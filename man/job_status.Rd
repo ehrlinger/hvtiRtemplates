@@ -17,11 +17,22 @@ Invisibly, a list: \code{state} is one of \code{"none"},
   or \code{"vanished"}; the other elements are what the status file
   recorded (\code{pid}, \code{created}, \code{host}, \code{started},
   \code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version}), and \code{log}, the log file's path.
+  \code{progress}, the render's progress record when there is one, with
+  \code{eta_s}, the estimated seconds left in the current stage, and
+  \code{stale}, \code{TRUE} when it has not changed for three reporting
+  intervals and at least 30 minutes.
 }
 \description{
 Reads the status \code{\link{submit_job}} keeps beside a job,
 \code{<job>.run.yml}. A job whose process was killed never records its
 end, so a recorded \code{running} is checked against the process itself.
+A render also keeps \code{<job>.run.progress}, read here; a render started
+without \code{\link{submit_job}}, after the last submitted run or with none, is reported from that file alone.
+A progress file older than the run the status file records is ignored.
+}
+\details{
+A long step writes a line to the render log at most every
+\code{getOption("hvtiRtemplates.progress_every", 10)} minutes.
 }
 \examples{
 job <- file.path(tempdir(), "example.qmd")

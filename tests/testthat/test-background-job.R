@@ -15,6 +15,7 @@ test_that("the run files sit beside the job, and the runner has no .R extension"
   expect_identical(f$log, "/s/analyses/nb.x.run.log")
   expect_identical(f$status, "/s/analyses/nb.x.run.yml")
   expect_identical(f$runner, "/s/analyses/nb.x.runner")
+  expect_identical(f$progress, "/s/analyses/nb.x.run.progress")
   expect_identical(f$lock, "/s/analyses/nb.x.run.lock")
 })
 
@@ -154,6 +155,16 @@ test_that("submit_job() refuses Windows and a path that is not a job", {
   local_mocked_bindings(.is_windows = function() TRUE)
   job <- status_job()
   expect_error(submit_job(job), "Windows")
+})
+
+test_that("submitting removes the last run's progress file", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  writeLines("stage: fit", .run_files(job)$progress)
+  .submit_job(job, final = FALSE, render_call = "1", root = dirname(job))
+  expect_false(file.exists(.run_files(job)$progress))
+  wait_for(job, c("finished", "failed", "vanished"))
 })
 
 test_that("a submit is refused, launching nothing, while another call holds the claim", {

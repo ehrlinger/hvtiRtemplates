@@ -1,7 +1,7 @@
 .run_files <- function(path) {
   stem <- sub("[.]qmd$", "", path)
   list(log = paste0(stem, ".run.log"), status = paste0(stem, ".run.yml"), runner = paste0(stem, ".runner"),
-       lock = paste0(stem, ".run.lock"))
+       progress = paste0(stem, ".run.progress"), lock = paste0(stem, ".run.lock"))
 }
 
 # A pid alone is not an identity: after reuse, any live process answers to it. When the status recorded the process's
@@ -38,6 +38,13 @@
 #' Reads the status \code{\link{submit_job}} keeps beside a job,
 #' \code{<job>.run.yml}. A job whose process was killed never records its
 #' end, so a recorded \code{running} is checked against the process itself.
+#' A render also keeps \code{<job>.run.progress}, read here; a render started
+#' without \code{\link{submit_job}}, after the last submitted run or with none, is reported from that file alone.
+#' A progress file older than the run the status file records is ignored.
+#'
+#' @details
+#' A long step writes a line to the render log at most every
+#' \code{getOption("hvtiRtemplates.progress_every", 10)} minutes.
 #'
 #' @param path Character(1). The job's \code{.qmd} file.
 #' @param quiet Logical(1). \code{FALSE} prints a one-line summary.
@@ -46,6 +53,10 @@
 #'   or \code{"vanished"}; the other elements are what the status file
 #'   recorded (\code{pid}, \code{created}, \code{host}, \code{started},
 #'   \code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version}), and \code{log}, the log file's path.
+#'   \code{progress}, the render's progress record when there is one, with
+#'   \code{eta_s}, the estimated seconds left in the current stage, and
+#'   \code{stale}, \code{TRUE} when it has not changed for three reporting
+#'   intervals and at least 30 minutes.
 #' @examples
 #' job <- file.path(tempdir(), "example.qmd")
 #' writeLines("---\ntitle: example\n---", job)
@@ -65,6 +76,23 @@ job_status <- function(path, quiet = FALSE) {
   if (!st$state %in% known) {
     stop("job_status(): the status file ", files$status, " records an unexpected state \"", st$state, "\".", call. = FALSE)
   }
+  prog <- .progress_read(files$progress)
+  # Progress is advisory: whatever its file holds, it must not stop the report of the job's state.
+  unreadable <- list(error = paste0("cannot read ", files$progress, "; progress not shown"))
+  # A progress file left by an earlier run is not this run's: compare it with the run the status file records.
+  vs_run <- if (!identical(st$state, "none") && is.list(prog) && is.null(prog$error)) {
+    tryCatch(.progress_vs_run(prog, st), error = function(e) "current")
+  } else {
+    "current"
+  }
+  if (identical(vs_run, "older")) prog <- NULL
+  from_progress <- (identical(st$state, "none") || identical(vs_run, "newer")) && is.list(prog) && is.null(prog$error)
+  if (from_progress) {
+    st <- tryCatch(.state_from_progress(prog), error = function(e) {
+      prog <<- unreadable
+      st
+    })
+  }
   never_started <- FALSE
   other_host <- NULL
   if (identical(st$state, "running")) {
@@ -83,6 +111,7 @@ job_status <- function(path, quiet = FALSE) {
     }
   }
   st$log <- files$log
+  st$progress <- tryCatch(.progress_view(prog), error = function(e) unreadable)
   if (!isTRUE(quiet)) {
     detail <- switch(st$state,
                      running = if (is.null(other_host)) {
@@ -101,6 +130,8 @@ job_status <- function(path, quiet = FALSE) {
                      },
                      "")
     cat(basename(path), ": ", st$state, detail, "\n", sep = "")
+    lines <- tryCatch(.progress_lines(st$progress, st$state), error = function(e) paste0("  progress: ", unreadable$error))
+    if (length(lines)) cat(lines, sep = "\n")
   }
   invisible(st)
 }
@@ -163,6 +194,8 @@ job_status <- function(path, quiet = FALSE) {
   if (file.access(rscript, 1L) != 0L) stop("submit_job(): cannot execute ", rscript, ".", call. = FALSE)
   if (!suppressWarnings(file.create(files$log))) stop("submit_job(): cannot write the log file ", files$log, ".", call. = FALSE)
   writeLines(.runner_lines(path, files$status, final, render_call), files$runner)
+  # The last run's progress is not this one's; job_status() would report it until the render writes its own.
+  unlink(files$progress)
   .write_status(files$status, state = "submitted", submitted = .stamp())
   setsid <- if (nzchar(Sys.which("setsid"))) "setsid " else ""
   cmd <- sprintf("cd %s && exec %snohup %s %s > %s 2>&1 < /dev/null",
