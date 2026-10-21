@@ -184,7 +184,7 @@ PREDICTORS <- c("age", "female", "hx_chf")
 # EDIT: how many permuted noise columns to add, split evenly between
 # categorical and continuous candidates. A variable is selected only when it
 # beats every TESTED noise column of its kind, so too few columns make a
-# lenient bar. 20 is what the Virtual Twins screen used.
+# lenient bar. 20 is what the screen behind this template used.
 NOISE_N <- 20
 
 # EDIT: the share of trees a variable must be scored in to count as tested.
@@ -194,7 +194,7 @@ TRIM <- 0.1
 # EDIT: varPro's forest. NVAR caps how many variables get release rules, and
 # counts the noise columns too; with SPLIT_WEIGHT = TRUE a guided first forest
 # picks them, and the rest are cut before any rule is built (104 of 154 terms
-# in the Virtual Twins screen). Those cut variables show as not eligible below,
+# in the screen behind this template). Those cut variables show as not eligible below,
 # which is not evidence of no effect. To give every candidate rules, set NVAR
 # to at least length(PREDICTORS) + NOISE_N and SPLIT_WEIGHT to FALSE.
 NTREE <- 500

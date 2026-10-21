@@ -14,6 +14,9 @@ test_that("vp-fit draws half its noise from each kind of candidate", {
   # A permuted copy keeps its source's values and loses their order.
   for (i in seq_along(noise)) {
     expect_identical(sort(as.character(env$d_noise[[noise[i]]])), sort(as.character(env$d[[src[i]]])))
+    # A continuous column of 200 draws keeps its order after a permutation
+    # only if sample() was skipped.
+    if (src[i] %in% c("xs", "x1", "x2")) expect_false(identical(env$d_noise[[noise[i]]], env$d[[src[i]]]))
   }
 })
 
