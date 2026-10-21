@@ -287,6 +287,8 @@ test_that("the fit and the partial effects report their steps, and progress is n
   expect_gte(length(holders), 1L)
   expect_true(all(vapply(holders, function(e) identical(ls(e, all.names = TRUE), "unit"), logical(1L))))
   expect_false(any(vapply(envs, function(e) any(c(".job", ".root") %in% ls(e, all.names = TRUE)), logical(1L))))
+  # The reporter above is this test's own; the package's real one must hold no more than `unit` either.
+  expect_identical(ls(environment(hvtiRtemplates:::.progress_step("iteration")), all.names = TRUE), "unit")
   # A second run loads both from the cache: the reporter, and the run record behind it, are not key inputs.
   env2 <- nb_env(root)
   nb_run(c("set", "edit-study-choices"), env2, nb_choices())
