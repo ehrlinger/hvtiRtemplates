@@ -223,3 +223,29 @@ test_that("vp-explain refuses a horizon past the longest follow-up", {
   expect_error(rf_run("vp", "explain", vp_explain_labels, env, list(HORIZON = 1e6, SEED = 1, SAVE_FIGURES = FALSE)),
                "longest follow-up")
 })
+
+test_that("vp-fit and vp-explain keyed on MRN save no MRN in any file", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "explain"))
+  data <- rf_mrn_data(n = 60L)
+  choices <- list(TIME = "iv_dead", EVENT = "dead", RESPONSE = NULL, PREDICTORS = c("age", "x1", "grp"),
+                  NTREE = 25, REPEATS = 1, SEED = 1, SAVE_FIGURES = FALSE)
+  fit <- vp_fit_first(data, choices)
+  # The ID fell back to MRN, and the job read it.
+  expect_identical(attr(fit$job_data$record, "selection")$id, "mrn")
+  expect_identical(rf_files_holding(fit$CACHE_DIR, data$MRN), character())
+  # On 60 patients the screen may select nothing, and vp-explain would then stop
+  # before writing its cache; draw the first tested variable instead, so the
+  # partial cache exists to be searched.
+  h <- readRDS(fit$set_path("estimates", "vp.rds"))
+  tested <- h$coverage$variable[!h$coverage$noise & h$coverage$tested]
+  expect_gt(length(tested), 0L)
+  env <- new.env(parent = globalenv())
+  env$.root <- fit$.root
+  rf_run("vp", "explain", vp_explain_labels, env,
+         list(PARTIAL_VARS = tested[[1L]], HORIZON = 1, SEED = 1, SAVE_FIGURES = FALSE))
+  expect_true(file.exists(file.path(fit$CACHE_DIR, "vp-partial.rds")))
+  expect_identical(rf_files_holding(fit$CACHE_DIR, data$MRN), character())
+  # The search finds what is there: every MRN in the data as the job read it.
+  expect_true(rf_bytes_hold_any(serialize(fit$job_data$data, NULL), data$MRN))
+})

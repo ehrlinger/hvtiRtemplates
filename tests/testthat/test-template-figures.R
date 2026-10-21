@@ -35,7 +35,9 @@ test_that("every printed figure is also saved, under its documented name", {
                         "nb-boostmtree-importance", "nb-boostmtree-effects-", "nb-boostmtree-traces"),
     `rfc-fit` = c("rfc-fit-diagnostics-error", "rfc-fit-diagnostics-roc"),
     `rfr-fit` = c("rfr-fit-diagnostics-error", "rfr-fit-diagnostics-predicted"),
-    `rfs-fit` = c("rfs-fit-diagnostics-error", "rfs-fit-diagnostics-survival", "rfs-fit-diagnostics-brier")
+    `rfs-fit` = c("rfs-fit-diagnostics-error", "rfs-fit-diagnostics-survival", "rfs-fit-diagnostics-brier"),
+    `vp-fit` = c("vp-fit-coverage", "vp-fit-varpro"),
+    `vp-explain` = "vp-explain-dependence-varpro"
   )
   for (t in c("rfc-explain", "rfr-explain", "rfs-explain")) {
     expected[[t]] <- paste0(t, c("-importance", "-varpro", "-dependence-marginal", "-dependence-partial",
