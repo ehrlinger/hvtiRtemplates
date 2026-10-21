@@ -27,7 +27,8 @@ Reads the status \code{\link{submit_job}} keeps beside a job,
 \code{<job>.run.yml}. A job whose process was killed never records its
 end, so a recorded \code{running} is checked against the process itself.
 A render also keeps \code{<job>.run.progress}, read here; a render started
-without \code{\link{submit_job}} is reported from that file alone.
+without \code{\link{submit_job}}, after the last submitted run or with none, is reported from that file alone.
+A progress file older than the run the status file records is ignored.
 }
 \details{
 A long step writes a line to the render log at most every

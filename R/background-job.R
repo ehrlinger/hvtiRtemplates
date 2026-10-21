@@ -25,7 +25,8 @@
 #' \code{<job>.run.yml}. A job whose process was killed never records its
 #' end, so a recorded \code{running} is checked against the process itself.
 #' A render also keeps \code{<job>.run.progress}, read here; a render started
-#' without \code{\link{submit_job}} is reported from that file alone.
+#' without \code{\link{submit_job}}, after the last submitted run or with none, is reported from that file alone.
+#' A progress file older than the run the status file records is ignored.
 #'
 #' @details
 #' A long step writes a line to the render log at most every
@@ -64,7 +65,15 @@ job_status <- function(path, quiet = FALSE) {
   prog <- .progress_read(files$progress)
   # Progress is advisory: whatever its file holds, it must not stop the report of the job's state.
   unreadable <- list(error = paste0("cannot read ", files$progress, "; progress not shown"))
-  if (identical(st$state, "none") && is.list(prog) && is.null(prog$error)) {
+  # A progress file left by an earlier run is not this run's: compare it with the run the status file records.
+  vs_run <- if (!identical(st$state, "none") && is.list(prog) && is.null(prog$error)) {
+    tryCatch(.progress_vs_run(prog, st), error = function(e) "current")
+  } else {
+    "current"
+  }
+  if (identical(vs_run, "older")) prog <- NULL
+  from_progress <- (identical(st$state, "none") || identical(vs_run, "newer")) && is.list(prog) && is.null(prog$error)
+  if (from_progress) {
     st <- tryCatch(.state_from_progress(prog), error = function(e) {
       prog <<- unreadable
       st
@@ -156,6 +165,8 @@ job_status <- function(path, quiet = FALSE) {
   if (file.access(rscript, 1L) != 0L) stop("submit_job(): cannot execute ", rscript, ".", call. = FALSE)
   if (!suppressWarnings(file.create(files$log))) stop("submit_job(): cannot write the log file ", files$log, ".", call. = FALSE)
   writeLines(.runner_lines(path, files$status, final, render_call), files$runner)
+  # The last run's progress is not this one's; job_status() would report it until the render writes its own.
+  unlink(files$progress)
   .write_status(files$status, state = "submitted", submitted = .stamp())
   setsid <- if (nzchar(Sys.which("setsid"))) "setsid " else ""
   cmd <- sprintf("cd %s && exec %snohup %s %s > %s 2>&1 < /dev/null",

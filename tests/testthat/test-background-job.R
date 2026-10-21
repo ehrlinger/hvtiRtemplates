@@ -155,3 +155,13 @@ test_that("submit_job() refuses Windows and a path that is not a job", {
   job <- status_job()
   expect_error(submit_job(job), "Windows")
 })
+
+test_that("submitting removes the last run's progress file", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  writeLines("stage: fit", .run_files(job)$progress)
+  .submit_job(job, final = FALSE, render_call = "1", root = dirname(job))
+  expect_false(file.exists(.run_files(job)$progress))
+  wait_for(job, c("finished", "failed", "vanished"))
+})

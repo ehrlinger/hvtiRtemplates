@@ -286,3 +286,37 @@ test_that("a Quarto render leaves <job>.run.progress, which job_status() reads",
   expect_identical(st$progress$stages, c("first", "second"))
   expect_identical(st$state, "finished")
 })
+
+test_that("a progress file from before the recorded run is ignored, whatever state that run is in", {
+  local_clock(Sys.time())
+  for (state in c("submitted", "running", "finished", "failed")) {
+    job <- status_job_progress()
+    write_progress(job)  # began an hour ago
+    .write_status(.run_files(job)$status, state = state, pid = Sys.getpid(), host = Sys.info()[["nodename"]],
+                  submitted = .stamp(.now() - 10), started = .stamp(.now() - 10), ended = .stamp(.now() - 5),
+                  exit_code = 0L, elapsed_s = 5L)
+    st <- job_status(job, quiet = TRUE)
+    expect_identical(st$state, state, label = state)
+    expect_null(st$progress, label = state)
+  }
+})
+
+test_that("a progress file from after the recorded run ended gives the state, as with no run.yml", {
+  local_clock(Sys.time())
+  job <- status_job_progress()
+  write_progress(job)
+  .write_status(.run_files(job)$status, state = "finished", pid = 999999L, host = Sys.info()[["nodename"]],
+                started = .stamp(.now() - 7300), ended = .stamp(.now() - 7200), exit_code = 0L, elapsed_s = 100L)
+  st <- job_status(job, quiet = TRUE)
+  expect_identical(st$state, "running")
+  expect_identical(st$progress$stage, "fit")
+})
+
+test_that("a progress file inside the recorded run is kept", {
+  local_clock(Sys.time())
+  job <- status_job_progress()
+  write_progress(job)
+  .write_status(.run_files(job)$status, state = "running", pid = Sys.getpid(), host = Sys.info()[["nodename"]],
+                started = .stamp(.now() - 3700))
+  expect_identical(job_status(job, quiet = TRUE)$progress$stage, "fit")
+})

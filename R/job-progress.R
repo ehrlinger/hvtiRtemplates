@@ -197,6 +197,19 @@
   list(state = "running", pid = prog$pid, host = prog$host, started = prog$started)
 }
 
+# How a progress file stands against the run <job>.run.yml records: "older" when it began before that run was
+# submitted or started (a leftover), "newer" when it began after that run ended (a render started without
+# submit_job()), else "current". Anything unparseable counts as current.
+.progress_vs_run <- function(prog, st) {
+  began <- .parse_stamp(prog$started)
+  as_stamp <- function(x) .parse_stamp(if (is.character(x) && length(x) == 1L) x else NA_character_)
+  run_began <- as_stamp(if (is.null(st$started)) st$submitted else st$started)
+  run_ended <- as_stamp(st$ended)
+  if (!is.na(run_began) && began < run_began) return("older")
+  if (!is.na(run_ended) && began > run_ended) return("newer")
+  "current"
+}
+
 .progress_lines <- function(prog, state) {
   if (is.null(prog)) return(character())
   if (!is.null(prog$error)) return(paste0("  progress: ", prog$error))
