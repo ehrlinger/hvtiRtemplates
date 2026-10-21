@@ -332,6 +332,10 @@ malformed_progress <- list(
   "stage_started no stamp" = set_field("stage_started", "soon"),
   "step_started no stamp"  = set_field("step_started", "soon"),
   "step_base is text"      = set_field("step_base", "abc"),
+  "pid is a vector"        = set_field("pid", c(1L, 2L)),
+  "pid is text"            = set_field("pid", "abc"),
+  "host is a number"       = set_field("host", 5L),
+  "host is a vector"       = set_field("host", c("a", "b")),
   "cached is text"         = set_field("done", list(list(stage = "tbl-data", elapsed_s = 3L, cached = "yes")))
 )
 
@@ -352,6 +356,14 @@ test_that("a malformed progress file is noted, never an error, and the state sti
     expect_identical(st$state, "none", label = case)
     expect_match(paste(out, collapse = "\n"), "cannot read", fixed = TRUE, label = case)
   }
+})
+
+test_that("the state taken from progress refuses a pid that is not one number, so the process check cannot error", {
+  p <- list(stages = "a", done = list(list(stage = "a", elapsed_s = 1L)), started = "2026-10-21T07:00:00+0000",
+            updated = "2026-10-21T07:01:00+0000", host = "h")
+  expect_error(.state_from_progress(c(p, list(pid = c(1L, 2L)))))
+  expect_error(.state_from_progress(c(p, list(pid = "abc"))))
+  expect_identical(.state_from_progress(c(p, list(pid = 7L)))$state, "finished")
 })
 
 test_that("the progress path of a Quarto intermediate is the job's, beside it", {

@@ -188,7 +188,8 @@
     is.list(d) && is.character(d$stage) && length(d$stage) == 1L && is.numeric(d$elapsed_s) && length(d$elapsed_s) == 1L &&
       is.finite(d$elapsed_s) && (is.null(d$cached) || (is.logical(d$cached) && length(d$cached) == 1L && !is.na(d$cached)))
   }, NA)))
-  stamp_ok(p$updated) && stamp_ok(p$started) && (is.null(p$stage_started) || stamp_ok(p$stage_started)) &&
+  process_ok <- .num1_or_null(p$pid) && (is.null(p$host) || (is.character(p$host) && length(p$host) == 1L))
+  process_ok && stamp_ok(p$updated) && stamp_ok(p$started) && (is.null(p$stage_started) || stamp_ok(p$stage_started)) &&
     (is.null(p$step_started) || stamp_ok(p$step_started)) && done_ok &&
     all(vapply(p[c("step", "steps", "step_base", "stage_index", "stage_count")], .num1_or_null, NA)) &&
     (is.null(p$step) || !is.null(p$steps)) && (is.null(p$stages) || is.character(p$stages))
@@ -225,6 +226,8 @@
 # A render started without submit_job() has no run.yml: its progress file says
 # whether it finished, and its process whether it is still running.
 .state_from_progress <- function(prog) {
+  # job_status() hands this pid to the process check, which cannot take anything but one number.
+  if (!(is.numeric(prog$pid) && length(prog$pid) == 1L && is.finite(prog$pid))) stop("progress record has no usable pid")
   done <- vapply(prog$done, function(d) d$stage, "")
   if (length(prog$stages) && all(prog$stages %in% done)) {
     return(list(state = "finished", pid = prog$pid, host = prog$host, started = prog$started, ended = prog$updated,
