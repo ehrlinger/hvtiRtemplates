@@ -31,13 +31,23 @@ format:
 <!-- EDIT: name the SAS job this replaces, and say what its %KAPLAN calls do.
      Replace this comment with that text. -->
 
-An `ac` job produces life tables. Figures over the same estimates are an `hp`
-job, and the parametric fit is `hz`; neither belongs here.
+An `ac` job is the first look at an outcome: the Kaplan-Meier life table,
+survival and patients at risk at the reporting horizons, the follow-up, the
+strata compared, and the figures read before any hazard model. Those are the
+survival curve, the cumulative-hazard views that suggest the phases an `hz` job
+fits, and a manuscript figure with the numbers at risk beneath it. The
+parametric fit is `hz`, and the figures that lay that fit over these estimates
+are `hp`.
 
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
      document is computed from them, so no output path below needs editing.
+
+     TYPE names the analysis chain the set belongs to, not this job: an ac job
+     feeding a parametric hazard chain is type "hz", because hp reads this
+     job's ac.rds beside hz's hz.rds in the same set. SUBJECT names the
+     outcome, such as "dead" or "reop".
 
      Do NOT hand-edit these declarations: the render-time guard below checks
      them against this file's own name and stops if they disagree. To put
@@ -56,19 +66,21 @@ job, and the parametric fit is `hz`; neither belongs here.
 SUBJECT <- "dead_pa"
 TYPE    <- "hz"
 .in <- knitr::current_input(dir = TRUE)
-suppressPackageStartupMessages({
-  library(TemporalHazard)
-  library(hvtiRutilities)
-})
+suppressPackageStartupMessages(library(hvtiRutilities))
+if (utils::packageVersion("TemporalHazard") < "1.2.12") {
+  stop("This job needs TemporalHazard >= 1.2.12 for hzr_kaplan(); ",
+       utils::packageVersion("TemporalHazard"), " is installed.", call. = FALSE)
+}
+if (utils::packageVersion("hvtiPlotR") < "2.7.0") {
+  stop("This job needs hvtiPlotR >= 2.7.0 for hv_atrisk_compose(); ",
+       utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
+}
+if (!requireNamespace("patchwork", quietly = TRUE)) {
+  stop("This job needs the patchwork package for its page of cumulative-hazard views.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
-# Without the guard in .job_setup(), an unedited job renders green over a
-# meaningless analysis. The edit-derive chunk below indexes a placeholder
-# column; when that column is absent `!is.na(d$<col>)` is logical(0), and
-# assignment through a zero-length index is a SILENT no-op in R. Every patient
-# keeps the initial category, every stratified estimate is computed over one
-# dummy stratum, and nothing errors.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -78,6 +90,12 @@ suppressPackageStartupMessages({
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 # The overall life table is saved after it is fitted. `hp` reads that exact
 # handoff by set and refuses an older lineage-free artifact.
 # The draft banners, if any, and the box under the title, after all the code above.
@@ -86,7 +104,10 @@ set_path <- .job$set_path
 
 ## Study choices
 
-Edit these values for this study before rendering.
+Edit these values for this study before rendering. The life table, the horizons,
+the tests and the figures are computed by `hvtiRtemplates::life_table()` and its
+companions, the counterpart of the SAS `%KAPLAN` macro; `?life_table` lists what
+each one does.
 
 ```{r}
 #| label: edit-study-choices
@@ -102,7 +123,8 @@ ANALYSIS_SET <- NULL
 WHERE <- NULL
 
 # EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
-# name another column, such as "randid", if the study uses one.
+# name another column if the study uses one, such as "ccfidu" where a patient
+# enters the study once for each operation.
 ID <- "ccfid"
 
 # EDIT: what makes a row unique; one row per patient unless repeated measures
@@ -110,9 +132,10 @@ ID <- "ccfid"
 KEY <- ID
 
 # Optional, and needs no edit: NULL reads the cohort alone. To join one
-# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
-# above decides the patients, one row each; the joined records of other
-# patients are dropped and counted in the data table.
+# registered ancillary dataset (echoes, labs, the match assignments a
+# propensity job saved), name it in JOIN. The cohort above decides the
+# patients, one row each; the joined records of other patients are dropped and
+# counted in the data table.
 #   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
 #     and a column both datasets have stops, so list only those the job needs.
 #   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
@@ -129,25 +152,56 @@ JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
 
-# EDIT: each derived category and its source variable.
-DERIVED <- c(cat_a = "src_a")
-
-# EDIT: stratification variables.
-STRATA <- c("cat_a")
-
 # EDIT: time and event variables.
 TIME   <- "iv_dead"
 
 EVENT  <- "dead"
 
-# EDIT: counts from the SAS reference for the rows this job analyses. Leave
-# these invalid defaults in place until WHERE and the endpoint agree.
-EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_)
+# EDIT: the stratification variables, or NULL for the whole cohort only. Each
+# is analysed on its own: c("female", "tr_strat") gives a table, tests and
+# figures by sex, then another set by treatment, not a cross-tab of the two.
+# The whole cohort is always reported first. A grouping the dataset lacks is
+# made in "Derived strata" below.
+STRATA <- NULL
 
-# EDIT: reporting horizons and their labels.
-grid <- c(30 / 365.2425, 0.5, 1, 5, 10)
+# Optional: each grouping made in "Derived strata" below, named by its source,
+# e.g. DERIVED <- c(lvef_grp = "lvef"), so the job can read one against the other.
+DERIVED <- NULL
 
-labs <- c("30 days", "6 months", "1 year", "5 years", "10 years")
+# Optional: the counts of the SAS reference, to have the job stop when the rows
+# it reads differ, e.g. list(n = 69L, n_events = 50L, n_censored = 19L).
+# NULL reports the counts the job finds and checks them against nothing.
+EXPECTED <- NULL
+
+# Reporting horizons, in the unit of TIME (years here), and their labels.
+# NULL labels each horizon with its value; labs <- c("30 days", "6 months",
+# paste(1:10, "y")) is one way to name them. Another grid: c(1, seq(2, 20, by = 2)).
+grid <- c(30 / 365.2425, 0.5, 1:10)
+labs <- NULL
+
+# The life table's rows: TRUE prints a row for each death (SAS PEVENT=1);
+# FALSE adds a row for each censored patient as well (PEVENT=0).
+EVENT_ONLY <- TRUE
+
+# %KAPLAN's CLEVEL default: one standard error, NOT 95%. This is a SAS
+# convention rather than a study choice; change it only if your SAS job
+# overrides CLEVEL, and say so in the report if you do.
+CLEVEL <- 0.68268948
+
+# The figures' last time. NULL draws to the end of follow-up; a manuscript
+# figure usually stops where enough patients remain at risk, e.g. PLOT_MAX <- 15.
+PLOT_MAX <- NULL
+
+# The times the manuscript figure counts patients at risk, e.g. 0:10; NULL
+# takes evenly spaced times across the axis.
+RISK_TIMES <- NULL
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("ac-survival"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Cohort
@@ -183,15 +237,14 @@ if (!is.null(job_data$attrition)) {
 ```
 
 <!-- The rows are chosen by WHERE in the study choices, and the report above
-     shows what each condition removed. The expected counts, event and time are
-     this job's contract with its SAS reference; the invalid defaults make an
-     unedited job stop rather than silently accept an unreconciled cohort. -->
+     shows what each condition removed. EXPECTED, when it is set, is this
+     job's contract with its SAS reference. -->
 
 ```{r}
 #| label: tbl-cohort
 #| tbl-cap: "Analysable patients, events and censored patients"
 cc <- cohort_counts(d, event = EVENT, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+if (!is.null(EXPECTED)) assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
 
 # A time of zero, a death on the day of operation, leaves the hazard likelihood
 # undefined, and hz would stop on an optimizer error that names neither the
@@ -212,262 +265,118 @@ if (.n_zero + .n_neg > 0) {
 
 knitr::kable(data.frame(
   quantity = c("n_analysable", "n_events", "n_censored"),
-  n        = c(cc$n, cc$n_events, cc$n_censored)
+  n        = c(cc$n, cc$n_events, cc$n_censored),
+  percent  = round(100 * c(cc$n, cc$n_events, cc$n_censored) / cc$n, 1)
 ))
 ```
 
-A rendered report is itself evidence the gate passed. Report the counts anyway —
-a gate that passes silently tells the reader nothing about what it passed on.
+These are the counts the job found, the `PROC FREQ` of the event over the rows
+analysed. With `EXPECTED` set, a rendered report is also evidence that they
+matched the SAS reference.
 
-**An event flag that is 0/1 in SAS may arrive as `logical`**, because
-`read_clinical_data()` infers binary columns as logical and `hzr_kaplan()`
-requires a numeric status. The `as.numeric()` coercions below are not
-decoration.
+```{r}
+#| label: tbl-followup
+#| tbl-cap: "Follow-up, in the unit of TIME: all patients, and those still alive (censored)"
+# Percentiles are SAS's PROC UNIVARIATE default definition (PCTLDEF=5), which is
+# R's quantile type 2, so the median follow-up quoted in a manuscript matches.
+fu_row <- function(who, t) {
+  q <- stats::quantile(t, c(0.10, 0.25, 0.50, 0.75, 0.90), type = 2, names = FALSE)
+  data.frame(patients = who, n = length(t), mean = mean(t), sd = stats::sd(t), min = min(t),
+             p10 = q[1], p25 = q[2], median = q[3], p75 = q[4], p90 = q[5], max = max(t))
+}
+.fu <- d[!is.na(d[[TIME]]) & !is.na(d[[EVENT]]), , drop = FALSE]
+.fu_t <- as.numeric(.fu[[TIME]])
+.alive <- as.numeric(.fu[[EVENT]]) == 0
+knitr::kable(rbind(fu_row("all", .fu_t), if (any(.alive)) fu_row("alive", .fu_t[.alive])),
+             row.names = FALSE, digits = 2)
+```
+
+Goodness of follow-up, for a study whose patients die early or whose follow-up
+is in doubt, is the `dc-gfup` job.
 
 ## Derived strata
 
-<!-- EDIT: this whole chunk. The cutpoints, the variables and the number of
-     strata are all study-specific. What is NOT study-specific is the pattern:
-     SAS derives categories with cumulative overwrites, and the ORDER matters
-     as much as the cutpoints — each later condition overwrites the earlier
-     assignment. Transcribe the order from the SAS, do not reorder it.
+<!-- Optional. Leave this section as it is when STRATA names only columns the
+     dataset already has, which is most jobs; delete it if you prefer. -->
 
-     Delete this section entirely if the job has no derived strata. -->
-
-```{r}
-#| label: edit-derive
-# EDIT: your study's category derivations, in SAS order.
-derive_cats <- function(d) {
-  # Assert the source columns are present BEFORE deriving. Every condition
-  # below is guarded by !is.na(d$src), and when `src` is absent that guard is
-  # logical(0), so each assignment is a silent no-op: every patient keeps the
-  # initial value, the counts still sum to the cohort, and the render is green
-  # over a single dummy stratum. An absent column must fail here, loudly.
-  .need <- "src_a"                     # EDIT: the source column(s) used below.
-  .miss <- setdiff(.need, names(d))
-  if (length(.miss)) {
-    stop("derive_cats(): source column(s) not in the data: ",
-         paste(.miss, collapse = ", "),
-         ". Edit this chunk for your study before rendering.", call. = FALSE)
-  }
-
-  d$cat_a <- 4L
-  d$cat_a[!is.na(d$src_a) & d$src_a <  0.00] <- 3L
-  d$cat_a[!is.na(d$src_a) & d$src_a < -0.60] <- 2L
-  d$cat_a[!is.na(d$src_a) & d$src_a < -1.25] <- 1L
-  d
-}
-d <- derive_cats(d)
-```
+A grouping the dataset lacks, such as ejection fraction cut into three groups,
+is made here and named in `DERIVED`. A grouping that more than one job needs
+belongs in the dataset build instead.
 
 ```{r}
-#| label: tbl-derive
-#| tbl-cap: "Patients in each derived category"
-knitr::kable(as.data.frame(table(cat_a = d$cat_a), stringsAsFactors = FALSE))
+#| label: derive
+# Optional: derive a grouping STRATA names that the dataset lacks, then name it
+# and its source in DERIVED in the study choices, so the table below reads one
+# against the other.
+# The example makes three ejection-fraction groups from lvef; uncomment and
+# adapt it. SAS derives categories by cumulative overwrites, each later line
+# overwriting the ones before, so transcribe the ORDER from the SAS as well as
+# the cutpoints. Keep a missing source missing: the patient is then dropped from
+# the stratified tables, as %KAPLAN drops them, instead of joining a group.
+#   d$lvef_grp <- 3L
+#   d$lvef_grp[which(d$lvef < 50)] <- 2L
+#   d$lvef_grp[which(d$lvef < 40)] <- 1L
+#   d$lvef_grp[is.na(d$lvef)] <- NA
 ```
 
 ```{r}
 #| label: tbl-derive-check
 #| tbl-cap: "Each derived category against the variable it came from"
+#| include: !expr length(DERIVED) > 0
 # A cumulative-overwrite derivation fails QUIETLY: reorder the conditions and
 # every patient still lands in some category, the counts still sum to the
 # cohort, and every stratified estimate below is wrong while looking entirely
-# plausible. So the derivation is checked against the data it came from rather
-# than against an external listing.
-#
-# Two things are visible here and nowhere else:
-#   * the source RANGE within each category. Correctly ordered, the ranges are
-#     disjoint and ascend with the category. Overlapping or inverted ranges mean
-#     the overwrites ran in the wrong order.
-#   * src_missing. Every condition is guarded by !is.na(), so a patient whose
-#     source variable is missing keeps the INITIAL value and silently joins the
-#     top category. That is a missingness stratum wearing a clinical label.
-
-# Each derived category names the variable it was derived FROM.
-
-# DERIVED is maintained by hand and can drift from derive_cats() above -- a
-# category renamed there, or a source renamed here. Either way d[[src]] is NULL,
-# every row below comes back empty, and a zero-row table renders quietly beside
-# a derive table showing every patient in one category. The assertion covers
-# both ends: sources must exist in the data, and each derived category must
-# actually have been produced above.
-.miss_src <- setdiff(unname(DERIVED), names(d))
-.miss_cat <- setdiff(names(DERIVED),  names(d))
-if (length(.miss_src) || length(.miss_cat)) {
-  stop("DERIVED does not describe this data. ",
-       if (length(.miss_src))
-         paste0("Source column(s) absent: ", paste(.miss_src, collapse = ", "), ". "),
-       if (length(.miss_cat))
-         paste0("Derived column(s) absent -- not produced by derive_cats(): ",
-                paste(.miss_cat, collapse = ", "), ". "),
-       call. = FALSE)
+# plausible. So the derivation is checked against the data it came from: the
+# source RANGE within each category. Correctly ordered, the ranges are disjoint
+# and ascend with the category; overlapping or inverted ranges mean the
+# overwrites ran in the wrong order.
+if (length(DERIVED)) {
+  .miss <- setdiff(c(names(DERIVED), unname(DERIVED)), names(d))
+  if (length(.miss)) {
+    stop("DERIVED names column(s) not in the data: ", paste(.miss, collapse = ", "),
+         ". Name each derived column and its source as the derive chunk made them.", call. = FALSE)
+  }
+  derived_rows <- function(cat) {
+    src <- DERIVED[[cat]]
+    lv <- d[[cat]]
+    do.call(rbind, lapply(c(sort(unique(lv[!is.na(lv)])), if (anyNA(lv)) NA), function(k) {
+      v <- d[[src]][if (is.na(k)) is.na(lv) else which(lv == k)]
+      r <- if (any(!is.na(v))) range(v, na.rm = TRUE) else c(NA_real_, NA_real_)
+      data.frame(category = cat, level = k, n = length(v), source = src,
+                 src_min = r[1], src_max = r[2], src_missing = sum(is.na(v)))
+    }))
+  }
+  knitr::kable(do.call(rbind, lapply(names(DERIVED), derived_rows)), row.names = FALSE, digits = 4)
 }
-
-rng <- function(x) {
-  x <- x[!is.na(x)]
-  if (!length(x)) c(NA_real_, NA_real_) else range(x)
-}
-
-derived_rows <- function(cat) {
-  src <- DERIVED[[cat]]
-  do.call(rbind, lapply(sort(unique(d[[cat]])), function(k) {
-    v <- d[[src]][d[[cat]] == k]
-    r <- rng(v)
-    data.frame(
-      category = cat, level = k, n = length(v), source = src,
-      src_min = r[1], src_max = r[2], src_missing = sum(is.na(v))
-    )
-  }))
-}
-
-knitr::kable(
-  do.call(rbind, lapply(names(DERIVED), derived_rows)),
-  row.names = FALSE, digits = 4
-)
 ```
 
-**Read the ranges before reading anything below.** They must not overlap between
-levels of the same category, and they must ascend with the level. If a
-derivation is wrong, every stratified estimate downstream is wrong in a way that
-still looks entirely plausible, and this table is where that shows.
-
-Any `src_missing` above zero is worth naming in the report: those patients are
-in that stratum because their source value is unknown, not because they belong
-to it clinically.
+When this job derives a grouping, read the ranges before reading anything below.
+They must not overlap between levels of the same category, and they must ascend
+with the level.
 
 ## Estimation
-
-`hzr_kaplan()` takes vectors, not a formula with a strata term, so a stratified
-fit is a split and a call per stratum.
-
-The confidence level is SAS's `%KAPLAN` `CLEVEL` default of `0.68268948` — one
-standard deviation, **not** 95%. This is a SAS convention rather than a study
-choice, so it is not marked as an edit; change it only if your job overrides
-`CLEVEL`, and say so in the report if you do.
 
 ```{r}
 #| label: km-helpers
 # unnumbered: defines helpers only
-CLEVEL <- 0.68268948
-
 .fence <- strrep("`", 3)
 .seen <- new.env()
-.child <- function(label, caption, code) {
+# Prints `code` as a child chunk with its own label and caption, so each table
+# and figure the loops below make is numbered and can be cited.
+.child <- function(label, caption, code, opts = character()) {
   label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
   if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
   .seen[[label]] <- TRUE
   .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
-  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, code, .fence),
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, opts, code, .fence),
                         envir = parent.frame(), quiet = TRUE), sep = "\n")
   cat("\n")
 }
 
-# your time and status variables.
-
-km_fit <- function(dd) {
-  ok <- !is.na(dd[[TIME]]) & !is.na(dd[[EVENT]])
-  out <- hzr_kaplan(time       = as.numeric(dd[[TIME]][ok]),
-                    status     = as.numeric(dd[[EVENT]][ok]),
-                    conf_level = CLEVEL)
-  # End of follow-up, carried from the DATA. It cannot be recovered from the
-  # life table: that has one row per EVENT time, so patients censored after the
-  # last death extend follow-up without adding a row. max(out$time) is the last
-  # event, which can be years short of the last observation.
-  out$max_fup <- max(as.numeric(dd[[TIME]][ok]))
-  out
-}
-
-# Bookkeeping columns km_fit()/km_by() attach for the code's benefit. They are
-# constant down every row and must not appear in a table someone reads. Kept as
-# columns rather than attributes because split()/rbind() drop attributes, and
-# losing max_fup silently would restore the extrapolation bug it exists to stop.
-INTERNAL_COLS <- c("max_fup", "n")
-readable <- function(x) x[, setdiff(names(x), INTERNAL_COLS), drop = FALSE]
-
-# Levels of a stratification variable that are not clean integers. A missing
-# binary that was MEAN-IMPUTED upstream is stored as a third factor level: a
-# value such as 0.714047380714047 is the observed proportion, not an
-# observation, and one imputation constant can propagate into several derived
-# variables.
-#
-# Splitting on such a variable produces a stratum that LOOKS like a clinical
-# group, has a plausible survival curve, and is really "this covariate was
-# missing".
-#
-# SAS %KAPLAN DROPS these rows, reporting "NOTE: n observations with invalid
-# ... strata values were deleted".
-#
-# THIS TEMPLATE DOES NOT DROP THEM. They are carried as an explicit "Unknown"
-# stratum: "we do not know this patient's value" is a fact about the cohort
-# worth showing, and the stratified table then accounts for every patient
-# rather than quietly shedding some. This is a DELIBERATE DIVERGENCE from the
-# SAS baseline, legitimate because an R_hazard job does the analysis; matching
-# SAS is a parity job's business and applies only where a stored SAS answer
-# exists.
-#
-# Consequence to state in any report built from this file: the Unknown
-# stratum's curve is NOT a clinical subgroup and must not be read as one. It is
-# a missingness stratum, and a difference between it and the others is evidence
-# about who had the covariate recorded, not about the covariate.
-# imputed_levels() is hvtiRutilities' (>= 1.1.4). This file carried a local copy
-# until then; it was identical, so the copy only meant two places to fix.
-UNKNOWN <- "Unknown"
-
-# Stratified fits, one per level, with the level carried on the result so the
-# strata cannot be silently transposed when the tables are stacked.
-km_by <- function(dd, var) {
-  raw    <- as.character(dd[[var]])
-  imp_lv <- imputed_levels(dd[[var]])
-
-  # Both imputed levels and outright NA mean "we do not know". They are folded
-  # into one Unknown stratum, but their provenance is reported separately below
-  # so the fold is never silent.
-  lab <- raw
-  lab[raw %in% imp_lv | is.na(raw)] <- UNKNOWN
-
-  # Unknown sorts LAST, whatever the observed levels are called.
-  obs <- sort(setdiff(unique(lab), UNKNOWN))
-  lab <- factor(lab, levels = c(obs, if (UNKNOWN %in% lab) UNKNOWN))
-
-  parts <- split(dd, lab)
-  out <- do.call(rbind, lapply(levels(lab), function(lv) {
-    p <- parts[[lv]]
-    # Carry the number of patients FITTED. Do not report n_risk[1] as the
-    # stratum size: that is the number at risk at the FIRST EVENT time, and any
-    # patient censored before the stratum's first death is missing from it. The
-    # two agree only when a stratum has a death at t=0, which large strata do
-    # and small ones do not -- so the error appears exactly where it is hardest
-    # to notice.
-    cbind(stratum = lv,
-          n       = sum(!is.na(p[[TIME]]) & !is.na(p[[EVENT]])),
-          km_fit(p))
-  }))
-
-  src <- rbind(
-    if (length(imp_lv)) {
-      data.frame(
-        source = imp_lv,
-        n = vapply(imp_lv, function(l) sum(raw == l, na.rm = TRUE), integer(1)),
-        reason = "mean-imputed level, not an observed value"
-      )
-    },
-    if (anyNA(raw)) {
-      data.frame(source = "NA", n = sum(is.na(raw)), reason = "missing outright")
-    }
-  )
-  attr(out, "unknown_sources") <- if (!is.null(src)) `rownames<-`(src, NULL) else NULL
-  out
-}
-
-# Print what went into Unknown alongside the estimates, never instead of them.
-report_unknown <- function(fit, var) {
-  src <- attr(fit, "unknown_sources")
-  if (is.null(src)) return(invisible(NULL))
-  cap <- paste0(
-    "What the ", var, " \"", UNKNOWN, "\" stratum is made of: a missingness ",
-    "group, NOT a clinical subgroup. SAS %KAPLAN drops these rows."
-  )
-  .child(paste("tbl km strata", var, "unknown"), cap, "knitr::kable(src, row.names = FALSE)")
+# Survival and its limits as percentages, the way the tables report them.
+as_percent <- function(x) {
+  for (col in intersect(c("survival", "cl_lower", "cl_upper"), names(x))) x[[col]] <- round(100 * x[[col]], 1)
+  x
 }
 ```
 
@@ -475,9 +384,8 @@ report_unknown <- function(fit, var) {
 
 ```{r}
 #| label: tbl-km-overall
-#| tbl-cap: "Overall life table (first 20 rows)"
-km <- km_fit(d)
-knitr::kable(head(readable(km), 20))
+#| tbl-cap: "Overall life table"
+km <- hvtiRtemplates::life_table(d, TIME, EVENT, conf_level = CLEVEL)
 ac_art <- hvtiRtemplates:::.attach_handoff_lineage(
   list(overall = km),
   data = .provenance_data,
@@ -490,93 +398,166 @@ ac_art <- hvtiRtemplates:::.attach_handoff_lineage(
   selection = c(attr(job_data$record, "selection"), list(time = TIME, event = EVENT))
 )
 saveRDS(ac_art, set_path("estimates", "ac.rds"))
+# The saved life table is always the event rows, the table hp draws over.
+.km_rows <- if (EVENT_ONLY) km else hvtiRtemplates::life_table(d, TIME, EVENT, conf_level = CLEVEL, event_only = FALSE)
+knitr::kable(as_percent(.km_rows), row.names = FALSE, digits = 4)
 ```
 
-Survival at reporting horizons, read off the step function as the last estimate
-at or before each horizon.
+Survival at each horizon is the last estimate at or before it. The number at
+risk is the number of patients followed beyond the horizon, the count on the
+first row of a `PEVENT=0` life table after it: the estimate comes from the row
+before, the count from the row after. Past the end of follow-up survival is not
+defined and is left blank.
 
 ```{r}
 #| label: tbl-horizons
-#| tbl-cap: "Overall survival (%) at reporting horizons"
-# your reporting horizons, in the time unit of TIME (years here).
-# A wrong grid does not error — it produces a plausible-looking table.
-
-at_horizon <- function(fit, g) {
-  i <- which(fit$time <= g)
-  # BEFORE the first event: the life table starts at the first event time, so a
-  # stratum with no event before `g` has no row at or below it. Survival there
-  # is 1, not missing -- NA_real_ would read as "no data" in a stratum that
-  # simply had no deaths yet, and small strata are where that happens.
-  beyond <- g > fit$max_fup[1]
-  if (!length(i)) return(if (beyond) NA_real_ else 1)
-  s <- fit$survival[max(i)]
-  # BEYOND THE END OF FOLLOW-UP the KM estimate is NOT DEFINED, and carrying the
-  # last value forward silently reports a horizon nobody was observed to.
-  # Return NA instead -- EXCEPT when survival has already reached 0, which is
-  # absorbing: everyone has died, so 0 is genuinely known thereafter.
-  # Compare against max_fup, NOT max(fit$time): the latter is the last EVENT.
-  if (beyond && s > 0) return(NA_real_)
-  s
-}
-
-knitr::kable(data.frame(
-  horizon  = labs,
-  survival = round(100 * vapply(grid, at_horizon, numeric(1), fit = km), 1)
-))
+#| tbl-cap: "Overall survival (%) and patients at risk at the reporting horizons"
+knitr::kable(as_percent(hvtiRtemplates::life_table_at(d, TIME, EVENT, times = grid, labels = labs,
+                                                      conf_level = CLEVEL)),
+             row.names = FALSE, digits = 4)
 ```
 
 ## Stratified
 
-<!-- EDIT: one block per %KAPLAN stratification in your SAS job. Add or remove
-     blocks to match, or delete the section if the job has none. -->
+A patient whose stratum is missing, or is a mean-imputed value rather than an
+observed one, is left out of that stratification, as SAS `%KAPLAN` leaves them
+out, and a table under the stratum counts says how many.
+
+The tests compare the strata over all follow-up: the log-rank, the Wilcoxon,
+which weighs the early differences, and `-2Log(LR)`, as `PROC LIFETEST` prints
+them. Where the curves cross late, on few patients, censor the data at a horizon
+in this job before the tests, and say so in the report.
 
 ```{r}
 #| label: km-strata
 #| results: asis
 # unnumbered: each child chunk below carries its own label and caption
-stratum_row <- function(s) {
-  data.frame(
-    stratum  = s$stratum[1],
-    n        = s$n[1],
-    n_events = sum(s$n_event),
-    setNames(as.list(round(100 * vapply(grid, at_horizon, numeric(1), fit = s), 1)), labs),
-    check.names = FALSE
-  )
-}
-
-# your stratification variables.
+strata_fits <- list()
 for (v in STRATA) {
-  fit <- km_by(d, v)
-  .strata <- do.call(rbind, lapply(split(fit, fit$stratum), stratum_row))
-  .child(paste("tbl km strata", v), paste0("Survival (%) by ", v), "knitr::kable(.strata, row.names = FALSE)")
-  report_unknown(fit, v)
+  .lt <- hvtiRtemplates::life_table(d, TIME, EVENT, strata = v, conf_level = CLEVEL)
+  strata_fits[[v]] <- .lt
+  .counts <- attr(.lt, "counts")
+  .child(paste("tbl km counts", v), paste0("Patients, events and end of follow-up by ", v),
+         "knitr::kable(.counts, row.names = FALSE, digits = 2)")
+  .dropped <- attr(.lt, "dropped")
+  if (!is.null(.dropped)) {
+    .child(paste("tbl km dropped", v), paste0("Patients left out of the ", v, " strata, as %KAPLAN leaves them out"),
+           "knitr::kable(.dropped, row.names = FALSE)")
+  }
+  .at <- as_percent(hvtiRtemplates::life_table_at(d, TIME, EVENT, times = grid, labels = labs, strata = v,
+                                                  conf_level = CLEVEL))
+  .child(paste("tbl km horizons", v), paste0("Survival (%) and patients at risk at the reporting horizons, by ", v),
+         "knitr::kable(.at, row.names = FALSE, digits = 4)")
+  if (nrow(.counts) > 1L) {
+    .tests <- hvtiRtemplates::life_table_tests(d, TIME, EVENT, strata = v)
+    .child(paste("tbl km tests", v), paste0("Tests of equal survival across ", v),
+           "knitr::kable(.tests, row.names = FALSE, digits = 4)")
+  }
+  .rows <- .lt
+  if (!EVENT_ONLY) .rows <- hvtiRtemplates::life_table(d, TIME, EVENT, strata = v, conf_level = CLEVEL, event_only = FALSE)
+  .child(paste("tbl km life table", v), paste0("Life table by ", v),
+         "knitr::kable(as_percent(.rows), row.names = FALSE, digits = 4)")
 }
 ```
 
-Nested stratification — one stratum variable within the levels of another — is
-the same call applied to each subset.
+For one stratification within the levels of another, run a second `ac` job, in
+a set of its own, whose `WHERE` keeps one level of the outer variable.
+
+## Figures
+
+Each figure below is drawn from the life tables above, so it shows exactly the
+patients they count. The first page is for reading, not for publication: the
+survival curve and four views of the cumulative hazard. A straight line in a
+view says the hazard has that shape there; a bend between an early and a late
+stretch is where an `hz` job's early and late phases meet. The last figure is
+the manuscript copy, in the house theme with the numbers at risk, and is saved
+to `graphs/`.
 
 ```{r}
-#| label: edit-km-nested
-#| eval: false
-# EDIT: your nesting, or delete this chunk if the job has none. It is
-# `eval: false` because the template ships no second category; turn it on once
-# `cat_b` exists.
-for (outer in sort(unique(d$cat_b))) {
-  sub <- d[d$cat_b == outer, , drop = FALSE]
-  fit <- km_by(sub, "cat_a")
-  print(knitr::kable(
-    do.call(rbind, lapply(split(fit, fit$stratum), function(s) data.frame(
-      cat_a    = s$stratum[1],
-      n        = s$n[1],
-      n_events = sum(s$n_event),
-      setNames(as.list(round(100 * vapply(grid, at_horizon, numeric(1), fit = s), 1)), labs),
-      check.names = FALSE
-    ))),
-    row.names = FALSE,
-    caption = paste0("Survival (%) by cat_a within cat_b = ", outer)
-  ))
-  report_unknown(fit, "cat_a")
+#| label: km-figures
+# unnumbered: defines the figures; the chunks below draw them
+plot_max <- if (is.null(PLOT_MAX)) max(attr(km, "counts")$max_fup) else PLOT_MAX
+
+# The survival curve and the four cumulative-hazard views SAS's %KAPLAN plots
+# (PLOTS, PLOTC and their log scales), one page, coloured by stratum.
+km_views <- function(fit) {
+  if (is.null(fit$stratum)) fit$stratum <- "All"
+  fit <- fit[fit$time <= plot_max, , drop = FALSE]
+  start <- data.frame(stratum = unique(fit$stratum), time = 0, survival = 1)
+  surv <- rbind(start, fit[, names(start)])
+  # The cumulative hazard is infinite once survival reaches zero; it is left off a figure.
+  haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
+  step <- function(data, y, ylab) {
+    ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], colour = .data$stratum)) +
+      ggplot2::geom_step() +
+      ggplot2::labs(x = "Years", y = ylab, colour = NULL) +
+      hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  }
+  log_x <- ggplot2::scale_x_log10()
+  log_y <- ggplot2::scale_y_log10()
+  patchwork::wrap_plots(
+    step(surv, "survival", "Survival (%)") + ggplot2::scale_y_continuous(labels = function(p) 100 * p),
+    step(haz, "cumhaz", "Cumulative hazard"),
+    step(haz, "cumhaz", "Cumulative hazard") + log_x + ggplot2::labs(x = "Years (log scale)"),
+    step(haz, "cumhaz", "Cumulative hazard (log scale)") + log_y,
+    step(haz, "cumhaz", "Cumulative hazard (log scale)") + log_x + log_y + ggplot2::labs(x = "Years (log scale)"),
+    ncol = 2, guides = "collect"
+  ) & ggplot2::theme(legend.position = "bottom")
+}
+
+# The manuscript figure: the curve in the house theme, with patients at risk beneath it.
+km_figure <- function(strata = NULL) {
+  dd <- d[hvtiRtemplates::life_table_keep(d, TIME, EVENT, strata), , drop = FALSE]
+  dd[[EVENT]] <- as.numeric(dd[[EVENT]])
+  if (!is.null(strata)) dd[[strata]] <- as.character(dd[[strata]])
+  at <- if (is.null(RISK_TIMES)) pretty(c(0, plot_max)) else RISK_TIMES
+  at <- at[at <= plot_max]
+  hv <- hvtiPlotR::hv_survival(dd, time_col = TIME, event_col = EVENT, group_col = strata,
+                               conf_level = CLEVEL, report_times = at)
+  # The logit limits are undefined where survival reaches zero, and the band would
+  # warn and drop that row; zero is known there, so the band closes on it.
+  .zero <- hv$data$surv == 0
+  hv$data$lower[.zero] <- 0
+  hv$data$upper[.zero] <- 0
+  curve <- plot(hv) +
+    ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
+    ggplot2::labs(x = "Years", y = "Survival (%)") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  # The house theme drops the legend; a stratified figure needs it to tell the curves apart.
+  if (!is.null(strata)) curve <- curve + ggplot2::theme(legend.position = "top") + ggplot2::labs(colour = strata, fill = strata)
+  hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(hv))
+}
+```
+
+```{r}
+#| label: fig-km-views
+#| fig-cap: "Overall: survival and the cumulative hazard on four scales"
+#| fig-width: 6.5
+#| fig-height: 8
+km_views(km)
+```
+
+```{r}
+#| label: fig-km-survival
+#| fig-cap: "Overall survival, with patients at risk"
+#| fig-height: 5
+.fig <- km_figure()
+save_figure(.fig, "ac-survival", width = 6, height = 5)
+.fig
+```
+
+```{r}
+#| label: km-strata-figures
+#| results: asis
+# unnumbered: each child chunk below carries its own label and caption
+for (v in names(strata_fits)) {
+  .views <- km_views(strata_fits[[v]])
+  .child(paste("fig km views", v), paste0("By ", v, ": survival and the cumulative hazard on four scales"),
+         ".views", opts = c("#| fig-width: 6.5", "#| fig-height: 8"))
+  .fig <- km_figure(v)
+  save_figure(.fig, paste0("ac-survival-", v), width = 6, height = 5)
+  .child(paste("fig km survival", v), paste0("Survival by ", v, ", with patients at risk"), ".fig",
+         opts = "#| fig-height: 5")
 }
 ```
 

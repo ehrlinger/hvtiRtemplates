@@ -39,7 +39,7 @@ hazard_rows <- list(
 # The counts that selection holds. In a real job these come from the SAS
 # reference; here they are the counts family-00-survival.R's outcome produces.
 hazard_counts <- list(
-  "^EXPECTED <- list\\(n = NA_integer_" = "EXPECTED <- list(n = 725L, n_events = 406L, n_censored = 319L)"
+  "^EXPECTED <- (NULL$|list\\(n = NA_integer_)" = "EXPECTED <- list(n = 725L, n_events = 406L, n_censored = 319L)"
 )
 # hz's starting values, shared by the chain's hz and by each treatment group's
 # hz that hs-concordance reads. The probes need no override: since #169 the
@@ -155,17 +155,12 @@ gallery_family(
   columns = hazard_columns,
   jobs = list(
     ac = list(subject = "dead", type = "hz", choices = c(hazard_rows, hazard_counts, list(
-      "^DERIVED <- c\\(cat_a = \"src_a\"\\)$" = "DERIVED <- c(lvef_grp = \"lvef\")",
-      "^STRATA <- c\\(\"cat_a\"\\)$" = "STRATA <- c(\"lvef_grp\", \"hx_chf\")",
-      "^  \\.need <- \"src_a\"" = "  .need <- \"lvef\"",
-      "^  d\\$cat_a <- 4L$" = "  d$lvef_grp <- 3L",
-      "^  d\\$cat_a\\[!is.na\\(d\\$src_a\\) & d\\$src_a <  0.00\\] <- 3L$" =
-        "  d$lvef_grp[!is.na(d$lvef) & d$lvef < 50] <- 2L",
-      "^  d\\$cat_a\\[!is.na\\(d\\$src_a\\) & d\\$src_a < -0.60\\] <- 2L$" =
-        "  d$lvef_grp[!is.na(d$lvef) & d$lvef < 40] <- 1L",
-      "^  d\\$cat_a\\[!is.na\\(d\\$src_a\\) & d\\$src_a < -1.25\\] <- 1L$" = "",
-      "^knitr::kable\\(as.data.frame\\(table\\(cat_a = d\\$cat_a\\)" =
-        "knitr::kable(as.data.frame(table(lvef_grp = d$lvef_grp), stringsAsFactors = FALSE))"
+      "^STRATA <- NULL$" = "STRATA <- c(\"lvef_grp\", \"hx_chf\")",
+      "^#   d\\$lvef_grp <- 3L$" = "d$lvef_grp <- 3L",
+      "^#   d\\$lvef_grp\\[which\\(d\\$lvef < 50\\)\\] <- 2L$" = "d$lvef_grp[which(d$lvef < 50)] <- 2L",
+      "^#   d\\$lvef_grp\\[which\\(d\\$lvef < 40\\)\\] <- 1L$" = "d$lvef_grp[which(d$lvef < 40)] <- 1L",
+      "^#   d\\$lvef_grp\\[is.na\\(d\\$lvef\\)\\] <- NA$" = "d$lvef_grp[is.na(d$lvef)] <- NA",
+      "^DERIVED <- NULL$" = "DERIVED <- c(lvef_grp = \"lvef\")"
     ))),
     hz = list(subject = "dead", type = "hz", choices = c(hazard_rows, hazard_counts, hazard_hz_choices)),
     # hm, hp and hs-setup take the data, rows, ID, time and event from hz.rds.
