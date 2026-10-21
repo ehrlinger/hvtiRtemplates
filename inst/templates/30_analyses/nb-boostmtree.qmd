@@ -69,12 +69,13 @@ TYPE    <- "boost"
 # CRAN today. Should upstream release a 2.0.2 without the fix, this check would
 # pass it; read the installed package's NEWS if in doubt. 2.0.4 is the floor
 # because it adds boostmtree.control(cv.cores = ), which the fit below uses.
-# The install line names 2.0.7: its workers need about a third of 2.0.4's memory,
-# and each uses one BLAS thread, so a server's multithreaded OpenBLAS does not
-# overload the machine.
+# The install line names 2.0.8: its workers need about a third of 2.0.4's memory,
+# each uses one BLAS thread, so a server's multithreaded OpenBLAS does not
+# overload the machine, and its partial effects no longer hold every boosting
+# step in memory at once.
 if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.4") {
   stop("This job needs boostmtree >= 2.0.4 from the CCF fork. Install it with\n",
-       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.7-ccf\")\n",
+       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.8-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
 if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.9.0") {
