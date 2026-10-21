@@ -35,7 +35,7 @@ rf_chunk <- function(src, label) {
 rf_study <- function(data = data.frame(ccfid = 1:2, time = c(1, 2), event = c(1, 0)), .local_envir = parent.frame()) {
   root <- withr::local_tempdir("rf-study-", .local_envir = .local_envir)
   utils::capture.output(suppressMessages(
-    hvtiRutilities::study_setup(root, study = "RF smoke", study_tracker_id = 1L, adopt = TRUE)
+    hvtiRutilities::study_setup(root, study = "RF smoke", study_tracker_id = 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE)
   ))
   root <- normalizePath(root)
   saveRDS(data, file.path(hvtiRutilities::study_dir("datasets", root), "cohort.rds"))

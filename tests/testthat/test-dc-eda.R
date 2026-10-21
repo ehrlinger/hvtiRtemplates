@@ -162,7 +162,7 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
   # the spec chunk must leave it out. Run through a real study: the data chunk
   # and then the spec chunk, as a render would.
   root <- file.path(withr::local_tempdir(), "study")
-  suppressMessages(hvtiRutilities::study_setup(root, study = "EDA identifiers", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "EDA identifiers", study_tracker_id = 1L, renv = FALSE))
   n <- 12L
   built <- data.frame(year = 2000L + seq_len(n), ccfid = 1000L + seq_len(n), randid = 3000L + seq_len(n),
                       MRN = 5000L + seq_len(n), study_id = 7000L + seq_len(n), hosp_id = 9000L + seq_len(n),

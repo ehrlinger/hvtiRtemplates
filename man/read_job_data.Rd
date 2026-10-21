@@ -218,7 +218,7 @@ Direct identifiers are dropped unless one is the identifier, from a
 \donttest{
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
-hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE)
+hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE)
 d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)

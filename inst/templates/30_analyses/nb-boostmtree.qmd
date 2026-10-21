@@ -69,11 +69,13 @@ TYPE    <- "boost"
 # CRAN today. Should upstream release a 2.0.2 without the fix, this check would
 # pass it; read the installed package's NEWS if in doubt. 2.0.4 is the floor
 # because it adds boostmtree.control(cv.cores = ), which the fit below uses.
-# The install line names 2.0.6, whose workers need about a third of the memory,
-# so more cores fit in a session; the fit is the same on either.
+# The install line names 2.0.8: its workers need about a third of 2.0.4's memory,
+# each uses one BLAS thread, so a server's multithreaded OpenBLAS does not
+# overload the machine, and its partial effects no longer hold every boosting
+# step in memory at once.
 if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.4") {
   stop("This job needs boostmtree >= 2.0.4 from the CCF fork. Install it with\n",
-       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.6-ccf\")\n",
+       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.8-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
 if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.9.0") {
@@ -179,6 +181,13 @@ PREDICTORS <- NULL
 # the cross-validated best M should sit well inside it, not at its right edge.
 M  <- 1000
 NU <- 0.05
+
+# EDIT: predictors tried at each split of each tree, or NULL for every one of
+# them, boostmtree's default. Fewer than all makes the trees less alike, as in a
+# random forest, at the cost of a noisier single tree; set it to reproduce a
+# study that fitted with a smaller mtry. A different MTRY is a different fit, so
+# it is part of the cache key.
+MTRY <- NULL
 
 # EDIT: cores for the cross-validated fit, whose cost grows with the square of
 # the number of patients; about 80% of it runs in parallel, so speed levels off
@@ -337,7 +346,7 @@ hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
 fit <- cache_fit(
   "nb-boostmtree-fit",
   boostmtree(x = d[.predictors], tm = d[[.time]], id = .patient, y = d[[.response]],
-             family = FAMILY, M = M, nu = NU, mod.grad = TRUE, cv.flag = TRUE, verbose = FALSE,
+             family = FAMILY, M = M, nu = NU, mtry = MTRY, mod.grad = TRUE, cv.flag = TRUE, verbose = FALSE,
              # get() keeps CORES out of cache_fit()'s key, which sees only the values
              # the call names directly: changing it must not mark an identical fit stale.
              control = boostmtree.control(cv.cores = get("CORES"))),

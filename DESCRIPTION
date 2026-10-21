@@ -1,8 +1,8 @@
 Package: hvtiRtemplates
 Type: Package
 Title: Analysis Job Templates for the HVTI CORR Group
-Version: 1.4.1
-Date: 2026-10-15
+Version: 1.4.2
+Date: 2026-10-20
 Authors@R: c(
     person(
       "John", "Ehrlinger",
@@ -26,7 +26,7 @@ Depends:
     R (>= 4.4.0)
 Imports:
     digest,
-    hvtiRutilities (>= 1.5.1),
+    hvtiRutilities (>= 1.5.7),
     jsonlite,
     openssl,
     ps,
@@ -56,7 +56,7 @@ Suggests:
     ggplot2,
     haven,
     hvtiPlotR (>= 2.8.9),
-    hvtiRtables (>= 1.0.7),
+    hvtiRtables (>= 1.0.9),
     hvtiRdatabuild (>= 0.3.0),
     hvtiRbootstrap (>= 0.9.3),
     hvtiRlifetables (>= 0.1.2),
@@ -74,7 +74,8 @@ Suggests:
     TemporalHazard (>= 1.2.12),
     testthat (>= 3.0.0),
     varPro (>= 3.2.0),
-    withr
+    withr,
+    xml2
 VignetteBuilder: quarto
 SystemRequirements: Quarto command line tool
     (<https://github.com/quarto-dev/quarto-cli>)

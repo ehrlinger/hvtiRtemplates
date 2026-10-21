@@ -65,6 +65,16 @@ suppressPackageStartupMessages({
   library(TemporalHazard)
   library(hvtiRutilities)
 })
+# numDeriv is a Suggests of TemporalHazard, not a hard dependency. Without it,
+# interval- or left-censored multiphase fits SILENTLY produce no standard
+# errors: the fit succeeds, `converged` is TRUE, and vcov() is simply absent.
+# A model with forty covariates and no standard errors is not a smaller result,
+# it is a different one -- so this is a hard stop.
+if (!requireNamespace("numDeriv", quietly = TRUE)) {
+  stop("numDeriv is not installed. Interval-censored multiphase fits will ",
+       "produce no standard errors, and will not tell you so. Install it ",
+       "before reading anything below.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -198,19 +208,6 @@ a gate that passes silently tells the reader nothing about what it passed on.
 a numeric status. The `as.numeric()` coercions below are not decoration — and
 see the covariate audit above for the same problem on the covariate side, where
 it changes the model rather than erroring.
-```{r}
-#| label: numderiv-gate
-# numDeriv is a Suggests of TemporalHazard, not a hard dependency. Without it,
-# interval- or left-censored multiphase fits SILENTLY produce no standard
-# errors: the fit succeeds, `converged` is TRUE, and vcov() is simply absent.
-# A model with forty covariates and no standard errors is not a smaller result,
-# it is a different one -- so this is a hard stop.
-if (!requireNamespace("numDeriv", quietly = TRUE)) {
-  stop("numDeriv is not installed. Interval-censored multiphase fits will ",
-       "produce no standard errors, and will not tell you so. Install it ",
-       "before reading anything below.", call. = FALSE)
-}
-```
 
 ## Covariates
 

@@ -43,7 +43,7 @@ test_that("descriptive templates can read the whole cohort", {
   root <- file.path(tempdir(), "whole-cohort-study")
   unlink(root, recursive = TRUE)
   suppressMessages(hvtiRutilities::study_setup(
-    root, study = "Template route test", study_tracker_id = 1L
+    root, study = "Template route test", study_tracker_id = 1L, renv = FALSE
   ))
   built <- data.frame(ccfid = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4))
   data_dir <- hvtiRutilities::study_dir("datasets", root)
@@ -102,7 +102,7 @@ test_that("descriptive templates read a named additional dataset", {
   root <- file.path(tempdir(), "named-dataset-study")
   unlink(root, recursive = TRUE)
   suppressMessages(hvtiRutilities::study_setup(
-    root, study = "Template named dataset test", study_tracker_id = 1L
+    root, study = "Template named dataset test", study_tracker_id = 1L, renv = FALSE
   ))
   built <- data.frame(ccfid = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4), x = 5:8)
   subset <- built[c("ccfid", "dead", "iv_dead")]
@@ -193,7 +193,7 @@ test_that("converted templates read a whole dataset without hvtiRdatabuild insta
     "10_descriptive/dc-eda.qmd", "10_descriptive/dc-trends.qmd"
   ))
   root <- file.path(withr::local_tempdir(), "no-databuild-study")
-  suppressMessages(hvtiRutilities::study_setup(root, study = "No databuild", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "No databuild", study_tracker_id = 1L, renv = FALSE))
   built <- data.frame(ccfid = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4))
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
@@ -277,7 +277,7 @@ test_that("descriptive templates join an ancillary dataset, long and one row per
   templates <- file.path(normalizePath(template_root), "10_descriptive",
                          c("dc-general.qmd", "dc-tables.qmd", "dc-eda.qmd"))
   root <- file.path(withr::local_tempdir(), "join-study")
-  suppressMessages(hvtiRutilities::study_setup(root, study = "Join route test", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Join route test", study_tracker_id = 1L, renv = FALSE))
   data_dir <- hvtiRutilities::study_dir("datasets", root)
   built <- data.frame(ccfid = 1:3, dead = c(0, 1, 0), iv_dead = c(1, 2, 3))
   echo <- data.frame(ccfid = c(1L, 1L, 2L, 4L), echo_day = c(5, 9, 5, 5), ef = c(50, 55, 45, 40))
@@ -335,7 +335,7 @@ test_that("templates that model one row per patient refuse a long join; long-dat
   accept <- files[basename(files) %in% c("nb-boostmtree.qmd", "dc-trends.qmd")]
   expect_length(accept, 2L)
   root <- file.path(withr::local_tempdir(), "one-row-study")
-  suppressMessages(hvtiRutilities::study_setup(root, study = "One row route test", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "One row route test", study_tracker_id = 1L, renv = FALSE))
   data_dir <- hvtiRutilities::study_dir("datasets", root)
   built <- data.frame(ccfid = 1:3, dead = c(0, 1, 0), iv_dead = c(1, 2, 3), iv_echo = c(0, 0, 0))
   echo <- data.frame(ccfid = c(1L, 1L, 2L, 4L), echo_day = c(5, 9, 5, 5), ef = c(50, 55, 45, 40))
@@ -409,7 +409,7 @@ test_that("nb-boostmtree takes a long join whose visit time is only in the joine
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
   template <- file.path(normalizePath(template_root), "30_analyses", "nb-boostmtree.qmd")
   root <- file.path(withr::local_tempdir(), "visit-study")
-  suppressMessages(hvtiRutilities::study_setup(root, study = "Visit route test", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Visit route test", study_tracker_id = 1L, renv = FALSE))
   data_dir <- hvtiRutilities::study_dir("datasets", root)
   # The cohort has no visit time: iv_echo is a column of the echoes alone.
   built <- data.frame(ccfid = 1:3, age = c(50, 60, 70))

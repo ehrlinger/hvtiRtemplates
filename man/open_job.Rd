@@ -57,7 +57,7 @@ The editor is opened only in an interactive session.
 \examples{
 root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
-  root, study = "Example", study_tracker_id = 1L
+  root, study = "Example", study_tracker_id = 1L, renv = FALSE
 ))
 open_job(prefix = "ac", subject = "death", type = "eda", dir = root)
 unlink(root, recursive = TRUE)

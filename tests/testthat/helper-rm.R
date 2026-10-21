@@ -49,7 +49,7 @@ rm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = c
   root <- tempfile("rm-study-")
   withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
   d <- if (is.null(data)) rm_data() else data
-  suppressMessages(hvtiRutilities::study_setup(root, study = "Synthetic rm study", study_tracker_id = 42L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Synthetic rm study", study_tracker_id = 42L, renv = FALSE))
   utils::write.csv(d, file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(
     root, built = "built.csv", role = "study", population = "Synthetic cohort"

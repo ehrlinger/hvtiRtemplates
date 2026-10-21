@@ -75,7 +75,7 @@ test_that("add_job follows a numbered study layout", {
   dir <- tempfile("addjob-numbered-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   suppressMessages(hvtiRutilities::study_setup(
-    dir, study = "Numbered layout test", study_tracker_id = 1L
+    dir, study = "Numbered layout test", study_tracker_id = 1L, renv = FALSE
   ))
 
   out <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
@@ -94,7 +94,7 @@ test_that("add_job leaves no job when provenance hooks cannot be installed", {
   dir <- tempfile("addjob-malformed-quarto-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   suppressMessages(hvtiRutilities::study_setup(
-    dir, study = "Malformed Quarto", study_tracker_id = 1L
+    dir, study = "Malformed Quarto", study_tracker_id = 1L, renv = FALSE
   ))
   writeLines("project: [", file.path(dir, "_quarto.yml"))
 
@@ -106,7 +106,7 @@ test_that("add_job rejects inline project mappings without installing hook files
   dir <- tempfile("addjob-inline-quarto-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   suppressMessages(hvtiRutilities::study_setup(
-    dir, study = "Inline Quarto", study_tracker_id = 1L
+    dir, study = "Inline Quarto", study_tracker_id = 1L, renv = FALSE
   ))
   config_path <- file.path(dir, "_quarto.yml")
   writeLines("project: {type: default}", config_path)
@@ -165,7 +165,9 @@ test_that("add_job errors when the template lacks the SUBJECT/TYPE marker lines"
   # `.set_markers()` must fail loudly rather than hand back a job that looks
   # scaffolded but silently kept whatever the fake template happened to say.
   fake_template <- tempfile("fake-template-", fileext = ".qmd")
-  writeLines(c("---", "title: fake", "---", "no markers here"), fake_template)
+  # It has a setup chunk (add_job() reads its packages first) but no SUBJECT/TYPE lines.
+  writeLines(c("---", "title: fake", "---", "no markers here",
+               "```{r}", "#| label: setup", "library(hvtiRutilities)", "```"), fake_template)
   on.exit(unlink(fake_template), add = TRUE)
 
   # Mirrors template_list()'s real columns, `qualifier` included. A mock that
@@ -314,7 +316,7 @@ test_that("template artifact paths follow a numbered study layout", {
   root <- tempfile("template-paths-")
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
   suppressMessages(hvtiRutilities::study_setup(
-    root, study = "Template paths", study_tracker_id = 1L
+    root, study = "Template paths", study_tracker_id = 1L, renv = FALSE
   ))
 
   for (template in template_list()$file) {
@@ -409,7 +411,7 @@ test_that("add_job() and open_job() find the study from the working directory, o
   # dir = NULL walks up to _study.yml, so a call from inside a study's folders
   # writes into the study, and one from outside a study writes nothing.
   root <- withr::local_tempdir("dir-default-")
-  suppressMessages(hvtiRutilities::study_setup(root, "Dir default", 1L, adopt = TRUE))
+  suppressMessages(hvtiRutilities::study_setup(root, "Dir default", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE))
   sub <- hvtiRutilities::study_dir("descriptive", root)
   dir.create(sub, recursive = TRUE, showWarnings = FALSE)
   withr::with_dir(sub, job <- add_job("dc-gfup", subject = "cohort", type = "eda"))
@@ -440,10 +442,43 @@ test_that("a malformed manifest is reported as itself, not as no study (#258)", 
 
 test_that("add_job refuses a job whose old spelling already exists", {
   d <- file.path(withr::local_tempdir(), "study")
-  invisible(suppressMessages(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L)))
+  invisible(suppressMessages(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L, renv = FALSE)))
   old <- file.path(hvtiRutilities::study_dir("distributions", d), "dead_pa-hz-ac.qmd")
   dir.create(dirname(old), recursive = TRUE, showWarnings = FALSE)
   file.copy(template_path("ac"), old)
   expect_error(add_job("ac", "dead_pa", "hz", dir = d), "dead_pa-hz-ac.qmd", fixed = TRUE)
   expect_false(file.exists(file.path(dirname(old), "ac.dead_pa.hz.qmd")))
+})
+
+test_that("add_job asks the study for the template's packages before writing", {
+  dir <- tempfile("addjob-need-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  suppressMessages(hvtiRutilities::study_setup(
+    dir, study = "Need test", study_tracker_id = 1L, renv = FALSE
+  ))
+  seen <- NULL
+  testthat::local_mocked_bindings(
+    study_need = function(packages, root, caller, only_in_renv, ...) {
+      seen <<- list(packages = packages, caller = caller, only_in_renv = only_in_renv)
+      invisible(character(0))
+    },
+    .package = "hvtiRutilities"
+  )
+  add_job("rfc", "dead", "rfc", dir = dir, qualifier = "fit")
+  expect_identical(seen$packages, c("randomForestSRC", "ggRandomForests", "hvtiRutilities"))
+  expect_identical(seen$caller, "add_job")
+  expect_true(seen$only_in_renv)
+})
+
+test_that("add_job writes nothing when the study cannot get the packages", {
+  dir <- tempfile("addjob-need-refused-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  dir.create(dir)  # an empty root, so any folder add_job() makes shows up
+  testthat::local_mocked_bindings(
+    study_need = function(...) stop("add_job(): needs randomForestSRC"),
+    .package = "hvtiRutilities"
+  )
+  expect_error(add_job("rfc", "dead", "rfc", dir = dir, qualifier = "fit"), "needs randomForestSRC")
+  expect_length(list.files(dir, pattern = "dead", recursive = TRUE), 0L)
+  expect_length(list.files(dir, recursive = TRUE, include.dirs = TRUE, all.files = TRUE), 0L)
 })

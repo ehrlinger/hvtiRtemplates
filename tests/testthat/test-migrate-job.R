@@ -63,7 +63,7 @@ test_that("migrate_job refuses out-of-root sources", {
 
 test_that("migrate_job scaffolds a template with no converter and says so", {
   root <- tempfile("migrate-noconv-")
-  suppressMessages(hvtiRutilities::study_setup(root, study = "No converter", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "No converter", study_tracker_id = 1L, renv = FALSE))
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
   src <- file.path(root, "20_distributions", "ac.dead.sas")
   writeLines(c("proc lifetest data=built;", "run;"), src)
@@ -668,7 +668,7 @@ test_that("migrating a SAS hs job needs its qualifier, which the filename does n
   # second field is the endpoint, so nothing in the name says which hs job it
   # is, and migrate_job() refuses rather than guess.
   root <- tempfile("migrate-hs-")
-  suppressMessages(hvtiRutilities::study_setup(root, study = "hs qualifier", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "hs qualifier", study_tracker_id = 1L, renv = FALSE))
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
   src <- file.path(root, "40_graphs", "hs.dead.setup.sas")
   dir.create(dirname(src), showWarnings = FALSE, recursive = TRUE)
