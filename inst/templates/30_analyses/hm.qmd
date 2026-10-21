@@ -93,6 +93,12 @@ if (!requireNamespace("numDeriv", quietly = TRUE)) {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder,
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 # `hm` reads the `hz` fit through this and writes its own model back, both by
 # set, so a model can never be filed against a different set than the shapes it
 # was built on. The write is in the `save` chunk at the foot of this file.
@@ -143,6 +149,12 @@ MAX_STEPS <- 50L     # SAS maxsteps=
 # Calibration horizon.
 # EDIT: calibration horizon.
 DECILE_TIME <- 10
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hm-calibration").
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 ## Cohort
 
@@ -802,6 +814,26 @@ print(dec)
 
 A group where observed and expected diverge is a region of risk the model gets
 wrong, and it is invisible in a coefficient table.
+
+```{r}
+#| label: fig-calibration
+#| fig-cap: "Observed against expected events in each group of predicted risk, numbered from the lowest risk.
+#|   The dashed line is perfect calibration."
+# The table above, drawn: a point above the line is a group with more events
+# than the model expects. Read the pattern, not one point: a run of points on
+# one side at the high-risk end is a model that under-predicts the sickest
+# patients, which the overall chi-square can pass.
+.lim <- c(0, 1.05 * max(dec$events, dec$expected))
+.fig <- ggplot2::ggplot(dec, ggplot2::aes(x = .data$expected, y = .data$events)) +
+  ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  ggplot2::geom_point() +
+  ggplot2::geom_text(ggplot2::aes(label = .data$group), nudge_x = 0.03 * .lim[[2]], hjust = 0) +
+  ggplot2::coord_equal(xlim = .lim, ylim = .lim, clip = "off") +
+  ggplot2::labs(x = "Expected events", y = "Observed events") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "hm-calibration")
+.fig
+```
 
 ```{r}
 #| label: tbl-gof
