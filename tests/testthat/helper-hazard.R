@@ -57,7 +57,10 @@ hazard_data <- function(n = 160L, id = "ccfid") {
 # verify_manifest() work as they do in a real study.
 hazard_study <- function(data = hazard_data(), .local_envir = parent.frame()) {
   root <- withr::local_tempdir("hazard-study-", .local_envir = .local_envir)
-  suppressMessages(hvtiRutilities::study_setup(root, study = "Hazard chain test", study_tracker_id = 7L, adopt = TRUE))
+  suppressMessages(hvtiRutilities::study_setup(
+    root, study = "Hazard chain test", study_tracker_id = 7L,
+    adopt = TRUE, cleanup = FALSE, renv = FALSE
+  ))
   utils::write.csv(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
   normalizePath(root)

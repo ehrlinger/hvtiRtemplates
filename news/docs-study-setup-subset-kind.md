@@ -1,1 +1,0 @@
-* The study-setup article's "If EDA uses a subset" example now registers the subset with `kind = "subset"`, and points to an analysis set (`hvtiRdatabuild::write_analysis_set()`) as the alternative for a subset of the study dataset that several jobs share.

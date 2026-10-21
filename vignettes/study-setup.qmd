@@ -132,11 +132,14 @@ The executable example uses its temporary directory instead:
 
 ```{r}
 #| label: adopt-study
+# A vignette builds a throwaway study; in a real study, run hvtiR::setup().
 study_setup(
   adopted_root,
   study = "Synthetic legacy study",
   study_tracker_id = 42L,
-  adopt = TRUE
+  adopt = TRUE,
+  cleanup = FALSE,
+  renv = FALSE
 )
 root <- adopted_root
 ```

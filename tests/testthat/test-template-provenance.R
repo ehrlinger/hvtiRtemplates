@@ -626,7 +626,7 @@ test_that("event-time provenance chunks retain observed TIME and EVENT cohorts",
 
 make_provenance_study <- function(root) {
   suppressMessages(hvtiRutilities::study_setup(
-    root, "Provenance render", 42L, adopt = TRUE
+    root, "Provenance render", 42L, adopt = TRUE, cleanup = FALSE, renv = FALSE
   ))
   data <- data.frame(ccfid = 1:3, id = 1:3, dead = c(1L, 0L, 0L), iv_dead = 1:3)
   utils::write.csv(

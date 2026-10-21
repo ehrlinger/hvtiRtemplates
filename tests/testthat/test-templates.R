@@ -614,6 +614,8 @@ test_that("dc-tables carries the registered-data and checked Word pipeline contr
   for (required in c(
     "hvtiRtables::hv_tbl_summary(", "hvtiRtables::hv_man_table(",
     "hvtiRtables::hv_man_table_save(", "hvtiRtables::hv_check_docx(",
+    'hvtiRtables::hv_table_style("manuscript", fill = MANUSCRIPT_FILL)', "layout = MANUSCRIPT_LAYOUT",
+    "caption = MANUSCRIPT_CAPTION", 'hv_check_docx(word_path, style = "manuscript")',
     'study_dir("documents"', "dataset = DATASET"
   )) expect_true(any(grepl(required, code, fixed = TRUE)), info = required)
 })
@@ -797,7 +799,7 @@ test_that("the root resolves to the study from any depth, and from the working d
   skip_if_not_installed("knitr")
   root <- tempfile("root-lookup-")
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
-  suppressMessages(hvtiRutilities::study_setup(root, study = "Root lookup", study_tracker_id = 1L))
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Root lookup", study_tracker_id = 1L, renv = FALSE))
   root <- normalizePath(root)
   deep <- file.path(root, "30_analyses", "sub")
   dir.create(deep, recursive = TRUE)

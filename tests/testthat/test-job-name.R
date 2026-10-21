@@ -43,7 +43,7 @@ test_that("a name in neither form gives no fields", {
 
 test_that("the old spelling of a job is the dash form in the same folder", {
   d <- file.path(withr::local_tempdir(), "study")
-  invisible(suppressMessages(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L)))
+  invisible(suppressMessages(hvtiRutilities::study_setup(d, study = "Old spelling", study_tracker_id = 1L, renv = FALSE)))
   tl <- template_list()
   row <- hvtiRtemplates:::.select_template(tl, "dc", "trends")
   legacy <- hvtiRtemplates:::.job_path_legacy(row, "cohort", "eda", d)
