@@ -132,3 +132,66 @@
   knitr::opts_chunk$set(hvti_progress = TRUE)
   .progress_step
 }
+
+.progress_read <- function(file) {
+  if (!file.exists(file)) return(NULL)
+  p <- tryCatch(yaml::read_yaml(file), error = function(e) NULL)
+  if (!is.list(p) || !is.character(p$updated) || !is.character(p$started)) {
+    return(list(error = paste0("cannot read ", file, "; progress not shown")))
+  }
+  p
+}
+
+# What job_status() adds to the file: how old it is, whether that is old enough
+# to look stuck, and the estimate counted from now rather than from the last write.
+.progress_view <- function(prog, now = .now()) {
+  if (is.null(prog) || !is.null(prog$error)) return(prog)
+  updated <- .parse_stamp(prog$updated)
+  prog$age_s <- max(0, as.numeric(difftime(now, updated, units = "secs")))
+  prog$stale <- prog$age_s > max(3 * .progress_every() * 60, 30 * 60)
+  started <- if (is.null(prog$stage_started)) NA else .parse_stamp(prog$stage_started)
+  prog$stage_s <- as.numeric(difftime(now, started, units = "secs"))
+  prog$eta_s <- if (is.null(prog$step) || is.na(started)) {
+    NA_real_
+  } else {
+    max(0, .progress_eta(as.numeric(difftime(updated, started, units = "secs")), prog$step, prog$steps) - prog$age_s)
+  }
+  prog
+}
+
+# A render started without submit_job() has no run.yml: its progress file says
+# whether it finished, and its process whether it is still running.
+.state_from_progress <- function(prog) {
+  done <- vapply(prog$done, function(d) d$stage, "")
+  if (length(prog$stages) && all(prog$stages %in% done)) {
+    return(list(state = "finished", pid = prog$pid, host = prog$host, started = prog$started, ended = prog$updated,
+                elapsed_s = round(as.numeric(difftime(.parse_stamp(prog$updated), .parse_stamp(prog$started),
+                                                      units = "secs")))))
+  }
+  list(state = "running", pid = prog$pid, host = prog$host, started = prog$started)
+}
+
+.progress_lines <- function(prog, state) {
+  if (is.null(prog)) return(character())
+  if (!is.null(prog$error)) return(paste0("  progress: ", prog$error))
+  stages_done <- vapply(prog$done, function(d) d$stage, "")
+  secs_done <- vapply(prog$done, function(d) as.numeric(d$elapsed_s), 0)
+  if (!identical(state, "running")) {
+    if (!length(stages_done)) return(character())
+    return(c("  stage times:", sprintf("    %-28s %s", stages_done, vapply(secs_done, .fmt_dur, ""))))
+  }
+  out <- character()
+  if (!is.null(prog$stage)) {
+    out <- c(out, sprintf("  stage   %s (%s of %s), %s in stage", prog$stage, prog$stage_index, prog$stage_count,
+                          .fmt_dur(prog$stage_s)))
+  }
+  if (!is.null(prog$step)) {
+    out <- c(out, sprintf("  step    %s %s/%s%s", prog$unit, prog$step, prog$steps,
+                          if (is.na(prog$eta_s)) "" else paste0(", ~", .fmt_dur(prog$eta_s), " left in stage")))
+  }
+  out <- c(out, sprintf("  done    %d stages, %s in all", length(stages_done), .fmt_dur(sum(secs_done))))
+  upcoming <- setdiff(prog$stages, c(stages_done, prog$stage))
+  if (length(upcoming)) out <- c(out, paste0("  next    ", paste(upcoming, collapse = ", ")))
+  c(out, paste0("  updated ", .fmt_dur(prog$age_s), " ago",
+                if (isTRUE(prog$stale)) ", no progress since; possibly stalled" else ""))
+}

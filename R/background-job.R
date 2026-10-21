@@ -24,6 +24,12 @@
 #' Reads the status \code{\link{submit_job}} keeps beside a job,
 #' \code{<job>.run.yml}. A job whose process was killed never records its
 #' end, so a recorded \code{running} is checked against the process itself.
+#' A render also keeps \code{<job>.run.progress}, read here; a render started
+#' without \code{\link{submit_job}} is reported from that file alone.
+#'
+#' @details
+#' A long step writes a line to the render log at most every
+#' \code{getOption("hvtiRtemplates.progress_every", 10)} minutes.
 #'
 #' @param path Character(1). The job's \code{.qmd} file.
 #' @param quiet Logical(1). \code{FALSE} prints a one-line summary.
@@ -32,6 +38,10 @@
 #'   or \code{"vanished"}; the other elements are what the status file
 #'   recorded (\code{pid}, \code{started}, \code{ended}, \code{exit_code},
 #'   \code{elapsed_s}, \code{r_version}), and \code{log}, the log file's path.
+#'   \code{progress}, the render's progress record when there is one, with
+#'   \code{eta_s}, the estimated seconds left in the current stage, and
+#'   \code{stale}, \code{TRUE} when it has not changed for three reporting
+#'   intervals and at least 30 minutes.
 #' @examples
 #' job <- file.path(tempdir(), "example.qmd")
 #' writeLines("---\ntitle: example\n---", job)
@@ -51,6 +61,8 @@ job_status <- function(path, quiet = FALSE) {
   if (!st$state %in% known) {
     stop("job_status(): the status file ", files$status, " records an unexpected state \"", st$state, "\".", call. = FALSE)
   }
+  prog <- .progress_read(files$progress)
+  if (identical(st$state, "none") && is.list(prog) && is.null(prog$error)) st <- .state_from_progress(prog)
   never_started <- FALSE
   other_host <- NULL
   if (identical(st$state, "running")) {
@@ -69,6 +81,7 @@ job_status <- function(path, quiet = FALSE) {
     }
   }
   st$log <- files$log
+  st$progress <- .progress_view(prog)
   if (!isTRUE(quiet)) {
     detail <- switch(st$state,
                      running = if (is.null(other_host)) {
@@ -87,6 +100,8 @@ job_status <- function(path, quiet = FALSE) {
                      },
                      "")
     cat(basename(path), ": ", st$state, detail, "\n", sep = "")
+    lines <- .progress_lines(st$progress, st$state)
+    if (length(lines)) cat(lines, sep = "\n")
   }
   invisible(st)
 }

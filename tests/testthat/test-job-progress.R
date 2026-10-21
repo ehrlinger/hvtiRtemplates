@@ -127,3 +127,73 @@ test_that("outside a knit nothing is recorded and the factory returns NULL", {
   expect_false(file.exists(file))
   expect_null(.progress_install(NULL)("iteration"))
 })
+
+# A progress file as a render in its fit stage would leave it, `age` minutes ago.
+write_progress <- function(job, age = 2, done_all = FALSE, pid = Sys.getpid()) {
+  now <- .now()
+  stages <- c("tbl-data", "fit", "effects")
+  done <- if (done_all) {
+    lapply(stages, function(s) list(stage = s, elapsed_s = 600L))
+  } else {
+    list(list(stage = "tbl-data", elapsed_s = 41L))
+  }
+  .write_status(.run_files(job)$progress, pid = pid, host = Sys.info()[["nodename"]],
+                started = .stamp(now - 3600), updated = .stamp(now - age * 60),
+                stage = if (done_all) "effects" else "fit", stage_index = if (done_all) 3L else 2L, stage_count = 3L,
+                stage_started = .stamp(now - 3000), step = 412L, steps = 1000L, unit = "iteration", stages = stages,
+                done = done)
+}
+
+status_job_progress <- function() {
+  job <- file.path(withr::local_tempdir(.local_envir = parent.frame()), "nb.boostmtree.x.boost.qmd")
+  writeLines("---\ntitle: x\n---", job)
+  job
+}
+
+test_that("a running job prints its stage, step, estimate, what is next and when it last moved", {
+  local_clock(Sys.time())
+  job <- status_job_progress()
+  .write_status(.run_files(job)$status, state = "running", pid = Sys.getpid(), host = Sys.info()[["nodename"]],
+                started = .stamp(.now() - 3600))
+  write_progress(job)
+  out <- utils::capture.output(st <- job_status(job))
+  expect_identical(st$state, "running")
+  expect_match(out[2], "stage   fit (2 of 3)", fixed = TRUE)
+  expect_match(out[3], "step    iteration 412/1000, ~", fixed = TRUE)
+  expect_match(paste(out, collapse = "\n"), "next    effects", fixed = TRUE)
+  expect_match(paste(out, collapse = "\n"), "updated 2m ago$")
+  expect_false(st$progress$stale)
+  expect_true(st$progress$eta_s > 0)
+})
+
+test_that("progress older than three intervals, and at least 30 minutes, reads possibly stalled", {
+  local_clock(Sys.time())
+  job <- status_job_progress()
+  write_progress(job, age = 47)
+  out <- utils::capture.output(st <- job_status(job))
+  expect_true(st$progress$stale)
+  expect_match(paste(out, collapse = "\n"), "updated 47m ago, no progress since; possibly stalled", fixed = TRUE)
+})
+
+test_that("without a run.yml the state comes from the progress file", {
+  local_clock(Sys.time())
+  job <- status_job_progress()
+  write_progress(job)
+  expect_identical(job_status(job, quiet = TRUE)$state, "running")
+  write_progress(job, pid = 999999L)
+  expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
+  write_progress(job, done_all = TRUE, pid = 999999L)
+  st <- job_status(job, quiet = TRUE)
+  expect_identical(st$state, "finished")
+  out <- utils::capture.output(job_status(job))
+  expect_match(paste(out, collapse = "\n"), "stage times:", fixed = TRUE)
+})
+
+test_that("an unreadable progress file is noted, and the state still comes from run.yml", {
+  job <- status_job_progress()
+  .write_status(.run_files(job)$status, state = "failed", exit_code = 1L, pid = 999999L)
+  writeLines("{{{ not yaml", .run_files(job)$progress)
+  out <- utils::capture.output(st <- job_status(job))
+  expect_identical(st$state, "failed")
+  expect_match(paste(out, collapse = "\n"), "cannot read", fixed = TRUE)
+})
