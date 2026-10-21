@@ -58,8 +58,8 @@ job_status(path)                  # reads and reports the status
   its end state, so for `state: running` it checks whether `pid` is alive and
   reports `running` or `vanished`; where `created` was recorded it must match
   too, and a status without it is judged by `pid` alone.
-- `submit_job()` refuses to start while the status reads `running` and that `pid`
-  is alive.
+- `submit_job()` refuses to start while the status reads `submitted`, or `running` with
+  that `pid` alive (and, when recorded, its creation time matching within 60 s).
 - Both return the status invisibly as a list; `job_status()` also prints one line.
 
 ### 2b. `guard_long_fit()`

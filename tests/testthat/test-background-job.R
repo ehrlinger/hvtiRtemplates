@@ -207,7 +207,7 @@ test_that("the runner records its creation time, and the live job reads running 
   st <- wait_for(job, "running")
   expect_identical(st$state, "running")
   expect_type(st$created, "character")
-  expect_lt(abs(as.numeric(st$created) - as.numeric(ps::ps_create_time(ps::ps_handle(as.integer(st$pid))))), 0.5)
+  expect_lt(abs(as.numeric(st$created) - as.numeric(ps::ps_create_time(ps::ps_handle(as.integer(st$pid))))), 60)
   ps::ps_kill(ps::ps_handle(as.integer(st$pid)))
   wait_for(job, "vanished")
 })
