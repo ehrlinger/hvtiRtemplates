@@ -1080,7 +1080,8 @@ News fragment `news/<branch>.md` (branch name with `/` replaced by `-`):
 ```markdown
 * `nb-boostmtree` reports each boosting iteration and each partial-effect prediction to
   `<job>.run.progress` and the render log, so `job_status()` can say how far a fit has got
-  and how long its stage has left. It needs boostmtree 2.0.8.
+  and how long its stage has left. It needs boostmtree 2.0.8. Existing jobs need not
+  change: they still report stages, and adding these lines to one means refitting it.
 ```
 
 - [ ] **Step 4: Run tests and gates**
@@ -1098,9 +1099,8 @@ Expected: PASS; 0/0/0. Two mutations, each restored after:
 ⚠️ `cache_fit()`'s key also holds the call's code text, so this edit changes the key for
 a job already in a study. Do NOT copy the `progress =` lines into an existing study job that
 holds a cached fit unless it is refitting anyway (`REFIT = TRUE`): its cache would stop as
-stale. New jobs scaffolded from the template are unaffected. Say this in the PR body and in
-the news fragment's second sentence: "Existing jobs need not change: they still report
-stages, and adding these lines to one means refitting it."
+stale. New jobs scaffolded from the template are unaffected. Say this in the PR body; the
+news fragment above already does.
 
 - [ ] **Step 5: Commit**
 
