@@ -207,12 +207,22 @@ The step this design exists for.
   fixed part, per-subject matrix-vector loops at the R level, is what the 2.0.8 rewrite
   works on (one partial prediction 15.6 s before, 13.3 s after, on their synthetic ordinal
   fit).
-- **At M = 1000 the model gives about 3 minutes a prediction**, 15 + 170 s, if the selected
-  iteration count runs to 1000: about 7.5 hours for six variables at 25 points, or about
-  3.8 hours for the three the current run uses. **This is an extrapolation from M ≤ 40 and
-  T = 1,000, not a measurement.** COMMENCE's T is not known here, and 2.0.8 changes the
-  code being timed. The M = 1000 run's own stage table (§4) is the measurement and should
-  replace this paragraph.
+- **boostmtree 2.0.8 removes the fixed part.** About 90% of each partial prediction was a
+  per-subject nearest-time match costing n × T², which the 2.0.8 branch fixes. The same
+  timing against its tip (`22be929`, `predict()`; `partial.plot()` itself is a little cheaper):
+
+  | T, time points predicted | M = 10 | M = 20 | M = 40 |
+  |---|---|---|---|
+  | 250 | 0.9 s | 1.5 s | 2.9 s |
+  | 1,000 | 1.2 s | 2.1 s | 4.0 s |
+
+  Cost now grows with M, at about 0.09 s a tree at T = 1,000.
+- **At M = 1000 on 2.0.8 that gives about 1.5 minutes a prediction** if the selected
+  iteration count runs to 1000: about 3.9 hours for six variables at 25 points, or about
+  2 hours for three. On 2.0.7 the same model gives about 3 minutes a prediction, 7.5 and 3.8
+  hours. **These are extrapolations from M ≤ 40, not measurements**, and COMMENCE's T is not
+  known here. The M = 1000 run's own stage table (§4) is the measurement and should replace
+  this paragraph. Even at 2 hours, a step this long needs per-prediction progress.
 
 Not in this design: caching partial effects one variable at a time, so that a lost
 process costs one variable rather than all six. For a step that is 86% of the run that is
