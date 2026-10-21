@@ -120,9 +120,9 @@ test_that("the setup chunk passes when both packages meet their floors", {
   expect_no_error(nb_mocked_setup("neither", "0.0.0"))
 })
 
-test_that("boostmtree older than 2.0.4 is refused with the fork's install line", {
+test_that("boostmtree older than 2.0.8 is refused with the fork's install line", {
   nb_skip_unless_stack()
-  expect_error(nb_mocked_setup("boostmtree", "2.0.3"), "ref = \"v2.0.8-ccf\"", fixed = TRUE)
+  expect_error(nb_mocked_setup("boostmtree", "2.0.7"), "ref = \"v2.0.8-ccf\"", fixed = TRUE)
 })
 
 test_that("ggBoostedTrees older than 0.9.0 is refused with its install line", {
@@ -259,6 +259,32 @@ test_that("changing CORES reuses the cached fit rather than stopping", {
   env2 <- fit_with(1L)
   expect_identical(list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache)), before)
   expect_identical(env2$fit$id.unique, env$fit$id.unique)
+})
+
+test_that("the fit and the partial effects report their steps, and progress is not in the cache key", {
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  labels <- c("tbl-data", "fit", "tbl-fit", "tbl-fit-summary", "fig-importance", "effects")
+  env <- nb_env(root)
+  nb_run(c("set", "edit-study-choices"), env, nb_choices())
+  seen <- new.env(parent = emptyenv())
+  seen$units <- character()
+  # The closures live in a bare environment: the fit keeps the reporter, and the cache saves it.
+  bare <- list2env(list(seen = seen), parent = baseenv())
+  env$.job$progress <- function(unit) {
+    force(unit)
+    function(step, steps) seen$units <- c(seen$units, unit)
+  }
+  environment(env$.job$progress) <- bare
+  utils::capture.output(nb_run(labels, env))
+  expect_true("iteration" %in% seen$units)
+  expect_true("prediction" %in% seen$units)
+  # A second run loads both from the cache: the reporter, and the run record behind it, are not key inputs.
+  env2 <- nb_env(root)
+  nb_run(c("set", "edit-study-choices"), env2, nb_choices())
+  env2$.job$progress <- function(unit) NULL
+  expect_no_error(utils::capture.output(nb_run(labels, env2)))
 })
 
 test_that("every report chunk draws for every family, from a fresh fit and from the cache", {
@@ -455,6 +481,9 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   expect_identical(payload$analysis$family, "continuous")
   expect_identical(payload$cohort$n_patients, length(unique(data$MRN)))
   expect_true(file.exists(sub("[.]qmd$", ".provenance.json", job)))
+  # The fit and the effects each recorded how far they got.
+  prog <- yaml::read_yaml(sub("[.]qmd$", ".run.progress", job))
+  expect_true(all(c("fit", "effects") %in% vapply(prog$done, `[[`, "", "stage")))
 })
 
 test_that("the fit chunk refuses to start an uncached fit interactively, and names submit_job()", {
