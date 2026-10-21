@@ -76,8 +76,8 @@ overwritten at the start of each render, so it always describes the current or l
 - The hook is active only while knitting (`isTRUE(getOption("knitr.in.progress"))`), never
   in a console session.
 - Chunks that `knitr::knit_child()` generates, such as the per-variable figures in
-  `nb-boostmtree`, also fire the hook and are recorded under their own labels. They are not
-  counted in `stage_count`, which reads the parent document only.
+  `nb-boostmtree`, are ignored: they run inside a parent chunk, and the parent's stage covers
+  them. Only labels in `stages` are recorded.
 
 ### 3c. Steps come from `.job$progress()`
 
@@ -117,7 +117,10 @@ the stages still to come.
 
 The states from #366 are unchanged. When `.run.progress` exists, `job_status()` adds a
 progress block. It reads the progress file on its own when there is no `.run.yml`, so a
-render started with plain `nohup quarto render` still gets an answer.
+render started with plain `nohup quarto render` still gets an answer. Without `.run.yml` the state
+comes from the progress file: `finished` once every stage is done, otherwise `running` or
+`vanished` by the recorded process, checked as for `.run.yml`. A render that failed reads
+`vanished`, and its log says why.
 
 ```
 nb.boostmtree.avmngrad.boost.qmd: running (process 48213, since 07:14)
