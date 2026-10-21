@@ -33,7 +33,7 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not_installed("hvtiRpropensity")
-  skip_if(utils::packageVersion("hvtiRtables") < "1.0.8", "needs hvtiRtables >= 1.0.8")
+  skip_if(utils::packageVersion("hvtiRtables") < "1.0.9", "needs hvtiRtables >= 1.0.9")
   withr::local_envvar(HVTI_TEMPLATE_STRICT = NA)
   root <- dc_tables_study()
   job <- add_job("dc", "cohort", "tables", qualifier = "tables", dir = root)

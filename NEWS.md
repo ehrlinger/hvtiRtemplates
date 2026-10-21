@@ -1,3 +1,150 @@
+# hvtiRtemplates 1.4.2
+
+* `dc-tables` draws the `%summarytable` table the team asked for on
+  2026-10-16: one table with continuous and categorical variables together,
+  and, with `STDDIFF <- TRUE`, the standardized difference `%stddiff` printed
+  beside the p-value. The difference comes from `hvtiRpropensity::ps_stddiff()`
+  through `hvtiRtables::hv_tbl_compare()`. `MEAN_SD` shows named continuous
+  variables as mean ± SD and the rest as `CONTINUOUS_STAT`, with every one
+  still tested by Wilcoxon. `ORDINAL` names ordered categorical variables,
+  which `%stddiff` ranks rather than treats as nominal. `GROUP_1` names the
+  treated group when `BY` is not 0/1. `SHOW_VARIABLE <- FALSE` drops the new
+  Variable column for a manuscript. The report now shows the table exactly as
+  it is saved to Word, with its notes, not gtsummary's working copy. Needs
+  hvtiRtables 1.0.6, and broom for `COMPARE <- "pvalue"`.
+
+* `migrate_job()` on a `%desc_tab` job now writes the table that job printed:
+  `COMPARE <- "pvalue"` when `by=` named a group, `CONTINUOUS_STAT <- "both"`
+  for mean ± SD beside the percentiles, and `PERCENTILES` from `perctile=` when
+  every call agrees on a low/median/high triple. Until now it wrote "none",
+  "median" and 15, 85 whatever the SAS said. `exposure=0` (the group as an
+  outcome, incidence by row) is listed as unresolved, since `dc-tables` does not
+  draw it. The report lists where the R table differs from `%desc_tab` on
+  purpose: Fisher's exact test for sparse categorical rows, the Wilcoxon test
+  (exact in small groups) where `%desc_tab` reported Kruskal-Wallis for two
+  groups, and percentiles: `%desc_tab` computed them with
+  `PCTLDEF=4`, where the R table uses SAS's default definition, so the low and
+  high percentiles can differ in small groups.
+
+* `nb-boostmtree`'s partial-effects pages are drawn at their own height.
+  Since 1.4.1 every page was emitted as tall as it was wide, because one
+  `sprintf()` call built both chunk options and handed each the page width,
+  so a one-panel page came out 3.25 by 3.25 in rather than 3.25 by 3. The
+  saved files were already the right size; only the figure in the report was
+  wrong, and the call raised a warning on every page.
+
+* `dc-tables`' report shows the table with the same header marks, notes and
+  abbreviation key as the saved Word table, through
+  `hvtiRtables::hv_man_table_display()`, so an `ABBREVIATIONS` entry or a
+  header asterisk is explained in the HTML as well. Needs hvtiRtables 1.0.7.
+
+* `migrate_job()` now migrates a `%desc_tab` job in the shape
+  `tp.dc.tables.ods.sas` ships: each table written twice, overall (`by=`
+  blank) and by group. It stopped on that pair before, so the mapping added
+  for `%desc_tab` jobs never reached a typical one. The group becomes `BY`
+  and the overall calls become the table's Overall column, which the report
+  says, but only when every patient has a group: where the registered data
+  has patients with no `BY` value, which SAS's overall calls counted and the
+  R table's Overall column leaves out, the report lists it as unresolved with
+  the count instead. A group variable an overall call summarized as a row is
+  taken out of `GROUPS`, since its levels are now the columns. Calls naming
+  two different groups still stop.
+
+* `nb-boostmtree`'s variable importance is seeded, so a re-render reproduces
+  it. `vimp.boostmtree()` permutes each predictor at random and the template
+  called it unseeded, so the importance figure, and the six most important
+  variables the partial effects are drawn for, could change from one render
+  of the same fit to the next. It now runs under `SEED` through
+  `cache_fit()`, as the fit does. The seed-hygiene test now lists
+  `vimp.boostmtree()` among the calls that draw from R's generator, which is
+  how it had been missed.
+* `nb-boostmtree` caches its partial effects beside the fit, as
+  `nb-boostmtree-partial.rds`. `partial.plot()` makes one prediction over
+  every patient for each of 25 grid values per continuous covariate, and was
+  the slowest step after the fit; it re-ran on every render, even one that
+  changed only prose. A changed `EFFECT_VARIABLES` or a refit stops the render
+  until `REFIT = TRUE`, as a changed fit setting does. The importances are
+  cached too, as `nb-boostmtree-vimp.rds`.
+
+* `nb-boostmtree` runs its cross-validated fit on several cores, through a new
+  study choice, `CORES` (4, or 1 on Windows, which cannot fork). The fit's cost
+  grows with the square of the number of patients, and most of it now runs in
+  parallel: at 600 patients, 4 cores fit 3.3 times faster than before. The fit
+  is identical on any number of cores, so `CORES` is left out of the cache
+  key and changing it never forces a refit. This needs `boostmtree` 2.0.4 from
+  the CCF fork (`v2.0.4-ccf`), which the setup chunk now requires. A job
+  scaffolded before this change keeps its own copy of the fit call, so its
+  cached fit is unaffected until the job is upgraded; the first render after
+  an upgrade finds the cached fit stale and stops until `REFIT = TRUE`,
+  because the call itself changed. The upgraded job also carries `CORES` under
+  its own `EDIT:` marker, so it renders as a draft until the marker is
+  resolved.
+
+* The study-setup article's "If EDA uses a subset" example now registers the subset with `kind = "subset"`, and points to an analysis set (`hvtiRdatabuild::write_analysis_set()`) as the alternative for a subset of the study dataset that several jobs share.
+
+* `nb-boostmtree`'s setup chunk, when boostmtree is missing or too old, now
+  gives the install line for boostmtree 2.0.5 (`v2.0.5-ccf`), whose
+  cross-validation is faster for an ordinal response; the fit is the same.
+  The floor stays at 2.0.4.
+
+* `nb-boostmtree`'s `CORES` choice now says what to set it to. Its comment
+  carries a table, measured on the server, of peak memory at `M = 10` and
+  hours scaled to `M = 1000`, by patients and cores, with the smallest session
+  each needs. The cross-validated fit's parallel share levels off near 80%, so
+  speed stops improving past 4 to 5 times, and memory is what limits `CORES`
+  on a large study: at 4,000 patients and `M = 10`, 4 cores needed about 70 GB
+  and 8 ran out. The fit itself keeps every step, so memory grows with `M`
+  and the sessions are a floor at `M = 1000`, not a fit.
+
+* `nb-boostmtree`'s setup chunk, when boostmtree is missing or too old, now
+  gives the install line for boostmtree 2.0.6 (`v2.0.6-ccf`), whose forked
+  workers need about a third of the memory, so more `CORES` fit in a session.
+  The fit is the same. The floor stays at 2.0.4.
+
+* Tests and examples pass `renv` and `cleanup` to `hvtiRutilities::study_setup()` explicitly, ahead of
+  `hvtiRutilities` turning both on by default. A new test fails on any call that leaves them implicit.
+* The `hvtiRutilities` floor rises to 1.5.2, the first release whose `study_setup()` takes `renv` and `cleanup`.
+
+* `nb-boostmtree`'s setup chunk, when boostmtree is missing or too old, now
+  gives the install line for boostmtree 2.0.7 (`v2.0.7-ccf`). Its forked
+  workers each use one BLAS thread, so a server whose R links a multithreaded
+  OpenBLAS is no longer overloaded: at 1,000 patients on 4 cores, 616 s where
+  2.0.6 took 1,488 s. The floor stays at 2.0.4.
+
+* `add_job()` installs the packages a template needs into the study's library, and records them in
+  `renv.lock`, when the study is a renv project. It asks first, and writes nothing if the packages cannot be had.
+  It needs hvtiRutilities 1.5.7 or later, the first release whose `study_need()` leaves the study unchanged when an install is declined.
+
+* `nb-boostmtree` gains a study choice, `MTRY`: the number of predictors tried
+  at each split of each tree, passed to `boostmtree(mtry = )`. `NULL`, the
+  default, tries every predictor, as the template has always done, so existing
+  fits are unchanged. Set it to reproduce a study fitted with a smaller
+  `mtry`. It is part of the cache key, because a different `MTRY` is a
+  different fit. A job upgraded to this version finds its cached fit stale
+  once, because the fit call changed.
+
+* `dc-tables` saves its Word table in hvtiRtables' manuscript style: a full
+  grid, a two-row header when the table is grouped, with the grouping spanning its levels, shaded section
+  rows that span the table, the notes below it, and a caption above it. Three
+  study choices set it: `MANUSCRIPT_LAYOUT` (`"compare"`, one `n` column beside
+  the groups, or `"describe"`, a count beside each group), `MANUSCRIPT_CAPTION`
+  and `MANUSCRIPT_FILL`. The report keeps the report style, with the Variable
+  column, and shows the Word table beneath it. `SHOW_VARIABLE` now applies to
+  the report only. `migrate_job()` writes `MANUSCRIPT_LAYOUT <- "describe"` for
+  a `%desc_tab` job that printed mean ± SD beside the percentiles, which the
+  compare layout cannot draw. Needs hvtiRtables 1.0.9. A job scaffolded before
+  this keeps working and keeps its report-style Word table; `upgrade_job()`
+  adds the three choices, each with its `EDIT:` marker. An upgraded job with
+  `CONTINUOUS_STAT "both"` stops at its Word table until `MANUSCRIPT_LAYOUT` is
+  set to `"describe"`. hvtiRtables' error names `layout =`; the study choice that sets it is
+  `MANUSCRIPT_LAYOUT`.
+
+* The `hvtiRtables` floor is now 1.0.9, in `DESCRIPTION` and in `dc-tables`'
+  setup check. In 1.0.7 and 1.0.8, `hv_tbl_summary()` failed with "Value must
+  be a named list of functions" on any mean±SD or median row when the study's
+  `R/` folder defined `sd` or `median`, and every job sources `R/` into the
+  global environment. 1.0.9 fixes that.
+
 # hvtiRtemplates 1.4.1
 
 * The `rfs-explain`, `rfc-explain` and `rfr-explain` dependence figures, and
