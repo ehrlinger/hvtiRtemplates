@@ -186,3 +186,40 @@ test_that("REPEATS = 0 skips the stability check", {
   expect_identical(nrow(env$.stab), 0L)
   expect_false(any(grepl("^vp-repeat-", list.files(env$CACHE_DIR))))
 })
+
+vp_explain_labels <- c("setup", "edit-study-choices", "screen", "tbl-data", "select", "dependence-varpro")
+
+test_that("no vp-explain line calls varpro()", {
+  src <- readLines(template_path("vp", "explain"), warn = FALSE)
+  # gg_partial_varpro( is allowed; a bare varpro( fit is not.
+  expect_false(any(grepl("(^|[^_[:alnum:]])varpro\\(", src)))
+})
+
+test_that("vp-explain stops when no vp-fit has run in its set", {
+  rf_skip_unless_stack(rf_template_packages("vp", "explain"))
+  env <- rf_env(vp_data())
+  expect_error(rf_run("vp", "explain", c("setup", "edit-study-choices", "screen"), env), "Render the vp-fit job")
+})
+
+test_that("vp-explain draws the saved selection, tested variables only", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "explain"))
+  fit <- vp_fit_first()
+  env <- new.env(parent = globalenv())
+  env$.root <- fit$.root
+  rf_run("vp", "explain", vp_explain_labels, env, list(HORIZON = 1, SEED = 1, SAVE_FIGURES = FALSE))
+  h <- readRDS(fit$set_path("estimates", "vp.rds"))
+  expect_setequal(env$sel, h$selected)
+  expect_true(all(env$sel %in% h$coverage$variable[h$coverage$tested]))
+  expect_true(file.exists(file.path(env$CACHE_DIR, "vp-partial.rds")))
+})
+
+test_that("vp-explain refuses a horizon past the longest follow-up", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "explain"))
+  fit <- vp_fit_first()
+  env <- new.env(parent = globalenv())
+  env$.root <- fit$.root
+  expect_error(rf_run("vp", "explain", vp_explain_labels, env, list(HORIZON = 1e6, SEED = 1, SAVE_FIGURES = FALSE)),
+               "longest follow-up")
+})
