@@ -148,7 +148,7 @@ a function `function(step, steps)`.
 - **Fit:** called in `boostmtree.fit.tree()`'s `for (m in seq_len(M))` loop, as
   `progress(m, M)`. Cross-validation forks inside each iteration, so this loop runs only in
   the parent and the callback is never called from a worker.
-- **`partial.plot()`:** called after each `predict(..., partial = TRUE)`, once per
+- **`partial.plot()`:** called after each per-grid-point prediction (in 2.0.8, `generic.predict.boostmtree(..., .extrapolate = FALSE)`), once per
   (variable, grid point). The grids for all variables are resolved before the loop, so
   `steps` is the total number of predictions from the start and the estimate covers the
   whole step, not one variable. The call stays out of `predict()` itself.
