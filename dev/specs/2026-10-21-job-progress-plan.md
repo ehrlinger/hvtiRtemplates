@@ -985,6 +985,12 @@ git commit -m "docs: job progress in the long-running jobs guide, and its news"
 Do not start until John has tagged boostmtree `v2.0.8-ccf` and it is installed. This is
 hvtiRtemplates' own floor move, in a PR of its own after B merges.
 
+⚠️ Coordination (2026-10-21): hvtiRtemplates PR #375 (`chore/boostmtree-2.0.8-install`)
+already changes the template's install message to `ref = "v2.0.8-ccf"` and its assertion in
+`test-nb-boostmtree.R`, and leaves the floor at 2.0.4. Branch Part C from `main` after #375
+merges; keep the install line as #375 leaves it; Part C raises only the floor (template
+check, its message's `>=`, and `DESCRIPTION` Suggests) and adapts the floor test.
+
 ### Task C1: wire progress and raise the floor
 
 **Files:**
