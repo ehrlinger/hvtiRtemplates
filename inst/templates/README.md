@@ -10,7 +10,7 @@ refuses to overwrite an existing job.
 | template | job type | a job scaffolds into |
 |---|---|---|
 | `00_datasets/bd.qmd` | study dataset build: master snapshot to a registered dated version | `00_datasets/` or `datasets/` |
-| `20_distributions/ac.qmd` | actuarial life tables | `20_distributions/` or `distributions/` |
+| `20_distributions/ac.qmd` | Kaplan-Meier life tables, numbers at risk, strata tests and survival figures | `20_distributions/` or `distributions/` |
 | `20_distributions/hz.qmd` | multiphase parametric hazard fit | `20_distributions/` or `distributions/` |
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-setup.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
@@ -375,6 +375,7 @@ as on a Mac without XQuartz.
 
 | template | figure names |
 |---|---|
+| ac | `ac-survival`, and `ac-survival-<stratum variable>` for each variable in `STRATA` |
 | dc-gfup | `dc-gfup-<panel>` |
 | dc-stddiff | `dc-stddiff-balance` |
 | dc-tables | `dc-tables-correlation-matrix` (in `descriptive/`) |
