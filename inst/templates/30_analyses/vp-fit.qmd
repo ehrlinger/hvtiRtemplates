@@ -419,6 +419,125 @@ model <- if (.survival) {
 environment(model) <- globalenv()
 ```
 
+## Fit
+
+```{r}
+#| label: judge
+# The selection rule. A real variable is selected when it is tested and its z
+# beats every TESTED noise column of its kind. varPro's own cutoff (z > 0.79)
+# does not carry from one fit to another, because z shrinks as more variables
+# share each tree; noise in the same fit shrinks with it.
+#
+# The categorical bar needs care. Categorical noise is rarely tested, and when
+# it is it almost always scores z = 0 (in the repeats of the screen behind this template: none
+# tested in 20 of 40, all zero in 18). A bar of 0 lets any tested categorical
+# variable through, so a categorical bar of 0, or one with no categorical
+# noise tested, is replaced by the continuous bar. The continuous bar is the
+# stricter one, since continuous noise picks up split-point bias, so the rule
+# errs toward missing a real categorical effect rather than admitting a false
+# one. A continuous bar is never borrowed: when no continuous noise sets a bar
+# above 0, no continuous variable is selected, because nothing calibrates it.
+# The table names the bar each variable was judged against.
+vp_judge <- function(cov) {
+  noise <- cov$noise & cov$tested
+  # A bar is usable only above 0: noise that scores 0 bars nothing.
+  bar_of <- function(k) {
+    z <- cov$z[noise & cov$kind == k]
+    if (length(z) && max(z) > 0) max(z) else NA_real_
+  }
+  bar_cont <- bar_of("continuous")
+  bar_cat <- bar_of("categorical")
+  fallback <- is.na(bar_cat) && !is.na(bar_cont)
+  if (fallback) bar_cat <- bar_cont
+  cov$bar <- ifelse(cov$kind == "categorical", bar_cat, bar_cont)
+  cov$bar_from <- ifelse(cov$kind == "categorical", if (fallback) "continuous (fallback)" else "categorical", "continuous")
+  cov$bar_from[is.na(cov$bar)] <- "no usable noise bar"
+  cov$selected <- !cov$noise & cov$tested & (cov$z > cov$bar) %in% TRUE
+  cov
+}
+```
+
+```{r}
+#| label: fit
+#| message: true
+# cache_fit() writes <dir>/<name>.rds and its default dir is the study's
+# estimates folder, not this set's, so every call here names the set's.
+CACHE_DIR <- dirname(set_path("estimates", "vp.rds"))
+fit <- cache_fit(
+  "vp-fit",
+  varpro(model, d_noise, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, verbose = FALSE, cores = 1L,
+         seed = -abs(SEED)),
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+)
+```
+
+## Coverage
+
+Every candidate, and whether VarPro could test it. A variable is **eligible**
+when VarPro built release rules for it; one that is not was cut by the split
+weights or `NVAR` before any rule was built. It is **tested** when it was
+scored in at least `TRIM` of the trees; below that its z is 0 by construction,
+which is no evidence of no effect. It is **selected** when it is tested and its
+z beats the bar named in the last columns.
+
+```{r}
+#| label: tbl-coverage
+#| tbl-cap: "Coverage, importance and selection of each candidate, most covered first"
+# varpro_coverage() samples release rules, so it is seeded too.
+set.seed(abs(SEED))
+cov <- vp_judge(ggRandomForests::varpro_coverage(fit, by = "variable", trim = TRIM, noise = "^noise"))
+.real <- cov[!cov$noise, ]
+knitr::kable(data.frame(
+  variable = .real$variable, kind = .real$kind, eligible = .real$eligible, trees = .real$n_trees,
+  coverage = round(.real$coverage, 3), z = round(.real$z, 3), tested = .real$tested,
+  bar = round(.real$bar, 3), judged_against = .real$bar_from, selected = .real$selected
+))
+```
+
+```{r}
+#| label: tbl-funnel
+#| tbl-cap: "How the candidates become the selected set"
+# A candidate varPro dropped from its data altogether, a constant column say,
+# is counted as a candidate and nothing more.
+knitr::kable(data.frame(
+  step = c("Candidates", "Eligible", "Tested", "Selected"),
+  variables = c(length(PREDICTORS), sum(.real$eligible), sum(.real$tested), sum(.real$selected))
+))
+```
+
+```{r}
+#| label: fig-coverage
+#| fig-cap: "Importance against coverage for every eligible variable, one panel per kind. Black points are real
+#|   candidates and gray points permuted noise; the dashed horizontal line is the bar a real variable must beat and the
+#|   dotted vertical line the coverage below which a variable is untested."
+#| fig-width: 8
+.plot_cov <- cov[cov$eligible & !is.na(cov$z), ]
+.plot_cov$source <- ifelse(.plot_cov$noise, "noise", "real")
+.bars <- unique(.plot_cov[!is.na(.plot_cov$bar), c("kind", "bar")])
+.fig <- ggplot2::ggplot(.plot_cov, ggplot2::aes(x = coverage, y = z, colour = source)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_hline(data = .bars, ggplot2::aes(yintercept = bar), linetype = "dashed") +
+  ggplot2::geom_vline(xintercept = TRIM, linetype = "dotted") +
+  ggplot2::facet_wrap(~kind) +
+  ggplot2::scale_colour_manual(values = c(noise = "gray60", real = "black")) +
+  ggplot2::labs(x = "Coverage (share of trees scored)", y = "Importance (z)") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "vp-fit-coverage", width = 8)
+.fig
+```
+
+```{r}
+#| label: fig-varpro
+#| fig-cap: "VarPro's own importance plot, noise columns included. Each box spans the 15th to the 85th percentile of a
+#|   variable's per-tree importance, with a line at the median and whiskers to the 5th and 95th percentiles; the dashed
+#|   red line is varPro's default cutoff, which is not the selection rule in this report."
+#| fig-height: 7
+# Free size: one row per variable, so the height grows with the list.
+.fig <- plot(gg_varpro(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "vp-fit-varpro", height = 7)
+.fig
+```
+
 ```{r}
 #| label: provenance
 #| echo: false

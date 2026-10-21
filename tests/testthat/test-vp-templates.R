@@ -59,3 +59,92 @@ test_that("vp-fit refuses a candidate whose name could be taken for noise", {
   env <- rf_env(data)
   expect_error(rf_run("vp", "fit", c(vp_data_labels, "noise"), env, choices), "start with \"noise\"")
 })
+
+# vp_judge() on hand-built tables: no fit, so these run on CRAN too.
+vp_judge_fn <- function() {
+  env <- new.env(parent = globalenv())
+  src <- readLines(template_path("vp", "fit"), warn = FALSE)
+  eval(parse(text = rf_chunk(src, "judge")), envir = env)  # nolint: object_usage_linter.
+  env$vp_judge
+}
+vp_cov <- function(variable, kind, noise, tested, z) {
+  data.frame(variable = variable, kind = kind, noise = noise, tested = tested, z = z)
+}
+
+test_that("vp_judge falls back to the continuous bar when tested categorical noise all scores zero", {
+  cov <- vp_cov(
+    variable = c("x_real", "f_null", "noise1_x", "noise2_f", "noise3_f"),
+    kind = c("continuous", "categorical", "continuous", "categorical", "categorical"),
+    noise = c(FALSE, FALSE, TRUE, TRUE, TRUE),
+    tested = c(TRUE, TRUE, TRUE, TRUE, FALSE),
+    z = c(0.9, 0.2, 0.3, 0, NA)
+  )
+  out <- vp_judge_fn()(cov)
+  expect_identical(out$selected, c(TRUE, FALSE, FALSE, FALSE, FALSE))
+  expect_identical(out$bar[out$variable == "f_null"], 0.3)
+  expect_identical(out$bar_from[out$variable == "f_null"], "continuous (fallback)")
+})
+
+test_that("vp_judge keeps a categorical bar that tested noise set above zero", {
+  cov <- vp_cov(
+    variable = c("f_real", "f_null", "noise1_x", "noise2_f"),
+    kind = c("categorical", "categorical", "continuous", "categorical"),
+    noise = c(FALSE, FALSE, TRUE, TRUE),
+    tested = c(TRUE, TRUE, TRUE, TRUE),
+    z = c(0.5, 0.2, 0.9, 0.25)
+  )
+  out <- vp_judge_fn()(cov)
+  expect_identical(out$selected, c(TRUE, FALSE, FALSE, FALSE))
+  expect_identical(unique(out$bar[out$kind == "categorical"]), 0.25)
+  expect_identical(unique(out$bar_from[out$kind == "categorical"]), "categorical")
+})
+
+test_that("vp_judge selects nothing when no noise was tested, and says so", {
+  cov <- vp_cov(
+    variable = c("x_real", "noise1_x"), kind = c("continuous", "continuous"),
+    noise = c(FALSE, TRUE), tested = c(TRUE, FALSE), z = c(2, NA)
+  )
+  out <- vp_judge_fn()(cov)
+  expect_identical(out$selected, c(FALSE, FALSE))
+  expect_identical(out$bar_from, c("no usable noise bar", "no usable noise bar"))
+})
+
+test_that("vp_judge borrows no bar from noise that scored zero", {
+  # Only categorical noise was tested, and it scored 0: neither kind has a
+  # usable bar, so a categorical z of 0.05 is not selected through a
+  # "fallback" that is 0 again.
+  cov <- vp_cov(
+    variable = c("x_real", "f_null", "noise1_x", "noise2_f"),
+    kind = c("continuous", "categorical", "continuous", "categorical"),
+    noise = c(FALSE, FALSE, TRUE, TRUE),
+    tested = c(TRUE, TRUE, FALSE, TRUE),
+    z = c(2, 0.05, NA, 0)
+  )
+  out <- vp_judge_fn()(cov)
+  expect_identical(out$selected, c(FALSE, FALSE, FALSE, FALSE))
+  expect_identical(out$bar_from[1:2], c("no usable noise bar", "no usable noise bar"))
+})
+
+test_that("every varpro() call in vp-fit runs on one core", {
+  # options(rf.cores) limits randomForestSRC's threads, not varPro's own
+  # workers, which read `cores =` or mc.cores.
+  lines <- readLines(template_path("vp", "fit"), warn = FALSE)
+  # Comments mention varpro() in prose; only code lines are calls.
+  src <- paste(lines[!grepl("^\\s*#", lines)], collapse = "\n")
+  calls <- regmatches(src, gregexpr("(?<![_[:alnum:]])varpro\\([^\n]*", src, perl = TRUE))[[1L]]
+  # Task 5's stability refit makes this 2.
+  expect_length(calls, 1L)
+  expect_true(all(grepl("cores = 1L", calls, fixed = TRUE)))
+  expect_match(src, "options(rf.cores = 1L, mc.cores = 1L)", fixed = TRUE)
+})
+
+test_that("vp-fit selects a planted signal", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- vp_fit_first()
+  real <- env$.real[env$.real$tested, ]
+  expect_true(all(c("xs", "fs") %in% env$.real$variable[env$.real$selected]))
+  expect_setequal(utils::head(real$variable[order(-real$z)], 2L), c("xs", "fs"))
+  # Every noise column reached the coverage table, so the bars rest on all of them.
+  expect_identical(sum(env$cov$noise), 20L)
+})
