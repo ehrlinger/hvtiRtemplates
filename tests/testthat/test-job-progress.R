@@ -120,6 +120,29 @@ test_that("a knitted document records its chunks as stages, less the one that in
   expect_false(any(grepl("step 3/3", readLines(file.path(dir, "x.md")), fixed = TRUE)))
 })
 
+test_that("stages are the current document's chunks, not labels a child left in knitr's registry", {
+  dir <- withr::local_tempdir()
+  # knitr keeps one registry of chunk labels for the session. A child knitted outside any render, as the
+  # template tests do, leaves its label there, and the next render's labels are added after it.
+  withr::local_options(knitr.duplicate.label = "allow")
+  withr::local_dir(dir)
+  quietly(knitr::knit_child(text = c("```{r}", "#| label: tbl-stray", "1", "```"), quiet = TRUE))
+  rmd <- file.path(dir, "x.Rmd")
+  file <- file.path(dir, "x.run.progress")
+  writeLines(c("```{r setup}",
+               sprintf("p <- hvtiRtemplates:::.progress_install(%s)", deparse(file)),
+               "```",
+               "```{r first}",
+               "1",
+               "```",
+               "```{r second}",
+               "1",
+               "```"), rmd)
+  withr::defer(knitr::knit_hooks$delete("hvti_progress"))
+  quietly(knitr::knit(rmd, file.path(dir, "x.md"), quiet = TRUE))
+  expect_identical(yaml::read_yaml(file)$stages, c("first", "second"))
+})
+
 test_that("outside a knit nothing is recorded and the factory returns NULL", {
   file <- file.path(withr::local_tempdir(), "x.run.progress")
   p <- .progress_install(file)

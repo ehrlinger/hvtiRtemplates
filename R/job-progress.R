@@ -120,13 +120,18 @@
   invisible(NULL)
 }
 
-# Called from .job_setup(), in the setup chunk. The stages are the document's chunk
-# labels less the setup chunk itself, which installs the hook and so never sees its
-# own end. Chunks made by knitr::knit_child() have labels outside the list and are
+# Called from .job_setup(), in the setup chunk. The stages are the chunks that come after
+# the setup chunk, which installs the hook and so never sees its own end. knitr keeps ONE
+# registry of labels for the session and a render appends its labels to whatever is
+# already there, so labels left by a child knitted outside any render (the template tests
+# do) come first. The setup chunk is the first of this document's, so what follows it is
+# exactly this document. Chunks made by knitr::knit_child() have labels outside the list and are
 # ignored: they run inside a parent chunk, whose stage covers them.
 .progress_install <- function(file) {
   if (is.null(file) || !isTRUE(getOption("knitr.in.progress"))) return(function(unit) NULL)
-  stages <- setdiff(unique(knitr::all_labels()), knitr::opts_current$get("label"))
+  labels <- unique(knitr::all_labels())
+  at <- match(knitr::opts_current$get("label"), labels)
+  stages <- if (is.na(at)) labels else labels[-seq_len(at)]
   .progress_begin(file, stages)
   knitr::knit_hooks$set(hvti_progress = .progress_hook)
   knitr::opts_chunk$set(hvti_progress = TRUE)
