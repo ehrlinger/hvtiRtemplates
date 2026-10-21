@@ -15,6 +15,7 @@ test_that("the run files sit beside the job, and the runner has no .R extension"
   expect_identical(f$log, "/s/analyses/nb.x.run.log")
   expect_identical(f$status, "/s/analyses/nb.x.run.yml")
   expect_identical(f$runner, "/s/analyses/nb.x.runner")
+  expect_identical(f$progress, "/s/analyses/nb.x.run.progress")
 })
 
 test_that("running is reported only while the recorded process is alive", {

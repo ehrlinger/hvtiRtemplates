@@ -1,6 +1,7 @@
 .run_files <- function(path) {
   stem <- sub("[.]qmd$", "", path)
-  list(log = paste0(stem, ".run.log"), status = paste0(stem, ".run.yml"), runner = paste0(stem, ".runner"))
+  list(log = paste0(stem, ".run.log"), status = paste0(stem, ".run.yml"), runner = paste0(stem, ".runner"),
+       progress = paste0(stem, ".run.progress"))
 }
 
 .pid_alive <- function(pid) {
