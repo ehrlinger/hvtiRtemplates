@@ -3,7 +3,7 @@
 # tests, the follow-up summary, missing strata dropped as %KAPLAN drops them,
 # optional expected counts, and the figures.
 
-ac_chunks <- c("tbl-data", "tbl-cohort", "tbl-followup", "derive", "tbl-derive-check", "km-helpers",
+ac_chunks <- c("tbl-data", "tbl-cohort", "tbl-event-freq", "tbl-followup", "derive", "tbl-derive-check", "km-helpers",
                "tbl-km-overall", "tbl-horizons", "km-strata", "km-figures", "fig-km-views", "fig-km-survival",
                "km-strata-figures")
 

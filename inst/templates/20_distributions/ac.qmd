@@ -158,7 +158,7 @@ TIME   <- "iv_dead"
 EVENT  <- "dead"
 
 # EDIT: the stratification variables, or NULL for the whole cohort only. Each
-# is analysed on its own: c("female", "tr_strat") gives a table, tests and
+# is analyzed on its own: c("female", "tr_strat") gives a table, tests and
 # figures by sex, then another set by treatment, not a cross-tab of the two.
 # The whole cohort is always reported first. A grouping the dataset lacks is
 # made in "Derived strata" below.
@@ -175,7 +175,7 @@ EXPECTED <- NULL
 
 # Reporting horizons, in the unit of TIME (years here), and their labels.
 # NULL labels each horizon with its value; labs <- c("30 days", "6 months",
-# paste(1:10, "y")) is one way to name them. Another grid: c(1, seq(2, 20, by = 2)).
+# "1 year", paste(2:10, "years")) names them. Another grid: c(1, seq(2, 20, by = 2)).
 grid <- c(30 / 365.2425, 0.5, 1:10)
 labs <- NULL
 
@@ -270,8 +270,22 @@ knitr::kable(data.frame(
 ))
 ```
 
+```{r}
+#| label: tbl-event-freq
+#| tbl-cap: "The event over every row read, missing included (PROC FREQ with MISSING)"
+# A row whose event is missing is not analyzed, and is counted here so it is seen.
+.ev <- as.character(as.numeric(d[[EVENT]]))
+.ev[is.na(.ev)] <- "missing"
+.freq <- as.data.frame(table(value = factor(.ev, levels = intersect(c("0", "1", "missing"), unique(.ev)))),
+                       stringsAsFactors = FALSE)
+names(.freq)[1] <- EVENT
+.freq$percent <- round(100 * .freq$Freq / sum(.freq$Freq), 1)
+.freq$cumulative <- cumsum(.freq$Freq)
+knitr::kable(.freq, row.names = FALSE)
+```
+
 These are the counts the job found, the `PROC FREQ` of the event over the rows
-analysed. With `EXPECTED` set, a rendered report is also evidence that they
+analyzed. With `EXPECTED` set, a rendered report is also evidence that they
 matched the SAS reference.
 
 ```{r}
@@ -479,7 +493,7 @@ to `graphs/`.
 plot_max <- if (is.null(PLOT_MAX)) max(attr(km, "counts")$max_fup) else PLOT_MAX
 
 # The survival curve and the four cumulative-hazard views SAS's %KAPLAN plots
-# (PLOTS, PLOTC and their log scales), one page, coloured by stratum.
+# (PLOTS, PLOTC and their log scales), one page, colored by stratum.
 km_views <- function(fit) {
   if (is.null(fit$stratum)) fit$stratum <- "All"
   # Every stratum starts at 100%, even one with no event before PLOT_MAX.
@@ -489,9 +503,9 @@ km_views <- function(fit) {
   # The cumulative hazard is infinite once survival reaches zero; it is left off a figure.
   haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
   step <- function(data, y, ylab) {
-    ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], colour = .data$stratum)) +
+    ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum)) +
       ggplot2::geom_step() +
-      ggplot2::labs(x = "Years", y = ylab, colour = NULL) +
+      ggplot2::labs(x = "Years", y = ylab, color = NULL) +
       hvtiPlotR::theme_hv_manuscript(base_size = 12)
   }
   log_x <- ggplot2::scale_x_log10()
@@ -531,7 +545,7 @@ km_figure <- function(strata = NULL) {
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   # The house theme drops the legend; a stratified figure needs it to tell the curves apart.
-  if (!is.null(strata)) curve <- curve + ggplot2::theme(legend.position = "top") + ggplot2::labs(colour = strata, fill = strata)
+  if (!is.null(strata)) curve <- curve + ggplot2::theme(legend.position = "top") + ggplot2::labs(color = strata, fill = strata)
   hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(risk))
 }
 ```

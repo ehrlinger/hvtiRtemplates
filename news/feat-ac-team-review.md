@@ -1,7 +1,7 @@
 * The `ac` template takes the biostats team's review of 2026-10-21. It now reports the number at risk beside
   survival at every horizon, overall and by stratum; prints the whole life table, with `EVENT_ONLY <- FALSE`
   adding a row for each censored patient as SAS `PEVENT=0` does; compares strata with the log-rank, Wilcoxon and
-  `-2Log(LR)` tests; summarises follow-up overall and among survivors with SAS's percentile definition; and draws
+  `-2Log(LR)` tests; summarizes follow-up overall and among survivors with SAS's percentile definition; and draws
   its own figures: survival and four views of the cumulative hazard for reading, and a manuscript survival figure
   with the numbers at risk, saved as `ac-survival` (and `ac-survival-<variable>` for each stratification). A
   missing or mean-imputed stratum is now dropped, as `%KAPLAN` drops it, and the dropped patients are listed.

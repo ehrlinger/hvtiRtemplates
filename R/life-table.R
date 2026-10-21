@@ -5,11 +5,11 @@
 #' it. \code{life_table()} returns the product-limit life table, overall or one
 #' per stratum. \code{life_table_at()} reads survival and the number at risk at
 #' reporting horizons, \code{life_table_tests()} compares strata, and
-#' \code{life_table_keep()} names the rows all three analyse, so a figure can be
+#' \code{life_table_keep()} names the rows all three analyze, so a figure can be
 #' drawn over exactly the same patients.
 #'
 #' @details
-#' \strong{Rows analysed.} A row is analysed when its time and event are both
+#' \strong{Rows analyzed.} A row is analyzed when its time and event are both
 #' recorded. With \code{strata}, a row whose stratum value is missing, or is a
 #' mean-imputed level (\code{hvtiRutilities::imputed_levels()}), is dropped too,
 #' as \code{\%KAPLAN} drops "invalid strata values". The dropped rows are not
@@ -31,7 +31,7 @@
 #' \strong{Tests.} \code{life_table_tests()} reports the three tests SAS
 #' \code{PROC LIFETEST} prints for strata: the log-rank, the Wilcoxon (Gehan's
 #' weights, the number at risk) and \code{-2Log(LR)}, the likelihood ratio test
-#' of an exponential model. All three use every analysed row to the end of
+#' of an exponential model. All three use every analyzed row to the end of
 #' follow-up. To compare curves only up to a horizon, censor the data there
 #' first, in the job.
 #'
@@ -68,7 +68,7 @@
 #' attribute. A stratum with nobody at risk at any event time adds nothing to
 #' the log-rank or Wilcoxon test and is left out of its degrees of freedom.
 #'
-#' \code{life_table_keep()}: a logical vector, \code{TRUE} for each analysed
+#' \code{life_table_keep()}: a logical vector, \code{TRUE} for each analyzed
 #' row of \code{data}.
 #'
 #' @examples
@@ -193,7 +193,7 @@ life_table_keep <- function(data, time, event, strata = NULL) {
   invisible(TRUE)
 }
 
-# The analysed rows of `data`, split by stratum, with the counts and the dropped rows.
+# The analyzed rows of `data`, split by stratum, with the counts and the dropped rows.
 .lt_parts <- function(data, time, event, strata) {
   .lt_check_columns(data, time, event, strata)
   ok <- !is.na(data[[time]]) & !is.na(data[[event]])
