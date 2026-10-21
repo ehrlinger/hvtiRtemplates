@@ -35,7 +35,7 @@ vp_outcome <- function(choices, TIME, EVENT, RESPONSE) {  # nolint: object_name_
 
 # Every chunk of vp-fit, in order. Tasks 4 and 5 extend it.
 vp_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise", "judge", "fit",
-                   "tbl-coverage", "tbl-funnel", "fig-coverage", "fig-varpro")
+                   "tbl-coverage", "tbl-funnel", "fig-coverage", "fig-varpro", "tbl-stability", "save")
 
 # vp-fit run end to end in a throwaway study.
 vp_fit_first <- function(data = vp_data(), choices = vp_choices, .local_envir = parent.frame()) {

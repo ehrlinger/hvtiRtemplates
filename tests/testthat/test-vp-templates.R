@@ -132,8 +132,8 @@ test_that("every varpro() call in vp-fit runs on one core", {
   # Comments mention varpro() in prose; only code lines are calls.
   src <- paste(lines[!grepl("^\\s*#", lines)], collapse = "\n")
   calls <- regmatches(src, gregexpr("(?<![_[:alnum:]])varpro\\([^\n]*", src, perl = TRUE))[[1L]]
-  # Task 5's stability refit makes this 2.
-  expect_length(calls, 1L)
+  # The full fit and the stability refit.
+  expect_length(calls, 2L)
   expect_true(all(grepl("cores = 1L", calls, fixed = TRUE)))
   expect_match(src, "options(rf.cores = 1L, mc.cores = 1L)", fixed = TRUE)
 })
@@ -147,4 +147,42 @@ test_that("vp-fit selects a planted signal", {
   expect_setequal(utils::head(real$variable[order(-real$z)], 2L), c("xs", "fs"))
   # Every noise column reached the coverage table, so the bars rest on all of them.
   expect_identical(sum(env$cov$noise), 20L)
+})
+
+test_that("vp-fit saves one handoff: the fit, its judged coverage, the selection and the family", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- vp_fit_first()
+  h <- readRDS(env$set_path("estimates", "vp.rds"))
+  expect_named(h, c("fit", "coverage", "selected", "family"))
+  expect_identical(h$selected, env$.real$variable[env$.real$selected])
+  expect_identical(h$family, "survival")
+  expect_s3_class(h$fit, "varpro")
+  expect_false(is.null(attr(h, "hvti_provenance")))
+  expect_setequal(unique(env$.stab$r), 1:2)
+})
+
+test_that("raising REPEATS computes only the new repeat", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- vp_fit_first()
+  first <- file.path(env$CACHE_DIR, "vp-repeat-01.rds")
+  stamp <- file.mtime(first)
+  expect_false(file.exists(file.path(env$CACHE_DIR, "vp-repeat-03.rds")))
+  Sys.sleep(1.1)  # so a rewrite would show in the modification time
+  again <- new.env(parent = globalenv())
+  again$.root <- env$.root
+  again$.provenance_data <- list()
+  rf_run("vp", "fit", vp_fit_labels, again, utils::modifyList(vp_choices, list(REPEATS = 3)))
+  expect_identical(file.mtime(first), stamp)
+  expect_true(file.exists(file.path(env$CACHE_DIR, "vp-repeat-03.rds")))
+  expect_setequal(unique(again$.stab$r), 1:3)
+})
+
+test_that("REPEATS = 0 skips the stability check", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- vp_fit_first(choices = utils::modifyList(vp_choices, list(REPEATS = 0)))
+  expect_identical(nrow(env$.stab), 0L)
+  expect_false(any(grepl("^vp-repeat-", list.files(env$CACHE_DIR))))
 })

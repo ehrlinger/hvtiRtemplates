@@ -538,6 +538,83 @@ save_figure(.fig, "vp-fit-varpro", height = 7)
 .fig
 ```
 
+## Stability
+
+The screen refitted `REPEATS` times, each on a subsample of the patients drawn
+without replacement and with a fresh noise draw. A variable selected in most
+refits holds up; one selected once in a while is the screen's own noise.
+
+```{r}
+#| label: tbl-stability
+#| tbl-cap: "How often each candidate was tested and selected across the refits"
+#| message: true
+# Each refit is cached on its own, so raising REPEATS computes only the new
+# ones. Redrawing the noise alone would hold the patients fixed and understate
+# how much the selection moves, so each refit also draws its patients.
+.stab <- data.frame(r = integer(), variable = character(), selected = logical(), tested = logical())
+if (REPEATS > 0) {
+  .stab <- do.call(rbind, lapply(seq_len(REPEATS), function(r) {
+    set.seed(abs(SEED) + r)
+    rows <- sort(sample.int(nrow(d), floor(SUBSAMPLE * nrow(d))))
+    dr <- vp_add_noise(d[rows, , drop = FALSE], PREDICTORS, NOISE_N, SEED + r)
+    fr <- cache_fit(
+      sprintf("vp-repeat-%02d", r),
+      varpro(model, dr, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, verbose = FALSE, cores = 1L,
+             seed = -abs(SEED + r)),
+      seed = SEED + r, dir = CACHE_DIR, refit = REFIT
+    )
+    set.seed(abs(SEED) + r)
+    cr <- vp_judge(ggRandomForests::varpro_coverage(fr, by = "variable", trim = TRIM, noise = "^noise"))
+    cr <- cr[!cr$noise, ]
+    data.frame(r = r, variable = cr$variable, selected = cr$selected, tested = cr$tested)
+  }))
+  .per <- tapply(.stab$selected, .stab$r, sum)
+  cat("Selected per refit: ", min(.per), " to ", max(.per), " variables.\n", sep = "")
+  .freq <- stats::aggregate(cbind(share_tested = tested, share_selected = selected) ~ variable, data = .stab, FUN = mean)
+  .freq <- .freq[order(-.freq$share_selected, -.freq$share_tested), ]
+  knitr::kable(.freq, digits = 2, row.names = FALSE)
+} else {
+  cat("Skipped: REPEATS is 0.\n")
+}
+```
+
+## Reading the result
+
+**Untested is not unimportant.** VarPro scores a variable by a trimmed mean of
+its importance in each tree, and a tree with no usable rule for the variable
+counts as zero. A variable tested in fewer than `TRIM` of the trees therefore
+scores exactly 0. A variable that is not eligible was never tested at all.
+Neither is evidence of no effect; the variable simply was not examined.
+
+**Selected means it beat chance in this fit.** The bar is the best score any
+tested noise column of the same kind reached. A categorical variable is held
+to the continuous bar whenever categorical noise sets no bar of its own, which
+makes the rule strict for categorical variables.
+
+**This is a screen, not a selection.** It keeps everything it could not rule
+out, and its settings matter: guided split weights and `NVAR` decide which
+variables are examined at all. A selection would also need the unguided screen
+(`SPLIT_WEIGHT <- FALSE`), the stability above, and ideally cross-validation
+to agree. Read the stability table before the coverage table: a variable
+selected in the full fit but rarely in the refits is a weak candidate.
+
+```{r}
+#| label: save
+# The product of this job, and what vp-explain reads: the fit, its judged
+# coverage and the selected set, in one file, so they cannot drift apart. It is
+# separate from the cache on purpose: cache_fit() stores a keyed record, so the
+# cache is this job's internals and this file is its interface.
+vp_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
+  list(fit = fit, coverage = cov, selected = .real$variable[.real$selected], family = .family),
+  data = .provenance_data,
+  analysis = .analysis,
+  cohort = .cohort,
+  # vp-explain takes the rows, ID and KEY of this screen from this record.
+  selection = attr(job_data$record, "selection")
+)
+saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
+```
+
 ```{r}
 #| label: provenance
 #| echo: false
