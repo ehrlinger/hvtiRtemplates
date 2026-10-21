@@ -25,7 +25,9 @@ The process runs the \code{Rscript} of the R that called
 \code{submit_job()}, from the study root, so the study's \code{renv} and
 \code{.Renviron} apply. It writes \code{<job>.run.log} (everything the render
 prints) and \code{<job>.run.yml} (its state) beside the job; read the state
-with \code{\link{job_status}}. A job already running is not started twice.
+with \code{\link{job_status}}. A job already running is not started twice: a
+\code{<job>.run.lock} directory is taken while a submit is in progress, and a
+submit that crashed can leave it behind, in which case delete it to try again.
 Not available on Windows, which cannot detach a process this way.
 }
 \examples{

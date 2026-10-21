@@ -1,12 +1,26 @@
 .run_files <- function(path) {
   stem <- sub("[.]qmd$", "", path)
   list(log = paste0(stem, ".run.log"), status = paste0(stem, ".run.yml"), runner = paste0(stem, ".runner"),
-       progress = paste0(stem, ".run.progress"))
+       progress = paste0(stem, ".run.progress"), lock = paste0(stem, ".run.lock"))
 }
 
-.pid_alive <- function(pid) {
+# A pid alone is not an identity: after reuse, any live process answers to it. When the status recorded the process's
+# creation time, both must match; an older status without one is judged by the pid alone.
+.pid_alive <- function(pid, created = NULL) {
   if (is.null(pid) || is.na(suppressWarnings(as.integer(pid)))) return(FALSE)
-  isTRUE(tryCatch(ps::ps_is_running(ps::ps_handle(as.integer(pid))), error = function(e) FALSE))
+  isTRUE(tryCatch({
+    h <- ps::ps_handle(as.integer(pid))
+    ok <- ps::ps_is_running(h)
+    created <- suppressWarnings(as.numeric(created))
+    if (ok && length(created) == 1L && !is.na(created)) {
+      # 60 s, erring toward "alive": pid reuse means a NEW process, whose creation time differs from a long-running
+      # job's by far more than a minute, while Linux derives it from btime in /proc/stat (whole seconds) and clock
+      # steps (chrony makestep, VM resume) shift it, so a tight bound could read a live job as vanished and let a
+      # duplicate render start.
+      ok <- abs(as.numeric(ps::ps_create_time(h)) - created) < 60
+    }
+    ok
+  }, error = function(e) FALSE))
 }
 
 .write_status <- function(file, ...) {
@@ -37,8 +51,8 @@
 #' @return Invisibly, a list: \code{state} is one of \code{"none"},
 #'   \code{"submitted"}, \code{"running"}, \code{"finished"}, \code{"failed"}
 #'   or \code{"vanished"}; the other elements are what the status file
-#'   recorded (\code{pid}, \code{started}, \code{ended}, \code{exit_code},
-#'   \code{elapsed_s}, \code{r_version}), and \code{log}, the log file's path.
+#'   recorded (\code{pid}, \code{created}, \code{host}, \code{started},
+#'   \code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version}), and \code{log}, the log file's path.
 #'   \code{progress}, the render's progress record when there is one, with
 #'   \code{eta_s}, the estimated seconds left in the current stage, and
 #'   \code{stale}, \code{TRUE} when it has not changed for three reporting
@@ -85,7 +99,7 @@ job_status <- function(path, quiet = FALSE) {
     host <- st$host
     if (is.character(host) && length(host) == 1L && !is.na(host) && !identical(host, Sys.info()[["nodename"]])) {
       other_host <- host  # sessions can land on different hosts; a pid can only be checked on its own
-    } else if (!.pid_alive(st$pid)) {
+    } else if (!.pid_alive(st$pid, st$created)) {
       st$state <- "vanished"
     }
   }
@@ -136,9 +150,13 @@ job_status <- function(path, quiet = FALSE) {
     "  invisible(status)",
     "}",
     "started <- Sys.time()",
+    # The creation time lets job_status() tell this process from a later one that reuses the pid. Recording nothing is
+    # safe: job_status() then falls back to the pid alone.
+    paste0("created <- tryCatch(list(created = sprintf('%.6f', as.numeric(ps::ps_create_time(ps::ps_handle())))), ",
+           "error = function(e) list())"),
     "stamp <- function(t) format(t, '%Y-%m-%dT%H:%M:%S%z')",
-    paste0("base <- list(pid = Sys.getpid(), host = Sys.info()[['nodename']], ",
-           "r_version = as.character(getRversion()), started = stamp(started))"),
+    paste0("base <- c(list(pid = Sys.getpid()), created, list(host = Sys.info()[['nodename']], ",
+           "r_version = as.character(getRversion()), started = stamp(started)))"),
     "put(c(list(state = 'running'), base))",
     sprintf("ok <- tryCatch({ %s; TRUE }, error = function(e) { message('Error: ', conditionMessage(e)); FALSE })",
             render_call),
@@ -150,6 +168,17 @@ job_status <- function(path, quiet = FALSE) {
 
 .submit_job <- function(path, final, render_call, root) {
   files <- .run_files(path)
+  # mkdir is atomic: of two callers that reach this point together, one creates the directory and the other is refused,
+  # so the status check below and the submission that follows it cannot interleave with another submit.
+  if (!dir.create(files$lock, showWarnings = FALSE)) {
+    if (!dir.exists(files$lock)) stop("submit_job(): cannot create ", files$lock, ".", call. = FALSE)
+    age <- difftime(Sys.time(), file.info(files$lock)$mtime, units = "secs")
+    stop("submit_job(): ", basename(path), " is being submitted by another call (", files$lock, " exists, ",
+         if (is.na(age)) "age unknown" else sprintf("%.0f s old", age), "). ",
+         "If no submit is in progress, a crashed one left it behind: delete that directory and submit again.",
+         call. = FALSE)
+  }
+  on.exit(unlink(files$lock, recursive = TRUE), add = TRUE)
   # "submitted" too: the gap before the runner records "running" must not let a second copy start.
   now <- job_status(path, quiet = TRUE)
   if (now$state %in% c("submitted", "running")) {
@@ -188,7 +217,9 @@ job_status <- function(path, quiet = FALSE) {
 #' \code{submit_job()}, from the study root, so the study's \code{renv} and
 #' \code{.Renviron} apply. It writes \code{<job>.run.log} (everything the render
 #' prints) and \code{<job>.run.yml} (its state) beside the job; read the state
-#' with \code{\link{job_status}}. A job already running is not started twice.
+#' with \code{\link{job_status}}. A job already running is not started twice: a
+#' \code{<job>.run.lock} directory is taken while a submit is in progress, and a
+#' submit that crashed can leave it behind, in which case delete it to try again.
 #' Not available on Windows, which cannot detach a process this way.
 #'
 #' @param path Character(1). The job's \code{.qmd} file.

@@ -16,6 +16,7 @@ test_that("the run files sit beside the job, and the runner has no .R extension"
   expect_identical(f$status, "/s/analyses/nb.x.run.yml")
   expect_identical(f$runner, "/s/analyses/nb.x.runner")
   expect_identical(f$progress, "/s/analyses/nb.x.run.progress")
+  expect_identical(f$lock, "/s/analyses/nb.x.run.lock")
 })
 
 test_that("running is reported only while the recorded process is alive", {
@@ -164,4 +165,80 @@ test_that("submitting removes the last run's progress file", {
   .submit_job(job, final = FALSE, render_call = "1", root = dirname(job))
   expect_false(file.exists(.run_files(job)$progress))
   wait_for(job, c("finished", "failed", "vanished"))
+})
+
+test_that("a submit is refused, launching nothing, while another call holds the claim", {
+  job <- status_job()
+  f <- .run_files(job)
+  expect_true(dir.create(f$lock))
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), f$lock, fixed = TRUE)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "delete that directory", fixed = TRUE)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "s old", fixed = TRUE)
+  expect_false(file.exists(f$log))
+  expect_false(file.exists(f$runner))
+  expect_false(file.exists(f$status))
+  expect_true(dir.exists(f$lock))  # the holder's claim is not ours to release
+})
+
+test_that("the claim is released after a submit that fails, and after one that succeeds", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  f <- .run_files(job)
+  dir.create(f$log)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "cannot write the log file")
+  expect_false(dir.exists(f$lock))
+  unlink(f$log, recursive = TRUE)
+  .submit_job(job, final = FALSE, render_call = "1", root = dirname(job))
+  expect_false(dir.exists(f$lock))
+  wait_for(job, c("finished", "failed", "vanished"))
+})
+
+test_that("a live pid with a different creation time is a different process, and reads vanished", {
+  job <- status_job()
+  f <- .run_files(job)$status
+  mine <- as.numeric(ps::ps_create_time(ps::ps_handle()))
+  .write_status(f, state = "running", pid = Sys.getpid(), created = sprintf("%.6f", mine - 3600))
+  expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
+  .write_status(f, state = "running", pid = Sys.getpid(), created = sprintf("%.6f", mine))
+  expect_identical(job_status(job, quiet = TRUE)$state, "running")
+})
+
+test_that("a status written without a creation time is judged by its pid alone", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "running", pid = Sys.getpid())
+  expect_identical(job_status(job, quiet = TRUE)$state, "running")
+})
+
+test_that("the runner records its creation time, and the live job reads running by it", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  .submit_job(job, final = FALSE, render_call = "Sys.sleep(60)", root = dirname(job))
+  st <- wait_for(job, "running")
+  expect_identical(st$state, "running")
+  expect_type(st$created, "character")
+  expect_lt(abs(as.numeric(st$created) - as.numeric(ps::ps_create_time(ps::ps_handle(as.integer(st$pid))))), 60)
+  ps::ps_kill(ps::ps_handle(as.integer(st$pid)))
+  wait_for(job, "vanished")
+})
+
+test_that("an unwritable directory says the claim cannot be created, not that another call holds it", {
+  skip_on_os("windows")
+  skip_on_cran()
+  skip_if(identical(Sys.info()[["user"]], "root"))
+  job <- status_job()
+  Sys.chmod(dirname(job), "555")
+  withr::defer(Sys.chmod(dirname(job), "755"))
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "cannot create", fixed = TRUE)
+})
+
+test_that("a creation time 30 s off still reads running, and one 10 minutes off reads vanished", {
+  job <- status_job()
+  f <- .run_files(job)$status
+  mine <- as.numeric(ps::ps_create_time(ps::ps_handle()))
+  .write_status(f, state = "running", pid = Sys.getpid(), created = sprintf("%.6f", mine + 30))
+  expect_identical(job_status(job, quiet = TRUE)$state, "running")
+  .write_status(f, state = "running", pid = Sys.getpid(), created = sprintf("%.6f", mine - 600))
+  expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
 })
