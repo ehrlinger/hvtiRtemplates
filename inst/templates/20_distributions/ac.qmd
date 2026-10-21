@@ -495,13 +495,23 @@ plot_max <- if (is.null(PLOT_MAX)) max(attr(km, "counts")$max_fup) else PLOT_MAX
 # The survival curve and the four cumulative-hazard views SAS's %KAPLAN plots
 # (PLOTS, PLOTC and their log scales), one page, colored by stratum.
 km_views <- function(fit) {
-  if (is.null(fit$stratum)) fit$stratum <- "All"
-  # Every stratum starts at 100%, even one with no event before PLOT_MAX.
-  start <- data.frame(stratum = unique(fit$stratum), time = 0, survival = 1)
+  # The strata come from the counts, not the event rows: a stratum with no event,
+  # or a cohort with none, has no rows, and would otherwise vanish from the page.
+  counts <- attr(fit, "counts")
+  if (is.null(fit$stratum)) fit$stratum <- rep("All", nrow(fit))
   fit <- fit[fit$time <= plot_max, , drop = FALSE]
-  surv <- rbind(start, fit[, names(start)])
+  # Each stratum runs from 100% at time 0 to the end of its own follow-up.
+  last <- vapply(counts$stratum, function(s) {
+    v <- fit$survival[fit$stratum == s]
+    if (length(v)) v[length(v)] else 1
+  }, numeric(1))
+  surv <- rbind(data.frame(stratum = counts$stratum, time = 0, survival = 1),
+                fit[, c("stratum", "time", "survival")],
+                data.frame(stratum = counts$stratum, time = pmin(counts$max_fup, plot_max), survival = last))
+  surv$stratum <- factor(surv$stratum, levels = counts$stratum)
   # The cumulative hazard is infinite once survival reaches zero; it is left off a figure.
   haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
+  haz$stratum <- factor(haz$stratum, levels = counts$stratum)
   step <- function(data, y, ylab) {
     ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum)) +
       ggplot2::geom_step() +

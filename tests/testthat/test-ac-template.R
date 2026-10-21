@@ -117,4 +117,24 @@ test_that("an ac job completes when one stratum is all censored", {
   expect_identical(counts$n_events[counts$stratum == "b"], 0L)
   graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead_pa-hz")
   expect_true(file.exists(file.path(graphs, "ac-survival-grp.png")))
+  # The views draw it too, flat at 100% to the end of its follow-up.
+  surv <- env$km_views(env$strata_fits$grp)[[1]]$data
+  b <- surv[surv$stratum == "b", ]
+  expect_identical(unique(b$survival), 1)
+  expect_identical(max(b$time), counts$max_fup[counts$stratum == "b"])
+})
+
+test_that("an ac job completes when no patient has the event", {
+  skip_ac()
+  local_child_chunks()
+  d <- hazard_data()
+  d$dead <- 0L
+  env <- ac_run(d)
+  expect_identical(env$.warnings, character(0))
+  expect_identical(env$cc$n_events, 0L)
+  expect_identical(nrow(env$km), 0L)
+  surv <- env$km_views(env$km)[[1]]$data
+  expect_identical(unique(surv$survival), 1)
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead_pa-hz")
+  expect_true(file.exists(file.path(graphs, "ac-survival.png")))
 })
