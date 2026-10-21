@@ -117,6 +117,9 @@ if (utils::packageVersion("TemporalHazard") < "1.2.12") {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
+# The figures draw with hvtiPlotR. Checked here, before the fit, so a missing
+# package stops the render at once rather than after the fit and before the save.
+if (!requireNamespace("hvtiPlotR", quietly = TRUE)) stop("This job needs hvtiPlotR for its figures.", call. = FALSE)
 # Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder,
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
@@ -587,7 +590,8 @@ because the expected curve carries no sampling error of its own here.
 # can open and close in between. Both are recomputed on a grid out to the last
 # horizon, the same way: the cohort average of each patient's predicted survival
 # from the model, and us_cohort_curve() over us_matched() for the population.
-.grid <- seq(0, max(HORIZONS), length.out = 51L)[-1L]
+# The horizons are on the grid, so the table's points sit on the curves.
+.grid <- sort(unique(c(seq(0, max(HORIZONS), length.out = 51L)[-1L], HORIZONS)))
 .nd <- dd[rep(seq_len(nrow(dd)), times = length(.grid)), COVARIATES, drop = FALSE]
 .nd$time <- rep(.grid, each = nrow(dd))
 .model <- vapply(split(predict(fit, newdata = .nd, type = "survival"), .nd$time), mean, numeric(1))

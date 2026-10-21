@@ -92,6 +92,9 @@ if (!requireNamespace("numDeriv", quietly = TRUE)) {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
+# The figures draw with hvtiPlotR. Checked here, before the fit, so a missing
+# package stops the render at once rather than after the fit and before the save.
+if (!requireNamespace("hvtiPlotR", quietly = TRUE)) stop("This job needs hvtiPlotR for its figures.", call. = FALSE)
 # Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder,
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
@@ -652,8 +655,9 @@ quantity that actually reaches a clinician.
 # table for publication; this one is drawn from the rows fitted here.
 # An interval-censored response has no Kaplan-Meier estimate, so its figure
 # shows the parametric curve alone.
-.grid <- data.frame(time = seq(0, max(resp[intersect(c("time", "hi"), names(resp))], na.rm = TRUE),
-                               length.out = 200))
+# The last finite time, as an interval-censored response may code an open upper bound as Inf.
+.times <- unlist(resp[intersect(c("time", "lo", "hi"), names(resp))], use.names = FALSE)
+.grid <- data.frame(time = seq(0, max(.times[is.finite(.times)]), length.out = 200))
 .grid$survival <- 100 * unname(predict(fit_det, newdata = .grid, type = "survival"))
 .fig <- ggplot2::ggplot(.grid, ggplot2::aes(x = .data$time, y = .data$survival))
 if (!all(c("lo", "hi") %in% names(resp))) {

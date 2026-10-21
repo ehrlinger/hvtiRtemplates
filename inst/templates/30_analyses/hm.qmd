@@ -93,6 +93,9 @@ if (!requireNamespace("numDeriv", quietly = TRUE)) {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
+# The figures draw with hvtiPlotR. Checked here, before the fit, so a missing
+# package stops the render at once rather than after the fit and before the save.
+if (!requireNamespace("hvtiPlotR", quietly = TRUE)) stop("This job needs hvtiPlotR for its figures.", call. = FALSE)
 # Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder,
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {

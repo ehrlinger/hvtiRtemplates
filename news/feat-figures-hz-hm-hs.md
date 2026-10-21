@@ -5,5 +5,6 @@
   (`hm-calibration`). `hs-setup` draws the cohort's model-predicted survival
   against the matched population's, on a grid out to the last horizon
   (`hs-setup-expected`). Each is saved through the job's `save_figure()`
-  under the new `SAVE_FIGURES` and `FIGURES` study choices. Existing jobs are
-  unchanged until they add the figure chunk and those two choices.
+  under the new `SAVE_FIGURES` and `FIGURES` study choices, and each job now
+  stops in its setup chunk when hvtiPlotR is not installed. `upgrade_job()`
+  brings an existing job up to date, keeping its own choices.
