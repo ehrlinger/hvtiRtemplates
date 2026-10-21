@@ -115,9 +115,40 @@ nb_mocked_setup <- function(pkg, version) {
   eval(parse(text = setup), envir = env)
 }
 
+# On CI a missing or too-old stack stops the suite instead of skipping it: boostmtree 2.0.8 reaches CI only through
+# the Remotes pin, and a skip would let every nb test go quiet unnoticed.
 nb_skip_unless_stack <- function() {
-  testthat::skip_if_not_installed("boostmtree", minimum_version = "2.0.8")
-  testthat::skip_if_not_installed("ggBoostedTrees", minimum_version = "0.9.0")
+  floors <- c(boostmtree = "2.0.8", ggBoostedTrees = "0.9.0")
+  for (pkg in names(floors)) {
+    ok <- requireNamespace(pkg, quietly = TRUE) && utils::packageVersion(pkg) >= floors[[pkg]]
+    if (ok) next
+    msg <- paste0(pkg, " >= ", floors[[pkg]], " is required for the nb-boostmtree tests")
+    if (identical(Sys.getenv("CI"), "true")) stop(msg, call. = FALSE)
+    testthat::skip(msg)
+  }
+}
+
+# Every environment reachable from `x` that is not the global, base or a package's. Used to see what a fit carries.
+nb_reachable_envs <- function(x) {
+  seen <- list()
+  walk <- function(o) {
+    if (is.environment(o)) {
+      if (identical(o, globalenv()) || identical(o, baseenv()) || identical(o, emptyenv()) || isNamespace(o) ||
+            nzchar(environmentName(o))) return(invisible())
+      if (any(vapply(seen, identical, logical(1L), o))) return(invisible())
+      seen[[length(seen) + 1L]] <<- o
+      for (n in setdiff(ls(o, all.names = TRUE), "...")) walk(get(n, o))
+      walk(parent.env(o))
+      return(invisible())
+    }
+    if (is.function(o)) walk(environment(o))
+    if (is.list(o) || is.pairlist(o)) for (i in seq_along(o)) walk(o[[i]])
+    if (is.language(o)) walk(attr(o, ".Environment"))
+    for (a in setdiff(names(attributes(o)), c("names", "dim", "dimnames", "class"))) walk(attr(o, a))
+    invisible()
+  }
+  walk(x)
+  seen
 }
 
 # M is five boosting steps: enough for every chunk to draw, and the fit and

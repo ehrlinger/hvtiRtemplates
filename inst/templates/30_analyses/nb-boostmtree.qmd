@@ -195,8 +195,8 @@ MTRY <- NULL
 # the number of patients; about 80% of it runs in parallel, so speed levels off
 # near 4 to 5 times however many cores you give it. Each core is a forked copy of
 # R holding its own working data, and memory, not speed, is what limits CORES on
-# a large study. Measured on the server (2026-10-19, ordinal, about 9 visits per
-# patient, M = 10): peak memory at M = 10, and hours scaled to M = 1000.
+# a large study. Measured on the server (2026-10-19, boostmtree 2.0.4, ordinal, about
+# 9 visits per patient, M = 10): peak memory at M = 10, and hours scaled to M = 1000.
 #   patients   CORES   peak memory at M = 10   hours at M = 1000   session, at least
 #      1,000     4            6 GB                     7            Default (16 GB)
 #      1,000     8           11 GB                     5            Small (32 GB)
@@ -205,10 +205,11 @@ MTRY <- NULL
 # Measured full run (2026-10-21, boostmtree 2.0.8, continuous, 1,391 patients, 4,771
 # visits, M = 1000, 8 cores, Medium session): fit about 1 h, importance 13 min,
 # partial effects for 3 variables 32 min at 11.3 GiB of session memory; on 2.0.7,
-# 94 min at 70.0 GiB, against Medium's 76.8 GiB limit. So 2.0.8 removed the need
-# for a larger session for the partial effects. These are RStudio session-memory
-# readings, covering everything in the session including the forked workers, each
-# taken once during the step: not measured peaks.
+# 94 min at 70.0 GiB, within 7 GiB of Medium's limit of 76.8 GiB. 2.0.8 leaves
+# Medium ample room. The 76.8 GiB is the enforced cap, about 1.2 times the 64 GB
+# profile named in the table. These are RStudio session-memory readings, covering
+# everything in the session including the forked workers, each taken once during
+# the step: not measured peaks.
 # Memory is an upper bound at M = 10 only. The fit keeps every step, about
 # 0.35 MB per step per 1,000 visits for an ordinal response, so at M = 1000 add
 # about 3 GB at 1,000 patients and 11 GB at 4,000, and possibly that much again
@@ -362,6 +363,9 @@ fit <- cache_fit(
              # Reports each boosting iteration to <job>.run.progress and the render log.
              # get() keeps the job's run record out of the cache key's inputs, as for
              # CORES: it changes what is reported, never what is fitted.
+             # The fit keeps the reporter (boostmtree's formula environment holds it), which
+             # is safe because the reporter's frame holds only `unit`: no run record is
+             # saved with the fit.
              progress = get(".job")$progress("iteration")),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
 )

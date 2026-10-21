@@ -280,6 +280,13 @@ test_that("the fit and the partial effects report their steps, and progress is n
   utils::capture.output(nb_run(labels, env))
   expect_true("iteration" %in% seen$units)
   expect_true("prediction" %in% seen$units)
+  # The fit keeps the reporter (boostmtree's formula environment holds it), and the cache saves it. That is safe
+  # while its frame holds only `unit`: no run record, and nothing else of the job, rides along in the saved fit.
+  envs <- nb_reachable_envs(env$fit)
+  holders <- Filter(function(e) "unit" %in% ls(e, all.names = TRUE), envs)
+  expect_gte(length(holders), 1L)
+  expect_true(all(vapply(holders, function(e) identical(ls(e, all.names = TRUE), "unit"), logical(1L))))
+  expect_false(any(vapply(envs, function(e) any(c(".job", ".root") %in% ls(e, all.names = TRUE)), logical(1L))))
   # A second run loads both from the cache: the reporter, and the run record behind it, are not key inputs.
   env2 <- nb_env(root)
   nb_run(c("set", "edit-study-choices"), env2, nb_choices())
@@ -465,7 +472,7 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   set_choice("^N_TRACES <- ", "N_TRACES <- 10")
   set_choice("^CORES <- ", paste0("CORES <- ", nb_cores, "L"))
   # EDIT: markers remain, so this renders as a draft, with its warning and banner.
-  render_job(job, quiet = TRUE)
+  log <- utils::capture.output(render_job(job, quiet = FALSE))
   html <- sub("[.]qmd$", ".html", job)
   expect_true(file.exists(html))
   expect_true(file.exists(file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree.rds")))
@@ -484,6 +491,10 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   # The fit and the effects each recorded how far they got.
   prog <- yaml::read_yaml(sub("[.]qmd$", ".run.progress", job))
   expect_true(all(c("fit", "effects") %in% vapply(prog$done, `[[`, "", "stage")))
+  # The steps themselves reached the render log, and not the page.
+  expect_true(any(grepl("iteration 5/5", log, fixed = TRUE)))
+  expect_true(any(grepl("prediction [0-9]+/[0-9]+", log)))
+  expect_false(grepl("iteration [0-9]+/[0-9]+", page))
 })
 
 test_that("the fit chunk refuses to start an uncached fit interactively, and names submit_job()", {

@@ -260,8 +260,8 @@ test_that("upgrading a job with a hand-added progress stopgap leaves the templat
     expect_false(any(grepl(".bm_progress", code, fixed = TRUE)), info = helper_in)
     # The boostmtree() and partial.plot() calls each report once, through the job.
     expect_identical(sum(grepl("progress = ", code, fixed = TRUE)), 2L, info = helper_in)
-    expect_length(grep('progress = get(".job")$progress("iteration")', code, fixed = TRUE), 1L)
-    expect_length(grep('progress = get(".job")$progress("prediction")', code, fixed = TRUE), 1L)
+    expect_identical(length(grep('progress = get(".job")$progress("iteration")', code, fixed = TRUE)), 1L, info = helper_in)
+    expect_identical(length(grep('progress = get(".job")$progress("prediction")', code, fixed = TRUE)), 1L, info = helper_in)
     # Nothing is left as a comment that could be uncommented into a second reporter either.
     expect_false(any(grepl(".bm_progress", upgraded, fixed = TRUE)), info = helper_in)
   }
