@@ -44,6 +44,15 @@ test_that("stages and steps are recorded, and a finished stage joins done", {
   expect_identical(p$done, list(list(stage = "tbl-data", elapsed_s = 41L)))
 })
 
+test_that("a stage that starts after stages that never reported counts those as cached", {
+  local_clock()
+  file <- progress_file()
+  quietly(.progress_begin(file, c("a", "b", "c")))
+  quietly(.progress_stage("c", TRUE))
+  expect_identical(yaml::read_yaml(file)$done,
+                   list(list(stage = "a", elapsed_s = 0L, cached = TRUE), list(stage = "b", elapsed_s = 0L, cached = TRUE)))
+})
+
 test_that("a label not among the stages is ignored", {
   local_clock()
   file <- progress_file()
@@ -165,6 +174,53 @@ test_that("stages are the current document's chunks, not labels a child left in 
   expect_identical(yaml::read_yaml(file)$stages, c("first", "second"))
 })
 
+test_that("chunks knitr reuses from its cache still count as done, and the job reads finished", {
+  dir <- withr::local_tempdir()
+  withr::local_dir(dir)
+  file <- file.path(dir, "x.run.progress")
+  writeLines(c("```{r setup}",
+               sprintf("p <- hvtiRtemplates:::.progress_install(%s)", deparse(file)),
+               "```",
+               "```{r first, cache=TRUE}", "1", "```",
+               "```{r second, cache=TRUE}", "2", "```",
+               "```{r third}", "3", "```",
+               "```{r fourth, cache=TRUE}", "4", "```"), "x.Rmd")
+  withr::defer(knitr::knit_hooks$delete("hvti_progress"))
+  quietly(knitr::knit("x.Rmd", "x.md", quiet = TRUE))
+  quietly(knitr::knit("x.Rmd", "x.md", quiet = TRUE))
+  p <- yaml::read_yaml(file)
+  expect_setequal(vapply(p$done, `[[`, "", "stage"), c("first", "second", "third", "fourth"))
+  cached <- vapply(p$done, function(d) isTRUE(d$cached), NA)
+  expect_setequal(vapply(p$done, `[[`, "", "stage")[cached], c("first", "second", "fourth"))
+  job <- file.path(dir, "x.qmd")
+  file.rename(file, .run_files(job)$progress)
+  p$pid <- 999999L
+  yaml::write_yaml(p, .run_files(job)$progress)
+  expect_identical(job_status(job, quiet = TRUE)$state, "finished")
+  out <- utils::capture.output(job_status(job))
+  expect_match(paste(out, collapse = "\n"), "cached", fixed = TRUE)
+})
+
+test_that("the document hook that was set before the install still runs, and does not stack across knits", {
+  dir <- withr::local_tempdir()
+  withr::local_dir(dir)
+  file <- file.path(dir, "x.run.progress")
+  writeLines(c("```{r setup}",
+               "knitr::knit_hooks$set(document = function(x) paste0(x, 'SEN', 'TINEL'))",
+               sprintf("p <- hvtiRtemplates:::.progress_install(%s)", deparse(file)),
+               "```",
+               "```{r first}", "1", "```"), "x.Rmd")
+  withr::defer(knitr::knit_hooks$delete("hvti_progress"))
+  # The hook receives a vector of pieces and adds one marker to each, so a second wrapper would add a second marker.
+  count <- function() {
+    quietly(knitr::knit("x.Rmd", "x.md", quiet = TRUE))
+    sum(lengths(regmatches(readLines("x.md"), gregexpr("SENTINEL", readLines("x.md")))))
+  }
+  first <- count()
+  expect_gt(first, 0L)
+  expect_identical(count(), first)
+})
+
 test_that("outside a knit nothing is recorded and the factory returns NULL", {
   file <- file.path(withr::local_tempdir(), "x.run.progress")
   p <- .progress_install(file)
@@ -275,7 +331,8 @@ malformed_progress <- list(
   "updated is no stamp"    = set_field("updated", "yesterday"),
   "stage_started no stamp" = set_field("stage_started", "soon"),
   "step_started no stamp"  = set_field("step_started", "soon"),
-  "step_base is text"      = set_field("step_base", "abc")
+  "step_base is text"      = set_field("step_base", "abc"),
+  "cached is text"         = set_field("done", list(list(stage = "tbl-data", elapsed_s = 3L, cached = "yes")))
 )
 
 test_that("a malformed progress file is noted, never an error, and the state still comes from run.yml", {
@@ -357,4 +414,24 @@ test_that("a progress file inside the recorded run is kept", {
   .write_status(.run_files(job)$status, state = "running", pid = Sys.getpid(), host = Sys.info()[["nodename"]],
                 started = .stamp(.now() - 3700))
   expect_identical(job_status(job, quiet = TRUE)$progress$stage, "fit")
+})
+
+test_that("a second Quarto render, with its chunks cached, still reads finished", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if(!nzchar(Sys.which("quarto")))
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "nb.boostmtree.x.boost.qmd")
+  writeLines(c("---", "title: x", "format: html", "---", "",
+               "```{r}", "#| label: setup",
+               "hvtiRtemplates:::.progress_install(hvtiRtemplates:::.progress_path(knitr::current_input(dir = TRUE)))",
+               "```", "",
+               "```{r}", "#| label: first", "#| cache: true", "1 + 1", "```", "",
+               "```{r}", "#| label: second", "#| cache: true", "2 + 2", "```"), job)
+  quarto::quarto_render(job, execute_dir = dir, quiet = TRUE)
+  unlink(file.path(dir, "nb.boostmtree.x.boost.run.progress"))
+  quarto::quarto_render(job, execute_dir = dir, quiet = TRUE)
+  st <- job_status(job, quiet = TRUE)
+  expect_identical(st$progress$stages, c("first", "second"))
+  expect_identical(st$state, "finished")
 })
