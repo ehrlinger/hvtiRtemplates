@@ -68,7 +68,8 @@ time; \code{"dropped"} is described under Details, or \code{NULL}.
 
 \code{life_table_tests()}: a data frame with a row per test: \code{test},
 \code{chisq}, \code{df} and \code{p_value}, with the \code{"dropped"}
-attribute.
+attribute. A stratum with nobody at risk at any event time adds nothing to
+the log-rank or Wilcoxon test and is left out of its degrees of freedom.
 
 \code{life_table_keep()}: a logical vector, \code{TRUE} for each analysed
 row of \code{data}.

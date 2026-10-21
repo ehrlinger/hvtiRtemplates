@@ -65,7 +65,8 @@
 #'
 #' \code{life_table_tests()}: a data frame with a row per test: \code{test},
 #' \code{chisq}, \code{df} and \code{p_value}, with the \code{"dropped"}
-#' attribute.
+#' attribute. A stratum with nobody at risk at any event time adds nothing to
+#' the log-rank or Wilcoxon test and is left out of its degrees of freedom.
 #'
 #' \code{life_table_keep()}: a logical vector, \code{TRUE} for each analysed
 #' row of \code{data}.
@@ -154,13 +155,12 @@ life_table_tests <- function(data, time, event, strata) {
   st <- unlist(lapply(parts$rows, `[[`, "status"), use.names = FALSE)
   gr <- rep(seq_along(parts$rows), vapply(parts$rows, nrow, integer(1)))
 
-  chisq <- c(
-    `Log-rank` = .lt_weighted_test(tm, st, gr, function(n) rep(1, length(n))),
-    Wilcoxon = .lt_weighted_test(tm, st, gr, function(n) n),
-    `-2Log(LR)` = .lt_exponential_lr(tm, st, gr)
-  )
-  out <- data.frame(test = names(chisq), chisq = unname(chisq), df = df,
-                    p_value = stats::pchisq(unname(chisq), df, lower.tail = FALSE))
+  logrank <- .lt_weighted_test(tm, st, gr, function(n) 1)
+  wilcoxon <- .lt_weighted_test(tm, st, gr, function(n) n)
+  chisq <- c(logrank$chisq, wilcoxon$chisq, .lt_exponential_lr(tm, st, gr))
+  dfs <- c(logrank$df, wilcoxon$df, df)
+  out <- data.frame(test = c("Log-rank", "Wilcoxon", "-2Log(LR)"), chisq = chisq, df = dfs,
+                    p_value = stats::pchisq(chisq, dfs, lower.tail = FALSE))
   attr(out, "dropped") <- parts$dropped
   out
 }
@@ -218,6 +218,10 @@ life_table_keep <- function(data, time, event, strata = NULL) {
   tm <- as.numeric(data[[time]][ok])
   # An event flag that is 0/1 in SAS can arrive as logical; hzr_kaplan() needs a number.
   st <- as.numeric(data[[event]][ok])
+  if (!all(st %in% c(0, 1))) {
+    stop("`", event, "` must be 0/1 (or logical); it holds ", paste(sort(setdiff(unique(st), c(0, 1))), collapse = ", "),
+         ".", call. = FALSE)
+  }
   lab <- lab[ok]
   levels <- if (is.null(strata)) "All" else .lt_sort_levels(unique(lab))
   rows <- lapply(stats::setNames(levels, levels), function(s) {
@@ -256,8 +260,12 @@ life_table_keep <- function(data, time, event, strata = NULL) {
       v <- v + w^2 * d * (n - d) / (n - 1) * (diag(p, k) - p %o% p)
     }
   }
-  keep <- seq_len(k - 1L)
-  as.numeric(t(u[keep]) %*% solve(v[keep, keep, drop = FALSE], u[keep]))
+  # A stratum with nobody at risk at any event time adds nothing and would make v
+  # singular; it is left out, and the degrees of freedom count only the others.
+  live <- which(diag(v) > 0)
+  if (length(live) < 2L) return(list(chisq = NA_real_, df = 0L))
+  keep <- live[-length(live)]
+  list(chisq = as.numeric(t(u[keep]) %*% solve(v[keep, keep, drop = FALSE], u[keep])), df = length(keep))
 }
 
 # The likelihood ratio test of one exponential rate against a rate per group.

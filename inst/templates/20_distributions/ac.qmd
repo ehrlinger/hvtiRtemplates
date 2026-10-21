@@ -276,7 +276,7 @@ matched the SAS reference.
 
 ```{r}
 #| label: tbl-followup
-#| tbl-cap: "Follow-up, in the unit of TIME: all patients, and those still alive (censored)"
+#| tbl-cap: "Follow-up, in the unit of TIME: all patients, and those censored (event-free)"
 # Percentiles are SAS's PROC UNIVARIATE default definition (PCTLDEF=5), which is
 # R's quantile type 2, so the median follow-up quoted in a manuscript matches.
 fu_row <- function(who, t) {
@@ -286,8 +286,8 @@ fu_row <- function(who, t) {
 }
 .fu <- d[!is.na(d[[TIME]]) & !is.na(d[[EVENT]]), , drop = FALSE]
 .fu_t <- as.numeric(.fu[[TIME]])
-.alive <- as.numeric(.fu[[EVENT]]) == 0
-knitr::kable(rbind(fu_row("all", .fu_t), if (any(.alive)) fu_row("alive", .fu_t[.alive])),
+.censored <- as.numeric(.fu[[EVENT]]) == 0
+knitr::kable(rbind(fu_row("all", .fu_t), if (any(.censored)) fu_row("censored", .fu_t[.censored])),
              row.names = FALSE, digits = 2)
 ```
 
@@ -482,8 +482,9 @@ plot_max <- if (is.null(PLOT_MAX)) max(attr(km, "counts")$max_fup) else PLOT_MAX
 # (PLOTS, PLOTC and their log scales), one page, coloured by stratum.
 km_views <- function(fit) {
   if (is.null(fit$stratum)) fit$stratum <- "All"
-  fit <- fit[fit$time <= plot_max, , drop = FALSE]
+  # Every stratum starts at 100%, even one with no event before PLOT_MAX.
   start <- data.frame(stratum = unique(fit$stratum), time = 0, survival = 1)
+  fit <- fit[fit$time <= plot_max, , drop = FALSE]
   surv <- rbind(start, fit[, names(start)])
   # The cumulative hazard is infinite once survival reaches zero; it is left off a figure.
   haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
@@ -509,9 +510,15 @@ km_views <- function(fit) {
 km_figure <- function(strata = NULL) {
   dd <- d[hvtiRtemplates::life_table_keep(d, TIME, EVENT, strata), , drop = FALSE]
   dd[[EVENT]] <- as.numeric(dd[[EVENT]])
-  if (!is.null(strata)) dd[[strata]] <- as.character(dd[[strata]])
+  # The strata in the order the tables list them.
+  if (!is.null(strata)) dd[[strata]] <- factor(as.character(dd[[strata]]), levels = attr(strata_fits[[strata]], "counts")$stratum)
   at <- if (is.null(RISK_TIMES)) pretty(c(0, plot_max)) else RISK_TIMES
   at <- at[at <= plot_max]
+  # The numbers at risk are the tables' own, counted after each time, so the
+  # figure and the tables agree where a patient is followed to exactly that time.
+  risk <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = at, strata = strata, conf_level = CLEVEL)
+  risk <- data.frame(strata = if (is.null(strata)) "All" else factor(risk$stratum, levels = levels(dd[[strata]])),
+                     report_time = risk$time, n.risk = risk$n_risk)
   hv <- hvtiPlotR::hv_survival(dd, time_col = TIME, event_col = EVENT, group_col = strata,
                                conf_level = CLEVEL, report_times = at)
   # The logit limits are undefined where survival reaches zero, and the band would
@@ -525,7 +532,7 @@ km_figure <- function(strata = NULL) {
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   # The house theme drops the legend; a stratified figure needs it to tell the curves apart.
   if (!is.null(strata)) curve <- curve + ggplot2::theme(legend.position = "top") + ggplot2::labs(colour = strata, fill = strata)
-  hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(hv))
+  hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(risk))
 }
 ```
 

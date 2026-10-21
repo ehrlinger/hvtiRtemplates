@@ -94,3 +94,19 @@ test_that("the life table functions name what is wrong with their input", {
   expect_error(life_table_tests(d, "t", "e", "g"), "fewer than two analysable strata")
   expect_error(life_table(data.frame(t = NA, e = 1), "t", "e"), "No row has a recorded time")
 })
+
+test_that("a stratum with nobody at risk at an event time is left out of the tests, not fatal", {
+  # Stratum c is censored before the first death, so it adds nothing and would
+  # make the variance singular.
+  d <- data.frame(t = c(1, 2, 3, 4, 1.5, 2.5, 3.5, 0.2, 0.3), e = c(1, 1, 0, 1, 1, 0, 1, 0, 0),
+                  g = c("a", "a", "a", "a", "b", "b", "b", "c", "c"))
+  out <- life_table_tests(d, "t", "e", "g")
+  expect_identical(out$df, c(1L, 1L, 2L))
+  two <- life_table_tests(d[d$g != "c", ], "t", "e", "g")
+  expect_equal(out$chisq[1:2], two$chisq[1:2])
+})
+
+test_that("an event that is not 0/1 stops, naming its values", {
+  d <- data.frame(t = c(1, 2, 3), e = c(0, 1, 2))
+  expect_error(life_table(d, "t", "e"), "`e` must be 0/1 \\(or logical\\); it holds 2")
+})
