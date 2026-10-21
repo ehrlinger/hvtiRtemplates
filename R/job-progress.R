@@ -36,7 +36,10 @@
 
 .parse_stamp <- function(x) as.POSIXct(x, format = "%Y-%m-%dT%H:%M:%S%z")
 
-.progress_eta <- function(elapsed, step, steps) if (step > 0) elapsed / step * (steps - step) else NA_real_
+# `elapsed` is the time since the loop's counter stood at `base`, so the time per step leaves out whatever came before.
+.progress_eta <- function(elapsed, step, steps, base = 0) {
+  if (step > base) elapsed / (step - base) * (steps - step) else NA_real_
+}
 
 # Quarto knits through <stem>.rmarkdown, so the job's own name is put back before the path is made:
 # the file job_status() reads is <job>.run.progress, beside the .qmd.
@@ -56,7 +59,9 @@
   rec <- list(pid = Sys.getpid(), host = Sys.info()[["nodename"]], started = .stamp(s$started), updated = .stamp(.now()),
               stage = s$stage, stage_index = s$stage_index, stage_count = length(s$stages),
               stage_started = if (!is.null(s$stage_started)) .stamp(s$stage_started),
-              step = s$step, steps = s$steps, unit = s$unit, stages = s$stages, done = s$done)
+              step = s$step, steps = s$steps, unit = s$unit,
+              step_started = if (!is.null(s$step_started)) .stamp(s$step_started), step_base = s$step_base,
+              stages = s$stages, done = s$done)
   # yaml::write_yaml() can warn (a file that will not open) before it errors; both stop the reporting.
   stop_reporting <- function(e) {
     cat("progress reporting stopped: ", conditionMessage(e), "\n", sep = "", file = stderr())
@@ -85,7 +90,7 @@
     s$stage <- label
     s$stage_index <- match(label, s$stages)
     s$stage_started <- .now()
-    s$step <- s$steps <- s$unit <- NULL
+    s$step <- s$steps <- s$unit <- s$step_started <- s$step_base <- NULL
     .progress_log(sprintf("%s  started (%d of %d)", label, s$stage_index, length(s$stages)))
   } else if (identical(label, s$stage)) {
     elapsed <- as.numeric(difftime(.now(), s$stage_started, units = "secs"))
@@ -104,13 +109,20 @@
   function(step, steps) {
     s <- .progress_state
     if (is.null(s$file)) return(invisible(NULL))
+    now <- .now()
+    # A new loop: the first step, a different unit, or a counter that went back. The estimate counts from here,
+    # so the time the stage spent before its loop does not stretch it.
+    if (is.null(s$step_started) || !identical(s$unit, unit) || step < s$step) {
+      s$step_started <- now
+      s$step_base <- as.integer(step)
+    }
     s$step <- as.integer(step)
     s$steps <- as.integer(steps)
     s$unit <- unit
-    now <- .now()
     if (step >= steps || as.numeric(difftime(now, s$last_log, units = "mins")) >= .progress_every()) {
       elapsed <- as.numeric(difftime(now, if (is.null(s$stage_started)) s$started else s$stage_started, units = "secs"))
-      left <- if (step < steps) paste0("  ~", .fmt_dur(.progress_eta(elapsed, step, steps)), " left in stage") else ""
+      eta <- .progress_eta(as.numeric(difftime(now, s$step_started, units = "secs")), step, steps, s$step_base)
+      left <- if (step < steps && !is.na(eta)) paste0("  ~", .fmt_dur(eta), " left in stage") else ""
       .progress_log(sprintf("%s  %s %d/%d  %s in stage%s", if (is.null(s$stage)) "-" else s$stage, unit,
                             as.integer(step), as.integer(steps), .fmt_dur(elapsed), left))
     }
@@ -154,8 +166,9 @@
     is.list(d) && is.character(d$stage) && length(d$stage) == 1L && is.numeric(d$elapsed_s) && length(d$elapsed_s) == 1L &&
       is.finite(d$elapsed_s)
   }, NA)))
-  stamp_ok(p$updated) && stamp_ok(p$started) && (is.null(p$stage_started) || stamp_ok(p$stage_started)) && done_ok &&
-    all(vapply(p[c("step", "steps", "stage_index", "stage_count")], .num1_or_null, NA)) &&
+  stamp_ok(p$updated) && stamp_ok(p$started) && (is.null(p$stage_started) || stamp_ok(p$stage_started)) &&
+    (is.null(p$step_started) || stamp_ok(p$step_started)) && done_ok &&
+    all(vapply(p[c("step", "steps", "step_base", "stage_index", "stage_count")], .num1_or_null, NA)) &&
     (is.null(p$step) || !is.null(p$steps)) && (is.null(p$stages) || is.character(p$stages))
 }
 
@@ -177,10 +190,12 @@
   prog$stale <- prog$age_s > max(3 * .progress_every() * 60, 30 * 60)
   started <- if (is.null(prog$stage_started)) NA else .parse_stamp(prog$stage_started)
   prog$stage_s <- as.numeric(difftime(now, started, units = "secs"))
-  prog$eta_s <- if (is.null(prog$step) || is.na(started)) {
+  step_started <- if (is.null(prog$step_started)) NA else .parse_stamp(prog$step_started)
+  prog$eta_s <- if (is.null(prog$step) || is.null(prog$step_base) || is.na(step_started)) {
     NA_real_
   } else {
-    max(0, .progress_eta(as.numeric(difftime(updated, started, units = "secs")), prog$step, prog$steps) - prog$age_s)
+    eta <- .progress_eta(as.numeric(difftime(updated, step_started, units = "secs")), prog$step, prog$steps, prog$step_base)
+    max(0, eta - prog$age_s)
   }
   prog
 }
@@ -216,8 +231,11 @@
   stages_done <- vapply(prog$done, function(d) d$stage, "")
   secs_done <- vapply(prog$done, function(d) as.numeric(d$elapsed_s), 0)
   if (!identical(state, "running")) {
-    if (!length(stages_done)) return(character())
-    return(c("  stage times:", sprintf("    %-28s %s", stages_done, vapply(secs_done, .fmt_dur, ""))))
+    stopped <- if (state %in% c("failed", "vanished") && !is.null(prog$stage) && !prog$stage %in% stages_done) {
+      sprintf("  stopped in %s (%s of %s)", prog$stage, prog$stage_index, prog$stage_count)
+    }
+    times <- if (length(stages_done)) c("  stage times:", sprintf("    %-28s %s", stages_done, vapply(secs_done, .fmt_dur, "")))
+    return(c(stopped, times))
   }
   out <- character()
   if (!is.null(prog$stage)) {

@@ -68,6 +68,28 @@ test_that("step lines are throttled to one per `every` minutes; stage lines alwa
   expect_identical(yaml::read_yaml(file)$step, 2L)
 })
 
+test_that("time spent before the first step does not inflate the estimate", {
+  withr::local_options(hvtiRtemplates.progress_every = 1)
+  clock <- local_clock()
+  file <- progress_file()
+  quietly(.progress_begin(file, "fit"))
+  quietly(.progress_stage("fit", TRUE))
+  f <- .progress_step("iteration")
+  clock$now <- clock$now + 3600  # a long preamble in the stage, before the loop
+  quietly(f(1L, 100L))
+  clock$now <- clock$now + 60
+  line <- quietly(f(2L, 100L))
+  expect_match(line, "iteration 2/100  1h01m in stage  ~1h38m left in stage", fixed = TRUE)
+  view <- .progress_view(yaml::read_yaml(file), now = clock$now)
+  expect_equal(view$eta_s, 98 * 60)
+  # A new loop (the counter goes back) starts the estimate again.
+  clock$now <- clock$now + 600
+  quietly(f(1L, 50L))
+  clock$now <- clock$now + 30
+  quietly(f(2L, 50L))
+  expect_equal(.progress_view(yaml::read_yaml(file), now = clock$now)$eta_s, 48 * 30)
+})
+
 test_that("the last step always prints", {
   clock <- local_clock()
   file <- progress_file()
@@ -163,7 +185,8 @@ write_progress <- function(job, age = 2, done_all = FALSE, pid = Sys.getpid()) {
   .write_status(.run_files(job)$progress, pid = pid, host = Sys.info()[["nodename"]],
                 started = .stamp(now - 3600), updated = .stamp(now - age * 60),
                 stage = if (done_all) "effects" else "fit", stage_index = if (done_all) 3L else 2L, stage_count = 3L,
-                stage_started = .stamp(now - 3000), step = 412L, steps = 1000L, unit = "iteration", stages = stages,
+                stage_started = .stamp(now - 3000), step = 412L, steps = 1000L, unit = "iteration",
+                step_started = .stamp(now - 2900), step_base = 12L, stages = stages,
                 done = done)
 }
 
@@ -172,6 +195,19 @@ status_job_progress <- function() {
   writeLines("---\ntitle: x\n---", job)
   job
 }
+
+test_that("a failed or vanished job says where it stopped", {
+  local_clock(Sys.time())
+  job <- status_job_progress()
+  write_progress(job)
+  .write_status(.run_files(job)$status, state = "failed", exit_code = 1L, pid = 999999L, started = .stamp(.now() - 4000))
+  out <- utils::capture.output(job_status(job))
+  expect_match(out, "  stopped in fit (2 of 3)", fixed = TRUE, all = FALSE)
+  expect_match(out, "stage times:", fixed = TRUE, all = FALSE)
+  write_progress(job, done_all = TRUE, pid = 999999L)
+  .write_status(.run_files(job)$status, state = "finished", started = .stamp(.now() - 4000), ended = .stamp(.now() - 60))
+  expect_false(any(grepl("stopped in", utils::capture.output(job_status(job)), fixed = TRUE)))
+})
 
 test_that("a running job prints its stage, step, estimate, what is next and when it last moved", {
   local_clock(Sys.time())
@@ -237,7 +273,9 @@ malformed_progress <- list(
   "step without steps"     = set_field("steps", NULL),
   "elapsed_s is text"      = set_field("done", list(list(stage = "tbl-data", elapsed_s = "foo"))),
   "updated is no stamp"    = set_field("updated", "yesterday"),
-  "stage_started no stamp" = set_field("stage_started", "soon")
+  "stage_started no stamp" = set_field("stage_started", "soon"),
+  "step_started no stamp"  = set_field("step_started", "soon"),
+  "step_base is text"      = set_field("step_base", "abc")
 )
 
 test_that("a malformed progress file is noted, never an error, and the state still comes from run.yml", {
