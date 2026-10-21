@@ -202,6 +202,11 @@ MTRY <- NULL
 #      1,000     8           11 GB                     5            Small (32 GB)
 #      2,000     8           30 GB                    22            Medium (64 GB)
 #      4,000     4           70 GB                   110            Large (128 GB); 8 cores ran out
+# Measured full run (2026-10-21, boostmtree 2.0.8, continuous, 1,391 patients, 4,771
+# visits, M = 1000, 8 cores, Medium session): fit about 1 h, importance 13 min,
+# partial effects for 3 variables 32 min at about 11 GB for the whole session. On
+# 2.0.7 the same partial effects took 94 min and about 72 GB, so 2.0.8 removed
+# the need for a larger session for them.
 # Memory is an upper bound at M = 10 only. The fit keeps every step, about
 # 0.35 MB per step per 1,000 visits for an ordinal response, so at M = 1000 add
 # about 3 GB at 1,000 patients and 11 GB at 4,000, and possibly that much again
