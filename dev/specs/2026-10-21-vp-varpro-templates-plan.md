@@ -19,7 +19,7 @@
 - A template carries its own `format:` block, opens with ONE `setup` chunk, has exactly one `^SUBJECT\s+<- ` and one `^TYPE\s+<- ` line, puts every `EDIT:` marker in a chunk labeled `edit-…`, carries no study identifiers, and ends with one `provenance` chunk.
 - Each template gets its own **file** key in `.lintr` excluding exactly `object_name_linter`, `commented_code_linter` and `object_usage_linter`.
 - Version floors in the templates match `DESCRIPTION`'s `Suggests`: `varPro (>= 3.2.0)`, `ggRandomForests (>= 4.0.0)`. A ggRandomForests 4.0.0 build without `varpro_coverage()` exists (rc builds before rc9 share the version string), so `vp-fit` also checks the export.
-- `options(rf.cores = 1L)` in every `setup` chunk that fits, as the rf templates do.
+- `options(rf.cores = 1L, mc.cores = 1L)` in every `setup` chunk, and `cores = 1L` on every `varpro()` call. `rf.cores` limits randomForestSRC's threads only; varPro's own workers read `cores =` or `mc.cores`.
 - Every random call is seeded: `set.seed()` before it, and `varpro()` also gets `seed = -abs(<seed>)`. `varpro()` draws on R's generator even with `seed =`.
 - Tests that fit varPro carry `skip_on_cran()`. Tests run the INSTALLED templates chunk by chunk via `rf_run()` (`tests/testthat/helper-rf.R`).
 - Local test runs that need the `vp` taxonomy row use a private library holding hvtiRutilities from `main` (Task 2 onward): `R_LIBS="$VP_LIB"`. Concurrent sessions overwrite the shared library.
@@ -485,8 +485,9 @@ suppressPackageStartupMessages({
 # One thread, so a fit reproduces from machine to machine. Left unset,
 # randomForestSRC, which varPro grows its forests with, runs on every core its
 # OpenMP build can see, and on a multi-core server a varPro result changed with
-# the thread count with every seed held fixed.
-options(rf.cores = 1L)
+# the thread count with every seed held fixed. mc.cores does the same for
+# varPro's own workers, which rf.cores does not reach.
+options(rf.cores = 1L, mc.cores = 1L)
 # The versions this template was verified against on 2026-10-21. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
@@ -946,7 +947,33 @@ test_that("vp_judge selects nothing when no noise was tested, and says so", {
   )
   out <- vp_judge_fn()(cov)
   expect_identical(out$selected, c(FALSE, FALSE))
-  expect_identical(out$bar_from, c("no noise tested", "no noise tested"))
+  expect_identical(out$bar_from, c("no usable noise bar", "no usable noise bar"))
+})
+
+test_that("vp_judge borrows no bar from noise that scored zero", {
+  # Only categorical noise was tested, and it scored 0: neither kind has a
+  # usable bar, so a categorical z of 0.05 is not selected through a
+  # "fallback" that is 0 again.
+  cov <- vp_cov(
+    variable = c("x_real", "f_null", "noise1_x", "noise2_f"),
+    kind = c("continuous", "categorical", "continuous", "categorical"),
+    noise = c(FALSE, FALSE, TRUE, TRUE),
+    tested = c(TRUE, TRUE, FALSE, TRUE),
+    z = c(2, 0.05, NA, 0)
+  )
+  out <- vp_judge_fn()(cov)
+  expect_identical(out$selected, c(FALSE, FALSE, FALSE, FALSE))
+  expect_identical(out$bar_from[1:2], c("no usable noise bar", "no usable noise bar"))
+})
+
+test_that("every varpro() call in vp-fit runs on one core", {
+  # options(rf.cores) limits randomForestSRC's threads, not varPro's own
+  # workers, which read `cores =` or mc.cores.
+  src <- paste(readLines(template_path("vp", "fit"), warn = FALSE), collapse = "\n")
+  calls <- regmatches(src, gregexpr("(?<![_[:alnum:]])varpro\\([^\n]*", src, perl = TRUE))[[1L]]
+  expect_length(calls, 2L)
+  expect_true(all(grepl("cores = 1L", calls, fixed = TRUE)))
+  expect_match(src, "options(rf.cores = 1L, mc.cores = 1L)", fixed = TRUE)
 })
 
 test_that("vp-fit selects a planted signal", {
@@ -994,21 +1021,23 @@ In `vp-fit.qmd`, between the `noise` chunk and the `provenance` chunk, insert:
 # noise tested, is replaced by the continuous bar. The continuous bar is the
 # stricter one, since continuous noise picks up split-point bias, so the rule
 # errs toward missing a real categorical effect rather than admitting a false
-# one. The table names the bar each variable was judged against.
+# one. A continuous bar is never borrowed: when no continuous noise sets a bar
+# above 0, no continuous variable is selected, because nothing calibrates it.
+# The table names the bar each variable was judged against.
 vp_judge <- function(cov) {
   noise <- cov$noise & cov$tested
+  # A bar is usable only above 0: noise that scores 0 bars nothing.
   bar_of <- function(k) {
     z <- cov$z[noise & cov$kind == k]
-    if (length(z)) max(z) else NA_real_
+    if (length(z) && max(z) > 0) max(z) else NA_real_
   }
   bar_cont <- bar_of("continuous")
   bar_cat <- bar_of("categorical")
-  if (is.na(bar_cont) && any(noise)) bar_cont <- max(cov$z[noise])
-  fallback <- is.na(bar_cat) || bar_cat <= 0
+  fallback <- is.na(bar_cat) && !is.na(bar_cont)
   if (fallback) bar_cat <- bar_cont
   cov$bar <- ifelse(cov$kind == "categorical", bar_cat, bar_cont)
   cov$bar_from <- ifelse(cov$kind == "categorical", if (fallback) "continuous (fallback)" else "categorical", "continuous")
-  cov$bar_from[is.na(cov$bar)] <- "no noise tested"
+  cov$bar_from[is.na(cov$bar)] <- "no usable noise bar"
   cov$selected <- !cov$noise & cov$tested & (cov$z > cov$bar) %in% TRUE
   cov
 }
@@ -1022,7 +1051,8 @@ vp_judge <- function(cov) {
 CACHE_DIR <- dirname(set_path("estimates", "vp.rds"))
 fit <- cache_fit(
   "vp-fit",
-  varpro(model, d_noise, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, verbose = FALSE, seed = -abs(SEED)),
+  varpro(model, d_noise, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, verbose = FALSE, cores = 1L,
+         seed = -abs(SEED)),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
 )
 ```
@@ -1102,7 +1132,7 @@ Expected: all PASS. If "vp-fit selects a planted signal" fails because `fs` or `
 
 - [ ] **Step 5: Prove the fallback test by mutation**
 
-In the `judge` chunk, change `fallback <- is.na(bar_cat) || bar_cat <= 0` to `fallback <- is.na(bar_cat)`, run `R_LIBS="$VP_LIB" Rscript -e 'devtools::test(filter = "vp-templates")'` and confirm "vp_judge falls back to the continuous bar…" FAILS. Restore the line and confirm it passes again.
+In the `judge` chunk, change `if (length(z) && max(z) > 0) max(z) else NA_real_` to `if (length(z)) max(z) else NA_real_`, run `R_LIBS="$VP_LIB" Rscript -e 'devtools::test(filter = "vp-templates")'` and confirm "vp_judge falls back to the continuous bar…" FAILS. Restore the line and confirm it passes again.
 
 - [ ] **Step 6: Commit**
 
@@ -1208,7 +1238,8 @@ if (REPEATS > 0) {
     dr <- vp_add_noise(d[rows, , drop = FALSE], PREDICTORS, NOISE_N, SEED + r)
     fr <- cache_fit(
       sprintf("vp-repeat-%02d", r),
-      varpro(model, dr, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, verbose = FALSE, seed = -abs(SEED + r)),
+      varpro(model, dr, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, verbose = FALSE, cores = 1L,
+             seed = -abs(SEED + r)),
       seed = SEED + r, dir = CACHE_DIR, refit = REFIT
     )
     set.seed(abs(SEED) + r)
@@ -1409,8 +1440,9 @@ suppressPackageStartupMessages({
   library(hvtiRutilities)
 })
 # One thread, so a partial reproduces from machine to machine: each point is a
-# prediction from VarPro's forests.
-options(rf.cores = 1L)
+# prediction from VarPro's forests. mc.cores does the same for varPro's own
+# workers, which rf.cores does not reach.
+options(rf.cores = 1L, mc.cores = 1L)
 # The versions this template was verified against on 2026-10-21.
 if (utils::packageVersion("varPro") < "3.2.0") {
   stop("This job needs varPro >= 3.2.0; ", utils::packageVersion("varPro"),

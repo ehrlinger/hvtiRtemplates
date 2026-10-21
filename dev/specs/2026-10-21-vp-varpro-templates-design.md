@@ -156,6 +156,18 @@ therefore judges the coverage table itself, in a small `vp_judge()` defined in
 a chunk of its own, so the rule can be tested on a hand-built table without a
 fit.
 
+**No bar from noise that scored 0.** A bar is usable only above 0. A
+categorical kind with no usable bar borrows the continuous bar; a continuous
+kind never borrows, because the overall bar may itself come from categorical
+noise at 0. A kind left with no usable bar has nothing selected, and the table
+says "no usable noise bar". (Found in review of the plan, 2026-10-21: borrowing
+the overall bar selected a categorical candidate at z = 0.05.)
+
+**One core.** `options(rf.cores = 1L)` limits randomForestSRC's threads, not
+varPro's own workers, which read `cores =` or `mc.cores`. Both templates set
+`options(rf.cores = 1L, mc.cores = 1L)`, and every `varpro()` call passes
+`cores = 1L`.
+
 ## 4. The handoff
 
 `vp-explain` reads the `vp.rds` that `vp-fit` saved, the way `rfs-explain`
