@@ -52,8 +52,9 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.8") {
-  stop("This job needs hvtiRtables >= 1.0.8 for hv_table_style() and the manuscript Word table; ",
+if (utils::packageVersion("hvtiRtables") < "1.0.9") {
+  stop("This job needs hvtiRtables >= 1.0.9 for hv_table_style(), the manuscript Word table and summaries that a study's ",
+       "own sd() or median() cannot break; ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {

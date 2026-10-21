@@ -132,12 +132,18 @@
   column, and shows the Word table beneath it. `SHOW_VARIABLE` now applies to
   the report only. `migrate_job()` writes `MANUSCRIPT_LAYOUT <- "describe"` for
   a `%desc_tab` job that printed mean ± SD beside the percentiles, which the
-  compare layout cannot draw. Needs hvtiRtables 1.0.8. A job scaffolded before
+  compare layout cannot draw. Needs hvtiRtables 1.0.9. A job scaffolded before
   this keeps working and keeps its report-style Word table; `upgrade_job()`
   adds the three choices, each with its `EDIT:` marker. An upgraded job with
   `CONTINUOUS_STAT "both"` stops at its Word table until `MANUSCRIPT_LAYOUT` is
   set to `"describe"`. hvtiRtables' error names `layout =`; the study choice that sets it is
   `MANUSCRIPT_LAYOUT`.
+
+* The `hvtiRtables` floor is now 1.0.9, in `DESCRIPTION` and in `dc-tables`'
+  setup check. In 1.0.7 and 1.0.8, `hv_tbl_summary()` failed with "Value must
+  be a named list of functions" on any mean±SD or median row when the study's
+  `R/` folder defined `sd` or `median`, and every job sources `R/` into the
+  global environment. 1.0.9 fixes that.
 
 # hvtiRtemplates 1.4.1
 
