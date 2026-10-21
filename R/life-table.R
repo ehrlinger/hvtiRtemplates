@@ -94,7 +94,8 @@ life_table <- function(data, time, event, strata = NULL, conf_level = 0.68268948
     p <- parts$rows[[s]]
     fit <- as.data.frame(TemporalHazard::hzr_kaplan(time = p$time, status = p$status, conf_level = conf_level,
                                                     event_only = event_only))
-    if (is.null(strata)) fit else cbind(stratum = s, fit)
+    # A stratum with no event has no event rows; rep() keeps its label the length of its table.
+    if (is.null(strata)) fit else cbind(stratum = rep(s, nrow(fit)), fit)
   })
   out <- do.call(rbind, fits)
   rownames(out) <- NULL

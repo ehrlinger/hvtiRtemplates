@@ -110,3 +110,18 @@ test_that("an event that is not 0/1 stops, naming its values", {
   d <- data.frame(t = c(1, 2, 3), e = c(0, 1, 2))
   expect_error(life_table(d, "t", "e"), "`e` must be 0/1 \\(or logical\\); it holds 2")
 })
+
+test_that("an all-censored stratum keeps its counts and its horizons, with no event rows", {
+  d <- data.frame(t = c(1, 2, 3, 4, 1.5, 2.5, 3.5), e = c(1, 1, 0, 1, 0, 0, 0),
+                  g = c("a", "a", "a", "a", "b", "b", "b"))
+  lt <- life_table(d, "t", "e", strata = "g")
+  expect_false("b" %in% lt$stratum)
+  counts <- attr(lt, "counts")
+  expect_identical(counts$n[counts$stratum == "b"], 3L)
+  expect_identical(counts$n_events[counts$stratum == "b"], 0L)
+  at <- life_table_at(d, "t", "e", times = c(1, 3), strata = "g")
+  b <- at[at$stratum == "b", ]
+  expect_identical(b$survival, c(1, 1))
+  expect_identical(b$n_risk, c(3L, 1L))
+  expect_identical(nrow(life_table_tests(d, "t", "e", "g")), 3L)
+})

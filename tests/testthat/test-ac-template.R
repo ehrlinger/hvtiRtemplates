@@ -103,3 +103,18 @@ test_that("ac's follow-up summary uses SAS's percentile definition", {
   expect_identical(row$median, 2.5)
   expect_identical(row$p25, 1.5)
 })
+
+test_that("an ac job completes when one stratum is all censored", {
+  skip_ac()
+  local_child_chunks()
+  d <- hazard_data()
+  d$grp <- ifelse(seq_len(nrow(d)) <= 20, "b", "a")
+  d$dead[d$grp == "b"] <- 0L
+  env <- ac_run(d, list(STRATA = "grp"))
+  expect_identical(env$.warnings, character(0))
+  counts <- attr(env$strata_fits$grp, "counts")
+  expect_identical(counts$n[counts$stratum == "b"], 20L)
+  expect_identical(counts$n_events[counts$stratum == "b"], 0L)
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead_pa-hz")
+  expect_true(file.exists(file.path(graphs, "ac-survival-grp.png")))
+})
