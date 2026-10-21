@@ -62,7 +62,7 @@ Lands first, so that when Task 2 puts `vp` into the taxonomy this repo's `test-r
 - [ ] **Step 1: Branch**
 
 ```bash
-cd /Users/ehrlinj/Documents/GitHub/hvtiRtemplates
+cd ~/Documents/GitHub/hvtiRtemplates
 git fetch -q origin && git checkout -b feat/vp-intake origin/main
 ```
 
@@ -187,7 +187,7 @@ The PR body says the rows wait on hvtiRutilities (Task 2) and that `/code-review
 
 ### Task 2: The `vp` taxonomy row (hvtiRutilities)
 
-**Files (repo `/Users/ehrlinj/Documents/GitHub/hvtiRutilities`):**
+**Files (repo `hvtiRutilities`, checked out beside this one):**
 - Modify: `R/taxonomy.R` (one row after the `vt` row)
 - Create: `news/feat-vp-taxonomy.md`
 
@@ -197,7 +197,7 @@ The PR body says the rows wait on hvtiRutilities (Task 2) and that `/code-review
 - [ ] **Step 1: Branch**
 
 ```bash
-cd /Users/ehrlinj/Documents/GitHub/hvtiRutilities
+cd ~/Documents/GitHub/hvtiRutilities
 git fetch -q origin && git checkout -b feat/vp-taxonomy origin/main
 ```
 
@@ -274,7 +274,7 @@ The body links the hvtiRtemplates intake PR and the spec. Before it merges, run 
 - [ ] **Step 1: Branch and private library**
 
 ```bash
-cd /Users/ehrlinj/Documents/GitHub/hvtiRtemplates
+cd ~/Documents/GitHub/hvtiRtemplates
 git fetch -q origin && git checkout -b feat/vp-templates origin/main
 export VP_LIB=/private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/vp-lib
 mkdir -p "$VP_LIB" && git -C ../hvtiRutilities fetch -q origin && git -C ../hvtiRutilities checkout -q origin/main && R CMD INSTALL -l "$VP_LIB" ../hvtiRutilities
