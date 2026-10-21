@@ -182,3 +182,31 @@ test_that("the claim is released after a submit that fails, and after one that s
   wait_for(job, c("finished", "failed", "vanished"))
 })
 
+test_that("a live pid with a different creation time is a different process, and reads vanished", {
+  job <- status_job()
+  f <- .run_files(job)$status
+  mine <- as.numeric(ps::ps_create_time(ps::ps_handle()))
+  .write_status(f, state = "running", pid = Sys.getpid(), created = sprintf("%.6f", mine - 3600))
+  expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
+  .write_status(f, state = "running", pid = Sys.getpid(), created = sprintf("%.6f", mine))
+  expect_identical(job_status(job, quiet = TRUE)$state, "running")
+})
+
+test_that("a status written without a creation time is judged by its pid alone", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "running", pid = Sys.getpid())
+  expect_identical(job_status(job, quiet = TRUE)$state, "running")
+})
+
+test_that("the runner records its creation time, and the live job reads running by it", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  .submit_job(job, final = FALSE, render_call = "Sys.sleep(60)", root = dirname(job))
+  st <- wait_for(job, "running")
+  expect_identical(st$state, "running")
+  expect_type(st$created, "character")
+  expect_lt(abs(as.numeric(st$created) - as.numeric(ps::ps_create_time(ps::ps_handle(as.integer(st$pid))))), 0.5)
+  ps::ps_kill(ps::ps_handle(as.integer(st$pid)))
+  wait_for(job, "vanished")
+})

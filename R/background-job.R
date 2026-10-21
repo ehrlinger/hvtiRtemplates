@@ -4,9 +4,19 @@
        lock = paste0(stem, ".run.lock"))
 }
 
-.pid_alive <- function(pid) {
+# A pid alone is not an identity: after reuse, any live process answers to it. When the status recorded the process's
+# creation time, both must match; an older status without one is judged by the pid alone.
+.pid_alive <- function(pid, created = NULL) {
   if (is.null(pid) || is.na(suppressWarnings(as.integer(pid)))) return(FALSE)
-  isTRUE(tryCatch(ps::ps_is_running(ps::ps_handle(as.integer(pid))), error = function(e) FALSE))
+  isTRUE(tryCatch({
+    h <- ps::ps_handle(as.integer(pid))
+    ok <- ps::ps_is_running(h)
+    created <- suppressWarnings(as.numeric(created))
+    if (ok && length(created) == 1L && !is.na(created)) {
+      ok <- abs(as.numeric(ps::ps_create_time(h)) - created) < 0.5
+    }
+    ok
+  }, error = function(e) FALSE))
 }
 
 .write_status <- function(file, ...) {
@@ -57,7 +67,7 @@ job_status <- function(path, quiet = FALSE) {
     host <- st$host
     if (is.character(host) && length(host) == 1L && !is.na(host) && !identical(host, Sys.info()[["nodename"]])) {
       other_host <- host  # sessions can land on different hosts; a pid can only be checked on its own
-    } else if (!.pid_alive(st$pid)) {
+    } else if (!.pid_alive(st$pid, st$created)) {
       st$state <- "vanished"
     }
   }
@@ -105,9 +115,13 @@ job_status <- function(path, quiet = FALSE) {
     "  invisible(status)",
     "}",
     "started <- Sys.time()",
+    # The creation time lets job_status() tell this process from a later one that reuses the pid. Recording nothing is
+    # safe: job_status() then falls back to the pid alone.
+    paste0("created <- tryCatch(list(created = sprintf('%.6f', as.numeric(ps::ps_create_time(ps::ps_handle())))), ",
+           "error = function(e) list())"),
     "stamp <- function(t) format(t, '%Y-%m-%dT%H:%M:%S%z')",
-    paste0("base <- list(pid = Sys.getpid(), host = Sys.info()[['nodename']], ",
-           "r_version = as.character(getRversion()), started = stamp(started))"),
+    paste0("base <- c(list(pid = Sys.getpid()), created, list(host = Sys.info()[['nodename']], ",
+           "r_version = as.character(getRversion()), started = stamp(started)))"),
     "put(c(list(state = 'running'), base))",
     sprintf("ok <- tryCatch({ %s; TRUE }, error = function(e) { message('Error: ', conditionMessage(e)); FALSE })",
             render_call),
