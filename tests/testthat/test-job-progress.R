@@ -87,7 +87,13 @@ test_that("a progress file that cannot be written stops reporting, not the rende
   expect_false(file.exists(file))
 })
 
-test_that("a bad progress_every stops with a message naming the option", {
+test_that("a bad progress_every falls back to 10 minutes and says so once", {
   withr::local_options(hvtiRtemplates.progress_every = 0)
-  expect_error(.progress_every(), "hvtiRtemplates.progress_every")
+  rm(list = ls(.progress_state, all.names = TRUE), envir = .progress_state)
+  first <- utils::capture.output(val <- .progress_every(), type = "message")
+  expect_equal(val, 10)
+  expect_match(paste(first, collapse = "\n"), "hvtiRtemplates.progress_every")
+  second <- utils::capture.output(val2 <- .progress_every(), type = "message")
+  expect_equal(val2, 10)
+  expect_length(second, 0)
 })

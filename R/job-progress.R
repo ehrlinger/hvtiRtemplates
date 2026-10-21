@@ -16,7 +16,12 @@
 .progress_every <- function() {
   every <- getOption("hvtiRtemplates.progress_every", 10)
   if (!is.numeric(every) || length(every) != 1L || is.na(every) || every <= 0) {
-    stop("options(hvtiRtemplates.progress_every = ) must be a positive number of minutes.", call. = FALSE)
+    # Progress is advisory and this runs inside the step callback, so a bad option must never stop a fit.
+    if (!isTRUE(.progress_state$bad_every_noted)) {
+      cat("options(hvtiRtemplates.progress_every = ) must be a positive number of minutes; using 10.\n", file = stderr())
+      .progress_state$bad_every_noted <- TRUE
+    }
+    return(10)
   }
   every
 }
@@ -39,9 +44,6 @@
   invisible(NULL)
 }
 
-# .stamp() and .write_status() live in background-job.R, which object_usage_linter reads only per file;
-# the calls are fine at run time, so the linter is switched off for this one function.
-# nolint start: object_usage_linter.
 .progress_write <- function() {
   s <- .progress_state
   if (is.null(s$file)) return(invisible(NULL))
@@ -58,7 +60,6 @@
            error = stop_reporting, warning = stop_reporting)
   invisible(NULL)
 }
-# nolint end.
 
 .progress_begin <- function(file, stages) {
   s <- .progress_state
