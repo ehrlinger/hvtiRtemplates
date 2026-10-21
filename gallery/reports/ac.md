@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 15:02
+2026-10-21 08:01
 
 An `ac` job produces life tables. Figures over the same estimates are an
 `hp` job, and the parametric fit is `hz`; neither belongs here.
@@ -43,8 +43,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
-· rendered by gallery on gallery · hvtiRtemplates 1.4.1
+**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
+· rendered by gallery on gallery · hvtiRtemplates 1.4.2
 
 ## Study choices
 
@@ -133,7 +133,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261020.parquet) |
+| Source              | dataset `built` (built_20261021.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -632,8 +632,8 @@ for (outer in sort(unique(d$cat_b))) {
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-20 15:02:47 EDT  |
-|                 | Ended            | 2026-10-20 15:02:47 EDT  |
+| Run             | Started          | 2026-10-21 08:01:11 EDT  |
+|                 | Ended            | 2026-10-21 08:01:11 EDT  |
 |                 | Duration         | 0 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -642,9 +642,9 @@ for (outer in sort(unique(d$cat_b))) {
 |                 | Template         | ac                       |
 |                 | Subject          | dead                     |
 |                 | Type             | hz                       |
-|                 | hvtiRtemplates   | 1.4.1                    |
-| Dataset `built` | Version file     | built_20261020.parquet   |
-|                 | Registered       | 2026-10-20               |
+|                 | hvtiRtemplates   | 1.4.2                    |
+| Dataset `built` | Version file     | built_20261021.parquet   |
+|                 | Registered       | 2026-10-21               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 725 rows on 725 patients |
 |                 | WHERE            | `!is.na(creat_pr)`       |

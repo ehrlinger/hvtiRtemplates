@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 15:11
+2026-10-21 08:09
 
 Explains the forest the `rfc-fit` job in this set saved: which
 predictors drive it, and how.
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.1
+hvtiRtemplates 1.4.2
 
 ## Study choices
 
@@ -289,7 +289,7 @@ save_figure(.fig, "rfc-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/54dc8877f131006e8d17489618e68fa4.png)
+![](assets/87e52f40cd4134600279166ec2ab46ab.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -380,7 +380,7 @@ Code
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/3aec4cdb67a2a97d671c90f10adf3d87.png)
+![](assets/d717e6fad61982bf6f3b586bbb8c4bcb.png)
 
 Figure 3: Predicted class probability against each selected predictor,
 as observed, one panel per predictor. Points are individual patients,
@@ -478,8 +478,8 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-20 15:11:02 EDT |
-|  | Ended | 2026-10-20 15:11:20 EDT |
+| Run | Started | 2026-10-21 08:09:00 EDT |
+|  | Ended | 2026-10-21 08:09:19 EDT |
 |  | Duration | 19 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -488,13 +488,13 @@ the spread of the partial effect at each level.
 |  | Template | rfc.explain |
 |  | Subject | complication |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261020.parquet |
-|  | Registered | 2026-10-20 |
+|  | hvtiRtemplates | 1.4.2 |
+| Dataset `built` | Version file | built_20261021.parquet |
+|  | Registered | 2026-10-21 |
 |  | Source file | built.rds |
 |  | sha256 | 07a531bb5b35 |
 |  | Manifest | current |
-| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-20 15:10:52 -0400, data built_20261020.parquet |
+| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-21 08:08:51 -0400, data built_20261021.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

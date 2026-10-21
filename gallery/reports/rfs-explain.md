@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 15:10
+2026-10-21 08:08
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -82,7 +82,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.1
+hvtiRtemplates 1.4.2
 
 ## Study choices
 
@@ -290,7 +290,7 @@ save_figure(.fig, "rfs-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/7258945dfaaa3634060b7b1496b3ad41.png)
+![](assets/15a6b6796b2723b263b488aa07c54537.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -343,7 +343,7 @@ Code
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/8dee6b83a2f6228cbec8420b1559607c.png)
+![](assets/7eae863e284a2dbd55befc2d0ae33b8a.png)
 
 Figure 3: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -474,9 +474,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-20 15:08:57 EDT |
-|  | Ended | 2026-10-20 15:10:41 EDT |
-|  | Duration | 1 min 44 s |
+| Run | Started | 2026-10-21 08:07:04 EDT |
+|  | Ended | 2026-10-21 08:08:46 EDT |
+|  | Duration | 1 min 42 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -484,13 +484,13 @@ the spread of the partial effect at each level.
 |  | Template | rfs.explain |
 |  | Subject | dead |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261020.parquet |
-|  | Registered | 2026-10-20 |
+|  | hvtiRtemplates | 1.4.2 |
+| Dataset `built` | Version file | built_20261021.parquet |
+|  | Registered | 2026-10-21 |
 |  | Source file | built.rds |
 |  | sha256 | 07a531bb5b35 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-20 15:08:45 -0400, data built_20261020.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-21 08:06:51 -0400, data built_20261021.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

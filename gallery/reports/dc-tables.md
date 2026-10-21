@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 15:01
+2026-10-21 08:00
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -14,6 +14,9 @@ summary form you select. The default is median (15th, 85th percentile).
 files; `hv_tbl_summary()` writes one table with both. It describes; with
 `BY` set it separates the groups into columns. `COMPARE` chooses whether
 to test them; a p-value here is a prompt for an analysis, not a result.
+The report shows the table in the report style, with each variable’s
+column name beside its label. The Word file holds the same table in the
+manuscript style, under its caption, as a journal receives it.
 
 Code
 
@@ -28,8 +31,9 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.7") {
-  stop("This job needs hvtiRtables >= 1.0.7 for hv_man_table_display() and hv_tbl_compare(); ",
+if (utils::packageVersion("hvtiRtables") < "1.0.9") {
+  stop("This job needs hvtiRtables >= 1.0.9 for hv_table_style(), the manuscript Word table and summaries that a study's ",
+       "own sd() or median() cannot break; ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
@@ -58,8 +62,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
-· rendered by gallery on gallery · hvtiRtemplates 1.4.1
+**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
+· rendered by gallery on gallery · hvtiRtemplates 1.4.2
 
 ## Study choices
 
@@ -134,7 +138,19 @@ CONTINUOUS_STAT <- "median"   # Demo: choose the continuous summary
 PERCENTILES <- c(15, 85)       # Demo: choose the reported percentiles
 ABBREVIATIONS <- character(0) # Demo: define abbreviations used in the table
 WORD_FILE <- "dc-tables.docx"  # Demo: choose the Word filename within this set
+MANUSCRIPT_LAYOUT <- "compare" # Demo: choose the Word table's layout
 # MIGRATE-END: dc-tables-config
+# The Word table is drawn in the manuscript style. MANUSCRIPT_LAYOUT, above,
+# says what the table does: "compare" puts one n column beside the groups it
+# compares; "describe" puts a count beside each group, for cohorts or repeated
+# measures shown side by side. "describe" is also the layout that draws
+# CONTINUOUS_STAT "both": "compare" has one statistic column per group.
+# Demo: the Word table's caption, written in bold above it. A manuscript
+# table must carry one, so the title is never typed into Word by hand.
+MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"
+# Demo: the shading of the Word table's section rows, one color "#RRGGBB".
+# Journals differ here; "#CAEDFB" is the house default.
+MANUSCRIPT_FILL <- "#CAEDFB"
 # Demo: force a bucket where the data guess wrong, e.g. an ordinal score you
 # want summarized as continuous: list(continuous = c("nyha_pr")). list() for none.
 OVERRIDES <- list()
@@ -155,8 +171,8 @@ STDDIFF <- FALSE
 # Demo: with STDDIFF, the value of BY that is the treated group, such as
 # "tavr". NULL when BY is coded 0/1, where 1 is treated.
 GROUP_1 <- NULL
-# Demo: FALSE drops the Variable column, the column name beside each label.
-# Keep it for the analysis report; drop it for a manuscript table.
+# Demo: FALSE drops the Variable column, the column name beside each label,
+# from the report. The Word table never carries it, whatever this says.
 SHOW_VARIABLE <- TRUE
 # Demo: NULL skips the correlation variant (dc.tables.ods_<topic>.sas). To run
 # it, name the numeric columns, the anchor to correlate them against (NULL for
@@ -192,7 +208,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261020.parquet) |
+| Source              | dataset `built` (built_20261021.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -371,20 +387,11 @@ if (STDDIFF) {
   tbl <- hvtiRtables::hv_tbl_compare(tbl, stddiff_values(d, BY, buckets, MEAN_SD, ORDINAL, GROUP_1),
                                      label = "Std. Diff. (%)")
 }
-# The table as it is saved to Word, so the report and the .docx are one table:
-# hv_man_table_display() adds the header marks, notes and abbreviation key the
-# saver writes, from the saver's own code. ft itself is what is saved.
+# The report's table, in the report style. hv_man_table_display() adds the
+# header marks, notes and abbreviation key the Word table carries, from the
+# saver's own code.
 ft <- hvtiRtables::hv_man_table(tbl)
 hvtiRtables::hv_man_table_display(ft, abbreviations = ABBREVIATIONS)
-if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
-      !grepl("^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$", WORD_FILE)) {
-  stop("WORD_FILE must be a plain .docx filename within this set.", call. = FALSE)
-}
-word_path <- file.path(study_dir("documents", .root), paste0(SUBJECT, "-", TYPE), WORD_FILE)
-dir.create(dirname(word_path), recursive = TRUE, showWarnings = FALSE)
-hvtiRtables::hv_man_table_save(ft, word_path, abbreviations = ABBREVIATIONS)
-check <- hvtiRtables::hv_check_docx(word_path)
-if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)
 ```
 
 | Characteristic | Variable | No.\* | N = 800† |
@@ -413,8 +420,65 @@ if (nrow(check)) stop("Word output failed the CORR structural check", call. = FA
 | \* Number of non-missing values. |  |  |  |
 | † No. (%) or Median \[15th, 85th percentiles\]. |  |  |  |
 
-Table 2: Summary statistics for the study cohort, as written to the Word
-file
+Table 2: Summary statistics for the study cohort
+
+Code
+
+``` r
+# unnumbered: writes the Word file; the table below shows what it holds
+# The same summary, drawn for the manuscript. MANUSCRIPT_CAPTION is written into
+# the .docx above the table; this report numbers its own tables. The tbl-word
+# chunk below shows word_ft, so it cannot run without this chunk: if the Word
+# table stops here, fix MANUSCRIPT_LAYOUT rather than skipping the chunk.
+word_ft <- hvtiRtables::hv_man_table(
+  tbl, style = hvtiRtables::hv_table_style("manuscript", fill = MANUSCRIPT_FILL),
+  layout = MANUSCRIPT_LAYOUT
+)
+if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
+      !grepl("^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$", WORD_FILE)) {
+  stop("WORD_FILE must be a plain .docx filename within this set.", call. = FALSE)
+}
+word_path <- file.path(study_dir("documents", .root), paste0(SUBJECT, "-", TYPE), WORD_FILE)
+dir.create(dirname(word_path), recursive = TRUE, showWarnings = FALSE)
+hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS, caption = MANUSCRIPT_CAPTION)
+# The manuscript style merges its header and section rows, and nothing else.
+check <- hvtiRtables::hv_check_docx(word_path, style = "manuscript")
+if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)
+```
+
+Code
+
+``` r
+hvtiRtables::hv_man_table_display(word_ft, abbreviations = ABBREVIATIONS)
+```
+
+| Characteristic | n\* | All patients (N = 800)† |
+|----|----|----|
+| Demography |  |  |
+| Age at operation (years) | 800 | 63 \[49, 75\] |
+| Female | 800 | 299 (37) |
+| Race | 800 |  |
+| Black |  | 111 (14) |
+| Other |  | 58 (7.3) |
+| White |  | 631 (79) |
+| Body mass index (kg/m2) | 800 | 28 \[23, 32\] |
+| History |  |  |
+| History of heart failure | 800 | 243 (30) |
+| Diabetes | 800 | 175 (22) |
+| NYHA functional class | 800 |  |
+| 1 |  | 129 (16) |
+| 2 |  | 360 (45) |
+| 3 |  | 275 (34) |
+| 4 |  | 36 (4.5) |
+| Echo |  |  |
+| LV ejection fraction (%) | 800 | 52 \[42, 62\] |
+| LV mass index (g/m2) | 800 | 121 \[91, 152\] |
+| Laboratory |  |  |
+| Creatinine (mg/dL) | 725 | 1.0 \[0.75, 1.4\] |
+| \*Patients with non-missing data. |  |  |
+| †Values are No. (%) or median \[15th, 85th percentiles\]. |  |  |
+
+Table 3: The table as saved to Word, in the manuscript style
 
 ## Correlations
 
@@ -457,8 +521,8 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-20 15:01:44 EDT  |
-|                 | Ended            | 2026-10-20 15:01:45 EDT  |
+| Run             | Started          | 2026-10-21 08:00:07 EDT  |
+|                 | Ended            | 2026-10-21 08:00:08 EDT  |
 |                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -467,9 +531,9 @@ Correlation variant not requested (`CORR <- NULL`).
 |                 | Template         | dc.tables                |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.4.1                    |
-| Dataset `built` | Version file     | built_20261020.parquet   |
-|                 | Registered       | 2026-10-20               |
+|                 | hvtiRtemplates   | 1.4.2                    |
+| Dataset `built` | Version file     | built_20261021.parquet   |
+|                 | Registered       | 2026-10-21               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 15:11
+2026-10-21 08:09
 
 Explains the forest the `rfr-fit` job in this set saved: which
 predictors drive it, and how.
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.1
+hvtiRtemplates 1.4.2
 
 ## Study choices
 
@@ -284,7 +284,7 @@ save_figure(.fig, "rfr-explain-varpro", height = 7)
 .fig
 ```
 
-![](assets/4ecd318f1c90e4eb91084e441d7efef8.png)
+![](assets/b7a707f50bb0533c3dac2f72a13c2883.png)
 
 Figure 2: VarPro importance of each predictor. Each box spans the 15th
 to the 85th percentile of the predictor’s importance, with a line at the
@@ -437,9 +437,9 @@ the spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-20 15:11:37 EDT |
-|  | Ended | 2026-10-20 15:11:57 EDT |
-|  | Duration | 20 s |
+| Run | Started | 2026-10-21 08:09:39 EDT |
+|  | Ended | 2026-10-21 08:09:58 EDT |
+|  | Duration | 19 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -447,13 +447,13 @@ the spread of the partial effect at each level.
 |  | Template | rfr.explain |
 |  | Subject | los |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.4.1 |
-| Dataset `built` | Version file | built_20261020.parquet |
-|  | Registered | 2026-10-20 |
+|  | hvtiRtemplates | 1.4.2 |
+| Dataset `built` | Version file | built_20261021.parquet |
+|  | Registered | 2026-10-21 |
 |  | Source file | built.rds |
 |  | sha256 | 07a531bb5b35 |
 |  | Manifest | current |
-| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-20 15:11:26 -0400, data built_20261020.parquet |
+| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-21 08:09:29 -0400, data built_20261021.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

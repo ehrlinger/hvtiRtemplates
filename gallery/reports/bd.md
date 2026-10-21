@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 14:58
+2026-10-21 07:57
 
 This job cuts the study’s dataset from a master snapshot, records who
 was excluded and why, and writes the study’s working dataset with its
@@ -18,7 +18,7 @@ sees them); imputation, propensity scores and variables for one model (a
 `vars` job); printing patient rows to check them (do that in the
 console, never in a report).
 
-**final** · rendered by gallery on gallery · hvtiRtemplates 1.4.1
+**final** · rendered by gallery on gallery · hvtiRtemplates 1.4.2
 
 ## Study choices
 
@@ -38,8 +38,8 @@ console, never in a report).
 | Rows in the dataset | 683 |
 | Patients | 683 |
 | Columns | 14 |
-| Study dataset before | built_20261020.parquet |
-| Study dataset after | built_20261020.parquet |
+| Study dataset before | built_20261021.parquet |
+| Study dataset after | built_20261021.parquet |
 | Registration | Working file only: nothing registered |
 
 Table 1: Run mode, master snapshot, row counts and dataset registration
@@ -81,8 +81,8 @@ Table 3: Type, missing count and range of each column
 
 | Group           | Item             | Value                   |
 |:----------------|:-----------------|:------------------------|
-| Run             | Started          | 2026-10-20 14:58:50 EDT |
-|                 | Ended            | 2026-10-20 14:58:50 EDT |
+| Run             | Started          | 2026-10-21 07:57:03 EDT |
+|                 | Ended            | 2026-10-21 07:57:04 EDT |
 |                 | Duration         | 0 s                     |
 |                 | Status           | final                   |
 |                 | Rendered by      | gallery                 |
@@ -91,6 +91,6 @@ Table 3: Type, missing count and range of each column
 |                 | Template         | bd                      |
 |                 | Subject          | study                   |
 |                 | Type             | build                   |
-|                 | hvtiRtemplates   | 1.4.1                   |
+|                 | hvtiRtemplates   | 1.4.2                   |
 | Reproducibility | renv             | not active              |
 |                 | renv.lock sha256 | d09f96b6cd21            |

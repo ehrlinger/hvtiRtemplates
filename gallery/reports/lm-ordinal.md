@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-20 15:04
+2026-10-21 08:02
 
 Fits a proportional-odds cumulative-logit model. The complete outcome
 order is declared rather than inferred, and thresholds remain distinct
@@ -34,8 +34,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261020.parquet`, registered 2026-10-20
-· rendered by gallery on gallery · hvtiRtemplates 1.4.1
+**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
+· rendered by gallery on gallery · hvtiRtemplates 1.4.2
 
 Code
 
@@ -115,7 +115,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTOR
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261020.parquet) |
+| Source              | dataset `built` (built_20261021.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -243,8 +243,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-20 15:04:03 EDT  |
-|                 | Ended            | 2026-10-20 15:04:03 EDT  |
+| Run             | Started          | 2026-10-21 08:02:32 EDT  |
+|                 | Ended            | 2026-10-21 08:02:33 EDT  |
 |                 | Duration         | 0 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -253,9 +253,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |                 | Template         | lm.ordinal               |
 |                 | Subject          | mr                       |
 |                 | Type             | model                    |
-|                 | hvtiRtemplates   | 1.4.1                    |
-| Dataset `built` | Version file     | built_20261020.parquet   |
-|                 | Registered       | 2026-10-20               |
+|                 | hvtiRtemplates   | 1.4.2                    |
+| Dataset `built` | Version file     | built_20261021.parquet   |
+|                 | Registered       | 2026-10-21               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
