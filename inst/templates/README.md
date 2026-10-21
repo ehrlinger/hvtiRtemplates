@@ -500,11 +500,11 @@ interactive session and names the `submit_job()` call to use. `nb-boostmtree`
 does so today. Once the fit is cached, its chunks run interactively and load it.
 
 A render records how far it has got in `<job>.run.progress`, beside the job: the chunk
-running, the step within it where the template reports steps (boostmtree iterations and
-partial-effect predictions), and how long each finished chunk took. `job_status()` prints
+running, the step within it where a template reports steps, and how long each finished
+chunk took. Every job records its chunks; steps appear only for a chunk that reports them. `job_status()` prints
 it, with an estimate of the time left in the current chunk, and says when nothing has moved
 for half an hour or more. The render log gets a line as each chunk starts and ends, and,
-within a long chunk, a line at most every ten minutes:
+within a chunk that reports steps, a line at most every ten minutes:
 `options(hvtiRtemplates.progress_every = 5)` makes that five. A render started from a
 terminal without `submit_job()` records progress too.
 
