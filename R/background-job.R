@@ -13,7 +13,11 @@
     ok <- ps::ps_is_running(h)
     created <- suppressWarnings(as.numeric(created))
     if (ok && length(created) == 1L && !is.na(created)) {
-      ok <- abs(as.numeric(ps::ps_create_time(h)) - created) < 0.5
+      # 60 s, erring toward "alive": pid reuse means a NEW process, whose creation time differs from a long-running
+      # job's by far more than a minute, while Linux derives it from btime in /proc/stat (whole seconds) and clock
+      # steps (chrony makestep, VM resume) shift it, so a tight bound could read a live job as vanished and let a
+      # duplicate render start.
+      ok <- abs(as.numeric(ps::ps_create_time(h)) - created) < 60
     }
     ok
   }, error = function(e) FALSE))
@@ -40,8 +44,8 @@
 #' @return Invisibly, a list: \code{state} is one of \code{"none"},
 #'   \code{"submitted"}, \code{"running"}, \code{"finished"}, \code{"failed"}
 #'   or \code{"vanished"}; the other elements are what the status file
-#'   recorded (\code{pid}, \code{started}, \code{ended}, \code{exit_code},
-#'   \code{elapsed_s}, \code{r_version}), and \code{log}, the log file's path.
+#'   recorded (\code{pid}, \code{created}, \code{host}, \code{started},
+#'   \code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version}), and \code{log}, the log file's path.
 #' @examples
 #' job <- file.path(tempdir(), "example.qmd")
 #' writeLines("---\ntitle: example\n---", job)
@@ -136,7 +140,10 @@ job_status <- function(path, quiet = FALSE) {
   # mkdir is atomic: of two callers that reach this point together, one creates the directory and the other is refused,
   # so the status check below and the submission that follows it cannot interleave with another submit.
   if (!dir.create(files$lock, showWarnings = FALSE)) {
-    stop("submit_job(): ", basename(path), " is being submitted by another call (", files$lock, " exists). ",
+    if (!dir.exists(files$lock)) stop("submit_job(): cannot create ", files$lock, ".", call. = FALSE)
+    age <- difftime(Sys.time(), file.info(files$lock)$mtime, units = "secs")
+    stop("submit_job(): ", basename(path), " is being submitted by another call (", files$lock, " exists, ",
+         if (is.na(age)) "age unknown" else sprintf("%.0f s old", age), "). ",
          "If no submit is in progress, a crashed one left it behind: delete that directory and submit again.",
          call. = FALSE)
   }
@@ -177,7 +184,9 @@ job_status <- function(path, quiet = FALSE) {
 #' \code{submit_job()}, from the study root, so the study's \code{renv} and
 #' \code{.Renviron} apply. It writes \code{<job>.run.log} (everything the render
 #' prints) and \code{<job>.run.yml} (its state) beside the job; read the state
-#' with \code{\link{job_status}}. A job already running is not started twice.
+#' with \code{\link{job_status}}. A job already running is not started twice: a
+#' \code{<job>.run.lock} directory is taken while a submit is in progress, and a
+#' submit that crashed can leave it behind, in which case delete it to try again.
 #' Not available on Windows, which cannot detach a process this way.
 #'
 #' @param path Character(1). The job's \code{.qmd} file.

@@ -162,6 +162,7 @@ test_that("a submit is refused, launching nothing, while another call holds the 
   expect_true(dir.create(f$lock))
   expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), f$lock, fixed = TRUE)
   expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "delete that directory", fixed = TRUE)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "s old", fixed = TRUE)
   expect_false(file.exists(f$log))
   expect_false(file.exists(f$runner))
   expect_false(file.exists(f$status))
@@ -209,4 +210,24 @@ test_that("the runner records its creation time, and the live job reads running 
   expect_lt(abs(as.numeric(st$created) - as.numeric(ps::ps_create_time(ps::ps_handle(as.integer(st$pid))))), 0.5)
   ps::ps_kill(ps::ps_handle(as.integer(st$pid)))
   wait_for(job, "vanished")
+})
+
+test_that("an unwritable directory says the claim cannot be created, not that another call holds it", {
+  skip_on_os("windows")
+  skip_on_cran()
+  skip_if(identical(Sys.info()[["user"]], "root"))
+  job <- status_job()
+  Sys.chmod(dirname(job), "555")
+  withr::defer(Sys.chmod(dirname(job), "755"))
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "cannot create", fixed = TRUE)
+})
+
+test_that("a creation time 30 s off still reads running, and one 10 minutes off reads vanished", {
+  job <- status_job()
+  f <- .run_files(job)$status
+  mine <- as.numeric(ps::ps_create_time(ps::ps_handle()))
+  .write_status(f, state = "running", pid = Sys.getpid(), created = sprintf("%.6f", mine + 30))
+  expect_identical(job_status(job, quiet = TRUE)$state, "running")
+  .write_status(f, state = "running", pid = Sys.getpid(), created = sprintf("%.6f", mine - 600))
+  expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
 })

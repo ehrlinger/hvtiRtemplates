@@ -44,14 +44,20 @@ job_status(path)                  # reads and reports the status
   apply (including `OPENBLAS_NUM_THREADS=1` where a study sets it).
 - The runner calls `hvtiRtemplates::render_job(path, final = final)` unchanged: a
   background render is exactly an ordinary render.
-- Two files beside the job:
+- Three entries beside the job (the last is transient):
   - `<job>.run.log`: everything the render prints.
+  - `<job>.run.lock`: a directory taken (mkdir is atomic) while `submit_job()`
+    checks the status and launches, so two callers cannot both start a render.
+    Removed on exit; a crashed submit can leave it, and the refusal says to
+    delete it.
   - `<job>.run.yml`: the status. The runner writes `state: running`, `pid`,
-    `r_version`, `started` before rendering, then on exit `state: finished` or
+    `created` (the process creation time, so a reused pid is not mistaken for
+    the job), `host`, `r_version`, `started` before rendering, then on exit `state: finished` or
     `failed`, `exit_code`, `ended`, `elapsed`.
 - `job_status()` reads the file. A process that was killed outright never writes
   its end state, so for `state: running` it checks whether `pid` is alive and
-  reports `running` or `vanished`.
+  reports `running` or `vanished`; where `created` was recorded it must match
+  too, and a status without it is judged by `pid` alone.
 - `submit_job()` refuses to start while the status reads `running` and that `pid`
   is alive.
 - Both return the status invisibly as a list; `job_status()` also prints one line.

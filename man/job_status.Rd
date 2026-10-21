@@ -15,8 +15,8 @@ job_status(path, quiet = FALSE)
 Invisibly, a list: \code{state} is one of \code{"none"},
   \code{"submitted"}, \code{"running"}, \code{"finished"}, \code{"failed"}
   or \code{"vanished"}; the other elements are what the status file
-  recorded (\code{pid}, \code{started}, \code{ended}, \code{exit_code},
-  \code{elapsed_s}, \code{r_version}), and \code{log}, the log file's path.
+  recorded (\code{pid}, \code{created}, \code{host}, \code{started},
+  \code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version}), and \code{log}, the log file's path.
 }
 \description{
 Reads the status \code{\link{submit_job}} keeps beside a job,
