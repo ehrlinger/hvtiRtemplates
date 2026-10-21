@@ -1,6 +1,7 @@
 .run_files <- function(path) {
   stem <- sub("[.]qmd$", "", path)
-  list(log = paste0(stem, ".run.log"), status = paste0(stem, ".run.yml"), runner = paste0(stem, ".runner"))
+  list(log = paste0(stem, ".run.log"), status = paste0(stem, ".run.yml"), runner = paste0(stem, ".runner"),
+       lock = paste0(stem, ".run.lock"))
 }
 
 .pid_alive <- function(pid) {
@@ -118,6 +119,14 @@ job_status <- function(path, quiet = FALSE) {
 
 .submit_job <- function(path, final, render_call, root) {
   files <- .run_files(path)
+  # mkdir is atomic: of two callers that reach this point together, one creates the directory and the other is refused,
+  # so the status check below and the submission that follows it cannot interleave with another submit.
+  if (!dir.create(files$lock, showWarnings = FALSE)) {
+    stop("submit_job(): ", basename(path), " is being submitted by another call (", files$lock, " exists). ",
+         "If no submit is in progress, a crashed one left it behind: delete that directory and submit again.",
+         call. = FALSE)
+  }
+  on.exit(unlink(files$lock, recursive = TRUE), add = TRUE)
   # "submitted" too: the gap before the runner records "running" must not let a second copy start.
   now <- job_status(path, quiet = TRUE)
   if (now$state %in% c("submitted", "running")) {

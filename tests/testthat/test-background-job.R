@@ -15,6 +15,7 @@ test_that("the run files sit beside the job, and the runner has no .R extension"
   expect_identical(f$log, "/s/analyses/nb.x.run.log")
   expect_identical(f$status, "/s/analyses/nb.x.run.yml")
   expect_identical(f$runner, "/s/analyses/nb.x.runner")
+  expect_identical(f$lock, "/s/analyses/nb.x.run.lock")
 })
 
 test_that("running is reported only while the recorded process is alive", {
@@ -154,3 +155,30 @@ test_that("submit_job() refuses Windows and a path that is not a job", {
   job <- status_job()
   expect_error(submit_job(job), "Windows")
 })
+
+test_that("a submit is refused, launching nothing, while another call holds the claim", {
+  job <- status_job()
+  f <- .run_files(job)
+  expect_true(dir.create(f$lock))
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), f$lock, fixed = TRUE)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "delete that directory", fixed = TRUE)
+  expect_false(file.exists(f$log))
+  expect_false(file.exists(f$runner))
+  expect_false(file.exists(f$status))
+  expect_true(dir.exists(f$lock))  # the holder's claim is not ours to release
+})
+
+test_that("the claim is released after a submit that fails, and after one that succeeds", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  f <- .run_files(job)
+  dir.create(f$log)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "cannot write the log file")
+  expect_false(dir.exists(f$lock))
+  unlink(f$log, recursive = TRUE)
+  .submit_job(job, final = FALSE, render_call = "1", root = dirname(job))
+  expect_false(dir.exists(f$lock))
+  wait_for(job, c("finished", "failed", "vanished"))
+})
+
