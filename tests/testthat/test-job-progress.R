@@ -221,6 +221,41 @@ test_that("the document hook that was set before the install still runs, and doe
   expect_identical(count(), first)
 })
 
+test_that("a knit_child() inside a chunk does not end the document: its document hook is not the last", {
+  dir <- withr::local_tempdir()
+  withr::local_dir(dir)
+  file <- file.path(dir, "x.run.progress")
+  writeLines(c("```{r setup}",
+               sprintf("p <- hvtiRtemplates:::.progress_install(%s)", deparse(file)),
+               "```",
+               "```{r a}",
+               "invisible(knitr::knit_child(text = 'plain text', quiet = TRUE))",
+               sprintf("options(seen_in_a = yaml::read_yaml(%s)$done)", deparse(file)),
+               "```",
+               "```{r b}", "1", "```"), "x.Rmd")
+  withr::defer(knitr::knit_hooks$delete("hvti_progress"))
+  withr::defer(options(seen_in_a = NULL))
+  quietly(knitr::knit("x.Rmd", "x.md", quiet = TRUE))
+  expect_length(getOption("seen_in_a"), 0L)
+  done <- yaml::read_yaml(file)$done
+  expect_identical(vapply(done, `[[`, "", "stage"), c("a", "b"))
+  expect_false(any(vapply(done, function(d) isTRUE(d$cached), NA)))
+})
+
+test_that("the hardening: a stage already done is never appended again", {
+  local_clock()
+  file <- progress_file()
+  quietly(.progress_begin(file, c("a", "b")))
+  quietly(.progress_stage("a", TRUE))
+  quietly(.progress_stage("a", FALSE))
+  quietly(.progress_stage("a", FALSE))
+  .progress_fill(c("a", "b"))
+  .progress_fill(c("a", "b"))
+  .progress_write()
+  .progress_finish()
+  expect_identical(vapply(yaml::read_yaml(file)$done, `[[`, "", "stage"), c("a", "b"))
+})
+
 test_that("outside a knit nothing is recorded and the factory returns NULL", {
   file <- file.path(withr::local_tempdir(), "x.run.progress")
   p <- .progress_install(file)
@@ -336,6 +371,7 @@ malformed_progress <- list(
   "pid is text"            = set_field("pid", "abc"),
   "host is a number"       = set_field("host", 5L),
   "host is a vector"       = set_field("host", c("a", "b")),
+  "skipped is text"        = set_field("done", list(list(stage = "tbl-data", elapsed_s = 3L, skipped = "yes"))),
   "cached is text"         = set_field("done", list(list(stage = "tbl-data", elapsed_s = 3L, cached = "yes")))
 )
 
@@ -364,6 +400,26 @@ test_that("the state taken from progress refuses a pid that is not one number, s
   expect_error(.state_from_progress(c(p, list(pid = c(1L, 2L)))))
   expect_error(.state_from_progress(c(p, list(pid = "abc"))))
   expect_identical(.state_from_progress(c(p, list(pid = 7L)))$state, "finished")
+})
+
+test_that("stages left after a stop_here() are skipped, not cached, and the stage table says so", {
+  local_clock(Sys.time())
+  withr::defer(.partial_state$points <- NULL)
+  .partial_state$points <- list(list(line = 12L, kind = "stop", reason = "x"))
+  job <- status_job_progress()
+  file <- .run_files(job)$progress
+  quietly(.progress_begin(file, c("a", "b", "c")))
+  quietly(.progress_stage("a", TRUE))
+  quietly(.progress_stage("a", FALSE))
+  .progress_finish()
+  done <- yaml::read_yaml(file)$done
+  expect_identical(vapply(done, function(d) isTRUE(d$skipped), NA), c(FALSE, TRUE, TRUE))
+  expect_false(any(vapply(done, function(d) isTRUE(d$cached), NA)))
+  p <- yaml::read_yaml(file)
+  p$pid <- 999999L
+  yaml::write_yaml(p, file)
+  out <- paste(utils::capture.output(job_status(job)), collapse = "\n")
+  expect_match(out, "b +skipped")
 })
 
 test_that("the progress path of a Quarto intermediate is the job's, beside it", {

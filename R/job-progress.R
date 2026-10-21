@@ -83,20 +83,29 @@
   .progress_write()
 }
 
+.progress_done_stages <- function(done) vapply(done, function(d) d$stage, "")
+
+# Records `stages` as done without having run, and says why: "skipped" after a stop_here(), else "cached".
+.progress_fill <- function(stages) {
+  s <- .progress_state
+  stopped <- any(vapply(.partial_state$points, function(p) identical(p$kind, "stop"), NA))
+  for (m in setdiff(stages, .progress_done_stages(s$done))) {
+    s$done[[length(s$done) + 1L]] <- c(list(stage = m, elapsed_s = 0L), if (stopped) list(skipped = TRUE) else list(cached = TRUE))
+  }
+}
+
 .progress_stage <- function(label, before) {
   s <- .progress_state
   if (is.null(s$file) || !isTRUE(label %in% s$stages)) return(invisible(NULL))
   if (isTRUE(before)) {
     # knitr runs no hook for a chunk it reuses from its cache, so an earlier stage that never reported was cached.
-    for (earlier in setdiff(s$stages[seq_len(match(label, s$stages) - 1L)], vapply(s$done, function(d) d$stage, ""))) {
-      s$done[[length(s$done) + 1L]] <- list(stage = earlier, elapsed_s = 0L, cached = TRUE)
-    }
+    .progress_fill(s$stages[seq_len(match(label, s$stages) - 1L)])
     s$stage <- label
     s$stage_index <- match(label, s$stages)
     s$stage_started <- .now()
     s$step <- s$steps <- s$unit <- s$step_started <- s$step_base <- NULL
     .progress_log(sprintf("%s  started (%d of %d)", label, s$stage_index, length(s$stages)))
-  } else if (identical(label, s$stage)) {
+  } else if (identical(label, s$stage) && !label %in% .progress_done_stages(s$done)) {
     elapsed <- as.numeric(difftime(.now(), s$stage_started, units = "secs"))
     s$done[[length(s$done) + 1L]] <- list(stage = label, elapsed_s = as.integer(round(elapsed)))
     .progress_log(sprintf("%s  done in %s", label, .fmt_dur(elapsed)))
@@ -109,9 +118,8 @@
 .progress_finish <- function() {
   s <- .progress_state
   if (is.null(s$file)) return(invisible(NULL))
-  missing <- setdiff(s$stages, vapply(s$done, function(d) d$stage, ""))
-  if (!length(missing)) return(invisible(NULL))
-  for (m in missing) s$done[[length(s$done) + 1L]] <- list(stage = m, elapsed_s = 0L, cached = TRUE)
+  if (!length(setdiff(s$stages, .progress_done_stages(s$done)))) return(invisible(NULL))
+  .progress_fill(s$stages)
   .progress_write()
 }
 
@@ -171,7 +179,8 @@
   # document hook at the start of each knit, so this does not stack across renders.
   previous <- knitr::knit_hooks$get("document")
   knitr::knit_hooks$set(document = function(x) {
-    tryCatch(.progress_finish(), error = function(e) NULL)
+    # knitr applies the document hook to every knit_child() too, which is not the end of the document.
+    if (!isTRUE(knitr::opts_knit$get("child"))) tryCatch(.progress_finish(), error = function(e) NULL)
     previous(x)
   })
   knitr::opts_chunk$set(hvti_progress = TRUE)
@@ -184,9 +193,10 @@
 # TRUE when the fields job_status() does arithmetic on have the shape the writer gives them.
 .progress_shape_ok <- function(p) {
   stamp_ok <- function(x) is.character(x) && length(x) == 1L && !is.na(.parse_stamp(x))
+  flag_ok <- function(x) is.null(x) || (is.logical(x) && length(x) == 1L && !is.na(x))
   done_ok <- is.null(p$done) || (is.list(p$done) && all(vapply(p$done, function(d) {
     is.list(d) && is.character(d$stage) && length(d$stage) == 1L && is.numeric(d$elapsed_s) && length(d$elapsed_s) == 1L &&
-      is.finite(d$elapsed_s) && (is.null(d$cached) || (is.logical(d$cached) && length(d$cached) == 1L && !is.na(d$cached)))
+      is.finite(d$elapsed_s) && flag_ok(d$cached) && flag_ok(d$skipped)
   }, NA)))
   process_ok <- .num1_or_null(p$pid) && (is.null(p$host) || (is.character(p$host) && length(p$host) == 1L))
   process_ok && stamp_ok(p$updated) && stamp_ok(p$started) && (is.null(p$stage_started) || stamp_ok(p$stage_started)) &&
@@ -255,13 +265,13 @@
   if (!is.null(prog$error)) return(paste0("  progress: ", prog$error))
   stages_done <- vapply(prog$done, function(d) d$stage, "")
   secs_done <- vapply(prog$done, function(d) as.numeric(d$elapsed_s), 0)
-  was_cached <- vapply(prog$done, function(d) isTRUE(d$cached), NA)
+  how <- vapply(prog$done, function(d) if (isTRUE(d$skipped)) "skipped" else if (isTRUE(d$cached)) "cached" else "", "")
   if (!identical(state, "running")) {
     stopped <- if (state %in% c("failed", "vanished") && !is.null(prog$stage) && !prog$stage %in% stages_done) {
       sprintf("  stopped in %s (%s of %s)", prog$stage, prog$stage_index, prog$stage_count)
     }
     times <- if (length(stages_done)) {
-      c("  stage times:", sprintf("    %-28s %s", stages_done, ifelse(was_cached, "cached", vapply(secs_done, .fmt_dur, ""))))
+      c("  stage times:", sprintf("    %-28s %s", stages_done, ifelse(nzchar(how), how, vapply(secs_done, .fmt_dur, ""))))
     }
     return(c(stopped, times))
   }
