@@ -357,23 +357,27 @@ test_that("endpoint-driven templates own explicit cohort definitions", {
   }
 
   # The first jobs of a hazard set. hm, hp and hs take these counts from the
-  # upstream hand-off instead (#177), which test-hazard-chain.R asserts.
+  # upstream hand-off instead (#177), which test-hazard-chain.R asserts. hz
+  # ships invalid counts, so an unedited fit stops; ac's are optional since the
+  # biostats team review (2026-10-21), and checked only when given.
   templates <- c(ac = "EVENT", hz = "EVENT")
+  shipped <- c(
+    ac = "^EXPECTED <- NULL$",
+    hz = "^EXPECTED <- list\\(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_\\)$"
+  )
+  asserted <- c(ac = "^if \\(!is.null\\(EXPECTED\\)\\) ", hz = "^")
   for (prefix in names(templates)) {
     src <- readLines(hazard_template(prefix), warn = FALSE)
     event <- templates[[prefix]]
     info <- paste0(prefix, ".qmd")
 
-    expect_true(any(grepl(
-      "^EXPECTED <- list\\(n = NA_integer_, n_events = NA_integer_, n_censored = NA_integer_\\)$",
-      src
-    )), info = paste(info, "has no deliberately invalid expected counts"))
+    expect_true(any(grepl(shipped[[prefix]], src)), info = paste(info, "does not ship its expected counts as designed"))
     expect_true(any(grepl(
       paste0("^cc <- cohort_counts\\(d, event = ", event, ", time = TIME\\)$"),
       src
     )), info = paste(info, "does not count its own event and time columns"))
     expect_true(any(grepl(
-      paste0("^assert_cohort\\(d, expected = EXPECTED, event = ", event, ", time = TIME\\)$"),
+      paste0(asserted[[prefix]], "assert_cohort\\(d, expected = EXPECTED, event = ", event, ", time = TIME\\)$"),
       src
     )), info = paste(info, "does not assert its own expected counts"))
     expect_false(grepl("_study[.]yml.*cohort|cohort.*_study[.]yml",
