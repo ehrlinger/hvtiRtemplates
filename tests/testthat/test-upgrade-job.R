@@ -228,3 +228,41 @@ test_that("upgrade_job() installs the study's provenance hooks", {
   expect_true(any(grepl("pre-render", config, fixed = TRUE)))
   expect_true(any(grepl("post-render", config, fixed = TRUE)))
 })
+
+# A study job that reports through a hand-added stopgap, `.bm_progress()`, defined in the job. The template now
+# reports through the job's own `get(".job")$progress()`, and an upgrade must leave exactly that one reporter.
+nb_stopgap_job <- function(root, helper_in) {
+  job <- add_job("nb", subject = "lvef", type = "boost", dir = root, qualifier = "boostmtree")
+  lines <- readLines(job)
+  fit <- grep('progress = get(".job")$progress("iteration")', lines, fixed = TRUE)
+  eff <- grep('progress = get(".job")$progress("prediction")', lines, fixed = TRUE)
+  stopifnot(length(fit) == 1L, length(eff) == 1L)
+  lines[[fit]] <- sub('get(".job")$progress("iteration")', 'get(".bm_progress")("fit")', lines[[fit]], fixed = TRUE)
+  lines[[eff]] <- sub('get(".job")$progress("prediction")', 'get(".bm_progress")("partial effects")', lines[[eff]], fixed = TRUE)
+  helper <- ".bm_progress <- function(label) function(step, steps) cat(label, step, steps, '\\n', file = stderr())"
+  chunks <- hvtiRtemplates:::.qmd_chunks(lines)
+  target <- if (helper_in == "edit") "edit-study-choices" else "fit"
+  at <- chunks$close[chunks$label == target]
+  stopifnot(length(at) == 1L)
+  lines <- append(lines, helper, after = at - 1L)
+  writeLines(lines, job)
+  job
+}
+
+test_that("upgrading a job with a hand-added progress stopgap leaves the template's one reporter", {
+  for (helper_in in c("edit", "fit")) {
+    root <- migration_study_fixture()
+    job <- nb_stopgap_job(root, helper_in)
+    stopifnot(any(grepl(".bm_progress", readLines(job), fixed = TRUE)))
+    upgraded <- readLines(upgrade_job(job))
+    code <- upgraded[!grepl("^\\s*#", upgraded)]
+    # No stopgap runs: the helper and both calls to it are gone from the code.
+    expect_false(any(grepl(".bm_progress", code, fixed = TRUE)), info = helper_in)
+    # The boostmtree() and partial.plot() calls each report once, through the job.
+    expect_identical(sum(grepl("progress = ", code, fixed = TRUE)), 2L, info = helper_in)
+    expect_identical(length(grep('progress = get(".job")$progress("iteration")', code, fixed = TRUE)), 1L, info = helper_in)
+    expect_identical(length(grep('progress = get(".job")$progress("prediction")', code, fixed = TRUE)), 1L, info = helper_in)
+    # Nothing is left as a comment that could be uncommented into a second reporter either.
+    expect_false(any(grepl(".bm_progress", upgraded, fixed = TRUE)), info = helper_in)
+  }
+})

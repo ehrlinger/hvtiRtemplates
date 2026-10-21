@@ -60,21 +60,23 @@ patients' fitted trajectories.
 SUBJECT <- "lvef"
 TYPE    <- "boost"
 .in <- knitr::current_input(dir = TRUE)
-# boostmtree must be the CCF fork, 2.0.4 or later. Every study fits with
+# boostmtree must be the CCF fork, 2.0.8 or later. Every study fits with
 # cv.flag = TRUE, and in boostmtree 2.0.0 (the CRAN release) that flag leaves the
 # in-sample fit frozen, so the stored coefficients diverge with M and every
 # non-cross-validated result is wrong: partial and marginal effects, importance,
 # and predict(use.cv.flag = FALSE). Reported upstream as kogalur/boostmtree#2;
 # the fix is kogalur/boostmtree#3. The version floor separates the fork from
 # CRAN today. Should upstream release a 2.0.2 without the fix, this check would
-# pass it; read the installed package's NEWS if in doubt. 2.0.4 is the floor
-# because it adds boostmtree.control(cv.cores = ), which the fit below uses.
-# The install line names 2.0.8: its workers need about a third of 2.0.4's memory,
+# pass it; read the installed package's NEWS if in doubt. 2.0.8 is the floor
+# because it adds the progress = argument of boostmtree() and partial.plot(), which
+# the fit and the partial effects below use to report how far they have got; it
+# also keeps boostmtree.control(cv.cores = ), added in 2.0.4, which the fit uses.
+# 2.0.8 is also the release whose workers need about a third of 2.0.4's memory,
 # each uses one BLAS thread, so a server's multithreaded OpenBLAS does not
 # overload the machine, and its partial effects no longer hold every boosting
 # step in memory at once.
-if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.4") {
-  stop("This job needs boostmtree >= 2.0.4 from the CCF fork. Install it with\n",
+if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.8") {
+  stop("This job needs boostmtree >= 2.0.8 from the CCF fork. Install it with\n",
        "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.8-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
@@ -193,13 +195,21 @@ MTRY <- NULL
 # the number of patients; about 80% of it runs in parallel, so speed levels off
 # near 4 to 5 times however many cores you give it. Each core is a forked copy of
 # R holding its own working data, and memory, not speed, is what limits CORES on
-# a large study. Measured on the server (2026-10-19, ordinal, about 9 visits per
-# patient, M = 10): peak memory at M = 10, and hours scaled to M = 1000.
+# a large study. Measured on the server (2026-10-19, boostmtree 2.0.4, ordinal, about
+# 9 visits per patient, M = 10): peak memory at M = 10, and hours scaled to M = 1000.
 #   patients   CORES   peak memory at M = 10   hours at M = 1000   session, at least
 #      1,000     4            6 GB                     7            Default (16 GB)
 #      1,000     8           11 GB                     5            Small (32 GB)
 #      2,000     8           30 GB                    22            Medium (64 GB)
 #      4,000     4           70 GB                   110            Large (128 GB); 8 cores ran out
+# Measured full run (2026-10-21, boostmtree 2.0.8, continuous, 1,391 patients, 4,771
+# visits, M = 1000, 8 cores, Medium session): fit about 1 h, importance 13 min,
+# partial effects for 3 variables 32 min at 11.3 GiB of session memory; on 2.0.7,
+# 94 min at 70.0 GiB, within 7 GiB of Medium's limit of 76.8 GiB. 2.0.8 leaves
+# Medium ample room. The 76.8 GiB is the enforced cap, about 1.2 times the 64 GB
+# profile named in the table. These are RStudio session-memory readings, covering
+# everything in the session including the forked workers, each taken once during
+# the step: not measured peaks.
 # Memory is an upper bound at M = 10 only. The fit keeps every step, about
 # 0.35 MB per step per 1,000 visits for an ordinal response, so at M = 1000 add
 # about 3 GB at 1,000 patients and 11 GB at 4,000, and possibly that much again
@@ -349,7 +359,14 @@ fit <- cache_fit(
              family = FAMILY, M = M, nu = NU, mtry = MTRY, mod.grad = TRUE, cv.flag = TRUE, verbose = FALSE,
              # get() keeps CORES out of cache_fit()'s key, which sees only the values
              # the call names directly: changing it must not mark an identical fit stale.
-             control = boostmtree.control(cv.cores = get("CORES"))),
+             control = boostmtree.control(cv.cores = get("CORES")),
+             # Reports each boosting iteration to <job>.run.progress and the render log.
+             # get() keeps the job's run record out of the cache key's inputs, as for
+             # CORES: it changes what is reported, never what is fitted.
+             # The fit keeps the reporter (boostmtree's formula environment holds it), which
+             # is safe because the reporter's frame holds only `unit`: no run record is
+             # saved with the fit.
+             progress = get(".job")$progress("iteration")),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
 )
 ```
@@ -485,7 +502,8 @@ if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unkno
 # beside the fit and keyed on it, so a re-render that changes only prose skips
 # it, and a refit or a changed EFFECT_VARIABLES stops until REFIT, as the fit does.
 .partial <- cache_fit("nb-boostmtree-partial",
-                      partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE),
+                      partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE,
+                                   progress = get(".job")$progress("prediction")),
                       seed = SEED, dir = CACHE_DIR, refit = REFIT)
 .effect <- gg_boost_effect(.partial)
 .relabel <- .components[match(levels(.effect$response), .labels)]
