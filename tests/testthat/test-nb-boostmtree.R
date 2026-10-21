@@ -122,7 +122,7 @@ test_that("the setup chunk passes when both packages meet their floors", {
 
 test_that("boostmtree older than 2.0.4 is refused with the fork's install line", {
   nb_skip_unless_stack()
-  expect_error(nb_mocked_setup("boostmtree", "2.0.3"), "ref = \"v2.0.7-ccf\"", fixed = TRUE)
+  expect_error(nb_mocked_setup("boostmtree", "2.0.3"), "ref = \"v2.0.8-ccf\"", fixed = TRUE)
 })
 
 test_that("ggBoostedTrees older than 0.9.0 is refused with its install line", {
