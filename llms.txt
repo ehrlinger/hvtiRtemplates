@@ -197,6 +197,11 @@ the structural check does not establish numerical agreement.
   : Stop a long fit from starting in an interactive session
 - [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
   : Report a background job's state
+- [`life_table()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md)
+  [`life_table_at()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md)
+  [`life_table_tests()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md)
+  [`life_table_keep()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md)
+  : Kaplan-Meier life tables, as the ac job reports them
 - [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
   : Migrate a legacy job into a supported analysis template
 - [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
