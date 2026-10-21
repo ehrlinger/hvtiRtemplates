@@ -111,3 +111,24 @@
     .progress_write()
   }
 }
+
+# knitr calls this before and after every chunk that has the hvti_progress option,
+# which .progress_install() sets for all of them. It returns NULL so nothing
+# reaches the report.
+.progress_hook <- function(before, options, ...) {
+  .progress_stage(options$label, before)
+  invisible(NULL)
+}
+
+# Called from .job_setup(), in the setup chunk. The stages are the document's chunk
+# labels less the setup chunk itself, which installs the hook and so never sees its
+# own end. Chunks made by knitr::knit_child() have labels outside the list and are
+# ignored: they run inside a parent chunk, whose stage covers them.
+.progress_install <- function(file) {
+  if (is.null(file) || !isTRUE(getOption("knitr.in.progress"))) return(function(unit) NULL)
+  stages <- setdiff(unique(knitr::all_labels()), knitr::opts_current$get("label"))
+  .progress_begin(file, stages)
+  knitr::knit_hooks$set(hvti_progress = .progress_hook)
+  knitr::opts_chunk$set(hvti_progress = TRUE)
+  .progress_step
+}

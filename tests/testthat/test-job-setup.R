@@ -6,7 +6,8 @@
 test_that(".job_setup() finds the study root and returns the root, set_path() and the run record", {
   fx <- setup_fixture()
   r <- run_setup()
-  expect_named(r$job, c("root", "set_path", "run", "notice"))
+  expect_named(r$job, c("root", "set_path", "run", "notice", "progress"))
+  expect_null(r$job$progress("iteration"))
   expect_identical(normalizePath(r$job$root), normalizePath(fx$root))
   expect_true(is.function(r$job$set_path))
   expect_s3_class(r$job$run$started, "POSIXct")

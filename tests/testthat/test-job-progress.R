@@ -97,3 +97,33 @@ test_that("a bad progress_every falls back to 10 minutes and says so once", {
   expect_equal(val2, 10)
   expect_length(second, 0)
 })
+
+test_that("a knitted document records its chunks as stages, less the one that installs the hook", {
+  dir <- withr::local_tempdir()
+  rmd <- file.path(dir, "x.Rmd")
+  file <- file.path(dir, "x.run.progress")
+  writeLines(c("```{r setup}",
+               sprintf("p <- hvtiRtemplates:::.progress_install(%s)", deparse(file)),
+               "```",
+               "```{r first}",
+               "f <- p('step'); for (i in 1:3) f(i, 3)",
+               "```",
+               "```{r second}",
+               "1",
+               "```"), rmd)
+  withr::defer(knitr::knit_hooks$delete("hvti_progress"))
+  log <- quietly(knitr::knit(rmd, file.path(dir, "x.md"), quiet = TRUE))
+  p <- yaml::read_yaml(file)
+  expect_identical(p$stages, c("first", "second"))
+  expect_identical(vapply(p$done, `[[`, "", "stage"), c("first", "second"))
+  expect_true(any(grepl("first  step 3/3", log, fixed = TRUE)))
+  expect_false(any(grepl("step 3/3", readLines(file.path(dir, "x.md")), fixed = TRUE)))
+})
+
+test_that("outside a knit nothing is recorded and the factory returns NULL", {
+  file <- file.path(withr::local_tempdir(), "x.run.progress")
+  p <- .progress_install(file)
+  expect_null(p("iteration"))
+  expect_false(file.exists(file))
+  expect_null(.progress_install(NULL)("iteration"))
+})

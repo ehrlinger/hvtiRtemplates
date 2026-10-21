@@ -18,9 +18,11 @@
 #   6. the run record started, and
 #   7. the top box made.
 # Returns the study root, the set_path() function the job writes through, the
-# run record, and the notice the report opens with: the draft banners, if any,
-# then the box. `show_markers = FALSE` keeps a marker's source line out of the
-# report, for a job whose markers can sit beside a patient's name (bd). `box_data = FALSE` leaves the
+# run record, the notice the report opens with (the draft banners, if any,
+# then the box) and `progress`, the step callback factory for a long fit: during a
+# render it records the document's chunks as stages in <job>.run.progress, and
+# otherwise it returns a function that does nothing. `show_markers = FALSE` keeps a
+# marker's source line out of the report, for a job whose markers can sit beside a patient's name (bd). `box_data = FALSE` leaves the
 # data clause out of the box, for a job that reads no registered dataset (bd builds one).
 .job_setup <- function(subject, type, envir = parent.frame(), show_markers = TRUE, box_data = TRUE) {
   started <- Sys.time()
@@ -47,6 +49,9 @@
   run <- .run_begin(started, input, subject, type, markers)
   notice <- paste0(c(if (length(banner)) paste(banner, collapse = "\n"), as.character(partial),
                      .run_box(run, .box_dataset(root, input), box_data)), collapse = "\n")
+  # A render records its stages and steps in <job>.run.progress; the
+  # design is dev/specs/2026-10-21-job-progress-design.md.
+  progress <- .progress_install(if (is.null(input)) NULL else .run_files(input)$progress)
   # Resolves from `envir`, not from the arguments, so a test or an author who
   # changes SUBJECT or TYPE afterward moves the set, as the old chunk's did.
   set_path <- function(kind, file) {
@@ -56,7 +61,7 @@
     if (!dir.exists(d)) dir.create(d, recursive = TRUE)
     file.path(d, file)
   }
-  list(root = root, set_path = set_path, run = run, notice = knitr::asis_output(notice))
+  list(root = root, set_path = set_path, run = run, notice = knitr::asis_output(notice), progress = progress)
 }
 
 # add_job() writes SUBJECT and TYPE from the same values it put in the file's
