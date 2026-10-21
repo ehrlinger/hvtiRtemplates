@@ -32,7 +32,7 @@ RTF files; `hv_tbl_summary()` writes one table with both. It describes; with
 `BY` set it separates the groups into columns. `COMPARE` chooses whether to
 test them; a p-value here is a prompt for an analysis, not a result.
 The report shows the table in the report style, with each variable's column
-name beside its label. The Word file holds the same table in the manuscript
+name beside its label while `SHOW_VARIABLE` is `TRUE`. The Word file holds the same table in the manuscript
 style, under its caption, as a journal receives it.
 
 <!-- The two values below are written by add_job() from the subject/type it

@@ -497,8 +497,12 @@ test_that("a migrated job lays its Word table out by what %desc_tab printed", {
   by_group <- tables_config("%desc_tab(vartype=category,input=built,by=treatment,varlist=/* Demography */ female);")
   expect_identical(by_group$env$MANUSCRIPT_LAYOUT, "compare")
   expect_true(any(grepl("MANUSCRIPT_LAYOUT: compare", by_group$translated, fixed = TRUE)))
+  expect_true(any(grepl("beside the groups", by_group$translated, fixed = TRUE)))
   overall <- tables_config("%desc_tab(vartype=category,input=built,by=,varlist=/* Demography */ female);")
   expect_identical(overall$env$MANUSCRIPT_LAYOUT, "compare")
+  # No by= means no groups, so the reason must not talk about them.
+  expect_true(any(grepl("for the whole cohort", overall$translated, fixed = TRUE)))
+  expect_false(any(grepl("beside the groups", overall$translated, fixed = TRUE)))
   # The rule is the statistic, not the grouping: continuous rows with no by= are
   # still mean +/- SD beside the percentiles, so they still need describe.
   overall_continuous <- tables_config("%desc_tab(vartype=continuous,input=built,by=,varlist=/* Demography */ age);")

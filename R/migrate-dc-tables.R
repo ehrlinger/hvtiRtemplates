@@ -224,7 +224,8 @@
   layout_reason <- if (identical(layout, "describe")) {
     "CONTINUOUS_STAT is both, which only the describe layout draws in the Word table."
   } else {
-    "One statistic per variable: the compare layout, one n column beside the groups."
+    paste0("One statistic per variable: the compare layout, ",
+           if (nzchar(by)) "one n column beside the groups." else "one n column for the whole cohort, as there is no by= group.")
   }
   translated <- rbind(translated, record(calls[[1L]]$start, paste0("MANUSCRIPT_LAYOUT: ", layout), layout_reason))
   unresolved <- rbind(unresolved, record(NA_integer_, "abbreviations, Word filename",
@@ -248,7 +249,8 @@
     at <- startsWith(translated$text, "MANUSCRIPT_LAYOUT: ")
     translated$text[at] <- "MANUSCRIPT_LAYOUT: compare"
     translated$reason[at] <- paste("Candidate only; source logic prevents deterministic mapping.",
-                                   "With nothing mapped, the layout is the compare layout, one n column beside the groups.")
+                                   "With nothing mapped there is no group, so the layout is the compare layout,",
+                                   "one n column for the whole cohort.")
     unresolved <- rbind(unresolved, translated)
     translated <- translated[FALSE, ]
     selection$dataset <- NA_character_
