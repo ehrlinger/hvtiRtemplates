@@ -31,7 +31,7 @@ Each template carries a light.
 - 🟢 **Shipped** (34): on disk and supported. Scaffold it and use it.
 - 🟡 **In progress** (19): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
-- 🔴 **Not yet on the way** (13): waiting on a function in another
+- 🔴 **Not yet on the way** (15): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
   now, write it by hand.
 
@@ -141,6 +141,8 @@ as zero.
 | 🔴 Not yet on the way | `cp` | Cumulative probability plot | 4 | hvtiPlotR#135 |
 | 🔴 Not yet on the way | `bq` | Bootstrap quantile | 2 | hvtiRbootstrap#16 |
 | 🔴 Not yet on the way | `nb-boostmlr` | Boosting: BoostMLR | unmeasured |  |
+| 🔴 Not yet on the way | `vp-fit` | A VarPro variable screen that says which variables were tested, judges selection against permuted noise of the same kind, and checks the selection across subsamples. | unmeasured | hvtiRutilities: the vp row in hvti_taxonomy() |
+| 🔴 Not yet on the way | `vp-explain` | VarPro partial dependence for the variables a vp-fit screen selected. It never fits varPro. | unmeasured | hvtiRutilities: the vp row in hvti_taxonomy() |
 | 🔴 Not yet on the way | `sid` | Random forest clustering (sidClustering) | unmeasured | hvtiRforests#1 |
 | 🔴 Not yet on the way | `vt` | Virtual twins | unmeasured | hvtiRforests#1 |
 

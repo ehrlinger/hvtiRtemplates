@@ -30,8 +30,8 @@ warns when it is used.
 catalog <- template_catalog()
 table(catalog$status)
 #> 
-#> in-flight    queued   revisit   shipped 
-#>         1        30         1        34 
+#> in-flight    intake    queued   revisit   shipped 
+#>         1         2        30         1        34 
 
 # Templates that still scaffold but name a replacement.
 catalog[!is.na(catalog$deprecated_by), c("prefix", "qualifier", "deprecated_by")]
@@ -50,6 +50,6 @@ queued[, c("prefix", "qualifier", "blocked_on")]
 #> 17     gp      <NA>     hvtiPlotR#136
 #> 49   vars      <NA>    hvtiRdatabuild
 #> 51     mi      <NA>   hvtiRimputation
-#> 54    sid      <NA>    hvtiRforests#1
-#> 55     vt      <NA>    hvtiRforests#1
+#> 56    sid      <NA>    hvtiRforests#1
+#> 57     vt      <NA>    hvtiRforests#1
 ```
