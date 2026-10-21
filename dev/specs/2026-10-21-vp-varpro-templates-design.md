@@ -33,10 +33,21 @@ draws varPro's fixed cutoff (0.79) and nothing else cannot tell the two apart.
 
 ## 2. Taxonomy, ledger and naming
 
-- **Taxonomy row:** `vp | VarPro | analyses | rule-based variable screen with
-  coverage, noise and stability checks | FALSE`. The taxonomy grows from 42
-  rows to 43. `vp` is in neither `hvti_taxonomy()` nor `hvti_non_prefixes()`,
-  and the 2026-09-02 census holds no `vp` jobs.
+- **Taxonomy row:** `vp | VarPro | analyses | rule-based variable screen:
+  coverage, noise and stability checks`. `hvti_taxonomy()` lives in
+  **hvtiRutilities** (`R/taxonomy.R`); this package only re-exports it. The
+  row goes there, growing its `main` from 47 rows to 48. `vp` is in neither
+  `hvti_taxonomy()` nor `hvti_non_prefixes()`, and the 2026-09-02 census
+  holds no `vp` jobs.
+- **Cross-repo order**, the route `rfr`, `sid` and `vt` took through
+  hvtiRutilities PR #127. This repo's `test-roadmap.R` fails in one direction
+  if the taxonomy names a prefix the ledger lacks, and in the other if a
+  non-`intake` ledger row names a prefix the taxonomy lacks. So:
+  1. here, the two ledger rows land at status `intake`, blocked on the
+     taxonomy row;
+  2. in hvtiRutilities, the taxonomy row lands on `main` (CI here installs
+     hvtiRutilities from `main`, since `Remotes` are unpinned);
+  3. here, the templates land and both rows move to `in-flight`.
 - **Files:** `inst/templates/30_analyses/vp-fit.qmd` and
   `inst/templates/30_analyses/vp-explain.qmd`. The pair mirrors
   `rfs-fit`/`rfs-explain`, and `template_list()` shows them as `vp.fit` and
@@ -66,7 +77,8 @@ Chunks, in order:
    - the outcome and the candidate predictors;
    - `NOISE_N` (default 20), the number of noise columns;
    - `REPEATS` (default 20), the stability refits, where `0` skips the
-     stability section;
+     stability section, and `SUBSAMPLE` (default 0.632), the share of
+     patients each refit draws;
    - `SEED`, part of every cache key and handed to `varpro()` as
      `seed = -abs(SEED)`, with `set.seed()` before each random call. Both are
      needed: `varpro()` draws on R's generator even with `seed =`, which made
@@ -98,19 +110,25 @@ Chunks, in order:
    vertical. This is the chapter 13 figure. The `gg_varpro()` panel follows,
    still showing the 0.79 cutoff for reference, with a caption saying it is
    not the selection rule here.
-8. **Stability**, skipped when `REPEATS` is 0. `REPEATS` refits, each with a
-   fresh noise draw (`SEED + r`) and each cached on its own key, then a table
-   of how often each real variable was selected and the range of the number
-   selected per repeat.
+8. **Stability**, skipped when `REPEATS` is 0. `REPEATS` refits, each on a
+   subsample of `SUBSAMPLE` (default 0.632) of the patients drawn without
+   replacement and with a fresh noise draw, both seeded `SEED + r`, and each
+   cached on its own key. This is chapter 13's loop: redrawing the noise alone
+   would hold the patients fixed and understate how much the selection moves.
+   Then a table of how often each real variable was selected and tested, and
+   the range of the number selected per repeat.
 9. **Reading the result.** Appendix C's prose made general: what eligible,
    tested, untested and selected mean; that z = 0 is untested and never
    evidence of no effect; and that this is a *screen*, not a selection. It
    keeps everything it could not rule out. A selection would also need the
    unguided screen, a tuned bar and the stability check to agree.
-10. **Save** to `estimates/<subject>-<type>/`: `vp.rds` (the fit),
-    `vp-coverage.rds` (the coverage table) and `vp-selected.rds` (a character
-    vector of the selected variables, which a later model job reads when `vp`
-    is used as a screen).
+10. **Save** one handoff, `estimates/<subject>-<type>/vp.rds`: a list of
+    `fit` (the varPro fit), `coverage` (the judged coverage table) and
+    `selected` (a character vector of the selected variables, which a later
+    model job reads when `vp` is used as a screen), with the handoff lineage
+    attached. One file rather than three, because the package's handoff
+    reader validates the lineage of one object, and three files could drift
+    apart, leaving a stale coverage table beside a new fit.
 
 ### The selection rule, and the categorical fallback
 
@@ -131,13 +149,17 @@ The coverage table names the bar each variable was judged against. The
 continuous bar is the stricter one, because continuous noise picks up
 split-point bias (up to 0.188 in Virtual Twins' setting F). The rule therefore
 errs toward missing a real categorical effect rather than admitting a false
-one, which is the right direction for a screen. `varpro_coverage()` computes
-the per-kind bar; the fallback is applied in the template.
+one, which is the right direction for a screen. `varpro_coverage()` already
+falls back to the overall bar when a kind has *no tested* noise; the case it
+does not cover is tested categorical noise that all scores 0. The template
+therefore judges the coverage table itself, in a small `vp_judge()` defined in
+a chunk of its own, so the rule can be tested on a hand-built table without a
+fit.
 
 ## 4. The handoff
 
-`vp-explain` reads the three files `vp-fit` saved, the way `rfs-explain` reads
-`rfs.rds`, and never calls `varpro()`. It stops with a message naming the
+`vp-explain` reads the `vp.rds` that `vp-fit` saved, the way `rfs-explain`
+reads `rfs.rds`, and never calls `varpro()`. It stops with a message naming the
 missing file when no `vp-fit` has run in its set.
 
 ## 5. `vp-explain.qmd`
@@ -166,13 +188,14 @@ added beside it.
    rows with one strong continuous predictor, one strong two-level factor and
    null distractors: the strong pair is selected and no noise column is.
    `REPEATS = 2`, small `ntree`.
-2. **The categorical fallback, proven by mutation.** Data where the categorical
-   bar is 0 and a null factor is tested. With the fallback, the factor is not
-   selected and the table names the continuous bar. Revert the fallback and
-   confirm the test fails.
-3. **The handoff.** `vp-fit` writes the three files; `vp-explain` reads them
-   with no `varpro(` call in its source, and stops naming the file when no fit
-   has run.
+2. **The categorical fallback, proven by mutation.** `vp_judge()` on a
+   hand-built coverage table where every tested categorical noise row scores
+   0 and a null factor is tested above 0: the factor is not selected and the
+   table names the continuous bar. No fit, so this test runs on CRAN too.
+   Revert the fallback and confirm the test fails.
+3. **The handoff.** `vp-fit` writes `vp.rds`; `vp-explain` reads it with no
+   `varpro(` call in its source, and stops naming the file when no fit has
+   run.
 4. **`HORIZON` past the largest follow-up time errors** for a survival fit.
 5. **The stability cache.** Moving `REPEATS` from 2 to 3 computes one new fit
    and reuses two.
@@ -183,10 +206,13 @@ The catalog-wide tests cover format block, `SUBJECT`/`TYPE` lines, the single
 provenance and lineage for both files with no new code.
 
 **Gates outside `testthat`:** a `.lintr` **file** key for each template; the
-two ledger rows; and the counts the taxonomy row moves, regenerated rather than
-hand-edited, so `spec-counts.yaml` and `check-roadmap-counts.py` pass.
+two ledger rows, with the roadmap tables regenerated by
+`python3 dev/specs/artifacts/roadmap_render.py` and `test-template-catalog.R`'s
+counts moved from 66 rows and 44 prefixes to 68 and 45. The job flow diagrams
+need no change: their prefix map is a frozen 2026-08-22 corpus snapshot, which
+`sid` and `vt` were never added to either.
 
-**CI cost.** Tests 1, 2, 5 and the MRN scan fit varPro, so they carry
+**CI cost.** Tests 1, 3, 5 and the MRN scan fit varPro, so they carry
 `skip_on_cran()`. That is about six small fits at `ntree = 50`, a few seconds
 each. Under `NOT_CRAN=true`, as CI runs, the expected `SKIP 0` on macOS and
 Ubuntu and `SKIP 3` on Windows do not change. A CRAN-mode check skips about
