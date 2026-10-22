@@ -165,8 +165,6 @@ job_status <- function(path, quiet = FALSE) {
   invisible(st)
 }
 
-.num1 <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x)
-
 .is_windows <- function() .Platform$OS.type == "windows"
 
 # The runner is a separate Rscript process, so it uses only yaml and base R. Its status writes are atomic

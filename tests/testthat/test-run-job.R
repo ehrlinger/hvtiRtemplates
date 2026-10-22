@@ -195,7 +195,7 @@ test_that("run_job drives the real chain: preflight, submit, the render's own ch
   need <- .always_needed()
   root <- lock_study(r = as.character(getRversion()),
                      pkgs = stats::setNames(lapply(need, function(p) as.character(utils::packageVersion(p))), need))
-  withr::local_envvar(QUARTO_R = NA, HVTI_RUN_R = NA, HVTI_RUN_R_VERSION = NA)
+  withr::local_envvar(QUARTO_R = NA, HVTI_RUN_R = NA, HVTI_RUN_R_VERSION = NA, RENV_PROJECT = NA)
   testthat::local_mocked_bindings(.warn_stale_hvti = function() invisible(FALSE))
   job_file <- function(subject, guard) {
     job <- file.path(root, "analyses", sprintf("dc.%s.eda.qmd", subject))

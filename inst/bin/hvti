@@ -4,8 +4,15 @@
 usage() { echo "usage: hvti run|status|cancel <job.qmd> [--final]" >&2; exit 2; }
 [ $# -ge 2 ] || usage
 case $1 in run|status|cancel) ;; *) usage ;; esac
+[ $# -le 3 ] || usage
 cmd=$1; job=$2; final=FALSE
-[ "${3:-}" = "--final" ] && final=TRUE
+case ${3:-} in "") ;; --final) final=TRUE ;; *) usage ;; esac
+# The paths run_job() prints are from the study root; from deeper in the study, try the job there.
+if [ ! -f "$job" ]; then
+  up=$(pwd)
+  while [ ! -f "$up/renv.lock" ] && [ "$up" != "/" ]; do up=$(dirname "$up"); done
+  [ -f "$up/renv.lock" ] && [ -f "$up/$job" ] && job="$up/$job"
+fi
 [ -f "$job" ] || { echo "hvti: no such job file: $job" >&2; exit 1; }
 jobdir=$(cd "$(dirname "$job")" && pwd) || exit 1
 jobpath="$jobdir/$(basename "$job")"

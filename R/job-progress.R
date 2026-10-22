@@ -57,7 +57,7 @@
 # not fail the write (yaml writes NA as .na, which a reader would take for a value).
 .progress_mem_gib <- function() {
   m <- tryCatch(.cgroup_memory(), error = function(e) list())
-  num <- function(x) if (is.numeric(x) && length(x) == 1L && !is.na(x)) round(x, 1)
+  num <- function(x) if (.num1(x)) round(x, 1)
   list(mem_gib = num(m$usage_gib), mem_limit_gib = num(m$limit_gib))
 }
 

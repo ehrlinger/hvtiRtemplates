@@ -18,8 +18,8 @@
     n <- length(refusal)
     return(list(reason = paste(refusal[seq_len(max(n - 1L, 1L))], collapse = " "), fix = if (n > 1L) refusal[n] else ""))
   }
-  killed <- length(hit("worker result\\(s\\) were not delivered|^Killed\\s*$|exit status 137")) ||
-    isTRUE(suppressWarnings(as.numeric(st$exit_code)) == 137)
+  # The log only: the runner records exit code 0 or 1, never the signal that killed a render.
+  killed <- length(hit("worker result\\(s\\) were not delivered|^Killed\\s*$|exit status 137")) > 0L
   if (killed) {
     peak <- st$mem_peak_gib
     lim <- st$mem_limit_gib

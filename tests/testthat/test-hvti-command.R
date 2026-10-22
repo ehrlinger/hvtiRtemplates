@@ -145,3 +145,30 @@ test_that("the stale-copy warning names the directory the copy is in", {
   .hvti_state$warned <- FALSE
   expect_warning(.warn_stale_hvti(), sprintf('install_hvti("%s")', d), fixed = TRUE)
 })
+
+test_that("hvti refuses an unknown third argument and any fourth, so a mistyped --final is not a draft", {
+  skip_on_os("windows")
+  root <- lock_study(r = "4.5.3")
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines("x", job)
+  r <- fake_r("4.5.3")
+  for (args in list(c("run", job, "--fianl"), c("run", job, "--final", "extra"))) {
+    out <- suppressWarnings(system2(hvti(), shQuote(args), env = paste0("HVTI_R_ROOT=", r$top), stdout = TRUE, stderr = TRUE))
+    expect_match(paste(out, collapse = "\n"), "usage: hvti", fixed = TRUE)
+    expect_identical(attr(out, "status"), 2L)
+    expect_false(file.exists(r$log))
+  }
+})
+
+test_that("hvti finds a study-relative job path from a directory inside the study", {
+  skip_on_os("windows")
+  root <- lock_study(r = "4.5.3")
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines("x", job)
+  r <- fake_r("4.5.3")
+  withr::local_dir(file.path(root, "analyses"))
+  system2(hvti(), c("status", "analyses/x.qmd"), env = paste0("HVTI_R_ROOT=", r$top), stdout = TRUE, stderr = TRUE)
+  got <- readLines(r$log)
+  expect_identical(got[4], "status")
+  expect_identical(normalizePath(got[5]), normalizePath(job))
+})

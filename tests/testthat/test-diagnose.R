@@ -94,10 +94,10 @@ test_that("'Killed' alone on a line is a kill; a line that merely starts with it
   expect_match(.diagnose_failure(c("Killed 3 outliers"), list())$reason, "no known cause", fixed = TRUE)
 })
 
-test_that("a recorded exit code of 137 is the kill signal, with or without log text", {
+test_that("a recorded exit code is not read as a kill: the runner records only 0 or 1", {
   d <- .diagnose_failure(c("something unrelated"), list(exit_code = 137L, mem_peak_gib = 19.1, mem_limit_gib = 19.2))
-  expect_match(d$reason, "ran out of memory", fixed = TRUE)
-  expect_match(.diagnose_failure(c("x"), list(exit_code = 1L))$reason, "no known cause", fixed = TRUE)
+  expect_match(d$reason, "no known cause", fixed = TRUE)
+  expect_match(.diagnose_failure(c("exit status 137"), list())$reason, "^probably memory")   # the log's own text still counts
 })
 
 test_that("the error quoted for a chunk stops before the Backtrace", {

@@ -4,12 +4,16 @@
   list(name = name, ok = ok, message = if (!ok) paste0(name, ": ", message), fix = fix, note = note)
 }
 
+# TRUE when x is one number, not NA.
+.num1 <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x)
+
 # Wrapped so tests can stand in for them; base functions cannot be mocked.
 .session_r <- function() getRversion()
 .r_home <- function() R.home("bin")
 .installed_version <- function(p) {
   tryCatch(as.character(utils::packageVersion(p)), error = function(e) NA_character_)
 }
+.renv_project <- function() Sys.getenv("RENV_PROJECT")
 .always_needed <- function() c("quarto", "knitr", "rmarkdown", "hvtiRtemplates", "hvtiRutilities")
 
 .lock_read <- function(root) {
@@ -45,6 +49,21 @@
                   sprintf("this study's renv.lock records R %s, but this session is R %s, so it would use a different library.",
                           lock, have),
                   sprintf("Run it from a terminal with `hvti run <job>`, or start R %s (/opt/R/%s/bin/R).", lock, lock)))
+  }
+  # The packages check reads this session's library, which is the study's only when this session runs renv for it.
+  # hvti's route passes: Rscript starts in the root, where the study's .Rprofile activates renv and sets RENV_PROJECT.
+  proj <- .renv_project()
+  uses <- if (nzchar(proj)) {
+    identical(normalizePath(proj, mustWork = FALSE), normalizePath(root, mustWork = FALSE))
+  } else {
+    !file.exists(file.path(root, "renv", "activate.R"))
+  }
+  if (!uses) {
+    return(.check("r_version", FALSE,
+                  sprintf(paste("this session is not using this study's renv library (%s), so the package check and",
+                                "the render would read different libraries."),
+                          if (nzchar(proj)) paste("it runs renv for", proj) else "renv is not active"),
+                  "Run it from a terminal with `hvti run <job>`, or open the study's own project so renv activates."))
   }
   .check("r_version", TRUE, note = if (lock != have) sprintf("renv.lock records R %s; this session is %s (same library).", lock, have))
 }
@@ -254,8 +273,8 @@
   }, NA)
   note <- if (any(editor_dead)) {
     paste(vapply(names(running)[editor_dead], function(j) {
-      sprintf(paste("%s has a progress record on %s that has not moved for over 30 minutes and no .run.yml,",
-                    "so it is probably an editor render that stopped with an error. %s"),
+      sprintf(paste("%s has a progress record on %s that has not moved for over 30 minutes and no submit_job() run",
+                    "in progress, so it is probably an editor render that stopped with an error. %s"),
               rel_of(j), running[[j]]$host, .abandon_route(running[[j]], j, rel_of(j)))
     }, ""), collapse = " ")
   }
@@ -264,16 +283,15 @@
     describe <- function(job) {
       st <- running[[job]]
       pr <- st$progress
-      has <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x)
       stage <- if (is.character(pr$stage) && length(pr$stage) == 1L) {
         paste0("in stage ", pr$stage,
-               if (has(pr$stage_index) && has(pr$stage_count)) {
+               if (.num1(pr$stage_index) && .num1(pr$stage_count)) {
                  sprintf(" (%d of %d)", as.integer(pr$stage_index), as.integer(pr$stage_count))
                })
       }
       left <- if (isTRUE(pr$stale)) {
         "its progress has not moved for over 30 minutes"
-      } else if (has(pr$eta_s)) {
+      } else if (.num1(pr$eta_s)) {
         paste("about", .fmt_dur(pr$eta_s), "left")
       }
       host <- if (is.character(st$host) && length(st$host) == 1L) paste("on", st$host)

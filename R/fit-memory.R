@@ -143,7 +143,7 @@ guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
   }
   to <- .profile_for(need_gib)
   k <- if (is.function(cores_fit) && !is.null(cores)) {
-    ok <- Filter(function(k) cores_fit(k) <= 0.9 * m$limit_gib, seq_len(cores - 1L))
+    ok <- Filter(function(k) isTRUE(cores_fit(k) <= 0.9 * m$limit_gib), seq_len(cores - 1L))  # an NA estimate never fits
     if (length(ok)) max(unlist(ok))
   }
   stop(.check("memory", FALSE,
@@ -159,6 +159,6 @@ guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
 # The memory fields .run.yml records at a run's end; list() when nothing can be read.
 .run_memory_fields <- function() {
   m <- tryCatch(.cgroup_memory(), error = function(e) list())
-  num <- function(x) if (is.numeric(x) && length(x) == 1L && !is.na(x)) round(x, 1)
+  num <- function(x) if (.num1(x)) round(x, 1)
   Filter(Negate(is.null), list(mem_peak_gib = num(m$peak_gib), mem_limit_gib = num(m$limit_gib)))
 }

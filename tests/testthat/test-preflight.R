@@ -491,6 +491,8 @@ test_that("study_render notes, and does not refuse, a stale progress-only render
   expect_true(ck$ok)
   expect_match(ck$note, "analyses/editor.qmd", fixed = TRUE)
   expect_match(ck$note, "other_host = \"abandon\"", fixed = TRUE)
+  expect_match(ck$note, "no submit_job() run in progress", fixed = TRUE)
+  expect_no_match(ck$note, "no .run.yml", fixed = TRUE)
 })
 
 test_that("study_render still refuses a live progress-only render, and a stale submitted one", {
@@ -527,4 +529,27 @@ test_that("study_render notes an editor render that errored after an earlier sub
   ck <- .check_study_render(mine, root)
   expect_true(ck$ok)
   expect_match(ck$note, "analyses/editor.qmd", fixed = TRUE)
+})
+
+test_that("r_version refuses a session that is not using this study's renv library", {
+  root <- lock_study(r = "4.5.3")
+  dir.create(file.path(root, "renv"))
+  file.create(file.path(root, "renv", "activate.R"))
+  elsewhere <- withr::local_tempdir()
+  testthat::local_mocked_bindings(.session_r = function() numeric_version("4.5.3"), .renv_project = function() elsewhere)
+  ck <- .check_r_version(root)
+  expect_false(ck$ok)
+  expect_match(ck$message, "^r_version: this session is not using this study's renv library")
+  expect_match(ck$message, "the package check and the render would read different libraries", fixed = TRUE)
+  expect_match(ck$fix, "hvti run", fixed = TRUE)
+  testthat::local_mocked_bindings(.renv_project = function() "")
+  expect_false(.check_r_version(root)$ok)   # renv/activate.R, but this session never activated it
+  testthat::local_mocked_bindings(.renv_project = function() root)
+  expect_true(.check_r_version(root)$ok)    # hvti's route: Rscript in the root, where .Rprofile activates renv
+})
+
+test_that("r_version passes a study with no renv directory, whatever RENV_PROJECT says", {
+  root <- lock_study(r = "4.5.3")
+  testthat::local_mocked_bindings(.session_r = function() numeric_version("4.5.3"), .renv_project = function() "")
+  expect_true(.check_r_version(root)$ok)
 })

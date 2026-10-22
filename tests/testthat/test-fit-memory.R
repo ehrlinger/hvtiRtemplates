@@ -115,3 +115,10 @@ test_that("guard_memory refuses arguments of the wrong shape, plainly", {
   fit <- function(k) .boostmtree_need_gib(1391, 4771, "continuous", k, 1000)
   expect_error(g(fit(8), "x", cores = 8, cores_fit = fit), "with 8 cores.*CORES <- [0-9]+")  # 8 (double) coerced, used as a count
 })
+
+test_that("a cores_fit that returns NA never names CORES <- NA", {
+  cg <- fake_cgroup_v1(19.2)
+  err <- expect_error(guard_memory(100, "x", cores = 8, cores_fit = function(k) NA_real_, proc = cg$proc, sys = cg$sys),
+                      "^memory: ")
+  expect_no_match(conditionMessage(err), "CORES <- NA", fixed = TRUE)
+})
