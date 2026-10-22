@@ -558,7 +558,10 @@ substituting a guess.
   the same file, so they no longer conflict at the top of `NEWS.md`. A separate commit then
   moves `Version:` in `DESCRIPTION` and its `Date`, at most once a day, and runs
   `python3 .github/scripts/news.py collect`, which files the fragments under
-  `# hvtiRtemplates X.Y.Z` in merge order and deletes them. The `news-fragment` job in
+  `# hvtiRtemplates X.Y.Z` in merge order and deletes them. The same commit runs
+  `Rscript dev/template-history/build.R`, which rebuilds `inst/extdata/template-history.rds`, the
+  archive of template texts `upgrade_job()` finds a job's base in; a release without it cannot find
+  the base of a job scaffolded from `main` since the last bump. The `news-fragment` job in
   `lint.yaml` fails a pull request that ships something and adds no fragment.
   `.claude/house-style.md` carries the rule and the reasoning.
   `NEWS.md` uses plain `# hvtiRtemplates X.Y.Z` headings — **no `Version:` line**,
