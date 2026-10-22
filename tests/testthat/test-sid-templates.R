@@ -95,3 +95,75 @@ test_that("sid_mds_signs gives the same picture under row order and sign flips",
   expect_identical(h$sid_mds_signs(xy[perm, ]), ref[perm, ])
   expect_identical(h$sid_mds_signs(-xy), ref)
 })
+
+test_that("sid-fit imputes, fits and saves the handoff", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))
+  env <- sid_fit_first()
+  h <- readRDS(env$set_path("estimates", "sid.rds"))
+  expect_identical(names(h), c("dist", "id_key", "vars", "dropped", "reduced", "settings"))
+  expect_identical(dim(h$dist), c(150L, 150L))
+  expect_false(anyNA(h$dist))
+  key <- hvtiRtemplates:::.study_id_key(env$.root)
+  expect_identical(rownames(h$dist), hvtiRtemplates:::.id_digest(seq_len(150L), key))
+  expect_identical(h$id_key, hvtiRtemplates:::.id_key_fingerprint(key))
+  expect_false(is.null(attr(h, "hvti_provenance")$selection))
+})
+
+test_that("sid-fit imputes by forest, and pools M imputations into one mean distance", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))
+  forest <- readRDS(sid_fit_first(choices = utils::modifyList(sid_fit_choices, list(IMPUTE = "forest")))$set_path(
+    "estimates", "sid.rds"
+  ))
+  expect_false(anyNA(forest$dist))
+  env <- sid_fit_first(choices = utils::modifyList(sid_fit_choices, list(M = 2)))
+  expect_length(env$sid_fits, 2L)
+  pooled <- readRDS(env$set_path("estimates", "sid.rds"))$dist
+  expect_equal(unname(pooled), unname((env$sid_fits[[1]]$dist + env$sid_fits[[2]]$dist) / 2))
+  expect_identical(nrow(env$sid_agreement), 2L)
+  # IMPUTE is checked where it is used, in the impute chunk (the fifth).
+  bad <- rf_env(sid_data())
+  expect_error(rf_run("sid", "fit", sid_fit_labels[1:5], bad, utils::modifyList(sid_fit_choices, list(IMPUTE = "x"))),
+               "IMPUTE")
+})
+
+test_that("sid-fit drops a variable over MAX_MISSING and says so", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))
+  d <- sid_data()
+  d$e[1:80] <- NA
+  env <- sid_fit_first(d)
+  expect_identical(env$sid_dropped$variable, "e")
+  expect_false("e" %in% env$sid_vars)
+})
+
+test_that("sid-fit refuses an ID or an absent column in VARS", {
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))
+  for (vars in list(c("a", "ccfid"), c("a", "nope"))) {
+    env <- rf_env(sid_data())
+    expect_error(
+      rf_run("sid", "fit", sid_fit_labels[1:3], env, utils::modifyList(sid_fit_choices, list(VARS = vars))),
+      "VARS"
+    )
+  }
+})
+
+test_that("the seed reproduces a reduce = TRUE fit", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))
+  # Six noise columns make the reduce step's choice of variables depend on the
+  # generator. Without them the planted groups settle the reduced set whatever
+  # the incoming state, and this test cannot go red (measured by mutation).
+  d <- sid_data()
+  withr::with_seed(5L, for (i in 1:6) d[[paste0("n", i)]] <- stats::rnorm(nrow(d)))
+  choices <- utils::modifyList(sid_fit_choices, list(SID_REDUCE = TRUE, VARS = c(sid_fit_choices$VARS, paste0("n", 1:6))))
+  # Each throwaway study draws its own ID key, so the digest dimnames differ
+  # by design; the numbers must not. The incoming generator states differ too,
+  # so only the job's own seeding can make the two agree.
+  set.seed(1)
+  one <- readRDS(sid_fit_first(d, choices)$set_path("estimates", "sid.rds"))$dist
+  set.seed(3)
+  two <- readRDS(sid_fit_first(d, choices)$set_path("estimates", "sid.rds"))$dist
+  expect_identical(unname(one), unname(two))
+})

@@ -1422,7 +1422,7 @@
       "folder": "analyses",
       "family": "machine-learning",
       "kind": "job",
-      "status": "queued",
+      "status": "in-flight",
       "batch": null,
       "sas_breadth": null,
       "r_exemplars": null,
@@ -1432,7 +1432,7 @@
       "workflows": [],
       "blocked_on": null,
       "spec": "dev/specs/2026-10-22-sid-templates-design.md",
-      "note": "Built from the two SID clustering studies in the ML family roadmap. Helpers live in template chunks; hvtiRforests#1 is no longer a blocker.",
+      "note": "Released for review in a real study. Becomes shipped once a study renders sid-fit and sid-clusters end to end. Built from the two SID clustering studies in the ML family roadmap. Helpers live in template chunks; hvtiRforests#1 is no longer a blocker.",
       "sas_breadth_jobs": null,
       "disposition": "scaffold",
       "uses": [
