@@ -218,16 +218,23 @@ if (any(.other)) {
   stop(sum(.other), " row(s) have an ARM that is neither in ARMS nor NO_ARM: ",
        paste(unique(d[[ARM]][.other]), collapse = ", "), ".", call. = FALSE)
 }
-if (!all(d[[STATUS]][.treated] %in% c(0, 1))) stop(STATUS, " must be coded 0 and 1.", call. = FALSE)
 .no_outcome <- .treated & (is.na(d[[TIME]]) | is.na(d[[STATUS]]))
 if (any(.no_outcome)) {
   stop(sum(.no_outcome), " treated patient(s) have no outcome. A forest cannot learn from them, and imputing one ",
        "would invent follow-up. Resolve them in the dataset build.", call. = FALSE)
 }
+if (!all(d[[STATUS]][.treated] %in% c(0, 1))) stop(STATUS, " must be coded 0 and 1.", call. = FALSE)
+NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
 .counts <- do.call(rbind, lapply(ARMS, function(a) {
   i <- d[[ARM]] %in% a
   data.frame(Arm = a, Patients = sum(i), Events = sum(d[[STATUS]][i] == 1, na.rm = TRUE))
 }))
+.thin <- .counts$Patients < 2 | .counts$Events < 1
+if (any(.thin)) {
+  stop("Each arm needs at least 2 treated patients and 1 event; ",
+       paste0(.counts$Arm[.thin], " has ", .counts$Patients[.thin], " patient(s) and ", .counts$Events[.thin], " event(s)",
+              collapse = "; "), ".", call. = FALSE)
+}
 .counts <- rbind(.counts, data.frame(Arm = "No arm", Patients = sum(.no_arm), Events = NA_integer_))
 knitr::kable(.counts)
 ```
@@ -241,7 +248,7 @@ if (!is.null(VP_SET)) {
   .vp_path <- file.path(dirname(dirname(set_path("estimates", "vt.rds"))), VP_SET, "vp.rds")
   if (!file.exists(.vp_path)) stop("No vp-fit screen at ", .vp_path, ". Render that job first.", call. = FALSE)
   .vp_read <- hvtiRtemplates:::.read_handoff(.vp_path, "screen", .cfg, "the vp-fit job")
-  if (ARM %in% .vp_read$value$coverage$variable) {
+  if (tolower(ARM) %in% tolower(.vp_read$value$coverage$variable)) {
     stop("The screen in ", VP_SET, " was given ", ARM, " as a candidate, so it is not treatment-blind. ",
          "Re-run vp-fit without the arm.", call. = FALSE)
   }
@@ -410,12 +417,11 @@ for (m in .methods) {
 # ps_forest() refuses missing predictors, while the arm forests impute them
 # (NA_ACTION = "na.impute"). So the propensity model gets a forest-imputed copy
 # of the treated patients' predictors, seeded, and the arm forests keep the
-# data as read. Under "na.omit" nothing is missing and the copy equals d.
+# data as read. The arm is left out of the imputation, so the treatment does not
+# shape the predictors that then predict it. Under "na.omit" nothing is missing and the copy equals d.
 .ps_data <- d[.treated, c(ID, ARM, .predictors), drop = FALSE]
 if (anyNA(.ps_data[.predictors])) {
-  # impute() leaves a character column's values unimputed, so the arm goes in as a factor.
-  .imp <- .ps_data[c(ARM, .predictors)]
-  .imp[[ARM]] <- factor(.imp[[ARM]])
+  .imp <- .ps_data[.predictors]
   set.seed(SEED)
   .ps_data[.predictors] <- randomForestSRC::impute(data = .imp, ntree = 100L, seed = -abs(SEED),
                                                    verbose = FALSE)[.predictors]
@@ -610,6 +616,7 @@ vt_rmst <- function(curves, horizon, arms, followup) {
   long <- do.call(rbind, per)
   wide <- stats::reshape(long, idvar = "ID", timevar = "arm_of_curve", direction = "wide", sep = "_")
   wide$diff <- wide[[paste0("rmst_", arms[1])]] - wide[[paste0("rmst_", arms[2])]]
+  # log_rr is +/-Inf or NaN when a patient's risk is 0 under an arm (vt-explain drops and counts those).
   wide$log_rr <- log(wide[[paste0("risk_", arms[1])]] / wide[[paste0("risk_", arms[2])]])
   rownames(wide) <- NULL
   wide
@@ -657,6 +664,7 @@ vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
        settings = list(arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED, time = TIME, status = STATUS,
                        id = ID, id_key = hvtiRtemplates:::.id_key_fingerprint(.id_key),
                        arm = ARM, imputation = IMPUTATION, imputation_use = IMPUTATION_USE,
+                       imputation_m = if (!is.null(IMPUTATION)) .m,
                        # Everything read_job_data() was given, so vt-explain reads the same patients and values.
                        read = list(dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, key = KEY,
                                    join = JOIN, join_vars = JOIN_VARS, reduce = REDUCE, join_key = JOIN_KEY))),

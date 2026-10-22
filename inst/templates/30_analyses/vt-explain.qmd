@@ -132,6 +132,14 @@ if (!file.exists(.handoff)) {
 .provenance_artifacts <- c(.vt_read$lineage$artifacts, list(.vt_read$record))
 ARMS <- .vt$settings$arms
 HORIZON <- .vt$settings$horizon
+# The sign of a beta: log_rr is the log of the risk under the first arm over the risk under the second.
+.beta_sign <- paste0("A positive beta: the characteristic goes with a higher relative risk of the event by ", HORIZON,
+                     " under ", ARMS[1], " than under ", ARMS[2], ".")
+.beta_cap_tbl <- paste("Standardized beta for each characteristic.", .beta_sign,
+                       "unestimable: bootstrap resamples in which the characteristic did not vary.")
+.beta_cap_fig <- paste("Standardized association of each characteristic with the estimated effect, by overlap-weighted",
+                       "regression.", .beta_sign, "Bars, where drawn, are the 2.5th to 97.5th percentile over bootstrap",
+                       "resamples of patients.")
 r <- .vt$rmst
 # Named `.eligible`, never `.in`: `.in` is setup's source path, which the provenance chunk needs.
 .eligible <- r$elig
@@ -144,6 +152,13 @@ r <- .vt$rmst
 # analysis set, filter, join or stacked imputation gives the same patients and
 # values the forests saw.
 .s <- .vt$settings
+# The study key is checked first, so a mismatch stops this job before any read.
+.id_key <- hvtiRtemplates:::.study_id_key(.root, create = FALSE)
+if (!identical(.s$id_key, hvtiRtemplates:::.id_key_fingerprint(.id_key))) {
+  stop("vt.rds was digested under a different study key. Re-render vt-fit.", call. = FALSE)
+}
+# The checksum of every dataset in manifest.yaml is checked before anything is read.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .jd <- hvtiRtemplates::read_job_data(.cfg, dataset = .s$read$dataset, analysis_set = .s$read$analysis_set,
                                      where = .s$read$where, id = .s$id, key = .s$read$key, join = .s$read$join,
                                      join_vars = .s$read$join_vars, reduce = .s$read$reduce,
@@ -151,11 +166,14 @@ r <- .vt$rmst
                                      imputation = .s$imputation)
 .d_all <- .jd$data
 if (!is.null(.s$imputation)) .d_all <- .d_all[.d_all[[.s$imputation]] == .s$imputation_use, , drop = FALSE]
-# vt.rds holds ID digests, so the data are digested with the same study key.
-.id_key <- hvtiRtemplates:::.study_id_key(.root, create = FALSE)
-if (!identical(.s$id_key, hvtiRtemplates:::.id_key_fingerprint(.id_key))) {
-  stop("vt.rds was digested under a different study key. Re-render vt-fit.", call. = FALSE)
+.provenance_data <- c(.provenance_data, list(.jd$provenance), if (!is.null(.jd$provenance_join)) list(.jd$provenance_join))
+# The datasets read now must be the ones vt-fit recorded: their checksums are in its lineage.
+.sha_now <- c(.jd$provenance$sha256, .jd$provenance_join$sha256)
+.sha_fit <- unlist(lapply(.vt_read$lineage$data, function(x) x$sha256))
+if (length(setdiff(.sha_now, .sha_fit))) {
+  stop("The dataset changed since vt-fit ran. Re-render vt-fit.", call. = FALSE)
 }
+# vt.rds holds ID digests, so the data are digested with the same study key.
 .d_all[[.s$id]] <- hvtiRtemplates:::.id_digest(.d_all[[.s$id]], .id_key)
 .d_all <- .d_all[.d_all[[.s$id]] %in% r$ID, , drop = FALSE]
 ```
@@ -263,7 +281,7 @@ summarizes. The combined rule is the one used above.
                favour_first = mean(x$diff > 0))
   }))
 }))
-knitr::kable(.sens, digits = 2)
+knitr::kable(.sens, digits = 2, row.names = FALSE)
 ```
 
 ## Strata
@@ -294,7 +312,7 @@ if (is.list(STRATIFY)) {
   if (!.col %in% names(.cl)) {
     stop("The sid clusters have no column \"", .col, "\" (they have ", paste(names(.cl), collapse = ", "), ").", call. = FALSE)
   }
-  .strata <- data.frame(ID = .cl$id, stratum = as.character(.cl[[.col]]))
+  .strata <- data.frame(ID = as.character(.cl$id), stratum = as.character(.cl[[.col]]))
   # The clustering defines the strata, so the report names it and its data.
   .provenance_data <- c(.provenance_data, .sid_strata$lineage$data)
   .provenance_artifacts <- c(.provenance_artifacts, .sid_strata$lineage$artifacts, list(.sid_strata$record))
@@ -324,7 +342,7 @@ if (is.null(.strata)) {
                favour_first = mean(x$diff > 0))
   }))
   rownames(.st) <- NULL
-  knitr::kable(.st, digits = 2)
+  knitr::kable(.st, digits = 2, row.names = FALSE)
 }
 ```
 
@@ -341,11 +359,18 @@ vt_overlap_weights <- function(ps_data, ids, id, arm, arms, score = "prob_t") {
 
 ```{r}
 #| label: tbl-betas
-#| tbl-cap: "Standardized beta for each characteristic. unestimable: bootstrap resamples in which the characteristic did not vary."
+#| results: asis
+#| tbl-cap: !expr .beta_cap_tbl
 # Each patient's log relative risk at HORIZON, scaled by its SD, regressed on one
 # characteristic at a time with overlap weights (Ishwaran and Blackstone, 2025).
 # The forests are fixed; only patients are resampled.
-.bx <- merge(r[.eligible & r$arm %in% ARMS & is.finite(r$log_rr), c("ID", "log_rr")],
+.lr <- r[.eligible & r$arm %in% ARMS, c("ID", "log_rr")]
+.lr_dropped <- sum(!is.finite(.lr$log_rr))
+if (.lr_dropped) {
+  cat(.lr_dropped, " eligible patient(s) have a risk of 0 under an arm, so no relative risk, and are left out of the betas.\n\n",
+      sep = "")
+}
+.bx <- merge(.lr[is.finite(.lr$log_rr), ],
              .d_all[c(.vt$settings$id, .vt$predictors$names)], by.x = "ID", by.y = .vt$settings$id)
 .ps <- .vt$eligibility$ps
 # Overlap (ATO) weights, computed here: ps_forest()'s own weight column is the
@@ -392,20 +417,20 @@ if (BOOT > 0) {
   .betas$upper <- apply(.boot, 1L, stats::quantile, 0.975, na.rm = TRUE)
   .betas$unestimable <- rowSums(is.na(.boot))
 }
-knitr::kable(.betas, digits = 2)
+print(knitr::kable(.betas, digits = 2, row.names = FALSE))
 ```
 
 ```{r}
 #| label: fig-betas
-#| fig-cap: "Standardized association of each characteristic with the estimated effect, by overlap-weighted
-#|   regression. Bars, where drawn, are the 2.5th to 97.5th percentile over bootstrap resamples of patients."
+#| fig-cap: !expr .beta_cap_fig
+
 .bp <- .betas[is.finite(.betas$beta), ]
 .bp$variable <- factor(.bp$variable, levels = .bp$variable[order(.bp$beta)])
 .fig <- ggplot(.bp, aes(x = beta, y = variable)) +
   geom_vline(xintercept = 0, linetype = "dashed") +
   geom_point()
 if (BOOT > 0) .fig <- .fig + geom_errorbar(aes(xmin = lower, xmax = upper), width = 0.2, orientation = "y")
-.fig <- .fig + labs(x = "Standardized beta", y = NULL)
+.fig <- .fig + labs(x = paste0("Standardized beta (positive: higher relative risk under ", ARMS[1], ")"), y = NULL)
 save_figure(.fig, "vt-explain-betas")
 .fig
 ```
@@ -447,7 +472,7 @@ print(knitr::kable(as.data.frame(table(received = .benefit$arm))))
 }))
 if (!is.null(.ben_tab)) {
   cat("Characteristics of those patients beside the rest of the arm:\n\n")
-  print(knitr::kable(.ben_tab))
+  print(knitr::kable(.ben_tab, row.names = FALSE))
 }
 cat("Patients with no arm, by the arm their twin favours:\n\n")
 print(knitr::kable(as.data.frame(table(favours = .future$favours))))
@@ -474,10 +499,9 @@ print(knitr::kable(as.data.frame(table(favours = .future$favours))))
   more into a subgroup.
 * **The standardized betas** are one-at-a-time, overlap-weighted associations
   with the estimated effect. They say which characteristics the twins' effect
-  tracks, not which cause it. An interval resting on many fewer than `BOOT`
+  tracks, not which cause it. `r .beta_sign` An interval resting on many fewer than `BOOT`
   resamples (see `unestimable`) is unreliable.
-* **Imputation.** When the fit read stacked imputations it used one of the m,
-  `.vt$settings$imputation_use`; the result describes that imputation alone.
+* **Imputation.** `r if (is.null(.vt$settings$imputation)) "The fit stacked no imputations." else paste0("The fit read stacked imputations and used imputation ", .vt$settings$imputation_use, " of ", .vt$settings$imputation_m, "; the result describes that imputation alone.")`
 
 ```{r}
 #| label: provenance

@@ -14,6 +14,27 @@ test_that("the predictor contract refuses the arm, the outcome and the ID", {
   }
 })
 
+test_that("an arm with fewer than 2 patients stops, naming the arm and its counts", {
+  skip_on_cran()
+  d <- vt_data()
+  d$arm[which(d$arm == "B")[-1L]] <- "A"
+  expect_error(vt_fit_first(data = d), "B has 1 patient\\(s\\)")
+})
+
+test_that("a treated patient with no status reports the missing outcome", {
+  skip_on_cran()
+  d <- vt_data()
+  d$event[which(d$arm == "A")[1L]] <- NA
+  expect_error(vt_fit_first(data = d), "no outcome")
+})
+
+test_that("an ARM value in neither ARMS nor NO_ARM stops", {
+  skip_on_cran()
+  d <- vt_data()
+  d$arm[1L] <- "C"
+  expect_error(vt_fit_first(data = d), "neither in ARMS nor NO_ARM")
+})
+
 test_that("patient IDs are digested on read", {
   skip_on_cran()
   env <- vt_fit_first()
@@ -293,7 +314,7 @@ test_that("the stratifier joins sid-clusters on the ID digest", {
   sid_dir <- file.path(dirname(dirname(env$set_path("estimates", "vt.rds"))), "dead-sid")
   dir.create(sid_dir, recursive = TRUE)
   key <- hvtiRtemplates:::.study_id_key(env$.root)
-  saveRDS(list(clusters = data.frame(id = vt_digest(env, factor(vt_data()$ccfid)),
+  saveRDS(list(clusters = data.frame(id = factor(vt_digest(env, factor(vt_data()$ccfid))),
                                      cluster = ifelse(vt_data()$xs > 0, "hi", "lo")),
                id_key = hvtiRtemplates:::.id_key_fingerprint(key)),
           file.path(sid_dir, "sid-clusters.rds"))

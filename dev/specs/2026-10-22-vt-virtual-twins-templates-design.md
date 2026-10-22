@@ -251,11 +251,11 @@ method is hard-wired.
 | element | contents |
 |---|---|
 | `rmst` | one row per patient: `ID`, arm (with no-arm rows marked), `rmst_<arm>` for each arm, `diff`, `risk_<arm>`, `log_rr`, one logical column per eligibility method (`elig_gower`, `elig_sid`, ...), `elig` (the methods combined by `COMBINE`), and the sensitivity columns `elig_propensity` and `elig_none` |
-| `curves` | the per-patient survival curves on the forests' shared time grid, keyed by `ID` and arm |
+| `curves` | the per-patient survival curves on each forest's own time grid, keyed by `ID` and arm |
 | `forests` | the two `rfsrc` fits, named by arm |
 | `eligibility` | `vt_ood()`'s rows for every method, `ELIGIBILITY`, `COMBINE`, the `SID_SET` read if any, and the propensity scores |
 | `predictors` | the final predictor list, and the `VP_SET` it came from or `NULL` |
-| `settings` | `ARMS`, `HORIZON`, `NTREE`, `SEED`, the time units label |
+| `settings` | `ARMS`, `HORIZON`, `NTREE`, `SEED`, and the names and settings the fit read with (time, status, ID, arm, key fingerprint, read arguments, imputation and its m) |
 
 One file rather than several, because the handoff reader validates the lineage
 of one object, and separate files could drift apart. The forests are saved so

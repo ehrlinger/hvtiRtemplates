@@ -101,7 +101,9 @@ vt_render_fixture <- function(.local_envir = parent.frame()) {
   utils::write.csv(vt_data(), file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(root, built = "built.csv", role = "study", population = "Synthetic cohort"))
   set_line <- function(lines, key, value) {
-    lines[which(grepl(paste0("^", key, " <- "), lines))[1L]] <- paste(key, "<-", value)
+    hit <- which(grepl(paste0("^", key, " <- "), lines))
+    if (!length(hit)) stop("no line for ", key)
+    lines[hit[1L]] <- paste(key, "<-", value)
     lines
   }
   jobs <- vapply(c("fit", "explain"), function(q) {
