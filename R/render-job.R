@@ -19,7 +19,10 @@
 #' whose \code{renv} library belongs to the calling R then fails to find its
 #' packages. So the render sets \code{QUARTO_R} to this R's \code{bin}
 #' directory, \code{R.home("bin")}, and restores it afterwards. A
-#' non-empty \code{QUARTO_R} that is already set is left alone and wins.
+#' non-empty \code{QUARTO_R} that is already set is left alone, and Quarto
+#' honors it with a Quarto CLI of 1.8.13 or later. With an older CLI the
+#' quarto package itself sets \code{QUARTO_R} to the calling R for every
+#' render, so a value set by the user does not reach Quarto there.
 #'
 #' Jobs scaffolded by \code{\link{add_job}} capture their data provenance while
 #' executing and embed it in the completed HTML. The same project hooks used by
