@@ -308,7 +308,7 @@ cat("Patients:", attr(D, "Size"), " Clustering variables:", toString(sid$vars), 
 
 ## PAM over K
 
-PAM (partitioning around medoids) chooses K patients as centres and assigns
+PAM (partitioning around medoids) chooses K patients as centers and assigns
 everyone to the nearest one, here by the SID distance itself. It is
 deterministic given the distance, so this job needs no seed.
 
@@ -410,7 +410,7 @@ save_figure(.plt_sankey, "sid-clusters-sankey", width = 6.5, height = 6)
 ```
 
 A cluster that keeps its letter and most of its patients across several K
-is stable; one that forms and dissolves between neighbouring K is not.
+is stable; one that forms and dissolves between neighboring K is not.
 
 ## The solution at K
 
@@ -462,14 +462,14 @@ acceptable.
 
 ```{r}
 #| label: fig-mds
-#| fig-cap: "Patients placed in two dimensions by classical MDS of the SID distance, coloured by cluster at K"
+#| fig-cap: "Patients placed in two dimensions by classical MDS of the SID distance, colored by cluster at K"
 #| include: !expr '!is.null(K)'
 if (!is.null(K)) {
   sid_mds <- sid_mds_signs(stats::cmdscale(D, k = 2))
   .plt_mds <- ggplot2::ggplot(data.frame(x = sid_mds[, 1], y = sid_mds[, 2], letter = .at),
-                              ggplot2::aes(x, y, colour = letter)) +
+                              ggplot2::aes(x, y, color = letter)) +
     ggplot2::geom_point(alpha = 0.7) +
-    ggplot2::labs(x = "Dimension 1", y = "Dimension 2", colour = "Cluster") +
+    ggplot2::labs(x = "Dimension 1", y = "Dimension 2", color = "Cluster") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   save_figure(.plt_mds, "sid-clusters-mds")
   print(.plt_mds)

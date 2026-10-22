@@ -17,10 +17,10 @@ sid_helpers_env <- function() {
 sid_data <- function(n_per = 50L, seed = 20261022L) {
   withr::with_seed(seed, {
     truth <- rep(1:3, each = n_per)
-    centre <- c(-3, 0, 3)[truth]
+    center <- c(-3, 0, 3)[truth]
     d <- data.frame(
-      a = stats::rnorm(3 * n_per, centre), b = stats::rnorm(3 * n_per, -centre),
-      c = stats::rnorm(3 * n_per, centre / 2), e = stats::rnorm(3 * n_per),
+      a = stats::rnorm(3 * n_per, center), b = stats::rnorm(3 * n_per, -center),
+      c = stats::rnorm(3 * n_per, center / 2), e = stats::rnorm(3 * n_per),
       f = factor(ifelse(truth == 3, "y", sample(c("x", "y"), 3 * n_per, replace = TRUE, prob = c(0.8, 0.2))))
     )
     d$a[sample(nrow(d), 5)] <- NA
