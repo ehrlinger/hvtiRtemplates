@@ -17,7 +17,7 @@
 - Roxygen is Rd markup. Lines are at most 135 characters (`.lintr`).
 - A template carries its own `format:` block, opens with ONE `setup` chunk, has exactly one `^SUBJECT\s+<- ` and one `^TYPE\s+<- ` line, puts every `EDIT:` marker in the `edit-study-choices` chunk, carries no study identifiers, and ends with one `provenance` chunk.
 - Each template gets its own **file** key in `.lintr` excluding exactly `object_name_linter`, `commented_code_linter` and `object_usage_linter`.
-- Version floors in the templates match `DESCRIPTION` `Suggests`: `randomForestSRC (>= 3.7.0)`, `varPro (>= 3.2.0)`, `ggRandomForests (>= 4.0.0)`; `ggraph` has no floor.
+- Version floors in the two new templates: `randomForestSRC (>= 3.7.0)`, **`varPro (>= 3.3.0)`**, `ggRandomForests (>= 4.0.0)`; `ggraph` has no floor. `DESCRIPTION` `Suggests` moves to `varPro (>= 3.3.0)` (Task 1): `test-templates.R` requires the declared bound to be at least the highest template floor. 3.3.0 is required, not merely current: its NEWS fixes `ivarpro()` honoring `scale = "global"`/`"none"`, multivariate OOB extraction in `ivarpro()`, `sdependent()` row/column alignment, and maps encoded columns to predictors exactly; these templates rely on all four. ggRandomForests 4.0.0 already imports `varPro (>= 3.3.0)`, so no working install moves. `vp-fit`, `vp-explain` and `rf*-explain` keep their 3.2.0 guards (the test allows a lower floor, and another branch is editing `rf*-explain`).
 - `options(rf.cores = 1L, mc.cores = 1L)` in every `setup` chunk. `uvarpro()`, `get.beta.entropy()` and `ivarpro()` take no `cores =` argument; the options are the only lever. `get.beta.entropy()` is called with `papply = lapply`.
 - Every random call is seeded: `set.seed()` before it, and `uvarpro()` also gets `seed = -abs(<seed>)`. `get.beta.entropy()` gets a second `set.seed()` because the lasso cross-validation draws its folds from R's generator.
 - `get.beta.entropy()` is always called with `pre.filter = FALSE`: the pre-filter would drop the noise and the outcome columns.
@@ -60,7 +60,7 @@ The template is created whole enough to pass every catalog-wide test (format blo
 
 **Interfaces:**
 - Produces, in the template's `dependence-helpers` chunk:
-  - `vpd_parent(terms, sources)` → named character vector, one source column per processed term (`NA` when none), longest match wins.
+  - `vpd_parent(fit)` → named character vector, `attr(fit$x, "xvar.map")`: names are processed terms, values their source variables, exactly as varPro encoded them. Stops when the attribute is absent. Never guessed from names (see the collision test).
   - `vpd_square(I, parent)` → numeric matrix, square over `union(rownames(I), colnames(I))`, zero-filled, diagonal 0, entries between two terms of one parent zeroed.
   - `vpd_bar(I, noise, fixed)` → `list(bar = <numeric>, from = "noise" | "fixed (fallback)")`; `I` is the output of `vpd_square()`, `noise` a logical vector over its row names.
 - Produces in `helper-vp.R`: `vpd_labels` (chunk labels, extended in Tasks 2 and 3), `vpd_helpers_env()` (an environment holding only the helper chunk's functions).
@@ -70,11 +70,12 @@ The template is created whole enough to pass every catalog-wide test (format blo
 ```r
 # vp-dependence ---------------------------------------------------------------
 
-test_that("vpd_parent maps each processed term to its longest source name", {
+test_that("vpd_parent reads varPro's own term map, and refuses a fit without one", {
   env <- vpd_helpers_env()
-  p <- env$vpd_parent(c("a", "fsb", "f", "noise3_fsa", "zz"), c("a", "f", "fs", "noise3_fs"))
-  expect_identical(unname(p), c("a", "fs", "f", "noise3_fs", NA))
-  expect_identical(names(p), c("a", "fsb", "f", "noise3_fsa", "zz"))
+  x <- data.frame(fs = 1, fs.1 = 0)
+  attr(x, "xvar.map") <- c(fs = "fs", fs.1 = "f")
+  expect_identical(env$vpd_parent(list(x = x)), c(fs = "fs", fs.1 = "f"))
+  expect_error(env$vpd_parent(list(x = data.frame(a = 1))), "xvar.map")
 })
 
 test_that("vpd_square pads to square and zeroes links within one factor", {
@@ -82,13 +83,26 @@ test_that("vpd_square pads to square and zeroes links within one factor", {
   I <- matrix(c(0, 9, 0.5,
                 8, 0, 0.2), nrow = 2, byrow = TRUE,
               dimnames = list(c("g1u", "g1v"), c("g1u", "g1v", "a")))
-  sq <- env$vpd_square(I, env$vpd_parent(c("g1u", "g1v", "a"), c("g1", "a")))
+  sq <- env$vpd_square(I, c(g1u = "g1", g1v = "g1", a = "a"))
   expect_identical(dim(sq), c(3L, 3L))
   expect_identical(rownames(sq), colnames(sq))
   expect_equal(sq["g1u", "g1v"], 0)
   expect_equal(sq["g1v", "g1u"], 0)
   expect_equal(sq["g1u", "a"], 0.5)
   expect_equal(sq["a", "g1u"], 0)
+})
+
+test_that("vpd_square follows the term map through a name collision", {
+  env <- vpd_helpers_env()
+  # A factor f with levels s, t, u beside a numeric fs: varPro 3.3.0 names
+  # f's s-level column fs.1, and it belongs to f.
+  map <- c(fs = "fs", fs.1 = "f", ft = "f", fu = "f")
+  I <- matrix(1, 4, 4, dimnames = list(names(map), names(map)))
+  sq <- env$vpd_square(I, map)
+  expect_equal(sq["fs", "fs.1"], 1)   # a real link between two variables survives
+  expect_equal(sq["fs.1", "fs"], 1)
+  expect_equal(sq["fs.1", "ft"], 0)   # a link between two levels of f is removed
+  expect_equal(sq["fu", "fs.1"], 0)
 })
 
 test_that("vpd_bar takes the largest noise entry in a row or a column", {
@@ -157,6 +171,7 @@ Create `inst/templates/30_analyses/vp-dependence.qmd`. Build it in this order:
 3. **`setup` chunk**: copy `vp-fit.qmd`'s `setup` chunk (from the `<!-- The two values below` comment through `.job$notice`), with these exact changes:
    - `TYPE <- "dependence"` (keep `SUBJECT <- "dead"`).
    - Packages: `library(varPro)`, `library(ggRandomForests)`, `library(hvtiRutilities)`; drop the `varpro_coverage` export check.
+   - The varPro guard reads `< "3.3.0"` and its message `varPro >= 3.3.0`, with the comment: "3.3.0 records which variable each encoded column came from (xvar.map) and aligns sdependent()'s matrix by name; this job relies on both." 
    - After the version checks, add:
 
 ```r
@@ -272,15 +287,18 @@ if (length(.chr)) {
 # The decisions this job makes from the importance matrix, in one chunk of
 # their own so they can be checked on a hand-built matrix without a fit.
 #
-# varPro splits a factor into one 0/1 column per level, so the matrix names
-# processed terms ("g1u"), not variables ("g1"). Each term belongs to the
-# longest variable name it starts with, so "fsb" belongs to "fs", not "f".
-vpd_parent <- function(terms, sources) {
-  sources <- sources[order(-nchar(sources))]
-  stats::setNames(vapply(terms, function(t) {
-    hit <- sources[startsWith(t, sources)]
-    if (length(hit)) hit[[1L]] else NA_character_
-  }, ""), terms)
+# varPro splits a factor into one 0/1 column per level and records which
+# variable each column came from, in attr(fit$x, "xvar.map"). That record is
+# read, never guessed from the names: a factor f with a level s beside a
+# numeric fs gets a column named fs.1, which belongs to f, and no rule on the
+# spelling can tell.
+vpd_parent <- function(fit) {
+  map <- attr(fit$x, "xvar.map")
+  if (is.null(map)) {
+    stop("This varPro fit records no xvar.map, so its encoded columns cannot be traced to variables. ",
+         "Update varPro to 3.3.0 or later, set REFIT <- TRUE, and re-render.", call. = FALSE)
+  }
+  map
 }
 # get.beta.entropy() returns rows only for the variables that formed a
 # contrast, so the matrix is padded to square, missing entries 0. A patient is
@@ -356,7 +374,7 @@ Insert after the `(vp, explain)` object in `inst/extdata/templates.json`:
     ),
 ```
 
-`DESCRIPTION` `Suggests`: add `ggraph,` after `ggiraph (>= 0.9.5),`.
+`DESCRIPTION` `Suggests`: add `ggraph,` after `ggiraph (>= 0.9.5),`, and change `varPro (>= 3.2.0),` to `varPro (>= 3.3.0),`.
 
 Then:
 
@@ -378,7 +396,7 @@ Expected: the six new tests PASS; the catalog-wide tests in `test-add-job.R` pas
 
 - [ ] **Step 6: Prove the bar tests by mutation**
 
-Edit the installed copy only (`$VP_LIB/hvtiRtemplates/templates/30_analyses/vp-dependence.qmd`): change `vpd_bar`'s first line to `w <- c(I[noise, , drop = FALSE])`. Rerun the filter: "vpd_bar takes the largest noise entry in a row or a column" FAILS. Restore by reinstalling. Then delete the `same[is.na(same)] <- FALSE` and `sq[same] <- 0` lines in the installed copy: "vpd_square pads to square..." FAILS. Reinstall.
+Edit the installed copy only (`$VP_LIB/hvtiRtemplates/templates/30_analyses/vp-dependence.qmd`): change `vpd_bar`'s first line to `w <- c(I[noise, , drop = FALSE])`. Rerun the filter: "vpd_bar takes the largest noise entry in a row or a column" FAILS. Restore by reinstalling. Then delete the `same[is.na(same)] <- FALSE` and `sq[same] <- 0` lines in the installed copy: "vpd_square pads to square..." and "vpd_square follows the term map through a name collision" FAIL. Reinstall.
 
 - [ ] **Step 7: Lint and commit**
 
@@ -401,7 +419,7 @@ Expected lint: no lints.
 - Modify: `tests/testthat/helper-vp.R`, `tests/testthat/test-vp-templates.R`
 
 **Interfaces:**
-- Consumes: `vpd_parent()`, `vpd_square()`, `vpd_bar()` (Task 1); `d_noise`, `.cols`, `.analysis`, `.cohort`, `job_data` (Task 1 chunks).
+- Consumes: `vpd_parent(fit)`, `vpd_square()`, `vpd_bar()` (Task 1); `d_noise`, `.cols`, `.analysis`, `.cohort`, `job_data` (Task 1 chunks).
 - Produces in the job environment: `fit` (a `uvarpro` object), `beta` (square, zeroed), `bar` (`vpd_bar()` result), `gg` (a `gg_udependent`), `signal` (character), `CACHE_DIR`. Produces `estimates/<set>/dependence.rds` = `list(fit, beta, bar, bar_from, edges, signal, stability)` with lineage, `stability` `NULL` until Task 3.
 - Produces in `helper-vp.R`: `vpd_data()`, `vpd_choices`, `vpd_labels`, `vpd_first()`.
 
@@ -462,6 +480,22 @@ test_that("vp-dependence saves one handoff with its lineage", {
   expect_no_error(hvtiRtemplates:::.read_handoff(path, "dependence", env$.cfg, "the vp-dependence job"))
 })
 
+test_that("vp-dependence traces a colliding encoded column to its factor", {
+  skip_on_cran()
+  rf_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  d <- vpd_data()
+  d$f <- factor(withr::with_seed(3, sample(c("s", "t", "u"), nrow(d), replace = TRUE)))
+  d$fs <- withr::with_seed(4, stats::rnorm(nrow(d)))
+  env <- vpd_first(d, utils::modifyList(vpd_choices, list(VARIABLES = c("a", "c", "f", "fs"))))
+  # Asserted on varPro's own record, so it holds whatever spelling a later
+  # varPro chooses: every encoded column of f maps to f, and fs stays fs.
+  f_terms <- names(env$.parent)[env$.parent == "f"]
+  expect_gt(length(f_terms), 1L)
+  expect_identical(unname(env$.parent["fs"]), "fs")
+  in_beta <- intersect(f_terms, rownames(env$beta))
+  expect_true(all(env$beta[in_beta, in_beta] == 0))
+})
+
 test_that("vp-dependence refuses an ORDINAL variable it was not given", {
   rf_skip_unless_stack(rf_template_packages("vp", "dependence"))
   env <- rf_env(vpd_data())
@@ -503,7 +537,7 @@ beta_raw <- cache_fit("vp-dependence-beta", get.beta.entropy(fit, pre.filter = F
 ```{r}
 #| label: matrix
 #| results: asis
-.parent <- vpd_parent(union(rownames(beta_raw), colnames(beta_raw)), names(d_noise))
+.parent <- vpd_parent(fit)
 beta <- vpd_square(beta_raw, .parent)
 .noise <- startsWith(.parent[rownames(beta)], "noise")
 bar <- vpd_bar(beta, .noise, THRESHOLD_FIXED)
@@ -648,7 +682,7 @@ if (REPEATS > 0) {
     br <- cache_fit(sprintf("vp-dependence-repeat-%02d-beta", r),
                     get.beta.entropy(fr, pre.filter = FALSE, papply = lapply),
                     seed = SEED + r, dir = CACHE_DIR, refit = REFIT)
-    pr <- vpd_parent(union(rownames(br), colnames(br)), names(dr))
+    pr <- vpd_parent(fr)
     sq <- vpd_square(br, pr)
     nz <- startsWith(pr[rownames(sq)], "noise")
     b <- vpd_bar(sq, nz, THRESHOLD_FIXED)
@@ -698,7 +732,8 @@ git commit -m "feat(vp-dependence): edge and signal stability over subsamples"
 
 **Interfaces:**
 - Consumes: `vp.rds` from `vp-fit` (`fit`, `coverage` with columns `variable`, `noise`, `tested`, `selected`, and `selected`); `vp_fit_first()`, `vp_data()`, `vp_choices` from `helper-vp.R`.
-- Produces, in the `individual-helpers` chunk: `vpi_coverage(grad, parent, screen)` → data frame with columns `term`, `variable`, `noise`, `share_na`, `median_abs`, `tested`, `selected`, `drawn` (logical); and `vpi_noise_ref(cov)` → `list(value = <numeric or NA>, text = <character>)`.
+- Produces, in the `individual-helpers` chunk: `vpi_parent(fit)` (the `xvar.map` reader, as `vpd_parent()`); `vpi_coverage(grad, parent, screen)` → data frame, ONE ROW PER TERM OF `parent` (every processed predictor in `fit$x`, not only the columns `ivarpro()` returned), with columns `term`, `variable`, `share_na`, `median_abs`, `gradients` (`"computed"`, `"none for any patient"` or `"removed before gradients"`), `noise`, `tested`, `selected`, `drawn` (logical); and `vpi_noise_ref(cov, grad = NULL)` → `list(value = <numeric or NA>, text = <character>)`.
+- Produces in the job: `.idata`, the plotting data taken from the OUTER `ivarpro()` result before any target is selected (`ivarpro()` attaches it to the list, not to each target's table); `.target_col`, the column of `.idata` holding the drawn target; `.bee`, the beeswarm's long data (`term`, `gradient`, `value`).
 - Produces in the job: `ivp` (the `ivarpro` object, or the one table `TARGET` picks), `icov`, `show` (terms drawn). Saves `estimates/<set>/individual.rds` = `list(ivarpro, coverage)` with lineage.
 - Produces in `helper-vp.R`: `vpi_labels`.
 
@@ -722,9 +757,7 @@ test_that("vp-individual stops when no vp-fit has run in its set", {
 })
 
 test_that("vpi_coverage lists an all-NA term and draws it not", {
-  env <- new.env(parent = globalenv())
-  src <- readLines(template_path("vp", "individual"), warn = FALSE)
-  eval(parse(text = rf_chunk(src, "individual-helpers")), envir = env)
+  env <- vpi_helpers_env()
   grad <- data.frame(xs = c(1, -2, NA), x1 = NA_real_, noise1_xs = NA_real_)
   screen <- data.frame(variable = c("xs", "x1", "noise1_xs"), noise = c(FALSE, FALSE, TRUE),
                        tested = c(TRUE, TRUE, FALSE), selected = c(TRUE, FALSE, FALSE))
@@ -735,6 +768,41 @@ test_that("vpi_coverage lists an all-NA term and draws it not", {
   ref <- env$vpi_noise_ref(cov)
   expect_true(is.na(ref$value))
   expect_match(ref$text, "no noise reference")
+})
+
+test_that("vpi_coverage keeps a predictor ivarpro() returned no column for", {
+  env <- vpi_helpers_env()
+  # With nvar = 1, varPro 3.3.0 kept only x1 in xvar.names and ivarpro()
+  # returned only x1, though fit$x held x1, x2 and x3: x2 and x3 are absent, not NA.
+  grad <- data.frame(x1 = c(0.5, -1))
+  screen <- data.frame(variable = c("x1", "x2", "x3"), noise = FALSE, tested = c(TRUE, FALSE, FALSE),
+                       selected = c(TRUE, FALSE, FALSE))
+  cov <- env$vpi_coverage(grad, c(x1 = "x1", x2 = "x2", x3 = "x3"), screen)
+  expect_identical(cov$term, c("x1", "x2", "x3"))
+  expect_identical(cov$gradients, c("computed", "removed before gradients", "removed before gradients"))
+  expect_identical(cov$drawn, c(TRUE, FALSE, FALSE))
+  expect_equal(cov$share_na[cov$term == "x2"], 1)
+})
+
+test_that("vp-individual draws one target of a multiclass screen, with its plotting data", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "individual"))
+  d <- vp_data()
+  d$cls <- factor(ifelse(d$xs > 0.5, "c", ifelse(d$xs < -0.5, "a", "b")))
+  ch <- utils::modifyList(vp_outcome(vp_choices, NULL, NULL, "cls"),
+                          list(PREDICTORS = c("xs", "x1", "x2"), SPLIT_WEIGHT = FALSE, NVAR = 50, REPEATS = 0))
+  fit <- vp_fit_first(d, ch)
+  env <- new.env(parent = globalenv())
+  env$.root <- fit$.root
+  expect_error(rf_run("vp", "individual", vpi_labels, env, list(SHOW = "xs", TARGET = NULL, SEED = 1, SAVE_FIGURES = FALSE)),
+               "Name one in TARGET")
+  env <- new.env(parent = globalenv())
+  env$.root <- fit$.root
+  rf_run("vp", "individual", vpi_labels, env, list(SHOW = "xs", TARGET = "c", SEED = 1, SAVE_FIGURES = FALSE))
+  expect_false(is.null(env$.idata))
+  expect_true(env$.target_col %in% names(env$.idata))
+  expect_gt(nrow(env$.bee), 0L)
+  expect_true(all(is.finite(env$.bee$value)))
 })
 
 test_that("vp-individual gives the planted signal larger gradients than the nulls", {
@@ -754,7 +822,16 @@ test_that("vp-individual gives the planted signal larger gradients than the null
 })
 ```
 
-Move `vpi_labels` into `helper-vp.R` once the file layout settles (the test file defines it above only so this step reads in one piece).
+Move `vpi_labels` into `helper-vp.R` once the file layout settles (the test file defines it above only so this step reads in one piece), beside:
+
+```r
+vpi_helpers_env <- function() {
+  env <- new.env(parent = globalenv())
+  src <- readLines(template_path("vp", "individual"), warn = FALSE)
+  eval(parse(text = rf_chunk(src, "individual-helpers")), envir = env)  # nolint: object_usage_linter.
+  env
+}
+```
 
 - [ ] **Step 2: Run, expect FAIL** (no template `vp`/`individual`).
 
@@ -763,7 +840,7 @@ Move `vpi_labels` into `helper-vp.R` once the file layout settles (the test file
 Copy `vp-explain.qmd` whole as the starting point, then:
 
 - `title: "VarPro: individual"`, `TYPE <- "individual"`; narration per spec section 4, with the `EDIT:` HTML comment asking which screen and why.
-- `setup`: unchanged packages and floors (`varPro`, `ggRandomForests`, `hvtiRutilities`), plus `ggplot2` used by namespace. Thread comment: "ivarpro() takes no cores argument; mc.cores reaches its workers."
+- `setup`: the same packages (`varPro`, `ggRandomForests`, `hvtiRutilities`), plus `ggplot2` used by namespace. The varPro guard reads `< "3.3.0"`, commented: "3.3.0 fixes ivarpro()'s scale = \"global\"/\"none\" and its multiclass targets, both study choices here, and records the encoded-column map (xvar.map) the coverage table reads."  Thread comment: "ivarpro() takes no cores argument; mc.cores reaches its workers."
 - `edit-study-choices`: keep `WHERE`/`ID`/`KEY` and `REFIT`, `SAVE_FIGURES`, `FIGURES` (example `FIGURES <- c("vp-individual-beeswarm")`); replace `PARTIAL_VARS`, `SCALE`, `HORIZON` with:
 
 ```r
@@ -789,16 +866,32 @@ SEED <- 2026
 
 ```r
 #| label: individual-helpers
-# One row per processed predictor: how many patients have no local estimate,
-# the typical size of the rest, and what the screen said about its variable.
+# The encoded-column map, read from the fit as vp-dependence reads it.
+vpi_parent <- function(fit) {
+  map <- attr(fit$x, "xvar.map")
+  if (is.null(map)) {
+    stop("This varPro fit records no xvar.map. Update varPro to 3.3.0 or later and re-render the vp-fit job.", call. = FALSE)
+  }
+  map
+}
+# One row per processed predictor the screen was given, taken from the map and
+# not from the gradient table: ivarpro() returns columns only for the
+# predictors the fit kept, so one cut by split weights or NVAR has no column at
+# all, and would otherwise vanish from the table instead of being listed.
 vpi_coverage <- function(grad, parent, screen) {
-  terms <- names(grad)
+  terms <- names(parent)
+  have <- terms %in% names(grad)
+  col_of <- function(t) if (t %in% names(grad)) grad[[t]] else NA_real_
   out <- data.frame(
-    term = terms, variable = unname(parent[terms]),
-    share_na = vapply(grad, function(g) mean(is.na(g)), numeric(1L)),
-    median_abs = vapply(grad, function(g) if (all(is.na(g))) NA_real_ else stats::median(abs(g), na.rm = TRUE), numeric(1L)),
+    term = terms, variable = unname(parent),
+    share_na = vapply(terms, function(t) mean(is.na(col_of(t))), numeric(1L)),
+    median_abs = vapply(terms, function(t) {
+      g <- col_of(t)
+      if (all(is.na(g))) NA_real_ else stats::median(abs(g), na.rm = TRUE)
+    }, numeric(1L)),
     row.names = NULL
   )
+  out$gradients <- ifelse(!have, "removed before gradients", ifelse(out$share_na == 1, "none for any patient", "computed"))
   m <- match(out$variable, screen$variable)
   out$noise <- screen$noise[m] %in% TRUE
   out$tested <- screen$tested[m] %in% TRUE
@@ -831,22 +924,28 @@ vpi_noise_ref <- function(cov, grad = NULL) {
 set.seed(abs(SEED))
 ivp_all <- cache_fit("vp-individual", ivarpro(fit, scale = SCALE, save.model = FALSE, path.store.membership = FALSE),
                      seed = SEED, dir = CACHE_DIR, refit = REFIT)
-ivp <- if (is.data.frame(ivp_all)) {
-  ivp_all
+# ivarpro() attaches the predictors and targets it explained to the result as
+# a whole. For a multiclass fit that is a list of one table per class, and the
+# tables carry no data of their own, so the data is taken before a class is.
+.idata <- attr(ivp_all, "data")
+.targets <- attr(.idata, "response.names")
+if (is.data.frame(ivp_all)) {
+  ivp <- ivp_all
+  .target_col <- unname(.targets[[1L]])
 } else {
   if (is.null(TARGET) || !TARGET %in% names(ivp_all)) {
     stop("This fit explains several targets: ", paste(names(ivp_all), collapse = ", "), ". Name one in TARGET.", call. = FALSE)
   }
-  ivp_all[[TARGET]]
+  ivp <- ivp_all[[TARGET]]
+  .target_col <- unname(.targets[[TARGET]])
 }
 grad <- as.data.frame(ivp)
-.parent <- vpd_parent_i(names(grad), c(cov$variable))
+.parent <- vpi_parent(fit)
 ```
 
-  where `vpd_parent_i()` is `vpd_parent()` from Task 1, copied into `individual-helpers` under that name (templates are self-contained; a template cannot source another).
-- `tbl-coverage` chunk (caption "Local gradients for each predictor: patients without one, their typical size, and what the screen found"): `icov <- vpi_coverage(grad, .parent, cov)`; `.ref <- vpi_noise_ref(icov, grad)`; `cat(.ref$text)`; `show <- if (is.null(SHOW)) icov$term[icov$variable %in% selected] else icov$term[icov$variable %in% SHOW]`, refusing names in `SHOW` that the screen was not given, as `vp-explain` does for `PARTIAL_VARS`; list the shown terms that are not drawn, with "no patient has a local estimate"; `show <- intersect(show, icov$term[icov$drawn])`; stop with a message naming `SHOW` when none remain; `knitr::kable(icov, digits = 3)`.
-- `fig-beeswarm` chunk (spec 4 item 7): long data of `grad[c(show, noise terms drawn)]` beside the standardized predictor values from `attr(ivp, "data")`, points with `ggplot2::position_jitter(width = 0, height = 0.3, seed = abs(SEED))`, colour `ggplot2::scale_colour_gradient2(low = "steelblue4", mid = "grey85", high = "firebrick", name = "Value (z)")`, noise rows in grey via a separate layer, the y labels `sprintf("%s (%.0f%%)", term, 100 * (1 - share_na))`, a dashed vertical line at 0, `hvtiPlotR::theme_hv_manuscript(base_size = 11)`, `save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = 1 + 0.4 * n_rows)`.
-- `gradient-pages` chunk, `#| results: asis`: copy `vp-explain`'s `.fence`/`.page_child()` definitions and its paging loop shape (`hvtiRtemplates:::.figure_pages(length(show), panel_width = 3.25, panel_height = 3, page_height = 6)`); each page is `ggplot2::ggplot(<long data for the page's terms>, ggplot2::aes(value, gradient)) + ggplot2::geom_point(alpha = 0.5) + ggplot2::geom_hline(yintercept = 0, linetype = "dashed") + ggplot2::facet_wrap(~ term, scales = "free")`, saved as `sprintf("vp-individual-gradient-page-%02d", .i)` and emitted with `.page_child("gradient", .i, .pages, show, .cap)`. Caption: each point a patient, the local slope of the prediction against the predictor's value, dashed line at no change.
+- `tbl-coverage` chunk (caption "Local gradients for each predictor: patients without one, their typical size, and what the screen found"): `icov <- vpi_coverage(grad, .parent, cov)`; `.ref <- vpi_noise_ref(icov, grad)`; `cat(.ref$text)`; `show <- if (is.null(SHOW)) icov$term[icov$variable %in% selected] else icov$term[icov$variable %in% SHOW]`, refusing names in `SHOW` that the screen was not given, as `vp-explain` does for `PARTIAL_VARS`; list the shown terms that are not drawn, each with its `gradients` reason ("removed before gradients" or "none for any patient"); `show <- intersect(show, icov$term[icov$drawn])`; stop with a message naming `SHOW` when none remain; `knitr::kable(icov, digits = 3)`.
+- `fig-beeswarm` chunk (spec 4 item 7): long data of `grad[c(show, noise terms drawn)]` beside the standardized predictor values from `.idata` (never `attr(ivp, "data")`, which a selected target lacks), assigned to `.bee` with columns `term`, `gradient`, `value`, points with `ggplot2::position_jitter(width = 0, height = 0.3, seed = abs(SEED))`, colour `ggplot2::scale_colour_gradient2(low = "steelblue4", mid = "grey85", high = "firebrick", name = "Value (z)")`, noise rows in grey via a separate layer, the y labels `sprintf("%s (%.0f%%)", term, 100 * (1 - share_na))`, a dashed vertical line at 0, `hvtiPlotR::theme_hv_manuscript(base_size = 11)`, `save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = 1 + 0.4 * n_rows)`.
+- `gradient-pages` chunk, `#| results: asis`: copy `vp-explain`'s `.fence`/`.page_child()` definitions and its paging loop shape (`hvtiRtemplates:::.figure_pages(length(show), panel_width = 3.25, panel_height = 3, page_height = 6)`); each page is `ggplot2::ggplot(<the page's terms: gradient from grad, value from .idata>, ggplot2::aes(value, gradient)) + ggplot2::geom_point(alpha = 0.5) + ggplot2::geom_hline(yintercept = 0, linetype = "dashed") + ggplot2::facet_wrap(~ term, scales = "free")`, saved as `sprintf("vp-individual-gradient-page-%02d", .i)` and emitted with `.page_child("gradient", .i, .pages, show, .cap)`. Caption: each point a patient, the local slope of the prediction against the predictor's value, dashed line at no change.
 - `## Reading the result` prose (spec 4 item 9, including the survival target: varPro's ensemble mortality in expected events, not a probability).
 - `save` chunk: `.attach_handoff_lineage(list(ivarpro = ivp_all, coverage = icov), data = .provenance_data, artifacts = .provenance_artifacts, analysis = .vp_read$lineage$analysis, cohort = .vp_read$lineage$cohort, selection = .vp_read$lineage$selection)` saved to `set_path("estimates", "individual.rds")`.
 - `provenance`: `vp-explain`'s verbatim.
@@ -896,7 +995,7 @@ R CMD INSTALL --no-test-load -l "$VP_LIB" . >/dev/null
 R_LIBS=$VP_LIB Rscript -e 'devtools::test(filter = "vp-templates|template-catalog|add-job|roadmap")'
 ```
 
-- [ ] **Step 5: Mutation check.** In the installed copy, change `out$drawn <- out$share_na < 1` to `out$drawn <- TRUE`: "vpi_coverage lists an all-NA term" FAILS. Reinstall.
+- [ ] **Step 5: Mutation checks.** In the installed copy, one at a time, reinstalling after each: change `out$drawn <- out$share_na < 1` to `out$drawn <- TRUE`, and "vpi_coverage lists an all-NA term" FAILS; change `terms <- names(parent)` to `terms <- names(grad)`, and "vpi_coverage keeps a predictor ivarpro() returned no column for" FAILS; move the `.idata` line below the target selection as `.idata <- attr(ivp, "data")`, and the multiclass test FAILS.
 
 - [ ] **Step 6: Lint and commit**
 

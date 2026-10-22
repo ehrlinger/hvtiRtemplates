@@ -65,7 +65,7 @@ Independent of `vp-fit`: it reads the dataset, not `vp.rds`, because
 
 Chunks, in order:
 
-1. **`setup`**, the standard opening, with `varPro (>= 3.2.0)`,
+1. **`setup`**, the standard opening, with `varPro (>= 3.3.0)` (section 9),
    `ggRandomForests (>= 4.0.0)` and `igraph` attached and checked, and
    `options(rf.cores = 1L, mc.cores = 1L)`. `uvarpro()` passes `...` to
    `rfsrc()`, which reads `rf.cores`; `get.beta.entropy()` runs its release
@@ -102,8 +102,8 @@ Chunks, in order:
 6. **The matrix.** `I` is padded to square over its row and column names and
    the links between levels of one factor are zeroed (a patient is only ever
    one level), as `gg_udependent()` does. Each processed term is mapped to its
-   source column by `vpd_parent()`, the longest source name the term starts
-   with.
+   source column by `vpd_parent()`, which reads varPro's own record,
+   `attr(fit$x, "xvar.map")`, and never guesses from the spelling (section 9).
 7. **The noise bar.** `vpd_bar(I, noise)`: the largest entry of `I` in a row
    or a column whose source is a noise column. Section 3.1 has the rule.
 8. **Graph and signal set.** The noise rows and columns are dropped from `I`
@@ -194,7 +194,9 @@ Chunks, in order:
    - `SHOW`, the variables to draw: `NULL`, the default, takes the screen's
      selected set;
    - `TARGET`, which target to draw when `ivarpro()` returns several (a
-     multiclass forest, or multivariate regression). Ignored for one target;
+     multiclass forest, or multivariate regression). Ignored for one target.
+     The plotting data `ivarpro()` saves is attached to the whole result, not
+     to each target's table, so the job takes it before selecting a target;
    - `SCALE` (default `"local"`), passed to `ivarpro(scale =)`;
    - `SEED`, set before `ivarpro()` and part of its cache key.
 3. **The screen.** `readRDS(set_path("estimates", "vp.rds"))`, its lineage
@@ -207,8 +209,12 @@ Chunks, in order:
 5. **Coverage, carried over.** A table, one row per processed predictor: the
    share of patients with no usable local estimate (`NA`), the median absolute
    gradient, and whether the screen tested and selected its source variable.
-   A variable whose gradients are all `NA` was cut by split weights or never
-   released; it is listed and not drawn, with the reason.
+   The rows come from the fit's term map (`attr(fit$x, "xvar.map")`), not
+   from the gradient table: `ivarpro()` returns columns only for the
+   predictors the fit kept, so a predictor cut by split weights or `NVAR` is
+   **absent** from its result, not an all-`NA` column. Each row says
+   "computed", "none for any patient" or "removed before gradients"; the last
+   two are listed and not drawn.
 6. **The noise reference, when there is one.** The fit carries `vp-fit`'s
    permuted noise columns, so `ivarpro()` returns gradients for any noise
    column the rules released. The table gives the 95th percentile of the
@@ -250,8 +256,11 @@ the installed templates through `rf_run()`, with fixtures in `helper-vp.R`.
    the fixed threshold and `bar_from = "fixed (fallback)"`; links between two
    levels of one factor are zeroed before the bar is taken. Proven by
    mutation: drop the column direction, or the zeroing, and a test fails.
-2. **`vpd_parent()`** maps `fsb` to `fs` and not to `f` when both `f` and
-   `fs` are source names (longest match).
+2. **The term map, through a name collision:** with a factor `f` (levels
+   `s`, `t`, `u`) beside a numeric `fs`, varPro names a column of `f` `fs.1`.
+   On a hand-built map, the `fs`–`fs.1` link survives and `fs.1`–`ft` is
+   zeroed; on a fit, every column `xvar.map` assigns to `f` is mutually
+   zeroed.
 3. **A planted dependence is found.** A cohort where `c = a + noise` and `b`,
    `x2` and a two-level `fs` are null: the edge between `a` and `c` clears the
    bar in both directions. `NTREE = 100`, `REPEATS = 0`: at 30 trees the spike
@@ -270,16 +279,20 @@ the installed templates through `rf_run()`, with fixtures in `helper-vp.R`.
 8. **A planted signal gets gradients:** on `vp_data()` screened with
    `SPLIT_WEIGHT = FALSE`, `xs` has gradients for some patients and its
    median absolute gradient exceeds every null variable's that has one.
-9. **The coverage table, on a hand-built gradient table (no fit):** a
+9. **A multiclass screen:** with no `TARGET` the job stops naming the
+   classes; with one, the beeswarm data is built from the outer result's data.
+10. **The coverage table, on a hand-built gradient table (no fit):** a
    variable with all-`NA` gradients is listed and not drawn, and with no noise
    gradient the reference reads "no noise reference" rather than `NA` or 0.
 
 **Both:**
 
-10. **No MRN** in `dependence.rds` or `individual.rds`, with `rf_mrn_data()`.
-11. **One core:** both templates set `rf.cores` and `mc.cores` to 1 in `setup`.
+11. **A predictor `ivarpro()` returned no column for** is still a row,
+    "removed before gradients", not drawn.
+12. **No MRN** in `dependence.rds` or `individual.rds`, with `rf_mrn_data()`.
+13. **One core:** both templates set `rf.cores` and `mc.cores` to 1 in `setup`.
 
-Tests 3, 5, 6, 7, 8 and 10 fit and carry `skip_on_cran()`. The catalog-wide
+Tests 3, 5, 6, 7, 8, 9 and 12 fit and carry `skip_on_cran()`. The catalog-wide
 tests cover the format block, `SUBJECT`/`TYPE`, the single `setup` chunk, no
 study identifiers, `EDIT:` markers, floors, provenance and lineage, with no
 new code.
@@ -348,3 +361,26 @@ was approved; it changed sections 4 and 5.
   - the target is `"response1"`, the ensemble mortality, stored as `y` in
     `attr(x, "data")` beside the processed predictors;
   - `gg_ivarpro()` stops on the survival fit.
+
+## 9. The design review, 2026-10-22
+
+An adversarial review of the first version on this pull request found four
+defects, each reproduced here on varPro 3.3.0 before it was accepted:
+
+- **Encoded columns were mapped by guessing from their names.** With a factor
+  `f` (levels `s`, `t`, `u`) beside a numeric `fs`, varPro names one of `f`'s
+  columns `fs.1`; a longest-prefix rule gave it to `fs`, which kept a
+  within-factor link and deleted a real one. Both templates now read
+  `attr(fit$x, "xvar.map")`, the record varPro and `gg_udependent()` use.
+- **The multiclass plotting data was taken from the wrong object.** `ivarpro()`
+  attaches its data to the list of per-class tables, not to each table.
+- **Predictors cut before gradients were silently dropped.** `ivarpro()`
+  returns columns for `fit$xvar.names` only; with `nvar = 1` and three
+  predictors it returned one. The coverage table now enumerates the term map.
+- **The varPro floor is 3.3.0 for both new templates and in `Suggests`.**
+  3.3.0's NEWS fixes `ivarpro()`'s `scale = "global"`/`"none"`, its
+  multivariate OOB targets and `sdependent()`'s name alignment, and maps
+  encoded columns exactly; `SCALE`, `TARGET` and the graph rely on them.
+  ggRandomForests 4.0.0 already requires varPro 3.3.0, so no installed stack
+  moves. `vp-fit`, `vp-explain` and `rf*-explain` keep their 3.2.0 guards,
+  which the floor test permits.
