@@ -138,3 +138,45 @@ test_that("an ac job completes when no patient has the event", {
   graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead_pa-hz")
   expect_true(file.exists(file.path(graphs, "ac-survival.png")))
 })
+
+test_that("CI_TIMES draws confidence bars at those times, with the tables' limits", {
+  skip_ac()
+  local_child_chunks()
+  geoms <- function(p) vapply(p$layers, function(l) class(l$geom)[[1]], "")
+  # 0.005 years is before the first event (follow-up starts at 0.01) and 50 is past follow-up:
+  # neither has limits to draw.
+  env <- ac_run(ac_data(), list(STRATA = "grp", CI_TIMES = c(0.005, 1, 3, 50), CI_BAND = FALSE))
+  expect_identical(env$.warnings, character(0))
+  curve <- env$km_figure("grp")[[1]]
+  # CI_BAND = FALSE with CI_TIMES set: the SAS figure's bars alone.
+  expect_true("GeomErrorbar" %in% geoms(curve))
+  expect_false("GeomRibbon" %in% geoms(curve))
+  bars <- curve$layers[[match("GeomErrorbar", geoms(curve))]]$data
+  at <- life_table_at(env$d, env$TIME, env$EVENT, times = c(1, 3), strata = "grp", conf_level = env$CLEVEL)
+  expect_identical(nrow(bars), 4L)
+  expect_identical(sort(unique(bars$time)), c(1, 3))
+  expect_equal(bars$cl_lower, at$cl_lower)
+  expect_equal(bars$cl_upper, at$cl_upper)
+  expect_identical(levels(bars$strata), c("a", "b"))
+  # The overall figure gets them too.
+  expect_true("GeomErrorbar" %in% geoms(env$km_figure()[[1]]))
+  # With the band left on, the figure carries both.
+  env$CI_BAND <- TRUE
+  expect_true(all(c("GeomRibbon", "GeomErrorbar") %in% geoms(env$km_figure("grp")[[1]])))
+  # And with neither, no limits are drawn at all.
+  env$CI_BAND <- FALSE
+  env$CI_TIMES <- NULL
+  expect_false(any(c("GeomRibbon", "GeomErrorbar") %in% geoms(env$km_figure("grp")[[1]])))
+})
+
+test_that("by default the manuscript figure draws the band and no bars", {
+  skip_ac()
+  local_child_chunks()
+  geoms <- function(p) vapply(p$layers, function(l) class(l$geom)[[1]], "")
+  env <- ac_run(ac_data())
+  expect_null(env$CI_TIMES)
+  expect_true(env$CI_BAND)
+  curve <- env$km_figure()[[1]]
+  expect_true("GeomRibbon" %in% geoms(curve))
+  expect_false("GeomErrorbar" %in% geoms(curve))
+})
