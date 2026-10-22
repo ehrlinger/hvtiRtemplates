@@ -457,6 +457,8 @@ for separation, and the sizes for whether a cluster is large enough to say
 anything about. To describe the clusters, a `dc-tables` job joins the
 registered dataset below; to ask which variables separate them, a `vp-fit`
 job takes the cluster at K as a classification outcome.
+A job that models one row per patient, such as `vp-fit`, also sets `REDUCE` to keep the first record by the
+patient ID; the line to use is printed in the save section below.
 
 ## Save
 

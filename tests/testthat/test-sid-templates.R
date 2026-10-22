@@ -266,3 +266,19 @@ test_that("a cluster under MIN_SIZE at K warns", {
   env <- sid_fit_first(sid_data(n_per = 4L))  # 12 patients, so every cluster is under 20
   expect_warning(sid_clusters_after(env), "fewer than 20 patients")
 })
+
+test_that("a later job joins the registered clusters, one per patient", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  sid_clusters_after(env)
+  cfg <- hvtiRutilities::study_config(start = env$.root)
+  long <- read_job_data(cfg, join = "clusters_10_morphology_sid")
+  expect_identical(nrow(long$data), 150L)
+  expect_true(all(c("c2", "c3") %in% tolower(names(long$data))))
+  expect_error(read_job_data(cfg, join = "clusters_10_morphology_sid", one_row_per_patient = TRUE), "REDUCE")
+  one <- read_job_data(cfg, join = "clusters_10_morphology_sid", reduce = list(rule = "first", by = "ccfid"),
+                       one_row_per_patient = TRUE)
+  expect_identical(nrow(one$data), 150L)
+  expect_identical(anyDuplicated(one$data$ccfid), 0L)
+})
