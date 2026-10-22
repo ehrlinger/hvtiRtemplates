@@ -1449,7 +1449,7 @@
       "folder": "analyses",
       "family": "machine-learning",
       "kind": "job",
-      "status": "queued",
+      "status": "in-flight",
       "batch": null,
       "sas_breadth": null,
       "r_exemplars": null,
@@ -1459,7 +1459,7 @@
       "workflows": [],
       "blocked_on": null,
       "spec": "dev/specs/2026-10-22-sid-templates-design.md",
-      "note": "Never fits SID; reads sid.rds. Per-cluster profiling is a dc-tables job and per-cluster varPro a vp-fit job, both joining the registered clusters dataset.",
+      "note": "Released for review in a real study. Becomes shipped once a study renders sid-fit and sid-clusters end to end. Never fits SID; reads sid.rds. Per-cluster profiling is a dc-tables job and per-cluster varPro a vp-fit job, both joining the registered clusters dataset.",
       "sas_breadth_jobs": null,
       "disposition": "build",
       "uses": [
