@@ -7,8 +7,7 @@ fail for the right reason, then write the code.
 
 ## Task 0: confirm the ground
 
-- On lri, John runs `git --version` (design decision 6). If git is missing there, stop and go back
-  to question 2.
+- All four questions are settled: no pristine copy, an R diff3, dated names for `migrate_job()` too, and the next minor (1.5.0).
 - Confirm #383 is on `main` and read its final `.upgrade_report()`, because tasks 6 and 7 build on it.
 
 ## Task 1: shared scaffolding steps (decision 4)
@@ -40,15 +39,21 @@ fail for the right reason, then write the code.
   its candidates oldest first; a fixture repo whose bump commit changes no template maps the text to
   both versions. Measure the tarball before and after: expect about +135 KB.
 
+## Task 3b: the R diff3 (decision 6)
+
+- `R/merge3.R`: `.line_diff(a, b)` (integer-map lines, trim the common prefix and suffix, LCS by
+  dynamic programming) and `.merge3(job, base, template, labels)` returning the merged lines and the
+  conflict list. Internal, no new dependency.
+- Tests first: the law-based rows and the hand-written rows of the design's table. Mutate each branch
+  of the region rule and confirm red.
+
 ## Task 4: the merge seam (decisions 5, 6)
 
 - `.upgrade_merge(job, base, template, labels)` in `R/upgrade-job.R` returns the merged lines, the
   conflict ranges, the carried hunks and the resolved-marker list. Steps: mask choices in all three
-  (stop on a two-statement line), write three temp files, run `git merge-file -p --diff3 -L ...`,
-  read the status with stdout and stderr in separate files. 0 is clean, 1 to 127 is conflicts and must
-  equal the `<<<<<<< job` count in non-empty output, and anything else is an engine error that aborts
-  before any study file is touched (review finding 3; `system2()` reports git's error as 255). Unmask
-  with the job's text,
+  (stop on a two-statement line), call `.merge3()`, then check that the output is non-empty and that
+  the conflict count matches the `<<<<<<< job` lines; any error aborts before any study file is
+  touched (review finding 3). Unmask with the job's text,
   then auto-resolve conflicts that are only the deletion of `EDIT:` lines.
 - Tests: the design's table rows for cases 1 and 2, masking, defaults, and marker resolution, each
   driven from small texts written in the test.
@@ -73,7 +78,7 @@ fail for the right reason, then write the code.
 
 - `.free_name(stem, suffix, date)` returns the first free `...-YYYY-MM-DD[-N]`, treating a dangling
   symlink as taken (keep today's `taken()`). It is used for the backup and the report, and for
-  `migrate_job()` if question 3 is a yes.
+  `migrate_job()`'s report (question 3, settled yes).
 - Report sections: Base, Carried from the job, Conflicts, Cache may be stale (the fit's own chunk changed, or any code
   chunk before it did; worded as a possibility, with the `REFIT` behaviour), Markers resolved in the old job.
   Each names labels and lines, never values, and an empty section reads "None." (from #383).
