@@ -11,7 +11,8 @@ which shipped `vp-fit` and `vp-explain` in
 `11-exp-uvarpro-dag.qmd` (2026-10-06), for `uvarpro`. No study has run
 `ivarpro` yet.
 **Read against** varPro 3.3.0 and ggRandomForests 4.0.0, the installed
-versions on 2026-10-22.
+versions on 2026-10-22, and a spike on synthetic data the same day (section 8),
+which amended sections 4 and 5 after the design was approved.
 
 ## 1. Why two more jobs
 
@@ -202,18 +203,29 @@ Chunks, in order:
    gradient, and whether the screen tested and selected its source variable.
    A variable whose gradients are all `NA` was cut by split weights or never
    released; it is listed and not drawn, with the reason.
-6. **The noise reference.** The fit carries `vp-fit`'s permuted noise columns,
-   so `ivarpro()` returns gradients for them too, at no extra cost. The table
-   gives the 95th percentile of the noise columns' absolute gradients beside
-   each real variable's median. It is a reference, not a test: nothing is
-   selected here.
-7. **Beeswarm.** `gg_ivarpro()` over the shown variables plus the noise
-   columns, noise drawn gray, so the spread a chance predictor reaches is
-   visible beside each real one.
+6. **The noise reference, when there is one.** The fit carries `vp-fit`'s
+   permuted noise columns, so `ivarpro()` returns gradients for any noise
+   column the rules released. The table gives the 95th percentile of the
+   noise columns' absolute gradients beside each real variable's median. It is
+   a reference, not a test: nothing is selected here. **Usually there is
+   none:** with `vp-fit`'s default guided split weights, every noise column
+   in the spike came back all `NA`, because split weights keep low-importance
+   columns out of the rules. When no noise gradient exists the table says "no
+   noise reference: the screen's rules never released a noise column" and the
+   figures draw no band. It is not computed some other way.
+7. **Beeswarm**, drawn in the template with ggplot2: one row per shown
+   variable (plus any noise column with gradients, in gray), each patient a
+   point jittered vertically, colored by the predictor's standardized value.
+   `gg_ivarpro()` is not used: in ggRandomForests 4.0.0 it refuses a survival
+   fit ("supports varPro regression and classification fits only"), and
+   survival is `vp-fit`'s main use. Patients with an `NA` gradient are not
+   drawn, and the row label carries the share drawn.
 8. **Gradient against value**, one panel per shown variable, paged with
    `.page_child()` and cached per page as in `vp-explain`.
 9. **Reading the result.** That a gradient is the local slope of the
-   *prediction*, not of the outcome; that its sign says which way the
+   *prediction*, not of the outcome, and for a survival fit the prediction is
+   varPro's ensemble mortality, a relative risk score in units of expected
+   events, not a probability (the spike's target ranged from 15 to 240); that its sign says which way the
    prediction moves near that patient; that `NA` means no local estimate, not
    no effect; and that spread across patients is where an interaction would
    show, not proof of one.
@@ -234,9 +246,11 @@ the installed templates through `rf_run()`, with fixtures in `helper-vp.R`.
    mutation: drop the column direction, or the zeroing, and a test fails.
 2. **`vpd_parent()`** maps `fsb` to `fs` and not to `f` when both `f` and
    `fs` are source names (longest match).
-3. **A planted dependence is found.** A cohort where `c = a + noise` and `b`
-   and `g1` are null: the edge between `a` and `c` clears the bar, and no
-   noise column is in the signal set. `REPEATS = 2`, small `NTREE`.
+3. **A planted dependence is found.** A cohort where `c = a + noise` and `b`,
+   `x2` and a two-level `fs` are null: the edge between `a` and `c` clears the
+   bar in both directions. `NTREE = 100`, `REPEATS = 0`: at 30 trees the spike
+   put a noise entry at 1.69 against the planted edge's 2.3, too close to
+   assert on.
 4. **`pre.filter = FALSE` is in the source**, by a line check, since dropping
    it would silently drop the noise.
 5. **The stability cache.** Raising `REPEATS` from 2 to 3 computes one refit.
@@ -247,10 +261,12 @@ the installed templates through `rf_run()`, with fixtures in `helper-vp.R`.
 
 7. **It reads `vp.rds`** and no line calls `varpro(`; it stops naming the file
    when no `vp-fit` has run.
-8. **A planted signal beats the noise reference:** on `vp_data()`, `xs`'s
-   median absolute gradient exceeds the noise 95th percentile.
-9. **A variable with all-`NA` gradients is listed, not drawn**, on a hand-built
-   gradient table (no fit).
+8. **A planted signal gets gradients:** on `vp_data()` screened with
+   `SPLIT_WEIGHT = FALSE`, `xs` has gradients for some patients and its
+   median absolute gradient exceeds every null variable's that has one.
+9. **The coverage table, on a hand-built gradient table (no fit):** a
+   variable with all-`NA` gradients is listed and not drawn, and with no noise
+   gradient the reference reads "no noise reference" rather than `NA` or 0.
 
 **Both:**
 
@@ -266,9 +282,10 @@ new code.
 ledger rows and the regenerated roadmap; catalog counts 68 → 70.
 
 **CI cost.** `get.beta.entropy()` fits a cross-validated lasso per release
-variable per rule, so the dependence tests use 6 variables, `NTREE = 30` and
-`REPEATS = 2`, and must stay under about 30 s together on the Ubuntu leg;
-the plan's first task measures it before the tests are written. Expected skip
+variable per rule. In the spike, 9 columns on 200 rows took 4 s at 30 trees
+and 11 s at 100. The planted test runs one fit at 100 trees; the cache and
+handoff tests run at 30 trees with `REPEATS = 2`, where the result is not
+asserted on. About 30 s added on the Ubuntu leg. Expected skip
 counts under `NOT_CRAN=true` do not change.
 
 **Not tested:** whether the dependence noise bar is a good cutoff. That is a
@@ -280,7 +297,7 @@ records it.
 | check | `vp-fit` | `vp-dependence` | `vp-individual` |
 |---|---|---|---|
 | coverage (untested is not unimportant) | z = 0 under `TRIM` | variables with no edge at the bar are listed as "no link at the bar" | all-`NA` gradients listed, not drawn |
-| permuted noise | per-kind bar, selection | one bar for edges, fixed fallback | reference only, no selection |
+| permuted noise | per-kind bar, selection | one bar for edges, fixed fallback | reference only when noise was released, usually absent; no selection |
 | stability over subsamples | selection frequency | edge and signal frequency | none: it describes one fit |
 | one core | `cores = 1L` and options | options only (no `cores` argument) | options only |
 | seeds | `set.seed` + `seed = -abs()` | the same, plus a second `set.seed` before the lasso | `set.seed(SEED)` before `ivarpro()`, and in the cache key |
@@ -297,3 +314,31 @@ records it.
 - **Chapter 11's two-experiment layout** (survival outcome, then a binary
   outcome). A study runs the job twice, as two sets, rather than the template
   carrying both.
+
+## 8. The spike, 2026-10-22
+
+Run on the Mac against synthetic data, nothing from a study, after the design
+was approved; it changed sections 4 and 5.
+
+- **`uvarpro`**, 200 rows, `a`, `b`, `x2`, a two-level `fs`, `c = a + N(0, 0.3)`
+  and four permuted noise columns, `get.beta.entropy(pre.filter = FALSE)`:
+  - at `ntree = 30` (4 s), `I[a, c] = 2.34`, `I[c, a] = 2.26`, and the largest
+    noise entry `I[noise1_a, c] = 1.69`;
+  - at `ntree = 100` (11 s), `I[a, c] = 2.12`, `I[c, a] = 2.15`, the largest
+    noise entry 0.44, so the bar sits above the fixed 0.25 and the planted
+    edge clears it five times over. The spurious `I[x2, a] = 0.43` does not.
+  - with a three-level factor in the data instead, the release rows were
+    almost only that factor's indicator columns linked to each other, which
+    same-factor zeroing removes. This is chapter 11's finding about graded
+    variables, from the other side, and why `ORDINAL` exists.
+- **`ivarpro`** on a survival `varpro()` fit of 200 rows, a planted `xs`, null
+  `x1`, a two-level `fs` and two noise columns, reloaded from `.rds` first
+  (which works):
+  - default split weights: only `xs` had gradients, `NA` for 44% of patients;
+    every other column, noise included, was all `NA`;
+  - `split.weight = FALSE`: `NA` shares `xs` 0.40, `x1` 1.00, `noise1_xs`
+    0.93, `fs` 0.90, `noise2_fs` 1.00; median absolute gradient `xs` 21.0,
+    `noise1_xs` 4.9, `fs` 6.9.
+  - the target is `"response1"`, the ensemble mortality, stored as `y` in
+    `attr(x, "data")` beside the processed predictors;
+  - `gg_ivarpro()` stops on the survival fit.
