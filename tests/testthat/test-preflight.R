@@ -57,11 +57,84 @@ test_that("drift in a package the job does not load is a note, not a refusal", {
   root <- lock_study(pkgs = list(quarto = "1.4.4", knitr = "1.48", sf = "1.0"))
   job <- file.path(root, "analyses", "x.qmd")
   writeLines(c("```{r}", "#| label: setup", "library(knitr)", "```"), job)
-  testthat::local_mocked_bindings(.installed_version = function(p) {
-                                    if (p == "sf") "1.1" else c(quarto = "1.4.4", knitr = "1.48")[[p]]
-                                  },
-                                  .always_needed = function() c("quarto", "knitr"))
+  installed <- function(p) if (p == "sf") "1.1" else c(quarto = "1.4.4", knitr = "1.48")[[p]]
+  testthat::local_mocked_bindings(.installed_version = installed, .always_needed = function() c("quarto", "knitr"))
   ck <- .check_packages(job, root)
   expect_true(ck$ok)
   expect_match(ck$note, "sf", fixed = TRUE)
+})
+
+job_with_setup <- function(root) {
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines(c("```{r}", "#| label: setup", "library(knitr)", "```"), job)
+  job
+}
+
+test_that("a dashed locked version matches the dotted installed one", {
+  root <- lock_study(pkgs = list(quarto = "1.4.4", knitr = "1.48", survival = "3.5-8"))
+  job <- job_with_setup(root)
+  testthat::local_mocked_bindings(
+    .installed_version = function(p) c(quarto = "1.4.4", knitr = "1.48", survival = "3.5.8")[[p]],
+    .always_needed = function() c("quarto", "knitr", "survival")
+  )
+  ck <- .check_packages(job, root)
+  expect_true(ck$ok)
+  expect_null(ck$note)
+})
+
+test_that("a lock entry with no Version is unrecorded, not a crash", {
+  root <- lock_study(pkgs = list(quarto = "1.4.4", knitr = "1.48"))
+  lock <- jsonlite::read_json(file.path(root, "renv.lock"))
+  lock$Packages$gh <- list(Package = "gh", Source = "GitHub")
+  jsonlite::write_json(lock, file.path(root, "renv.lock"), auto_unbox = TRUE)
+  job <- job_with_setup(root)
+  testthat::local_mocked_bindings(
+    .installed_version = function(p) c(quarto = "1.4.4", knitr = "1.48", gh = "1.0")[[p]],
+    .always_needed = function() c("quarto", "knitr", "gh")
+  )
+  ck <- .check_packages(job, root)
+  expect_false(ck$ok)
+  expect_match(ck$message, "gh 1.0 is installed but not recorded", fixed = TRUE)
+})
+
+test_that("r_version treats an unparseable lock version as absent, with a note", {
+  for (bad in c("", "devel", "4")) {
+    root <- lock_study(r = bad)
+    testthat::local_mocked_bindings(.session_r = function() numeric_version("4.5.3"))
+    ck <- .check_r_version(root)
+    expect_true(ck$ok)
+    expect_match(ck$note, "could not be read", fixed = TRUE)
+  }
+})
+
+test_that("packages notes when the job's own packages could not be read", {
+  root <- lock_study()
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines("no setup chunk here", job)
+  testthat::local_mocked_bindings(.installed_version = function(p) c(quarto = "1.4.4", knitr = "1.48")[[p]],
+                                  .always_needed = function() c("quarto", "knitr"))
+  ck <- .check_packages(job, root)
+  expect_true(ck$ok)
+  expect_match(ck$note, "could not be read", fixed = TRUE)
+})
+
+test_that("packages: neither installed nor recorded", {
+  root <- lock_study(pkgs = list(knitr = "1.48"))
+  job <- job_with_setup(root)
+  testthat::local_mocked_bindings(.installed_version = function(p) if (p == "quarto") NA_character_ else "1.48",
+                                  .always_needed = function() c("quarto", "knitr"))
+  ck <- .check_packages(job, root)
+  expect_false(ck$ok)
+  expect_match(ck$message, "quarto is neither installed nor recorded", fixed = TRUE)
+  expect_match(ck$fix, "hvtiR::update()", fixed = TRUE)
+})
+
+test_that("packages: installed newer than locked updates, older restores", {
+  root <- lock_study(pkgs = list(quarto = "1.4.4", knitr = "1.48"))
+  job <- job_with_setup(root)
+  testthat::local_mocked_bindings(.installed_version = function(p) if (p == "knitr") "1.50" else "1.4.4",
+                                  .always_needed = function() c("quarto", "knitr"))
+  expect_match(.check_packages(job, root)$fix, "hvtiR::update()", fixed = TRUE)
+  testthat::local_mocked_bindings(.installed_version = function(p) if (p == "knitr") "1.40" else "1.4.4")
+  expect_match(.check_packages(job, root)$fix, 'renv::restore(packages = "knitr")', fixed = TRUE)
 })

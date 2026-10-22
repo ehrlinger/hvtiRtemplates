@@ -23,14 +23,24 @@
   if (is.character(v) && length(v) == 1L) v else NA_character_
 }
 
-.minor <- function(v) paste(unlist(numeric_version(v))[1:2], collapse = ".")
+# NULL for anything that is not at least major.minor ("", "devel", "4").
+.parse_r <- function(v) {
+  nv <- tryCatch(numeric_version(v), error = function(e) NULL)
+  if (is.null(nv) || length(nv) != 1L || is.na(nv) || length(unlist(nv)) < 2L) NULL else nv
+}
+
+.minor <- function(nv) paste(unlist(nv)[1:2], collapse = ".")
 
 # renv keeps one library per major.minor, so only that has to agree.
 .check_r_version <- function(root) {
   lock <- .lock_r_version(root)
   have <- as.character(.session_r())
   if (is.na(lock)) return(.check("r_version", TRUE))
-  if (.minor(lock) != .minor(have)) {
+  nv <- .parse_r(lock)
+  if (is.null(nv)) {
+    return(.check("r_version", TRUE, note = sprintf("the R version in renv.lock (\"%s\") could not be read; not checked.", lock)))
+  }
+  if (.minor(nv) != .minor(numeric_version(have))) {
     return(.check("r_version", FALSE,
                   sprintf("this study's renv.lock records R %s, but this session is R %s, so it would use a different library.",
                           lock, have),
@@ -41,20 +51,21 @@
 
 # What the job's own setup chunk loads, read the way .template_packages() reads a template.
 .job_packages <- function(path) {
-  pk <- tryCatch(.template_packages(path)$package, error = function(e) character())
-  unique(c(pk, .always_needed()))
+  pk <- tryCatch(.template_packages(path)$package, error = function(e) NULL)
+  structure(unique(c(pk, .always_needed())), unread = is.null(pk))
 }
 
 .check_packages <- function(path, root) {
   lock <- .lock_read(root)
   if (is.null(lock)) return(.check("packages", TRUE, note = "no renv.lock; packages not checked."))
-  locked <- vapply(lock$Packages, function(p) p$Version, "")
+  # GitHub and local sources can carry no Version; they count as unrecorded.
+  locked <- vapply(lock$Packages, function(p) if (is.character(p$Version) && length(p$Version) == 1L) p$Version else NA_character_, "")
   need <- .job_packages(path)
-  have <- vapply(need, .installed_version, "")
+  have <- vapply(as.vector(need), .installed_version, "")
   bad <- character()
   fix <- character()
-  for (p in need) {
-    l <- if (p %in% names(locked)) locked[[p]] else NA_character_
+  for (p in as.vector(need)) {
+    l <- if (p %in% names(locked)) locked[[p]] else NA_character_  # NA: absent or no Version
     h <- have[[p]]
     if (is.na(h) && is.na(l)) {
       bad <- c(bad, sprintf("%s is neither installed nor recorded in renv.lock", p))
@@ -65,16 +76,25 @@
     } else if (is.na(h)) {
       bad <- c(bad, sprintf("%s %s is recorded in renv.lock but not installed", p, l))
       fix <- c(fix, sprintf('renv::restore(packages = "%s")', p))
-    } else if (h != l) {
+    } else if (numeric_version(h) != numeric_version(l)) {
       bad <- c(bad, sprintf("%s %s installed, %s locked", p, h, l))
       fix <- c(fix, if (numeric_version(h) > numeric_version(l)) "hvtiR::update()" else sprintf('renv::restore(packages = "%s")', p))
     }
   }
-  other <- setdiff(names(locked), need)
-  drift <- other[vapply(other, function(p) !identical(.installed_version(p), locked[[p]]), NA)]
-  note <- if (length(drift)) sprintf("%d package(s) this job does not load differ from renv.lock: %s.",
-                                     length(drift), paste(drift, collapse = ", "))
+  other <- setdiff(names(locked), as.vector(need))
+  drift <- other[vapply(other, function(p) .drifts(.installed_version(p), locked[[p]]), NA)]
+  note <- c(if (length(drift)) sprintf("%d package(s) this job does not load differ from renv.lock: %s.",
+                                       length(drift), paste(drift, collapse = ", ")),
+            if (isTRUE(attr(need, "unread"))) "the job's own packages could not be read, so only the always-needed set was checked.")
+  note <- if (length(note)) paste(note, collapse = " ")
   if (length(bad)) return(.check("packages", FALSE, paste0(paste(bad, collapse = "; "), "."),
                                  paste(unique(fix), collapse = "\n"), note))
   .check("packages", TRUE, note = note)
+}
+
+# TRUE when the installed and locked versions differ; "3.5.8" and "3.5-8" are the same version.
+.drifts <- function(have, lock) {
+  if (is.na(lock)) return(FALSE)
+  if (is.na(have)) return(TRUE)
+  numeric_version(have) != numeric_version(lock)
 }
