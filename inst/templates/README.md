@@ -381,7 +381,10 @@ as on a Mac without XQuartz.
 | dc-tables | `dc-tables-correlation-matrix` (in `descriptive/`) |
 | dc-eda | `dc-eda-gfup-<panel>`, `dc-eda-<section>-page-<NN>` |
 | dc-trends | `dc-trends-<trend>-<subgroup>` |
+| hz | `hz-fit` |
+| hm | `hm-calibration` |
 | hp | `hp-survival`, `hp-hazard`, `hp-phases` |
+| hs-setup | `hs-setup-expected` |
 | lg | `lg-<covariate>`, one for each covariate in `VARIABLES`, such as `lg-age` |
 | lp-mirror | `lp-mirror-unmatched`, `lp-mirror-weighted`, and `lp-mirror-matched` when `MATCH` is set |
 | bc, bh, bl, br | `<prefix>-frequencies` |
