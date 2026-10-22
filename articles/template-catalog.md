@@ -85,11 +85,11 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `lm-propensity_nominal` | Generalized-logit propensity model for a nominal treatment with an explicit reference level. | `add_job("lm", subject, type, qualifier = "propensity_nominal")` |
 | 🟢 Shipped | `lm-propensity_ordinal` | Proportional-odds propensity model for an ordered treatment. | `add_job("lm", subject, type, qualifier = "propensity_ordinal")` |
 | 🟢 Shipped | `nb-boostmtree` | Fits boosted multivariate trees to a response measured repeatedly over follow-up, and reports its error path, fit over time, importance, partial effects and patient trajectories. | `add_job("nb", subject, type, qualifier = "boostmtree")` |
-| 🟢 Shipped | `rfc-explain` | Explains a saved classification forest: variable importance, VarPro and dependence plots. | `add_job("rfc", subject, type, qualifier = "explain")` |
+| 🟢 Shipped | `rfc-explain` | Explains a saved classification forest: variable importance and dependence plots. | `add_job("rfc", subject, type, qualifier = "explain")` |
 | 🟢 Shipped | `rfc-fit` | Grows a classification forest and checks it: out-of-bag error and the ROC curve with its AUC. | `add_job("rfc", subject, type, qualifier = "fit")` |
-| 🟢 Shipped | `rfr-explain` | Explains a saved regression forest: variable importance, VarPro and dependence plots. | `add_job("rfr", subject, type, qualifier = "explain")` |
+| 🟢 Shipped | `rfr-explain` | Explains a saved regression forest: variable importance and dependence plots. | `add_job("rfr", subject, type, qualifier = "explain")` |
 | 🟢 Shipped | `rfr-fit` | Grows a regression forest and checks it: out-of-bag error and predicted against observed. | `add_job("rfr", subject, type, qualifier = "fit")` |
-| 🟢 Shipped | `rfs-explain` | Explains a saved survival forest: variable importance, VarPro and dependence plots. It never grows a forest. | `add_job("rfs", subject, type, qualifier = "explain")` |
+| 🟢 Shipped | `rfs-explain` | Explains a saved survival forest: variable importance and dependence plots. It never grows a forest. | `add_job("rfs", subject, type, qualifier = "explain")` |
 | 🟢 Shipped | `rfs-fit` | Grows a random survival forest and checks it learned something: out-of-bag error, predicted survival and the Brier score. | `add_job("rfs", subject, type, qualifier = "fit")` |
 | 🟢 Shipped | `rm-balancing_continuous` | Least-squares balancing score for a continuous exposure: the averaged fitted value and its strata. | `add_job("rm", subject, type, qualifier = "balancing_continuous")` |
 | 🟢 Shipped | `rm-linear` | Ordinary least-squares outcome model with Rubin-pooled inference. | `add_job("rm", subject, type, qualifier = "linear")` |
