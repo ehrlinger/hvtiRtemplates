@@ -197,6 +197,13 @@ if (length(.absent)) {
   stop("VARS names column(s) the data do not have: ", toString(.absent), ".", call. = FALSE)
 }
 VARS <- tolower(VARS)
+# sidClustering() staggers each variable by its range, which a text column does
+# not have, so text variables are converted to factors here, and named.
+.chr <- VARS[vapply(d[VARS], is.character, logical(1L))]
+if (length(.chr)) {
+  d[.chr] <- lapply(d[.chr], factor)
+  cat("Text variables converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
+}
 .empty <- rowSums(!is.na(d[VARS])) == 0
 d <- d[!.empty, , drop = FALSE]
 if (nrow(d) == 0L) {

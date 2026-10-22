@@ -160,6 +160,17 @@ test_that("sid-fit caches only the distance and the kept variables, and guards a
   expect_true(any(grepl("is.null(o$dist)", src, fixed = TRUE)))
 })
 
+test_that("sid-fit converts text variables to factors, and says which", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))
+  # Built data arrives with text as character, which sidClustering() cannot stagger.
+  d <- sid_data()
+  d$f <- as.character(d$f)
+  out <- utils::capture.output(env <- sid_fit_first(d))
+  expect_s3_class(env$d$f, "factor")
+  expect_true(any(grepl("converted to factors: f", out)))
+})
+
 test_that("sid-fit refuses an ID or an absent column in VARS", {
   rf_skip_unless_stack(rf_template_packages("sid", "fit"))
   for (vars in list(c("a", "ccfid"), c("a", "nope"))) {
