@@ -71,8 +71,9 @@ A wrong base fails in one of two directions, and they are not equally safe:
   at A, and the base is taken to be B. The job's A then looks like a study edit against B, so the
   merge keeps A.
 
-So the base must be exact where it can be. Where it has to be inferred, the inference must lean
-older.
+So the base must be exact where it can be. Where it has to be inferred, choosing one candidate is not
+safe by any rule: a closer text is not proof of ancestry (review finding 1, below). Decision 3 makes
+the candidates agree before anything is carried silently.
 
 ## Decisions
 
@@ -87,8 +88,18 @@ which this widens.
 
 The package ships `inst/extdata/template-history.rds`: every distinct template text that was on
 `main` since `d3b741e`, keyed by SHA-256, with an index of (template name, package version, first
-and last commit date). It is built from git by `dev/template-history/build.R`, which reads
-`git rev-list --first-parent` over `inst/templates/` and needs nothing from the installed package.
+and last commit date). It is built from git by `dev/template-history/build.R` and needs nothing from the installed
+package.
+
+**The index is built over every first-parent commit, not only those that touch `inst/templates/`**
+(review finding 2). A bump commit changes `Version:` and no template, so a walk filtered by path
+skips it and indexes the unchanged text under the previous version, while a job scaffolded just
+after the bump stamps the new one. Over `d3b741e~1..be576eb` the filtered walk visits 38 of 69
+first-parent commits and loses two real pairs for `nb-boostmtree.qmd` alone (1.4.0 at `d39a5eb`,
+1.4.1 at `d61ba9a`). The build therefore reads `Version:` and every template at **each** first-parent
+commit from `d3b741e` (the first commit that stamps) onward, records every (template, version, text)
+triple it sees, and stores each text once, by hash. The texts are deduplicated; the version index is
+not.
 
 - **Size, measured:** 164 distinct texts, 3.5 MB raw, **133 KB** compressed with `xz`. One file in
   the tarball, because `xz` compresses the near-duplicates against one another and per-file `gzip`
@@ -113,11 +124,25 @@ In order, and the report says which one was used:
 
 1. **Exact.** The stamp carries a hash, and the archive or `inst/templates/` has that text.
 2. **Inferred.** The stamp carries a version but no hash. That is every job stamped from 1.3.x to
-   1.4.2, the three above included. The candidates are the texts the index lists for that template at
-   that version. Each is rendered into a job as in decision 4, and the one whose line diff against
-   the job is smallest is the base. A tie goes to the **older** text, for the reason above. The
-   report names the base as inferred, says how many candidates there were, and gives each carried
-   hunk a line under "Carried" for the analyst to confirm.
+   1.4.2, the three above included. The candidates are every text the index lists for that template
+   at that version (decision 2 makes that list complete), each rendered into a job as in decision 4.
+   **The upgrade merges against every candidate, not one.** Where the merges agree, the base did not
+   matter there, and the merged text stands. Where they disagree, the region is written as a
+   conflict that shows each outcome, so the analyst decides it, never a ranking.
+
+   This replaces "the closest candidate, a tie to the older", which review finding 1 broke with a
+   four-line counterexample. A job copied from A changed two choice values, and those same values
+   happen to be B's defaults. That makes the newer B *strictly* closer, so no tie-break ever runs,
+   and the merge against B exits 0 having undone the template's `strict = TRUE` in silence. Scoring
+   with choices masked (decision 5) would fix that example, but not the general case: similarity is
+   not ancestry. Agreement across all candidates needs no ranking at all.
+
+   The cost is more conflicts when a version had many texts (nine for `nb.boostmtree` 1.4.1), and
+   only in the regions where those texts differ. Choices are masked before every candidate merge, so
+   they never disagree. The report names the base as inferred, gives the candidate count, and lists
+   the disagreement conflicts separately from the job-against-template ones. An inferred upgrade with
+   no disagreement and no conflict is still labelled inferred in the report, so a reader can tell it
+   from an exact one.
 3. **None.** No stamp, or a hash the archive has never seen (an install from `main` after the last
    bump). The upgrade falls back to today's behaviour: carry the choices, list the rest, with #383's
    description carry and "None." for empty sections. The report opens by saying that no base was
@@ -164,6 +189,17 @@ stops and names the line, rather than guessing.
 - The upgraded job is written with `git merge-file --diff3` markers labelled
   `<<<<<<< job`, `||||||| template <old version>`, `=======` and `>>>>>>> template <new version>`.
   The base section shows the analyst what the template used to say.
+- **An engine failure is not a conflict** (review finding 3). Through `system2()`, `git merge-file`'s
+  error status reaches R as **255**, not negative. A "negative is an error" test would read that as
+  255 conflicts and go on to publish an empty or diagnostic file as the job. So:
+  - stdout and stderr go to separate files;
+  - status 0 is clean, 1 to 127 is that many conflicts, and anything else (128 or more, or `NA`)
+    is an engine error;
+  - the conflict status must equal the number of `<<<<<<< job` lines in the output, and the output
+    must be non-empty.
+
+  Any failure aborts with stderr in the message **before any study file is touched**, as today's code
+  already computes the upgrade before renaming anything.
 - The backup and the report are written too. Then `upgrade_job()` signals an error of class
   `hvtiRtemplates_upgrade_conflict`, naming the count and the report. That is an error a script
   cannot step past.
@@ -198,10 +234,15 @@ and line ranges, never values:
 - **Carried from the job**: each hunk of the job's own edits kept outside the choices, by chunk and
   line range. In case 2 this is where the analyst sees `tbl-data` and the `partial.plot()` chunk.
 - **Conflicts**: by chunk and line range in the upgraded job, or "None."
-- **Will refit**: every chunk that calls `cache_fit()` whose code text changed in the upgrade.
-  `cache_fit()` keys on the code text, so the next render refits it, and for a boostmtree job that is
-  half an hour to hours. Adding `progress =` to a fit call is exactly such a change, whether the
-  template or the study adds it.
+- **Cache may be stale** (review finding 4; this was "Will refit"). It lists every chunk that calls
+  `cache_fit()` and either changed itself or comes after any changed code chunk, the fit's own and
+  upstream ones like `tbl-data` alike. That is a static guess and the report says so. `cache_fit()`
+  keys on the code text, the values the call reads, the seed and package versions, so the upgrade
+  cannot tell whether a fit will go stale. A listed fit may still match, and an unlisted fit is not
+  promised valid. It also does not refit by itself. With the shipped `REFIT <- FALSE`, a stale cache
+  stops the render with `hvtiRutilities_stale_cache` until the analyst sets `REFIT`. The section
+  says that too, because for a boostmtree fit the refit is half an hour to hours. Adding
+  `progress =` to a fit call is one such change, whether the template or the study adds it.
 
 ### 9. A job renamed by an upgrade has one live copy
 
@@ -243,7 +284,7 @@ names and not their values; mutation, removing the guard, turns the first red.
   the description and the notes above choices on its own, so #383's heuristics and its notes-above-
   choices listing are skipped in that path, not deleted.
 - **`progress =` and the cache key.** The merge cannot keep a fit's cache valid when the fit call's
-  text changes, and should not try. "Will refit" makes the cost visible before the render. A
+  text changes, and should not try. "Cache may be stale" makes the risk visible before the render. A
   separate point for the job-progress work: the templates could pass the callback through `get()`,
   as they already do for `CORES`, so that adding it does not key the fit. That belongs to that design,
   not here.
@@ -272,11 +313,14 @@ end-to-end test runs `upgrade_job()` on a job scaffolded from an archived `nb.bo
 | both sides change one line: error of class `hvtiRtemplates_upgrade_conflict`, markers in the file, backup and report written, conflict listed | decision 6 | the merge takes either side |
 | `.job_setup()` stops on a job with conflict markers, draft or final | decision 6 | the guard is removed |
 | two upgrades in one day write `-2` names and overwrite nothing; an undated `.pre-upgrade` does not block | case 3 | naming reverts to the fixed name |
-| a stamp without a hash, three candidates: the closest is chosen, a tie goes to the older, the report says inferred | decision 3 | the newest candidate is taken |
+| a stamp without a hash, three candidates that agree in a region: that region merges cleanly; where they disagree it is a conflict showing each outcome; the report says inferred | decision 3 | one candidate is used |
 | the newer-base hazard: job at A, candidates A and B, template C; the template's change lands | decision 3 | same |
+| review finding 1's case: job's choice values equal newer B's, so B is strictly closer; the `strict` change becomes a conflict, not a silent revert | decision 3 | one candidate is ranked and used |
+| an engine failure (a missing input): error before anything is written; job, backups and reports byte-identical | decision 6 | status 255 is read as conflicts |
+| an archive built over a bump commit that changes no template maps the text to both versions | decision 2 | the walk is filtered by path |
 | no stamp: today's behaviour, and the report opens with "no base" | decision 3 | the fallback is removed |
 | every archive entry's text hashes to its key | decision 2 | the archive is hand-edited |
-| a fit chunk whose code changes is listed under "Will refit" | decision 8 | the section is removed |
+| a fit chunk whose code changes, and one whose code is unchanged but follows a changed `tbl-data`, are both listed under "Cache may be stale" | decision 8 | only the fit chunk's own text is compared |
 
 "Goes red" is the mutation to run. Each is reverted in a scratch commit and the named tests must fail
 before the change is called done.

@@ -27,32 +27,40 @@ fail for the right reason, then write the code.
 
 ## Task 3: the template archive (decision 2)
 
-- `dev/template-history/build.R`: walk `git rev-list --first-parent d3b741e~1..HEAD -- inst/templates`,
-  collect each distinct `.qmd` text with its template name, the `Version:` at that commit and the
-  first and last commit dates, and write `inst/extdata/template-history.rds` (`compress = "xz"`).
+- `dev/template-history/build.R`: walk **every** commit of `git rev-list --first-parent d3b741e~1..HEAD`,
+  with no path filter, so that a bump commit that changes no template still maps its texts to the new
+  version (review finding 2). At each commit, read `Version:` and every `.qmd` under `inst/templates/`.
+  Record each (template, version, text hash) triple with first and last commit dates, store each text
+  once by hash, and write `inst/extdata/template-history.rds` (`compress = "xz"`).
 - `.template_history()` reads it once per session. `.base_candidates(template, version, hash)`
   returns the exact text, or the candidates for a version, or none; it reads `inst/templates/` as well.
 - Add the `build.R` run to the bump procedure beside `news.py collect` (`.claude/house-style.md`'s
   source in the vault, then recompose; `AGENTS.md`'s "Bump when you name a version").
 - Tests: every entry hashes to its key; a hash that is present returns one text; a version returns
-  its candidates oldest first. Measure the tarball before and after: expect about +135 KB.
+  its candidates oldest first; a fixture repo whose bump commit changes no template maps the text to
+  both versions. Measure the tarball before and after: expect about +135 KB.
 
 ## Task 4: the merge seam (decisions 5, 6)
 
 - `.upgrade_merge(job, base, template, labels)` in `R/upgrade-job.R` returns the merged lines, the
   conflict ranges, the carried hunks and the resolved-marker list. Steps: mask choices in all three
   (stop on a two-statement line), write three temp files, run `git merge-file -p --diff3 -L ...`,
-  read the conflict count from the exit status (negative is an error), unmask with the job's text,
+  read the status with stdout and stderr in separate files. 0 is clean, 1 to 127 is conflicts and must
+  equal the `<<<<<<< job` count in non-empty output, and anything else is an engine error that aborts
+  before any study file is touched (review finding 3; `system2()` reports git's error as 255). Unmask
+  with the job's text,
   then auto-resolve conflicts that are only the deletion of `EDIT:` lines.
 - Tests: the design's table rows for cases 1 and 2, masking, defaults, and marker resolution, each
   driven from small texts written in the test.
 
 ## Task 5: base resolution (decision 3)
 
-- Exact, then inferred (the smallest line diff, computed by `git diff --no-index --numstat` or by a
-  count of `merge-file`'s non-matching lines; a tie goes to the older), then none. `upgrade_job()` gains
+- Exact, then inferred, then none. Inferred merges against **every** candidate and turns each region
+  where the merged texts disagree into a conflict showing every outcome; no candidate is ranked
+  (review finding 1). `upgrade_job()` gains
   `base = NULL`, a path to a template file to use as the base.
-- Tests: the inference rows and the newer-base hazard row, from a temporary archive.
+- Tests: the inference rows, the newer-base hazard row and review finding 1's strictly-closer case,
+  from a temporary archive; and the engine-failure row (task 4).
 
 ## Task 6: conflicts stop the upgrade (decision 6)
 
@@ -66,7 +74,8 @@ fail for the right reason, then write the code.
 - `.free_name(stem, suffix, date)` returns the first free `...-YYYY-MM-DD[-N]`, treating a dangling
   symlink as taken (keep today's `taken()`). It is used for the backup and the report, and for
   `migrate_job()` if question 3 is a yes.
-- Report sections: Base, Carried from the job, Conflicts, Will refit, Markers resolved in the old job.
+- Report sections: Base, Carried from the job, Conflicts, Cache may be stale (the fit's own chunk changed, or any code
+  chunk before it did; worded as a possibility, with the `REFIT` behaviour), Markers resolved in the old job.
   Each names labels and lines, never values, and an empty section reads "None." (from #383).
 - Update the roxygen in Rd markup: the `@description` paragraph on backups, `@details` on what is
   carried, and a `@section` on conflicts. Then run `devtools::document()`.
