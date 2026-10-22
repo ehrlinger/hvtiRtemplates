@@ -77,7 +77,7 @@ root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L, renv = FALSE
 ))
-#> Study: /tmp/RtmpQxX1bU/open-job-example
+#> Study: /tmp/RtmppE5sHq/open-job-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
