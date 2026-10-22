@@ -36,6 +36,92 @@
   }
 }
 
+# hvti's whole R side. The path arrives as data (commandArgs), never as source. Exit 1 on a refusal,
+# or a launch that failed or vanished during the wait, so a shell `&&` chain stops there.
+.hvti_main <- function(args) {
+  cmd <- args[1L]
+  path <- args[2L]
+  final <- identical(args[3L], "TRUE")
+  st <- tryCatch(switch(cmd,
+                        run = run_job(path, final = final),
+                        status = job_status(path),
+                        cancel = cancel_job(path)),
+                 error = function(e) {
+                   message(conditionMessage(e))
+                   NULL
+                 })
+  if (is.null(st)) return(1L)
+  if (identical(cmd, "run") && isTRUE(st$state %in% c("failed", "vanished", "cancelled"))) 1L else 0L
+}
+
+# Once per session, so a long script of run_job() calls says it once.
+.hvti_state <- new.env(parent = emptyenv())
+.hvti_state$warned <- FALSE
+
+# The hvti on PATH, or "". A wrapper so tests can stand in for Sys.which(), which cannot be mocked.
+.hvti_on_path <- function() unname(Sys.which("hvti"))
+
+# The `hvti-version: N` stamp in a copy of the script; NA when the file or stamp is missing.
+.hvti_version <- function(file) {
+  if (!nzchar(file) || !file.exists(file)) return(NA_integer_)
+  head <- readLines(file, n = 5L, warn = FALSE)
+  m <- regmatches(head, regexpr("hvti-version: *[0-9]+", head))
+  if (!length(m)) return(NA_integer_)
+  as.integer(sub("hvti-version: *", "", m[1L]))
+}
+
+# Warns, once, when the hvti on PATH is an older copy than the package's. No copy on PATH, no warning.
+.warn_stale_hvti <- function() {
+  if (.hvti_state$warned) return(invisible(FALSE))
+  installed <- .hvti_version(.hvti_on_path())
+  shipped <- .hvti_version(system.file("bin", "hvti", package = "hvtiRtemplates"))
+  if (is.na(installed) || is.na(shipped) || installed >= shipped) return(invisible(FALSE))
+  .hvti_state$warned <- TRUE
+  warning("The hvti command on your PATH is older than this package's (version ", installed, " against ", shipped,
+          "). Run hvtiRtemplates::install_hvti() to update it.", call. = FALSE)
+  invisible(TRUE)
+}
+
+#' Install the hvti command
+#'
+#' @description
+#' Copies the \code{hvti} shell command into a directory on your \code{PATH}.
+#' \code{hvti run job.qmd} then starts \code{\link{run_job}} on the R that the
+#' study's \code{renv.lock} records, from a terminal, whichever R your own
+#' session would have started. \code{hvti status} and \code{hvti cancel} do the
+#' same for \code{\link{job_status}} and \code{\link{cancel_job}}.
+#'
+#' @details
+#' The command is a copy, not a symlink. The library path it would point at
+#' changes with the R version, and surviving that change is what the command
+#' is for. Run \code{install_hvti()} again after updating the package;
+#' \code{run_job()} warns, once per session, when the copy on your
+#' \code{PATH} is older than the one the package ships.
+#' It writes only into \code{dir}.
+#'
+#' @param dir Character(1). The directory to install into, created if absent.
+#'   It should be on your \code{PATH}; a message gives the line to add if not.
+#' @return Invisibly, the path of the installed command.
+#' @seealso \code{\link{run_job}}
+#' @examples
+#' if (.Platform$OS.type != "windows") {
+#'   install_hvti(file.path(tempdir(), "bin"))
+#' }
+#' @export
+install_hvti <- function(dir = "~/bin") {
+  dir <- path.expand(dir)
+  if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
+  to <- file.path(dir, "hvti")
+  # A copy, not a symlink: the library path changes with the R version, which is what hvti exists to survive.
+  if (!file.copy(system.file("bin", "hvti", package = "hvtiRtemplates"), to, overwrite = TRUE)) {
+    stop("install_hvti(): could not write ", to, ".", call. = FALSE)
+  }
+  Sys.chmod(to, "755")
+  on_path <- normalizePath(dir) %in% normalizePath(strsplit(Sys.getenv("PATH"), ":", fixed = TRUE)[[1]], mustWork = FALSE)
+  if (!on_path) message("Add it to your PATH: echo 'export PATH=\"", dir, ":$PATH\"' >> ~/.profile")
+  invisible(to)
+}
+
 #' Check a job, run it in the background, and wait for its own checks
 #'
 #' @description
@@ -84,6 +170,7 @@ run_job <- function(path, final = FALSE, wait = 300) {
   if (!is.numeric(wait) || length(wait) != 1L || is.na(wait) || wait < 0) {
     stop("run_job(): `wait` must be a single number of seconds, 0 or more.", call. = FALSE)
   }
+  .warn_stale_hvti()
   path <- normalizePath(path, winslash = "/")
   root <- .find_study_root(dirname(path))
   cat("Checking ", basename(path), "\n", sep = "")

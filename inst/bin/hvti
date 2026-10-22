@@ -1,0 +1,28 @@
+#!/bin/sh
+# hvti: run an hvtiR job on the R its study's renv.lock records. hvti-version: 1
+# Design: hvtiRtemplates dev/specs/2026-10-22-run-job-design.md, section 3.
+usage() { echo "usage: hvti run|status|cancel <job.qmd> [--final]" >&2; exit 2; }
+[ $# -ge 2 ] || usage
+cmd=$1; job=$2; final=FALSE
+[ "${3:-}" = "--final" ] && final=TRUE
+[ -f "$job" ] || { echo "hvti: no such job file: $job" >&2; exit 1; }
+jobdir=$(cd "$(dirname "$job")" && pwd) || exit 1
+jobpath="$jobdir/$(basename "$job")"
+root=$jobdir
+while [ ! -f "$root/renv.lock" ]; do
+  [ "$root" = "/" ] && { echo "hvti: $job is not inside a study (no renv.lock above it)." >&2; exit 1; }
+  root=$(dirname "$root")
+done
+ver=$(tr -d '\n' < "$root/renv.lock" | sed -n 's/.*"R"[[:space:]]*:[[:space:]]*{[^}]*"Version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+[ -n "$ver" ] || { echo "hvti: $root/renv.lock records no R version." >&2; exit 1; }
+for top in "${HVTI_R_ROOT:-}" /opt/R; do
+  [ -n "$top" ] && [ -x "$top/$ver/bin/Rscript" ] && { rscript="$top/$ver/bin/Rscript"; break; }
+done
+if [ -z "${rscript:-}" ]; then
+  echo "hvti: this study needs R $ver, which is not installed here. Installed: $(ls /opt/R 2>/dev/null | tr '\n' ' ')" >&2
+  exit 1
+fi
+case $cmd in run|status|cancel) ;; *) usage ;; esac
+# The job path reaches R as an argument, never as R source: a fixed expression reads it with
+# commandArgs(), so no directory name can change what R runs. .hvti_main() returns the exit status.
+cd "$root" && exec "$rscript" -e 'quit(status = hvtiRtemplates:::.hvti_main(commandArgs(TRUE)))' "$cmd" "$jobpath" "$final"
