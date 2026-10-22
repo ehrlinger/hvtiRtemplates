@@ -44,6 +44,8 @@
 | `tests/testthat/test-template-catalog.R` | counts 68 → 69 rows, 45 prefixes |
 | `tests/testthat/test-template-figures.R` | the `expected` list gains `sid-clusters` |
 | `tests/testthat/helper-rf.R` | `rf_pkg_floors` gains `cluster` and `mice` |
+| `tests/testthat/test-template-data-routes.R` | `sid-fit` among the patient-level readers; readers count +1 |
+| `tests/testthat/test-template-provenance.R` | template count +2; `sid-fit` among the templates that read data |
 | `.lintr` | two file keys |
 | `DESCRIPTION` | `Suggests`: `cluster (>= 2.1.8)`, `mice (>= 3.19.0)` |
 | `inst/templates/README.md` | template table rows, figure-name rows |
@@ -106,7 +108,7 @@ In `inst/extdata/templates.json`, replace the whole object whose `"prefix"` is `
       "prefix": "sid",
       "qualifier": "fit",
       "name": "SID clustering: fit",
-      "description": "An unsupervised sidClustering forest on the clustering variables, after one seeded imputation, saving the SID dissimilarity for sid-clusters.",
+      "description": "An unsupervised sidClustering forest on the clustering variables, after mice or forest imputation pooled over M, saving a digest-keyed SID dissimilarity for sid-clusters and vt.",
       "folder": "analyses",
       "family": "machine-learning",
       "kind": "job",
