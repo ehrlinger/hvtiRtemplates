@@ -59,6 +59,7 @@
 **Files:**
 - Modify: `inst/extdata/templates.json` (the row with `"prefix": "sid"`)
 - Modify: `tests/testthat/test-template-catalog.R:4-5`
+- Modify: `tests/testthat/test-template-catalog-rules.R` (row count 68 → 69; `build` rows 6 → 5, since `sid` leaves `build`)
 - Modify: `DESCRIPTION` (`Suggests`)
 - Modify: `tests/testthat/helper-rf.R:104-109`
 - Modify: `dev/specs/2026-08-29-template-conversion-roadmap.md` (generated block only, by script)
@@ -99,6 +100,8 @@ to
 Run: `Rscript -e 'devtools::test(filter = "template-catalog$")'`
 Expected: FAIL, `nrow(catalog)` is 68 not 69.
 
+Also in `tests/testthat/test-template-catalog-rules.R`, change `expect_length(rows, 68L)` to `69L` and the `build`-row `expect_length(rows, 6L)` to `5L`. `build` means a template waits on a new package function, which needs a `pkg#N` blocker. `sid` no longer waits on one: its helpers ship in the template, as `vp`'s do, so its rows are `scaffold` (found implementing Task 2).
+
 - [ ] **Step 4: Replace the `sid` row with two**
 
 In `inst/extdata/templates.json`, replace the whole object whose `"prefix"` is `"sid"` with:
@@ -124,7 +127,7 @@ In `inst/extdata/templates.json`, replace the whole object whose `"prefix"` is `
       "spec": "dev/specs/2026-10-22-sid-templates-design.md",
       "note": "Built from the two SID clustering studies in the ML family roadmap. Helpers live in template chunks; hvtiRforests#1 is no longer a blocker.",
       "sas_breadth_jobs": null,
-      "disposition": "build",
+      "disposition": "scaffold",
       "uses": [
         "randomForestSRC::sidClustering",
         "mice::mice",
@@ -151,7 +154,7 @@ In `inst/extdata/templates.json`, replace the whole object whose `"prefix"` is `
       "spec": "dev/specs/2026-10-22-sid-templates-design.md",
       "note": "Never fits SID; reads sid.rds. Per-cluster profiling is a dc-tables job and per-cluster varPro a vp-fit job, both joining the registered clusters dataset.",
       "sas_breadth_jobs": null,
-      "disposition": "build",
+      "disposition": "scaffold",
       "uses": [
         "cluster::pam",
         "cluster::silhouette",
