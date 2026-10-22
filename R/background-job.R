@@ -59,7 +59,10 @@
 #'   \code{progress}, the render's progress record when there is one, with
 #'   \code{eta_s}, the estimated seconds left in the current stage, and
 #'   \code{stale}, \code{TRUE} when it has not changed for three reporting
-#'   intervals and at least 30 minutes.
+#'   intervals and at least 30 minutes. \code{diagnosis}, for a \code{failed}
+#'   or \code{vanished} run whose log can be read, a list of \code{reason}, what
+#'   went wrong in plain words, and \code{fix}, what to do about it; it is
+#'   returned when \code{quiet} is \code{TRUE} too.
 #' @examples
 #' job <- file.path(tempdir(), "example.qmd")
 #' writeLines("---\ntitle: example\n---", job)
@@ -115,6 +118,10 @@ job_status <- function(path, quiet = FALSE) {
   }
   st$log <- files$log
   st$progress <- tryCatch(.progress_view(prog), error = function(e) unreadable)
+  # The diagnosis is advisory and read from a log that may be anything; it must not stop the report.
+  if (st$state %in% c("failed", "vanished") && file.exists(files$log)) {
+    st$diagnosis <- tryCatch(.diagnose_failure(readLines(files$log, warn = FALSE), st), error = function(e) NULL)
+  }
   if (!isTRUE(quiet)) {
     detail <- switch(st$state,
                      running = if (is.null(other_host)) {
@@ -141,6 +148,7 @@ job_status <- function(path, quiet = FALSE) {
     if (is.numeric(st$mem_peak_gib) && is.numeric(st$mem_limit_gib)) {
       cat(sprintf("  memory: %.1f of %.1f GiB (peak)\n", st$mem_peak_gib, st$mem_limit_gib))
     }
+    if (!is.null(st$diagnosis)) cat("  why: ", st$diagnosis$reason, "\n  fix: ", st$diagnosis$fix, "\n", sep = "")
     lines <- tryCatch(.progress_lines(st$progress, st$state), error = function(e) paste0("  progress: ", unreadable$error))
     if (length(lines)) cat(lines, sep = "\n")
   }

@@ -1,0 +1,74 @@
+[91mERROR: YAMLException: missed comma between flow collection entries (3:6)
+
+ 1 | 
+ 2 | title: [unclosed
+ 3 |   bad: : yaml
+----------^
+
+Stack trace:
+    at generateError2 (file:///Applications/quarto/bin/quarto.js:16780:10)
+    at throwError2 (file:///Applications/quarto/bin/quarto.js:16783:9)
+    at readFlowCollection2 (file:///Applications/quarto/bin/quarto.js:17110:7)
+    at composeNode2 (file:///Applications/quarto/bin/quarto.js:17574:135)
+    at readBlockMapping2 (file:///Applications/quarto/bin/quarto.js:17381:11)
+    at composeNode2 (file:///Applications/quarto/bin/quarto.js:17574:80)
+    at readDocument2 (file:///Applications/quarto/bin/quarto.js:17706:3)
+    at loadDocuments2 (file:///Applications/quarto/bin/quarto.js:17748:5)
+    at load$12 (file:///Applications/quarto/bin/quarto.js:17766:19)
+    at parseWithNiceErrors (file:///Applications/quarto/bin/quarto.js:18831:12)
+    at readYamlFromMarkdown (file:///Applications/quarto/bin/quarto.js:18788:9)
+    at markdownExecutionEngine (file:///Applications/quarto/bin/quarto.js:77251:16)
+    at fileExecutionEngine (file:///Applications/quarto/bin/quarto.js:77368:14)
+    at async fileExecutionEngineAndTarget (file:///Applications/quarto/bin/quarto.js:77392:18)
+    at async render (file:///Applications/quarto/bin/quarto.js:142561:22)
+    at async _Command.actionHandler (file:///Applications/quarto/bin/quarto.js:142798:24)
+    at async _Command.execute (file:///Applications/quarto/bin/quarto.js:102189:7)
+    at async _Command.parseCommand (file:///Applications/quarto/bin/quarto.js:102066:14)
+    at async quarto4 (file:///Applications/quarto/bin/quarto.js:188195:5)
+    at async file:///Applications/quarto/bin/quarto.js:188224:5
+    at async file:///Applications/quarto/bin/quarto.js:188078:14
+    at async mainRunner (file:///Applications/quarto/bin/quarto.js:188080:5)
+    at async file:///Applications/quarto/bin/quarto.js:188217:3[39m
+Error: ! Error running quarto CLI from R.
+Caused by error in `quarto::quarto_render()`:
+✖ Error returned by quarto CLI.
+  -----------------------------
+  [91mERROR: YAMLException: missed comma between flow collection entries (3:6)[39m
+  
+  1 |
+  2 | title: [unclosed
+  3 | bad: : yaml
+  ----------^
+  
+  Stack trace:
+  at generateError2 (file:///Applications/quarto/bin/quarto.js:16780:10)
+  at throwError2 (file:///Applications/quarto/bin/quarto.js:16783:9)
+  at readFlowCollection2 (file:///Applications/quarto/bin/quarto.js:17110:7)
+  at composeNode2 (file:///Applications/quarto/bin/quarto.js:17574:135)
+  at readBlockMapping2 (file:///Applications/quarto/bin/quarto.js:17381:11)
+  at composeNode2 (file:///Applications/quarto/bin/quarto.js:17574:80)
+  at readDocument2 (file:///Applications/quarto/bin/quarto.js:17706:3)
+  at loadDocuments2 (file:///Applications/quarto/bin/quarto.js:17748:5)
+  at load$12 (file:///Applications/quarto/bin/quarto.js:17766:19)
+  at parseWithNiceErrors (file:///Applications/quarto/bin/quarto.js:18831:12)
+  at readYamlFromMarkdown (file:///Applications/quarto/bin/quarto.js:18788:9)
+  at markdownExecutionEngine
+  (file:///Applications/quarto/bin/quarto.js:77251:16)
+  at fileExecutionEngine (file:///Applications/quarto/bin/quarto.js:77368:14)
+  at async fileExecutionEngineAndTarget
+  (file:///Applications/quarto/bin/quarto.js:77392:18)
+  at async render (file:///Applications/quarto/bin/quarto.js:142561:22)
+  at async _Command.actionHandler
+  (file:///Applications/quarto/bin/quarto.js:142798:24)
+  at async _Command.execute
+  (file:///Applications/quarto/bin/quarto.js:102189:7)
+  at async _Command.parseCommand
+  (file:///Applications/quarto/bin/quarto.js:102066:14)
+  at async quarto4 (file:///Applications/quarto/bin/quarto.js:188195:5)
+  at async file:///Applications/quarto/bin/quarto.js:188224:5
+  at async file:///Applications/quarto/bin/quarto.js:188078:14
+  at async mainRunner (file:///Applications/quarto/bin/quarto.js:188080:5)
+  at async file:///Applications/quarto/bin/quarto.js:188217:3
+  
+Caused by error in `processx::run()`:
+! System command 'quarto' failed
