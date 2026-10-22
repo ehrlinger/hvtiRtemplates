@@ -1434,7 +1434,7 @@
       "spec": "dev/specs/2026-10-22-sid-templates-design.md",
       "note": "Built from the two SID clustering studies in the ML family roadmap. Helpers live in template chunks; hvtiRforests#1 is no longer a blocker.",
       "sas_breadth_jobs": null,
-      "disposition": "build",
+      "disposition": "scaffold",
       "uses": [
         "randomForestSRC::sidClustering",
         "mice::mice",
@@ -1461,7 +1461,7 @@
       "spec": "dev/specs/2026-10-22-sid-templates-design.md",
       "note": "Released for review in a real study. Becomes shipped once a study renders sid-fit and sid-clusters end to end. Never fits SID; reads sid.rds. Per-cluster profiling is a dc-tables job and per-cluster varPro a vp-fit job, both joining the registered clusters dataset.",
       "sas_breadth_jobs": null,
-      "disposition": "build",
+      "disposition": "scaffold",
       "uses": [
         "cluster::pam",
         "cluster::silhouette",
