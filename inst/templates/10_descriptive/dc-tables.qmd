@@ -52,9 +52,9 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.9") {
-  stop("This job needs hvtiRtables >= 1.0.9 for hv_table_style(), the manuscript Word table and summaries that a study's ",
-       "own sd() or median() cannot break; ",
+if (utils::packageVersion("hvtiRtables") < "1.0.11") {
+  stop("This job needs hvtiRtables >= 1.0.11 for hv_table_style(), the manuscript Word table, its page orientation and ",
+       "summaries that a study's own sd() or median() cannot break; ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
@@ -166,6 +166,10 @@ MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"
 # EDIT: the shading of the Word table's section rows, one color "#RRGGBB".
 # Journals differ here; "#CAEDFB" is the house default.
 MANUSCRIPT_FILL <- "#CAEDFB"
+# EDIT: the Word table's page. "auto" turns it landscape when it is too wide
+# for portrait, as a table with many groups is; "portrait" or "landscape"
+# always wins, and a table too wide for that page has its columns narrowed.
+TABLE_ORIENTATION <- "auto"
 # EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you
 # want summarized as continuous: list(continuous = c("nyha_pr")). list() for none.
 OVERRIDES <- list()
@@ -438,7 +442,8 @@ if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
 }
 word_path <- file.path(study_dir("documents", .root), paste0(SUBJECT, "-", TYPE), WORD_FILE)
 dir.create(dirname(word_path), recursive = TRUE, showWarnings = FALSE)
-hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS, caption = MANUSCRIPT_CAPTION)
+hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS, caption = MANUSCRIPT_CAPTION,
+                               orientation = TABLE_ORIENTATION)
 # The manuscript style merges its header and section rows, and nothing else.
 check <- hvtiRtables::hv_check_docx(word_path, style = "manuscript")
 if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)

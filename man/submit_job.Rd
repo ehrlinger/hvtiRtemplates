@@ -28,6 +28,7 @@ prints) and \code{<job>.run.yml} (its state) beside the job; read the state
 with \code{\link{job_status}}. A job already running is not started twice: a
 \code{<job>.run.lock} directory is taken while a submit is in progress, and a
 submit that crashed can leave it behind, in which case delete it to try again.
+Stop a submitted job with \code{\link{cancel_job}}.
 Not available on Windows, which cannot detach a process this way.
 }
 \examples{

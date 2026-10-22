@@ -98,7 +98,8 @@ test_that("add_job() stamps its job and upgrade_job() reads the stamp", {
   root <- migration_study_fixture()
   job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
   version <- as.character(utils::packageVersion("hvtiRtemplates"))
-  expect_true(paste0("<!-- hvtiRtemplates: dc.general ", version, " -->") %in% readLines(job))
+  sha <- digest::digest(file = template_path("dc", "general"), algo = "sha256")
+  expect_true(paste0("<!-- hvtiRtemplates: dc.general ", version, " sha256:", sha, " -->") %in% readLines(job))
   lines <- sub('^DATASET <- "built"', 'DATASET <- "built_r"', readLines(job))
   writeLines(lines, job)
   upgraded <- upgrade_job(job)
@@ -265,6 +266,18 @@ test_that("upgrading a job with a hand-added progress stopgap leaves the templat
     # Nothing is left as a comment that could be uncommented into a second reporter either.
     expect_false(any(grepl(".bm_progress", upgraded, fixed = TRUE)), info = helper_in)
   }
+})
+
+test_that(".read_stamp() reads a stamp with and without its template hash", {
+  sha <- strrep("a1", 32L)
+  new <- c("---", "title: x", "---", "", paste0("<!-- hvtiRtemplates: nb.boostmtree 1.5.0 sha256:", sha, " -->"))
+  s <- hvtiRtemplates:::.read_stamp(new)
+  expect_identical(s[c("line", "template", "version", "sha256")],
+                   list(line = 5L, template = "nb.boostmtree", version = "1.5.0", sha256 = sha))
+  old <- hvtiRtemplates:::.read_stamp("<!-- hvtiRtemplates: nb.boostmtree 1.4.1 -->")
+  expect_identical(old$version, "1.4.1")
+  expect_identical(old$sha256, NA_character_)
+  expect_null(hvtiRtemplates:::.read_stamp(c("---", "---", "no stamp")))
 })
 
 test_that("an empty report section reads None, never a blank entry", {

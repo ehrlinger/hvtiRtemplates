@@ -3,6 +3,7 @@
 S3method(print,hvti_template_list)
 export(add_job)
 export(build_cohort)
+export(cancel_job)
 export(guard_long_fit)
 export(hvti_non_prefixes)
 export(hvti_taxonomy)
