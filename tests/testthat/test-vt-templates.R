@@ -173,7 +173,7 @@ test_that("vt_curves keys by ID, whatever the row order", {
   skip_on_cran()
   env <- vt_fit_first(labels = c(vt_fit_labels, "fit", "curves-helper", "curves"))
   shuffled <- env$d[rev(seq_len(nrow(env$d))), ]
-  again <- env$vt_curves(env$.forests, env$.train_ids, shuffled, env$ID, env$ARM, env$ARMS, no_arm = rev(env$.no_arm))
+  again <- env$vt_curves(env$.forests, env$.train_ids, shuffled, env$ID, env$ARM, env$ARMS, no_arm = rev(env$.no_arm), seed = -abs(env$SEED))
   key <- function(x) x[order(x$ID, x$arm_of_curve, x$time), ]
   expect_equal(key(again)$surv, key(env$.curves)$surv)
 })
@@ -203,4 +203,29 @@ test_that("vt-fit saves one handoff with every element", {
   expect_named(h, c("rmst", "curves", "forests", "eligibility", "predictors", "settings"))
   expect_true(all(c("elig", "elig_gower", "elig_propensity", "elig_none", "diff", "log_rr") %in% names(h$rmst)))
   expect_false(is.null(attr(h, "hvti_provenance")))
+})
+
+test_that("curves are reproducible when predictors are missing under na.impute", {
+  skip_on_cran()
+  d <- vt_data()
+  d$x1[c(which(d$arm == "B")[1:6], which(is.na(d$arm))[1:3])] <- NA
+  labs <- c(vt_fit_labels, "fit", "curves-helper", "curves")
+  one <- vt_fit_first(data = d, labels = labs)
+  two <- vt_fit_first(data = d, labels = labs)
+  expect_identical(one$.curves$surv, two$.curves$surv)
+})
+
+test_that("the saved handoff carries no patient ID and no captured environment", {
+  skip_on_cran()
+  d <- vt_data()
+  d$ccfid <- 7350000000 + d$ccfid
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all)
+  h <- readRDS(env$set_path("estimates", "vt.rds"))
+  # rfsrc 3.9.0 keeps no $formula or $terms; the formula is stored in $call.
+  f <- h$forests[[1]]
+  expect_null(f$formula)
+  expect_identical(environment(f$call$formula), globalenv())
+  expect_identical(environment(h$eligibility$ps$meta$formula), globalenv())
+  held <- rf_files_holding(dirname(env$set_path("estimates", "vt.rds")), as.character(d$ccfid))
+  expect_identical(held, character())
 })
