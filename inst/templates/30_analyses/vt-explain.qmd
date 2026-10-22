@@ -388,7 +388,7 @@ if (BOOT > 0) {
   .betas$unestimable <- rowSums(is.na(.boot))
 }
 knitr::kable(.betas, digits = 2, caption = paste("Standardized beta for each characteristic.",
-                                           "unestimable: bootstrap resamples in which the characteristic did not vary."))
+                                                 "unestimable: bootstrap resamples in which the characteristic did not vary."))
 ```
 
 ```{r}
