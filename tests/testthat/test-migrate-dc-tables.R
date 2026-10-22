@@ -179,6 +179,7 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   env$SHOW_VARIABLE <- TRUE
   env$MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"
   env$MANUSCRIPT_FILL <- "#CAEDFB"
+  env$TABLE_ORIENTATION <- "auto"
   env$study_dir <- hvtiRutilities::study_dir
   env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   eval(parse(text = tables_region(out, "dc-tables-config")), env)
@@ -538,6 +539,7 @@ test_that("the Word table is drawn in the manuscript style, under the study's ca
   env$MANUSCRIPT_LAYOUT <- "compare"
   env$MANUSCRIPT_CAPTION <- "Table 2. Operative details"
   env$MANUSCRIPT_FILL <- "#A5C9EB"
+  env$TABLE_ORIENTATION <- "landscape"
   eval(tables_chunk(template, "helpers"), env)
   invisible(eval(tables_chunk(template, "tbl-table"), env))
   invisible(eval(tables_chunk(template, "word-file"), env))
@@ -557,6 +559,9 @@ test_that("the Word table is drawn in the manuscript style, under the study's ca
   fills <- xml2::xml_attr(xml2::xml_find_all(xml, "//w:tc/w:tcPr/w:shd", xml2::xml_ns(xml)), "fill")
   expect_true("A5C9EB" %in% fills)
   expect_false("CAEDFB" %in% fills)
+  # TABLE_ORIENTATION reaches the page: this narrow table would stay portrait on "auto".
+  page <- xml2::xml_find_first(xml, "//w:sectPr/w:pgSz", xml2::xml_ns(xml))
+  expect_identical(xml2::xml_attr(page, "orient"), "landscape")
   # The describe layout draws both statistics, with a count beside each group.
   env$CONTINUOUS_STAT <- "both"
   env$MANUSCRIPT_LAYOUT <- "describe"
