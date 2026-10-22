@@ -62,3 +62,45 @@ sid_clusters_after <- function(env, choices = sid_clusters_choices) {
   rf_skip_unless_stack(rf_template_packages("sid", "clusters"))  # nolint: object_usage_linter.
   rf_run("sid", "clusters", sid_clusters_labels, env, choices)  # nolint: object_usage_linter.
 }
+
+# sid-fit rendered with Quarto in a throwaway study whose built dataset has a TEXT clustering
+# variable (f) and missing values in a numeric one (a). Returns the study root and the job
+# paths; sid_render_clusters() renders sid-clusters in it.
+sid_render_fixture <- function(.local_envir = parent.frame()) {
+  root <- tempfile("sid-study-")
+  withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Synthetic sid study", study_tracker_id = 42L, renv = FALSE))
+  d <- sid_data()
+  d$f <- as.character(d$f)
+  d <- cbind(ccfid = seq_len(nrow(d)), d[c("a", "b", "c", "e", "f")])
+  utils::write.csv(d, file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv", role = "study", population = "Synthetic cohort"))
+  fit <- add_job("sid", "morph", "sid", dir = root, qualifier = "fit")  # nolint: object_usage_linter.
+  sid_edit_job(fit, c('VARS <- c("a", "b", "c", "e", "f")', "NTREE <- 200", "SID_REDUCE <- FALSE", "MICE_MAXIT <- 5", "M <- 2"))
+  quarto::quarto_render(fit, execute_dir = dirname(fit), quiet = TRUE)
+  list(root = root, fit = fit)
+}
+
+# EDIT: markers reviewed and the named study choices set, each on its first assignment.
+sid_edit_job <- function(job, choices) {
+  lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
+  for (choice in choices) {
+    lines[which(grepl(paste0("^", sub(" .*", "", choice), " +<- "), lines))[1L]] <- choice
+  }
+  writeLines(lines, job)
+}
+
+# sid-clusters rendered in a fixture, with `choices` set. `before_csv` is lines to insert ahead of
+# the save chunk's CSV name, for simulating a failure there. Returns the html path.
+sid_render_clusters <- function(fixture, choices, before_csv = NULL, quiet = TRUE) {
+  job <- list.files(dirname(fixture$fit), pattern = "clusters.*[.]qmd$", full.names = TRUE)[1L]
+  if (is.na(job)) job <- add_job("sid", "morph", "sid", dir = fixture$root, qualifier = "clusters")  # nolint: object_usage_linter.
+  sid_edit_job(job, choices)
+  if (!is.null(before_csv)) {
+    lines <- readLines(job, warn = FALSE)
+    at <- grep("^\\.csv_name <- ", lines)[1L]
+    writeLines(append(lines, before_csv, after = at - 1L), job)
+  }
+  quarto::quarto_render(job, execute_dir = dirname(job), quiet = quiet)
+  sub("[.]qmd$", ".html", job)
+}

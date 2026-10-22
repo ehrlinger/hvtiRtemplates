@@ -88,6 +88,15 @@ test_that("sid_collapse maps letters, keeps unmapped ones and rejects a bad map"
   expect_identical(h$sid_collapse(x, list(C = c("C", "D"))), c("A", "C", "C", "B", "E"))
 })
 
+test_that("sid_collapse stops on a map that does not name its groups", {
+  h <- sid_helpers_env()
+  x <- c("A", "C", "D", "B", "E")
+  msg <- "COLLAPSE must name each group"
+  expect_error(h$sid_collapse(x, list(c("C", "D"))), msg)
+  expect_error(h$sid_collapse(x, c("C", "D")), msg)
+  expect_error(h$sid_collapse(x, stats::setNames(list(c("C", "D"), "E"), c("Z", ""))), msg)
+})
+
 test_that("sid_mds_signs gives the same picture under row order and sign flips", {
   h <- sid_helpers_env()
   xy <- cbind(c(1, -3, 2, 0.5), c(-0.2, 0.1, 0.4, -2))
@@ -393,4 +402,64 @@ test_that("the sid templates hide the captioned chunks that would be empty, and 
   # The callouts are printed by chunks that emit markdown.
   expect_identical(opts(cl, "small-clusters")$results, "asis")
   expect_identical(opts(cl, "k-unset")$results, "asis")
+})
+
+sid_prose <- function(html) {
+  gsub("(?s)<pre[^>]*>.*?</pre>", "", paste(readLines(html, warn = FALSE), collapse = "\n"), perl = TRUE)
+}
+
+test_that("both sid templates render with Quarto, and K = NULL says why the K sections are empty", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))  # nolint: object_usage_linter.
+  fx <- sid_render_fixture()
+  expect_true(file.exists(sub("[.]qmd$", ".html", fx$fit)))
+  html <- sid_render_clusters(fx, c("K_RANGE <- 2:5", "K <- 3L", "MIN_SIZE <- 60", "K_METRICS_MAX <- 8",
+                                    'COLLAPSE <- list(Z = c("B", "C"))'))
+  expect_true(file.exists(html))
+  raw <- paste(readLines(html, warn = FALSE), collapse = "\n")
+  prose <- sid_prose(html)
+  expect_identical(lengths(regmatches(raw, gregexpr("<img", raw))), 4L)
+  expect_false(grepl(":::", prose, fixed = TRUE))
+  expect_match(prose, "hold fewer than")
+  html <- sid_render_clusters(fx, "K <- NULL")
+  expect_true(file.exists(html))
+  prose <- sid_prose(html)
+  expect_match(prose, "K is not set yet")
+  expect_no_match(prose, "Silhouette width of every patient")
+})
+
+test_that("a render whose ID fails the CSV read-back leaves the registered CSV in place", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))  # nolint: object_usage_linter.
+  fx <- sid_render_fixture()
+  choices <- c("K_RANGE <- 2:4", "K <- 3L", "K_METRICS_MAX <- 4")
+  sid_render_clusters(fx, choices)
+  csv <- list.files(file.path(fx$root, "00_datasets"), pattern = "-clusters[.]csv$", full.names = TRUE)
+  expect_length(csv, 1L)
+  first <- readLines(csv)
+  # The registration: the study config's additional datasets and the manifest.
+  registered <- function() {
+    vapply(c("_study.yml", "manifest.yaml"), function(f) paste(readLines(file.path(fx$root, f), warn = FALSE), collapse = "\n"),
+           character(1L))
+  }
+  before <- registered()
+  expect_match(before[["_study.yml"]], basename(csv), fixed = TRUE)
+  rds <- file.path(fx$root, "90_estimates", "sid-clusters.rds")
+  rds_before <- if (file.exists(rds)) file.info(rds)$mtime
+  # Simulate an ID that does not survive CSV: zero-padded text reads back as a number.
+  # Quarto prints the stop() message to the console, and the R error only says the CLI failed.
+  out <- capture.output(
+    expect_error(sid_render_clusters(fx, "K <- 3L", quiet = FALSE,
+                                     before_csv = "sid_letters[[.id]] <- sprintf(\"%08d\", seq_len(nrow(sid_letters)))")),
+    type = "output"
+  )
+  expect_match(paste(out, collapse = "\n"), "would not survive as CSV")
+  expect_identical(readLines(csv), first)
+  expect_identical(registered(), before)
+  expect_identical(list.files(dirname(csv), pattern = "^sid-clusters-.*[.]csv$"), character(0))
+  if (!is.null(rds_before)) expect_identical(file.info(rds)$mtime, rds_before)
 })

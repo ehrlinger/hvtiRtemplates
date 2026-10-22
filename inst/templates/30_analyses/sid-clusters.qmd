@@ -212,6 +212,9 @@ sid_align_labels <- function(mat, overrides = list(), pool = LETTERS) {
 
 # Groups made of clusters. A letter not in the map keeps its own letter.
 sid_collapse <- function(letters, map) {
+  if (!is.list(map) || is.null(names(map)) || any(is.na(names(map)) | !nzchar(names(map)))) {
+    stop("COLLAPSE must name each group, such as list(Z = c(\"C\", \"D\"))", call. = FALSE)
+  }
   named <- unlist(map, use.names = FALSE)
   twice <- unique(named[duplicated(named)])
   if (length(twice)) stop("COLLAPSE has a letter mapped more than once: ", toString(twice), call. = FALSE)
@@ -425,12 +428,11 @@ if (is.null(K)) {
 #| label: fig-silhouette
 #| fig-cap: "Silhouette width of every patient at K, by cluster"
 #| include: !expr '!is.null(K)'
-if (is.null(K)) {
-  cat("K is NULL: the sections that describe one solution are skipped. Set K in the study choices.\n")
-} else {
+if (!is.null(K)) {
   .at <- sid_letters[[paste0("C", K)]]
-  .sil <- cluster::silhouette(sid_pam[[K]]$clustering, D)
-  .sil_d <- data.frame(letter = .at, width = .sil[, "sil_width"])
+  # pam() already computed the widths; they come back ordered by cluster, so put them in the patients' order.
+  .w <- sid_pam[[K]]$silinfo$widths
+  .sil_d <- data.frame(letter = .at, width = .w[match(rownames(sid$dist), rownames(.w)), "sil_width"])
   .sil_d <- .sil_d[order(.sil_d$letter, -.sil_d$width), ]
   .sil_d$rank <- seq_len(nrow(.sil_d))
   .plt_sil <- ggplot2::ggplot(.sil_d, ggplot2::aes(rank, width, fill = letter)) +
@@ -521,33 +523,21 @@ if (!is.null(.reg) && !identical(.reg$key, .id)) {
        ". Register it again under the ID, or remove the old entry.", call. = FALSE)
 }
 .csv_path <- file.path(hvtiRutilities::study_dir("datasets", .root), .csv_name)
-utils::write.csv(sid_letters, .csv_path, row.names = FALSE)
+# Write to a temporary file in the same folder first, so a failed check below
+# never touches a CSV an earlier render already registered. Same folder, so the
+# final move is a rename on one file system.
+.csv_tmp <- tempfile("sid-clusters-", tmpdir = dirname(.csv_path), fileext = ".csv")
+utils::write.csv(sid_letters, .csv_tmp, row.names = FALSE)
 # Later jobs read this file back from CSV without column types, so an ID such as
-# "0012345" would return as 12345 and match no patient. Read it back as they do
-# and stop, removing the file, if the ID changed.
-.reread <- utils::read.csv(.csv_path)
+# "0012345" would return as 12345 and match no patient. Read the temporary file
+# back as they do and stop, removing only it, if the ID changed.
+.reread <- utils::read.csv(.csv_tmp)
 if (!identical(as.character(.reread[[.id]]), as.character(sid_letters[[.id]]))) {
-  file.remove(.csv_path)
+  file.remove(.csv_tmp)
   stop("The ID `", .id, "` would not survive as CSV: read back, its values differ (a leading zero or a long number ",
-       "is read as a number). No file was kept. Cluster on an ID that reads back unchanged, or ask for the ID to be ",
-       "stored without leading zeros.", call. = FALSE)
+       "is read as a number). No new file was kept and any earlier one is unchanged. Cluster on an ID that reads back ",
+       "unchanged, or ask for the ID to be stored without leading zeros.", call. = FALSE)
 }
-# register_data() registers a dataset once and stops on a second call. A later
-# render records the rewritten file as a new dated version instead, so later
-# jobs read the current letters and their manifest check passes.
-if (!is.null(.reg)) {
-  utils::capture.output(suppressMessages(
-    withr::with_dir(.root, hvtiRutilities::update_manifest(dataset = .dataset))
-  ))
-} else {
-  utils::capture.output(suppressMessages(
-    hvtiRutilities::register_data(.root, built = .csv_name, dataset = .dataset, role = "named",
-                                  population = "SID cluster assignments", kind = "ancillary", key = .id)
-  ))
-}
-cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job to use these clusters.\n",
-    "A job that models one row per patient also sets REDUCE <- list(rule = \"first\", by = \"", .id, "\").\n",
-    sep = "")
 # The solution at K for jobs that read this file rather than the dataset, such
 # as vt-explain's stratifier: patients by ID digest, as in sid.rds, never by ID.
 sid_clusters <- if (!is.null(K)) {
@@ -568,6 +558,30 @@ sid_clusters_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   cohort = .cohort
 )
 saveRDS(sid_clusters_handoff, set_path("estimates", "sid-clusters.rds"))
+# Only now is the CSV replaced. Order: the .rds first, so a failure there leaves the
+# registered CSV as it was; then the move; then the manifest, which records the
+# file that is on disk.
+if (!isTRUE(file.rename(.csv_tmp, .csv_path))) {
+  # rename() fails across file systems or onto a locked file; copy then remove.
+  if (!file.copy(.csv_tmp, .csv_path, overwrite = TRUE)) stop("Could not write ", .csv_path, call. = FALSE)
+  unlink(.csv_tmp)
+}
+# register_data() registers a dataset once and stops on a second call. A later
+# render records the rewritten file as a new dated version instead, so later
+# jobs read the current letters and their manifest check passes.
+if (!is.null(.reg)) {
+  utils::capture.output(suppressMessages(
+    withr::with_dir(.root, hvtiRutilities::update_manifest(dataset = .dataset))
+  ))
+} else {
+  utils::capture.output(suppressMessages(
+    hvtiRutilities::register_data(.root, built = .csv_name, dataset = .dataset, role = "named",
+                                  population = "SID cluster assignments", kind = "ancillary", key = .id)
+  ))
+}
+cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job to use these clusters.\n",
+    "A job that models one row per patient also sets REDUCE <- list(rule = \"first\", by = \"", .id, "\").\n",
+    sep = "")
 ```
 
 ```{r}
