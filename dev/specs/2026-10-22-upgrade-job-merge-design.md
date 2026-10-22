@@ -220,7 +220,7 @@ stops and names the line, rather than guessing.
   conflict. Adjacent changes conflict, as they do in diff3, which errs toward stopping.
 - **The risk the earlier draft named**, that a hand-written diff is subtly wrong, is met by tests
   rather than by an oracle (see Tests): the algebraic laws every three-way merge obeys, checked over
-  generated texts, and hand-written expected outputs for the real cases.
+  generated texts, and hand-written expected outputs for the real cases. These tests are evidence, not a proof of the engine.
 
 ### 7. Backups and reports never collide
 
@@ -323,8 +323,8 @@ end-to-end test runs `upgrade_job()` on a job scaffolded from an archived `nb.bo
 | the newer-base hazard: job at A, candidates A and B, template C; the template's change lands | decision 3 | same |
 | review finding 1's case: job's choice values equal newer B's, so B is strictly closer; the `strict` change becomes a conflict, not a silent revert | decision 3 | one candidate is ranked and used |
 | an engine failure (the merge forced to error, or to return a count that disagrees with its markers): error before anything is written; job, backups and reports byte-identical | decision 6 | the consistency check is removed |
-| diff3 laws over generated texts (a few hundred seeded cases): merge(x, b, b) = x, merge(b, b, y) = y, merge(x, b, x) = x, swapping job and template swaps the conflict sides only, and a clean merge's output, diffed against base, holds every change from both sides | decision 6 | any branch of the region rule is altered |
-| hand-written expected outputs: insert/insert at one place, delete against edit, adjacent edits, edits at the first and last line, an empty base | decision 6 | same |
+| diff3 laws over generated texts (a few hundred seeded cases): merge(x, b, b) = x, merge(b, b, y) = y, merge(x, b, x) = x, swapping job and template swaps the conflict sides only, and a clean merge is the same text both ways round. Preservation is tested with **known provenance**, never by re-diffing the result against base, because repeated lines let a fresh diff align the same result as different hunks (review of #387). Generated edits are applied to disjoint regions of base with at least one untouched line between them, so the expected result is known in advance, and the merge must equal it | decision 6 | any branch of the region rule is altered |
+| hand-written expected outputs: insert/insert at one place, delete against edit, adjacent edits, edits at the first and last line, an empty base, and repeated lines (base `a, a, a`, job `a, a`, template `b, a, a, a`: the clean result is `b, a, a`) | decision 6 | same |
 | an archive built over a bump commit that changes no template maps the text to both versions | decision 2 | the walk is filtered by path |
 | no stamp: today's behaviour, and the report opens with "no base" | decision 3 | the fallback is removed |
 | every archive entry's text hashes to its key | decision 2 | the archive is hand-edited |
