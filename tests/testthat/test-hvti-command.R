@@ -17,7 +17,8 @@ test_that("hvti run starts the lock's R from the study root, passing the path as
   root <- lock_study(r = "4.5.3")
   odd <- file.path(root, "analyses", "we\"ird\\dir")   # a quote and a backslash in a directory name
   dir.create(odd)
-  job <- file.path(odd, "x.qmd"); writeLines("x", job)
+  job <- file.path(odd, "x.qmd")
+  writeLines("x", job)
   r <- fake_r("4.5.3")
   out <- system2(hvti(), c("run", shQuote(job), "--final"), env = paste0("HVTI_R_ROOT=", r$top), stdout = TRUE, stderr = TRUE)
   got <- readLines(r$log)
@@ -45,15 +46,25 @@ test_that(".hvti_main exits nonzero when the launch fails or is refused, zero wh
 
 test_that(".hvti_main passes the path through unchanged, quotes and backslashes included", {
   seen <- NULL
-  testthat::local_mocked_bindings(run_job = function(path, final) { seen <<- list(path, final); list(state = "running") })
+  testthat::local_mocked_bindings(run_job = function(path, final) {
+    seen <<- list(path, final)
+    list(state = "running")
+  })
   .hvti_main(c("run", "/s/we\"ird\\dir/x.qmd", "TRUE"))
   expect_identical(seen, list("/s/we\"ird\\dir/x.qmd", TRUE))
 })
 
 test_that(".hvti_main routes status and cancel with the path, and exits 1 on their errors", {
   seen <- NULL
-  testthat::local_mocked_bindings(job_status = function(path, quiet = FALSE) { seen <<- c("status", path); list(state = "running") },
-                                  cancel_job = function(path, ...) { seen <<- c("cancel", path); list(state = "cancelled") })
+  fake_status <- function(path, quiet = FALSE) {
+    seen <<- c("status", path)
+    list(state = "running")
+  }
+  fake_cancel <- function(path, ...) {
+    seen <<- c("cancel", path)
+    list(state = "cancelled")
+  }
+  testthat::local_mocked_bindings(job_status = fake_status, cancel_job = fake_cancel)
   expect_identical(.hvti_main(c("status", "a.qmd", "FALSE")), 0L)
   expect_identical(seen, c("status", "a.qmd"))
   expect_identical(.hvti_main(c("cancel", "b.qmd", "FALSE")), 0L)
@@ -65,7 +76,8 @@ test_that(".hvti_main routes status and cancel with the path, and exits 1 on the
 test_that("hvti refuses, naming the version, when the lock's R is not installed", {
   skip_on_os("windows")
   root <- lock_study(r = "9.9.9")   # a version no /opt/R on any host holds
-  job <- file.path(root, "analyses", "x.qmd"); writeLines("x", job)
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines("x", job)
   r <- fake_r("4.6.1")
   out <- suppressWarnings(system2(hvti(), c("run", job), env = paste0("HVTI_R_ROOT=", r$top), stdout = TRUE, stderr = TRUE))
   expect_match(paste(out, collapse = "\n"), "R 9.9.9")
@@ -74,7 +86,9 @@ test_that("hvti refuses, naming the version, when the lock's R is not installed"
 
 test_that("hvti refuses a job outside any study", {
   skip_on_os("windows")
-  d <- withr::local_tempdir(); job <- file.path(d, "x.qmd"); writeLines("x", job)
+  d <- withr::local_tempdir()
+  job <- file.path(d, "x.qmd")
+  writeLines("x", job)
   out <- suppressWarnings(system2(hvti(), c("run", job), stdout = TRUE, stderr = TRUE))
   expect_match(paste(out, collapse = "\n"), "renv.lock")
 })
@@ -90,7 +104,8 @@ test_that("install_hvti copies the script, not a symlink", {
 test_that("run_job warns once per session when the installed hvti is older than the package's", {
   skip_on_os("windows")
   d <- withr::local_tempdir()
-  old <- file.path(d, "hvti"); writeLines(c("#!/bin/sh", "# hvti: x. hvti-version: 0"), old)
+  old <- file.path(d, "hvti")
+  writeLines(c("#!/bin/sh", "# hvti: x. hvti-version: 0"), old)
   testthat::local_mocked_bindings(.hvti_on_path = function() old)
   .hvti_state$warned <- FALSE
   expect_warning(.warn_stale_hvti(), "install_hvti")
@@ -100,7 +115,8 @@ test_that("run_job warns once per session when the installed hvti is older than 
 test_that("run_job does not warn when the installed hvti is current or absent", {
   skip_on_os("windows")
   d <- withr::local_tempdir()
-  cur <- file.path(d, "hvti"); file.copy(hvti(), cur)
+  cur <- file.path(d, "hvti")
+  file.copy(hvti(), cur)
   .hvti_state$warned <- FALSE
   testthat::local_mocked_bindings(.hvti_on_path = function() cur)
   expect_no_warning(.warn_stale_hvti())
