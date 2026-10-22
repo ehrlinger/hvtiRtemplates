@@ -559,6 +559,10 @@ km_figure <- function(strata = NULL) {
   .zero <- hv$data$surv == 0
   hv$data$lower[.zero] <- 0
   hv$data$upper[.zero] <- 0
+  # hv_survival() returns the strata as text, which the color and fill scales would
+  # sort as text ("1", "10", "2"). The curve, band, bars and at-risk rows all use the
+  # tables' order instead, so each stratum keeps one color throughout.
+  if (!is.null(strata)) hv$data$strata <- factor(as.character(hv$data$strata), levels = levels(dd[[strata]]))
   curve <- plot(hv, conf_int = isTRUE(CI_BAND)) +
     ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
@@ -573,10 +577,17 @@ km_figure <- function(strata = NULL) {
     ci <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = bars, strata = strata, conf_level = CLEVEL)
     ci <- ci[!is.na(ci$cl_lower), , drop = FALSE]
     ci$strata <- if (is.null(strata)) rep("All", nrow(ci)) else factor(ci$stratum, levels = levels(dd[[strata]]))
+  }
+  if (length(bars) && nrow(ci)) {
+    # The strata's bars at one time are dodged apart, across a width that must stay
+    # inside the gap to the next chosen time and the distance to zero, or bars for
+    # neighboring times interleave and one is drawn before time zero. A fortieth of
+    # the axis is the most it takes; close early times take less.
+    times <- sort(unique(ci$time))
+    span <- min(plot_max / 40, 0.8 * min(c(diff(times), 2 * times[[1]])))
     curve <- curve + ggplot2::geom_errorbar(
       data = ci, ggplot2::aes(x = .data$time, ymin = 100 * .data$cl_lower, ymax = 100 * .data$cl_upper, color = .data$strata),
-      # Dodged, so strata whose limits overlap at a time stay apart; kept out of the legend.
-      width = plot_max / 60, position = ggplot2::position_dodge(width = plot_max / 40),
+      width = span, position = ggplot2::position_dodge(width = span),
       inherit.aes = FALSE, show.legend = FALSE
     )
   }
