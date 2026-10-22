@@ -134,11 +134,13 @@ Chunks, in order:
      random calls were unseeded;
    - `REFIT`, `SAVE_FIGURES` and `FIGURES`, as in every template.
 3. **`tbl-data`.** `ID` is taken as `read_job_data()` resolved it (it matches
-   case-insensitively and can fall back from `ccfid` to an MRN). **A resolved
-   ID that is an MRN or eMRN stops the render**: this job saves one row per
-   patient keyed by `ID`, and `sid` and `vp` sets join on it, so an MRN key
-   would be written into every saved table. The study names a random or study
-   ID instead. Treated rows with a missing `TIME` or `STATUS` stop the render. Counts and events by arm, and the count
+   case-insensitively and can fall back from `ccfid` to an MRN), then
+   **replaced by its digest** under the study's key
+   (`.id_digest(ids, .study_id_key(root))`, as `nb-boostmtree` does). This
+   job saves one row per patient and a `sid` set joins on the same digests, so
+   no saved artifact holds a raw identifier, an MRN least of all (#203). The
+   handoff records the key's fingerprint, and a reader whose key differs
+   stops. Treated rows with a missing `TIME` or `STATUS` stop the render. Counts and events by arm, and the count
    of no-arm rows.
 4. **`predictors`.** Resolves the predictor set (section 3), applies the
    contract and prints the final list.
@@ -290,13 +292,16 @@ choices.
    - a cross-tab of arm by stratum, and the difference by stratum and arm.
      Strata with fewer than 5 in-distribution patients in an arm are shown but
      their medians are not.
-   - **The `sid` handoff shape is not settled.** The `sid` template is being
-     designed alongside this one. The `vt` templates read two elements of
-     `sid.rds`: `dist`, the patient-by-patient SID distance with IDs as labels
-     (for `vt-fit`'s `"sid"` method), and `clusters`, a data frame of the ID
-     and one `cluster` column for the chosen K (for this stratifier). If the
-     `sid` design lands with other names, the plan's tasks follow it, and this
-     paragraph is amended.
+   - **The `sid` handoff**, confirmed with the `sid` design on 2026-10-22
+     (`2026-10-22-sid-templates-design.md`). `vt-fit`'s `"sid"` method reads
+     `<sid set>/sid.rds`, element `dist`, an n x n matrix whose dimnames are
+     ID digests (with MICE M > 1, the mean of the M SID distances), and checks
+     its `id_key` fingerprint. This stratifier reads
+     `<sid set>/sid-clusters.rds`, element `clusters`,
+     `data.frame(id = <digest>, cluster = <letter at the chosen K>)` plus a
+     `group` column when the clusters were collapsed; `STRATIFY` can name
+     `column = "group"`. `clusters` is `NULL` until the author sets K, and
+     this job then stops with "set K in sid-clusters".
 3. **Standardized betas**, the study's chapter 07 method (Ishwaran and
    Blackstone, CSBJ 2025): each patient's log relative risk at `HORIZON`,
    divided by its standard deviation, regressed on one characteristic at a

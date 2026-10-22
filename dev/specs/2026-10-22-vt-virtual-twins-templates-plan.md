@@ -24,7 +24,7 @@
 - Tests run the INSTALLED templates chunk by chunk via `rf_run()` (`tests/testthat/helper-rf.R`). Install into a private library before each test run (concurrent sessions overwrite the shared one): `R CMD INSTALL -l "$VT_LIB" . && R_LIBS="$VT_LIB" Rscript -e 'devtools::test(filter = "vt")'`. Tests that grow a forest carry `skip_on_cran()` and use `NTREE = 50`.
 - Never `git add -A` after a test run: a failing testthat run writes `tests/testthat/_problems/`. Add files by name.
 - Run `/code-review` locally before opening the PR and say in the PR body that it stood in for Copilot, whose credits are exhausted.
-- **The `sid` handoff names are provisional**: `sid.rds$dist` (a `dist` or matrix labelled by ID) and `sid.rds$clusters` (columns `ID` and `cluster`). Before Task 2, read the merged `sid` spec under `dev/specs/`; if it names them differently, use its names in Tasks 2 and 5 and amend spec section 6.
+- **IDs are digested on read** (`.id_digest()` under `.study_id_key(.root)`), and nothing this job saves holds a raw ID. The `sid` handoff, confirmed with the sid session on 2026-10-22: `<sid set>/sid.rds$dist`, an n x n matrix whose dimnames are ID digests, with `id_key` (the key fingerprint); `<sid set>/sid-clusters.rds$clusters`, `data.frame(id = <digest>, cluster = <letter>)` plus `group` when collapsed, `NULL` until K is set, with `id_key`. Re-read `dev/specs/2026-10-22-sid-templates-design.md` before Task 2 in case it moved.
 
 ## File map
 
@@ -101,6 +101,9 @@ vt_choices <- list(
 # Every chunk of vt-fit, in order. Tasks 2 and 3 extend it.
 vt_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "predictors")
 
+# The digest the job keys a raw ID by, in a fixture study.
+vt_digest <- function(env, ids) hvtiRtemplates:::.id_digest(ids, hvtiRtemplates:::.study_id_key(env$.root))
+
 vt_fit_first <- function(data = vt_data(), choices = vt_choices, labels = vt_fit_labels,
                          .local_envir = parent.frame()) {
   # rf_run() strips library() from setup, so attach the template's own stack
@@ -133,10 +136,11 @@ test_that("the predictor contract refuses the arm, the outcome and the ID", {
   }
 })
 
-test_that("a cohort keyed on an MRN is refused, so no MRN is saved", {
+test_that("patient IDs are digested on read", {
   skip_on_cran()
-  d <- vt_data(); d$MRN <- sprintf("%08d", d$ccfid); d$ccfid <- NULL
-  expect_error(vt_fit_first(data = d), "medical record number")
+  env <- vt_fit_first()
+  expect_identical(env$d[[env$ID]][1:3],
+                   hvtiRtemplates:::.id_digest(1:3, hvtiRtemplates:::.study_id_key(env$.root)))
 })
 
 test_that("EXCLUDE drops post-treatment columns", {
@@ -265,15 +269,12 @@ if (!is.null(IMPUTATION)) {
 # read_job_data() matches ID case-insensitively and falls back from ccfid to an
 # MRN, without changing ID here. Take the name it resolved.
 ID <- attr(job_data$record, "selection")$id
-# This job saves one row per patient keyed by ID (vt.rds), and a sid or vp set
-# joins on it. A medical record number must not be that key: it would be
-# written into every saved table.
-if (tolower(ID) %in% hvtiRtemplates:::.job_identifier_names) {
-  stop("This job saves per-patient results keyed by the patient ID, and the ID it resolved is ", ID,
-       ", a medical record number. Name a study key in ID (a random or study ID) in edit-study-choices.",
-       call. = FALSE)
-}
-d[[ID]] <- as.character(d[[ID]])
+# This job saves one row per patient (vt.rds), and a sid set joins on it. No
+# saved artifact holds a raw identifier, an MRN least of all (#203), so the ID
+# is replaced here by its digest under the study's key, the form a sid set
+# saves too. Everything below, and everything saved, carries only the digest.
+.id_key <- hvtiRtemplates:::.study_id_key(.root)
+d[[ID]] <- hvtiRtemplates:::.id_digest(d[[ID]], .id_key)
 .no_arm <- if (is.null(NO_ARM)) is.na(d[[ARM]]) else d[[ARM]] %in% NO_ARM
 .treated <- d[[ARM]] %in% ARMS
 .other <- !.no_arm & !.treated
@@ -523,9 +524,15 @@ vt_elig_gower <- function(d, predictors, id) {
 # not cover every patient here.
 # Returns the distance with the whole reader result as attribute "read", so the
 # eligibility chunk can carry the sid set's record and lineage into vt.rds.
-vt_elig_sid <- function(path, ids, cfg, read = function(p) hvtiRtemplates:::.read_handoff(p, "clustering", cfg, "the sid job")) {
+vt_elig_sid <- function(path, ids, cfg, key = NULL, read = function(p) hvtiRtemplates:::.read_handoff(p, "clustering", cfg, "the sid job")) {
   if (!file.exists(path)) stop("No sid clustering at ", path, ". Render that job first.", call. = FALSE)
   got <- read(path)
+  # A sid set's distance is labelled by ID digests under the study key, with the
+  # key's fingerprint saved beside it. A different fingerprint means the key
+  # changed since, and every digest would miss.
+  if (!is.null(key) && !identical(got$value$id_key, hvtiRtemplates:::.id_key_fingerprint(key))) {
+    stop("The sid set at ", path, " was digested under a different study key. Re-render it.", call. = FALSE)
+  }
   m <- as.matrix(got$value$dist)
   absent <- setdiff(ids, rownames(m))
   if (length(absent)) {
@@ -556,7 +563,8 @@ vt_combine <- function(rows, combine = c("any", "all")) {
   gower = function() vt_elig_gower(d, .predictors, ID),
   sid = function() {
     if (is.null(SID_SET)) stop("ELIGIBILITY includes \"sid\"; name the sid set in SID_SET.", call. = FALSE)
-    m <- vt_elig_sid(file.path(dirname(dirname(set_path("estimates", "vt.rds"))), SID_SET, "sid.rds"), .ids, .cfg)
+    m <- vt_elig_sid(file.path(dirname(dirname(set_path("estimates", "vt.rds"))), SID_SET, "sid.rds"), .ids, .cfg,
+                     key = .id_key)
     # The sid set decided some flags, so its record and data lineage travel
     # into vt.rds with the vp screen's (see `save`).
     .sid_read <<- attr(m, "read")
@@ -590,7 +598,7 @@ test_that("vt-fit flags the planted outliers against arm B", {
   skip_on_cran()
   env <- vt_fit_first()
   flagged <- env$.elig$ID[!env$.elig$elig_gower]
-  expect_true(all(as.character(which(vt_data()$arm == "A")[1:5]) %in% flagged))
+  expect_true(all(vt_digest(env, which(vt_data()$arm == "A")[1:5]) %in% flagged))
 })
 ```
 
@@ -665,7 +673,7 @@ Forest-growing, in `test-vt-templates.R`:
 test_that("the twin difference recovers the planted effect", {
   skip_on_cran()
   env <- vt_fit_first(labels = vt_fit_labels_all)
-  r <- merge(env$.rmst, data.frame(ID = as.character(vt_data()$ccfid), xs = vt_data()$xs))
+  r <- merge(env$.rmst, data.frame(ID = vt_digest(env, vt_data()$ccfid), xs = vt_data()$xs))
   r <- r[r$elig, ]
   expect_gt(stats::median(r$diff[r$xs > 1]), 0)
   expect_lt(stats::median(r$diff[r$xs < -1]), 0)
@@ -837,7 +845,8 @@ vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
        eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ps = .ps),
        predictors = list(names = .predictors, vp_set = VP_SET),
        settings = list(arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED, time = TIME, status = STATUS,
-                       id = ID, arm = ARM, imputation = IMPUTATION, imputation_use = IMPUTATION_USE,
+                       id = ID, id_key = hvtiRtemplates:::.id_key_fingerprint(.id_key),
+                       arm = ARM, imputation = IMPUTATION, imputation_use = IMPUTATION_USE,
                        # Everything read_job_data() was given, so vt-explain reads the same patients and values.
                        read = list(dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, key = KEY,
                                    join = JOIN, join_vars = JOIN_VARS, reduce = REDUCE, join_key = JOIN_KEY))),
@@ -933,8 +942,9 @@ Expected: FAIL, no `vt-explain` template; catalog reads 68.
 YAML `title: "Virtual twins: explain"` and the `format:` block. `setup` as `vt-fit`'s, with `TYPE <- "vt"`, libraries `hvtiPlotR`, `hvtiRpropensity`, `hvtiRutilities`, `ggplot2`, and the same floors. `edit-study-choices`:
 
 ```r
-# EDIT: NULL, a column of the data (e.g. "group"), or list(set = "<subject>-<type>")
-# naming a sid set whose clusters stratify the result. Strata are never a model
+# EDIT: NULL, a column of the data, or list(set = "<subject>-<type>") naming a
+# sid-clusters set whose clusters stratify the result (add column = "group" for
+# its collapsed groups). Strata are never a model
 # covariate: they are built from what the forests already use.
 STRATIFY <- NULL
 BOOT <- 1000                                # EDIT: bootstraps for the standardized betas; 0 skips the intervals.
@@ -974,7 +984,12 @@ r <- .vt$rmst
                                      imputation = .s$imputation)
 .d_all <- .jd$data
 if (!is.null(.s$imputation)) .d_all <- .d_all[.d_all[[.s$imputation]] == .s$imputation_use, , drop = FALSE]
-.d_all[[.s$id]] <- as.character(.d_all[[.s$id]])
+# vt.rds holds ID digests, so the data are digested with the same study key.
+.id_key <- hvtiRtemplates:::.study_id_key(.root, create = FALSE)
+if (!identical(.s$id_key, hvtiRtemplates:::.id_key_fingerprint(.id_key))) {
+  stop("vt.rds was digested under a different study key. Re-render vt-fit.", call. = FALSE)
+}
+.d_all[[.s$id]] <- hvtiRtemplates:::.id_digest(.d_all[[.s$id]], .id_key)
 .d_all <- .d_all[.d_all[[.s$id]] %in% r$ID, , drop = FALSE]
 ```
 
@@ -1042,14 +1057,16 @@ vt_explain_labels_all <- c(setdiff(vt_explain_labels, "provenance"), "stratify",
 ```
 
 ```r
-test_that("the stratifier joins on ID across factor and character", {
+test_that("the stratifier joins sid-clusters on the ID digest", {
   skip_on_cran()
   env <- vt_fit_first(labels = vt_fit_labels_all)
   sid_dir <- file.path(dirname(dirname(env$set_path("estimates", "vt.rds"))), "dead-sid")
   dir.create(sid_dir, recursive = TRUE)
-  ids <- factor(vt_data()$ccfid)
-  saveRDS(list(clusters = data.frame(ID = ids, cluster = ifelse(vt_data()$xs > 0, "hi", "lo"))),
-          file.path(sid_dir, "sid.rds"))
+  key <- hvtiRtemplates:::.study_id_key(env$.root)
+  saveRDS(list(clusters = data.frame(id = vt_digest(env, factor(vt_data()$ccfid)),
+                                     cluster = ifelse(vt_data()$xs > 0, "hi", "lo")),
+               id_key = hvtiRtemplates:::.id_key_fingerprint(key)),
+          file.path(sid_dir, "sid-clusters.rds"))
   vt_explain(env, vt_explain_labels_all,
              list(STRATIFY = list(set = "dead-sid"), BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE,
                   .vt_read_sid = function(p) list(value = readRDS(p), lineage = list(data = list(), artifacts = list()),
@@ -1092,11 +1109,18 @@ Expected: FAIL, chunk `stratify` not found.
 .strata <- NULL
 if (!exists(".vt_read_sid")) .vt_read_sid <- function(p) hvtiRtemplates:::.read_handoff(p, "clustering", .cfg, "the sid job")
 if (is.list(STRATIFY)) {
-  .sid_path <- file.path(dirname(dirname(.handoff)), STRATIFY$set, "sid.rds")
-  if (!file.exists(.sid_path)) stop("No sid clustering at ", .sid_path, ". Render that job first.", call. = FALSE)
+  .sid_path <- file.path(dirname(dirname(.handoff)), STRATIFY$set, "sid-clusters.rds")
+  if (!file.exists(.sid_path)) stop("No sid clusters at ", .sid_path, ". Render sid-clusters first.", call. = FALSE)
   .sid_strata <- .vt_read_sid(.sid_path)
+  if (!identical(.sid_strata$value$id_key, .vt$settings$id_key)) {
+    stop("The sid clusters at ", .sid_path, " were digested under a different study key from vt.rds.", call. = FALSE)
+  }
   .cl <- .sid_strata$value$clusters
-  .strata <- data.frame(ID = as.character(.cl$ID), stratum = as.character(.cl$cluster))
+  if (is.null(.cl)) stop("The sid set has no clusters yet: set K in sid-clusters and render it.", call. = FALSE)
+  # "cluster" (the letter at the chosen K) unless STRATIFY names "group", the
+  # collapsed groups sid-clusters writes when COLLAPSE is set.
+  .col <- if (is.null(STRATIFY$column)) "cluster" else STRATIFY$column
+  .strata <- data.frame(ID = .cl$id, stratum = as.character(.cl[[.col]]))
   # The clustering defines the strata, so the report names it and its data.
   .provenance_data <- c(.provenance_data, .sid_strata$lineage$data)
   .provenance_artifacts <- c(.provenance_artifacts, .sid_strata$lineage$artifacts, list(.sid_strata$record))
@@ -1225,12 +1249,12 @@ test_that("a screen that saw the arm is refused", {
   expect_error(vt_with_screen(screen, utils::modifyList(vt_choices, list(VP_SET = "dead-vp"))), "treatment-blind")
 })
 
-# An MRN-keyed cohort is refused outright (Task 1). This covers the other way
-# an MRN could leak: a cohort keyed on ccfid that also carries one.
+# Keyed on an MRN (no ccfid, so read_job_data() falls back to it): the job
+# digests it, and no file it writes holds one.
 test_that("no MRN reaches any file vt-fit or vt-explain generates", {
   skip_on_cran()
-  d <- vt_data(); d$MRN <- sprintf("%08d", d$ccfid)
-  env <- vt_fit_first(data = d, labels = vt_fit_labels_all)
+  d <- vt_data(); d$MRN <- sprintf("%08d", d$ccfid); d$ccfid <- NULL
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all, choices = utils::modifyList(vt_choices, list(ID = "ccfid")))
   vt_explain(env, vt_explain_labels_all)
   # Only what the jobs wrote: the set's estimates. The fixture's input dataset
   # under datasets/ holds the MRNs on purpose.
