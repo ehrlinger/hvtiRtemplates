@@ -222,7 +222,7 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   ok <- FALSE
   on.exit(if (!ok) unlink(c(out, runner)), add = TRUE)
   .set_markers(out, subject, type)
-  .stamp_job(out, row$name[[1L]])
+  .stamp_job(out, row$name[[1L]], row$file[[1L]])
   if (length(runner)) {
     if (!file.copy(runner_src, runner, overwrite = FALSE)) {
       stop("add_job(): failed to write '", runner, "'.", call. = FALSE)
@@ -342,8 +342,12 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
 # so an unvalidated `"` or `\` would emit a syntactically broken job. A future
 # caller (a planned `add_job_set()`) must run .check_field() first too.
 .set_markers <- function(path, subject, type) {
-  txt <- readLines(path, warn = FALSE)
+  writeLines(.set_marker_lines(readLines(path, warn = FALSE), subject, type, path), path)
+}
 
+# The substitution itself, on lines, so upgrade_job() can render a template's
+# old text into the job add_job() wrote from it. `path` names the file in errors.
+.set_marker_lines <- function(txt, subject, type, path) {
   i_subject <- grep("^SUBJECT\\s+<- ", txt)
   if (length(i_subject) != 1L) {
     stop("add_job(): '", path, "' has ", length(i_subject), " lines matching ",
@@ -361,19 +365,36 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   # `<-` lines up under SUBJECT's.
   txt[[i_subject]] <- paste0("SUBJECT <- \"", subject, "\"")
   txt[[i_type]]    <- paste0("TYPE    <- \"", type, "\"")
-  writeLines(txt, path)
+  txt
 }
 
-# Record which template, at which package version, a job was copied from, as
-# one HTML comment after the front matter. upgrade_job() reads it; without it,
-# the template a job came from cannot be recovered. See
-# dev/specs/2026-10-12-upgrade-job-design.md, decision 7.
-.stamp_job <- function(path, template) {
-  txt <- readLines(path, warn = FALSE)
+# Record which template, at which package version and in which text, a job was
+# copied from, as one HTML comment after the front matter. upgrade_job() reads
+# it to find the text to merge against; the version alone names up to nine
+# texts. See dev/specs/2026-10-22-upgrade-job-merge-design.md, decision 1.
+.stamp_job <- function(path, template, source) {
+  writeLines(.stamp_lines(readLines(path, warn = FALSE), .job_stamp(template, source)), path)
+}
+
+.job_stamp <- function(template, source) {
+  paste0("<!-- hvtiRtemplates: ", template, " ", utils::packageVersion("hvtiRtemplates"),
+         " sha256:", digest::digest(file = source, algo = "sha256"), " -->")
+}
+
+.stamp_lines <- function(txt, stamp) {
   fences <- which(txt == "---")
   at <- if (length(fences) >= 2L && fences[[1L]] == 1L) fences[[2L]] else 0L
-  stamp <- paste0("<!-- hvtiRtemplates: ", template, " ", utils::packageVersion("hvtiRtemplates"), " -->")
-  writeLines(append(txt, c("", stamp), after = at), path)
+  append(txt, c("", stamp), after = at)
+}
+
+# A job's stamp as list(line, template, version, sha256), sha256 NA for a stamp
+# written before 1.5.0; NULL for a job with none.
+.read_stamp <- function(lines) {
+  at <- grep("^<!-- hvtiRtemplates: [^ ]+ [0-9.]+( sha256:[0-9a-f]{64})? -->$", lines)
+  if (!length(at)) return(NULL)
+  f <- regmatches(lines[[at[[1L]]]], regexec("^<!-- hvtiRtemplates: ([^ ]+) ([0-9.]+)( sha256:([0-9a-f]{64}))? -->$",
+                                             lines[[at[[1L]]]]))[[1L]]
+  list(line = at[[1L]], template = f[[2L]], version = f[[3L]], sha256 = if (nzchar(f[[5L]])) f[[5L]] else NA_character_)
 }
 
 # The companion runner a template's job runs from, or "" when it has none.

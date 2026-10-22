@@ -327,8 +327,8 @@ upgrade_job <- function(path, dir = NULL) {
     p <- .canonical_path(p)
     if (startsWith(p, paste0(root, "/"))) substring(p, nchar(root) + 2L) else p
   }
-  stamp <- regmatches(old, regexpr("<!-- hvtiRtemplates: [^ ]+ [0-9.]+ -->", old))
-  from <- if (length(stamp)) sub("<!-- hvtiRtemplates: [^ ]+ ([0-9.]+) -->", "\\1", stamp[[1L]]) else
+  stamp <- .read_stamp(old)
+  from <- if (!is.null(stamp)) stamp$version else
     "not recorded (scaffolded before add_job() stamped its jobs)"
   lst <- function(x) if (length(x)) paste0("- ", x) else "None."
   nl <- u$new_lines
