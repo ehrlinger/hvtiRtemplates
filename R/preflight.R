@@ -98,3 +98,14 @@
   if (is.na(have)) return(TRUE)
   numeric_version(have) != numeric_version(lock)
 }
+
+# Quarto starts its own R for knitr; QUARTO_R or the PATH can point it at another one.
+.check_render_r <- function(expected = Sys.getenv("HVTI_RUN_R")) {
+  if (!nzchar(expected)) return(.check("render_r", TRUE))
+  have <- normalizePath(.r_home(), mustWork = FALSE)
+  want <- normalizePath(expected, mustWork = FALSE)
+  if (identical(have, want)) return(.check("render_r", TRUE))
+  .check("render_r", FALSE,
+         sprintf("Quarto ran this render on %s, not the R that submitted it, %s.", have, want),
+         "A QUARTO_R setting is overriding it: remove QUARTO_R from ~/.Renviron or the study's .Renviron.")
+}

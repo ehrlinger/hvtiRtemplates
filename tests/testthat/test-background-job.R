@@ -555,3 +555,13 @@ test_that("NA memory readings are dropped, not written or fatal", {
   expect_identical(st$state, "finished")
   expect_null(st$mem_limit_gib)
 })
+
+test_that("submit_job exports HVTI_RUN_R to the runner", {
+  captured <- NULL
+  testthat::local_mocked_bindings(.launch = function(cmd) captured <<- cmd)
+  job <- status_job()
+  .submit_job(job, FALSE, "TRUE", dirname(job))
+  expect_match(captured, "HVTI_RUN_R=", fixed = TRUE)
+  expect_match(captured, "export [A-Za-z0-9_]+ HVTI_JOB_MARKER HVTI_RUN_R ")
+  expect_match(captured, R.home("bin"), fixed = TRUE)
+})

@@ -196,6 +196,9 @@ job_status <- function(path, quiet = FALSE) {
   invisible(files$lock)
 }
 
+# Wrapped so tests can capture the command; wait = FALSE appends the "&" itself.
+.launch <- function(cmd) system(cmd, wait = FALSE)
+
 .submit_job <- function(path, final, render_call, root) {
   files <- .run_files(path)
   .claim_run(path, files, "submit_job")
@@ -227,10 +230,12 @@ job_status <- function(path, quiet = FALSE) {
   now <- Sys.time()
   marker <- sprintf("PSHVTI%d%s_%d", Sys.getpid(), format(now, "%H%M%OS6"), as.integer(now))
   marker <- gsub("[^A-Za-z0-9_]", "", marker)
-  cmd <- sprintf("cd %s && %s=YES HVTI_JOB_MARKER=%s && export %s HVTI_JOB_MARKER && exec %snohup %s %s > %s 2>&1 < /dev/null",
-                 shQuote(root), marker, marker, marker, setsid, shQuote(rscript), shQuote(files$runner),
+  # HVTI_RUN_R names the R that submitted the job; .job_setup() stops the render if Quarto's knitr runs on another.
+  cmd <- sprintf(paste0("cd %s && %s=YES HVTI_JOB_MARKER=%s HVTI_RUN_R=%s && export %s HVTI_JOB_MARKER HVTI_RUN_R && ",
+                        "exec %snohup %s %s > %s 2>&1 < /dev/null"),
+                 shQuote(root), marker, marker, shQuote(.r_home()), marker, setsid, shQuote(rscript), shQuote(files$runner),
                  shQuote(files$log))
-  system(cmd, wait = FALSE)  # wait = FALSE appends the "&" itself
+  .launch(cmd)
   invisible(job_status(path, quiet = TRUE))
 }
 

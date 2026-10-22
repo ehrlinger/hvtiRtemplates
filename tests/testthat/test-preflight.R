@@ -138,3 +138,23 @@ test_that("packages: installed newer than locked updates, older restores", {
   testthat::local_mocked_bindings(.installed_version = function(p) if (p == "knitr") "1.40" else "1.4.4")
   expect_match(.check_packages(job, root)$fix, 'renv::restore(packages = "knitr")', fixed = TRUE)
 })
+
+test_that("render_r refuses a render on an R other than the submitter's (failure 2)", {
+  testthat::local_mocked_bindings(.r_home = function() "/usr/lib/R/bin")
+  ck <- .check_render_r(expected = "/opt/R/4.5.3/lib/R/bin")
+  expect_false(ck$ok)
+  expect_match(ck$message, "^render_r: .*/usr/lib/R/bin.*/opt/R/4.5.3")
+  expect_match(ck$fix, "QUARTO_R", fixed = TRUE)
+})
+
+test_that("render_r is skipped when nothing was submitted", {
+  expect_true(.check_render_r(expected = "")$ok)
+})
+
+test_that(".job_setup() stops a render whose R is not the submitter's, and passes the same R", {
+  setup_fixture()
+  withr::local_envvar(HVTI_RUN_R = "/no/such/R/bin")
+  expect_error(run_setup(), "render_r: .*/no/such/R/bin.*QUARTO_R")
+  withr::local_envvar(HVTI_RUN_R = R.home("bin"))
+  expect_no_error(run_setup())
+})
