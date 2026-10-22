@@ -323,7 +323,7 @@ knitr::kable(data.frame(
 ```{r}
 #| label: tbl-agreement
 #| tbl-cap: "Agreement of each imputation's distances with their mean"
-#| include: !expr M > 1
+#| include: !expr 'M > 1'
 # One forest per imputation; near 1, the imputations agree. With one imputation
 # there is nothing to compare, and the chunk is hidden. If no value was missing,
 # the forests differ only by their seeds, so this measures Monte Carlo noise in

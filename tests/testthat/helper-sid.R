@@ -54,7 +54,7 @@ sid_clusters_choices <- list(K_RANGE = 2:5, K = 3L, OVERRIDES = list(), COLLAPSE
 
 # Every chunk of sid-clusters, in order.
 sid_clusters_labels <- c("setup", "edit-study-choices", "sid-helpers", "handoff", "pam", "fig-metrics", "tbl-metrics",
-                         "tbl-sizes", "small-clusters", "fig-sankey", "fig-silhouette", "tbl-silhouette", "fig-mds",
+                         "tbl-sizes", "small-clusters", "fig-sankey", "k-unset", "fig-silhouette", "tbl-silhouette", "fig-mds",
                          "tbl-collapse", "save")
 
 # sid-clusters run in the set a sid-fit just wrote, in the same study.

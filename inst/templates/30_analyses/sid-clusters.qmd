@@ -412,9 +412,19 @@ is stable; one that forms and dissolves between neighbouring K is not.
 ## The solution at K
 
 ```{r}
+#| label: k-unset
+#| results: asis
+# The chunks below are hidden while K is NULL, so this says why the section is empty.
+if (is.null(K)) {
+  cat("\n::: {.callout-note}\nK is not set yet, so the sections that describe one solution are left out. Choose K",
+      "from the metrics and sizes above, then set it in the study choices.\n:::\n")
+}
+```
+
+```{r}
 #| label: fig-silhouette
 #| fig-cap: "Silhouette width of every patient at K, by cluster"
-#| include: !expr !is.null(K)
+#| include: !expr '!is.null(K)'
 if (is.null(K)) {
   cat("K is NULL: the sections that describe one solution are skipped. Set K in the study choices.\n")
 } else {
@@ -436,7 +446,7 @@ if (is.null(K)) {
 ```{r}
 #| label: tbl-silhouette
 #| tbl-cap: "Average silhouette width and share of negative widths, by cluster at K"
-#| include: !expr !is.null(K)
+#| include: !expr '!is.null(K)'
 if (!is.null(K)) {
   knitr::kable(do.call(rbind, lapply(split(.sil_d$width, .sil_d$letter), function(w) {
     data.frame(n = length(w), average = round(mean(w), 3), negative = sprintf("%.0f%%", 100 * mean(w < 0)))
@@ -451,7 +461,7 @@ acceptable.
 ```{r}
 #| label: fig-mds
 #| fig-cap: "Patients placed in two dimensions by classical MDS of the SID distance, coloured by cluster at K"
-#| include: !expr !is.null(K)
+#| include: !expr '!is.null(K)'
 if (!is.null(K)) {
   sid_mds <- sid_mds_signs(stats::cmdscale(D, k = 2))
   .plt_mds <- ggplot2::ggplot(data.frame(x = sid_mds[, 1], y = sid_mds[, 2], letter = .at),
@@ -470,7 +480,7 @@ here may still be separate; the silhouette above is the better guide.
 ```{r}
 #| label: tbl-collapse
 #| tbl-cap: "Clusters at K and the groups COLLAPSE makes of them"
-#| include: !expr !is.null(K) && !is.null(COLLAPSE)
+#| include: !expr '!is.null(K) && !is.null(COLLAPSE)'
 if (!is.null(K) && !is.null(COLLAPSE)) {
   sid_letters[[paste0("G", K)]] <- sid_collapse(.at, COLLAPSE)
   knitr::kable(as.data.frame.matrix(table(cluster = .at, group = sid_letters[[paste0("G", K)]])))

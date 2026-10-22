@@ -376,17 +376,21 @@ test_that("no file under estimates/ carries an MRN, though the job's ID is the M
 test_that("the sid templates hide the captioned chunks that would be empty, and render the callout", {
   fit <- readLines(template_path("sid", "fit"), warn = FALSE)
   cl <- readLines(template_path("sid", "clusters"), warn = FALSE)
+  # The chunk's option block parsed as YAML, as Quarto parses it, with each !expr
+  # kept as its text. An unquoted `!expr !is.null(K)` reads as two YAML tags and
+  # stops the render before any code runs; a string match on the source missed that.
   opts <- function(src, label) {
     i <- grep(paste0("^#\\| label: ", label, "$"), src)
     j <- i + 1L
     while (j <= length(src) && grepl("^#\\|", src[j])) j <- j + 1L
-    src[i:(j - 1L)]
+    yaml::yaml.load(paste(sub("^#\\| ?", "", src[i:(j - 1L)]), collapse = "\n"), handlers = list(expr = identity))
   }
-  expect_true(any(grepl("include: !expr M > 1", opts(fit, "tbl-agreement"), fixed = TRUE)))
+  expect_identical(opts(fit, "tbl-agreement")$include, "M > 1")
   for (lab in c("fig-silhouette", "tbl-silhouette", "fig-mds")) {
-    expect_true(any(grepl("include: !expr !is.null(K)", opts(cl, lab), fixed = TRUE)), info = lab)
+    expect_identical(opts(cl, lab)$include, "!is.null(K)", info = lab)
   }
-  expect_true(any(grepl("include: !expr !is.null(K) && !is.null(COLLAPSE)", opts(cl, "tbl-collapse"), fixed = TRUE)))
-  # The callout is printed by a chunk that emits markdown.
-  expect_true(any(grepl("results: asis", opts(cl, "small-clusters"), fixed = TRUE)))
+  expect_identical(opts(cl, "tbl-collapse")$include, "!is.null(K) && !is.null(COLLAPSE)")
+  # The callouts are printed by chunks that emit markdown.
+  expect_identical(opts(cl, "small-clusters")$results, "asis")
+  expect_identical(opts(cl, "k-unset")$results, "asis")
 })
