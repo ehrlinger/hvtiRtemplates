@@ -106,8 +106,13 @@ Chunks, in order:
    with.
 7. **The noise bar.** `vpd_bar(I, noise)`: the largest entry of `I` in a row
    or a column whose source is a noise column. Section 3.1 has the rule.
-8. **Graph and signal set.** `gg_udependent(fit, beta.mat = I, threshold =
-   bar)`, plotted, with the signal set it names. Variables with no edge at
+8. **Graph and signal set.** The noise rows and columns are dropped from `I`
+   once the bar is taken, so the graph holds real variables only (a noise
+   entry equal to the bar would otherwise be drawn, since `sdependent()` keeps
+   an edge at `>=` its threshold). Then `gg_udependent(fit, beta.mat = I_real,
+   threshold = bar)`, plotted, with the signal set it names. Its `plot()`
+   method draws with `ggraph`, which ggRandomForests only suggests, so `ggraph`
+   joins this package's `Suggests` and the template checks it is installed. Variables with no edge at
    the bar are not drawn; the narration says so.
 9. **Heatmap.** Every variable against every other at any strength, ordered by
    hierarchical clustering on `pmax(I, t(I))`, outcome columns fenced off.
@@ -130,9 +135,10 @@ Chunks, in order:
 
 ### 3.1 The dependence noise bar
 
-**Rule.** An edge `s → j` is kept when `I[s, j]` is at least the bar, where
-the bar is the largest entry `I[a, b]` with `a` or `b` a noise term, taken
-over the off-diagonal entries after same-factor zeroing.
+**Rule.** An edge `s → j` between two real variables is kept when `I[s, j]`
+is at least the bar, where the bar is the largest entry `I[a, b]` with `a` or
+`b` a noise term, taken over the off-diagonal entries after same-factor
+zeroing.
 
 **Why both directions.** A noise row is the contrast formed by releasing noise:
 any predictor that separates it does so by chance. A noise column is noise
