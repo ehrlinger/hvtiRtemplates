@@ -1416,8 +1416,9 @@
     },
     {
       "prefix": "sid",
-      "qualifier": null,
-      "name": "Random forest clustering (sidClustering)",
+      "qualifier": "fit",
+      "name": "SID clustering: fit",
+      "description": "An unsupervised sidClustering forest on the clustering variables, after mice or forest imputation pooled over M, saving a digest-keyed SID dissimilarity for sid-clusters and vt.",
       "folder": "analyses",
       "family": "machine-learning",
       "kind": "job",
@@ -1429,12 +1430,44 @@
       "upstream": [],
       "downstream": [],
       "workflows": [],
-      "blocked_on": "hvtiRforests#1",
-      "spec": null,
-      "note": "in hvti_taxonomy() via hvtiRutilities PR #127, unreleased (not in 1.2.0); destination repoints to hvtiRforests in ML sub-project 3",
+      "blocked_on": null,
+      "spec": "dev/specs/2026-10-22-sid-templates-design.md",
+      "note": "Built from the two SID clustering studies in the ML family roadmap. Helpers live in template chunks; hvtiRforests#1 is no longer a blocker.",
       "sas_breadth_jobs": null,
       "disposition": "build",
-      "uses": []
+      "uses": [
+        "randomForestSRC::sidClustering",
+        "mice::mice",
+        "hvtiRutilities::cache_fit"
+      ]
+    },
+    {
+      "prefix": "sid",
+      "qualifier": "clusters",
+      "name": "SID clustering: clusters",
+      "description": "PAM on a sid-fit dissimilarity over a range of K: metrics for choosing K, letters stable across K, a Sankey, and the assignments registered for later jobs to join.",
+      "folder": "analyses",
+      "family": "machine-learning",
+      "kind": "job",
+      "status": "queued",
+      "batch": null,
+      "sas_breadth": null,
+      "r_exemplars": null,
+      "r_jobs": null,
+      "upstream": [],
+      "downstream": [],
+      "workflows": [],
+      "blocked_on": null,
+      "spec": "dev/specs/2026-10-22-sid-templates-design.md",
+      "note": "Never fits SID; reads sid.rds. Per-cluster profiling is a dc-tables job and per-cluster varPro a vp-fit job, both joining the registered clusters dataset.",
+      "sas_breadth_jobs": null,
+      "disposition": "build",
+      "uses": [
+        "cluster::pam",
+        "cluster::silhouette",
+        "hvtiPlotR::hv_sankey",
+        "hvtiRutilities::register_data"
+      ]
     },
     {
       "prefix": "vt",
