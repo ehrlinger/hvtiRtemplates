@@ -107,14 +107,18 @@ K_RANGE <- 2:9
 
 # EDIT: the solution this study reports, one of K_RANGE. Leave NULL for the
 # first render: the metrics and sizes below are how K is chosen, and every
-# section that needs K is skipped, saying so. A final render needs K.
+# section that needs K is skipped, saying so. A final render needs K. A draft
+# render with K = NULL saves clusters = NULL, so a job that reads this set's
+# clusters (vt) stops until K is set.
 K <- NULL
 
 # EDIT: letters pinned by hand, by solution and PAM cluster number, such as
 #   OVERRIDES <- list(pm4 = c("1" = "B", "2" = "D", "3" = "C", "4" = "A"))
 # PAM numbers its clusters arbitrarily, so an override is a domain decision
 # written down (which cluster a paper calls A), not a fix. Read the cluster
-# numbers from the sizes table. list() lets the lineage rule choose.
+# numbers from the sizes table. list() lets the lineage rule choose. Overrides
+# are keyed on PAM numbers, which sid-fit's forest decides: after a refit they go
+# stale, so read the sizes table again before reusing them.
 OVERRIDES <- list()
 
 # EDIT: optionally, groups made of clusters at K, such as
@@ -213,6 +217,12 @@ sid_collapse <- function(letters, map) {
   if (length(twice)) stop("COLLAPSE has a letter mapped more than once: ", toString(twice), call. = FALSE)
   absent <- setdiff(named, letters)
   if (length(absent)) stop("COLLAPSE names a letter that is not a cluster at K: ", toString(absent), call. = FALSE)
+  # A group named for a letter that stays as it is would merge into that cluster.
+  clash <- intersect(names(map), setdiff(unique(letters), named))
+  if (length(clash)) {
+    stop("COLLAPSE has a group name that is also an unmapped cluster at K: ", toString(clash),
+         ". Rename the group.", call. = FALSE)
+  }
   out <- letters
   for (g in names(map)) out[letters %in% map[[g]]] <- g
   out
@@ -302,6 +312,7 @@ deterministic given the distance, so this job needs no seed.
 ```{r}
 #| label: pam
 .ks <- seq_len(min(max(K_RANGE, K_METRICS_MAX), attr(D, "Size") - 1L))
+sid_mds <- NULL  # set by fig-mds when K is chosen; defined here so a skipped chunk leaves it NULL
 sid_pam <- lapply(.ks, function(k) cluster::pam(D, k))
 names(sid_pam) <- paste0("pm", .ks)
 sid_metrics <- data.frame(
@@ -350,7 +361,12 @@ knitr::kable(transform(sid_metrics, objective = round(objective, 3), silhouette 
 
 ```{r}
 #| label: tbl-sizes
-#| tbl-cap: "Patients per cluster at each K, by letter (PAM number in brackets)"
+#| tbl-cap: "Patients per cluster at each K, by letter; pam is the PAM cluster number the letter was given to"
+.unknown <- setdiff(names(OVERRIDES), paste0("pm", K_RANGE))
+if (length(.unknown)) {
+  stop("OVERRIDES names solution(s) that are not in K_RANGE: ", toString(.unknown),
+       ". Name them pm<K>, such as pm4, for a K in ", toString(K_RANGE), ".", call. = FALSE)
+}
 .pm <- as.data.frame(lapply(sid_pam[paste0("pm", K_RANGE)], function(p) p$clustering))
 .letters <- sid_align_labels(.pm, OVERRIDES)
 sid_letters <- data.frame(sid_ids, .letters, check.names = FALSE)
@@ -360,11 +376,21 @@ names(sid_letters) <- c(.id, paste0("C", K_RANGE))
   data.frame(K = k, letter = rownames(tab), pam = colnames(tab)[apply(tab, 1, which.max)],
              n = as.integer(rowSums(tab)))
 }))
-knitr::kable(.sizes)
+.shown <- .sizes
+.shown$smallest <- ifelse(.sizes$n == stats::ave(.sizes$n, .sizes$K, FUN = min), "smallest at this K", "")
+knitr::kable(.shown, row.names = FALSE)
 .small <- if (!is.null(K)) .sizes[.sizes$K == K & .sizes$n < MIN_SIZE, ] else .sizes[0, ]
 if (nrow(.small)) {
   warning("At K = ", K, ", cluster(s) ", toString(.small$letter), " hold fewer than ", MIN_SIZE, " patients.",
           call. = FALSE)
+}
+```
+
+```{r}
+#| label: small-clusters
+#| results: asis
+# In its own chunk because a callout is markdown, which only an asis chunk emits.
+if (nrow(.small)) {
   cat("\n::: {.callout-warning}\nAt K = ", K, ", cluster(s) ", toString(.small$letter), " hold fewer than ",
       MIN_SIZE, " patients, too few for per-cluster tables or a vp-fit to say much.\n:::\n", sep = "")
 }
@@ -388,7 +414,7 @@ is stable; one that forms and dissolves between neighbouring K is not.
 ```{r}
 #| label: fig-silhouette
 #| fig-cap: "Silhouette width of every patient at K, by cluster"
-sid_mds <- NULL
+#| include: !expr !is.null(K)
 if (is.null(K)) {
   cat("K is NULL: the sections that describe one solution are skipped. Set K in the study choices.\n")
 } else {
@@ -410,6 +436,7 @@ if (is.null(K)) {
 ```{r}
 #| label: tbl-silhouette
 #| tbl-cap: "Average silhouette width and share of negative widths, by cluster at K"
+#| include: !expr !is.null(K)
 if (!is.null(K)) {
   knitr::kable(do.call(rbind, lapply(split(.sil_d$width, .sil_d$letter), function(w) {
     data.frame(n = length(w), average = round(mean(w), 3), negative = sprintf("%.0f%%", 100 * mean(w < 0)))
@@ -424,6 +451,7 @@ acceptable.
 ```{r}
 #| label: fig-mds
 #| fig-cap: "Patients placed in two dimensions by classical MDS of the SID distance, coloured by cluster at K"
+#| include: !expr !is.null(K)
 if (!is.null(K)) {
   sid_mds <- sid_mds_signs(stats::cmdscale(D, k = 2))
   .plt_mds <- ggplot2::ggplot(data.frame(x = sid_mds[, 1], y = sid_mds[, 2], letter = .at),
@@ -442,6 +470,7 @@ here may still be separate; the silhouette above is the better guide.
 ```{r}
 #| label: tbl-collapse
 #| tbl-cap: "Clusters at K and the groups COLLAPSE makes of them"
+#| include: !expr !is.null(K) && !is.null(COLLAPSE)
 if (!is.null(K) && !is.null(COLLAPSE)) {
   sid_letters[[paste0("G", K)]] <- sid_collapse(.at, COLLAPSE)
   knitr::kable(as.data.frame.matrix(table(cluster = .at, group = sid_letters[[paste0("G", K)]])))
@@ -457,6 +486,7 @@ for separation, and the sizes for whether a cluster is large enough to say
 anything about. To describe the clusters, a `dc-tables` job joins the
 registered dataset below; to ask which variables separate them, a `vp-fit`
 job takes the cluster at K as a classification outcome.
+
 A job that models one row per patient, such as `vp-fit`, also sets `REDUCE` to keep the first record by the
 patient ID; the line to use is printed in the save section below.
 
@@ -472,11 +502,26 @@ patient ID; the line to use is printed in the save section below.
 # whose names differ only in case meet here. update_manifest() would follow
 # that other file and report success on stale letters, so stop instead.
 .reg <- .cfg$additional_datasets[[.dataset]]
-if (!is.null(.reg) && (!identical(.reg$built, .csv_name) || !identical(.reg$key, .id))) {
+if (!is.null(.reg) && !identical(.reg$built, .csv_name)) {
   stop("The dataset name `", .dataset, "` is already registered to ", .reg$built, ", not this set's ", .csv_name,
        ". Give this set a subject or type that differs by more than case.", call. = FALSE)
 }
-utils::write.csv(sid_letters, file.path(hvtiRutilities::study_dir("datasets", .root), .csv_name), row.names = FALSE)
+if (!is.null(.reg) && !identical(.reg$key, .id)) {
+  stop("The dataset `", .dataset, "` is already registered with key ", .reg$key, ", not this set's ID ", .id,
+       ". Register it again under the ID, or remove the old entry.", call. = FALSE)
+}
+.csv_path <- file.path(hvtiRutilities::study_dir("datasets", .root), .csv_name)
+utils::write.csv(sid_letters, .csv_path, row.names = FALSE)
+# Later jobs read this file back from CSV without column types, so an ID such as
+# "0012345" would return as 12345 and match no patient. Read it back as they do
+# and stop, removing the file, if the ID changed.
+.reread <- utils::read.csv(.csv_path)
+if (!identical(as.character(.reread[[.id]]), as.character(sid_letters[[.id]]))) {
+  file.remove(.csv_path)
+  stop("The ID `", .id, "` would not survive as CSV: read back, its values differ (a leading zero or a long number ",
+       "is read as a number). No file was kept. Cluster on an ID that reads back unchanged, or ask for the ID to be ",
+       "stored without leading zeros.", call. = FALSE)
+}
 # register_data() registers a dataset once and stops on a second call. A later
 # render records the rewritten file as a new dated version instead, so later
 # jobs read the current letters and their manifest check passes.
