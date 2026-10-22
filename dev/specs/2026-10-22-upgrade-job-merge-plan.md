@@ -7,7 +7,7 @@ fail for the right reason, then write the code.
 
 ## Task 0: confirm the ground
 
-- Questions 1 and 3 answered. (2 and 4 are settled: an R diff3, and the next minor, 1.5.0.)
+- All four questions are settled: no pristine copy, an R diff3, dated names for `migrate_job()` too, and the next minor (1.5.0).
 - Confirm #383 is on `main` and read its final `.upgrade_report()`, because tasks 6 and 7 build on it.
 
 ## Task 1: shared scaffolding steps (decision 4)
@@ -78,7 +78,7 @@ fail for the right reason, then write the code.
 
 - `.free_name(stem, suffix, date)` returns the first free `...-YYYY-MM-DD[-N]`, treating a dangling
   symlink as taken (keep today's `taken()`). It is used for the backup and the report, and for
-  `migrate_job()` if question 3 is a yes.
+  `migrate_job()`'s report (question 3, settled yes).
 - Report sections: Base, Carried from the job, Conflicts, Cache may be stale (the fit's own chunk changed, or any code
   chunk before it did; worded as a possibility, with the `REFIT` behaviour), Markers resolved in the old job.
   Each names labels and lines, never values, and an empty section reads "None." (from #383).

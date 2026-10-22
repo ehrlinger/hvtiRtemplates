@@ -1,7 +1,8 @@
 # upgrade_job(): carry every study edit by a three-way merge
 
 Status: **design merged 2026-10-22 (#384).** John settled questions 2 (an R diff3, no git at run time) and
-4 (it opens the next minor) the same day; 1 and 3 are open. Supersedes decisions 4 ("prose is not carried") and 5 (fixed
+4 (it opens the next minor) the same day, then 1 (no pristine copy) and 3 (dated names for `migrate_job()`):
+**approved, all four questions settled.** Supersedes decisions 4 ("prose is not carried") and 5 (fixed
 backup name) of [`2026-10-12-upgrade-job-design.md`](2026-10-12-upgrade-job-design.md), and takes up the
 three-way merge that design's decision 7 left for later. Plan:
 [`2026-10-22-upgrade-job-merge-plan.md`](2026-10-22-upgrade-job-merge-plan.md).
@@ -228,7 +229,7 @@ The old job is kept as `<job>.qmd.pre-upgrade-<YYYY-MM-DD>` and the report is
 in `.qmd`, so neither renders. The refusal is still there, but it moves from "this fixed name exists"
 to "no free name", which cannot happen in practice. Files made by the current naming (undated) are
 left alone and no longer block. Each report names the backup it belongs to, so the pair is never
-ambiguous. `migrate_job()`'s `-migration.md` takes the same helper; question 3.
+ambiguous. `migrate_job()`'s `-migration.md` report and any backup it keeps take the same helper (question 3, settled yes).
 
 ### 8. The report says what the merge did, and what will refit
 
@@ -348,7 +349,7 @@ listed rather than resolved.
 
 ## Questions for John
 
-1. **A pristine copy as well?** Recommended: **no** for now. The archive covers every released text
+1. ~~A pristine copy as well?~~ **Settled 2026-10-22: no pristine copy.** `add_job()` writes none. The archive covers every released text
    and every text on `main` up to the last bump. The gap is a job scaffolded from a `main` install
    between bumps whose template changes before the next bump. It is real, and it falls to "inferred"
    or "none", both loud. If it bites, a study-level `.hvtiRtemplates/bases/<sha>.qmd` (one file per
@@ -356,7 +357,7 @@ listed rather than resolved.
 2. ~~`git merge-file` or an R diff3?~~ **Settled 2026-10-22: an R diff3; git is not used at run
    time.** Decision 6. The archive in decision 2 is still built from this repo's git history, by a dev
    script at bump time in the repo itself, never in a study and never by `upgrade_job()`.
-3. **Give `migrate_job()` the dated names too?** Recommended: yes, the same helper and a few lines,
-   so the two reports do not follow two conventions.
+3. ~~Give `migrate_job()` the dated names too?~~ **Settled 2026-10-22: yes.** The same helper
+   (decision 7) names its backup and `-migration-<date>.md` report, so the two follow one convention.
 4. ~~Version.~~ **Settled 2026-10-22: it opens the next minor.** John's decision, per the versioning
    rule: the bump that ships it is 1.5.0, and the change lands without touching `Version:`.
