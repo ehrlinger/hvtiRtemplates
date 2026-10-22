@@ -535,12 +535,12 @@ knitr::kable(data.frame(
 .plot_cov <- cov[cov$eligible & !is.na(cov$z), ]
 .plot_cov$source <- ifelse(.plot_cov$noise, "noise", "real")
 .bars <- unique(.plot_cov[!is.na(.plot_cov$bar), c("kind", "bar")])
-.fig <- ggplot2::ggplot(.plot_cov, ggplot2::aes(x = coverage, y = z, colour = source)) +
+.fig <- ggplot2::ggplot(.plot_cov, ggplot2::aes(x = coverage, y = z, color = source)) +
   ggplot2::geom_point() +
   ggplot2::geom_hline(data = .bars, ggplot2::aes(yintercept = bar), linetype = "dashed") +
   ggplot2::geom_vline(xintercept = TRIM, linetype = "dotted") +
   ggplot2::facet_wrap(~kind) +
-  ggplot2::scale_colour_manual(values = c(noise = "gray60", real = "black")) +
+  ggplot2::scale_color_manual(values = c(noise = "gray60", real = "black")) +
   ggplot2::labs(x = "Coverage (share of trees scored)", y = "Importance (z)") +
   hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "vp-fit-coverage", width = 6.5)
