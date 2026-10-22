@@ -42,8 +42,11 @@ The render and every process it started are sent \code{SIGTERM}, given
 a marker \code{\link{submit_job}} puts in the render's environment, which
 reaches processes Quarto starts in sessions of their own, and by descent
 from the recorded process, which is signalled only while it is still the
-one the status file records, by its pid and creation time, so a pid since
-reused by another process is left alone. A run recorded without a creation
+one the status file records: it must carry the run's marker or, recorded
+without one, match its creation time to the second, so a pid since reused
+by another process is left alone, and an identity in doubt is refused. The
+job is scanned afresh until no process of it remains, so one started while
+it shuts down is stopped too. A run recorded without a creation
 time, such as a render started without \code{\link{submit_job}}, is
 refused rather than signalled by its pid alone.
 

@@ -276,7 +276,7 @@ submit_job <- function(path, final = FALSE) {
 # carrying the run's marker, which reaches the render that processx starts in a session of its own and any orphan.
 .job_procs <- function(h, marker) {
   procs <- if (is.null(h)) list() else c(list(h), tryCatch(ps::ps_children(h, recursive = TRUE), error = function(e) list()))
-  if (is.character(marker) && length(marker) == 1L && grepl("^PS[A-Za-z0-9]+_[0-9]+$", marker)) {
+  if (.is_marker(marker)) {
     procs <- c(procs, tryCatch(ps::ps_find_tree(marker), error = function(e) list()))
   }
   procs[!duplicated(vapply(procs, ps::ps_pid, 0L))]
@@ -284,21 +284,57 @@ submit_job <- function(path, final = FALSE) {
 
 .running <- function(p) isTRUE(tryCatch(ps::ps_is_running(p), error = function(e) FALSE))
 
-# SIGTERM, `grace` seconds to finish, then SIGKILL and 5 more. Returns the pids still running, none on success.
-.stop_procs <- function(procs, grace) {
-  send <- function(sig) for (p in procs) try(ps::ps_send_signal(p, sig), silent = TRUE)
-  survivors <- function() vapply(Filter(.running, procs), ps::ps_pid, 0L)
+.is_marker <- function(marker) is.character(marker) && length(marker) == 1L && grepl("^PS[A-Za-z0-9]+_[0-9]+$", marker)
+
+# job_status() allows a minute of creation-time drift, so as not to read a live job as gone; signalling must not.
+# The recorded process is the run's only if it carries the run's marker or, for a run recorded without one, if its
+# creation time matches to the second. A live process without the marker took the pid, and is not the job's.
+.cancel_handle <- function(st, fn = "cancel_job") {
+  h <- .job_handle(st$pid, st$created)
+  if (is.null(h)) return(NULL)
+  ambiguous <- function(why) {
+    stop(fn, "(): process ", st$pid, " may not be the job's, ", why, ". Check it by hand and stop it if it is the ",
+         "render; cancel_job() then records the end.", call. = FALSE)
+  }
+  if (.is_marker(st$marker)) {
+    env <- tryCatch(unclass(ps::ps_environ(h)), error = function(e) NULL)
+    if (is.null(env)) ambiguous("for its environment cannot be read to look for the run's marker")
+    return(if (isTRUE(env[st$marker] == "YES")) h else NULL)
+  }
+  drift <- abs(as.numeric(ps::ps_create_time(h)) - as.numeric(st$created))
+  if (!isTRUE(drift < 1)) ambiguous(sprintf("for it began %.0f s from the recorded start", drift))
+  h
+}
+
+# SIGTERM, `grace` seconds to finish, then SIGKILL and 5 more. Every check scans afresh, and a process that appears
+# meanwhile (a child started from a SIGTERM handler, say) is signalled when found, so the job is stopped only once a
+# fresh scan finds nothing. Returns the pids still running, none on success.
+.stop_procs <- function(discover, grace) {
+  key <- function(l) vapply(l, function(p) paste(ps::ps_pid(p), tryCatch(ps::ps_create_time(p), error = function(e) "")), "")
+  run <- new.env()
+  run$live <- list()
+  run$sig <- ps::signals()$SIGTERM
+  scan <- function() {
+    found <- Filter(.running, c(run$live, discover()))
+    found <- found[!duplicated(key(found))]
+    for (p in found[!key(found) %in% key(run$live)]) try(ps::ps_send_signal(p, run$sig), silent = TRUE)
+    run$live <- found
+    !length(found)
+  }
   gone_within <- function(secs) {
     end <- Sys.time() + secs
-    while (length(survivors()) && Sys.time() < end) Sys.sleep(0.25)
-    !length(survivors())
+    repeat {
+      if (scan()) return(TRUE)
+      if (Sys.time() >= end) return(FALSE)
+      Sys.sleep(0.25)
+    }
   }
-  send(ps::signals()$SIGTERM)
   if (!gone_within(grace)) {
-    send(ps::signals()$SIGKILL)
+    run$sig <- ps::signals()$SIGKILL
+    for (p in run$live) try(ps::ps_send_signal(p, run$sig), silent = TRUE)
     gone_within(5)
   }
-  survivors()
+  vapply(run$live, ps::ps_pid, 0L)
 }
 
 #' Stop a background job
@@ -316,8 +352,11 @@ submit_job <- function(path, final = FALSE) {
 #' a marker \code{\link{submit_job}} puts in the render's environment, which
 #' reaches processes Quarto starts in sessions of their own, and by descent
 #' from the recorded process, which is signalled only while it is still the
-#' one the status file records, by its pid and creation time, so a pid since
-#' reused by another process is left alone. A run recorded without a creation
+#' one the status file records: it must carry the run's marker or, recorded
+#' without one, match its creation time to the second, so a pid since reused
+#' by another process is left alone, and an identity in doubt is refused. The
+#' job is scanned afresh until no process of it remains, so one started while
+#' it shuts down is stopped too. A run recorded without a creation
 #' time, such as a render started without \code{\link{submit_job}}, is
 #' refused rather than signalled by its pid alone.
 #'
@@ -397,7 +436,8 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
   }
   if (st$state %in% c("running", "vanished")) {
     # A vanished runner can leave its render running: the marker still finds it.
-    left <- .stop_procs(.job_procs(.job_handle(st$pid, st$created), st$marker), grace)
+    h <- .cancel_handle(st)
+    left <- .stop_procs(function() .job_procs(h, st$marker), grace)
     if (length(left)) {
       stop("cancel_job(): process(es) ", paste(left, collapse = ", "), " of ", basename(path), " did not exit after ",
            "SIGKILL; nothing was recorded.", call. = FALSE)

@@ -359,7 +359,53 @@ test_that("a run recorded with no creation time is refused, not signalled by its
   expect_identical(yaml::read_yaml(.run_files(job)$status)$state, "running")
 })
 
+test_that("a process the job starts while shutting down is found by a fresh scan and stopped", {
+  skip_on_os("windows")
+  skip_on_cran()
+  skip_if(!nzchar(Sys.which("perl")))
+  job <- status_job()
+  d <- dirname(job)
+  # A render whose SIGTERM handler starts a marked process in a session of its own, after the first scan has run.
+  writeLines("writeLines(as.character(Sys.getpid()), 'late.pid'); Sys.sleep(61)", file.path(d, "late.R"))
+  writeLines(c(sprintf("trap 'perl -MPOSIX -e \"POSIX::setsid(); exec @ARGV\" %s late.R > /dev/null 2>&1 &' TERM",
+                       shQuote(file.path(R.home("bin"), "Rscript"))),
+               "while :; do sleep 1; done"), file.path(d, "render.sh"))
+  .submit_job(job, final = FALSE, render_call = "system('sh render.sh')", root = d)
+  expect_identical(wait_for(job, "running")$state, "running")
+  Sys.sleep(1)
+  expect_identical(cancel_job(job, grace = 3, quiet = TRUE)$state, "cancelled")
+  expect_true(file.exists(file.path(d, "late.pid")))
+  late <- as.integer(readLines(file.path(d, "late.pid")))
+  withr::defer(try(ps::ps_kill(ps::ps_handle(late)), silent = TRUE))
+  expect_false(.pid_alive(late))
+})
+
+test_that("a live pid whose creation time is seconds off is refused, not signalled", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  b <- bystander()
+  b$created <- sprintf("%.6f", as.numeric(b$created) - 30)  # within job_status()'s minute, so it reads running
+  running_on(job, b)
+  expect_identical(job_status(job, quiet = TRUE)$state, "running")
+  expect_error(cancel_job(job, grace = 1, quiet = TRUE), "may not be the job's", fixed = TRUE)
+  expect_true(alive(b$h))
+  expect_identical(yaml::read_yaml(.run_files(job)$status)$state, "running")
+})
+
+test_that("a live pid without the run's marker is not the job's, and is not signalled", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  b <- bystander(sprintf("exec %s -e 'Sys.sleep(60)'", shQuote(file.path(R.home("bin"), "Rscript"))))
+  .write_status(.run_files(job)$status, state = "running", pid = b$pid, created = b$created,
+                marker = "PSHVTINOTHERE_1", host = Sys.info()[["nodename"]], started = .stamp(Sys.time() - 60))
+  expect_identical(cancel_job(job, grace = 1, quiet = TRUE)$state, "cancelled")
+  expect_true(alive(b$h))
+})
+
 test_that("a job recorded on another host is refused, naming the host, and nothing changes", {
+  local_mocked_bindings(.is_windows = function() FALSE)  # no process is signalled: only the records are read
   job <- status_job()
   f <- .run_files(job)
   .write_status(f$status, state = "running", pid = 999999L, host = "lri-r99", started = "x")
@@ -372,6 +418,7 @@ test_that("a job recorded on another host is refused, naming the host, and nothi
 })
 
 test_that("a job on another host can be abandoned, signalling nothing, recording why and clearing its progress", {
+  local_mocked_bindings(.is_windows = function() FALSE)  # no process is signalled: only the records are read
   job <- status_job()
   f <- .run_files(job)
   .write_status(f$status, state = "running", pid = 999999L, host = "lri-r99", started = "x")
@@ -388,6 +435,7 @@ test_that("a job on another host can be abandoned, signalling nothing, recording
 })
 
 test_that("abandon changes nothing for a job on this host", {
+  local_mocked_bindings(.is_windows = function() FALSE)  # no process is signalled: only the records are read
   job <- status_job()
   f <- .run_files(job)$status
   .write_status(f, state = "finished", exit_code = 0L, pid = 999999L, elapsed_s = 3)
@@ -397,6 +445,7 @@ test_that("abandon changes nothing for a job on this host", {
 })
 
 test_that("a progress file left with no status file, from another host, is refused the same way", {
+  local_mocked_bindings(.is_windows = function() FALSE)  # no process is signalled: only the records are read
   job <- status_job()
   .write_status(.run_files(job)$progress, pid = 999999L, host = "lri-r98", started = .stamp(Sys.time() - 3600),
                 updated = .stamp(Sys.time() - 60), stage = "fit", stage_index = 2L, stage_count = 3L,
@@ -406,6 +455,7 @@ test_that("a progress file left with no status file, from another host, is refus
 })
 
 test_that("a finished job is left as it is", {
+  local_mocked_bindings(.is_windows = function() FALSE)  # no process is signalled: only the records are read
   job <- status_job()
   f <- .run_files(job)$status
   .write_status(f, state = "finished", exit_code = 0L, pid = 999999L, elapsed_s = 3)
@@ -432,6 +482,7 @@ test_that("a pid reused by another process is not signalled, and the run is reco
 })
 
 test_that("a submission that never started is recorded failed, saying so", {
+  local_mocked_bindings(.is_windows = function() FALSE)  # no process is signalled: only the records are read
   job <- status_job()
   .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600))
   st <- cancel_job(job, quiet = TRUE)
