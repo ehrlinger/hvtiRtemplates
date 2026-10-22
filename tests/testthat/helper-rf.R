@@ -52,12 +52,17 @@ rf_study <- function(data = data.frame(ccfid = 1:2, time = c(1, 2), event = c(1,
 # study author's edits would. `setup` (or its old name, `set`) runs from the
 # study root, which the caller sets as env$.root, with its library() calls left
 # out: the caller attaches the packages instead.
+#
+# Before the `dependence-varpro` chunk, a gg_partial_varpro() on a coarser
+# grid is put in `env`, where the chunk finds it ahead of ggRandomForests' own:
+# see rf_gg_partial_varpro.
 rf_run <- function(prefix, qualifier, labels, env, choices = list()) {
   src <- readLines(template_path(prefix, qualifier), warn = FALSE)
   # The dependence chunks emit each page as a child chunk.
   if (any(startsWith(labels, "dependence-"))) local_child_chunks()  # nolint: object_usage_linter.
   # "set" is the old name of the setup chunk, and a list that names both runs it once.
   for (label in unique(vapply(labels, setup_label, ""))) {  # nolint: object_usage_linter.
+    if (identical(label, "dependence-varpro")) assign("gg_partial_varpro", rf_gg_partial_varpro, envir = env)
     if (identical(label, "setup")) {
       eval_setup_chunk(rf_chunk(src, label), env)  # nolint: object_usage_linter.
     } else {
@@ -83,10 +88,22 @@ rf_drawing_notice <- function(label, w) {
   ), collapse = "|"), conditionMessage(w))
 }
 
+# gg_partial_varpro() as vp-explain calls it, but evaluating each
+# continuous predictor at 25 grid points rather than partialpro()'s default
+# 100. The grid is not a study choice, so no template sets it, and each point
+# is a prediction from VarPro's 500-tree forest: at 100 points the explain
+# tests spent about 80 of their 110 seconds here. VarPro's own fit, and so the
+# variables it keeps, is left as the template runs it; only the curve is
+# coarser, as NTREE = 50 makes the study's forest smaller. Its environment is
+# the base one, so a saved object that refers to it carries no test state.
+rf_gg_partial_varpro <- function(...) ggRandomForests::gg_partial_varpro(..., nvirtual = 25L)
+environment(rf_gg_partial_varpro) <- baseenv()
+
 # Version floors verified end-to-end on 2026-09-19. Keyed by package name so
 # a package a template does not use is never looked up here.
 rf_pkg_floors <- c(
   randomForestSRC  = "3.7.0",
+  varPro           = "3.2.0",
   ggRandomForests  = "4.0.0",
   hvtiRutilities   = "1.3.0"
 )
@@ -97,7 +114,8 @@ rf_pkg_floors <- c(
 # template that forgets a `library()` call in its own setup fail ITS OWN
 # tests instead of riding on a package a sibling test happened to attach
 # earlier in the session -- the coverage hole AGENTS.md records biting
-# hvtiRlifetables.
+# hvtiRlifetables. It is also what keeps a fit template (no varPro) from
+# skipping on a varPro problem it does not have.
 rf_template_packages <- function(prefix, qualifier) {
   src <- readLines(template_path(prefix, qualifier), warn = FALSE)
   setup <- rf_chunk(src, "setup")
