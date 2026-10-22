@@ -158,6 +158,12 @@ test_that("CI_TIMES draws confidence bars at those times, with the tables' limit
   expect_equal(bars$cl_lower, at$cl_lower)
   expect_equal(bars$cl_upper, at$cl_upper)
   expect_identical(levels(bars$strata), c("a", "b"))
+  layer <- curve$layers[[match("GeomErrorbar", geoms(curve))]]
+  expect_s3_class(layer$position, "PositionDodge")
+  expect_false(isTRUE(layer$show.legend))
+  env$CI_TIMES <- c(1, NA)
+  expect_error(env$km_figure("grp"), "CI_TIMES must be NULL or nonnegative times")
+  env$CI_TIMES <- c(1, 3, 50)
   # The overall figure gets them too.
   expect_true("GeomErrorbar" %in% geoms(env$km_figure()[[1]]))
   # With the band left on, the figure carries both.

@@ -565,6 +565,9 @@ km_figure <- function(strata = NULL) {
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   # Bars at the chosen times, from the same life table as the horizon tables, so a
   # bar and the table row for its time give the same limits.
+  if (!is.null(CI_TIMES) && (!is.numeric(CI_TIMES) || anyNA(CI_TIMES) || any(CI_TIMES < 0))) {
+    stop("CI_TIMES must be NULL or nonnegative times, in the unit of TIME.", call. = FALSE)
+  }
   bars <- CI_TIMES[CI_TIMES <= plot_max]
   if (length(bars)) {
     ci <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = bars, strata = strata, conf_level = CLEVEL)
@@ -572,7 +575,9 @@ km_figure <- function(strata = NULL) {
     ci$strata <- if (is.null(strata)) rep("All", nrow(ci)) else factor(ci$stratum, levels = levels(dd[[strata]]))
     curve <- curve + ggplot2::geom_errorbar(
       data = ci, ggplot2::aes(x = .data$time, ymin = 100 * .data$cl_lower, ymax = 100 * .data$cl_upper, color = .data$strata),
-      width = plot_max / 60, inherit.aes = FALSE
+      # Dodged, so strata whose limits overlap at a time stay apart; kept out of the legend.
+      width = plot_max / 60, position = ggplot2::position_dodge(width = plot_max / 40),
+      inherit.aes = FALSE, show.legend = FALSE
     )
   }
   # The house theme drops the legend; a stratified figure needs it to tell the curves apart.
