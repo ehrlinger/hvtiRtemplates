@@ -71,6 +71,9 @@ Implements §4.1 and §4.2, failures 1 and 3.
 
 **Files:**
 - Create: `R/preflight.R`
+- Create: `tests/testthat/helper-run-job.R` (fixtures every later task's tests use; testthat loads
+  `helper-*.R` before any filtered run, so `devtools::test(filter = ...)` sees them)
+- Modify: `tests/testthat/test-background-job.R` (move `status_job()` from lines 1–6 into the helper)
 - Test: `tests/testthat/test-preflight.R`
 
 **Interfaces:**
@@ -80,19 +83,50 @@ Implements §4.1 and §4.2, failures 1 and 3.
   `.check_r_version(root)` and `.check_packages(path, root)` return `check` records.
   `.job_packages(path)` returns a character vector.
 
-- [ ] **Step 1: Write the failing tests**
+- [ ] **Step 0: Write the shared fixtures** in `tests/testthat/helper-run-job.R`, and delete
+  `status_job()` from the top of `test-background-job.R`, so it is defined once:
 
 ```r
-lock_study <- function(r = "4.5.3", pkgs = list(quarto = "1.4.4", knitr = "1.48")) {
-  root <- withr::local_tempdir(.local_envir = parent.frame())
+# A set-up study (so .find_study_root() accepts it, which needs _study.yml) with a renv.lock.
+lock_study <- function(r = "4.5.3", pkgs = list(quarto = "1.4.4", knitr = "1.48"), env = parent.frame()) {
+  root <- withr::local_tempdir(.local_envir = env)
+  invisible(hvtiRutilities::study_setup(root, "Example", 1L, renv = FALSE))
   lock <- list(R = list(Version = r, Repositories = list()),
                Packages = lapply(names(pkgs), function(p) list(Package = p, Version = pkgs[[p]])))
   names(lock$Packages) <- names(pkgs)
   jsonlite::write_json(lock, file.path(root, "renv.lock"), auto_unbox = TRUE, pretty = TRUE)
-  dir.create(file.path(root, "analyses"))
+  dir.create(file.path(root, "analyses"), showWarnings = FALSE)
   root
 }
 
+status_job <- function(env = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = env)
+  job <- file.path(dir, "nb.boostmtree.x.boost.qmd")
+  writeLines("---\ntitle: x\n---", job)
+  job
+}
+
+# A cgroup v1 tree: the session's leaf under the memory controller, optionally beneath a capped parent.
+fake_cgroup_v1 <- function(limit_gib, usage_gib = 1, peak_gib = 2, parent_gib = NULL, env = parent.frame()) {
+  d <- withr::local_tempdir(.local_envir = env)
+  proc <- file.path(d, "cgroup")
+  writeLines(c("12:cpu,cpuacct:/rstudio/s1", "7:memory:/rstudio/s1", "1:name=systemd:/x"), proc)
+  b <- function(g) if (is.na(g)) "9223372036854771712" else format(round(g * 1024^3), scientific = FALSE)
+  put <- function(dir, lim, use, peak) {
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+    writeLines(b(lim), file.path(dir, "memory.limit_in_bytes"))
+    writeLines(b(use), file.path(dir, "memory.usage_in_bytes"))
+    writeLines(b(peak), file.path(dir, "memory.max_usage_in_bytes"))
+  }
+  put(file.path(d, "sys", "memory", "rstudio", "s1"), limit_gib, usage_gib, peak_gib)
+  if (!is.null(parent_gib)) put(file.path(d, "sys", "memory", "rstudio"), parent_gib, usage_gib, peak_gib)
+  list(proc = proc, sys = file.path(d, "sys"))
+}
+```
+
+- [ ] **Step 1: Write the failing tests**
+
+```r
 test_that("r_version refuses a session R whose major.minor differs from the lock's (failure 1)", {
   root <- lock_study(r = "4.5.3")
   testthat::local_mocked_bindings(.session_r = function() numeric_version("4.6.1"))
@@ -290,19 +324,7 @@ Implements §5.2, failures 4 and 5.
 - [ ] **Step 1: Write the failing tests**
 
 ```r
-fake_cgroup_v1 <- function(limit_gib, usage_gib = 1, peak_gib = 2) {
-  d <- withr::local_tempdir(.local_envir = parent.frame())
-  proc <- file.path(d, "cgroup")
-  writeLines(c("12:cpu,cpuacct:/rstudio/s1", "7:memory:/rstudio/s1", "1:name=systemd:/x"), proc)
-  m <- file.path(d, "sys", "memory", "rstudio", "s1")
-  dir.create(m, recursive = TRUE)
-  b <- function(g) format(round(g * 1024^3), scientific = FALSE)
-  writeLines(b(limit_gib), file.path(m, "memory.limit_in_bytes"))
-  writeLines(b(usage_gib), file.path(m, "memory.usage_in_bytes"))
-  writeLines(b(peak_gib), file.path(m, "memory.max_usage_in_bytes"))
-  list(proc = proc, sys = file.path(d, "sys"))
-}
-
+# fake_cgroup_v1() is in helper-run-job.R (Task 1).
 test_that("the v1 limit is read under the memory controller", {
   cg <- fake_cgroup_v1(19.2)
   m <- .cgroup_memory(cg$proc, cg$sys)
@@ -310,7 +332,15 @@ test_that("the v1 limit is read under the memory controller", {
   expect_identical(m$source, "cgroup v1")
 })
 
-test_that("a v2 memory.max of 'max' reads as no cgroup limit", {
+test_that("an unlimited leaf beneath a capped parent takes the parent's cap", {
+  cg <- fake_cgroup_v1(NA, parent_gib = 76.8, usage_gib = 40, peak_gib = 50)
+  m <- .cgroup_memory(cg$proc, cg$sys)
+  expect_equal(m$limit_gib, 76.8, tolerance = 1e-6)
+  expect_identical(m$source, "cgroup v1")
+  expect_equal(m$usage_gib, 40, tolerance = 1e-6)
+})
+
+test_that("a v2 memory.max of 'max' all the way up reads as no cgroup limit", {
   d <- withr::local_tempdir()
   writeLines("0::/user.slice/s", file.path(d, "cgroup"))
   dir.create(file.path(d, "sys", "user.slice", "s"), recursive = TRUE)
@@ -320,7 +350,8 @@ test_that("a v2 memory.max of 'max' reads as no cgroup limit", {
 })
 
 test_that("the profile named is the smallest whose cap holds the need", {
-  expect_identical(.profile_for(25), "Medium")
+  expect_identical(.profile_for(25), "Small")    # 25 <= 0.9 * 38.4
+  expect_identical(.profile_for(40), "Medium")
   expect_identical(.profile_for(80), "Large")
   expect_identical(.profile_for(500), "none")
 })
@@ -339,6 +370,16 @@ test_that("Penny's ordinal fit at 8 cores is refused in a Medium session (failur
   cg <- fake_cgroup_v1(76.8)
   expect_error(guard_memory(need, "a boostmtree fit", cores = 8, proc = cg$proc, sys = cg$sys),
                "^memory: .*76.8 GiB.*Medium")
+})
+
+test_that("a need of 0 (a cached rerender) passes and records the memory check", {
+  dir <- withr::local_tempdir()
+  f <- file.path(dir, "x.run.progress")
+  .progress_begin(f, "fit")
+  withr::defer(.progress_finish())
+  cg <- fake_cgroup_v1(19.2)
+  guard_memory(0, "x", proc = cg$proc, sys = cg$sys)
+  expect_true("memory" %in% yaml::read_yaml(f)$checks)
 })
 
 test_that("the refusal names the CORES that would fit this session", {
@@ -375,21 +416,30 @@ Expected: FAIL, `could not find function ".cgroup_memory"`.
 }
 
 # A detached job counts against its submitting session's cgroup, so this is the cap the fit will hit.
+# An unlimited leaf can sit beneath a capped ancestor, so the binding cap is the smallest finite one
+# from the leaf up to the controller's root; usage and peak are read at that same cgroup.
 .cgroup_memory <- function(proc = "/proc/self/cgroup", sys = "/sys/fs/cgroup") {
   lines <- if (file.exists(proc)) readLines(proc, warn = FALSE) else character()
   parts <- strsplit(lines, ":", fixed = TRUE)
   v1 <- Filter(function(p) length(p) >= 3L && "memory" %in% strsplit(p[2L], ",", fixed = TRUE)[[1L]], parts)
-  out <- if (length(v1)) {
-    d <- file.path(sys, "memory", sub("^/", "", v1[[1L]][3L]))
-    list(limit_gib = .read_bytes_gib(file.path(d, "memory.limit_in_bytes")),
-         usage_gib = .read_bytes_gib(file.path(d, "memory.usage_in_bytes")),
-         peak_gib = .read_bytes_gib(file.path(d, "memory.max_usage_in_bytes")), source = "cgroup v1")
-  } else {
-    v2 <- Filter(function(p) length(p) >= 3L && p[1L] == "0" && p[2L] == "", parts)
-    d <- if (length(v2)) file.path(sys, sub("^/", "", v2[[1L]][3L])) else NA_character_
-    list(limit_gib = if (is.na(d)) NA_real_ else .read_bytes_gib(file.path(d, "memory.max")),
-         usage_gib = if (is.na(d)) NA_real_ else .read_bytes_gib(file.path(d, "memory.current")),
-         peak_gib = if (is.na(d)) NA_real_ else .read_bytes_gib(file.path(d, "memory.peak")), source = "cgroup v2")
+  v2 <- Filter(function(p) length(p) >= 3L && p[1L] == "0" && p[2L] == "", parts)
+  spec <- if (length(v1)) {
+    list(base = file.path(sys, "memory"), rel = v1[[1L]][3L], source = "cgroup v1",
+         files = c("memory.limit_in_bytes", "memory.usage_in_bytes", "memory.max_usage_in_bytes"))
+  } else if (length(v2)) {
+    list(base = sys, rel = v2[[1L]][3L], source = "cgroup v2", files = c("memory.max", "memory.current", "memory.peak"))
+  }
+  out <- list(limit_gib = NA_real_, usage_gib = NA_real_, peak_gib = NA_real_, source = "physical")
+  if (!is.null(spec)) {
+    segs <- strsplit(sub("^/", "", spec$rel), "/", fixed = TRUE)[[1L]]
+    for (i in rev(seq_len(length(segs) + 1L) - 1L)) {   # leaf first, then each ancestor, then the root
+      d <- do.call(file.path, as.list(c(spec$base, segs[seq_len(i)])))
+      lim <- .read_bytes_gib(file.path(d, spec$files[1L]))
+      if (!is.na(lim) && (is.na(out$limit_gib) || lim < out$limit_gib)) {
+        out <- list(limit_gib = lim, usage_gib = .read_bytes_gib(file.path(d, spec$files[2L])),
+                    peak_gib = .read_bytes_gib(file.path(d, spec$files[3L])), source = spec$source)
+      }
+    }
   }
   if (is.na(out$limit_gib)) {
     out$limit_gib <- tryCatch(as.numeric(ps::ps_system_memory()$total) / 1024^3, error = function(e) NA_real_)
@@ -406,6 +456,8 @@ Cookbook. Its `@details` say the v1 peak is the session's:
 guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
                          proc = "/proc/self/cgroup", sys = "/sys/fs/cgroup") {
   m <- .cgroup_memory(proc, sys)
+  # Recorded so job_status() can name the right profile if the fit dies anyway (spec section 6).
+  .progress_state$mem_need_gib <- round(need_gib, 1)
   if (is.na(m$limit_gib) || need_gib <= 0.9 * m$limit_gib) {
     if (exists(".progress_check_passed", mode = "function")) .progress_check_passed("memory")
     return(invisible(m$limit_gib))
@@ -521,7 +573,7 @@ Expected: FAIL on the four new tests.
 In `.progress_write()`, add two fields to `rec`, after `done = s$done`:
 
 ```r
-              checks = s$checks,
+              checks = s$checks, mem_need_gib = s$mem_need_gib,
               mem_gib = tryCatch(round(.cgroup_memory()$usage_gib, 1), error = function(e) NULL)
 ```
 
@@ -535,7 +587,9 @@ Add, after `.progress_finish()`:
 }
 ```
 
-Reset `.progress_state$checks <- NULL` in `.progress_begin()`.
+Reset `.progress_state$checks <- NULL` and `.progress_state$mem_need_gib <- NULL` in
+`.progress_begin()`. `.progress_view()` keeps every field it reads, so `job_status()`'s
+`st$progress$mem_need_gib` needs no change there.
 
 In `.runner_lines()`, replace the final `put(...)` line with one that adds the memory fields. The
 runner already runs the package to render, so `:::` is available there:
@@ -861,11 +915,22 @@ test_that("the wait returns once every expected check is recorded", {
 })
 
 test_that("the wait returns on failure, printing the diagnosis", {
-  testthat::local_mocked_bindings(job_status = function(path, quiet) {
+  testthat::local_mocked_bindings(job_status = function(path, quiet = FALSE) {
     if (!quiet) cat("x.qmd: failed\n  why: memory: ...\n")
     list(state = "failed")
   })
   expect_output(.wait_for_checks("x.qmd", "render_r", wait = 1, poll = 0), "why: memory")
+})
+
+test_that("a render that finishes between polls is reported finished, not running or starting", {
+  testthat::local_mocked_bindings(job_status = function(path, quiet = FALSE) {
+    if (!quiet) cat("x.qmd: finished in 40 s\n")
+    list(state = "finished", progress = list(checks = "render_r"))
+  })
+  out <- capture.output(st <- .wait_for_checks("x.qmd", c("render_r", "memory"), wait = 60, poll = 0))
+  expect_identical(st$state, "finished")
+  expect_match(out, "finished", all = FALSE)
+  expect_false(any(grepl("still starting|checks passed", out)))
 })
 
 test_that("the wait times out with a pointer to hvti status", {
@@ -899,7 +964,8 @@ Expected: FAIL, `could not find function "run_job"`.
   deadline <- Sys.time() + wait
   repeat {
     st <- job_status(path, quiet = TRUE)
-    if (st$state %in% c("failed", "vanished", "cancelled")) return(invisible(job_status(path)))
+    # Finished, failed or gone: say so at once, whatever the check markers show.
+    if (st$state %in% c("finished", "failed", "vanished", "cancelled")) return(invisible(job_status(path)))
     if (all(expected %in% st$progress$checks)) {
       cat(sprintf("checks passed; running (process %s on %s). Follow it with `hvti status %s`.\n",
                   st$pid, st$host, basename(path)))
@@ -971,10 +1037,16 @@ followed by `Error in ...`, and a `memory: ...` guard refusal.
 ```r
 fx <- function(name) readLines(test_path("fixtures-diagnose", paste0(name, ".log")))
 
-test_that("killed workers with the peak at the cap read as memory (failures 4-5)", {
-  d <- .diagnose_failure(fx("oom-workers"), list(mem_peak_gib = 19.1, mem_limit_gib = 19.2))
+test_that("killed workers with the peak at the cap read as memory, and the fix uses the recorded need (failures 4-5)", {
+  d <- .diagnose_failure(fx("oom-workers"), list(mem_peak_gib = 19.1, mem_limit_gib = 19.2,
+                                                 progress = list(mem_need_gib = 30)))
   expect_match(d$reason, "ran out of memory: peak 19.1 of a 19.2 GiB cap", fixed = TRUE)
-  expect_match(d$fix, "Medium", fixed = TRUE)
+  expect_match(d$fix, "Medium", fixed = TRUE)   # .profile_for(30)
+})
+
+test_that("with no recorded need, the fix asks for a larger session than this one", {
+  d <- .diagnose_failure(fx("oom-workers"), list(mem_peak_gib = 19.1, mem_limit_gib = 19.2))
+  expect_match(d$fix, "larger than this one (19.2 GiB)", fixed = TRUE)
 })
 
 test_that("the same signature without a recorded peak is hedged", {
@@ -1029,8 +1101,14 @@ Expected: FAIL, `could not find function ".diagnose_failure"`.
   if (length(hit("worker result\\(s\\) were not delivered|^Killed|exit status 137"))) {
     peak <- st$mem_peak_gib; lim <- st$mem_limit_gib
     if (is.numeric(peak) && is.numeric(lim) && peak >= 0.95 * lim) {
-      return(list(reason = sprintf("the session ran out of memory: peak %.1f of a %.1f GiB cap.", peak, lim),
-                  fix = sprintf("Start a \"%s\" session or larger, or lower CORES.", .profile_for(lim * 1.5))))
+      need <- st$progress$mem_need_gib
+      to <- if (is.numeric(need)) .profile_for(need) else "none"
+      fix <- if (to != "none") {
+        sprintf("Start a \"%s\" session or larger (this fit was estimated at %.0f GiB), or lower CORES.", to, need)
+      } else {
+        sprintf("Start a Workbench session larger than this one (%.1f GiB), or lower CORES.", lim)
+      }
+      return(list(reason = sprintf("the session ran out of memory: peak %.1f of a %.1f GiB cap.", peak, lim), fix = fix))
     }
     return(list(reason = "probably memory: forked workers were killed, and this run recorded no memory peak.",
                 fix = "Start a larger Workbench session, or lower CORES, and run again."))
@@ -1092,7 +1170,8 @@ Implements §5.2, the template half.
 - Test: the existing nb-boostmtree template tests (`grep -ln "nb-boostmtree" tests/testthat/test-*.R`)
 
 **Interfaces:**
-- Consumes: `guard_memory()`, `.boostmtree_need_gib()` (Task 2).
+- Consumes: `guard_memory()`, `.boostmtree_need_gib()` (Task 2). The cache-hit handshake (a need of
+  0 records `memory`) is tested in Task 2; this task's test checks the call is unconditional.
 
 - [ ] **Step 1: Write the failing test** in the nb template test file, using that file's helpers:
 
@@ -1103,6 +1182,8 @@ test_that("the nb-boostmtree fit chunk guards memory before cache_fit()", {
   cache <- grep("cache_fit(", tpl, fixed = TRUE)
   expect_length(fit, 1L)
   expect_lt(fit, min(cache[cache > fit]))
+  # Not inside an if (): a cached rerender must still record the check run_job() waits for.
+  expect_match(tpl[fit], "^hvtiRtemplates::guard_memory\\(")
 })
 ```
 
@@ -1110,16 +1191,17 @@ test_that("the nb-boostmtree fit chunk guards memory before cache_fit()", {
   Expected: FAIL.
 
 - [ ] **Step 3: Edit the template.** Immediately before the fit's `cache_fit()` call, and after
-  `guard_long_fit()` if present, add:
+  `guard_long_fit()` if present, add one unconditional call. A cached rerender needs no memory, so it
+  passes a need of 0, which still records `memory` and lets `run_job()`'s wait complete:
 
 ```r
 # Refuses here, in the first minutes of the render, a fit this session's memory cannot hold, and
 # names the Workbench profile to start. The numbers behind the estimate are in hvtiRtemplates'
-# R/fit-memory.R, measured on the server.
-if (!file.exists(file.path(CACHE_DIR, "nb-boostmtree-fit.rds")) || isTRUE(REFIT)) {
-  .need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(d[[ID]])), nrow(d), FAMILY, k, M)
-  hvtiRtemplates::guard_memory(.need(CORES), "this boostmtree fit", cores = CORES, cores_fit = .need)
-}
+# R/fit-memory.R, measured on the server. A cached fit is only loaded, so it needs nothing.
+.need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(d[[ID]])), nrow(d), FAMILY, k, M)
+.fitting <- !file.exists(file.path(CACHE_DIR, "nb-boostmtree-fit.rds")) || isTRUE(REFIT)
+hvtiRtemplates::guard_memory(if (.fitting) .need(CORES) else 0, "this boostmtree fit",
+                             cores = CORES, cores_fit = .need)
 ```
 
 Use the template's own names for the data frame, ID column, family, M and cache file. Read the fit
@@ -1152,8 +1234,10 @@ Implements §3, failures 1 and 8.
 - Test: `tests/testthat/test-hvti-command.R`
 
 **Interfaces:**
-- Produces: `hvti run|status|cancel <job> [--final]`, and `install_hvti(dir = "~/bin")` (exported),
-  which returns the installed path invisibly.
+- Produces: `hvti run|status|cancel <job> [--final]`; `.hvti_main(args)` (internal), which takes
+  `c(cmd, path, final)` and returns the process exit status, 0L or 1L; and `install_hvti(dir = "~/bin")`
+  (exported), which returns the installed path invisibly. `hvti run` exits 1 when a check refuses or
+  the render fails or vanishes during the wait, so `hvti run job && next` stops there.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1165,21 +1249,43 @@ fake_r <- function(ver) {
   bin <- file.path(top, ver, "bin")
   dir.create(bin, recursive = TRUE)
   log <- file.path(top, "args.txt")
-  writeLines(c("#!/bin/sh", sprintf('echo "$PWD" > %s; for a in "$@"; do echo "$a" >> %s; done', log, log)),
+  # printf, not echo: sh's echo interprets backslashes, which would corrupt the path being checked.
+  writeLines(c("#!/bin/sh", sprintf('printf "%%s\\n" "$PWD" > %s; for a in "$@"; do printf "%%s\\n" "$a" >> %s; done', log, log)),
              file.path(bin, "Rscript"))
   Sys.chmod(file.path(bin, "Rscript"), "755")
   list(top = top, log = log)
 }
 
-test_that("hvti run starts the lock's R from the study root (failures 1 and 8)", {
+test_that("hvti run starts the lock's R from the study root, passing the path as data (failures 1 and 8)", {
   skip_on_os("windows")
   root <- lock_study(r = "4.5.3")
-  job <- file.path(root, "analyses", "x.qmd"); writeLines("x", job)
+  odd <- file.path(root, "analyses", "we\"ird\\dir")   # a quote and a backslash in a directory name
+  dir.create(odd)
+  job <- file.path(odd, "x.qmd"); writeLines("x", job)
   r <- fake_r("4.5.3")
-  out <- system2(hvti(), c("run", job, "--final"), env = paste0("HVTI_R_ROOT=", r$top), stdout = TRUE, stderr = TRUE)
+  out <- system2(hvti(), c("run", shQuote(job), "--final"), env = paste0("HVTI_R_ROOT=", r$top), stdout = TRUE, stderr = TRUE)
   got <- readLines(r$log)
   expect_identical(normalizePath(got[1]), normalizePath(root))
-  expect_match(got[3], 'hvtiRtemplates::run_job(".*x.qmd", final = TRUE)')
+  expect_identical(got[2], "-e")
+  expect_identical(got[3], "quit(status = hvtiRtemplates:::.hvti_main(commandArgs(TRUE)))")
+  expect_identical(got[c(4, 6)], c("run", "TRUE"))
+  expect_identical(normalizePath(got[5]), normalizePath(job))   # pwd may keep a symlinked tempdir logical
+})
+
+test_that(".hvti_main exits nonzero when the launch fails or is refused, zero when it runs (C11)", {
+  testthat::local_mocked_bindings(run_job = function(path, final) invisible(list(state = "failed")))
+  expect_identical(.hvti_main(c("run", "x.qmd", "FALSE")), 1L)
+  testthat::local_mocked_bindings(run_job = function(path, final) stop("run_job(): refused; fix the checks"))
+  expect_identical(suppressMessages(.hvti_main(c("run", "x.qmd", "FALSE"))), 1L)
+  testthat::local_mocked_bindings(run_job = function(path, final) invisible(list(state = "running")))
+  expect_identical(.hvti_main(c("run", "x.qmd", "FALSE")), 0L)
+})
+
+test_that(".hvti_main passes the path through unchanged, quotes and backslashes included", {
+  seen <- NULL
+  testthat::local_mocked_bindings(run_job = function(path, final) { seen <<- list(path, final); list(state = "running") })
+  .hvti_main(c("run", "/s/we\"ird\\dir/x.qmd", "TRUE"))
+  expect_identical(seen, list("/s/we\"ird\\dir/x.qmd", TRUE))
 })
 
 test_that("hvti refuses, naming the version, when the lock's R is not installed", {
@@ -1240,21 +1346,35 @@ if [ -z "${rscript:-}" ]; then
   echo "hvti: this study needs R $ver, which is not installed here. Installed: $(ls /opt/R 2>/dev/null | tr '\n' ' ')" >&2
   exit 1
 fi
-case $cmd in
-  run)    call="hvtiRtemplates::run_job(\"$jobpath\", final = $final)" ;;
-  status) call="invisible(hvtiRtemplates::job_status(\"$jobpath\"))" ;;
-  cancel) call="invisible(hvtiRtemplates::cancel_job(\"$jobpath\"))" ;;
-  *) usage ;;
-esac
-cd "$root" && exec "$rscript" -e "$call"
+case $cmd in run|status|cancel) ;; *) usage ;; esac
+# The job path reaches R as an argument, never as R source: a fixed expression reads it with
+# commandArgs(), so no directory name can change what R runs. .hvti_main() returns the exit status.
+cd "$root" && exec "$rscript" -e 'quit(status = hvtiRtemplates:::.hvti_main(commandArgs(TRUE)))' "$cmd" "$jobpath" "$final"
 ```
 
-The fake Rscript in the test logs `$PWD` and then each argument, so line 2 is `-e` and line 3 is
-the call. Make the file executable and keep the bit in git: `chmod 755 inst/bin/hvti` and
+The fake Rscript in the test logs `$PWD` and then each argument, so its lines are the root, `-e`,
+the fixed expression, the command, the path and `final`. Make the file executable and keep the bit in git: `chmod 755 inst/bin/hvti` and
 `git update-index --chmod=+x inst/bin/hvti`. `R CMD build` keeps the mode.
 
-- [ ] **Step 4: Add `install_hvti()` to `R/run-job.R`**, exported with roxygen, `@return`, and an
-  example that installs into `tempdir()`:
+- [ ] **Step 4: Add `.hvti_main()` and `install_hvti()` to `R/run-job.R`.** `.hvti_main()` is
+  internal; `install_hvti()` is exported with roxygen, `@return`, and an example that installs into
+  `tempdir()`:
+
+```r
+# hvti's whole R side. The path arrives as data (commandArgs), never as source. Exit 1 on a refusal,
+# or a launch that failed or vanished during the wait, so a shell `&&` chain stops there.
+.hvti_main <- function(args) {
+  cmd <- args[1L]; path <- args[2L]; final <- identical(args[3L], "TRUE")
+  st <- tryCatch(switch(cmd,
+                        run = run_job(path, final = final),
+                        status = job_status(path),
+                        cancel = cancel_job(path)),
+                 error = function(e) { message(conditionMessage(e)); NULL })
+  if (is.null(st)) return(1L)
+  if (identical(cmd, "run") && isTRUE(st$state %in% c("failed", "vanished", "cancelled"))) 1L else 0L
+}
+```
+
 
 ```r
 install_hvti <- function(dir = "~/bin") {

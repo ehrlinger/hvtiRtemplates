@@ -55,8 +55,12 @@ and the only route that worked was a terminal `Rscript` with a full path.
 3. Finds that R's `Rscript`, first `$HVTI_R_ROOT/<ver>/bin/Rscript` and then
    `/opt/R/<ver>/bin/Rscript` (Posit's layout on lri). If neither exists it refuses, naming the
    version the lock wants and listing the versions under `/opt/R`.
-4. `cd` to the root and `exec "$RSCRIPT" -e 'hvtiRtemplates::run_job("<path>", final = <bool>)'`.
-   `status` and `cancel` call `job_status()` and `cancel_job()` the same way.
+4. `cd` to the root and `exec "$RSCRIPT" -e '<fixed expression>' <cmd> <path> <final>`. The job path
+   reaches R as an argument read with `commandArgs()`, never pasted into R source, so a directory
+   name holding a quote or backslash cannot change what R runs. `status` and `cancel` go through the
+   same expression to `job_status()` and `cancel_job()`.
+5. `hvti run` exits 1 when a check refuses, or the render fails or vanishes during the wait, so
+   `hvti run <job> && <next>` stops there. The R API still returns the status.
 
 `hvtiRtemplates::install_hvti(dir = "~/bin")` installs it once per user. It **copies** the script and
 does not symlink it: a symlink into the library breaks when the library path changes with the R
@@ -149,7 +153,8 @@ is.
 
 - **Limit.** The function finds the session's memory cgroup from `/proc/self/cgroup` and reads
   `memory.limit_in_bytes` under the memory controller (cgroup v1, as on lri) or `memory.max`
-  (v2). A detached job counts against its submitting session's cgroup, so this is the cap the fit
+  (v2). An unlimited leaf can sit beneath a capped ancestor, so the binding cap is the smallest
+  finite limit from the leaf up, and usage and peak are read at that same cgroup. A detached job counts against its submitting session's cgroup, so this is the cap the fit
   will hit. If no limit can be read (macOS, or "max"), it uses physical memory and says so.
 - **Need.** The template computes it from the data it actually loaded. For nb-boostmtree,
   `.boostmtree_need_gib(patients, visits, family, cores, M)` is fitted to the measured CORES table
@@ -174,6 +179,10 @@ and its workers were killed at the first CV step. Penny's ordinal fit, about 5,5
 echoes and 8 cores, ran in a Medium session (76.8 GiB) and hit the cap at iteration 2. The estimator
 must refuse both, and pass COMMENCE in Medium and Penny's fit in Large, which is how they then ran.
 
+A cached rerender only loads the fit, so the template calls `guard_memory()` unconditionally with a
+need of 0 in that case. That still records the `memory` check, so `run_job()`'s wait completes.
+`guard_memory()` also records its estimate as `mem_need_gib` in `.run.progress` for the diagnosis.
+
 `guard_memory()` is general. Other long templates (`rf*-fit`, `vp-fit`, the bootstraps) adopt it
 when they have measured numbers. This spec wires only nb-boostmtree.
 
@@ -185,7 +194,8 @@ scans the job file for `guard_memory(` to know which checks to expect: always `r
 
 - every expected check is recorded, and it prints "checks passed; running (pid, host); `hvti status`
   to follow", or
-- the state is `failed` or `vanished`, and it prints the diagnosis (section 6), or
+- the state is `finished`, `failed`, `vanished` or `cancelled`, and it prints that status at once,
+  with the diagnosis for a failure (section 6). A render can finish between two polls, or
 - `wait` seconds pass, and it prints "still starting; `hvti status <job>` to follow".
 
 A failure is then still diagnosed by `job_status()` later. `wait = 0` returns at once, as
@@ -199,7 +209,7 @@ matched from `<job>.run.log` and `.run.yml` in this order:
 | signature | reason | fix |
 |---|---|---|
 | a check's own refusal (`r_version:`, `memory:` ...) | the refusal itself, verbatim | as it says |
-| `worker result(s) were not delivered`, `Killed`, or exit status 137, **and** recorded peak ≥ 95% of the limit | the session ran out of memory: peak X of a Y GiB cap | the profile `guard_memory()` would name; fewer `CORES` |
+| `worker result(s) were not delivered`, `Killed`, or exit status 137, **and** recorded peak ≥ 95% of the limit | the session ran out of memory: peak X of a Y GiB cap | the profile for the `mem_need_gib` `guard_memory()` recorded; with none recorded, "a session larger than this one (Y GiB)"; fewer `CORES` |
 | the same without a recorded peak | probably memory; this run recorded no peak | as above, hedged |
 | `there is no package called '<pkg>'` | the render ran on an R or library that lacks `<pkg>` | `hvti run <job>`; then the `packages` fix |
 | `Quitting from <file>:<lines> [<label>]` | the job stopped in chunk `<label>`, lines `<lines>` | the error line that follows, quoted |
