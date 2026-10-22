@@ -203,12 +203,14 @@ test_that("numeric strata keep one color for curve, band and bars (1, 2, 10 sort
   curve <- env$km_figure("grp3")[[1]]
   expect_no_warning(layers <- built_layers(curve))
   b <- ggplot2::ggplot_build(curve)
-  expect_identical(b$plot$scales$get_scales("colour")$get_limits(), c("1", "2", "10"))
+  # ggplot's own name for the color aesthetic and its built-data column.
+  col_aes <- ggplot2::standardise_aes_names("color")
+  expect_identical(b$plot$scales$get_scales(col_aes)$get_limits(), c("1", "2", "10"))
   expect_identical(b$plot$scales$get_scales("fill")$get_limits(), c("1", "2", "10"))
   by_group <- function(x, col) tapply(x[[col]], x$group, function(v) unique(v)[[1]])
-  line <- by_group(layers$GeomStep, "colour")
+  line <- by_group(layers$GeomStep, col_aes)
   band <- by_group(layers$GeomRibbon, "fill")
-  bar <- by_group(layers$GeomErrorbar, "colour")
+  bar <- by_group(layers$GeomErrorbar, col_aes)
   expect_identical(unname(line), unname(band))
   expect_identical(unname(line), unname(bar))
 })
