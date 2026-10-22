@@ -1,6 +1,8 @@
 # `sid` templates: design, 2026-10-22
 
-**Status** Design, approved by section on 2026-10-22. Not implemented.
+**Status** Design, approved by section on 2026-10-22. Revised the same day,
+after review of the plan, for the imputation choice with pooling over `M`,
+digested IDs, and the `clusters` element `vt` reads. Not implemented.
 **Adds** two templates under the existing `sid` prefix, `sid-fit.qmd` and
 `sid-clusters.qmd`. Both ship with ledger status `in-flight`.
 **Starts from** the two SID clustering studies named in the ML family roadmap
@@ -41,8 +43,9 @@ Each was found while reading the studies against randomForestSRC 3.9.0 and
   calls with `seed = 7` gave different distance matrices; `set.seed()` before
   each made them identical. Both studies call `set.seed(1024)` once at the top
   of the notebook, so their fits reproduce only when the chunks run in the same
-  order. The template calls `set.seed(SEED)` inside the cached expression,
-  directly before the fit.
+  order. The template runs every fit through `cache_fit(seed = ...)`, which
+  evaluates the code under `withr::with_seed()`, so R's generator is set
+  immediately before each fit, whatever ran before it.
 - **`na.action = "na.impute"` errors when values are missing.** Both studies
   pass it ("arguments imply differing number of rows: 150, 147" on iris with
   three missing values). It only works for them because `mice` has already
@@ -95,40 +98,68 @@ Chunks, in order:
    `mice` and hvtiRutilities, checks their floors, and sets
    `options(rf.cores = 1L, mc.cores = 1L)`.
 2. **`edit-study-choices`**, holding every `EDIT:` marker:
-   - `DATASET`, `ANALYSIS_SET`, `WHERE`, `ID`, `KEY`, the standard read
-     choices.
+   - `DATASET`, `ANALYSIS_SET`, `WHERE`, `ID`, `KEY`, `JOIN`, `JOIN_VARS`,
+     `REDUCE`, `JOIN_KEY`: the standard read choices, as `vp-fit` has them,
+     since `test-template-data-routes.R` requires every patient-level reader to
+     offer the join.
    - `VARS`: the clustering variables. These are what defines a cluster, so
      the narration says so. They are not candidate predictors, and an outcome
      never belongs here: that would cluster on the answer a later job asks
      about.
-   - `MAX_MISSING <- 0.4`, `NTREE <- 5000`, `REDUCE <- TRUE`
-     (sidClustering's holdout-VIMP variable reduction), `MICE_MAXIT <- 50`,
-     `SEED <- 1024`.
+   - `MAX_MISSING <- 0.4`, `NTREE <- 5000`, `SID_REDUCE <- TRUE`
+     (sidClustering's holdout-VIMP variable reduction, named so it is not
+     confused with the join's `REDUCE`), `SEED <- 1024`.
+   - `IMPUTE <- "mice"`: `"mice"` (predictive mean matching) or `"forest"`
+     (`randomForestSRC::impute()`). `M <- 1`: the number of imputations.
+     `MICE_MAXIT <- 50`. Both methods were raised by the maintainer
+     (2026-10-22), and both are a study's choice.
 3. **Cohort.** `read_job_data(one_row_per_patient = TRUE)`. The run stops if
    `VARS` names the ID or a column the data lack. Rows with every variable in
    `VARS` missing are dropped and counted.
 4. **Missingness.** A table of the percent missing per variable. Variables
    above `MAX_MISSING` are dropped and listed by name. A factor with one level
    left is dropped and listed too.
-5. **Impute.** One `mice(method = "pmm", m = 1, maxit = MICE_MAXIT,
-   seed = SEED)`, cached with `cache_fit()`. The prose says that a single
-   imputation ignores imputation uncertainty. That is acceptable for a
-   distance used to form groups, but it means the cluster boundaries are
-   conditional on one draw.
-6. **Fit.** `cache_fit()` around `{ set.seed(SEED); sidClustering(d,
-   method = "sid", ntree = NTREE, reduce = REDUCE, seed = -abs(SEED)) }`. No
-   `na.action` is passed: a missing value at this point stops with a message,
-   because section 1 shows that `na.impute` would fail here anyway.
-7. **What the forest used.** The variables the reduce step kept, from the
-   fit's `sid` element, beside those it dropped, and the dimension of `dist`.
+5. **Impute.** `M` completed datasets, each cached with
+   `cache_fit(seed = SEED + m)`:
+   - `"mice"`: `mice(method = "pmm", m = 1, maxit = MICE_MAXIT)`, once per m;
+   - `"forest"`: `randomForestSRC::impute(data = d, ntree = 250)`, once per m.
+
+   Skipped when nothing is missing. With `M = 1` the prose says that one
+   imputation treats the filled values as known, so the cluster boundaries
+   are conditional on one draw.
+6. **Fit, and pooling across imputations** (approved 2026-10-22). One SID
+   forest per completed dataset, each through
+   `cache_fit(sidClustering(d_m, method = "sid", ntree = NTREE,
+   reduce = SID_REDUCE, seed = -abs(SEED + m)), seed = SEED + m)`. The `M`
+   distance matrices are averaged, and the mean is the dissimilarity PAM
+   later uses.
+   - Averaging keeps one set of clusters, so the letters, the Sankey and the
+     handoff work the same at any `M`.
+   - The spread across imputations is reported: the correlation of each
+     imputation's distances with the mean. A low one says the imputation, not
+     the data, is driving the distance.
+   - `M` forests cost `M` times one.
+
+   No `na.action` is passed: a missing value at this point stops with a
+   message, because section 1 shows that `na.impute` would fail here anyway.
+7. **What the forest used.** The variables the reduce step kept (each fit's
+   `outcome.names`; factors appear dummy-expanded), beside those dropped
+   before the fit, and the number of patients.
 8. **Save** one handoff, `estimates/<subject>-<type>/sid.rds`, with handoff
    lineage attached (including the data selection):
-   `list(dist, kept, vars, dropped, reduced, settings)`. `kept` is a logical
-   vector over the rows read, marking those clustered.
-   - **It holds no patient identifier and no patient values.** `sid-clusters`
-     rebuilds the IDs from the recorded selection, as every downstream job
-     rebuilds its cohort. That keeps an MRN out of `estimates/` when a study's
-     ID falls back to MRN.
+   `list(dist, id_key, vars, dropped, reduced, settings)`.
+   - `dist` is the (mean) n × n distance matrix. Its dimnames are the
+     patients' **study-keyed ID digests**,
+     `.id_digest(ids, .study_id_key(root))`, the HMAC the package already uses
+     so saved models never hold an ID (#203).
+   - `id_key` is `.id_key_fingerprint(key)`, so a reader can tell when the
+     study key has changed, which would make every digest miss.
+   - **It holds no patient identifier and no patient values.** That keeps an
+     MRN out of `estimates/` when a study's ID falls back to MRN.
+     `sid-clusters` rebuilds the IDs from the recorded selection, as every
+     downstream job rebuilds its cohort, and matches them to `dist` by digest.
+   - `vt-fit`, whose eligibility can use SID as a method, reads `dist` the same
+     way (section 5).
    - Later profiling reads the built dataset through `JOIN`, so it describes
      observed values, not imputed ones.
    - The forest itself is not saved: it is large and nothing downstream reads
@@ -140,8 +171,9 @@ Chunks, in order:
 It reads `sid.rds` and never calls `sidClustering(`. When no `sid-fit` has run
 in its set, it stops with a message naming the missing file. It rebuilds the
 fit's cohort from the handoff's recorded selection
-(`.read_upstream_job_data()`, which checks the rows and their key hash), and
-takes the IDs of the `kept` rows from it. Nothing in it is
+(`.read_upstream_job_data()`, which checks the rows and their key hash),
+digests its IDs, and orders them to match `dist`. A patient in `dist` that is
+missing from the rebuilt cohort stops the job. Nothing in it is
 random: PAM is deterministic given the dissimilarity, and so are the
 silhouette and classical MDS. So it needs no seed.
 
@@ -151,7 +183,8 @@ silhouette and classical MDS. So it needs no seed.
    - `K <- NULL`: the solution a study reports. A draft render with
      `K = NULL` shows the metrics and sizes, skips every section that needs K,
      and says why, so the first render is how an author chooses. A final
-     render needs K. A K outside `K_RANGE` is an error.
+     render (`.strict_render()`) stops on `K = NULL`. A K outside `K_RANGE` is
+     an error.
    - `OVERRIDES <- list()`: pins letters, as
      `list(pm4 = c("1" = "B", "2" = "D"))`. The narration explains that PAM's
      cluster numbers are arbitrary, so overrides are a domain decision written
@@ -220,18 +253,22 @@ one:
   root. That records a new dated version (`_r2` on the same day), keeps the
   earlier ones, and leaves an unchanged file alone. A later job therefore
   reads the current assignments, and its manifest check passes.
-- `estimates/<subject>-<type>/sid-clusters.rds`, with lineage: the PAM fits,
-  the metrics table, the letter map per K (`pm<k>` id to letter), `K`,
-  `OVERRIDES` and `COLLAPSE`.
+- `estimates/<subject>-<type>/sid-clusters.rds`, with lineage:
+  `list(clusters, id_key, pam, metrics, letters, k, overrides, collapse)`.
+  - `clusters` is `data.frame(id = <ID digest>, cluster = <letter at K>)`,
+    plus a `group` column when `COLLAPSE` is set. It is `NULL` while `K` is
+    `NULL`. This is the element `vt-explain` reads as its stratifier,
+    matching patients by digest (agreed with the `vt` design, 2026-10-22).
+  - `id_key` is the study key's fingerprint, as in `sid.rds`.
+  - `letters` is the letter map per K, `pm<k>` PAM number to letter.
 
 A later job then sets `JOIN <- "clusters_<subject>_<type>"`.
-**To be verified in the plan:** `read_job_data()` stops a
-`one_row_per_patient = TRUE` job, such as `vp-fit`, on any JOIN without
-`REDUCE`, even when the joined key is the ID itself. The plan proves that a
-`dc-tables`-style read and a `vp-fit`-style read both consume the file, and
-records the `REDUCE` value the second needs. If that value is awkward,
-relaxing the rule for an ID-keyed join is a follow-up in `read_job_data()`,
-not part of this work.
+`read_job_data()` stops a `one_row_per_patient = TRUE` job, such as `vp-fit`,
+on any JOIN without `REDUCE`, even when the joined key is the ID itself.
+`REDUCE <- list(rule = "first", by = ID)` satisfies it, since each patient has
+one row (checked while the plan was reviewed). `sid-clusters` prints that line
+beside the `JOIN` line. Relaxing the rule for an ID-keyed join is a possible
+follow-up in `read_job_data()`, not part of this work.
 
 ## 6. Where the code lives
 
@@ -250,12 +287,15 @@ running the **installed** templates chunk by chunk through `rf_run()` and
 
 1. **Planted clusters are recovered.** A synthetic cohort of about 150 rows
    in three well-separated groups across four continuous variables and one
-   factor, with a few values missing, fit at `NTREE = 50`, `REDUCE = FALSE`.
-   At K = 3 the clusters match the planted groups:
+   factor, with a few values missing, fit at `NTREE = 500`, `SID_REDUCE = FALSE`.
+   (At `NTREE = 50` the plan's review measured 0.92: too few trees to recover
+   anything.) At K = 3 the clusters match the planted groups:
    `randomForestSRC::sid.perf.metric()`'s normalized measure is below 0.2.
 2. **The seed reproduces the fit, proven by mutation.** Two `sid-fit` runs
-   with `REDUCE = TRUE` and the same `SEED` give identical `dist`. Remove the
-   `set.seed()` from the fit chunk and confirm the test fails.
+   with `SID_REDUCE = TRUE` and the same `SEED` give identical `dist`. Remove
+   `seed =` from the fit's `cache_fit()` call and confirm the test fails.
+2a. **Imputation.** `IMPUTE = "forest"` runs. `M = 2` fits two forests,
+   reports the agreement of each with the mean, and saves the mean.
 3. **`sid_align_labels()`** on hand-built matrices: lineage across K, an
    override applied, an unknown override id errors, the letter pool errors
    past 26, and relabelling PAM's cluster numbers within each column leaves
@@ -270,8 +310,10 @@ running the **installed** templates chunk by chunk through `rf_run()` and
    key ID. A second render with different `OVERRIDES` succeeds, and a read
    returns the new letters. A `read_job_data(join = ...)` read returns one cluster per patient,
    for both a long read and a `one_row_per_patient = TRUE` read (section 5).
-7. **K.** `K = NULL` runs every chunk and skips the K sections with a note. A
-   K outside `K_RANGE` errors.
+7. **K.** `K = NULL` runs every chunk, skips the K sections with a note and
+   saves `clusters = NULL`. It stops under `HVTI_TEMPLATE_STRICT=true`. A K
+   outside `K_RANGE` errors. With K set, `clusters` holds one row per patient,
+   keyed by digest, and no raw ID.
 8. **No MRN in any file under `estimates/`**, with the ID falling back to MRN
    on `rf_mrn_data()`. The clusters dataset in `datasets/` carries the
    study's ID by design, as the built dataset beside it does.
@@ -286,11 +328,20 @@ chunks, package floors, provenance and lineage, with no new code.
 - `cluster` and `mice` added to `Suggests`, with floors at the installed
   versions the tests ran against;
 - the ledger rows, with the roadmap tables regenerated by
-  `python3 dev/specs/artifacts/roadmap_render.py`.
+  `python3 dev/specs/artifacts/roadmap_render.py`;
+- the catalog-wide counts that a new patient-level reader and two new
+  analysis templates move: `test-template-data-routes.R` (readers, and
+  `sid-fit` among the patient-level templates) and
+  `test-template-provenance.R` (the template count, and `sid-fit` among those
+  reading data);
+- every figure at or under the 6.5 in page width with
+  `hvtiPlotR::theme_hv_manuscript(base_size = 12)`, as `test-figure-standard.R`
+  requires.
 
-**CI cost.** Tests 1, 2, 5, 6, 7 and the MRN scan fit SID, so they carry
-`skip_on_cran()`. That is about eight small fits at `NTREE = 50` on 150 rows.
-Test 2 needs `REDUCE = TRUE` and is the slowest, and the plan times it. Under
+**CI cost.** Tests 1, 2, 2a, 5, 6, 7 and the MRN scan fit SID, so they carry
+`skip_on_cran()`. That is about ten small fits at `NTREE = 500` on 150 rows,
+each under a quarter of a second as the review measured them. Test 2 needs
+`SID_REDUCE = TRUE` and is the slowest, and the plan times it. Under
 `NOT_CRAN=true` the expected `SKIP 0` on macOS and Ubuntu and `SKIP 3` on
 Windows do not change.
 

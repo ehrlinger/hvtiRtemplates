@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `sid-fit.qmd` (impute, SID forest, distance handoff) and `sid-clusters.qmd` (PAM over K, K metrics, stable letters, Sankey, a registered cluster dataset) under the existing `sid` prefix, both at ledger status `in-flight`.
+**Goal:** Ship `sid-fit.qmd` (mice or forest imputation over `M`, pooled SID forests, a digest-keyed distance handoff) and `sid-clusters.qmd` (PAM over K, K metrics, stable letters, Sankey, a registered cluster dataset) under the existing `sid` prefix, both at ledger status `in-flight`.
 
-**Architecture:** Two self-contained Quarto templates in `inst/templates/30_analyses/`, built from the two SID studies the spec names. `sid-fit` saves one handoff, `sid.rds` (`list(dist, id, vars, dropped, reduced, settings, data)` with lineage attached). `sid-clusters` reads it the way `vp-explain` reads `vp.rds`, defines its helpers in a `sid-helpers` chunk, and writes a CSV of cluster letters that it registers as an ancillary dataset, so later jobs read it through `JOIN`. Everything is in this one repository: `sid` is already in `hvti_taxonomy()`.
+**Architecture:** Two self-contained Quarto templates in `inst/templates/30_analyses/`, built from the two SID studies the spec names. `sid-fit` saves one handoff, `sid.rds` (`list(dist, id_key, vars, dropped, reduced, settings)` with lineage; `dist` is named by study-keyed ID digests, never IDs). `sid-clusters` reads it the way `vp-explain` reads `vp.rds`, defines its helpers in a `sid-helpers` chunk, and writes a CSV of cluster letters that it registers as an ancillary dataset, so later jobs read it through `JOIN`. Everything is in this one repository: `sid` is already in `hvti_taxonomy()`.
 
 **Tech Stack:** R, Quarto, randomForestSRC 3.9.0 (`sidClustering()`), mice 3.19.0, cluster 2.1.8, hvtiPlotR (`hv_sankey()`), hvtiRutilities (`cache_fit()`, `register_data()`), testthat edition 3.
 
@@ -19,7 +19,11 @@
 - A template carries its own `format:` block and opens with ONE `setup` chunk. It has exactly one `^SUBJECT\s+<- ` and one `^TYPE\s+<- ` line. Every `EDIT:` marker sits in a chunk labeled `edit-…`. It carries no study identifiers (no study names, no `/studies/` paths, no built-dataset filenames), and it ends with one `provenance` chunk.
 - Each template gets its own **file** key in `.lintr` excluding exactly `object_name_linter`, `commented_code_linter` and `object_usage_linter`.
 - `options(rf.cores = 1L, mc.cores = 1L)` in both `setup` chunks.
-- Every random call is seeded. `mice(seed = SEED)`. The SID fit is `{ set.seed(SEED); sidClustering(..., seed = -abs(SEED)) }` inside one `cache_fit()` expression: the `reduce = TRUE` step draws on R's generator even with `seed =` (spec §1).
+- Every random call is seeded. Imputation m and its SID forest run inside `cache_fit(seed = SEED + m - 1)`, which evaluates the code under `withr::with_seed()`; `sidClustering()` also gets `seed = -abs(SEED + m - 1)`. The `reduce = TRUE` step draws on R's generator even with `seed =` (spec §1).
+- No file under `estimates/` holds a patient ID: patients are named by `hvtiRtemplates:::.id_digest(ids, hvtiRtemplates:::.study_id_key(.root))` (#203).
+- Every figure is at most 6.5 in wide and 9 in high, and adds `hvtiPlotR::theme_hv_manuscript(base_size = 12)` (`test-figure-standard.R`).
+- The count scripts live in `dev/specs/artifacts/`: `roadmap_render.py`, `check-roadmap-counts.py`, `check-spec-counts.py`, `check-flow-counts.py`.
+- `check-roadmap-counts.py` fails a commit that adds a template file no ledger row claims, and a `queued` row claims none: the task that creates a template sets its row to `in-flight` in the same commit.
 - PAM is `cluster::pam(stats::as.dist(D), k)` everywhere. Never `pam(D, k)` on the matrix (spec §1).
 - No `na.action` argument to `sidClustering()`. A missing value reaching the fit stops with a message.
 - Template version floors match `DESCRIPTION`'s `Suggests`.
@@ -58,7 +62,7 @@
 - Modify: `dev/specs/2026-08-29-template-conversion-roadmap.md` (generated block only, by script)
 
 **Interfaces:**
-- Produces: catalog rows keyed `(sid, fit)` and `(sid, clusters)`, `status: "queued"`, `folder: "analyses"`, `family: "machine-learning"`. Task 6 flips both to `in-flight`.
+- Produces: catalog rows keyed `(sid, fit)` and `(sid, clusters)`, `status: "queued"`, `folder: "analyses"`, `family: "machine-learning"`. Task 2 flips `(sid, clusters)` and Task 3 flips `(sid, fit)` to `in-flight`, each with its file.
 
 - [ ] **Step 1: Worktree, branch and private library**
 
@@ -186,7 +190,7 @@ If `hv_sankey` first appears under a heading above `2.8.9`, raise the floor in `
 
 ```bash
 python3 dev/specs/artifacts/roadmap_render.py
-python3 .github/scripts/check-roadmap-counts.py
+python3 dev/specs/artifacts/check-roadmap-counts.py
 Rscript -e 'devtools::test(filter = "template-catalog$|roadmap")'
 ```
 
@@ -267,6 +271,17 @@ test_that("sid_align_labels applies an override and rejects an unknown cluster i
   out <- h$sid_align_labels(mat, overrides = list(pm2 = c("1" = "B", "2" = "A")))
   expect_identical(out[, "pm2"], c("B", "B", "B", "A", "A"))
   expect_error(h$sid_align_labels(mat, overrides = list(pm2 = c("7" = "B"))), "unknown cluster id")
+})
+
+test_that("sid_align_labels never gives two clusters one letter when an override takes it", {
+  h <- sid_helpers_env()
+  # Found in review: an override gives cluster 1 at K = 3 the letter "B", which
+  # the lineage rule would otherwise hand to cluster 2, the child of B.
+  mat <- data.frame(pm2 = c(1, 1, 1, 1, 2, 2), pm3 = c(1, 1, 3, 3, 2, 2))
+  out <- h$sid_align_labels(mat, overrides = list(pm3 = c("1" = "B")))
+  pm3 <- tapply(out[, "pm3"], mat$pm3, unique)
+  expect_identical(anyDuplicated(unlist(pm3)), 0L)
+  expect_error(h$sid_align_labels(mat, overrides = list(pm3 = c("1" = "B", "2" = "B"))), "one letter to two")
 })
 
 test_that("sid_align_labels stops when the letter pool runs out", {
@@ -439,6 +454,7 @@ sid_align_labels <- function(mat, overrides = list(), pool = LETTERS) {
     if (length(bad)) {
       stop("OVERRIDES$", col, " names unknown cluster id(s): ", toString(bad), call. = FALSE)
     }
+    if (anyDuplicated(ov)) stop("OVERRIDES$", col, " gives one letter to two clusters.", call. = FALSE)
     res[names(ov)] <- ov
     res
   }
@@ -461,9 +477,11 @@ sid_align_labels <- function(mat, overrides = list(), pool = LETTERS) {
     for (p in unique(parent)) {
       kids <- names(parent)[parent == p]
       kids <- kids[order(colSums(tab)[kids], decreasing = TRUE)]
-      if (!p %in% got[kids]) for (ch in kids) if (is.na(got[ch])) {
-        got[ch] <- p
-        break
+      # Checked against the whole column: an override may already have given
+      # the parent's letter to a cluster of another parent.
+      if (!p %in% got) {
+        free <- kids[is.na(got[kids])]
+        if (length(free)) got[free[1]] <- p
       }
       for (ch in kids) if (is.na(got[ch])) got[ch] <- fresh(c(used, got))
     }
@@ -495,18 +513,21 @@ sid_mds_signs <- function(xy) {
   xy
 }
 ```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  run = .job$run,
+  extra = list(subject = SUBJECT, type = TYPE)
+))
+```
 ````
 
-In `sid_align_labels`, the `for (ch in kids) if (...) { ...; break }` form must keep its braces, as shown, for `lintr`'s brace rules. If `lintr` flags it, rewrite it as:
-
-```r
-      if (!p %in% got[kids]) {
-        free <- kids[is.na(got[kids])]
-        if (length(free)) got[free[1]] <- p
-      }
-```
-
-That is the same rule: the largest unpinned child inherits.
+The `provenance` chunk is here from the start because the catalog-wide tests require every shipped template to end with one. Task 4 replaces it.
 
 - [ ] **Step 4: The `.lintr` key**
 
@@ -527,12 +548,25 @@ R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
 R_LIBS="$SID_LIB" Rscript -e 'devtools::test(filter = "sid-templates")'
 ```
 
-Expected: PASS, 6 tests. If the renumbering test fails, the cause is ties in `sort()` order: the test data have no ties, so look for a bug in `parent`.
+Expected: PASS, 7 tests. If the renumbering test fails, the cause is ties in `sort()` order: the test data have no ties, so look for a bug in `parent`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: The ledger row and the template count**
+
+Set the `(sid, clusters)` row in `inst/extdata/templates.json` to `"status": "in-flight"`. Start its `note` with "Released for review in a real study. Becomes shipped once a study renders sid-fit and sid-clusters end to end." and keep the existing note after it. In `tests/testthat/test-template-provenance.R`, raise `expect_equal(nrow(templates), 37L)` (line 172 at `88cd7cd`) by one. Then:
 
 ```bash
-git add inst/templates/30_analyses/sid-clusters.qmd tests/testthat/helper-sid.R tests/testthat/test-sid-templates.R .lintr
+python3 dev/specs/artifacts/roadmap_render.py && python3 dev/specs/artifacts/check-roadmap-counts.py
+R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
+R_LIBS="$SID_LIB" Rscript -e 'devtools::test(filter = "template-")'
+```
+
+Expected: no error, and the catalog-wide `template-` tests PASS with the skeleton in place.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add inst/templates/30_analyses/sid-clusters.qmd tests/testthat/helper-sid.R tests/testthat/test-sid-templates.R .lintr \
+  inst/extdata/templates.json tests/testthat/test-template-provenance.R dev/specs/2026-08-29-template-conversion-roadmap.md
 git commit -m "feat(sid-clusters): skeleton and the label, collapse and MDS-sign helpers"
 ```
 
@@ -546,14 +580,14 @@ git commit -m "feat(sid-clusters): skeleton and the label, collapse and MDS-sign
 
 **Interfaces:**
 - Consumes: `cache_fit(name, code, seed, dir, refit)` from hvtiRutilities; `.attach_handoff_lineage()`, `.embed_provenance()` and `read_job_data()` from this package.
-- Produces: `estimates/<subject>-<type>/sid.rds`, an object `list(dist, kept, vars, dropped, reduced, settings)` with handoff lineage in `attr(, "hvti_provenance")`, including the data `selection`. Its parts:
-  - `dist` is a numeric n × n matrix;
-  - `kept` is a logical vector over the rows `read_job_data()` returned, `TRUE` for the n rows clustered;
+- Produces: `estimates/<subject>-<type>/sid.rds`, an object `list(dist, id_key, vars, dropped, reduced, settings)` with handoff lineage in `attr(, "hvti_provenance")`, including the data `selection`. Its parts:
+  - `dist` is a numeric n × n matrix, the mean over `M` imputations, with `rownames` and `colnames` set to `hvtiRtemplates:::.id_digest(<ID column>, hvtiRtemplates:::.study_id_key(.root))`;
+  - `id_key` is `hvtiRtemplates:::.id_key_fingerprint(key)`;
   - `vars` is a character vector of the variables clustered on;
   - `dropped` is a data frame (`variable`, `reason`);
-  - `reduced` is `fit$outcome.names`;
-  - `settings` is `list(ntree, reduce, seed, mice_maxit, max_missing)`.
-  - It holds **no patient ID and no patient values** (spec §3).
+  - `reduced` is the union of the fits' `outcome.names`;
+  - `settings` is `list(ntree, sid_reduce, seed, impute, m, mice_maxit, max_missing)`.
+  - It holds **no patient ID and no patient values** (spec §3). `vt-fit` reads `dist` by digest too.
 - Produces, in `helper-sid.R`: `sid_data()`, `sid_fit_choices`, `sid_fit_labels`, `sid_fit_first()`.
 
 - [ ] **Step 1: Test helpers**
@@ -581,9 +615,12 @@ sid_data <- function(n_per = 50L, seed = 20261022L) {
   d
 }
 
+# NTREE = 500: at 50 trees the planted groups were not recovered (normalized
+# measure 0.92, measured in review); at 200 it was 0.12. Each fit takes well
+# under a second on 150 rows.
 sid_fit_choices <- list(
-  VARS = c("a", "b", "c", "e", "f"), MAX_MISSING = 0.4, NTREE = 50, REDUCE = FALSE,
-  MICE_MAXIT = 5, SEED = 1, REFIT = FALSE
+  VARS = c("a", "b", "c", "e", "f"), MAX_MISSING = 0.4, NTREE = 500, SID_REDUCE = FALSE,
+  IMPUTE = "mice", M = 1, MICE_MAXIT = 5, SEED = 1, REFIT = FALSE
 )
 
 # Every chunk of sid-fit, in order.
@@ -607,11 +644,31 @@ test_that("sid-fit imputes, fits and saves the handoff", {
   rf_skip_unless_stack(rf_template_packages("sid", "fit"))
   env <- sid_fit_first()
   h <- readRDS(env$set_path("estimates", "sid.rds"))
-  expect_identical(names(h), c("dist", "kept", "vars", "dropped", "reduced", "settings"))
+  expect_identical(names(h), c("dist", "id_key", "vars", "dropped", "reduced", "settings"))
   expect_identical(dim(h$dist), c(150L, 150L))
   expect_false(anyNA(h$dist))
-  expect_identical(sum(h$kept), 150L)
+  key <- hvtiRtemplates:::.study_id_key(env$.root)
+  expect_identical(rownames(h$dist), hvtiRtemplates:::.id_digest(seq_len(150L), key))
+  expect_identical(h$id_key, hvtiRtemplates:::.id_key_fingerprint(key))
   expect_false(is.null(attr(h, "hvti_provenance")$selection))
+})
+
+test_that("sid-fit imputes by forest, and pools M imputations into one mean distance", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))
+  forest <- readRDS(sid_fit_first(choices = utils::modifyList(sid_fit_choices, list(IMPUTE = "forest")))$set_path(
+    "estimates", "sid.rds"
+  ))
+  expect_false(anyNA(forest$dist))
+  env <- sid_fit_first(choices = utils::modifyList(sid_fit_choices, list(M = 2)))
+  expect_length(env$sid_fits, 2L)
+  pooled <- readRDS(env$set_path("estimates", "sid.rds"))$dist
+  expect_equal(unname(pooled), unname((env$sid_fits[[1]]$dist + env$sid_fits[[2]]$dist) / 2))
+  expect_identical(nrow(env$sid_agreement), 2L)
+  # IMPUTE is checked where it is used, in the impute chunk (the fifth).
+  bad <- rf_env(sid_data())
+  expect_error(rf_run("sid", "fit", sid_fit_labels[1:5], bad, utils::modifyList(sid_fit_choices, list(IMPUTE = "x"))),
+               "IMPUTE")
 })
 
 test_that("sid-fit drops a variable over MAX_MISSING and says so", {
@@ -638,7 +695,7 @@ test_that("sid-fit refuses an ID or an absent column in VARS", {
 test_that("the seed reproduces a reduce = TRUE fit", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("sid", "fit"))
-  choices <- utils::modifyList(sid_fit_choices, list(REDUCE = TRUE))
+  choices <- utils::modifyList(sid_fit_choices, list(SID_REDUCE = TRUE))
   one <- readRDS(sid_fit_first(choices = choices)$set_path("estimates", "sid.rds"))$dist
   two <- readRDS(sid_fit_first(choices = choices)$set_path("estimates", "sid.rds"))$dist
   expect_identical(one, two)
@@ -744,6 +801,23 @@ ID <- "ccfid"
 # EDIT: what makes a row unique. Clustering is one row per patient.
 KEY <- ID
 
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). A tie stops: picking one
+#     record silently would be a hidden choice. This job clusters one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
+
 # EDIT: the clustering variables. These DEFINE the clusters: two patients are
 # close when they are alike on these. Name measurements of the thing being
 # grouped (anatomy, physiology), never an outcome: clustering on survival and
@@ -757,19 +831,27 @@ VARS <- c("age", "female", "hx_chf")
 MAX_MISSING <- 0.4
 
 # EDIT: the forest. NTREE = 5000 is what the studies behind this template
-# used. REDUCE = TRUE runs sidClustering's holdout-VIMP step, which drops
+# used. SID_REDUCE = TRUE runs sidClustering's holdout-VIMP step, which drops
 # staggered variables that carry no structure; it is slow, and recommended
 # with more than a handful of variables because the interactions grow with the
-# square of their number.
+# square of their number. (It is not the join's REDUCE above.)
 NTREE <- 5000
-REDUCE <- TRUE
+SID_REDUCE <- TRUE
 
-# EDIT: iterations of the single mice imputation.
+# EDIT: how missing values are filled before the forest, which needs complete
+# data. "mice" uses predictive mean matching; "forest" uses randomForestSRC's
+# own imputation. M is the number of imputations: with M > 1 one SID forest is
+# grown on each and their distances are averaged, so the clusters reflect more
+# than one draw of the missing values, at M times the cost. MICE_MAXIT is the
+# number of mice iterations, unused by "forest".
+IMPUTE <- "mice"
+M <- 1
 MICE_MAXIT <- 50
 
-# EDIT: the seed. It is part of every cache key, seeds mice, seeds R's
-# generator before the fit, and is handed to sidClustering() as `seed =`.
-# Both halves matter: REDUCE = TRUE draws from R's generator as well.
+# EDIT: the seed. Imputation m and its forest use SEED + m - 1: it is part of
+# each cache key, sets R's generator for the call (cache_fit() runs it under
+# that seed), and is handed to sidClustering() as `seed =`. Both matter:
+# SID_REDUCE = TRUE draws from R's generator as well as from the forest's seed.
 SEED <- 1024
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
@@ -788,9 +870,11 @@ REFIT <- FALSE
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, one_row_per_patient = TRUE)
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
-.provenance_data <- c(.provenance_data, list(job_data$provenance))
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
 .id <- attr(job_data$record, "selection")$id
 if (tolower(.id) %in% tolower(VARS)) {
@@ -801,12 +885,8 @@ if (length(.absent)) {
   stop("VARS names column(s) the data do not have: ", toString(.absent), ".", call. = FALSE)
 }
 VARS <- tolower(VARS)
-# Kept as a row mask over what read_job_data() returned, so sid-clusters can
-# rebuild the same rows from the recorded selection without this job saving
-# any patient identifier.
-sid_kept <- rowSums(!is.na(d[VARS])) > 0
-.empty <- !sid_kept
-d <- d[sid_kept, , drop = FALSE]
+.empty <- rowSums(!is.na(d[VARS])) == 0
+d <- d[!.empty, , drop = FALSE]
 cat("Patients with every clustering variable missing, dropped:", sum(.empty), "\n")
 ```
 
@@ -833,22 +913,37 @@ knitr::kable(data.frame(variable = names(.miss), missing = sprintf("%.1f%%", 100
 
 ## Imputation
 
-One imputation by predictive mean matching. A single imputation treats the
-filled values as known, so the cluster boundaries are conditional on one
-draw. That is acceptable for a distance used to form groups, and it is why
-nothing later describes the clusters with imputed values.
+The forest needs complete data. Each imputation fills the missing values
+once, by predictive mean matching (`"mice"`) or by randomForestSRC's forest
+imputation (`"forest"`). With one imputation the filled values are treated as
+known, so the cluster boundaries are conditional on one draw; with several,
+the forests' distances are averaged below. Either way, nothing later describes
+the clusters with imputed values.
 
 ```{r}
 #| label: impute
+if (!IMPUTE %in% c("mice", "forest")) stop("IMPUTE must be \"mice\" or \"forest\".", call. = FALSE)
+if (!is.numeric(M) || length(M) != 1L || M < 1 || M != trunc(M)) stop("M must be a whole number, 1 or more.", call. = FALSE)
 CACHE_DIR <- dirname(set_path("estimates", "sid.rds"))
 .to_impute <- d[sid_vars]
-imp <- cache_fit(
-  "sid-fit-impute",
-  mice::mice(.to_impute, m = 1, maxit = MICE_MAXIT, method = "pmm", seed = SEED, printFlag = FALSE),
-  seed = SEED, dir = CACHE_DIR, refit = REFIT
-)
-d_complete <- mice::complete(imp, 1)
-cat("Values imputed:", sum(is.na(.to_impute)), "\n")
+.n_missing <- sum(is.na(.to_impute))
+# Imputation m is cached under its own name and seeded SEED + m - 1, so raising
+# M later reuses the imputations already made.
+d_complete <- lapply(seq_len(M), function(m) {
+  if (.n_missing == 0L) return(.to_impute)
+  s <- SEED + m - 1L
+  if (identical(IMPUTE, "mice")) {
+    imp <- cache_fit(paste0("sid-fit-impute-", m),
+                     mice::mice(.to_impute, m = 1, maxit = MICE_MAXIT, method = "pmm", printFlag = FALSE),
+                     seed = s, dir = CACHE_DIR, refit = REFIT)
+    mice::complete(imp, 1)
+  } else {
+    cache_fit(paste0("sid-fit-impute-", m),
+              randomForestSRC::impute(data = .to_impute, ntree = 250, verbose = FALSE),
+              seed = s, dir = CACHE_DIR, refit = REFIT)
+  }
+})
+cat("Values imputed in each of", M, "imputation(s):", .n_missing, "\n")
 ```
 
 ## The SID forest
@@ -858,41 +953,56 @@ cat("Values imputed:", sum(is.na(.to_impute)), "\n")
 #| message: true
 # No na.action: the data are complete by now, and sidClustering() fails with
 # na.action = "na.impute" when a value IS missing, so a gap here is a bug.
-if (anyNA(d_complete)) stop("Missing values reached the SID fit after imputation.", call. = FALSE)
-fit <- cache_fit(
-  "sid-fit",
-  {
-    set.seed(SEED)
-    sidClustering(d_complete, method = "sid", ntree = NTREE, reduce = REDUCE, seed = -abs(SEED))
-  },
-  seed = SEED, dir = CACHE_DIR, refit = REFIT
+# cache_fit(seed = ) runs each fit under withr::with_seed(), which sets R's
+# generator for the holdout-VIMP step; `seed =` is the forest's own.
+sid_fits <- lapply(seq_len(M), function(m) {
+  if (anyNA(d_complete[[m]])) stop("Missing values reached the SID fit after imputation ", m, ".", call. = FALSE)
+  s <- SEED + m - 1L
+  cache_fit(paste0("sid-fit-", m),
+            sidClustering(d_complete[[m]], method = "sid", ntree = NTREE, reduce = SID_REDUCE, seed = -abs(s)),
+            seed = s, dir = CACHE_DIR, refit = REFIT)
+})
+sid_dist <- Reduce(`+`, lapply(sid_fits, `[[`, "dist")) / M
+# How closely each imputation's distances follow the mean. Near 1, the
+# imputations agree; well below, the missing values are shaping the distance.
+.lower <- function(x) x[lower.tri(x)]
+sid_agreement <- data.frame(
+  imputation = seq_len(M),
+  correlation_with_mean = vapply(sid_fits, function(f) stats::cor(.lower(f$dist), .lower(sid_dist)), numeric(1))
 )
 ```
 
 ```{r}
 #| label: tbl-used
-#| tbl-cap: "What the forest was grown on"
+#| tbl-cap: "What the forests were grown on"
 knitr::kable(data.frame(
-  step = c("Clustering variables", "Dropped before the fit", "Kept by the reduce step", "Patients"),
+  step = c("Clustering variables", "Dropped before the fit", "Kept by the reduce step", "Imputation", "Patients"),
   value = c(toString(sid_vars), if (nrow(sid_dropped)) toString(sid_dropped$variable) else "none",
-            toString(fit$outcome.names), nrow(fit$dist))
+            toString(unique(unlist(lapply(sid_fits, `[[`, "outcome.names")))),
+            if (.n_missing == 0L) "none needed" else paste0(IMPUTE, ", ", M, " imputation(s)"),
+            nrow(sid_dist))
 ), col.names = c("", ""))
+if (M > 1L) knitr::kable(sid_agreement, digits = 3, caption = "Agreement of each imputation's distances with their mean")
 ```
 
 ## Save
 
 ```{r}
 #| label: save
-# The product of this job, and what sid-clusters reads. It is separate from the
-# cache on purpose: cache_fit() stores a keyed record, so the cache is this
-# job's internals and this file is its interface. The forest is not saved:
-# nothing downstream reads it, and it is the large part. Nor is any patient
-# identifier or value: sid-clusters rebuilds the rows from the selection.
+# The product of this job, and what sid-clusters and vt-fit read. It is
+# separate from the cache on purpose: cache_fit() stores a keyed record, so the
+# cache is this job's internals and this file is its interface. The forests
+# are not saved: nothing downstream reads them, and they are the large part.
+# Patients are named by a study-keyed digest of their ID, never the ID itself
+# (#203), so the file can be matched on without holding an MRN.
+.key <- hvtiRtemplates:::.study_id_key(.root)
+dimnames(sid_dist) <- rep(list(hvtiRtemplates:::.id_digest(d[[.id]], .key)), 2L)
 .cohort <- list(n = as.integer(nrow(d)))
 sid_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
-  list(dist = fit$dist, kept = sid_kept, vars = sid_vars, dropped = sid_dropped, reduced = fit$outcome.names,
-       settings = list(ntree = NTREE, reduce = REDUCE, seed = SEED, mice_maxit = MICE_MAXIT,
-                       max_missing = MAX_MISSING)),
+  list(dist = sid_dist, id_key = hvtiRtemplates:::.id_key_fingerprint(.key), vars = sid_vars, dropped = sid_dropped,
+       reduced = unique(unlist(lapply(sid_fits, `[[`, "outcome.names"))),
+       settings = list(ntree = NTREE, sid_reduce = SID_REDUCE, seed = SEED, impute = IMPUTE, m = M,
+                       mice_maxit = MICE_MAXIT, max_missing = MAX_MISSING)),
   data = .provenance_data,
   cohort = .cohort,
   selection = attr(job_data$record, "selection")
@@ -934,18 +1044,41 @@ R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
 NOT_CRAN=true R_LIBS="$SID_LIB" Rscript -e 'system.time(devtools::test(filter = "sid-templates"))'
 ```
 
-Expected: PASS, 10 tests. Record the elapsed time in the commit message. If it exceeds 60 seconds, drop the seed test's `NTREE` to 25.
+Expected: PASS, 11 tests. Record the elapsed time in the commit message. If it exceeds 60 seconds, set the seed test's `NTREE` to 200, which still recovered the groups in review.
 
 - [ ] **Step 7: Prove the seed test by mutation**
 
-Delete the line `    set.seed(SEED)` from the `fit` chunk, reinstall, and rerun with `filter = "sid-templates"`.
-Expected: "the seed reproduces a reduce = TRUE fit" FAILS. Restore the line, reinstall, and rerun to confirm it passes. Do not commit the mutation.
+In the `fit` chunk, change `seed = s, dir = CACHE_DIR` to `dir = CACHE_DIR` in the `sidClustering` call's `cache_fit()`, so no seed is set for R's generator. Reinstall, and rerun with `filter = "sid-templates"`.
+Expected: "the seed reproduces a reduce = TRUE fit" FAILS. Restore it, reinstall, and rerun to confirm it passes. Do not commit the mutation.
 
-- [ ] **Step 8: Commit**
+If the test still passes under the mutation, `cache_fit()` without `seed` has fallen back to some fixed seed. Read `hvtiRutilities:::.cache_run` and mutate whatever sets the generator instead. A mutation test that cannot go red proves nothing.
+
+- [ ] **Step 8: The catalog-wide counts, and the ledger row**
+
+`sid-fit` is the first new template here that reads its own data. In `tests/testthat/test-template-data-routes.R`, add `"sid-fit.qmd"` to `patient_level_templates` after `"vp-fit.qmd"`, and add one to the `readers` total that test expects. Run it to read the current number:
 
 ```bash
-git add inst/templates/30_analyses/sid-fit.qmd tests/testthat/helper-sid.R tests/testthat/test-sid-templates.R .lintr
-git commit -m "feat(sid-fit): imputation, seeded SID forest and the sid.rds handoff"
+R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
+R_LIBS="$SID_LIB" Rscript -e 'devtools::test(filter = "template-data-routes|template-provenance")'
+```
+
+In `tests/testthat/test-template-provenance.R`, add `"sid-fit"` after `"vp-fit"` in the list of templates that read data (line 249 at `88cd7cd`), and raise `expect_equal(nrow(templates), …)` (line 172) by one more; Task 2 already raised it once, for `sid-clusters`. Rerun the command above; expect PASS.
+
+`check-roadmap-counts.py` fails a commit that adds a template no ledger row claims, and a `queued` row does not claim one. Set the `(sid, fit)` row in `inst/extdata/templates.json` to `"status": "in-flight"`. Start its `note` with "Released for review in a real study. Becomes shipped once a study renders sid-fit and sid-clusters end to end." and keep the existing note after it. Then:
+
+```bash
+python3 dev/specs/artifacts/roadmap_render.py && python3 dev/specs/artifacts/check-roadmap-counts.py
+```
+
+Expected: no error.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add inst/templates/30_analyses/sid-fit.qmd tests/testthat/helper-sid.R tests/testthat/test-sid-templates.R .lintr \
+  tests/testthat/test-template-data-routes.R tests/testthat/test-template-provenance.R inst/extdata/templates.json \
+  dev/specs/2026-08-29-template-conversion-roadmap.md
+git commit -m "feat(sid-fit): mice or forest imputation over M, seeded SID forests pooled, digest-keyed sid.rds"
 ```
 
 ---
@@ -961,8 +1094,13 @@ git commit -m "feat(sid-fit): imputation, seeded SID forest and the sid.rds hand
 - Produces:
   - `datasets/<subject>-<type>-clusters.csv` with columns `<id>`, `C<k>` for each k in `K_RANGE`, and `G<K>` when `COLLAPSE` is set;
   - the registered dataset `clusters_<subject>_<type>`, `kind = "ancillary"`, `key = <id>`: registered on the first render, a new dated version via `update_manifest()` on each later one;
-  - `estimates/<subject>-<type>/sid-clusters.rds`, `list(pam, metrics, letters, k, overrides, collapse)` with lineage, where `pam` is the list of `pam` fits by k, `metrics` a data frame (`k`, `objective`, `silhouette`), and `letters` a list by `pm<k>` of id → letter maps.
-  - Chunk objects used by tests: `sid_letters` (the data frame written to the CSV), `sid_metrics`.
+  - `estimates/<subject>-<type>/sid-clusters.rds`, `list(clusters, id_key, pam, metrics, letters, k, overrides, collapse)` with lineage. Its parts:
+    - `clusters` is `data.frame(id = <ID digest, character>, cluster = <letter at K, character>)`, plus `group` when `COLLAPSE` is set, or `NULL` while `K` is `NULL`. **This is the element `vt-explain` reads** (agreed with the vt design session, 2026-10-22);
+    - `id_key` is the key fingerprint copied from `sid.rds`;
+    - `pam` is the list of `pam` fits by k;
+    - `metrics` is a data frame (`k`, `objective`, `silhouette`);
+    - `letters` is a list by `pm<k>` of PAM number → letter maps.
+  - Chunk objects used by tests: `sid_letters` (the data frame written to the CSV), `sid_metrics`, `sid_mds`.
 
 - [ ] **Step 1: Test helpers**
 
@@ -1031,18 +1169,36 @@ test_that("sid-clusters writes and registers the cluster letters, and nothing el
   expect_false(identical(again$c2[again$ccfid == out$ccfid[1]], out$C2[1]))
 })
 
-test_that("K = NULL renders the metrics and skips what needs K; a K outside K_RANGE stops", {
+test_that("K = NULL renders the metrics and skips what needs K; a final render or a K outside K_RANGE stops", {
   skip_on_cran()
   rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
   env <- sid_fit_first()
-  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(K = NULL)))
+  # modifyList() would drop an element set to NULL, so K = NULL is rebuilt with c().
+  no_k <- c(sid_clusters_choices[setdiff(names(sid_clusters_choices), "K")], list(K = NULL))
+  sid_clusters_after(env, no_k)
   expect_false(is.null(env$sid_metrics))
   expect_null(env$sid_mds)
+  expect_null(readRDS(env$set_path("estimates", "sid-clusters.rds"))$clusters)
+  withr::with_envvar(c(HVTI_TEMPLATE_STRICT = "true"),
+                     expect_error(rf_run("sid", "clusters", sid_clusters_labels[c(2:4)], env, no_k), "set K"))
   expect_error(sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(K = 9L))), "K_RANGE")
+})
+
+test_that("the clusters element vt reads holds one digest-keyed letter per patient, and no raw ID", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  sid_clusters_after(env)
+  h <- readRDS(env$set_path("estimates", "sid-clusters.rds"))
+  key <- hvtiRtemplates:::.study_id_key(env$.root)
+  expect_identical(names(h$clusters), c("id", "cluster"))
+  expect_setequal(h$clusters$id, hvtiRtemplates:::.id_digest(seq_len(150L), key))
+  expect_identical(h$clusters$cluster, as.character(env$sid_letters$C3[match(h$clusters$id, rownames(env$sid$dist))]))
+  expect_identical(h$id_key, hvtiRtemplates:::.id_key_fingerprint(key))
 })
 ```
 
-`modifyList()` drops an element set to `NULL`. So for `K = NULL`, build the list with `c(sid_clusters_choices[setdiff(names(sid_clusters_choices), "K")], list(K = NULL))` instead, as `vp_outcome()` does in `helper-vp.R`. Write the test that way.
+The strict check runs `edit-study-choices`, `sid-helpers` and `handoff` only, after a full run has already set up `env`. If `.strict_render()` reads a different variable than `HVTI_TEMPLATE_STRICT`, read `R/job-setup.R:90-118` and use that one.
 
 - [ ] **Step 3: Run them to see them fail**
 
@@ -1053,9 +1209,9 @@ NOT_CRAN=true R_LIBS="$SID_LIB" Rscript -e 'devtools::test(filter = "sid-templat
 
 Expected: the four new tests FAIL with "chunk not found: handoff" (or `rf_chunk`'s equivalent message).
 
-- [ ] **Step 4: Append the chunks**
+- [ ] **Step 4: Add the chunks**
 
-Append to `inst/templates/30_analyses/sid-clusters.qmd`:
+In `inst/templates/30_analyses/sid-clusters.qmd`, replace the stub `provenance` chunk from Task 2 with the following. It ends with the full `provenance` chunk.
 
 ````markdown
 ## The dissimilarity
@@ -1073,17 +1229,29 @@ sid <- .sid_read$value
 .provenance_data <- .sid_read$lineage$data
 .provenance_artifacts <- c(.sid_read$lineage$artifacts, list(.sid_read$record))
 D <- stats::as.dist(sid$dist)
-# The IDs are not in sid.rds. The fit's rows are rebuilt from its recorded
-# selection, which checks the rows and their key hash, and the kept mask
-# picks the patients the forest clustered, in the forest's row order.
+# sid.rds names patients by a study-keyed digest of their ID, never the ID. The
+# fit's rows are rebuilt from its recorded selection, which checks the rows and
+# their key hash, and each rebuilt ID is digested and matched to the distance.
+.key <- hvtiRtemplates:::.study_id_key(.root)
+if (!identical(hvtiRtemplates:::.id_key_fingerprint(.key), sid$id_key)) {
+  stop("This study's ID key has changed since sid-fit ran, so its patients cannot be matched. Rerun sid-fit.",
+       call. = FALSE)
+}
 .up <- hvtiRtemplates:::.read_upstream_job_data(.cfg, .sid_read$lineage, list(), source = "sid.rds")
 .id <- .up$selection$id
-sid_ids <- .up$job_data$data[[.id]][sid$kept]
-if (length(sid_ids) != attr(D, "Size")) stop("The rebuilt cohort does not match the SID fit; rerun sid-fit.", call. = FALSE)
-if (!identical(K_RANGE, seq(min(K_RANGE), max(K_RANGE))) || min(K_RANGE) < 2L) {
+.rebuilt <- .up$job_data$data[[.id]]
+.at_fit <- match(rownames(sid$dist), hvtiRtemplates:::.id_digest(.rebuilt, .key))
+if (anyNA(.at_fit)) stop("The rebuilt cohort lacks patients the SID fit clustered; rerun sid-fit.", call. = FALSE)
+sid_ids <- .rebuilt[.at_fit]
+if (any(diff(K_RANGE) != 1) || min(K_RANGE) < 2L) {
   stop("K_RANGE must be consecutive and start at 2 or more, such as 2:9.", call. = FALSE)
 }
 if (!is.null(K) && !K %in% K_RANGE) stop("K = ", K, " is not in K_RANGE (", toString(K_RANGE), ").", call. = FALSE)
+# A draft may leave K unset to choose it from the metrics below; a final report
+# must name the solution it reports.
+if (is.null(K) && hvtiRtemplates:::.strict_render()) {
+  stop("K is NULL. Choose it from the metrics in a draft render, then set K in the study choices.", call. = FALSE)
+}
 cat("Patients:", attr(D, "Size"), " Clustering variables:", toString(sid$vars), "\n")
 ```
 
@@ -1126,7 +1294,8 @@ the clusters mean anything clinically.
   ggplot2::geom_line() + ggplot2::geom_point() +
   ggplot2::facet_wrap(~metric, ncol = 1, scales = "free_y") +
   ggplot2::scale_x_continuous("Clusters (K)", breaks = sid_metrics$k) +
-  ggplot2::labs(y = NULL)
+  ggplot2::labs(y = NULL) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.plt_metrics, "sid-clusters-metrics", height = 5)
 .plt_metrics
 ```
@@ -1167,8 +1336,9 @@ if (nrow(.small)) {
 #| label: fig-sankey
 #| fig-cap: "How patients move between clusters as K grows"
 .sk <- hvtiPlotR::hv_sankey(sid_letters, cluster_cols = paste0("C", K_RANGE))
-.plt_sankey <- plot(.sk)
-save_figure(.plt_sankey, "sid-clusters-sankey", width = 7, height = 6)
+.plt_sankey <- plot(.sk) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+# The page is 6.5 in wide; the Sankey's columns need its full width.
+save_figure(.plt_sankey, "sid-clusters-sankey", width = 6.5, height = 6)
 .plt_sankey
 ```
 
@@ -1192,6 +1362,7 @@ if (is.null(K)) {
   .plt_sil <- ggplot2::ggplot(.sil_d, ggplot2::aes(rank, width, fill = letter)) +
     ggplot2::geom_col(width = 1) + ggplot2::coord_flip() +
     ggplot2::labs(x = NULL, y = "Silhouette width", fill = "Cluster") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12) +
     ggplot2::theme(axis.text.y = ggplot2::element_blank(), axis.ticks.y = ggplot2::element_blank())
   save_figure(.plt_sil, "sid-clusters-silhouette")
   print(.plt_sil)
@@ -1220,7 +1391,8 @@ if (!is.null(K)) {
   .plt_mds <- ggplot2::ggplot(data.frame(x = sid_mds[, 1], y = sid_mds[, 2], letter = .at),
                               ggplot2::aes(x, y, colour = letter)) +
     ggplot2::geom_point(alpha = 0.7) +
-    ggplot2::labs(x = "Dimension 1", y = "Dimension 2", colour = "Cluster")
+    ggplot2::labs(x = "Dimension 1", y = "Dimension 2", colour = "Cluster") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12)
   save_figure(.plt_mds, "sid-clusters-mds")
   print(.plt_mds)
 }
@@ -1270,10 +1442,19 @@ if (.dataset %in% names(.cfg$additional_datasets)) {
                                   population = "SID cluster assignments", kind = "ancillary", key = .id)
   ))
 }
-cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job to use these clusters.\n", sep = "")
+cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job to use these clusters.\n",
+    "A job that models one row per patient also sets REDUCE <- list(rule = \"first\", by = \"", .id, "\").\n",
+    sep = "")
+# The solution at K for jobs that read this file rather than the dataset, such
+# as vt-explain's stratifier: patients by ID digest, as in sid.rds, never by ID.
+sid_clusters <- if (!is.null(K)) {
+  out <- data.frame(id = rownames(sid$dist), cluster = as.character(sid_letters[[paste0("C", K)]]))
+  if (!is.null(COLLAPSE)) out$group <- as.character(sid_letters[[paste0("G", K)]])
+  out
+}
 .cohort <- list(n = as.integer(attr(D, "Size")))
 sid_clusters_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
-  list(pam = sid_pam, metrics = sid_metrics,
+  list(clusters = sid_clusters, id_key = sid$id_key, pam = sid_pam, metrics = sid_metrics,
        letters = lapply(stats::setNames(paste0("pm", K_RANGE), paste0("pm", K_RANGE)), function(col) {
          tab <- table(.pm[[col]], .letters[, col])
          stats::setNames(colnames(tab)[apply(tab, 1, which.max)], rownames(tab))
@@ -1293,11 +1474,14 @@ saveRDS(sid_clusters_handoff, set_path("estimates", "sid-clusters.rds"))
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
+  artifacts = .provenance_artifacts,
   run = .job$run,
   extra = list(subject = SUBJECT, type = TYPE, cohort = .cohort)
 ))
 ```
 ````
+
+`artifacts =` is how `vp-explain`'s provenance chunk records the handoff it read; check its exact form there and match it.
 
 Checked against the code while writing this plan:
 
@@ -1313,24 +1497,32 @@ R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
 NOT_CRAN=true R_LIBS="$SID_LIB" Rscript -e 'devtools::test(filter = "sid-templates")'
 ```
 
-Expected: PASS, 14 tests. If the recovery test's score is above 0.2, print `table(truth, env$sid_letters$C3)` before changing anything. The planted groups are 6 standard deviations apart on `a` and `b`, so a high score points to a bug, most likely rows misaligned between `sid$id` and the PAM order.
+Expected: PASS, 16 tests. If the recovery test's score is above 0.2, print `table(truth, env$sid_letters$C3)` before changing anything. The review measured 0.12 at `NTREE = 200` on this cohort, so a high score at 500 points to a bug, most likely `sid_ids` misordered against `rownames(sid$dist)`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: The catalog-wide gates**
+
+```bash
+R_LIBS="$SID_LIB" Rscript -e 'devtools::test(filter = "template-|figure-standard")'
+```
+
+Expected: PASS. The figure standard reads every `save_figure()` width and every theme call in the file.
+
+- [ ] **Step 7: Commit**
 
 ```bash
 git add inst/templates/30_analyses/sid-clusters.qmd tests/testthat/helper-sid.R tests/testthat/test-sid-templates.R
-git commit -m "feat(sid-clusters): PAM over K, K metrics, stable letters, Sankey, and the registered clusters dataset"
+git commit -m "feat(sid-clusters): PAM over K, K metrics, stable letters, Sankey, clusters for vt, the registered dataset"
 ```
 
 ---
 
 ### Task 5: Later jobs consume the clusters
 
-Spec §5's open check: can a long read and a one-row-per-patient read both JOIN the registered dataset, and what `REDUCE` does the second need?
+Spec §5: a long read and a one-row-per-patient read both JOIN the registered dataset. The second needs `REDUCE <- list(rule = "first", by = <ID>)`, which the plan's review confirmed works (a non-ID, non-date `by` such as `"c2"` errors). Task 4's `save` chunk already prints that line.
 
 **Files:**
 - Modify: `tests/testthat/test-sid-templates.R`
-- Modify: `inst/templates/30_analyses/sid-clusters.qmd` (the "Reading the result" paragraph and the `save` chunk's `cat()`, with the exact `REDUCE` line)
+- Modify: `inst/templates/30_analyses/sid-clusters.qmd` (one sentence at the end of "Reading the result")
 
 **Interfaces:**
 - Consumes: the registered dataset `clusters_<subject>_<type>` (Task 4).
@@ -1349,6 +1541,7 @@ test_that("a later job joins the registered clusters, one per patient", {
   long <- read_job_data(cfg, join = "clusters_morphology_sid")
   expect_identical(nrow(long$data), 150L)
   expect_true(all(c("c2", "c3") %in% tolower(names(long$data))))
+  expect_error(read_job_data(cfg, join = "clusters_morphology_sid", one_row_per_patient = TRUE), "REDUCE")
   one <- read_job_data(cfg, join = "clusters_morphology_sid", reduce = list(rule = "first", by = "ccfid"),
                        one_row_per_patient = TRUE)
   expect_identical(nrow(one$data), 150L)
@@ -1363,19 +1556,11 @@ R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
 NOT_CRAN=true R_LIBS="$SID_LIB" Rscript -e 'devtools::test(filter = "sid-templates")'
 ```
 
-Expected: PASS. If the `reduce` read fails because `by` may not be the ID, try `REDUCE <- list(rule = "first", by = "c2")` (any column of the joined file, since each patient has one row). Keep whichever passes, and note in the PR body that a one-row join keyed on the ID still needs a `REDUCE`. That makes the follow-up in spec §8 real.
+Expected: PASS, 17 tests.
 
-- [ ] **Step 3: Write the working setting into the template**
+- [ ] **Step 3: Say it in the report**
 
-In `sid-clusters.qmd`, change the `cat()` in the `save` chunk to:
-
-```r
-cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job to use these clusters.\n",
-    "A job that models one row per patient also sets REDUCE <- list(rule = \"first\", by = \"", .id, "\").\n",
-    sep = "")
-```
-
-Use the `by` value that passed in Step 2. Add the same sentence to the end of "Reading the result".
+At the end of "Reading the result" in `sid-clusters.qmd`, add: "A job that models one row per patient, such as `vp-fit`, also sets `REDUCE` to keep the first record by the patient ID; the line to use is printed in the save section below."
 
 - [ ] **Step 4: Run and commit**
 
@@ -1383,16 +1568,14 @@ Rerun Step 2's command; expect PASS.
 
 ```bash
 git add inst/templates/30_analyses/sid-clusters.qmd tests/testthat/test-sid-templates.R
-git commit -m "test(sid): later jobs join the registered clusters; document the REDUCE a one-row job needs"
+git commit -m "test(sid): later jobs join the registered clusters, with the REDUCE a one-row job needs"
 ```
 
 ---
 
-### Task 6: Status, documentation, MRN scan and the full gate
+### Task 6: Documentation, MRN scan and the full gate
 
 **Files:**
-- Modify: `inst/extdata/templates.json` (both `sid` rows: `"status": "in-flight"`)
-- Modify: `dev/specs/2026-08-29-template-conversion-roadmap.md` (by script)
 - Modify: `inst/templates/README.md` (template table, figure-name table)
 - Modify: `tests/testthat/test-template-figures.R` (the `expected` list)
 - Modify: `tests/testthat/test-sid-templates.R` (MRN test)
@@ -1418,8 +1601,13 @@ test_that("no file under estimates/ carries an MRN, though the job's ID is the M
   rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
   d <- rf_mrn_data()  # keyed on a ten-digit MRN, no ccfid
   env <- rf_env(d)
-  rf_run("sid", "fit", sid_fit_labels, env, utils::modifyList(sid_fit_choices, list(ID = "MRN", VARS = c("age", "x1", "los"))))
-  sid_clusters_after(env)
+  # ID stays "ccfid", which falls back to MRN here, as in the rf MRN tests:
+  # KEY <- ID is evaluated before the choices apply, so overriding ID alone
+  # would leave KEY on a column this cohort lacks.
+  rf_run("sid", "fit", sid_fit_labels, env, utils::modifyList(sid_fit_choices, list(VARS = c("age", "x1", "los"))))
+  # This cohort has no cluster structure, so a small cluster is likely; MIN_SIZE = 1
+  # keeps its warning out of the suite's WARN 0.
+  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(MIN_SIZE = 1)))
   dir <- dirname(env$set_path("estimates", "sid.rds"))
   expect_true(all(c("sid.rds", "sid-clusters.rds") %in% list.files(dir)))
   # rf_files_holding() (helper-rf.R) searches every file in `dir`, caches and
@@ -1434,23 +1622,12 @@ test_that("no file under estimates/ carries an MRN, though the job's ID is the M
 
 If the mice or SID cache file holds an MRN (`rf_files_holding()` names it), the data passed to `mice()` or `sidClustering()` carried the ID column. `.to_impute <- d[sid_vars]` must exclude it; fix the code, not the test.
 
-- [ ] **Step 3: Flip the status**
-
-In `inst/extdata/templates.json`, set `"status": "in-flight"` on both `sid` rows, and set each `note` to start with "Released for review in a real study. Becomes shipped once a study renders sid-fit and sid-clusters end to end." followed by the existing note. Then:
-
-```bash
-python3 dev/specs/artifacts/roadmap_render.py
-python3 .github/scripts/check-roadmap-counts.py
-```
-
-Expected: no error. `in-flight` rows must have their file on disk, which they now do.
-
-- [ ] **Step 4: README rows**
+- [ ] **Step 3: README rows**
 
 In `inst/templates/README.md`, after the `vp-explain.qmd` row of the template table, add:
 
 ```markdown
-| `30_analyses/sid-fit.qmd` | SID clustering forest on the clustering variables, after one seeded imputation (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/sid-fit.qmd` | SID clustering forest on the clustering variables, after mice or forest imputation pooled over M (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/sid-clusters.qmd` | PAM over K on a `sid-fit` distance: K metrics, letters stable across K, Sankey, registered assignments (in flight) | `30_analyses/` or `analyses/` |
 ```
 
@@ -1462,22 +1639,24 @@ In the figure-name table, after the `vp-explain` row, add:
 
 If the paragraph at line 87 ("qualified templates are …") lists every qualified template, add `sid-fit` and `sid-clusters` to it in the same style.
 
-- [ ] **Step 5: NEWS fragment**
+- [ ] **Step 4: NEWS fragment**
 
 Create `news/feat-sid-templates.md`:
 
 ```markdown
-* New templates `sid-fit` and `sid-clusters` (in flight). `sid-fit` grows an
-  unsupervised SID clustering forest after one seeded imputation, seeding R's
-  generator as well as the forest so the holdout-VIMP step reproduces.
-  `sid-clusters` runs PAM on the SID distance over a range of K, reports the
-  elbow and silhouette, gives letters that keep their identity across K, and
-  registers the assignments so a later job can `JOIN` them. The `sid` prefix
+* New templates `sid-fit` and `sid-clusters` (in flight). `sid-fit` fills
+  missing values by mice or forest imputation, `M` times, grows one seeded
+  SID clustering forest on each and averages their distances. It saves them
+  keyed by a study-keyed digest of the patient ID, never the ID.
+  `sid-clusters` runs PAM on that distance over a range of K, reports the
+  elbow and silhouette, gives letters that keep their identity across K,
+  saves the chosen solution for `vt`, and registers the assignments so a
+  later job can `JOIN` them. The `sid` prefix
   is now qualified, so `add_job("sid", ...)` needs `qualifier = "fit"` or
   `"clusters"`.
 ```
 
-- [ ] **Step 6: The full gate**
+- [ ] **Step 5: The full gate**
 
 ```bash
 R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
@@ -1485,28 +1664,28 @@ Rscript -e 'devtools::document()'
 git status --short man NAMESPACE   # expect nothing: no roxygen changed
 NOT_CRAN=true R_LIBS="$SID_LIB" Rscript -e 'devtools::test()' 2>&1 | tail -5
 Rscript -e 'lintr::lint_package()'
-python3 .github/scripts/check-spec-counts.py && python3 .github/scripts/check-flow-counts.py \
-  && python3 .github/scripts/check-roadmap-counts.py
+python3 dev/specs/artifacts/check-spec-counts.py && python3 dev/specs/artifacts/check-flow-counts.py \
+  && python3 dev/specs/artifacts/check-roadmap-counts.py
 R_LIBS="$SID_LIB" Rscript -e 'devtools::check(error_on = "note")' 2>&1 | tail -15
 ```
 
 Expected:
-- the test summary reads `FAIL 0`, `SKIP 0` and `WARN 0`, apart from the known local warnings in `test-rf-templates.R` (see memory: local WARN masks new warnings). Compare against an `origin/main` run if unsure;
+- the test summary reads `FAIL 0`, `SKIP 0` and `WARN 0`, apart from warnings an `origin/main` run of the same command also shows (a local run reports `test-rf-templates.R` warnings that CI muffles). Compare the two;
 - `lint_package()` prints nothing;
 - the three scripts exit 0;
 - `check()` is 0 errors, 0 warnings, 0 notes.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add inst/extdata/templates.json dev/specs/2026-08-29-template-conversion-roadmap.md inst/templates/README.md \
-  tests/testthat/test-template-figures.R tests/testthat/test-sid-templates.R news/feat-sid-templates.md
-git commit -m "feat(sid): in-flight status, README, figure names, MRN scan and NEWS"
+git add inst/templates/README.md tests/testthat/test-template-figures.R tests/testthat/test-sid-templates.R \
+  news/feat-sid-templates.md
+git commit -m "docs(sid): README, figure names, MRN scan and NEWS"
 ```
 
 Add the MRN-fix files from Step 2 by name if that step changed a template.
 
-- [ ] **Step 8: Review and PR**
+- [ ] **Step 7: Review and PR**
 
 1. Run `/code-review` on the branch.
 2. Check the Copilot quota with the reviews command in `AGENTS.md`.
