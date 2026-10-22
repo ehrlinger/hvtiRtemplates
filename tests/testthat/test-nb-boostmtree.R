@@ -519,3 +519,13 @@ test_that("the fit chunk runs interactively once the fit is cached, and refuses 
   expect_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env2, nb_choices(REFIT = TRUE))),
                "REFIT", fixed = TRUE)
 })
+
+test_that("the nb-boostmtree fit chunk guards memory before cache_fit()", {
+  tpl <- readLines(nb_template(), warn = FALSE)
+  fit <- grep("guard_memory(", tpl, fixed = TRUE)
+  cache <- grep("cache_fit(", tpl, fixed = TRUE)
+  expect_length(fit, 1L)
+  expect_lt(fit, min(cache[cache > fit]))
+  # Not inside an if (): a cached rerender must still record the check run_job() waits for.
+  expect_match(tpl[fit], "^hvtiRtemplates::guard_memory\\(")
+})
