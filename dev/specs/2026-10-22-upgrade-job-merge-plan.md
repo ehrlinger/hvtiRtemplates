@@ -1,0 +1,91 @@
+# upgrade_job() three-way merge: implementation plan
+
+Design: [`2026-10-22-upgrade-job-merge-design.md`](2026-10-22-upgrade-job-merge-design.md). **Do not
+start until John has approved the design and answered its four questions.** Branch from `origin/main`
+after #383 has merged, in a worktree of its own. Every task is test-first: write the test, watch it
+fail for the right reason, then write the code.
+
+## Task 0: confirm the ground
+
+- On lri, John runs `git --version` (design decision 6). If git is missing there, stop and go back
+  to question 2.
+- Confirm #383 is on `main` and read its final `.upgrade_report()`, because tasks 6 and 7 build on it.
+
+## Task 1: shared scaffolding steps (decision 4)
+
+- Pull the `SUBJECT`/`TYPE` substitution and the stamp insertion out of `add_job()` into
+  `.scaffold_lines(lines, subject, type, stamp)` in `R/add-job.R`. `add_job()` calls it, and its
+  behaviour does not change.
+- Test: `add_job()` output is byte-identical before and after (snapshot one template's output first).
+
+## Task 2: the hash in the stamp (decision 1)
+
+- `.stamp_job()` writes `sha256:<hex>` of the template file as shipped. Widen the stamp regex in
+  `.upgrade_report()` to read both forms.
+- Tests: a new job's stamp hash equals `digest::digest(file = template, algo = "sha256")`, and an old
+  stamp without a hash still parses.
+
+## Task 3: the template archive (decision 2)
+
+- `dev/template-history/build.R`: walk `git rev-list --first-parent d3b741e~1..HEAD -- inst/templates`,
+  collect each distinct `.qmd` text with its template name, the `Version:` at that commit and the
+  first and last commit dates, and write `inst/extdata/template-history.rds` (`compress = "xz"`).
+- `.template_history()` reads it once per session. `.base_candidates(template, version, hash)`
+  returns the exact text, or the candidates for a version, or none; it reads `inst/templates/` as well.
+- Add the `build.R` run to the bump procedure beside `news.py collect` (`.claude/house-style.md`'s
+  source in the vault, then recompose; `AGENTS.md`'s "Bump when you name a version").
+- Tests: every entry hashes to its key; a hash that is present returns one text; a version returns
+  its candidates oldest first. Measure the tarball before and after: expect about +135 KB.
+
+## Task 4: the merge seam (decisions 5, 6)
+
+- `.upgrade_merge(job, base, template, labels)` in `R/upgrade-job.R` returns the merged lines, the
+  conflict ranges, the carried hunks and the resolved-marker list. Steps: mask choices in all three
+  (stop on a two-statement line), write three temp files, run `git merge-file -p --diff3 -L ...`,
+  read the conflict count from the exit status (negative is an error), unmask with the job's text,
+  then auto-resolve conflicts that are only the deletion of `EDIT:` lines.
+- Tests: the design's table rows for cases 1 and 2, masking, defaults, and marker resolution, each
+  driven from small texts written in the test.
+
+## Task 5: base resolution (decision 3)
+
+- Exact, then inferred (the smallest line diff, computed by `git diff --no-index --numstat` or by a
+  count of `merge-file`'s non-matching lines; a tie goes to the older), then none. `upgrade_job()` gains
+  `base = NULL`, a path to a template file to use as the base.
+- Tests: the inference rows and the newer-base hazard row, from a temporary archive.
+
+## Task 6: conflicts stop the upgrade (decision 6)
+
+- Write the job, the backup and the report, then signal `hvtiRtemplates_upgrade_conflict`. Refuse to
+  upgrade a job that still holds conflict markers.
+- Add the conflict guard to `.job_setup()` in `R/job-setup.R`, for draft and final renders alike.
+- Tests: the conflict row and the guard row.
+
+## Task 7: names and report (decisions 7, 8)
+
+- `.free_name(stem, suffix, date)` returns the first free `...-YYYY-MM-DD[-N]`, treating a dangling
+  symlink as taken (keep today's `taken()`). It is used for the backup and the report, and for
+  `migrate_job()` if question 3 is a yes.
+- Report sections: Base, Carried from the job, Conflicts, Will refit, Markers resolved in the old job.
+  Each names labels and lines, never values, and an empty section reads "None." (from #383).
+- Update the roxygen in Rd markup: the `@description` paragraph on backups, `@details` on what is
+  carried, and a `@section` on conflicts. Then run `devtools::document()`.
+- Tests: the naming row and the refit row.
+
+## Task 8: end-to-end and mutation
+
+- One `upgrade_job()` test from a job scaffolded out of an archived `nb.boostmtree` 1.4.1 text, with
+  the case 1 and case 2 edits applied, asserting each edit is either in the job or on the job side of
+  a conflict.
+- Run every mutation in the design's "goes red when" column in a scratch commit; record the result
+  in the PR body.
+
+## Task 9: gates
+
+- `news/<branch>.md` fragment; no `Version:` edit.
+- `devtools::document()`, `devtools::test()` in a private library with `NOT_CRAN=true` and
+  `_R_CHECK_LIMIT_CORES_=TRUE`; `devtools::check()` 0/0/0; `lintr::lint_package()` clean at 135
+  columns.
+- Local `/code-review` (Copilot's quota is exhausted), and say so in the PR body.
+- Hand John the lri check from the design's Tests section: copies in `/studies/general/_development`,
+  never the study folders.
