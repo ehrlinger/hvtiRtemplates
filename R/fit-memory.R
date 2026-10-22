@@ -59,8 +59,9 @@
 #  - a[ordinal] = 0.5: 2.0.8 workers use about a third of 2.0.4's (1.25 / 3 ~ 0.42), raised to 0.5 so Penny's
 #    fit (2026-10-22, 2.0.8, 5,500 patients / 13,900 visits / ordinal / 8 cores, killed at iteration 2 in a
 #    Medium session, 76.8 GiB cap) estimates above 0.9 x 76.8.
-#  - a[continuous] = 1.5: COMMENCE (2026-10-22, 2.0.8, 1,391 / 4,771 / continuous / 8 cores) was killed at
-#    the first CV step in a Default session (19.2 GiB) and ran in Medium.
+#  - a[continuous] = 2.6: COMMENCE (2026-10-22, 2.0.8, 1,391 / 4,771 / continuous / 8 cores) was killed at
+#    the first CV step in a Default session (19.2 GiB) and ran in Medium. It is set so the COMMENCE fixture
+#    names Medium, the profile it ran in (spec section 8), and is a lower bound: nothing shows Small holds it.
 #  - Any other family takes the largest a, conservatively; that is unmeasured.
 #  - growth: 0.35e-3 GiB per boosting step per 1,000 visits, ordinal only (the CORES comment's term).
 # The upper bound is unknown: Penny's Large run (started 2026-10-22 13:26 on lri-r03) has not recorded a
@@ -71,7 +72,7 @@
       stop("patients, visits, cores and m must be non-negative numbers.", call. = FALSE)
     }
   }
-  a <- c(ordinal = 0.5, continuous = 1.5)
+  a <- c(ordinal = 0.5, continuous = 2.6)
   a <- if (family %in% names(a)) a[[family]] else max(a)
   growth <- if (identical(family, "ordinal")) 0.35e-3 * m * visits / 1000 else 0
   1 + cores * a * (patients / 1000)^1.7 + growth

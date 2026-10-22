@@ -35,7 +35,7 @@ test_that("COMMENCE at 8 cores is refused in a Default session and passes in Med
   need <- .boostmtree_need_gib(patients = 1391, visits = 4771, family = "continuous", cores = 8, m = 1000)
   cg <- fake_cgroup_v1(19.2)
   expect_error(guard_memory(need, "a boostmtree fit", cores = 8, proc = cg$proc, sys = cg$sys),
-               "^memory: .*19.2 GiB.*Default.*Small")
+               "^memory: .*19.2 GiB.*Default.*Medium")
   cg <- fake_cgroup_v1(76.8)
   expect_silent(guard_memory(need, "a boostmtree fit", cores = 8, proc = cg$proc, sys = cg$sys))
 })
@@ -71,8 +71,8 @@ test_that("an NA need cannot be estimated and passes", {
 })
 
 test_that("the estimates sit where the calibration says", {
-  expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 8, 1000), 22.0, tolerance = 0.01)
-  expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 6, 1000), 16.8, tolerance = 0.01)
+  expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 8, 1000), 37.5, tolerance = 0.01)
+  expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 3, 1000), 14.7, tolerance = 0.01)
   expect_equal(.boostmtree_need_gib(5500, 13900, "ordinal", 8, 1000), 78.4, tolerance = 0.01)
   expect_true(is.na(.boostmtree_need_gib(NA_real_, 1, "ordinal", 8, 1000)))
   expect_error(.boostmtree_need_gib(-1, 1, "ordinal", 8, 1000), "non-negative")
