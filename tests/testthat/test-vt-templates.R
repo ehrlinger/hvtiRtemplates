@@ -150,3 +150,57 @@ test_that("vt-fit flags the planted outliers against arm B", {
   flagged <- env$.elig$ID[!env$.elig$elig_gower]
   expect_true(all(vt_digest(env, which(vt_data()$arm == "A")[1:5]) %in% flagged))
 })
+
+test_that("vt_rmst integrates a step curve to the horizon and takes the difference in ARMS order", {
+  h <- vt_helpers()
+  curves <- data.frame(ID = "p", arm_of_curve = rep(c("A", "B"), each = 3),
+                       time = rep(c(1, 2, 3), 2), surv = c(0.9, 0.8, 0.7, 0.5, 0.5, 0.5))
+  r <- h$vt_rmst(curves, horizon = 2, arms = c("A", "B"), followup = c(A = 5, B = 5))
+  expect_equal(r$rmst_A, 1 * 1 + 1 * 0.9)
+  expect_equal(r$rmst_B, 1 * 1 + 1 * 0.5)
+  expect_equal(r$diff, r$rmst_A - r$rmst_B)
+  expect_equal(r$risk_A, 1 - 0.8)
+})
+
+test_that("a horizon beyond either arm's follow-up stops", {
+  h <- vt_helpers()
+  curves <- data.frame(ID = "p", arm_of_curve = c("A", "B"), time = 1, surv = 0.9)
+  expect_error(h$vt_rmst(curves, horizon = 6, arms = c("A", "B"), followup = c(A = 8, B = 5)),
+               "HORIZON.*B")
+})
+
+test_that("vt_curves keys by ID, whatever the row order", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = c(vt_fit_labels, "fit", "curves-helper", "curves"))
+  shuffled <- env$d[rev(seq_len(nrow(env$d))), ]
+  again <- env$vt_curves(env$.forests, env$.train_ids, shuffled, env$ID, env$ARM, env$ARMS, no_arm = rev(env$.no_arm))
+  key <- function(x) x[order(x$ID, x$arm_of_curve, x$time), ]
+  expect_equal(key(again)$surv, key(env$.curves)$surv)
+})
+
+test_that("a patient's own-arm curve is out of bag", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = c(vt_fit_labels, "fit", "curves-helper", "curves"))
+  fA <- env$.forests[["A"]]
+  first <- env$d[[env$ID]][env$d[[env$ARM]] %in% "A"][1]
+  own <- env$.curves[env$.curves$ID == first & env$.curves$arm_of_curve == "A", "surv"]
+  expect_equal(own, unname(fA$survival.oob[1, ]))
+})
+
+test_that("the twin difference recovers the planted effect", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  r <- merge(env$.rmst, data.frame(ID = vt_digest(env, vt_data()$ccfid), xs = vt_data()$xs))
+  r <- r[r$elig, ]
+  expect_gt(stats::median(r$diff[r$xs > 1]), 0)
+  expect_lt(stats::median(r$diff[r$xs < -1]), 0)
+})
+
+test_that("vt-fit saves one handoff with every element", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  h <- readRDS(env$set_path("estimates", "vt.rds"))
+  expect_named(h, c("rmst", "curves", "forests", "eligibility", "predictors", "settings"))
+  expect_true(all(c("elig", "elig_gower", "elig_propensity", "elig_none", "diff", "log_rr") %in% names(h$rmst)))
+  expect_false(is.null(attr(h, "hvti_provenance")))
+})
