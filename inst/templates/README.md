@@ -516,6 +516,66 @@ within a chunk that reports steps, a line at most every ten minutes:
 `options(hvtiRtemplates.progress_every = 5)` makes that five. A render started from a
 terminal without `submit_job()` records progress too.
 
+### Running a long job
+
+`run_job()` is `submit_job()` with the checks done first. A long fit that fails usually fails
+for a reason that was knowable before it started: the session is on a different R from the one
+the study was built with, a package is missing, another job is already rendering. Each of those
+used to surface minutes or hours in, or not as a reason at all. `run_job()` looks for them
+first, lists every one it finds together, and starts nothing until they are cleared.
+
+Install the `hvti` command once. It is a shell command, so it works from a terminal whichever
+R your session happened to start:
+
+    hvtiRtemplates::install_hvti()
+
+Then, from the study:
+
+    hvti run analyses/nb.boostmtree.lvef.boost.qmd
+    hvti run analyses/nb.boostmtree.lvef.boost.qmd --final
+    hvti status analyses/nb.boostmtree.lvef.boost.qmd
+    hvti cancel analyses/nb.boostmtree.lvef.boost.qmd
+
+`--final` is `final = TRUE` in `render_job()`. `hvti` runs the job on the R that the study's
+`renv.lock` records, which is the one thing a terminal can do that an R console cannot. From
+an R session, `hvtiRtemplates::run_job("analyses/nb.boostmtree.lvef.boost.qmd")` does the same,
+with `job_status()` and `cancel_job()` for the other two. Run `install_hvti()` again after
+updating the package; `run_job()` warns when the copy on your `PATH` is older.
+
+There are seven checks. Each is named, and the name starts the refusal, so you can quote it
+in a message to the team.
+
+| check | what it asks, and why |
+|---|---|
+| `r_version` | Is this session on the R the study's `renv.lock` records? Packages are built per R version, so a different R finds none of the study's packages. |
+| `packages` | Are the packages the job loads installed at the locked versions? A missing one otherwise stops the render partway. |
+| `quarto` | Can Quarto be found? A detached render has no console to say it cannot. |
+| `run_state` | Is this job already running, or did an earlier run leave a state file behind? Two renders of one job overwrite each other. |
+| `study_render` | Is another job already rendering in this study? Quarto allows one render per study, and a second one fails after the first has done its work. |
+| `render_r` | Inside the render: did it start on the R that was checked above? A detached job can pick up a different R than the one your session has. |
+| `memory` | Inside the render, for a job that calls `guard_memory()`: does the fit's expected memory fit the session's limit? A fit that outgrows the limit is killed without a message. |
+
+The first five run before anything is submitted. `render_r` and `memory` can only run inside
+the render, so `run_job()` waits up to five minutes for them to report and prints the answer here
+rather than leaving it in a log.
+
+A refusal has two lines, what is wrong and a `fix:` line. **The `fix:` line is the thing to
+run.** It is the exact command, not a hint. Fix everything listed and run the job again.
+
+`guard_memory()` names the Workbench profile that would hold the fit and, for a fit that runs
+on several cores, the largest core count that fits the session you are in. Its estimate for
+`nb-boostmtree` is calibrated from two fits that were killed, so it is a lower bound: a fit it
+refuses will not fit, but one it passes can still fail. Larger fits have not been measured.
+
+When a run fails anyway, `job_status()` says why, in a sentence, with a fix, for the causes
+we know: out of memory, a package missing on the R the render used, or the chunk and lines
+where the job stopped. When none match it prints the end of the log. It also shows the
+memory peak against the session's limit, so a fit that came close is visible.
+
+A job scaffolded before the setup consolidation has no in-render checks to wait for.
+`run_job()` runs the first five, says the rest are missing and names `upgrade_job()`, which
+adds them.
+
 ## What every report says about its run
 
 A template opens with one `setup` chunk, where it used to open with four
