@@ -30,10 +30,18 @@ test_that("Quitting from names the chunk and quotes the error printed above it",
   expect_false(grepl("See the log", d$fix, fixed = TRUE))
 })
 
-test_that("a check's refusal through Quarto (Error:, then '! memory: ...', then Quitting) is passed through", {
+test_that("guard_memory()'s refusal through Quarto is passed through, and rlang's Backtrace is not taken as its fix", {
   d <- .diagnose_failure(fx("guard"), list())
-  expect_match(d$reason, "^memory: probe refusal")
-  expect_match(d$fix, "Large", fixed = TRUE)
+  expect_match(d$reason, "^memory: this fit needs about 100 GiB")
+  expect_match(d$reason, "Start a \"Large\" session", fixed = TRUE)
+  expect_identical(d$fix, "")   # a one-line refusal carries its advice in the reason
+  expect_no_match(paste(d$reason, d$fix), "Backtrace", fixed = TRUE)
+})
+
+test_that(".job_setup()'s render_r refusal through Quarto keeps its fix line, not the Backtrace", {
+  d <- .diagnose_failure(fx("render-r"), list())
+  expect_match(d$reason, "^render_r: Quarto ran this render on R [0-9.]+ \\(<tmp>/bin\\), not the R that submitted it, R 4[.]5[.]3")
+  expect_match(d$fix, "^A QUARTO_R setting")
 })
 
 test_that("every check name passes through, study_render included", {
@@ -52,7 +60,7 @@ test_that("an unknown failure shows the last 20 log lines", {
 
 test_that("a log carrying a refusal and a missing package is explained by the refusal", {
   d <- .diagnose_failure(fx("guard-and-package"), list())
-  expect_match(d$reason, "^memory: probe refusal")
+  expect_match(d$reason, "^memory: this fit needs")
 })
 
 test_that("a log carrying killed workers and a missing package is explained by memory", {

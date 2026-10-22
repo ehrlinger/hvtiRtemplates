@@ -123,3 +123,25 @@ test_that("run_job does not warn when the installed hvti is current or absent", 
   testthat::local_mocked_bindings(.hvti_on_path = function() "")
   expect_no_warning(.warn_stale_hvti())
 })
+
+test_that("hvti rejects an unknown subcommand with the usage, before looking for a study", {
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  out <- suppressWarnings(system2(hvti(), c("foo", file.path(d, "x.qmd")), stdout = TRUE, stderr = TRUE))
+  expect_match(paste(out, collapse = "\n"), "usage: hvti", fixed = TRUE)
+  expect_identical(attr(out, "status"), 2L)
+})
+
+test_that("install_hvti has no default directory, so it never writes into the home filespace unasked", {
+  expect_identical(formals(install_hvti)$dir, quote(expr = ))
+})
+
+test_that("the stale-copy warning names the directory the copy is in", {
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  old <- file.path(d, "hvti")
+  writeLines(c("#!/bin/sh", "# hvti: x. hvti-version: 0"), old)
+  testthat::local_mocked_bindings(.hvti_on_path = function() old)
+  .hvti_state$warned <- FALSE
+  expect_warning(.warn_stale_hvti(), sprintf('install_hvti("%s")', d), fixed = TRUE)
+})

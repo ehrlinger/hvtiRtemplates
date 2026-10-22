@@ -565,3 +565,12 @@ test_that("submit_job exports HVTI_RUN_R to the runner", {
   expect_match(captured, "export [A-Za-z0-9_]+ HVTI_JOB_MARKER HVTI_RUN_R ")
   expect_match(captured, R.home("bin"), fixed = TRUE)
 })
+
+test_that("submit_job exports the submitter's R version as HVTI_RUN_R_VERSION", {
+  captured <- NULL
+  testthat::local_mocked_bindings(.launch = function(cmd) captured <<- cmd, .session_r = function() numeric_version("4.5.3"))
+  job <- status_job()
+  .submit_job(job, FALSE, "TRUE", dirname(job))
+  expect_match(captured, "HVTI_RUN_R_VERSION='4.5.3'", fixed = TRUE)
+  expect_match(captured, "export [A-Za-z0-9_]+ HVTI_JOB_MARKER HVTI_RUN_R HVTI_RUN_R_VERSION ")
+})

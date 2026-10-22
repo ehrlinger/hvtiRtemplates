@@ -4,11 +4,12 @@
 \alias{install_hvti}
 \title{Install the hvti command}
 \usage{
-install_hvti(dir = "~/bin")
+install_hvti(dir)
 }
 \arguments{
-\item{dir}{Character(1). The directory to install into, created if absent.
-It should be on your \code{PATH}; a message gives the line to add if not.}
+\item{dir}{Character(1). The directory to install into, created if absent,
+usually \code{"~/bin"}. It should be on your \code{PATH}; a message gives
+the line to add if not.}
 }
 \value{
 Invisibly, the path of the installed command.
@@ -23,10 +24,11 @@ same for \code{\link{job_status}} and \code{\link{cancel_job}}.
 \details{
 The command is a copy, not a symlink. The library path it would point at
 changes with the R version, and surviving that change is what the command
-is for. Run \code{install_hvti()} again after updating the package;
+is for. Run \code{install_hvti("~/bin")} again after updating the package;
 \code{run_job()} warns, once per session, when the copy on your
 \code{PATH} is older than the one the package ships.
-It writes only into \code{dir}.
+It writes only into \code{dir}, which has no default: \code{install_hvti("~/bin")}
+is the usual call.
 }
 \examples{
 if (.Platform$OS.type != "windows") {

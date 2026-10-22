@@ -4,7 +4,7 @@
 \alias{run_job}
 \title{Check a job, run it in the background, and wait for its own checks}
 \usage{
-run_job(path, final = FALSE, wait = 300)
+run_job(path, final = FALSE, wait = 300, quiet = FALSE)
 }
 \arguments{
 \item{path}{Character(1). The job's \code{.qmd} file.}
@@ -13,6 +13,10 @@ run_job(path, final = FALSE, wait = 300)
 
 \item{wait}{Numeric(1), seconds, at least 0. How long to wait for the render's
 own checks. \code{0} submits and returns at once.}
+
+\item{quiet}{Logical(1). \code{TRUE} prints nothing: not the checks, the note
+for a legacy job, or the lines the wait ends on. A refusal is still an
+error, and its message then lists the failed checks and their fixes.}
 }
 \value{
 Invisibly, the job's status, as \code{\link{job_status}} returns it.

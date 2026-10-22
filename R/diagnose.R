@@ -10,8 +10,9 @@
   g <- hit("^(r_version|packages|run_state|quarto|render_r|memory|study_render): ")
   if (length(g)) {
     # Convention: a multi-line refusal's last line is its fix; a one-line refusal has none (fix is "").
-    # The refusal runs to the next blank line, the quitting marker, or an indented repeat of it; its last line is the fix.
-    stop_at <- grep("^$|^Quitting from|^[ \t]", log)
+    # The refusal runs to the next blank line, the quitting marker, rlang's Backtrace (a refusal raised inside a function,
+    # as guard_memory() and .job_setup() raise theirs), or an indented repeat of it; its last line is the fix.
+    stop_at <- grep("^$|^Quitting from|^Backtrace|^[ \t]", log)
     stop_at <- stop_at[stop_at > g[1L]]
     refusal <- log[seq.int(g[1L], (if (length(stop_at)) stop_at[1L] else length(log) + 1L) - 1L)]
     n <- length(refusal)

@@ -1,6 +1,6 @@
-# Prints one line per check, and the fix under each failure. TRUE when every check passed.
-.report_checks <- function(checks) {
-  for (ck in checks) {
+# Prints one line per check, and the fix under each failure, unless quiet. TRUE when every check passed.
+.report_checks <- function(checks, quiet = FALSE) {
+  for (ck in if (!quiet) checks) {
     cat(if (ck$ok) "  ok    " else "  FAIL  ", ck$name, "\n", sep = "")
     if (!ck$ok) cat("        ", ck$message, "\n        fix: ", gsub("\n", "\n             ", ck$fix), "\n", sep = "")
     if (!is.null(ck$note)) cat("        note: ", ck$note, "\n", sep = "")
@@ -13,23 +13,27 @@
 # no in-render checks, and run_job() says so and names upgrade_job() (spec section 5.3).
 .expected_checks <- function(path) {
   src <- readLines(path, warn = FALSE)
+  src <- src[!grepl("^\\s*#", src)]  # a commented-out call runs nothing
   c(character(0), if (any(grepl(".job_setup(", src, fixed = TRUE))) "render_r",
     if (any(grepl("guard_memory(", src, fixed = TRUE))) "memory")
 }
 
-.wait_for_checks <- function(path, expected, wait, poll = 5) {
+# `rel` is the job's path from the study root, which is what `hvti status` takes there.
+.wait_for_checks <- function(path, expected, wait, poll = 5, rel = basename(path), quiet = FALSE) {
   deadline <- Sys.time() + wait
   repeat {
     st <- job_status(path, quiet = TRUE)
-    # Finished, failed or gone: say so at once, whatever the check markers show.
-    if (st$state %in% c("finished", "failed", "vanished", "cancelled")) return(invisible(job_status(path)))
+    # Finished, failed, cancelled or gone: say so at once, whatever the check markers show.
+    if (st$state %in% c("finished", "failed", "vanished", "cancelled")) return(invisible(job_status(path, quiet = quiet)))
     if (all(expected %in% st$progress$checks) && identical(st$state, "running")) {
-      cat(sprintf("%s; running (process %s on %s). Follow it with `hvti status %s`.\n",
-                  if (length(expected)) "checks passed" else "started", st$pid, st$host, basename(path)))
+      if (!quiet) {
+        cat(sprintf("%s; running (process %s on %s). Follow it with `hvti status %s`.\n",
+                    if (length(expected)) "checks passed" else "started", st$pid, st$host, rel))
+      }
       return(invisible(st))
     }
     if (Sys.time() >= deadline) {
-      cat(sprintf("still starting; follow it with `hvti status %s`.\n", basename(path)))
+      if (!quiet) cat(sprintf("still starting; follow it with `hvti status %s`.\n", rel))
       return(invisible(st))
     }
     Sys.sleep(poll)
@@ -78,7 +82,7 @@
   if (is.na(installed) || is.na(shipped) || installed >= shipped) return(invisible(FALSE))
   .hvti_state$warned <- TRUE
   warning("The hvti command on your PATH is older than this package's (version ", installed, " against ", shipped,
-          "). Run hvtiRtemplates::install_hvti() to update it.", call. = FALSE)
+          "). Run hvtiRtemplates::install_hvti(\"", dirname(.hvti_on_path()), "\") to update it.", call. = FALSE)
   invisible(TRUE)
 }
 
@@ -94,13 +98,15 @@
 #' @details
 #' The command is a copy, not a symlink. The library path it would point at
 #' changes with the R version, and surviving that change is what the command
-#' is for. Run \code{install_hvti()} again after updating the package;
+#' is for. Run \code{install_hvti("~/bin")} again after updating the package;
 #' \code{run_job()} warns, once per session, when the copy on your
 #' \code{PATH} is older than the one the package ships.
-#' It writes only into \code{dir}.
+#' It writes only into \code{dir}, which has no default: \code{install_hvti("~/bin")}
+#' is the usual call.
 #'
-#' @param dir Character(1). The directory to install into, created if absent.
-#'   It should be on your \code{PATH}; a message gives the line to add if not.
+#' @param dir Character(1). The directory to install into, created if absent,
+#'   usually \code{"~/bin"}. It should be on your \code{PATH}; a message gives
+#'   the line to add if not.
 #' @return Invisibly, the path of the installed command.
 #' @seealso \code{\link{run_job}}
 #' @examples
@@ -108,7 +114,7 @@
 #'   install_hvti(file.path(tempdir(), "bin"))
 #' }
 #' @export
-install_hvti <- function(dir = "~/bin") {
+install_hvti <- function(dir) {
   dir <- path.expand(dir)
   if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
   to <- file.path(dir, "hvti")
@@ -153,6 +159,9 @@ install_hvti <- function(dir = "~/bin") {
 #' @param final Logical(1). Passed to \code{\link{submit_job}}.
 #' @param wait Numeric(1), seconds, at least 0. How long to wait for the render's
 #'   own checks. \code{0} submits and returns at once.
+#' @param quiet Logical(1). \code{TRUE} prints nothing: not the checks, the note
+#'   for a legacy job, or the lines the wait ends on. A refusal is still an
+#'   error, and its message then lists the failed checks and their fixes.
 #' @return Invisibly, the job's status, as \code{\link{job_status}} returns it.
 #'   A job refused by the checks is an error and returns nothing.
 #' @seealso \code{\link{submit_job}}, \code{\link{job_status}},
@@ -163,26 +172,37 @@ install_hvti <- function(dir = "~/bin") {
 #' run_job("analyses/nb.boostmtree.lvef.boost.qmd")
 #' }
 #' @export
-run_job <- function(path, final = FALSE, wait = 300) {
+run_job <- function(path, final = FALSE, wait = 300, quiet = FALSE) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
     stop("run_job(): `path` must be an existing job file.", call. = FALSE)
   }
   if (!is.numeric(wait) || length(wait) != 1L || is.na(wait) || wait < 0) {
     stop("run_job(): `wait` must be a single number of seconds, 0 or more.", call. = FALSE)
   }
+  if (!is.logical(quiet) || length(quiet) != 1L || is.na(quiet)) {
+    stop("run_job(): `quiet` must be TRUE or FALSE.", call. = FALSE)
+  }
   .warn_stale_hvti()
   path <- normalizePath(path, winslash = "/")
   root <- .find_study_root(dirname(path))
-  cat("Checking ", basename(path), "\n", sep = "")
-  checks <- list(.check_r_version(root), .check_packages(path, root), .check_quarto(), .check_run_state(path),
+  rel <- .study_rel(path, root)
+  if (!quiet) cat("Checking ", basename(path), "\n", sep = "")
+  checks <- list(.check_r_version(root), .check_packages(path, root), .check_quarto(), .check_run_state(path, root),
                  .check_study_render(path, root))
-  if (!.report_checks(checks)) stop("run_job(): refused; fix the checks marked FAIL above and run again.", call. = FALSE)
+  if (!.report_checks(checks, quiet)) {
+    # Quiet printed nothing, so the error itself has to say what failed and how to fix it.
+    failed <- if (quiet) {
+      vapply(Filter(function(ck) !ck$ok, checks), function(ck) paste0("\n  ", ck$message, "\n  fix: ", ck$fix), "")
+    }
+    stop("run_job(): refused; fix the checks marked FAIL ", if (quiet) "below" else "above", " and run again.",
+         paste(failed, collapse = ""), call. = FALSE)
+  }
   expected <- .expected_checks(path)
-  if (!"render_r" %in% expected) {
+  if (!quiet && !"render_r" %in% expected) {
     cat("  note  this job predates the in-render checks (no .job_setup() call), so the render's R and memory\n",
         "        are not checked inside the render. upgrade_job(\"", basename(path), "\") adds them.\n", sep = "")
   }
   submit_job(path, final = final)
   if (wait == 0) return(invisible(job_status(path, quiet = TRUE)))
-  .wait_for_checks(path, expected, wait)
+  .wait_for_checks(path, expected, wait, rel = rel, quiet = quiet)
 }

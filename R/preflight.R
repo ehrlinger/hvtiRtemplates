@@ -101,28 +101,46 @@
 
 # Quarto starts its own R for knitr; QUARTO_R or the PATH can point it at another one.
 # HVTI_RUN_R is set by submit_job() for the runner. Setting it by hand (in ~/.Renviron, say) makes editor renders fail this check.
-.check_render_r <- function(expected = Sys.getenv("HVTI_RUN_R")) {
+# HVTI_RUN_R_VERSION, set beside it, names the submitter's version; a runner started before it existed names paths only.
+.check_render_r <- function(expected = Sys.getenv("HVTI_RUN_R"), expected_version = Sys.getenv("HVTI_RUN_R_VERSION")) {
   if (!nzchar(expected)) return(.check("render_r", TRUE))
   have <- normalizePath(.r_home(), mustWork = FALSE)
   want <- normalizePath(expected, mustWork = FALSE)
   if (identical(have, want)) return(.check("render_r", TRUE))
+  named <- if (nzchar(expected_version)) {
+    c(sprintf("R %s (%s)", as.character(.session_r()), have), sprintf("R %s (%s)", expected_version, want))
+  } else {
+    c(have, want)
+  }
   .check("render_r", FALSE,
-         sprintf("Quarto ran this render on %s, not the R that submitted it, %s.", have, want),
+         sprintf("Quarto ran this render on %s, not the R that submitted it, %s.", named[1L], named[2L]),
          paste("A QUARTO_R setting, or another R first on the PATH, is overriding it:",
                "remove QUARTO_R from ~/.Renviron or the study's .Renviron, and check the PATH."))
 }
 
-.quarto_found <- function() {
-  requireNamespace("quarto", quietly = TRUE) && !is.null(tryCatch(quarto::quarto_path(), error = function(e) NULL))
+.quarto_pkg <- function() requireNamespace("quarto", quietly = TRUE)
+.quarto_found <- function() !is.null(tryCatch(quarto::quarto_path(), error = function(e) NULL))
+
+# The spellings of this R that QUARTO_R may use: its bin directory, its R home, and, for an R installed
+# under <prefix>/lib/R (as /opt/R/<version> is), <prefix>/bin, which holds the same R's front ends.
+.same_r_dirs <- function(bin = .r_home()) {
+  dirs <- c(bin, dirname(bin))
+  if (grepl("/lib(64)?/R/bin/?$", bin)) dirs <- c(dirs, file.path(dirname(dirname(dirname(bin))), "bin"))
+  normalizePath(dirs, mustWork = FALSE)
 }
 
 .check_quarto <- function() {
+  if (!.quarto_pkg()) {
+    return(.check("quarto", FALSE, "the quarto R package is not installed.", 'renv::restore(packages = "quarto")'))
+  }
   if (!.quarto_found()) {
     return(.check("quarto", FALSE, "the Quarto command line tool cannot be found.",
                   "Ask the server administrator; on lri it ships with Workbench."))
   }
   q <- Sys.getenv("QUARTO_R")
-  if (nzchar(q) && !identical(normalizePath(q, mustWork = FALSE), normalizePath(.r_home(), mustWork = FALSE))) {
+  # QUARTO_R may name the Rscript itself rather than its directory.
+  q_dir <- if (file.exists(q) && !dir.exists(q)) dirname(q) else q
+  if (nzchar(q) && !normalizePath(q_dir, mustWork = FALSE) %in% .same_r_dirs()) {
     return(.check("quarto", FALSE, sprintf("QUARTO_R is set to %s, so Quarto would render on that R, not this one (%s).",
                                            q, .r_home()),
                   "Remove QUARTO_R from ~/.Renviron or the study's .Renviron."))
@@ -131,19 +149,22 @@
 }
 
 # Stale progress is not proof: Quarto's knitr runs in a session of its own and can outlive the Workbench
-# session, so the way out confirms on that host before abandoning (spec section 6).
-.abandon_route <- function(st, path, files = .run_files(path)) {
+# session, so the way out confirms on that host before abandoning (spec section 6). `rel` is the path hvti takes.
+.abandon_route <- function(st, path, rel = "") {
   if (!.on_other_host(st)) return(sprintf('Stop it with `hvti cancel`, or cancel_job("%s").', path))
   confirm <- if (is.character(st$marker)) {
     sprintf("On %s, confirm nothing is left with `ps eww -u $USER | grep %s`. ", st$host, st$marker)
   } else {
-    sprintf("From a session on %s, confirm with `hvti status` that nothing is left. ", st$host)
+    sprintf("From a session on %s, confirm with `%s` that nothing is left. ", st$host, trimws(paste("hvti status", rel)))
   }
-  if ("other_host" %in% names(formals(cancel_job))) {
-    sprintf('%sOnly then run cancel_job("%s", other_host = "abandon") here.', confirm, path)
-  } else {
-    sprintf("%sOnly then, if that session is gone, delete %s and %s, then run again.", confirm, files$status, files$progress)
-  }
+  sprintf('%sOnly then run cancel_job("%s", other_host = "abandon") here.', confirm, path)
+}
+
+# The job's path from the study root, which is what `hvti status` takes there; the full path when it lies outside.
+.study_rel <- function(job, root) {
+  r <- .norm_path(root)
+  p <- .norm_path(job)
+  if (startsWith(p, paste0(r, "/"))) substring(p, nchar(r) + 2L) else p
 }
 
 # TRUE only when the status records a host and it is not this one.
@@ -156,7 +177,8 @@
 .norm_path <- function(p) file.path(normalizePath(dirname(p), mustWork = FALSE), basename(p))
 
 # THIS job already running, a stale run recorded on another host, or a crashed submit's lock directory.
-.check_run_state <- function(path) {
+# `root` is the study root, for the path the fix gives hvti; the default names the job by its file name.
+.check_run_state <- function(path, root = dirname(path)) {
   files <- .run_files(path)
   if (dir.exists(files$lock)) {
     age <- difftime(Sys.time(), file.info(files$lock)$mtime, units = "mins")
@@ -170,7 +192,7 @@
   here <- Sys.info()[["nodename"]]
   if (identical(st$state, "running") && is.character(st$host) && !identical(st$host, here)) {
     stale <- isTRUE(st$progress$stale)
-    abandon <- .abandon_route(st, path, files)
+    abandon <- .abandon_route(st, path, .study_rel(path, root))
     return(.check("run_state", FALSE,
                   sprintf("this job is recorded running on host %s%s.", st$host,
                           if (stale) ", but its progress has not moved for over 30 minutes, so it is probably dead" else ""),
@@ -178,7 +200,8 @@
   }
   if (st$state %in% c("running", "submitted")) {
     return(.check("run_state", FALSE, sprintf("this job is already %s.", st$state),
-                  "Follow it with `hvti status <job>`, or stop it with `hvti cancel <job>`."))
+                  sprintf("Follow it with `hvti status %s`, or stop it with `hvti cancel %s`.",
+                          .study_rel(path, root), .study_rel(path, root))))
   }
   .check("run_state", TRUE)
 }
@@ -214,12 +237,22 @@
     st <- tryCatch(job_status(job, quiet = TRUE), error = function(e) NULL)  # an unreadable file must not stop preflight
     if (!is.null(st) && identical(st$state, "running")) running[[job]] <- st
   }
+  rel_of <- function(job) .study_rel(job, root)
+  # An editor render that errored never ends its progress file, so from another host it reads running for good.
+  # Stale, on another host and with no .run.yml (not a submit_job() run), it is noted with its way out, not refused.
+  editor_dead <- vapply(names(running), function(j) {
+    st <- running[[j]]
+    isTRUE(st$progress$stale) && .on_other_host(st) && !file.exists(.run_files(j)$status)
+  }, NA)
+  note <- if (any(editor_dead)) {
+    paste(vapply(names(running)[editor_dead], function(j) {
+      sprintf(paste("%s has a progress record on %s that has not moved for over 30 minutes and no .run.yml,",
+                    "so it is probably an editor render that stopped with an error. %s"),
+              rel_of(j), running[[j]]$host, .abandon_route(running[[j]], j, rel_of(j)))
+    }, ""), collapse = " ")
+  }
+  running <- running[!editor_dead]
   if (length(running)) {
-    root_norm <- .norm_path(root)
-    rel_of <- function(job) {
-      p <- .norm_path(job)
-      if (startsWith(p, paste0(root_norm, "/"))) substring(p, nchar(root_norm) + 2L) else p
-    }
     describe <- function(job) {
       st <- running[[job]]
       pr <- st$progress
@@ -244,7 +277,11 @@
     live <- paste(vapply(names(running)[!is_stale], rel_of, ""), collapse = ", ")
     routes <- vapply(names(running)[is_stale], function(j) {
       st <- running[[j]]
-      paste0(sprintf("Check %s from a session on %s with `hvti status %s`. ", rel_of(j), st$host, rel_of(j)), .abandon_route(st, j))
+      # Without a marker the abandon route's own confirmation is `hvti status` on that host, so it is not said twice.
+      check <- if (is.character(st$marker)) {
+        sprintf("Check %s from a session on %s with `hvti status %s`. ", rel_of(j), st$host, rel_of(j))
+      }
+      paste0(check, .abandon_route(st, j, rel_of(j)))
     }, "")
     fix <- c(if (any(!is_stale)) {
       sprintf("Wait for it to finish (hvti status %s), or stop it (hvti cancel %s), then run again.", live, live)
@@ -252,7 +289,7 @@
     return(.check("study_render", FALSE,
                   sprintf("another job is rendering in this study: %s. Quarto renders one job at a time in a study.",
                           paste(vapply(names(running), describe, ""), collapse = "; ")),
-                  paste(fix, collapse = " ")))
+                  paste(fix, collapse = " "), note))
   }
   lock <- .provenance_lock_path(root)
   owner_file <- file.path(lock, "owner.json")
@@ -261,7 +298,7 @@
     return(.check("study_render", FALSE,
                   sprintf(paste("another Quarto render holds this study's render lock (process %s), started outside run_job(),",
                                 "so its job is not known."), owner$pid),
-                  "Wait for it to finish, then run again."))
+                  "Wait for it to finish, then run again.", note))
   }
-  .check("study_render", TRUE)
+  .check("study_render", TRUE, note = note)
 }

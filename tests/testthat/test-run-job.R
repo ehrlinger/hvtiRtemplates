@@ -120,3 +120,113 @@ test_that("the wait times out with a pointer to hvti status", {
   expect_output(st <- .wait_for_checks("x.qmd", "render_r", wait = 0, poll = 0), "still starting", fixed = TRUE)
   expect_identical(st, want)
 })
+
+test_that("a commented-out guard_memory( or .job_setup( is not expected", {
+  root <- withr::local_tempdir()
+  j <- file.path(root, "a.qmd")
+  writeLines(c("# .job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE)", "  # guard_memory(need, 'fit')"), j)
+  expect_identical(.expected_checks(j), character(0))
+  writeLines(c(".job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE)", "#guard_memory(need, 'fit')"), j)
+  expect_identical(.expected_checks(j), "render_r")
+})
+
+test_that("the wait names the job by its path from the study root", {
+  testthat::local_mocked_bindings(job_status = function(path, quiet = FALSE) {
+    list(state = "running", pid = 1L, host = "h", progress = list(checks = "render_r"))
+  })
+  out <- capture.output(.wait_for_checks("/s/analyses/x.qmd", "render_r", wait = 1, poll = 0, rel = "analyses/x.qmd"))
+  expect_match(out, "hvti status analyses/x.qmd", fixed = TRUE, all = FALSE)
+  testthat::local_mocked_bindings(job_status = function(path, quiet = FALSE) list(state = "running", progress = list()))
+  out <- capture.output(.wait_for_checks("/s/analyses/x.qmd", "render_r", wait = 0, poll = 0, rel = "analyses/x.qmd"))
+  expect_match(out, "still starting; follow it with `hvti status analyses/x.qmd`", fixed = TRUE, all = FALSE)
+})
+
+test_that("run_job prints the study-relative path in its wait line", {
+  root <- lock_study()
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines(".job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE)", job)
+  ok_checks()
+  testthat::local_mocked_bindings(submit_job = function(...) invisible(NULL),
+                                  job_status = function(path, quiet = FALSE) {
+                                    list(state = "running", pid = 1L, host = "h", progress = list(checks = "render_r"))
+                                  })
+  out <- capture.output(run_job(job, wait = 1))
+  expect_match(out, "hvti status analyses/x.qmd", fixed = TRUE, all = FALSE)
+})
+
+test_that("run_job(quiet = TRUE) prints nothing, and its refusal carries the failed checks", {
+  root <- lock_study()
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines(".job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE)", job)
+  ok_checks()
+  seen_quiet <- NULL
+  testthat::local_mocked_bindings(submit_job = function(...) invisible(NULL), .warn_stale_hvti = function() invisible(FALSE),
+                                  job_status = function(path, quiet = FALSE) {
+                                    seen_quiet <<- c(seen_quiet, quiet)
+                                    if (!quiet) cat("printed\n")
+                                    list(state = "finished", progress = list(checks = "render_r"))
+                                  })
+  expect_silent(st <- run_job(job, wait = 1, quiet = TRUE))
+  expect_identical(st$state, "finished")
+  expect_true(all(seen_quiet))
+  testthat::local_mocked_bindings(.check_packages = function(...) .check("packages", FALSE, "knitr missing.", "hvtiR::update()"))
+  err <- expect_error(expect_silent(run_job(job, quiet = TRUE)), "refused")
+  expect_match(conditionMessage(err), "packages: knitr missing.", fixed = TRUE)
+  expect_match(conditionMessage(err), "hvtiR::update()", fixed = TRUE)
+})
+
+test_that("run_job(quiet = FALSE) still prints the checks and keeps the refusal short", {
+  root <- lock_study()
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines("---\ntitle: x\n---", job)
+  ok_checks()
+  testthat::local_mocked_bindings(.check_packages = function(...) .check("packages", FALSE, "knitr missing.", "hvtiR::update()"))
+  out <- capture.output(err <- tryCatch(run_job(job), error = function(e) e))
+  expect_match(out, "FAIL  packages", fixed = TRUE, all = FALSE)
+  expect_no_match(conditionMessage(err), "knitr missing", fixed = TRUE)
+})
+
+test_that("run_job drives the real chain: preflight, submit, the render's own checks, and a refusal diagnosed", {
+  skip_on_os("windows")
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if(!nzchar(Sys.which("quarto")))
+  # A lock that records this session's R and the installed versions, so the preflight passes on its own merits.
+  need <- .always_needed()
+  root <- lock_study(r = as.character(getRversion()),
+                     pkgs = stats::setNames(lapply(need, function(p) as.character(utils::packageVersion(p))), need))
+  withr::local_envvar(QUARTO_R = NA, HVTI_RUN_R = NA, HVTI_RUN_R_VERSION = NA)
+  testthat::local_mocked_bindings(.warn_stale_hvti = function() invisible(FALSE))
+  job_file <- function(subject, guard) {
+    job <- file.path(root, "analyses", sprintf("dc.%s.eda.qmd", subject))
+    writeLines(c("---", "title: x", "format: html", "---", "",
+                 "```{r}", "#| label: setup", sprintf('SUBJECT <- "%s"', subject), 'TYPE    <- "eda"',
+                 ".job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE)", "```", "",
+                 "```{r}", "#| label: fit", guard, "```"), job)
+    job
+  }
+  settle <- function(job, seconds = 120) {
+    for (i in seq_len(seconds * 2)) {
+      st <- job_status(job, quiet = TRUE)
+      if (st$state %in% c("finished", "failed", "vanished", "cancelled")) return(st)
+      Sys.sleep(0.5)
+    }
+    st
+  }
+  ok <- job_file("cohort", 'hvtiRtemplates::guard_memory(0, "a cached fit")')
+  st <- run_job(ok, wait = 120, quiet = TRUE)
+  expect_true(all(c("render_r", "memory") %in% st$progress$checks))
+  expect_identical(settle(ok)$state, "finished")
+  # A fake cgroup v1 tree capped at 19.2 GiB, written in the chunk, so the guard refuses wherever this runs.
+  big <- job_file("big", c('cg <- file.path(tempdir(), "cg")',
+                           'dir.create(file.path(cg, "sys", "memory", "s1"), recursive = TRUE, showWarnings = FALSE)',
+                           'writeLines("7:memory:/s1", file.path(cg, "cgroup"))',
+                           'cap <- file.path(cg, "sys", "memory", "s1", "memory.limit_in_bytes")',
+                           "writeLines(format(round(19.2 * 1024^3), scientific = FALSE), cap)",
+                           'hvtiRtemplates::guard_memory(100, "this fit", proc = file.path(cg, "cgroup"),',
+                           '                             sys = file.path(cg, "sys"))'))
+  run_job(big, wait = 120, quiet = TRUE)
+  st <- settle(big)
+  expect_identical(st$state, "failed")
+  expect_match(job_status(big, quiet = TRUE)$diagnosis$reason, "^memory: ")
+})

@@ -135,7 +135,8 @@ test_that("packages: installed newer than locked updates, older restores", {
   testthat::local_mocked_bindings(.installed_version = function(p) if (p == "knitr") "1.50" else "1.4.4",
                                   .always_needed = function() c("quarto", "knitr"))
   expect_match(.check_packages(job, root)$fix, "hvtiR::update()", fixed = TRUE)
-  testthat::local_mocked_bindings(.installed_version = function(p) if (p == "knitr") "1.40" else "1.4.4")
+  testthat::local_mocked_bindings(.installed_version = function(p) if (p == "knitr") "1.40" else "1.4.4",
+                                  .always_needed = function() c("quarto", "knitr"))
   expect_match(.check_packages(job, root)$fix, 'renv::restore(packages = "knitr")', fixed = TRUE)
 })
 
@@ -393,15 +394,6 @@ test_that("study_render sends a stale other-host job through confirm-then-abando
   expect_no_match(ck$fix, "Wait for it", fixed = TRUE)
 })
 
-test_that("the abandon route always confirms first, even without cancel_job's other_host", {
-  job <- status_job()
-  st <- list(host = "lri-r06", marker = "PSabc123_1")
-  testthat::local_mocked_bindings(cancel_job = function(path) NULL)
-  fix <- .abandon_route(st, job)
-  expect_match(fix, "^On lri-r06, confirm nothing is left with `ps eww -u \\$USER \\| grep PSabc123_1`")
-  expect_match(fix, "delete", fixed = TRUE)
-})
-
 test_that("run_state refuses a fresh submission", {
   job <- status_job()
   .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp())
@@ -432,4 +424,91 @@ test_that("the abandon route for a job on this host is a plain cancel", {
   expect_no_match(fix, "other_host", fixed = TRUE)
   expect_no_match(fix, "confirm", fixed = TRUE)
   expect_match(.abandon_route(list(host = NULL), job), "hvti cancel", fixed = TRUE)
+})
+
+test_that("render_r names both R versions when the submitter recorded its own", {
+  testthat::local_mocked_bindings(.r_home = function() "/usr/lib/R/bin", .session_r = function() numeric_version("4.4.1"))
+  ck <- .check_render_r(expected = "/opt/R/4.5.3/lib/R/bin", expected_version = "4.5.3")
+  expect_match(ck$message, paste0("Quarto ran this render on R 4.4.1 (/usr/lib/R/bin), not the R that submitted it, ",
+                                  "R 4.5.3 (/opt/R/4.5.3/lib/R/bin)."), fixed = TRUE)
+  ck <- .check_render_r(expected = "/opt/R/4.5.3/lib/R/bin", expected_version = "")
+  expect_match(ck$message, "on /usr/lib/R/bin, not the R that submitted it, /opt/R/4.5.3/lib/R/bin.", fixed = TRUE)
+})
+
+test_that("quarto accepts a QUARTO_R naming this R in another spelling", {
+  top <- withr::local_tempdir()
+  home <- file.path(top, "opt", "R", "4.5.3", "lib", "R")
+  dir.create(file.path(home, "bin"), recursive = TRUE)
+  dir.create(file.path(top, "opt", "R", "4.5.3", "bin"))
+  file.create(file.path(top, "opt", "R", "4.5.3", "bin", "Rscript"))
+  file.create(file.path(home, "bin", "Rscript"))
+  testthat::local_mocked_bindings(.r_home = function() file.path(home, "bin"), .quarto_found = function() TRUE)
+  for (q in c(file.path(top, "opt", "R", "4.5.3", "bin"), file.path(top, "opt", "R", "4.5.3", "bin", "Rscript"),
+              home, file.path(home, "bin", "Rscript"), file.path(home, "bin"))) {
+    withr::local_envvar(QUARTO_R = q)
+    expect_true(.check_quarto()$ok, label = q)
+  }
+  withr::local_envvar(QUARTO_R = file.path(top, "usr", "lib", "R", "bin"))
+  expect_false(.check_quarto()$ok)
+})
+
+test_that("quarto says when the quarto R package is not installed", {
+  testthat::local_mocked_bindings(.quarto_pkg = function() FALSE, .quarto_found = function() FALSE)
+  ck <- .check_quarto()
+  expect_false(ck$ok)
+  expect_match(ck$message, "the quarto R package is not installed", fixed = TRUE)
+  expect_identical(ck$fix, 'renv::restore(packages = "quarto")')
+  expect_no_match(ck$fix, "administrator", fixed = TRUE)
+})
+
+test_that("run_state names the job by its path from the study root", {
+  root <- lock_study()
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines("---\ntitle: x\n---", job)
+  .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp())
+  ck <- .check_run_state(job, root)
+  expect_match(ck$fix, "hvti status analyses/x.qmd", fixed = TRUE)
+  expect_match(ck$fix, "hvti cancel analyses/x.qmd", fixed = TRUE)
+  expect_no_match(ck$fix, "<job>", fixed = TRUE)
+})
+
+# An editor render that errored: a progress file and no .run.yml, recorded on another host.
+progress_only_job <- function(root, host = "lri-r03", age_min = 120) {
+  job <- file.path(root, "analyses", "editor.qmd")
+  writeLines("---\ntitle: x\n---", job)
+  now <- Sys.time()
+  .write_status(.run_files(job)$progress, pid = 1L, host = host, started = .stamp(now - 7200),
+                updated = .stamp(now - age_min * 60), stage = "fit", stage_index = 1L, stage_count = 2L,
+                stages = c("fit", "b"))
+  job
+}
+
+test_that("study_render notes, and does not refuse, a stale progress-only render on another host", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  progress_only_job(root)
+  ck <- .check_study_render(mine, root)
+  expect_true(ck$ok)
+  expect_match(ck$note, "analyses/editor.qmd", fixed = TRUE)
+  expect_match(ck$note, "other_host = \"abandon\"", fixed = TRUE)
+})
+
+test_that("study_render still refuses a live progress-only render, and a stale submitted one", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  progress_only_job(root, age_min = 0)
+  expect_false(.check_study_render(mine, root)$ok)
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  other_running_job(root, age_min = 120)
+  expect_false(.check_study_render(mine, root)$ok)
+})
+
+test_that("a stale other-host job without a marker is told to confirm once, not twice", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  other_running_job(root, age_min = 120)
+  fix <- .check_study_render(mine, root)$fix
+  expect_identical(lengths(regmatches(fix, gregexpr("hvti status", fix, fixed = TRUE))), 1L)
+  expect_match(fix, "hvti status analyses/nb.boostmtree.x.boost.qmd", fixed = TRUE)
 })
