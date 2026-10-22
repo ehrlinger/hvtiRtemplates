@@ -1438,12 +1438,13 @@
     },
     {
       "prefix": "vt",
-      "qualifier": null,
-      "name": "Virtual twins",
+      "qualifier": "fit",
+      "name": "Virtual twins: fit",
+      "description": "Per-arm survival forests, swapped-arm twin curves and a per-patient RMST difference, with eligibility judged by a choice of methods.",
       "folder": "analyses",
       "family": "machine-learning",
       "kind": "job",
-      "status": "queued",
+      "status": "in-flight",
       "batch": null,
       "sas_breadth": null,
       "r_exemplars": null,
@@ -1451,12 +1452,17 @@
       "upstream": [],
       "downstream": [],
       "workflows": [],
-      "blocked_on": "hvtiRforests#1",
-      "spec": null,
-      "note": "in hvti_taxonomy() via hvtiRutilities PR #127, unreleased (not in 1.2.0); destination repoints to hvtiRforests in ML sub-project 3, method code in sub-project 4",
+      "blocked_on": null,
+      "spec": "dev/specs/2026-10-22-vt-virtual-twins-templates-design.md",
+      "note": "Released for review in a real study. Built from the Virtual Twins study, its only exemplar; becomes shipped once a second study runs vt-fit through vt-explain. The method helpers live in the template until hvtiRforests#1 gives them a package.",
       "sas_breadth_jobs": null,
-      "disposition": "build",
-      "uses": []
+      "disposition": "scaffold",
+      "uses": [
+        "hvtiRpropensity::ps_forest",
+        "hvtiRpropensity::ps_support",
+        "hvtiPlotR::hv_rmst_curves",
+        "hvtiRutilities::cache_fit"
+      ]
     },
     {
       "prefix": "dc",

@@ -50,6 +50,7 @@ Suggests:
     bit64,
     boostmtree (>= 2.0.8),
     broom,
+    cluster,
     fs,
     ggBoostedTrees (>= 0.9.1),
     ggRandomForests (>= 4.0.0),
