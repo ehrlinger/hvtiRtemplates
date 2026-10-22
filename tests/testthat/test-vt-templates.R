@@ -317,3 +317,66 @@ test_that("BOOT = 0 skips the intervals and the betas still render", {
   expect_true(all(is.na(env$.betas$lower)))
   expect_true(all(is.finite(env$.betas$beta)))
 })
+
+# A sid-clusters fixture for the stratifier tests; `clusters` and `id_key` are overridable.
+vt_sid_fixture <- function(env, clusters, id_key = NULL) {
+  sid_dir <- file.path(dirname(dirname(env$set_path("estimates", "vt.rds"))), "dead-sid")
+  dir.create(sid_dir, recursive = TRUE, showWarnings = FALSE)
+  key <- hvtiRtemplates:::.study_id_key(env$.root)
+  saveRDS(list(clusters = clusters, id_key = id_key %||% hvtiRtemplates:::.id_key_fingerprint(key)),
+          file.path(sid_dir, "sid-clusters.rds"))
+}
+vt_sid_reader <- function(p) {
+  list(value = readRDS(p), lineage = list(data = list(), artifacts = list()), record = list(path = p))
+}
+vt_strat_choices <- function(column = NULL) {
+  list(STRATIFY = list(set = "dead-sid", column = column), BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE,
+       .vt_read_sid = vt_sid_reader)
+}
+
+test_that("sid-clusters digested under another study key stop the stratifier", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  d <- vt_data()
+  vt_sid_fixture(env, data.frame(id = vt_digest(env, factor(d$ccfid)), cluster = "a"), id_key = "0000000000000000")
+  expect_error(vt_explain(env, vt_explain_labels_all, vt_strat_choices()), "different study key")
+})
+
+test_that("a sid set with no clusters stops the stratifier", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_sid_fixture(env, NULL)
+  expect_error(vt_explain(env, vt_explain_labels_all, vt_strat_choices()), "set K in sid-clusters")
+})
+
+test_that("a stratifier column the set lacks stops and names what it has", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  d <- vt_data()
+  vt_sid_fixture(env, data.frame(id = vt_digest(env, factor(d$ccfid)), cluster = "a"))
+  expect_error(vt_explain(env, vt_explain_labels_all, vt_strat_choices("group")), 'no column "group".*id, cluster')
+})
+
+test_that("a stratum cell under 5 patients shows no median but keeps its n", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  d <- vt_data()
+  tiny <- which(d$arm == "B")[1:3]
+  vt_sid_fixture(env, data.frame(id = vt_digest(env, factor(d$ccfid)), cluster = ifelse(seq_len(nrow(d)) %in% tiny, "tiny", "big")))
+  vt_explain(env, vt_explain_labels_all, vt_strat_choices())
+  cell <- env$.st[env$.st$stratum == "tiny" & env$.st$arm == "B", ]
+  expect_equal(nrow(cell), 1L)
+  expect_true(is.na(cell$median))
+  expect_false(is.na(cell$n))
+  expect_lt(cell$n, 5L)
+})
+
+test_that("tbl-benefit honours GAIN_MIN and splits the no-arm patients between the arms", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_explain(env, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 1e6, SAVE_FIGURES = FALSE))
+  expect_equal(nrow(env$.benefit), 0L)
+  env2 <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_explain(env2, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
+  expect_equal(sum(table(env2$.future$favours)), sum(env2$.eligible & env2$r$arm == "none"))
+})

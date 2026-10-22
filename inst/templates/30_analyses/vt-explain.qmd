@@ -275,7 +275,7 @@ result.
 .strata <- NULL
 # The sid clusters are read through this function so a test can supply its own.
 if (!exists(".vt_read_sid")) {
-  .vt_read_sid <- function(p) hvtiRtemplates:::.read_handoff(p, "clustering", .cfg, "the sid job")
+  .vt_read_sid <- function(p) hvtiRtemplates:::.read_handoff(p, "SID clusters", .cfg, "the sid job")
 }
 if (is.list(STRATIFY)) {
   .sid_path <- file.path(dirname(dirname(.handoff)), STRATIFY$set, "sid-clusters.rds")
@@ -289,6 +289,9 @@ if (is.list(STRATIFY)) {
   # "cluster" (the letter at the chosen K) unless STRATIFY names "group", the
   # collapsed groups sid-clusters writes when COLLAPSE is set.
   .col <- if (is.null(STRATIFY$column)) "cluster" else STRATIFY$column
+  if (!.col %in% names(.cl)) {
+    stop("The sid clusters have no column \"", .col, "\" (they have ", paste(names(.cl), collapse = ", "), ").", call. = FALSE)
+  }
   .strata <- data.frame(ID = .cl$id, stratum = as.character(.cl[[.col]]))
   # The clustering defines the strata, so the report names it and its data.
   .provenance_data <- c(.provenance_data, .sid_strata$lineage$data)
@@ -306,7 +309,9 @@ if (is.list(STRATIFY)) {
 if (is.null(.strata)) {
   cat("No stratifier chosen (STRATIFY is NULL).\n")
 } else {
-  .sr <- merge(r[.eligible & r$arm %in% ARMS, c("ID", "arm", "diff")], .strata, by = "ID")
+  .sr0 <- r[.eligible & r$arm %in% ARMS, c("ID", "arm", "diff")]
+  .sr <- merge(.sr0, .strata, by = "ID")
+  if (nrow(.sr) < nrow(.sr0)) cat(nrow(.sr0) - nrow(.sr), "eligible patients have no stratum and are not shown.\n\n")
   print(knitr::kable(as.data.frame.matrix(table(.sr$stratum, .sr$arm)), caption = "Patients by stratum and arm received"))
   .cells <- split(.sr, list(.sr$stratum, .sr$arm), drop = TRUE)
   .st <- do.call(rbind, lapply(.cells, function(x) {
@@ -382,7 +387,8 @@ if (BOOT > 0) {
   .betas$upper <- apply(.boot, 1L, stats::quantile, 0.975, na.rm = TRUE)
   .betas$unestimable <- rowSums(is.na(.boot))
 }
-knitr::kable(.betas, digits = 2, caption = "Standardized beta for each characteristic. unestimable: bootstrap resamples in which the characteristic did not vary.")
+knitr::kable(.betas, digits = 2, caption = paste("Standardized beta for each characteristic.",
+                                           "unestimable: bootstrap resamples in which the characteristic did not vary."))
 ```
 
 ```{r}
