@@ -247,3 +247,99 @@ test_that("quarto refuses a missing CLI and passes a matching QUARTO_R", {
   testthat::local_mocked_bindings(.r_home = function() "/opt/R/4.5.3/lib/R/bin", .quarto_found = function() TRUE)
   expect_true(.check_quarto()$ok)
 })
+
+# A second job in the study, recorded running on lri-r03 with a fit stage three of seven and an hour into 1 of 3 steps.
+other_running_job <- function(root, name = "nb.boostmtree.x.boost.qmd", dir = "analyses", host = "lri-r03", age_min = 0) {
+  job <- file.path(root, dir, name)
+  dir.create(dirname(job), recursive = TRUE, showWarnings = FALSE)
+  writeLines("---\ntitle: x\n---", job)
+  now <- Sys.time()
+  .write_status(.run_files(job)$status, state = "running", pid = 1L, host = host, started = .stamp(now - 7200))
+  .write_status(.run_files(job)$progress, pid = 1L, host = host, started = .stamp(now - 7200),
+                updated = .stamp(now - age_min * 60), stage = "fit", stage_index = 3L, stage_count = 7L,
+                stage_started = .stamp(now - 3600), step = 1L, steps = 3L, unit = "fold",
+                step_started = .stamp(now - 3600 - age_min * 60), step_base = 0L, stages = c("a", "b", "fit"))
+  job
+}
+
+test_that("study_render refuses another job running in the study and names it", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  writeLines("---\ntitle: x\n---", mine)
+  other <- other_running_job(root)
+  ck <- .check_study_render(mine, root)
+  expect_false(ck$ok)
+  expect_match(ck$message, "^study_render: another job is rendering in this study: analyses/nb.boostmtree.x.boost.qmd")
+  expect_match(ck$message, "on lri-r03", fixed = TRUE)
+  expect_match(ck$message, "in stage fit (3 of 7)", fixed = TRUE)
+  expect_match(ck$message, "about (2h00m|1h59m) left")
+  expect_match(ck$fix, "hvti status analyses/nb.boostmtree.x.boost.qmd", fixed = TRUE)
+  expect_match(ck$fix, "hvti cancel analyses/nb.boostmtree.x.boost.qmd", fixed = TRUE)
+  expect_true(file.exists(other))
+})
+
+test_that("study_render reports stale progress instead of a time left", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  other_running_job(root, age_min = 120)
+  ck <- .check_study_render(mine, root)
+  expect_match(ck$message, "has not moved for over 30 minutes", fixed = TRUE)
+  expect_no_match(ck$message, "left", fixed = TRUE)
+})
+
+test_that("study_render names every running job", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  other_running_job(root, "a.qmd")
+  other_running_job(root, "b.qmd", dir = "graphs")
+  ck <- .check_study_render(mine, root)
+  expect_match(ck$message, "analyses/a.qmd", fixed = TRUE)
+  expect_match(ck$message, "graphs/b.qmd", fixed = TRUE)
+})
+
+test_that("study_render leaves the job's own run to run_state", {
+  root <- lock_study()
+  mine <- other_running_job(root, "mine.qmd")
+  expect_true(.check_study_render(mine, root)$ok)
+})
+
+test_that("study_render passes for a finished job and for a study with no other jobs", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  expect_true(.check_study_render(mine, root)$ok)
+  other <- file.path(root, "analyses", "done.qmd")
+  writeLines("---\ntitle: x\n---", other)
+  .write_status(.run_files(other)$status, state = "finished", pid = 1L, elapsed_s = 5L)
+  expect_true(.check_study_render(mine, root)$ok)
+})
+
+test_that("study_render does not scan renv, .git or .hvtiR", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  other_running_job(root, "hidden.qmd", dir = "renv/library")
+  other_running_job(root, "hidden.qmd", dir = ".git")
+  expect_true(.check_study_render(mine, root)$ok)
+})
+
+test_that("study_render survives an unreadable status file", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  bad <- other_running_job(root, "bad.qmd")
+  writeLines("", .run_files(bad)$status)
+  expect_true(.check_study_render(mine, root)$ok)
+})
+
+test_that("study_render refuses a live render lock with no running job, and passes a dead owner", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  lock <- .provenance_lock_path(root)
+  dir.create(lock, recursive = TRUE)
+  jsonlite::write_json(list(pid = 4242L, created = "1.000000"), file.path(lock, "owner.json"), auto_unbox = TRUE)
+  testthat::local_mocked_bindings(.provenance_owner_alive = function(owner) TRUE)
+  ck <- .check_study_render(mine, root)
+  expect_false(ck$ok)
+  expect_match(ck$message, "process 4242", fixed = TRUE)
+  expect_true(dir.exists(lock))
+  testthat::local_mocked_bindings(.provenance_owner_alive = function(owner) FALSE)
+  expect_true(.check_study_render(mine, root)$ok)
+})

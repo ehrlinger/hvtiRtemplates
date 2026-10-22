@@ -168,3 +168,73 @@
   }
   .check("run_state", TRUE)
 }
+
+# The directories a study keeps that never hold a job's run files (renv's library is large).
+.run_scan_skip <- c("renv", ".git", ".hvtiR")
+
+# The jobs under `root` that have run files, found without descending into the skipped directories.
+.jobs_with_run_files <- function(root) {
+  jobs <- character()
+  todo <- root
+  while (length(todo)) {
+    dir <- todo[[1L]]
+    todo <- todo[-1L]
+    entries <- list.files(dir, all.files = TRUE, no.. = TRUE)
+    full <- file.path(dir, entries)
+    is_dir <- dir.exists(full)
+    todo <- c(todo, full[is_dir & !entries %in% .run_scan_skip])
+    hits <- entries[!is_dir & grepl("[.]run[.](yml|progress)$", entries)]
+    jobs <- c(jobs, file.path(dir, sub("[.]run[.](yml|progress)$", ".qmd", hits)))
+  }
+  unique(jobs)
+}
+
+# Quarto holds one render lock per study, so another job rendering there fails minutes in. This names it up front.
+.check_study_render <- function(path, root) {
+  jobs <- .jobs_with_run_files(root)
+  jobs <- jobs[normalizePath(jobs, mustWork = FALSE) != normalizePath(path, mustWork = FALSE)]
+  running <- list()
+  for (job in jobs) {
+    st <- tryCatch(job_status(job, quiet = TRUE), error = function(e) NULL)  # an unreadable file must not stop preflight
+    if (!is.null(st) && identical(st$state, "running")) running[[job]] <- st
+  }
+  if (length(running)) {
+    root_norm <- normalizePath(root, mustWork = FALSE)
+    rel_of <- function(job) sub(paste0("^", root_norm, "/?"), "", normalizePath(job, mustWork = FALSE))
+    describe <- function(job) {
+      st <- running[[job]]
+      pr <- st$progress
+      has <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x)
+      stage <- if (is.character(pr$stage) && length(pr$stage) == 1L) {
+        paste0("in stage ", pr$stage,
+               if (has(pr$stage_index) && has(pr$stage_count)) {
+                 sprintf(" (%d of %d)", as.integer(pr$stage_index), as.integer(pr$stage_count))
+               })
+      }
+      left <- if (isTRUE(pr$stale)) {
+        "its progress has not moved for over 30 minutes"
+      } else if (has(pr$eta_s)) {
+        paste("about", .fmt_dur(pr$eta_s), "left")
+      }
+      host <- if (is.character(st$host) && length(st$host) == 1L) paste("on", st$host)
+      detail <- c(host, stage, left)
+      paste0(rel_of(job), if (length(detail)) paste0(", ", paste(detail, collapse = ", ")))
+    }
+    rels <- paste(vapply(names(running), rel_of, ""), collapse = ", ")
+    return(.check("study_render", FALSE,
+                  sprintf("another job is rendering in this study: %s. Quarto renders one job at a time in a study.",
+                          paste(vapply(names(running), describe, ""), collapse = "; ")),
+                  sprintf("Wait for it to finish (hvti status %s), or stop it (hvti cancel %s), then run again.",
+                          rels, rels)))
+  }
+  lock <- .provenance_lock_path(root)
+  owner_file <- file.path(lock, "owner.json")
+  owner <- if (file.exists(owner_file)) tryCatch(jsonlite::read_json(owner_file), error = function(e) NULL)
+  if (!is.null(owner) && .provenance_owner_alive(owner)) {
+    return(.check("study_render", FALSE,
+                  sprintf(paste("another Quarto render holds this study's render lock (process %s), started outside run_job(),",
+                                "so its job is not known."), owner$pid),
+                  "Wait for it to finish, then run again."))
+  }
+  .check("study_render", TRUE)
+}
