@@ -36,6 +36,8 @@ refuses to overwrite an existing job.
 | `30_analyses/rfr-explain.qmd` | importance and dependence for an `rfr` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/vp-fit.qmd` | VarPro screen: coverage, a noise bar by kind and stability across subsamples (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/vp-explain.qmd` | VarPro partial dependence for the variables a `vp-fit` screen selected (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/vt-fit.qmd` | virtual twins: one survival forest per arm, out-of-bag own-arm and swapped-arm curves, a per-patient RMST difference, eligibility by Gower and SID combined by a stated rule (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/vt-explain.qmd` | the virtual-twins contrast by arm, eligibility rule and stratum, standardized betas and who might benefit (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/nb-boostmtree.qmd` | boosted multivariate trees for a response measured at each visit | `30_analyses/` or `analyses/` |
 
 `dc-eda` and `dc-trends` were `dp-eda` and `dp-trends` until 2026-10-10, and
@@ -395,6 +397,8 @@ as on a Mac without XQuartz.
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |
 | vp-fit | `vp-fit-coverage`, `-varpro` |
 | vp-explain | `vp-explain-dependence-varpro-page-<NN>` |
+| vt-fit | `vt-fit-eligibility`, `-curves` |
+| vt-explain | `vt-explain-contrast`, `-ranking`, `-twin-curves`, `-received-best`, `-betas` |
 | rm-linear | `rm-linear-residuals`, `rm-linear-qq` |
 
 A plot method that returns several plots saves them as `<name>-1`, `<name>-2`

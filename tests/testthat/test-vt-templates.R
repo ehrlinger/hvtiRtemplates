@@ -52,9 +52,9 @@ test_that("vt_ood flags a patient beyond the arm's largest nearest-neighbour gap
   h <- vt_helpers()
   # Arm A at 0, 1, 2 (largest within-arm gap 1); arm B at 2.5 and 10.
   x <- c(a1 = 0, a2 = 1, a3 = 2, b1 = 2.5, b2 = 10)
-  D <- as.matrix(stats::dist(x))
+  dm <- as.matrix(stats::dist(x))
   arm <- c("A", "A", "A", "B", "B")
-  r <- h$vt_ood(D, names(x), arm, c("A", "B"))
+  r <- h$vt_ood(dm, names(x), arm, c("A", "B"))
   b <- r[r$arm == "A" & r$ID %in% c("b1", "b2"), ]
   expect_equal(b$in_distribution[b$ID == "b1"], TRUE)
   expect_equal(b$in_distribution[b$ID == "b2"], FALSE)
@@ -81,9 +81,9 @@ test_that("a no-arm row must pass against both arms", {
 
 test_that("a patient with no distance to an arm is out of distribution, not NA", {
   h <- vt_helpers()
-  D <- as.matrix(stats::dist(c(a1 = 0, a2 = 1, b1 = 0.5)))
-  D["b1", c("a1", "a2")] <- D[c("a1", "a2"), "b1"] <- NA
-  r <- h$vt_ood(D, rownames(D), c("A", "A", "B"), c("A", "B"))
+  dm <- as.matrix(stats::dist(c(a1 = 0, a2 = 1, b1 = 0.5)))
+  dm["b1", c("a1", "a2")] <- dm[c("a1", "a2"), "b1"] <- NA
+  r <- h$vt_ood(dm, rownames(dm), c("A", "A", "B"), c("A", "B"))
   b1 <- r[r$ID == "b1" & r$arm == "A", ]
   expect_false(b1$in_distribution)
   expect_match(b1$reason, "no comparable")
@@ -139,7 +139,8 @@ test_that("the sid method checks the key fingerprint of a set", {
 
 test_that("the propensity sensitivity renders with missing predictors under na.impute", {
   skip_on_cran()
-  d <- vt_data(); d$x1[c(20, 40, 60)] <- NA
+  d <- vt_data()
+  d$x1[c(20, 40, 60)] <- NA
   env <- vt_fit_first(data = d)
   expect_false(anyNA(env$.elig$elig_propensity))
 })
@@ -173,7 +174,8 @@ test_that("vt_curves keys by ID, whatever the row order", {
   skip_on_cran()
   env <- vt_fit_first(labels = c(vt_fit_labels, "fit", "curves-helper", "curves"))
   shuffled <- env$d[rev(seq_len(nrow(env$d))), ]
-  again <- env$vt_curves(env$.forests, env$.train_ids, shuffled, env$ID, env$ARM, env$ARMS, no_arm = rev(env$.no_arm), seed = -abs(env$SEED))
+  again <- env$vt_curves(env$.forests, env$.train_ids, shuffled, env$ID, env$ARM, env$ARMS,
+                         no_arm = rev(env$.no_arm), seed = -abs(env$SEED))
   key <- function(x) x[order(x$ID, x$arm_of_curve, x$time), ]
   expect_equal(key(again)$surv, key(env$.curves)$surv)
 })
@@ -181,10 +183,10 @@ test_that("vt_curves keys by ID, whatever the row order", {
 test_that("a patient's own-arm curve is out of bag", {
   skip_on_cran()
   env <- vt_fit_first(labels = c(vt_fit_labels, "fit", "curves-helper", "curves"))
-  fA <- env$.forests[["A"]]
+  forest_a <- env$.forests[["A"]]
   first <- env$d[[env$ID]][env$d[[env$ARM]] %in% "A"][1]
   own <- env$.curves[env$.curves$ID == first & env$.curves$arm_of_curve == "A", "surv"]
-  expect_equal(own, unname(fA$survival.oob[1, ]))
+  expect_equal(own, unname(forest_a$survival.oob[1, ]))
 })
 
 test_that("the twin difference recovers the planted effect", {
@@ -263,8 +265,11 @@ test_that("vt-explain stops naming the file when no fit has run", {
 
 test_that("vt-explain reads the fit's own selection, stacked imputations included", {
   skip_on_cran()
-  d1 <- vt_data(); d1$imp <- 1L
-  d2 <- vt_data(); d2$imp <- 2L; d2$x1 <- d2$x1 + 100
+  d1 <- vt_data()
+  d1$imp <- 1L
+  d2 <- vt_data()
+  d2$imp <- 2L
+  d2$x1 <- d2$x1 + 100
   env <- vt_fit_first(data = rbind(d1, d2), labels = vt_fit_labels_all,
                       choices = utils::modifyList(vt_choices, list(IMPUTATION = "imp", IMPUTATION_USE = 2L)))
   vt_explain(env, vt_explain_labels_all, list(STRATIFY = "x1", BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
@@ -276,7 +281,8 @@ test_that("vt-explain reads the fit's own selection, stacked imputations include
 
 test_that("overlap weights are 1 - e on the first arm and e on the second", {
   src <- readLines(template_path("vt", "explain"), warn = FALSE)
-  env <- new.env(); eval(parse(text = rf_chunk(src, "overlap-weights")), envir = env)  # nolint: object_usage_linter.
+  env <- new.env()
+  eval(parse(text = rf_chunk(src, "overlap-weights")), envir = env)  # nolint: object_usage_linter.
   ps <- data.frame(id = c("p", "q", "r"), arm = c("A", "B", "A"), prob_t = c(0.8, 0.3, 0.1))
   expect_equal(env$vt_overlap_weights(ps, c("r", "p", "q"), "id", "arm", c("A", "B")), c(0.9, 0.2, 0.3))
 })
@@ -293,15 +299,17 @@ test_that("the stratifier joins sid-clusters on the ID digest", {
           file.path(sid_dir, "sid-clusters.rds"))
   vt_explain(env, vt_explain_labels_all,
              list(STRATIFY = list(set = "dead-sid"), BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE,
-                  .vt_read_sid = function(p) list(value = readRDS(p), lineage = list(data = list(), artifacts = list()),
-                                                  record = list(path = p))))
+                  .vt_read_sid = function(p) {
+                    list(value = readRDS(p), lineage = list(data = list(), artifacts = list()), record = list(path = p))
+                  }))
   expect_setequal(unique(env$.strata$stratum), c("hi", "lo"))
   expect_equal(sum(is.na(merge(env$r, env$.strata, by = "ID", all.x = TRUE)$stratum)), 0L)
 })
 
 test_that("a rare factor level does not abort the bootstrap", {
   skip_on_cran()
-  d <- vt_data(); d$rare <- factor(ifelse(seq_len(nrow(d)) %in% c(3, 150), "yes", "no"))
+  d <- vt_data()
+  d$rare <- factor(ifelse(seq_len(nrow(d)) %in% c(3, 150), "yes", "no"))
   env <- vt_fit_first(data = d, labels = vt_fit_labels_all,
                       choices = utils::modifyList(vt_choices, list(PREDICTORS = c("xs", "x1", "g1", "rare"))))
   vt_explain(env, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 50L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
@@ -379,4 +387,45 @@ test_that("tbl-benefit honours GAIN_MIN and splits the no-arm patients between t
   env2 <- vt_fit_first(labels = vt_fit_labels_all)
   vt_explain(env2, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
   expect_equal(sum(table(env2$.future$favours)), sum(env2$.eligible & env2$r$arm == "none"))
+})
+
+test_that("VP_SET reads a vp-fit screen's selected set, minus EXCLUDE", {
+  skip_on_cran()
+  screen <- list(selected = c("xs", "x1"), coverage = data.frame(variable = c("xs", "x1", "g1")))
+  env <- vt_with_screen(screen, utils::modifyList(vt_choices, list(VP_SET = "dead-vp", EXCLUDE = "x1")))
+  expect_equal(env$.predictors, "xs")
+})
+
+test_that("a screen that saw the arm is refused", {
+  skip_on_cran()
+  screen <- list(selected = "xs", coverage = data.frame(variable = c("xs", "arm")))
+  expect_error(vt_with_screen(screen, utils::modifyList(vt_choices, list(VP_SET = "dead-vp"))), "treatment-blind")
+})
+
+# Keyed on an MRN (no ccfid, so read_job_data() falls back to it): the job
+# digests it, and no file it writes holds one.
+test_that("no MRN reaches any file vt-fit or vt-explain generates", {
+  skip_on_cran()
+  d <- vt_data()
+  # Realistic ten-digit values: a short one such as 00000001 reads as the number 1,
+  # whose double bytes sit in every .rds, so the scan would flag a file that holds no ID.
+  d$MRN <- sprintf("73%08d", d$ccfid)
+  d$ccfid <- NULL
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all, choices = utils::modifyList(vt_choices, list(ID = "ccfid")))
+  vt_explain(env, vt_explain_labels_all)
+  # Only what the jobs wrote: the set's estimates. The fixture's input dataset
+  # under datasets/ holds the MRNs on purpose.
+  set_dir <- dirname(env$set_path("estimates", "vt.rds"))
+  expect_identical(rf_files_holding(set_dir, d$MRN), character())  # nolint: object_usage_linter.
+})
+
+test_that("vt-fit and vt-explain render end to end", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if(is.null(quarto::quarto_path()), "Quarto is not installed")
+  # nolint start: object_usage_linter.
+  rf_skip_unless_stack(unique(c(rf_template_packages("vt", "fit"), rf_template_packages("vt", "explain"))))
+  # nolint end
+  out <- vt_render_fixture()
+  expect_true(all(file.exists(out$outputs)))
 })

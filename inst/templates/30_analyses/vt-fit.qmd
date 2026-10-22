@@ -109,6 +109,16 @@ ANALYSIS_SET <- NULL
 WHERE <- NULL
 ID <- "ccfid"                               # EDIT: the patient identifier.
 KEY <- NULL
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (labs, echoes), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all.
+#   REDUCE: NULL keeps a row per joined record; list(rule = "first", by = "date")
+#     keeps one row per patient. This job models one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
 REDUCE <- NULL
@@ -219,7 +229,7 @@ if (any(.no_outcome)) {
   data.frame(Arm = a, Patients = sum(i), Events = sum(d[[STATUS]][i] == 1, na.rm = TRUE))
 }))
 .counts <- rbind(.counts, data.frame(Arm = "No arm", Patients = sum(.no_arm), Events = NA_integer_))
-knitr::kable(.counts, caption = "Patients and events by arm")
+knitr::kable(.counts)
 ```
 
 ## Predictors
@@ -403,10 +413,10 @@ for (m in .methods) {
 # data as read. Under "na.omit" nothing is missing and the copy equals d.
 .ps_data <- d[.treated, c(ID, ARM, .predictors), drop = FALSE]
 if (anyNA(.ps_data[.predictors])) {
-  set.seed(SEED)
   # impute() leaves a character column's values unimputed, so the arm goes in as a factor.
   .imp <- .ps_data[c(ARM, .predictors)]
   .imp[[ARM]] <- factor(.imp[[ARM]])
+  set.seed(SEED)
   .ps_data[.predictors] <- randomForestSRC::impute(data = .imp, ntree = 100L, seed = -abs(SEED),
                                                    verbose = FALSE)[.predictors]
 }
@@ -465,9 +475,9 @@ save_figure(.fig, "vt-fit-eligibility")
 if (length(.methods) > 1L) {
   .pairs <- utils::combn(.methods, 2L, simplify = FALSE)
   for (.p in .pairs) {
+    cat("Eligible under", .p[1], "(rows) and", .p[2], "(columns):\n\n")
     cat(knitr::kable(table(.elig[[paste0("elig_", .p[1])]], .elig[[paste0("elig_", .p[2])]],
-                           dnn = paste0("elig_", .p)),
-                     caption = paste("Eligible under", .p[1], "(rows) and", .p[2], "(columns)")),
+                           dnn = paste0("elig_", .p))),
         sep = "\n")
     cat("\n")
   }
@@ -553,7 +563,7 @@ vt_curves <- function(forests, train_ids, d, id, arm, arms, no_arm, seed) {
                                           time = f$time.interest, surv = as.vector(t(oob)))
     other <- d[!own, , drop = FALSE]
     p <- predict(f, newdata = other[, f$xvar.names, drop = FALSE], na.action = "na.impute",
-                   seed = seed)
+                 seed = seed)
     out[[length(out) + 1L]] <- data.frame(ID = rep(other[[id]], each = length(f$time.interest)), arm_of_curve = a,
                                           time = f$time.interest, surv = as.vector(t(p$survival)))
   }

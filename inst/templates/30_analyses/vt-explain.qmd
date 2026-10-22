@@ -24,6 +24,8 @@ format:
       sidebar-width: 250px
     toc-depth: 3
     code-fold: true
+    df-print: default
+    embed-resources: true
 ---
 
 <!-- EDIT: say which vt-fit job in this set this explains, and which treatment
@@ -306,13 +308,15 @@ if (is.list(STRATIFY)) {
 #| label: tbl-stratum
 #| tbl-cap: "The RMST difference by stratum and arm received, patients in distribution. A median is shown only
 #|   where a cell holds at least 5 patients."
+#| results: asis
 if (is.null(.strata)) {
   cat("No stratifier chosen (STRATIFY is NULL).\n")
 } else {
   .sr0 <- r[.eligible & r$arm %in% ARMS, c("ID", "arm", "diff")]
   .sr <- merge(.sr0, .strata, by = "ID")
   if (nrow(.sr) < nrow(.sr0)) cat(nrow(.sr0) - nrow(.sr), "eligible patients have no stratum and are not shown.\n\n")
-  print(knitr::kable(as.data.frame.matrix(table(.sr$stratum, .sr$arm)), caption = "Patients by stratum and arm received"))
+  cat("Patients by stratum and arm received:\n\n")
+  print(knitr::kable(as.data.frame.matrix(table(.sr$stratum, .sr$arm))))
   .cells <- split(.sr, list(.sr$stratum, .sr$arm), drop = TRUE)
   .st <- do.call(rbind, lapply(.cells, function(x) {
     data.frame(stratum = x$stratum[1L], arm = x$arm[1L], n = nrow(x),
@@ -336,7 +340,8 @@ vt_overlap_weights <- function(ps_data, ids, id, arm, arms, score = "prob_t") {
 ```
 
 ```{r}
-#| label: betas
+#| label: tbl-betas
+#| tbl-cap: "Standardized beta for each characteristic. unestimable: bootstrap resamples in which the characteristic did not vary."
 # Each patient's log relative risk at HORIZON, scaled by its SD, regressed on one
 # characteristic at a time with overlap weights (Ishwaran and Blackstone, 2025).
 # The forests are fixed; only patients are resampled.
@@ -387,8 +392,7 @@ if (BOOT > 0) {
   .betas$upper <- apply(.boot, 1L, stats::quantile, 0.975, na.rm = TRUE)
   .betas$unestimable <- rowSums(is.na(.boot))
 }
-knitr::kable(.betas, digits = 2, caption = paste("Standardized beta for each characteristic.",
-                                                 "unestimable: bootstrap resamples in which the characteristic did not vary."))
+knitr::kable(.betas, digits = 2)
 ```
 
 ```{r}
@@ -411,12 +415,14 @@ save_figure(.fig, "vt-explain-betas")
 ```{r}
 #| label: tbl-benefit
 #| tbl-cap: "Patients in distribution whose twin favours the arm they did not receive, by more than GAIN_MIN"
+#| results: asis
 .gain <- ifelse(r$arm == ARMS[1], -r$diff, ifelse(r$arm == ARMS[2], r$diff, NA))
 .is_ben <- .eligible & r$arm %in% ARMS & (.gain > GAIN_MIN) %in% TRUE
 .benefit <- r[.is_ben, ]
 .future <- r[.eligible & r$arm == "none", ]
 .future$favours <- ifelse(.future$diff > 0, ARMS[1], ARMS[2])
-print(knitr::kable(as.data.frame(table(received = .benefit$arm)), caption = "Patients whose twin favours the other arm"))
+cat("Patients whose twin favours the other arm:\n\n")
+print(knitr::kable(as.data.frame(table(received = .benefit$arm))))
 # Their characteristics beside the rest of their arm: median (IQR) for a number, percent for a factor.
 .sumry <- function(x) {
   do.call(rbind, lapply(.vt$predictors$names, function(v) {
@@ -439,8 +445,12 @@ print(knitr::kable(as.data.frame(table(received = .benefit$arm)), caption = "Pat
   s0 <- .sumry(dd[!hit, , drop = FALSE])
   data.frame(arm = a, variable = s1$variable, other_arm_favoured = s1$value, rest = s0$value[match(s1$variable, s0$variable)])
 }))
-if (!is.null(.ben_tab)) print(knitr::kable(.ben_tab, caption = "Characteristics of those patients beside the rest of the arm"))
-print(knitr::kable(as.data.frame(table(favours = .future$favours)), caption = "Patients with no arm, by the arm their twin favours"))
+if (!is.null(.ben_tab)) {
+  cat("Characteristics of those patients beside the rest of the arm:\n\n")
+  print(knitr::kable(.ben_tab))
+}
+cat("Patients with no arm, by the arm their twin favours:\n\n")
+print(knitr::kable(as.data.frame(table(favours = .future$favours))))
 ```
 
 ## Reading the result
