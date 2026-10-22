@@ -1,7 +1,7 @@
 # `sid` templates: design, 2026-10-22
 
 **Status** Design, approved by section on 2026-10-22. Revised the same day,
-after review of the plan, for the imputation choice with pooling over `M`,
+after review of the plan and the Codex review of #394, for the imputation choice with pooling over `M`,
 digested IDs, and the `clusters` element `vt` reads. Not implemented.
 **Adds** two templates under the existing `sid` prefix, `sid-fit.qmd` and
 `sid-clusters.qmd`. Both ship with ledger status `in-flight`.
@@ -200,15 +200,22 @@ silhouette and classical MDS. So it needs no seed.
      the parent's letter by majority overlap, and its siblings take fresh
      letters. An override naming an unknown cluster id is an error, and so is
      running past 26 letters.
+     **Nothing depends on PAM's cluster numbers**, which are arbitrary (Codex
+     review of #394). Equal-sized clusters are ordered by their first
+     patient. Parents hand out fresh letters in the order of their own
+     letters.
    - `sid_collapse(letters, map)`: unmapped letters keep their own letter. A
      letter in the map that does not occur at K is an error, and so is one
      mapped twice.
    - `sid_mds_signs(xy)`: flips each MDS axis so that the patient with the
-     largest absolute coordinate on it is positive. The second study's map
+     largest absolute coordinate on it is positive. Equally distant patients
+     are told apart by their ID digest (the row name). The second study's map
      mirrored between renders because `cmdscale()` signs are arbitrary. This
      rule depends on neither the row order nor the render.
 4. **PAM.** `pam(as.dist(D), k)` for k = 1 to `max(K_RANGE, K_METRICS_MAX)`,
-   held in memory. At this size PAM is seconds, so it is not cached.
+   capped at n − 1, since PAM needs fewer clusters than patients. A
+   `K_RANGE` reaching n stops with a message, because it is the author's
+   request; the metrics-only range is simply capped. Held in memory. At this size PAM is seconds, so it is not cached.
 5. **Choosing K.** One faceted figure: the PAM objective normalized to its
    k = 1 value (the elbow), and the average silhouette for k ≥ 2. A table
    gives each k's values and marks the silhouette maximum. The elbow is read
@@ -244,12 +251,20 @@ one:
   holds only the ID and letters, never a clustering variable, so the
   registered file adds no data the study did not already hold.
 - On the first render, `hvtiRutilities::register_data(built = <that file>,
-  dataset = "clusters_<subject>_<type>", role = "named", kind = "ancillary",
-  key = ID)`. Dataset names must match `^[a-z][a-z0-9_]*$`, so subject and
-  type are lowercased.
+  dataset = "clusters_<nchar(subject)>_<subject>_<type>", role = "named",
+  kind = "ancillary", key = ID)`, so `clusters_10_morphology_sid`.
+  - Dataset names must match `^[a-z][a-z0-9_]*$`, so subject and type are
+    lowercased.
+  - The subject's length comes first because both fields may hold `_`:
+    without it, `(a_b, c)` and `(a, b_c)` would share one name (Codex review
+    of #394).
+  - A name already registered to a different file or key stops the job.
+    Names that differ only in case would otherwise meet there, and
+    `update_manifest()` would follow the other set's file and report stale
+    letters as current.
 - On a later render, `register_data()` would stop: it registers a dataset
   only once. The job instead rewrites the file and runs
-  `update_manifest(dataset = "clusters_<subject>_<type>")` from the study
+  `update_manifest(dataset = <that name>)` from the study
   root. That records a new dated version (`_r2` on the same day), keeps the
   earlier ones, and leaves an unchanged file alone. A later job therefore
   reads the current assignments, and its manifest check passes.
@@ -262,7 +277,7 @@ one:
   - `id_key` is the study key's fingerprint, as in `sid.rds`.
   - `letters` is the letter map per K, `pm<k>` PAM number to letter.
 
-A later job then sets `JOIN <- "clusters_<subject>_<type>"`.
+A later job then sets `JOIN` to that name, which the job prints.
 `read_job_data()` stops a `one_row_per_patient = TRUE` job, such as `vp-fit`,
 on any JOIN without `REDUCE`, even when the joined key is the ID itself.
 `REDUCE <- list(rule = "first", by = ID)` satisfies it, since each patient has
@@ -292,14 +307,17 @@ running the **installed** templates chunk by chunk through `rf_run()` and
    anything.) At K = 3 the clusters match the planted groups:
    `randomForestSRC::sid.perf.metric()`'s normalized measure is below 0.2.
 2. **The seed reproduces the fit, proven by mutation.** Two `sid-fit` runs
-   with `SID_REDUCE = TRUE` and the same `SEED` give identical `dist`. Remove
+   with `SID_REDUCE = TRUE`, the same `SEED` and different incoming generator
+   states give identical `dist` values. Only the values are compared: each
+   throwaway study has its own ID key, so the digest names differ by design. Remove
    `seed =` from the fit's `cache_fit()` call and confirm the test fails.
 2a. **Imputation.** `IMPUTE = "forest"` runs. `M = 2` fits two forests,
    reports the agreement of each with the mean, and saves the mean.
 3. **`sid_align_labels()`** on hand-built matrices: lineage across K, an
    override applied, an unknown override id errors, the letter pool errors
    past 26, and relabelling PAM's cluster numbers within each column leaves
-   the letters unchanged. No fit, so these run on CRAN too.
+   the letters unchanged. That includes two parents splitting at once and
+   equal-sized clusters. No fit, so these run on CRAN too.
 4. **`sid_collapse()`** and **`sid_mds_signs()`**: an unmapped letter is kept,
    an absent letter errors, a letter mapped twice errors; signs do not change
    under a row permutation or a sign flip of the input. No fit.
@@ -310,6 +328,9 @@ running the **installed** templates chunk by chunk through `rf_run()` and
    key ID. A second render with different `OVERRIDES` succeeds, and a read
    returns the new letters. A `read_job_data(join = ...)` read returns one cluster per patient,
    for both a long read and a `one_row_per_patient = TRUE` read (section 5).
+6a. **Limits.** A 12-patient cohort caps the metrics at 11 and refuses
+   `K_RANGE = 2:12`. A registered name that belongs to another file stops
+   the job.
 7. **K.** `K = NULL` runs every chunk, skips the K sections with a note and
    saves `clusters = NULL`. It stops under `HVTI_TEMPLATE_STRICT=true`. A K
    outside `K_RANGE` errors. With K set, `clusters` holds one row per patient,

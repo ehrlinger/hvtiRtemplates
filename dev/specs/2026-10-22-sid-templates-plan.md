@@ -219,10 +219,11 @@ The helpers come first because they are pure functions with hand-built tests, ne
 - Modify: `.lintr` (a file key)
 
 **Interfaces:**
-- Produces, in chunk `sid-helpers`:
+- Produces, in chunk `sid-helpers` (each is invariant to how PAM numbers its clusters and to row order; found in the Codex review of #394):
   - `sid_align_labels(mat, overrides = list(), pool = LETTERS)`: `mat` is an integer matrix or data frame, one column per K in ascending order, named `pm<k>`. Returns a character matrix of the same shape and names.
   - `sid_collapse(letters, map)`: `letters` is a character vector; `map` is a named list of character vectors. Returns a character vector.
-  - `sid_mds_signs(xy)`: `xy` is a numeric matrix. Returns it with each column's sign set.
+  - `sid_mds_signs(xy)`: `xy` is a numeric matrix whose rownames are the patients' ID digests. Returns it with each column's sign set.
+  - `sid_dataset_name(subject, type)`: the registered dataset name, `clusters_<nchar(subject)>_<subject>_<type>`, lowercased.
 - Produces, in `helper-sid.R`: `sid_helpers_env()`, an environment holding the three helpers, parsed from the installed template.
 
 - [ ] **Step 1: Write the failing helper tests**
@@ -284,6 +285,39 @@ test_that("sid_align_labels never gives two clusters one letter when an override
   pm3 <- tapply(out[, "pm3"], mat$pm3, unique)
   expect_identical(anyDuplicated(unlist(pm3)), 0L)
   expect_error(h$sid_align_labels(mat, overrides = list(pm3 = c("1" = "B", "2" = "B"))), "one letter to two")
+})
+
+test_that("sid_align_labels gives the same letters when several parents split, however PAM numbered them", {
+  h <- sid_helpers_env()
+  # Found in review (Codex, #394): two parents each produce a fresh child at
+  # K = 4, with no size ties; the order of PAM's numbers decided D and E.
+  mat <- data.frame(pm2 = c(rep(1, 20), rep(2, 19)), pm3 = c(rep(1, 20), rep(2, 16), rep(3, 3)),
+                    pm4 = c(rep(1, 12), rep(2, 8), rep(3, 10), rep(4, 6), rep(1, 3)))
+  other <- mat
+  other$pm4 <- c(`1` = 4, `2` = 3, `3` = 2, `4` = 1)[as.character(mat$pm4)]
+  expect_identical(h$sid_align_labels(other), h$sid_align_labels(mat))
+})
+
+test_that("sid_align_labels orders equal-sized clusters by their first patient, not PAM's number", {
+  h <- sid_helpers_env()
+  one <- h$sid_align_labels(data.frame(pm2 = c(1, 1, 2, 2)))
+  two <- h$sid_align_labels(data.frame(pm2 = c(2, 2, 1, 1)))
+  expect_identical(one, two)
+  expect_identical(one[, "pm2"], c("A", "A", "B", "B"))
+})
+
+test_that("sid_mds_signs breaks a tie between equally distant patients by row name", {
+  h <- sid_helpers_env()
+  xy <- cbind(c(-1, 1), c(2, -2))
+  rownames(xy) <- c("p2", "p1")
+  expect_identical(h$sid_mds_signs(xy[2:1, ]), h$sid_mds_signs(xy)[2:1, ])
+  expect_identical(unname(h$sid_mds_signs(xy)["p1", ]), c(1, 2))
+})
+
+test_that("sid_dataset_name keeps sets apart whose names split differently at an underscore", {
+  h <- sid_helpers_env()
+  expect_false(identical(h$sid_dataset_name("a_b", "c"), h$sid_dataset_name("a", "b_c")))
+  expect_match(h$sid_dataset_name("Morphology", "sid"), "^[a-z][a-z0-9_]*$")
 })
 
 test_that("sid_align_labels stops when the letter pool runs out", {
@@ -445,6 +479,9 @@ FIGURES <- NULL
 # the previous solution's cluster that contributes most of its patients; the
 # largest child of each parent inherits the parent's letter and its siblings
 # take fresh ones. An override pins a letter to a PAM cluster number.
+# PAM numbers its clusters arbitrarily, so nothing here may depend on those
+# numbers: clusters of equal size are ordered by their first patient (row),
+# and parents hand out fresh letters in the order of their own letters.
 sid_align_labels <- function(mat, overrides = list(), pool = LETTERS) {
   mat <- as.matrix(mat)
   out <- matrix(NA_character_, nrow(mat), ncol(mat), dimnames = list(NULL, colnames(mat)))
@@ -465,20 +502,29 @@ sid_align_labels <- function(mat, overrides = list(), pool = LETTERS) {
     if (is.na(l)) stop("Letter pool exhausted: more clusters than letters.", call. = FALSE)
     l
   }
+  # Cluster ids of column `x`, largest first, equal sizes by their first row.
+  by_size <- function(x, ids = unique(x)) {
+    ids <- as.character(ids)
+    size <- vapply(ids, function(id) sum(x == id), integer(1))
+    first <- vapply(ids, function(id) match(id, x), integer(1))
+    ids[order(-size, first)]
+  }
   used <- character(0)
-  sizes <- table(mat[, 1])
-  ids <- names(sort(sizes, decreasing = TRUE))
+  col1 <- as.character(mat[, 1])
+  ids <- by_size(col1)
   got <- pinned(colnames(mat)[1], ids)
   for (id in ids) if (is.na(got[id])) got[id] <- fresh(c(used, got))
   used <- unique(c(used, got))
-  out[, 1] <- got[as.character(mat[, 1])]
+  out[, 1] <- got[col1]
   for (k in seq_len(ncol(mat))[-1]) {
-    tab <- table(out[, k - 1], mat[, k])
+    colk <- as.character(mat[, k])
+    tab <- table(out[, k - 1], colk)
+    # rownames(tab) are the previous letters, sorted, so a tie between parents
+    # goes to the earlier letter whatever PAM's numbering.
     parent <- apply(tab, 2, function(col) rownames(tab)[which.max(col)])
     got <- pinned(colnames(mat)[k], colnames(tab))
-    for (p in unique(parent)) {
-      kids <- names(parent)[parent == p]
-      kids <- kids[order(colSums(tab)[kids], decreasing = TRUE)]
+    for (p in sort(unique(parent))) {
+      kids <- by_size(colk, names(parent)[parent == p])
       # Checked against the whole column: an override may already have given
       # the parent's letter to a cluster of another parent.
       if (!p %in% got) {
@@ -488,7 +534,7 @@ sid_align_labels <- function(mat, overrides = list(), pool = LETTERS) {
       for (ch in kids) if (is.na(got[ch])) got[ch] <- fresh(c(used, got))
     }
     used <- unique(c(used, got))
-    out[, k] <- got[as.character(mat[, k])]
+    out[, k] <- got[colk]
   }
   out
 }
@@ -507,12 +553,24 @@ sid_collapse <- function(letters, map) {
 
 # cmdscale() returns each axis with an arbitrary sign, so a map can mirror
 # between renders. Each axis is turned so that the patient furthest from the
-# origin along it is positive, which depends on neither row order nor render.
+# origin along it is positive. Among patients equally far, the one whose row
+# name (the ID digest) sorts first decides, so neither row order nor render
+# changes the picture.
 sid_mds_signs <- function(xy) {
+  key <- if (is.null(rownames(xy))) seq_len(nrow(xy)) else rownames(xy)
   for (j in seq_len(ncol(xy))) {
-    if (xy[which.max(abs(xy[, j])), j] < 0) xy[, j] <- -xy[, j]
+    far <- which(abs(xy[, j]) == max(abs(xy[, j])))
+    if (xy[far[order(key[far])[1]], j] < 0) xy[, j] <- -xy[, j]
   }
   xy
+}
+
+# The name a set's clusters are registered under. Dataset names allow only
+# [a-z0-9_], and SUBJECT and TYPE may themselves hold "_", so the subject's
+# length is written first: (a_b, c) and (a, b_c) would otherwise share one name.
+# Names that differ only in case still meet, which the save chunk refuses.
+sid_dataset_name <- function(subject, type) {
+  paste0("clusters_", nchar(subject), "_", tolower(subject), "_", tolower(type))
 }
 ```
 
@@ -550,7 +608,7 @@ R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
 R_LIBS="$SID_LIB" Rscript -e 'devtools::test(filter = "sid-templates")'
 ```
 
-Expected: PASS, 7 tests. If the renumbering test fails, the cause is ties in `sort()` order: the test data have no ties, so look for a bug in `parent`.
+Expected: PASS, 11 tests. If a renumbering test fails, the cause is ties in `sort()` order: the test data have no ties, so look for a bug in `parent`.
 
 - [ ] **Step 6: The ledger row and the template count**
 
@@ -698,9 +756,14 @@ test_that("the seed reproduces a reduce = TRUE fit", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("sid", "fit"))
   choices <- utils::modifyList(sid_fit_choices, list(SID_REDUCE = TRUE))
+  # Each throwaway study draws its own ID key, so the digest dimnames differ
+  # by design; the numbers must not. The incoming generator states differ too,
+  # so only the job's own seeding can make the two agree.
+  set.seed(1)
   one <- readRDS(sid_fit_first(choices = choices)$set_path("estimates", "sid.rds"))$dist
+  set.seed(2)
   two <- readRDS(sid_fit_first(choices = choices)$set_path("estimates", "sid.rds"))$dist
-  expect_identical(one, two)
+  expect_identical(unname(one), unname(two))
 })
 ```
 
@@ -1046,7 +1109,7 @@ R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
 NOT_CRAN=true R_LIBS="$SID_LIB" Rscript -e 'system.time(devtools::test(filter = "sid-templates"))'
 ```
 
-Expected: PASS, 11 tests. Record the elapsed time in the commit message. If it exceeds 60 seconds, set the seed test's `NTREE` to 200, which still recovered the groups in review.
+Expected: PASS, 16 tests. Record the elapsed time in the commit message. If it exceeds 60 seconds, set the seed test's `NTREE` to 200, which still recovered the groups in review.
 
 - [ ] **Step 7: Prove the seed test by mutation**
 
@@ -1095,7 +1158,7 @@ git commit -m "feat(sid-fit): mice or forest imputation over M, seeded SID fores
 - Consumes: `sid.rds` (Task 3); `sid_align_labels`, `sid_collapse`, `sid_mds_signs` (Task 2).
 - Produces:
   - `datasets/<subject>-<type>-clusters.csv` with columns `<id>`, `C<k>` for each k in `K_RANGE`, and `G<K>` when `COLLAPSE` is set;
-  - the registered dataset `clusters_<subject>_<type>`, `kind = "ancillary"`, `key = <id>`: registered on the first render, a new dated version via `update_manifest()` on each later one;
+  - the registered dataset `sid_dataset_name(SUBJECT, TYPE)`, e.g. `clusters_10_morphology_sid`, `kind = "ancillary"`, `key = <id>`: registered on the first render, a new dated version via `update_manifest()` on each later one;
   - `estimates/<subject>-<type>/sid-clusters.rds`, `list(clusters, id_key, pam, metrics, letters, k, overrides, collapse)` with lineage. Its parts:
     - `clusters` is `data.frame(id = <ID digest, character>, cluster = <letter at K, character>)`, plus `group` when `COLLAPSE` is set, or `NULL` while `K` is `NULL`. **This is the element `vt-explain` reads** (agreed with the vt design session, 2026-10-22);
     - `id_key` is the key fingerprint copied from `sid.rds`;
@@ -1160,14 +1223,14 @@ test_that("sid-clusters writes and registers the cluster letters, and nothing el
   expect_identical(names(out), c("ccfid", "C2", "C3", "C4", "C5", "G3"))
   expect_identical(nrow(out), 150L)
   cfg <- hvtiRutilities::study_config(start = env$.root)
-  expect_true("clusters_morphology_sid" %in% names(cfg$additional_datasets))
+  expect_true("clusters_10_morphology_sid" %in% names(cfg$additional_datasets))
   # A second render with letters pinned differently re-registers, and a read
   # returns the new letters.
   # The K = 2 map the first render chose, PAM number -> letter, reversed.
   map <- readRDS(env$set_path("estimates", "sid-clusters.rds"))$letters$pm2
   flip <- stats::setNames(rev(unname(map)), names(map))
   sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(OVERRIDES = list(pm2 = flip))))
-  again <- read_job_data(hvtiRutilities::study_config(start = env$.root), join = "clusters_morphology_sid")$data
+  again <- read_job_data(hvtiRutilities::study_config(start = env$.root), join = "clusters_10_morphology_sid")$data
   expect_false(identical(again$c2[again$ccfid == out$ccfid[1]], out$C2[1]))
 })
 
@@ -1184,6 +1247,29 @@ test_that("K = NULL renders the metrics and skips what needs K; a final render o
   withr::with_envvar(c(HVTI_TEMPLATE_STRICT = "true"),
                      expect_error(rf_run("sid", "clusters", sid_clusters_labels[c(2:4)], env, no_k), "set K"))
   expect_error(sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(K = 9L))), "K_RANGE")
+})
+
+test_that("a small cohort caps the metrics at n - 1 and refuses a K_RANGE it cannot hold", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first(sid_data(n_per = 4L))  # 12 patients
+  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(K_RANGE = 2:9, K_METRICS_MAX = 15)))
+  expect_identical(env$sid_metrics$k, 1:11)
+  expect_error(sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(K_RANGE = 2:12))), "only 12 patients")
+})
+
+test_that("sid-clusters refuses a registered name that belongs to another file", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  # Another set already holds the name, as a set whose name differs only in case would.
+  dd <- hvtiRutilities::study_dir("datasets", env$.root)
+  utils::write.csv(data.frame(ccfid = 1:150, C2 = "A"), file.path(dd, "other-clusters.csv"), row.names = FALSE)
+  utils::capture.output(suppressMessages(hvtiRutilities::register_data(
+    env$.root, built = "other-clusters.csv", dataset = "clusters_10_morphology_sid", role = "named",
+    population = "x", kind = "ancillary", key = "ccfid"
+  )))
+  expect_error(sid_clusters_after(env), "already registered to other-clusters.csv")
 })
 
 test_that("the clusters element vt reads holds one digest-keyed letter per patient, and no raw ID", {
@@ -1248,6 +1334,12 @@ sid_ids <- .rebuilt[.at_fit]
 if (any(diff(K_RANGE) != 1) || min(K_RANGE) < 2L) {
   stop("K_RANGE must be consecutive and start at 2 or more, such as 2:9.", call. = FALSE)
 }
+# PAM needs fewer clusters than patients. K_RANGE is the author's request and
+# stops; K_METRICS_MAX only draws the metrics further out, so it is capped.
+if (max(K_RANGE) >= attr(D, "Size")) {
+  stop("K_RANGE reaches ", max(K_RANGE), " clusters, but only ", attr(D, "Size"), " patients were clustered. ",
+       "Lower K_RANGE.", call. = FALSE)
+}
 if (!is.null(K) && !K %in% K_RANGE) stop("K = ", K, " is not in K_RANGE (", toString(K_RANGE), ").", call. = FALSE)
 # A draft may leave K unset to choose it from the metrics below; a final report
 # must name the solution it reports.
@@ -1265,7 +1357,7 @@ deterministic given the distance, so this job needs no seed.
 
 ```{r}
 #| label: pam
-.ks <- seq_len(max(K_RANGE, K_METRICS_MAX))
+.ks <- seq_len(min(max(K_RANGE, K_METRICS_MAX), attr(D, "Size") - 1L))
 sid_pam <- lapply(.ks, function(k) cluster::pam(D, k))
 names(sid_pam) <- paste0("pm", .ks)
 sid_metrics <- data.frame(
@@ -1429,12 +1521,20 @@ job takes the cluster at K as a classification outcome.
 # The letters, for any later job to JOIN by the patient ID. Only the ID and
 # letters are written: no clustering variable leaves this job.
 .csv_name <- paste0(SUBJECT, "-", TYPE, "-clusters.csv")
-.dataset <- tolower(paste0("clusters_", SUBJECT, "_", TYPE))
+.dataset <- sid_dataset_name(SUBJECT, TYPE)
+# A name already registered to another file or key is not this set's: two sets
+# whose names differ only in case meet here. update_manifest() would follow
+# that other file and report success on stale letters, so stop instead.
+.reg <- .cfg$additional_datasets[[.dataset]]
+if (!is.null(.reg) && (!identical(.reg$built, .csv_name) || !identical(.reg$key, .id))) {
+  stop("The dataset name `", .dataset, "` is already registered to ", .reg$built, ", not this set's ", .csv_name,
+       ". Give this set a subject or type that differs by more than case.", call. = FALSE)
+}
 utils::write.csv(sid_letters, file.path(hvtiRutilities::study_dir("datasets", .root), .csv_name), row.names = FALSE)
 # register_data() registers a dataset once and stops on a second call. A later
 # render records the rewritten file as a new dated version instead, so later
 # jobs read the current letters and their manifest check passes.
-if (.dataset %in% names(.cfg$additional_datasets)) {
+if (!is.null(.reg)) {
   utils::capture.output(suppressMessages(
     withr::with_dir(.root, hvtiRutilities::update_manifest(dataset = .dataset))
   ))
@@ -1499,7 +1599,7 @@ R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
 NOT_CRAN=true R_LIBS="$SID_LIB" Rscript -e 'devtools::test(filter = "sid-templates")'
 ```
 
-Expected: PASS, 16 tests. If the recovery test's score is above 0.2, print `table(truth, env$sid_letters$C3)` before changing anything. The review measured 0.12 at `NTREE = 200` on this cohort, so a high score at 500 points to a bug, most likely `sid_ids` misordered against `rownames(sid$dist)`.
+Expected: PASS, 23 tests. If the recovery test's score is above 0.2, print `table(truth, env$sid_letters$C3)` before changing anything. The review measured 0.12 at `NTREE = 200` on this cohort, so a high score at 500 points to a bug, most likely `sid_ids` misordered against `rownames(sid$dist)`.
 
 - [ ] **Step 6: The catalog-wide gates**
 
@@ -1527,7 +1627,7 @@ Spec §5: a long read and a one-row-per-patient read both JOIN the registered da
 - Modify: `inst/templates/30_analyses/sid-clusters.qmd` (one sentence at the end of "Reading the result")
 
 **Interfaces:**
-- Consumes: the registered dataset `clusters_<subject>_<type>` (Task 4).
+- Consumes: the registered dataset `sid_dataset_name(SUBJECT, TYPE)`, e.g. `clusters_10_morphology_sid` (Task 4).
 
 - [ ] **Step 1: Write the test**
 
@@ -1540,11 +1640,11 @@ test_that("a later job joins the registered clusters, one per patient", {
   env <- sid_fit_first()
   sid_clusters_after(env)
   cfg <- hvtiRutilities::study_config(start = env$.root)
-  long <- read_job_data(cfg, join = "clusters_morphology_sid")
+  long <- read_job_data(cfg, join = "clusters_10_morphology_sid")
   expect_identical(nrow(long$data), 150L)
   expect_true(all(c("c2", "c3") %in% tolower(names(long$data))))
-  expect_error(read_job_data(cfg, join = "clusters_morphology_sid", one_row_per_patient = TRUE), "REDUCE")
-  one <- read_job_data(cfg, join = "clusters_morphology_sid", reduce = list(rule = "first", by = "ccfid"),
+  expect_error(read_job_data(cfg, join = "clusters_10_morphology_sid", one_row_per_patient = TRUE), "REDUCE")
+  one <- read_job_data(cfg, join = "clusters_10_morphology_sid", reduce = list(rule = "first", by = "ccfid"),
                        one_row_per_patient = TRUE)
   expect_identical(nrow(one$data), 150L)
   expect_identical(anyDuplicated(one$data$ccfid), 0L)
@@ -1558,7 +1658,7 @@ R CMD INSTALL --no-test-load -l "$SID_LIB" . >/dev/null 2>&1
 NOT_CRAN=true R_LIBS="$SID_LIB" Rscript -e 'devtools::test(filter = "sid-templates")'
 ```
 
-Expected: PASS, 17 tests.
+Expected: PASS, 24 tests.
 
 - [ ] **Step 3: Say it in the report**
 
