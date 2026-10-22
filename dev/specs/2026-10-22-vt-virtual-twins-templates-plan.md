@@ -1308,6 +1308,51 @@ test_that("no MRN reaches any file vt-fit or vt-explain generates", {
 
 Put `vt_with_screen()` in `helper-vt.R`, not the test file.
 
+A full Quarto render of both jobs, end to end, because the chunk runner does not exercise everything a render does (the `provenance` chunk's `.embed_provenance(.in, ...)` resolving the render input, figure saving, the draft guards). Follow `rm_render_fixture()` in `helper-rm.R`: a fresh study with `vt_data()` written as `built.csv` and registered, `add_job("vt", "dead", "vt", dir = root, qualifier = "fit")` and then `"explain"`, every `EDIT:` replaced by `REVIEWED:`, each study-choice line set from `vt_choices` (`NTREE <- 50`, `BOOT <- 20`), then `quarto::quarto_render()`. In `helper-vt.R`:
+
+```r
+vt_render_fixture <- function(.local_envir = parent.frame()) {
+  root <- tempfile("vt-study-")
+  withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Synthetic vt study", study_tracker_id = 42L, renv = FALSE))
+  utils::write.csv(vt_data(), file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv", role = "study", population = "Synthetic cohort"))
+  set_line <- function(lines, key, value) {
+    lines[which(grepl(paste0("^", key, " <- "), lines))[1L]] <- paste(key, "<-", value)
+    lines
+  }
+  jobs <- vapply(c("fit", "explain"), function(q) {
+    job <- add_job("vt", "dead", "vt", dir = root, qualifier = q)
+    lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
+    if (q == "fit") {
+      for (kv in list(c("TIME", '"time"'), c("STATUS", '"event"'), c("ARM", '"arm"'), c("ARMS", 'c("A", "B")'),
+                      c("PREDICTORS", 'c("xs", "x1", "g1")'), c("HORIZON", "2"), c("NTREE", "50"))) {
+        lines <- set_line(lines, kv[1], kv[2])
+      }
+    } else {
+      lines <- set_line(lines, "BOOT", "20")
+    }
+    writeLines(lines, job)
+    job
+  }, "")
+  for (job in jobs) quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
+  list(root = root, jobs = jobs, outputs = sub("[.]qmd$", ".html", jobs))
+}
+```
+
+```r
+test_that("vt-fit and vt-explain render end to end", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if(is.null(quarto::quarto_path()), "Quarto is not installed")
+  rf_skip_unless_stack(unique(c(rf_template_packages("vt", "fit"), rf_template_packages("vt", "explain"))))  # nolint: object_usage_linter.
+  out <- vt_render_fixture()
+  expect_true(all(file.exists(out$outputs)))
+})
+```
+
+Render tests use the installed package, so run them with the private library (`R_LIBS="$VT_LIB"`).
+
 - [ ] **Step 2: Run them and make them pass**
 
 Run: `R CMD INSTALL -l "$VT_LIB" . && R_LIBS="$VT_LIB" Rscript -e 'devtools::test(filter = "vt")'`
