@@ -29,11 +29,11 @@ refuses to overwrite an existing job.
 | `30_analyses/bc.qmd` | bootstrap variable selection, Cox | `30_analyses/` or `analyses/` |
 | `30_analyses/bh.qmd` | bootstrap variable selection | `30_analyses/` or `analyses/` |
 | `30_analyses/rfs-fit.qmd` | random survival forest, grown and checked | `30_analyses/` or `analyses/` |
-| `30_analyses/rfs-explain.qmd` | importance, VarPro and dependence for an `rfs` forest | `30_analyses/` or `analyses/` |
+| `30_analyses/rfs-explain.qmd` | importance and dependence for an `rfs` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/rfc-fit.qmd` | classification forest, grown and checked | `30_analyses/` or `analyses/` |
-| `30_analyses/rfc-explain.qmd` | importance, VarPro and dependence for an `rfc` forest | `30_analyses/` or `analyses/` |
+| `30_analyses/rfc-explain.qmd` | importance and dependence for an `rfc` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/rfr-fit.qmd` | regression forest, grown and checked | `30_analyses/` or `analyses/` |
-| `30_analyses/rfr-explain.qmd` | importance, VarPro and dependence for an `rfr` forest | `30_analyses/` or `analyses/` |
+| `30_analyses/rfr-explain.qmd` | importance and dependence for an `rfr` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/vp-fit.qmd` | VarPro screen: coverage, a noise bar by kind and stability across subsamples (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/vp-explain.qmd` | VarPro partial dependence for the variables a `vp-fit` screen selected (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/nb-boostmtree.qmd` | boosted multivariate trees for a response measured at each visit | `30_analyses/` or `analyses/` |
@@ -389,7 +389,7 @@ as on a Mac without XQuartz.
 | lp-mirror | `lp-mirror-unmatched`, `lp-mirror-weighted`, and `lp-mirror-matched` when `MATCH` is set |
 | bc, bh, bl, br | `<prefix>-frequencies` |
 | nb-boostmtree | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>`, `-traces` |
-| rfc-, rfr-, rfs-explain | `<template>-importance`, `-varpro`, `-dependence-marginal`, `-dependence-partial`, `-dependence-varpro` |
+| rfc-, rfr-, rfs-explain | `<template>-importance`, `-dependence-marginal`, `-dependence-partial` |
 | rfc-fit | `rfc-fit-diagnostics-error`, `-roc` |
 | rfr-fit | `rfr-fit-diagnostics-error`, `-predicted` |
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |

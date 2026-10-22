@@ -34,7 +34,7 @@ format:
 
 An `rfs-fit` job grows a random survival forest and checks that it learned
 something: out-of-bag error by number of trees, predicted survival, and the
-Brier score over follow-up. **Importance, VarPro and dependence plots are not
+Brier score over follow-up. **Importance and dependence plots are not
 here.** They are the `rfs-explain` job in this same set, which reads the forest
 this job saves instead of growing its own, so the explanations always describe
 this forest.

@@ -40,8 +40,7 @@ test_that("every printed figure is also saved, under its documented name", {
     `vp-explain` = "vp-explain-dependence-varpro"
   )
   for (t in c("rfc-explain", "rfr-explain", "rfs-explain")) {
-    expected[[t]] <- paste0(t, c("-importance", "-varpro", "-dependence-marginal", "-dependence-partial",
-                                 "-dependence-varpro"))
+    expected[[t]] <- paste0(t, c("-importance", "-dependence-marginal", "-dependence-partial"))
   }
   for (name in names(expected)) {
     src <- template_source(name)
