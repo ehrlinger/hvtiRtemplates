@@ -122,17 +122,26 @@ Chunks, in order:
 7. **What the forest used.** The variables the reduce step kept, from the
    fit's `sid` element, beside those it dropped, and the dimension of `dist`.
 8. **Save** one handoff, `estimates/<subject>-<type>/sid.rds`, with handoff
-   lineage attached:
-   `list(dist, id, vars, dropped, reduced, settings, data)`. `data` holds the
-   **un-imputed** values of `VARS` with the ID, so later profiling describes
-   observed values, not imputed ones. The forest itself is not saved: it is
-   large and nothing downstream reads it.
+   lineage attached (including the data selection):
+   `list(dist, kept, vars, dropped, reduced, settings)`. `kept` is a logical
+   vector over the rows read, marking those clustered.
+   - **It holds no patient identifier and no patient values.** `sid-clusters`
+     rebuilds the IDs from the recorded selection, as every downstream job
+     rebuilds its cohort. That keeps an MRN out of `estimates/` when a study's
+     ID falls back to MRN.
+   - Later profiling reads the built dataset through `JOIN`, so it describes
+     observed values, not imputed ones.
+   - The forest itself is not saved: it is large and nothing downstream reads
+     it.
 9. **`provenance`**, the standard closing chunk.
 
 ## 4. `sid-clusters.qmd`
 
 It reads `sid.rds` and never calls `sidClustering(`. When no `sid-fit` has run
-in its set, it stops with a message naming the missing file. Nothing in it is
+in its set, it stops with a message naming the missing file. It rebuilds the
+fit's cohort from the handoff's recorded selection
+(`.read_upstream_job_data()`, which checks the rows and their key hash), and
+takes the IDs of the `kept` rows from it. Nothing in it is
 random: PAM is deterministic given the dissimilarity, and so are the
 silhouette and classical MDS. So it needs no seed.
 
@@ -201,11 +210,16 @@ one:
   `K_RANGE` (letters, in Sankey order), and `G<K>` when `COLLAPSE` is set. It
   holds only the ID and letters, never a clustering variable, so the
   registered file adds no data the study did not already hold.
-- `hvtiRutilities::register_data(built = <that file>, dataset =
-  "clusters_<subject>_<type>", role = "named", kind = "ancillary", key = ID)`.
-  Dataset names must match `^[a-z][a-z0-9_]*$`, so subject and type are
-  lowercased. A re-render overwrites the file and re-registers it under the
-  same name.
+- On the first render, `hvtiRutilities::register_data(built = <that file>,
+  dataset = "clusters_<subject>_<type>", role = "named", kind = "ancillary",
+  key = ID)`. Dataset names must match `^[a-z][a-z0-9_]*$`, so subject and
+  type are lowercased.
+- On a later render, `register_data()` would stop: it registers a dataset
+  only once. The job instead rewrites the file and runs
+  `update_manifest(dataset = "clusters_<subject>_<type>")` from the study
+  root. That records a new dated version (`_r2` on the same day), keeps the
+  earlier ones, and leaves an unchanged file alone. A later job therefore
+  reads the current assignments, and its manifest check passes.
 - `estimates/<subject>-<type>/sid-clusters.rds`, with lineage: the PAM fits,
   the metrics table, the letter map per K (`pm<k>` id to letter), `K`,
   `OVERRIDES` and `COLLAPSE`.
@@ -253,11 +267,14 @@ running the **installed** templates chunk by chunk through `rf_run()` and
    in its source, and stops naming the file when no fit has run.
 6. **The registered dataset.** After `sid-clusters` runs, the file exists,
    holds only the ID and letter columns, and is registered as ancillary with
-   key ID. A `read_job_data(join = ...)` read returns one cluster per patient,
+   key ID. A second render with different `OVERRIDES` succeeds, and a read
+   returns the new letters. A `read_job_data(join = ...)` read returns one cluster per patient,
    for both a long read and a `one_row_per_patient = TRUE` read (section 5).
 7. **K.** `K = NULL` runs every chunk and skips the K sections with a note. A
    K outside `K_RANGE` errors.
-8. **No MRN in any saved file**, with the existing `rf_mrn_data()` scan.
+8. **No MRN in any file under `estimates/`**, with the ID falling back to MRN
+   on `rf_mrn_data()`. The clusters dataset in `datasets/` carries the
+   study's ID by design, as the built dataset beside it does.
 
 The catalog-wide tests cover the format block, the `SUBJECT`/`TYPE` lines, the
 single `setup` chunk, no study identifiers, `EDIT:` markers only in `edit-`
