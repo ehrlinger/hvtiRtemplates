@@ -72,6 +72,15 @@ fail for the right reason, then write the code.
   carried, and a `@section` on conflicts. Then run `devtools::document()`.
 - Tests: the naming row and the refit row.
 
+## Task 7b: one live copy (decision 9)
+
+- `.job_setup()` refuses to render when another spelling of the same job (current, pre-2026-10,
+  renamed-template) sits in the study, naming both and the newer by mtime.
+- The "another copy" refusal in `upgrade_job()` and `add_job()` lists both paths, mtimes, stamps and
+  the names of choices whose values differ. The success message warns that a buffer still open under
+  the old name must be closed unsaved.
+- Tests: the two decision-9 rows, proven by removing the guard.
+
 ## Task 8: end-to-end and mutation
 
 - One `upgrade_job()` test from a job scaffolded out of an archived `nb.boostmtree` 1.4.1 text, with

@@ -203,6 +203,39 @@ and line ranges, never values:
   half an hour to hours. Adding `progress =` to a fit call is exactly such a change, whether the
   template or the study adds it.
 
+### 9. A job renamed by an upgrade has one live copy
+
+The fourth real failure, in study #1356's `descriptive/`. On 10-20 `upgrade_job()` moved
+`cohort-eda-dc-tables.qmd` to the new spelling, `dc.tables.cohort.eda.qmd`. By 10-21 the old-named file
+was live again: the study set `BY` and `COMPARE` in it and rendered it, while the new-named copy stayed
+at its defaults. On 10-22 the upgrade of the live file refused with "is another copy of this job" and
+did not say which copy was live. The stale one was moved aside by hand
+(`dc.tables.cohort.eda.qmd.stale-20261020`).
+
+`upgrade_job()` renames the old job and never copies it; every version on `main` does
+`file.rename(path, backup)`. So the old name came back from outside the function. The likeliest
+causes are an editor saving a buffer it still had open under the old path, or the backup renamed back
+by hand. That cannot be checked from here, since the 10-20 `.pre-upgrade` is no longer in the folder.
+Either way the function cannot stop it at upgrade time. So the fix has two parts:
+
+- **Rendering refuses two copies.** `.job_setup()` already knows the job's fields. It refuses to render
+  a job when another spelling of the same job exists beside it, and names both files and which one
+  was modified more recently. A render of either copy then stops on the day the split happens, not
+  two days later. This rule is enforced at render time, so it holds whatever recreated the file.
+  A stub left at the old name was considered and rejected: the editor's next save overwrites it, and
+  the stub would itself count as "another copy".
+- **The refusal says which copy is live.** "Another copy" in `upgrade_job()` and in `add_job()` lists
+  both paths with their modification times and their stamps, plus the **names** of the choices whose
+  values differ between them (never the values). Then it suggests the step: move the stale copy aside,
+  then upgrade the live one.
+
+`upgrade_job()` also opens the renamed job in the editor already (`.open_in_editor()`). Its message says
+that the old name is now the backup, and that a buffer still open under the old name must be closed
+without saving.
+
+Tests: two spellings present make `.job_setup()` stop and name both; the refusal lists differing choice
+names and not their values; mutation, removing the guard, turns the first red.
+
 ## Interactions
 
 - **#383** (open) should merge first. Its "None." for empty lists stays in every report, and its
