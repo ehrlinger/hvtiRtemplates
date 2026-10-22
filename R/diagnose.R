@@ -5,13 +5,20 @@
   log <- gsub("\033\\[[0-9;]*m", "", log, perl = TRUE)
   # rlang/knitr print a condition's lines with "! ", "i " or "x " bullets; strip them so a check's own
   # refusal is matched the same whether it came through Quarto or a plain Rscript.
-  log <- sub("^[!ixℹ✖] ", "", log)
+  log <- sub("^[!ix\u2139\u2716] ", "", log)
   hit <- function(p) grep(p, log, perl = TRUE)
   g <- hit("^(r_version|packages|run_state|quarto|render_r|memory|study_render): ")
   if (length(g)) {
-    return(list(reason = log[g[1L]], fix = if (length(log) > g[1L]) log[g[1L] + 1L] else ""))
+    # The refusal runs to the next blank line, the quitting marker, or an indented repeat of it; its last line is the fix.
+    stop_at <- grep("^$|^Quitting from|^[ \t]", log)
+    stop_at <- stop_at[stop_at > g[1L]]
+    refusal <- log[seq.int(g[1L], (if (length(stop_at)) stop_at[1L] else length(log) + 1L) - 1L)]
+    n <- length(refusal)
+    return(list(reason = paste(refusal[seq_len(max(n - 1L, 1L))], collapse = " "), fix = if (n > 1L) refusal[n] else ""))
   }
-  if (length(hit("worker result\\(s\\) were not delivered|^Killed|exit status 137"))) {
+  killed <- length(hit("worker result\\(s\\) were not delivered|^Killed\\s*$|exit status 137")) ||
+    isTRUE(suppressWarnings(as.numeric(st$exit_code)) == 137)
+  if (killed) {
     peak <- st$mem_peak_gib
     lim <- st$mem_limit_gib
     if (is.numeric(peak) && is.numeric(lim) && peak >= 0.95 * lim) {
@@ -36,15 +43,17 @@
   q <- hit("^Quitting from .*\\[[^]]+\\]")
   if (length(q)) {
     label <- sub("^.*\\[([^]]+)\\].*$", "\\1", log[q[1L]])
-    lines <- sub("^Quitting from [^:]*:([0-9-]+).*$", "\\1", log[q[1L]])
+    span <- sub("^Quitting from [^:]*:([0-9-]+).*$", "\\1", log[q[1L]])
     # Quarto prints the error BEFORE the quitting marker: take the last "Error" line above it and
     # the condition lines between them.
     e <- utils::tail(grep("^Error", log[seq_len(q[1L] - 1L)]), 1L)
     err <- if (length(e)) {
       cond <- log[seq.int(e, q[1L] - 1L)]
+      bt <- grep("^Backtrace", cond)
+      if (length(bt)) cond <- cond[seq_len(bt[1L] - 1L)]
       paste(trimws(cond[nzchar(trimws(cond))]), collapse = " ")
     }
-    return(list(reason = sprintf("the job stopped in chunk `%s`, lines %s.", label, lines),
+    return(list(reason = sprintf("the job stopped in chunk `%s`, lines %s.", label, span),
                 fix = if (length(err)) err else "See the log for the error."))
   }
   list(reason = "no known cause; the end of the log follows.", fix = paste(utils::tail(log, 20L), collapse = "\n"))

@@ -119,7 +119,7 @@ job_status <- function(path, quiet = FALSE) {
   st$log <- files$log
   st$progress <- tryCatch(.progress_view(prog), error = function(e) unreadable)
   # The diagnosis is advisory and read from a log that may be anything; it must not stop the report.
-  if (st$state %in% c("failed", "vanished") && file.exists(files$log)) {
+  if (st$state %in% c("failed", "vanished") && !never_started && file.exists(files$log)) {
     st$diagnosis <- tryCatch(.diagnose_failure(readLines(files$log, warn = FALSE), st), error = function(e) NULL)
   }
   if (!isTRUE(quiet)) {

@@ -19,3 +19,6 @@ Versions: Quarto CLI 1.10.18, quarto R package 1.5.1, knitr 1.51, boostmtree 2.0
 
 The two assembled files exist so the order of the branches in `.diagnose_failure()` is tested: with the
 signatures each real fixture carries alone, any order would pass.
+
+`quitting-backtrace.log`: chunk `fit` calling `outer(1)` -> `inner()` -> `stop("inner failure\nsecond line")`, rendered as is; the
+error is followed by a `Backtrace:` block.

@@ -80,3 +80,36 @@ test_that("the diagnosis is returned even when quiet, and a failing diagnosis ne
   expect_output(st <- job_status(job), "failed")
   expect_null(st$diagnosis)
 })
+
+test_that("'Killed' alone on a line is a kill; a line that merely starts with it is not", {
+  expect_match(.diagnose_failure(c("Killed"), list())$reason, "^probably memory")
+  expect_match(.diagnose_failure(c("Killed 3 outliers"), list())$reason, "no known cause", fixed = TRUE)
+})
+
+test_that("a recorded exit code of 137 is the kill signal, with or without log text", {
+  d <- .diagnose_failure(c("something unrelated"), list(exit_code = 137L, mem_peak_gib = 19.1, mem_limit_gib = 19.2))
+  expect_match(d$reason, "ran out of memory", fixed = TRUE)
+  expect_match(.diagnose_failure(c("x"), list(exit_code = 1L))$reason, "no known cause", fixed = TRUE)
+})
+
+test_that("the error quoted for a chunk stops before the Backtrace", {
+  d <- .diagnose_failure(fx("quitting-backtrace"), list())
+  expect_match(d$fix, "inner failure second line", fixed = TRUE)
+  expect_false(grepl("Backtrace", d$fix, fixed = TRUE))
+})
+
+test_that("a refusal of three lines is not cut", {
+  d <- .diagnose_failure(c("Error:", "! memory: this fit needs 40 GiB.", "The session is 19.2 GiB.",
+                           "Start a Large session.", "", "Quitting from x.qmd:1-2 [fit]"), list())
+  expect_identical(d$reason, "memory: this fit needs 40 GiB. The session is 19.2 GiB.")
+  expect_identical(d$fix, "Start a Large session.")
+})
+
+test_that("a run that never started gets no diagnosis", {
+  job <- status_job()
+  file.copy(test_path("fixtures-diagnose", "no-package.log"), .run_files(job)$log, overwrite = TRUE)
+  .write_status(.run_files(job)$status, state = "submitted", submitted = "2020-01-01T00:00:00+0000")
+  st <- job_status(job, quiet = TRUE)
+  expect_identical(st$state, "vanished")
+  expect_null(st$diagnosis)
+})
