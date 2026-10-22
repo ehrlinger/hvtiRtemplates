@@ -199,6 +199,10 @@ if (length(.absent)) {
 VARS <- tolower(VARS)
 .empty <- rowSums(!is.na(d[VARS])) == 0
 d <- d[!.empty, , drop = FALSE]
+if (nrow(d) == 0L) {
+  stop("No patients are left: every patient is missing every clustering variable in VARS. Check the names in VARS.",
+       call. = FALSE)
+}
 cat("Patients with every clustering variable missing, dropped:", sum(.empty), "\n")
 ```
 
@@ -267,16 +271,29 @@ cat("Values imputed in each of", M, "imputation(s):", .n_missing, "\n")
 # na.action = "na.impute" when a value IS missing, so a gap here is a bug.
 # cache_fit(seed = ) runs each fit under withr::with_seed(), which sets R's
 # generator for the holdout-VIMP step; `seed =` is the forest's own.
+# sidClustering() catches an error inside randomForestSRC and returns dist = NULL
+# instead of stopping, so the check inside the cached expression turns that into
+# a stop: a failed fit is then never cached, and the message names the imputation.
+# Only the distance and the kept variables are cached; the 5000-tree forest, which
+# holds patient values, is left out of the cache as it is of sid.rds.
 sid_fits <- lapply(seq_len(M), function(m) {
   if (anyNA(d_complete[[m]])) stop("Missing values reached the SID fit after imputation ", m, ".", call. = FALSE)
   s <- SEED + m - 1L
-  cache_fit(paste0("sid-fit-", m),
-            sidClustering(d_complete[[m]], method = "sid", ntree = NTREE, reduce = SID_REDUCE, seed = -abs(s)),
-            seed = s, dir = CACHE_DIR, refit = REFIT)
+  cache_fit(paste0("sid-fit-", m), {
+    o <- sidClustering(d_complete[[m]], method = "sid", ntree = NTREE, reduce = SID_REDUCE, seed = -abs(s))
+    if (is.null(o$dist)) {
+      stop("sidClustering() failed on imputation ", m, " (it returned no distance). Look above for the message ",
+           "randomForestSRC gave, and check the clustering variables for a constant or near-empty factor.", call. = FALSE)
+    }
+    o[c("dist", "outcome.names")]
+  }, seed = s, dir = CACHE_DIR, refit = REFIT)
 })
 sid_dist <- Reduce(`+`, lapply(sid_fits, `[[`, "dist")) / M
 # How closely each imputation's distances follow the mean. Near 1, the
 # imputations agree; well below, the missing values are shaping the distance.
+# With nothing missing, every imputation is the same data and the forests differ
+# only by their seeds, so the correlation then measures the forest's own Monte
+# Carlo noise, not the imputation.
 .lower <- function(x) x[lower.tri(x)]
 sid_agreement <- data.frame(
   imputation = seq_len(M),
@@ -299,7 +316,11 @@ knitr::kable(data.frame(
 ```{r}
 #| label: tbl-agreement
 #| tbl-cap: "Agreement of each imputation's distances with their mean"
-# One forest per imputation; near 1, the imputations agree.
+#| include: !expr M > 1
+# One forest per imputation; near 1, the imputations agree. With one imputation
+# there is nothing to compare, and the chunk is hidden. If no value was missing,
+# the forests differ only by their seeds, so this measures Monte Carlo noise in
+# the forest, not the imputation.
 if (M > 1L) knitr::kable(sid_agreement, digits = 3)
 ```
 
@@ -310,7 +331,8 @@ if (M > 1L) knitr::kable(sid_agreement, digits = 3)
 # The product of this job, and what sid-clusters and vt-fit read. It is
 # separate from the cache on purpose: cache_fit() stores a keyed record, so the
 # cache is this job's internals and this file is its interface. The forests
-# are not saved: nothing downstream reads them, and they are the large part.
+# are not saved, here or in the caches: nothing downstream reads them, and they
+# are the large part.
 # Patients are named by a study-keyed digest of their ID, never the ID itself
 # (#203), so the file can be matched on without holding an MRN.
 .key <- hvtiRtemplates:::.study_id_key(.root)
