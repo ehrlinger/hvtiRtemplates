@@ -130,6 +130,25 @@
   .check("quarto", TRUE)
 }
 
+# Stale progress is not proof: Quarto's knitr runs in a session of its own and can outlive the Workbench
+# session, so the way out confirms on that host before abandoning (spec section 6).
+.abandon_route <- function(st, path, files = .run_files(path)) {
+  confirm <- if (is.character(st$marker)) {
+    sprintf("On %s, confirm nothing is left with `ps eww -u $USER | grep %s`. ", st$host, st$marker)
+  } else {
+    sprintf("From a session on %s, confirm with `hvti status` that nothing is left. ", st$host)
+  }
+  if ("other_host" %in% names(formals(cancel_job))) {
+    sprintf('%sOnly then run cancel_job("%s", other_host = "abandon") here.', confirm, path)
+  } else {
+    sprintf("%sOnly then, if that session is gone, delete %s and %s, then run again.", confirm, files$status, files$progress)
+  }
+}
+
+# A path with its directory resolved, which normalizePath() alone does not do for a file that is not there
+# (macOS /var against /private/var).
+.norm_path <- function(p) file.path(normalizePath(dirname(p), mustWork = FALSE), basename(p))
+
 # THIS job already running, a stale run recorded on another host, or a crashed submit's lock directory.
 .check_run_state <- function(path) {
   files <- .run_files(path)
@@ -145,18 +164,7 @@
   here <- Sys.info()[["nodename"]]
   if (identical(st$state, "running") && is.character(st$host) && !identical(st$host, here)) {
     stale <- isTRUE(st$progress$stale)
-    # Stale progress is not proof: Quarto's knitr runs in a session of its own and can outlive the
-    # Workbench session, so the fix confirms on that host before abandoning (spec section 6).
-    confirm <- if (is.character(st$marker)) {
-      sprintf("On %s, confirm nothing is left with `ps eww -u $USER | grep %s`. ", st$host, st$marker)
-    } else {
-      sprintf("From a session on %s, confirm with `hvti status` that nothing is left. ", st$host)
-    }
-    abandon <- if ("other_host" %in% names(formals(cancel_job))) {
-      sprintf('%sOnly then run cancel_job("%s", other_host = "abandon") here.', confirm, path)
-    } else {
-      sprintf("If that session is gone, delete %s and %s, then run again.", files$status, files$progress)
-    }
+    abandon <- .abandon_route(st, path, files)
     return(.check("run_state", FALSE,
                   sprintf("this job is recorded running on host %s%s.", st$host,
                           if (stale) ", but its progress has not moved for over 30 minutes, so it is probably dead" else ""),
@@ -182,7 +190,8 @@
     entries <- list.files(dir, all.files = TRUE, no.. = TRUE)
     full <- file.path(dir, entries)
     is_dir <- dir.exists(full)
-    todo <- c(todo, full[is_dir & !entries %in% .run_scan_skip])
+    linked <- nzchar(Sys.readlink(full))  # a symlinked directory could loop back on the study
+    todo <- c(todo, full[is_dir & !linked & !entries %in% .run_scan_skip])
     hits <- entries[!is_dir & grepl("[.]run[.](yml|progress)$", entries)]
     jobs <- c(jobs, file.path(dir, sub("[.]run[.](yml|progress)$", ".qmd", hits)))
   }
@@ -192,15 +201,18 @@
 # Quarto holds one render lock per study, so another job rendering there fails minutes in. This names it up front.
 .check_study_render <- function(path, root) {
   jobs <- .jobs_with_run_files(root)
-  jobs <- jobs[normalizePath(jobs, mustWork = FALSE) != normalizePath(path, mustWork = FALSE)]
+  jobs <- jobs[vapply(jobs, .norm_path, "") != .norm_path(path)]
   running <- list()
   for (job in jobs) {
     st <- tryCatch(job_status(job, quiet = TRUE), error = function(e) NULL)  # an unreadable file must not stop preflight
     if (!is.null(st) && identical(st$state, "running")) running[[job]] <- st
   }
   if (length(running)) {
-    root_norm <- normalizePath(root, mustWork = FALSE)
-    rel_of <- function(job) sub(paste0("^", root_norm, "/?"), "", normalizePath(job, mustWork = FALSE))
+    root_norm <- .norm_path(root)
+    rel_of <- function(job) {
+      p <- .norm_path(job)
+      if (startsWith(p, paste0(root_norm, "/"))) substring(p, nchar(root_norm) + 2L) else p
+    }
     describe <- function(job) {
       st <- running[[job]]
       pr <- st$progress
@@ -220,12 +232,19 @@
       detail <- c(host, stage, left)
       paste0(rel_of(job), if (length(detail)) paste0(", ", paste(detail, collapse = ", ")))
     }
-    rels <- paste(vapply(names(running), rel_of, ""), collapse = ", ")
+    is_stale <- vapply(running, function(st) isTRUE(st$progress$stale), NA)
+    live <- paste(vapply(names(running)[!is_stale], rel_of, ""), collapse = ", ")
+    routes <- vapply(names(running)[is_stale], function(j) {
+      st <- running[[j]]
+      paste0(sprintf("Check %s from a session on %s with `hvti status %s`. ", rel_of(j), st$host, rel_of(j)), .abandon_route(st, j))
+    }, "")
+    fix <- c(if (any(!is_stale)) {
+      sprintf("Wait for it to finish (hvti status %s), or stop it (hvti cancel %s), then run again.", live, live)
+    }, routes)
     return(.check("study_render", FALSE,
                   sprintf("another job is rendering in this study: %s. Quarto renders one job at a time in a study.",
                           paste(vapply(names(running), describe, ""), collapse = "; ")),
-                  sprintf("Wait for it to finish (hvti status %s), or stop it (hvti cancel %s), then run again.",
-                          rels, rels)))
+                  paste(fix, collapse = " ")))
   }
   lock <- .provenance_lock_path(root)
   owner_file <- file.path(lock, "owner.json")

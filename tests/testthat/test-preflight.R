@@ -343,3 +343,69 @@ test_that("study_render refuses a live render lock with no running job, and pass
   testthat::local_mocked_bindings(.provenance_owner_alive = function(owner) FALSE)
   expect_true(.check_study_render(mine, root)$ok)
 })
+
+test_that("study_render copes with a study root holding regex metacharacters", {
+  root <- lock_study()
+  odd <- file.path(dirname(root), "st(udy)+1")
+  file.rename(root, odd)
+  mine <- file.path(odd, "analyses", "mine.qmd")
+  other_running_job(odd)
+  ck <- .check_study_render(mine, odd)
+  expect_false(ck$ok)
+  expect_match(ck$message, "in this study: analyses/nb.boostmtree", fixed = TRUE)
+})
+
+test_that("study_render does not follow a symlinked directory", {
+  skip_on_os("windows")
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  file.symlink(root, file.path(root, "analyses", "loop"))
+  elsewhere <- withr::local_tempdir()
+  other_running_job(elsewhere, "linked.qmd", dir = ".")
+  file.symlink(elsewhere, file.path(root, "graphs"))
+  expect_true(.check_study_render(mine, root)$ok)
+})
+
+test_that("study_render names a job whose .qmd is missing, with its relative path", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  orphan <- file.path(root, "analyses", "gone.qmd")
+  .write_status(.run_files(orphan)$status, state = "running", pid = 1L, host = "lri-r03", started = .stamp())
+  ck <- .check_study_render(mine, root)
+  expect_match(ck$message, "in this study: analyses/gone.qmd", fixed = TRUE)
+  # and its own orphan files are not another job
+  .write_status(.run_files(mine)$status, state = "running", pid = 1L, host = "lri-r03", started = .stamp())
+  unlink(.run_files(orphan)$status)
+  expect_true(.check_study_render(mine, root)$ok)
+})
+
+test_that("study_render sends a stale other-host job through confirm-then-abandon", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  other <- other_running_job(root, age_min = 120)
+  .write_status(.run_files(other)$status, state = "running", pid = 1L, host = "lri-r03", started = .stamp(Sys.time() - 7200),
+                marker = "PSabc123_1")
+  ck <- .check_study_render(mine, root)
+  expect_match(ck$fix, "hvti status analyses/nb.boostmtree.x.boost.qmd", fixed = TRUE)
+  expect_match(ck$fix, "ps eww -u $USER | grep PSabc123_1", fixed = TRUE)
+  expect_match(ck$fix, "other_host = \"abandon\"", fixed = TRUE)
+  expect_lt(regexpr("grep", ck$fix, fixed = TRUE), regexpr("cancel_job(", ck$fix, fixed = TRUE))
+  expect_no_match(ck$fix, "Wait for it", fixed = TRUE)
+})
+
+test_that("the abandon route always confirms first, even without cancel_job's other_host", {
+  job <- status_job()
+  st <- list(host = "lri-r06", marker = "PSabc123_1")
+  testthat::local_mocked_bindings(cancel_job = function(path) NULL)
+  fix <- .abandon_route(st, job)
+  expect_match(fix, "^On lri-r06, confirm nothing is left with `ps eww -u \\$USER \\| grep PSabc123_1`")
+  expect_match(fix, "delete", fixed = TRUE)
+})
+
+test_that("run_state refuses a fresh submission", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp())
+  ck <- .check_run_state(job)
+  expect_false(ck$ok)
+  expect_match(ck$message, "already submitted", fixed = TRUE)
+})
