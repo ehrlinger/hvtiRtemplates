@@ -103,6 +103,9 @@ vt_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "predictors")
 
 vt_fit_first <- function(data = vt_data(), choices = vt_choices, labels = vt_fit_labels,
                          .local_envir = parent.frame()) {
+  # rf_run() strips library() from setup, so attach the template's own stack
+  # (and skip when it is absent) rather than rely on an earlier test having.
+  rf_skip_unless_stack(rf_template_packages("vt", "fit"))  # nolint: object_usage_linter.
   env <- rf_env(data, .local_envir)  # nolint: object_usage_linter.
   rf_run("vt", "fit", labels, env, choices)  # nolint: object_usage_linter.
   env
@@ -128,6 +131,12 @@ test_that("the predictor contract refuses the arm, the outcome and the ID", {
     ch <- utils::modifyList(vt_choices, list(PREDICTORS = c("xs", leak)))
     expect_error(vt_fit_first(choices = ch), "PREDICTORS", info = leak)
   }
+})
+
+test_that("a cohort keyed on an MRN is refused, so no MRN is saved", {
+  skip_on_cran()
+  d <- vt_data(); d$MRN <- sprintf("%08d", d$ccfid); d$ccfid <- NULL
+  expect_error(vt_fit_first(data = d), "medical record number")
 })
 
 test_that("EXCLUDE drops post-treatment columns", {
@@ -252,6 +261,17 @@ if (!is.null(IMPUTATION)) {
   d <- d[d[[IMPUTATION]] == IMPUTATION_USE, setdiff(names(d), IMPUTATION), drop = FALSE]
   cat("This job uses imputation ", IMPUTATION_USE, " of ", .m, ". The forests are not pooled across imputations.\n",
       sep = "")
+}
+# read_job_data() matches ID case-insensitively and falls back from ccfid to an
+# MRN, without changing ID here. Take the name it resolved.
+ID <- attr(job_data$record, "selection")$id
+# This job saves one row per patient keyed by ID (vt.rds), and a sid or vp set
+# joins on it. A medical record number must not be that key: it would be
+# written into every saved table.
+if (tolower(ID) %in% hvtiRtemplates:::.job_identifier_names) {
+  stop("This job saves per-patient results keyed by the patient ID, and the ID it resolved is ", ID,
+       ", a medical record number. Name a study key in ID (a random or study ID) in edit-study-choices.",
+       call. = FALSE)
 }
 d[[ID]] <- as.character(d[[ID]])
 .no_arm <- if (is.null(NO_ARM)) is.na(d[[ARM]]) else d[[ARM]] %in% NO_ARM
@@ -397,6 +417,25 @@ test_that("a no-arm row must pass against both arms", {
   expect_false(h$vt_combine(r, "any")$elig[h$vt_combine(r, "any")$ID == "n1"])
 })
 
+test_that("a patient with no distance to an arm is out of distribution, not NA", {
+  h <- vt_helpers()
+  D <- as.matrix(stats::dist(c(a1 = 0, a2 = 1, b1 = 0.5)))
+  D["b1", c("a1", "a2")] <- D[c("a1", "a2"), "b1"] <- NA
+  r <- h$vt_ood(D, rownames(D), c("A", "A", "B"), c("A", "B"))
+  b1 <- r[r$ID == "b1" & r$arm == "A", ]
+  expect_false(b1$in_distribution)
+  expect_match(b1$reason, "no comparable")
+  expect_false(anyNA(r$in_distribution))
+})
+
+test_that("Gower on a patient missing every predictor gives a flag", {
+  skip_if_not_installed("cluster")
+  h <- vt_helpers()
+  d <- data.frame(ID = as.character(1:5), x = c(0, 1, 2, 1.5, NA), g = factor(c("u", "v", "u", "v", NA)))
+  r <- h$vt_ood(h$vt_elig_gower(d, c("x", "g"), "ID"), d$ID, c("A", "A", "A", "B", "B"), c("A", "B"))
+  expect_false(r$in_distribution[r$ID == "5" & r$arm == "A"])
+})
+
 test_that("methods combine by any and all, with one row shape", {
   h <- vt_helpers()
   base <- data.frame(ID = c("p1", "p2", "p3"), method = NA, arm = "A", nn_id = "q", distance = 1,
@@ -417,6 +456,7 @@ test_that("the sid method uses a set's distance and refuses a missing patient", 
   saveRDS(list(dist = stats::dist(c(`1` = 0, `2` = 1, `3` = 2))), path)
   m <- h$vt_elig_sid(path, ids, cfg = NULL, read = function(p) list(value = readRDS(p)))
   expect_equal(dimnames(m)[[1]], ids)
+  expect_false(is.null(attr(m, "read")))
   expect_error(h$vt_elig_sid(path, c(ids, "4"), cfg = NULL, read = function(p) list(value = readRDS(p))),
                "1 patient")
 })
@@ -437,24 +477,37 @@ Under a heading `## Eligibility` with the spec's section 4.1 prose made general 
 # largest nearest-neighbour distance among the arm's own patients. Farther than
 # that, STRICTLY, and the arm's forest would be extrapolating. A treated patient
 # is judged against the other arm; a row with no arm against both.
+#
+# A distance can be unavailable: Gower gives NA for two patients who share no
+# observed predictor. An unavailable distance is no evidence of nearness, so it
+# counts as infinitely far. A patient with no finite distance to any patient in
+# an arm has no comparable neighbour there and is out of distribution for it,
+# with that reason; an arm member with no finite within-arm neighbour does not
+# set the arm's reference. Every judged patient therefore gets TRUE or FALSE,
+# never NA.
 vt_ood <- function(dist, ids, arm, arms) {
   dist <- as.matrix(dist)[ids, ids, drop = FALSE]
+  dist[is.na(dist)] <- Inf
   diag(dist) <- Inf
   rows <- lapply(arms, function(a) {
     members <- which(arm %in% a)
     nn_within <- apply(dist[members, members, drop = FALSE], 1L, min)
+    nn_within <- nn_within[is.finite(nn_within)]
+    if (!length(nn_within)) stop("No two patients in arm ", a, " have a finite distance.", call. = FALSE)
     reference <- max(nn_within)
     judged <- which(is.na(arm) | !arm %in% c(a, NA))
     if (!length(judged)) return(NULL)
     sub <- dist[judged, members, drop = FALSE]
     nn <- apply(sub, 1L, which.min)
     distance <- sub[cbind(seq_along(judged), nn)]
-    out <- distance > reference
-    data.frame(ID = ids[judged], method = NA_character_, arm = a, nn_id = ids[members][nn],
+    none <- !is.finite(distance)
+    out <- none | distance > reference
+    reason <- ifelse(none, sprintf("no comparable %s patient (no predictor observed in common)", a),
+                     ifelse(out, sprintf("nearest %s patient at %.3f, beyond that arm's largest gap %.3f",
+                                         a, distance, reference), ""))
+    data.frame(ID = ids[judged], method = NA_character_, arm = a, nn_id = ifelse(none, NA, ids[members][nn]),
                distance = distance, reference = reference, ratio = distance / stats::median(nn_within),
-               in_distribution = !out,
-               reason = ifelse(out, sprintf("nearest %s patient at %.3f, beyond that arm's largest gap %.3f",
-                                            a, distance, reference), ""))
+               in_distribution = !out, reason = reason)
   })
   do.call(rbind, rows)
 }
@@ -468,14 +521,17 @@ vt_elig_gower <- function(d, predictors, id) {
 
 # The SID distance a sid job saved. Read, never refit, and refused when it does
 # not cover every patient here.
+# Returns the distance with the whole reader result as attribute "read", so the
+# eligibility chunk can carry the sid set's record and lineage into vt.rds.
 vt_elig_sid <- function(path, ids, cfg, read = function(p) hvtiRtemplates:::.read_handoff(p, "clustering", cfg, "the sid job")) {
   if (!file.exists(path)) stop("No sid clustering at ", path, ". Render that job first.", call. = FALSE)
-  m <- as.matrix(read(path)$value$dist)
+  got <- read(path)
+  m <- as.matrix(got$value$dist)
   absent <- setdiff(ids, rownames(m))
   if (length(absent)) {
     stop(length(absent), " patient(s) in this job are not in the sid distance at ", path, ".", call. = FALSE)
   }
-  m[ids, ids, drop = FALSE]
+  structure(m[ids, ids, drop = FALSE], read = got)
 }
 
 # A patient is eligible when every arm they were judged against passed, per
@@ -495,11 +551,17 @@ vt_combine <- function(rows, combine = c("any", "all")) {
 .methods <- match.arg(ELIGIBILITY, c("gower", "sid"), several.ok = TRUE)
 .ids <- d[[ID]]
 .arm <- ifelse(.no_arm, NA_character_, as.character(d[[ARM]]))
+.sid_read <- NULL
 .dist <- list(
   gower = function() vt_elig_gower(d, .predictors, ID),
   sid = function() {
     if (is.null(SID_SET)) stop("ELIGIBILITY includes \"sid\"; name the sid set in SID_SET.", call. = FALSE)
-    vt_elig_sid(file.path(dirname(dirname(set_path("estimates", "vt.rds"))), SID_SET, "sid.rds"), .ids, .cfg)
+    m <- vt_elig_sid(file.path(dirname(dirname(set_path("estimates", "vt.rds"))), SID_SET, "sid.rds"), .ids, .cfg)
+    # The sid set decided some flags, so its record and data lineage travel
+    # into vt.rds with the vp screen's (see `save`).
+    .sid_read <<- attr(m, "read")
+    .provenance_data <<- c(.provenance_data, .sid_read$lineage$data)
+    m
   }
 )
 .elig_rows <- do.call(rbind, lapply(.methods, function(m) transform(vt_ood(.dist[[m]](), .ids, .arm, ARMS), method = m)))
@@ -582,7 +644,7 @@ test_that("vt_curves keys by ID, whatever the row order", {
   skip_on_cran()
   env <- vt_fit_first(labels = c(vt_fit_labels, "fit", "curves-helper", "curves"))
   shuffled <- env$d[rev(seq_len(nrow(env$d))), ]
-  again <- env$vt_curves(env$.forests, shuffled, env$ID, env$ARM, env$ARMS, no_arm = rev(env$.no_arm))
+  again <- env$vt_curves(env$.forests, env$.train_ids, shuffled, env$ID, env$ARM, env$ARMS, no_arm = rev(env$.no_arm))
   key <- function(x) x[order(x$ID, x$arm_of_curve, x$time), ]
   expect_equal(key(again)$surv, key(env$.curves)$surv)
 })
@@ -638,6 +700,13 @@ Expected: FAIL, `could not find function "vt_rmst"`.
 #| message: true
 CACHE_DIR <- dirname(set_path("estimates", "vt.rds"))
 .model <- stats::as.formula(paste0("Surv(", TIME, ", ", STATUS, ") ~ ", paste(.predictors, collapse = " + ")))
+# The saved forest keeps this formula, and a formula keeps the environment it
+# was made in, `job_data` and its patient IDs included. Point it at the global
+# environment, which a saved file only refers to (rfs-fit does the same).
+environment(.model) <- globalenv()
+# The IDs of each forest's training rows, in training order. survival.oob rows
+# follow this order, and vt_curves() matches on it rather than on d's order.
+.train_ids <- stats::setNames(lapply(ARMS, function(a) d[[ID]][d[[ARM]] %in% a & .treated]), ARMS)
 .forests <- stats::setNames(lapply(ARMS, function(a) {
   da <- d[d[[ARM]] %in% a & .treated, c(TIME, STATUS, .predictors), drop = FALSE]
   set.seed(SEED)
@@ -677,16 +746,19 @@ Prose above it says the C-index here is computed from the OOB predictions, not t
 # arm comes from predict() on the other forest. Rows with no arm get both from
 # predict(). Everything is keyed by ID: predict() returns rows in the order it
 # was given them, and pairing by position silently swaps patients.
-vt_curves <- function(forests, d, id, arm, arms, no_arm) {
+vt_curves <- function(forests, train_ids, d, id, arm, arms, no_arm) {
   out <- list()
   for (a in arms) {
     f <- forests[[a]]
     own <- d[[arm]] %in% a & !no_arm
     own_ids <- d[[id]][own]
-    # survival.oob rows follow the forest's training rows, which are arm a's
-    # treated rows in data order; the fit chunk built them in that order.
+    # survival.oob rows are in TRAINING order, which train_ids records; d may
+    # be in any order, so each own-arm patient is matched to their row by ID.
+    at <- match(own_ids, train_ids[[a]])
+    if (anyNA(at)) stop(sum(is.na(at)), " arm ", a, " patient(s) are not among its forest's training rows.", call. = FALSE)
+    oob <- f$survival.oob[at, , drop = FALSE]
     out[[length(out) + 1L]] <- data.frame(ID = rep(own_ids, each = length(f$time.interest)), arm_of_curve = a,
-                                          time = f$time.interest, surv = as.vector(t(f$survival.oob)))
+                                          time = f$time.interest, surv = as.vector(t(oob)))
     other <- d[!own, , drop = FALSE]
     p <- predict(f, newdata = other[, f$xvar.names, drop = FALSE], na.action = "na.impute")
     out[[length(out) + 1L]] <- data.frame(ID = rep(other[[id]], each = length(f$time.interest)), arm_of_curve = a,
@@ -696,16 +768,16 @@ vt_curves <- function(forests, d, id, arm, arms, no_arm) {
 }
 ```
 
-The OOB block relies on the training rows matching `own_ids` in order. In the `fit` chunk, `da` is subset in data order from the same `d`, so this holds; the `curves` chunk asserts it:
+The OOB rows are matched to patients through `.train_ids`, recorded in the `fit` chunk in training order, so `d`'s order at prediction time does not matter:
 
 ```r
 #| label: curves
 .own_n <- vapply(ARMS, function(a) .forests[[a]]$n, integer(1L))
-stopifnot(all(.own_n == vapply(ARMS, function(a) sum(d[[ARM]] %in% a & .treated), integer(1L))))
-.curves <- vt_curves(.forests, d, ID, ARM, ARMS, no_arm = .no_arm)
+stopifnot(all(.own_n == lengths(.train_ids[ARMS])))
+.curves <- vt_curves(.forests, .train_ids, d, ID, ARM, ARMS, no_arm = .no_arm)
 ```
 
-With `NA_ACTION = "na.omit"` rows were dropped in `predictors`, so `d` and the forests still agree, and the `stopifnot()` above stops the render if a forest ever drops a row on its own.
+With `NA_ACTION = "na.omit"` rows were dropped in `predictors`, so `d` and the forests still agree, and the `stopifnot()` stops the render if a forest ever drops a row on its own.
 
 - [ ] **Step 5: Write chunks `rmst-helper`, `rmst`, `fig-curves`**
 
@@ -765,9 +837,15 @@ vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
        eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ps = .ps),
        predictors = list(names = .predictors, vp_set = VP_SET),
        settings = list(arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED, time = TIME, status = STATUS,
-                       id = ID, arm = ARM, imputation = IMPUTATION, imputation_use = IMPUTATION_USE)),
+                       id = ID, arm = ARM, imputation = IMPUTATION, imputation_use = IMPUTATION_USE,
+                       # Everything read_job_data() was given, so vt-explain reads the same patients and values.
+                       read = list(dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, key = KEY,
+                                   join = JOIN, join_vars = JOIN_VARS, reduce = REDUCE, join_key = JOIN_KEY))),
+  # .provenance_data already holds the vp and sid sets' data lineage (appended
+  # where each was read); their handoff records go in as artifacts.
   data = .provenance_data,
-  artifacts = if (!is.null(.vp_read)) list(.vp_read$record) else list(),
+  artifacts = c(if (!is.null(.vp_read)) c(.vp_read$lineage$artifacts, list(.vp_read$record)),
+                if (!is.null(.sid_read)) c(.sid_read$lineage$artifacts, list(.sid_read$record))),
   analysis = list(time = list(variable = TIME), event = list(variable = STATUS, event = 1L, censored = 0L)),
   selection = attr(job_data$record, "selection")
 )
@@ -796,21 +874,30 @@ git commit -m "feat(vt-fit): arm forests, out-of-bag twin curves, RMST differenc
 
 **Interfaces:**
 - Consumes: `vt.rds` (Task 3).
-- Produces: job objects `.vt` (the handoff value), `r` (`.vt$rmst`), `.in` (logical: `r$elig`); chunks `handoff`, `fig-contrast`, `fig-ranking`, `fig-twin-curves`, `fig-received-best`, `tbl-sensitivity`; `vt_explain_labels` in `helper-vt.R`.
+- Produces: job objects `.vt` (the handoff value), `r` (`.vt$rmst`), `.eligible` (logical: `r$elig`; never `.in`, which `setup` sets to the source path the `provenance` chunk passes to `.embed_provenance()`), `.d_all` (the fit's patients, re-read by chunk `explain-data`); chunks `handoff`, `fig-contrast`, `fig-ranking`, `fig-twin-curves`, `fig-received-best`, `tbl-sensitivity`; `vt_explain_labels` in `helper-vt.R`.
 
 - [ ] **Step 1: Write the failing tests**
 
 ```r
-vt_explain_labels <- c("setup", "edit-study-choices", "handoff", "fig-contrast", "fig-ranking",
-                       "fig-twin-curves", "fig-received-best", "tbl-sensitivity")
+vt_explain_labels <- c("setup", "edit-study-choices", "handoff", "explain-data", "fig-contrast", "fig-ranking",
+                       "fig-twin-curves", "fig-received-best", "tbl-sensitivity", "provenance")
+
+# rf_run() strips library() from setup; attach the explain stack itself.
+vt_explain <- function(env, labels = vt_explain_labels, choices = list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 0,
+                                                                      SAVE_FIGURES = FALSE)) {
+  rf_skip_unless_stack(rf_template_packages("vt", "explain"))  # nolint: object_usage_linter.
+  rf_run("vt", "explain", labels, env, choices)  # nolint: object_usage_linter.
+}
 ```
 
 ```r
 test_that("vt-explain reads vt.rds and never grows a forest", {
   skip_on_cran()
   env <- vt_fit_first(labels = vt_fit_labels_all)
-  rf_run("vt", "explain", vt_explain_labels, env, list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
+  vt_explain(env)
   expect_true(all(c("gower", "propensity", "none") %in% env$.sens$rule))
+  # provenance ran: .in is still the source path, not the eligibility mask.
+  expect_type(env$.in, "character")
   src <- readLines(template_path("vt", "explain"), warn = FALSE)
   expect_false(any(grepl("rfsrc(", src, fixed = TRUE)))
 })
@@ -818,7 +905,19 @@ test_that("vt-explain reads vt.rds and never grows a forest", {
 test_that("vt-explain stops naming the file when no fit has run", {
   skip_on_cran()
   env <- rf_env(vt_data())
-  expect_error(rf_run("vt", "explain", c("setup", "edit-study-choices", "handoff"), env, list()), "vt.rds")
+  expect_error(vt_explain(env, c("setup", "edit-study-choices", "handoff"), list()), "vt.rds")
+})
+
+test_that("vt-explain reads the fit's own selection, stacked imputations included", {
+  skip_on_cran()
+  d1 <- vt_data(); d1$imp <- 1L
+  d2 <- vt_data(); d2$imp <- 2L; d2$x1 <- d2$x1 + 100
+  env <- vt_fit_first(data = rbind(d1, d2), labels = vt_fit_labels_all,
+                      choices = utils::modifyList(vt_choices, list(IMPUTATION = "imp", IMPUTATION_USE = 2L)))
+  vt_explain(env, c(setdiff(vt_explain_labels, "provenance"), "stratify", "tbl-stratum"),
+             list(STRATIFY = "x1", BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
+  expect_equal(nrow(env$.d_all), 300L)
+  expect_gt(min(as.numeric(env$.strata$stratum)), 90)
 })
 ```
 
@@ -860,13 +959,29 @@ if (!file.exists(.handoff)) {
 ARMS <- .vt$settings$arms
 HORIZON <- .vt$settings$horizon
 r <- .vt$rmst
-.in <- r$elig
+.eligible <- r$elig
 ```
 
-`fig-contrast`: percentile boxes of `r$diff[.in]` by `r$arm` (box 15th–85th, whiskers 5th–95th, median line), built with `ggplot2::stat_summary()` over a `quantile()` helper; caption says a positive difference favours `ARMS[1]`; saved `vt-explain-contrast`. `fig-ranking`: `r[.in, ]` ordered by `diff`, points coloured by `arm`, a zero line; saved `vt-explain-ranking`. `fig-twin-curves`: per received arm, the mean of each curve arm over in-distribution patients from `.vt$curves`, through `hv_rmst_curves(tau = HORIZON)`; saved `vt-explain-twin-curves`. `fig-received-best`:
+`explain-data`, the one read of patient data in this job, reused by `stratify`, `betas` and `tbl-benefit`. It repeats the fit's own `read_job_data()` call from the settings `vt-fit` saved, so a named dataset, analysis set, filter, join or stacked imputation gives the same patients and values the forests saw:
 
 ```r
-.rb <- r[.in & r$arm %in% ARMS, ]
+#| label: explain-data
+.s <- .vt$settings
+.jd <- hvtiRtemplates::read_job_data(.cfg, dataset = .s$read$dataset, analysis_set = .s$read$analysis_set,
+                                     where = .s$read$where, id = .s$id, key = .s$read$key, join = .s$read$join,
+                                     join_vars = .s$read$join_vars, reduce = .s$read$reduce,
+                                     join_key = .s$read$join_key, one_row_per_patient = TRUE,
+                                     imputation = .s$imputation)
+.d_all <- .jd$data
+if (!is.null(.s$imputation)) .d_all <- .d_all[.d_all[[.s$imputation]] == .s$imputation_use, , drop = FALSE]
+.d_all[[.s$id]] <- as.character(.d_all[[.s$id]])
+.d_all <- .d_all[.d_all[[.s$id]] %in% r$ID, , drop = FALSE]
+```
+
+`fig-contrast`: percentile boxes of `r$diff[.eligible]` by `r$arm` (box 15th–85th, whiskers 5th–95th, median line), built with `ggplot2::stat_summary()` over a `quantile()` helper; caption says a positive difference favours `ARMS[1]`; saved `vt-explain-contrast`. `fig-ranking`: `r[.eligible, ]` ordered by `diff`, points coloured by `arm`, a zero line; saved `vt-explain-ranking`. `fig-twin-curves`: per received arm, the mean of each curve arm over in-distribution patients from `.vt$curves`, through `hv_rmst_curves(tau = HORIZON)`; saved `vt-explain-twin-curves`. `fig-received-best`:
+
+```r
+.rb <- r[.eligible & r$arm %in% ARMS, ]
 .own <- ifelse(.rb$arm == ARMS[1], .rb[[paste0("rmst_", ARMS[1])]], .rb[[paste0("rmst_", ARMS[2])]])
 .alt <- ifelse(.rb$arm == ARMS[1], .rb[[paste0("rmst_", ARMS[2])]], .rb[[paste0("rmst_", ARMS[1])]])
 .rb$best <- ifelse(.own >= .alt, "Received best", "Alternative best")
@@ -915,13 +1030,15 @@ git commit -m "feat(vt-explain): the twin contrast, received best and the eligib
 - Modify: `inst/templates/30_analyses/vt-explain.qmd` (chunks `stratify`, `tbl-stratum`, `betas`, `fig-betas`, `tbl-benefit`, then `## Reading the result` prose), `tests/testthat/helper-vt.R`, `tests/testthat/test-vt-templates.R`
 
 **Interfaces:**
-- Consumes: `.vt`, `r`, `.in` (Task 4).
+- Consumes: `.vt`, `r`, `.eligible` (Task 4).
 - Produces: `.strata` (data frame `ID`, `stratum`) or `NULL`; `.betas` (data frame `variable`, `beta`, `lower`, `upper`); `.benefit` (data frame).
 
 - [ ] **Step 1: Write the failing tests**
 
 ```r
-vt_explain_labels_all <- c(vt_explain_labels, "stratify", "tbl-stratum", "betas", "fig-betas", "tbl-benefit")
+# provenance stays last: it reads what stratify appends.
+vt_explain_labels_all <- c(setdiff(vt_explain_labels, "provenance"), "stratify", "tbl-stratum", "betas", "fig-betas",
+                           "tbl-benefit", "provenance")
 ```
 
 ```r
@@ -933,18 +1050,29 @@ test_that("the stratifier joins on ID across factor and character", {
   ids <- factor(vt_data()$ccfid)
   saveRDS(list(clusters = data.frame(ID = ids, cluster = ifelse(vt_data()$xs > 0, "hi", "lo"))),
           file.path(sid_dir, "sid.rds"))
-  rf_run("vt", "explain", vt_explain_labels_all, env,
-         list(STRATIFY = list(set = "dead-sid"), BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE,
-              .vt_read_sid = function(p) list(value = readRDS(p))))
+  vt_explain(env, vt_explain_labels_all,
+             list(STRATIFY = list(set = "dead-sid"), BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE,
+                  .vt_read_sid = function(p) list(value = readRDS(p), lineage = list(data = list(), artifacts = list()),
+                                                  record = list(path = p))))
   expect_setequal(unique(env$.strata$stratum), c("hi", "lo"))
   expect_equal(sum(is.na(merge(env$r, env$.strata, by = "ID", all.x = TRUE)$stratum)), 0L)
+})
+
+test_that("a rare factor level does not abort the bootstrap", {
+  skip_on_cran()
+  d <- vt_data(); d$rare <- factor(ifelse(seq_len(nrow(d)) %in% c(3, 150), "yes", "no"))
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all,
+                      choices = utils::modifyList(vt_choices, list(PREDICTORS = c("xs", "x1", "g1", "rare"))))
+  vt_explain(env, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 50L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
+  row <- env$.betas[startsWith(env$.betas$variable, "rare"), ]
+  expect_match(row$variable, "yes vs no")
+  expect_gt(row$unestimable, 0L)
 })
 
 test_that("BOOT = 0 skips the intervals and the betas still render", {
   skip_on_cran()
   env <- vt_fit_first(labels = vt_fit_labels_all)
-  rf_run("vt", "explain", vt_explain_labels_all, env, list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 0,
-                                                            SAVE_FIGURES = FALSE))
+  vt_explain(env, vt_explain_labels_all)
   expect_true(all(is.na(env$.betas$lower)))
   expect_true(all(is.finite(env$.betas$beta)))
 })
@@ -966,11 +1094,15 @@ if (!exists(".vt_read_sid")) .vt_read_sid <- function(p) hvtiRtemplates:::.read_
 if (is.list(STRATIFY)) {
   .sid_path <- file.path(dirname(dirname(.handoff)), STRATIFY$set, "sid.rds")
   if (!file.exists(.sid_path)) stop("No sid clustering at ", .sid_path, ". Render that job first.", call. = FALSE)
-  .cl <- .vt_read_sid(.sid_path)$value$clusters
+  .sid_strata <- .vt_read_sid(.sid_path)
+  .cl <- .sid_strata$value$clusters
   .strata <- data.frame(ID = as.character(.cl$ID), stratum = as.character(.cl$cluster))
+  # The clustering defines the strata, so the report names it and its data.
+  .provenance_data <- c(.provenance_data, .sid_strata$lineage$data)
+  .provenance_artifacts <- c(.provenance_artifacts, .sid_strata$lineage$artifacts, list(.sid_strata$record))
 } else if (is.character(STRATIFY)) {
-  .d <- hvtiRtemplates::read_job_data(.cfg, id = .vt$settings$id, one_row_per_patient = TRUE)$data
-  .strata <- data.frame(ID = as.character(.d[[.vt$settings$id]]), stratum = as.character(.d[[STRATIFY]]))
+  if (!STRATIFY %in% names(.d_all)) stop(STRATIFY, " is not in the data the fit read.", call. = FALSE)
+  .strata <- data.frame(ID = .d_all[[.vt$settings$id]], stratum = as.character(.d_all[[STRATIFY]]))
 }
 ```
 
@@ -983,42 +1115,56 @@ if (is.list(STRATIFY)) {
 # Each patient's log relative risk at HORIZON, scaled by its SD, regressed on one
 # characteristic at a time with overlap weights (Ishwaran and Blackstone, 2025).
 # The forests are fixed; only patients are resampled.
-.d_all <- hvtiRtemplates::read_job_data(.cfg, id = .vt$settings$id, one_row_per_patient = TRUE)$data
-.d_all[[.vt$settings$id]] <- as.character(.d_all[[.vt$settings$id]])
-.bx <- merge(r[.in & r$arm %in% ARMS & is.finite(r$log_rr), c("ID", "log_rr")],
+.bx <- merge(r[.eligible & r$arm %in% ARMS & is.finite(r$log_rr), c("ID", "log_rr")],
              .d_all[c(.vt$settings$id, .vt$predictors$names)], by.x = "ID", by.y = .vt$settings$id)
 .ps <- .vt$eligibility$ps
 .bx$w <- .ps$data[[.ps$weight_col %||% "mt_wt"]][match(.bx$ID, as.character(.ps$data[[.vt$settings$id]]))]
 .bx$y <- .bx$log_rr / stats::sd(.bx$log_rr)
-.beta_one <- function(x, v) {
-  xv <- x[[v]]
-  if (is.numeric(xv)) xv <- (xv - mean(xv, na.rm = TRUE)) / stats::sd(xv, na.rm = TRUE)
-  fit <- stats::lm(x$y ~ xv, weights = x$w)
-  unname(stats::coef(fit)[-1L][1L])
+# Each characteristic becomes ONE numeric column, fixed on the full sample before
+# any resampling: a number is standardized with the full-sample mean and SD; a
+# factor becomes an indicator of its most common non-reference level, against
+# the reference (its first level). A resample then regresses on the same
+# column, so the coefficient means the same thing in every resample, and a
+# resample in which that column does not vary is unestimable: it gives NA and
+# is counted, never an error.
+.design <- lapply(.vt$predictors$names, function(v) {
+  xv <- .bx[[v]]
+  if (is.numeric(xv)) return(list(x = (xv - mean(xv, na.rm = TRUE)) / stats::sd(xv, na.rm = TRUE), label = v))
+  xv <- factor(xv)
+  ref <- levels(xv)[1L]
+  lev <- names(sort(table(xv[xv != ref]), decreasing = TRUE))[1L]
+  list(x = as.numeric(xv == lev), label = paste0(v, ": ", lev, " vs ", ref))
+})
+.beta_one <- function(y, x, w) {
+  ok <- !is.na(x)
+  if (length(unique(x[ok])) < 2L) return(NA_real_)
+  unname(stats::coef(stats::lm(y[ok] ~ x[ok], weights = w[ok]))[2L])
 }
-.betas <- data.frame(variable = .vt$predictors$names,
-                     beta = vapply(.vt$predictors$names, function(v) .beta_one(.bx, v), numeric(1L)),
-                     lower = NA_real_, upper = NA_real_)
+.betas <- data.frame(variable = vapply(.design, `[[`, "", "label"),
+                     beta = vapply(.design, function(z) .beta_one(.bx$y, z$x, .bx$w), numeric(1L)),
+                     lower = NA_real_, upper = NA_real_, unestimable = NA_integer_)
 if (BOOT > 0) {
   set.seed(.vt$settings$seed)
   .boot <- replicate(BOOT, {
-    b <- .bx[sample.int(nrow(.bx), replace = TRUE), ]
-    vapply(.vt$predictors$names, function(v) .beta_one(b, v), numeric(1L))
+    i <- sample.int(nrow(.bx), replace = TRUE)
+    vapply(.design, function(z) .beta_one(.bx$y[i], z$x[i], .bx$w[i]), numeric(1L))
   })
+  .boot <- matrix(.boot, nrow = length(.design))
   .betas$lower <- apply(.boot, 1L, stats::quantile, 0.025, na.rm = TRUE)
   .betas$upper <- apply(.boot, 1L, stats::quantile, 0.975, na.rm = TRUE)
+  .betas$unestimable <- rowSums(is.na(.boot))
 }
 ```
 
-Read `ps_forest()`'s returned structure in Task 2 and use its actual weight column here (its default `weight_col` is `"mt_wt"`); replace the `%||%` line with the documented accessor. A factor with more than two levels contributes its first non-reference level's coefficient; the prose says so and names the reference level. `fig-betas`: a dot-and-interval plot of `.betas` ordered by `beta`, intervals drawn only when `BOOT > 0`; saved `vt-explain-betas`.
+Read `ps_forest()`'s returned structure in Task 2 and use its actual weight column here (its default `weight_col` is `"mt_wt"`); replace the `%||%` line with the documented accessor. The table shows `unestimable`, the resamples in which a characteristic did not vary, and the prose says an interval resting on many fewer than `BOOT` resamples is unreliable. `fig-betas`: a dot-and-interval plot of `.betas` ordered by `beta`, intervals drawn only when `BOOT > 0`; saved `vt-explain-betas`.
 
 - [ ] **Step 5: Write `tbl-benefit` and the reading prose**
 
 ```r
 #| label: tbl-benefit
 .gain <- ifelse(r$arm == ARMS[1], -r$diff, ifelse(r$arm == ARMS[2], r$diff, NA))
-.benefit <- r[.in & r$arm %in% ARMS & .gain > GAIN_MIN, ]
-.future <- r[.in & r$arm == "none", ]
+.benefit <- r[.eligible & r$arm %in% ARMS & .gain > GAIN_MIN, ]
+.future <- r[.eligible & r$arm == "none", ]
 .future$favours <- ifelse(.future$diff > 0, ARMS[1], ARMS[2])
 ```
 
@@ -1079,14 +1225,17 @@ test_that("a screen that saw the arm is refused", {
   expect_error(vt_with_screen(screen, utils::modifyList(vt_choices, list(VP_SET = "dead-vp"))), "treatment-blind")
 })
 
-test_that("no MRN reaches any file vt-fit or vt-explain saves", {
+# An MRN-keyed cohort is refused outright (Task 1). This covers the other way
+# an MRN could leak: a cohort keyed on ccfid that also carries one.
+test_that("no MRN reaches any file vt-fit or vt-explain generates", {
   skip_on_cran()
   d <- vt_data(); d$MRN <- sprintf("%08d", d$ccfid)
   env <- vt_fit_first(data = d, labels = vt_fit_labels_all)
-  rf_run("vt", "explain", vt_explain_labels_all, env, list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 0,
-                                                            SAVE_FIGURES = FALSE))
-  saved <- list.files(env$.root, recursive = TRUE, full.names = TRUE, pattern = "\\.rds$")
-  for (f in saved) expect_false(any(grepl(d$MRN[1], capture.output(str(readRDS(f), max.level = 6)))), info = f)
+  vt_explain(env, vt_explain_labels_all)
+  # Only what the jobs wrote: the set's estimates. The fixture's input dataset
+  # under datasets/ holds the MRNs on purpose.
+  set_dir <- dirname(env$set_path("estimates", "vt.rds"))
+  expect_identical(rf_files_holding(set_dir, d$MRN), character())  # nolint: object_usage_linter.
 })
 ```
 

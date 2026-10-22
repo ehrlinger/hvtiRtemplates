@@ -133,8 +133,12 @@ Chunks, in order:
      needed: the study's forests were irreproducible until 2026-10-07 because
      random calls were unseeded;
    - `REFIT`, `SAVE_FIGURES` and `FIGURES`, as in every template.
-3. **`tbl-data`.** Rows with a missing `TIME` or `STATUS` among the treated
-   are dropped, with the count stated. Counts and events by arm, and the count
+3. **`tbl-data`.** `ID` is taken as `read_job_data()` resolved it (it matches
+   case-insensitively and can fall back from `ccfid` to an MRN). **A resolved
+   ID that is an MRN or eMRN stops the render**: this job saves one row per
+   patient keyed by `ID`, and `sid` and `vp` sets join on it, so an MRN key
+   would be written into every saved table. The study names a random or study
+   ID instead. Treated rows with a missing `TIME` or `STATUS` stop the render. Counts and events by arm, and the count
    of no-arm rows.
 4. **`predictors`.** Resolves the predictor set (section 3), applies the
    contract and prints the final list.
@@ -213,7 +217,13 @@ method is hard-wired.
     arm's own patients. The reference is the arm's own spread, not a
     percentile;
   - a treated patient is judged against the other arm; a no-arm patient must
-    pass against both.
+    pass against both;
+  - **an unavailable distance counts as infinitely far.** Gower is undefined
+    for two patients who share no observed predictor, which `na.impute` data
+    allow. A patient with no finite distance to an arm has no comparable
+    neighbour there and is out of distribution for it, with that reason; an
+    arm member with no finite within-arm neighbour does not set the arm's
+    reference. Every judged patient gets a flag, never `NA`.
 - **The same shape from every method.** `vt_ood()` returns one row per
   patient and arm judged: `ID`, `method`, `arm`, `nn_id`, `distance`,
   `reference`, `ratio` (distance over the arm's median nearest-neighbour
@@ -250,7 +260,12 @@ that `vt-explain`'s standardized betas can refit nothing.
 
 It reads `vt.rds` from its own set with `.read_handoff()`, never calls
 `rfsrc()`, and stops naming the missing file when no `vt-fit` has run in the
-set. Its study choices are `STRATIFY`, `BOOT`, `GAIN_MIN` and the figure
+set. Where it needs patient characteristics (the stratifier, betas and who
+might benefit) it repeats the fit's own `read_job_data()` call from the
+selection `vt-fit` saved in `settings`, imputation included, so it sees the
+patients and values the forests saw. A `sid` set read for strata adds its
+record and data lineage to the report's provenance, as `vt-fit` does for the
+`vp` and `sid` sets it reads. Its study choices are `STRATIFY`, `BOOT`, `GAIN_MIN` and the figure
 choices.
 
 1. **Core contrast**, in-distribution patients under the primary rule:
@@ -286,6 +301,11 @@ choices.
    Blackstone, CSBJ 2025): each patient's log relative risk at `HORIZON`,
    divided by its standard deviation, regressed on one characteristic at a
    time with overlap (ATO) weights from the propensity scores in `vt.rds`.
+   Each characteristic is one numeric column fixed on the full sample before
+   resampling (a number standardized, a factor as an indicator of its most
+   common non-reference level), so a coefficient means the same in every
+   resample. A resample in which that column does not vary is unestimable,
+   gives `NA` and is counted in the table, never an error.
    Confidence intervals come from `BOOT` patient bootstraps with the forests
    held fixed (default 1000, about a minute in the study); `BOOT <- 0` skips
    the intervals. Seeded with `SEED` from the handoff.
