@@ -38,6 +38,17 @@ The job's own edit guard decides whether it is finished; this function
 does not search for markers itself, so it cannot disagree with a render
 started from the editor or from Quarto.
 
+Quarto starts its own R to run the job's chunks, and by default it takes
+whichever R comes first on the `PATH`, which on a server with several
+versions installed need not be the R that called this function. A study
+whose `renv` library belongs to the calling R then fails to find its
+packages. So the render sets `QUARTO_R` to this R's `bin` directory,
+`R.home("bin")`, and restores it afterwards. A non-empty `QUARTO_R` that
+is already set is left alone, and Quarto honors it with a Quarto CLI of
+1.8.13 or later. With an older CLI the quarto package itself sets
+`QUARTO_R` to the calling R for every render, so a value set by the user
+does not reach Quarto there.
+
 Jobs scaffolded by
 [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 capture their data provenance while executing and embed it in the
