@@ -82,3 +82,49 @@ test_that("the merge obeys diff3's laws over generated texts", {
     }
   }
 })
+
+test_that("repeated lines: a delete at the end and an insert at the start both land", {
+  m <- merge3(c("a", "a"), c("a", "a", "a"), c("b", "a", "a", "a"))
+  expect_identical(m$lines, c("b", "a", "a"))
+  expect_identical(nrow(m$conflicts), 0L)
+})
+
+test_that("edits with known provenance, separated by an untouched line, merge to the expected text", {
+  # Tested against the edits themselves, not by re-diffing the result against
+  # base: repeated lines let a fresh diff align one result as different hunks.
+  # Base mixes repeated lines (blank, fences) with unique ones, and the edits
+  # land on unique lines: an edit to one of several identical lines has no
+  # single right answer (see the next test).
+  withr::local_seed(20261023)
+  alphabet <- c("a", "b", "", "```")
+  for (case in seq_len(300L)) {
+    n <- sample(3:14, 1L)
+    base <- ifelse(stats::runif(n) < 0.5, sample(alphabet, n, replace = TRUE), paste0("u", seq_len(n)))
+    unique_at <- which(!base %in% base[duplicated(base)])
+    # Edit sites at least two apart, so an untouched line separates any two.
+    sites <- integer()
+    for (i in sample(unique_at, length(unique_at))) if (all(abs(sites - i) >= 2L)) sites <- c(sites, i)
+    sites <- sort(sites[seq_len(sample(0:min(4L, length(sites)), 1L))])
+    side <- sample(c("job", "template"), length(sites), replace = TRUE)
+    new <- lapply(seq_along(sites), function(k) {
+      paste0(side[[k]], case, "-", k, "-", seq_len(sample(0:2, 1L)), recycle0 = TRUE)
+    })
+    apply_edits <- function(which) {
+      out <- as.list(base)
+      for (k in seq_along(sites)) if (side[[k]] %in% which) out[[sites[[k]]]] <- new[[k]]
+      unlist(out, use.names = FALSE)
+    }
+    m <- merge3(apply_edits("job"), base, apply_edits("template"))
+    expect_identical(nrow(m$conflicts), 0L, info = paste("case", case))
+    expect_identical(m$lines, apply_edits(c("job", "template")), info = paste("case", case))
+  }
+})
+
+test_that("identical lines are indistinguishable: each side deleting one of a run reads as one deletion", {
+  # A limit of every line-based diff3, git's included, written down so a change
+  # to it is noticed. Each side deletes one `x` of three; the merge sees the
+  # same deletion twice and keeps two. See the design's decision 6.
+  m <- merge3(c("a", "x", "x", "z"), c("a", "x", "x", "x", "z"), c("a", "x", "x", "z"))
+  expect_identical(m$lines, c("a", "x", "x", "z"))
+  expect_identical(nrow(m$conflicts), 0L)
+})
