@@ -220,6 +220,15 @@ can be reached. It records `cancelled` with a reason naming both hosts, and remo
 `.run.progress`. `run_state` (4.3) names it when the other host's progress is stale. Until it
 lands, `run_state` refuses and says to delete the two files by hand, as was done on 2026-10-22.
 
+Built on `feat/cancel-job` as `cancel_job(path, other_host = c("refuse", "abandon"))`. ⚠️ **Stale
+progress is not proof the job is dead.** processx starts Quarto's knitr in a session of its own, so a
+host whose Workbench session has ended may still be running the fit. Abandoning it then lets a
+second render start on the same outputs. `cancel_job()` therefore records an environment marker,
+`HVTI_JOB_MARKER`, as `marker` in `.run.yml`. The `run_state` refusal never calls the job dead. It
+says "probably", gives the command that confirms nothing is left on that host, `ps eww -u $USER |
+grep <marker>` run there (or `hvti status` from a session on that host), and offers the abandon
+call only after that.
+
 ## 7. Snapshot guard, in hvtiRutilities and hvtiR (failure 1, second half)
 
 A `renv::snapshot()` from an R whose major.minor differs from the lock's records the wrong R and

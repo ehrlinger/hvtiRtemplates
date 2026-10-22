@@ -672,8 +672,8 @@ Implements §4.3 and §4.4, failures 6 and 2 (the pre-submit half).
 - Test: `tests/testthat/test-preflight.R`
 
 **Interfaces:**
-- Consumes: `job_status()`, `.run_files()`. `cancel_job()`'s other-host option, if `feat/cancel-job`
-  has merged by then: run `grep -n other_host R/background-job.R` on `origin/main` first.
+- Consumes: `job_status()`, `.run_files()`. `cancel_job(path, other_host = "abandon")` and the `marker`
+  field in `.run.yml` come from `feat/cancel-job`: run `grep -n other_host R/background-job.R` on `origin/main` first.
 - Produces: `.check_run_state(path)` and `.check_quarto()` return `check` records.
 
 - [ ] **Step 1: Write the failing tests**
@@ -695,6 +695,16 @@ test_that("a stale other-host run is called probably dead, with the abandon call
   ck <- .check_run_state(job)
   expect_match(ck$message, "probably", fixed = TRUE)
   expect_match(ck$fix, "cancel_job(", fixed = TRUE)
+})
+
+test_that("the abandon fix tells the user to confirm on that host first, by marker", {
+  job <- status_job()
+  testthat::local_mocked_bindings(job_status = function(path, quiet) list(state = "running", host = "lri-r06",
+                                                                          marker = "hvti-abc123",
+                                                                          progress = list(stale = TRUE)))
+  ck <- .check_run_state(job)
+  expect_match(ck$fix, "ps eww -u $USER | grep hvti-abc123", fixed = TRUE)
+  expect_lt(regexpr("grep", ck$fix, fixed = TRUE), regexpr("cancel_job(", ck$fix, fixed = TRUE))
 })
 
 test_that("a lock directory older than ten minutes is refused by name", {
@@ -764,8 +774,15 @@ Expected: FAIL on the five new tests.
   here <- Sys.info()[["nodename"]]
   if (identical(st$state, "running") && is.character(st$host) && !identical(st$host, here)) {
     stale <- isTRUE(st$progress$stale)
+    # Stale progress is not proof: Quarto's knitr runs in a session of its own and can outlive the
+    # Workbench session, so the fix confirms on that host before abandoning (spec section 6).
+    confirm <- if (is.character(st$marker)) {
+      sprintf("On %s, confirm nothing is left with `ps eww -u $USER | grep %s`. ", st$host, st$marker)
+    } else {
+      sprintf("From a session on %s, confirm with `hvti status` that nothing is left. ", st$host)
+    }
     abandon <- if (exists("cancel_job", mode = "function") && "other_host" %in% names(formals(cancel_job))) {
-      sprintf('If that session is gone, run cancel_job("%s", other_host = "abandon") here.', path)
+      sprintf('%sOnly then run cancel_job("%s", other_host = "abandon") here.', confirm, path)
     } else {
       sprintf("If that session is gone, delete %s and %s, then run again.", files$status, files$progress)
     }
