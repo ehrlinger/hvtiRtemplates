@@ -49,7 +49,8 @@
 #'
 #' The one exception is the job's description. Where the template opens with
 #' an \code{EDIT:} comment asking for it, the text the old job has in that
-#' place is carried instead, unless it is still the comment.
+#' place is carried instead, once the study has deleted the comment's marker.
+#' While the marker stands, the report names those lines for review.
 #'
 #' The old job is kept beside the new one as \code{<file>.pre-upgrade}, a name
 #' nothing renders. The upgraded job takes the name \code{\link{add_job}}
@@ -329,12 +330,12 @@ upgrade_job <- function(path, dir = NULL) {
 }
 
 # The job's own description: what the study wrote where the template opens with
-# an EDIT comment ahead of its first chunk. The comment's neighbours in the
+# an EDIT comment ahead of its first chunk. The comment's neighbors in the
 # template, the line before it (the front matter, for most) and the line after,
 # find the same place in the old job; whatever stands between them there is the
-# description, and replaces the comment unless it is the comment itself.
+# description, and replaces the comment once the study has deleted its marker.
 # `status` is "none" (the template has no such comment), "open" (the old job
-# still has the comment), "carried" or "not found".
+# still has a marker there), "carried" or "not found".
 .carry_description <- function(old, new) {
   token <- .edit_token()
   stamp <- "^<!-- hvtiRtemplates: "
@@ -366,12 +367,15 @@ upgrade_job <- function(path, dir = NULL) {
   ofm <- front(old)
   s <- if (is.na(before)) ofm else which(old == new[[before]] & seq_along(old) > ofm)[1L]
   if (is.na(s)) return(status("not found"))
-  # The line after is the next paragraph's first; failing that, the one after
-  # it, because some templates follow the comment with a placeholder line, such
-  # as "Replaces `descriptive/dc.general`.", that the study rewrites.
+  # The line after is the next paragraph's first. Where that paragraph is the
+  # template's placeholder, a "Replaces ..." line the study rewrites, it is the
+  # paragraph after. Template prose is never skipped: a paragraph the template
+  # has reworded since would be read as the description and carry the old
+  # template's text over the new.
   starts <- which(filled(new) & !filled(c("", new[-length(new)])) & seq_along(new) > b)
+  tries <- utils::head(starts, if (length(starts) && startsWith(new[[starts[[1L]]]], "Replaces ")) 2L else 1L)
   after <- e <- NA_integer_
-  for (k in utils::head(starts, 2L)) {
+  for (k in tries) {
     e <- which(old == new[[k]] & seq_along(old) > s)[1L]
     if (!is.na(e)) {
       after <- k
@@ -380,20 +384,17 @@ upgrade_job <- function(path, dir = NULL) {
   }
   between <- if (!is.na(e) && e > s + 1L) (s + 1L):(e - 1L) else integer()
   between <- between[filled(old[between])]
-  # Nothing between the neighbours is not a deleted description: the old job's
+  # Nothing between the neighbors is not a deleted description: the old job's
   # template may have had no comment there.
   if (!length(between)) return(status("not found"))
   region <- a:(after - 1L)
   region <- region[seq_len(max(which(filled(new[region]))))]
   text <- old[min(between):max(between)]
-  # Still the comment, in this template's wording or an older one's.
-  rest <- text
-  o <- grep("^<!--", rest)
-  for (i in rev(o)) {
-    j <- i - 1L + grep("-->", rest[i:length(rest)], fixed = TRUE)[1L]
-    if (!is.na(j) && any(grepl(token, rest[i:j], fixed = TRUE))) rest <- rest[-(i:j)]
-  }
-  if (identical(text, new[region]) || !any(filled(rest))) return(status("open"))
+  if (identical(text, new[region])) return(status("open"))
+  # A description is the study's once its marker is gone, as a choice's is.
+  # While the marker stands the text may be any template's prompt or
+  # placeholder, so it is named for review and not carried.
+  if (any(grepl(token, text, fixed = TRUE))) return(status("open", new, min(between), max(between)))
   status("carried", c(new[seq_len(a - 1L)], text, new[-seq_len(max(region))]), min(between), max(between))
 }
 
@@ -470,7 +471,9 @@ upgrade_job <- function(path, dir = NULL) {
   d <- u$description
   description <- switch(d$status,
     none = "The current template has no description to write.",
-    open = "The old job had not written it; the template's comment, under its marker, is still in place.",
+    open = if (is.na(d$from)) "The old job had not written it; the template's comment, under its marker, is still in place." else
+      paste0("Old lines ", d$from, "-", d$to, " still carry a marker, so they were not carried; the template's comment ",
+             "is in their place. Copy any text of your own from the old job and delete the comment."),
     carried = paste0("Carried from the old job, old lines ", d$from, "-", d$to, ", in place of the template's comment."),
     "Not found in the old job. The template's comment, under its marker, is in its place; copy the old job's text there."
   )

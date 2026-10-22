@@ -49,7 +49,8 @@ comment lacks.
 
 The one exception is the job's description. Where the template opens with
 an \code{EDIT:} comment asking for it, the text the old job has in that
-place is carried instead, unless it is still the comment.
+place is carried instead, once the study has deleted the comment's marker.
+While the marker stands, the report names those lines for review.
 
 The old job is kept beside the new one as \code{<file>.pre-upgrade}, a name
 nothing renders. The upgraded job takes the name \code{\link{add_job}}

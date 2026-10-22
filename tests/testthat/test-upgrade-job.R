@@ -358,7 +358,7 @@ test_that("an older template's wording of the comment, untouched, is still open"
   expect_length(grep("^<!-- EDIT: name the job", upgraded), 1L)
   expect_false(any(grepl("say which job", upgraded)))
   report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
-  expect_true(any(grepl("^The old job had not written it", report)))
+  expect_true(any(grepl("^Old lines [0-9]+-[0-9]+ still carry a marker", report)))
 })
 
 test_that("a job whose template had no comment there keeps the current template's", {
@@ -371,4 +371,30 @@ test_that("a job whose template had no comment there keeps the current template'
   expect_length(grep("^<!-- EDIT: name the job", upgraded), 1L)
   report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
   expect_true(any(grepl("^Not found in the old job", report)))
+})
+
+test_that("template prose reworded since the old job is never read as its description", {
+  # Two template versions whose introductions differ, as after a template edit.
+  old <- readLines(template_path("nb", "boostmtree"))
+  new <- old
+  k <- grep("^An `nb-boostmtree` job fits", new)
+  new[[k]] <- sub("fits boosted", "fits and validates boosted", new[[k]], fixed = TRUE)
+  u <- .upgrade_lines(old, new)
+  expect_identical(u$description$status, "not found")
+  expect_true(new[[k]] %in% u$lines)
+  expect_false(old[[k]] %in% u$lines)
+  # The same, with a description the study wrote: still the current introduction.
+  i <- grep("^<!-- EDIT: name the job", old)
+  written <- c(old[seq_len(i - 1L)], "Replaces `nb.lvef.Boostmtree`.", old[-(i:(i + 2L))])
+  u <- .upgrade_lines(written, new)
+  expect_true(new[[k]] %in% u$lines)
+  expect_false(old[[k]] %in% u$lines)
+})
+
+test_that("an older template's prompt and placeholder, untouched, are not carried", {
+  old <- readLines(testthat::test_path("fixtures-upgrade", "rfs-fit-v1.3.0.qmd"), warn = FALSE)
+  u <- .upgrade_lines(old, readLines(template_path("rfs", "fit")))
+  expect_identical(u$description$status, "open")
+  expect_false("Replaces `analyses/<job>`: describe its outcome and candidate predictors here." %in% u$lines)
+  expect_length(grep("^<!-- EDIT: name the job", u$lines), 1L)
 })
