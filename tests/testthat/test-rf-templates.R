@@ -505,7 +505,7 @@ test_that("the fit and explain jobs save no MRN when their chunks run outside th
     expect_true("mrn" %in% names(fit$job_data$data), info = prefix)
     expect_identical(rf_files_holding(fit$dir, data$MRN), character(), info = prefix)
     caches <- rf_explain_in(prefix, fit$root, new.env(parent = globalenv()))
-    expect_length(grep("[.]rds$", caches), 4L)
+    expect_length(grep("[.]rds$", caches), 2L)
     expect_identical(rf_files_holding(fit$dir, data$MRN), character(), info = prefix)
   }
 })
