@@ -152,6 +152,9 @@ Chunks, in order:
    - **Propensity common support**, from `hvtiRpropensity::ps_forest()` on the
      treated patients and `ps_support()`. It is a sensitivity row only, never
      part of the combined rule.
+     `ps_forest()` refuses missing predictors, so under `na.impute` it is
+     given a seeded forest-imputed copy (`randomForestSRC::impute()`) of the
+     treated patients' predictors; the arm forests keep the data as read.
    - **Unrestricted**, everyone.
    - A table of the out-of-distribution patients with, for each method, the
      arm each failed against and the reason, and a figure per method of each
@@ -305,7 +308,11 @@ choices.
 3. **Standardized betas**, the study's chapter 07 method (Ishwaran and
    Blackstone, CSBJ 2025): each patient's log relative risk at `HORIZON`,
    divided by its standard deviation, regressed on one characteristic at a
-   time with overlap (ATO) weights from the propensity scores in `vt.rds`.
+   time with overlap (ATO) weights from the propensity scores in `vt.rds`:
+   1 - e for a patient on `ARMS[1]` and e on `ARMS[2]`, e being the
+   out-of-bag probability of `ARMS[1]`. They are computed here, not taken
+   from `ps_forest()`'s weight column, which holds Li-Greene matching weights
+   (a different estimand, ATM).
    Each characteristic is one numeric column fixed on the full sample before
    resampling (a number standardized, a factor as an indicator of its most
    common non-reference level), so a coefficient means the same in every

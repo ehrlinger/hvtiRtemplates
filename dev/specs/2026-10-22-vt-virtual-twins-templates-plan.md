@@ -576,8 +576,18 @@ vt_combine <- function(rows, combine = c("any", "all")) {
 .elig <- vt_combine(.elig_rows, COMBINE)
 for (m in .methods) .elig[[paste0("elig_", m)]] <- vt_combine(.elig_rows[.elig_rows$method == m, ], "any")$elig
 # Sensitivity only, never part of the combined rule: forest propensity common support.
+# ps_forest() refuses missing predictors, while the arm forests impute them
+# (NA_ACTION = "na.impute"). So the propensity model gets a forest-imputed copy
+# of the treated patients' predictors, seeded, and the arm forests keep the
+# data as read. Under "na.omit" nothing is missing and the copy equals d.
+.ps_data <- d[.treated, c(ID, ARM, .predictors), drop = FALSE]
+if (anyNA(.ps_data[.predictors])) {
+  set.seed(SEED)
+  .ps_data[.predictors] <- randomForestSRC::impute(data = .ps_data[c(ARM, .predictors)], ntree = 100L,
+                                                   seed = -abs(SEED))[.predictors]
+}
 set.seed(SEED)
-.ps <- ps_forest(stats::reformulate(.predictors, ARM), data = d[.treated, ], treatment_col = ARM, id_col = ID,
+.ps <- ps_forest(stats::reformulate(.predictors, ARM), data = .ps_data, treatment_col = ARM, id_col = ID,
                  treated_level = ARMS[1], ntree = NTREE, seed = -abs(SEED))
 .support <- ps_support(.ps)
 .elig$elig_propensity <- .elig$ID %in% .support[[ID]][.support$in_support]
@@ -594,6 +604,13 @@ vt_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "predictors",
 ```
 
 ```r
+test_that("the propensity sensitivity renders with missing predictors under na.impute", {
+  skip_on_cran()
+  d <- vt_data(); d$x1[c(20, 40, 60)] <- NA
+  env <- vt_fit_first(data = d)
+  expect_false(anyNA(env$.elig$elig_propensity))
+})
+
 test_that("vt-fit flags the planted outliers against arm B", {
   skip_on_cran()
   env <- vt_fit_first()
@@ -1052,7 +1069,7 @@ git commit -m "feat(vt-explain): the twin contrast, received best and the eligib
 
 ```r
 # provenance stays last: it reads what stratify appends.
-vt_explain_labels_all <- c(setdiff(vt_explain_labels, "provenance"), "stratify", "tbl-stratum", "betas", "fig-betas",
+vt_explain_labels_all <- c(setdiff(vt_explain_labels, "provenance"), "stratify", "tbl-stratum", "overlap-weights", "betas", "fig-betas",
                            "tbl-benefit", "provenance")
 ```
 
@@ -1142,7 +1159,11 @@ if (is.list(STRATIFY)) {
 .bx <- merge(r[.eligible & r$arm %in% ARMS & is.finite(r$log_rr), c("ID", "log_rr")],
              .d_all[c(.vt$settings$id, .vt$predictors$names)], by.x = "ID", by.y = .vt$settings$id)
 .ps <- .vt$eligibility$ps
-.bx$w <- .ps$data[[.ps$weight_col %||% "mt_wt"]][match(.bx$ID, as.character(.ps$data[[.vt$settings$id]]))]
+# Overlap (ATO) weights, computed here: ps_forest()'s own weight column is the
+# Li-Greene MATCHING weight, which targets a different estimand (ATM). With e
+# the out-of-bag probability of ARMS[1], a patient on ARMS[1] weighs 1 - e and
+# one on ARMS[2] weighs e (Li, Morgan and Zaslavsky 2018).
+.bx$w <- vt_overlap_weights(.ps$data, .bx$ID, .vt$settings$id, .vt$settings$arm, ARMS)
 .bx$y <- .bx$log_rr / stats::sd(.bx$log_rr)
 # Each characteristic becomes ONE numeric column, fixed on the full sample before
 # any resampling: a number is standardized with the full-sample mean and SD; a
@@ -1180,7 +1201,29 @@ if (BOOT > 0) {
 }
 ```
 
-Read `ps_forest()`'s returned structure in Task 2 and use its actual weight column here (its default `weight_col` is `"mt_wt"`); replace the `%||%` line with the documented accessor. The table shows `unestimable`, the resamples in which a characteristic did not vary, and the prose says an interval resting on many fewer than `BOOT` resamples is unreliable. `fig-betas`: a dot-and-interval plot of `.betas` ordered by `beta`, intervals drawn only when `BOOT > 0`; saved `vt-explain-betas`.
+Confirm `ps_forest()`'s score column is `prob_t`, the probability of `treated_level` (`ARMS[1]`), from its help page. The table shows `unestimable`, the resamples in which a characteristic did not vary, and the prose says an interval resting on many fewer than `BOOT` resamples is unreliable. `vt_overlap_weights()` is defined in a chunk of its own, `overlap-weights`, ahead of `betas`, so it can be tested without a fit:
+
+```r
+#| label: overlap-weights
+vt_overlap_weights <- function(ps_data, ids, id, arm, arms, score = "prob_t") {
+  at <- match(ids, as.character(ps_data[[id]]))
+  e <- ps_data[[score]][at]
+  ifelse(ps_data[[arm]][at] == arms[1], 1 - e, e)
+}
+```
+
+Its test, CRAN-safe, in Step 1:
+
+```r
+test_that("overlap weights are 1 - e on the first arm and e on the second", {
+  src <- readLines(template_path("vt", "explain"), warn = FALSE)
+  env <- new.env(); eval(parse(text = rf_chunk(src, "overlap-weights")), envir = env)  # nolint: object_usage_linter.
+  ps <- data.frame(id = c("p", "q", "r"), arm = c("A", "B", "A"), prob_t = c(0.8, 0.3, 0.1))
+  expect_equal(env$vt_overlap_weights(ps, c("r", "p", "q"), "id", "arm", c("A", "B")), c(0.9, 0.2, 0.3))
+})
+```
+
+Add `"overlap-weights"` before `"betas"` in `vt_explain_labels_all`. `fig-betas`: a dot-and-interval plot of `.betas` ordered by `beta`, intervals drawn only when `BOOT > 0`; saved `vt-explain-betas`.
 
 - [ ] **Step 5: Write `tbl-benefit` and the reading prose**
 
@@ -1264,6 +1307,51 @@ test_that("no MRN reaches any file vt-fit or vt-explain generates", {
 ```
 
 Put `vt_with_screen()` in `helper-vt.R`, not the test file.
+
+A full Quarto render of both jobs, end to end, because the chunk runner does not exercise everything a render does (the `provenance` chunk's `.embed_provenance(.in, ...)` resolving the render input, figure saving, the draft guards). Follow `rm_render_fixture()` in `helper-rm.R`: a fresh study with `vt_data()` written as `built.csv` and registered, `add_job("vt", "dead", "vt", dir = root, qualifier = "fit")` and then `"explain"`, every `EDIT:` replaced by `REVIEWED:`, each study-choice line set from `vt_choices` (`NTREE <- 50`, `BOOT <- 20`), then `quarto::quarto_render()`. In `helper-vt.R`:
+
+```r
+vt_render_fixture <- function(.local_envir = parent.frame()) {
+  root <- tempfile("vt-study-")
+  withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Synthetic vt study", study_tracker_id = 42L, renv = FALSE))
+  utils::write.csv(vt_data(), file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv", role = "study", population = "Synthetic cohort"))
+  set_line <- function(lines, key, value) {
+    lines[which(grepl(paste0("^", key, " <- "), lines))[1L]] <- paste(key, "<-", value)
+    lines
+  }
+  jobs <- vapply(c("fit", "explain"), function(q) {
+    job <- add_job("vt", "dead", "vt", dir = root, qualifier = q)
+    lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
+    if (q == "fit") {
+      for (kv in list(c("TIME", '"time"'), c("STATUS", '"event"'), c("ARM", '"arm"'), c("ARMS", 'c("A", "B")'),
+                      c("PREDICTORS", 'c("xs", "x1", "g1")'), c("HORIZON", "2"), c("NTREE", "50"))) {
+        lines <- set_line(lines, kv[1], kv[2])
+      }
+    } else {
+      lines <- set_line(lines, "BOOT", "20")
+    }
+    writeLines(lines, job)
+    job
+  }, "")
+  for (job in jobs) quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
+  list(root = root, jobs = jobs, outputs = sub("[.]qmd$", ".html", jobs))
+}
+```
+
+```r
+test_that("vt-fit and vt-explain render end to end", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if(is.null(quarto::quarto_path()), "Quarto is not installed")
+  rf_skip_unless_stack(unique(c(rf_template_packages("vt", "fit"), rf_template_packages("vt", "explain"))))  # nolint: object_usage_linter.
+  out <- vt_render_fixture()
+  expect_true(all(file.exists(out$outputs)))
+})
+```
+
+Render tests use the installed package, so run them with the private library (`R_LIBS="$VT_LIB"`).
 
 - [ ] **Step 2: Run them and make them pass**
 
