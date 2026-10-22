@@ -1100,13 +1100,17 @@ are Quarto's. Quarto writes `Error:` (or `Error in <call>:`), then the condition
 then `Quitting from <file>:<lines> [<label>]`: the error comes **before** the quitting marker. Make
 them in Step 0 by rendering synthetic jobs on the Mac (in a temp directory, never a study share),
 and commit the `.run.log`s. They contain **no data values, IDs or paths under `/studies/`**. Strip
-temp paths to `<tmp>` with `sub()`. The boostmtree "worker result(s) were not delivered" text is the
-one fixture not reproducible locally without a memory kill. Take that line verbatim from the
-COMMENCE 2026-10-22 log, which John supplies, keeping only boostmtree's message lines.
+temp paths to `<tmp>` with `sub()`. **Never copy a line from a study's log:** boostmtree's message
+names a subject (`(first for subject <id>)`), so a line from the COMMENCE log would carry a patient
+ID into a public repository. The killed-worker fixture is generated too, the way boostmtree's own
+`tests/testthat/test-cv-cores.R` provokes it, on `simLong()` synthetic data.
 
 - [ ] **Step 0: Generate the fixtures.** For each of `stop("memory: probe refusal.\nStart a Large
   session.")` (guard), `library(notapkg)` (no-package), and `stop("boom")` in a chunk labelled `fit`
-  (quitting), write a minimal `.qmd` with that chunk, render it with `quarto::quarto_render()` while
+  (quitting), and for oom-workers a chunk that mocks `parallel::mclapply` to return a NULL result,
+  as `boostmtree/tests/testthat/test-cv-cores.R` does, and then fits `boostmtree(..., cv.flag = TRUE,
+  control = boostmtree.control(cv.cores = 2L))` on `simLong(n = 20, n.time = 4, family = "continuous")`,
+  write a minimal `.qmd` with that chunk, render it with `quarto::quarto_render()` while
   capturing stdout and stderr to a file, and save it as `fixtures-diagnose/<name>.log`. Record the
   Quarto and knitr versions in `fixtures-diagnose/README.md`.
 
