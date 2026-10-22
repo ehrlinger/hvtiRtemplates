@@ -527,7 +527,7 @@ first, lists every one it finds together, and starts nothing until they are clea
 Install the `hvti` command once. It is a shell command, so it works from a terminal whichever
 R your session happened to start:
 
-    hvtiRtemplates::install_hvti()
+    hvtiRtemplates::install_hvti("~/bin")
 
 Then, from the study:
 
@@ -539,7 +539,7 @@ Then, from the study:
 `--final` is `final = TRUE` in `render_job()`. `hvti` runs the job on the R that the study's
 `renv.lock` records, which is the one thing a terminal can do that an R console cannot. From
 an R session, `hvtiRtemplates::run_job("analyses/nb.boostmtree.lvef.boost.qmd")` does the same,
-with `job_status()` and `cancel_job()` for the other two. Run `install_hvti()` again after
+with `job_status()` and `cancel_job()` for the other two. Run `install_hvti("~/bin")` again after
 updating the package; `run_job()` warns when the copy on your `PATH` is older.
 
 There are seven checks. Each is named, and the name starts the refusal, so you can quote it
@@ -560,17 +560,23 @@ the render, so `run_job()` waits up to five minutes for them to report and print
 rather than leaving it in a log.
 
 A refusal has two lines, what is wrong and a `fix:` line. **The `fix:` line is the thing to
-run.** It is the exact command, not a hint. Fix everything listed and run the job again.
+do.** Where a command fixes it, such as `renv::restore(packages = "quarto")`, that is the
+command to run; where it needs a decision, such as which session to start, it says what to
+change. Fix everything listed and run the job again.
 
 `guard_memory()` names the Workbench profile that would hold the fit and, for a fit that runs
 on several cores, the largest core count that fits the session you are in. Its estimate for
-`nb-boostmtree` is calibrated from two fits that were killed, so it is a lower bound: a fit it
-refuses will not fit, but one it passes can still fail. Larger fits have not been measured.
+`nb-boostmtree` is set so that it refuses the two fits measured being killed, COMMENCE in a
+Default session and an ordinal fit in a Medium one. It is not verified between them or above
+them: nothing shows, for instance, that a Small session cannot hold COMMENCE, so the profile it
+names may be larger than the fit needs, and a fit it passes can still fail. Its coefficients are
+provisional until they are reviewed against more runs.
 
 When a run fails anyway, `job_status()` says why, in a sentence, with a fix, for the causes
 we know: out of memory, a package missing on the R the render used, or the chunk and lines
-where the job stopped. When none match it prints the end of the log. It also shows the
-memory peak against the session's limit, so a fit that came close is visible.
+where the job stopped. When none match it prints the end of the log. While the job runs it
+shows the memory in use against the session's limit, and after it ends the peak, so a fit that
+came close is visible.
 
 A job scaffolded before the setup consolidation has no in-render checks to wait for.
 `run_job()` runs the first five, says the rest are missing and names `upgrade_job()`, which
