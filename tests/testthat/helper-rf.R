@@ -88,7 +88,7 @@ rf_drawing_notice <- function(label, w) {
   ), collapse = "|"), conditionMessage(w))
 }
 
-# gg_partial_varpro() as the explain templates call it, but evaluating each
+# gg_partial_varpro() as vp-explain calls it, but evaluating each
 # continuous predictor at 25 grid points rather than partialpro()'s default
 # 100. The grid is not a study choice, so no template sets it, and each point
 # is a prediction from VarPro's 500-tree forest: at 100 points the explain
@@ -232,19 +232,9 @@ rf_explain_in <- function(prefix, root, env, .local_envir = parent.frame()) {
   rf_restore_later(env, .local_envir)
   env$.root <- root
   choices <- c(list(TOP_K = 2, SEED = 1), if (identical(prefix, "rfs")) list(TIMES = c(1, 3)))
-  labels <- c("set", "edit-study-choices", "forest", "tbl-data", "fig-importance", "tbl-importance", "select", "fig-varpro",
-              "dependence-marginal", "dependence-partial", "dependence-varpro")
-  # VarPro keeps only the variables it selects, so a top variable by VIMP can be
-  # absent from its partial, and it says so. That one notice is about the
-  # explanation, not the files; any other warning still reaches the summary.
-  withCallingHandlers(
-    utils::capture.output(rf_run(prefix, "explain", labels, env, choices)),
-    warning = function(w) {
-      if (grepl("^partialpro\\(\\): skipping xvar.names not found in object\\$xvar.names", conditionMessage(w))) {
-        invokeRestart("muffleWarning")
-      }
-    }
-  )
+  labels <- c("set", "edit-study-choices", "forest", "tbl-data", "fig-importance", "tbl-importance", "select",
+              "dependence-marginal", "dependence-partial")
+  utils::capture.output(rf_run(prefix, "explain", labels, env, choices))
   setdiff(list.files(env$CACHE_DIR), paste0(prefix, c(".rds", "-forest.rds", "-forest.provenance.json")))
 }
 

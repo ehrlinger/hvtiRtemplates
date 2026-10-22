@@ -74,9 +74,8 @@ test_that("rf_skip_unless_stack does not error on a package with no floor", {
 })
 
 # Each figure and table is a chunk of its own, so the report's outputs are listed one by one.
-dependence_labels <- c("dependence-marginal", "dependence-partial", "dependence-varpro")
-explain_labels <- c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select", "fig-varpro",
-                    dependence_labels)
+dependence_labels <- c("dependence-marginal", "dependence-partial")
+explain_labels <- c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select", dependence_labels)
 
 rfs_explain_choices <- list(TOP_K = 2, TIMES = c(30, 90), SEED = 1)
 
@@ -114,13 +113,12 @@ test_that("rfs-explain explains the saved forest without refitting", {
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
   env <- rfs_explained()
 
-  expect_identical(names(env$frame), c(env$forest$yvar.names, env$forest$xvar.names))
   expect_length(env$sel, 2L)
   expect_identical(env$sel, head(env$ranked, 2L))
-  for (nm in c("rfs-vimp", "rfs-varpro", "rfs-partial", "rfs-partial-varpro")) {
+  for (nm in c("rfs-vimp", "rfs-partial")) {
     expect_true(file.exists(file.path(env$CACHE_DIR, paste0(nm, ".rds"))), info = nm)
   }
-  for (p in list(ggRandomForests::gg_vimp(env$vi), ggRandomForests::gg_varpro(env$vp), env$pd, env$pv)) {
+  for (p in list(ggRandomForests::gg_vimp(env$vi), env$pd)) {
     expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
   }
 })
@@ -143,7 +141,7 @@ test_that("a changed TOP_K makes only the partial caches stale", {
   choices$TOP_K <- 3
   again <- new.env(parent = globalenv())
   again$.root <- root
-  rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select", "fig-varpro"),
+  rf_run("rfs", "explain", c("set", "edit-study-choices", "forest", "fig-importance", "tbl-importance", "select"),
          again, choices)
   # "only" is the claim under test: the error must name rfs-partial, the
   # cache the dependence chunk hits first, not merely be A stale-cache error,
@@ -164,7 +162,7 @@ test_that("a changed TOP_K makes only the partial caches stale", {
 test_that("PARTIAL_VARS names the dependence variables explicitly", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
-  # The shared study's importance and VarPro caches are reused; its partials,
+  # The shared study's importance cache is reused; its partials,
   # computed for the TOP_K choice, go, so these are computed for PARTIAL_VARS.
   root <- rfs_explained_copy()
   unlink(list.files(root, "^rfs-partial", recursive = TRUE, full.names = TRUE))
@@ -275,7 +273,7 @@ test_that("rfc-explain ranks by overall importance, not per class", {
   rf_run("rfc", "explain", explain_labels, env, list(TOP_K = 2, SEED = 1))
   expect_false(anyDuplicated(env$ranked) > 0)
   expect_length(env$sel, 2L)
-  for (p in list(env$pd, env$pv)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
+  expect_s3_class(ggplot2::ggplot_build(plot(env$pd)), "ggplot_built")
 })
 
 test_that("no explain template grows a forest", {
@@ -348,17 +346,13 @@ test_that("rfr-fit refuses its outcome and duplicate names among predictors", {
   )
 })
 
-test_that("rfr-explain runs VarPro on a forest grown with missing predictors", {
+test_that("rfr-explain explains a forest grown with missing predictors", {
   rf_skip_unless_stack(rf_template_packages("rfr", "explain"))
   fit_env <- rf_fit_first("rfr", rfr_data(), rfr_choices)
   env <- new.env(parent = globalenv())
   env$.root <- fit_env$.root
-  # VarPro is given the forest's imputed data, so it drops no patient and has
-  # no notice to muffle (varPro 3.3.0 warned when it dropped rows, #166).
   rf_run("rfr", "explain", explain_labels, env, list(TOP_K = 2, SEED = 1))
-  expect_false(anyNA(env$frame))   # the forest's imputed data, not the raw training rows
-  expect_s3_class(env$vp, "varpro")
-  for (p in list(env$pd, env$pv)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
+  expect_s3_class(ggplot2::ggplot_build(plot(env$pd)), "ggplot_built")
 })
 
 # ---- The data contract: read_job_data(), WHERE, ID and KEY ---------------------
@@ -489,8 +483,7 @@ test_that("the fit and explain jobs keyed on MRN save no MRN in any file", {
     expect_identical(rf_files_holding(fit$dir, data$MRN), character(), info = prefix)
     # The explain job's caches sit beside the forest and are searched with it.
     caches <- rf_explain_in(prefix, fit$root, globalenv())
-    expect_true(all(paste0(prefix, c("-vimp.rds", "-varpro.rds", "-partial.rds", "-partial-varpro.rds")) %in% caches),
-                info = prefix)
+    expect_true(all(paste0(prefix, c("-vimp.rds", "-partial.rds")) %in% caches), info = prefix)
     expect_identical(rf_files_holding(fit$dir, data$MRN), character(), info = prefix)
     # The search finds what is there: every MRN in the data as the job read it.
     read <- serialize(fit$job_data$data, NULL)
@@ -512,7 +505,7 @@ test_that("the fit and explain jobs save no MRN when their chunks run outside th
     expect_true("mrn" %in% names(fit$job_data$data), info = prefix)
     expect_identical(rf_files_holding(fit$dir, data$MRN), character(), info = prefix)
     caches <- rf_explain_in(prefix, fit$root, new.env(parent = globalenv()))
-    expect_length(grep("[.]rds$", caches), 4L)
+    expect_length(grep("[.]rds$", caches), 2L)
     expect_identical(rf_files_holding(fit$dir, data$MRN), character(), info = prefix)
   }
 })
@@ -554,38 +547,6 @@ test_that("every fit refuses the patient identifier as its outcome", {
     } else {
       expect_no_error(utils::capture.output(rf_run(prefix, "fit", c("set", "edit-study-choices", "tbl-data"), env, choices)))
     }
-  }
-})
-
-# ---- #166: VarPro explains the patients the forest was grown on -----------------
-
-test_that("every explain gives VarPro the forest's imputed data, so both cover the same patients (#166)", {
-  veteran <- rfs_data()
-  veteran$karno[c(3, 10, 40)] <- NA
-  iris2 <- rfc_data()
-  iris2$Sepal.Length[c(2, 30, 60, 90)] <- NA
-  cases <- list(
-    list("rfs", veteran, rfs_choices, list(TIMES = c(30, 90))),
-    list("rfc", iris2, rfc_choices, list()),
-    list("rfr", rfr_data(), rfr_choices, list())
-  )
-  for (case in cases) {
-    prefix <- case[[1L]]
-    rf_skip_unless_stack(rf_template_packages(prefix, "explain"))
-    fit_env <- rf_fit_first(prefix, case[[2L]], utils::modifyList(case[[3L]], list(NA_ACTION = "na.impute")))
-    env <- new.env(parent = globalenv())
-    env$.root <- fit_env$.root
-    # No warning is muffled: varpro() says so when it drops a patient.
-    rf_run(prefix, "explain", c("set", "edit-study-choices", "forest", "fig-varpro"), env,
-           c(list(TOP_K = 2, SEED = 1), case[[4L]]))
-    expect_true(anyNA(env$forest$xvar), info = prefix)               # the fit really had missing values
-    expect_identical(nrow(env$vp$x), env$forest$n, info = prefix)    # VarPro explains every patient the forest has
-    expect_false(anyNA(env$frame), info = prefix)
-    # The imputed values land on the patients they were imputed for, and no other cell changes.
-    imputed <- env$forest$imputed.data
-    expect_equal(env$frame[env$forest$imputed.indv, names(imputed)], imputed, ignore_attr = TRUE, info = prefix)
-    kept <- !is.na(env$forest$xvar)
-    expect_equal(as.matrix(env$frame[names(env$forest$xvar)])[kept], as.matrix(env$forest$xvar)[kept], info = prefix)
   }
 })
 
