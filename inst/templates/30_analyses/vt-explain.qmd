@@ -242,14 +242,8 @@ save_figure(.fig, "vt-explain-twin-curves")
 .rb$best <- ifelse(.own >= .alt, "Received best", "Alternative best")
 # An arm whose forest does not discriminate (C-index interval including 0.5)
 # makes its half of every contrast exploratory; say so on the figure.
-# Same out-of-bag C-index as vt-fit's tbl-performance.
-.weak <- do.call(rbind, lapply(ARMS, function(a) {
-  f <- .vt$forests[[a]]
-  yt <- f$yvar[[1]]
-  ys <- f$yvar[[2]]
-  cc <- survival::concordance(survival::Surv(yt, ys) ~ f$predicted.oob, reverse = TRUE)
-  data.frame(arm = a, events = sum(ys == 1), lower = cc$concordance - 1.96 * sqrt(cc$var))
-}))
+# The out-of-bag C-index vt-fit computed and saved, not recomputed here.
+.weak <- .vt$settings$performance
 .weak <- .weak[.weak$lower <= 0.5, ]
 .note <- if (nrow(.weak)) {
   paste0("The C-index interval includes 0.5 for ", paste0(.weak$arm, " (", .weak$events, " events)", collapse = ", "),
@@ -445,10 +439,12 @@ save_figure(.fig, "vt-explain-betas")
 .is_ben <- .eligible & r$arm %in% ARMS & (.gain > GAIN_MIN) %in% TRUE
 .benefit <- r[.is_ben, ]
 .future <- r[.eligible & r$arm == "none", ]
-.future$favours <- ifelse(.future$diff > 0, ARMS[1], ARMS[2])
+# An exact tie (diff == 0) favours neither arm; it must not fall to ARMS[2].
+.future$favours <- ifelse(.future$diff > 0, ARMS[1], ifelse(.future$diff < 0, ARMS[2], "neither"))
 cat("Patients whose twin favours the other arm:\n\n")
 print(knitr::kable(as.data.frame(table(received = .benefit$arm))))
 # Their characteristics beside the rest of their arm: median (IQR) for a number, percent for a factor.
+# Factor levels come from the whole cohort, so a level absent from one group reads 0%.
 .sumry <- function(x) {
   do.call(rbind, lapply(.vt$predictors$names, function(v) {
     xv <- x[[v]]
@@ -456,7 +452,8 @@ print(knitr::kable(as.data.frame(table(received = .benefit$arm))))
       q <- stats::quantile(xv, c(0.25, 0.5, 0.75), na.rm = TRUE, names = FALSE)
       data.frame(variable = v, value = sprintf("%.2f (%.2f to %.2f)", q[2], q[1], q[3]))
     } else {
-      tb <- 100 * prop.table(table(factor(xv)))
+      lv <- levels(factor(.d_all[[v]]))
+      tb <- 100 * prop.table(table(factor(xv, levels = lv)))
       data.frame(variable = paste0(v, ": ", names(tb)), value = sprintf("%.0f%%", tb))
     }
   }))

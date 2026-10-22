@@ -21,6 +21,15 @@ test_that("an arm with fewer than 2 patients stops, naming the arm and its count
   expect_error(vt_fit_first(data = d), "B has 1 patient\\(s\\)")
 })
 
+test_that("na.omit that leaves an arm with 1 patient stops, naming the arm", {
+  skip_on_cran()
+  d <- vt_data()
+  b <- which(d$arm == "B")
+  d$x1[b[-1L]] <- NA
+  ch <- utils::modifyList(vt_choices, list(NA_ACTION = "na.omit"))
+  expect_error(vt_fit_first(data = d, choices = ch), "B has 1 patient\\(s\\)")
+})
+
 test_that("a treated patient with no status reports the missing outcome", {
   skip_on_cran()
   d <- vt_data()
@@ -226,6 +235,8 @@ test_that("vt-fit saves one handoff with every element", {
   expect_named(h, c("rmst", "curves", "forests", "eligibility", "predictors", "settings"))
   expect_true(all(c("elig", "elig_gower", "elig_propensity", "elig_none", "diff", "log_rr") %in% names(h$rmst)))
   expect_false(is.null(attr(h, "hvti_provenance")))
+  expect_setequal(h$settings$performance$arm, c("A", "B"))
+  expect_true(all(c("events", "c_index", "lower") %in% names(h$settings$performance)))
 })
 
 test_that("curves are reproducible when predictors are missing under na.impute", {
@@ -449,4 +460,33 @@ test_that("vt-fit and vt-explain render end to end", {
   # nolint end
   out <- vt_render_fixture()
   expect_true(all(file.exists(out$outputs)))
+})
+
+test_that("a level carried only by the rest of the arm still shows, at 0% for the other group", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_explain(env, vt_explain_labels_all)
+  expect_gt(nrow(env$.benefit), 0L)
+  env$.d_all$g1 <- as.character(env$.d_all$g1)
+  env$.d_all$g1[!env$.d_all[[env$.vt$settings$id]] %in% env$.benefit$ID] <- "z"
+  vt_explain(env, "tbl-benefit")
+  z <- env$.ben_tab[env$.ben_tab$variable == "g1: z", ]
+  expect_gt(nrow(z), 0L)
+  expect_true(all(z$other_arm_favoured == "0%"))
+  expect_false(any(is.na(env$.ben_tab$other_arm_favoured)))
+})
+
+test_that("vt-explain stops when the dataset changed since vt-fit ran, though the manifest verifies", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  dd <- hvtiRutilities::study_dir("datasets", env$.root)
+  f <- file.path(dd, "cohort.rds")
+  d <- readRDS(f)
+  d$x1[1L] <- d$x1[1L] + 1
+  saveRDS(d, f)
+  # Re-register the changed file, so the manifest agrees with it and only vt-explain's own lineage check can object.
+  withr::with_dir(env$.root, utils::capture.output(suppressMessages(hvtiRutilities::update_manifest())))
+  expect_error(hvtiRutilities::verify_manifest(file.path(env$.root, "manifest.yaml")), NA)
+  expect_error(vt_explain(env, c("setup", "edit-study-choices", "handoff", "explain-data")),
+               "The dataset changed since vt-fit ran")
 })

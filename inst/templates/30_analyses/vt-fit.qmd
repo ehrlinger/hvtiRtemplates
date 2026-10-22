@@ -225,16 +225,21 @@ if (any(.no_outcome)) {
 }
 if (!all(d[[STATUS]][.treated] %in% c(0, 1))) stop(STATUS, " must be coded 0 and 1.", call. = FALSE)
 NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
-.counts <- do.call(rbind, lapply(ARMS, function(a) {
-  i <- d[[ARM]] %in% a
-  data.frame(Arm = a, Patients = sum(i), Events = sum(d[[STATUS]][i] == 1, na.rm = TRUE))
-}))
-.thin <- .counts$Patients < 2 | .counts$Events < 1
-if (any(.thin)) {
-  stop("Each arm needs at least 2 treated patients and 1 event; ",
-       paste0(.counts$Arm[.thin], " has ", .counts$Patients[.thin], " patient(s) and ", .counts$Events[.thin], " event(s)",
-              collapse = "; "), ".", call. = FALSE)
+# Run again after na.omit drops patients (predictors chunk): the guard must hold for the patients the forests see.
+.arm_counts <- function(d, when = "") {
+  counts <- do.call(rbind, lapply(ARMS, function(a) {
+    i <- d[[ARM]] %in% a
+    data.frame(Arm = a, Patients = sum(i), Events = sum(d[[STATUS]][i] == 1, na.rm = TRUE))
+  }))
+  thin <- counts$Patients < 2 | counts$Events < 1
+  if (any(thin)) {
+    stop("Each arm needs at least 2 treated patients and 1 event", when, "; ",
+         paste0(counts$Arm[thin], " has ", counts$Patients[thin], " patient(s) and ", counts$Events[thin], " event(s)",
+                collapse = "; "), ".", call. = FALSE)
+  }
+  counts
 }
+.counts <- .arm_counts(d)
 .counts <- rbind(.counts, data.frame(Arm = "No arm", Patients = sum(.no_arm), Events = NA_integer_))
 knitr::kable(.counts)
 ```
@@ -272,6 +277,7 @@ if (NA_ACTION == "na.omit") {
   .kept <- stats::complete.cases(d[.predictors])
   cat(sum(!.kept), "patient(s) missing a predictor were dropped (NA_ACTION = \"na.omit\").\n")
   d <- d[.kept, , drop = FALSE]
+  invisible(.arm_counts(d, " after NA_ACTION = \"na.omit\" dropped patients"))
   .no_arm <- .no_arm[.kept]
   .treated <- .treated[.kept]
 }
@@ -661,7 +667,7 @@ vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   list(rmst = .rmst, curves = .curves, forests = .forests,
        eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ps = .ps),
        predictors = list(names = .predictors, vp_set = VP_SET),
-       settings = list(arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED, time = TIME, status = STATUS,
+       settings = list(performance = .perf, arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED, time = TIME, status = STATUS,
                        id = ID, id_key = hvtiRtemplates:::.id_key_fingerprint(.id_key),
                        arm = ARM, imputation = IMPUTATION, imputation_use = IMPUTATION_USE,
                        imputation_m = if (!is.null(IMPUTATION)) .m,
