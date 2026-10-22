@@ -48,7 +48,6 @@ test_that("Penny's ordinal fit at 8 cores is refused in a Medium session (failur
 })
 
 test_that("a need of 0 (a cached rerender) passes and records the memory check", {
-  skip_if_not(exists(".progress_check_passed", mode = "function"))  # Task 3 defines it and removes this skip
   dir <- withr::local_tempdir()
   f <- file.path(dir, "x.run.progress")
   .progress_begin(f, "fit")
@@ -76,4 +75,12 @@ test_that("the estimates sit where the calibration says", {
   expect_equal(.boostmtree_need_gib(5500, 13900, "ordinal", 8, 1000), 78.4, tolerance = 0.01)
   expect_true(is.na(.boostmtree_need_gib(NA_real_, 1, "ordinal", 8, 1000)))
   expect_error(.boostmtree_need_gib(-1, 1, "ordinal", 8, 1000), "non-negative")
+})
+
+test_that("with no progress file active, guard_memory and a passed check leave no state behind", {
+  rm(list = ls(.progress_state, all.names = TRUE), envir = .progress_state)
+  cg <- fake_cgroup_v1(19.2)
+  guard_memory(4, "x", proc = cg$proc, sys = cg$sys)
+  .progress_check_passed("render_r")
+  expect_length(ls(.progress_state, all.names = TRUE), 0L)
 })

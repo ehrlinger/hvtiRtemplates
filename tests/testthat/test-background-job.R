@@ -519,3 +519,39 @@ test_that("the already-running refusal names both run files for another host, an
   expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "Stop it with cancel_job()",
                fixed = TRUE)
 })
+
+test_that("job_status prints the recorded peak against the limit", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "failed", exit_code = 1L, pid = 999999L,
+                mem_peak_gib = 76.7, mem_limit_gib = 76.8)
+  expect_output(job_status(job), "memory: 76.7 of 76.8 GiB (peak)", fixed = TRUE)
+})
+
+test_that("the runner records the cgroup peak at its end", {
+  lines <- .runner_lines("/s/a.qmd", "/s/a.run.yml", FALSE, "TRUE")
+  expect_true(any(grepl("hvtiRtemplates:::.run_memory_fields()", lines, fixed = TRUE)))
+})
+
+# Runs the generated runner in-process, with quit() stubbed, so the terminal write is observed.
+run_runner <- function(status) {
+  env <- new.env()
+  env$quit <- function(...) invisible(NULL)
+  eval(parse(text = .runner_lines("/s/a.qmd", status, FALSE, "TRUE")), envir = env)
+  yaml::read_yaml(status)
+}
+
+test_that("a memory reader that errors still lets the runner record finished", {
+  status <- file.path(withr::local_tempdir(), "a.run.yml")
+  testthat::local_mocked_bindings(.cgroup_memory = function(...) stop("no cgroup"))
+  st <- run_runner(status)
+  expect_identical(st$state, "finished")
+  expect_null(st$mem_peak_gib)
+})
+
+test_that("NA memory readings are dropped, not written or fatal", {
+  status <- file.path(withr::local_tempdir(), "a.run.yml")
+  testthat::local_mocked_bindings(.cgroup_memory = function(...) list(limit_gib = NA_real_, peak_gib = NA_real_))
+  st <- run_runner(status)
+  expect_identical(st$state, "finished")
+  expect_null(st$mem_limit_gib)
+})

@@ -520,3 +520,38 @@ test_that("a second Quarto render, with its chunks cached, still reads finished"
   expect_identical(st$progress$stages, c("first", "second"))
   expect_identical(st$state, "finished")
 })
+
+test_that("a passed check is recorded in the progress file", {
+  dir <- withr::local_tempdir()
+  f <- file.path(dir, "x.run.progress")
+  .progress_begin(f, c("setup", "fit"))
+  withr::defer(.progress_finish())
+  .progress_check_passed("render_r")
+  expect_identical(yaml::read_yaml(f)$checks, "render_r")
+})
+
+test_that("each progress write records the session's memory use", {
+  dir <- withr::local_tempdir()
+  f <- file.path(dir, "x.run.progress")
+  testthat::local_mocked_bindings(.cgroup_memory = function(...) {
+    list(limit_gib = 76.8, usage_gib = 41.5, peak_gib = 50, source = "cgroup v1")
+  })
+  .progress_begin(f, c("setup"))
+  withr::defer(.progress_finish())
+  expect_equal(yaml::read_yaml(f)$mem_gib, 41.5)
+})
+
+test_that("a memory reader that errors or reads NA drops mem_gib and does not stop reporting", {
+  dir <- withr::local_tempdir()
+  f <- file.path(dir, "x.run.progress")
+  testthat::local_mocked_bindings(.cgroup_memory = function(...) stop("no cgroup"))
+  .progress_begin(f, c("setup", "fit"))
+  withr::defer(.progress_finish())
+  .progress_check_passed("memory")
+  expect_null(yaml::read_yaml(f)$mem_gib)
+  expect_identical(yaml::read_yaml(f)$checks, "memory")
+  testthat::local_mocked_bindings(.cgroup_memory = function(...) list(usage_gib = NA_real_))
+  .progress_check_passed("render_r")
+  expect_null(yaml::read_yaml(f)$mem_gib)
+  expect_identical(yaml::read_yaml(f)$checks, c("memory", "render_r"))
+})

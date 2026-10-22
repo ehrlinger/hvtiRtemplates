@@ -138,6 +138,9 @@ job_status <- function(path, quiet = FALSE) {
                      },
                      "")
     cat(basename(path), ": ", st$state, detail, "\n", sep = "")
+    if (is.numeric(st$mem_peak_gib) && is.numeric(st$mem_limit_gib)) {
+      cat(sprintf("  memory: %.1f of %.1f GiB (peak)\n", st$mem_peak_gib, st$mem_limit_gib))
+    }
     lines <- tryCatch(.progress_lines(st$progress, st$state), error = function(e) paste0("  progress: ", unreadable$error))
     if (length(lines)) cat(lines, sep = "\n")
   }
@@ -170,8 +173,11 @@ job_status <- function(path, quiet = FALSE) {
     sprintf("ok <- tryCatch({ %s; TRUE }, error = function(e) { message('Error: ', conditionMessage(e)); FALSE })",
             render_call),
     "ended <- Sys.time()",
+    # Telemetry is advisory: any failure in reading or converting it yields list(), never an error that
+    # would skip the terminal put() and leave a finished run looking vanished.
+    "mem <- tryCatch(hvtiRtemplates:::.run_memory_fields(), error = function(e) list())",
     paste0("put(c(list(state = if (ok) 'finished' else 'failed', exit_code = if (ok) 0L else 1L), base, ",
-           "list(ended = stamp(ended), elapsed_s = round(as.numeric(difftime(ended, started, units = 'secs'))))))"),
+           "list(ended = stamp(ended), elapsed_s = round(as.numeric(difftime(ended, started, units = 'secs')))), mem))"),
     "quit(save = 'no', status = if (ok) 0L else 1L)")
 }
 

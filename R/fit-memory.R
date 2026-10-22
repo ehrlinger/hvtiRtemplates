@@ -113,9 +113,9 @@ guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
                          proc = "/proc/self/cgroup", sys = "/sys/fs/cgroup") {
   m <- .cgroup_memory(proc, sys)
   # Recorded so job_status() can name the right profile if the fit dies anyway (spec section 6).
-  if (!is.na(need_gib)) .progress_state$mem_need_gib <- round(need_gib, 1)
+  if (!is.na(need_gib) && !is.null(.progress_state$file)) .progress_state$mem_need_gib <- round(need_gib, 1)
   if (is.na(need_gib) || is.na(m$limit_gib) || need_gib <= 0.9 * m$limit_gib) {
-    if (exists(".progress_check_passed", mode = "function")) do.call(".progress_check_passed", list("memory"))  # Task 3 defines it
+    .progress_check_passed("memory")
     return(invisible(m$limit_gib))
   }
   here <- .workbench_profiles$profile[match(TRUE, abs(.workbench_profiles$cap_gib - m$limit_gib) < 0.5)]
@@ -133,4 +133,11 @@ guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
                                 .workbench_profiles$cap_gib[.workbench_profiles$profile == to]),
                       if (!is.null(k)) sprintf(" Or set CORES <- %d to fit in this one.", k) else ""))$message,
        call. = FALSE)
+}
+
+# The memory fields .run.yml records at a run's end; list() when nothing can be read.
+.run_memory_fields <- function() {
+  m <- tryCatch(.cgroup_memory(), error = function(e) list())
+  num <- function(x) if (is.numeric(x) && length(x) == 1L && !is.na(x)) round(x, 1)
+  Filter(Negate(is.null), list(mem_peak_gib = num(m$peak_gib), mem_limit_gib = num(m$limit_gib)))
 }

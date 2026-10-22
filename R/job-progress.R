@@ -53,6 +53,13 @@
   invisible(NULL)
 }
 
+# The session's memory use now, or NULL: an unreadable cgroup or an NA must drop the field, not fail the write
+# (yaml writes NA as .na, which a reader would take for a value).
+.progress_mem_gib <- function() {
+  gib <- tryCatch(.cgroup_memory()$usage_gib, error = function(e) NULL)
+  if (is.numeric(gib) && length(gib) == 1L && !is.na(gib)) round(gib, 1)
+}
+
 .progress_write <- function() {
   s <- .progress_state
   if (is.null(s$file)) return(invisible(NULL))
@@ -61,7 +68,8 @@
               stage_started = if (!is.null(s$stage_started)) .stamp(s$stage_started),
               step = s$step, steps = s$steps, unit = s$unit,
               step_started = if (!is.null(s$step_started)) .stamp(s$step_started), step_base = s$step_base,
-              stages = s$stages, done = s$done)
+              stages = s$stages, done = s$done,
+              checks = s$checks, mem_need_gib = s$mem_need_gib, mem_gib = .progress_mem_gib())
   # yaml::write_yaml() can warn (a file that will not open) before it errors; both stop the reporting.
   stop_reporting <- function(e) {
     cat("progress reporting stopped: ", conditionMessage(e), "\n", sep = "", file = stderr())
@@ -110,6 +118,14 @@
     s$done[[length(s$done) + 1L]] <- list(stage = label, elapsed_s = as.integer(round(elapsed)))
     .progress_log(sprintf("%s  done in %s", label, .fmt_dur(elapsed)))
   }
+  .progress_write()
+}
+
+# An in-render check that passed; run_job() waits for these (dev/specs/2026-10-22-run-job-design.md, 5.3).
+# A no-op unless a progress file is active, so a check run outside a render leaves no state behind.
+.progress_check_passed <- function(name) {
+  if (is.null(.progress_state$file)) return(invisible(NULL))
+  .progress_state$checks <- unique(c(.progress_state$checks, name))
   .progress_write()
 }
 
