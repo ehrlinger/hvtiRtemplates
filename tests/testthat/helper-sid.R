@@ -43,6 +43,7 @@ sid_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "i
 
 # sid-fit run end to end in a throwaway study.
 sid_fit_first <- function(data = sid_data(), choices = sid_fit_choices, .local_envir = parent.frame()) {
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))  # nolint: object_usage_linter.
   env <- rf_env(data, .local_envir)  # nolint: object_usage_linter.
   rf_run("sid", "fit", sid_fit_labels, env, choices)  # nolint: object_usage_linter.
   env
@@ -53,10 +54,11 @@ sid_clusters_choices <- list(K_RANGE = 2:5, K = 3L, OVERRIDES = list(), COLLAPSE
 
 # Every chunk of sid-clusters, in order.
 sid_clusters_labels <- c("setup", "edit-study-choices", "sid-helpers", "handoff", "pam", "fig-metrics", "tbl-metrics",
-                         "tbl-sizes", "fig-sankey", "fig-silhouette", "tbl-silhouette", "fig-mds", "tbl-collapse",
-                         "save")
+                         "tbl-sizes", "small-clusters", "fig-sankey", "fig-silhouette", "tbl-silhouette", "fig-mds",
+                         "tbl-collapse", "save")
 
 # sid-clusters run in the set a sid-fit just wrote, in the same study.
 sid_clusters_after <- function(env, choices = sid_clusters_choices) {
+  rf_skip_unless_stack(rf_template_packages("sid", "clusters"))  # nolint: object_usage_linter.
   rf_run("sid", "clusters", sid_clusters_labels, env, choices)  # nolint: object_usage_linter.
 }

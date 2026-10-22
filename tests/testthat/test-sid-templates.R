@@ -83,6 +83,9 @@ test_that("sid_collapse maps letters, keeps unmapped ones and rejects a bad map"
   expect_identical(h$sid_collapse(x, list(Z = c("C", "D", "E"))), c("A", "Z", "Z", "B", "Z"))
   expect_error(h$sid_collapse(x, list(Z = c("C", "Q"))), "not a cluster at K: Q")
   expect_error(h$sid_collapse(x, list(Y = "C", Z = "C")), "mapped more than once: C")
+  # A group named for a letter that stays unmapped would merge into it silently.
+  expect_error(h$sid_collapse(x, list(A = c("C", "D"))), "group name.*A")
+  expect_identical(h$sid_collapse(x, list(C = c("C", "D"))), c("A", "C", "C", "B", "E"))
 })
 
 test_that("sid_mds_signs gives the same picture under row order and sign flips", {
@@ -136,6 +139,25 @@ test_that("sid-fit drops a variable over MAX_MISSING and says so", {
   env <- sid_fit_first(d)
   expect_identical(env$sid_dropped$variable, "e")
   expect_false("e" %in% env$sid_vars)
+})
+
+test_that("sid-fit stops plainly when every patient is missing every clustering variable", {
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))
+  d <- sid_data()
+  d[sid_fit_choices$VARS] <- NA
+  env <- rf_env(d)
+  expect_error(rf_run("sid", "fit", sid_fit_labels[1:3], env, sid_fit_choices), "No patients are left")
+})
+
+test_that("sid-fit caches only the distance and the kept variables, and guards a failed fit", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))
+  env <- sid_fit_first()
+  cached <- readRDS(file.path(env$CACHE_DIR, "sid-fit-1.rds"))$value
+  expect_setequal(names(cached), c("dist", "outcome.names"))
+  # A failed fit comes back from sidClustering() with dist = NULL, not as an error.
+  src <- readLines(template_path("sid", "fit"), warn = FALSE)
+  expect_true(any(grepl("is.null(o$dist)", src, fixed = TRUE)))
 })
 
 test_that("sid-fit refuses an ID or an absent column in VARS", {
@@ -206,7 +228,26 @@ test_that("sid-clusters writes and registers the cluster letters, and nothing el
   flip <- stats::setNames(rev(unname(map)), names(map))
   sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(OVERRIDES = list(pm2 = flip))))
   again <- read_job_data(hvtiRutilities::study_config(start = env$.root), join = "clusters_10_morphology_sid")$data
-  expect_false(identical(again$c2[again$ccfid == out$ccfid[1]], out$C2[1]))
+  # The second render's letters are the flipped ones, patient by patient.
+  expect_identical(again$c2[match(env$sid_letters$ccfid, again$ccfid)], as.character(env$sid_letters$C2))
+  expect_false(identical(again$c2[match(out$ccfid, again$ccfid)], out$C2))
+})
+
+test_that("sid-clusters stops on an OVERRIDES name that is no solution in K_RANGE", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  bad <- utils::modifyList(sid_clusters_choices, list(OVERRIDES = list(pm7 = c("1" = "B"))))
+  expect_error(sid_clusters_after(env, bad), "OVERRIDES.*pm7")
+})
+
+test_that("sid-clusters stops when the ID would not survive the CSV, zero-padded IDs being the case", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  d <- sid_data()
+  d$ccfid <- sprintf("%07d", seq_len(nrow(d)))
+  env <- sid_fit_first(d)
+  expect_error(sid_clusters_after(env), "would not survive")
 })
 
 test_that("K = NULL renders the metrics and skips what needs K; a final render or a K outside K_RANGE stops", {
@@ -247,6 +288,19 @@ test_that("sid-clusters refuses a registered name that belongs to another file",
   expect_error(sid_clusters_after(env), "already registered to other-clusters.csv")
 })
 
+test_that("sid-clusters names the key when the same file is registered under another one", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  dd <- hvtiRutilities::study_dir("datasets", env$.root)
+  utils::write.csv(data.frame(ccfid = 1:150, other = 1:150), file.path(dd, "morphology-sid-clusters.csv"), row.names = FALSE)
+  utils::capture.output(suppressMessages(hvtiRutilities::register_data(
+    env$.root, built = "morphology-sid-clusters.csv", dataset = "clusters_10_morphology_sid", role = "named",
+    population = "x", kind = "ancillary", key = "other"
+  )))
+  expect_error(sid_clusters_after(env), "registered with key other, not this set's ID ccfid")
+})
+
 test_that("the clusters element vt reads holds one digest-keyed letter per patient, and no raw ID", {
   skip_on_cran()
   rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
@@ -280,7 +334,11 @@ test_that("a later job joins the registered clusters, one per patient", {
   one <- read_job_data(cfg, join = "clusters_10_morphology_sid", reduce = list(rule = "first", by = "ccfid"),
                        one_row_per_patient = TRUE)
   expect_identical(nrow(one$data), 150L)
+  expect_true("ccfid" %in% names(one$data))
   expect_identical(anyDuplicated(one$data$ccfid), 0L)
+  at <- match(env$sid_letters$ccfid, one$data$ccfid)
+  expect_identical(as.character(one$data$c2[at]), as.character(env$sid_letters$C2))
+  expect_identical(as.character(one$data$c3[at]), as.character(env$sid_letters$C3))
 })
 
 test_that("no file under estimates/ carries an MRN, though the job's ID is the MRN", {
@@ -302,4 +360,22 @@ test_that("no file under estimates/ carries an MRN, though the job's ID is the M
   expect_identical(rf_files_holding(dir, d$MRN), character(0))  # nolint: object_usage_linter.
   # The clusters dataset in datasets/ carries the MRN by design: it is how a
   # later job joins it, as the built dataset beside it does.
+})
+
+test_that("the sid templates hide the captioned chunks that would be empty, and render the callout", {
+  fit <- readLines(template_path("sid", "fit"), warn = FALSE)
+  cl <- readLines(template_path("sid", "clusters"), warn = FALSE)
+  opts <- function(src, label) {
+    i <- grep(paste0("^#\\| label: ", label, "$"), src)
+    j <- i + 1L
+    while (j <= length(src) && grepl("^#\\|", src[j])) j <- j + 1L
+    src[i:(j - 1L)]
+  }
+  expect_true(any(grepl("include: !expr M > 1", opts(fit, "tbl-agreement"), fixed = TRUE)))
+  for (lab in c("fig-silhouette", "tbl-silhouette", "fig-mds")) {
+    expect_true(any(grepl("include: !expr !is.null(K)", opts(cl, lab), fixed = TRUE)), info = lab)
+  }
+  expect_true(any(grepl("include: !expr !is.null(K) && !is.null(COLLAPSE)", opts(cl, "tbl-collapse"), fixed = TRUE)))
+  # The callout is printed by a chunk that emits markdown.
+  expect_true(any(grepl("results: asis", opts(cl, "small-clusters"), fixed = TRUE)))
 })
