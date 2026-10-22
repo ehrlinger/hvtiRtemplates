@@ -230,6 +230,14 @@ if (length(.sparse)) {
 if (length(.flat)) sid_dropped <- rbind(sid_dropped, data.frame(variable = .flat, reason = "one value only"))
 sid_vars <- setdiff(VARS, sid_dropped$variable)
 if (length(sid_vars) < 2L) stop("Fewer than two clustering variables are left to cluster on.", call. = FALSE)
+# A patient seen only on a variable just dropped has nothing left to cluster on, and the forest
+# imputation would drop that row without saying, leaving the distance a row short of the cohort.
+.bare <- rowSums(!is.na(d[sid_vars])) == 0
+d <- d[!.bare, , drop = FALSE]
+if (nrow(d) == 0L) {
+  stop("No patients are left: every patient is missing every retained clustering variable.", call. = FALSE)
+}
+cat("Patients with every retained clustering variable missing, dropped:", sum(.bare), "\n")
 knitr::kable(data.frame(variable = names(.miss), missing = sprintf("%.1f%%", 100 * .miss),
                         kept = names(.miss) %in% sid_vars))
 ```
@@ -266,6 +274,10 @@ d_complete <- lapply(seq_len(M), function(m) {
               seed = s, dir = CACHE_DIR, refit = REFIT)
   }
 })
+if (any(vapply(d_complete, nrow, integer(1L)) != nrow(d))) {
+  stop("The imputation returned fewer patients than the cohort holds, so the distances could not be matched to patients.",
+       call. = FALSE)
+}
 cat("Values imputed in each of", M, "imputation(s):", .n_missing, "\n")
 ```
 
@@ -342,6 +354,9 @@ if (M > 1L) knitr::kable(sid_agreement, digits = 3)
 # are the large part.
 # Patients are named by a study-keyed digest of their ID, never the ID itself
 # (#203), so the file can be matched on without holding an MRN.
+if (nrow(sid_dist) != nrow(d)) {
+  stop("The distance holds ", nrow(sid_dist), " patients but the cohort holds ", nrow(d), ".", call. = FALSE)
+}
 .key <- hvtiRtemplates:::.study_id_key(.root)
 dimnames(sid_dist) <- rep(list(hvtiRtemplates:::.id_digest(d[[.id]], .key)), 2L)
 .cohort <- list(n = as.integer(nrow(d)))

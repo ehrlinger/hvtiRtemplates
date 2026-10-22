@@ -463,3 +463,34 @@ test_that("a render whose ID fails the CSV read-back leaves the registered CSV i
   expect_identical(list.files(dirname(csv), pattern = "^sid-clusters-.*[.]csv$"), character(0))
   if (!is.null(rds_before)) expect_identical(file.info(rds)$mtime, rds_before)
 })
+
+test_that("sid-fit drops a patient observed only on a dropped variable, and the forest imputation still saves", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("sid", "fit"))
+  d <- sid_data()
+  d$e[2:100] <- NA
+  d[1, c("a", "b", "c", "f")] <- NA
+  env <- sid_fit_first(d, utils::modifyList(sid_fit_choices, list(IMPUTE = "forest", NTREE = 50)))
+  h <- readRDS(env$set_path("estimates", "sid.rds"))
+  expect_identical(nrow(h$dist), 149L)
+  expect_false(hvtiRtemplates:::.id_digest(1L, hvtiRtemplates:::.study_id_key(env$.root)) %in% rownames(h$dist))
+})
+
+test_that("sid-clusters runs with a single K in K_RANGE, leaving the Sankey out", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(K_RANGE = 3L, K = 3L)))
+  h <- readRDS(env$set_path("estimates", "sid-clusters.rds"))
+  expect_identical(length(unique(h$clusters$cluster)), 3L)
+})
+
+test_that("sid-clusters reading the handoff never creates a study ID key", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  key <- file.path(env$.root, ".hvti", "id_key")
+  unlink(key)
+  expect_error(rf_run("sid", "clusters", sid_clusters_labels[1:4], env, sid_clusters_choices), "Restore the study's .hvti/id_key")
+  expect_false(file.exists(key))
+})

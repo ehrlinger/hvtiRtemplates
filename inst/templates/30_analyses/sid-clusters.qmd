@@ -272,7 +272,11 @@ D <- stats::as.dist(sid$dist)
 # sid.rds names patients by a study-keyed digest of their ID, never the ID. The
 # fit's rows are rebuilt from its recorded selection, which checks the rows and
 # their key hash, and each rebuilt ID is digested and matched to the distance.
-.key <- hvtiRtemplates:::.study_id_key(.root)
+# A reader never creates the key: a new one could not match the digests sid-fit saved.
+.key <- tryCatch(hvtiRtemplates:::.study_id_key(.root, create = FALSE), error = function(e) {
+  stop("This study's patient-ID key is missing. Restore the study's .hvti/id_key (copying a study loses hidden files); ",
+       "rerunning sid-fit would make a new key that no saved result matches.", call. = FALSE)
+})
 if (!identical(hvtiRtemplates:::.id_key_fingerprint(.key), sid$id_key)) {
   stop("This study's ID key has changed since sid-fit ran, so its patients cannot be matched. Rerun sid-fit.",
        call. = FALSE)
@@ -402,11 +406,24 @@ if (nrow(.small)) {
 ```{r}
 #| label: fig-sankey
 #| fig-cap: "How patients move between clusters as K grows"
-.sk <- hvtiPlotR::hv_sankey(sid_letters, cluster_cols = paste0("C", K_RANGE))
-.plt_sankey <- plot(.sk) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
-# The page is 6.5 in wide; the Sankey's columns need its full width.
-save_figure(.plt_sankey, "sid-clusters-sankey", width = 6.5, height = 6)
-.plt_sankey
+#| include: !expr 'length(K_RANGE) > 1'
+# A Sankey needs two or more K to follow patients between.
+if (length(K_RANGE) > 1L) {
+  .sk <- hvtiPlotR::hv_sankey(sid_letters, cluster_cols = paste0("C", K_RANGE))
+  .plt_sankey <- plot(.sk) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  # The page is 6.5 in wide; the Sankey's columns need its full width.
+  save_figure(.plt_sankey, "sid-clusters-sankey", width = 6.5, height = 6)
+  .plt_sankey
+}
+```
+
+```{r}
+#| label: sankey-single
+#| results: asis
+if (length(K_RANGE) < 2L) {
+  cat("\n::: {.callout-note}\nK_RANGE holds one K, so there is no Sankey: it follows patients between solutions.",
+      "Widen K_RANGE to compare clusters across K.\n:::\n")
+}
 ```
 
 A cluster that keeps its letter and most of its patients across several K

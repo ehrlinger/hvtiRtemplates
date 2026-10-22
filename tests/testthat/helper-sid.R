@@ -54,8 +54,8 @@ sid_clusters_choices <- list(K_RANGE = 2:5, K = 3L, OVERRIDES = list(), COLLAPSE
 
 # Every chunk of sid-clusters, in order.
 sid_clusters_labels <- c("setup", "edit-study-choices", "sid-helpers", "handoff", "pam", "fig-metrics", "tbl-metrics",
-                         "tbl-sizes", "small-clusters", "fig-sankey", "k-unset", "fig-silhouette", "tbl-silhouette", "fig-mds",
-                         "tbl-collapse", "save")
+                         "tbl-sizes", "small-clusters", "fig-sankey", "sankey-single", "k-unset", "fig-silhouette", "tbl-silhouette",
+                         "fig-mds", "tbl-collapse", "save")
 
 # sid-clusters run in the set a sid-fit just wrote, in the same study.
 sid_clusters_after <- function(env, choices = sid_clusters_choices) {
