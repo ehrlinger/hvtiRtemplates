@@ -29,6 +29,17 @@ error. The job's own edit guard decides whether it is finished; this
 function does not search for markers itself, so it cannot disagree with a
 render started from the editor or from Quarto.
 
+Quarto starts its own R to run the job's chunks, and by default it takes
+whichever R comes first on the \code{PATH}, which on a server with several
+versions installed need not be the R that called this function. A study
+whose \code{renv} library belongs to the calling R then fails to find its
+packages. So the render sets \code{QUARTO_R} to this R's \code{bin}
+directory, \code{R.home("bin")}, and restores it afterwards. A
+non-empty \code{QUARTO_R} that is already set is left alone, and Quarto
+honors it with a Quarto CLI of 1.8.13 or later. With an older CLI the
+quarto package itself sets \code{QUARTO_R} to the calling R for every
+render, so a value set by the user does not reach Quarto there.
+
 Jobs scaffolded by \code{\link{add_job}} capture their data provenance while
 executing and embed it in the completed HTML. The same project hooks used by
 the Render button and bare Quarto commands then publish a same-stem
