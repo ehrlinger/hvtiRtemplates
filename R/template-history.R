@@ -55,13 +55,34 @@
 # The texts a job stamped `template version [sha256]` may have been copied
 # from, each list(sha256, lines, first), oldest first. A hash names at most one
 # text; without one, every text the index lists for that template at that
-# version is a candidate. Empty when there is none.
-.base_candidates <- function(template, version, sha256, history = .template_history()) {
+# version is a candidate. The installed template counts too: a job scaffolded
+# from `main` after a template changed has that text's hash before the next
+# bump rebuilds the archive. Empty when there is none.
+.base_candidates <- function(template, version, sha256, history = .template_history(),
+                             current = .current_template(template)) {
   ix <- history$index[history$index$template == template, , drop = FALSE]
   ix <- if (is.na(sha256)) ix[ix$version == version, , drop = FALSE] else ix[ix$sha256 == sha256, , drop = FALSE]
   ix <- ix[!duplicated(ix$sha256), , drop = FALSE]
   ix <- ix[order(ix$first), , drop = FALSE]
-  lapply(seq_len(nrow(ix)), function(i) {
+  out <- lapply(seq_len(nrow(ix)), function(i) {
     list(sha256 = ix$sha256[[i]], lines = .text_lines(history$texts[[ix$sha256[[i]]]]), first = ix$first[[i]])
   })
+  wanted <- !is.null(current) &&
+    if (is.na(sha256)) identical(current$version, version) else identical(current$sha256, sha256)
+  if (wanted && !current$sha256 %in% ix$sha256) {
+    # The newest text there is, so it goes last.
+    out[[length(out) + 1L]] <- list(sha256 = current$sha256, lines = .text_lines(current$text), first = NA_character_)
+  }
+  out
+}
+
+# The installed text of a template, as list(sha256, text, version), or NULL
+# for a template this install does not have.
+.current_template <- function(template) {
+  rows <- template_list()
+  file <- rows$file[rows$name == template]
+  if (length(file) != 1L || !file.exists(file)) return(NULL)
+  raw <- readBin(file, "raw", file.size(file))
+  list(sha256 = digest::digest(raw, algo = "sha256", serialize = FALSE), text = rawToChar(raw),
+       version = as.character(utils::packageVersion("hvtiRtemplates")))
 }

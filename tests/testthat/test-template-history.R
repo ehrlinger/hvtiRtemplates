@@ -46,3 +46,31 @@ test_that(".base_candidates(): a hash names one text, a version its texts oldest
   expect_identical(hvtiRtemplates:::.base_candidates("dc.general", "0.9.0", NA_character_, history = h), list())
   expect_identical(hvtiRtemplates:::.base_candidates("dc.general", "1.0.1", strrep("0", 64L), history = h), list())
 })
+
+test_that(".base_candidates() finds the installed template when the archive predates it", {
+  # The archive is rebuilt only at a bump, so a job scaffolded from `main` after
+  # a template changed carries a hash the archive lacks; the installed file has it.
+  h <- hvtiRtemplates:::.history_from_states(list(
+    state("1.0.0", "2026-10-01", "inst/templates/10_descriptive/dc-general.qmd" = "old")
+  ))
+  text <- "installed\n"
+  current <- list(sha256 = digest::digest(charToRaw(text), algo = "sha256", serialize = FALSE), text = text,
+                  version = "1.0.0")
+  exact <- hvtiRtemplates:::.base_candidates("dc.general", "1.0.0", current$sha256, history = h, current = current)
+  expect_identical(length(exact), 1L)
+  expect_identical(exact[[1L]]$lines, "installed")
+  # By version alone, the installed text is the newest candidate, after the archived one.
+  both <- hvtiRtemplates:::.base_candidates("dc.general", "1.0.0", NA_character_, history = h, current = current)
+  expect_identical(vapply(both, function(x) x$lines, ""), c("old", "installed"))
+  # A different version, or another hash, does not take it.
+  expect_identical(hvtiRtemplates:::.base_candidates("dc.general", "0.9.0", NA_character_, history = h,
+                                                     current = current), list())
+  expect_identical(hvtiRtemplates:::.base_candidates("dc.general", "1.0.0", strrep("0", 64L), history = h,
+                                                     current = current), list())
+})
+
+test_that(".current_template() hashes the installed file", {
+  cur <- hvtiRtemplates:::.current_template("dc.general")
+  expect_identical(cur$sha256, digest::digest(file = template_path("dc", "general"), algo = "sha256"))
+  expect_null(hvtiRtemplates:::.current_template("no.such"))
+})
