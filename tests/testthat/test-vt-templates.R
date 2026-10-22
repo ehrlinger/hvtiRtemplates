@@ -123,6 +123,20 @@ test_that("the sid method uses a set's distance and refuses a missing patient", 
                "1 patient")
 })
 
+test_that("the sid method checks the key fingerprint of a set", {
+  h <- vt_helpers()
+  ids <- c("1", "2", "3")
+  key <- strrep("a", 64)
+  path <- withr::local_tempfile(fileext = ".rds")
+  saveRDS(1, path)
+  d <- stats::dist(c(`1` = 0, `2` = 1, `3` = 2))
+  stub <- function(fp) function(p) list(value = list(dist = d, id_key = fp))
+  expect_error(h$vt_elig_sid(path, ids, cfg = NULL, key = key, read = stub("0000000000000000")),
+               "different study key")
+  m <- h$vt_elig_sid(path, ids, cfg = NULL, key = key, read = stub(hvtiRtemplates:::.id_key_fingerprint(key)))
+  expect_equal(dimnames(m)[[1]], ids)
+})
+
 test_that("the propensity sensitivity renders with missing predictors under na.impute", {
   skip_on_cran()
   d <- vt_data(); d$x1[c(20, 40, 60)] <- NA

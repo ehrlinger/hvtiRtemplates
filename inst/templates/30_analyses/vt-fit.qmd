@@ -339,7 +339,7 @@ vt_elig_gower <- function(d, predictors, id) {
 # Returns the distance with the whole reader result as attribute "read", so the
 # eligibility chunk can carry the sid set's record and lineage into vt.rds.
 vt_elig_sid <- function(path, ids, cfg, key = NULL,
-                        read = function(p) hvtiRtemplates:::.read_handoff(p, "clustering", cfg, "the sid job")) {
+                        read = function(p) hvtiRtemplates:::.read_handoff(p, "SID fit", cfg, "the sid job")) {
   if (!file.exists(path)) stop("No sid clustering at ", path, ". Render that job first.", call. = FALSE)
   got <- read(path)
   # A sid set's distance is labelled by ID digests under the study key, with the
@@ -458,12 +458,15 @@ save_figure(.fig, "vt-fit-eligibility")
 ```{r}
 #| label: tbl-agreement
 #| tbl-cap: "Eligibility under each pair of methods"
+#| results: asis
 if (length(.methods) > 1L) {
   .pairs <- utils::combn(.methods, 2L, simplify = FALSE)
   for (.p in .pairs) {
-    print(knitr::kable(table(.elig[[paste0("elig_", .p[1])]], .elig[[paste0("elig_", .p[2])]],
-                             dnn = paste0("elig_", .p)),
-                       caption = paste("Eligible under", .p[1], "(rows) and", .p[2], "(columns)")))
+    cat(knitr::kable(table(.elig[[paste0("elig_", .p[1])]], .elig[[paste0("elig_", .p[2])]],
+                           dnn = paste0("elig_", .p)),
+                     caption = paste("Eligible under", .p[1], "(rows) and", .p[2], "(columns)")),
+        sep = "\n")
+    cat("\n")
   }
 } else {
   cat("One eligibility method ran, so there is nothing to compare.\n")
