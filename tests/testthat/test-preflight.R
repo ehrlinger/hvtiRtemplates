@@ -158,3 +158,92 @@ test_that(".job_setup() stops a render whose R is not the submitter's, and passe
   withr::local_envvar(HVTI_RUN_R = R.home("bin"))
   expect_no_error(run_setup())
 })
+
+test_that("render_r compares two spellings of one R home as equal", {
+  skip_on_os("windows")
+  home <- withr::local_tempdir()
+  link <- file.path(withr::local_tempdir(), "R")
+  file.symlink(home, link)
+  testthat::local_mocked_bindings(.r_home = function() paste0(home, "/"))
+  expect_true(.check_render_r(expected = link)$ok)
+})
+
+test_that("render_r's fix names the PATH as well as QUARTO_R", {
+  testthat::local_mocked_bindings(.r_home = function() "/usr/lib/R/bin")
+  expect_match(.check_render_r(expected = "/opt/R/4.5.3/lib/R/bin")$fix, "PATH", fixed = TRUE)
+})
+
+test_that("run_state refuses a run recorded on another host and names it (failure 6)", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "running", pid = 1L, host = "lri-r06", started = .stamp())
+  ck <- .check_run_state(job)
+  expect_false(ck$ok)
+  expect_match(ck$message, "lri-r06", fixed = TRUE)
+})
+
+test_that("a stale other-host run is called probably dead, with the abandon call", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "running", pid = 1L, host = "lri-r06", started = .stamp())
+  testthat::local_mocked_bindings(job_status = function(path, quiet = FALSE) {
+    list(state = "running", host = "lri-r06", progress = list(stale = TRUE))
+  })
+  ck <- .check_run_state(job)
+  expect_match(ck$message, "probably", fixed = TRUE)
+  expect_match(ck$fix, "cancel_job(", fixed = TRUE)
+})
+
+test_that("the abandon fix tells the user to confirm on that host first, by marker", {
+  job <- status_job()
+  testthat::local_mocked_bindings(job_status = function(path, quiet = FALSE) {
+    list(state = "running", host = "lri-r06", marker = "PSabc123_1", progress = list(stale = TRUE))
+  })
+  ck <- .check_run_state(job)
+  expect_match(ck$fix, "ps eww -u $USER | grep PSabc123_1", fixed = TRUE)
+  expect_lt(regexpr("grep", ck$fix, fixed = TRUE), regexpr("cancel_job(", ck$fix, fixed = TRUE))
+})
+
+test_that("a lock directory older than ten minutes is refused by name", {
+  job <- status_job()
+  lock <- .run_files(job)$lock
+  dir.create(lock)
+  Sys.setFileTime(lock, Sys.time() - 3600)
+  ck <- .check_run_state(job)
+  expect_false(ck$ok)
+  expect_match(ck$message, basename(lock), fixed = TRUE)
+})
+
+test_that("a fresh lock directory does not refuse", {
+  job <- status_job()
+  dir.create(.run_files(job)$lock)
+  expect_true(.check_run_state(job)$ok)
+})
+
+test_that("finished, failed and vanished runs pass", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "failed", exit_code = 1L, pid = 999999L)
+  expect_true(.check_run_state(job)$ok)
+})
+
+test_that("a run of this job on this host is refused as already running", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "running", pid = Sys.getpid(), host = Sys.info()[["nodename"]])
+  ck <- .check_run_state(job)
+  expect_false(ck$ok)
+  expect_match(ck$message, "already running", fixed = TRUE)
+})
+
+test_that("quarto refuses a QUARTO_R that names another R", {
+  withr::local_envvar(QUARTO_R = "/usr/lib/R/bin")
+  testthat::local_mocked_bindings(.r_home = function() "/opt/R/4.5.3/lib/R/bin", .quarto_found = function() TRUE)
+  ck <- .check_quarto()
+  expect_false(ck$ok)
+  expect_match(ck$message, "^quarto: QUARTO_R")
+})
+
+test_that("quarto refuses a missing CLI and passes a matching QUARTO_R", {
+  testthat::local_mocked_bindings(.quarto_found = function() FALSE)
+  expect_match(.check_quarto()$message, "cannot be found")
+  withr::local_envvar(QUARTO_R = "/opt/R/4.5.3/lib/R/bin")
+  testthat::local_mocked_bindings(.r_home = function() "/opt/R/4.5.3/lib/R/bin", .quarto_found = function() TRUE)
+  expect_true(.check_quarto()$ok)
+})

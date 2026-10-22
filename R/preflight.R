@@ -100,6 +100,7 @@
 }
 
 # Quarto starts its own R for knitr; QUARTO_R or the PATH can point it at another one.
+# HVTI_RUN_R is set by submit_job() for the runner. Setting it by hand (in ~/.Renviron, say) makes editor renders fail this check.
 .check_render_r <- function(expected = Sys.getenv("HVTI_RUN_R")) {
   if (!nzchar(expected)) return(.check("render_r", TRUE))
   have <- normalizePath(.r_home(), mustWork = FALSE)
@@ -107,5 +108,63 @@
   if (identical(have, want)) return(.check("render_r", TRUE))
   .check("render_r", FALSE,
          sprintf("Quarto ran this render on %s, not the R that submitted it, %s.", have, want),
-         "A QUARTO_R setting is overriding it: remove QUARTO_R from ~/.Renviron or the study's .Renviron.")
+         paste("A QUARTO_R setting, or another R first on the PATH, is overriding it:",
+               "remove QUARTO_R from ~/.Renviron or the study's .Renviron, and check the PATH."))
+}
+
+.quarto_found <- function() {
+  requireNamespace("quarto", quietly = TRUE) && !is.null(tryCatch(quarto::quarto_path(), error = function(e) NULL))
+}
+
+.check_quarto <- function() {
+  if (!.quarto_found()) {
+    return(.check("quarto", FALSE, "the Quarto command line tool cannot be found.",
+                  "Ask the server administrator; on lri it ships with Workbench."))
+  }
+  q <- Sys.getenv("QUARTO_R")
+  if (nzchar(q) && !identical(normalizePath(q, mustWork = FALSE), normalizePath(.r_home(), mustWork = FALSE))) {
+    return(.check("quarto", FALSE, sprintf("QUARTO_R is set to %s, so Quarto would render on that R, not this one (%s).",
+                                           q, .r_home()),
+                  "Remove QUARTO_R from ~/.Renviron or the study's .Renviron."))
+  }
+  .check("quarto", TRUE)
+}
+
+# THIS job already running, a stale run recorded on another host, or a crashed submit's lock directory.
+.check_run_state <- function(path) {
+  files <- .run_files(path)
+  if (dir.exists(files$lock)) {
+    age <- difftime(Sys.time(), file.info(files$lock)$mtime, units = "mins")
+    if (!is.na(age) && age > 10) {
+      return(.check("run_state", FALSE,
+                    sprintf("%s is %.0f minutes old; a submit that crashed left it.", basename(files$lock), age),
+                    sprintf("Delete the directory %s, then run again.", files$lock)))
+    }
+  }
+  st <- job_status(path, quiet = TRUE)
+  here <- Sys.info()[["nodename"]]
+  if (identical(st$state, "running") && is.character(st$host) && !identical(st$host, here)) {
+    stale <- isTRUE(st$progress$stale)
+    # Stale progress is not proof: Quarto's knitr runs in a session of its own and can outlive the
+    # Workbench session, so the fix confirms on that host before abandoning (spec section 6).
+    confirm <- if (is.character(st$marker)) {
+      sprintf("On %s, confirm nothing is left with `ps eww -u $USER | grep %s`. ", st$host, st$marker)
+    } else {
+      sprintf("From a session on %s, confirm with `hvti status` that nothing is left. ", st$host)
+    }
+    abandon <- if ("other_host" %in% names(formals(cancel_job))) {
+      sprintf('%sOnly then run cancel_job("%s", other_host = "abandon") here.', confirm, path)
+    } else {
+      sprintf("If that session is gone, delete %s and %s, then run again.", files$status, files$progress)
+    }
+    return(.check("run_state", FALSE,
+                  sprintf("this job is recorded running on host %s%s.", st$host,
+                          if (stale) ", but its progress has not moved for over 30 minutes, so it is probably dead" else ""),
+                  paste0(if (!stale) sprintf("Check it from a session on %s with `hvti status`. ", st$host), abandon)))
+  }
+  if (st$state %in% c("running", "submitted")) {
+    return(.check("run_state", FALSE, sprintf("this job is already %s.", st$state),
+                  "Follow it with `hvti status <job>`, or stop it with `hvti cancel <job>`."))
+  }
+  .check("run_state", TRUE)
 }
