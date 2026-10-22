@@ -213,6 +213,17 @@ test_that("curves are reproducible when predictors are missing under na.impute",
   one <- vt_fit_first(data = d, labels = labs)
   two <- vt_fit_first(data = d, labels = labs)
   expect_identical(one$.curves$surv, two$.curves$surv)
+  # Two fresh runs share an RNG history, so they can agree with no seed at all.
+  # Re-run only `curves` from a different global RNG state: the same SEED must still
+  # give the same curves, and a different SEED must give different ones.
+  curves_at <- function(seed, rng) {
+    set.seed(rng)
+    one$SEED <- seed
+    rf_run("vt", "fit", "curves", one, vt_choices)  # nolint: object_usage_linter.
+    one$.curves$surv
+  }
+  expect_identical(curves_at(1L, 100L), curves_at(1L, 200L))
+  expect_false(identical(curves_at(1L, 100L), curves_at(2L, 100L)))
 })
 
 test_that("the saved handoff carries no patient ID and no captured environment", {
@@ -223,9 +234,11 @@ test_that("the saved handoff carries no patient ID and no captured environment",
   h <- readRDS(env$set_path("estimates", "vt.rds"))
   # rfsrc 3.9.0 keeps no $formula or $terms; the formula is stored in $call.
   f <- h$forests[[1]]
-  expect_null(f$formula)
   expect_identical(environment(f$call$formula), globalenv())
   expect_identical(environment(h$eligibility$ps$meta$formula), globalenv())
+  # The propensity forest keeps its own call; its formula must not capture the job environment either.
+  pf <- h$eligibility$ps$models$forest
+  expect_identical(environment(pf$call$formula), globalenv())
   held <- rf_files_holding(dirname(env$set_path("estimates", "vt.rds")), as.character(d$ccfid))
   expect_identical(held, character())
 })
