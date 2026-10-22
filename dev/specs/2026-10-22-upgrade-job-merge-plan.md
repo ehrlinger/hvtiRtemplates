@@ -7,8 +7,7 @@ fail for the right reason, then write the code.
 
 ## Task 0: confirm the ground
 
-- On lri, John runs `git --version` (design decision 6). If git is missing there, stop and go back
-  to question 2.
+- Questions 1 and 3 answered. (2 and 4 are settled: an R diff3, and the next minor, 1.5.0.)
 - Confirm #383 is on `main` and read its final `.upgrade_report()`, because tasks 6 and 7 build on it.
 
 ## Task 1: shared scaffolding steps (decision 4)
@@ -40,15 +39,21 @@ fail for the right reason, then write the code.
   its candidates oldest first; a fixture repo whose bump commit changes no template maps the text to
   both versions. Measure the tarball before and after: expect about +135 KB.
 
+## Task 3b: the R diff3 (decision 6)
+
+- `R/merge3.R`: `.line_diff(a, b)` (integer-map lines, trim the common prefix and suffix, LCS by
+  dynamic programming) and `.merge3(job, base, template, labels)` returning the merged lines and the
+  conflict list. Internal, no new dependency.
+- Tests first: the law-based rows and the hand-written rows of the design's table. Mutate each branch
+  of the region rule and confirm red.
+
 ## Task 4: the merge seam (decisions 5, 6)
 
 - `.upgrade_merge(job, base, template, labels)` in `R/upgrade-job.R` returns the merged lines, the
   conflict ranges, the carried hunks and the resolved-marker list. Steps: mask choices in all three
-  (stop on a two-statement line), write three temp files, run `git merge-file -p --diff3 -L ...`,
-  read the status with stdout and stderr in separate files. 0 is clean, 1 to 127 is conflicts and must
-  equal the `<<<<<<< job` count in non-empty output, and anything else is an engine error that aborts
-  before any study file is touched (review finding 3; `system2()` reports git's error as 255). Unmask
-  with the job's text,
+  (stop on a two-statement line), call `.merge3()`, then check that the output is non-empty and that
+  the conflict count matches the `<<<<<<< job` lines; any error aborts before any study file is
+  touched (review finding 3). Unmask with the job's text,
   then auto-resolve conflicts that are only the deletion of `EDIT:` lines.
 - Tests: the design's table rows for cases 1 and 2, masking, defaults, and marker resolution, each
   driven from small texts written in the test.

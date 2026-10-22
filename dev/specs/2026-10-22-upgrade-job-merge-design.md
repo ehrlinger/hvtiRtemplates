@@ -1,6 +1,7 @@
 # upgrade_job(): carry every study edit by a three-way merge
 
-Status: **design, for John's approval.** Supersedes decisions 4 ("prose is not carried") and 5 (fixed
+Status: **design merged 2026-10-22 (#384).** John settled questions 2 (an R diff3, no git at run time) and
+4 (it opens the next minor) the same day; 1 and 3 are open. Supersedes decisions 4 ("prose is not carried") and 5 (fixed
 backup name) of [`2026-10-12-upgrade-job-design.md`](2026-10-12-upgrade-job-design.md), and takes up the
 three-way merge that design's decision 7 left for later. Plan:
 [`2026-10-22-upgrade-job-merge-plan.md`](2026-10-22-upgrade-job-merge-plan.md).
@@ -186,20 +187,15 @@ stops and names the line, rather than guessing.
 
 ### 6. Conflicts stop the upgrade, loudly, and the job will not render
 
-- The upgraded job is written with `git merge-file --diff3` markers labelled
+- The upgraded job is written with diff3-style markers labelled
   `<<<<<<< job`, `||||||| template <old version>`, `=======` and `>>>>>>> template <new version>`.
   The base section shows the analyst what the template used to say.
-- **An engine failure is not a conflict** (review finding 3). Through `system2()`, `git merge-file`'s
-  error status reaches R as **255**, not negative. A "negative is an error" test would read that as
-  255 conflicts and go on to publish an empty or diagnostic file as the job. So:
-  - stdout and stderr go to separate files;
-  - status 0 is clean, 1 to 127 is that many conflicts, and anything else (128 or more, or `NA`)
-    is an engine error;
-  - the conflict status must equal the number of `<<<<<<< job` lines in the output, and the output
-    must be non-empty.
-
-  Any failure aborts with stderr in the message **before any study file is touched**, as today's code
-  already computes the upgrade before renaming anything.
+- **An engine failure is not a conflict** (review finding 3). With the merge in R (below) there is
+  no exit status to misread, the 255 trap the review found in `system2()`. The rule it led to still
+  holds. The merge returns its lines and a conflict list. Before anything is written, the upgrade
+  checks that the merged lines are non-empty and that the conflict count equals the number of
+  `<<<<<<< job` lines. Any error inside the merge aborts **before any study file is touched**, as
+  today's code already computes the upgrade before renaming anything.
 - The backup and the report are written too. Then `upgrade_job()` signals an error of class
   `hvtiRtemplates_upgrade_conflict`, naming the count and the report. That is an error a script
   cannot step past.
@@ -209,12 +205,21 @@ stops and names the line, rather than guessing.
   names no cause.
 - A second `upgrade_job()` on a job that still holds conflict markers refuses.
 
-**Engine: `git merge-file`.** It is very likely on lri, since studies there carry `.git` folders
-even though nobody uses them; `git --version` on lri confirms it before implementation. It is on
-every CI runner and on a Mac with the command-line tools. It returns the conflict count as
-its exit status. An R diff3 would mean writing and maintaining a Myers diff, which is the kind of
-code that is subtly wrong for a year. `SystemRequirements` gains git, and an install without it
-gets a clear error from `upgrade_job()` naming the fallback. Open as question 2.
+**Engine: a diff3 in R, settled by John on 2026-10-22: git is not used at run time.** It lives in
+`R/merge3.R` and is internal, with no new dependency and no `SystemRequirements` change.
+
+- **The line diff.** Lines are mapped to integers. The common prefix and suffix are trimmed, which
+  leaves a few dozen lines for a typical job against its template. A longest common subsequence is
+  then found by dynamic programming over what remains. Its cost is the product of the two lengths:
+  trivial after the trim, and still about a second for a whole 1,000-line file in the worst case.
+- **The merge.** The standard diff3 rule over the two diffs from the base (Khanna, Kunal and Pierce,
+  2007, "A formal investigation of diff3"). Stable regions, where base, job and template agree,
+  separate the unstable ones. In an unstable region: job unchanged gives the template's text,
+  template unchanged gives the job's, both the same gives either, and both different gives a
+  conflict. Adjacent changes conflict, as they do in diff3, which errs toward stopping.
+- **The risk the earlier draft named**, that a hand-written diff is subtly wrong, is met by tests
+  rather than by an oracle (see Tests): the algebraic laws every three-way merge obeys, checked over
+  generated texts, and hand-written expected outputs for the real cases.
 
 ### 7. Backups and reports never collide
 
@@ -316,7 +321,9 @@ end-to-end test runs `upgrade_job()` on a job scaffolded from an archived `nb.bo
 | a stamp without a hash, three candidates that agree in a region: that region merges cleanly; where they disagree it is a conflict showing each outcome; the report says inferred | decision 3 | one candidate is used |
 | the newer-base hazard: job at A, candidates A and B, template C; the template's change lands | decision 3 | same |
 | review finding 1's case: job's choice values equal newer B's, so B is strictly closer; the `strict` change becomes a conflict, not a silent revert | decision 3 | one candidate is ranked and used |
-| an engine failure (a missing input): error before anything is written; job, backups and reports byte-identical | decision 6 | status 255 is read as conflicts |
+| an engine failure (the merge forced to error, or to return a count that disagrees with its markers): error before anything is written; job, backups and reports byte-identical | decision 6 | the consistency check is removed |
+| diff3 laws over generated texts (a few hundred seeded cases): merge(x, b, b) = x, merge(b, b, y) = y, merge(x, b, x) = x, swapping job and template swaps the conflict sides only, and a clean merge's output, diffed against base, holds every change from both sides | decision 6 | any branch of the region rule is altered |
+| hand-written expected outputs: insert/insert at one place, delete against edit, adjacent edits, edits at the first and last line, an empty base | decision 6 | same |
 | an archive built over a bump commit that changes no template maps the text to both versions | decision 2 | the walk is filtered by path |
 | no stamp: today's behaviour, and the report opens with "no base" | decision 3 | the fallback is removed |
 | every archive entry's text hashes to its key | decision 2 | the archive is hand-edited |
@@ -346,8 +353,10 @@ listed rather than resolved.
    between bumps whose template changes before the next bump. It is real, and it falls to "inferred"
    or "none", both loud. If it bites, a study-level `.hvtiRtemplates/bases/<sha>.qmd` (one file per
    text, not per job) closes it.
-2. **`git merge-file` or an R diff3?** Recommended: git, for the reasons in decision 6.
+2. ~~`git merge-file` or an R diff3?~~ **Settled 2026-10-22: an R diff3; git is not used at run
+   time.** Decision 6. The archive in decision 2 is still built from this repo's git history, by a dev
+   script at bump time in the repo itself, never in a study and never by `upgrade_job()`.
 3. **Give `migrate_job()` the dated names too?** Recommended: yes, the same helper and a few lines,
    so the two reports do not follow two conventions.
-4. **Version.** This changes an exported function's behaviour. It ships as a patch under the current
-   minor, unless you want it to be the change that opens the next one.
+4. ~~Version.~~ **Settled 2026-10-22: it opens the next minor.** John's decision, per the versioning
+   rule: the bump that ships it is 1.5.0, and the change lands without touching `Version:`.
