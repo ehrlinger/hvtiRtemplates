@@ -9,6 +9,7 @@
   hit <- function(p) grep(p, log, perl = TRUE)
   g <- hit("^(r_version|packages|run_state|quarto|render_r|memory|study_render): ")
   if (length(g)) {
+    # Convention: a multi-line refusal's last line is its fix; a one-line refusal has none (fix is "").
     # The refusal runs to the next blank line, the quitting marker, or an indented repeat of it; its last line is the fix.
     stop_at <- grep("^$|^Quitting from|^[ \t]", log)
     stop_at <- stop_at[stop_at > g[1L]]

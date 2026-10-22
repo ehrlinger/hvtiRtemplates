@@ -148,7 +148,10 @@ job_status <- function(path, quiet = FALSE) {
     if (is.numeric(st$mem_peak_gib) && is.numeric(st$mem_limit_gib)) {
       cat(sprintf("  memory: %.1f of %.1f GiB (peak)\n", st$mem_peak_gib, st$mem_limit_gib))
     }
-    if (!is.null(st$diagnosis)) cat("  why: ", st$diagnosis$reason, "\n  fix: ", st$diagnosis$fix, "\n", sep = "")
+    if (!is.null(st$diagnosis)) {
+      cat("  why: ", st$diagnosis$reason, "\n", sep = "")
+      if (nzchar(st$diagnosis$fix)) cat("  fix: ", st$diagnosis$fix, "\n", sep = "")
+    }
     lines <- tryCatch(.progress_lines(st$progress, st$state), error = function(e) paste0("  progress: ", unreadable$error))
     if (length(lines)) cat(lines, sep = "\n")
   }

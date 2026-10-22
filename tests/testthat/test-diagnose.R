@@ -113,3 +113,12 @@ test_that("a run that never started gets no diagnosis", {
   expect_identical(st$state, "vanished")
   expect_null(st$diagnosis)
 })
+
+test_that("a one-line refusal keeps its reason and prints no empty fix line", {
+  job <- status_job()
+  writeLines(c("Error:", "! memory: one line only.", "", "Quitting from x.qmd:1-2 [fit]"), .run_files(job)$log)
+  .write_status(.run_files(job)$status, state = "failed", exit_code = 1L, pid = 999999L)
+  out <- capture.output(job_status(job))
+  expect_true(any(grepl("why: memory: one line only.", out, fixed = TRUE)))
+  expect_false(any(grepl("fix:", out, fixed = TRUE)))
+})
