@@ -43,7 +43,13 @@
 #' renders as a draft until someone decides. Prose and code outside the
 #' choices come from the current template, because without the template the
 #' job was copied from an analyst's edit cannot be told from the old
-#' template's text. The report lists every chunk that may hold such an edit.
+#' template's text. The report lists every chunk that may hold such an edit,
+#' and every comment line above a carried choice that the current template's
+#' comment lacks.
+#'
+#' The one exception is the job's description. Where the template opens with
+#' an \code{EDIT:} comment asking for it, the text the old job has in that
+#' place is carried instead, unless it is still the comment.
 #'
 #' The old job is kept beside the new one as \code{<file>.pre-upgrade}, a name
 #' nothing renders. The upgraded job takes the name \code{\link{add_job}}
@@ -316,9 +322,84 @@ upgrade_job <- function(path, dir = NULL) {
     for (i in seq_len(nrow(unplaced))) note <- c(note, paste0("# ", .choice_parts(old, unplaced[i, ])$own))
     out <- append(out, note, after = at - 1L)
   }
-  list(lines = out, carried = carry$name, unplaced = unplaced, new = setdiff(nc$name, oc$name),
+  desc <- .carry_description(old, out)
+  list(lines = desc$lines, carried = carry$name, unplaced = unplaced, new = setdiff(nc$name, oc$name),
        old_chunks = .qmd_chunks(old), new_chunks = .qmd_chunks(new), old_choices = oc, new_choices = nc,
-       new_lines = new)
+       new_lines = new, description = desc[c("status", "from", "to")])
+}
+
+# The job's own description: what the study wrote where the template opens with
+# an EDIT comment ahead of its first chunk. The comment's neighbours in the
+# template, the line before it (the front matter, for most) and the line after,
+# find the same place in the old job; whatever stands between them there is the
+# description, and replaces the comment unless it is the comment itself.
+# `status` is "none" (the template has no such comment), "open" (the old job
+# still has the comment), "carried" or "not found".
+.carry_description <- function(old, new) {
+  token <- .edit_token()
+  stamp <- "^<!-- hvtiRtemplates: "
+  front <- function(x) {
+    fences <- which(x == "---")
+    if (length(fences) >= 2L && fences[[1L]] == 1L) fences[[2L]] else 0L
+  }
+  status <- function(s, lines = new, from = NA_integer_, to = NA_integer_) {
+    list(lines = lines, status = s, from = from, to = to)
+  }
+  fm <- front(new)
+  fence <- c(grep("^`{3,}\\{", new), length(new) + 1L)
+  fence <- fence[fence > fm][1L]
+  opens <- grep("^<!--", new)
+  opens <- opens[opens > fm & opens < fence]
+  closes <- grep("-->", new, fixed = TRUE)
+  a <- b <- NA_integer_
+  for (o in opens) {
+    e <- closes[closes >= o][1L]
+    if (!is.na(e) && any(grepl(token, new[o:e], fixed = TRUE))) {
+      a <- o
+      b <- e
+      break
+    }
+  }
+  if (is.na(a)) return(status("none"))
+  filled <- function(x) nzchar(trimws(x)) & !grepl(stamp, x)
+  before <- rev(which(filled(new[seq_len(a - 1L)]) & seq_len(a - 1L) > fm))[1L]
+  after <- b + which(filled(new[-seq_len(b)]))[1L]
+  if (is.na(after)) return(status("not found"))
+
+  ofm <- front(old)
+  s <- if (is.na(before)) ofm else which(old == new[[before]] & seq_along(old) > ofm)[1L]
+  e <- if (is.na(s)) NA_integer_ else which(old == new[[after]] & seq_along(old) > s)[1L]
+  if (is.na(e)) return(status("not found"))
+  between <- if (e > s + 1L) (s + 1L):(e - 1L) else integer()
+  between <- between[filled(old[between])]
+  if (!length(between)) return(status("carried", new[-(a:b)]))
+  text <- old[min(between):max(between)]
+  if (identical(text, new[a:b])) return(status("open"))
+  status("carried", c(new[seq_len(a - 1L)], text, new[-seq_len(b)]), min(between), max(between))
+}
+
+# Comment lines above a carried choice in the old job that the current
+# template's comment above it lacks: a study's note, or the old template's
+# wording. Neither is carried, so each is named for review. A resolved marker
+# reads as the template's line without it, so it is not counted.
+.choice_notes <- function(u, old) {
+  token <- paste0(.edit_token(), "\\s*")
+  block <- function(lines, ch) {
+    if (ch$block_start < ch$start) ch$block_start:(ch$start - 1L) else integer()
+  }
+  norm <- function(x) trimws(sub(token, "", x))
+  notes <- character()
+  for (name in u$carried) {
+    o <- u$old_choices[u$old_choices$name == name, , drop = FALSE][1L, ]
+    n <- u$new_choices[u$new_choices$name == name, , drop = FALSE][1L, ]
+    at <- block(old, o)
+    at <- at[!norm(old[at]) %in% norm(u$new_lines[block(u$new_lines, n)])]
+    if (length(at)) {
+      notes <- c(notes, paste0("`", name, "`, old line", if (length(at) > 1L) "s", " ", paste(at, collapse = ", "),
+                               ": comment above it that the current template does not have, not carried"))
+    }
+  }
+  notes
 }
 
 .upgrade_report <- function(u, template, old, path, backup, root,
@@ -365,24 +446,35 @@ upgrade_job <- function(path, dir = NULL) {
       review <- c(review, paste0("`", lab, "`, ", where, ": differs from the current template"))
     }
   }
+  review <- c(review, .choice_notes(u, old))
   markers <- grep(.edit_token(), u$lines, fixed = TRUE)
+  d <- u$description
+  description <- switch(d$status,
+    none = "The current template has no description to write.",
+    open = "The old job had not written it; the template's comment, under its marker, is still in place.",
+    carried = if (is.na(d$from)) "Carried from the old job, which had left it empty." else
+      paste0("Carried from the old job, old lines ", d$from, "-", d$to, ", in place of the template's comment."),
+    "Not found in the old job. The template's comment, under its marker, is in its place; copy the old job's text there."
+  )
+  # paste0() recycles a zero-length argument to "", which made an empty list one blank entry.
   c(
     "# Upgrade report", "",
     paste0("Template: hvtiRtemplates ", version, " / ", template), "",
     paste0("- Old job: ", rel(backup), " (SHA-256 ", digest::digest(file = path, algo = "sha256"), ")"),
     paste0("- Template version the old job came from: ", from), "",
-    "## Carried", "", lst(paste0("`", u$carried, "`")), "",
+    "## Description", "", description, "",
+    "## Carried", "", lst(paste0("`", u$carried, "`", recycle0 = TRUE)), "",
     "## Not placed", "",
     "Set in the old job, absent from the current template. Each is commented out at the end of the ",
     "`edit-study-choices` chunk under a marker.", "",
     lst(paste0("`", u$unplaced$name, "`, old line ", u$unplaced$start,
-               ifelse(u$unplaced$duplicated, " (assigned more than once in the old job)", ""))), "",
+               ifelse(u$unplaced$duplicated, " (assigned more than once in the old job)", ""), recycle0 = TRUE)), "",
     "## New", "", "In the current template only, left at its default.", "",
-    lst(paste0("`", u$new, "`")), "",
+    lst(paste0("`", u$new, "`", recycle0 = TRUE)), "",
     "## Review", "",
     "Code outside the choices comes from the current template. These chunks of the old job may hold an ",
     "edit of your own; compare them with the old job.", "",
     lst(review), "",
-    "## Markers left", "", lst(paste0("line ", markers)), ""
+    "## Markers left", "", lst(paste0("line ", markers, recycle0 = TRUE)), ""
   )
 }

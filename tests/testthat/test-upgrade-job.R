@@ -266,3 +266,69 @@ test_that("upgrading a job with a hand-added progress stopgap leaves the templat
     expect_false(any(grepl(".bm_progress", upgraded, fixed = TRUE)), info = helper_in)
   }
 })
+
+test_that("an empty report section reads None, never a blank entry", {
+  root <- migration_study_fixture()
+  # Nothing unplaced and nothing new: the current template against its own copy.
+  job <- upgrade_job(add_job("dc", "cohort", "eda", dir = root, qualifier = "general"))
+  report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
+  section <- function(title) {
+    from <- which(report == paste("##", title)) + 1L
+    to <- c(grep("^## ", report), length(report) + 1L)
+    report[from:(to[to > from][1L] - 1L)]
+  }
+  expect_true("None." %in% section("Not placed"))
+  expect_true("None." %in% section("New"))
+  expect_false(any(grepl("``|line $", report)))
+})
+
+test_that("the job's own description is carried in place of the template's comment", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  token <- paste0("ED", "IT", ":")
+  lines <- readLines(job)
+  i <- grep(paste0("^<!-- ", token, " name the job"), lines)
+  expect_length(i, 1L)
+  lines <- c(lines[seq_len(i - 1L)], "This job replaces the cohort's", "first look, `old/eda.sas`.", lines[-i])
+  writeLines(lines, job)
+  upgraded <- readLines(upgrade_job(job))
+  expect_length(grep("^This job replaces the cohort's$", upgraded), 1L)
+  expect_false(any(grepl(paste0("^<!-- ", token, " name the job"), upgraded)))
+  report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
+  expect_true(any(grepl("^Carried from the old job", report)))
+  expect_false(any(grepl("first look", report)))
+})
+
+test_that("a description still unwritten stays the template's comment, written once", {
+  root <- migration_study_fixture()
+  job <- upgrade_job(add_job("dc", "cohort", "eda", dir = root, qualifier = "general"))
+  token <- paste0("ED", "IT", ":")
+  expect_length(grep(paste0("^<!-- ", token, " name the job"), readLines(job)), 1L)
+})
+
+test_that("a description is carried from a job scaffolded before add_job() stamped it", {
+  root <- migration_study_fixture()
+  path <- old_rfs_job(root)
+  lines <- readLines(path)
+  i <- grep("^<!-- EDIT: name the job", lines)
+  lines <- c(lines[seq_len(i - 1L)], "Replaces `rf.dead.sas`, on every candidate.", lines[-(i:(i + 2L))])
+  writeLines(lines, path)
+  upgraded <- readLines(upgrade_job(path))
+  expect_length(grep("^Replaces `rf.dead.sas`, on every candidate[.]$", upgraded), 1L)
+  expect_false(any(grepl("^<!-- EDIT: name the job", upgraded)))
+})
+
+test_that("comment lines a study added above a choice are listed for review", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  lines <- readLines(job)
+  i <- grep("^DATASET <- ", lines)
+  lines <- c(lines[seq_len(i - 1L)], "# The day-level set, same-day pairs averaged;", "# see datasets/bd.day.R.",
+             lines[-seq_len(i - 1L)])
+  writeLines(lines, job)
+  report <- readLines(sub("[.]qmd$", "-upgrade.md", upgrade_job(job)))
+  expect_true(any(grepl(paste0("^- `DATASET`, old lines ", i, ", ", i + 1L, ": comment"), report)))
+  expect_false(any(grepl("same-day", report)))
+  # Only DATASET: the template's own comments above a choice are not listed.
+  expect_length(grep("^- `[A-Z_]+`, old line", report), 1L)
+})
