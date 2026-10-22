@@ -138,3 +138,97 @@ test_that("an ac job completes when no patient has the event", {
   graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead_pa-hz")
   expect_true(file.exists(file.path(graphs, "ac-survival.png")))
 })
+
+test_that("CI_TIMES draws confidence bars at those times, with the tables' limits", {
+  skip_ac()
+  local_child_chunks()
+  geoms <- function(p) vapply(p$layers, function(l) class(l$geom)[[1]], "")
+  # 0.005 years is before the first event (follow-up starts at 0.01) and 50 is past follow-up:
+  # neither has limits to draw.
+  env <- ac_run(ac_data(), list(STRATA = "grp", CI_TIMES = c(0.005, 1, 3, 50), CI_BAND = FALSE))
+  expect_identical(env$.warnings, character(0))
+  curve <- env$km_figure("grp")[[1]]
+  # CI_BAND = FALSE with CI_TIMES set: the SAS figure's bars alone.
+  expect_true("GeomErrorbar" %in% geoms(curve))
+  expect_false("GeomRibbon" %in% geoms(curve))
+  bars <- curve$layers[[match("GeomErrorbar", geoms(curve))]]$data
+  at <- life_table_at(env$d, env$TIME, env$EVENT, times = c(1, 3), strata = "grp", conf_level = env$CLEVEL)
+  expect_identical(nrow(bars), 4L)
+  expect_identical(sort(unique(bars$time)), c(1, 3))
+  expect_equal(bars$cl_lower, at$cl_lower)
+  expect_equal(bars$cl_upper, at$cl_upper)
+  expect_identical(levels(bars$strata), c("a", "b"))
+  layer <- curve$layers[[match("GeomErrorbar", geoms(curve))]]
+  expect_s3_class(layer$position, "PositionDodge")
+  expect_false(isTRUE(layer$show.legend))
+  env$CI_TIMES <- c(1, NA)
+  expect_error(env$km_figure("grp"), "CI_TIMES must be NULL or nonnegative times")
+  env$CI_TIMES <- c(1, 3, 50)
+  # The overall figure gets them too.
+  expect_true("GeomErrorbar" %in% geoms(env$km_figure()[[1]]))
+  # With the band left on, the figure carries both.
+  env$CI_BAND <- TRUE
+  expect_true(all(c("GeomRibbon", "GeomErrorbar") %in% geoms(env$km_figure("grp")[[1]])))
+  # And with neither, no limits are drawn at all.
+  env$CI_BAND <- FALSE
+  env$CI_TIMES <- NULL
+  expect_false(any(c("GeomRibbon", "GeomErrorbar") %in% geoms(env$km_figure("grp")[[1]])))
+})
+
+test_that("by default the manuscript figure draws the band and no bars", {
+  skip_ac()
+  local_child_chunks()
+  geoms <- function(p) vapply(p$layers, function(l) class(l$geom)[[1]], "")
+  env <- ac_run(ac_data())
+  expect_null(env$CI_TIMES)
+  expect_true(env$CI_BAND)
+  curve <- env$km_figure()[[1]]
+  expect_true("GeomRibbon" %in% geoms(curve))
+  expect_false("GeomErrorbar" %in% geoms(curve))
+})
+
+# Built layers of the manuscript figure's curve, by geom, from ggplot_build().
+built_layers <- function(curve) {
+  b <- ggplot2::ggplot_build(curve)
+  stats::setNames(b$data, vapply(curve$layers, function(l) class(l$geom)[[1]], ""))
+}
+
+test_that("numeric strata keep one color for curve, band and bars (1, 2, 10 sort as numbers)", {
+  skip_ac()
+  local_child_chunks()
+  d <- hazard_data()
+  d$grp3 <- rep(c(1, 2, 10), length.out = nrow(d))
+  env <- ac_run(d, list(STRATA = "grp3", CI_TIMES = c(1, 3), CI_BAND = TRUE))
+  expect_identical(env$.warnings, character(0))
+  curve <- env$km_figure("grp3")[[1]]
+  expect_no_warning(layers <- built_layers(curve))
+  b <- ggplot2::ggplot_build(curve)
+  # ggplot's own name for the color aesthetic and its built-data column.
+  col_aes <- ggplot2::standardise_aes_names("color")
+  expect_identical(b$plot$scales$get_scales(col_aes)$get_limits(), c("1", "2", "10"))
+  expect_identical(b$plot$scales$get_scales("fill")$get_limits(), c("1", "2", "10"))
+  by_group <- function(x, col) tapply(x[[col]], x$group, function(v) unique(v)[[1]])
+  line <- by_group(layers$GeomStep, col_aes)
+  band <- by_group(layers$GeomRibbon, "fill")
+  bar <- by_group(layers$GeomErrorbar, col_aes)
+  expect_identical(unname(line), unname(band))
+  expect_identical(unname(line), unname(bar))
+})
+
+test_that("bars at close early times on a long axis stay at their own time and after zero", {
+  skip_ac()
+  local_child_chunks()
+  d <- hazard_data()
+  d$grp3 <- rep(c(1, 2, 10), length.out = nrow(d))
+  early <- c(30, 90) / 365.2425
+  env <- ac_run(d, list(STRATA = "grp3", CI_TIMES = early, CI_BAND = FALSE, PLOT_MAX = 20))
+  expect_identical(env$.warnings, character(0))
+  curve <- env$km_figure("grp3")[[1]]
+  expect_no_warning(layers <- built_layers(curve))
+  bars <- layers$GeomErrorbar
+  expect_true(all(bars$xmin >= 0))
+  # Each bar sits nearer its own time than the other one, so 30- and 90-day bars never interleave.
+  own <- early[apply(abs(outer(bars$x, early, "-")), 1, which.min)]
+  expect_identical(sort(unique(own)), early)
+  expect_lt(max(bars$xmax[own == early[[1]]]), min(bars$xmin[own == early[[2]]]))
+})
