@@ -47,3 +47,92 @@ test_that("with stacked imputations only IMPUTATION_USE reaches the job", {
   expect_equal(nrow(env$d), 300L)
   expect_gt(min(env$d$xs), 90)
 })
+
+test_that("vt_ood flags a patient beyond the arm's largest nearest-neighbour gap", {
+  h <- vt_helpers()
+  # Arm A at 0, 1, 2 (largest within-arm gap 1); arm B at 2.5 and 10.
+  x <- c(a1 = 0, a2 = 1, a3 = 2, b1 = 2.5, b2 = 10)
+  D <- as.matrix(stats::dist(x))
+  arm <- c("A", "A", "A", "B", "B")
+  r <- h$vt_ood(D, names(x), arm, c("A", "B"))
+  b <- r[r$arm == "A" & r$ID %in% c("b1", "b2"), ]
+  expect_equal(b$in_distribution[b$ID == "b1"], TRUE)
+  expect_equal(b$in_distribution[b$ID == "b2"], FALSE)
+  expect_match(b$reason[b$ID == "b2"], "A")
+})
+
+test_that("a distance exactly at the reference is in distribution (strict >)", {
+  h <- vt_helpers()
+  x <- c(a1 = 0, a2 = 1, b1 = 2)  # b1's distance to arm A is 1, the reference is 1
+  r <- h$vt_ood(as.matrix(stats::dist(x)), names(x), c("A", "A", "B"), c("A", "B"))
+  expect_true(r$in_distribution[r$ID == "b1" & r$arm == "A"])
+})
+
+test_that("a no-arm row must pass against both arms", {
+  h <- vt_helpers()
+  x <- c(a1 = 0, a2 = 1, b1 = 20, b2 = 21, n1 = 0.5)
+  r <- h$vt_ood(as.matrix(stats::dist(x)), names(x), c("A", "A", "B", "B", NA), c("A", "B"))
+  r$method <- "gower"  # aggregate() drops rows whose group is NA, as the caller's method never is
+  n1 <- r[r$ID == "n1", ]
+  expect_setequal(n1$arm, c("A", "B"))
+  expect_false(all(n1$in_distribution))
+  expect_false(h$vt_combine(r, "any")$elig[h$vt_combine(r, "any")$ID == "n1"])
+})
+
+test_that("a patient with no distance to an arm is out of distribution, not NA", {
+  h <- vt_helpers()
+  D <- as.matrix(stats::dist(c(a1 = 0, a2 = 1, b1 = 0.5)))
+  D["b1", c("a1", "a2")] <- D[c("a1", "a2"), "b1"] <- NA
+  r <- h$vt_ood(D, rownames(D), c("A", "A", "B"), c("A", "B"))
+  b1 <- r[r$ID == "b1" & r$arm == "A", ]
+  expect_false(b1$in_distribution)
+  expect_match(b1$reason, "no comparable")
+  expect_false(anyNA(r$in_distribution))
+})
+
+test_that("Gower on a patient missing every predictor gives a flag", {
+  skip_if_not_installed("cluster")
+  h <- vt_helpers()
+  d <- data.frame(ID = as.character(1:5), x = c(0, 1, 2, 1.5, NA), g = factor(c("u", "v", "u", "v", NA)))
+  r <- h$vt_ood(h$vt_elig_gower(d, c("x", "g"), "ID"), d$ID, c("A", "A", "A", "B", "B"), c("A", "B"))
+  expect_false(r$in_distribution[r$ID == "5" & r$arm == "A"])
+})
+
+test_that("methods combine by any and all, with one row shape", {
+  h <- vt_helpers()
+  base <- data.frame(ID = c("p1", "p2", "p3"), method = NA, arm = "A", nn_id = "q", distance = 1,
+                     reference = 1, ratio = 1, in_distribution = TRUE, reason = "")
+  g <- transform(base, method = "gower", in_distribution = c(FALSE, TRUE, TRUE))
+  s <- transform(base, method = "sid", in_distribution = c(TRUE, FALSE, TRUE))
+  expect_identical(names(g), names(s))
+  any_ <- h$vt_combine(rbind(g, s), "any")
+  all_ <- h$vt_combine(rbind(g, s), "all")
+  expect_equal(any_$elig[order(any_$ID)], c(FALSE, FALSE, TRUE))
+  expect_equal(all_$elig[order(all_$ID)], c(TRUE, TRUE, TRUE))
+})
+
+test_that("the sid method uses a set's distance and refuses a missing patient", {
+  h <- vt_helpers()
+  ids <- c("1", "2", "3")
+  path <- withr::local_tempfile(fileext = ".rds")
+  saveRDS(list(dist = stats::dist(c(`1` = 0, `2` = 1, `3` = 2))), path)
+  m <- h$vt_elig_sid(path, ids, cfg = NULL, read = function(p) list(value = readRDS(p)))
+  expect_equal(dimnames(m)[[1]], ids)
+  expect_false(is.null(attr(m, "read")))
+  expect_error(h$vt_elig_sid(path, c(ids, "4"), cfg = NULL, read = function(p) list(value = readRDS(p))),
+               "1 patient")
+})
+
+test_that("the propensity sensitivity renders with missing predictors under na.impute", {
+  skip_on_cran()
+  d <- vt_data(); d$x1[c(20, 40, 60)] <- NA
+  env <- vt_fit_first(data = d)
+  expect_false(anyNA(env$.elig$elig_propensity))
+})
+
+test_that("vt-fit flags the planted outliers against arm B", {
+  skip_on_cran()
+  env <- vt_fit_first()
+  flagged <- env$.elig$ID[!env$.elig$elig_gower]
+  expect_true(all(vt_digest(env, which(vt_data()$arm == "A")[1:5]) %in% flagged))
+})

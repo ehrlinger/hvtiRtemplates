@@ -32,7 +32,8 @@ vt_choices <- list(
 )
 
 # Every chunk of vt-fit, in order. Tasks 2 and 3 extend it.
-vt_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "predictors")
+vt_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "predictors",
+                   "ood", "eligibility", "tbl-ood", "fig-ood", "tbl-agreement")
 
 # The digest the job keys a raw ID by, in a fixture study.
 vt_digest <- function(env, ids) hvtiRtemplates:::.id_digest(ids, hvtiRtemplates:::.study_id_key(env$.root))
@@ -44,5 +45,16 @@ vt_fit_first <- function(data = vt_data(), choices = vt_choices, labels = vt_fit
   rf_skip_unless_stack(rf_template_packages("vt", "fit"))  # nolint: object_usage_linter.
   env <- rf_env(data, .local_envir)  # nolint: object_usage_linter.
   rf_run("vt", "fit", labels, env, choices)  # nolint: object_usage_linter.
+  env
+}
+
+# The helper chunks of vt-fit, evaluated alone, so a test can call vt_ood()
+# without a study or a forest.
+vt_helpers <- function() {
+  env <- new.env()
+  src <- readLines(template_path("vt", "fit"), warn = FALSE)
+  for (label in c("ood", "curves-helper", "rmst-helper")) {
+    if (any(trimws(src) == paste0("#| label: ", label))) eval(parse(text = rf_chunk(src, label)), envir = env)  # nolint: object_usage_linter.
+  }
   env
 }

@@ -262,6 +262,214 @@ d <- d[, c(ID, ARM, TIME, STATUS, .predictors), drop = FALSE]
 cat("Predictors:", paste(.predictors, collapse = ", "), "\n")
 ```
 
+## Eligibility
+
+A patient's twin curve for the arm they did not receive is only as good as the
+patients it was learned from. **Out of distribution** means a patient has no
+close counterpart in an arm, so that arm's forest would be extrapolating for
+them. The rule is the same for every distance this job can use. For each arm,
+each patient's nearest neighbour in that arm (never themself) is compared with
+the largest nearest-neighbour distance among the arm's own patients. That
+reference is the arm's own largest gap: a patient farther from the arm than its
+own members are from each other is outside what the arm covers. A treated
+patient is judged against the other arm; a patient with no arm is judged against
+both and must pass both.
+
+Patients are **flagged, not dropped**. The flags are saved with the fit and the
+effect estimates carry them, so a report can show the effect with and without
+the flagged patients.
+
+```{r}
+#| label: ood
+# One rule, applied to any patient-by-patient distance. For each arm, each
+# patient's nearest neighbour in that arm (never themself) is compared with the
+# largest nearest-neighbour distance among the arm's own patients. Farther than
+# that, STRICTLY, and the arm's forest would be extrapolating. A treated patient
+# is judged against the other arm; a row with no arm against both.
+#
+# A distance can be unavailable: Gower gives NA for two patients who share no
+# observed predictor. An unavailable distance is no evidence of nearness, so it
+# counts as infinitely far. A patient with no finite distance to any patient in
+# an arm has no comparable neighbour there and is out of distribution for it,
+# with that reason; an arm member with no finite within-arm neighbour does not
+# set the arm's reference. Every judged patient therefore gets TRUE or FALSE,
+# never NA.
+vt_ood <- function(dist, ids, arm, arms) {
+  dist <- as.matrix(dist)[ids, ids, drop = FALSE]
+  dist[is.na(dist)] <- Inf
+  diag(dist) <- Inf
+  rows <- lapply(arms, function(a) {
+    members <- which(arm %in% a)
+    nn_within <- apply(dist[members, members, drop = FALSE], 1L, min)
+    nn_within <- nn_within[is.finite(nn_within)]
+    # An arm whose members have no finite neighbour has no reference gap, so nobody can be shown
+    # to sit inside it: they are flagged with that reason, and the eligibility chunk stops on it.
+    reference <- if (length(nn_within)) max(nn_within) else NA_real_
+    judged <- which(is.na(arm) | !arm %in% c(a, NA))
+    if (!length(judged)) return(NULL)
+    sub <- dist[judged, members, drop = FALSE]
+    nn <- apply(sub, 1L, which.min)
+    distance <- sub[cbind(seq_along(judged), nn)]
+    none <- !is.finite(distance)
+    out <- none | is.na(reference) | distance > reference
+    reason <- ifelse(none, sprintf("no comparable %s patient (no predictor observed in common)", a), "")
+    if (is.na(reference)) {
+      reason[!none] <- sprintf("arm %s has no reference gap", a)
+    } else {
+      reason[out & !none] <- sprintf("nearest %s patient at %.3f, beyond that arm's largest gap %.3f",
+                                     a, distance[out & !none], reference)
+    }
+    data.frame(ID = ids[judged], method = NA_character_, arm = a, nn_id = ifelse(none, NA, ids[members][nn]),
+               distance = distance, reference = reference,
+               ratio = if (length(nn_within)) distance / stats::median(nn_within) else NA_real_,
+               in_distribution = !out, reason = reason)
+  })
+  do.call(rbind, rows)
+}
+
+# Gower over the model predictors only: mixed types, no model, bounded in [0, 1].
+vt_elig_gower <- function(d, predictors, id) {
+  m <- as.matrix(cluster::daisy(d[predictors], metric = "gower"))
+  dimnames(m) <- list(d[[id]], d[[id]])
+  m
+}
+
+# The SID distance a sid job saved. Read, never refit, and refused when it does
+# not cover every patient here.
+# Returns the distance with the whole reader result as attribute "read", so the
+# eligibility chunk can carry the sid set's record and lineage into vt.rds.
+vt_elig_sid <- function(path, ids, cfg, key = NULL,
+                        read = function(p) hvtiRtemplates:::.read_handoff(p, "clustering", cfg, "the sid job")) {
+  if (!file.exists(path)) stop("No sid clustering at ", path, ". Render that job first.", call. = FALSE)
+  got <- read(path)
+  # A sid set's distance is labelled by ID digests under the study key, with the
+  # key's fingerprint saved beside it. A different fingerprint means the key
+  # changed since, and every digest would miss.
+  if (!is.null(key) && !identical(got$value$id_key, hvtiRtemplates:::.id_key_fingerprint(key))) {
+    stop("The sid set at ", path, " was digested under a different study key. Re-render it.", call. = FALSE)
+  }
+  m <- as.matrix(got$value$dist)
+  absent <- setdiff(ids, rownames(m))
+  if (length(absent)) {
+    stop(length(absent), " patient(s) in this job are not in the sid distance at ", path, ".", call. = FALSE)
+  }
+  structure(m[ids, ids, drop = FALSE], read = got)
+}
+
+# A patient is eligible when every arm they were judged against passed, per
+# method; then methods combine: "any" flag excludes, or "all" must.
+vt_combine <- function(rows, combine = c("any", "all")) {
+  combine <- match.arg(combine)
+  per <- stats::aggregate(in_distribution ~ ID + method, rows, all)
+  flagged <- stats::aggregate(!in_distribution ~ ID, per, if (combine == "any") any else all)
+  data.frame(ID = flagged$ID, elig = !flagged[[2]])
+}
+```
+
+```{r}
+#| label: eligibility
+.methods <- match.arg(ELIGIBILITY, c("gower", "sid"), several.ok = TRUE)
+.ids <- d[[ID]]
+.arm <- ifelse(.no_arm, NA_character_, as.character(d[[ARM]]))
+.sid_read <- NULL
+.dist <- list(
+  gower = function() vt_elig_gower(d, .predictors, ID),
+  sid = function() {
+    if (is.null(SID_SET)) stop("ELIGIBILITY includes \"sid\"; name the sid set in SID_SET.", call. = FALSE)
+    m <- vt_elig_sid(file.path(dirname(dirname(set_path("estimates", "vt.rds"))), SID_SET, "sid.rds"), .ids, .cfg,
+                     key = .id_key)
+    # The sid set decided some flags, so its record and data lineage travel
+    # into vt.rds with the vp screen's (see `save`).
+    .sid_read <<- attr(m, "read")
+    .provenance_data <<- c(.provenance_data, .sid_read$lineage$data)
+    m
+  }
+)
+.elig_rows <- do.call(rbind, lapply(.methods, function(m) transform(vt_ood(.dist[[m]](), .ids, .arm, ARMS), method = m)))
+if (anyNA(.elig_rows$reference)) {
+  .bad <- unique(.elig_rows$method[is.na(.elig_rows$reference)])
+  stop("An arm has no two patients with a finite distance by ", paste(.bad, collapse = ", "),
+       ", so its reference gap is undefined. Check the predictors' missingness.", call. = FALSE)
+}
+.elig <- vt_combine(.elig_rows, COMBINE)
+for (m in .methods) {
+  .one <- vt_combine(.elig_rows[.elig_rows$method == m, ], "any")
+  .elig[[paste0("elig_", m)]] <- .one$elig[match(.elig$ID, .one$ID)]
+}
+# Sensitivity only, never part of the combined rule: forest propensity common support.
+# ps_forest() refuses missing predictors, while the arm forests impute them
+# (NA_ACTION = "na.impute"). So the propensity model gets a forest-imputed copy
+# of the treated patients' predictors, seeded, and the arm forests keep the
+# data as read. Under "na.omit" nothing is missing and the copy equals d.
+.ps_data <- d[.treated, c(ID, ARM, .predictors), drop = FALSE]
+if (anyNA(.ps_data[.predictors])) {
+  set.seed(SEED)
+  # impute() leaves a character column's values unimputed, so the arm goes in as a factor.
+  .imp <- .ps_data[c(ARM, .predictors)]
+  .imp[[ARM]] <- factor(.imp[[ARM]])
+  .ps_data[.predictors] <- randomForestSRC::impute(data = .imp, ntree = 100L, seed = -abs(SEED),
+                                                   verbose = FALSE)[.predictors]
+}
+set.seed(SEED)
+.ps <- ps_forest(stats::reformulate(.predictors, ARM), data = .ps_data, treatment_col = ARM, id_col = ID,
+                 treated_level = ARMS[1], ntree = NTREE, seed = -abs(SEED))
+# ps_support() adds weak_common (outside the range both arms occupy) to $data.
+# Patients with no arm have no propensity score and are not judged by it.
+.support <- ps_support(.ps)$data
+.elig$elig_propensity <- .elig$ID %in% .support[[ID]][!.support$weak_common]
+.elig$elig_none <- TRUE
+```
+
+### Who is out of distribution
+
+```{r}
+#| label: tbl-ood
+#| tbl-cap: "Patients out of distribution, by method and the arm they were judged against"
+.out <- .elig_rows[!.elig_rows$in_distribution, c("ID", "method", "arm", "distance", "reference", "reason")]
+if (nrow(.out)) {
+  .out$distance <- round(.out$distance, 3)
+  .out$reference <- round(.out$reference, 3)
+}
+cat(nrow(.out), "patient-by-arm judgements are out of distribution; every one is listed.\n")
+knitr::kable(.out, row.names = FALSE)
+```
+
+```{r}
+#| label: fig-ood
+#| fig-cap: "Distance to the nearest patient of the arm judged against, patients ranked within each panel. The dashed line is
+#|   that arm's largest nearest-neighbour gap among its own patients: points above it are out of distribution."
+.plot <- .elig_rows[is.finite(.elig_rows$distance), ]
+.plot <- do.call(rbind, lapply(split(.plot, list(.plot$method, .plot$arm), drop = TRUE), function(x) {
+  x$rank <- rank(x$distance, ties.method = "first")
+  x
+}))
+.ref <- unique(.plot[c("method", "arm", "reference")])
+.fig <- ggplot2::ggplot(.plot, ggplot2::aes(x = rank, y = distance, color = in_distribution)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_hline(data = .ref, ggplot2::aes(yintercept = reference), linetype = "dashed") +
+  ggplot2::facet_grid(method ~ arm, scales = "free") +
+  ggplot2::scale_color_manual(values = c(`TRUE` = "gray60", `FALSE` = "black")) +
+  ggplot2::labs(x = "Patient rank", y = "Distance to nearest patient in the arm", color = "In distribution") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "vt-fit-eligibility")
+.fig
+```
+
+```{r}
+#| label: tbl-agreement
+#| tbl-cap: "Eligibility under each pair of methods"
+if (length(.methods) > 1L) {
+  .pairs <- utils::combn(.methods, 2L, simplify = FALSE)
+  for (.p in .pairs) {
+    print(knitr::kable(table(.elig[[paste0("elig_", .p[1])]], .elig[[paste0("elig_", .p[2])]],
+                             dnn = paste0("elig_", .p)),
+                       caption = paste("Eligible under", .p[1], "(rows) and", .p[2], "(columns)")))
+  }
+} else {
+  cat("One eligibility method ran, so there is nothing to compare.\n")
+}
+```
+
 ```{r}
 #| label: provenance
 #| echo: false
