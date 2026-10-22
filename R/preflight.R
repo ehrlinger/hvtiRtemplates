@@ -32,7 +32,7 @@
   if (is.na(lock)) return(.check("r_version", TRUE))
   if (.minor(lock) != .minor(have)) {
     return(.check("r_version", FALSE,
-                  sprintf("this study's renv.lock records R %s, but this session is R %s, so it would use a different package library.",
+                  sprintf("this study's renv.lock records R %s, but this session is R %s, so it would use a different library.",
                           lock, have),
                   sprintf("Run it from a terminal with `hvti run <job>`, or start R %s (/opt/R/%s/bin/R).", lock, lock)))
   }
@@ -51,7 +51,8 @@
   locked <- vapply(lock$Packages, function(p) p$Version, "")
   need <- .job_packages(path)
   have <- vapply(need, .installed_version, "")
-  bad <- character(); fix <- character()
+  bad <- character()
+  fix <- character()
   for (p in need) {
     l <- if (p %in% names(locked)) locked[[p]] else NA_character_
     h <- have[[p]]
@@ -72,7 +73,7 @@
   other <- setdiff(names(locked), need)
   drift <- other[vapply(other, function(p) !identical(.installed_version(p), locked[[p]]), NA)]
   note <- if (length(drift)) sprintf("%d package(s) this job does not load differ from renv.lock: %s.",
-                                      length(drift), paste(drift, collapse = ", "))
+                                     length(drift), paste(drift, collapse = ", "))
   if (length(bad)) return(.check("packages", FALSE, paste0(paste(bad, collapse = "; "), "."),
                                  paste(unique(fix), collapse = "\n"), note))
   .check("packages", TRUE, note = note)

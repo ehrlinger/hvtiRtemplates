@@ -57,8 +57,9 @@ test_that("drift in a package the job does not load is a note, not a refusal", {
   root <- lock_study(pkgs = list(quarto = "1.4.4", knitr = "1.48", sf = "1.0"))
   job <- file.path(root, "analyses", "x.qmd")
   writeLines(c("```{r}", "#| label: setup", "library(knitr)", "```"), job)
-  testthat::local_mocked_bindings(.installed_version = function(p) if (p == "sf") "1.1" else
-                                    c(quarto = "1.4.4", knitr = "1.48")[[p]],
+  testthat::local_mocked_bindings(.installed_version = function(p) {
+                                    if (p == "sf") "1.1" else c(quarto = "1.4.4", knitr = "1.48")[[p]]
+                                  },
                                   .always_needed = function() c("quarto", "knitr"))
   ck <- .check_packages(job, root)
   expect_true(ck$ok)
