@@ -409,3 +409,27 @@ test_that("run_state refuses a fresh submission", {
   expect_false(ck$ok)
   expect_match(ck$message, "already submitted", fixed = TRUE)
 })
+
+test_that("study_render copes with a stale running job that records no host", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  other <- file.path(root, "analyses", "nohost.qmd")
+  writeLines("---\ntitle: x\n---", other)
+  now <- Sys.time()
+  .write_status(.run_files(other)$progress, pid = 1L, started = .stamp(now - 7200), updated = .stamp(now - 7200),
+                stage = "fit", stage_index = 1L, stage_count = 2L, stages = c("fit", "b"))
+  ck <- expect_no_error(.check_study_render(mine, root))
+  expect_false(ck$ok)
+  expect_match(ck$fix, "hvti cancel analyses/nohost.qmd", fixed = TRUE)
+  expect_no_match(ck$fix, "other_host", fixed = TRUE)
+})
+
+test_that("the abandon route for a job on this host is a plain cancel", {
+  job <- status_job()
+  fix <- .abandon_route(list(host = Sys.info()[["nodename"]], marker = "PSabc123_1"), job)
+  expect_match(fix, "hvti cancel", fixed = TRUE)
+  expect_match(fix, sprintf('cancel_job("%s")', job), fixed = TRUE)
+  expect_no_match(fix, "other_host", fixed = TRUE)
+  expect_no_match(fix, "confirm", fixed = TRUE)
+  expect_match(.abandon_route(list(host = NULL), job), "hvti cancel", fixed = TRUE)
+})

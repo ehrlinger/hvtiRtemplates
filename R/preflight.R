@@ -133,6 +133,7 @@
 # Stale progress is not proof: Quarto's knitr runs in a session of its own and can outlive the Workbench
 # session, so the way out confirms on that host before abandoning (spec section 6).
 .abandon_route <- function(st, path, files = .run_files(path)) {
+  if (!.on_other_host(st)) return(sprintf('Stop it with `hvti cancel`, or cancel_job("%s").', path))
   confirm <- if (is.character(st$marker)) {
     sprintf("On %s, confirm nothing is left with `ps eww -u $USER | grep %s`. ", st$host, st$marker)
   } else {
@@ -143,6 +144,11 @@
   } else {
     sprintf("%sOnly then, if that session is gone, delete %s and %s, then run again.", confirm, files$status, files$progress)
   }
+}
+
+# TRUE only when the status records a host and it is not this one.
+.on_other_host <- function(st) {
+  is.character(st$host) && length(st$host) == 1L && !is.na(st$host) && !identical(st$host, Sys.info()[["nodename"]])
 }
 
 # A path with its directory resolved, which normalizePath() alone does not do for a file that is not there
@@ -190,6 +196,7 @@
     entries <- list.files(dir, all.files = TRUE, no.. = TRUE)
     full <- file.path(dir, entries)
     is_dir <- dir.exists(full)
+    # Jobs under a symlinked folder are not scanned: a deliberate trade-off against loops.
     linked <- nzchar(Sys.readlink(full))  # a symlinked directory could loop back on the study
     todo <- c(todo, full[is_dir & !linked & !entries %in% .run_scan_skip])
     hits <- entries[!is_dir & grepl("[.]run[.](yml|progress)$", entries)]
@@ -232,7 +239,8 @@
       detail <- c(host, stage, left)
       paste0(rel_of(job), if (length(detail)) paste0(", ", paste(detail, collapse = ", ")))
     }
-    is_stale <- vapply(running, function(st) isTRUE(st$progress$stale), NA)
+    # Stale on a host other than this one is the only case the wait advice cannot resolve; a missing host gets the live wording.
+    is_stale <- vapply(running, function(st) isTRUE(st$progress$stale) && .on_other_host(st), NA)
     live <- paste(vapply(names(running)[!is_stale], rel_of, ""), collapse = ", ")
     routes <- vapply(names(running)[is_stale], function(j) {
       st <- running[[j]]
