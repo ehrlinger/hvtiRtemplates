@@ -64,7 +64,7 @@
       <h1>The template catalog</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-10-21</p>
+      <p class="date">2026-10-22</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/vignettes/template-catalog.qmd" class="external-link"><code>vignettes/template-catalog.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -87,8 +87,8 @@
 <p>Each template carries a light.</p>
 <ul>
 <li>🟢 <strong>Shipped</strong> (34): on disk and supported. Scaffold it and use it.</li>
-<li>🟡 <strong>In progress</strong> (19): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
-<li>🔴 <strong>Not yet on the way</strong> (15): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
+<li>🟡 <strong>In progress</strong> (21): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
+<li>🔴 <strong>Not yet on the way</strong> (13): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
 </h2>
 <p>Every template on disk, grouped by the study folder a job lands in, named without its digits (<code>graphs</code> is <code>40_graphs</code> in a new study). <code><a href="../reference/add_job.html">add_job()</a></code> places each one; you do not choose the folder.</p>
@@ -203,11 +203,11 @@
 </tbody>
 </table></section><section class="level3"><h3 id="analyses">analyses<a class="anchor" aria-label="anchor" href="#analyses"></a>
 </h3>
-<table class="table caption-top">
+<table class="table caption-top" style="width:100%;">
 <colgroup>
-<col style="width: 3%">
+<col style="width: 5%">
 <col style="width: 9%">
-<col style="width: 63%">
+<col style="width: 62%">
 <col style="width: 23%">
 </colgroup>
 <thead><tr class="header">
@@ -349,6 +349,18 @@
 <td style="text-align: left;">Ordinary least-squares outcome model with Rubin-pooled inference.</td>
 <td style="text-align: left;"><code>add_job("rm", subject, type, qualifier = "linear")</code></td>
 </tr>
+<tr class="odd">
+<td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>vp-explain</code></td>
+<td style="text-align: left;">VarPro partial dependence for the variables a vp-fit screen selected. It never fits varPro.</td>
+<td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "explain")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>vp-fit</code></td>
+<td style="text-align: left;">A VarPro variable screen that says which variables were tested, judges selection against permuted noise of the same kind, and checks the selection across subsamples.</td>
+<td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "fit")</code></td>
+</tr>
 </tbody>
 </table></section><section class="level3"><h3 id="graphs">graphs<a class="anchor" aria-label="anchor" href="#graphs"></a>
 </h3>
@@ -396,13 +408,13 @@
 <p>Job types the SAS library and the study corpus carry that have no template yet. <strong>SAS jobs</strong> counts the distinct studies with a SAS job of that type, so a larger number is a template more studies are waiting for. <em>Unmeasured</em> means nobody has counted it yet, which is not the same as zero.</p>
 <div class="cell">
 <div class="cell-output-display">
-<table class="table caption-top" style="width:100%;">
+<table class="table caption-top">
 <colgroup>
-<col style="width: 8%">
-<col style="width: 5%">
-<col style="width: 63%">
-<col style="width: 4%">
-<col style="width: 17%">
+<col style="width: 20%">
+<col style="width: 14%">
+<col style="width: 38%">
+<col style="width: 10%">
+<col style="width: 16%">
 </colgroup>
 <thead><tr class="header">
 <th style="text-align: left;">Delivery</th>
@@ -607,20 +619,6 @@
 <td style="text-align: left;">Boosting: BoostMLR</td>
 <td style="text-align: left;">unmeasured</td>
 <td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">🔴 Not yet on the way</td>
-<td style="text-align: left;"><code>vp-fit</code></td>
-<td style="text-align: left;">A VarPro variable screen that says which variables were tested, judges selection against permuted noise of the same kind, and checks the selection across subsamples.</td>
-<td style="text-align: left;">unmeasured</td>
-<td style="text-align: left;">hvtiRutilities: the vp row in hvti_taxonomy()</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">🔴 Not yet on the way</td>
-<td style="text-align: left;"><code>vp-explain</code></td>
-<td style="text-align: left;">VarPro partial dependence for the variables a vp-fit screen selected. It never fits varPro.</td>
-<td style="text-align: left;">unmeasured</td>
-<td style="text-align: left;">hvtiRutilities: the vp row in hvti_taxonomy()</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
