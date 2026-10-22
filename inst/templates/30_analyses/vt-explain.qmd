@@ -106,7 +106,7 @@ horizon are not here: they come from the fit.
 # covariate: they are built from what the forests already use.
 STRATIFY <- NULL
 BOOT <- 1000                                # EDIT: bootstraps for the standardized betas; 0 skips the intervals.
-GAIN_MIN <- 0                               # EDIT: a twin must favour the other arm by more than this, in TIME's units.
+GAIN_MIN <- 0                               # EDIT: a twin must favor the other arm by more than this, in TIME's units.
 
 # Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
@@ -181,12 +181,12 @@ if (length(setdiff(.sha_now, .sha_fit))) {
 ## The contrast
 
 Patients in distribution, under the combined eligibility rule. A positive
-difference favours the first arm.
+difference favors the first arm.
 
 ```{r}
 #| label: fig-contrast
 #| fig-cap: "The estimated RMST difference by the arm patients received. Box: 15th to 85th percentile;
-#|   whiskers: 5th to 95th; line: median. A positive difference favours the first arm."
+#|   whiskers: 5th to 95th; line: median. A positive difference favors the first arm."
 .pct <- function(x) {
   q <- stats::quantile(x, c(0.05, 0.15, 0.5, 0.85, 0.95), names = FALSE)
   data.frame(ymin = q[1], lower = q[2], middle = q[3], upper = q[4], ymax = q[5])
@@ -202,7 +202,7 @@ save_figure(.fig, "vt-explain-contrast")
 
 ```{r}
 #| label: fig-ranking
-#| fig-cap: "Every patient in distribution, ranked by the estimated RMST difference and coloured by the arm received."
+#| fig-cap: "Every patient in distribution, ranked by the estimated RMST difference and colored by the arm received."
 .rk <- .e[order(.e$diff), ]
 .rk$rank <- seq_len(nrow(.rk))
 .fig <- ggplot(.rk, aes(x = rank, y = diff, color = arm)) +
@@ -265,14 +265,14 @@ summarizes. The combined rule is the one used above.
 ```{r}
 #| label: tbl-sensitivity
 #| tbl-cap: "The RMST difference under each eligibility rule: patients kept, median with 15th and 85th
-#|   percentiles, and the share favouring the first arm"
+#|   percentiles, and the share favoring the first arm"
 .rules <- c(sub("^elig_", "", grep("^elig_", names(r), value = TRUE)))
 .sens <- do.call(rbind, lapply(c("combined", .rules), function(rule) {
   keep <- if (rule == "combined") r$elig else r[[paste0("elig_", rule)]]
   do.call(rbind, lapply(split(r[keep, ], r$arm[keep]), function(x) {
     q <- stats::quantile(x$diff, c(0.15, 0.5, 0.85), names = FALSE)
     data.frame(rule = rule, arm = x$arm[1L], kept = nrow(x), p15 = q[1], median = q[2], p85 = q[3],
-               favour_first = mean(x$diff > 0))
+               favor_first = mean(x$diff > 0))
   }))
 }))
 knitr::kable(.sens, digits = 2, row.names = FALSE)
@@ -333,7 +333,7 @@ if (is.null(.strata)) {
   .st <- do.call(rbind, lapply(.cells, function(x) {
     data.frame(stratum = x$stratum[1L], arm = x$arm[1L], n = nrow(x),
                median = if (nrow(x) >= 5L) stats::median(x$diff) else NA_real_,
-               favour_first = mean(x$diff > 0))
+               favor_first = mean(x$diff > 0))
   }))
   rownames(.st) <- NULL
   knitr::kable(.st, digits = 2, row.names = FALSE)
@@ -433,15 +433,15 @@ save_figure(.fig, "vt-explain-betas")
 
 ```{r}
 #| label: tbl-benefit
-#| tbl-cap: "Patients in distribution whose twin favours the arm they did not receive, by more than GAIN_MIN"
+#| tbl-cap: "Patients in distribution whose twin favors the arm they did not receive, by more than GAIN_MIN"
 #| results: asis
 .gain <- ifelse(r$arm == ARMS[1], -r$diff, ifelse(r$arm == ARMS[2], r$diff, NA))
 .is_ben <- .eligible & r$arm %in% ARMS & (.gain > GAIN_MIN) %in% TRUE
 .benefit <- r[.is_ben, ]
 .future <- r[.eligible & r$arm == "none", ]
-# An exact tie (diff == 0) favours neither arm; it must not fall to ARMS[2].
-.future$favours <- ifelse(.future$diff > 0, ARMS[1], ifelse(.future$diff < 0, ARMS[2], "neither"))
-cat("Patients whose twin favours the other arm:\n\n")
+# An exact tie (diff == 0) favors neither arm; it must not fall to ARMS[2].
+.future$favors <- ifelse(.future$diff > 0, ARMS[1], ifelse(.future$diff < 0, ARMS[2], "neither"))
+cat("Patients whose twin favors the other arm:\n\n")
 print(knitr::kable(as.data.frame(table(received = .benefit$arm))))
 # Their characteristics beside the rest of their arm: median (IQR) for a number, percent for a factor.
 # Factor levels come from the whole cohort, so a level absent from one group reads 0%.
@@ -465,14 +465,14 @@ print(knitr::kable(as.data.frame(table(received = .benefit$arm))))
   dd <- .d_all[match(ids, .d_all[[.vt$settings$id]]), , drop = FALSE]
   s1 <- .sumry(dd[hit, , drop = FALSE])
   s0 <- .sumry(dd[!hit, , drop = FALSE])
-  data.frame(arm = a, variable = s1$variable, other_arm_favoured = s1$value, rest = s0$value[match(s1$variable, s0$variable)])
+  data.frame(arm = a, variable = s1$variable, other_arm_favored = s1$value, rest = s0$value[match(s1$variable, s0$variable)])
 }))
 if (!is.null(.ben_tab)) {
   cat("Characteristics of those patients beside the rest of the arm:\n\n")
   print(knitr::kable(.ben_tab, row.names = FALSE))
 }
-cat("Patients with no arm, by the arm their twin favours:\n\n")
-print(knitr::kable(as.data.frame(table(favours = .future$favours))))
+cat("Patients with no arm, by the arm their twin favors:\n\n")
+print(knitr::kable(as.data.frame(table(favors = .future$favors))))
 ```
 
 ## Reading the result

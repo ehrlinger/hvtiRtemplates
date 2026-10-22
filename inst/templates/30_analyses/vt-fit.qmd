@@ -127,7 +127,7 @@ TIME <- "iv_dead"                           # EDIT: follow-up time.
 STATUS <- "dead"                            # EDIT: the event, coded 0/1.
 ARM <- "treatment"                          # EDIT: the treatment arm.
 # EDIT: the two arms, in the order the difference is taken: a positive diff
-# favours ARMS[1].
+# favors ARMS[1].
 ARMS <- c("arm1", "arm2")
 # EDIT: rows that received neither arm are predicted under both and fit by
 # neither. NULL treats a missing ARM as no arm; a vector of levels names them.
@@ -291,8 +291,8 @@ A patient's twin curve for the arm they did not receive is only as good as the
 patients it was learned from. **Out of distribution** means a patient has no
 close counterpart in an arm, so that arm's forest would be extrapolating for
 them. The rule is the same for every distance this job can use. For each arm,
-each patient's nearest neighbour in that arm (never themself) is compared with
-the largest nearest-neighbour distance among the arm's own patients. That
+each patient's nearest neighbor in that arm (never themself) is compared with
+the largest nearest-neighbor distance among the arm's own patients. That
 reference is the arm's own largest gap: a patient farther from the arm than its
 own members are from each other is outside what the arm covers. A treated
 patient is judged against the other arm; a patient with no arm is judged against
@@ -305,16 +305,16 @@ the flagged patients.
 ```{r}
 #| label: ood
 # One rule, applied to any patient-by-patient distance. For each arm, each
-# patient's nearest neighbour in that arm (never themself) is compared with the
-# largest nearest-neighbour distance among the arm's own patients. Farther than
+# patient's nearest neighbor in that arm (never themself) is compared with the
+# largest nearest-neighbor distance among the arm's own patients. Farther than
 # that, STRICTLY, and the arm's forest would be extrapolating. A treated patient
 # is judged against the other arm; a row with no arm against both.
 #
 # A distance can be unavailable: Gower gives NA for two patients who share no
 # observed predictor. An unavailable distance is no evidence of nearness, so it
 # counts as infinitely far. A patient with no finite distance to any patient in
-# an arm has no comparable neighbour there and is out of distribution for it,
-# with that reason; an arm member with no finite within-arm neighbour does not
+# an arm has no comparable neighbor there and is out of distribution for it,
+# with that reason; an arm member with no finite within-arm neighbor does not
 # set the arm's reference. Every judged patient therefore gets TRUE or FALSE,
 # never NA.
 vt_ood <- function(dist, ids, arm, arms) {
@@ -325,7 +325,7 @@ vt_ood <- function(dist, ids, arm, arms) {
     members <- which(arm %in% a)
     nn_within <- apply(dist[members, members, drop = FALSE], 1L, min)
     nn_within <- nn_within[is.finite(nn_within)]
-    # An arm whose members have no finite neighbour has no reference gap, so nobody can be shown
+    # An arm whose members have no finite neighbor has no reference gap, so nobody can be shown
     # to sit inside it: they are flagged with that reason, and the eligibility chunk stops on it.
     reference <- if (length(nn_within)) max(nn_within) else NA_real_
     judged <- which(is.na(arm) | !arm %in% c(a, NA))
@@ -365,7 +365,7 @@ vt_elig_sid <- function(path, ids, cfg, key = NULL,
                         read = function(p) hvtiRtemplates:::.read_handoff(p, "SID fit", cfg, "the sid job")) {
   if (!file.exists(path)) stop("No sid clustering at ", path, ". Render that job first.", call. = FALSE)
   got <- read(path)
-  # A sid set's distance is labelled by ID digests under the study key, with the
+  # A sid set's distance is labeled by ID digests under the study key, with the
   # key's fingerprint saved beside it. A different fingerprint means the key
   # changed since, and every digest would miss.
   if (!is.null(key) && !identical(got$value$id_key, hvtiRtemplates:::.id_key_fingerprint(key))) {
@@ -455,14 +455,14 @@ if (nrow(.out)) {
   .out$distance <- round(.out$distance, 3)
   .out$reference <- round(.out$reference, 3)
 }
-cat(nrow(.out), "patient-by-arm judgements are out of distribution; every one is listed.\n")
+cat(nrow(.out), "patient-by-arm judgments are out of distribution; every one is listed.\n")
 knitr::kable(.out, row.names = FALSE)
 ```
 
 ```{r}
 #| label: fig-ood
 #| fig-cap: "Distance to the nearest patient of the arm judged against, patients ranked within each panel. The dashed line is
-#|   that arm's largest nearest-neighbour gap among its own patients: points above it are out of distribution."
+#|   that arm's largest nearest-neighbor gap among its own patients: points above it are out of distribution."
 .plot <- .elig_rows[is.finite(.elig_rows$distance), ]
 .plot <- do.call(rbind, lapply(split(.plot, list(.plot$method, .plot$arm), drop = TRUE), function(x) {
   x$rank <- rank(x$distance, ties.method = "first")
@@ -597,7 +597,7 @@ set.seed(SEED)
 #| label: rmst-helper
 # RMST to the horizon: the area under a step survival curve, which starts at 1.
 # The horizon must sit inside both arms' follow-up; past it every curve is cut
-# at the same place and the difference is an artefact (a horizon in days on a
+# at the same place and the difference is an artifact (a horizon in days on a
 # fit in years gave identical curves once).
 vt_rmst <- function(curves, horizon, arms, followup) {
   past <- names(followup)[followup < horizon]

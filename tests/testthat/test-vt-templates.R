@@ -78,7 +78,7 @@ test_that("with stacked imputations only IMPUTATION_USE reaches the job", {
   expect_gt(min(env$d$xs), 90)
 })
 
-test_that("vt_ood flags a patient beyond the arm's largest nearest-neighbour gap", {
+test_that("vt_ood flags a patient beyond the arm's largest nearest-neighbor gap", {
   h <- vt_helpers()
   # Arm A at 0, 1, 2 (largest within-arm gap 1); arm B at 2.5 and 10.
   x <- c(a1 = 0, a2 = 1, a3 = 2, b1 = 2.5, b2 = 10)
@@ -411,14 +411,14 @@ test_that("a stratum cell under 5 patients shows no median but keeps its n", {
   expect_lt(cell$n, 5L)
 })
 
-test_that("tbl-benefit honours GAIN_MIN and splits the no-arm patients between the arms", {
+test_that("tbl-benefit honors GAIN_MIN and splits the no-arm patients between the arms", {
   skip_on_cran()
   env <- vt_fit_first(labels = vt_fit_labels_all)
   vt_explain(env, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 1e6, SAVE_FIGURES = FALSE))
   expect_equal(nrow(env$.benefit), 0L)
   env2 <- vt_fit_first(labels = vt_fit_labels_all)
   vt_explain(env2, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
-  expect_equal(sum(table(env2$.future$favours)), sum(env2$.eligible & env2$r$arm == "none"))
+  expect_equal(sum(table(env2$.future$favors)), sum(env2$.eligible & env2$r$arm == "none"))
 })
 
 test_that("VP_SET reads a vp-fit screen's selected set, minus EXCLUDE", {
@@ -472,8 +472,8 @@ test_that("a level carried only by the rest of the arm still shows, at 0% for th
   vt_explain(env, "tbl-benefit")
   z <- env$.ben_tab[env$.ben_tab$variable == "g1: z", ]
   expect_gt(nrow(z), 0L)
-  expect_true(all(z$other_arm_favoured == "0%"))
-  expect_false(any(is.na(env$.ben_tab$other_arm_favoured)))
+  expect_true(all(z$other_arm_favored == "0%"))
+  expect_false(any(is.na(env$.ben_tab$other_arm_favored)))
 })
 
 test_that("vt-explain stops when the dataset changed since vt-fit ran, though the manifest verifies", {
