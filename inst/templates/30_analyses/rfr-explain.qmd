@@ -280,6 +280,11 @@ VarPro is given the forest's own data. When the fit imputed missing values
 (`NA_ACTION` was `"na.impute"`), that is the imputed data, so VarPro and the
 forest describe the same patients.
 
+The panel and partial here use varPro's default cutoff, and a variable with
+z = 0 may simply be untested. For a screen that says which variables were
+tested, judges selection against noise and checks it across subsamples, use
+the `vp-fit` and `vp-explain` pair.
+
 ```{r}
 #| label: fig-varpro
 #| fig-cap: "VarPro importance of each predictor. Each box spans the 15th to the 85th percentile of the predictor's

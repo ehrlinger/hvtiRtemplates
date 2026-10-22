@@ -34,6 +34,8 @@ refuses to overwrite an existing job.
 | `30_analyses/rfc-explain.qmd` | importance, VarPro and dependence for an `rfc` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/rfr-fit.qmd` | regression forest, grown and checked | `30_analyses/` or `analyses/` |
 | `30_analyses/rfr-explain.qmd` | importance, VarPro and dependence for an `rfr` forest | `30_analyses/` or `analyses/` |
+| `30_analyses/vp-fit.qmd` | VarPro screen: coverage, a noise bar by kind and stability across subsamples (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/vp-explain.qmd` | VarPro partial dependence for the variables a `vp-fit` screen selected (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/nb-boostmtree.qmd` | boosted multivariate trees for a response measured at each visit | `30_analyses/` or `analyses/` |
 
 `dc-eda` and `dc-trends` were `dp-eda` and `dp-trends` until 2026-10-10, and
@@ -83,7 +85,7 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dc-trends`,
-`dc-eda`, `hs-setup`, `hs-concordance`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr` fit and explain jobs, and the eight
+`dc-eda`, `hs-setup`, `hs-concordance`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr` and `vp` fit and explain jobs, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so
 in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
@@ -388,6 +390,8 @@ as on a Mac without XQuartz.
 | rfc-fit | `rfc-fit-diagnostics-error`, `-roc` |
 | rfr-fit | `rfr-fit-diagnostics-error`, `-predicted` |
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |
+| vp-fit | `vp-fit-coverage`, `-varpro` |
+| vp-explain | `vp-explain-dependence-varpro-page-<NN>` |
 | rm-linear | `rm-linear-residuals`, `rm-linear-qq` |
 
 A plot method that returns several plots saves them as `<name>-1`, `<name>-2`
