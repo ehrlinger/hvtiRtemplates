@@ -332,3 +332,43 @@ test_that("comment lines a study added above a choice are listed for review", {
   # Only DATASET: the template's own comments above a choice are not listed.
   expect_length(grep("^- `[A-Z_]+`, old line", report), 1L)
 })
+
+test_that("a rewritten placeholder line after the comment is carried as the description", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "general", dir = root, qualifier = "general")
+  lines <- readLines(job)
+  i <- grep("^<!-- EDIT: name the job", lines)
+  j <- grep("^Replaces `descriptive/dc.general`[.]$", lines)
+  expect_identical(j, i + 2L)
+  lines[[j]] <- "Replaces `descriptive/dc.cohort.sas`."
+  writeLines(lines[-i], job)
+  upgraded <- readLines(upgrade_job(job))
+  expect_length(grep("^Replaces `descriptive/dc.cohort.sas`[.]$", upgraded), 1L)
+  expect_false(any(grepl("^Replaces `descriptive/dc.general`[.]$|^<!-- EDIT: name the job", upgraded)))
+})
+
+test_that("an older template's wording of the comment, untouched, is still open", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  lines <- readLines(job)
+  i <- grep("^<!-- EDIT: name the job", lines)
+  lines[[i]] <- "<!-- EDIT: say which job this replaces. -->"
+  writeLines(lines, job)
+  upgraded <- readLines(upgrade_job(job))
+  expect_length(grep("^<!-- EDIT: name the job", upgraded), 1L)
+  expect_false(any(grepl("say which job", upgraded)))
+  report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
+  expect_true(any(grepl("^The old job had not written it", report)))
+})
+
+test_that("a job whose template had no comment there keeps the current template's", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  lines <- readLines(job)
+  i <- grep("^<!-- EDIT: name the job", lines)
+  writeLines(lines[-(i:(i + 1L))], job)
+  upgraded <- readLines(upgrade_job(job))
+  expect_length(grep("^<!-- EDIT: name the job", upgraded), 1L)
+  report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
+  expect_true(any(grepl("^Not found in the old job", report)))
+})

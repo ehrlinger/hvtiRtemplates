@@ -363,19 +363,38 @@ upgrade_job <- function(path, dir = NULL) {
   if (is.na(a)) return(status("none"))
   filled <- function(x) nzchar(trimws(x)) & !grepl(stamp, x)
   before <- rev(which(filled(new[seq_len(a - 1L)]) & seq_len(a - 1L) > fm))[1L]
-  after <- b + which(filled(new[-seq_len(b)]))[1L]
-  if (is.na(after)) return(status("not found"))
-
   ofm <- front(old)
   s <- if (is.na(before)) ofm else which(old == new[[before]] & seq_along(old) > ofm)[1L]
-  e <- if (is.na(s)) NA_integer_ else which(old == new[[after]] & seq_along(old) > s)[1L]
-  if (is.na(e)) return(status("not found"))
-  between <- if (e > s + 1L) (s + 1L):(e - 1L) else integer()
+  if (is.na(s)) return(status("not found"))
+  # The line after is the next paragraph's first; failing that, the one after
+  # it, because some templates follow the comment with a placeholder line, such
+  # as "Replaces `descriptive/dc.general`.", that the study rewrites.
+  starts <- which(filled(new) & !filled(c("", new[-length(new)])) & seq_along(new) > b)
+  after <- e <- NA_integer_
+  for (k in utils::head(starts, 2L)) {
+    e <- which(old == new[[k]] & seq_along(old) > s)[1L]
+    if (!is.na(e)) {
+      after <- k
+      break
+    }
+  }
+  between <- if (!is.na(e) && e > s + 1L) (s + 1L):(e - 1L) else integer()
   between <- between[filled(old[between])]
-  if (!length(between)) return(status("carried", new[-(a:b)]))
+  # Nothing between the neighbours is not a deleted description: the old job's
+  # template may have had no comment there.
+  if (!length(between)) return(status("not found"))
+  region <- a:(after - 1L)
+  region <- region[seq_len(max(which(filled(new[region]))))]
   text <- old[min(between):max(between)]
-  if (identical(text, new[a:b])) return(status("open"))
-  status("carried", c(new[seq_len(a - 1L)], text, new[-seq_len(b)]), min(between), max(between))
+  # Still the comment, in this template's wording or an older one's.
+  rest <- text
+  o <- grep("^<!--", rest)
+  for (i in rev(o)) {
+    j <- i - 1L + grep("-->", rest[i:length(rest)], fixed = TRUE)[1L]
+    if (!is.na(j) && any(grepl(token, rest[i:j], fixed = TRUE))) rest <- rest[-(i:j)]
+  }
+  if (identical(text, new[region]) || !any(filled(rest))) return(status("open"))
+  status("carried", c(new[seq_len(a - 1L)], text, new[-seq_len(max(region))]), min(between), max(between))
 }
 
 # Comment lines above a carried choice in the old job that the current
@@ -452,8 +471,7 @@ upgrade_job <- function(path, dir = NULL) {
   description <- switch(d$status,
     none = "The current template has no description to write.",
     open = "The old job had not written it; the template's comment, under its marker, is still in place.",
-    carried = if (is.na(d$from)) "Carried from the old job, which had left it empty." else
-      paste0("Carried from the old job, old lines ", d$from, "-", d$to, ", in place of the template's comment."),
+    carried = paste0("Carried from the old job, old lines ", d$from, "-", d$to, ", in place of the template's comment."),
     "Not found in the old job. The template's comment, under its marker, is in its place; copy the old job's text there."
   )
   # paste0() recycles a zero-length argument to "", which made an empty list one blank entry.
