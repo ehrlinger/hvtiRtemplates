@@ -27,10 +27,12 @@
   v1 <- Filter(function(p) length(p) >= 3L && "memory" %in% strsplit(p[2L], ",", fixed = TRUE)[[1L]], parts)
   v2 <- Filter(function(p) length(p) >= 3L && p[1L] == "0" && p[2L] == "", parts)
   spec <- if (length(v1)) {
-    list(base = file.path(sys, "memory"), rel = v1[[1L]][3L], source = "cgroup v1",
+    # The path is everything after the second ':', which a cgroup's own name may contain.
+    list(base = file.path(sys, "memory"), rel = paste(v1[[1L]][-(1:2)], collapse = ":"), source = "cgroup v1",
          files = c("memory.limit_in_bytes", "memory.usage_in_bytes", "memory.max_usage_in_bytes"))
   } else if (length(v2)) {
-    list(base = sys, rel = v2[[1L]][3L], source = "cgroup v2", files = c("memory.max", "memory.current", "memory.peak"))
+    list(base = sys, rel = paste(v2[[1L]][-(1:2)], collapse = ":"), source = "cgroup v2",
+         files = c("memory.max", "memory.current", "memory.peak"))
   }
   out <- list(limit_gib = NA_real_, usage_gib = NA_real_, peak_gib = NA_real_, source = "physical")
   if (!is.null(spec)) {
@@ -89,8 +91,9 @@
 #'
 #' @param need_gib Expected peak memory of the fit, in GiB. \code{0} (a cached re-render) and
 #'   \code{NA} (no estimate) pass.
-#' @param why What needs the memory, in a few words, for the message ("a boostmtree fit").
-#' @param cores Number of parallel workers the fit would use, or \code{NULL}.
+#' @param why Character(1). What needs the memory, in a few words, for the message, best with the
+#'   counts the estimate was made from ("this boostmtree fit (1,391 patients, 4,771 visits, continuous)").
+#' @param cores Number of parallel workers the fit would use, a whole number of at least 1, or \code{NULL}.
 #' @param cores_fit A function taking a number of cores and returning the GiB the fit would need, or
 #'   \code{NULL}. Used only to name a core count that fits.
 #' @param proc,sys Paths of the cgroup files, for tests. The defaults read the running session.
@@ -111,6 +114,18 @@
 #' @export
 guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
                          proc = "/proc/self/cgroup", sys = "/sys/fs/cgroup") {
+  if (!(length(need_gib) == 1L && (is.numeric(need_gib) || identical(need_gib, NA)))) {
+    stop("guard_memory(): `need_gib` must be a single number of GiB, or NA.", call. = FALSE)
+  }
+  if (!is.character(why) || length(why) != 1L || is.na(why)) {
+    stop("guard_memory(): `why` must be a single string.", call. = FALSE)
+  }
+  if (!is.null(cores)) {
+    if (!is.numeric(cores) || length(cores) != 1L || is.na(cores) || cores < 1 || cores != round(cores)) {
+      stop("guard_memory(): `cores` must be NULL or a single whole number, 1 or more.", call. = FALSE)
+    }
+    cores <- as.integer(cores)
+  }
   m <- .cgroup_memory(proc, sys)
   # Recorded so job_status() can name the right profile if the fit dies anyway (spec section 6).
   if (!is.na(need_gib) && !is.null(.progress_state$file)) .progress_state$mem_need_gib <- round(need_gib, 1)
@@ -119,7 +134,13 @@ guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
     return(invisible(m$limit_gib))
   }
   here <- .workbench_profiles$profile[match(TRUE, abs(.workbench_profiles$cap_gib - m$limit_gib) < 0.5)]
-  where <- if (is.na(here)) sprintf("%.1f GiB", m$limit_gib) else sprintf("%.1f GiB (Workbench \"%s\")", m$limit_gib, here)
+  where <- if (identical(m$source, "physical")) {
+    sprintf("%.1f GiB (physical memory: no cgroup limit found)", m$limit_gib)
+  } else if (is.na(here)) {
+    sprintf("%.1f GiB", m$limit_gib)
+  } else {
+    sprintf("%.1f GiB (Workbench \"%s\")", m$limit_gib, here)
+  }
   to <- .profile_for(need_gib)
   k <- if (is.function(cores_fit) && !is.null(cores)) {
     ok <- Filter(function(k) cores_fit(k) <= 0.9 * m$limit_gib, seq_len(cores - 1L))

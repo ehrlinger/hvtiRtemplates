@@ -53,11 +53,12 @@
   invisible(NULL)
 }
 
-# The session's memory use now, or NULL: an unreadable cgroup or an NA must drop the field, not fail the write
-# (yaml writes NA as .na, which a reader would take for a value).
+# The session's memory use now and its limit, from one reading; an unreadable cgroup or an NA must drop the field,
+# not fail the write (yaml writes NA as .na, which a reader would take for a value).
 .progress_mem_gib <- function() {
-  gib <- tryCatch(.cgroup_memory()$usage_gib, error = function(e) NULL)
-  if (is.numeric(gib) && length(gib) == 1L && !is.na(gib)) round(gib, 1)
+  m <- tryCatch(.cgroup_memory(), error = function(e) list())
+  num <- function(x) if (is.numeric(x) && length(x) == 1L && !is.na(x)) round(x, 1)
+  list(mem_gib = num(m$usage_gib), mem_limit_gib = num(m$limit_gib))
 }
 
 .progress_write <- function() {
@@ -69,7 +70,8 @@
               step = s$step, steps = s$steps, unit = s$unit,
               step_started = if (!is.null(s$step_started)) .stamp(s$step_started), step_base = s$step_base,
               stages = s$stages, done = s$done,
-              checks = s$checks, mem_need_gib = s$mem_need_gib, mem_gib = .progress_mem_gib())
+              checks = s$checks, mem_need_gib = s$mem_need_gib)
+  rec <- c(rec, .progress_mem_gib())
   # yaml::write_yaml() can warn (a file that will not open) before it errors; both stop the reporting.
   stop_reporting <- function(e) {
     cat("progress reporting stopped: ", conditionMessage(e), "\n", sep = "", file = stderr())

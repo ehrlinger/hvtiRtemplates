@@ -1,5 +1,4 @@
 # fake_cgroup_v1() is in helper-run-job.R.
-# fake_cgroup_v1() is in helper-run-job.R (Task 1).
 test_that("the v1 limit is read under the memory controller", {
   cg <- fake_cgroup_v1(19.2)
   m <- .cgroup_memory(cg$proc, cg$sys)
@@ -83,4 +82,36 @@ test_that("with no progress file active, guard_memory and a passed check leave n
   guard_memory(4, "x", proc = cg$proc, sys = cg$sys)
   .progress_check_passed("render_r")
   expect_length(ls(.progress_state, all.names = TRUE), 0L)
+})
+
+test_that("a cgroup path holding ':' is read whole", {
+  d <- withr::local_tempdir()
+  writeLines("7:memory:/rstudio/a:b", file.path(d, "cgroup"))
+  leaf <- file.path(d, "sys", "memory", "rstudio", "a:b")
+  dir.create(leaf, recursive = TRUE)
+  writeLines(format(round(19.2 * 1024^3), scientific = FALSE), file.path(leaf, "memory.limit_in_bytes"))
+  m <- .cgroup_memory(file.path(d, "cgroup"), file.path(d, "sys"))
+  expect_equal(m$limit_gib, 19.2, tolerance = 1e-6)
+  expect_identical(m$source, "cgroup v1")
+})
+
+test_that("a refusal on physical memory says no cgroup limit was found", {
+  d <- withr::local_tempdir()
+  expect_error(guard_memory(1e6, "this fit", proc = file.path(d, "none"), sys = file.path(d, "none")),
+               "^memory: .*GiB \\(physical memory: no cgroup limit found\\)")
+})
+
+test_that("guard_memory refuses arguments of the wrong shape, plainly", {
+  cg <- fake_cgroup_v1(19.2)
+  g <- function(...) guard_memory(proc = cg$proc, sys = cg$sys, ...)
+  expect_error(g(c(1, 2), "x"), "need_gib")
+  expect_error(g("1", "x"), "need_gib")
+  expect_error(g(1, c("a", "b")), "why")
+  expect_error(g(1, 3), "why")
+  expect_error(g(1, NA_character_), "why")
+  for (bad in list(0, NA, 8.5, -2, c(2, 4), "8")) expect_error(g(1, "x", cores = bad), "cores", label = deparse(bad))
+  expect_silent(g(NA_real_, "x", cores = 8))
+  expect_silent(g(1, "x", cores = NULL))
+  fit <- function(k) .boostmtree_need_gib(1391, 4771, "continuous", k, 1000)
+  expect_error(g(fit(8), "x", cores = 8, cores_fit = fit), "with 8 cores.*CORES <- [0-9]+")  # 8 (double) coerced, used as a count
 })

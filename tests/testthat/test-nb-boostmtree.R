@@ -528,4 +528,6 @@ test_that("the nb-boostmtree fit chunk guards memory before cache_fit()", {
   expect_lt(fit, min(cache[cache > fit]))
   # Not inside an if (): a cached rerender must still record the check run_job() waits for.
   expect_match(tpl[fit], "^hvtiRtemplates::guard_memory\\(")
+  # The refusal names the counts the estimate was made from (spec section 5.2).
+  expect_match(paste(tpl[fit:(fit + 3L)], collapse = " "), "patients.*visits", perl = TRUE)
 })

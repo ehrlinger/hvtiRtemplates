@@ -17,9 +17,10 @@ guard_memory(
 \item{need_gib}{Expected peak memory of the fit, in GiB. \code{0} (a cached re-render) and
 \code{NA} (no estimate) pass.}
 
-\item{why}{What needs the memory, in a few words, for the message ("a boostmtree fit").}
+\item{why}{Character(1). What needs the memory, in a few words, for the message, best with the
+counts the estimate was made from ("this boostmtree fit (1,391 patients, 4,771 visits, continuous)").}
 
-\item{cores}{Number of parallel workers the fit would use, or \code{NULL}.}
+\item{cores}{Number of parallel workers the fit would use, a whole number of at least 1, or \code{NULL}.}
 
 \item{cores_fit}{A function taking a number of cores and returning the GiB the fit would need, or
 \code{NULL}. Used only to name a core count that fits.}

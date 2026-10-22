@@ -198,6 +198,10 @@ MTRY <- NULL
 # a large study. The fit refuses to start, in the first minutes, when this session's
 # memory cannot hold it at this CORES, and says which Workbench profile to start;
 # the measurements behind that estimate are in R/fit-memory.R and ?guard_memory.
+# Run time at M = 1000, by patients and cores (2026-10-19, boostmtree 2.0.4, ordinal):
+# about 7 h at 1,000 patients on 4 cores, 5 h at 1,000 on 8, 22 h at 2,000 on 8 and
+# 110 h at 4,000 on 4. On 2.0.8 (2026-10-21, continuous, 1,391 patients, M = 1000,
+# 8 cores) the fit took about 1 h. Hours scale with M.
 # CORES should never exceed the session's CPUs; Windows cannot fork.
 # Not part of the cache key: the fit is identical on any number of cores.
 CORES <- if (.Platform$OS.type == "windows") 1L else 4L
@@ -344,7 +348,10 @@ hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
 # unconditional, so a cached rerender still records the memory check that run_job() waits for.
 .need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(.patient)), nrow(d), FAMILY, k, M)
 .fitting <- !file.exists(file.path(CACHE_DIR, "nb-boostmtree-fit.rds")) || isTRUE(REFIT)
-hvtiRtemplates::guard_memory(if (.fitting) .need(CORES) else 0, "this boostmtree fit",
+hvtiRtemplates::guard_memory(if (.fitting) .need(CORES) else 0,
+                             sprintf("this boostmtree fit (%s patients, %s visits, %s)",
+                                     format(length(unique(.patient)), big.mark = ","), format(nrow(d), big.mark = ","),
+                                     FAMILY),
                              cores = CORES, cores_fit = .need)
 fit <- cache_fit(
   "nb-boostmtree-fit",
