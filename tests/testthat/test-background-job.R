@@ -1,10 +1,3 @@
-status_job <- function() {
-  dir <- withr::local_tempdir(.local_envir = parent.frame())
-  job <- file.path(dir, "nb.boostmtree.x.boost.qmd")
-  writeLines("---\ntitle: x\n---", job)
-  job
-}
-
 test_that("a job never submitted reads none", {
   job <- status_job()
   expect_identical(job_status(job, quiet = TRUE)$state, "none")
