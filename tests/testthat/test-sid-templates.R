@@ -282,3 +282,24 @@ test_that("a later job joins the registered clusters, one per patient", {
   expect_identical(nrow(one$data), 150L)
   expect_identical(anyDuplicated(one$data$ccfid), 0L)
 })
+
+test_that("no file under estimates/ carries an MRN, though the job's ID is the MRN", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  d <- rf_mrn_data()  # keyed on a ten-digit MRN, no ccfid
+  env <- rf_env(d)
+  # ID stays "ccfid", which falls back to MRN here, as in the rf MRN tests:
+  # KEY <- ID is evaluated before the choices apply, so overriding ID alone
+  # would leave KEY on a column this cohort lacks.
+  rf_run("sid", "fit", sid_fit_labels, env, utils::modifyList(sid_fit_choices, list(VARS = c("age", "x1", "los"))))
+  # This cohort has no cluster structure, so a small cluster is likely; MIN_SIZE = 1
+  # keeps its warning out of the suite's WARN 0.
+  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(MIN_SIZE = 1)))
+  dir <- dirname(env$set_path("estimates", "sid.rds"))
+  expect_true(all(c("sid.rds", "sid-clusters.rds") %in% list.files(dir)))
+  # rf_files_holding() (helper-rf.R) searches every file in `dir`, caches and
+  # provenance sidecars included, for each MRN as text and as a big-endian double.
+  expect_identical(rf_files_holding(dir, d$MRN), character(0))  # nolint: object_usage_linter.
+  # The clusters dataset in datasets/ carries the MRN by design: it is how a
+  # later job joins it, as the built dataset beside it does.
+})
