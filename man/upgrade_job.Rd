@@ -43,7 +43,14 @@ written, commented out, at the end of the template's
 renders as a draft until someone decides. Prose and code outside the
 choices come from the current template, because without the template the
 job was copied from an analyst's edit cannot be told from the old
-template's text. The report lists every chunk that may hold such an edit.
+template's text. The report lists every chunk that may hold such an edit,
+and every comment line above a carried choice that the current template's
+comment lacks.
+
+The one exception is the job's description. Where the template opens with
+an \code{EDIT:} comment asking for it, the text the old job has in that
+place is carried instead, once the study has deleted the comment's marker.
+While the marker stands, the report names those lines for review.
 
 The old job is kept beside the new one as \code{<file>.pre-upgrade}, a name
 nothing renders. The upgraded job takes the name \code{\link{add_job}}
