@@ -590,11 +590,17 @@ because the expected curve carries no sampling error of its own here.
 # can open and close in between. Both are recomputed on a grid out to the last
 # horizon, the same way: the cohort average of each patient's predicted survival
 # from the model, and us_cohort_curve() over us_matched() for the population.
-# The horizons are on the grid, so the table's points sit on the curves.
-.grid <- sort(unique(c(seq(0, max(HORIZONS), length.out = 51L)[-1L], HORIZONS)))
+# The horizons are on the grid, so the table's points sit on the curves. A grid
+# point within rounding of a horizon is dropped for it: seq() makes 3 * 0.2 into
+# 0.6000000000000001, which unique() keeps beside 0.6, and the two would then
+# be one time to everything that reads them.
+.grid <- seq(0, max(HORIZONS), length.out = 51L)[-1L]
+.grid <- sort(c(.grid[vapply(.grid, function(t) all(abs(t - HORIZONS) > 1e-8 * max(HORIZONS)), logical(1))], HORIZONS))
 .nd <- dd[rep(seq_len(nrow(dd)), times = length(.grid)), COVARIATES, drop = FALSE]
 .nd$time <- rep(.grid, each = nrow(dd))
-.model <- vapply(split(predict(fit, newdata = .nd, type = "survival"), .nd$time), mean, numeric(1))
+# Averaged by grid position, not by time: a split on a double groups by its printed value.
+.model <- vapply(split(predict(fit, newdata = .nd, type = "survival"), rep(seq_along(.grid), each = nrow(dd))),
+                 mean, numeric(1))
 .population <- us_cohort_curve(us_matched(
   age = d[[AGE_COL]], male = as.vector(.male), other = as.vector(.other),
   times = .grid, id = seq_len(nrow(d)),

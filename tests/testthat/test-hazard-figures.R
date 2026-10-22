@@ -64,3 +64,27 @@ test_that("hm and hs-setup draw calibration and expected survival, with no warni
   expect_equal(curves$survival[curves$curve == "population"][at], points$survival[points$curve == "population"])
   expect_identical(grDevices::dev.cur(), c("null device" = 1L))
 })
+
+test_that("hs-setup's grid keeps a horizon that seq() lands a rounding error away from (#381 review)", {
+  skip_on_cran()
+  skip_if_not_installed("ragg")
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  skip_if_not_installed("hvtiRlifetables", minimum_version = "0.1.2")
+  skip_if_not_installed("numDeriv")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  withr::local_package("hvtiRlifetables")
+  # seq(0, 5, length.out = 51) holds 0.6000000000000001 beside the horizon 0.6:
+  # kept as two times, they were averaged as one, and the figure stopped.
+  horizons <- c(0.6, 1, 5)
+  expect_false(0.6 %in% seq(0, 5, length.out = 51L))
+  data <- hazard_data()
+  hazard_chain_run(hazard_study(data), data, hs_choices = list(HORIZONS = horizons))
+  env <- globalenv()
+  expect_identical(figure_warnings("hs-setup", "fig-expected", env), character(0))
+  grid <- get(".grid", envir = env)
+  expect_true(all(horizons %in% grid))
+  expect_false(any(diff(grid) < 1e-8 * max(horizons)))
+  curves <- get(".curves", envir = env)
+  expect_identical(nrow(curves), 2L * (length(grid) + 1L))
+})
