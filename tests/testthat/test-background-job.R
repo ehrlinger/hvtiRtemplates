@@ -242,3 +242,236 @@ test_that("a creation time 30 s off still reads running, and one 10 minutes off 
   .write_status(f, state = "running", pid = Sys.getpid(), created = sprintf("%.6f", mine - 600))
   expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
 })
+
+# A process outside the test session, so a test can watch whether it was signalled.
+bystander <- function(cmd = "exec sleep 60") {
+  dir <- withr::local_tempdir(.local_envir = parent.frame())
+  pidf <- file.path(dir, "pid")
+  launch <- sprintf("sh -c %s", shQuote(cmd))
+  system(sprintf("cd %s; %s > /dev/null 2>&1 & echo $! > %s", shQuote(dir), launch, shQuote(pidf)), wait = TRUE)
+  pid <- as.integer(readLines(pidf))
+  h <- ps::ps_handle(pid)
+  withr::defer(try(ps::ps_kill(h), silent = TRUE), envir = parent.frame())
+  list(pid = pid, h = h, dir = dir, created = sprintf("%.6f", as.numeric(ps::ps_create_time(h))))
+}
+
+running_on <- function(job, b, host = Sys.info()[["nodename"]]) {
+  .write_status(.run_files(job)$status, state = "running", pid = b$pid, created = b$created, host = host,
+                started = .stamp(Sys.time() - 60))
+}
+
+alive <- function(h) isTRUE(tryCatch(ps::ps_is_running(h), error = function(e) FALSE))
+
+test_that("cancelling a running job on its own host stops it, records cancelled and clears its progress", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  .submit_job(job, final = FALSE, render_call = "Sys.sleep(60)", root = dirname(job))
+  st <- wait_for(job, "running")
+  expect_identical(st$state, "running")
+  h <- ps::ps_handle(as.integer(st$pid))
+  writeLines("stage: fit", .run_files(job)$progress)
+  out <- cancel_job(job, grace = 5, quiet = TRUE)
+  expect_identical(out$state, "cancelled")
+  expect_false(alive(h))
+  expect_false(file.exists(.run_files(job)$progress))
+  expect_false(dir.exists(.run_files(job)$lock))
+  rec <- yaml::read_yaml(.run_files(job)$status)
+  expect_identical(rec$state, "cancelled")
+  expect_identical(rec$started, st$started)
+  expect_false(is.null(rec$ended))
+  expect_output(job_status(job), "cancelled at", fixed = TRUE)
+  .submit_job(job, final = FALSE, render_call = "1", root = dirname(job))  # and it can be submitted again
+  expect_identical(wait_for(job, c("finished", "failed", "vanished"))$state, "finished")
+})
+
+test_that("a job that ignores SIGTERM is killed after the grace period", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  b <- bystander("trap '' TERM; while :; do sleep 1; done")
+  running_on(job, b)
+  t0 <- Sys.time()
+  expect_identical(cancel_job(job, grace = 1, quiet = TRUE)$state, "cancelled")
+  expect_false(alive(b$h))
+  expect_gte(as.numeric(difftime(Sys.time(), t0, units = "secs")), 1)
+})
+
+# A render call that starts a stand-in for Quarto the way processx does, in a session of its own, then orphans it,
+# so it is neither the runner's descendant nor in its process group. Its pid lands in render.pid.
+detached_render <- function(job) {
+  script <- file.path(dirname(job), "render.R")
+  # An Rscript, as knitr's process is: macOS will not show another process the environment of a system binary such as
+  # sleep, so a stand-in like that could not be found by its marker there.
+  rscript <- file.path(R.home("bin"), "Rscript")
+  cmd <- paste("perl -MPOSIX -e 'POSIX::setsid(); open(F, q(>render.pid)); print F $$; close(F); exec @ARGV'",
+               shQuote(rscript), "-e 'Sys.sleep(61)' > /dev/null 2>&1 &")
+  writeLines(c(sprintf("system(%s)", deparse(cmd)), "Sys.sleep(60)"), script)
+  sprintf("source(%s)", deparse(script))
+}
+
+render_handle <- function(job) {
+  f <- file.path(dirname(job), "render.pid")
+  for (i in 1:40) if (file.exists(f) && length(readLines(f, warn = FALSE))) break else Sys.sleep(0.25)
+  h <- ps::ps_handle(as.integer(readLines(f, warn = FALSE)))
+  withr::defer(try(ps::ps_kill(h), silent = TRUE), envir = parent.frame())
+  h
+}
+
+test_that("the render is stopped even in a session of its own, found by the run's marker", {
+  skip_on_os("windows")
+  skip_on_cran()
+  skip_if(!nzchar(Sys.which("perl")))
+  job <- status_job()
+  .submit_job(job, final = FALSE, render_call = detached_render(job), root = dirname(job))
+  expect_identical(wait_for(job, "running")$state, "running")
+  render <- render_handle(job)
+  expect_true(alive(render))
+  expect_identical(cancel_job(job, grace = 5, quiet = TRUE)$state, "cancelled")
+  expect_false(alive(render))
+})
+
+test_that("a runner killed by hand is recorded failed, and the render it left running is stopped", {
+  skip_on_os("windows")
+  skip_on_cran()
+  skip_if(!nzchar(Sys.which("perl")))
+  job <- status_job()
+  .submit_job(job, final = FALSE, render_call = detached_render(job), root = dirname(job))
+  st <- wait_for(job, "running")
+  render <- render_handle(job)
+  ps::ps_kill(ps::ps_handle(as.integer(st$pid)))
+  expect_identical(wait_for(job, "vanished")$state, "vanished")
+  expect_true(alive(render))
+  out <- cancel_job(job, grace = 5, quiet = TRUE)
+  expect_identical(out$state, "failed")
+  expect_false(alive(render))
+})
+
+test_that("a run recorded with no creation time is refused, not signalled by its pid alone", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  b <- bystander()
+  .write_status(.run_files(job)$status, state = "running", pid = b$pid, host = Sys.info()[["nodename"]],
+                started = .stamp(Sys.time() - 60))
+  expect_error(cancel_job(job, grace = 1, quiet = TRUE), "no creation time", fixed = TRUE)
+  expect_true(alive(b$h))
+  expect_identical(yaml::read_yaml(.run_files(job)$status)$state, "running")
+})
+
+test_that("a job recorded on another host is refused, naming the host, and nothing changes", {
+  job <- status_job()
+  f <- .run_files(job)
+  .write_status(f$status, state = "running", pid = 999999L, host = "lri-r99", started = "x")
+  writeLines("stage: fit", f$progress)
+  before <- readLines(f$status)
+  expect_error(cancel_job(job, quiet = TRUE), "run cancel_job() in an R session on lri-r99", fixed = TRUE)
+  expect_identical(readLines(f$status), before)
+  expect_true(file.exists(f$progress))
+  expect_false(dir.exists(f$lock))
+})
+
+test_that("a job on another host can be abandoned, signalling nothing, recording why and clearing its progress", {
+  job <- status_job()
+  f <- .run_files(job)
+  .write_status(f$status, state = "running", pid = 999999L, host = "lri-r99", started = "x")
+  writeLines("stage: fit", f$progress)
+  expect_error(cancel_job(job, quiet = TRUE), "other_host = \"abandon\"", fixed = TRUE)
+  st <- cancel_job(job, other_host = "abandon", quiet = TRUE)
+  expect_identical(st$state, "cancelled")
+  expect_match(st$reason, "abandoned from", fixed = TRUE)
+  expect_match(st$reason, "lri-r99", fixed = TRUE)
+  expect_identical(st$host, "lri-r99")
+  expect_false(file.exists(f$progress))
+  expect_output(job_status(job), "nothing signalled", fixed = TRUE)
+  expect_error(cancel_job(job, other_host = "maybe"), "should be one of")
+})
+
+test_that("abandon changes nothing for a job on this host", {
+  job <- status_job()
+  f <- .run_files(job)$status
+  .write_status(f, state = "finished", exit_code = 0L, pid = 999999L, elapsed_s = 3)
+  expect_identical(cancel_job(job, other_host = "abandon", quiet = TRUE)$state, "finished")
+  .write_status(f, state = "running", pid = Sys.getpid(), host = Sys.info()[["nodename"]], started = "x")
+  expect_error(cancel_job(job, other_host = "abandon", quiet = TRUE), "no creation time", fixed = TRUE)
+})
+
+test_that("a progress file left with no status file, from another host, is refused the same way", {
+  job <- status_job()
+  .write_status(.run_files(job)$progress, pid = 999999L, host = "lri-r98", started = .stamp(Sys.time() - 3600),
+                updated = .stamp(Sys.time() - 60), stage = "fit", stage_index = 2L, stage_count = 3L,
+                stages = c("tbl-data", "fit", "effects"), done = list())
+  expect_identical(job_status(job, quiet = TRUE)$state, "running")
+  expect_error(cancel_job(job, quiet = TRUE), "lri-r98", fixed = TRUE)
+})
+
+test_that("a finished job is left as it is", {
+  job <- status_job()
+  f <- .run_files(job)$status
+  .write_status(f, state = "finished", exit_code = 0L, pid = 999999L, elapsed_s = 3)
+  before <- readLines(f)
+  expect_identical(cancel_job(job, quiet = TRUE)$state, "finished")
+  expect_identical(readLines(f), before)
+  expect_identical(cancel_job(status_job(), quiet = TRUE)$state, "none")
+})
+
+test_that("a pid reused by another process is not signalled, and the run is recorded failed", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  b <- bystander()
+  b$created <- sprintf("%.6f", as.numeric(b$created) - 3600)  # the recorded job began an hour before this process
+  running_on(job, b)
+  writeLines("stage: fit", .run_files(job)$progress)
+  st <- cancel_job(job, grace = 1, quiet = TRUE)
+  expect_true(alive(b$h))
+  expect_identical(st$state, "failed")
+  expect_match(st$reason, "ended without recording an end", fixed = TRUE)
+  expect_false(file.exists(.run_files(job)$progress))
+  expect_output(job_status(job), "ended without recording an end", fixed = TRUE)
+})
+
+test_that("a submission that never started is recorded failed, saying so", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600))
+  st <- cancel_job(job, quiet = TRUE)
+  expect_identical(st$state, "failed")
+  expect_identical(st$reason, "it never started")
+})
+
+test_that("a cancel is refused, signalling nothing, while another call holds the claim", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  b <- bystander()
+  running_on(job, b)
+  f <- .run_files(job)
+  dir.create(f$lock)
+  expect_error(cancel_job(job, quiet = TRUE), "run.lock exists", fixed = TRUE)
+  expect_true(alive(b$h))
+  expect_true(dir.exists(f$lock))
+})
+
+test_that("cancel_job() refuses Windows, a path that is not a job and a bad grace", {
+  expect_error(cancel_job(file.path(tempdir(), "no-such-job.qmd")), "existing job file")
+  job <- status_job()
+  expect_error(cancel_job(job, grace = -1), "`grace`")
+  local_mocked_bindings(.is_windows = function() TRUE)
+  expect_error(cancel_job(job), "Windows")
+})
+
+test_that("the already-running refusal names both run files for another host, and cancel_job() for this one", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  f <- .run_files(job)
+  .write_status(f$status, state = "running", pid = 999999L, host = "lri-r97", started = "x")
+  err <- tryCatch(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), error = conditionMessage)
+  expect_match(err, f$status, fixed = TRUE)
+  expect_match(err, f$progress, fixed = TRUE)
+  expect_match(err, "cancel_job() in a session there", fixed = TRUE)
+  b <- bystander()
+  running_on(job, b)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "Stop it with cancel_job()",
+               fixed = TRUE)
+})
