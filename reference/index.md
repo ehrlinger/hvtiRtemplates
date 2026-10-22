@@ -6,6 +6,8 @@
   : Scaffold a new analysis job from a template
 - [`build_cohort()`](https://ehrlinger.github.io/hvtiRtemplates/reference/build_cohort.md)
   : Cut a study cohort from a master, recording who was dropped and why
+- [`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md)
+  : Stop a background job
 - [`guard_long_fit()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_long_fit.md)
   : Stop a long fit from starting in an interactive session
 - [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)

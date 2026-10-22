@@ -30,13 +30,15 @@ job_status(path, quiet = FALSE)
 ## Value
 
 Invisibly, a list: `state` is one of `"none"`, `"submitted"`,
-`"running"`, `"finished"`, `"failed"` or `"vanished"`; the other
-elements are what the status file recorded (`pid`, `created`, `host`,
-`started`, `ended`, `exit_code`, `elapsed_s`, `r_version`), and `log`,
-the log file's path. `progress`, the render's progress record when there
-is one, with `eta_s`, the estimated seconds left in the current stage,
-and `stale`, `TRUE` when it has not changed for three reporting
-intervals and at least 30 minutes.
+`"running"`, `"finished"`, `"failed"`, `"vanished"` or `"cancelled"`
+(stopped by
+[`cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md));
+the other elements are what the status file recorded (`pid`, `created`,
+`host`, `started`, `ended`, `exit_code`, `elapsed_s`, `r_version`,
+`reason`), and `log`, the log file's path. `progress`, the render's
+progress record when there is one, with `eta_s`, the estimated seconds
+left in the current stage, and `stale`, `TRUE` when it has not changed
+for three reporting intervals and at least 30 minutes.
 
 ## Details
 

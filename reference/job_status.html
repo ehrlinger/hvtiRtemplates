@@ -80,10 +80,11 @@ A progress file older than the run the status file records is ignored.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Invisibly, a list: <code>state</code> is one of <code>"none"</code>,
-  <code>"submitted"</code>, <code>"running"</code>, <code>"finished"</code>, <code>"failed"</code>
-  or <code>"vanished"</code>; the other elements are what the status file
+  <code>"submitted"</code>, <code>"running"</code>, <code>"finished"</code>, <code>"failed"</code>,
+  <code>"vanished"</code> or <code>"cancelled"</code> (stopped by <code><a href="cancel_job.html">cancel_job</a></code>); the other elements are what the status file
   recorded (<code>pid</code>, <code>created</code>, <code>host</code>, <code>started</code>,
-  <code>ended</code>, <code>exit_code</code>, <code>elapsed_s</code>, <code>r_version</code>), and <code>log</code>, the log file's path.
+  <code>ended</code>, <code>exit_code</code>, <code>elapsed_s</code>, <code>r_version</code>,
+  <code>reason</code>), and <code>log</code>, the log file's path.
   <code>progress</code>, the render's progress record when there is one, with
   <code>eta_s</code>, the estimated seconds left in the current stage, and
   <code>stale</code>, <code>TRUE</code> when it has not changed for three reporting

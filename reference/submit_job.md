@@ -39,8 +39,10 @@ state) beside the job; read the state with
 [`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md).
 A job already running is not started twice: a `<job>.run.lock` directory
 is taken while a submit is in progress, and a submit that crashed can
-leave it behind, in which case delete it to try again. Not available on
-Windows, which cannot detach a process this way.
+leave it behind, in which case delete it to try again. Stop a submitted
+job with
+[`cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md).
+Not available on Windows, which cannot detach a process this way.
 
 ## Examples
 
