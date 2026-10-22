@@ -241,6 +241,278 @@ sid_dataset_name <- function(subject, type) {
 }
 ```
 
+## The dissimilarity
+
+```{r}
+#| label: handoff
+.handoff <- set_path("estimates", "sid.rds")
+if (!file.exists(.handoff)) {
+  stop("No SID fit at ", .handoff, ". Render the sid-fit job in this set first; ",
+       "this job clusters that fit and never grows its own.", call. = FALSE)
+}
+.cfg <- study_config(start = .root)
+.sid_read <- hvtiRtemplates:::.read_handoff(.handoff, "SID fit", .cfg, "the sid-fit job")
+sid <- .sid_read$value
+.provenance_data <- .sid_read$lineage$data
+.provenance_artifacts <- c(.sid_read$lineage$artifacts, list(.sid_read$record))
+D <- stats::as.dist(sid$dist)
+# sid.rds names patients by a study-keyed digest of their ID, never the ID. The
+# fit's rows are rebuilt from its recorded selection, which checks the rows and
+# their key hash, and each rebuilt ID is digested and matched to the distance.
+.key <- hvtiRtemplates:::.study_id_key(.root)
+if (!identical(hvtiRtemplates:::.id_key_fingerprint(.key), sid$id_key)) {
+  stop("This study's ID key has changed since sid-fit ran, so its patients cannot be matched. Rerun sid-fit.",
+       call. = FALSE)
+}
+.up <- hvtiRtemplates:::.read_upstream_job_data(.cfg, .sid_read$lineage, list(), source = "sid.rds")
+job_data <- .up$job_data
+.id <- .up$selection$id
+.rebuilt <- job_data$data[[.id]]
+# The rows were re-read to name the patients, so the data they came from joins
+# the record beside what sid.rds already recorded.
+.provenance_data <- c(.provenance_data, list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
+.at_fit <- match(rownames(sid$dist), hvtiRtemplates:::.id_digest(.rebuilt, .key))
+if (anyNA(.at_fit)) stop("The rebuilt cohort lacks patients the SID fit clustered; rerun sid-fit.", call. = FALSE)
+sid_ids <- .rebuilt[.at_fit]
+if (any(diff(K_RANGE) != 1) || min(K_RANGE) < 2L) {
+  stop("K_RANGE must be consecutive and start at 2 or more, such as 2:9.", call. = FALSE)
+}
+# PAM needs fewer clusters than patients. K_RANGE is the author's request and
+# stops; K_METRICS_MAX only draws the metrics further out, so it is capped.
+if (max(K_RANGE) >= attr(D, "Size")) {
+  stop("K_RANGE reaches ", max(K_RANGE), " clusters, but only ", attr(D, "Size"), " patients were clustered. ",
+       "Lower K_RANGE.", call. = FALSE)
+}
+if (!is.null(K) && !K %in% K_RANGE) stop("K = ", K, " is not in K_RANGE (", toString(K_RANGE), ").", call. = FALSE)
+# A draft may leave K unset to choose it from the metrics below; a final report
+# must name the solution it reports.
+if (is.null(K) && hvtiRtemplates:::.strict_render()) {
+  stop("K is NULL. Choose it from the metrics in a draft render, then set K in the study choices.", call. = FALSE)
+}
+cat("Patients:", attr(D, "Size"), " Clustering variables:", toString(sid$vars), "\n")
+```
+
+## PAM over K
+
+PAM (partitioning around medoids) chooses K patients as centres and assigns
+everyone to the nearest one, here by the SID distance itself. It is
+deterministic given the distance, so this job needs no seed.
+
+```{r}
+#| label: pam
+.ks <- seq_len(min(max(K_RANGE, K_METRICS_MAX), attr(D, "Size") - 1L))
+sid_pam <- lapply(.ks, function(k) cluster::pam(D, k))
+names(sid_pam) <- paste0("pm", .ks)
+sid_metrics <- data.frame(
+  k = .ks,
+  objective = vapply(sid_pam, function(p) unname(p$objective[["swap"]]), numeric(1)),
+  silhouette = vapply(.ks, function(k) if (k == 1L) NA_real_ else sid_pam[[k]]$silinfo$avg.width, numeric(1))
+)
+sid_metrics$objective <- sid_metrics$objective / sid_metrics$objective[1]
+```
+
+## Choosing K
+
+The elbow is the PAM objective, each patient's distance to its medoid,
+relative to one cluster. It always falls as K grows; K is chosen where the
+fall levels off, which is read by eye and stated as a judgment. The average
+silhouette compares each patient's distance to its own cluster with its
+distance to the nearest other one: near 1 is well separated, near 0 is on a
+boundary. Its maximum is one suggestion, not a rule. Neither says whether
+the clusters mean anything clinically.
+
+```{r}
+#| label: fig-metrics
+#| fig-cap: "PAM objective (normalized to K = 1) and average silhouette by K"
+.long <- rbind(data.frame(k = sid_metrics$k, value = sid_metrics$objective, metric = "PAM objective"),
+               data.frame(k = sid_metrics$k, value = sid_metrics$silhouette, metric = "Average silhouette"))
+.long <- .long[!is.na(.long$value), ]
+.plt_metrics <- ggplot2::ggplot(.long, ggplot2::aes(k, value)) +
+  ggplot2::geom_line() + ggplot2::geom_point() +
+  ggplot2::facet_wrap(~metric, ncol = 1, scales = "free_y") +
+  ggplot2::scale_x_continuous("Clusters (K)", breaks = sid_metrics$k) +
+  ggplot2::labs(y = NULL) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.plt_metrics, "sid-clusters-metrics", height = 5)
+.plt_metrics
+```
+
+```{r}
+#| label: tbl-metrics
+#| tbl-cap: "K metrics; the silhouette maximum is marked"
+.best <- sid_metrics$k[which.max(sid_metrics$silhouette)]
+knitr::kable(transform(sid_metrics, objective = round(objective, 3), silhouette = round(silhouette, 3),
+                       note = ifelse(k == .best, "silhouette maximum", "")))
+```
+
+## Letters across K
+
+```{r}
+#| label: tbl-sizes
+#| tbl-cap: "Patients per cluster at each K, by letter (PAM number in brackets)"
+.pm <- as.data.frame(lapply(sid_pam[paste0("pm", K_RANGE)], function(p) p$clustering))
+.letters <- sid_align_labels(.pm, OVERRIDES)
+sid_letters <- data.frame(sid_ids, .letters, check.names = FALSE)
+names(sid_letters) <- c(.id, paste0("C", K_RANGE))
+.sizes <- do.call(rbind, lapply(K_RANGE, function(k) {
+  tab <- table(.letters[, paste0("pm", k)], .pm[[paste0("pm", k)]])
+  data.frame(K = k, letter = rownames(tab), pam = colnames(tab)[apply(tab, 1, which.max)],
+             n = as.integer(rowSums(tab)))
+}))
+knitr::kable(.sizes)
+.small <- if (!is.null(K)) .sizes[.sizes$K == K & .sizes$n < MIN_SIZE, ] else .sizes[0, ]
+if (nrow(.small)) {
+  warning("At K = ", K, ", cluster(s) ", toString(.small$letter), " hold fewer than ", MIN_SIZE, " patients.",
+          call. = FALSE)
+  cat("\n::: {.callout-warning}\nAt K = ", K, ", cluster(s) ", toString(.small$letter), " hold fewer than ",
+      MIN_SIZE, " patients, too few for per-cluster tables or a vp-fit to say much.\n:::\n", sep = "")
+}
+```
+
+```{r}
+#| label: fig-sankey
+#| fig-cap: "How patients move between clusters as K grows"
+.sk <- hvtiPlotR::hv_sankey(sid_letters, cluster_cols = paste0("C", K_RANGE))
+.plt_sankey <- plot(.sk) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+# The page is 6.5 in wide; the Sankey's columns need its full width.
+save_figure(.plt_sankey, "sid-clusters-sankey", width = 6.5, height = 6)
+.plt_sankey
+```
+
+A cluster that keeps its letter and most of its patients across several K
+is stable; one that forms and dissolves between neighbouring K is not.
+
+## The solution at K
+
+```{r}
+#| label: fig-silhouette
+#| fig-cap: "Silhouette width of every patient at K, by cluster"
+sid_mds <- NULL
+if (is.null(K)) {
+  cat("K is NULL: the sections that describe one solution are skipped. Set K in the study choices.\n")
+} else {
+  .at <- sid_letters[[paste0("C", K)]]
+  .sil <- cluster::silhouette(sid_pam[[K]]$clustering, D)
+  .sil_d <- data.frame(letter = .at, width = .sil[, "sil_width"])
+  .sil_d <- .sil_d[order(.sil_d$letter, -.sil_d$width), ]
+  .sil_d$rank <- seq_len(nrow(.sil_d))
+  .plt_sil <- ggplot2::ggplot(.sil_d, ggplot2::aes(rank, width, fill = letter)) +
+    ggplot2::geom_col(width = 1) + ggplot2::coord_flip() +
+    ggplot2::labs(x = NULL, y = "Silhouette width", fill = "Cluster") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12) +
+    ggplot2::theme(axis.text.y = ggplot2::element_blank(), axis.ticks.y = ggplot2::element_blank())
+  save_figure(.plt_sil, "sid-clusters-silhouette")
+  print(.plt_sil)
+}
+```
+
+```{r}
+#| label: tbl-silhouette
+#| tbl-cap: "Average silhouette width and share of negative widths, by cluster at K"
+if (!is.null(K)) {
+  knitr::kable(do.call(rbind, lapply(split(.sil_d$width, .sil_d$letter), function(w) {
+    data.frame(n = length(w), average = round(mean(w), 3), negative = sprintf("%.0f%%", 100 * mean(w < 0)))
+  })))
+}
+```
+
+A negative width means a patient is closer to another cluster than to its
+own. A cluster with many is poorly separated even when the average looks
+acceptable.
+
+```{r}
+#| label: fig-mds
+#| fig-cap: "Patients placed in two dimensions by classical MDS of the SID distance, coloured by cluster at K"
+if (!is.null(K)) {
+  sid_mds <- sid_mds_signs(stats::cmdscale(D, k = 2))
+  .plt_mds <- ggplot2::ggplot(data.frame(x = sid_mds[, 1], y = sid_mds[, 2], letter = .at),
+                              ggplot2::aes(x, y, colour = letter)) +
+    ggplot2::geom_point(alpha = 0.7) +
+    ggplot2::labs(x = "Dimension 1", y = "Dimension 2", colour = "Cluster") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  save_figure(.plt_mds, "sid-clusters-mds")
+  print(.plt_mds)
+}
+```
+
+Two dimensions keep only part of the distance, so clusters that overlap
+here may still be separate; the silhouette above is the better guide.
+
+```{r}
+#| label: tbl-collapse
+#| tbl-cap: "Clusters at K and the groups COLLAPSE makes of them"
+if (!is.null(K) && !is.null(COLLAPSE)) {
+  sid_letters[[paste0("G", K)]] <- sid_collapse(.at, COLLAPSE)
+  knitr::kable(as.data.frame.matrix(table(cluster = .at, group = sid_letters[[paste0("G", K)]])))
+}
+```
+
+## Reading the result
+
+A SID cluster is a region of the clustering variables where patients are
+alike, found without any outcome. It is a description, not a diagnosis, and
+the letters carry no order. Read the Sankey for stability, the silhouette
+for separation, and the sizes for whether a cluster is large enough to say
+anything about. To describe the clusters, a `dc-tables` job joins the
+registered dataset below; to ask which variables separate them, a `vp-fit`
+job takes the cluster at K as a classification outcome.
+
+## Save
+
+```{r}
+#| label: save
+# The letters, for any later job to JOIN by the patient ID. Only the ID and
+# letters are written: no clustering variable leaves this job.
+.csv_name <- paste0(SUBJECT, "-", TYPE, "-clusters.csv")
+.dataset <- sid_dataset_name(SUBJECT, TYPE)
+# A name already registered to another file or key is not this set's: two sets
+# whose names differ only in case meet here. update_manifest() would follow
+# that other file and report success on stale letters, so stop instead.
+.reg <- .cfg$additional_datasets[[.dataset]]
+if (!is.null(.reg) && (!identical(.reg$built, .csv_name) || !identical(.reg$key, .id))) {
+  stop("The dataset name `", .dataset, "` is already registered to ", .reg$built, ", not this set's ", .csv_name,
+       ". Give this set a subject or type that differs by more than case.", call. = FALSE)
+}
+utils::write.csv(sid_letters, file.path(hvtiRutilities::study_dir("datasets", .root), .csv_name), row.names = FALSE)
+# register_data() registers a dataset once and stops on a second call. A later
+# render records the rewritten file as a new dated version instead, so later
+# jobs read the current letters and their manifest check passes.
+if (!is.null(.reg)) {
+  utils::capture.output(suppressMessages(
+    withr::with_dir(.root, hvtiRutilities::update_manifest(dataset = .dataset))
+  ))
+} else {
+  utils::capture.output(suppressMessages(
+    hvtiRutilities::register_data(.root, built = .csv_name, dataset = .dataset, role = "named",
+                                  population = "SID cluster assignments", kind = "ancillary", key = .id)
+  ))
+}
+cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job to use these clusters.\n",
+    "A job that models one row per patient also sets REDUCE <- list(rule = \"first\", by = \"", .id, "\").\n",
+    sep = "")
+# The solution at K for jobs that read this file rather than the dataset, such
+# as vt-explain's stratifier: patients by ID digest, as in sid.rds, never by ID.
+sid_clusters <- if (!is.null(K)) {
+  out <- data.frame(id = rownames(sid$dist), cluster = as.character(sid_letters[[paste0("C", K)]]))
+  if (!is.null(COLLAPSE)) out$group <- as.character(sid_letters[[paste0("G", K)]])
+  out
+}
+.cohort <- list(n = as.integer(attr(D, "Size")))
+sid_clusters_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
+  list(clusters = sid_clusters, id_key = sid$id_key, pam = sid_pam, metrics = sid_metrics,
+       letters = lapply(stats::setNames(paste0("pm", K_RANGE), paste0("pm", K_RANGE)), function(col) {
+         tab <- table(.pm[[col]], .letters[, col])
+         stats::setNames(colnames(tab)[apply(tab, 1, which.max)], rownames(tab))
+       }),
+       k = K, overrides = OVERRIDES, collapse = COLLAPSE),
+  data = .provenance_data,
+  artifacts = .provenance_artifacts,
+  cohort = .cohort
+)
+saveRDS(sid_clusters_handoff, set_path("estimates", "sid-clusters.rds"))
+```
+
 ```{r}
 #| label: provenance
 #| echo: false
@@ -248,7 +520,8 @@ sid_dataset_name <- function(subject, type) {
 cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
+  artifacts = .provenance_artifacts,
   run = .job$run,
-  extra = list(subject = SUBJECT, type = TYPE)
+  extra = list(subject = SUBJECT, type = TYPE, cohort = .cohort)
 ))
 ```

@@ -167,3 +167,102 @@ test_that("the seed reproduces a reduce = TRUE fit", {
   two <- readRDS(sid_fit_first(d, choices)$set_path("estimates", "sid.rds"))$dist
   expect_identical(unname(one), unname(two))
 })
+
+test_that("sid-clusters recovers planted clusters at K = 3", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  sid_clusters_after(env)
+  truth <- sid_data()$truth
+  score <- randomForestSRC::sid.perf.metric(factor(truth), factor(env$sid_letters$C3))$normalized_measure
+  expect_lt(score, 0.2)
+  expect_identical(env$sid_metrics$k, 1:8)
+})
+
+test_that("sid-clusters reads sid.rds and never fits", {
+  rf_skip_unless_stack(rf_template_packages("sid", "clusters"))
+  src <- readLines(template_path("sid", "clusters"), warn = FALSE)
+  expect_false(any(grepl("sidClustering(", src, fixed = TRUE)))
+  env <- rf_env(sid_data())
+  expect_error(rf_run("sid", "clusters", sid_clusters_labels[1:4], env, sid_clusters_choices),
+               "Render the sid-fit job in this set first")
+})
+
+test_that("sid-clusters writes and registers the cluster letters, and nothing else", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(COLLAPSE = list(Z = c("B", "C")))))
+  csv <- file.path(hvtiRutilities::study_dir("datasets", env$.root), "morphology-sid-clusters.csv")
+  out <- utils::read.csv(csv)
+  expect_identical(names(out), c("ccfid", "C2", "C3", "C4", "C5", "G3"))
+  expect_identical(nrow(out), 150L)
+  cfg <- hvtiRutilities::study_config(start = env$.root)
+  expect_true("clusters_10_morphology_sid" %in% names(cfg$additional_datasets))
+  # A second render with letters pinned differently re-registers, and a read
+  # returns the new letters.
+  # The K = 2 map the first render chose, PAM number -> letter, reversed.
+  map <- readRDS(env$set_path("estimates", "sid-clusters.rds"))$letters$pm2
+  flip <- stats::setNames(rev(unname(map)), names(map))
+  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(OVERRIDES = list(pm2 = flip))))
+  again <- read_job_data(hvtiRutilities::study_config(start = env$.root), join = "clusters_10_morphology_sid")$data
+  expect_false(identical(again$c2[again$ccfid == out$ccfid[1]], out$C2[1]))
+})
+
+test_that("K = NULL renders the metrics and skips what needs K; a final render or a K outside K_RANGE stops", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  # modifyList() would drop an element set to NULL, so K = NULL is rebuilt with c().
+  no_k <- c(sid_clusters_choices[setdiff(names(sid_clusters_choices), "K")], list(K = NULL))
+  sid_clusters_after(env, no_k)
+  expect_false(is.null(env$sid_metrics))
+  expect_null(env$sid_mds)
+  expect_null(readRDS(env$set_path("estimates", "sid-clusters.rds"))$clusters)
+  withr::with_envvar(c(HVTI_TEMPLATE_STRICT = "true"),
+                     expect_error(rf_run("sid", "clusters", sid_clusters_labels[c(2:4)], env, no_k), "set K"))
+  expect_error(sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(K = 9L))), "K_RANGE")
+})
+
+test_that("a small cohort caps the metrics at n - 1 and refuses a K_RANGE it cannot hold", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first(sid_data(n_per = 4L))  # 12 patients
+  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(K_RANGE = 2:9, K_METRICS_MAX = 15, MIN_SIZE = 1)))
+  expect_identical(env$sid_metrics$k, 1:11)
+  expect_error(sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(K_RANGE = 2:12))), "only 12 patients")
+})
+
+test_that("sid-clusters refuses a registered name that belongs to another file", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  # Another set already holds the name, as a set whose name differs only in case would.
+  dd <- hvtiRutilities::study_dir("datasets", env$.root)
+  utils::write.csv(data.frame(ccfid = 1:150, C2 = "A"), file.path(dd, "other-clusters.csv"), row.names = FALSE)
+  utils::capture.output(suppressMessages(hvtiRutilities::register_data(
+    env$.root, built = "other-clusters.csv", dataset = "clusters_10_morphology_sid", role = "named",
+    population = "x", kind = "ancillary", key = "ccfid"
+  )))
+  expect_error(sid_clusters_after(env), "already registered to other-clusters.csv")
+})
+
+test_that("the clusters element vt reads holds one digest-keyed letter per patient, and no raw ID", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  sid_clusters_after(env)
+  h <- readRDS(env$set_path("estimates", "sid-clusters.rds"))
+  key <- hvtiRtemplates:::.study_id_key(env$.root)
+  expect_identical(names(h$clusters), c("id", "cluster"))
+  expect_setequal(h$clusters$id, hvtiRtemplates:::.id_digest(seq_len(150L), key))
+  expect_identical(h$clusters$cluster, as.character(env$sid_letters$C3[match(h$clusters$id, rownames(env$sid$dist))]))
+  expect_identical(h$id_key, hvtiRtemplates:::.id_key_fingerprint(key))
+})
+
+test_that("a cluster under MIN_SIZE at K warns", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first(sid_data(n_per = 4L))  # 12 patients, so every cluster is under 20
+  expect_warning(sid_clusters_after(env), "fewer than 20 patients")
+})

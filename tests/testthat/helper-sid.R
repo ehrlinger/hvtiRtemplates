@@ -47,3 +47,16 @@ sid_fit_first <- function(data = sid_data(), choices = sid_fit_choices, .local_e
   rf_run("sid", "fit", sid_fit_labels, env, choices)  # nolint: object_usage_linter.
   env
 }
+
+sid_clusters_choices <- list(K_RANGE = 2:5, K = 3L, OVERRIDES = list(), COLLAPSE = NULL, MIN_SIZE = 20,
+                             K_METRICS_MAX = 8, SAVE_FIGURES = FALSE, FIGURES = NULL)
+
+# Every chunk of sid-clusters, in order.
+sid_clusters_labels <- c("setup", "edit-study-choices", "sid-helpers", "handoff", "pam", "fig-metrics", "tbl-metrics",
+                         "tbl-sizes", "fig-sankey", "fig-silhouette", "tbl-silhouette", "fig-mds", "tbl-collapse",
+                         "save")
+
+# sid-clusters run in the set a sid-fit just wrote, in the same study.
+sid_clusters_after <- function(env, choices = sid_clusters_choices) {
+  rf_run("sid", "clusters", sid_clusters_labels, env, choices)  # nolint: object_usage_linter.
+}
