@@ -201,6 +201,15 @@ scans the job file for `guard_memory(` to know which checks to expect: always `r
 A failure is then still diagnosed by `job_status()` later. `wait = 0` returns at once, as
 `submit_job()` does.
 
+**Legacy jobs.** A job scaffolded before the setup consolidation keeps its four old setup chunks
+(AGENTS.md preserves them) and never calls `.job_setup()`, so it can never record `render_r`.
+Installing a new package cannot add a check to a copied job, so `run_job()` does not expect one.
+It runs the job with the pre-submit checks only, printing a note that the in-render checks do not
+run and that `upgrade_job("<job>")` adds them. It does not refuse. The pre-submit `quarto` check
+already refuses the known cause of a wrong render R (a conflicting `QUARTO_R`), and `render_job()`
+sets `QUARTO_R` itself (#386). Refusing every legacy job would block studies whose jobs are
+correct, and the upgrade is a choice the author makes, not a fix to impose before a run.
+
 ## 6. Diagnosis after a failure (failure 7)
 
 When `job_status()` reports `failed` or `vanished`, it now ends with a plain reason and a fix,
@@ -215,9 +224,15 @@ matched from `<job>.run.log` and `.run.yml` in this order:
 | `Quitting from <file>:<lines> [<label>]` | the job stopped in chunk `<label>`, lines `<lines>` | the error line that follows, quoted |
 | anything else | no known cause | the last 20 lines of the log |
 
+**Fixtures are real renderer output.** Quarto prints `Error:` (or `Error in <call>:`), then the
+condition with a `! ` bullet, then `Quitting from <file>:<lines> [<label>]`, so the error comes
+before the quitting marker. The matcher strips condition bullets before matching a check's refusal,
+and takes the error from above the marker. The fixtures are rendered, not hand-written.
+
 **Peak tracking (failure 5).** `.progress_write()` adds `mem_gib`, the cgroup's current usage, to
 each write. At the end the runner records `mem_peak_gib` (v1 `memory.max_usage_in_bytes`, v2
-`memory.peak`) and `mem_limit_gib` in `.run.yml`. `job_status()` shows `memory: 70.2 of 76.8 GiB
+`memory.peak`) and `mem_limit_gib` in `.run.yml`. Telemetry is advisory. A memory reading that fails or is NA drops its field and never prevents the
+runner's terminal status write. `job_status()` shows `memory: 70.2 of 76.8 GiB
 (peak)` while the job runs and after it ends. The v1 peak is the session's, not the job's alone. For
 a session that submits one long job that is the number that matters, and the documentation says
 which it is.

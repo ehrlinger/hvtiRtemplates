@@ -558,8 +558,31 @@ test_that("job_status prints the recorded peak against the limit", {
 
 test_that("the runner records the cgroup peak at its end", {
   lines <- .runner_lines("/s/a.qmd", "/s/a.run.yml", FALSE, "TRUE")
-  expect_true(any(grepl("hvtiRtemplates:::.cgroup_memory()", lines, fixed = TRUE)))
-  expect_true(any(grepl("mem_peak_gib", lines, fixed = TRUE)))
+  expect_true(any(grepl("hvtiRtemplates:::.run_memory_fields()", lines, fixed = TRUE)))
+})
+
+# Runs the generated runner in-process, with quit() stubbed, so the terminal write is observed.
+run_runner <- function(status) {
+  env <- new.env()
+  env$quit <- function(...) invisible(NULL)
+  eval(parse(text = .runner_lines("/s/a.qmd", status, FALSE, "TRUE")), envir = env)
+  yaml::read_yaml(status)
+}
+
+test_that("a memory reader that errors still lets the runner record finished", {
+  status <- file.path(withr::local_tempdir(), "a.run.yml")
+  testthat::local_mocked_bindings(.cgroup_memory = function(...) stop("no cgroup"))
+  st <- run_runner(status)
+  expect_identical(st$state, "finished")
+  expect_null(st$mem_peak_gib)
+})
+
+test_that("NA memory readings are dropped, not written or fatal", {
+  status <- file.path(withr::local_tempdir(), "a.run.yml")
+  testthat::local_mocked_bindings(.cgroup_memory = function(...) list(limit_gib = NA_real_, peak_gib = NA_real_))
+  st <- run_runner(status)
+  expect_identical(st$state, "finished")
+  expect_null(st$mem_limit_gib)
 })
 ```
 
@@ -569,6 +592,18 @@ Run: `Rscript -e 'devtools::test(filter = "job-progress|background-job")'`
 Expected: FAIL on the four new tests.
 
 - [ ] **Step 3: Implement**
+
+Add to `R/fit-memory.R` the conversion the runner calls, so every field is typed and an NA or a
+reader error drops the field rather than failing:
+
+```r
+# The memory fields .run.yml records at a run's end; list() when nothing can be read.
+.run_memory_fields <- function() {
+  m <- tryCatch(.cgroup_memory(), error = function(e) list())
+  num <- function(x) if (is.numeric(x) && length(x) == 1L && !is.na(x)) round(x, 1)
+  Filter(Negate(is.null), list(mem_peak_gib = num(m$peak_gib), mem_limit_gib = num(m$limit_gib)))
+}
+```
 
 In `.progress_write()`, add two fields to `rec`, after `done = s$done`:
 
@@ -595,11 +630,11 @@ In `.runner_lines()`, replace the final `put(...)` line with one that adds the m
 runner already runs the package to render, so `:::` is available there:
 
 ```r
-    paste0("mem <- tryCatch(hvtiRtemplates:::.cgroup_memory(), error = function(e) list())"),
+    # Telemetry is advisory: any failure in reading or converting it yields list(), never an error that
+    # would skip the terminal put() and leave a finished run looking vanished.
+    "mem <- tryCatch(hvtiRtemplates:::.run_memory_fields(), error = function(e) list())",
     paste0("put(c(list(state = if (ok) 'finished' else 'failed', exit_code = if (ok) 0L else 1L), base, ",
-           "list(ended = stamp(ended), elapsed_s = round(as.numeric(difftime(ended, started, units = 'secs')))), ",
-           "Filter(function(v) length(v) == 1L && !is.na(v), list(mem_peak_gib = round(mem$peak_gib, 1), ",
-           "mem_limit_gib = round(mem$limit_gib, 1)))))"),
+           "list(ended = stamp(ended), elapsed_s = round(as.numeric(difftime(ended, started, units = 'secs')))), mem))"),
 ```
 
 In `job_status()`, after `cat(basename(path), ...)`:
@@ -898,13 +933,36 @@ test_that("run_job refuses before submitting when any check fails, and lists eve
   expect_false(submitted)
 })
 
-test_that("the memory check is expected only where the job calls guard_memory()", {
+test_that("render_r is expected where the job calls .job_setup(), memory where it calls guard_memory()", {
   root <- withr::local_tempdir()
   j <- file.path(root, "a.qmd")
-  writeLines("x <- 1", j)
+  writeLines(".job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE)", j)
   expect_identical(.expected_checks(j), "render_r")
-  writeLines("guard_memory(need, 'fit')", j)
+  writeLines(c(".job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE)", "guard_memory(need, 'fit')"), j)
   expect_identical(.expected_checks(j), c("render_r", "memory"))
+})
+
+test_that("a legacy job (four old setup chunks, no .job_setup()) expects no in-render checks", {
+  # The pre-consolidation shape, as rfs-fit.qmd had it at 384234f^: guard-edits, guard-partial, set.
+  root <- withr::local_tempdir()
+  j <- file.path(root, "legacy.qmd")
+  writeLines(c("```{r}", "#| label: guard-edits", "hvtiRtemplates:::.guard_edits()", "```",
+               "```{r}", "#| label: set", ".root <- hvtiRtemplates:::.find_study_root(getwd())", "```"), j)
+  expect_identical(.expected_checks(j), character(0))
+})
+
+test_that("run_job notes that a legacy job runs without in-render checks, naming upgrade_job()", {
+  root <- lock_study()
+  job <- file.path(root, "analyses", "legacy.qmd")
+  writeLines(c("```{r}", "#| label: set", "x <- 1", "```"), job)
+  ok <- function(n) function(...) .check(n, TRUE)
+  testthat::local_mocked_bindings(.check_r_version = ok("r_version"), .check_packages = ok("packages"),
+                                  .check_quarto = ok("quarto"), .check_run_state = ok("run_state"),
+                                  submit_job = function(...) invisible(NULL),
+                                  job_status = function(path, quiet = FALSE) list(state = "running", pid = 1L, host = "h"))
+  out <- paste(capture.output(run_job(job, wait = 1)), collapse = "\n")
+  expect_match(out, "predates the in-render checks", fixed = TRUE)
+  expect_match(out, 'upgrade_job("legacy.qmd")', fixed = TRUE)
 })
 
 test_that("the wait returns once every expected check is recorded", {
@@ -956,8 +1014,13 @@ Expected: FAIL, `could not find function "run_job"`.
   all(vapply(checks, `[[`, NA, "ok"))
 }
 
+# A job scaffolded before the setup consolidation keeps its four old chunks and never calls
+# .job_setup(), so it never records render_r; waiting for it would only time out. Such a job gets
+# no in-render checks, and run_job() says so and names upgrade_job() (spec section 5.3).
 .expected_checks <- function(path) {
-  c("render_r", if (any(grepl("guard_memory(", readLines(path, warn = FALSE), fixed = TRUE))) "memory")
+  src <- readLines(path, warn = FALSE)
+  c(if (any(grepl(".job_setup(", src, fixed = TRUE))) "render_r",
+    if (any(grepl("guard_memory(", src, fixed = TRUE))) "memory")
 }
 
 .wait_for_checks <- function(path, expected, wait, poll = 5) {
@@ -966,9 +1029,9 @@ Expected: FAIL, `could not find function "run_job"`.
     st <- job_status(path, quiet = TRUE)
     # Finished, failed or gone: say so at once, whatever the check markers show.
     if (st$state %in% c("finished", "failed", "vanished", "cancelled")) return(invisible(job_status(path)))
-    if (all(expected %in% st$progress$checks)) {
-      cat(sprintf("checks passed; running (process %s on %s). Follow it with `hvti status %s`.\n",
-                  st$pid, st$host, basename(path)))
+    if (all(expected %in% st$progress$checks) && identical(st$state, "running")) {
+      cat(sprintf("%s; running (process %s on %s). Follow it with `hvti status %s`.\n",
+                  if (length(expected)) "checks passed" else "started", st$pid, st$host, basename(path)))
       return(invisible(st))
     }
     if (Sys.time() >= deadline) {
@@ -994,9 +1057,14 @@ run_job <- function(path, final = FALSE, wait = 300) {
   cat("Checking ", basename(path), "\n", sep = "")
   checks <- list(.check_r_version(root), .check_packages(path, root), .check_quarto(), .check_run_state(path))
   if (!.report_checks(checks)) stop("run_job(): refused; fix the checks marked FAIL above and run again.", call. = FALSE)
+  expected <- .expected_checks(path)
+  if (!"render_r" %in% expected) {
+    cat("  note  this job predates the in-render checks (no .job_setup() call), so the render's R and memory\n",
+        "        are not checked inside the render. upgrade_job(\"", basename(path), "\") adds them.\n", sep = "")
+  }
   submit_job(path, final = final)
   if (wait <= 0) return(invisible(job_status(path, quiet = TRUE)))
-  .wait_for_checks(path, .expected_checks(path), wait)
+  .wait_for_checks(path, expected, wait)
 }
 ```
 
@@ -1027,10 +1095,20 @@ Implements §6, failure 7.
 - Consumes: the `mem_peak_gib` and `mem_limit_gib` fields (Task 3), `.profile_for()` (Task 2).
 - Produces: `.diagnose_failure(log_lines, st)` returns `list(reason = chr, fix = chr)`.
 
-The fixture logs are cut from the 2026-10-22 runs and contain **no data values, IDs or paths
-under `/studies/`**. Write them by hand from the signatures: COMMENCE's `worker result(s) were not
-delivered`, `there is no package called 'boostmtree'`, a `Quitting from nb.x.qmd:212-240 [fit]`
-followed by `Error in ...`, and a `memory: ...` guard refusal.
+The fixture logs must be **real renderer output**, not hand-written, because the order and prefixes
+are Quarto's. Quarto writes `Error:` (or `Error in <call>:`), then the condition with a `! ` prefix,
+then `Quitting from <file>:<lines> [<label>]`: the error comes **before** the quitting marker. Make
+them in Step 0 by rendering synthetic jobs on the Mac (in a temp directory, never a study share),
+and commit the `.run.log`s. They contain **no data values, IDs or paths under `/studies/`**. Strip
+temp paths to `<tmp>` with `sub()`. The boostmtree "worker result(s) were not delivered" text is the
+one fixture not reproducible locally without a memory kill. Take that line verbatim from the
+COMMENCE 2026-10-22 log, which John supplies, keeping only boostmtree's message lines.
+
+- [ ] **Step 0: Generate the fixtures.** For each of `stop("memory: probe refusal.\nStart a Large
+  session.")` (guard), `library(notapkg)` (no-package), and `stop("boom")` in a chunk labelled `fit`
+  (quitting), write a minimal `.qmd` with that chunk, render it with `quarto::quarto_render()` while
+  capturing stdout and stderr to a file, and save it as `fixtures-diagnose/<name>.log`. Record the
+  Quarto and knitr versions in `fixtures-diagnose/README.md`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1060,15 +1138,17 @@ test_that("a missing package reads as the wrong R or library", {
   expect_match(d$fix, "hvti run", fixed = TRUE)
 })
 
-test_that("Quitting from names the chunk and quotes the error", {
+test_that("Quitting from names the chunk and quotes the error printed above it", {
   d <- .diagnose_failure(fx("quitting"), list())
   expect_match(d$reason, "chunk `fit`", fixed = TRUE)
-  expect_match(d$fix, "^Error", ignore.case = FALSE)
+  expect_match(d$fix, "^Error.*boom")
+  expect_false(grepl("See the log", d$fix, fixed = TRUE))
 })
 
-test_that("a check's own refusal is passed through verbatim", {
+test_that("a check's refusal through Quarto (Error:, then '! memory: ...', then Quitting) is passed through", {
   d <- .diagnose_failure(fx("guard"), list())
-  expect_match(d$reason, "^memory: ")
+  expect_match(d$reason, "^memory: probe refusal")
+  expect_match(d$fix, "Large", fixed = TRUE)
 })
 
 test_that("an unknown failure shows the last 20 log lines", {
@@ -1095,6 +1175,9 @@ Expected: FAIL, `could not find function ".diagnose_failure"`.
 ```r
 # Known ways a render dies, matched in order; the first that matches explains it.
 .diagnose_failure <- function(log, st) {
+  # rlang/knitr print a condition's lines with "! ", "i " or "x " bullets; strip them so a check's own
+  # refusal is matched the same whether it came through Quarto or a plain Rscript.
+  log <- sub("^[!ix\u2139\u2716] ", "", log)
   hit <- function(p) grep(p, log, perl = TRUE)
   g <- hit("^(r_version|packages|run_state|quarto|render_r|memory): ")
   if (length(g)) return(list(reason = log[g[1L]], fix = if (length(log) > g[1L]) log[g[1L] + 1L] else ""))
@@ -1122,9 +1205,15 @@ Expected: FAIL, `could not find function ".diagnose_failure"`.
   if (length(q)) {
     label <- sub("^.*\\[([^]]+)\\].*$", "\\1", log[q[1L]])
     lines <- sub("^Quitting from [^:]*:([0-9-]+).*$", "\\1", log[q[1L]])
-    err <- grep("^Error", log[-seq_len(q[1L])], value = TRUE)
+    # Quarto prints the error BEFORE the quitting marker: take the last "Error" line above it and
+    # the condition lines between them.
+    e <- utils::tail(grep("^Error", log[seq_len(q[1L] - 1L)]), 1L)
+    err <- if (length(e)) {
+      cond <- log[seq.int(e, q[1L] - 1L)]
+      paste(trimws(cond[nzchar(trimws(cond))]), collapse = " ")
+    }
     return(list(reason = sprintf("the job stopped in chunk `%s`, lines %s.", label, lines),
-                fix = if (length(err)) err[1L] else "See the log for the error."))
+                fix = if (length(err)) err else "See the log for the error."))
   }
   list(reason = "no known cause; the end of the log follows.", fix = paste(utils::tail(log, 20L), collapse = "\n"))
 }
