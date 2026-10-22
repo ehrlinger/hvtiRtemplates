@@ -228,6 +228,13 @@
   unique(jobs)
 }
 
+# TRUE when no .run.yml exists or it records a run that ended, so a running state can only have come from progress.
+.run_yml_ended <- function(file) {
+  if (!file.exists(file)) return(TRUE)
+  state <- tryCatch(yaml::read_yaml(file)$state, error = function(e) NULL)
+  isTRUE(state %in% c("finished", "failed", "cancelled"))
+}
+
 # Quarto holds one render lock per study, so another job rendering there fails minutes in. This names it up front.
 .check_study_render <- function(path, root) {
   jobs <- .jobs_with_run_files(root)
@@ -239,10 +246,11 @@
   }
   rel_of <- function(job) .study_rel(job, root)
   # An editor render that errored never ends its progress file, so from another host it reads running for good.
-  # Stale, on another host and with no .run.yml (not a submit_job() run), it is noted with its way out, not refused.
+  # Stale, on another host and not a submit_job() run (no .run.yml, or one recording an earlier run that ended), it is
+  # noted with its way out, not refused.
   editor_dead <- vapply(names(running), function(j) {
     st <- running[[j]]
-    isTRUE(st$progress$stale) && .on_other_host(st) && !file.exists(.run_files(j)$status)
+    isTRUE(st$progress$stale) && .on_other_host(st) && .run_yml_ended(.run_files(j)$status)
   }, NA)
   note <- if (any(editor_dead)) {
     paste(vapply(names(running)[editor_dead], function(j) {

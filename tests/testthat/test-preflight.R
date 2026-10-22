@@ -512,3 +512,19 @@ test_that("a stale other-host job without a marker is told to confirm once, not 
   expect_identical(lengths(regmatches(fix, gregexpr("hvti status", fix, fixed = TRUE))), 1L)
   expect_match(fix, "hvti status analyses/nb.boostmtree.x.boost.qmd", fixed = TRUE)
 })
+
+test_that("study_render notes an editor render that errored after an earlier submit_job() run finished", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  job <- file.path(root, "analyses", "editor.qmd")
+  writeLines("---\ntitle: x\n---", job)
+  at <- function(x) .stamp(as.POSIXct(x, tz = "UTC"))
+  .write_status(.run_files(job)$status, state = "finished", pid = 1L, host = "lri-r03", started = at("2026-10-19 09:00"),
+                ended = at("2026-10-19 10:00"), exit_code = 0L, elapsed_s = 3600L)
+  .write_status(.run_files(job)$progress, pid = 2L, host = "lri-r03", started = at("2026-10-20 09:00"),
+                updated = at("2026-10-20 09:05"), stage = "fit", stage_index = 1L, stage_count = 2L, stages = c("fit", "b"))
+  expect_identical(job_status(job, quiet = TRUE)$state, "running")
+  ck <- .check_study_render(mine, root)
+  expect_true(ck$ok)
+  expect_match(ck$note, "analyses/editor.qmd", fixed = TRUE)
+})
