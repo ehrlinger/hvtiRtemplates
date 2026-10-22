@@ -294,7 +294,13 @@ knitr::kable(data.frame(
             if (.n_missing == 0L) "none needed" else paste0(IMPUTE, ", ", M, " imputation(s)"),
             nrow(sid_dist))
 ), col.names = c("", ""))
-if (M > 1L) knitr::kable(sid_agreement, digits = 3, caption = "Agreement of each imputation's distances with their mean")
+```
+
+```{r}
+#| label: tbl-agreement
+#| tbl-cap: "Agreement of each imputation's distances with their mean"
+# One forest per imputation; near 1, the imputations agree.
+if (M > 1L) knitr::kable(sid_agreement, digits = 3)
 ```
 
 ## Save

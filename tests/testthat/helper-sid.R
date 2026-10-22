@@ -39,7 +39,7 @@ sid_fit_choices <- list(
 )
 
 # Every chunk of sid-fit, in order.
-sid_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "impute", "fit", "tbl-used", "save")
+sid_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "impute", "fit", "tbl-used", "tbl-agreement", "save")
 
 # sid-fit run end to end in a throwaway study.
 sid_fit_first <- function(data = sid_data(), choices = sid_fit_choices, .local_envir = parent.frame()) {
