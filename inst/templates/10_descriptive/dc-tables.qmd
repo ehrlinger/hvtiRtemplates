@@ -170,6 +170,11 @@ MANUSCRIPT_FILL <- "#CAEDFB"
 # for portrait, as a table with many groups is; "portrait" or "landscape"
 # always wins, and a table too wide for that page has its columns narrowed.
 TABLE_ORIENTATION <- "auto"
+# EDIT: TRUE leaves out a row whose every recorded value is the same, such as
+# a finding every patient has by inclusion: the row says nothing, and a binary
+# one has no event to count. The report names each row left out. FALSE keeps
+# every row, and a constant binary row then stops the table.
+DROP_CONSTANT <- TRUE
 # EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you
 # want summarized as continuous: list(continuous = c("nyha_pr")). list() for none.
 OVERRIDES <- list()
@@ -379,6 +384,9 @@ stddiff_values <- function(d, by, buckets, mean_sd = character(0), ordinal = cha
 ```{r}
 #| label: tbl-table
 #| tbl-cap: "Summary statistics for the study cohort"
+if (!is.logical(DROP_CONSTANT) || length(DROP_CONSTANT) != 1L || is.na(DROP_CONSTANT)) {
+  stop("DROP_CONSTANT must be TRUE or FALSE.", call. = FALSE)
+}
 explicit <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
 if (all(vapply(explicit, is.null, logical(1)))) {
   b <- classify_buckets(d, unlist(GROUPS, use.names = FALSE), OVERRIDES)
@@ -395,6 +403,21 @@ if (all(vapply(explicit, is.null, logical(1)))) {
     stop("Every grouped row must appear in exactly one explicit bucket.", call. = FALSE)
   }
   invisible(classify_buckets(d, rows, explicit))
+}
+# A missing value is not a second value: a row is constant when every
+# recorded value is the same. A row with nothing recorded is kept, since an
+# empty row points at the data rather than at the cohort.
+constant_rows <- character(0)
+if (DROP_CONSTANT) {
+  rows <- unlist(GROUPS, use.names = FALSE)
+  constant_rows <- rows[vapply(d[rows], function(x) length(unique(x[!is.na(x)])) == 1L, logical(1))]
+  GROUPS <- Filter(length, lapply(GROUPS, setdiff, y = constant_rows))
+  if (!length(GROUPS)) stop("Every row has one value for every patient; there is no table to draw.", call. = FALSE)
+  CONTINUOUS <- setdiff(CONTINUOUS, constant_rows)
+  BINARY <- setdiff(BINARY, constant_rows)
+  CATEGORICAL <- setdiff(CATEGORICAL, constant_rows)
+  MEAN_SD <- setdiff(MEAN_SD, constant_rows)
+  ORDINAL <- setdiff(ORDINAL, constant_rows)
 }
 tbl <- hvtiRtables::hv_tbl_summary(
   d, by = BY, groups = GROUPS, continuous = CONTINUOUS,
@@ -423,6 +446,17 @@ if (STDDIFF) {
 # saver's own code.
 ft <- hvtiRtables::hv_man_table(tbl)
 hvtiRtables::hv_man_table_display(ft, abbreviations = ABBREVIATIONS)
+```
+
+```{r}
+#| label: constant-rows
+#| results: asis
+# unnumbered: a note under the table, and only when DROP_CONSTANT left rows out
+if (length(constant_rows)) {
+  cat("Not shown, because every patient with a recorded value has the same one: ",
+      paste0("`", constant_rows, "`", collapse = ", "),
+      ". Set `DROP_CONSTANT <- FALSE` to show them.\n", sep = "")
+}
 ```
 
 ```{r}
