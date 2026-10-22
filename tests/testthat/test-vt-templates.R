@@ -267,8 +267,53 @@ test_that("vt-explain reads the fit's own selection, stacked imputations include
   d2 <- vt_data(); d2$imp <- 2L; d2$x1 <- d2$x1 + 100
   env <- vt_fit_first(data = rbind(d1, d2), labels = vt_fit_labels_all,
                       choices = utils::modifyList(vt_choices, list(IMPUTATION = "imp", IMPUTATION_USE = 2L)))
-  vt_explain(env)
+  vt_explain(env, vt_explain_labels_all, list(STRATIFY = "x1", BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
   expect_equal(nrow(env$.d_all), 300L)
+  expect_gt(min(env$.strata$stratum |> as.numeric()), 90)
   # The stacked rows of imputation 1 are gone: x1 is the shifted one.
   expect_gt(min(env$.d_all$x1), 90)
+})
+
+test_that("overlap weights are 1 - e on the first arm and e on the second", {
+  src <- readLines(template_path("vt", "explain"), warn = FALSE)
+  env <- new.env(); eval(parse(text = rf_chunk(src, "overlap-weights")), envir = env)  # nolint: object_usage_linter.
+  ps <- data.frame(id = c("p", "q", "r"), arm = c("A", "B", "A"), prob_t = c(0.8, 0.3, 0.1))
+  expect_equal(env$vt_overlap_weights(ps, c("r", "p", "q"), "id", "arm", c("A", "B")), c(0.9, 0.2, 0.3))
+})
+
+test_that("the stratifier joins sid-clusters on the ID digest", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  sid_dir <- file.path(dirname(dirname(env$set_path("estimates", "vt.rds"))), "dead-sid")
+  dir.create(sid_dir, recursive = TRUE)
+  key <- hvtiRtemplates:::.study_id_key(env$.root)
+  saveRDS(list(clusters = data.frame(id = vt_digest(env, factor(vt_data()$ccfid)),
+                                     cluster = ifelse(vt_data()$xs > 0, "hi", "lo")),
+               id_key = hvtiRtemplates:::.id_key_fingerprint(key)),
+          file.path(sid_dir, "sid-clusters.rds"))
+  vt_explain(env, vt_explain_labels_all,
+             list(STRATIFY = list(set = "dead-sid"), BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE,
+                  .vt_read_sid = function(p) list(value = readRDS(p), lineage = list(data = list(), artifacts = list()),
+                                                  record = list(path = p))))
+  expect_setequal(unique(env$.strata$stratum), c("hi", "lo"))
+  expect_equal(sum(is.na(merge(env$r, env$.strata, by = "ID", all.x = TRUE)$stratum)), 0L)
+})
+
+test_that("a rare factor level does not abort the bootstrap", {
+  skip_on_cran()
+  d <- vt_data(); d$rare <- factor(ifelse(seq_len(nrow(d)) %in% c(3, 150), "yes", "no"))
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all,
+                      choices = utils::modifyList(vt_choices, list(PREDICTORS = c("xs", "x1", "g1", "rare"))))
+  vt_explain(env, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 50L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
+  row <- env$.betas[startsWith(env$.betas$variable, "rare"), ]
+  expect_match(row$variable, "yes vs no")
+  expect_gt(row$unestimable, 0L)
+})
+
+test_that("BOOT = 0 skips the intervals and the betas still render", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_explain(env, vt_explain_labels_all)
+  expect_true(all(is.na(env$.betas$lower)))
+  expect_true(all(is.finite(env$.betas$beta)))
 })
