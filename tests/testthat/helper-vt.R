@@ -61,3 +61,14 @@ vt_helpers <- function() {
   }
   env
 }
+
+vt_explain_labels <- c("setup", "edit-study-choices", "handoff", "explain-data", "fig-contrast", "fig-ranking",
+                       "fig-twin-curves", "fig-received-best", "tbl-sensitivity")
+# Not "provenance": that chunk refuses to run outside a render.
+
+# rf_run() strips library() from setup; attach the explain stack itself.
+vt_explain <- function(env, labels = vt_explain_labels, choices = list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 0,
+                                                                      SAVE_FIGURES = FALSE)) {
+  rf_skip_unless_stack(rf_template_packages("vt", "explain"))  # nolint: object_usage_linter.
+  rf_run("vt", "explain", labels, env, choices)  # nolint: object_usage_linter.
+}

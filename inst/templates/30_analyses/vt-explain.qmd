@@ -1,0 +1,278 @@
+---
+title: "Virtual twins: explain"
+date: now
+date-format: "YYYY-MM-DD HH:mm"
+# Carried in the file rather than inherited from _quarto.yml. A file meant to be
+# COPIED should not depend on settings from the directory it happens to sit in:
+# rendered as a standalone document the project's format block never applies,
+# which is how server-rendered reports end up with sibling _files/ trees instead
+# of being self-contained.
+#
+# NOTE: output-dir is a PROJECT setting and cannot be set here, so the .html
+# lands next to its source. With embed-resources that is a single standalone
+# file, which is the property that actually matters when a report is sent on.
+format:
+  html:
+    fig-width: 6
+    fig-height: 4
+    theme: cosmo
+    toc: true
+    toc-location: left
+    page-layout: full
+    grid:
+      body-width: 2000px
+      sidebar-width: 250px
+    toc-depth: 3
+    code-fold: true
+---
+
+<!-- EDIT: say which vt-fit job in this set this explains, and which treatment
+     decision the contrast is meant to inform. -->
+
+A `vt-explain` job reads the virtual twins a `vt-fit` job in this set saved
+and shows what they say. Each patient has two predicted survival curves, one
+per arm, and the difference in restricted mean survival time (RMST) between
+them at `HORIZON` is the patient's estimated effect of the treatment. This job
+shows that difference by arm, ranks the patients by it, and counts how many
+patients each eligibility rule keeps.
+
+A `vt-explain` job never grows a forest. It reads `vt.rds`, so every figure
+describes exactly the forests the fit job judged. The difference is a model
+estimate for each patient, not an observed outcome.
+
+This template is **in flight**, with `vt-fit`.
+
+```{r}
+#| label: setup
+#| results: asis
+SUBJECT <- "dead"
+TYPE    <- "vt"
+.in <- knitr::current_input(dir = TRUE)
+suppressPackageStartupMessages({
+  library(hvtiPlotR)
+  library(hvtiRpropensity)
+  library(hvtiRutilities)
+  library(ggplot2)
+})
+# One thread, so a bootstrap reproduces from machine to machine.
+options(rf.cores = 1L, mc.cores = 1L)
+# The versions this template was verified against on 2026-10-22. Below them a
+# call here can fail or change meaning, and the message would arrive mid-render
+# rather than here.
+for (.floor in list(c("hvtiRpropensity", "0.2.0"), c("hvtiPlotR", "2.8.9"))) {
+  if (utils::packageVersion(.floor[1]) < .floor[2]) {
+    stop("This job needs ", .floor[1], " >= ", .floor[2], "; ", utils::packageVersion(.floor[1]),
+         " is installed.\nUpdate it, then re-render.", call. = FALSE)
+  }
+}
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis.
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
+# `vt-explain` reads the fit `vt-fit` wrote in this same set.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
+```
+
+## Study choices
+
+Edit these values for this study before rendering. The arms, outcome and
+horizon are not here: they come from the fit.
+
+```{r}
+#| label: edit-study-choices
+# EDIT: NULL, a column of the data, or list(set = "<subject>-<type>") naming a
+# sid-clusters set whose clusters stratify the result (add column = "group" for
+# its collapsed groups). Strata are never a model
+# covariate: they are built from what the forests already use.
+STRATIFY <- NULL
+BOOT <- 1000                                # EDIT: bootstraps for the standardized betas; 0 skips the intervals.
+GAIN_MIN <- 0                               # EDIT: a twin must favour the other arm by more than this, in TIME's units.
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("vt-explain-contrast"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
+```
+
+## The fit
+
+```{r}
+#| label: handoff
+.handoff <- set_path("estimates", "vt.rds")
+if (!file.exists(.handoff)) {
+  stop("No fit at ", .handoff, ". Render the vt-fit job in this set first; this job explains that fit and ",
+       "never grows its own.", call. = FALSE)
+}
+.cfg <- study_config(start = .root)
+.vt_read <- hvtiRtemplates:::.read_handoff(.handoff, "twins", .cfg, "the vt-fit job")
+.vt <- .vt_read$value
+.provenance_data <- .vt_read$lineage$data
+.provenance_artifacts <- c(.vt_read$lineage$artifacts, list(.vt_read$record))
+ARMS <- .vt$settings$arms
+HORIZON <- .vt$settings$horizon
+r <- .vt$rmst
+# Named `.eligible`, never `.in`: `.in` is setup's source path, which the provenance chunk needs.
+.eligible <- r$elig
+```
+
+```{r}
+#| label: explain-data
+# The one read of patient data in this job. It repeats the fit's own
+# read_job_data() call from the settings vt-fit saved, so a named dataset,
+# analysis set, filter, join or stacked imputation gives the same patients and
+# values the forests saw.
+.s <- .vt$settings
+.jd <- hvtiRtemplates::read_job_data(.cfg, dataset = .s$read$dataset, analysis_set = .s$read$analysis_set,
+                                     where = .s$read$where, id = .s$id, key = .s$read$key, join = .s$read$join,
+                                     join_vars = .s$read$join_vars, reduce = .s$read$reduce,
+                                     join_key = .s$read$join_key, one_row_per_patient = TRUE,
+                                     imputation = .s$imputation)
+.d_all <- .jd$data
+if (!is.null(.s$imputation)) .d_all <- .d_all[.d_all[[.s$imputation]] == .s$imputation_use, , drop = FALSE]
+# vt.rds holds ID digests, so the data are digested with the same study key.
+.id_key <- hvtiRtemplates:::.study_id_key(.root, create = FALSE)
+if (!identical(.s$id_key, hvtiRtemplates:::.id_key_fingerprint(.id_key))) {
+  stop("vt.rds was digested under a different study key. Re-render vt-fit.", call. = FALSE)
+}
+.d_all[[.s$id]] <- hvtiRtemplates:::.id_digest(.d_all[[.s$id]], .id_key)
+.d_all <- .d_all[.d_all[[.s$id]] %in% r$ID, , drop = FALSE]
+```
+
+## The contrast
+
+Patients in distribution, under the combined eligibility rule. A positive
+difference favours the first arm.
+
+```{r}
+#| label: fig-contrast
+#| fig-cap: "The estimated RMST difference by the arm patients received. Box: 15th to 85th percentile;
+#|   whiskers: 5th to 95th; line: median. A positive difference favours the first arm."
+.pct <- function(x) {
+  q <- stats::quantile(x, c(0.05, 0.15, 0.5, 0.85, 0.95), names = FALSE)
+  data.frame(ymin = q[1], lower = q[2], middle = q[3], upper = q[4], ymax = q[5])
+}
+.e <- r[.eligible, ]
+.fig <- ggplot(.e, aes(x = arm, y = diff)) +
+  stat_summary(fun.data = .pct, geom = "boxplot", width = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(x = "Arm received", y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"))
+save_figure(.fig, "vt-explain-contrast")
+.fig
+```
+
+```{r}
+#| label: fig-ranking
+#| fig-cap: "Every patient in distribution, ranked by the estimated RMST difference and coloured by the arm received."
+.rk <- .e[order(.e$diff), ]
+.rk$rank <- seq_len(nrow(.rk))
+.fig <- ggplot(.rk, aes(x = rank, y = diff, color = arm)) +
+  geom_point(size = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(x = "Patients, ranked by difference", y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"),
+       color = "Arm received")
+save_figure(.fig, "vt-explain-ranking")
+.fig
+```
+
+```{r}
+#| label: fig-twin-curves
+#| fig-cap: "Mean predicted survival under each arm's forest, for patients in distribution, by the arm they received.
+#|   The shaded area to the horizon is the restricted mean survival time."
+.mc <- .vt$curves[.vt$curves$ID %in% r$ID[.eligible], ]
+.mc$received <- r$arm[match(.mc$ID, r$ID)]
+.mc <- stats::aggregate(surv ~ received + arm_of_curve + time, data = .mc, FUN = mean)
+# hv_rmst_curves() wants right-continuous steps that start at time 0 with surv 1.
+.mc <- do.call(rbind, lapply(split(.mc, list(.mc$received, .mc$arm_of_curve), drop = TRUE), function(x) {
+  rbind(data.frame(received = x$received[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1), x[order(x$time), ])
+}))
+.mc$facet <- paste("Received", .mc$received)
+.mc$arm <- .mc$arm_of_curve
+.fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet = "facet", arm = "arm")) +
+  labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
+save_figure(.fig, "vt-explain-twin-curves")
+.fig
+```
+
+```{r}
+#| label: fig-received-best
+#| fig-cap: "In each arm, the share of patients in distribution whose own arm's predicted RMST is the larger."
+.rb <- r[.eligible & r$arm %in% ARMS, ]
+.own <- ifelse(.rb$arm == ARMS[1], .rb[[paste0("rmst_", ARMS[1])]], .rb[[paste0("rmst_", ARMS[2])]])
+.alt <- ifelse(.rb$arm == ARMS[1], .rb[[paste0("rmst_", ARMS[2])]], .rb[[paste0("rmst_", ARMS[1])]])
+.rb$best <- ifelse(.own >= .alt, "Received best", "Alternative best")
+# An arm whose forest does not discriminate (C-index interval including 0.5)
+# makes its half of every contrast exploratory; say so on the figure.
+# Same out-of-bag C-index as vt-fit's tbl-performance.
+.weak <- do.call(rbind, lapply(ARMS, function(a) {
+  f <- .vt$forests[[a]]
+  yt <- f$yvar[[1]]
+  ys <- f$yvar[[2]]
+  cc <- survival::concordance(survival::Surv(yt, ys) ~ f$predicted.oob, reverse = TRUE)
+  data.frame(arm = a, events = sum(ys == 1), lower = cc$concordance - 1.96 * sqrt(cc$var))
+}))
+.weak <- .weak[.weak$lower <= 0.5, ]
+.note <- if (nrow(.weak)) {
+  paste0("The C-index interval includes 0.5 for ", paste0(.weak$arm, " (", .weak$events, " events)", collapse = ", "),
+         ": that arm's half of the contrast is exploratory.")
+}
+.fig <- ggplot(.rb, aes(x = arm, fill = best)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Arm received", y = "Share of patients", fill = NULL, caption = .note)
+save_figure(.fig, "vt-explain-received-best")
+.fig
+```
+
+## Eligibility rules
+
+How the contrast changes with the rule that decides which patients it
+summarizes. The combined rule is the one used above.
+
+```{r}
+#| label: tbl-sensitivity
+#| tbl-cap: "The RMST difference under each eligibility rule: patients kept, median with 15th and 85th
+#|   percentiles, and the share favouring the first arm"
+.rules <- c(sub("^elig_", "", grep("^elig_", names(r), value = TRUE)))
+.sens <- do.call(rbind, lapply(c("combined", .rules), function(rule) {
+  keep <- if (rule == "combined") r$elig else r[[paste0("elig_", rule)]]
+  do.call(rbind, lapply(split(r[keep, ], r$arm[keep]), function(x) {
+    q <- stats::quantile(x$diff, c(0.15, 0.5, 0.85), names = FALSE)
+    data.frame(rule = rule, arm = x$arm[1L], kept = nrow(x), p15 = q[1], median = q[2], p85 = q[3],
+               favour_first = mean(x$diff > 0))
+  }))
+}))
+knitr::kable(.sens, digits = 2)
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  run = .job$run,
+  artifacts = .provenance_artifacts,
+  extra = list(subject = SUBJECT, type = TYPE)
+))
+```

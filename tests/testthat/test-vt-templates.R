@@ -242,3 +242,33 @@ test_that("the saved handoff carries no patient ID and no captured environment",
   held <- rf_files_holding(dirname(env$set_path("estimates", "vt.rds")), as.character(d$ccfid))
   expect_identical(held, character())
 })
+
+test_that("vt-explain reads vt.rds and never grows a forest", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_explain(env)
+  expect_true(all(c("gower", "propensity", "none") %in% env$.sens$rule))
+  # The eligibility mask is `.eligible`; `.in` is setup's source path and must stay free for provenance.
+  expect_type(env$.eligible, "logical")
+  expect_false(exists(".in", envir = env, inherits = FALSE) && is.logical(env$.in))
+  src <- readLines(template_path("vt", "explain"), warn = FALSE)
+  expect_false(any(grepl("rfsrc(", src, fixed = TRUE)))
+})
+
+test_that("vt-explain stops naming the file when no fit has run", {
+  skip_on_cran()
+  env <- rf_env(vt_data())
+  expect_error(vt_explain(env, c("setup", "edit-study-choices", "handoff"), list()), "vt.rds")
+})
+
+test_that("vt-explain reads the fit's own selection, stacked imputations included", {
+  skip_on_cran()
+  d1 <- vt_data(); d1$imp <- 1L
+  d2 <- vt_data(); d2$imp <- 2L; d2$x1 <- d2$x1 + 100
+  env <- vt_fit_first(data = rbind(d1, d2), labels = vt_fit_labels_all,
+                      choices = utils::modifyList(vt_choices, list(IMPUTATION = "imp", IMPUTATION_USE = 2L)))
+  vt_explain(env)
+  expect_equal(nrow(env$.d_all), 300L)
+  # The stacked rows of imputation 1 are gone: x1 is the shifted one.
+  expect_gt(min(env$.d_all$x1), 90)
+})
