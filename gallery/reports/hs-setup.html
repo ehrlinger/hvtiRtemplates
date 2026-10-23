@@ -2236,7 +2236,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-21 08:01</p>
+      <p class="date">2026-10-23 13:36</p>
     </div>
   </div>
   
@@ -2248,7 +2248,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: hs.setup 1.4.2 -->
+<!-- hvtiRtemplates: hs.setup 1.5.0 sha256:e020d3ca4971f92905929bc92b8aa9b372252054db23a8554520ae5b3108492f -->
 <!-- Demo: name the SAS job this replaces, and say which horizons it reported
      and against which expected-survival comparison.
      Replace this comment with that text. -->
@@ -2321,11 +2321,20 @@ vertical-align: -.125em;
 <span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
 <span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
 <span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="co"># `hm` reads the `hz` fit through this and writes its own model back, both by</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="co"># set, so a model can never be filed against a different set than the shapes it</span></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="co"># was built on. The write is in the `save` chunk at the foot of this file.</span></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="co"># The figures draw with hvtiPlotR. Checked here, before the fit, so a missing</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="co"># package stops the render at once rather than after the fit and before the save.</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;hvtiPlotR&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR for its figures.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder,</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>                                SAVE_FIGURES, FIGURES, linked)</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="co"># `hm` reads the `hz` fit through this and writes its own model back, both by</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a><span class="co"># set, so a model can never be filed against a different set than the shapes it</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="co"># was built on. The write is in the `save` chunk at the foot of this file.</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="callout callout-style-simple callout-note no-icon">
 <div class="callout-body d-flex">
@@ -2333,7 +2342,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.4.2</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.0</p>
 </div>
 </div>
 </div>
@@ -2383,7 +2392,13 @@ vertical-align: -.125em;
 <span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>TABLE     <span class="ot">&lt;-</span> <span class="st">&quot;sexrace&quot;</span></span>
 <span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>SCALE     <span class="ot">&lt;-</span> <span class="st">&quot;years&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>SCALE     <span class="ot">&lt;-</span> <span class="st">&quot;years&quot;</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hs-setup-expected&quot;).</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2449,7 +2464,7 @@ Table 1: The data this job read, as hz read it
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>study</code> (built_20261021.parquet)</td>
+<td style="text-align: left;">dataset <code>study</code> (built_20261023.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2995,34 +3010,87 @@ Table 5: Model-predicted against age, sex and race matched population survival
 </div>
 </div>
 <p>A ratio below 1 says the cohort does worse than the matched general population at that horizon. It is a comparison, not a test — no interval is attached, because the expected curve carries no sampling error of its own here.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The table above gives the two curves at HORIZONS only; the gap between them</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># can open and close in between. Both are recomputed on a grid out to the last</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># horizon, the same way: the cohort average of each patient&#39;s predicted survival</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># from the model, and us_cohort_curve() over us_matched() for the population.</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># The horizons are on the grid, so the table&#39;s points sit on the curves. A grid</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co"># point within rounding of a horizon is dropped for it: seq() makes 3 * 0.2 into</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.6000000000000001, which unique() keeps beside 0.6, and the two would then</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># be one time to everything that reads them.</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>.grid <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="fu">max</span>(HORIZONS), <span class="at">length.out =</span> <span class="dv">51</span>L)[<span class="sc">-</span><span class="dv">1</span>L]</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>.grid <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">c</span>(.grid[<span class="fu">vapply</span>(.grid, <span class="cf">function</span>(t) <span class="fu">all</span>(<span class="fu">abs</span>(t <span class="sc">-</span> HORIZONS) <span class="sc">&gt;</span> <span class="fl">1e-8</span> <span class="sc">*</span> <span class="fu">max</span>(HORIZONS)), <span class="fu">logical</span>(<span class="dv">1</span>))], HORIZONS))</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>.nd <span class="ot">&lt;-</span> dd[<span class="fu">rep</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(dd)), <span class="at">times =</span> <span class="fu">length</span>(.grid)), COVARIATES, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>.nd<span class="sc">$</span>time <span class="ot">&lt;-</span> <span class="fu">rep</span>(.grid, <span class="at">each =</span> <span class="fu">nrow</span>(dd))</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Averaged by grid position, not by time: a split on a double groups by its printed value.</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>.model <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">split</span>(<span class="fu">predict</span>(fit, <span class="at">newdata =</span> .nd, <span class="at">type =</span> <span class="st">&quot;survival&quot;</span>), <span class="fu">rep</span>(<span class="fu">seq_along</span>(.grid), <span class="at">each =</span> <span class="fu">nrow</span>(dd))),</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>                 mean, <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>.population <span class="ot">&lt;-</span> <span class="fu">us_cohort_curve</span>(<span class="fu">us_matched</span>(</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">age =</span> d[[AGE_COL]], <span class="at">male =</span> <span class="fu">as.vector</span>(.male), <span class="at">other =</span> <span class="fu">as.vector</span>(.other),</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">times =</span> .grid, <span class="at">id =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(d)),</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">vintage =</span> VINTAGE, <span class="at">table =</span> TABLE, <span class="at">scale =</span> SCALE, <span class="at">individual =</span> <span class="cn">TRUE</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>))<span class="sc">$</span>smatched</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>.curves <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">time =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="dv">0</span>, .grid), <span class="dv">2</span>L), <span class="at">survival =</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fu">unname</span>(.model), <span class="dv">1</span>, .population),</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>                      <span class="at">curve =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;model&quot;</span>, <span class="st">&quot;population&quot;</span>), <span class="at">each =</span> <span class="fu">length</span>(.grid) <span class="sc">+</span> <span class="dv">1</span>L))</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>.points <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">time =</span> <span class="fu">rep</span>(obs_vs_exp<span class="sc">$</span>horizon, <span class="dv">2</span>L),</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>                      <span class="at">survival =</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">c</span>(obs_vs_exp<span class="sc">$</span>observed, obs_vs_exp<span class="sc">$</span>expected),</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>                      <span class="at">curve =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;model&quot;</span>, <span class="st">&quot;population&quot;</span>), <span class="at">each =</span> <span class="fu">nrow</span>(obs_vs_exp)))</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(.curves, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>time, <span class="at">y =</span> .data<span class="sc">$</span>survival, <span class="at">linetype =</span> .data<span class="sc">$</span>curve)) <span class="sc">+</span></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_point</span>(<span class="at">data =</span> .points) <span class="sc">+</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_linetype_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="at">model =</span> <span class="st">&quot;solid&quot;</span>, <span class="at">population =</span> <span class="st">&quot;dashed&quot;</span>),</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">labels =</span> <span class="fu">c</span>(<span class="at">model =</span> <span class="st">&quot;This cohort, model&quot;</span>, <span class="at">population =</span> <span class="st">&quot;Matched population&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> tools<span class="sc">::</span><span class="fu">toTitleCase</span>(SCALE), <span class="at">y =</span> <span class="st">&quot;Survival (%)&quot;</span>, <span class="at">linetype =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;hs-setup-expected&quot;</span>)</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-expected" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-expected-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img role="img" src="assets/9abfbe33762d58149120e3edd67f3b67.png" class="img-fluid figure-img" width="864">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-expected-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 1: Model-predicted survival of this cohort (solid) against the survival of a matched general population (dashed), each the cohort average. The points are the horizons in the table above.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
 </section>
 <section id="save" class="level2">
 <h2 class="anchored" data-anchor-id="save">Save</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read by the plotting jobs in this set. `vintage` travels WITH the estimates</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># rather than being recorded only in prose: an expected curve whose vintage has</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># to be recovered later is the defect this template&#39;s vintage marker exists to</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># prevent, and it would be reintroduced here by omitting it.</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co"># `clevel` travels with the estimates for the same reason `vintage` does: a</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co"># confidence limit whose coverage has to be inferred later is a number waiting</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># to be misread, and 0.68268948 is not the coverage anyone assumes.</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>hs_art <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">pred =</span> pred, <span class="at">expected =</span> expected, <span class="at">obs_vs_exp =</span> obs_vs_exp,</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">horizons =</span> HORIZONS, <span class="at">covariates =</span> COVARIATES, <span class="at">vintage =</span> VINTAGE,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>               <span class="at">clevel =</span> CLEVEL)</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>hs_art <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  hs_art,</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">artifacts =</span> .provenance_artifacts,</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> cc</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hs_art, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;hs.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read by the plotting jobs in this set. `vintage` travels WITH the estimates</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># rather than being recorded only in prose: an expected curve whose vintage has</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># to be recovered later is the defect this template&#39;s vintage marker exists to</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># prevent, and it would be reintroduced here by omitting it.</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co"># `clevel` travels with the estimates for the same reason `vintage` does: a</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co"># confidence limit whose coverage has to be inferred later is a number waiting</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># to be misread, and 0.68268948 is not the coverage anyone assumes.</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>hs_art <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">pred =</span> pred, <span class="at">expected =</span> expected, <span class="at">obs_vs_exp =</span> obs_vs_exp,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">horizons =</span> HORIZONS, <span class="at">covariates =</span> COVARIATES, <span class="at">vintage =</span> VINTAGE,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>               <span class="at">clevel =</span> CLEVEL)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>hs_art <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  hs_art,</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">artifacts =</span> .provenance_artifacts,</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> cc</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hs_art, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;hs.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -3045,17 +3113,17 @@ Table 5: Model-predicted against age, sex and race matched population survival
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-21 08:01:45 EDT</td>
+<td style="text-align: left;">2026-10-23 13:36:37 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-21 08:01:45 EDT</td>
+<td style="text-align: left;">2026-10-23 13:36:39 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">0 s</td>
+<td style="text-align: left;">2 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3095,17 +3163,17 @@ Table 5: Model-predicted against age, sex and race matched population survival
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.4.2</td>
+<td style="text-align: left;">1.5.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261021.parquet</td>
+<td style="text-align: left;">built_20261023.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Registered</td>
-<td style="text-align: left;">2026-10-21</td>
+<td style="text-align: left;">2026-10-23</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3125,7 +3193,7 @@ Table 5: Model-predicted against age, sex and race matched population survival
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">07a531bb5b35</td>
+<td style="text-align: left;">b236a472f1f3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3140,7 +3208,7 @@ Table 5: Model-predicted against age, sex and race matched population survival
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-hz/hm.rds</code> (hazard-regression-model), rendered 2026-10-21 08:01:24 -0400, data built_20261021.parquet</td>
+<td style="text-align: left;"><code>dead-hz/hm.rds</code> (hazard-regression-model), rendered 2026-10-23 13:36:12 -0400, data built_20261023.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Reproducibility</td>
@@ -3155,7 +3223,7 @@ Table 5: Model-predicted against age, sex and race matched population survival
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"hs.setup.dead.hz","rendered":"2026-10-21T12:01:45Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRlifetables","version":"0.1.5","source":"github","sha":"93117c87d5b19d3ea59b3647d9f06913704c3886"},{"package":"hvtiRtemplates","version":"1.4.2","source":"github","sha":"86c72fa1b420c9ad6da8901652e448c662f7f99a"},{"package":"hvtiRutilities","version":"1.5.8","source":"github","sha":"eedc57576f208c1ae703f3f40f5fe95eef3d56f1"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"TemporalHazard","version":"1.2.16","source":"github","sha":"746ce9e95ef3075afcdb8524306ea053f7306282"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261021.parquet","role":"analysis","bytes":59864,"mtime":"2026-10-21T11:56:59Z","sha256":"07a531bb5b3525c53f3c98425c2929ae9d9c9efd0f99e1786859132b29776970"},{"dataset":"study","path":"00_datasets/built_20261021.parquet","role":"analysis","bytes":59864,"mtime":"2026-10-21T11:56:59Z","sha256":"07a531bb5b3525c53f3c98425c2929ae9d9c9efd0f99e1786859132b29776970"},{"dataset":"study","path":"00_datasets/built_20261021.parquet","role":"analysis","bytes":59864,"mtime":"2026-10-21T11:56:59Z","sha256":"07a531bb5b3525c53f3c98425c2929ae9d9c9efd0f99e1786859132b29776970"}],"artifacts":[{"path":"90_estimates/dead-hz/hm.rds","role":"hazard-regression-model","bytes":107805,"mtime":"2026-10-21T12:01:29Z","sha256":"c3cc6c89c68266315f7bd1bcbde7980191b43860dd8b574a90fc6dedd588e636"},{"path":"90_estimates/dead-hz/hz.rds","role":"hazard-shape-model","bytes":7281,"mtime":"2026-10-21T12:01:19Z","sha256":"cc8024802e99423817e98f54c0648f45864b84031cfc65e6e27b6ad39fa50124"}],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-21T08:01:45-0400","end":"2026-10-21T08:01:45-0400","time_zone":"EDT","duration_seconds":0.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hs.setup.dead.hz.qmd","template":"hs.setup","prefix":"hs","qualifier":"setup","subject":"dead","type":"hz","hvtiRtemplates":"1.4.2"},"datasets":[{"name":"built","version_file":"built_20261021.parquet","registered":"2026-10-21","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"07a531bb5b35","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-hz/hz.rds","set":"dead-hz","role":"hazard-shape-model"},{"file":"90_estimates/dead-hz/hm.rds","set":"dead-hz","role":"hazard-regression-model","rendered_at":"2026-10-21T08:01:24-0400","dataset_version":"built_20261021.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"40_graphs/hs.setup.dead.hz.qmd",".hvti_render_id":"42debe4768072026db0e22c41be2808ab9c2a9bfbd361b65605bd5be133a78eb",".hvti_source_sha256":"b6255d41490a068b9fa0b6e4cea194507a067b6880eb5302f6f693c0642e9740"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"hs.setup.dead.hz","rendered":"2026-10-23T17:36:39Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.16","source":"github","sha":"17cb76ba25918ad46187a88e3c3d214628bc7e08"},{"package":"hvtiRlifetables","version":"0.1.5","source":"github","sha":"93117c87d5b19d3ea59b3647d9f06913704c3886"},{"package":"hvtiRtemplates","version":"1.5.0","source":"github","sha":"3ada5e551d1f85693e1340ae184f45a4d2b67c71"},{"package":"hvtiRutilities","version":"1.5.11","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.2.16","source":"github","sha":"746ce9e95ef3075afcdb8524306ea053f7306282"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261023.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-23T17:31:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261023.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-23T17:31:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261023.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-23T17:31:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/dead-hz/hm.rds","role":"hazard-regression-model","bytes":107802,"mtime":"2026-10-23T17:36:20Z","sha256":"447cbb6d36428c1147aa12a22ff36abbe5b23460ad635b2796278be8535f396f"},{"path":"90_estimates/dead-hz/hz.rds","role":"hazard-shape-model","bytes":7280,"mtime":"2026-10-23T17:36:04Z","sha256":"909d632456aaf4730ede549b863d5e97dba971f415da388e81f989c2d560844d"}],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-23T13:36:37-0400","end":"2026-10-23T13:36:39-0400","time_zone":"EDT","duration_seconds":2,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hs.setup.dead.hz.qmd","template":"hs.setup","prefix":"hs","qualifier":"setup","subject":"dead","type":"hz","hvtiRtemplates":"1.5.0"},"datasets":[{"name":"built","version_file":"built_20261023.parquet","registered":"2026-10-23","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-hz/hz.rds","set":"dead-hz","role":"hazard-shape-model"},{"file":"90_estimates/dead-hz/hm.rds","set":"dead-hz","role":"hazard-regression-model","rendered_at":"2026-10-23T13:36:12-0400","dataset_version":"built_20261023.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"40_graphs/hs.setup.dead.hz.qmd",".hvti_render_id":"e62d120b652eec300e03b8d1aff4ca8e49345d62022c5bb92f4082a799d08e7a",".hvti_source_sha256":"2c84de05f1848085693b69fc38d3b7fbe969d9254be0e56944f73d440e89120e"}</script>
 </section>
 
 </main>

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-21 08:01
+2026-10-23 13:36
 
 An `hs` job turns the risk-factor model an `hm` job fitted into
 **predictions for individual patients**, and sets those against the
@@ -76,6 +76,15 @@ if (utils::packageVersion("TemporalHazard") < "1.2.12") {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
+# The figures draw with hvtiPlotR. Checked here, before the fit, so a missing
+# package stops the render at once rather than after the fit and before the save.
+if (!requireNamespace("hvtiPlotR", quietly = TRUE)) stop("This job needs hvtiPlotR for its figures.", call. = FALSE)
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder,
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 # `hm` reads the `hz` fit through this and writes its own model back, both by
 # set, so a model can never be filed against a different set than the shapes it
 # was built on. The write is in the `save` chunk at the foot of this file.
@@ -84,7 +93,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.2
+hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -134,6 +143,12 @@ VINTAGE   <- "table2023"
 TABLE     <- "sexrace"
 
 SCALE     <- "years"
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hs-setup-expected").
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Cohort and model
@@ -176,7 +191,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261021.parquet) |
+| Source              | dataset `study` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -528,6 +543,53 @@ population at that horizon. It is a comparison, not a test — no interval
 is attached, because the expected curve carries no sampling error of its
 own here.
 
+Code
+
+``` r
+# The table above gives the two curves at HORIZONS only; the gap between them
+# can open and close in between. Both are recomputed on a grid out to the last
+# horizon, the same way: the cohort average of each patient's predicted survival
+# from the model, and us_cohort_curve() over us_matched() for the population.
+# The horizons are on the grid, so the table's points sit on the curves. A grid
+# point within rounding of a horizon is dropped for it: seq() makes 3 * 0.2 into
+# 0.6000000000000001, which unique() keeps beside 0.6, and the two would then
+# be one time to everything that reads them.
+.grid <- seq(0, max(HORIZONS), length.out = 51L)[-1L]
+.grid <- sort(c(.grid[vapply(.grid, function(t) all(abs(t - HORIZONS) > 1e-8 * max(HORIZONS)), logical(1))], HORIZONS))
+.nd <- dd[rep(seq_len(nrow(dd)), times = length(.grid)), COVARIATES, drop = FALSE]
+.nd$time <- rep(.grid, each = nrow(dd))
+# Averaged by grid position, not by time: a split on a double groups by its printed value.
+.model <- vapply(split(predict(fit, newdata = .nd, type = "survival"), rep(seq_along(.grid), each = nrow(dd))),
+                 mean, numeric(1))
+.population <- us_cohort_curve(us_matched(
+  age = d[[AGE_COL]], male = as.vector(.male), other = as.vector(.other),
+  times = .grid, id = seq_len(nrow(d)),
+  vintage = VINTAGE, table = TABLE, scale = SCALE, individual = TRUE
+))$smatched
+.curves <- data.frame(time = rep(c(0, .grid), 2L), survival = 100 * c(1, unname(.model), 1, .population),
+                      curve = rep(c("model", "population"), each = length(.grid) + 1L))
+.points <- data.frame(time = rep(obs_vs_exp$horizon, 2L),
+                      survival = 100 * c(obs_vs_exp$observed, obs_vs_exp$expected),
+                      curve = rep(c("model", "population"), each = nrow(obs_vs_exp)))
+.fig <- ggplot2::ggplot(.curves, ggplot2::aes(x = .data$time, y = .data$survival, linetype = .data$curve)) +
+  ggplot2::geom_line() +
+  ggplot2::geom_point(data = .points) +
+  ggplot2::scale_linetype_manual(values = c(model = "solid", population = "dashed"),
+                                 labels = c(model = "This cohort, model", population = "Matched population")) +
+  ggplot2::scale_y_continuous(limits = c(0, 100)) +
+  ggplot2::labs(x = tools::toTitleCase(SCALE), y = "Survival (%)", linetype = NULL) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12) +
+  ggplot2::theme(legend.position = "top")
+save_figure(.fig, "hs-setup-expected")
+.fig
+```
+
+![](assets/9abfbe33762d58149120e3edd67f3b67.png)
+
+Figure 1: Model-predicted survival of this cohort (solid) against the
+survival of a matched general population (dashed), each the cohort
+average. The points are the horizons in the table above.
+
 ## Save
 
 Code
@@ -561,9 +623,9 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-21 08:01:45 EDT |
-|  | Ended | 2026-10-21 08:01:45 EDT |
-|  | Duration | 0 s |
+| Run | Started | 2026-10-23 13:36:37 EDT |
+|  | Ended | 2026-10-23 13:36:39 EDT |
+|  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -571,15 +633,15 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 |  | Template | hs.setup |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.4.2 |
-| Dataset `built` | Version file | built_20261021.parquet |
-|  | Registered | 2026-10-21 |
+|  | hvtiRtemplates | 1.5.0 |
+| Dataset `built` | Version file | built_20261023.parquet |
+|  | Registered | 2026-10-23 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | 07a531bb5b35 |
+|  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-21 08:01:24 -0400, data built_20261021.parquet |
+|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-23 13:36:12 -0400, data built_20261023.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

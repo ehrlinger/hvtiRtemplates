@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-21 08:10
+2026-10-23 13:44
 
 Fits an ordinary least-squares model of a continuous outcome,
 untransformed or on the log scale, on one dataset or on stacked multiple
@@ -42,8 +42,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
-· rendered by gallery on gallery · hvtiRtemplates 1.4.2
+**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
+· rendered by gallery on gallery · hvtiRtemplates 1.5.0
 
 Code
 
@@ -138,7 +138,7 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261021.parquet) |
+| Source              | dataset `built` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -284,7 +284,7 @@ save_figure(.fig, "rm-linear-residuals")
 .fig
 ```
 
-![](assets/130f41fee484de20f92e7b5b4ef9c19c.png)
+![](assets/c12170111ea5d87717df55aade0e6f92.png)
 
 Figure 1: Residuals against fitted values. Under multiple imputation,
 the first imputation’s fit.
@@ -303,7 +303,7 @@ save_figure(.fig, "rm-linear-qq")
 .fig
 ```
 
-![](assets/75cec1f0202bc887d276c79a0570c6a8.png)
+![](assets/2fedbe91f4ac2db85c01c56145540f7c.png)
 
 Figure 2: Normal Q-Q plot of the residuals. Under multiple imputation,
 the first imputation’s fit.
@@ -326,8 +326,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-21 08:10:03 EDT  |
-|                 | Ended            | 2026-10-21 08:10:05 EDT  |
+| Run             | Started          | 2026-10-23 13:44:47 EDT  |
+|                 | Ended            | 2026-10-23 13:44:49 EDT  |
 |                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -336,13 +336,13 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |                 | Template         | rm.linear                |
 |                 | Subject          | los                      |
 |                 | Type             | model                    |
-|                 | hvtiRtemplates   | 1.4.2                    |
-| Dataset `built` | Version file     | built_20261021.parquet   |
-|                 | Registered       | 2026-10-21               |
+|                 | hvtiRtemplates   | 1.5.0                    |
+| Dataset `built` | Version file     | built_20261023.parquet   |
+|                 | Registered       | 2026-10-23               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | 07a531bb5b35             |
+|                 | sha256           | b236a472f1f3             |
 |                 | Manifest         | current                  |
 | Reproducibility | renv             | not active               |
 |                 | renv.lock sha256 | d09f96b6cd21             |

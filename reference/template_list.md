@@ -96,15 +96,17 @@ tl
 #> 32               rm.linear     rm               linear      analyses
 #> 33            sid.clusters    sid             clusters      analyses
 #> 34                 sid.fit    sid                  fit      analyses
-#> 35              vp.explain     vp              explain      analyses
-#> 36                  vp.fit     vp                  fit      analyses
-#> 37              vt.explain     vt              explain      analyses
-#> 38                  vt.fit     vt                  fit      analyses
-#> 39                      hp     hp                 <NA>        graphs
-#> 40          hs.concordance     hs          concordance        graphs
-#> 41                hs.setup     hs                setup        graphs
-#> 42               lp.mirror     lp               mirror        graphs
-#> # 42 templates; `call` and `file` not shown. Read them with $call and $file.
+#> 35           vp.dependence     vp           dependence      analyses
+#> 36              vp.explain     vp              explain      analyses
+#> 37                  vp.fit     vp                  fit      analyses
+#> 38           vp.individual     vp           individual      analyses
+#> 39              vt.explain     vt              explain      analyses
+#> 40                  vt.fit     vt                  fit      analyses
+#> 41                      hp     hp                 <NA>        graphs
+#> 42          hs.concordance     hs          concordance        graphs
+#> 43                hs.setup     hs                setup        graphs
+#> 44               lp.mirror     lp               mirror        graphs
+#> # 44 templates; `call` and `file` not shown. Read them with $call and $file.
 
 # Every template, where its job is written, and the call that scaffolds it.
 tl[, c("name", "folder", "call")]
@@ -143,14 +145,16 @@ tl[, c("name", "folder", "call")]
 #> 32               rm.linear      analyses
 #> 33            sid.clusters      analyses
 #> 34                 sid.fit      analyses
-#> 35              vp.explain      analyses
-#> 36                  vp.fit      analyses
-#> 37              vt.explain      analyses
-#> 38                  vt.fit      analyses
-#> 39                      hp        graphs
-#> 40          hs.concordance        graphs
-#> 41                hs.setup        graphs
-#> 42               lp.mirror        graphs
+#> 35           vp.dependence      analyses
+#> 36              vp.explain      analyses
+#> 37                  vp.fit      analyses
+#> 38           vp.individual      analyses
+#> 39              vt.explain      analyses
+#> 40                  vt.fit      analyses
+#> 41                      hp        graphs
+#> 42          hs.concordance        graphs
+#> 43                hs.setup        graphs
+#> 44               lp.mirror        graphs
 #>                                                                            call
 #> 1                              add_job("bd", subject = "study", type = "build")
 #> 2                           add_job("dc.eda", subject = "cohort", type = "eda")
@@ -186,14 +190,16 @@ tl[, c("name", "folder", "call")]
 #> 32                   add_job("rm.linear", subject = "outcome", type = "linear")
 #> 33                add_job("sid.clusters", subject = "morphology", type = "sid")
 #> 34                     add_job("sid.fit", subject = "morphology", type = "sid")
-#> 35                         add_job("vp.explain", subject = "dead", type = "vp")
-#> 36                             add_job("vp.fit", subject = "dead", type = "vp")
-#> 37                         add_job("vt.explain", subject = "dead", type = "vt")
-#> 38                             add_job("vt.fit", subject = "dead", type = "vt")
-#> 39                              add_job("hp", subject = "dead_pa", type = "hz")
-#> 40                  add_job("hs.concordance", subject = "dead_pa", type = "hz")
-#> 41                        add_job("hs.setup", subject = "dead_pa", type = "hz")
-#> 42             add_job("lp.mirror", subject = "treatment", type = "propensity")
+#> 35              add_job("vp.dependence", subject = "dead", type = "dependence")
+#> 36                         add_job("vp.explain", subject = "dead", type = "vp")
+#> 37                             add_job("vp.fit", subject = "dead", type = "vp")
+#> 38                      add_job("vp.individual", subject = "dead", type = "vp")
+#> 39                         add_job("vt.explain", subject = "dead", type = "vt")
+#> 40                             add_job("vt.fit", subject = "dead", type = "vt")
+#> 41                              add_job("hp", subject = "dead_pa", type = "hz")
+#> 42                  add_job("hs.concordance", subject = "dead_pa", type = "hz")
+#> 43                        add_job("hs.setup", subject = "dead_pa", type = "hz")
+#> 44             add_job("lp.mirror", subject = "treatment", type = "propensity")
 
 # Find a template by its qualifier, then copy its call: the follow-up jobs.
 subset(tl, qualifier == "gfup", c(name, folder, call))

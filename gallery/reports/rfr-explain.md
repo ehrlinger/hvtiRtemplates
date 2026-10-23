@@ -4,19 +4,17 @@
 
 Published
 
-2026-10-21 08:09
+2026-10-23 13:43
 
 Explains the forest the `rfr-fit` job in this set saved: which
 predictors drive it, and how.
 
 An `rfr-explain` job never grows a forest. It reads `rfr.rds`, which the
-fit job writes, and rebuilds the training data and the model from the
-forest itself. VIMP, minimal depth and the partial-dependence plots all
-describe that saved forest and no other; VarPro grows its own forests on
-the same training data, so its panel and partial describe forests VarPro
-grew, not the saved one. Each expensive step is cached on its own:
-changing how many variables get dependence plots recomputes the partials
-and nothing else.
+fit job writes. VIMP, minimal depth and the partial-dependence plots all
+describe that saved forest and no other. Each expensive step is cached
+on its own: changing how many variables get dependence plots recomputes
+the partials and nothing else. For a variable screen and VarPro
+partials, use the `vp-fit` and `vp-explain` jobs.
 
 Code
 
@@ -26,7 +24,6 @@ TYPE    <- "rf"
 .in <- knitr::current_input(dir = TRUE)
 suppressPackageStartupMessages({
   library(randomForestSRC)
-  library(varPro)
   library(ggRandomForests)
   library(hvtiRutilities)
 })
@@ -46,10 +43,6 @@ if (utils::packageVersion("randomForestSRC") < "3.7.0") {
 }
 if (utils::packageVersion("ggRandomForests") < "4.0.0") {
   stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
-       " is installed.\nUpdate it, then re-render.", call. = FALSE)
-}
-if (utils::packageVersion("varPro") < "3.2.0") {
-  stop("This job needs varPro >= 3.2.0; ", utils::packageVersion("varPro"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -81,7 +74,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.2
+hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -104,12 +97,9 @@ TOP_K <- 4
 # Demo: or name the variables yourself. NULL takes the top TOP_K by VIMP.
 PARTIAL_VARS <- NULL
 
-# Demo: seed for VIMP, VarPro and the partials. It is part of every cache key.
-# cache_fit() seeds R's generator with it before each call, and vimp() and
-# varpro() are also handed it as `seed =`, negated as randomForestSRC
-# documents. Both halves matter: varpro() draws from R's generator as well as
-# from its own seed, so the same seed after a different chunk gave different
-# importances.
+# Demo: seed for VIMP and the partials. It is part of every cache key.
+# cache_fit() seeds R's generator with it before each call, and vimp() is also
+# handed it as `seed =`, negated as randomForestSRC documents.
 SEED <- 2026
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
@@ -144,21 +134,6 @@ if (!identical(forest$family, "regr")) {
   stop("rfr.rds holds a '", forest$family, "' forest, not a regression forest.", call. = FALSE)
 }
 CACHE_DIR <- dirname(.handoff)
-
-# The training data and the model, from the forest rather than re-read. A
-# VarPro or partial call on a frame that differs from the fitted one explains a
-# model nobody fit. The forest keeps no usable formula (`$formula` is NULL and
-# `$call` holds whatever expression the fit job wrote), so the model is rebuilt
-# from the outcome names. `xvar` keeps any missing values under na.impute, and
-# varpro() drops every patient that has one, so it would describe fewer patients
-# than the forest. The values the forest imputed are put back in below, so both
-# cover the same patients. (Handing varpro() the forest's `imputed.data` as it
-# stands fails: that holds only the imputed patients.)
-frame <- cbind(stats::setNames(data.frame(forest$yvar), forest$yvar.names), forest$xvar)
-if (!is.null(forest$imputed.data)) {
-  frame[forest$imputed.indv, names(forest$imputed.data)] <- forest$imputed.data
-}
-model <- stats::reformulate(".", response = forest$yvar.names)
 ```
 
 Code
@@ -200,7 +175,7 @@ save_figure(.fig, "rfr-explain-importance", height = 7)
 .fig
 ```
 
-![](assets/8948d9cafe7f8ff1a10628b01ef745d5.png)
+![](assets/adbfdb110d2212687a4096bd0ada0c7e.png)
 
 Figure 1: Permutation importance of each predictor. Horizontal bars give
 the importance of each predictor, in one color where the importance is
@@ -261,36 +236,12 @@ if (is.null(PARTIAL_VARS)) {
   }
   code <- c(paste0(.fence, "{r}"), paste0("#| label: fig-", kind, "-", i),
             paste0("#| fig-cap: ", encodeString(caption, quote = "\"")),
-            sprintf("#| fig-width: %g", page$width), sprintf("#| fig-height: %g", page$height), ".fig", .fence)
+            sprintf("#| fig-width: %g", hvtiRtemplates:::.report_size(page$width)),
+            sprintf("#| fig-height: %g", hvtiRtemplates:::.report_size(page$height)), ".fig", .fence)
   cat(knitr::knit_child(text = code, envir = parent.frame(), quiet = TRUE), sep = "\n")
   cat("\n")
 }
 ```
-
-## VarPro
-
-VarPro is given the forest’s own data. When the fit imputed missing
-values (`NA_ACTION` was `"na.impute"`), that is the imputed data, so
-VarPro and the forest describe the same patients.
-
-Code
-
-``` r
-vp <- cache_fit("rfr-varpro", varpro(model, frame, verbose = FALSE, seed = -abs(SEED)),
-                seed = SEED, dir = CACHE_DIR, refit = REFIT)
-# Free size: one row per predictor, so the height grows with the list.
-.fig <- plot(gg_varpro(vp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
-save_figure(.fig, "rfr-explain-varpro", height = 7)
-.fig
-```
-
-![](assets/b7a707f50bb0533c3dac2f72a13c2883.png)
-
-Figure 2: VarPro importance of each predictor. Each box spans the 15th
-to the 85th percentile of the predictor’s importance, with a line at the
-median and whiskers to the 5th and 95th percentiles; blue boxes mark the
-predictors VarPro selected, gray boxes the rest, and the dashed red
-vertical line the selection cutoff.
 
 ## Dependence
 
@@ -340,9 +291,9 @@ Code
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/9b0a7d70b35252eecdcc42072bb76bac.png)
+![](assets/93f04fb04c529307eadb1d15deed3ff0.png)
 
-Figure 3: Predicted outcome against each selected predictor, as
+Figure 2: Predicted outcome against each selected predictor, as
 observed, one panel per predictor. Black filled circles are individual
 patients and the blue line a loess smooth with its gray band, drawn for
 predictors with more than five distinct values; for a categorical
@@ -378,68 +329,20 @@ Code
 .fig
 ```
 
-![](assets/25d125e137c6d4a64102455148e9b231.png)
+![](assets/f3ff2f9e4e775aec2d40836c937cac55.png)
 
-Figure 4: Partial dependence of the forest’s prediction on each selected
+Figure 3: Partial dependence of the forest’s prediction on each selected
 predictor, one panel per predictor. Black solid lines trace the partial
 effect across a continuous predictor, and dark gray bars give it at each
 level of a categorical one.
-
-Code
-
-``` r
-# unnumbered: each page below is a child chunk with its own label and caption
-# The VarPro partial, computed from the varpro fit.
-pv <- cache_fit("rfr-partial-varpro", gg_partial_varpro(object = vp, xvar.names = sel),
-                seed = SEED, dir = CACHE_DIR, refit = REFIT)
-# The manuscript theme hides the legend and its title, and the caption reads the line types from the legend.
-.cap <- paste("VarPro partial dependence on each selected predictor, one panel per predictor. For a",
-              "continuous predictor a black solid line marks the nonparametric partial effect and a black",
-              "dashed line the parametric one, as in the legend; for a categorical predictor black box",
-              "plots show the spread of the partial effect at each level.")
-# Free size, paged: one facet per predictor, two by two.
-.pages <- hvtiRtemplates:::.figure_pages(length(sel), panel_width = 3.25, panel_height = 3, page_height = 6)
-for (.i in seq_along(.pages)) {
-  .vars <- sel[.pages[[.i]]$index]
-  .fig <- plot(hvtiRtemplates:::.partial_subset(pv, .vars)) &
-    hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
-  save_figure(.fig, sprintf("rfr-explain-dependence-varpro-page-%02d", .i),
-              width = .pages[[.i]]$width, height = .pages[[.i]]$height)
-  .page_child("dependence-varpro", .i, .pages, sel, .cap)
-}
-```
-
-    Warning: Removed 28 rows containing non-finite outside the scale range
-    (`stat_boxplot()`).
-    Removed 28 rows containing non-finite outside the scale range
-    (`stat_boxplot()`).
-    Removed 28 rows containing non-finite outside the scale range
-    (`stat_boxplot()`).
-
-Code
-
-``` r
-.fig
-```
-
-    Warning: Removed 28 rows containing non-finite outside the scale range
-    (`stat_boxplot()`).
-
-![](assets/27669b808074afc913f92a51c001563b.png)
-
-Figure 5: VarPro partial dependence on each selected predictor, one
-panel per predictor. For a continuous predictor a black solid line marks
-the nonparametric partial effect and a black dashed line the parametric
-one, as in the legend; for a categorical predictor black box plots show
-the spread of the partial effect at each level.
 
 ## About this run
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-21 08:09:39 EDT |
-|  | Ended | 2026-10-21 08:09:58 EDT |
-|  | Duration | 19 s |
+| Run | Started | 2026-10-23 13:43:26 EDT |
+|  | Ended | 2026-10-23 13:43:33 EDT |
+|  | Duration | 7 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -447,13 +350,13 @@ the spread of the partial effect at each level.
 |  | Template | rfr.explain |
 |  | Subject | los |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.4.2 |
-| Dataset `built` | Version file | built_20261021.parquet |
-|  | Registered | 2026-10-21 |
+|  | hvtiRtemplates | 1.5.0 |
+| Dataset `built` | Version file | built_20261023.parquet |
+|  | Registered | 2026-10-23 |
 |  | Source file | built.rds |
-|  | sha256 | 07a531bb5b35 |
+|  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-21 08:09:29 -0400, data built_20261021.parquet |
+| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-23 13:43:16 -0400, data built_20261023.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

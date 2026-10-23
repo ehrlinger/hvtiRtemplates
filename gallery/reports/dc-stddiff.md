@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-21 08:01
+2026-10-23 13:35
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
-· rendered by gallery on gallery · hvtiRtemplates 1.4.2
+**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
+· rendered by gallery on gallery · hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -181,7 +181,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261021.parquet) |
+| Source              | dataset `built` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -542,8 +542,8 @@ rather than balance, so it is not part of this job.
 
 | Group           | Item             | Value                           |
 |:----------------|:-----------------|:--------------------------------|
-| Run             | Started          | 2026-10-21 08:00:58 EDT         |
-|                 | Ended            | 2026-10-21 08:00:59 EDT         |
+| Run             | Started          | 2026-10-23 13:35:24 EDT         |
+|                 | Ended            | 2026-10-23 13:35:25 EDT         |
 |                 | Duration         | 1 s                             |
 |                 | Status           | final                           |
 |                 | Rendered by      | gallery                         |
@@ -552,13 +552,13 @@ rather than balance, so it is not part of this job.
 |                 | Template         | dc.stddiff                      |
 |                 | Subject          | approach                        |
 |                 | Type             | balance                         |
-|                 | hvtiRtemplates   | 1.4.2                           |
-| Dataset `built` | Version file     | built_20261021.parquet          |
-|                 | Registered       | 2026-10-21                      |
+|                 | hvtiRtemplates   | 1.5.0                           |
+| Dataset `built` | Version file     | built_20261023.parquet          |
+|                 | Registered       | 2026-10-23                      |
 |                 | Source file      | built.rds                       |
 |                 | Rows kept        | 800 rows on 800 patients        |
 |                 | WHERE            | none                            |
-|                 | sha256           | 07a531bb5b35                    |
+|                 | sha256           | b236a472f1f3                    |
 |                 | Manifest         | current                         |
 | Reproducibility | Seed             | 20261006                        |
 |                 | renv             | not active                      |

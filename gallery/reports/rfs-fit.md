@@ -4,14 +4,14 @@
 
 Published
 
-2026-10-21 08:06
+2026-10-23 13:42
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
 
 An `rfs-fit` job grows a random survival forest and checks that it
 learned something: out-of-bag error by number of trees, predicted
-survival, and the Brier score over follow-up. **Importance, VarPro and
+survival, and the Brier score over follow-up. **Importance and
 dependence plots are not here.** They are the `rfs-explain` job in this
 same set, which reads the forest this job saves instead of growing its
 own, so the explanations always describe this forest.
@@ -81,8 +81,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
-· rendered by gallery on gallery · hvtiRtemplates 1.4.2
+**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
+· rendered by gallery on gallery · hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -239,7 +239,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261021.parquet) |
+| Source              | dataset `built` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -347,7 +347,7 @@ save_figure(.fig, "rfs-fit-diagnostics-error")
 .fig
 ```
 
-![](assets/b08096b1a729e8807fa121bc4ab853c0.png)
+![](assets/a6c7f5de518bc4d487e8cb66f016f19d.png)
 
 Figure 1: Out-of-bag error by number of trees. The black solid line is
 the out-of-bag error after each additional tree.
@@ -364,7 +364,7 @@ save_figure(.fig, "rfs-fit-diagnostics-survival")
 .fig
 ```
 
-![](assets/74c4498cc0949d58a3683347175a35b0.png)
+![](assets/87bd10daa0dd29798c8d02bd96160da5.png)
 
 Figure 2: Out-of-bag predicted survival, one curve per patient. Each
 step line is one patient’s predicted survival over follow-up, one color
@@ -382,7 +382,7 @@ save_figure(.fig, "rfs-fit-diagnostics-brier")
 .fig
 ```
 
-![](assets/1a7563b3b412828d00295625dbc9b004.png)
+![](assets/dfae18b8c7e3c28d0feb403a6c3d7c70.png)
 
 Figure 3: Brier score over follow-up. The black solid line is the
 out-of-bag Brier score at each time, lower being better.
@@ -418,9 +418,9 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-21 08:06:51 EDT  |
-|                 | Ended            | 2026-10-21 08:06:58 EDT  |
-|                 | Duration         | 7 s                      |
+| Run             | Started          | 2026-10-23 13:42:07 EDT  |
+|                 | Ended            | 2026-10-23 13:42:17 EDT  |
+|                 | Duration         | 11 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -428,13 +428,13 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 |                 | Template         | rfs.fit                  |
 |                 | Subject          | dead                     |
 |                 | Type             | rf                       |
-|                 | hvtiRtemplates   | 1.4.2                    |
-| Dataset `built` | Version file     | built_20261021.parquet   |
-|                 | Registered       | 2026-10-21               |
+|                 | hvtiRtemplates   | 1.5.0                    |
+| Dataset `built` | Version file     | built_20261023.parquet   |
+|                 | Registered       | 2026-10-23               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | 07a531bb5b35             |
+|                 | sha256           | b236a472f1f3             |
 |                 | Manifest         | current                  |
 | Reproducibility | Seed             | 2026                     |
 |                 | renv             | not active               |

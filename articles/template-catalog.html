@@ -87,7 +87,7 @@
 <p>Each template carries a light.</p>
 <ul>
 <li>🟢 <strong>Shipped</strong> (34): on disk and supported. Scaffold it and use it.</li>
-<li>🟡 <strong>In progress</strong> (25): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
+<li>🟡 <strong>In progress</strong> (27): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
 <li>🔴 <strong>Not yet on the way</strong> (11): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
 </h2>
@@ -363,15 +363,27 @@
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>vp-dependence</code></td>
+<td style="text-align: left;">Unsupervised VarPro: how the variables depend on each other, as a graph whose edges must beat permuted noise, checked across subsamples.</td>
+<td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "dependence")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>vp-explain</code></td>
 <td style="text-align: left;">VarPro partial dependence for the variables a vp-fit screen selected. It never fits varPro.</td>
 <td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "explain")</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>vp-fit</code></td>
 <td style="text-align: left;">A VarPro variable screen that says which variables were tested, judges selection against permuted noise of the same kind, and checks the selection across subsamples.</td>
 <td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "fit")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>vp-individual</code></td>
+<td style="text-align: left;">Individual VarPro: each patient’s local gradient for each predictor, from the fit a vp-fit screen saved. It never fits varPro.</td>
+<td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "individual")</code></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>

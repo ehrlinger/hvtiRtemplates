@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-21 08:00
+2026-10-23 13:35
 
 Replaces `descriptive/dc.general`.
 
@@ -42,8 +42,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
-· rendered by gallery on gallery · hvtiRtemplates 1.4.2
+**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
+· rendered by gallery on gallery · hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -135,7 +135,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261021.parquet) |
+| Source              | dataset `built` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -265,76 +265,134 @@ proc_contents(d)
 ```
 
     Observations: 800
-    Variables:    33
+    Variables:    41
 
-       num     variable type format                                    label
-    1    4          age  Num   <NA>                 Age at operation (years)
-    2   25     approach Char   <NA>    Surgical or transcatheter replacement
-    3    7          bmi  Num   <NA>                  Body mass index (kg/m2)
-    4   30 complication  Num   <NA>         Major postoperative complication
-    5   33     cpb_time  Num   <NA>    Cardiopulmonary bypass time (minutes)
-    6   13     creat_pr  Num   <NA>                       Creatinine (mg/dL)
-    7   14         dead  Num   <NA>                                    Death
-    8   24    discharge Char   <NA>                    Discharge destination
-    9    2      dt_surg  Num   <NA>                        Date of operation
-    10   5       female  Num   <NA>                                   Female
-    11   8       hx_chf  Num   <NA>                 History of heart failure
-    12   9        hx_dm  Num   <NA>                                 Diabetes
-    13  19    icu_hours  Num   <NA>                  Hours in intensive care
-    14  15      iv_dead  Num   <NA>  Follow-up to death or censoring (years)
-    15   3     iv_opyrs  Num   <NA>   Years from 1 January 1990 to operation
-    16  17      iv_reop  Num   <NA>         Follow-up to reoperation (years)
-    17  32      log_los  Num   <NA>  Postoperative length of stay (log days)
-    18  31          los  Num   <NA>      Postoperative length of stay (days)
-    19  11         lvef  Num   <NA>                 LV ejection fraction (%)
-    20  20         male  Num   <NA>                                     Male
-    21  29   match_pair  Num   <NA>            In a matched pair (simulated)
-    22  23     mr_grade Char   <NA> Postoperative mitral regurgitation grade
-    23  21     nonwhite  Num   <NA>                           Non-white race
-    24  10      nyha_pr  Num   <NA>                    NYHA functional class
-    25   1   patient_id Char   <NA>           Patient identifier (synthetic)
-    26  12     plvmassi  Num   <NA>                     LV mass index (g/m2)
-    27  28    prior_ops  Num   <NA>       Number of prior cardiac operations
-    28   6     race_grp Char   <NA>                                     Race
-    29  16         reop  Num   <NA>                              Reoperation
-    30  22       stroke Char   <NA>                     Postoperative stroke
-    31  26   valve_size Char   <NA>                          Prosthesis size
-    32  27   valve_type Char   <NA>                          Prosthesis type
-    33  18         vent  Num   <NA>                    Prolonged ventilation
-           class n_unique pct_missing
-    1    numeric       65         0.0
-    2  character        2         0.0
-    3    numeric      190         0.0
-    4    integer        2         0.0
-    5    numeric      120         0.0
-    6    numeric      147         9.4
-    7    integer        2         0.0
-    8  character        3         0.0
-    9       Date      766         0.0
-    10   integer        2         0.0
-    11   integer        2         0.0
-    12   integer        2         0.0
-    13   numeric       82         0.0
-    14   numeric      777         0.0
-    15   numeric      787         0.0
-    16   numeric      774         0.0
-    17   numeric       19         0.0
-    18   integer       19         0.0
-    19   numeric       53         0.0
-    20   integer        2         0.0
-    21   integer        2         0.0
-    22 character        4         0.0
-    23   integer        2         0.0
-    24   numeric        4         0.0
-    25 character      800         0.0
-    26   numeric      141         0.0
-    27   integer        4         0.0
-    28 character        3         0.0
-    29   integer        2         0.0
-    30 character        2         0.0
-    31 character        3         0.0
-    32 character        3         0.0
-    33   integer        2         0.0
+       num     variable type format
+    1    4          age  Num   <NA>
+    2   25     approach Char   <NA>
+    3    7          bmi  Num   <NA>
+    4   30 complication  Num   <NA>
+    5   33     cpb_time  Num   <NA>
+    6   13     creat_pr  Num   <NA>
+    7   14         dead  Num   <NA>
+    8   24    discharge Char   <NA>
+    9    2      dt_surg  Num   <NA>
+    10  38          e_e  Num   <NA>
+    11   5       female  Num   <NA>
+    12   8       hx_chf  Num   <NA>
+    13   9        hx_dm  Num   <NA>
+    14  19    icu_hours  Num   <NA>
+    15  15      iv_dead  Num   <NA>
+    16   3     iv_opyrs  Num   <NA>
+    17  41     iv_reint  Num   <NA>
+    18  17      iv_reop  Num   <NA>
+    19  36      la_diam  Num   <NA>
+    20  32      log_los  Num   <NA>
+    21  31          los  Num   <NA>
+    22  34        lvedd  Num   <NA>
+    23  11         lvef  Num   <NA>
+    24  35        lvesd  Num   <NA>
+    25  20         male  Num   <NA>
+    26  29   match_pair  Num   <NA>
+    27  23     mr_grade Char   <NA>
+    28  39 mv_procedure Char   <NA>
+    29  21     nonwhite  Num   <NA>
+    30  10      nyha_pr  Num   <NA>
+    31   1   patient_id Char   <NA>
+    32  12     plvmassi  Num   <NA>
+    33  28    prior_ops  Num   <NA>
+    34   6     race_grp Char   <NA>
+    35  40        reint  Num   <NA>
+    36  16         reop  Num   <NA>
+    37  37         rvsp  Num   <NA>
+    38  22       stroke Char   <NA>
+    39  26   valve_size Char   <NA>
+    40  27   valve_type Char   <NA>
+    41  18         vent  Num   <NA>
+                                                         label     class n_unique
+    1                                 Age at operation (years)   numeric       65
+    2                    Surgical or transcatheter replacement character        2
+    3                                  Body mass index (kg/m2)   numeric      190
+    4                         Major postoperative complication   integer        2
+    5                    Cardiopulmonary bypass time (minutes)   numeric      120
+    6                                       Creatinine (mg/dL)   numeric      147
+    7                                                    Death   integer        2
+    8                                    Discharge destination character        3
+    9                                        Date of operation      Date      766
+    10                                       Mitral E/e' ratio   numeric      188
+    11                                                  Female   integer        2
+    12                                History of heart failure   integer        2
+    13                                                Diabetes   integer        2
+    14                                 Hours in intensive care   numeric       82
+    15                 Follow-up to death or censoring (years)   numeric      777
+    16                  Years from 1 January 1990 to operation   numeric      787
+    17 Follow-up to reintervention, death or censoring (years)   numeric      775
+    18                        Follow-up to reoperation (years)   numeric      774
+    19                               Left atrial diameter (cm)   numeric       32
+    20                 Postoperative length of stay (log days)   numeric       19
+    21                     Postoperative length of stay (days)   integer       19
+    22                         LV end-diastolic dimension (cm)   numeric       36
+    23                                LV ejection fraction (%)   numeric       53
+    24                          LV end-systolic dimension (cm)   numeric       40
+    25                                                    Male   integer        2
+    26                           In a matched pair (simulated)   integer        2
+    27                Postoperative mitral regurgitation grade character        4
+    28                            Mitral repair or replacement character        2
+    29                                          Non-white race   integer        2
+    30                                   NYHA functional class   numeric        4
+    31                          Patient identifier (synthetic) character      800
+    32                                    LV mass index (g/m2)   numeric      141
+    33                      Number of prior cardiac operations   integer        4
+    34                                                    Race character        3
+    35                                          Reintervention   integer        2
+    36                                             Reoperation   integer        2
+    37                             RV systolic pressure (mmHg)   numeric       58
+    38                                    Postoperative stroke character        2
+    39                                         Prosthesis size character        3
+    40                                         Prosthesis type character        3
+    41                                   Prolonged ventilation   integer        2
+       pct_missing
+    1          0.0
+    2          0.0
+    3          0.0
+    4          0.0
+    5          0.0
+    6          9.4
+    7          0.0
+    8          0.0
+    9          0.0
+    10         5.4
+    11         0.0
+    12         0.0
+    13         0.0
+    14         0.0
+    15         0.0
+    16         0.0
+    17         0.0
+    18         0.0
+    19         5.8
+    20         0.0
+    21         0.0
+    22         5.4
+    23         0.0
+    24         4.6
+    25         0.0
+    26         0.0
+    27         0.0
+    28         0.0
+    29         0.0
+    30         0.0
+    31         0.0
+    32         0.0
+    33         0.0
+    34         0.0
+    35         0.0
+    36         0.0
+    37         4.2
+    38         0.0
+    39         0.0
+    40         0.0
+    41         0.0
 
 Table 2: Contents of the data: each column, its type and its label
 
@@ -359,56 +417,70 @@ Code
 proc_means(d, vars = overall_vars, stats = c("n", "nmiss", "mean", "std", "min", "max", "sum"))
 ```
 
-           variable                                   label   n nmiss       mean
-    1      iv_opyrs  Years from 1 January 1990 to operation 800     0  17.432389
-    2           age                Age at operation (years) 800     0  62.376250
-    3        female                                  Female 800     0   0.373750
-    4           bmi                 Body mass index (kg/m2) 800     0  27.902000
-    5        hx_chf                History of heart failure 800     0   0.303750
-    6         hx_dm                                Diabetes 800     0   0.218750
-    7       nyha_pr                   NYHA functional class 800     0   2.272500
-    8          lvef                LV ejection fraction (%) 800     0  51.777500
-    9      plvmassi                    LV mass index (g/m2) 800     0 121.031250
-    10     creat_pr                      Creatinine (mg/dL) 725    75   1.086152
-    11         dead                                   Death 800     0   0.556250
-    12      iv_dead Follow-up to death or censoring (years) 800     0   9.479378
-    13         reop                             Reoperation 800     0   0.250000
-    14      iv_reop        Follow-up to reoperation (years) 800     0   7.319961
-    15         vent                   Prolonged ventilation 800     0   0.315000
-    16    icu_hours                 Hours in intensive care 800     0  33.922500
-    17         male                                    Male 800     0   0.626250
-    18     nonwhite                          Non-white race 800     0   0.211250
-    19    prior_ops      Number of prior cardiac operations 800     0   0.392500
-    20   match_pair           In a matched pair (simulated) 800     0   0.593750
-    21 complication        Major postoperative complication 800     0   0.182500
-    22          los     Postoperative length of stay (days) 800     0   6.317500
-    23      log_los Postoperative length of stay (log days) 800     0   1.763026
-    24     cpb_time   Cardiopulmonary bypass time (minutes) 800     0 104.790000
-              std      min      max       sum
-    1   9.8319268  0.06600  34.9400 13945.911
-    2  12.1764123 32.00000 100.0000 49901.000
-    3   0.4841011  0.00000   1.0000   299.000
-    4   4.4563207 15.10000  44.8000 22321.600
-    5   0.4601637  0.00000   1.0000   243.000
-    6   0.4136573  0.00000   1.0000   175.000
-    7   0.7819899  1.00000   4.0000  1818.000
-    8   9.7894221 20.00000  75.0000 41422.000
-    9  29.4092912 28.00000 207.0000 96825.000
-    10  0.3555899  0.43000   2.7600   787.460
-    11  0.4971367  0.00000   1.0000   445.000
-    12  8.0874926  0.00025  34.6040  7583.503
-    13  0.4332836  0.00000   1.0000   200.000
-    14  6.6628164  0.00000  33.9340  5855.969
-    15  0.4648065  0.00000   1.0000   252.000
-    16 20.1484849  4.00000 108.0000 27138.000
-    17  0.4841011  0.00000   1.0000   501.000
-    18  0.4084507  0.00000   1.0000   169.000
-    19  0.6663323  0.00000   3.0000   314.000
-    20  0.4914395  0.00000   1.0000   475.000
-    21  0.3864977  0.00000   1.0000   146.000
-    22  2.6249394  1.00000  19.0000  5054.000
-    23  0.4032844  0.00000   2.9444  1410.421
-    24 24.6238973 35.00000 185.0000 83832.000
+           variable                                                   label   n
+    1      iv_opyrs                  Years from 1 January 1990 to operation 800
+    2           age                                Age at operation (years) 800
+    3        female                                                  Female 800
+    4           bmi                                 Body mass index (kg/m2) 800
+    5        hx_chf                                History of heart failure 800
+    6         hx_dm                                                Diabetes 800
+    7       nyha_pr                                   NYHA functional class 800
+    8          lvef                                LV ejection fraction (%) 800
+    9      plvmassi                                    LV mass index (g/m2) 800
+    10     creat_pr                                      Creatinine (mg/dL) 725
+    11         dead                                                   Death 800
+    12      iv_dead                 Follow-up to death or censoring (years) 800
+    13         reop                                             Reoperation 800
+    14      iv_reop                        Follow-up to reoperation (years) 800
+    15         vent                                   Prolonged ventilation 800
+    16    icu_hours                                 Hours in intensive care 800
+    17         male                                                    Male 800
+    18     nonwhite                                          Non-white race 800
+    19    prior_ops                      Number of prior cardiac operations 800
+    20   match_pair                           In a matched pair (simulated) 800
+    21 complication                        Major postoperative complication 800
+    22          los                     Postoperative length of stay (days) 800
+    23      log_los                 Postoperative length of stay (log days) 800
+    24     cpb_time                   Cardiopulmonary bypass time (minutes) 800
+    25        lvedd                         LV end-diastolic dimension (cm) 757
+    26        lvesd                          LV end-systolic dimension (cm) 763
+    27      la_diam                               Left atrial diameter (cm) 754
+    28         rvsp                             RV systolic pressure (mmHg) 766
+    29          e_e                                       Mitral E/e' ratio 757
+    30        reint                                          Reintervention 800
+    31     iv_reint Follow-up to reintervention, death or censoring (years) 800
+       nmiss       mean        std      min      max       sum
+    1      0  17.432389  9.8319268  0.06600  34.9400 13945.911
+    2      0  62.376250 12.1764123 32.00000 100.0000 49901.000
+    3      0   0.373750  0.4841011  0.00000   1.0000   299.000
+    4      0  27.902000  4.4563207 15.10000  44.8000 22321.600
+    5      0   0.303750  0.4601637  0.00000   1.0000   243.000
+    6      0   0.218750  0.4136573  0.00000   1.0000   175.000
+    7      0   2.272500  0.7819899  1.00000   4.0000  1818.000
+    8      0  51.777500  9.7894221 20.00000  75.0000 41422.000
+    9      0 121.031250 29.4092912 28.00000 207.0000 96825.000
+    10    75   1.086152  0.3555899  0.43000   2.7600   787.460
+    11     0   0.556250  0.4971367  0.00000   1.0000   445.000
+    12     0   9.479378  8.0874926  0.00025  34.6040  7583.503
+    13     0   0.250000  0.4332836  0.00000   1.0000   200.000
+    14     0   7.319961  6.6628164  0.00000  33.9340  5855.969
+    15     0   0.315000  0.4648065  0.00000   1.0000   252.000
+    16     0  33.922500 20.1484849  4.00000 108.0000 27138.000
+    17     0   0.626250  0.4841011  0.00000   1.0000   501.000
+    18     0   0.211250  0.4084507  0.00000   1.0000   169.000
+    19     0   0.392500  0.6663323  0.00000   3.0000   314.000
+    20     0   0.593750  0.4914395  0.00000   1.0000   475.000
+    21     0   0.182500  0.3864977  0.00000   1.0000   146.000
+    22     0   6.317500  2.6249394  1.00000  19.0000  5054.000
+    23     0   1.763026  0.4032844  0.00000   2.9444  1410.421
+    24     0 104.790000 24.6238973 35.00000 185.0000 83832.000
+    25    43   5.338705  0.8181764  3.70000   7.2000  4041.400
+    26    37   3.713237  1.0086088  2.10000   6.1000  2833.200
+    27    46   4.270955  0.6164564  2.80000   6.0000  3220.300
+    28    34  38.386423 11.7306157 10.00000  68.0000 29404.000
+    29    43  12.114531  4.4209668  0.30000  25.2000  9170.700
+    30     0   0.161250  0.3679915  0.00000   1.0000   129.000
+    31     0   8.194820  7.4723428  0.00025  34.4260  6555.856
 
 Table 3: Summary statistics of the overall variables
 
@@ -724,8 +796,8 @@ unless `ID_COL` is set under Study choices.
 
 | Group           | Item             | Value                     |
 |:----------------|:-----------------|:--------------------------|
-| Run             | Started          | 2026-10-21 08:00:53 EDT   |
-|                 | Ended            | 2026-10-21 08:00:53 EDT   |
+| Run             | Started          | 2026-10-23 13:35:17 EDT   |
+|                 | Ended            | 2026-10-23 13:35:17 EDT   |
 |                 | Duration         | 0 s                       |
 |                 | Status           | final                     |
 |                 | Rendered by      | gallery                   |
@@ -734,13 +806,13 @@ unless `ID_COL` is set under Study choices.
 |                 | Template         | dc.general                |
 |                 | Subject          | cohort                    |
 |                 | Type             | eda                       |
-|                 | hvtiRtemplates   | 1.4.2                     |
-| Dataset `built` | Version file     | built_20261021.parquet    |
-|                 | Registered       | 2026-10-21                |
+|                 | hvtiRtemplates   | 1.5.0                     |
+| Dataset `built` | Version file     | built_20261023.parquet    |
+|                 | Registered       | 2026-10-23                |
 |                 | Source file      | built.rds                 |
 |                 | Rows kept        | 800 rows on 800 patients  |
 |                 | WHERE            | none                      |
-|                 | sha256           | 07a531bb5b35              |
+|                 | sha256           | b236a472f1f3              |
 |                 | Manifest         | current                   |
 | Reproducibility | renv             | not active                |
 |                 | renv.lock sha256 | d09f96b6cd21              |

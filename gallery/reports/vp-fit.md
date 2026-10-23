@@ -1,0 +1,725 @@
+# VarPro: fit
+
+# VarPro: fit
+
+Published
+
+2026-10-23 13:44
+
+Gallery job on the synthetic cohort: a VarPro screen of survival after
+operation (iv_dead, dead) on the nine preoperative predictors rfs-fit
+grows on.
+
+A `vp-fit` job runs VarPro, a rule-based variable screen, and reports
+what it could and could not tell. It needs only the data and an outcome:
+VarPro grows its own forests, and no other job in the set has to run
+first.
+
+The report answers three questions VarPro’s own importance plot cannot.
+**Was each variable tested?** VarPro’s importance z is zero for a
+variable tested in fewer than about one tree in ten, so z = 0 means
+*untested*, not unimportant. **Does it beat noise?** Permuted copies of
+real candidates are added before the fit, and a variable is selected
+only when it beats every tested copy of its own kind. **Does the
+selection hold?** The screen is refitted on subsamples of the patients
+and the share of refits selecting each variable is reported.
+
+The selected set is saved for a later model job. `vp-explain` in this
+set draws VarPro’s partial dependence for it.
+
+This template is **in flight**: it is built from one study’s screen, and
+a second study running it through to its stability section is what moves
+it to shipped.
+
+Code
+
+``` r
+SUBJECT <- "dead"
+TYPE    <- "vp"
+.in <- knitr::current_input(dir = TRUE)
+suppressPackageStartupMessages({
+  library(varPro)
+  library(ggRandomForests)
+  library(hvtiRutilities)
+})
+# One thread, so a fit reproduces from machine to machine. Left unset,
+# randomForestSRC, which varPro grows its forests with, runs on every core its
+# OpenMP build can see, and on a multi-core server a varPro result changed with
+# the thread count with every seed held fixed. mc.cores does the same for
+# varPro's own workers, which rf.cores does not reach.
+options(rf.cores = 1L, mc.cores = 1L)
+# The versions this template was verified against on 2026-10-21. Below them a
+# call here can fail or change meaning, and the message would arrive mid-render
+# rather than here.
+if (utils::packageVersion("randomForestSRC") < "3.7.0") {
+  stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+if (utils::packageVersion("varPro") < "3.2.0") {
+  stop("This job needs varPro >= 3.2.0; ", utils::packageVersion("varPro"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+if (utils::packageVersion("ggRandomForests") < "4.0.0") {
+  stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+# Early 4.0.0 builds carry the same version string and lack varpro_coverage(),
+# so the floor above cannot tell them apart. Check the function itself.
+if (!"varpro_coverage" %in% getNamespaceExports("ggRandomForests")) {
+  stop("This job needs a ggRandomForests that exports varpro_coverage() (4.0.0-rc9 or later).\n",
+       "Update it, then re-render.", call. = FALSE)
+}
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. Here that is a screen of the template's placeholder
+# outcome and candidates, whose tables look exactly like a result.
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
+# `vp-fit` writes vp.rds and `vp-explain` reads it back, both by set. The write
+# is the `save` chunk near the foot of this file.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
+```
+
+**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
+· rendered by gallery on gallery · hvtiRtemplates 1.5.0
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+Code
+
+``` r
+# Demo: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
+
+# Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
+ANALYSIS_SET <- NULL
+
+# Demo: rows to keep, dplyr::filter() style, or NULL to keep every row:
+#   WHERE <- quote(age >= 18)
+#   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
+WHERE <- NULL
+
+# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "patient_id"
+
+# Demo: what makes a row unique; one row per patient unless repeated measures
+# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+KEY <- ID
+
+# Optional, and needs no edit: NULL reads the cohort alone. To join one
+# registered ancillary dataset (echoes, labs), name it in JOIN. The cohort
+# above decides the patients, one row each; the joined records of other
+# patients are dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs.
+#   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
+#     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
+#     or "nearest" with to = a cohort date column). A tie stops: picking one
+#     record silently would be a hidden choice. This job screens one row per
+#     patient, so a JOIN without REDUCE stops here.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
+
+# Demo: the outcome, named one of two ways.
+#   A survival screen names TIME and EVENT (coded 1 = event, 0 = censored)
+#   and leaves RESPONSE NULL.
+#   A classification or regression screen sets TIME and EVENT to NULL and
+#   names RESPONSE. A factor, text or 0/1 column screens as classification;
+#   any other number as regression.
+TIME     <- "iv_dead"
+EVENT    <- "dead"
+RESPONSE <- NULL
+
+# Demo: the candidate predictors. Name them rather than taking every column: a
+# built dataset carries identifiers, dates and derived outcomes, and a screen
+# will select a date that quietly encodes follow-up.
+PREDICTORS <- c("age", "female", "bmi", "hx_chf", "hx_dm", "nyha_pr", "lvef", "plvmassi", "creat_pr")
+
+# Demo: how many permuted noise columns to add, split evenly between
+# categorical and continuous candidates. A variable is selected only when it
+# beats every TESTED noise column of its kind, so too few columns make a
+# lenient bar. 20 is what the screen behind this template used.
+NOISE_N <- 20
+
+# Demo: the share of trees a variable must be scored in to count as tested.
+# 0.1 matches varPro's own trimming: below it, z is 0 by construction.
+TRIM <- 0.1
+
+# Demo: varPro's forest. NVAR caps how many variables get release rules, and
+# counts the noise columns too; with SPLIT_WEIGHT = TRUE a guided first forest
+# picks them, and the rest are cut before any rule is built (104 of 154 terms
+# in the screen behind this template). Those cut variables show as not eligible below,
+# which is not evidence of no effect. To give every candidate rules, set NVAR
+# to at least length(PREDICTORS) + NOISE_N and SPLIT_WEIGHT to FALSE.
+NTREE <- 500
+NVAR <- 30
+SPLIT_WEIGHT <- TRUE
+
+# Demo: the stability check. REPEATS refits, each on SUBSAMPLE of the patients
+# drawn without replacement and with a fresh noise draw. 0 skips it; it costs
+# REPEATS times one fit.
+REPEATS <- 5
+SUBSAMPLE <- 0.632
+
+# Demo: the seed. It is part of every cache key, seeds R's generator before
+# each random step, and is handed to varpro() as `seed =`, negated as
+# randomForestSRC documents. Both halves matter: varpro() draws from R's
+# generator as well as from its own seed.
+SEED <- 2026
+
+# Set TRUE after changing a choice above. A cache whose inputs changed stops the
+# render instead of returning the old result; TRUE recomputes only the caches
+# that are out of date.
+REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("vp-fit-coverage"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
+```
+
+## Cohort
+
+Code
+
+``` r
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
+knitr::kable(job_data$record, col.names = c("Data", ""))
+# One outcome, named one way. A screen given both would have to guess which
+# question it was asked.
+.survival <- !is.null(TIME) && !is.null(EVENT) && is.null(RESPONSE)
+if (!.survival && !(is.null(TIME) && is.null(EVENT) && !is.null(RESPONSE))) {
+  stop("Name either TIME and EVENT (a survival screen) or RESPONSE (classification or regression), ",
+       "not both and not neither.", call. = FALSE)
+}
+.outcome <- c(TIME, EVENT, RESPONSE)
+.outcomes <- intersect(.outcome, PREDICTORS)
+if (length(.outcomes)) {
+  stop("Do not include outcome variable(s) in PREDICTORS: ", paste(.outcomes, collapse = ", "), ".", call. = FALSE)
+}
+.duplicated <- unique(PREDICTORS[duplicated(PREDICTORS)])
+if (length(.duplicated)) {
+  stop("PREDICTORS names a variable more than once: ", paste(.duplicated, collapse = ", "), ".", call. = FALSE)
+}
+# A screen must not be handed an identifier. It would select who a patient is,
+# not what is true of them, and the saved fit keeps its data, so the
+# identifier would be written into vp.rds.
+.selection <- attr(job_data$record, "selection")
+.identifiers <- PREDICTORS[tolower(PREDICTORS) %in% tolower(c(.selection$id, .selection$key))]
+if (length(.identifiers)) {
+  stop("Do not include the patient identifier or a KEY column in PREDICTORS: ",
+       paste(.identifiers, collapse = ", "), ".", call. = FALSE)
+}
+if (any(tolower(.outcome) == tolower(.selection$id))) {
+  stop("The patient identifier (", .selection$id, ") cannot be an outcome of this job.", call. = FALSE)
+}
+.missing <- setdiff(c(.outcome, PREDICTORS), names(d))
+if (length(.missing)) {
+  stop("Not in the data this job read: ", paste(.missing, collapse = ", "), call. = FALSE)
+}
+d <- d[, c(.outcome, PREDICTORS), drop = FALSE]
+
+# A screen cannot learn from a patient with no outcome.
+.no_outcome <- Reduce(`|`, lapply(d[.outcome], is.na))
+if (any(.no_outcome)) {
+  stop(sum(.no_outcome), " patient(s) have no outcome. Resolve them in the dataset build; the screen will not.",
+       call. = FALSE)
+}
+if (.survival) {
+  # randomForestSRC reads a status above 1 as a competing event, so a 1/2
+  # coding, which survival::Surv() accepts, would screen a competing-risks
+  # outcome without a word. Refuse it here instead.
+  if (!all(d[[EVENT]] %in% c(0, 1))) {
+    stop(EVENT, " must be coded 0 and 1 (1 = event); found ",
+         paste(sort(unique(d[[EVENT]])), collapse = ", "), ".", call. = FALSE)
+  }
+  .family <- "survival"
+} else {
+  .y <- d[[RESPONSE]]
+  if (is.character(.y) || is.logical(.y) || is.factor(.y) || (is.numeric(.y) && all(.y %in% c(0, 1)))) {
+    # varPro screens a factor outcome as classification and a number as
+    # regression, so a 0/1 outcome left numeric would be screened as a
+    # continuous one. It is converted here, and the report says so.
+    if (!is.factor(.y)) {
+      d[[RESPONSE]] <- factor(.y)
+      cat(RESPONSE, "converted to a factor: screened as classification.\n")
+    }
+    .family <- "classification"
+  } else if (is.numeric(.y)) {
+    .family <- "regression"
+  } else {
+    stop(RESPONSE, " is neither a number, text nor a factor, so it cannot be screened.", call. = FALSE)
+  }
+}
+.analysis <- if (.survival) {
+  list(time = list(variable = TIME), event = list(variable = EVENT, event = 1L, censored = 0L))
+} else {
+  list(outcome = list(variable = RESPONSE, kind = if (.family == "classification") "classification" else "continuous"))
+}
+
+# A forest splits a text column only as a factor, so text predictors are
+# converted here, and named, rather than left for the fit to refuse or coerce.
+.chr <- PREDICTORS[vapply(d[PREDICTORS], is.character, logical(1L))]
+if (length(.chr)) {
+  d[.chr] <- lapply(d[.chr], factor)
+  cat("Text predictors converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
+}
+```
+
+| Data                |                                          |
+|:--------------------|:-----------------------------------------|
+| Source              | dataset `built` (built_20261023.parquet) |
+| Rows read           | 800                                      |
+| ID                  | `patient_id`                             |
+| Identifiers dropped | none                                     |
+| Rows kept           | 800 rows on 800 patients                 |
+
+Table 1: The data this job read
+
+Code
+
+``` r
+# unnumbered: its child chunk carries its own label and caption
+if (!is.null(job_data$attrition)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-data-attrition",
+    paste0("#| tbl-cap: ", encodeString(paste0("Analysis set `", ANALYSIS_SET, "`: exclusions, in order"), quote = "\"")),
+    "knitr::kable(job_data$attrition)", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
+Code
+
+``` r
+# varpro() drops every patient with a missing value, so the screen would
+# describe fewer patients than this report claims. They are dropped here
+# instead, and counted, before the fit sees the data.
+.empty <- PREDICTORS[vapply(d[PREDICTORS], function(x) all(is.na(x)), logical(1L))]
+if (length(.empty)) {
+  stop("PREDICTORS names a column with no values: ", paste(.empty, collapse = ", "),
+       ". Remove it from PREDICTORS.", call. = FALSE)
+}
+.missing_values <- hvtiRtemplates:::.missing_cases(d, TIME = TIME, EVENT = EVENT, RESPONSE = RESPONSE,
+                                                   PREDICTORS = PREDICTORS, action = "drop")
+d <- d[stats::complete.cases(d), , drop = FALSE]
+.cohort <- list(n = as.integer(nrow(d)))
+if (.survival) {
+  .cohort$n_events <- as.integer(sum(d[[EVENT]] == 1))
+  .cohort$n_censored <- as.integer(sum(d[[EVENT]] == 0))
+}
+knitr::kable(.missing_values)
+```
+
+| Variable       | Setting    | Missing                              |
+|:---------------|:-----------|:-------------------------------------|
+| creat_pr       | PREDICTORS | 75                                   |
+| Complete cases |            | 725 of 800 rows analyzed; 75 dropped |
+
+Table 2: Missing values in the screen’s variables
+
+## Noise
+
+Code
+
+``` r
+# Each noise column is a permuted copy of a real candidate: it keeps that
+# candidate's values and loses any link to the outcome, so whatever importance
+# it earns is what chance alone earns. Half the copies come from categorical
+# candidates and half from continuous ones, as far as each kind allows,
+# because a variable is judged against noise of its own kind.
+#
+# The kind rule is varpro_coverage()'s: a factor, text or logical column, or a
+# number with at most 5 distinct values, is categorical.
+vp_kind <- function(x) {
+  if (is.factor(x) || is.character(x) || is.logical(x) || length(unique(stats::na.omit(x))) <= 5L) {
+    "categorical"
+  } else {
+    "continuous"
+  }
+}
+vp_add_noise <- function(d, predictors, n, seed) {
+  kinds <- vapply(d[predictors], vp_kind, "")
+  pools <- split(predictors, kinds)
+  n_cat <- if (length(pools$categorical) && length(pools$continuous)) {
+    n %/% 2L
+  } else if (length(pools$categorical)) {
+    n
+  } else {
+    0L
+  }
+  set.seed(abs(seed))
+  draw <- function(pool, k) if (k == 0L) character() else pool[sample.int(length(pool), k, replace = k > length(pool))]
+  src <- c(draw(pools$categorical, n_cat), draw(pools$continuous, n - n_cat))
+  for (i in seq_along(src)) {
+    set.seed(abs(seed) + i)
+    d[[paste0("noise", i, "_", src[i])]] <- sample(d[[src[i]]])
+  }
+  d
+}
+if (NOISE_N < 1) {
+  stop("NOISE_N must be at least 1: the selection rule needs noise to beat.", call. = FALSE)
+}
+if (!(SUBSAMPLE > 0 && SUBSAMPLE < 1)) {
+  stop("SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).", call. = FALSE)
+}
+if (REPEATS > 0 && floor(SUBSAMPLE * nrow(d)) < 2) {
+  stop("SUBSAMPLE of ", nrow(d), " patients leaves fewer than 2 for a refit. Raise SUBSAMPLE or set REPEATS to 0.", call. = FALSE)
+}
+# The coverage table finds noise by the "noise" prefix, so a real candidate
+# named that way would be judged as noise.
+.noisy <- grep("^noise", PREDICTORS, value = TRUE)
+if (length(.noisy)) {
+  stop("Candidate(s) whose names start with \"noise\", which this job reserves for its noise columns: ",
+       paste(.noisy, collapse = ", "), ". Rename them in the dataset build.", call. = FALSE)
+}
+d_noise <- vp_add_noise(d, PREDICTORS, NOISE_N, SEED)
+model <- if (.survival) {
+  stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ ."))
+} else {
+  stats::as.formula(paste0(RESPONSE, " ~ ."))
+}
+# The saved fit keeps this formula, and a formula keeps the environment it was
+# made in; set it, so a job run anywhere else does not write every object
+# beside the formula, `job_data` and its patient IDs included, into vp.rds.
+environment(model) <- globalenv()
+```
+
+## Fit
+
+Code
+
+``` r
+# The selection rule. A real variable is selected when it is tested and its z
+# beats every TESTED noise column of its kind. varPro's own cutoff (z > 0.79)
+# does not carry from one fit to another, because z shrinks as more variables
+# share each tree; noise in the same fit shrinks with it.
+#
+# The categorical bar needs care. Categorical noise is rarely tested, and when
+# it is it almost always scores z = 0 (in the repeats of the screen behind this template: none
+# tested in 20 of 40, all zero in 18). A bar of 0 lets any tested categorical
+# variable through, so a categorical bar of 0, or one with no categorical
+# noise tested, is replaced by the continuous bar. The continuous bar is the
+# stricter one, since continuous noise picks up split-point bias, so the rule
+# errs toward missing a real categorical effect rather than admitting a false
+# one. A continuous bar is never borrowed: when no continuous noise sets a bar
+# above 0, no continuous variable is selected, because nothing calibrates it.
+# The table names the bar each variable was judged against.
+vp_judge <- function(cov) {
+  # varpro_coverage() brings its own noise_cut and selected; this rule replaces both, so one bar remains.
+  cov$noise_cut <- NULL
+  noise <- cov$noise & cov$tested
+  # A bar is usable only above 0: noise that scores 0 bars nothing.
+  bar_of <- function(k) {
+    z <- cov$z[noise & cov$kind == k]
+    z <- z[!is.na(z)]
+    if (length(z) && max(z) > 0) max(z) else NA_real_
+  }
+  bar_cont <- bar_of("continuous")
+  bar_cat <- bar_of("categorical")
+  fallback <- is.na(bar_cat) && !is.na(bar_cont)
+  if (fallback) bar_cat <- bar_cont
+  cov$bar <- ifelse(cov$kind == "categorical", bar_cat, bar_cont)
+  cov$bar_from <- ifelse(cov$kind == "categorical", if (fallback) "continuous (fallback)" else "categorical", "continuous")
+  cov$bar_from[is.na(cov$bar)] <- "no usable noise bar"
+  cov$selected <- !cov$noise & cov$tested & (cov$z > cov$bar) %in% TRUE
+  cov
+}
+```
+
+Code
+
+``` r
+# cache_fit() writes <dir>/<name>.rds and its default dir is the study's
+# estimates folder, not this set's, so every call here names the set's.
+CACHE_DIR <- dirname(set_path("estimates", "vp.rds"))
+fit <- cache_fit(
+  "vp-fit",
+  varpro(model, d_noise, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, verbose = FALSE, cores = 1L,
+         seed = -abs(SEED)),
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+)
+```
+
+## Coverage
+
+Every candidate, and whether VarPro could test it. A variable is
+**eligible** when VarPro built release rules for it; one that is not was
+cut by the split weights or `NVAR` before any rule was built. It is
+**tested** when it was scored in at least `TRIM` of the trees; below
+that its z is 0 by construction, which is no evidence of no effect. It
+is **selected** when it is tested and its z beats the bar named in the
+last columns.
+
+Code
+
+``` r
+# varpro_coverage() samples release rules, so it is seeded too.
+set.seed(abs(SEED))
+# vp_judge() replaces varpro_coverage()'s own selection, which reads an empty noise check as "select every tested
+# row", so its warning about that case would mislead here: vp_judge() selects nothing then, and says so.
+cov <- vp_judge(withCallingHandlers(
+  ggRandomForests::varpro_coverage(fit, by = "variable", trim = TRIM, noise = "^noise"),
+  warning = function(w) {
+    if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+  }
+))
+.real <- cov[!cov$noise, ]
+knitr::kable(data.frame(
+  variable = .real$variable, kind = .real$kind, eligible = .real$eligible, trees = .real$n_trees,
+  coverage = round(.real$coverage, 3), z = round(.real$z, 3), tested = .real$tested,
+  bar = round(.real$bar, 3), judged_against = .real$bar_from, selected = .real$selected
+))
+```
+
+| variable | kind | eligible | trees | coverage | z | tested | bar | judged_against | selected |
+|:---|:---|:---|---:|---:|---:|:---|---:|:---|:---|
+| age | continuous | TRUE | 500 | 1.000 | 2.778 | TRUE | NA | no usable noise bar | FALSE |
+| hx_chf | categorical | TRUE | 500 | 1.000 | 3.496 | TRUE | 0.694 | categorical | TRUE |
+| lvef | continuous | TRUE | 500 | 1.000 | 1.379 | TRUE | NA | no usable noise bar | FALSE |
+| plvmassi | continuous | TRUE | 500 | 1.000 | 0.926 | TRUE | NA | no usable noise bar | FALSE |
+| creat_pr | continuous | TRUE | 500 | 1.000 | 0.795 | TRUE | NA | no usable noise bar | FALSE |
+| hx_dm | categorical | TRUE | 483 | 0.966 | 1.347 | TRUE | 0.694 | categorical | TRUE |
+| female | categorical | TRUE | 0 | 0.000 | NA | FALSE | 0.694 | categorical | FALSE |
+| bmi | continuous | TRUE | 0 | 0.000 | NA | FALSE | NA | no usable noise bar | FALSE |
+| nyha_pr | categorical | TRUE | 0 | 0.000 | NA | FALSE | 0.694 | categorical | FALSE |
+
+Table 3: Coverage, importance and selection of each candidate, most
+covered first
+
+Code
+
+``` r
+# A candidate varPro dropped from its data altogether, a constant column say,
+# is counted as a candidate and nothing more.
+knitr::kable(data.frame(
+  step = c("Candidates", "Eligible", "Tested", "Selected", "Noise columns", "Noise tested"),
+  variables = c(length(PREDICTORS), sum(.real$eligible), sum(.real$tested), sum(.real$selected),
+                sum(cov$noise), sum(cov$noise & cov$tested))
+))
+```
+
+| step          | variables |
+|:--------------|----------:|
+| Candidates    |         9 |
+| Eligible      |         9 |
+| Tested        |         6 |
+| Selected      |         2 |
+| Noise columns |        20 |
+| Noise tested  |         2 |
+
+Table 4: How the candidates become the selected set
+
+Code
+
+``` r
+.plot_cov <- cov[cov$eligible & !is.na(cov$z), ]
+.plot_cov$source <- ifelse(.plot_cov$noise, "noise", "real")
+.bars <- unique(.plot_cov[!is.na(.plot_cov$bar), c("kind", "bar")])
+.fig <- ggplot2::ggplot(.plot_cov, ggplot2::aes(x = coverage, y = z, color = source)) +
+  ggplot2::geom_point() +
+  ggplot2::geom_hline(data = .bars, ggplot2::aes(yintercept = bar), linetype = "dashed") +
+  ggplot2::geom_vline(xintercept = TRIM, linetype = "dotted") +
+  ggplot2::facet_wrap(~kind) +
+  ggplot2::scale_color_manual(values = c(noise = "gray60", real = "black")) +
+  ggplot2::labs(x = "Coverage (share of trees scored)", y = "Importance (z)") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "vp-fit-coverage", width = 6.5)
+.fig
+```
+
+![](assets/e52bcb6cff83b43140bc268b38d7b570.png)
+
+Figure 1: Importance against coverage for every eligible variable, one
+panel per kind. Black points are real candidates and gray points
+permuted noise; the dashed horizontal line is the bar a real variable
+must beat and the dotted vertical line the coverage below which a
+variable is untested.
+
+Code
+
+``` r
+# Free size: one row per variable, so the height grows with the list.
+.fig <- plot(gg_varpro(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "vp-fit-varpro", height = 7)
+.fig
+```
+
+![](assets/b9d18cb0e7623d2a6a79593ea44207fe.png)
+
+Figure 2: VarPro’s own importance plot, noise columns included. Each box
+spans the 15th to the 85th percentile of a variable’s per-tree
+importance, with a line at the median and whiskers to the 5th and 95th
+percentiles; the dashed red line is varPro’s default cutoff, which is
+not the selection rule in this report.
+
+## Stability
+
+The screen refitted `REPEATS` times, each on a subsample of the patients
+drawn without replacement and with a fresh noise draw. A variable
+selected in most refits holds up; one selected once in a while is the
+screen’s own noise.
+
+Code
+
+``` r
+# Each refit is cached on its own, so raising REPEATS computes only the new
+# ones. Redrawing the noise alone would hold the patients fixed and understate
+# how much the selection moves, so each refit also draws its patients.
+.stab <- data.frame(r = integer(), variable = character(), selected = logical(), tested = logical())
+if (REPEATS > 0) {
+  .stab <- do.call(rbind, lapply(seq_len(REPEATS), function(r) {
+    set.seed(abs(SEED) + r)
+    rows <- sort(sample.int(nrow(d), floor(SUBSAMPLE * nrow(d))))
+    dr <- vp_add_noise(d[rows, , drop = FALSE], PREDICTORS, NOISE_N, SEED + r)
+    fr <- cache_fit(
+      sprintf("vp-repeat-%02d", r),
+      varpro(model, dr, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, verbose = FALSE, cores = 1L,
+             seed = -abs(SEED + r)),
+      seed = SEED + r, dir = CACHE_DIR, refit = REFIT
+    )
+    set.seed(abs(SEED) + r)
+    # As for the full fit: vp_judge() makes the selection, so varpro_coverage()'s empty-noise warning is muffled.
+    cr <- vp_judge(withCallingHandlers(
+      ggRandomForests::varpro_coverage(fr, by = "variable", trim = TRIM, noise = "^noise"),
+      warning = function(w) {
+        if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+      }
+    ))
+    cr <- cr[!cr$noise, ]
+    data.frame(r = r, variable = cr$variable, selected = cr$selected, tested = cr$tested)
+  }))
+  .per <- tapply(.stab$selected, .stab$r, sum)
+  cat("Selected per refit: ", min(.per), " to ", max(.per), " variables.\n", sep = "")
+  # Over REPEATS, not over the refits a variable appears in: a refit that drops a variable counts against it.
+  .n_tested <- tapply(.stab$tested, .stab$variable, sum)
+  .freq <- data.frame(
+    variable = names(.n_tested),
+    share_tested = as.vector(.n_tested) / REPEATS,
+    share_selected = as.vector(tapply(.stab$selected, .stab$variable, sum)[names(.n_tested)]) / REPEATS
+  )
+  .freq <- .freq[order(-.freq$share_selected, -.freq$share_tested), ]
+  knitr::kable(.freq, digits = 2, row.names = FALSE)
+} else {
+  cat("Skipped: REPEATS is 0.\n")
+}
+```
+
+    Selected per refit: 3 to 5 variables.
+
+| variable | share_tested | share_selected |
+|:---------|-------------:|---------------:|
+| age      |          1.0 |            1.0 |
+| hx_chf   |          1.0 |            1.0 |
+| lvef     |          1.0 |            0.8 |
+| hx_dm    |          1.0 |            0.6 |
+| plvmassi |          0.8 |            0.4 |
+| creat_pr |          0.6 |            0.2 |
+| bmi      |          0.0 |            0.0 |
+| female   |          0.0 |            0.0 |
+| nyha_pr  |          0.0 |            0.0 |
+
+Table 5: How often each candidate was tested and selected across the
+refits
+
+## Reading the result
+
+**Untested is not unimportant.** VarPro scores a variable by a trimmed
+mean of its importance in each tree, and a tree with no usable rule for
+the variable counts as zero. A variable tested in fewer than `TRIM` of
+the trees therefore scores exactly 0. A variable that is not eligible
+was never tested at all. Neither is evidence of no effect; the variable
+simply was not examined.
+
+**Selected means it beat chance in this fit.** The bar is the best score
+any tested noise column of the same kind reached. A categorical variable
+is held to the continuous bar whenever categorical noise sets no bar of
+its own, which makes the rule strict for categorical variables.
+
+**This is a screen, not a selection.** It keeps everything it could not
+rule out, and its settings matter: guided split weights and `NVAR`
+decide which variables are examined at all. A selection would also need
+the unguided screen (`SPLIT_WEIGHT <- FALSE`), the stability above, and
+ideally cross-validation to agree. Read the stability table before the
+coverage table: a variable selected in the full fit but rarely in the
+refits is a weak candidate.
+
+Code
+
+``` r
+# The product of this job, and what vp-explain reads: the fit, its judged
+# coverage and the selected set, in one file, so they cannot drift apart. It is
+# separate from the cache on purpose: cache_fit() stores a keyed record, so the
+# cache is this job's internals and this file is its interface. `family` is
+# informational: vp-explain reads the family from the fit itself.
+vp_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
+  list(fit = fit, coverage = cov, selected = .real$variable[.real$selected], family = .family),
+  data = .provenance_data,
+  analysis = .analysis,
+  cohort = .cohort,
+  # vp-explain takes the rows, ID and KEY of this screen from this record.
+  selection = attr(job_data$record, "selection")
+)
+saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
+```
+
+## About this run
+
+| Group           | Item             | Value                    |
+|:----------------|:-----------------|:-------------------------|
+| Run             | Started          | 2026-10-23 13:43:40 EDT  |
+|                 | Ended            | 2026-10-23 13:44:29 EDT  |
+|                 | Duration         | 49 s                     |
+|                 | Status           | final                    |
+|                 | Rendered by      | gallery                  |
+|                 | Host             | gallery                  |
+| Job             | File             | vp.fit.dead.vp.qmd       |
+|                 | Template         | vp.fit                   |
+|                 | Subject          | dead                     |
+|                 | Type             | vp                       |
+|                 | hvtiRtemplates   | 1.5.0                    |
+| Dataset `built` | Version file     | built_20261023.parquet   |
+|                 | Registered       | 2026-10-23               |
+|                 | Source file      | built.rds                |
+|                 | Rows kept        | 800 rows on 800 patients |
+|                 | WHERE            | none                     |
+|                 | sha256           | b236a472f1f3             |
+|                 | Manifest         | current                  |
+| Reproducibility | Seed             | 2026                     |
+|                 | renv             | not active               |
+|                 | renv.lock sha256 | d09f96b6cd21             |

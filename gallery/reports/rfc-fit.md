@@ -4,17 +4,17 @@
 
 Published
 
-2026-10-21 08:08
+2026-10-23 13:42
 
 Gallery job on the synthetic cohort: major postoperative complication
 (complication, 0/1).
 
 An `rfc-fit` job grows a classification forest and checks that it
 learned something: out-of-bag error by number of trees, and the ROC
-curve with its AUC. **Importance, VarPro and dependence plots are not
-here.** They are the `rfc-explain` job in this same set, which reads the
-forest this job saves instead of growing its own, so the explanations
-always describe this forest.
+curve with its AUC. **Importance and dependence plots are not here.**
+They are the `rfc-explain` job in this same set, which reads the forest
+this job saves instead of growing its own, so the explanations always
+describe this forest.
 
 Old `rfsrc.*` and `rf.*` jobs map onto three prefixes by outcome, read
 from the job’s fit call and not from its name: a survival outcome is
@@ -81,8 +81,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
-· rendered by gallery on gallery · hvtiRtemplates 1.4.2
+**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
+· rendered by gallery on gallery · hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -246,7 +246,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261021.parquet) |
+| Source              | dataset `built` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -374,7 +374,7 @@ save_figure(.fig, "rfc-fit-diagnostics-error")
 .fig
 ```
 
-![](assets/c093122dbc6a39036c441f48a38a0a71.png)
+![](assets/7d6e4c25e9dd98cc4d837c4bc8bec8cd.png)
 
 Figure 1: Out-of-bag error by number of trees, overall and per class.
 Each solid line traces the error rate of one outcome after each
@@ -394,7 +394,7 @@ save_figure(.fig, "rfc-fit-diagnostics-roc")
 .fig
 ```
 
-![](assets/6b063df63f45ccdb3632e8e3720f12ce.png)
+![](assets/af8c8c1b1022d0062f9a95874a91a0c8.png)
 
 Figure 2: Out-of-bag ROC curve for the chosen class against the rest.
 The black solid line is the curve, the red dashed diagonal the line of
@@ -441,9 +441,9 @@ saveRDS(forest, set_path("estimates", "rfc.rds"))
 
 | Group           | Item             | Value                       |
 |:----------------|:-----------------|:----------------------------|
-| Run             | Started          | 2026-10-21 08:08:51 EDT     |
-|                 | Ended            | 2026-10-21 08:08:55 EDT     |
-|                 | Duration         | 4 s                         |
+| Run             | Started          | 2026-10-23 13:42:48 EDT     |
+|                 | Ended            | 2026-10-23 13:42:53 EDT     |
+|                 | Duration         | 5 s                         |
 |                 | Status           | final                       |
 |                 | Rendered by      | gallery                     |
 |                 | Host             | gallery                     |
@@ -451,13 +451,13 @@ saveRDS(forest, set_path("estimates", "rfc.rds"))
 |                 | Template         | rfc.fit                     |
 |                 | Subject          | complication                |
 |                 | Type             | rf                          |
-|                 | hvtiRtemplates   | 1.4.2                       |
-| Dataset `built` | Version file     | built_20261021.parquet      |
-|                 | Registered       | 2026-10-21                  |
+|                 | hvtiRtemplates   | 1.5.0                       |
+| Dataset `built` | Version file     | built_20261023.parquet      |
+|                 | Registered       | 2026-10-23                  |
 |                 | Source file      | built.rds                   |
 |                 | Rows kept        | 800 rows on 800 patients    |
 |                 | WHERE            | none                        |
-|                 | sha256           | 07a531bb5b35                |
+|                 | sha256           | b236a472f1f3                |
 |                 | Manifest         | current                     |
 | Reproducibility | Seed             | 2026                        |
 |                 | renv             | not active                  |

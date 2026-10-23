@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-21 08:01
+2026-10-23 13:36
 
 An `hm` job builds the risk-factor model **on top of** the shape
 parameters the `hz` job fitted. The shapes are not re-derived here; they
@@ -52,6 +52,15 @@ if (!requireNamespace("numDeriv", quietly = TRUE)) {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
+# The figures draw with hvtiPlotR. Checked here, before the fit, so a missing
+# package stops the render at once rather than after the fit and before the save.
+if (!requireNamespace("hvtiPlotR", quietly = TRUE)) stop("This job needs hvtiPlotR for its figures.", call. = FALSE)
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder,
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 # `hm` reads the `hz` fit through this and writes its own model back, both by
 # set, so a model can never be filed against a different set than the shapes it
 # was built on. The write is in the `save` chunk at the foot of this file.
@@ -60,7 +69,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.4.2
+hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -106,6 +115,12 @@ MAX_STEPS <- 50L     # SAS maxsteps=
 # Calibration horizon.
 # Demo: calibration horizon.
 DECILE_TIME <- 10
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hm-calibration").
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Cohort
@@ -148,7 +163,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261021.parquet) |
+| Source              | dataset `study` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -903,6 +918,31 @@ model gets wrong, and it is invisible in a coefficient table.
 Code
 
 ``` r
+# The table above, drawn: a point above the line is a group with more events
+# than the model expects. Read the pattern, not one point: a run of points on
+# one side at the high-risk end is a model that under-predicts the sickest
+# patients, which the overall chi-square can pass.
+.lim <- c(0, 1.05 * max(dec$events, dec$expected))
+.fig <- ggplot2::ggplot(dec, ggplot2::aes(x = .data$expected, y = .data$events)) +
+  ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  ggplot2::geom_point() +
+  ggplot2::geom_text(ggplot2::aes(label = .data$group), nudge_x = 0.03 * .lim[[2]], hjust = 0) +
+  ggplot2::coord_equal(xlim = .lim, ylim = .lim, clip = "off") +
+  ggplot2::labs(x = "Expected events", y = "Observed events") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "hm-calibration")
+.fig
+```
+
+![](assets/c9b59a57c8cbc02169fa6ead6d383764.png)
+
+Figure 1: Observed against expected events in each group of predicted
+risk, numbered from the lowest risk. The dashed line is perfect
+calibration.
+
+Code
+
+``` r
 # The parametric fit against the actuarial estimate over the whole follow-up,
 # rather than at one horizon. This is the nearest available equivalent to the
 # SAS `%check` step, which refits with `maxsteps=0` to compute Q-statistics for
@@ -959,9 +999,9 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-21 08:01:24 EDT |
-|  | Ended | 2026-10-21 08:01:29 EDT |
-|  | Duration | 5 s |
+| Run | Started | 2026-10-23 13:36:12 EDT |
+|  | Ended | 2026-10-23 13:36:20 EDT |
+|  | Duration | 8 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -969,14 +1009,14 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 |  | Template | hm |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.4.2 |
-| Dataset `built` | Version file | built_20261021.parquet |
-|  | Registered | 2026-10-21 |
+|  | hvtiRtemplates | 1.5.0 |
+| Dataset `built` | Version file | built_20261023.parquet |
+|  | Registered | 2026-10-23 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | 07a531bb5b35 |
+|  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-21 08:01:16 -0400, data built_20261021.parquet |
+| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-23 13:35:59 -0400, data built_20261023.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

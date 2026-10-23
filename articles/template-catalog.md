@@ -29,7 +29,7 @@ existing file, because a job accumulates a study’s edits.
 Each template carries a light.
 
 - 🟢 **Shipped** (34): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (25): on disk but being reworked, or scheduled into
+- 🟡 **In progress** (27): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
 - 🔴 **Not yet on the way** (11): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
@@ -95,8 +95,10 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `rm-linear` | Ordinary least-squares outcome model with Rubin-pooled inference. | `add_job("rm", subject, type, qualifier = "linear")` |
 | 🟡 In progress | `sid-clusters` | PAM on a sid-fit dissimilarity over a range of K: metrics for choosing K, letters stable across K, a Sankey, and the assignments registered for later jobs to join. | `add_job("sid", subject, type, qualifier = "clusters")` |
 | 🟡 In progress | `sid-fit` | An unsupervised sidClustering forest on the clustering variables, after mice or forest imputation pooled over M, saving a digest-keyed SID dissimilarity for sid-clusters and vt. | `add_job("sid", subject, type, qualifier = "fit")` |
+| 🟡 In progress | `vp-dependence` | Unsupervised VarPro: how the variables depend on each other, as a graph whose edges must beat permuted noise, checked across subsamples. | `add_job("vp", subject, type, qualifier = "dependence")` |
 | 🟡 In progress | `vp-explain` | VarPro partial dependence for the variables a vp-fit screen selected. It never fits varPro. | `add_job("vp", subject, type, qualifier = "explain")` |
 | 🟡 In progress | `vp-fit` | A VarPro variable screen that says which variables were tested, judges selection against permuted noise of the same kind, and checks the selection across subsamples. | `add_job("vp", subject, type, qualifier = "fit")` |
+| 🟡 In progress | `vp-individual` | Individual VarPro: each patient’s local gradient for each predictor, from the fit a vp-fit screen saved. It never fits varPro. | `add_job("vp", subject, type, qualifier = "individual")` |
 | 🟡 In progress | `vt-explain` | The twin contrast a vt-fit job saved: by arm, by eligibility rule and by stratum, with standardized betas and who might benefit. It never grows a forest. | `add_job("vt", subject, type, qualifier = "explain")` |
 | 🟡 In progress | `vt-fit` | Per-arm survival forests, swapped-arm twin curves and a per-patient RMST difference, with eligibility judged by a choice of methods. | `add_job("vt", subject, type, qualifier = "fit")` |
 

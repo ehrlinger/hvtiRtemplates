@@ -4,17 +4,17 @@
 
 Published
 
-2026-10-21 08:09
+2026-10-23 13:43
 
 Gallery job on the synthetic cohort: postoperative length of stay,
 logged (log_los).
 
 An `rfr-fit` job grows a regression forest and checks that it learned
 something: out-of-bag error by number of trees, and predicted against
-observed. **Importance, VarPro and dependence plots are not here.** They
-are the `rfr-explain` job in this same set, which reads the forest this
-job saves instead of growing its own, so the explanations always
-describe this forest.
+observed. **Importance and dependence plots are not here.** They are the
+`rfr-explain` job in this same set, which reads the forest this job
+saves instead of growing its own, so the explanations always describe
+this forest.
 
 Every regression exemplar tuned the forest (`tune.rfsrc()`) before
 fitting. This template does not: tuning is a study’s choice, added above
@@ -85,8 +85,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
-· rendered by gallery on gallery · hvtiRtemplates 1.4.2
+**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
+· rendered by gallery on gallery · hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -242,7 +242,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261021.parquet) |
+| Source              | dataset `built` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -349,7 +349,7 @@ save_figure(.fig, "rfr-fit-diagnostics-error")
 .fig
 ```
 
-![](assets/1bf984a885b6d21f3e09b89ac5961d7a.png)
+![](assets/7bc429f5317ce70d5f3e4d03f701f6f0.png)
 
 Figure 1: Out-of-bag error by number of trees. The black solid line is
 the out-of-bag error after each additional tree.
@@ -364,7 +364,7 @@ save_figure(.fig, "rfr-fit-diagnostics-predicted")
 .fig
 ```
 
-![](assets/e506f42d89972c69fd393db0c7addd47.png)
+![](assets/50b5349b2279755af402776480dca9ea.png)
 
 Figure 2: Out-of-bag predicted values. Black circles, jittered sideways,
 mark the individual predictions, and the unfilled notched box plot marks
@@ -394,8 +394,8 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-21 08:09:29 EDT  |
-|                 | Ended            | 2026-10-21 08:09:33 EDT  |
+| Run             | Started          | 2026-10-23 13:43:16 EDT  |
+|                 | Ended            | 2026-10-23 13:43:20 EDT  |
 |                 | Duration         | 4 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -404,13 +404,13 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 |                 | Template         | rfr.fit                  |
 |                 | Subject          | los                      |
 |                 | Type             | rf                       |
-|                 | hvtiRtemplates   | 1.4.2                    |
-| Dataset `built` | Version file     | built_20261021.parquet   |
-|                 | Registered       | 2026-10-21               |
+|                 | hvtiRtemplates   | 1.5.0                    |
+| Dataset `built` | Version file     | built_20261023.parquet   |
+|                 | Registered       | 2026-10-23               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | 07a531bb5b35             |
+|                 | sha256           | b236a472f1f3             |
 |                 | Manifest         | current                  |
 | Reproducibility | Seed             | 2026                     |
 |                 | renv             | not active               |

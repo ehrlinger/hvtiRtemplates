@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-21 08:00
+2026-10-23 13:35
 
 Replaces an older EDA report.
 
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
-· rendered by gallery on gallery · hvtiRtemplates 1.4.2
+**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
+· rendered by gallery on gallery · hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -236,7 +236,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261021.parquet) |
+| Source              | dataset `built` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -480,8 +480,16 @@ knitr::kable(.shown, row.names = FALSE)
 | los | Num | Postoperative length of stay (days) | 19 | 0.0 |
 | log_los | Num | Postoperative length of stay (log days) | 19 | 0.0 |
 | cpb_time | Num | Cardiopulmonary bypass time (minutes) | 120 | 0.0 |
+| lvedd | Num | LV end-diastolic dimension (cm) | 36 | 5.4 |
+| lvesd | Num | LV end-systolic dimension (cm) | 40 | 4.6 |
+| la_diam | Num | Left atrial diameter (cm) | 32 | 5.8 |
+| rvsp | Num | RV systolic pressure (mmHg) | 58 | 4.2 |
+| e_e | Num | Mitral E/e’ ratio | 188 | 5.4 |
+| mv_procedure | Char | Mitral repair or replacement | 2 | 0.0 |
+| reint | Num | Reintervention | 2 | 0.0 |
+| iv_reint | Num | Follow-up to reintervention, death or censoring (years) | 775 | 0.0 |
 
-Table 2: Contents: 800 rows, 33 columns
+Table 2: Contents: 800 rows, 41 columns
 
 Code
 
@@ -765,7 +773,7 @@ Code
 figure_files <- c(figure_files, draw_section("continuous"))
 ```
 
-## Continuous variables (12)
+## Continuous variables (18)
 
 Code
 
@@ -787,6 +795,12 @@ knitr::kable(stats, digits = 2, row.names = FALSE)
 | los | Postoperative length of stay (days) | 800 | 0 | 6.32 | 2.62 | 1.00 | 4.00 | 6.00 | 9.00 | 19.00 |
 | log_los | Postoperative length of stay (log days) | 800 | 0 | 1.76 | 0.40 | 0.00 | 1.39 | 1.79 | 2.20 | 2.94 |
 | cpb_time | Cardiopulmonary bypass time (minutes) | 800 | 0 | 104.79 | 24.62 | 35.00 | 79.00 | 105.00 | 131.00 | 185.00 |
+| lvedd | LV end-diastolic dimension (cm) | 757 | 43 | 5.34 | 0.82 | 3.70 | 4.50 | 5.10 | 6.40 | 7.20 |
+| lvesd | LV end-systolic dimension (cm) | 763 | 37 | 3.71 | 1.01 | 2.10 | 2.80 | 3.30 | 5.10 | 6.10 |
+| la_diam | Left atrial diameter (cm) | 754 | 46 | 4.27 | 0.62 | 2.80 | 3.60 | 4.20 | 5.00 | 6.00 |
+| rvsp | RV systolic pressure (mmHg) | 766 | 34 | 38.39 | 11.73 | 10.00 | 26.00 | 37.00 | 52.00 | 68.00 |
+| e_e | Mitral E/e’ ratio | 757 | 43 | 12.11 | 4.42 | 0.30 | 7.60 | 11.70 | 17.10 | 25.20 |
+| iv_reint | Follow-up to reintervention, death or censoring (years) | 800 | 0 | 8.19 | 7.47 | 0.00 | 1.24 | 6.01 | 16.49 | 34.43 |
 
 Table 5: Continuous variables
 
@@ -816,14 +830,30 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/525cba4a8bdc04c56f1bcd4ac61cf1a9.png)
+![](assets/a9f171964d284bdabf8faa2ad4104339.png)
 
 Figure 4: Continuous variables, page 2: Hours in intensive care,
 Postoperative length of stay (days), Postoperative length of stay (log
-days), Cardiopulmonary bypass time (minutes). Black filled circles mark
-patients, the solid blue line a LOESS smooth where a variable has enough
-distinct values, and gray ticks along the bottom the patients missing
-the variable.
+days), Cardiopulmonary bypass time (minutes), LV end-diastolic dimension
+(cm), LV end-systolic dimension (cm), Left atrial diameter (cm), RV
+systolic pressure (mmHg). Black filled circles mark patients, the solid
+blue line a LOESS smooth where a variable has enough distinct values,
+and gray ticks along the bottom the patients missing the variable.
+
+### Continuous variables, page 3
+
+Code
+
+``` r
+knitr::include_graphics(.link, error = FALSE)
+```
+
+![](assets/808b1b75e2e57fba6968c3ea704acd8a.png)
+
+Figure 5: Continuous variables, page 3: Mitral E/e’ ratio, Follow-up to
+reintervention, death or…. Black filled circles mark patients, the solid
+blue line a LOESS smooth where a variable has enough distinct values,
+and gray ticks along the bottom the patients missing the variable.
 
 Code
 
@@ -831,7 +861,7 @@ Code
 figure_files <- c(figure_files, draw_section("percent"))
 ```
 
-## Categorical variables, percent (19)
+## Categorical variables, percent (21)
 
 Code
 
@@ -889,6 +919,10 @@ knitr::kable(freq, row.names = FALSE)
 | match_pair   | 1             | 475 |    59.4 |
 | complication | 0             | 654 |    81.8 |
 | complication | 1             | 146 |    18.2 |
+| mv_procedure | repair        | 412 |    51.5 |
+| mv_procedure | replace       | 388 |    48.5 |
+| reint        | 0             | 671 |    83.9 |
+| reint        | 1             | 129 |    16.1 |
 
 Table 6: Categorical variables, missing counted
 
@@ -900,7 +934,7 @@ Code
 hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-Figure 5: Categorical variables, percent, page 1: Female, Race, History
+Figure 6: Categorical variables, percent, page 1: Female, Race, History
 of heart failure, Diabetes, NYHA functional class, Death, Reoperation,
 Prolonged ventilation. Stacked bars give the share of patients at each
 reference value, one house color per category. The categories are told
@@ -914,7 +948,7 @@ Code
 hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-Figure 6: Categorical variables, percent, page 2: Male, Non-white race,
+Figure 7: Categorical variables, percent, page 2: Male, Non-white race,
 Postoperative stroke, Postoperative mitral regurgitation grade,
 Discharge destination, Surgical or transcatheter replacement, Prosthesis
 size, Prosthesis type. Stacked bars give the share of patients at each
@@ -929,11 +963,12 @@ Code
 hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-Figure 7: Categorical variables, percent, page 3: Number of prior
+Figure 8: Categorical variables, percent, page 3: Number of prior
 cardiac operations, In a matched pair (simulated), Major postoperative
-complication. Stacked bars give the share of patients at each reference
-value, one house color per category. The categories are told apart by
-color alone; the categorical frequency table above names them.
+complication, Mitral repair or replacement, Reintervention. Stacked bars
+give the share of patients at each reference value, one house color per
+category. The categories are told apart by color alone; the categorical
+frequency table above names them.
 
 Code
 
@@ -941,7 +976,7 @@ Code
 figure_files <- c(figure_files, draw_section("count"))
 ```
 
-## Categorical variables, counts (19)
+## Categorical variables, counts (21)
 
 ### Categorical variables, counts, page 1
 
@@ -951,7 +986,7 @@ Code
 hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-Figure 8: Categorical variables, counts, page 1: Female, Race, History
+Figure 9: Categorical variables, counts, page 1: Female, Race, History
 of heart failure, Diabetes, NYHA functional class, Death, Reoperation,
 Prolonged ventilation. Stacked bars give the number of patients at each
 reference value, one house color per category. The categories are told
@@ -965,7 +1000,7 @@ Code
 hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-Figure 9: Categorical variables, counts, page 2: Male, Non-white race,
+Figure 10: Categorical variables, counts, page 2: Male, Non-white race,
 Postoperative stroke, Postoperative mitral regurgitation grade,
 Discharge destination, Surgical or transcatheter replacement, Prosthesis
 size, Prosthesis type. Stacked bars give the number of patients at each
@@ -980,19 +1015,20 @@ Code
 hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-Figure 10: Categorical variables, counts, page 3: Number of prior
+Figure 11: Categorical variables, counts, page 3: Number of prior
 cardiac operations, In a matched pair (simulated), Major postoperative
-complication. Stacked bars give the number of patients at each reference
-value, one house color per category. The categories are told apart by
-color alone; the categorical frequency table above names them.
+complication, Mitral repair or replacement, Reintervention. Stacked bars
+give the number of patients at each reference value, one house color per
+category. The categories are told apart by color alone; the categorical
+frequency table above names them.
 
 ## About this run
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-21 08:00:26 EDT  |
-|                 | Ended            | 2026-10-21 08:00:46 EDT  |
-|                 | Duration         | 21 s                     |
+| Run             | Started          | 2026-10-23 13:34:43 EDT  |
+|                 | Ended            | 2026-10-23 13:35:08 EDT  |
+|                 | Duration         | 25 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -1000,13 +1036,13 @@ color alone; the categorical frequency table above names them.
 |                 | Template         | dc.eda                   |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.4.2                    |
-| Dataset `built` | Version file     | built_20261021.parquet   |
-|                 | Registered       | 2026-10-21               |
+|                 | hvtiRtemplates   | 1.5.0                    |
+| Dataset `built` | Version file     | built_20261023.parquet   |
+|                 | Registered       | 2026-10-23               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | 07a531bb5b35             |
+|                 | sha256           | b236a472f1f3             |
 |                 | Manifest         | current                  |
 | Reproducibility | renv             | not active               |
 |                 | renv.lock sha256 | d09f96b6cd21             |

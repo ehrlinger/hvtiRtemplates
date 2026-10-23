@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-21 08:00
+2026-10-23 13:34
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -15,8 +15,9 @@ files; `hv_tbl_summary()` writes one table with both. It describes; with
 `BY` set it separates the groups into columns. `COMPARE` chooses whether
 to test them; a p-value here is a prompt for an analysis, not a result.
 The report shows the table in the report style, with each variable’s
-column name beside its label. The Word file holds the same table in the
-manuscript style, under its caption, as a journal receives it.
+column name beside its label while `SHOW_VARIABLE` is `TRUE`. The Word
+file holds the same table in the manuscript style, under its caption, as
+a journal receives it.
 
 Code
 
@@ -31,9 +32,9 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.9") {
-  stop("This job needs hvtiRtables >= 1.0.9 for hv_table_style(), the manuscript Word table and summaries that a study's ",
-       "own sd() or median() cannot break; ",
+if (utils::packageVersion("hvtiRtables") < "1.0.11") {
+  stop("This job needs hvtiRtables >= 1.0.11 for hv_table_style(), the manuscript Word table, its page orientation and ",
+       "summaries that a study's own sd() or median() cannot break; ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
@@ -62,8 +63,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
-· rendered by gallery on gallery · hvtiRtemplates 1.4.2
+**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
+· rendered by gallery on gallery · hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -151,6 +152,15 @@ MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"
 # Demo: the shading of the Word table's section rows, one color "#RRGGBB".
 # Journals differ here; "#CAEDFB" is the house default.
 MANUSCRIPT_FILL <- "#CAEDFB"
+# Demo: the Word table's page. "auto" turns it landscape when it is too wide
+# for portrait, as a table with many groups is; "portrait" or "landscape"
+# always wins, and a table too wide for that page has its columns narrowed.
+TABLE_ORIENTATION <- "auto"
+# Demo: TRUE leaves out a row whose every recorded value is the same, such as
+# a finding every patient has by inclusion: the row says nothing, and a binary
+# one has no event to count. The report names each row left out. FALSE keeps
+# every row, and a constant binary row then stops the table.
+DROP_CONSTANT <- TRUE
 # Demo: force a bucket where the data guess wrong, e.g. an ordinal score you
 # want summarized as continuous: list(continuous = c("nyha_pr")). list() for none.
 OVERRIDES <- list()
@@ -208,7 +218,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261021.parquet) |
+| Source              | dataset `built` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -348,6 +358,9 @@ stddiff_values <- function(d, by, buckets, mean_sd = character(0), ordinal = cha
 Code
 
 ``` r
+if (!is.logical(DROP_CONSTANT) || length(DROP_CONSTANT) != 1L || is.na(DROP_CONSTANT)) {
+  stop("DROP_CONSTANT must be TRUE or FALSE.", call. = FALSE)
+}
 explicit <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
 if (all(vapply(explicit, is.null, logical(1)))) {
   b <- classify_buckets(d, unlist(GROUPS, use.names = FALSE), OVERRIDES)
@@ -364,6 +377,21 @@ if (all(vapply(explicit, is.null, logical(1)))) {
     stop("Every grouped row must appear in exactly one explicit bucket.", call. = FALSE)
   }
   invisible(classify_buckets(d, rows, explicit))
+}
+# A missing value is not a second value: a row is constant when every
+# recorded value is the same. A row with nothing recorded is kept, since an
+# empty row points at the data rather than at the cohort.
+constant_rows <- character(0)
+if (DROP_CONSTANT) {
+  rows <- unlist(GROUPS, use.names = FALSE)
+  constant_rows <- rows[vapply(d[rows], function(x) length(unique(x[!is.na(x)])) == 1L, logical(1))]
+  GROUPS <- Filter(length, lapply(GROUPS, setdiff, y = constant_rows))
+  if (!length(GROUPS)) stop("Every row has one value for every patient; there is no table to draw.", call. = FALSE)
+  CONTINUOUS <- setdiff(CONTINUOUS, constant_rows)
+  BINARY <- setdiff(BINARY, constant_rows)
+  CATEGORICAL <- setdiff(CATEGORICAL, constant_rows)
+  MEAN_SD <- setdiff(MEAN_SD, constant_rows)
+  ORDINAL <- setdiff(ORDINAL, constant_rows)
 }
 tbl <- hvtiRtables::hv_tbl_summary(
   d, by = BY, groups = GROUPS, continuous = CONTINUOUS,
@@ -425,6 +453,17 @@ Table 2: Summary statistics for the study cohort
 Code
 
 ``` r
+# unnumbered: a note under the table, and only when DROP_CONSTANT left rows out
+if (length(constant_rows)) {
+  cat("Not shown, because every patient with a recorded value has the same one: ",
+      paste0("`", constant_rows, "`", collapse = ", "),
+      ". Set `DROP_CONSTANT <- FALSE` to show them.\n", sep = "")
+}
+```
+
+Code
+
+``` r
 # unnumbered: writes the Word file; the table below shows what it holds
 # The same summary, drawn for the manuscript. MANUSCRIPT_CAPTION is written into
 # the .docx above the table; this report numbers its own tables. The tbl-word
@@ -440,7 +479,8 @@ if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
 }
 word_path <- file.path(study_dir("documents", .root), paste0(SUBJECT, "-", TYPE), WORD_FILE)
 dir.create(dirname(word_path), recursive = TRUE, showWarnings = FALSE)
-hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS, caption = MANUSCRIPT_CAPTION)
+hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS, caption = MANUSCRIPT_CAPTION,
+                               orientation = TABLE_ORIENTATION)
 # The manuscript style merges its header and section rows, and nothing else.
 check <- hvtiRtables::hv_check_docx(word_path, style = "manuscript")
 if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)
@@ -521,8 +561,8 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-21 08:00:07 EDT  |
-|                 | Ended            | 2026-10-21 08:00:08 EDT  |
+| Run             | Started          | 2026-10-23 13:34:20 EDT  |
+|                 | Ended            | 2026-10-23 13:34:21 EDT  |
 |                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -531,13 +571,13 @@ Correlation variant not requested (`CORR <- NULL`).
 |                 | Template         | dc.tables                |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.4.2                    |
-| Dataset `built` | Version file     | built_20261021.parquet   |
-|                 | Registered       | 2026-10-21               |
+|                 | hvtiRtemplates   | 1.5.0                    |
+| Dataset `built` | Version file     | built_20261023.parquet   |
+|                 | Registered       | 2026-10-23               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | 07a531bb5b35             |
+|                 | sha256           | b236a472f1f3             |
 |                 | Manifest         | current                  |
 | Reproducibility | renv             | not active               |
 |                 | renv.lock sha256 | d09f96b6cd21             |

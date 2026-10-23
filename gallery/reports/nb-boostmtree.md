@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-21 08:06
+2026-10-23 13:41
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -21,21 +21,24 @@ Code
 SUBJECT <- "lvef"
 TYPE    <- "boost"
 .in <- knitr::current_input(dir = TRUE)
-# boostmtree must be the CCF fork, 2.0.4 or later. Every study fits with
+# boostmtree must be the CCF fork, 2.0.8 or later. Every study fits with
 # cv.flag = TRUE, and in boostmtree 2.0.0 (the CRAN release) that flag leaves the
 # in-sample fit frozen, so the stored coefficients diverge with M and every
 # non-cross-validated result is wrong: partial and marginal effects, importance,
 # and predict(use.cv.flag = FALSE). Reported upstream as kogalur/boostmtree#2;
 # the fix is kogalur/boostmtree#3. The version floor separates the fork from
 # CRAN today. Should upstream release a 2.0.2 without the fix, this check would
-# pass it; read the installed package's NEWS if in doubt. 2.0.4 is the floor
-# because it adds boostmtree.control(cv.cores = ), which the fit below uses.
-# The install line names 2.0.7: its workers need about a third of 2.0.4's memory,
-# and each uses one BLAS thread, so a server's multithreaded OpenBLAS does not
-# overload the machine.
-if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.4") {
-  stop("This job needs boostmtree >= 2.0.4 from the CCF fork. Install it with\n",
-       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.7-ccf\")\n",
+# pass it; read the installed package's NEWS if in doubt. 2.0.8 is the floor
+# because it adds the progress = argument of boostmtree() and partial.plot(), which
+# the fit and the partial effects below use to report how far they have got; it
+# also keeps boostmtree.control(cv.cores = ), added in 2.0.4, which the fit uses.
+# 2.0.8 is also the release whose workers need about a third of 2.0.4's memory,
+# each uses one BLAS thread, so a server's multithreaded OpenBLAS does not
+# overload the machine, and its partial effects no longer hold every boosting
+# step in memory at once.
+if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.8") {
+  stop("This job needs boostmtree >= 2.0.8 from the CCF fork. Install it with\n",
+       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.8-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
 if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.9.0") {
@@ -73,8 +76,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `echo` `echo_20261021.parquet`, registered 2026-10-21 ·
-rendered by gallery on gallery · hvtiRtemplates 1.4.2
+**final** · data `echo` `echo_20261023.parquet`, registered 2026-10-23 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -157,18 +160,14 @@ MTRY <- NULL
 # the number of patients; about 80% of it runs in parallel, so speed levels off
 # near 4 to 5 times however many cores you give it. Each core is a forked copy of
 # R holding its own working data, and memory, not speed, is what limits CORES on
-# a large study. Measured on the server (2026-10-19, ordinal, about 9 visits per
-# patient, M = 10): peak memory at M = 10, and hours scaled to M = 1000.
-#   patients   CORES   peak memory at M = 10   hours at M = 1000   session, at least
-#      1,000     4            6 GB                     7            Default (16 GB)
-#      1,000     8           11 GB                     5            Small (32 GB)
-#      2,000     8           30 GB                    22            Medium (64 GB)
-#      4,000     4           70 GB                   110            Large (128 GB); 8 cores ran out
-# Memory is an upper bound at M = 10 only. The fit keeps every step, about
-# 0.35 MB per step per 1,000 visits for an ordinal response, so at M = 1000 add
-# about 3 GB at 1,000 patients and 11 GB at 4,000, and possibly that much again
-# per core: not yet measured, so treat the sessions above as a floor. Hours scale
-# with M. CORES should never exceed the session's CPUs; Windows cannot fork.
+# a large study. The fit refuses to start, in the first minutes, when this session's
+# memory cannot hold it at this CORES, and says which Workbench profile to start;
+# the measurements behind that estimate are in R/fit-memory.R and ?guard_memory.
+# Run time at M = 1000, by patients and cores (2026-10-19, boostmtree 2.0.4, ordinal):
+# about 7 h at 1,000 patients on 4 cores, 5 h at 1,000 on 8, 22 h at 2,000 on 8 and
+# 110 h at 4,000 on 4. On 2.0.8 (2026-10-21, continuous, 1,391 patients, M = 1000,
+# 8 cores) the fit took about 1 h. Hours scale with M.
+# CORES should never exceed the session's CPUs; Windows cannot fork.
 # Not part of the cache key: the fit is identical on any number of cores.
 CORES <- if (.Platform$OS.type == "windows") 1L else 4L
 
@@ -278,7 +277,7 @@ if (length(.chr)) {
 
 | Data                |                                        |
 |:--------------------|:---------------------------------------|
-| Source              | dataset `echo` (echo_20261021.parquet) |
+| Source              | dataset `echo` (echo_20261023.parquet) |
 | Rows read           | 1,180                                  |
 | ID                  | `patient_id`                           |
 | Identifiers dropped | none                                   |
@@ -310,16 +309,43 @@ Code
 # several places, its base learners included, and every one of them is saved
 # with it. A digest still groups the visits; it cannot be read back.
 CACHE_DIR <- dirname(set_path("estimates", "nb-boostmtree.rds"))
+# The fit runs for hours at study size. Started from the console it dies with
+# the session, so an uncached fit is refused there: run the job with
+# hvtiRtemplates::submit_job() instead. Once cached, these chunks load it.
+hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
+                               why = "a cross-validated boostmtree fit takes hours at study size",
+                               refit = REFIT)
 .patient <- hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root))
-fit <- cache_fit(
-  "nb-boostmtree-fit",
+# The fit, quoted once so the memory check below and cache_fit() read the same call: a
+# cache_fit() of a quoted call keys the call, so a fit cached before this was quoted still loads.
+.fit_code <- quote(
   boostmtree(x = d[.predictors], tm = d[[.time]], id = .patient, y = d[[.response]],
              family = FAMILY, M = M, nu = NU, mtry = MTRY, mod.grad = TRUE, cv.flag = TRUE, verbose = FALSE,
              # get() keeps CORES out of cache_fit()'s key, which sees only the values
              # the call names directly: changing it must not mark an identical fit stale.
-             control = boostmtree.control(cv.cores = get("CORES"))),
-  seed = SEED, dir = CACHE_DIR, refit = REFIT
+             control = boostmtree.control(cv.cores = get("CORES")),
+             # Reports each boosting iteration to <job>.run.progress and the render log.
+             # get() keeps the job's run record out of the cache key's inputs, as for
+             # CORES: it changes what is reported, never what is fitted.
+             # The fit keeps the reporter (boostmtree's formula environment holds it), which
+             # is safe because the reporter's frame holds only `unit`: no run record is
+             # saved with the fit.
+             progress = get(".job")$progress("iteration"))
 )
+# Refuses here, in the first minutes of the render, a fit this session's memory cannot hold, and
+# names the Workbench profile to start; the numbers behind the estimate are in hvtiRtemplates'
+# R/fit-memory.R. A cached fit is only loaded, so it needs nothing. Whether cache_fit() will fit
+# is its own decision, asked the way it makes it: a file whose key matches loads even with REFIT
+# left TRUE, and a stale file stops it before any fit unless REFIT is set. The call itself is
+# unconditional, so a cached rerender still records the memory check that run_job() waits for.
+.need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(.patient)), nrow(d), FAMILY, k, M)
+.fitting <- hvtiRutilities::cache_would_fit("nb-boostmtree-fit", .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
+hvtiRtemplates::guard_memory(if (.fitting) .need(CORES) else 0,
+                             sprintf("this boostmtree fit (%s patients, %s visits, %s)",
+                                     format(length(unique(.patient)), big.mark = ","), format(nrow(d), big.mark = ","),
+                                     FAMILY),
+                             cores = CORES, cores_fit = .need)
+fit <- cache_fit("nb-boostmtree-fit", .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
 ```
 
 `cv.flag = TRUE` and `mod.grad = TRUE` are not settings. Every study
@@ -382,7 +408,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 130 | 0.8880166 |
+| l2 | lvef | 186 | 0.8792952 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -396,7 +422,7 @@ save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/093414e8f4a82cc5fea069826e594ff1.png)
+![](assets/76374cec47e82192aec5962d3a1970f1.png)
 
 Figure 1: Cross-validated error by boosting iteration. The black solid
 line is the error after each iteration, and the black dashed vertical
@@ -411,7 +437,7 @@ save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/ed55ba2788643c9254cc5201b192b27c.png)
+![](assets/e94023be2d92aa4f683cdb8ccdf061e2.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
 per parameter. Each black solid line is the parameter’s fitted value
@@ -428,7 +454,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/b67ffd5e34c7212c769091d2f1285280.png)
+![](assets/b3e6fad91a2321a5c524bf28c183438d.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins.
 Each gray horizontal segment spans a time bin at its observed mean, with
@@ -451,7 +477,7 @@ save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
-![](assets/af7f0bff69e792f2aed8615e0ca3eb6d.png)
+![](assets/0d01c8850213bb64f2203328ab2f2bba.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time, one panel for each. Horizontal dark gray bars
@@ -488,7 +514,8 @@ if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unkno
 # beside the fit and keyed on it, so a re-render that changes only prose skips
 # it, and a refit or a changed EFFECT_VARIABLES stops until REFIT, as the fit does.
 .partial <- cache_fit("nb-boostmtree-partial",
-                      partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE),
+                      partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE,
+                                   progress = get(".job")$progress("prediction")),
                       seed = SEED, dir = CACHE_DIR, refit = REFIT)
 .effect <- gg_boost_effect(.partial)
 .relabel <- .components[match(levels(.effect$response), .labels)]
@@ -545,7 +572,8 @@ for (.i in seq_along(p_effects)) {
   .child(paste("fig effects", .pg$kind, .pg$page),
          paste0("Partial effects over follow-up, ", .pg$kind, " predictors, one panel per predictor. ", .key[[.pg$kind]],
                 .on_page),
-         ".p", opts = c(sprintf("#| fig-width: %g", .pg$size$width), sprintf("#| fig-height: %g", .pg$size$height)))
+         ".p", opts = c(sprintf("#| fig-width: %g", hvtiRtemplates:::.report_size(.pg$size$width)),
+                        sprintf("#| fig-height: %g", hvtiRtemplates:::.report_size(.pg$size$height))))
 }
 ```
 
@@ -555,12 +583,12 @@ Code
 .p
 ```
 
-![](assets/79e91fc895a14354ef6bb8aa9b3ce39d.png)
+![](assets/73fb4375ac655345f0f9c0efbcc27e7a.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-1 of 2: nyha_pr, hx_chf, bmi, age.
+1 of 2: nyha_pr, hx_chf, age, bmi.
 
 Code
 
@@ -568,12 +596,12 @@ Code
 .p
 ```
 
-![](assets/4d058f7ccedacd6b5831a1cdfbd76e9d.png)
+![](assets/dcf668947849c9c7b5f0bbdc1431452c.png)
 
 Figure 6: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-2 of 2: hx_dm, female.
+2 of 2: female, hx_dm.
 
 Code
 
@@ -618,7 +646,7 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/21753bd16c5e51466cf62216cb6d668e.png)
+![](assets/c9822c79183722e408b48b7d9a03fcd9.png)
 
 Figure 7: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time. Thin translucent black lines trace
@@ -646,9 +674,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 | Group           | Item             | Value                        |
 |:----------------|:-----------------|:-----------------------------|
-| Run             | Started          | 2026-10-21 08:03:13 EDT      |
-|                 | Ended            | 2026-10-21 08:06:46 EDT      |
-|                 | Duration         | 3 min 32 s                   |
+| Run             | Started          | 2026-10-23 13:39:03 EDT      |
+|                 | Ended            | 2026-10-23 13:41:54 EDT      |
+|                 | Duration         | 2 min 52 s                   |
 |                 | Status           | final                        |
 |                 | Rendered by      | gallery                      |
 |                 | Host             | gallery                      |
@@ -656,9 +684,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 |                 | Template         | nb.boostmtree                |
 |                 | Subject          | lvef                         |
 |                 | Type             | boost                        |
-|                 | hvtiRtemplates   | 1.4.2                        |
-| Dataset `echo`  | Version file     | echo_20261021.parquet        |
-|                 | Registered       | 2026-10-21                   |
+|                 | hvtiRtemplates   | 1.5.0                        |
+| Dataset `echo`  | Version file     | echo_20261023.parquet        |
+|                 | Registered       | 2026-10-23                   |
 |                 | Source file      | echo.rds                     |
 |                 | Rows kept        | 1,180 rows on 300 patients   |
 |                 | WHERE            | none                         |

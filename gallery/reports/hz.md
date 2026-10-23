@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-21 08:01
+2026-10-23 13:36
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -50,6 +50,15 @@ if (!requireNamespace("numDeriv", quietly = TRUE)) {
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
+# The figures draw with hvtiPlotR. Checked here, before the fit, so a missing
+# package stops the render at once rather than after the fit and before the save.
+if (!requireNamespace("hvtiPlotR", quietly = TRUE)) stop("This job needs hvtiPlotR for its figures.", call. = FALSE)
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder,
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 # An `hz` job ALWAYS persists: `hp` plots what it writes and `hm` fixes its
 # shape parameters at these converged values, both by set. The write itself is
 # in the `save` chunk at the foot of this file, not here.
@@ -57,8 +66,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261021.parquet`, registered 2026-10-21
-· rendered by gallery on gallery · hvtiRtemplates 1.4.2
+**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
+· rendered by gallery on gallery · hvtiRtemplates 1.5.0
 
 ## Study choices
 
@@ -126,6 +135,12 @@ TIME   <- "iv_dead"
 EVENT  <- "dead"
 
 EXPECTED <- list(n = 725L, n_events = 406L, n_censored = 319L)
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hz-fit").
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Cohort
@@ -148,7 +163,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261021.parquet) |
+| Source              | dataset `built` (built_20261023.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -699,6 +714,47 @@ So report per-parameter standard errors with that caveat attached, and
 treat the survival curve and its band — computed in the companion `hp`
 job — as the quantity that actually reaches a clinician.
 
+## Fit against the data
+
+Code
+
+``` r
+# The check to make before hp or hm reads this fit: the curve should run through
+# the step function for the whole of follow-up. A curve that leaves the band
+# early or late names the phase that is misspecified, which the log-likelihood
+# and the estimates above cannot. hp draws the same overlay against the ac life
+# table for publication; this one is drawn from the rows fitted here.
+# An interval-censored response has no Kaplan-Meier estimate, so its figure
+# shows the parametric curve alone.
+# The last finite time, as an interval-censored response may code an open upper bound as Inf.
+.times <- unlist(resp[intersect(c("time", "lo", "hi"), names(resp))], use.names = FALSE)
+.grid <- data.frame(time = seq(0, max(.times[is.finite(.times)]), length.out = 200))
+.grid$survival <- 100 * unname(predict(fit_det, newdata = .grid, type = "survival"))
+.fig <- ggplot2::ggplot(.grid, ggplot2::aes(x = .data$time, y = .data$survival))
+if (!all(c("lo", "hi") %in% names(resp))) {
+  # 68%, one standard error either side, as hp and the SAS plots draw it.
+  .km <- survival::survfit(survival::Surv(time, status) ~ 1, data = resp, conf.int = 0.68268948)
+  .km <- data.frame(time = c(0, .km$time), survival = 100 * c(1, .km$surv),
+                    lower = 100 * c(1, .km$lower), upper = 100 * c(1, .km$upper))
+  .fig <- .fig +
+    ggplot2::geom_step(data = .km, ggplot2::aes(y = .data$lower), linetype = "dotted", na.rm = TRUE) +
+    ggplot2::geom_step(data = .km, ggplot2::aes(y = .data$upper), linetype = "dotted", na.rm = TRUE) +
+    ggplot2::geom_step(data = .km, linetype = "dashed")
+}
+.fig <- .fig +
+  ggplot2::geom_line() +
+  ggplot2::scale_y_continuous(limits = c(0, 100)) +
+  ggplot2::labs(x = "Years", y = "Survival (%)") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "hz-fit")
+.fig
+```
+
+![](assets/9eaf1fbe866f476cd747e60b0cd784cc.png)
+
+Figure 1: Parametric survival from the reported fit (solid) over the
+Kaplan-Meier estimate (dashed) and its 68% band (dotted).
+
 ## Save
 
 Code
@@ -727,9 +783,9 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-21 08:01:16 EDT  |
-|                 | Ended            | 2026-10-21 08:01:19 EDT  |
-|                 | Duration         | 3 s                      |
+| Run             | Started          | 2026-10-23 13:35:59 EDT  |
+|                 | Ended            | 2026-10-23 13:36:04 EDT  |
+|                 | Duration         | 5 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -737,13 +793,13 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 |                 | Template         | hz                       |
 |                 | Subject          | dead                     |
 |                 | Type             | hz                       |
-|                 | hvtiRtemplates   | 1.4.2                    |
-| Dataset `built` | Version file     | built_20261021.parquet   |
-|                 | Registered       | 2026-10-21               |
+|                 | hvtiRtemplates   | 1.5.0                    |
+| Dataset `built` | Version file     | built_20261023.parquet   |
+|                 | Registered       | 2026-10-23               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 725 rows on 725 patients |
 |                 | WHERE            | `!is.na(creat_pr)`       |
-|                 | sha256           | 07a531bb5b35             |
+|                 | sha256           | b236a472f1f3             |
 |                 | Manifest         | current                  |
 | Reproducibility | renv             | not active               |
 |                 | renv.lock sha256 | d09f96b6cd21             |
