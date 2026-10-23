@@ -379,7 +379,7 @@ test_that("vp-dependence runs on one core", {
 
 test_that("vp-dependence finds a planted dependence above the noise bar", {
   skip_on_cran()
-  rf_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   # 100 trees: at 30 a noise entry reached 1.69 against the planted 2.3 (spec section 8).
   env <- vpd_first(choices = utils::modifyList(vpd_choices, list(NTREE = 100)))
   expect_identical(env$bar$from, "noise")
@@ -391,7 +391,7 @@ test_that("vp-dependence finds a planted dependence above the noise bar", {
 
 test_that("vp-dependence saves one handoff with its lineage", {
   skip_on_cran()
-  rf_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   env <- vpd_first()
   path <- env$set_path("estimates", "dependence.rds")
   h <- readRDS(path)
@@ -404,7 +404,7 @@ test_that("vp-dependence saves one handoff with its lineage", {
 
 test_that("vp-dependence traces a colliding encoded column to its factor", {
   skip_on_cran()
-  rf_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   d <- vpd_data()
   d$f <- factor(withr::with_seed(3, sample(c("s", "t", "u"), nrow(d), replace = TRUE)))
   d$fs <- withr::with_seed(4, stats::rnorm(nrow(d)))
@@ -419,7 +419,7 @@ test_that("vp-dependence traces a colliding encoded column to its factor", {
 })
 
 test_that("vp-dependence refuses an ORDINAL variable it was not given", {
-  rf_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   env <- rf_env(vpd_data())
   expect_error(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data"), env,
                       utils::modifyList(vpd_choices, list(ORDINAL = "zz"))),
@@ -428,7 +428,7 @@ test_that("vp-dependence refuses an ORDINAL variable it was not given", {
 
 test_that("raising REPEATS in vp-dependence computes only the new refit", {
   skip_on_cran()
-  rf_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   env <- vpd_first(choices = utils::modifyList(vpd_choices, list(REPEATS = 2)))
   # cache_fit() writes a provenance file beside each .rds, so only the .rds are counted.
   files <- list.files(env$CACHE_DIR, "^vp-dependence-repeat-.*[.]rds$", full.names = TRUE)
@@ -444,7 +444,7 @@ test_that("raising REPEATS in vp-dependence computes only the new refit", {
 
 test_that("REPEATS = 0 skips the dependence stability check", {
   skip_on_cran()
-  rf_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   env <- vpd_first()
   expect_length(list.files(env$CACHE_DIR, "^vp-dependence-repeat-"), 0L)
   expect_null(readRDS(env$set_path("estimates", "dependence.rds"))$stability)
@@ -458,7 +458,7 @@ test_that("no vp-individual line fits varPro", {
 })
 
 test_that("vp-individual stops when no vp-fit has run in its set", {
-  rf_skip_unless_stack(rf_template_packages("vp", "individual"))
+  vp33_skip_unless_stack(rf_template_packages("vp", "individual"))
   env <- rf_env(vp_data())
   expect_error(rf_run("vp", "individual", c("setup", "edit-study-choices", "screen"), env), "Render the vp-fit job")
 })
@@ -493,7 +493,7 @@ test_that("vpi_coverage keeps a predictor ivarpro() returned no column for", {
 
 test_that("vp-individual draws one target of a multiclass screen, with its plotting data", {
   skip_on_cran()
-  rf_skip_unless_stack(rf_template_packages("vp", "individual"))
+  vp33_skip_unless_stack(rf_template_packages("vp", "individual"))
   d <- vp_data()
   d$cls <- factor(ifelse(d$xs > 0.5, "c", ifelse(d$xs < -0.5, "a", "b")))
   ch <- utils::modifyList(vp_outcome(vp_choices, NULL, NULL, "cls"),
@@ -509,7 +509,7 @@ test_that("vp-individual draws one target of a multiclass screen, with its plott
 
 test_that("vp-individual gives the planted signal larger gradients than the nulls", {
   skip_on_cran()
-  rf_skip_unless_stack(rf_template_packages("vp", "individual"))
+  vp33_skip_unless_stack(rf_template_packages("vp", "individual"))
   fit <- vp_fit_first(choices = utils::modifyList(vp_choices, list(SPLIT_WEIGHT = FALSE, NVAR = 50)))
   env <- vpi_run(fit, list(SHOW = c("xs", "x1", "x2"), SEED = 1, SAVE_FIGURES = FALSE))
   cov <- env$icov
@@ -523,7 +523,7 @@ test_that("vp-individual gives the planted signal larger gradients than the null
 
 test_that("vp-dependence and vp-individual keyed on MRN save no MRN in any file", {
   skip_on_cran()
-  rf_skip_unless_stack(c(rf_template_packages("vp", "individual"), "ggraph"))
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "individual"), "ggraph"))
   data <- rf_mrn_data(n = 60L)
   dep <- vpd_first(data, list(VARIABLES = c("age", "x1", "grp"), OUTCOME = NULL, ORDINAL = NULL, NOISE_N = 2,
                               NTREE = 25, REPEATS = 1, SEED = 1, SAVE_FIGURES = FALSE))

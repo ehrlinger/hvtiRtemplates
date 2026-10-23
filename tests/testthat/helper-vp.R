@@ -99,3 +99,11 @@ vpi_run <- function(fit, choices) {
   env$.root <- fit$.root
   rf_run("vp", "individual", vpi_labels, env, choices)  # nolint: object_usage_linter.
 }
+
+# The vp-dependence and vp-individual setup chunks need varPro 3.3.0, above the
+# 3.2.0 rf_pkg_floors records for vp-fit and vp-explain, so their tests skip
+# below it rather than fail at the guard.
+vp33_skip_unless_stack <- function(pkgs) {
+  testthat::skip_if_not_installed("varPro", minimum_version = "3.3.0")
+  rf_skip_unless_stack(pkgs)  # nolint: object_usage_linter.
+}

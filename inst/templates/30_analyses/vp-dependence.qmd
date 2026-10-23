@@ -470,17 +470,22 @@ if (length(.unlinked)) {
 ```{r}
 #| label: fig-graph
 #| fig-cap: "Dependence between the variables, at the noise bar. An arrow runs from a released variable to a variable
-#|   that helps separate the patients its rules pick out, and its width is the weight; blue variables are the signal
-#|   set. A variable with no edge at the bar is not drawn."
+#|   that helps separate the patients its rules pick out, and the stronger the link the darker the arrow; blue variables
+#|   are the signal set. A variable with no edge at the bar is not drawn."
 #| fig-width: 6.5
 #| fig-height: 6
-if (nrow(gg$edges) == 0L) {
-  cat("No edge clears the bar.\n")
+# With no edge there is nothing to draw, and the matrix chunk above has said
+# which variables have no link. A blank panel stands in, so the caption still
+# has its figure, and it says why.
+.fig <- if (nrow(gg$edges) == 0L) {
+  ggplot2::ggplot() +
+    ggplot2::annotate("text", x = 0, y = 0, label = "No edge clears the bar.") +
+    ggplot2::theme_void()
 } else {
-  .fig <- plot(gg)
-  save_figure(.fig, "vp-dependence-graph", width = 6.5, height = 6)
-  .fig
+  plot(gg)
 }
+save_figure(.fig, "vp-dependence-graph", width = 6.5, height = 6)
+.fig
 ```
 
 ```{r}
@@ -519,8 +524,9 @@ is the forest's own noise.
 #| label: tbl-stability
 #| tbl-cap: "How often each edge cleared its refit's noise bar, most often first"
 #| message: true
-# Each refit draws its patients and its noise, both seeded SEED + r, and is
-# cached on its own, so raising REPEATS computes only the new ones.
+# Each refit draws its patients and its noise from seeds that move with r
+# (abs(SEED) + r, and abs(SEED + r) inside vp_add_noise(), as in vp-fit), and
+# is cached on its own, so raising REPEATS computes only the new ones.
 if (REPEATS > 0) {
   .runs <- lapply(seq_len(REPEATS), function(r) {
     set.seed(abs(SEED) + r)
