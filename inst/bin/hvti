@@ -33,4 +33,7 @@ if [ -z "${rscript:-}" ]; then
 fi
 # The job path reaches R as an argument, never as R source: a fixed expression reads it with
 # commandArgs(), so no directory name can change what R runs. .hvti_main() returns the exit status.
+# renv's activate.R prefers RENV_PROJECT over the working directory, so one inherited from another study would load
+# that study's library. Bind it to this one.
+export RENV_PROJECT="$root"
 cd "$root" && exec "$rscript" -e 'quit(status = hvtiRtemplates:::.hvti_main(commandArgs(TRUE)))' "$cmd" "$jobpath" "$final"

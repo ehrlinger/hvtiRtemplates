@@ -29,6 +29,22 @@ test_that("hvti run starts the lock's R from the study root, passing the path as
   expect_identical(normalizePath(got[5]), normalizePath(job))   # pwd may keep a symlinked tempdir logical
 })
 
+test_that("hvti binds renv to the target study, not a project inherited from the environment", {
+  skip_on_os("windows")
+  root <- lock_study(r = "4.5.3")
+  other <- lock_study(r = "4.5.3")   # study A, whose RENV_PROJECT the terminal inherited
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines("x", job)
+  top <- withr::local_tempdir()
+  dir.create(file.path(top, "4.5.3", "bin"), recursive = TRUE)
+  log <- file.path(top, "renv.txt")
+  writeLines(c("#!/bin/sh", sprintf('printf "%%s\\n" "$RENV_PROJECT" > %s', log)), file.path(top, "4.5.3", "bin", "Rscript"))
+  Sys.chmod(file.path(top, "4.5.3", "bin", "Rscript"), "755")
+  system2(hvti(), c("run", shQuote(job)), env = c(paste0("HVTI_R_ROOT=", top), paste0("RENV_PROJECT=", shQuote(other))),
+          stdout = TRUE, stderr = TRUE)
+  expect_identical(normalizePath(readLines(log)), normalizePath(root))
+})
+
 test_that("the hvti script keeps its executable bit in the installed package", {
   skip_on_os("windows")
   expect_true(nzchar(hvti()))
