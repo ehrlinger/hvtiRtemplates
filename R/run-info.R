@@ -111,7 +111,10 @@
 }
 
 # The manifest record of a dated version file, or of the dataset registered from
-# a source file: its source file, version file and extract (registration) date.
+# a source file: its source file, version file and extract date. The extract date
+# is the source file's modification date or a given one, not the day the version
+# was registered, which the manifest does not record; the field keeps the name
+# `registered` because it is saved in the provenance JSON.
 # An earlier version is found in the entry's history.
 .manifest_find <- function(root, version = NULL, source = NULL) {
   for (entry in .manifest_entries(root)) {
@@ -176,7 +179,7 @@
     cfg <- hvtiRutilities::study_config(start = root)
     .manifest_find(root, source = basename(hvtiRutilities::built_path(cfg, dataset)))
   }, error = function(e) NULL)
-  c(list(name = dataset, kind = "data", how = "registered"), found)
+  c(list(name = dataset, kind = "data", how = "dated"), found)
 }
 
 # ---- The top box -------------------------------------------------------------
@@ -391,7 +394,7 @@
                            c("hvtiRtemplates", j$hvtiRtemplates))),
     unlist(lapply(facts$datasets, function(d) {
       group_rows(paste0("Dataset `", d$name, "`"), list(
-        c("Version file", d$version_file), c("Registered", d$registered), c("Source file", d$source_file),
+        c("Version file", d$version_file), c("Version date", d$registered), c("Source file", d$source_file),
         c("Rows kept", if (!is.null(d$rows)) {
           # A joined source has rows and no patient count of its own.
           paste0(format(d$rows, big.mark = ","), " rows",

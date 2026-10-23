@@ -612,22 +612,28 @@ Every report says four things about the run that made it.
   front matter, shown as `YYYY-MM-DD HH:mm`).
 - **A one-line box under the title:** whether the report is final or a draft
   (with the count of open `EDIT:` markers and skipped chunks), the dataset and
-  its dated version file with the date it was registered, who rendered the
-  report and on which host, and the hvtiRtemplates version. The box is printed
+  its dated version file with the version's date, who rendered the report and
+  on which host, and the hvtiRtemplates version. The version's date is its
+  extract date: the source file's modification date, or the date given when it
+  was registered. It is not the day the version was registered, which the
+  manifest does not record, so a version registered on the 23rd from a file
+  dated the 21st reads `dated 2026-10-21`. The box is printed
   before the job reads its data, so its dataset is the one the job's file
   declares (`DATASET <- "name"`) or, failing that, the study dataset, `built`;
   the table below is the record of what was read.
 - **An "About this run" table as the last section,** unnumbered so it moves no
   figure or table number: the run (start and end with time zone, duration,
   status, user, host), the job (file, template, subject, type, hvtiRtemplates
-  version), each dataset read (registered name, version file, registration date,
+  version), each dataset read (registered name, version file, version date,
   source file, rows and patients kept, `WHERE`, the first 12 characters of the
   sha256, and whether a newer source file is waiting), each upstream handoff
   (the set it was saved in, its role, when it was saved and the dataset version
   it was built from), the seed when the job sets `SEED`, and whether renv is
   active with the first 12 characters of `renv.lock`'s sha256. It holds names,
   dates, counts and hashes, never a patient identifier or a data value.
-- **The same facts in the provenance JSON,** under `run`.
+- **The same facts in the provenance JSON,** under `run`. A dataset's version
+  date is saved there as `registered`, the key it has carried since 1.3.1, so
+  reports rendered before and after the label changed can be read alike.
 
 The user and host are the person's login name and the machine's name, and a
 report shared outside the group carries them. `HVTI_RUN_USER` and
