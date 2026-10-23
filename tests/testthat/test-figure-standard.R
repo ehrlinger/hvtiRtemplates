@@ -1,10 +1,12 @@
 # The figure standard, dev/specs/2026-10-13-figure-standard-design.md: a single
-# panel is 6 by 4 in, type is 12 pt in the hvtiPlotR theme (8 pt on a page of small
+# panel is saved at 6 by 4 in and drawn in the report at 9 by 6 (.report_size(),
+# 2026-10-23), type is 12 pt in the hvtiPlotR theme (8 pt on a page of small
 # panels, dc-eda's), and every figure has a numbered caption.
 # Captions built by .child() at render time are not visible here; the static ones
 # are, and they are most of them.
 
-# Nothing is drawn larger than the printed page, 6.5 by 9 in: a figure whose panel
+# Nothing is saved larger than the printed page, 6.5 by 9 in, nor drawn in the
+# report larger than .report_size() of it, 9.75 by 13.5: a figure whose panel
 # count follows the study is paged instead: .figure_pages() for the RF and nb
 # figures, dc-eda's grid pages, dc-stddiff's 30 rows a page. The one exception
 # is dc-tables' scatter-plot matrix, decided 2026-10-15 (the spec's rule 5):
@@ -23,8 +25,8 @@ figure_standard_scan <- function(templates) {
     src <- readLines(f, warn = FALSE)
     # A theme named in a string, such as a stop() message, or in a comment is not a call.
     code <- sub("#.*$", "", gsub("\"[^\"]*\"", "\"\"", src))
-    if (!any(src == "    fig-width: 6") || !any(src == "    fig-height: 4")) {
-      out <- c(out, paste0(label, ": format block lacks fig-width: 6 and fig-height: 4"))
+    if (!any(src == "    fig-width: 9") || !any(src == "    fig-height: 6")) {
+      out <- c(out, paste0(label, ": format block lacks fig-width: 9 and fig-height: 6"))
     }
     # ggplot2's own themes default to 11 pt, so naming one undoes the standard.
     for (i in grep("theme_(minimal|bw|gr[ae]y|classic|light|linedraw)\\(", code)) {
@@ -42,7 +44,13 @@ figure_standard_scan <- function(templates) {
       sizes <- regmatches(src[[i]], gregexpr("(width|height)(: | = )[0-9.]+", src[[i]]))[[1]]
       for (size in sizes) {
         inches <- as.numeric(sub("^.*(: | = )", "", size))
-        if (inches > if (startsWith(size, "width")) 6.5 else 9) {
+        page <- if (startsWith(size, "width")) 6.5 else 9
+        # A chunk option sizes the report's copy; `width =` the saved one.
+        if (grepl(": ", size, fixed = TRUE)) {
+          if (inches > .report_size(page)) {
+            out <- c(out, paste0(label, ":", i, ": ", size, " in is larger than the report's 9.75 by 13.5 in"))
+          }
+        } else if (inches > page) {
           out <- c(out, paste0(label, ":", i, ": ", size, " in is larger than the 6.5 by 9 in page"))
         }
       }
@@ -77,7 +85,7 @@ test_that("the scan catches each kind of violation", {
 
 test_that("8 pt is allowed only on a page of small panels", {
   dir <- withr::local_tempdir()
-  writeLines(c("---", "format:", "  html:", "    fig-width: 6", "    fig-height: 4", "---", "```{r}",
+  writeLines(c("---", "format:", "  html:", "    fig-width: 9", "    fig-height: 6", "---", "```{r}",
                "page <- hvtiRtemplates:::.eda_page_panels(p & theme_hv_manuscript(base_size = 8))",
                "q <- p + theme_hv_manuscript(base_size = 8)", "```"),
              file.path(dir, "eight.qmd"))
@@ -87,19 +95,19 @@ test_that("8 pt is allowed only on a page of small panels", {
 
 test_that("the scan catches a figure larger than the page, chunk option or saved size", {
   dir <- withr::local_tempdir()
-  writeLines(c("---", "format:", "  html:", "    fig-width: 6", "    fig-height: 4", "---", "```{r}",
-               "#| label: fig-wide", "#| fig-cap: \"Wide.\"", "#| fig-width: 9", "p + theme_hv_manuscript(base_size = 12)",
+  writeLines(c("---", "format:", "  html:", "    fig-width: 9", "    fig-height: 6", "---", "```{r}",
+               "#| label: fig-wide", "#| fig-cap: \"Wide.\"", "#| fig-width: 10", "p + theme_hv_manuscript(base_size = 12)",
                "save_figure(p, \"tall\", width = 6, height = 24)", "```"),
              file.path(dir, "big.qmd"))
   expect_identical(figure_standard_scan(dir),
-                   c("big.qmd:10: width: 9 in is larger than the 6.5 by 9 in page",
+                   c("big.qmd:10: width: 10 in is larger than the report's 9.75 by 13.5 in",
                      "big.qmd:12: height = 24 in is larger than the 6.5 by 9 in page"))
 })
 
 test_that("a save_figure() call is held to the page, as dc-eda's landscape pages were not", {
   dir <- withr::local_tempdir()
   # dc-eda's page save until 2026-10-15, word for word.
-  writeLines(c("---", "format:", "  html:", "    fig-width: 6", "    fig-height: 4", "---", "```{r}",
+  writeLines(c("---", "format:", "  html:", "    fig-width: 9", "    fig-height: 6", "---", "```{r}",
                "    file <- save_figure(.page,",
                "                        sprintf(\"dc-eda-%s-page-%02d\", section, i), width = 11, height = 8.5, linked = TRUE)",
                "```"),
@@ -110,11 +118,22 @@ test_that("a save_figure() call is held to the page, as dc-eda's landscape pages
 test_that("the page exception covers dc-tables' scatter-plot matrix line and nothing else", {
   dir <- withr::local_tempdir()
   dir.create(file.path(dir, "10_descriptive"))
-  writeLines(c("---", "format:", "  html:", "    fig-width: 6", "    fig-height: 4", "---", "```{r}",
+  writeLines(c("---", "format:", "  html:", "    fig-width: 9", "    fig-height: 6", "---", "```{r}",
                paste0("  ", page_exceptions[["10_descriptive/dc-tables.qmd"]]),
                "  save_figure(p, \"dc-tables-other\", width = 10, height = 10, linked = TRUE)", "```"),
              file.path(dir, "10_descriptive", "dc-tables.qmd"))
   expect_identical(figure_standard_scan(dir),
                    c("10_descriptive/dc-tables.qmd:9: width = 10 in is larger than the 6.5 by 9 in page",
                      "10_descriptive/dc-tables.qmd:9: height = 10 in is larger than the 6.5 by 9 in page"))
+})
+
+test_that("the report's size and the saved size are held to different limits", {
+  dir <- withr::local_tempdir()
+  # 9.75 in is the page's width at report size, so the chunk passes; the same
+  # figure saved 9 in wide would not fit the printed page.
+  writeLines(c("---", "format:", "  html:", "    fig-width: 9", "    fig-height: 6", "---", "```{r}",
+               "#| label: fig-page", "#| fig-cap: \"Page.\"", "#| fig-width: 9.75", "#| fig-height: 13.5",
+               "save_figure(p, \"page\", width = 9, height = 6)", "```"),
+             file.path(dir, "split.qmd"))
+  expect_identical(figure_standard_scan(dir), "split.qmd:12: width = 9 in is larger than the 6.5 by 9 in page")
 })

@@ -13,8 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
-    fig-width: 6
-    fig-height: 4
+    fig-width: 9
+    fig-height: 6
     theme: cosmo
     toc: true
     toc-location: left
@@ -435,7 +435,7 @@ p_error
 #| label: fig-path
 #| fig-cap: "Fitted rho, phi and lambda by boosting iteration, one panel per parameter. Each black solid line is the
 #|   parameter's fitted value after each iteration."
-#| fig-height: 8
+#| fig-height: 12
 # Free size: three stacked panels, one per parameter.
 p_path <- plot(gg_boost_path(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(p_path, "nb-boostmtree-path", height = 8)
@@ -459,8 +459,8 @@ p_calibration
 #| label: fig-importance
 #| fig-cap: "Importance of each predictor's main effect and of its interaction with time, one panel for each. Horizontal
 #|   dark gray bars give the importance of each predictor."
-#| fig-width: 6.5
-#| fig-height: 7
+#| fig-width: 9.75
+#| fig-height: 10.5
 # Importance of each predictor's main effect and its interaction with time; the
 # interaction is where a predictor whose effect changes over follow-up shows.
 # vimp.boostmtree() permutes each predictor at random, so it is seeded and
@@ -562,7 +562,8 @@ for (.i in seq_along(p_effects)) {
   .child(paste("fig effects", .pg$kind, .pg$page),
          paste0("Partial effects over follow-up, ", .pg$kind, " predictors, one panel per predictor. ", .key[[.pg$kind]],
                 .on_page),
-         ".p", opts = c(sprintf("#| fig-width: %g", .pg$size$width), sprintf("#| fig-height: %g", .pg$size$height)))
+         ".p", opts = c(sprintf("#| fig-width: %g", hvtiRtemplates:::.report_size(.pg$size$width)),
+                        sprintf("#| fig-height: %g", hvtiRtemplates:::.report_size(.pg$size$height))))
 }
 ```
 

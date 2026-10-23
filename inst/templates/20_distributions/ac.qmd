@@ -13,8 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
-    fig-width: 6
-    fig-height: 4
+    fig-width: 9
+    fig-height: 6
     theme: cosmo
     toc: true
     toc-location: left
@@ -600,15 +600,15 @@ km_figure <- function(strata = NULL) {
 ```{r}
 #| label: fig-km-views
 #| fig-cap: "Overall: survival and the cumulative hazard on four scales"
-#| fig-width: 6.5
-#| fig-height: 8
+#| fig-width: 9.75
+#| fig-height: 12
 km_views(km)
 ```
 
 ```{r}
 #| label: fig-km-survival
 #| fig-cap: "Overall survival, with patients at risk"
-#| fig-height: 5
+#| fig-height: 7.5
 .fig <- km_figure()
 save_figure(.fig, "ac-survival", width = 6, height = 5)
 .fig
@@ -621,11 +621,11 @@ save_figure(.fig, "ac-survival", width = 6, height = 5)
 for (v in names(strata_fits)) {
   .views <- km_views(strata_fits[[v]])
   .child(paste("fig km views", v), paste0("By ", v, ": survival and the cumulative hazard on four scales"),
-         ".views", opts = c("#| fig-width: 6.5", "#| fig-height: 8"))
+         ".views", opts = c("#| fig-width: 9.75", "#| fig-height: 12"))
   .fig <- km_figure(v)
   save_figure(.fig, paste0("ac-survival-", v), width = 6, height = 5)
   .child(paste("fig km survival", v), paste0("Survival by ", v, ", with patients at risk"), ".fig",
-         opts = "#| fig-height: 5")
+         opts = "#| fig-height: 7.5")
 }
 ```
 

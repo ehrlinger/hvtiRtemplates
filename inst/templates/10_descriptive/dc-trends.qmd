@@ -9,8 +9,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # of being self-contained.
 format:
   html:
-    fig-width: 6
-    fig-height: 4
+    fig-width: 9
+    fig-height: 6
     theme: cosmo
     toc: true
     toc-location: left

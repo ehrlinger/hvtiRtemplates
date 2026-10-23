@@ -13,8 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
-    fig-width: 6
-    fig-height: 4
+    fig-width: 9
+    fig-height: 6
     theme: cosmo
     toc: true
     toc-location: left
@@ -194,8 +194,8 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 #| fig-cap: "Permutation importance of each predictor, overall and for each class. Horizontal bars give the importance
 #|   of each predictor, one panel for the overall forest and one for each class, in one color where the importance is
 #|   positive and another where it is not, as in the legend."
-#| fig-width: 6.5
-#| fig-height: 7
+#| fig-width: 9.75
+#| fig-height: 10.5
 #| message: true
 vi <- cache_fit("rfc-vimp", vimp(forest, seed = -abs(SEED)), seed = SEED, dir = CACHE_DIR, refit = REFIT)
 # Free size: one row per predictor, and one panel per class, at the 6.5 in page width.
@@ -250,7 +250,8 @@ if (is.null(PARTIAL_VARS)) {
   }
   code <- c(paste0(.fence, "{r}"), paste0("#| label: fig-", kind, "-", i),
             paste0("#| fig-cap: ", encodeString(caption, quote = "\"")),
-            sprintf("#| fig-width: %g", page$width), sprintf("#| fig-height: %g", page$height), ".fig", .fence)
+            sprintf("#| fig-width: %g", hvtiRtemplates:::.report_size(page$width)),
+            sprintf("#| fig-height: %g", hvtiRtemplates:::.report_size(page$height)), ".fig", .fence)
   cat(knitr::knit_child(text = code, envir = parent.frame(), quiet = TRUE), sep = "\n")
   cat("\n")
 }
