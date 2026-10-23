@@ -319,9 +319,9 @@ knitr::kable(icov, digits = 3, row.names = FALSE)
 .jitter <- ggplot2::position_jitter(width = 0, height = 0.3, seed = abs(SEED))
 .fig <- ggplot2::ggplot(.bee, ggplot2::aes(gradient, label)) +
   ggplot2::geom_vline(xintercept = 0, linetype = "dashed") +
-  ggplot2::geom_point(data = .bee[!.bee$noise, ], ggplot2::aes(colour = value), position = .jitter, size = 0.8) +
-  ggplot2::geom_point(data = .bee[.bee$noise, ], colour = "gray60", position = .jitter, size = 0.8) +
-  ggplot2::scale_colour_gradient2(low = "steelblue4", mid = "grey85", high = "firebrick", name = "Value (z)") +
+  ggplot2::geom_point(data = .bee[!.bee$noise, ], ggplot2::aes(color = value), position = .jitter, size = 0.8) +
+  ggplot2::geom_point(data = .bee[.bee$noise, ], color = "gray60", position = .jitter, size = 0.8) +
+  ggplot2::scale_color_gradient2(low = "steelblue4", mid = "gray85", high = "firebrick", name = "Value (z)") +
   ggplot2::labs(x = "Local gradient", y = NULL) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "right", legend.title = ggplot2::element_text())
 # A row per predictor, up to the 9 in page.

@@ -503,7 +503,7 @@ save_figure(.fig, "vp-dependence-graph", width = 6.5, height = 6)
 .out <- .long[.parent[as.character(.long$row)] %in% OUTCOME | .parent[as.character(.long$col)] %in% OUTCOME, ]
 .fig <- ggplot2::ggplot(.long, ggplot2::aes(col, row, fill = weight)) +
   ggplot2::geom_tile() +
-  ggplot2::geom_tile(data = .out, fill = NA, colour = "black", linewidth = 0.3) +
+  ggplot2::geom_tile(data = .out, fill = NA, color = "black", linewidth = 0.3) +
   ggplot2::scale_fill_gradient(low = "white", high = "steelblue4", name = "Weight") +
   ggplot2::labs(x = NULL, y = NULL) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12) +
