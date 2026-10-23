@@ -12,6 +12,29 @@ test_that("with no recorded need, the fix asks for a larger session than this on
   expect_match(d$fix, "larger than this one (19.2 GiB)", fixed = TRUE)
 })
 
+test_that("after an OOM the recommended cap is larger than the cap that failed, whatever the estimate said", {
+  # An underestimate: Medium ran out at its cap, and an estimate of 37.5 GiB alone would name Medium again.
+  d <- .diagnose_failure(fx("oom-workers"), list(mem_peak_gib = 76.7, mem_limit_gib = 76.8,
+                                                 progress = list(mem_need_gib = 37.5)))
+  expect_no_match(d$fix, "Medium", fixed = TRUE)
+  expect_match(d$fix, "\"Large\"", fixed = TRUE)
+  # An estimate that would name a smaller profile than the one that failed.
+  d <- .diagnose_failure(fx("oom-workers"), list(mem_peak_gib = 38.3, mem_limit_gib = 38.4,
+                                                 progress = list(mem_need_gib = 10)))
+  expect_match(d$fix, "\"Medium\"", fixed = TRUE)
+  # Nothing larger than Large: the fallback.
+  d <- .diagnose_failure(fx("oom-workers"), list(mem_peak_gib = 153.5, mem_limit_gib = 153.6,
+                                                 progress = list(mem_need_gib = 37.5)))
+  expect_match(d$fix, "larger than this one (153.6 GiB)", fixed = TRUE)
+})
+
+test_that("a recorded need of zero (a cached rerender) counts as no estimate", {
+  d <- .diagnose_failure(fx("oom-workers"), list(mem_peak_gib = 19.1, mem_limit_gib = 19.2,
+                                                 progress = list(mem_need_gib = 0)))
+  expect_match(d$fix, "larger than this one (19.2 GiB)", fixed = TRUE)
+  expect_no_match(d$fix, "estimated at 0", fixed = TRUE)
+})
+
 test_that("the same signature without a recorded peak is hedged", {
   d <- .diagnose_failure(fx("oom-workers"), list())
   expect_match(d$reason, "^probably memory", ignore.case = TRUE)

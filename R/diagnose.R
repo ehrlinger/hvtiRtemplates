@@ -25,7 +25,11 @@
     lim <- st$mem_limit_gib
     if (is.numeric(peak) && is.numeric(lim) && peak >= 0.95 * lim) {
       need <- st$progress$mem_need_gib
-      to <- if (is.numeric(need)) .profile_for(need) else "none"
+      # The peak proves the cap that failed was too small, so the estimate only picks among larger caps: an underestimate
+      # must not name the same profile again. A need of 0 is a cached rerender's record, not an estimate.
+      prof <- .workbench_profiles
+      i <- if (.num1(need) && need > 0) which(prof$cap_gib > lim & prof$cap_gib * 0.9 >= need)[1L] else NA
+      to <- if (is.na(i)) "none" else prof$profile[i]
       fix <- if (to != "none") {
         sprintf("Start a \"%s\" session or larger (this fit was estimated at %.0f GiB), or lower CORES.", to, need)
       } else {
