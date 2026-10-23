@@ -48,6 +48,10 @@ tune_mtry(x, tm, id, y, family, candidates = NULL, n_patients = 1000L, M = 50L, 
 - The subsample is drawn by patient, never by row, so a patient's visits stay
   together. It draws from R's generator, so the caller seeds it (the template
   does, through `cache_fit(seed = SEED)`).
+- For an ordinal or nominal response the subsample holds every level present
+  in the data: a level the draw missed adds one random patient who has it. A
+  pilot that never sees a level cannot fit it, and a rare level is exactly the
+  one a 1,000-patient draw can miss.
 - It fits one cross-validated pilot per candidate (`cv.flag = TRUE`,
   `mod.grad = TRUE`, and `cv.cores = cores`).
 - It returns a list: `table`, a data frame with one row per candidate
@@ -61,13 +65,27 @@ tune_mtry(x, tm, id, y, family, candidates = NULL, n_patients = 1000L, M = 50L, 
 ## 4. In `nb-boostmtree`
 
 - `MTRY` accepts `"tune"`, alongside a positive integer or `NULL`.
-- Under `"tune"`, the fit chunk runs
-  `cache_fit("nb-boostmtree-mtry", tune_mtry(...), seed = SEED, dir = CACHE_DIR, refit = REFIT)`
-  before the full fit, then fits with the chosen value. The tuning has its own
-  cache, keyed on the data, `SEED` and the candidates, so changing the full fit's
-  `M` does not rerun the pilots.
-- `guard_long_fit()` is called before the pilots as well, since the pilots are
-  part of a long fit.
+- The template calls `hvtiRtemplates::tune_mtry()` by its namespace. A job
+  attaches only boostmtree, ggBoostedTrees and hvtiRutilities.
+- Under `"tune"`, the fit chunk settles the tuning **before** it builds the
+  fit's call. The fit's cache key and its memory check both depend on the
+  `mtry` chosen, so neither can be computed first. The order is:
+  1. `guard_long_fit("nb-boostmtree-mtry", ...)`, its own name, since the
+     pilots are a long fit in their own right;
+  2. `guard_memory()` sized for one pilot;
+  3. `cache_fit("nb-boostmtree-mtry", hvtiRtemplates::tune_mtry(...), seed = SEED,
+     dir = CACHE_DIR, refit = REFIT, packages = "boostmtree")`;
+  4. then the fit's existing call, memory check and cache.
+- `packages = "boostmtree"` is there because the pilots run inside `tune_mtry()`,
+  where the key cannot see the dependency, and a boostmtree upgrade must rerun
+  them. hvtiRtemplates is deliberately not keyed: a patch release should not
+  rerun an hour of pilots.
+- The tuning has its own cache, keyed on the data, `SEED` and the candidates,
+  so changing the full fit's `M` does not rerun the pilots. The pilots report
+  progress through the same `.job$progress()` as the fit.
+- **An untuned job's cache key does not change.** The fit's call keeps
+  `mtry = MTRY`. Under `"tune"` the chosen value is substituted into the call
+  as a literal, so only a tuned fit has a new key.
 - **Report.** Under `"tune"`, a table titled "Choosing mtry" lists each
   candidate's pilot error and marks the winner. The fit summary records the
   `mtry` actually used. Under a number or `NULL`, nothing changes.
@@ -83,8 +101,16 @@ tune_mtry(x, tm, id, y, family, candidates = NULL, n_patients = 1000L, M = 50L, 
 - The template under `MTRY = "tune"`: a test wraps `boostmtree()` and confirms
   the full fit receives the chosen value. The report table appears under
   `"tune"` and not otherwise.
-- Mutation: breaking the selection, or sampling by row instead of by patient,
-  makes the tests fail.
+- One render runs the real `tune_mtry()` end to end, so a call the job cannot
+  resolve fails in the suite rather than in a study.
+- An untuned job's fit call still reads `mtry = MTRY`; the tuning's stored key
+  includes boostmtree's version; a cached rerender of a tuned job asks no
+  memory for either the pilots or the fit; an ordinal sample holds a level
+  only one patient has.
+- Mutation: breaking the selection, sampling by row instead of by patient,
+  dropping the level top-up, calling `tune_mtry()` without its namespace,
+  dropping `packages =`, or keying the fit's memory check before the tuned
+  value is substituted makes the tests fail.
 
 ## 6. The experiment (server, outside the repository)
 
