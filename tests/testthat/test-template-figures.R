@@ -37,7 +37,8 @@ test_that("every printed figure is also saved, under its documented name", {
     `rfr-fit` = c("rfr-fit-diagnostics-error", "rfr-fit-diagnostics-predicted"),
     `rfs-fit` = c("rfs-fit-diagnostics-error", "rfs-fit-diagnostics-survival", "rfs-fit-diagnostics-brier"),
     `vp-fit` = c("vp-fit-coverage", "vp-fit-varpro"),
-    `vp-explain` = "vp-explain-dependence-varpro"
+    `vp-explain` = "vp-explain-dependence-varpro",
+    `sid-clusters` = c("sid-clusters-metrics", "sid-clusters-sankey", "sid-clusters-silhouette", "sid-clusters-mds")
   )
   for (t in c("rfc-explain", "rfr-explain", "rfs-explain")) {
     expected[[t]] <- paste0(t, c("-importance", "-dependence-marginal", "-dependence-partial"))

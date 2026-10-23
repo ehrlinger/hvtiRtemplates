@@ -99,13 +99,16 @@ rf_drawing_notice <- function(label, w) {
 rf_gg_partial_varpro <- function(...) ggRandomForests::gg_partial_varpro(..., nvirtual = 25L)
 environment(rf_gg_partial_varpro) <- baseenv()
 
-# Version floors verified end-to-end on 2026-09-19. Keyed by package name so
-# a package a template does not use is never looked up here.
+# Version floors verified end-to-end on 2026-09-19, except cluster and mice,
+# which were added on 2026-10-22 with the sid templates. Keyed by package name
+# so a package a template does not use is never looked up here.
 rf_pkg_floors <- c(
   randomForestSRC  = "3.7.0",
   varPro           = "3.2.0",
   ggRandomForests  = "4.0.0",
-  hvtiRutilities   = "1.3.0"
+  hvtiRutilities   = "1.3.0",
+  cluster          = "2.1.8",
+  mice             = "3.19.0"
 )
 
 # Parses the `library(...)` calls out of a template's own `setup` chunk, so
