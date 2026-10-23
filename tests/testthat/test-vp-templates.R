@@ -418,6 +418,24 @@ test_that("vp-dependence traces a colliding encoded column to its factor", {
   expect_true(all(env$beta[in_beta, in_beta] == 0))
 })
 
+test_that("vp-dependence keys its caches on the engines beneath varPro", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  env <- vpd_first(choices = utils::modifyList(vpd_choices, list(REPEATS = 1)))
+  # The key records the version of every package named in packages =, so an
+  # update to the forest or the lasso engine invalidates the cache.
+  key_names <- function(file) {
+    key <- readRDS(file.path(env$CACHE_DIR, file))$key
+    paste(deparse(key), collapse = " ")
+  }
+  for (file in c("vp-dependence.rds", "vp-dependence-repeat-01.rds")) {
+    expect_match(key_names(file), "randomForestSRC", fixed = TRUE, info = file)
+  }
+  for (file in c("vp-dependence-beta.rds", "vp-dependence-repeat-01-beta.rds")) {
+    expect_match(key_names(file), "glmnet", fixed = TRUE, info = file)
+  }
+})
+
 test_that("vp-dependence refuses an ORDINAL variable it was not given", {
   vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   env <- rf_env(vpd_data())
@@ -505,6 +523,23 @@ test_that("vp-individual draws one target of a multiclass screen, with its plott
   expect_true(env$.target_col %in% names(env$.idata))
   expect_gt(nrow(env$.bee), 0L)
   expect_true(all(is.finite(env$.bee$value)))
+})
+
+test_that("vp-individual names the class a two-class screen's gradients explain", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "individual"))
+  # A 0/1 outcome: ivarpro() explains the first class, 0, so a rising event risk
+  # has a falling gradient, and the report must say which class it shows.
+  ch <- utils::modifyList(vp_outcome(vp_choices, NULL, NULL, "event"),
+                          list(PREDICTORS = c("xs", "x1", "x2"), SPLIT_WEIGHT = FALSE, NVAR = 50, REPEATS = 0))
+  fit <- vp_fit_first(vp_data(), ch)
+  out <- utils::capture.output(env <- vpi_run(fit, list(SHOW = "xs", SEED = 1, SAVE_FIGURES = FALSE)))
+  expect_identical(env$.target, "0")
+  expect_identical(env$.target_label, "P(class 0)")
+  expect_true(any(grepl("predicted probability of class 0", out, fixed = TRUE)))
+  expect_true(any(grepl("sign reversed", out, fixed = TRUE)))
+  # .fig is the last gradient page, whose y axis is the gradient.
+  expect_identical(ggplot2::get_labs(env$.fig)$y, "Local gradient of P(class 0)")
 })
 
 test_that("vp-individual gives the planted signal larger gradients than the nulls", {

@@ -259,6 +259,15 @@ if (is.data.frame(ivp_all)) {
 }
 grad <- as.data.frame(ivp)
 .parent <- vpi_parent(fit)
+# What each gradient is the slope of, named in the report and on the axes. A
+# two-class fit is explained through its FIRST class, which for a 0/1 outcome
+# is class 0, so a gradient's sign must be read against that class.
+.target <- if (is.data.frame(ivp_all)) attr(ivp_all, "target")[[1L]] else TARGET
+.target_label <- switch(fit$family,
+  surv = "ensemble mortality",
+  class = sprintf("P(class %s)", .target),
+  sprintf("predicted %s", .target)
+)
 ```
 
 Every predictor the screen was given, and whether it has a gradient. A
@@ -274,6 +283,13 @@ every candidate gradients, rerun `vp-fit` with `SPLIT_WEIGHT <- FALSE` and
 #| results: asis
 icov <- vpi_coverage(grad, .parent, cov)
 .ref <- vpi_noise_ref(icov, grad)
+cat("Each gradient is the local slope of ", switch(fit$family,
+  surv = "varPro's ensemble mortality, in expected events, not a probability",
+  class = sprintf("the predicted probability of class %s", .target),
+  sprintf("the predicted %s, in its own units", .target)
+), ".", if (identical(fit$family, "class") && is.data.frame(ivp_all)) {
+  " With two classes, the other class's gradient is this one with its sign reversed."
+}, "\n\n", sep = "")
 cat(.ref$text, "\n\n", sep = "")
 if (is.null(SHOW)) {
   show <- icov$term[icov$variable %in% selected]
@@ -294,6 +310,9 @@ if (!length(show)) {
   stop("No predictor in SHOW (or the screen's selected set, when SHOW is NULL) has a gradient for any patient. ",
        "Name predictors the table lists as computed in SHOW.", call. = FALSE)
 }
+# The beeswarm's rows, and its height: a row per predictor, up to the 9 in page.
+.rows <- c(show, setdiff(icov$term[icov$noise & icov$drawn], show))
+bee_height <- min(9, 1 + 0.4 * length(.rows))
 knitr::kable(icov, digits = 3, row.names = FALSE)
 ```
 
@@ -301,10 +320,11 @@ knitr::kable(icov, digits = 3, row.names = FALSE)
 #| label: fig-beeswarm
 #| fig-cap: "Each patient's local gradient for each drawn predictor, one row per predictor, colored by the patient's
 #|   standardized value of that predictor; permuted noise columns, when the rules released any, are gray. The dashed line
-#|   is no change, and each label gives the share of patients with a gradient."
+#|   is no change, and each label gives the share of patients with a gradient. The axis names what the gradient is the
+#|   slope of."
 #| fig-width: 9.75
+#| fig-height: !expr hvtiRtemplates:::.report_size(bee_height)
 # Noise rows are drawn beside the real ones as a visual reference, never judged.
-.rows <- c(show, setdiff(icov$term[icov$noise & icov$drawn], show))
 .z <- function(x) {
   s <- stats::sd(x, na.rm = TRUE)
   if (is.finite(s) && s > 0) (x - mean(x, na.rm = TRUE)) / s else x * 0
@@ -322,10 +342,9 @@ knitr::kable(icov, digits = 3, row.names = FALSE)
   ggplot2::geom_point(data = .bee[!.bee$noise, ], ggplot2::aes(color = value), position = .jitter, size = 0.8) +
   ggplot2::geom_point(data = .bee[.bee$noise, ], color = "gray60", position = .jitter, size = 0.8) +
   ggplot2::scale_color_gradient2(low = "steelblue4", mid = "gray85", high = "firebrick", name = "Value (z)") +
-  ggplot2::labs(x = "Local gradient", y = NULL) +
+  ggplot2::labs(x = paste("Local gradient of", .target_label), y = NULL) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "right", legend.title = ggplot2::element_text())
-# A row per predictor, up to the 9 in page.
-save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = min(9, 1 + 0.4 * length(.rows)))
+save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = bee_height)
 .fig
 ```
 
@@ -367,7 +386,7 @@ for (.i in seq_along(.pages)) {
     ggplot2::geom_point(alpha = 0.5) +
     ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
     ggplot2::facet_wrap(~ term, scales = "free") +
-    ggplot2::labs(x = "Value", y = "Local gradient") +
+    ggplot2::labs(x = "Value", y = paste("Local gradient of", .target_label)) +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   save_figure(.fig, sprintf("vp-individual-gradient-page-%02d", .i),
               width = .pages[[.i]]$width, height = .pages[[.i]]$height)

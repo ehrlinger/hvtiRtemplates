@@ -417,14 +417,17 @@ vpd_bar <- function(I, noise, fixed) {
 # estimates folder, not this set's, so every call here names the set's.
 CACHE_DIR <- dirname(set_path("estimates", "dependence.rds"))
 set.seed(abs(SEED))
+# packages = keys each cache on the engine doing the work as well as on
+# varPro, which only calls it: randomForestSRC grows the forest and glmnet
+# fits the lasso, and an update to either must not reuse an old result.
 fit <- cache_fit("vp-dependence", uvarpro(d_noise, ntree = NTREE, seed = -abs(SEED)),
-                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
+                 seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
 # The lasso step draws its cross-validation folds from R's generator, so it is
 # seeded again. pre.filter = FALSE keeps every column: the pre-filter would
 # drop the noise the bar is made from, and any outcome column.
 set.seed(abs(SEED))
 beta_raw <- cache_fit("vp-dependence-beta", get.beta.entropy(fit, pre.filter = FALSE, papply = lapply),
-                      seed = SEED, dir = CACHE_DIR, refit = REFIT)
+                      seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "glmnet")
 ```
 
 ## The dependence matrix
@@ -534,11 +537,11 @@ if (REPEATS > 0) {
     dr <- vp_add_noise(d[rows, , drop = FALSE], .cols, NOISE_N, SEED + r)
     set.seed(abs(SEED) + r)
     fr <- cache_fit(sprintf("vp-dependence-repeat-%02d", r), uvarpro(dr, ntree = NTREE, seed = -abs(SEED + r)),
-                    seed = SEED + r, dir = CACHE_DIR, refit = REFIT)
+                    seed = SEED + r, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
     set.seed(abs(SEED) + r)
     br <- cache_fit(sprintf("vp-dependence-repeat-%02d-beta", r),
                     get.beta.entropy(fr, pre.filter = FALSE, papply = lapply),
-                    seed = SEED + r, dir = CACHE_DIR, refit = REFIT)
+                    seed = SEED + r, dir = CACHE_DIR, refit = REFIT, packages = "glmnet")
     pr <- vpd_parent(fr)
     sq <- vpd_square(br, pr)
     nz <- startsWith(unname(pr[rownames(sq)]), "noise") %in% TRUE
