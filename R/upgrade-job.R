@@ -202,33 +202,36 @@ upgrade_job <- function(path, dir = NULL) {
 
 # Before 1.5.1 an upgrade left the old job beside the job as <job>.qmd.pre-upgrade
 # and its report as <stem>-upgrade.md, and refused to run again while they stood.
-# Move any such pair, under any spelling of this job, into `archive` the way an
-# upgrade names its own, never over a file there and never one in `reserved`.
-# The report's time is the old upgrade's; the old job's is its last edit, which
-# the rename kept, so it stamps the pair only when the report is gone. A file an
-# analyst renamed by hand is not one upgrade_job() wrote and is left alone.
+# Move every such file, under any spelling of this job in `jobs`, into `archive`
+# the way an upgrade names its own, never over a file there and never one in
+# `reserved`. They share one stamp, since an upgrade that renamed the job left
+# the old job under the old spelling and the report under the new. The report's
+# time is the old upgrade's; the old job's is its last edit, which the rename
+# kept, so it stamps them only when no report is left. A file an analyst renamed
+# by hand is not one upgrade_job() wrote and is left alone.
 .archive_legacy_upgrade <- function(jobs, archive, taken, reserved) {
-  for (job in jobs) {
-    from <- c(paste0(job, ".pre-upgrade"), sub("[.]qmd$", "-upgrade.md", job))
-    present <- file.exists(from) & !dir.exists(from)
-    if (!any(present)) next
-    stem <- sub("[.]qmd$", "", basename(job))
-    stamp <- format(file.mtime(from[[if (present[[2L]]) 2L else 1L]]), "%Y%m%d-%H%M%S")
-    pair <- function(s) file.path(archive, paste0(stem, ".", s, c(".pre-upgrade", "-upgrade.md")))
-    to <- pair(stamp)
-    n <- 1L
-    while ((any(taken(to)) || any(to %in% reserved)) && n < 99L) {
-      n <- n + 1L
-      to <- pair(paste0(stamp, "-", n))
-    }
-    if (any(taken(to)) || any(to %in% reserved)) {
-      stop("upgrade_job(): '", to[taken(to) | to %in% reserved][[1L]], "' already exists; refusing to overwrite.",
-           call. = FALSE)
-    }
-    for (k in which(present)) {
-      if (!file.rename(from[[k]], to[[k]])) {
-        stop("upgrade_job(): could not move '", from[[k]], "' into _archive.", call. = FALSE)
-      }
+  reports <- sub("[.]qmd$", "-upgrade.md", jobs)
+  from <- c(paste0(jobs, ".pre-upgrade"), reports)
+  from <- unique(from[file.exists(from) & !dir.exists(from)])
+  if (!length(from)) return(invisible())
+  is_report <- from %in% reports
+  stem <- ifelse(is_report, sub("-upgrade[.]md$", "", basename(from)), sub("[.]qmd[.]pre-upgrade$", "", basename(from)))
+  suffix <- ifelse(is_report, "-upgrade.md", ".pre-upgrade")
+  stamp <- format(file.mtime(from[[if (any(is_report)) which(is_report)[[1L]] else 1L]]), "%Y%m%d-%H%M%S")
+  to <- function(s) file.path(archive, paste0(stem, ".", s, suffix))
+  blocked <- function(d) taken(d) | d %in% reserved
+  dest <- to(stamp)
+  n <- 1L
+  while (any(blocked(dest)) && n < 99L) {
+    n <- n + 1L
+    dest <- to(paste0(stamp, "-", n))
+  }
+  if (any(blocked(dest))) {
+    stop("upgrade_job(): '", dest[blocked(dest)][[1L]], "' already exists; refusing to overwrite.", call. = FALSE)
+  }
+  for (k in seq_along(from)) {
+    if (!file.rename(from[[k]], dest[[k]])) {
+      stop("upgrade_job(): could not move '", from[[k]], "' into _archive.", call. = FALSE)
     }
   }
 }

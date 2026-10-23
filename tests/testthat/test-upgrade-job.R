@@ -324,6 +324,21 @@ test_that("a legacy pair whose archived name is taken keeps both, under a suffix
   expect_identical(readLines(file.path(arch, "dc.general.cohort.eda.20261020-101300-2-upgrade.md")), "the old report")
 })
 
+test_that("a legacy pair split across a rename keeps one stamp", {
+  # An old upgrade that renamed the job left the old job under the old
+  # spelling and the report under the new; they are still one upgrade's pair.
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  legacy <- legacy_pair(job, "2026-10-20 10:13:00")
+  old_spelling <- file.path(dirname(job), "cohort-eda-dc-general.qmd.pre-upgrade")
+  file.rename(legacy[["backup"]], old_spelling)
+  local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
+  upgrade_job(job)
+  arch <- file.path(dirname(job), "_archive")
+  expect_identical(readLines(file.path(arch, "cohort-eda-dc-general.20261020-101300.pre-upgrade")), "the old job")
+  expect_identical(readLines(file.path(arch, "dc.general.cohort.eda.20261020-101300-upgrade.md")), "the old report")
+})
+
 test_that("a legacy old job without its report is archived under its own time", {
   root <- migration_study_fixture()
   job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
