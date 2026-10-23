@@ -433,7 +433,8 @@ test_that("each effects page is emitted at its own width and height", {
     size <- env$.effect_page[[i]]$size
     expect_true(size$width != size$height)
     expect_identical(grep("^#\\| fig-(width|height):", emitted[[i]], value = TRUE),
-                     c(sprintf("#| fig-width: %g", size$width), sprintf("#| fig-height: %g", size$height)))
+                     c(sprintf("#| fig-width: %g", .report_size(size$width)),
+                       sprintf("#| fig-height: %g", .report_size(size$height))))
   }
 })
 

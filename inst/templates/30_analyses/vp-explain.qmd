@@ -13,8 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
-    fig-width: 6
-    fig-height: 4
+    fig-width: 9
+    fig-height: 6
     theme: cosmo
     toc: true
     toc-location: left
@@ -215,7 +215,8 @@ if (!length(sel)) {
   }
   code <- c(paste0(.fence, "{r}"), paste0("#| label: fig-", kind, "-", i),
             paste0("#| fig-cap: ", encodeString(caption, quote = "\"")),
-            sprintf("#| fig-width: %g", page$width), sprintf("#| fig-height: %g", page$height), ".fig", .fence)
+            sprintf("#| fig-width: %g", hvtiRtemplates:::.report_size(page$width)),
+            sprintf("#| fig-height: %g", hvtiRtemplates:::.report_size(page$height)), ".fig", .fence)
   cat(knitr::knit_child(text = code, envir = parent.frame(), quiet = TRUE), sep = "\n")
   cat("\n")
 }
