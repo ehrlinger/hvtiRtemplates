@@ -174,6 +174,6 @@ guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
   # Kept for jobs scaffolded before 1.5.0, which call hvtiRtemplates:::.cache_would_fit() with a quoted call.
   # The decision is hvtiRutilities::cache_would_fit()'s (>= 1.5.11), the one cache_fit() itself makes.
   call <- bquote(hvtiRutilities::cache_would_fit(.(name), .(code), seed = .(seed), dir = .(dir),
-                                                  refit = .(refit), packages = .(packages)))
+                                                 refit = .(refit), packages = .(packages)))
   eval(call, env)
 }
