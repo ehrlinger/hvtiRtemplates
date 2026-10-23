@@ -29,9 +29,9 @@ existing file, because a job accumulates a study’s edits.
 Each template carries a light.
 
 - 🟢 **Shipped** (34): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (23): on disk but being reworked, or scheduled into
+- 🟡 **In progress** (25): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
-- 🔴 **Not yet on the way** (12): waiting on a function in another
+- 🔴 **Not yet on the way** (11): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
   now, write it by hand.
 
@@ -97,6 +97,8 @@ places each one; you do not choose the folder.
 | 🟡 In progress | `sid-fit` | An unsupervised sidClustering forest on the clustering variables, after mice or forest imputation pooled over M, saving a digest-keyed SID dissimilarity for sid-clusters and vt. | `add_job("sid", subject, type, qualifier = "fit")` |
 | 🟡 In progress | `vp-explain` | VarPro partial dependence for the variables a vp-fit screen selected. It never fits varPro. | `add_job("vp", subject, type, qualifier = "explain")` |
 | 🟡 In progress | `vp-fit` | A VarPro variable screen that says which variables were tested, judges selection against permuted noise of the same kind, and checks the selection across subsamples. | `add_job("vp", subject, type, qualifier = "fit")` |
+| 🟡 In progress | `vt-explain` | The twin contrast a vt-fit job saved: by arm, by eligibility rule and by stratum, with standardized betas and who might benefit. It never grows a forest. | `add_job("vt", subject, type, qualifier = "explain")` |
+| 🟡 In progress | `vt-fit` | Per-arm survival forests, swapped-arm twin curves and a per-patient RMST difference, with eligibility judged by a choice of methods. | `add_job("vt", subject, type, qualifier = "fit")` |
 
 ### graphs
 
@@ -145,7 +147,6 @@ as zero.
 | 🔴 Not yet on the way | `cp` | Cumulative probability plot | 4 | hvtiPlotR#135 |
 | 🔴 Not yet on the way | `bq` | Bootstrap quantile | 2 | hvtiRbootstrap#16 |
 | 🔴 Not yet on the way | `nb-boostmlr` | Boosting: BoostMLR | unmeasured |  |
-| 🔴 Not yet on the way | `vt` | Virtual twins | unmeasured | hvtiRforests#1 |
 
 ## Where to read more
 

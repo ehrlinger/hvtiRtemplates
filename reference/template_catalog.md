@@ -31,7 +31,7 @@ catalog <- template_catalog()
 table(catalog$status)
 #> 
 #> in-flight    queued   revisit   shipped 
-#>         5        29         1        34 
+#>         7        28         1        34 
 
 # Templates that still scaffold but name a replacement.
 catalog[!is.na(catalog$deprecated_by), c("prefix", "qualifier", "deprecated_by")]
@@ -50,5 +50,4 @@ queued[, c("prefix", "qualifier", "blocked_on")]
 #> 17     gp      <NA>     hvtiPlotR#136
 #> 49   vars      <NA>    hvtiRdatabuild
 #> 51     mi      <NA>   hvtiRimputation
-#> 58     vt      <NA>    hvtiRforests#1
 ```

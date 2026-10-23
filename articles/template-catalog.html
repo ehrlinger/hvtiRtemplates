@@ -87,8 +87,8 @@
 <p>Each template carries a light.</p>
 <ul>
 <li>🟢 <strong>Shipped</strong> (34): on disk and supported. Scaffold it and use it.</li>
-<li>🟡 <strong>In progress</strong> (23): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
-<li>🔴 <strong>Not yet on the way</strong> (12): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
+<li>🟡 <strong>In progress</strong> (25): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
+<li>🔴 <strong>Not yet on the way</strong> (11): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
 </h2>
 <p>Every template on disk, grouped by the study folder a job lands in, named without its digits (<code>graphs</code> is <code>40_graphs</code> in a new study). <code><a href="../reference/add_job.html">add_job()</a></code> places each one; you do not choose the folder.</p>
@@ -373,6 +373,18 @@
 <td style="text-align: left;">A VarPro variable screen that says which variables were tested, judges selection against permuted noise of the same kind, and checks the selection across subsamples.</td>
 <td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "fit")</code></td>
 </tr>
+<tr class="odd">
+<td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>vt-explain</code></td>
+<td style="text-align: left;">The twin contrast a vt-fit job saved: by arm, by eligibility rule and by stratum, with standardized betas and who might benefit. It never grows a forest.</td>
+<td style="text-align: left;"><code>add_job("vt", subject, type, qualifier = "explain")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>vt-fit</code></td>
+<td style="text-align: left;">Per-arm survival forests, swapped-arm twin curves and a per-patient RMST difference, with eligibility judged by a choice of methods.</td>
+<td style="text-align: left;"><code>add_job("vt", subject, type, qualifier = "fit")</code></td>
+</tr>
 </tbody>
 </table></section><section class="level3"><h3 id="graphs">graphs<a class="anchor" aria-label="anchor" href="#graphs"></a>
 </h3>
@@ -631,13 +643,6 @@
 <td style="text-align: left;">Boosting: BoostMLR</td>
 <td style="text-align: left;">unmeasured</td>
 <td style="text-align: left;"></td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">🔴 Not yet on the way</td>
-<td style="text-align: left;"><code>vt</code></td>
-<td style="text-align: left;">Virtual twins</td>
-<td style="text-align: left;">unmeasured</td>
-<td style="text-align: left;">hvtiRforests#1</td>
 </tr>
 </tbody>
 </table>
