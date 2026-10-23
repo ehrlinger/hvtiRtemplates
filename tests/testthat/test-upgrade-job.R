@@ -350,6 +350,38 @@ test_that("a legacy old job without its report is archived under its own time", 
                    "the old job")
 })
 
+test_that("two legacy pairs that would share an archived name stop the upgrade before anything moves", {
+  # A job moved below its stage folder and its canonical path are both spellings
+  # of it, and their pairs have the same file names.
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  nested <- file.path(dirname(job), "nested", basename(job))
+  dir.create(dirname(nested))
+  file.rename(job, nested)
+  here <- legacy_pair(nested, "2026-10-20 10:13:00")
+  there <- legacy_pair(job, "2026-10-20 10:13:00")
+  writeLines("the canonical old job", there[["backup"]])
+  expect_error(upgrade_job(nested), "would be archived under one name", fixed = TRUE)
+  expect_identical(readLines(here[["backup"]]), "the old job")
+  expect_identical(readLines(there[["backup"]]), "the canonical old job")
+  expect_true(all(file.exists(c(here, there))))
+  expect_length(list.files(file.path(dirname(job), "_archive"), pattern = "20261020"), 0L)
+})
+
+test_that("a legacy file under an old spelling that resolves outside the study is not moved", {
+  skip_on_os("windows")
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "trends")
+  # dc-trends was dp-trends, under graphs/; make graphs/ a link out of the study.
+  outside <- withr::local_tempdir()
+  unlink(file.path(root, "graphs"), recursive = TRUE)
+  file.symlink(outside, file.path(root, "graphs"))
+  stray <- file.path(outside, "dp.trends.cohort.eda.qmd.pre-upgrade")
+  writeLines("not this study's", stray)
+  expect_error(upgrade_job(job), "resolves outside the study root", fixed = TRUE)
+  expect_identical(readLines(stray), "not this study's")
+})
+
 test_that("upgrade_job() installs the study's provenance hooks", {
   root <- migration_study_fixture()
   path <- old_rfs_job(root)

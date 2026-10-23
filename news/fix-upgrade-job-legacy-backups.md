@@ -4,3 +4,5 @@
   time of the upgrade that wrote it, read from the report, and an archived name
   already taken gets a `-2` suffix rather than being overwritten. A copy renamed
   by hand, such as `<job>.qmd.pre-upgrade-20261020`, is left where it is.
+  It refuses, before moving anything, when two of those files would take one
+  archived name, or when one sits in a folder that resolves outside the study.

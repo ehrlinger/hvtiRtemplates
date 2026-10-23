@@ -181,7 +181,7 @@ upgrade_job <- function(path, dir = NULL) {
   if (!.path_within(normalizePath(archive, winslash = "/", mustWork = TRUE), root)) {
     stop("upgrade_job(): the job folder's _archive resolves outside the study root.", call. = FALSE)
   }
-  .archive_legacy_upgrade(unique(c(path, target, others_all)), archive, taken, files)
+  .archive_legacy_upgrade(unique(c(path, target, others_all)), archive, taken, files, root)
   # The current template's provenance checks need the study's hooks, which a
   # study older than them may lack; add_job() installs them the same way.
   .install_provenance_hooks(root)
@@ -208,12 +208,19 @@ upgrade_job <- function(path, dir = NULL) {
 # the old job under the old spelling and the report under the new. The report's
 # time is the old upgrade's; the old job's is its last edit, which the rename
 # kept, so it stamps them only when no report is left. A file an analyst renamed
-# by hand is not one upgrade_job() wrote and is left alone.
-.archive_legacy_upgrade <- function(jobs, archive, taken, reserved) {
+# by hand is not one upgrade_job() wrote and is left alone. Every check runs
+# before the first move, so a refusal leaves each file where it was.
+.archive_legacy_upgrade <- function(jobs, archive, taken, reserved, root) {
   reports <- sub("[.]qmd$", "-upgrade.md", jobs)
   from <- c(paste0(jobs, ".pre-upgrade"), reports)
   from <- unique(from[file.exists(from) & !dir.exists(from)])
   if (!length(from)) return(invisible())
+  # An old spelling's folder can be a link out of the study, and a sweep moves what it finds.
+  outside <- !.path_within(normalizePath(dirname(from), winslash = "/", mustWork = TRUE), root)
+  if (any(outside)) {
+    stop("upgrade_job(): '", from[outside][[1L]], "' resolves outside the study root; refusing to move it.",
+         call. = FALSE)
+  }
   is_report <- from %in% reports
   stem <- ifelse(is_report, sub("-upgrade[.]md$", "", basename(from)), sub("[.]qmd[.]pre-upgrade$", "", basename(from)))
   suffix <- ifelse(is_report, "-upgrade.md", ".pre-upgrade")
@@ -221,6 +228,12 @@ upgrade_job <- function(path, dir = NULL) {
   to <- function(s) file.path(archive, paste0(stem, ".", s, suffix))
   blocked <- function(d) taken(d) | d %in% reserved
   dest <- to(stamp)
+  # Spellings in different folders can share a file name, and the later move would replace the earlier.
+  if (anyDuplicated(dest)) {
+    same <- from[dest == dest[duplicated(dest)][[1L]]]
+    stop("upgrade_job(): '", same[[1L]], "' and '", same[[2L]], "' would be archived under one name; ",
+         "move one into _archive by hand first.", call. = FALSE)
+  }
   n <- 1L
   while (any(blocked(dest)) && n < 99L) {
     n <- n + 1L
