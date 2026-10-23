@@ -1,16 +1,39 @@
 # hvtiRtemplates
 
 Analysis job templates for the HVTI CORR group, plus the prefix taxonomy
-that names them. Eight exports across eleven source files:
+that names them. Twenty-four exports across 42 source files (counted at
+1.5.0), in four groups: - the taxonomy and catalog:
 [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
 [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html),
 [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
-[`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md),
+[`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
+and
+[`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md); -
+scaffolding and upgrading jobs:
 [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
 [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md),
-[`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+[`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md),
+[`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md),
+[`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md),
+[`build_cohort()`](https://ehrlinger.github.io/hvtiRtemplates/reference/build_cohort.md)
 and
-[`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md).
+[`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md); -
+running jobs:
+[`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md),
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
+[`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md),
+[`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md),
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md),
+[`install_hvti()`](https://ehrlinger.github.io/hvtiRtemplates/reference/install_hvti.md),
+[`guard_long_fit()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_long_fit.md)
+and
+[`guard_memory()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md); -
+the `ac` template’s life tables:
+[`life_table()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md),
+[`life_table_at()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md),
+[`life_table_keep()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md)
+and
+[`life_table_tests()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md).
 
 The package is small; the **templates are the product**.
 `inst/templates/README.md` promises that files there are supported and
@@ -388,16 +411,20 @@ guess.
   **automatic Copilot code review**. A direct push to `main` is rejected
   by the server, which is the ruleset and not a local hook, and the fix
   is to branch, never to force past it. ⚠️ **Copilot review credits are
-  EXHAUSTED again, measured 2026-10-19.** Every Copilot review here from
+  EXHAUSTED, measured 2026-10-23.** Every Copilot review here from
   [\#315](https://github.com/ehrlinger/hvtiRtemplates/pull/315)
   (2026-10-12) to
-  [\#357](https://github.com/ehrlinger/hvtiRtemplates/pull/357)
-  (2026-10-17) carries the quota body, with three exceptions:
+  [\#401](https://github.com/ehrlinger/hvtiRtemplates/pull/401)
+  (2026-10-23) carries the quota body, with these exceptions, which drew
+  real reviews:
   [\#323](https://github.com/ehrlinger/hvtiRtemplates/pull/323)
-  (2026-10-13) and
+  (2026-10-13),
   [\#352](https://github.com/ehrlinger/hvtiRtemplates/pull/352) and
   [\#353](https://github.com/ehrlinger/hvtiRtemplates/pull/353)
-  (2026-10-16), which drew real reviews.
+  (2026-10-16), and
+  [\#390](https://github.com/ehrlinger/hvtiRtemplates/pull/390) and
+  [\#392](https://github.com/ehrlinger/hvtiRtemplates/pull/392)
+  (2026-10-22).
   [hvtiRtables#84](https://github.com/ehrlinger/hvtiRtables/pull/84) and
   [\#85](https://github.com/ehrlinger/hvtiRtables/pull/85) drew the
   quota body on 2026-10-18, so it is the account’s quota and covers the

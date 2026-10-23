@@ -47,7 +47,9 @@ one the package ships. It writes only into `dir`, which has no default:
 
 ``` r
 if (.Platform$OS.type != "windows") {
-  install_hvti(file.path(tempdir(), "bin"))
+  d <- tempfile("bin")
+  install_hvti(d)
+  unlink(d, recursive = TRUE)
 }
-#> Add it to your PATH: echo 'export PATH="/tmp/RtmpHwVsL1/bin:$PATH"' >> ~/.profile
+#> Add it to your PATH: echo 'export PATH="/tmp/RtmpQjSGiD/bin1e7a5410550b:$PATH"' >> ~/.profile
 ```
