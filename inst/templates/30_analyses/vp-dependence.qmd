@@ -13,8 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
-    fig-width: 6
-    fig-height: 4
+    fig-width: 9
+    fig-height: 6
     theme: cosmo
     toc: true
     toc-location: left
@@ -472,8 +472,8 @@ if (length(.unlinked)) {
 #| fig-cap: "Dependence between the variables, at the noise bar. An arrow runs from a released variable to a variable
 #|   that helps separate the patients its rules pick out, and the stronger the link the darker the arrow; blue variables
 #|   are the signal set. A variable with no edge at the bar is not drawn."
-#| fig-width: 6.5
-#| fig-height: 6
+#| fig-width: 9.75
+#| fig-height: 9
 # With no edge there is nothing to draw, and the matrix chunk above has said
 # which variables have no link. A blank panel stands in, so the caption still
 # has its figure, and it says why.
@@ -492,8 +492,8 @@ save_figure(.fig, "vp-dependence-graph", width = 6.5, height = 6)
 #| label: fig-heatmap
 #| fig-cap: "Dependence between every pair of variables at any strength, the larger of the two directions, clustered so
 #|   related variables sit together. Outcome columns, if any, are outlined."
-#| fig-width: 6.5
-#| fig-height: 6
+#| fig-width: 9.75
+#| fig-height: 9
 .sym <- pmax(beta_real, t(beta_real))
 .ord <- if (nrow(.sym) > 2L) rownames(.sym)[stats::hclust(stats::dist(.sym))$order] else rownames(.sym)
 .long <- data.frame(row = rep(rownames(.sym), ncol(.sym)), col = rep(colnames(.sym), each = nrow(.sym)),
@@ -506,7 +506,7 @@ save_figure(.fig, "vp-dependence-graph", width = 6.5, height = 6)
   ggplot2::geom_tile(data = .out, fill = NA, colour = "black", linewidth = 0.3) +
   ggplot2::scale_fill_gradient(low = "white", high = "steelblue4", name = "Weight") +
   ggplot2::labs(x = NULL, y = NULL) +
-  hvtiPlotR::theme_hv_manuscript(base_size = 10) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12) +
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5))
 save_figure(.fig, "vp-dependence-heatmap", width = 6.5, height = 6)
 .fig

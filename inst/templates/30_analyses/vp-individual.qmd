@@ -13,8 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
-    fig-width: 6
-    fig-height: 4
+    fig-width: 9
+    fig-height: 6
     theme: cosmo
     toc: true
     toc-location: left
@@ -302,7 +302,7 @@ knitr::kable(icov, digits = 3, row.names = FALSE)
 #| fig-cap: "Each patient's local gradient for each drawn predictor, one row per predictor, colored by the patient's
 #|   standardized value of that predictor; permuted noise columns, when the rules released any, are gray. The dashed line
 #|   is no change, and each label gives the share of patients with a gradient."
-#| fig-width: 6.5
+#| fig-width: 9.75
 # Noise rows are drawn beside the real ones as a visual reference, never judged.
 .rows <- c(show, setdiff(icov$term[icov$noise & icov$drawn], show))
 .z <- function(x) {
@@ -323,8 +323,9 @@ knitr::kable(icov, digits = 3, row.names = FALSE)
   ggplot2::geom_point(data = .bee[.bee$noise, ], colour = "gray60", position = .jitter, size = 0.8) +
   ggplot2::scale_colour_gradient2(low = "steelblue4", mid = "grey85", high = "firebrick", name = "Value (z)") +
   ggplot2::labs(x = "Local gradient", y = NULL) +
-  hvtiPlotR::theme_hv_manuscript(base_size = 11, legend.position = "right", legend.title = ggplot2::element_text())
-save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = 1 + 0.4 * length(.rows))
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "right", legend.title = ggplot2::element_text())
+# A row per predictor, up to the 9 in page.
+save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = min(9, 1 + 0.4 * length(.rows)))
 .fig
 ```
 
@@ -346,7 +347,8 @@ save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = 1 + 0.4 * leng
   }
   code <- c(paste0(.fence, "{r}"), paste0("#| label: fig-", kind, "-", i),
             paste0("#| fig-cap: ", encodeString(caption, quote = "\"")),
-            sprintf("#| fig-width: %g", page$width), sprintf("#| fig-height: %g", page$height), ".fig", .fence)
+            sprintf("#| fig-width: %g", hvtiRtemplates:::.report_size(page$width)),
+            sprintf("#| fig-height: %g", hvtiRtemplates:::.report_size(page$height)), ".fig", .fence)
   cat(knitr::knit_child(text = code, envir = parent.frame(), quiet = TRUE), sep = "\n")
   cat("\n")
 }
