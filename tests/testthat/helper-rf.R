@@ -58,8 +58,8 @@ rf_study <- function(data = data.frame(ccfid = 1:2, time = c(1, 2), event = c(1,
 # see rf_gg_partial_varpro.
 rf_run <- function(prefix, qualifier, labels, env, choices = list()) {
   src <- readLines(template_path(prefix, qualifier), warn = FALSE)
-  # The dependence chunks emit each page as a child chunk.
-  if (any(startsWith(labels, "dependence-"))) local_child_chunks()  # nolint: object_usage_linter.
+  # The dependence chunks, and vp-individual's gradient pages, emit each page as a child chunk.
+  if (any(startsWith(labels, "dependence-") | labels == "gradient-pages")) local_child_chunks()  # nolint: object_usage_linter.
   # "set" is the old name of the setup chunk, and a list that names both runs it once.
   for (label in unique(vapply(labels, setup_label, ""))) {  # nolint: object_usage_linter.
     if (identical(label, "dependence-varpro")) assign("gg_partial_varpro", rf_gg_partial_varpro, envir = env)

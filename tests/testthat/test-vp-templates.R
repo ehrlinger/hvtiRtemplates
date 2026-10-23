@@ -299,3 +299,283 @@ test_that("vp-fit and vp-explain keyed on MRN save no MRN in any file", {
   # The search finds what is there: every MRN in the data as the job read it.
   expect_true(rf_bytes_hold_any(serialize(fit$job_data$data, NULL), data$MRN))
 })
+
+# vp-dependence ---------------------------------------------------------------
+
+test_that("vpd_parent reads varPro's own term map, and refuses a fit without one", {
+  env <- vpd_helpers_env()
+  x <- data.frame(fs = 1, fs.1 = 0)
+  attr(x, "xvar.map") <- c(fs = "fs", fs.1 = "f")
+  expect_identical(env$vpd_parent(list(x = x)), c(fs = "fs", fs.1 = "f"))
+  expect_error(env$vpd_parent(list(x = data.frame(a = 1))), "xvar.map")
+})
+
+test_that("vpd_square pads to square and zeroes links within one factor", {
+  env <- vpd_helpers_env()
+  m <- matrix(c(0, 9, 0.5,
+                8, 0, 0.2), nrow = 2, byrow = TRUE,
+              dimnames = list(c("g1u", "g1v"), c("g1u", "g1v", "a")))
+  sq <- env$vpd_square(m, c(g1u = "g1", g1v = "g1", a = "a"))
+  expect_identical(dim(sq), c(3L, 3L))
+  expect_identical(rownames(sq), colnames(sq))
+  expect_equal(sq["g1u", "g1v"], 0)
+  expect_equal(sq["g1v", "g1u"], 0)
+  expect_equal(sq["g1u", "a"], 0.5)
+  expect_equal(sq["a", "g1u"], 0)
+})
+
+test_that("vpd_square follows the term map through a name collision", {
+  env <- vpd_helpers_env()
+  # A factor f with levels s, t, u beside a numeric fs: varPro 3.3.0 names
+  # f's s-level column fs.1, and it belongs to f.
+  map <- c(fs = "fs", fs.1 = "f", ft = "f", fu = "f")
+  m <- matrix(1, 4, 4, dimnames = list(names(map), names(map)))
+  sq <- env$vpd_square(m, map)
+  expect_equal(sq["fs", "fs.1"], 1)   # a real link between two variables survives
+  expect_equal(sq["fs.1", "fs"], 1)
+  expect_equal(sq["fs.1", "ft"], 0)   # a link between two levels of f is removed
+  expect_equal(sq["fu", "fs.1"], 0)
+})
+
+test_that("vpd_bar takes the largest noise entry in a row or a column", {
+  env <- vpd_helpers_env()
+  nm <- c("a", "c", "noise1_a")
+  m <- matrix(0, 3, 3, dimnames = list(nm, nm))
+  m["a", "c"] <- 2.1
+  m["noise1_a", "c"] <- 0.3   # noise released, real predictor
+  m["a", "noise1_a"] <- 0.4   # real released, noise predictor
+  b <- env$vpd_bar(m, startsWith(nm, "noise"), fixed = 0.25)
+  expect_equal(b$bar, 0.4)    # the column direction counts
+  expect_identical(b$from, "noise")
+  m["a", "noise1_a"] <- 0
+  expect_equal(env$vpd_bar(m, startsWith(nm, "noise"), fixed = 0.25)$bar, 0.3)  # and the row direction
+})
+
+test_that("vpd_bar falls back to the fixed threshold when every noise entry is 0", {
+  env <- vpd_helpers_env()
+  nm <- c("a", "c", "noise1_a")
+  m <- matrix(0, 3, 3, dimnames = list(nm, nm))
+  m["a", "c"] <- 2.1
+  b <- env$vpd_bar(m, startsWith(nm, "noise"), fixed = 0.25)
+  expect_equal(b$bar, 0.25)
+  expect_identical(b$from, "fixed (fallback)")
+})
+
+test_that("vp-dependence keeps the noise and the outcome in the lasso step", {
+  src <- readLines(template_path("vp", "dependence"), warn = FALSE)
+  # Calls with arguments only: the narration and comments name the function as get.beta.entropy().
+  calls <- grep("get\\.beta\\.entropy\\([^)]", src, value = TRUE)
+  expect_gt(length(calls), 0L)
+  expect_true(all(grepl("pre.filter = FALSE", calls, fixed = TRUE)))
+})
+
+test_that("vp-dependence runs on one core", {
+  src <- readLines(template_path("vp", "dependence"), warn = FALSE)
+  expect_true(any(grepl("options(rf.cores = 1L, mc.cores = 1L)", src, fixed = TRUE)))
+  # Calls with arguments only: the narration and comments name the function as get.beta.entropy().
+  calls <- grep("get\\.beta\\.entropy\\([^)]", src, value = TRUE)
+  expect_true(all(grepl("papply = lapply", calls, fixed = TRUE)))
+})
+
+test_that("vp-dependence finds a planted dependence above the noise bar", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  # 100 trees: at 30 a noise entry reached 1.69 against the planted 2.3 (spec section 8).
+  env <- vpd_first(choices = utils::modifyList(vpd_choices, list(NTREE = 100)))
+  expect_identical(env$bar$from, "noise")
+  expect_gt(env$beta["a", "c"], env$bar$bar)
+  expect_gt(env$beta["c", "a"], env$bar$bar)
+  expect_true(any(env$gg$edges$variable_from == "a" & env$gg$edges$variable_to == "c"))
+  expect_false(any(grepl("^noise", c(env$gg$edges$variable_from, env$gg$edges$variable_to))))
+})
+
+test_that("vp-dependence saves one handoff with its lineage", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  env <- vpd_first()
+  path <- env$set_path("estimates", "dependence.rds")
+  h <- readRDS(path)
+  expect_named(h, c("fit", "beta", "bar", "bar_from", "edges", "signal", "stability"))
+  expect_s3_class(h$fit, "uvarpro")
+  expect_null(h$stability)
+  # The package's handoff reader accepts it: the lineage is complete.
+  expect_no_error(hvtiRtemplates:::.read_handoff(path, "dependence", env$.cfg, "the vp-dependence job"))
+})
+
+test_that("vp-dependence traces a colliding encoded column to its factor", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  d <- vpd_data()
+  d$f <- factor(withr::with_seed(3, sample(c("s", "t", "u"), nrow(d), replace = TRUE)))
+  d$fs <- withr::with_seed(4, stats::rnorm(nrow(d)))
+  env <- vpd_first(d, utils::modifyList(vpd_choices, list(VARIABLES = c("a", "c", "f", "fs"))))
+  # Asserted on varPro's own record, so it holds whatever spelling a later
+  # varPro chooses: every encoded column of f maps to f, and fs stays fs.
+  f_terms <- names(env$.parent)[env$.parent == "f"]
+  expect_gt(length(f_terms), 1L)
+  expect_identical(unname(env$.parent["fs"]), "fs")
+  in_beta <- intersect(f_terms, rownames(env$beta))
+  expect_true(all(env$beta[in_beta, in_beta] == 0))
+})
+
+test_that("vp-dependence keys its caches on the engines beneath varPro", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  env <- vpd_first(choices = utils::modifyList(vpd_choices, list(REPEATS = 1)))
+  # The key records the version of every package named in packages =, so an
+  # update to the forest or the lasso engine invalidates the cache.
+  key_names <- function(file) {
+    key <- readRDS(file.path(env$CACHE_DIR, file))$key
+    paste(deparse(key), collapse = " ")
+  }
+  for (file in c("vp-dependence.rds", "vp-dependence-repeat-01.rds")) {
+    expect_match(key_names(file), "randomForestSRC", fixed = TRUE, info = file)
+  }
+  for (file in c("vp-dependence-beta.rds", "vp-dependence-repeat-01-beta.rds")) {
+    expect_match(key_names(file), "glmnet", fixed = TRUE, info = file)
+  }
+})
+
+test_that("vp-dependence refuses an ORDINAL variable it was not given", {
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  env <- rf_env(vpd_data())
+  expect_error(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data"), env,
+                      utils::modifyList(vpd_choices, list(ORDINAL = "zz"))),
+               "ORDINAL names variable")
+})
+
+test_that("raising REPEATS in vp-dependence computes only the new refit", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  env <- vpd_first(choices = utils::modifyList(vpd_choices, list(REPEATS = 2)))
+  # cache_fit() writes a provenance file beside each .rds, so only the .rds are counted.
+  files <- list.files(env$CACHE_DIR, "^vp-dependence-repeat-.*[.]rds$", full.names = TRUE)
+  expect_length(files, 4L)  # a forest and a matrix per refit
+  before <- file.mtime(files)
+  rf_run("vp", "dependence", vpd_labels, env, utils::modifyList(vpd_choices, list(REPEATS = 3)))
+  expect_identical(file.mtime(files), before)
+  expect_length(list.files(env$CACHE_DIR, "^vp-dependence-repeat-.*[.]rds$"), 6L)
+  h <- readRDS(env$set_path("estimates", "dependence.rds"))
+  expect_length(h$stability$bars, 3L)
+  expect_true(all(h$stability$edges$share >= 0 & h$stability$edges$share <= 1))
+})
+
+test_that("REPEATS = 0 skips the dependence stability check", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  env <- vpd_first()
+  expect_length(list.files(env$CACHE_DIR, "^vp-dependence-repeat-"), 0L)
+  expect_null(readRDS(env$set_path("estimates", "dependence.rds"))$stability)
+})
+
+# vp-individual ---------------------------------------------------------------
+
+test_that("no vp-individual line fits varPro", {
+  src <- readLines(template_path("vp", "individual"), warn = FALSE)
+  expect_false(any(grepl("(^|[^_[:alnum:].])varpro\\(", src)))
+})
+
+test_that("vp-individual stops when no vp-fit has run in its set", {
+  vp33_skip_unless_stack(rf_template_packages("vp", "individual"))
+  env <- rf_env(vp_data())
+  expect_error(rf_run("vp", "individual", c("setup", "edit-study-choices", "screen"), env), "Render the vp-fit job")
+})
+
+test_that("vpi_coverage lists an all-NA term and draws it not", {
+  env <- vpi_helpers_env()
+  grad <- data.frame(xs = c(1, -2, NA), x1 = NA_real_, noise1_xs = NA_real_)
+  screen <- data.frame(variable = c("xs", "x1", "noise1_xs"), noise = c(FALSE, FALSE, TRUE),
+                       tested = c(TRUE, TRUE, FALSE), selected = c(TRUE, FALSE, FALSE))
+  cov <- env$vpi_coverage(grad, c(xs = "xs", x1 = "x1", noise1_xs = "noise1_xs"), screen)
+  expect_identical(cov$drawn[cov$term == "x1"], FALSE)
+  expect_equal(cov$share_na[cov$term == "x1"], 1)
+  expect_equal(cov$median_abs[cov$term == "xs"], 1.5)
+  ref <- env$vpi_noise_ref(cov)
+  expect_true(is.na(ref$value))
+  expect_match(ref$text, "no noise reference")
+})
+
+test_that("vpi_coverage keeps a predictor ivarpro() returned no column for", {
+  env <- vpi_helpers_env()
+  # With nvar = 1, varPro 3.3.0 kept only x1 in xvar.names and ivarpro()
+  # returned only x1, though fit$x held x1, x2 and x3: x2 and x3 are absent, not NA.
+  grad <- data.frame(x1 = c(0.5, -1))
+  screen <- data.frame(variable = c("x1", "x2", "x3"), noise = FALSE, tested = c(TRUE, FALSE, FALSE),
+                       selected = c(TRUE, FALSE, FALSE))
+  cov <- env$vpi_coverage(grad, c(x1 = "x1", x2 = "x2", x3 = "x3"), screen)
+  expect_identical(cov$term, c("x1", "x2", "x3"))
+  expect_identical(cov$gradients, c("computed", "removed before gradients", "removed before gradients"))
+  expect_identical(cov$drawn, c(TRUE, FALSE, FALSE))
+  expect_equal(cov$share_na[cov$term == "x2"], 1)
+})
+
+test_that("vp-individual draws one target of a multiclass screen, with its plotting data", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "individual"))
+  d <- vp_data()
+  d$cls <- factor(ifelse(d$xs > 0.5, "c", ifelse(d$xs < -0.5, "a", "b")))
+  ch <- utils::modifyList(vp_outcome(vp_choices, NULL, NULL, "cls"),
+                          list(PREDICTORS = c("xs", "x1", "x2"), SPLIT_WEIGHT = FALSE, NVAR = 50, REPEATS = 0))
+  fit <- vp_fit_first(d, ch)
+  expect_error(vpi_run(fit, list(SHOW = "xs", TARGET = NULL, SEED = 1, SAVE_FIGURES = FALSE)), "Name one in TARGET")
+  env <- vpi_run(fit, list(SHOW = "xs", TARGET = "c", SEED = 1, SAVE_FIGURES = FALSE))
+  expect_false(is.null(env$.idata))
+  expect_true(env$.target_col %in% names(env$.idata))
+  expect_gt(nrow(env$.bee), 0L)
+  expect_true(all(is.finite(env$.bee$value)))
+})
+
+test_that("vp-individual names the class a two-class screen's gradients explain", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "individual"))
+  # A 0/1 outcome: ivarpro() explains the first class, 0, so a rising event risk
+  # has a falling gradient, and the report must say which class it shows.
+  ch <- utils::modifyList(vp_outcome(vp_choices, NULL, NULL, "event"),
+                          list(PREDICTORS = c("xs", "x1", "x2"), SPLIT_WEIGHT = FALSE, NVAR = 50, REPEATS = 0))
+  fit <- vp_fit_first(vp_data(), ch)
+  out <- utils::capture.output(env <- vpi_run(fit, list(SHOW = "xs", SEED = 1, SAVE_FIGURES = FALSE)))
+  expect_identical(env$.target, "0")
+  expect_identical(env$.target_label, "P(class 0)")
+  expect_true(any(grepl("predicted probability of class 0", out, fixed = TRUE)))
+  expect_true(any(grepl("sign reversed", out, fixed = TRUE)))
+  # .fig is the last gradient page, whose y axis is the gradient.
+  expect_identical(ggplot2::get_labs(env$.fig)$y, "Local gradient of P(class 0)")
+})
+
+test_that("vp-individual gives the planted signal larger gradients than the nulls", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "individual"))
+  fit <- vp_fit_first(choices = utils::modifyList(vp_choices, list(SPLIT_WEIGHT = FALSE, NVAR = 50)))
+  env <- vpi_run(fit, list(SHOW = c("xs", "x1", "x2"), SEED = 1, SAVE_FIGURES = FALSE))
+  cov <- env$icov
+  xs <- cov$median_abs[cov$term == "xs"]
+  nulls <- cov$median_abs[cov$term %in% c("x1", "x2") & is.finite(cov$median_abs)]
+  expect_true(is.finite(xs))
+  expect_true(all(xs > nulls))
+  h <- readRDS(fit$set_path("estimates", "individual.rds"))
+  expect_named(h, c("ivarpro", "coverage"))
+})
+
+test_that("vp-dependence and vp-individual keyed on MRN save no MRN in any file", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "individual"), "ggraph"))
+  data <- rf_mrn_data(n = 60L)
+  dep <- vpd_first(data, list(VARIABLES = c("age", "x1", "grp"), OUTCOME = NULL, ORDINAL = NULL, NOISE_N = 2,
+                              NTREE = 25, REPEATS = 1, SEED = 1, SAVE_FIGURES = FALSE))
+  expect_identical(attr(dep$job_data$record, "selection")$id, "mrn")
+  expect_true(file.exists(dep$set_path("estimates", "dependence.rds")))
+  expect_identical(rf_files_holding(dep$CACHE_DIR, data$MRN), character())
+  # ivarpro() releases a predictor only through rules holding enough patients,
+  # and on the 60 above none of the three got a gradient, so the job stopped
+  # before writing individual.rds. 120 patients and two noise columns give the
+  # rules room; all three are shown, so whichever got gradients is drawn.
+  data <- rf_mrn_data(n = 120L)
+  fit <- vp_fit_first(data, list(TIME = "iv_dead", EVENT = "dead", RESPONSE = NULL, PREDICTORS = c("age", "x1", "grp"),
+                                 NOISE_N = 2, NTREE = 50, REPEATS = 0, SEED = 1, SAVE_FIGURES = FALSE,
+                                 SPLIT_WEIGHT = FALSE, NVAR = 50))
+  vpi_run(fit, list(SHOW = c("age", "x1", "grp"), SEED = 1, SAVE_FIGURES = FALSE))
+  expect_true(file.exists(fit$set_path("estimates", "individual.rds")))
+  expect_identical(rf_files_holding(fit$CACHE_DIR, data$MRN), character())
+  # The search finds what is there: every MRN in the data as the job read it.
+  expect_true(rf_bytes_hold_any(serialize(fit$job_data$data, NULL), data$MRN))
+})

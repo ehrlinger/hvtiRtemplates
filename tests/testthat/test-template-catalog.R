@@ -1,7 +1,7 @@
 test_that("the template catalog ships every owed job type", {
   catalog <- template_catalog()
   expect_s3_class(catalog, "data.frame")
-  expect_equal(nrow(catalog), 70L)
+  expect_equal(nrow(catalog), 72L)
   expect_equal(length(unique(catalog$prefix)), 45L)
   expect_false(any(c("destination", "replaced_by") %in% names(catalog)))
   expect_true(all(c("uses", "upstream", "downstream", "workflows") %in% names(catalog)))
