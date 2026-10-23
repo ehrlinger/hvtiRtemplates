@@ -128,6 +128,17 @@ test_that("Gower on a patient missing every predictor gives a flag", {
   expect_false(r$in_distribution[r$ID == "5" & r$arm == "A"])
 })
 
+test_that("Gower declares a 0/1 predictor binary: no warning, the same distance", {
+  skip_if_not_installed("cluster")
+  h <- vt_helpers()
+  # daisy() warns only past nine rows, so twelve.
+  d <- data.frame(ID = as.character(1:12), x = c(0, 1, 2, 1.5, NA, 3, 4, 2.5, 0.5, 1, 3.5, 2),
+                  b = c(0, 1, 1, NA, 0, 1, 1, 0, 0, 1, 0, 1), g = factor(rep(c("u", "v", "w", NA), 3)))
+  expect_no_warning(m <- h$vt_elig_gower(d, c("x", "b", "g"), "ID"))
+  interval <- suppressWarnings(as.matrix(cluster::daisy(d[c("x", "b", "g")], metric = "gower")))
+  expect_equal(unname(m), unname(interval))
+})
+
 test_that("methods combine by any and all, with one row shape", {
   h <- vt_helpers()
   base <- data.frame(ID = c("p1", "p2", "p3"), method = NA, arm = "A", nn_id = "q", distance = 1,
