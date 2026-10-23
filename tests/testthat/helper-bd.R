@@ -71,9 +71,12 @@ bd_run <- function(root, choices,
 }
 
 # The dated versions registered from the study's working file, and the provenance
-# row the manifest records for one of them.
+# row the manifest records for one of them. hvtiRutilities 1.5.12 moves earlier
+# versions into datasets/_archive/ on registration, so both places count.
 bd_versions <- function(root, stem = "study_cohort") {
-  list.files(hvtiRutilities::study_dir("datasets", root), pattern = paste0("^", stem, "_[0-9]{8}(_r[0-9]+)?[.]parquet$"))
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  pattern <- paste0("^", stem, "_[0-9]{8}(_r[0-9]+)?[.]parquet$")
+  sort(c(list.files(datasets, pattern = pattern), list.files(file.path(datasets, "_archive"), pattern = pattern)))
 }
 
 bd_current_version <- function(root) {
