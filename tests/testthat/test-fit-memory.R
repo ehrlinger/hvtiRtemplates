@@ -122,3 +122,25 @@ test_that("a cores_fit that returns NA never names CORES <- NA", {
                       "^memory: ")
   expect_no_match(conditionMessage(err), "CORES <- NA", fixed = TRUE)
 })
+
+test_that(".cache_would_fit() follows cache_fit()'s own decision, against a real cache", {
+  dir <- withr::local_tempdir()
+  a <- 2
+  # No file: cache_fit() computes.
+  expect_true(.cache_would_fit("f", quote(a * 3), seed = 7, dir = dir))
+  # The file is written by the inline form the template used before; the quoted form must read the same key.
+  suppressMessages(hvtiRutilities::cache_fit("f", a * 3, seed = 7, dir = dir))
+  code <- quote(a * 3)
+  expect_false(.cache_would_fit("f", code, seed = 7, dir = dir, refit = FALSE))
+  expect_false(.cache_would_fit("f", code, seed = 7, dir = dir, refit = TRUE))   # a matching key loads, REFIT or not
+  expect_message(hvtiRutilities::cache_fit("f", code, seed = 7, dir = dir, refit = TRUE), "loaded")
+  # A changed input: stale. cache_fit() stops without REFIT and recomputes with it.
+  a <- 5
+  expect_false(.cache_would_fit("f", code, seed = 7, dir = dir, refit = FALSE))
+  expect_true(.cache_would_fit("f", code, seed = 7, dir = dir, refit = TRUE))
+  expect_true(.cache_would_fit("f", code, seed = 8, dir = withr::local_tempdir(), refit = TRUE))
+  # An unkeyed file recomputes under REFIT.
+  saveRDS(1, file.path(dir, "g.rds"))
+  expect_true(.cache_would_fit("g", code, dir = dir, refit = TRUE))
+  expect_false(.cache_would_fit("g", code, dir = dir, refit = FALSE))
+})

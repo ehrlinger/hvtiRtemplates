@@ -520,6 +520,24 @@ test_that("the fit chunk runs interactively once the fit is cached, and refuses 
                "REFIT", fixed = TRUE)
 })
 
+test_that("a cached fit with REFIT left TRUE guards no memory; a stale one with REFIT guards the fit", {
+  nb_skip_unless_stack()
+  root <- nb_study()
+  nb_fit_in(root)
+  needs <- numeric()
+  testthat::local_mocked_bindings(guard_memory = function(need_gib, ...) {
+    needs <<- c(needs, need_gib)
+    invisible(TRUE)
+  })
+  # The key matches, so cache_fit() loads the fit although REFIT is TRUE: nothing is allocated for fitting.
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), nb_env(root), nb_choices(REFIT = TRUE)))
+  expect_identical(needs, 0)
+  # A changed setting with REFIT recomputes, so the estimate is guarded.
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), nb_env(root),
+                               nb_choices(NU = 0.01, REFIT = TRUE)))
+  expect_gt(needs[[2L]], 0)
+})
+
 test_that("the nb-boostmtree fit chunk guards memory before cache_fit()", {
   tpl <- readLines(nb_template(), warn = FALSE)
   fit <- grep("guard_memory(", tpl, fixed = TRUE)

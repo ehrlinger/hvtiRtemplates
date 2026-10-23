@@ -162,3 +162,25 @@ guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
   num <- function(x) if (.num1(x)) round(x, 1)
   Filter(Negate(is.null), list(mem_peak_gib = num(m$peak_gib), mem_limit_gib = num(m$limit_gib)))
 }
+
+# TRUE when hvtiRutilities::cache_fit() would compute rather than load, given the same arguments, so a template guards
+# memory only for a fit that will run. It follows cache_fit()'s own decision: no file computes; a file whose key matches
+# loads, REFIT or not; a stale or unkeyed file stops cache_fit() before any fit without REFIT, and computes with it.
+# hvtiRutilities exports no such test, so the key comes from cache_fit()'s own internals (unchanged since the 1.5.7
+# floor). Were they ever renamed, the answer falls back to "REFIT computes", which over-guards but never under-guards.
+# A matching file under REFIT is read here and again by cache_fit(): the cost of that one case, against refusing a
+# session for memory it would not use.
+.cache_would_fit <- function(name, code, seed = NULL, dir, refit = FALSE, packages = NULL, env = parent.frame()) {
+  path <- file.path(dir, paste0(name, ".rds"))
+  if (!file.exists(path)) return(TRUE)
+  if (!isTRUE(refit)) return(FALSE)
+  ns <- asNamespace("hvtiRutilities")
+  if (!all(vapply(c(".cache_key", ".cache_key_diff", ".cache_is_record"), exists, NA, envir = ns, inherits = FALSE))) {
+    return(TRUE)
+  }
+  stored <- tryCatch(readRDS(path), error = function(e) NULL)
+  if (!ns$.cache_is_record(stored)) return(TRUE)
+  if (!is.null(seed)) seed <- as.integer(seed)
+  key <- tryCatch(ns$.cache_key(code, env, seed, as.character(packages)), error = function(e) NULL)
+  is.null(key) || length(ns$.cache_key_diff(stored$key, key)) > 0L
+}
