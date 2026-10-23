@@ -405,11 +405,24 @@ test_that("dc-gfup and dc-eda choose follow-up colors with the same code", {
   block <- function(prefix, qualifier) {
     lines <- readLines(template_path(prefix, qualifier), warn = FALSE)
     start <- grep("^if \\(exists\\(\"COLOURS\"", lines)
-    end <- start + match("}", lines[-seq_len(start)])
+    end <- grep("^status_colors <- function", lines)
     end <- end + match("}", lines[-seq_len(end)])
     lines[start:end]
   }
-  expect_length(block("dc", "gfup"), 13L)
+  expect_length(block("dc", "gfup"), 25L)
+  expect_identical(block("dc", "gfup"), block("dc", "eda"))
+})
+
+test_that("dc-gfup and dc-eda draw event panels with the same code", {
+  # Both pass EVENTS to hv_followup_panels(), so both take competing events;
+  # the levels and the caption key must follow the panel's own event_levels.
+  block <- function(prefix, qualifier) {
+    lines <- readLines(template_path(prefix, qualifier), warn = FALSE)
+    start <- grep("^    levels <- fp\\$tables\\$panels\\[\\[nm\\]\\]\\$meta\\$event_levels$", lines)
+    end <- start + match("  }", lines[-seq_len(start)])
+    lines[start:end]
+  }
+  expect_gt(length(block("dc", "gfup")), 10L)
   expect_identical(block("dc", "gfup"), block("dc", "eda"))
 })
 

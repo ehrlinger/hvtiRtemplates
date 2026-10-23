@@ -58,7 +58,7 @@ Suggests:
     ggplot2,
     ggraph,
     haven,
-    hvtiPlotR (>= 2.8.9),
+    hvtiPlotR (>= 2.8.17),
     hvtiRtables (>= 1.0.11),
     hvtiRdatabuild (>= 0.3.0),
     hvtiRbootstrap (>= 0.9.3),
