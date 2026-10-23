@@ -154,3 +154,25 @@ test_that("a 0/1 group stored as text or a factor needs no GROUP_1", {
     expect_identical(stddiff_values(coded, "grp", sd_buckets, mean_sd = "age", ordinal = "nyha"), want)
   }
 })
+
+test_that("the commented GROUPS example uncomments to a grouping the template accepts", {
+  # The example is there to be uncommented. Commented out, nothing parses it,
+  # so a stray edit would ship a block that fails on the first job that uses it.
+  begin <- grep("^# GROUPS-EXAMPLE-BEGIN$", template_lines)
+  end <- grep("^# GROUPS-EXAMPLE-END$", template_lines)
+  expect_length(begin, 1L)
+  expect_length(end, 1L)
+  block <- template_lines[(begin + 1L):(end - 1L)]
+  expect_true(all(startsWith(block, "# ")))
+  env <- new.env()
+  eval(parse(text = substring(block, 3L)), envir = env)
+  groups <- env$GROUPS
+  expect_type(groups, "list")
+  expect_true(all(nzchar(names(groups))))
+  expect_true(all(vapply(groups, is.character, logical(1))))
+  # A variable in two groups would be two rows of one table.
+  vars <- unlist(groups, use.names = FALSE)
+  expect_false(anyDuplicated(tolower(vars)) > 0L)
+  # The example sits above the block migrate_job() rewrites, so a migrated job keeps it.
+  expect_lt(end, grep("^# MIGRATE-BEGIN: dc-tables-config$", template_lines))
+})

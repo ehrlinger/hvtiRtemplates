@@ -134,6 +134,55 @@ JOIN_KEY <- NULL
 # becomes a row group in the table, in this order. These are the /* Demography */
 # style banners from the SAS varlist; carry them across unchanged so the R table
 # reads like the SAS one. Commented-out SAS blocks stay out.
+# A fuller grouping to start from, the house summary-table categories with the
+# SAS template's added where they differ. The names are CORR database columns, not
+# one study's. Uncomment it in place of the GROUPS below, then delete the groups
+# and rows your data does not have, since a name missing from the data stops the
+# table. Race is race_grp; some studies spell it race_gp.
+# GROUPS-EXAMPLE-BEGIN
+# GROUPS <- list(
+#   Demography = c("female", "age", "bsa", "bmi", "wt", "ht", "wtht", "race_bl", "race_wh", "race_ot", "race_grp"),
+#   Symptoms = c("surgstat", "nyha_pr", "srgstat", "srg_ele", "srg_emg", "srg_emgs", "srg_urg", "srg_urem", "emgsrg"),
+#   `AV hemodynamics` = c("avrgrg", "avrg_com", "avsten", "pavmngra", "pavpkgra", "pav_area"),
+#   `Other valve pathology` = c("mvrgrg", "mvrg_com", "mvsten", "pvrgrg", "pvrgsev", "pvsten", "tvrgrg", "tvrg_com",
+#                               "pmvmngra", "pmvpkgra", "tvsten"),
+#   `LV function` = c("hx_mi", "plv_sfun", "lvef_pr", "pfs"),
+#   `LV geometry` = c("plvidd", "plvisd", "plvedv", "plvedvol", "plvesv", "plvesvol", "plvedvi", "plvesvi"),
+#   `LV mass` = c("prwt", "pivswt", "ppwt", "plvmass", "plvmassi"),
+#   `Aorta diameter` = c("pmidaadm", "paosindm"),
+#   `Cardiac comorbidity` = c("afib_pr", "chb_pr", "varr_pr", "hx_csurg", "hx_chf", "surg_num"),
+#   `Non-Cardiac comorbidity` = c("hx_endo", "hx_pad", "hx_htn", "hx_dmtrt", "hx_iddm", "hx_niddm", "hx_copd", "hx_smoke",
+#                                 "dial_pr", "hx_cva", "blrbn_pr", "creat_pr", "crcl_pr", "gfr_pr", "bun_pr", "hct_pr",
+#                                 "chol_pr", "hdl_pr", "ldl_pr", "trig_pr", "meld_pr", "ptinr_pr"),
+#   Procedure = c("avsize", "sp_cabg", "sp_av", "sp_mv", "sp_tv", "sp_avrpl", "sp_mvrpr", "sp_mvrpl", "sp_tvrpr",
+#                 "sp_tvrpl", "sp_aotic", "sp_afib", "sp_asdpf", "sp_dscao", "sp_chd", "sp_anlre", "ita_any", "stsproc",
+#                 "sp_pv", "sp_avrpr", "spc_tavr", "sp_lv", "sp_cend", "sp_sepmy", "sp_atrmy", "sp_tx", "sp_peric",
+#                 "sp_tmr", "numcomp", "numcomp2", "ita_none", "ita_sin", "ita_bil", "ita_num"),
+#   `Discharge medication` = c("dantico", "dccoum", "dcadp", "dcasa", "dcoanplt"),
+#   Support = c("iv_aocc", "iv_cpb", "aoxclmp", "onpump", "circarr", "iabp", "iabpwhn", "iv_tca"),
+#   `LA Dimensions` = c("pla_ge6", "pladia", "plavol", "plavoli", "plasarea", "pladarea"),
+#   `Right Ventricular Function` = c("prvsp", "prvspnew", "ptv_rvel"),
+#   Etiology = c("aet_rheu", "aet_degn", "aet_endo", "aet_cong", "aet_rgrg", "aet_nos", "avetiol", "met_isch", "met_degn",
+#                "met_endo", "met_rgrg", "met_nos", "mvetiol", "tet_rheu", "tet_degn", "tet_rgrg", "tet_nos", "tvetiol"),
+#   `Coronary Anatomy` = c("cad_sys", "vd0", "vd1", "vd2", "vd3", "lmt50", "lad50", "lad70", "lcx50", "lcx70", "rca50",
+#                          "rca70", "lmt", "lad", "lcx", "rca"),
+#   `STS Predicted Risk Scores` = c("STS14D", "STS6D", "STSDeep", "STSMM", "STSMort", "STSRenF", "STSReop", "STSStro",
+#                                   "STSVent"),
+#   `Incision Detail` = c("incision", "robot"),
+#   `Intraoperative Management` = c("bldicry", "bldiffp", "bldiplt", "bldirbc", "bldiprod", "bldicryu", "bldiffpu",
+#                                   "bldipltu", "bldirbcu"),
+#   `Postoperative Management` = c("bldpcry", "bldpffp", "bldpplt", "bldprbc", "bldpprod", "bldpcryu", "bldpffpu",
+#                                  "bldppltu", "bldprbcu"),
+#   `Combined Blood Products` = c("bldtcry", "bldtffp", "bldtplt", "bldtrbc", "bldtprod", "trsf_all", "trsf_noc",
+#                                 "bldtcryu", "bldtffpu", "bldtpltu", "bldtrbcu"),
+#   `Postoperative Complications` = c("spu_asdv", "cotafib", "ciseptic", "cistdeep", "cnstrokp", "crenfail", "crendial",
+#                                     "cpvntlng", "coprebld", "copregft", "coprenon", "copreoth", "coprevlv", "COpReAny",
+#                                     "hdeath", "opmort", "CO_STSmm", "los_lt6", "los_gt14"),
+#   `Length of Stay` = c("los_hos", "los_op", "los_icu"),
+#   Experience = c("iv_opyrs"),
+#   `Time-related Outcomes` = c("dead", "iv_dead")
+# )
+# GROUPS-EXAMPLE-END
 # MIGRATE-BEGIN: dc-tables-config
 GROUPS <- list(
   Demography = c("age", "female"),
