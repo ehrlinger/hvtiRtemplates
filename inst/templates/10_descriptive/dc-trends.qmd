@@ -158,13 +158,16 @@ JOIN_KEY <- NULL
 # `ylim` and `ybreaks` keeps figures for different subgroups comparable; either
 # may be set alone, and `ylim` zooms without dropping any patient.
 # `ylim` is drawn with coord_cartesian(), never as scale_y_continuous(limits =).
-# A scale limit drops the points outside it and refits the smooth without them,
-# so a percent smooth that dips below 0 or tops 100 at the ends of the year
-# range is cut off and reshaped, which hides the problem rather than fixing it.
-# Leave a little room instead, c(-3, 103) say, so the points clear the axis,
-# and if the smooth still overshoots, it is following thin data in the end
-# years: widen the year bins in the data, or give the plot call where the
-# figures are drawn a smaller `span` (0.75, ggplot2's default, is used now).
+# A scale limit removes whatever falls outside it. For a percent trend every
+# patient's 0 or 100 is inside c(0, 100), so what goes is the smooth itself
+# wherever it dips below 0 or tops 100: the line stops short at the ends of
+# the year range instead of showing the overshoot. A limit narrower than the
+# data is worse, because it drops patients and the smooth is refitted without
+# them. Leave a little room instead, c(-3, 103) say, so the points clear the
+# axis. A smooth that overshoots is not proof of thin data, since loess can
+# overshoot a steep trend near the ends; if the end years are thin, widen the
+# year bins in the data, or give the plot call where the figures are drawn a
+# smaller `span` (0.75, ggplot2's default, is used now).
 # `summary` is the per-year point drawn under the smooth. Percent trends must
 # use "mean" (the default); continuous trends may use "mean" or "median".
 # MIGRATE-BEGIN: dc-trends-trends
