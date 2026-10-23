@@ -23,6 +23,12 @@ test_that("the seed check catches what it exists to catch", {
   expect_match(check("set.seed(1)", "f <- rfsrc(y ~ ., d, seed = SEED)"), "needs a negative")
   # cache_fit() without a seed does not seed the call it wraps.
   expect_match(check("v <- cache_fit('v', varpro(m, d, seed = -abs(S)))"), "varpro\\(\\) is not seeded")
+  # A call quoted into a name is seeded by the seeded cache_fit() that evaluates that name, and only by one.
+  expect_identical(check("code <- quote(boostmtree(x))", "f <- cache_fit('f', code, seed = S)"), character(0))
+  expect_identical(check("code <- quote(boostmtree(x))", "f <- cache_fit(code = code, name = 'f', seed = S)"), character(0))
+  expect_match(check("code <- quote(boostmtree(x))", "f <- cache_fit('f', code)"), "boostmtree\\(\\) is not seeded")
+  expect_match(check("code <- quote(boostmtree(x))", "f <- cache_fit('f', other, seed = S)"), "boostmtree\\(\\) is not seeded")
+  expect_match(check("code <- quote(boostmtree(x))"), "boostmtree\\(\\) is not seeded")
   # A seed too far up, or in another chunk, has been spent by the time it runs.
   expect_match(check("set.seed(1)", "", "", "", "i <- sample(n)"), "x.qmd:5: sample\\(\\) is not seeded")
   expect_match(check("i <- sample(n)", "set.seed(1)"), "sample\\(\\) is not seeded")
