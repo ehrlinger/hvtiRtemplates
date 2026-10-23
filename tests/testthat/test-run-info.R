@@ -79,6 +79,19 @@ test_that("the box reads a literal DATASET in single quotes as well as double", 
   expect_match(s$box, "data `echo`", fixed = TRUE)
 })
 
+test_that("on a working read the box names the working file, not the registered version", {
+  # HVTI_DATA = "working" makes read_built() read the source file, so a box naming
+  # the registered version would attribute the report to data it never read.
+  withr::local_envvar(HVTI_DATA = "working")
+  s <- box_of("DATASET <- \"built\"")
+  expect_match(s$box, "data `built` `built.csv`, working read, not a registered version ·", fixed = TRUE)
+  expect_false(grepl("parquet", s$box, fixed = TRUE))
+  expect_false(grepl("registered [0-9]", s$box))
+  # Any other value is refused when the data are read, so the box does not guess.
+  withr::local_envvar(HVTI_DATA = "registered")
+  expect_null(hvtiRtemplates:::.box_dataset(s$root, s$job))
+})
+
 test_that("the box names a literal analysis set, and its version when the set was written", {
   s <- box_of(c("DATASET <- \"built\"", "ANALYSIS_SET <- \"eda\""))
   expect_match(s$box, "analysis set `eda`", fixed = TRUE)
