@@ -104,4 +104,7 @@ and so on. Those carry by name, independent of the base.
 ## Settled 2026-10-12
 
 - **Decision 5**: the old job stays beside the new one as `<file>.pre-upgrade`.
+  <sub>Superseded 2026-10-23: the old job and the report now go to `_archive/` in the job's folder, as
+  `<stem>.<stamp>.pre-upgrade` and `<stem>.<stamp>-upgrade.md`, so a second upgrade no longer stops on the first's
+  files (requested at the 2026-10-23 umbrella review).</sub>
 - **Decision 3**: a marker the analyst already resolved is dropped from the upgraded job.
