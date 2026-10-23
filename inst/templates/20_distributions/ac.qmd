@@ -196,6 +196,15 @@ PLOT_MAX <- NULL
 # takes evenly spaced times across the axis.
 RISK_TIMES <- NULL
 
+# How the manuscript figure shows the CLEVEL limits. CI_BAND draws them as a
+# continuous band. CI_TIMES draws a bar at each of the times given, e.g.
+# c(30 / 365.2425, 1, 5), as the SAS jobs mark chosen points; each bar spans the
+# limits the horizon tables report at that time, and a time before the first
+# event or past the end of follow-up has none and draws no bar. Either, both or
+# neither: CI_BAND <- FALSE with CI_TIMES set gives the SAS figure's bars alone.
+CI_BAND <- TRUE
+CI_TIMES <- NULL
+
 # Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("ac-survival"). The names are the
@@ -550,10 +559,38 @@ km_figure <- function(strata = NULL) {
   .zero <- hv$data$surv == 0
   hv$data$lower[.zero] <- 0
   hv$data$upper[.zero] <- 0
-  curve <- plot(hv) +
+  # hv_survival() returns the strata as text, which the color and fill scales would
+  # sort as text ("1", "10", "2"). The curve, band, bars and at-risk rows all use the
+  # tables' order instead, so each stratum keeps one color throughout.
+  if (!is.null(strata)) hv$data$strata <- factor(as.character(hv$data$strata), levels = levels(dd[[strata]]))
+  curve <- plot(hv, conf_int = isTRUE(CI_BAND)) +
     ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  # Bars at the chosen times, from the same life table as the horizon tables, so a
+  # bar and the table row for its time give the same limits.
+  if (!is.null(CI_TIMES) && (!is.numeric(CI_TIMES) || anyNA(CI_TIMES) || any(CI_TIMES < 0))) {
+    stop("CI_TIMES must be NULL or nonnegative times, in the unit of TIME.", call. = FALSE)
+  }
+  bars <- CI_TIMES[CI_TIMES <= plot_max]
+  if (length(bars)) {
+    ci <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = bars, strata = strata, conf_level = CLEVEL)
+    ci <- ci[!is.na(ci$cl_lower), , drop = FALSE]
+    ci$strata <- if (is.null(strata)) rep("All", nrow(ci)) else factor(ci$stratum, levels = levels(dd[[strata]]))
+  }
+  if (length(bars) && nrow(ci)) {
+    # The strata's bars at one time are dodged apart, across a width that must stay
+    # inside the gap to the next chosen time and the distance to zero, or bars for
+    # neighboring times interleave and one is drawn before time zero. A fortieth of
+    # the axis is the most it takes; close early times take less.
+    times <- sort(unique(ci$time))
+    span <- min(plot_max / 40, 0.8 * min(c(diff(times), 2 * times[[1]])))
+    curve <- curve + ggplot2::geom_errorbar(
+      data = ci, ggplot2::aes(x = .data$time, ymin = 100 * .data$cl_lower, ymax = 100 * .data$cl_upper, color = .data$strata),
+      width = span, position = ggplot2::position_dodge(width = span),
+      inherit.aes = FALSE, show.legend = FALSE
+    )
+  }
   # The house theme drops the legend; a stratified figure needs it to tell the curves apart.
   if (!is.null(strata)) curve <- curve + ggplot2::theme(legend.position = "top") + ggplot2::labs(color = strata, fill = strata)
   hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(risk))

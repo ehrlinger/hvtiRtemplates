@@ -180,6 +180,7 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   env$MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"
   env$MANUSCRIPT_FILL <- "#CAEDFB"
   env$TABLE_ORIENTATION <- "auto"
+  env$DROP_CONSTANT <- TRUE
   env$study_dir <- hvtiRutilities::study_dir
   env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   eval(parse(text = tables_region(out, "dc-tables-config")), env)
@@ -540,6 +541,7 @@ test_that("the Word table is drawn in the manuscript style, under the study's ca
   env$MANUSCRIPT_CAPTION <- "Table 2. Operative details"
   env$MANUSCRIPT_FILL <- "#A5C9EB"
   env$TABLE_ORIENTATION <- "landscape"
+  env$DROP_CONSTANT <- TRUE
   eval(tables_chunk(template, "helpers"), env)
   invisible(eval(tables_chunk(template, "tbl-table"), env))
   invisible(eval(tables_chunk(template, "word-file"), env))
@@ -574,4 +576,66 @@ test_that("the Word table is drawn in the manuscript style, under the study's ca
   # A manuscript table is never saved without its caption.
   env$MANUSCRIPT_CAPTION <- NULL
   expect_error(eval(tables_chunk(template, "word-file"), env), "needs `caption`", fixed = TRUE)
+})
+
+test_that("a row with one value for every patient is left out of the table and named in the report", {
+  skip_on_cran()
+  root <- migration_study_fixture("dc-tables")
+  template <- template_path("dc", "tables")
+  env <- new.env()
+  env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  # Every patient has it by inclusion, as preoperative MR did in the study
+  # that asked for this; one patient's value is missing, which is not a second value.
+  env$d$mr_preop <- "Yes"
+  env$d$mr_preop[1] <- NA
+  env$GROUPS <- list(Demography = c("age", "female"), Procedure = c("repair", "mr_preop"))
+  env$BY <- "treatment"
+  env$CONTINUOUS <- "age"
+  env$BINARY <- c("female", "repair", "mr_preop")
+  env$CATEGORICAL <- character(0)
+  env$COMPARE <- "pvalue"
+  env$CONTINUOUS_STAT <- "median"
+  env$PERCENTILES <- c(15, 85)
+  env$ABBREVIATIONS <- character(0)
+  env$OVERRIDES <- list()
+  env$MEAN_SD <- env$ORDINAL <- character(0)
+  env$STDDIFF <- FALSE
+  env$GROUP_1 <- NULL
+  env$SHOW_VARIABLE <- TRUE
+  env$DROP_CONSTANT <- TRUE
+  eval(tables_chunk(template, "helpers"), env)
+  invisible(eval(tables_chunk(template, "tbl-table"), env))
+  expect_identical(env$constant_rows, "mr_preop")
+  expect_false(any(grepl("mr_preop", unlist(env$ft$body$dataset), fixed = TRUE)))
+  expect_identical(env$GROUPS$Procedure, "repair")
+  note <- capture.output(eval(tables_chunk(template, "constant-rows"), env))
+  expect_true(any(grepl("mr_preop", note, fixed = TRUE)))
+  expect_true(any(grepl("DROP_CONSTANT", note, fixed = TRUE)))
+  # FALSE keeps every row and the report says nothing; a constant binary row
+  # then stops the table, since it has no event to count.
+  env$GROUPS <- list(Demography = c("age", "female"), Procedure = c("repair", "mr_preop"))
+  env$BINARY <- c("female", "repair", "mr_preop")
+  env$DROP_CONSTANT <- FALSE
+  expect_error(eval(tables_chunk(template, "tbl-table"), env), "mr_preop")
+  env$BINARY <- c("female", "repair")
+  env$CATEGORICAL <- "mr_preop"
+  invisible(eval(tables_chunk(template, "tbl-table"), env))
+  expect_identical(env$constant_rows, character(0))
+  expect_true(any(grepl("mr_preop", unlist(env$ft$body$dataset), fixed = TRUE)))
+  expect_identical(capture.output(eval(tables_chunk(template, "constant-rows"), env)), character(0))
+  env$DROP_CONSTANT <- NA
+  expect_error(eval(tables_chunk(template, "tbl-table"), env), "DROP_CONSTANT must be TRUE or FALSE")
+  # With the buckets left to the data, a section that holds only constant rows
+  # goes with them.
+  env$DROP_CONSTANT <- TRUE
+  env$GROUPS <- list(Demography = c("age", "female"), Inclusion = "mr_preop")
+  env$CONTINUOUS <- env$BINARY <- env$CATEGORICAL <- NULL
+  invisible(eval(tables_chunk(template, "tbl-table"), env))
+  expect_identical(env$constant_rows, "mr_preop")
+  expect_identical(names(env$GROUPS), "Demography")
+  expect_false(any(grepl("Inclusion", unlist(env$ft$body$dataset), fixed = TRUE)))
+  # A table of nothing but constant rows is refused, not drawn empty.
+  env$GROUPS <- list(Inclusion = "mr_preop")
+  env$CONTINUOUS <- env$BINARY <- env$CATEGORICAL <- NULL
+  expect_error(eval(tables_chunk(template, "tbl-table"), env), "no table to draw")
 })

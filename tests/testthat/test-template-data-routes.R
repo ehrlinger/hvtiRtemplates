@@ -222,7 +222,7 @@ test_that("converted templates read a whole dataset without hvtiRdatabuild insta
 # Other descriptive templates and nb-boostmtree (repeated measures) take the long form.
 patient_level_templates <- c(
   "ac.qmd", "hz.qmd", "dc-stddiff.qmd", "dc-gfup.qmd", "hs-concordance.qmd", "lg.qmd",
-  "rfc-fit.qmd", "rfr-fit.qmd", "rfs-fit.qmd", "vp-fit.qmd", "vt-fit.qmd",
+  "rfc-fit.qmd", "rfr-fit.qmd", "rfs-fit.qmd", "vp-fit.qmd", "sid-fit.qmd", "vt-fit.qmd",
   "lm-balancing_count.qmd", "lm-binary.qmd", "lm-checkpred.qmd", "lm-nominal.qmd", "lm-ordinal.qmd",
   "lm-propensity_binary.qmd", "lm-propensity_nominal.qmd", "lm-propensity_ordinal.qmd",
   "rm-balancing_continuous.qmd", "rm-linear.qmd"
@@ -264,7 +264,7 @@ test_that("every template that reads its own data offers the join and records th
                      info = basename(f))
   }
   # Every first job of a set reads its own data; a drop here means one stopped offering the join.
-  expect_identical(readers, 26L)
+  expect_identical(readers, 27L)
   # The refusal names the rest, read from the same templates.
   expect_identical(hvtiRtemplates:::.long_join_templates(normalizePath(template_root)),
                    c("dc-eda", "dc-general", "dc-tables", "dc-trends", "nb-boostmtree"))
@@ -399,8 +399,8 @@ test_that("a downstream job that rebuilds its upstream rows records the joined d
     expect_true(grepl("job_data <- .up$job_data", text, fixed = TRUE), info = basename(f))
     expect_true(grepl("list(job_data$provenance_join)", text, fixed = TRUE), info = basename(f))
   }
-  # hm, hp, hs-setup and lp-mirror.
-  expect_identical(rebuilders, 4L)
+  # hm, hp, hs-setup, lp-mirror and sid-clusters.
+  expect_identical(rebuilders, 5L)
 })
 
 test_that("nb-boostmtree takes a long join whose visit time is only in the joined dataset", {

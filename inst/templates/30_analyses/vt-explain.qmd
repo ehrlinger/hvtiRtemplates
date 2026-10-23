@@ -237,8 +237,8 @@ if (!nrow(.mc)) {
   .mc$received <- r$received[match(.mc$ID, r$ID)]
   .mc <- stats::aggregate(surv ~ received + arm_of_curve + time, data = .mc, FUN = mean)
   # hv_rmst_curves() wants right-continuous steps that start at time 0 with surv 1.
-  .mc <- do.call(rbind, lapply(split(.mc, list(.mc$received, .mc$arm_of_curve), drop = TRUE), function(x) {
-    rbind(data.frame(received = x$received[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1), x[order(x$time), ])
+  .mc <- do.call(base::rbind, lapply(split(.mc, list(.mc$received, .mc$arm_of_curve), drop = TRUE), function(x) {
+    base::rbind(data.frame(received = x$received[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1), x[order(x$time), ])
   }))
   .mc$facet <- paste("Received", .mc$received)
   .mc$arm <- .mc$arm_of_curve
@@ -287,9 +287,9 @@ summarizes. The combined rule is the one used above.
 #| tbl-cap: "The RMST difference under each eligibility rule: patients kept, median with 15th and 85th
 #|   percentiles, and the share favoring the first arm"
 .rules <- c(sub("^elig_", "", grep("^elig_", names(r), value = TRUE)))
-.sens <- do.call(rbind, lapply(c("combined", .rules), function(rule) {
+.sens <- do.call(base::rbind, lapply(c("combined", .rules), function(rule) {
   keep <- if (rule == "combined") r$elig else r[[paste0("elig_", rule)]]
-  do.call(rbind, lapply(split(r[keep, ], r$received[keep]), function(x) {
+  do.call(base::rbind, lapply(split(r[keep, ], r$received[keep]), function(x) {
     q <- stats::quantile(x$diff, c(0.15, 0.5, 0.85), names = FALSE)
     data.frame(rule = rule, arm = x$received[1L], kept = nrow(x), p15 = q[1], median = q[2], p85 = q[3],
                favor_first = mean(x$diff > 0))
@@ -352,7 +352,7 @@ if (is.null(.strata)) {
   cat("Patients by stratum and arm received:\n\n")
   print(knitr::kable(as.data.frame.matrix(table(.sr$stratum, .sr$arm))))
   .cells <- split(.sr, list(.sr$stratum, .sr$arm), drop = TRUE)
-  .st <- do.call(rbind, lapply(.cells, function(x) {
+  .st <- do.call(base::rbind, lapply(.cells, function(x) {
     data.frame(stratum = x$stratum[1L], arm = x$arm[1L], n = nrow(x),
                median = if (nrow(x) >= 5L) stats::median(x$diff) else NA_real_,
                favor_first = mean(x$diff > 0))
@@ -489,7 +489,7 @@ print(knitr::kable(as.data.frame(table(received = .benefit$arm))))
 # Their characteristics beside the rest of their arm: median (IQR) for a number, percent for a factor.
 # Factor levels come from the whole cohort, so a level absent from one group reads 0%.
 .sumry <- function(x) {
-  do.call(rbind, lapply(.vt$predictors$names, function(v) {
+  do.call(base::rbind, lapply(.vt$predictors$names, function(v) {
     xv <- x[[v]]
     if (is.numeric(xv)) {
       q <- stats::quantile(xv, c(0.25, 0.5, 0.75), na.rm = TRUE, names = FALSE)
@@ -501,7 +501,7 @@ print(knitr::kable(as.data.frame(table(received = .benefit$arm))))
     }
   }))
 }
-.ben_tab <- do.call(rbind, lapply(ARMS, function(a) {
+.ben_tab <- do.call(base::rbind, lapply(ARMS, function(a) {
   ids <- r$ID[r$arm %in% a & .eligible]
   hit <- ids %in% .benefit$ID
   if (!any(hit)) return(NULL)

@@ -232,7 +232,7 @@ if (!all(d[[STATUS]][.treated] %in% c(0, 1))) stop(STATUS, " must be coded 0 and
 NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
 # Run again after na.omit drops patients (predictors chunk): the guard must hold for the patients the forests see.
 .arm_counts <- function(d, when = "") {
-  counts <- do.call(rbind, lapply(ARMS, function(a) {
+  counts <- do.call(base::rbind, lapply(ARMS, function(a) {
     i <- d[[ARM]] %in% a
     data.frame(Arm = a, Patients = sum(i), Events = sum(d[[STATUS]][i] == 1, na.rm = TRUE))
   }))
@@ -245,7 +245,7 @@ NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
   counts
 }
 .counts <- .arm_counts(d)
-.counts <- rbind(.counts, data.frame(Arm = "No arm", Patients = sum(.no_arm), Events = NA_integer_))
+.counts <- base::rbind(.counts, data.frame(Arm = "No arm", Patients = sum(.no_arm), Events = NA_integer_))
 knitr::kable(.counts)
 ```
 
@@ -352,7 +352,7 @@ vt_ood <- function(dist, ids, arm, arms) {
                ratio = if (length(nn_within)) distance / stats::median(nn_within) else NA_real_,
                in_distribution = !out, reason = reason)
   })
-  do.call(rbind, rows)
+  do.call(base::rbind, rows)
 }
 
 # Gower over the model predictors only: mixed types, no model, bounded in [0, 1].
@@ -413,7 +413,7 @@ vt_combine <- function(rows, combine = c("any", "all")) {
     m
   }
 )
-.elig_rows <- do.call(rbind, lapply(.methods, function(m) transform(vt_ood(.dist[[m]](), .ids, .arm, ARMS), method = m)))
+.elig_rows <- do.call(base::rbind, lapply(.methods, function(m) transform(vt_ood(.dist[[m]](), .ids, .arm, ARMS), method = m)))
 if (anyNA(.elig_rows$reference)) {
   .bad <- unique(.elig_rows$method[is.na(.elig_rows$reference)])
   stop("An arm has no two patients with a finite distance by ", paste(.bad, collapse = ", "),
@@ -478,7 +478,7 @@ knitr::kable(.out, row.names = FALSE)
 #| fig-cap: "Distance to the nearest patient of the arm judged against, patients ranked within each panel. The dashed line is
 #|   that arm's largest nearest-neighbor gap among its own patients: points above it are out of distribution."
 .plot <- .elig_rows[is.finite(.elig_rows$distance), ]
-.plot <- do.call(rbind, lapply(split(.plot, list(.plot$method, .plot$arm), drop = TRUE), function(x) {
+.plot <- do.call(base::rbind, lapply(split(.plot, list(.plot$method, .plot$arm), drop = TRUE), function(x) {
   x$rank <- rank(x$distance, ties.method = "first")
   x
 }))
@@ -546,7 +546,7 @@ The C-index below is computed from each forest's out-of-bag predictions, not fro
 #| label: tbl-performance
 #| tbl-cap: "Each arm's forest, judged out of bag"
 #| results: asis
-.perf <- do.call(rbind, lapply(ARMS, function(a) {
+.perf <- do.call(base::rbind, lapply(ARMS, function(a) {
   f <- .forests[[a]]
   # yvar is the response as a data frame (time, status) for a survival forest.
   yt <- f$yvar[[1]]
@@ -593,7 +593,7 @@ vt_curves <- function(forests, train_ids, d, id, arm, arms, no_arm, seed) {
     out[[length(out) + 1L]] <- data.frame(ID = rep(other[[id]], each = length(f$time.interest)), arm_of_curve = a,
                                           time = f$time.interest, surv = as.vector(t(p$survival)))
   }
-  do.call(rbind, out)
+  do.call(base::rbind, out)
 }
 ```
 
@@ -633,7 +633,7 @@ vt_rmst <- function(curves, horizon, arms, followup) {
     v <- one(x$time, x$surv)
     data.frame(ID = x$ID[1L], arm_of_curve = x$arm_of_curve[1L], rmst = v[["rmst"]], risk = v[["risk"]])
   })
-  long <- do.call(rbind, per)
+  long <- do.call(base::rbind, per)
   wide <- stats::reshape(long, idvar = "ID", timevar = "arm_of_curve", direction = "wide", sep = "_")
   wide$diff <- wide[[paste0("rmst_", arms[1])]] - wide[[paste0("rmst_", arms[2])]]
   # log_rr is +/-Inf or NaN when a patient's risk is 0 under an arm (vt-explain drops and counts those).
@@ -667,8 +667,8 @@ if (!length(.in_dist)) {
   .mc$received <- ifelse(.rmst$no_arm[.at], "No arm", .rmst$arm[.at])
   .mc <- stats::aggregate(surv ~ received + arm_of_curve + time, data = .mc, FUN = mean)
   # hv_rmst_curves() wants right-continuous steps that start at time 0 with surv 1.
-  .mc <- do.call(rbind, lapply(split(.mc, list(.mc$received, .mc$arm_of_curve), drop = TRUE), function(x) {
-    rbind(data.frame(received = x$received[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1), x[order(x$time), ])
+  .mc <- do.call(base::rbind, lapply(split(.mc, list(.mc$received, .mc$arm_of_curve), drop = TRUE), function(x) {
+    base::rbind(data.frame(received = x$received[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1), x[order(x$time), ])
   }))
   .mc$facet <- paste("Received", .mc$received)
   .mc$arm <- .mc$arm_of_curve

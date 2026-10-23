@@ -397,7 +397,11 @@ test_that("a live pid without the run's marker is not the job's, and is not sign
   skip_on_os("windows")
   skip_on_cran()
   job <- status_job()
-  b <- bystander(sprintf("exec %s -e 'Sys.sleep(60)'", shQuote(file.path(R.home("bin"), "Rscript"))))
+  b <- bystander(sprintf("exec %s -e 'file.create(\"ready\"); Sys.sleep(60)'", shQuote(file.path(R.home("bin"), "Rscript"))))
+  # Wait for R itself: sh execs Rscript and Rscript execs R, and Linux cannot read a process's environment mid-exec,
+  # which cancel_job() rightly refuses as ambiguous. The bystander is the final process only once it writes `ready`.
+  for (i in 1:100) if (file.exists(file.path(b$dir, "ready"))) break else Sys.sleep(0.1)
+  expect_true(file.exists(file.path(b$dir, "ready")))
   .write_status(.run_files(job)$status, state = "running", pid = b$pid, created = b$created,
                 marker = "PSHVTINOTHERE_1", host = Sys.info()[["nodename"]], started = .stamp(Sys.time() - 60))
   expect_identical(cancel_job(job, grace = 1, quiet = TRUE)$state, "cancelled")
