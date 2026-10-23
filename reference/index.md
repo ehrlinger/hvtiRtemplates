@@ -10,6 +10,10 @@
   : Stop a background job
 - [`guard_long_fit()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_long_fit.md)
   : Stop a long fit from starting in an interactive session
+- [`guard_memory()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md)
+  : Refuse a fit that this session's memory cap cannot hold
+- [`install_hvti()`](https://ehrlinger.github.io/hvtiRtemplates/reference/install_hvti.md)
+  : Install the hvti command
 - [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
   : Report a background job's state
 - [`life_table()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md)
@@ -25,6 +29,8 @@
   : Read a job's data, keep its rows, and record what was done
 - [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
   : Render a job
+- [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+  : Check a job, run it in the background, and wait for its own checks
 - [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md)
   : Render a job only down to this point
 - [`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)

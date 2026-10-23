@@ -38,7 +38,10 @@ the other elements are what the status file recorded (`pid`, `created`,
 `reason`), and `log`, the log file's path. `progress`, the render's
 progress record when there is one, with `eta_s`, the estimated seconds
 left in the current stage, and `stale`, `TRUE` when it has not changed
-for three reporting intervals and at least 30 minutes.
+for three reporting intervals and at least 30 minutes. `diagnosis`, for
+a `failed` or `vanished` run whose log can be read, a list of `reason`,
+what went wrong in plain words, and `fix`, what to do about it; it is
+returned when `quiet` is `TRUE` too.
 
 ## Details
 

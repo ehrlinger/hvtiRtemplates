@@ -88,7 +88,10 @@ A progress file older than the run the status file records is ignored.</p>
   <code>progress</code>, the render's progress record when there is one, with
   <code>eta_s</code>, the estimated seconds left in the current stage, and
   <code>stale</code>, <code>TRUE</code> when it has not changed for three reporting
-  intervals and at least 30 minutes.</p>
+  intervals and at least 30 minutes. <code>diagnosis</code>, for a <code>failed</code>
+  or <code>vanished</code> run whose log can be read, a list of <code>reason</code>, what
+  went wrong in plain words, and <code>fix</code>, what to do about it; it is
+  returned when <code>quiet</code> is <code>TRUE</code> too.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
