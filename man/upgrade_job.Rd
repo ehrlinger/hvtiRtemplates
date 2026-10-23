@@ -84,7 +84,9 @@ folder beside it as \code{<job>.<stamp>-upgrade.md}, for the chunks to
 check. The old job is kept there too, as \code{<job>.<stamp>.pre-upgrade},
 and the stamp, the date and time of the upgrade, pairs the two. The job's
 own folder is left holding the job, and the same job can be upgraded again
-with nothing moved aside: each upgrade adds its own pair.
+with nothing moved aside: each upgrade adds its own pair. A pair whose
+stamp is already used, from an upgrade in the same second, takes a shared
+\code{-2}, \code{-3} suffix after the stamp.
 }
 
 \examples{

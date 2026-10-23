@@ -26,7 +26,9 @@
 #' check. The old job is kept there too, as \code{<job>.<stamp>.pre-upgrade},
 #' and the stamp, the date and time of the upgrade, pairs the two. The job's
 #' own folder is left holding the job, and the same job can be upgraded again
-#' with nothing moved aside: each upgrade adds its own pair.
+#' with nothing moved aside: each upgrade adds its own pair. A pair whose
+#' stamp is already used, from an upgrade in the same second, takes a shared
+#' \code{-2}, \code{-3} suffix after the stamp.
 #'
 #' @details
 #' The template is read from the job's file name, in either spelling
@@ -116,18 +118,30 @@ upgrade_job <- function(path, dir = NULL) {
   # Both files go to _archive/ beside the upgraded job, a folder Quarto does not
   # render, under one stamp: a second upgrade adds a pair rather than stopping.
   archive <- file.path(dirname(target), "_archive")
-  stamp <- .upgrade_stamp()
-  backup <- file.path(archive, paste0(sub("[.]qmd$", "", basename(path)), ".", stamp, ".pre-upgrade"))
-  report_path <- file.path(archive, paste0(sub("[.]qmd$", "", basename(target)), ".", stamp, "-upgrade.md"))
   # A symbolic link counts as taken even when it dangles: file.exists() says
   # FALSE for one, and writing through it would create a file wherever it points.
   taken <- function(p) {
     link <- Sys.readlink(p)
     file.exists(p) | (!is.na(link) & nzchar(link))
   }
-  for (p in c(backup, report_path)) {
+  # An upgrade takes well under the stamp's one second, so a stamp already
+  # used takes a suffix, -2 and on, shared by both files so they stay a pair.
+  stamp <- .upgrade_stamp()
+  pair <- function(s) {
+    c(file.path(archive, paste0(sub("[.]qmd$", "", basename(path)), ".", s, ".pre-upgrade")),
+      file.path(archive, paste0(sub("[.]qmd$", "", basename(target)), ".", s, "-upgrade.md")))
+  }
+  files <- pair(stamp)
+  n <- 1L
+  while (any(taken(files)) && n < 99L) {
+    n <- n + 1L
+    files <- pair(paste0(stamp, "-", n))
+  }
+  for (p in files) {
     if (taken(p)) stop("upgrade_job(): '", p, "' already exists; refusing to overwrite.", call. = FALSE)
   }
+  backup <- files[[1L]]
+  report_path <- files[[2L]]
   # Any other spelling of this job, current, before 2026-10 or under the
   # template's name before a rename, is a second copy of the same set's edits.
   others <- c(target, .job_path_legacy(row, fields$subject, fields$type, root),

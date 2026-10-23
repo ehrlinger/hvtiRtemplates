@@ -91,14 +91,19 @@ test_that("the upgrade report lists every choice by name and quotes no value", {
   expect_false(any(grepl("built_r|lvmassi", report)))
 })
 
-test_that("upgrade_job() refuses to overwrite and names a job it cannot read", {
+test_that("upgrade_job() never overwrites an archived file and names a job it cannot read", {
   root <- migration_study_fixture()
   path <- old_rfs_job(root)
   local_mocked_bindings(.upgrade_stamp = function() "20261023-120000")
   dir.create(file.path(root, "analyses", "_archive"))
-  file.create(file.path(root, "analyses", "_archive", "dead-rfs-rfs-fit.20261023-120000.pre-upgrade"))
-  expect_error(upgrade_job(path), "already exists")
-  expect_true(file.exists(path))
+  # One file of the stamp's pair taken moves the whole pair to the next suffix.
+  held <- file.path(root, "analyses", "_archive", "dead-rfs-rfs-fit.20261023-120000.pre-upgrade")
+  writeLines("held", held)
+  upgrade_job(path)
+  expect_identical(readLines(held), "held")
+  expect_identical(sort(list.files(dirname(held))),
+                   c("dead-rfs-rfs-fit.20261023-120000-2.pre-upgrade", "dead-rfs-rfs-fit.20261023-120000.pre-upgrade",
+                     "rfs.fit.dead.rfs.20261023-120000-2-upgrade.md"))
 
   odd <- file.path(root, "analyses", "notes.qmd")
   writeLines("x", odd)
@@ -257,6 +262,17 @@ test_that("a job upgrades again without moving the last upgrade's files aside", 
                      "dc.general.cohort.eda.20261020-101300.pre-upgrade",
                      "dc.general.cohort.eda.20261023-121500-upgrade.md",
                      "dc.general.cohort.eda.20261023-121500.pre-upgrade"))
+})
+
+test_that("upgrades within one second each keep their pair", {
+  # An upgrade finishes well inside a second, so back-to-back upgrades share a stamp.
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
+  for (i in 1:3) upgrade_job(job)
+  expect_identical(sort(list.files(file.path(dirname(job), "_archive"))),
+                   sort(c(paste0("dc.general.cohort.eda.20261023-121500", c("", "-2", "-3"), ".pre-upgrade"),
+                          paste0("dc.general.cohort.eda.20261023-121500", c("", "-2", "-3"), "-upgrade.md"))))
 })
 
 test_that("upgrade_job() installs the study's provenance hooks", {
