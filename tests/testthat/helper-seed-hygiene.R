@@ -57,6 +57,20 @@ seed_violations <- function(text, label, offset = 0L) {
   wrappers <- calls$call[calls$text == "with_seed" |
                            (calls$text == "cache_fit" &
                               vapply(calls$call, function(id) !is.null(seed_arg(id)), logical(1)))]
+  # A call quoted into a name, `X <- quote(f(...))`, runs where cache_fit(code = X, seed = ) evaluates it in the
+  # same unit, so that cache_fit() seeds it. A quoted call never handed to a seeded cache_fit() stays unseeded.
+  cache_formals <- function(name, code, seed = NULL, dir, refit = FALSE, packages = NULL) NULL
+  seeded_names <- unlist(lapply(wrappers[calls$text[match(wrappers, calls$call)] == "cache_fit"], function(id) {
+    code <- tryCatch(as.list(match.call(cache_formals, call_of(id)))[["code"]], error = function(e) NULL)
+    if (is.symbol(code)) as.character(code)
+  }))
+  quoted <- calls$call[calls$text == "quote"]
+  quoted <- quoted[vapply(quoted, function(id) {
+    assign <- tryCatch(str2lang(utils::getParseText(pd, parent_of[[as.character(id)]])), error = function(e) NULL)
+    is.call(assign) && identical(assign[[1L]], as.name("<-")) && is.symbol(assign[[2L]]) &&
+      as.character(assign[[2L]]) %in% seeded_names
+  }, logical(1))]
+  wrappers <- c(wrappers, quoted)
   seeds <- calls[calls$text == "set.seed", ]
   out <- character(0)
   for (i in which(calls$text %in% seed_random_calls)) {

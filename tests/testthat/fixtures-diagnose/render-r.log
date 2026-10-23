@@ -1,0 +1,40 @@
+[31m
+
+processing file: dc.cohort.eda.qmd
+[39m1/3        
+2/3 [setup]
+[31mError:
+! render_r: Quarto ran this render on R 4.6.1 (<tmp>/bin), not the R that submitted it, R 4.5.3 (/opt/R/4.5.3/lib/R/bin).
+A QUARTO_R setting, or another R first on the PATH, is overriding it: remove QUARTO_R from ~/.Renviron or the study's .Renviron, and check the PATH.
+Backtrace:
+    ▆
+ 1. └─hvtiRtemplates:::.job_setup(SUBJECT, TYPE)
+[39m[31m
+Quitting from dc.cohort.eda.qmd:6-11 [setup]
+[39m[31mExecution halted
+[39m[33mWARN: Error encountered when rendering files[39m
+Error: ! Error running quarto CLI from R.
+Caused by error in `quarto::quarto_render()`:
+✖ Error returned by quarto CLI.
+  -----------------------------
+  
+  
+  processing file: dc.cohort.eda.qmd
+  1/3
+  2/3 [setup]
+  [31mError:[39m
+  ! render_r: Quarto ran this render on R 4.6.1
+  (<tmp>/bin), not the R that
+  submitted it, R 4.5.3 (/opt/R/4.5.3/lib/R/bin).
+  A QUARTO_R setting, or another R first on the PATH, is overriding it: remove
+  QUARTO_R from ~/.Renviron or the study's .Renviron, and check the PATH.
+  Backtrace:
+  ▆
+  1. └─hvtiRtemplates:::.job_setup(SUBJECT, TYPE)
+  
+  Quitting from dc.cohort.eda.qmd:6-11 [setup]
+  [31mExecution halted[39m
+  [33mWARN: Error encountered when rendering files[39m
+  
+Caused by error in `processx::run()`:
+! System command 'quarto' failed

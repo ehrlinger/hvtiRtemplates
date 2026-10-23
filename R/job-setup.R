@@ -40,6 +40,8 @@
   banner <- utils::capture.output(markers <- .guard_edits(show_source = show_markers))
   partial <- .guard_partial(knitr::current_input())
   .check_job_name(knitr::current_input(), subject, type)
+  ck <- .check_render_r()
+  if (!ck$ok) stop(ck$message, "\n", ck$fix, call. = FALSE)
   # A new run: what the last one read is not this one's.
   .run_state$reads <- list()
   .run_state$handoffs <- list()
@@ -52,6 +54,7 @@
   # A render records its stages and steps in <job>.run.progress; the
   # design is dev/specs/2026-10-21-job-progress-design.md.
   progress <- .progress_install(.progress_path(input))
+  .progress_check_passed("render_r")
   # Resolves from `envir`, not from the arguments, so a test or an author who
   # changes SUBJECT or TYPE afterward moves the set, as the old chunk's did.
   set_path <- function(kind, file) {

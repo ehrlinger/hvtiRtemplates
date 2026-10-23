@@ -21,7 +21,10 @@ Invisibly, a list: \code{state} is one of \code{"none"},
   \code{progress}, the render's progress record when there is one, with
   \code{eta_s}, the estimated seconds left in the current stage, and
   \code{stale}, \code{TRUE} when it has not changed for three reporting
-  intervals and at least 30 minutes.
+  intervals and at least 30 minutes. \code{diagnosis}, for a \code{failed}
+  or \code{vanished} run whose log can be read, a list of \code{reason}, what
+  went wrong in plain words, and \code{fix}, what to do about it; it is
+  returned when \code{quiet} is \code{TRUE} too.
 }
 \description{
 Reads the status \code{\link{submit_job}} keeps beside a job,

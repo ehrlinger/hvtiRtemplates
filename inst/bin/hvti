@@ -1,0 +1,39 @@
+#!/bin/sh
+# hvti: run an hvtiR job on the R its study's renv.lock records. hvti-version: 1
+# Design: hvtiRtemplates dev/specs/2026-10-22-run-job-design.md, section 3.
+usage() { echo "usage: hvti run|status|cancel <job.qmd> [--final]" >&2; exit 2; }
+[ $# -ge 2 ] || usage
+case $1 in run|status|cancel) ;; *) usage ;; esac
+[ $# -le 3 ] || usage
+cmd=$1; job=$2; final=FALSE
+case ${3:-} in "") ;; --final) final=TRUE ;; *) usage ;; esac
+# The paths run_job() prints are from the study root; from deeper in the study, try the job there.
+if [ ! -f "$job" ]; then
+  up=$(pwd)
+  while [ ! -f "$up/renv.lock" ] && [ "$up" != "/" ]; do up=$(dirname "$up"); done
+  [ -f "$up/renv.lock" ] && [ -f "$up/$job" ] && job="$up/$job"
+fi
+[ -f "$job" ] || { echo "hvti: no such job file: $job" >&2; exit 1; }
+jobdir=$(cd "$(dirname "$job")" && pwd) || exit 1
+jobpath="$jobdir/$(basename "$job")"
+root=$jobdir
+# run_job() finds the root by _study.yml instead; in a set-up study both files sit in the same directory.
+while [ ! -f "$root/renv.lock" ]; do
+  [ "$root" = "/" ] && { echo "hvti: $job is not inside a study (no renv.lock above it)." >&2; exit 1; }
+  root=$(dirname "$root")
+done
+ver=$(tr -d '\n' < "$root/renv.lock" | sed -n 's/.*"R"[[:space:]]*:[[:space:]]*{[^}]*"Version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+[ -n "$ver" ] || { echo "hvti: $root/renv.lock records no R version." >&2; exit 1; }
+for top in "${HVTI_R_ROOT:-}" /opt/R; do
+  [ -n "$top" ] && [ -x "$top/$ver/bin/Rscript" ] && { rscript="$top/$ver/bin/Rscript"; break; }
+done
+if [ -z "${rscript:-}" ]; then
+  echo "hvti: this study needs R $ver, which is not installed here. Installed: $(ls /opt/R 2>/dev/null | tr '\n' ' ')" >&2
+  exit 1
+fi
+# The job path reaches R as an argument, never as R source: a fixed expression reads it with
+# commandArgs(), so no directory name can change what R runs. .hvti_main() returns the exit status.
+# renv's activate.R prefers RENV_PROJECT over the working directory, so one inherited from another study would load
+# that study's library. Bind it to this one.
+export RENV_PROJECT="$root"
+cd "$root" && exec "$rscript" -e 'quit(status = hvtiRtemplates:::.hvti_main(commandArgs(TRUE)))' "$cmd" "$jobpath" "$final"

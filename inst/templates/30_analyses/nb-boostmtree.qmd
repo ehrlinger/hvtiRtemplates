@@ -195,26 +195,14 @@ MTRY <- NULL
 # the number of patients; about 80% of it runs in parallel, so speed levels off
 # near 4 to 5 times however many cores you give it. Each core is a forked copy of
 # R holding its own working data, and memory, not speed, is what limits CORES on
-# a large study. Measured on the server (2026-10-19, boostmtree 2.0.4, ordinal, about
-# 9 visits per patient, M = 10): peak memory at M = 10, and hours scaled to M = 1000.
-#   patients   CORES   peak memory at M = 10   hours at M = 1000   session, at least
-#      1,000     4            6 GB                     7            Default (16 GB)
-#      1,000     8           11 GB                     5            Small (32 GB)
-#      2,000     8           30 GB                    22            Medium (64 GB)
-#      4,000     4           70 GB                   110            Large (128 GB); 8 cores ran out
-# Measured full run (2026-10-21, boostmtree 2.0.8, continuous, 1,391 patients, 4,771
-# visits, M = 1000, 8 cores, Medium session): fit about 1 h, importance 13 min,
-# partial effects for 3 variables 32 min at 11.3 GiB of session memory; on 2.0.7,
-# 94 min at 70.0 GiB, within 7 GiB of Medium's limit of 76.8 GiB. 2.0.8 leaves
-# Medium ample room. The 76.8 GiB is the enforced cap, about 1.2 times the 64 GB
-# profile named in the table. These are RStudio session-memory readings, covering
-# everything in the session including the forked workers, each taken once during
-# the step: not measured peaks.
-# Memory is an upper bound at M = 10 only. The fit keeps every step, about
-# 0.35 MB per step per 1,000 visits for an ordinal response, so at M = 1000 add
-# about 3 GB at 1,000 patients and 11 GB at 4,000, and possibly that much again
-# per core: not yet measured, so treat the sessions above as a floor. Hours scale
-# with M. CORES should never exceed the session's CPUs; Windows cannot fork.
+# a large study. The fit refuses to start, in the first minutes, when this session's
+# memory cannot hold it at this CORES, and says which Workbench profile to start;
+# the measurements behind that estimate are in R/fit-memory.R and ?guard_memory.
+# Run time at M = 1000, by patients and cores (2026-10-19, boostmtree 2.0.4, ordinal):
+# about 7 h at 1,000 patients on 4 cores, 5 h at 1,000 on 8, 22 h at 2,000 on 8 and
+# 110 h at 4,000 on 4. On 2.0.8 (2026-10-21, continuous, 1,391 patients, M = 1000,
+# 8 cores) the fit took about 1 h. Hours scale with M.
+# CORES should never exceed the session's CPUs; Windows cannot fork.
 # Not part of the cache key: the fit is identical on any number of cores.
 CORES <- if (.Platform$OS.type == "windows") 1L else 4L
 
@@ -353,8 +341,9 @@ hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
                                why = "a cross-validated boostmtree fit takes hours at study size",
                                refit = REFIT)
 .patient <- hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root))
-fit <- cache_fit(
-  "nb-boostmtree-fit",
+# The fit, quoted once so the memory check below and cache_fit() read the same call: a
+# cache_fit() of a quoted call keys the call, so a fit cached before this was quoted still loads.
+.fit_code <- quote(
   boostmtree(x = d[.predictors], tm = d[[.time]], id = .patient, y = d[[.response]],
              family = FAMILY, M = M, nu = NU, mtry = MTRY, mod.grad = TRUE, cv.flag = TRUE, verbose = FALSE,
              # get() keeps CORES out of cache_fit()'s key, which sees only the values
@@ -366,9 +355,22 @@ fit <- cache_fit(
              # The fit keeps the reporter (boostmtree's formula environment holds it), which
              # is safe because the reporter's frame holds only `unit`: no run record is
              # saved with the fit.
-             progress = get(".job")$progress("iteration")),
-  seed = SEED, dir = CACHE_DIR, refit = REFIT
+             progress = get(".job")$progress("iteration"))
 )
+# Refuses here, in the first minutes of the render, a fit this session's memory cannot hold, and
+# names the Workbench profile to start; the numbers behind the estimate are in hvtiRtemplates'
+# R/fit-memory.R. A cached fit is only loaded, so it needs nothing. Whether cache_fit() will fit
+# is its own decision, asked the way it makes it: a file whose key matches loads even with REFIT
+# left TRUE, and a stale file stops it before any fit unless REFIT is set. The call itself is
+# unconditional, so a cached rerender still records the memory check that run_job() waits for.
+.need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(.patient)), nrow(d), FAMILY, k, M)
+.fitting <- hvtiRtemplates:::.cache_would_fit("nb-boostmtree-fit", .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
+hvtiRtemplates::guard_memory(if (.fitting) .need(CORES) else 0,
+                             sprintf("this boostmtree fit (%s patients, %s visits, %s)",
+                                     format(length(unique(.patient)), big.mark = ","), format(nrow(d), big.mark = ","),
+                                     FAMILY),
+                             cores = CORES, cores_fit = .need)
+fit <- cache_fit("nb-boostmtree-fit", .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
 ```
 
 `cv.flag = TRUE` and `mod.grad = TRUE` are not settings. Every study fitted with

@@ -1,0 +1,29 @@
+[31m
+
+processing file: quitting.qmd
+[39m1/3      
+2/3 [fit]
+[31mError:
+! boom
+[39m[31m
+Quitting from quitting.qmd:5-8 [fit]
+[39m[31mExecution halted
+[39m[33mWARN: Error encountered when rendering files[39m
+Error: ! Error running quarto CLI from R.
+Caused by error in `quarto::quarto_render()`:
+✖ Error returned by quarto CLI.
+  -----------------------------
+  
+  
+  processing file: quitting.qmd
+  1/3
+  2/3 [fit]
+  [31mError:[39m
+  ! boom
+  
+  Quitting from quitting.qmd:5-8 [fit]
+  [31mExecution halted[39m
+  [33mWARN: Error encountered when rendering files[39m
+  
+Caused by error in `processx::run()`:
+! System command 'quarto' failed

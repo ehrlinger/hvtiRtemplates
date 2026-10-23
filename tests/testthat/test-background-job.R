@@ -1,10 +1,3 @@
-status_job <- function() {
-  dir <- withr::local_tempdir(.local_envir = parent.frame())
-  job <- file.path(dir, "nb.boostmtree.x.boost.qmd")
-  writeLines("---\ntitle: x\n---", job)
-  job
-}
-
 test_that("a job never submitted reads none", {
   job <- status_job()
   expect_identical(job_status(job, quiet = TRUE)$state, "none")
@@ -529,4 +522,59 @@ test_that("the already-running refusal names both run files for another host, an
   running_on(job, b)
   expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "Stop it with cancel_job()",
                fixed = TRUE)
+})
+
+test_that("job_status prints the recorded peak against the limit", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "failed", exit_code = 1L, pid = 999999L,
+                mem_peak_gib = 76.7, mem_limit_gib = 76.8)
+  expect_output(job_status(job), "memory: 76.7 of 76.8 GiB (peak)", fixed = TRUE)
+})
+
+test_that("the runner records the cgroup peak at its end", {
+  lines <- .runner_lines("/s/a.qmd", "/s/a.run.yml", FALSE, "TRUE")
+  expect_true(any(grepl("hvtiRtemplates:::.run_memory_fields()", lines, fixed = TRUE)))
+})
+
+# Runs the generated runner in-process, with quit() stubbed, so the terminal write is observed.
+run_runner <- function(status) {
+  env <- new.env()
+  env$quit <- function(...) invisible(NULL)
+  eval(parse(text = .runner_lines("/s/a.qmd", status, FALSE, "TRUE")), envir = env)
+  yaml::read_yaml(status)
+}
+
+test_that("a memory reader that errors still lets the runner record finished", {
+  status <- file.path(withr::local_tempdir(), "a.run.yml")
+  testthat::local_mocked_bindings(.cgroup_memory = function(...) stop("no cgroup"))
+  st <- run_runner(status)
+  expect_identical(st$state, "finished")
+  expect_null(st$mem_peak_gib)
+})
+
+test_that("NA memory readings are dropped, not written or fatal", {
+  status <- file.path(withr::local_tempdir(), "a.run.yml")
+  testthat::local_mocked_bindings(.cgroup_memory = function(...) list(limit_gib = NA_real_, peak_gib = NA_real_))
+  st <- run_runner(status)
+  expect_identical(st$state, "finished")
+  expect_null(st$mem_limit_gib)
+})
+
+test_that("submit_job exports HVTI_RUN_R to the runner", {
+  captured <- NULL
+  testthat::local_mocked_bindings(.launch = function(cmd) captured <<- cmd)
+  job <- status_job()
+  .submit_job(job, FALSE, "TRUE", dirname(job))
+  expect_match(captured, "HVTI_RUN_R=", fixed = TRUE)
+  expect_match(captured, "export [A-Za-z0-9_]+ HVTI_JOB_MARKER HVTI_RUN_R ")
+  expect_match(captured, R.home("bin"), fixed = TRUE)
+})
+
+test_that("submit_job exports the submitter's R version as HVTI_RUN_R_VERSION", {
+  captured <- NULL
+  testthat::local_mocked_bindings(.launch = function(cmd) captured <<- cmd, .session_r = function() numeric_version("4.5.3"))
+  job <- status_job()
+  .submit_job(job, FALSE, "TRUE", dirname(job))
+  expect_match(captured, "HVTI_RUN_R_VERSION='4.5.3'", fixed = TRUE)
+  expect_match(captured, "export [A-Za-z0-9_]+ HVTI_JOB_MARKER HVTI_RUN_R HVTI_RUN_R_VERSION ")
 })

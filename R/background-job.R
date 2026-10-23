@@ -59,7 +59,10 @@
 #'   \code{progress}, the render's progress record when there is one, with
 #'   \code{eta_s}, the estimated seconds left in the current stage, and
 #'   \code{stale}, \code{TRUE} when it has not changed for three reporting
-#'   intervals and at least 30 minutes.
+#'   intervals and at least 30 minutes. \code{diagnosis}, for a \code{failed}
+#'   or \code{vanished} run whose log can be read, a list of \code{reason}, what
+#'   went wrong in plain words, and \code{fix}, what to do about it; it is
+#'   returned when \code{quiet} is \code{TRUE} too.
 #' @examples
 #' job <- file.path(tempdir(), "example.qmd")
 #' writeLines("---\ntitle: example\n---", job)
@@ -115,6 +118,10 @@ job_status <- function(path, quiet = FALSE) {
   }
   st$log <- files$log
   st$progress <- tryCatch(.progress_view(prog), error = function(e) unreadable)
+  # The diagnosis is advisory and read from a log that may be anything; it must not stop the report.
+  if (st$state %in% c("failed", "vanished") && !never_started && file.exists(files$log)) {
+    st$diagnosis <- tryCatch(.diagnose_failure(readLines(files$log, warn = FALSE), st), error = function(e) NULL)
+  }
   if (!isTRUE(quiet)) {
     detail <- switch(st$state,
                      running = if (is.null(other_host)) {
@@ -138,6 +145,20 @@ job_status <- function(path, quiet = FALSE) {
                      },
                      "")
     cat(basename(path), ": ", st$state, detail, "\n", sep = "")
+    if (is.numeric(st$mem_peak_gib) && is.numeric(st$mem_limit_gib)) {
+      cat(sprintf("  memory: %.1f of %.1f GiB (peak)\n", st$mem_peak_gib, st$mem_limit_gib))
+    } else if (identical(st$state, "running") && .num1(st$progress$mem_gib)) {
+      # While it runs, the use at the render's last progress write; the limit when that write could read it.
+      cat(if (.num1(st$progress$mem_limit_gib)) {
+        sprintf("  memory: %.1f of %.1f GiB (now)\n", st$progress$mem_gib, st$progress$mem_limit_gib)
+      } else {
+        sprintf("  memory: %.1f GiB in use\n", st$progress$mem_gib)
+      })
+    }
+    if (!is.null(st$diagnosis)) {
+      cat("  why: ", st$diagnosis$reason, "\n", sep = "")
+      if (nzchar(st$diagnosis$fix)) cat("  fix: ", st$diagnosis$fix, "\n", sep = "")
+    }
     lines <- tryCatch(.progress_lines(st$progress, st$state), error = function(e) paste0("  progress: ", unreadable$error))
     if (length(lines)) cat(lines, sep = "\n")
   }
@@ -170,8 +191,11 @@ job_status <- function(path, quiet = FALSE) {
     sprintf("ok <- tryCatch({ %s; TRUE }, error = function(e) { message('Error: ', conditionMessage(e)); FALSE })",
             render_call),
     "ended <- Sys.time()",
+    # Telemetry is advisory: any failure in reading or converting it yields list(), never an error that
+    # would skip the terminal put() and leave a finished run looking vanished.
+    "mem <- tryCatch(hvtiRtemplates:::.run_memory_fields(), error = function(e) list())",
     paste0("put(c(list(state = if (ok) 'finished' else 'failed', exit_code = if (ok) 0L else 1L), base, ",
-           "list(ended = stamp(ended), elapsed_s = round(as.numeric(difftime(ended, started, units = 'secs'))))))"),
+           "list(ended = stamp(ended), elapsed_s = round(as.numeric(difftime(ended, started, units = 'secs')))), mem))"),
     "quit(save = 'no', status = if (ok) 0L else 1L)")
 }
 
@@ -189,6 +213,9 @@ job_status <- function(path, quiet = FALSE) {
   }
   invisible(files$lock)
 }
+
+# Wrapped so tests can capture the command; wait = FALSE appends the "&" itself.
+.launch <- function(cmd) system(cmd, wait = FALSE)
 
 .submit_job <- function(path, final, render_call, root) {
   files <- .run_files(path)
@@ -221,10 +248,14 @@ job_status <- function(path, quiet = FALSE) {
   now <- Sys.time()
   marker <- sprintf("PSHVTI%d%s_%d", Sys.getpid(), format(now, "%H%M%OS6"), as.integer(now))
   marker <- gsub("[^A-Za-z0-9_]", "", marker)
-  cmd <- sprintf("cd %s && %s=YES HVTI_JOB_MARKER=%s && export %s HVTI_JOB_MARKER && exec %snohup %s %s > %s 2>&1 < /dev/null",
-                 shQuote(root), marker, marker, marker, setsid, shQuote(rscript), shQuote(files$runner),
-                 shQuote(files$log))
-  system(cmd, wait = FALSE)  # wait = FALSE appends the "&" itself
+  # HVTI_RUN_R names the R that submitted the job; .job_setup() stops the render if Quarto's knitr runs on another.
+  # HVTI_RUN_R_VERSION gives its version, so the refusal can name both Rs by version as well as by path.
+  cmd <- sprintf(paste0("cd %s && %s=YES HVTI_JOB_MARKER=%s HVTI_RUN_R=%s HVTI_RUN_R_VERSION=%s && ",
+                        "export %s HVTI_JOB_MARKER HVTI_RUN_R HVTI_RUN_R_VERSION && ",
+                        "exec %snohup %s %s > %s 2>&1 < /dev/null"),
+                 shQuote(root), marker, marker, shQuote(.r_home()), shQuote(as.character(.session_r())), marker, setsid,
+                 shQuote(rscript), shQuote(files$runner), shQuote(files$log))
+  .launch(cmd)
   invisible(job_status(path, quiet = TRUE))
 }
 

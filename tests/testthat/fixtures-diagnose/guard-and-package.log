@@ -1,0 +1,71 @@
+[31m
+
+processing file: guard.qmd
+[39m1/3      
+2/3 [fit]
+[31mError:
+! memory: this fit needs about 100 GiB and this session is capped at 19.2 GiB (Workbench "Default"). Start a "Large" session (153.6 GiB) or larger.
+Backtrace:
+    ▆
+ 1. └─hvtiRtemplates::guard_memory(...)
+[39m[31m
+Quitting from guard.qmd:6-13 [fit]
+[39m[31mExecution halted
+[39m[33mWARN: Error encountered when rendering files[39m
+Error: ! Error running quarto CLI from R.
+Caused by error in `quarto::quarto_render()`:
+✖ Error returned by quarto CLI.
+  -----------------------------
+  
+  
+  processing file: guard.qmd
+  1/3
+  2/3 [fit]
+  [31mError:[39m
+  ! memory: this fit needs about 100 GiB and this session is capped at 19.2 GiB
+  (Workbench "Default"). Start a "Large" session (153.6 GiB) or larger.
+  Backtrace:
+  ▆
+  1. └─hvtiRtemplates::guard_memory(...)
+  
+  Quitting from guard.qmd:6-13 [fit]
+  [31mExecution halted[39m
+  [33mWARN: Error encountered when rendering files[39m
+  
+Caused by error in `processx::run()`:
+! System command 'quarto' failed
+[31m
+
+processing file: no-package.qmd
+[39m1/3        
+2/3 [setup]
+[31mError in `library()`:
+! there is no package called 'notapkg'
+Backtrace:
+    ▆
+ 1. └─base::library(notapkg)
+[39m[31m
+Quitting from no-package.qmd:5-8 [setup]
+[39m[31mExecution halted
+[39m[33mWARN: Error encountered when rendering files[39m
+Error: ! Error running quarto CLI from R.
+Caused by error in `quarto::quarto_render()`:
+✖ Error returned by quarto CLI.
+  -----------------------------
+  
+  
+  processing file: no-package.qmd
+  1/3
+  2/3 [setup]
+  [31mError in `library()`:[39m
+  ! there is no package called 'notapkg'
+  Backtrace:
+  ▆
+  1. └─base::library(notapkg)
+  
+  Quitting from no-package.qmd:5-8 [setup]
+  [31mExecution halted[39m
+  [33mWARN: Error encountered when rendering files[39m
+  
+Caused by error in `processx::run()`:
+! System command 'quarto' failed

@@ -1,0 +1,39 @@
+[31m
+
+processing file: nested.qmd
+[39m1/3      
+2/3 [fit]
+[31mError in `inner()`:
+! inner failure
+second line
+Backtrace:
+    ▆
+ 1. └─global outer(1)
+ 2.   └─global inner(x)
+[39m[31m
+Quitting from nested.qmd:5-10 [fit]
+[39m[31mExecution halted
+[39m[33mWARN: Error encountered when rendering files[39m
+Error: ! Error running quarto CLI from R.
+Caused by error in `quarto::quarto_render()`:
+✖ Error returned by quarto CLI.
+  -----------------------------
+  
+  
+  processing file: nested.qmd
+  1/3
+  2/3 [fit]
+  [31mError in `inner()`:[39m
+  ! inner failure
+  second line
+  Backtrace:
+  ▆
+  1. └─global outer(1)
+  2.  └─global inner(x)
+  
+  Quitting from nested.qmd:5-10 [fit]
+  [31mExecution halted[39m
+  [33mWARN: Error encountered when rendering files[39m
+  
+Caused by error in `processx::run()`:
+! System command 'quarto' failed
