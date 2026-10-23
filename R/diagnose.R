@@ -1,7 +1,7 @@
 # Known ways a render dies, matched in order; the first that matches explains it. Design:
 # dev/specs/2026-10-22-run-job-design.md section 6, failure 7.
 .diagnose_failure <- function(log, st) {
-  # Quarto colours its output even into a file; the escapes sit at the start of the lines matched below.
+  # Quarto colors its output even into a file; the escapes sit at the start of the lines matched below.
   log <- gsub("\033\\[[0-9;]*m", "", log, perl = TRUE)
   # rlang/knitr print a condition's lines with "! ", "i " or "x " bullets; strip them so a check's own
   # refusal is matched the same whether it came through Quarto or a plain Rscript.

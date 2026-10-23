@@ -2,7 +2,7 @@
 
 Each `.log` is the real output of a failed render, captured the way `submit_job()`'s runner captures it
 (`Rscript` running `quarto::quarto_render()` inside `tryCatch`, standard output and error to one file,
-`QUARTO_R` set), on a synthetic `.qmd` in a scratch directory. Quarto's own colour codes are kept.
+`QUARTO_R` set), on a synthetic `.qmd` in a scratch directory. Quarto's own color codes are kept.
 Local paths (temp directories, and the R home in `render-r.log`) are replaced by `<tmp>`, and the one subject id
 boostmtree prints by `<id>`.
 
