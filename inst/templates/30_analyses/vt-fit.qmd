@@ -218,6 +218,11 @@ if (any(.other)) {
   stop(sum(.other), " row(s) have an ARM that is neither in ARMS nor NO_ARM: ",
        paste(unique(d[[ARM]][.other]), collapse = ", "), ".", call. = FALSE)
 }
+# Arms are names, never positions. A numeric ARM (0 and 1) would otherwise index
+# the lists of forests by position, so ARMS and the arm column become text once,
+# here, and every list below is keyed by that text. A missing arm stays NA.
+ARMS <- as.character(ARMS)
+d[[ARM]] <- as.character(d[[ARM]])
 .no_outcome <- .treated & (is.na(d[[TIME]]) | is.na(d[[STATUS]]))
 if (any(.no_outcome)) {
   stop(sum(.no_outcome), " treated patient(s) have no outcome. A forest cannot learn from them, and imputing one ",
@@ -428,9 +433,18 @@ for (m in .methods) {
 .ps_data <- d[.treated, c(ID, ARM, .predictors), drop = FALSE]
 if (anyNA(.ps_data[.predictors])) {
   .imp <- .ps_data[.predictors]
+  # impute() drops a patient who is missing every predictor, so the imputed
+  # rows are matched back by ID (its row names), never by position.
+  rownames(.imp) <- .ps_data[[ID]]
   set.seed(SEED)
-  .ps_data[.predictors] <- randomForestSRC::impute(data = .imp, ntree = 100L, seed = -abs(SEED),
-                                                   verbose = FALSE)[.predictors]
+  .imputed <- randomForestSRC::impute(data = .imp, ntree = 100L, seed = -abs(SEED), verbose = FALSE)
+  .back <- match(.ps_data[[ID]], rownames(.imputed))
+  if (anyNA(.back)) {
+    cat(sum(is.na(.back)), " treated patient(s) could not be scored for the propensity sensitivity ",
+        "(no predictor observed); they are not eligible under it.\n", sep = "")
+  }
+  .ps_data <- .ps_data[!is.na(.back), , drop = FALSE]
+  .ps_data[.predictors] <- .imputed[.back[!is.na(.back)], .predictors, drop = FALSE]
 }
 set.seed(SEED)
 # The propensity forest keeps its formula too, and reformulate() would tie it to this
@@ -543,7 +557,7 @@ The C-index below is computed from each forest's out-of-bag predictions, not fro
              lower = cc$concordance - 1.96 * se, upper = cc$concordance + 1.96 * se)
 }))
 cat(knitr::kable(.perf, digits = 3), sep = "\n")
-.weak <- .perf$arm[.perf$lower <= 0.5]
+.weak <- .perf$arm[which(.perf$lower <= 0.5)]
 if (length(.weak)) {
   cat("\n**The interval for", paste(.weak, collapse = " and "), "includes 0.5.** That arm's half of every",
       "contrast below is exploratory.\n")
@@ -633,7 +647,10 @@ vt_rmst <- function(curves, horizon, arms, followup) {
 #| label: rmst
 .followup <- vapply(ARMS, function(a) max(d[[TIME]][d[[ARM]] %in% a & .treated]), numeric(1L))
 .rmst <- vt_rmst(.curves, HORIZON, ARMS, .followup)
-.rmst <- merge(data.frame(ID = d[[ID]], arm = ifelse(.no_arm, "none", as.character(d[[ARM]]))), .rmst, by = "ID")
+# no_arm marks the patients who received neither arm. Their arm is NA, never a label, so
+# an arm that is really named "none" cannot be confused with them.
+.rmst <- merge(data.frame(ID = d[[ID]], arm = ifelse(.no_arm, NA_character_, d[[ARM]]), no_arm = .no_arm),
+               .rmst, by = "ID")
 .rmst <- merge(.rmst, .elig, by = "ID")
 ```
 
@@ -642,19 +659,24 @@ vt_rmst <- function(curves, horizon, arms, followup) {
 #| fig-cap: "Mean predicted survival under each arm's forest, for patients in distribution, by the arm they received.
 #|   The shaded area to the horizon is the restricted mean survival time."
 .in_dist <- .rmst$ID[.rmst$elig]
-.mc <- .curves[.curves$ID %in% .in_dist, ]
-.mc$received <- .rmst$arm[match(.mc$ID, .rmst$ID)]
-.mc <- stats::aggregate(surv ~ received + arm_of_curve + time, data = .mc, FUN = mean)
-# hv_rmst_curves() wants right-continuous steps that start at time 0 with surv 1.
-.mc <- do.call(rbind, lapply(split(.mc, list(.mc$received, .mc$arm_of_curve), drop = TRUE), function(x) {
-  rbind(data.frame(received = x$received[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1), x[order(x$time), ])
-}))
-.mc$facet <- paste("Received", .mc$received)
-.mc$arm <- .mc$arm_of_curve
-.fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet = "facet", arm = "arm")) +
-  ggplot2::labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
-save_figure(.fig, "vt-fit-curves")
-.fig
+if (!length(.in_dist)) {
+  cat("No patient is in distribution under the combined rule; see the eligibility tables.\n")
+} else {
+  .mc <- .curves[.curves$ID %in% .in_dist, ]
+  .at <- match(.mc$ID, .rmst$ID)
+  .mc$received <- ifelse(.rmst$no_arm[.at], "No arm", .rmst$arm[.at])
+  .mc <- stats::aggregate(surv ~ received + arm_of_curve + time, data = .mc, FUN = mean)
+  # hv_rmst_curves() wants right-continuous steps that start at time 0 with surv 1.
+  .mc <- do.call(rbind, lapply(split(.mc, list(.mc$received, .mc$arm_of_curve), drop = TRUE), function(x) {
+    rbind(data.frame(received = x$received[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1), x[order(x$time), ])
+  }))
+  .mc$facet <- paste("Received", .mc$received)
+  .mc$arm <- .mc$arm_of_curve
+  .fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet = "facet", arm = "arm")) +
+    ggplot2::labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
+  save_figure(.fig, "vt-fit-curves")
+  .fig
+}
 ```
 
 ## Handoff

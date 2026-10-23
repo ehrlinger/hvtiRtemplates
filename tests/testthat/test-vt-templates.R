@@ -418,7 +418,7 @@ test_that("tbl-benefit honors GAIN_MIN and splits the no-arm patients between th
   expect_equal(nrow(env$.benefit), 0L)
   env2 <- vt_fit_first(labels = vt_fit_labels_all)
   vt_explain(env2, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
-  expect_equal(sum(table(env2$.future$favors)), sum(env2$.eligible & env2$r$arm == "none"))
+  expect_equal(sum(table(env2$.future$favors)), sum(env2$.eligible & env2$r$no_arm))
 })
 
 test_that("VP_SET reads a vp-fit screen's selected set, minus EXCLUDE", {
@@ -489,4 +489,86 @@ test_that("vt-explain stops when the dataset changed since vt-fit ran, though th
   expect_error(hvtiRutilities::verify_manifest(file.path(env$.root, "manifest.yaml")), NA)
   expect_error(vt_explain(env, c("setup", "edit-study-choices", "handoff", "explain-data")),
                "The dataset changed since vt-fit ran")
+})
+
+# The tbl-betas chunk, run on a hand-made cohort: twelve eligible patients with a three-level factor
+# u/v/w (3/5/4 patients) whose log relative risks are 0/1/10.
+test_that("a multilevel factor's beta is the named level against the reference, not against the pooled rest", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_explain(env, c(vt_explain_labels, "overlap-weights"))
+  id <- env$.vt$settings$id
+  ok <- which(env$r$arm %in% env$ARMS & env$r$elig & is.finite(env$r$log_rr))
+  pick <- env$r$ID[ok[1:12]]
+  lev <- rep(c("u", "v", "w"), c(3, 5, 4))
+  env$.eligible <- env$r$ID %in% pick
+  env$r$log_rr[match(pick, env$r$ID)] <- c(0, 1, 10)[match(lev, c("u", "v", "w"))]
+  env$.d_all$g1 <- factor(NA_character_, levels = c("u", "v", "w"))
+  env$.d_all$g1[match(pick, env$.d_all[[id]])] <- lev
+  env$.d_all$g1 <- factor(env$.d_all$g1, levels = c("u", "v", "w"))
+  env$BOOT <- 0L
+  vt_explain(env, "tbl-betas")
+  row <- env$.betas[startsWith(env$.betas$variable, "g1"), ]
+  expect_equal(row$variable, "g1: v vs u")
+  expect_gt(row$beta, 0)
+})
+
+test_that("a patient missing every predictor does not crash the fit or the betas", {
+  skip_on_cran()
+  d <- vt_data()
+  d[20, c("xs", "x1", "g1")] <- NA
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all)
+  expect_true(file.exists(env$set_path("estimates", "vt.rds")))
+  vt_explain(env, vt_explain_labels_all)
+  expect_true(all(is.finite(env$.betas$beta)))
+})
+
+test_that("an arm named 'none' is not confused with the patients who have no arm", {
+  skip_on_cran()
+  d <- vt_data()
+  d$arm <- ifelse(d$arm %in% "A", "none", ifelse(d$arm %in% "B", "treated", NA))
+  ch <- utils::modifyList(vt_choices, list(ARMS = c("none", "treated")))
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all, choices = ch)
+  expect_equal(sum(env$.rmst$no_arm), 10L)
+  expect_gt(sum(env$.rmst$arm %in% "none" & !env$.rmst$no_arm), 150L)
+  expect_true(all(is.na(env$.rmst$arm[env$.rmst$no_arm])))
+  vt_explain(env, vt_explain_labels_all)
+  expect_equal(nrow(env$.future), sum(env$.eligible & env$r$no_arm))
+})
+
+test_that("numeric arm values are not read as list positions", {
+  skip_on_cran()
+  d <- vt_data()
+  d$arm <- ifelse(d$arm %in% "A", 0, ifelse(d$arm %in% "B", 1, NA))
+  ch <- utils::modifyList(vt_choices, list(ARMS = c(0, 1)))
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all, choices = ch)
+  h <- readRDS(env$set_path("estimates", "vt.rds"))
+  expect_identical(h$settings$arms, c("0", "1"))
+  vt_explain(env, vt_explain_labels_all)
+  expect_gt(nrow(env$.benefit), 0L)
+})
+
+test_that("no eligible patient leaves the fit saved and the explain tables rendering", {
+  skip_on_cran()
+  d <- vt_data()
+  d$xs <- ifelse(d$arm %in% "A", 0, 100) + seq_len(nrow(d)) / nrow(d)
+  ch <- utils::modifyList(vt_choices, list(PREDICTORS = "xs"))
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all, choices = ch)
+  h <- readRDS(env$set_path("estimates", "vt.rds"))
+  expect_equal(sum(h$rmst$elig), 0L)
+  vt_explain(env, vt_explain_labels_all)
+  expect_true("none" %in% env$.sens$rule)
+  expect_false("combined" %in% env$.sens$rule)
+  expect_true(all(is.na(env$.betas$beta)))
+})
+
+test_that("a constant log relative risk gives NA betas and the report carries on", {
+  skip_on_cran()
+  d <- vt_data()
+  d$time <- 1
+  d$event <- 1L
+  ch <- utils::modifyList(vt_choices, list(HORIZON = 1))
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all, choices = ch)
+  vt_explain(env, vt_explain_labels_all)
+  expect_true(all(is.na(env$.betas$beta)))
 })

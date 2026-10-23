@@ -141,6 +141,10 @@ HORIZON <- .vt$settings$horizon
                        "regression.", .beta_sign, "Bars, where drawn, are the 2.5th to 97.5th percentile over bootstrap",
                        "resamples of patients.")
 r <- .vt$rmst
+# A patient who received neither arm has no_arm TRUE and arm NA. `received` is the label figures
+# and tables group by, so an arm that is really named "none" stays apart from them.
+r$received <- ifelse(r$no_arm, "No arm", r$arm)
+.no_elig_note <- "No patient is in distribution under the combined rule; see the eligibility tables."
 # Named `.eligible`, never `.in`: `.in` is setup's source path, which the provenance chunk needs.
 .eligible <- r$elig
 ```
@@ -192,26 +196,34 @@ difference favors the first arm.
   data.frame(ymin = q[1], lower = q[2], middle = q[3], upper = q[4], ymax = q[5])
 }
 .e <- r[.eligible, ]
-.fig <- ggplot(.e, aes(x = arm, y = diff)) +
-  stat_summary(fun.data = .pct, geom = "boxplot", width = 0.5) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  labs(x = "Arm received", y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"))
-save_figure(.fig, "vt-explain-contrast")
-.fig
+if (!nrow(.e)) {
+  cat(.no_elig_note, "\n")
+} else {
+  .fig <- ggplot(.e, aes(x = received, y = diff)) +
+    stat_summary(fun.data = .pct, geom = "boxplot", width = 0.5) +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    labs(x = "Arm received", y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"))
+  save_figure(.fig, "vt-explain-contrast")
+  .fig
+}
 ```
 
 ```{r}
 #| label: fig-ranking
 #| fig-cap: "Every patient in distribution, ranked by the estimated RMST difference and colored by the arm received."
-.rk <- .e[order(.e$diff), ]
-.rk$rank <- seq_len(nrow(.rk))
-.fig <- ggplot(.rk, aes(x = rank, y = diff, color = arm)) +
-  geom_point(size = 1) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  labs(x = "Patients, ranked by difference", y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"),
-       color = "Arm received")
-save_figure(.fig, "vt-explain-ranking")
-.fig
+if (!nrow(.e)) {
+  cat(.no_elig_note, "\n")
+} else {
+  .rk <- .e[order(.e$diff), ]
+  .rk$rank <- seq_len(nrow(.rk))
+  .fig <- ggplot(.rk, aes(x = rank, y = diff, color = received)) +
+    geom_point(size = 1) +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    labs(x = "Patients, ranked by difference", y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"),
+         color = "Arm received")
+  save_figure(.fig, "vt-explain-ranking")
+  .fig
+}
 ```
 
 ```{r}
@@ -219,24 +231,28 @@ save_figure(.fig, "vt-explain-ranking")
 #| fig-cap: "Mean predicted survival under each arm's forest, for patients in distribution, by the arm they received.
 #|   The shaded area to the horizon is the restricted mean survival time."
 .mc <- .vt$curves[.vt$curves$ID %in% r$ID[.eligible], ]
-.mc$received <- r$arm[match(.mc$ID, r$ID)]
-.mc <- stats::aggregate(surv ~ received + arm_of_curve + time, data = .mc, FUN = mean)
-# hv_rmst_curves() wants right-continuous steps that start at time 0 with surv 1.
-.mc <- do.call(rbind, lapply(split(.mc, list(.mc$received, .mc$arm_of_curve), drop = TRUE), function(x) {
-  rbind(data.frame(received = x$received[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1), x[order(x$time), ])
-}))
-.mc$facet <- paste("Received", .mc$received)
-.mc$arm <- .mc$arm_of_curve
-.fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet = "facet", arm = "arm")) +
-  labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
-save_figure(.fig, "vt-explain-twin-curves")
-.fig
+if (!nrow(.mc)) {
+  cat(.no_elig_note, "\n")
+} else {
+  .mc$received <- r$received[match(.mc$ID, r$ID)]
+  .mc <- stats::aggregate(surv ~ received + arm_of_curve + time, data = .mc, FUN = mean)
+  # hv_rmst_curves() wants right-continuous steps that start at time 0 with surv 1.
+  .mc <- do.call(rbind, lapply(split(.mc, list(.mc$received, .mc$arm_of_curve), drop = TRUE), function(x) {
+    rbind(data.frame(received = x$received[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1), x[order(x$time), ])
+  }))
+  .mc$facet <- paste("Received", .mc$received)
+  .mc$arm <- .mc$arm_of_curve
+  .fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet = "facet", arm = "arm")) +
+    labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
+  save_figure(.fig, "vt-explain-twin-curves")
+  .fig
+}
 ```
 
 ```{r}
 #| label: fig-received-best
 #| fig-cap: "In each arm, the share of patients in distribution whose own arm's predicted RMST is the larger."
-.rb <- r[.eligible & r$arm %in% ARMS, ]
+.rb <- r[.eligible & !r$no_arm, ]
 .own <- ifelse(.rb$arm == ARMS[1], .rb[[paste0("rmst_", ARMS[1])]], .rb[[paste0("rmst_", ARMS[2])]])
 .alt <- ifelse(.rb$arm == ARMS[1], .rb[[paste0("rmst_", ARMS[2])]], .rb[[paste0("rmst_", ARMS[1])]])
 .rb$best <- ifelse(.own >= .alt, "Received best", "Alternative best")
@@ -244,17 +260,21 @@ save_figure(.fig, "vt-explain-twin-curves")
 # makes its half of every contrast exploratory; say so on the figure.
 # The out-of-bag C-index vt-fit computed and saved, not recomputed here.
 .weak <- .vt$settings$performance
-.weak <- .weak[.weak$lower <= 0.5, ]
+.weak <- .weak[which(.weak$lower <= 0.5), ]
 .note <- if (nrow(.weak)) {
   paste0("The C-index interval includes 0.5 for ", paste0(.weak$arm, " (", .weak$events, " events)", collapse = ", "),
          ": that arm's half of the contrast is exploratory.")
 }
-.fig <- ggplot(.rb, aes(x = arm, fill = best)) +
-  geom_bar(position = "fill") +
-  scale_y_continuous(labels = scales::percent) +
-  labs(x = "Arm received", y = "Share of patients", fill = NULL, caption = .note)
-save_figure(.fig, "vt-explain-received-best")
-.fig
+if (!nrow(.rb)) {
+  cat(.no_elig_note, "\n")
+} else {
+  .fig <- ggplot(.rb, aes(x = arm, fill = best)) +
+    geom_bar(position = "fill") +
+    scale_y_continuous(labels = scales::percent) +
+    labs(x = "Arm received", y = "Share of patients", fill = NULL, caption = .note)
+  save_figure(.fig, "vt-explain-received-best")
+  .fig
+}
 ```
 
 ## Eligibility rules
@@ -269,9 +289,9 @@ summarizes. The combined rule is the one used above.
 .rules <- c(sub("^elig_", "", grep("^elig_", names(r), value = TRUE)))
 .sens <- do.call(rbind, lapply(c("combined", .rules), function(rule) {
   keep <- if (rule == "combined") r$elig else r[[paste0("elig_", rule)]]
-  do.call(rbind, lapply(split(r[keep, ], r$arm[keep]), function(x) {
+  do.call(rbind, lapply(split(r[keep, ], r$received[keep]), function(x) {
     q <- stats::quantile(x$diff, c(0.15, 0.5, 0.85), names = FALSE)
-    data.frame(rule = rule, arm = x$arm[1L], kept = nrow(x), p15 = q[1], median = q[2], p85 = q[3],
+    data.frame(rule = rule, arm = x$received[1L], kept = nrow(x), p15 = q[1], median = q[2], p85 = q[3],
                favor_first = mean(x$diff > 0))
   }))
 }))
@@ -323,8 +343,10 @@ if (is.list(STRATIFY)) {
 #| results: asis
 if (is.null(.strata)) {
   cat("No stratifier chosen (STRATIFY is NULL).\n")
+} else if (!any(.eligible)) {
+  cat(.no_elig_note, "\n")
 } else {
-  .sr0 <- r[.eligible & r$arm %in% ARMS, c("ID", "arm", "diff")]
+  .sr0 <- r[.eligible & !r$no_arm, c("ID", "arm", "diff")]
   .sr <- merge(.sr0, .strata, by = "ID")
   if (nrow(.sr) < nrow(.sr0)) cat(nrow(.sr0) - nrow(.sr), "eligible patients have no stratum and are not shown.\n\n")
   cat("Patients by stratum and arm received:\n\n")
@@ -358,7 +380,7 @@ vt_overlap_weights <- function(ps_data, ids, id, arm, arms, score = "prob_t") {
 # Each patient's log relative risk at HORIZON, scaled by its SD, regressed on one
 # characteristic at a time with overlap weights (Ishwaran and Blackstone, 2025).
 # The forests are fixed; only patients are resampled.
-.lr <- r[.eligible & r$arm %in% ARMS, c("ID", "log_rr")]
+.lr <- r[.eligible & !r$no_arm, c("ID", "log_rr")]
 .lr_dropped <- sum(!is.finite(.lr$log_rr))
 if (.lr_dropped) {
   cat(.lr_dropped, " eligible patient(s) have a risk of 0 under an arm, so no relative risk, and are left out of the betas.\n\n",
@@ -372,12 +394,28 @@ if (.lr_dropped) {
 # the out-of-bag probability of ARMS[1], a patient on ARMS[1] weighs 1 - e and
 # one on ARMS[2] weighs e (Li, Morgan and Zaslavsky 2018).
 .bx$w <- vt_overlap_weights(.ps$data, .bx$ID, .vt$settings$id, .vt$settings$arm, ARMS)
-if (anyNA(.bx$w)) stop("Some patients have no propensity score in vt.rds; re-render vt-fit.", call. = FALSE)
-.bx$y <- .bx$log_rr / stats::sd(.bx$log_rr)
+# A patient the fit could not score (no predictor observed) has no propensity weight; like a
+# nonfinite log_rr, they are dropped and counted, never a stop.
+.no_w <- is.na(.bx$w)
+if (any(.no_w)) {
+  cat(sum(.no_w), " eligible patient(s) have no propensity weight, and are left out of the betas.\n\n", sep = "")
+  .bx <- .bx[!.no_w, , drop = FALSE]
+}
+# A response that does not vary cannot be associated with anything, and dividing by its SD would
+# fill every beta with NaN. Say so and let the betas read NA.
+.sd_y <- if (nrow(.bx) > 1L) stats::sd(.bx$log_rr) else NA_real_
+.beta_fit <- is.finite(.sd_y) && .sd_y > 1e-8
+if (!nrow(.bx)) {
+  cat(.no_elig_note, "\n\n")
+} else if (!.beta_fit) {
+  cat("The estimated effect does not vary across patients, so no association can be estimated.\n\n")
+}
+.bx$y <- if (.beta_fit) .bx$log_rr / .sd_y else rep(NA_real_, nrow(.bx))
 # Each characteristic becomes ONE numeric column, fixed on the full sample before
 # any resampling: a number is standardized with the full-sample mean and SD; a
-# factor becomes an indicator of its most common non-reference level, against
-# the reference (its first level). A resample then regresses on the same
+# factor becomes 1 for its most common non-reference level, 0 for the reference
+# (its first level) and NA for every other level, so the regression compares
+# those two levels alone and drops the rest as missing. A resample then regresses on the same
 # column, so the coefficient means the same thing in every resample, and a
 # resample in which that column does not vary is unestimable: it gives NA and
 # is counted, never an error.
@@ -390,17 +428,17 @@ if (anyNA(.bx$w)) stop("Some patients have no propensity score in vt.rds; re-ren
   ref <- levels(xv)[1L]
   cnt <- table(xv)[levels(xv)[-1L]]
   lev <- names(cnt)[order(-as.numeric(cnt), seq_along(cnt))][1L]
-  list(x = as.numeric(xv == lev), label = paste0(v, ": ", lev, " vs ", ref))
+  list(x = ifelse(xv == lev, 1, ifelse(xv == ref, 0, NA_real_)), label = paste0(v, ": ", lev, " vs ", ref))
 })
 .beta_one <- function(y, x, w) {
-  ok <- !is.na(x)
+  ok <- !is.na(x) & !is.na(y)
   if (length(unique(x[ok])) < 2L) return(NA_real_)
   unname(stats::coef(stats::lm(y[ok] ~ x[ok], weights = w[ok]))[2L])
 }
 .betas <- data.frame(variable = vapply(.design, `[[`, "", "label"),
                      beta = vapply(.design, function(z) .beta_one(.bx$y, z$x, .bx$w), numeric(1L)),
                      lower = NA_real_, upper = NA_real_, unestimable = NA_integer_)
-if (BOOT > 0) {
+if (BOOT > 0 && .beta_fit) {
   set.seed(.vt$settings$seed)
   .boot <- replicate(BOOT, {
     i <- sample.int(nrow(.bx), replace = TRUE)
@@ -419,14 +457,18 @@ print(knitr::kable(.betas, digits = 2, row.names = FALSE))
 #| fig-cap: !expr .beta_cap_fig
 
 .bp <- .betas[is.finite(.betas$beta), ]
-.bp$variable <- factor(.bp$variable, levels = .bp$variable[order(.bp$beta)])
-.fig <- ggplot(.bp, aes(x = beta, y = variable)) +
-  geom_vline(xintercept = 0, linetype = "dashed") +
-  geom_point()
-if (BOOT > 0) .fig <- .fig + geom_errorbar(aes(xmin = lower, xmax = upper), width = 0.2, orientation = "y")
-.fig <- .fig + labs(x = paste0("Standardized beta (positive: higher relative risk under ", ARMS[1], ")"), y = NULL)
-save_figure(.fig, "vt-explain-betas")
-.fig
+if (!nrow(.bp)) {
+  cat("No beta could be estimated, so there is nothing to draw.\n")
+} else {
+  .bp$variable <- factor(.bp$variable, levels = .bp$variable[order(.bp$beta)])
+  .fig <- ggplot(.bp, aes(x = beta, y = variable)) +
+    geom_vline(xintercept = 0, linetype = "dashed") +
+    geom_point()
+  if (BOOT > 0) .fig <- .fig + geom_errorbar(aes(xmin = lower, xmax = upper), width = 0.2, orientation = "y")
+  .fig <- .fig + labs(x = paste0("Standardized beta (positive: higher relative risk under ", ARMS[1], ")"), y = NULL)
+  save_figure(.fig, "vt-explain-betas")
+  .fig
+}
 ```
 
 ## Who might benefit from the other arm
@@ -435,10 +477,11 @@ save_figure(.fig, "vt-explain-betas")
 #| label: tbl-benefit
 #| tbl-cap: "Patients in distribution whose twin favors the arm they did not receive, by more than GAIN_MIN"
 #| results: asis
-.gain <- ifelse(r$arm == ARMS[1], -r$diff, ifelse(r$arm == ARMS[2], r$diff, NA))
-.is_ben <- .eligible & r$arm %in% ARMS & (.gain > GAIN_MIN) %in% TRUE
+if (!any(.eligible)) cat(.no_elig_note, "\n\n")
+.gain <- ifelse(r$arm %in% ARMS[1], -r$diff, ifelse(r$arm %in% ARMS[2], r$diff, NA))
+.is_ben <- .eligible & !r$no_arm & (.gain > GAIN_MIN) %in% TRUE
 .benefit <- r[.is_ben, ]
-.future <- r[.eligible & r$arm == "none", ]
+.future <- r[.eligible & r$no_arm, ]
 # An exact tie (diff == 0) favors neither arm; it must not fall to ARMS[2].
 .future$favors <- ifelse(.future$diff > 0, ARMS[1], ifelse(.future$diff < 0, ARMS[2], "neither"))
 cat("Patients whose twin favors the other arm:\n\n")
@@ -459,7 +502,7 @@ print(knitr::kable(as.data.frame(table(received = .benefit$arm))))
   }))
 }
 .ben_tab <- do.call(rbind, lapply(ARMS, function(a) {
-  ids <- r$ID[r$arm == a & .eligible]
+  ids <- r$ID[r$arm %in% a & .eligible]
   hit <- ids %in% .benefit$ID
   if (!any(hit)) return(NULL)
   dd <- .d_all[match(ids, .d_all[[.vt$settings$id]]), , drop = FALSE]
