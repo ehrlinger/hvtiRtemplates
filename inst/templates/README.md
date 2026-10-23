@@ -38,6 +38,8 @@ refuses to overwrite an existing job.
 | `30_analyses/vp-explain.qmd` | VarPro partial dependence for the variables a `vp-fit` screen selected (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/sid-fit.qmd` | SID clustering forest on the clustering variables, after mice or forest imputation pooled over M (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/sid-clusters.qmd` | PAM over K on a `sid-fit` distance: K metrics, letters stable across K, Sankey, registered assignments (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/vt-fit.qmd` | virtual twins: one survival forest per arm, out-of-bag own-arm and swapped-arm curves, a per-patient RMST difference, eligibility by Gower and SID combined by a stated rule (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/vt-explain.qmd` | the virtual-twins contrast by arm, eligibility rule and stratum, standardized betas and who might benefit (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/nb-boostmtree.qmd` | boosted multivariate trees for a response measured at each visit | `30_analyses/` or `analyses/` |
 
 `dc-eda` and `dc-trends` were `dp-eda` and `dp-trends` until 2026-10-10, and
@@ -398,6 +400,8 @@ as on a Mac without XQuartz.
 | vp-fit | `vp-fit-coverage`, `-varpro` |
 | vp-explain | `vp-explain-dependence-varpro-page-<NN>` |
 | sid-clusters | `sid-clusters-metrics`, `-sankey`, `-silhouette`, `-mds` |
+| vt-fit | `vt-fit-eligibility`, `-curves` |
+| vt-explain | `vt-explain-contrast`, `-ranking`, `-twin-curves`, `-received-best`, `-betas` |
 | rm-linear | `rm-linear-residuals`, `rm-linear-qq` |
 
 A plot method that returns several plots saves them as `<name>-1`, `<name>-2`
