@@ -553,3 +553,24 @@ test_that("r_version passes a study with no renv directory, whatever RENV_PROJEC
   testthat::local_mocked_bindings(.session_r = function() numeric_version("4.5.3"), .renv_project = function() "")
   expect_true(.check_r_version(root)$ok)
 })
+
+test_that("the installed version is read only from .libPaths(), not from a namespace loaded from elsewhere", {
+  skip_on_cran()
+  src <- file.path(withr::local_tempdir(), "hvtiprobe")
+  dir.create(file.path(src, "R"), recursive = TRUE)
+  writeLines(c("Package: hvtiprobe", "Version: 0.0.1", "Title: Probe", "Description: Probe package.",
+               "License: MIT", "Encoding: UTF-8", "Authors@R: person('A', 'B', role = c('aut', 'cre'), email = 'a@b.c')"),
+             file.path(src, "DESCRIPTION"))
+  writeLines("probe <- function() 1", file.path(src, "R", "probe.R"))
+  writeLines("export(probe)", file.path(src, "NAMESPACE"))
+  lib <- withr::local_tempdir()
+  out <- system2(file.path(R.home("bin"), "R"), c("CMD", "INSTALL", "--no-test-load", "-l", shQuote(lib), shQuote(src)),
+                 stdout = TRUE, stderr = TRUE)
+  expect_true(dir.exists(file.path(lib, "hvtiprobe")), info = paste(out, collapse = "\n"))
+  loadNamespace("hvtiprobe", lib.loc = lib)
+  withr::defer(unloadNamespace("hvtiprobe"))
+  expect_false(lib %in% .libPaths())
+  expect_identical(.installed_version("hvtiprobe"), NA_character_)
+  expect_identical(.installed_version("no.such.package.xyz"), NA_character_)
+  expect_identical(.installed_version("testthat"), as.character(utils::packageVersion("testthat")))
+})

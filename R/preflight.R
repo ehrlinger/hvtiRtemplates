@@ -10,8 +10,12 @@
 # Wrapped so tests can stand in for them; base functions cannot be mocked.
 .session_r <- function() getRversion()
 .r_home <- function() R.home("bin")
+# Only the active libraries: packageVersion() without lib.loc reports a namespace already loaded from a library that
+# is not on .libPaths(), which the render would not find. packageDescription() warns and gives NA for an absent one.
 .installed_version <- function(p) {
-  tryCatch(as.character(utils::packageVersion(p)), error = function(e) NA_character_)
+  v <- tryCatch(suppressWarnings(utils::packageDescription(p, lib.loc = .libPaths(), fields = "Version")),
+                error = function(e) NA_character_)
+  if (is.character(v) && length(v) == 1L && !is.na(v)) v else NA_character_
 }
 .renv_project <- function() Sys.getenv("RENV_PROJECT")
 .always_needed <- function() c("quarto", "knitr", "rmarkdown", "hvtiRtemplates", "hvtiRutilities")
