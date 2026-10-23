@@ -72,7 +72,7 @@ vpd_choices <- list(VARIABLES = c("a", "b", "x2", "fs", "c"), OUTCOME = NULL, OR
 
 # Every chunk of vp-dependence, in order.
 vpd_labels <- c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise", "dependence-helpers",
-                "fit", "matrix", "fig-graph", "fig-heatmap", "tbl-stability", "stability-signal", "save")
+                "fit", "matrix", "fig-graph", "fig-heatmap", "tbl-stability", "tbl-stability-signal", "save")
 
 # vp-dependence run end to end in a throwaway study.
 vpd_first <- function(data = vpd_data(), choices = vpd_choices, .local_envir = parent.frame()) {

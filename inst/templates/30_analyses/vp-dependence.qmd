@@ -572,9 +572,9 @@ if (REPEATS > 0) {
 ```
 
 ```{r}
-#| label: stability-signal
-# How often each variable was in the signal set, over REPEATS. Uncaptioned: it
-# is the stability table's companion.
+#| label: tbl-stability-signal
+#| tbl-cap: "How often each variable was in the signal set across the refits, most often first"
+# Over REPEATS, as the edge table is. Empty when REPEATS is 0.
 if (!is.null(.vpd_stab)) {
   knitr::kable(.vpd_stab$signal[order(-.vpd_stab$signal$share), ], digits = 2, row.names = FALSE)
 }
