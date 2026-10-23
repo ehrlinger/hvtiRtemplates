@@ -1,3 +1,12 @@
+# The one file in the job folder's _archive/ that matches, by the job's stem;
+# upgrade_job() names both files <stem>.<stamp>.
+archived <- function(job, suffix) {
+  f <- Sys.glob(file.path(dirname(job), "_archive", paste0(sub("[.]qmd$", "", basename(job)), ".*", suffix)))
+  stopifnot(length(f) == 1L)
+  f
+}
+upgrade_report <- function(job) archived(job, "-upgrade.md")
+
 # An rfs-fit job copied from the v1.3.0 template, before #303 folded its four
 # setup chunks into one, with a study's choices made in it.
 old_rfs_job <- function(root) {
@@ -30,10 +39,10 @@ test_that("an old rfs-fit job upgrades with its choices intact", {
   job <- upgrade_job(path)
   lines <- readLines(job)
 
-  # The current name, and the old job kept under a name nothing renders.
+  # The current name, and the old job kept in _archive/ under a name nothing renders.
   expect_identical(basename(job), "rfs.fit.dead.rfs.qmd")
   expect_false(file.exists(path))
-  expect_true(file.exists(paste0(path, ".pre-upgrade")))
+  expect_match(basename(archived(path, ".pre-upgrade")), "^dead-rfs-rfs-fit[.][0-9]{8}-[0-9]{6}[.]pre-upgrade$")
 
   # The current template's shape: one setup chunk, no guard chunks.
   expect_length(grep("^#\\| label: setup$", lines), 1L)
@@ -69,7 +78,7 @@ test_that("an old rfs-fit job upgrades with its choices intact", {
 test_that("the upgrade report lists every choice by name and quotes no value", {
   root <- migration_study_fixture()
   job <- upgrade_job(old_rfs_job(root))
-  report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
+  report <- readLines(upgrade_report(job))
   section <- function(title) {
     from <- which(report == paste("##", title)) + 1L
     to <- c(grep("^## ", report), length(report) + 1L)
@@ -82,12 +91,19 @@ test_that("the upgrade report lists every choice by name and quotes no value", {
   expect_false(any(grepl("built_r|lvmassi", report)))
 })
 
-test_that("upgrade_job() refuses to overwrite and names a job it cannot read", {
+test_that("upgrade_job() never overwrites an archived file and names a job it cannot read", {
   root <- migration_study_fixture()
   path <- old_rfs_job(root)
-  file.create(paste0(path, ".pre-upgrade"))
-  expect_error(upgrade_job(path), "already exists")
-  expect_true(file.exists(path))
+  local_mocked_bindings(.upgrade_stamp = function() "20261023-120000")
+  dir.create(file.path(root, "analyses", "_archive"))
+  # One file of the stamp's pair taken moves the whole pair to the next suffix.
+  held <- file.path(root, "analyses", "_archive", "dead-rfs-rfs-fit.20261023-120000.pre-upgrade")
+  writeLines("held", held)
+  upgrade_job(path)
+  expect_identical(readLines(held), "held")
+  expect_identical(sort(list.files(dirname(held))),
+                   c("dead-rfs-rfs-fit.20261023-120000-2.pre-upgrade", "dead-rfs-rfs-fit.20261023-120000.pre-upgrade",
+                     "rfs.fit.dead.rfs.20261023-120000-2-upgrade.md"))
 
   odd <- file.path(root, "analyses", "notes.qmd")
   writeLines("x", odd)
@@ -105,7 +121,7 @@ test_that("add_job() stamps its job and upgrade_job() reads the stamp", {
   upgraded <- upgrade_job(job)
   expect_identical(upgraded, normalizePath(job, winslash = "/"))
   expect_identical(grep("^DATASET <- ", readLines(upgraded), value = TRUE), 'DATASET <- "built_r"')
-  report <- readLines(sub("[.]qmd$", "-upgrade.md", upgraded))
+  report <- readLines(upgrade_report(upgraded))
   expect_true(any(grepl(paste0("came from: ", version, "$"), report)))
 })
 
@@ -143,7 +159,7 @@ test_that("the report names marker lines and never quotes them", {
   writeLines(lines, job)
   upgraded <- upgrade_job(job)
   expect_true(any(grepl("x99999123", readLines(upgraded), fixed = TRUE)))
-  report <- readLines(sub("[.]qmd$", "-upgrade.md", upgraded))
+  report <- readLines(upgrade_report(upgraded))
   expect_false(any(grepl("x99999123", report, fixed = TRUE)))
 })
 
@@ -156,7 +172,7 @@ test_that("an upgraded job keeps the old job's permissions", {
   withr::defer(Sys.umask(umask))
   job <- upgrade_job(path)
   expect_identical(format(file.info(job)$mode), "600")
-  expect_identical(format(file.info(sub("[.]qmd$", "-upgrade.md", job))$mode), "600")
+  expect_identical(format(file.info(upgrade_report(job))$mode), "600")
 })
 
 test_that("a dangling link where the job would go is refused, and nothing is written through it", {
@@ -192,7 +208,7 @@ test_that("code in an edit chunk other than its choices is reported, not dropped
   i <- grep("^NTREE <- ", lines)
   lines <- append(lines, "d <- subset(d, age >= 18)", after = i)
   writeLines(lines, path)
-  report <- readLines(sub("[.]qmd$", "-upgrade.md", upgrade_job(path)))
+  report <- readLines(upgrade_report(upgrade_job(path)))
   expect_true(any(grepl("`edit-study-choices`.*code other than its choices differs", report)))
 })
 
@@ -217,7 +233,46 @@ test_that("a job under a renamed template moves to its folder, created if the st
   upgraded <- suppressWarnings(upgrade_job(old))
   expect_identical(basename(dirname(upgraded)), "descriptive")
   expect_identical(basename(upgraded), "dc.trends.cohort.eda.qmd")
-  expect_true(file.exists(paste0(old, ".pre-upgrade")))
+  # The old job is archived beside the job it became, not in the folder it left.
+  expect_length(Sys.glob(file.path(root, "descriptive", "_archive", "dp.trends.cohort.eda.*.pre-upgrade")), 1L)
+  expect_false(dir.exists(file.path(root, "graphs", "_archive")))
+})
+
+test_that("an upgrade leaves the job folder holding the job alone", {
+  root <- migration_study_fixture()
+  path <- old_rfs_job(root)
+  before <- setdiff(list.files(file.path(root, "analyses"), all.files = TRUE, no.. = TRUE), basename(path))
+  job <- upgrade_job(path)
+  after <- list.files(file.path(root, "analyses"), all.files = TRUE, no.. = TRUE)
+  expect_setequal(after, c(before, basename(job), "_archive"))
+  # The two files of one upgrade share its stamp.
+  stamp <- sub("^.*[.]([0-9]{8}-[0-9]{6})-upgrade[.]md$", "\\1", basename(upgrade_report(job)))
+  expect_true(file.exists(file.path(dirname(job), "_archive", paste0("dead-rfs-rfs-fit.", stamp, ".pre-upgrade"))))
+})
+
+test_that("a job upgrades again without moving the last upgrade's files aside", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  local_mocked_bindings(.upgrade_stamp = function() "20261020-101300")
+  upgrade_job(job)
+  local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
+  upgrade_job(job)
+  expect_identical(sort(list.files(file.path(dirname(job), "_archive"))),
+                   c("dc.general.cohort.eda.20261020-101300-upgrade.md",
+                     "dc.general.cohort.eda.20261020-101300.pre-upgrade",
+                     "dc.general.cohort.eda.20261023-121500-upgrade.md",
+                     "dc.general.cohort.eda.20261023-121500.pre-upgrade"))
+})
+
+test_that("upgrades within one second each keep their pair", {
+  # An upgrade finishes well inside a second, so back-to-back upgrades share a stamp.
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
+  for (i in 1:3) upgrade_job(job)
+  expect_identical(sort(list.files(file.path(dirname(job), "_archive"))),
+                   sort(c(paste0("dc.general.cohort.eda.20261023-121500", c("", "-2", "-3"), ".pre-upgrade"),
+                          paste0("dc.general.cohort.eda.20261023-121500", c("", "-2", "-3"), "-upgrade.md"))))
 })
 
 test_that("upgrade_job() installs the study's provenance hooks", {
@@ -284,7 +339,7 @@ test_that("an empty report section reads None, never a blank entry", {
   root <- migration_study_fixture()
   # Nothing unplaced and nothing new: the current template against its own copy.
   job <- upgrade_job(add_job("dc", "cohort", "eda", dir = root, qualifier = "general"))
-  report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
+  report <- readLines(upgrade_report(job))
   section <- function(title) {
     from <- which(report == paste("##", title)) + 1L
     to <- c(grep("^## ", report), length(report) + 1L)
@@ -307,7 +362,7 @@ test_that("the job's own description is carried in place of the template's comme
   upgraded <- readLines(upgrade_job(job))
   expect_length(grep("^This job replaces the cohort's$", upgraded), 1L)
   expect_false(any(grepl(paste0("^<!-- ", token, " name the job"), upgraded)))
-  report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
+  report <- readLines(upgrade_report(job))
   expect_true(any(grepl("^Carried from the old job", report)))
   expect_false(any(grepl("first look", report)))
 })
@@ -339,7 +394,7 @@ test_that("comment lines a study added above a choice are listed for review", {
   lines <- c(lines[seq_len(i - 1L)], "# The day-level set, same-day pairs averaged;", "# see datasets/bd.day.R.",
              lines[-seq_len(i - 1L)])
   writeLines(lines, job)
-  report <- readLines(sub("[.]qmd$", "-upgrade.md", upgrade_job(job)))
+  report <- readLines(upgrade_report(upgrade_job(job)))
   expect_true(any(grepl(paste0("^- `DATASET`, old lines ", i, ", ", i + 1L, ": comment"), report)))
   expect_false(any(grepl("same-day", report)))
   # Only DATASET: the template's own comments above a choice are not listed.
@@ -370,7 +425,7 @@ test_that("an older template's wording of the comment, untouched, is still open"
   upgraded <- readLines(upgrade_job(job))
   expect_length(grep("^<!-- EDIT: name the job", upgraded), 1L)
   expect_false(any(grepl("say which job", upgraded)))
-  report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
+  report <- readLines(upgrade_report(job))
   expect_true(any(grepl("^Old lines [0-9]+-[0-9]+ still carry a marker", report)))
 })
 
@@ -382,7 +437,7 @@ test_that("a job whose template had no comment there keeps the current template'
   writeLines(lines[-(i:(i + 1L))], job)
   upgraded <- readLines(upgrade_job(job))
   expect_length(grep("^<!-- EDIT: name the job", upgraded), 1L)
-  report <- readLines(sub("[.]qmd$", "-upgrade.md", job))
+  report <- readLines(upgrade_report(job))
   expect_true(any(grepl("^Not found in the old job", report)))
 })
 

@@ -38,6 +38,8 @@ test_that("every printed figure is also saved, under its documented name", {
     `rfs-fit` = c("rfs-fit-diagnostics-error", "rfs-fit-diagnostics-survival", "rfs-fit-diagnostics-brier"),
     `vp-fit` = c("vp-fit-coverage", "vp-fit-varpro"),
     `vp-explain` = "vp-explain-dependence-varpro",
+    `vp-dependence` = c("vp-dependence-graph", "vp-dependence-heatmap"),
+    `vp-individual` = c("vp-individual-beeswarm", "vp-individual-gradient"),
     `sid-clusters` = c("sid-clusters-metrics", "sid-clusters-sankey", "sid-clusters-silhouette", "sid-clusters-mds")
   )
   for (t in c("rfc-explain", "rfr-explain", "rfs-explain")) {

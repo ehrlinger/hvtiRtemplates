@@ -17,7 +17,7 @@ refuses to overwrite an existing job.
 | `40_graphs/hs-concordance.qmd` | every patient through every treatment group's model, with an optional best-treatment table | `40_graphs/` or `graphs/` |
 | `40_graphs/lp-mirror.qmd` | mirrored histogram of a saved propensity score: all patients, under the matching weights, and matched | `40_graphs/` or `graphs/` |
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dc-gfup.qmd` | follow-up interval checks and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-gfup.qmd` | follow-up interval checks, potential follow-up and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-stddiff.qmd` | balance table: standardized differences between two groups, unadjusted, matched and weighted | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-eda.qmd` | the whole EDA report: overview, follow-up, then the continuous, percent and count sections, each with its table | `10_descriptive/` or `descriptive/` |
@@ -36,6 +36,8 @@ refuses to overwrite an existing job.
 | `30_analyses/rfr-explain.qmd` | importance and dependence for an `rfr` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/vp-fit.qmd` | VarPro screen: coverage, a noise bar by kind and stability across subsamples (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/vp-explain.qmd` | VarPro partial dependence for the variables a `vp-fit` screen selected (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/vp-dependence.qmd` | Unsupervised VarPro: a dependence graph whose edges beat permuted noise, checked across subsamples (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/vp-individual.qmd` | Each patient's VarPro gradient for each predictor, from a `vp-fit` screen (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/sid-fit.qmd` | SID clustering forest on the clustering variables, after mice or forest imputation pooled over M (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/sid-clusters.qmd` | PAM over K on a `sid-fit` distance: K metrics, letters stable across K, Sankey, registered assignments (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/vt-fit.qmd` | virtual twins: one survival forest per arm, out-of-bag own-arm and swapped-arm curves, a per-patient RMST difference, eligibility by Gower and SID combined by a stated rule (in flight) | `30_analyses/` or `analyses/` |
@@ -89,7 +91,7 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dc-trends`,
-`dc-eda`, `hs-setup`, `hs-concordance`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr` and `vp` fit and explain jobs, `sid-fit`, `sid-clusters`, and the eight
+`dc-eda`, `hs-setup`, `hs-concordance`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr` and `vp` fit and explain jobs, `vp-dependence`, `vp-individual`, `sid-fit`, `sid-clusters`, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so
 in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
@@ -399,6 +401,8 @@ as on a Mac without XQuartz.
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |
 | vp-fit | `vp-fit-coverage`, `-varpro` |
 | vp-explain | `vp-explain-dependence-varpro-page-<NN>` |
+| vp-dependence | `vp-dependence-graph`, `-heatmap` |
+| vp-individual | `vp-individual-beeswarm`, `vp-individual-gradient-page-<NN>` |
 | sid-clusters | `sid-clusters-metrics`, `-sankey`, `-silhouette`, `-mds` |
 | vt-fit | `vt-fit-eligibility`, `-curves` |
 | vt-explain | `vt-explain-contrast`, `-ranking`, `-twin-curves`, `-received-best`, `-betas` |

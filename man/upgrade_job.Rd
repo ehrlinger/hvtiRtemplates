@@ -16,7 +16,8 @@ Defaults to the directory of \code{path}, which is right for any job
 inside its study.}
 }
 \value{
-The upgraded job's path, invisibly. The report is written beside it.
+The upgraded job's path, invisibly. The report is in the
+  \code{_archive} folder beside it.
 }
 \description{
 Upgrades \strong{one job}: the file you name in \code{path}. It does not
@@ -52,11 +53,14 @@ an \code{EDIT:} comment asking for it, the text the old job has in that
 place is carried instead, once the study has deleted the comment's marker.
 While the marker stands, the report names those lines for review.
 
-The old job is kept beside the new one as \code{<file>.pre-upgrade}, a name
-nothing renders. The upgraded job takes the name \code{\link{add_job}}
+Both files go to \code{_archive} in the upgraded job's folder, created if
+it is missing. Quarto renders nothing in a folder whose name starts with
+\code{_}, and the old job's \code{.pre-upgrade} extension keeps it from
+being rendered by hand too, which would write its figures over the current
+job's. The old job keeps its own name before the stamp; the report takes the
+upgraded job's. The upgraded job takes the name \code{\link{add_job}}
 would give it today, so a job named before 2026-10 moves to the
-\code{.}-separated spelling. The report is written beside the job, with the
-\code{.qmd} extension replaced by \code{-upgrade.md}. It records the
+\code{.}-separated spelling. The report records the
 template, the package version, the old job's checksum, and the choices
 carried, not placed and new, with the chunks to review. It names choices
 and lines but never quotes their values, since a value can identify a
@@ -75,11 +79,14 @@ You never name the template: the job's file name says which one it is.
 The job must sit inside its study; leave \code{dir} out unless you want to
 name a different directory of the same study.
 
-Afterwards, render the job and read its report,
-\code{<job>-upgrade.md}, for the chunks to check. The old job is kept as
-\code{<job>.pre-upgrade}. Before upgrading the same job again, move both
-of those files aside: \code{upgrade_job()} never overwrites a file, so a
-second upgrade stops while either one is there.
+Afterwards, render the job and read its report, in the \code{_archive}
+folder beside it as \code{<job>.<stamp>-upgrade.md}, for the chunks to
+check. The old job is kept there too, as \code{<job>.<stamp>.pre-upgrade},
+and the stamp, the date and time of the upgrade, pairs the two. The job's
+own folder is left holding the job, and the same job can be upgraded again
+with nothing moved aside: each upgrade adds its own pair. A pair whose
+stamp is already used, from an upgrade in the same second, takes a shared
+\code{-2}, \code{-3} suffix after the stamp.
 }
 
 \examples{
