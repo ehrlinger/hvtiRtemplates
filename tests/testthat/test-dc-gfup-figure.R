@@ -209,6 +209,9 @@ gfup_drawn <- function(events, echo = NULL, colors = NULL) {
   list(env = env, out = paste(out, collapse = "\n"))
 }
 
+# A built layer's colors; ggplot_build() names the column in British spelling.
+drawn_colors <- function(layer) unlist(lapply(list(layer), `[[`, "colour"))
+
 two_events <- list(nonfatal = list(event = c("ev_event", "ev_stroke"), time = c("iv_event", "iv_event"),
                                    death = "dead", death_time = "iv_dead", label = c("Reoperation", "Stroke")))
 
@@ -231,7 +234,7 @@ test_that("dc-gfup draws competing events in one panel, each in its own house co
   # Green, reddish purple, olive and black, up to the four events a panel draws.
   four <- hvtiPlotR::hv_role_palette(c("No event", LETTERS[1:4], "Death"), event = "Death", censored = "No event")
   expect_identical(unname(four[2:5]), c("#009E73", "#CC79A7", "#9D952B", "#000000"))
-  expect_setequal(unique(points$colour), house)
+  expect_setequal(unique(drawn_colors(points)), house)
   expect_setequal(unique(points$shape), c(1, 2, 0, 4))
 })
 
@@ -243,7 +246,7 @@ test_that("dc-gfup marks each patient's echo with a gray tick, and an NA echo wi
                fixed = TRUE)
   for (p in r$env$saved) {
     built <- ggplot2::ggplot_build(p)
-    ticks <- Filter(function(layer) "shape" %in% names(layer) && all(layer$colour == "gray40"), built$data)
+    ticks <- Filter(function(layer) "shape" %in% names(layer) && all(drawn_colors(layer) == "gray40"), built$data)
     expect_length(ticks, 1L)
     expect_identical(nrow(ticks[[1L]]), 64L)
   }
@@ -254,7 +257,7 @@ test_that("dc-gfup takes COLORS' event colors in order, one per competing event"
   own <- c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A", event = "#984EA3")
   r <- gfup_drawn(two_events, colors = own)
   built <- ggplot2::ggplot_build(r$env$saved[["dc-gfup-nonfatal"]])
-  expect_setequal(unique(built$data[[1L]]$colour), unname(own))
+  expect_setequal(unique(drawn_colors(built$data[[1L]])), unname(own))
   expect_error(gfup_drawn(two_events, colors = own[1:3]), "COLORS names 1 event color(s)", fixed = TRUE)
   expect_error(gfup_drawn(two_events, colors = c(alive = "blue", event = "green")), "COLORS must be NULL")
   five <- list(many = list(event = rep("ev_event", 5L), time = rep("iv_event", 5L), death = "dead",
