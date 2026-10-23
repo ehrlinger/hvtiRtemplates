@@ -173,6 +173,8 @@ test_that("the commented GROUPS example uncomments to a grouping the template ac
   # A variable in two groups would be two rows of one table.
   vars <- unlist(groups, use.names = FALSE)
   expect_false(anyDuplicated(tolower(vars)) > 0L)
+  # read_built() lowercases every column name, and GROUPS is matched exactly, so a capital never matches.
+  expect_identical(vars, tolower(vars))
   # The example sits above the block migrate_job() rewrites, so a migrated job keeps it.
   expect_lt(end, grep("^# MIGRATE-BEGIN: dc-tables-config$", template_lines))
 })
