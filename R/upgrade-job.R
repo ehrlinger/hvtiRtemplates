@@ -21,11 +21,12 @@
 #' The job must sit inside its study; leave \code{dir} out unless you want to
 #' name a different directory of the same study.
 #'
-#' Afterwards, render the job and read its report,
-#' \code{<job>-upgrade.md}, for the chunks to check. The old job is kept as
-#' \code{<job>.pre-upgrade}. Before upgrading the same job again, move both
-#' of those files aside: \code{upgrade_job()} never overwrites a file, so a
-#' second upgrade stops while either one is there.
+#' Afterwards, render the job and read its report, in the \code{_archive}
+#' folder beside it as \code{<job>.<stamp>-upgrade.md}, for the chunks to
+#' check. The old job is kept there too, as \code{<job>.<stamp>.pre-upgrade},
+#' and the stamp, the date and time of the upgrade, pairs the two. The job's
+#' own folder is left holding the job, and the same job can be upgraded again
+#' with nothing moved aside: each upgrade adds its own pair.
 #'
 #' @details
 #' The template is read from the job's file name, in either spelling
@@ -52,11 +53,14 @@
 #' place is carried instead, once the study has deleted the comment's marker.
 #' While the marker stands, the report names those lines for review.
 #'
-#' The old job is kept beside the new one as \code{<file>.pre-upgrade}, a name
-#' nothing renders. The upgraded job takes the name \code{\link{add_job}}
+#' Both files go to \code{_archive} in the upgraded job's folder, created if
+#' it is missing. Quarto renders nothing in a folder whose name starts with
+#' \code{_}, and the old job's \code{.pre-upgrade} extension keeps it from
+#' being rendered by hand too, which would write its figures over the current
+#' job's. The old job keeps its own name before the stamp; the report takes the
+#' upgraded job's. The upgraded job takes the name \code{\link{add_job}}
 #' would give it today, so a job named before 2026-10 moves to the
-#' \code{.}-separated spelling. The report is written beside the job, with the
-#' \code{.qmd} extension replaced by \code{-upgrade.md}. It records the
+#' \code{.}-separated spelling. The report records the
 #' template, the package version, the old job's checksum, and the choices
 #' carried, not placed and new, with the chunks to review. It names choices
 #' and lines but never quotes their values, since a value can identify a
@@ -69,7 +73,8 @@
 #'   Defaults to the directory of \code{path}, which is right for any job
 #'   inside its study.
 #'
-#' @return The upgraded job's path, invisibly. The report is written beside it.
+#' @return The upgraded job's path, invisibly. The report is in the
+#'   \code{_archive} folder beside it.
 #' @seealso \code{\link{add_job}}, \code{\link{migrate_job}}
 #' @examples
 #' \donttest{
@@ -108,8 +113,12 @@ upgrade_job <- function(path, dir = NULL) {
   .warn_if_deprecated(row, "upgrade_job")
 
   target <- .job_path(row, fields$subject, fields$type, root)
-  backup <- paste0(path, ".pre-upgrade")
-  report_path <- sub("[.]qmd$", "-upgrade.md", target)
+  # Both files go to _archive/ beside the upgraded job, a folder Quarto does not
+  # render, under one stamp: a second upgrade adds a pair rather than stopping.
+  archive <- file.path(dirname(target), "_archive")
+  stamp <- .upgrade_stamp()
+  backup <- file.path(archive, paste0(sub("[.]qmd$", "", basename(path)), ".", stamp, ".pre-upgrade"))
+  report_path <- file.path(archive, paste0(sub("[.]qmd$", "", basename(target)), ".", stamp, "-upgrade.md"))
   # A symbolic link counts as taken even when it dangles: file.exists() says
   # FALSE for one, and writing through it would create a file wherever it points.
   taken <- function(p) {
@@ -145,6 +154,12 @@ upgrade_job <- function(path, dir = NULL) {
   if (!.path_within(normalizePath(dirname(target), winslash = "/", mustWork = TRUE), root)) {
     stop("upgrade_job(): the upgraded job's folder resolves outside the study root.", call. = FALSE)
   }
+  if (!dir.exists(archive) && !dir.create(archive)) {
+    stop("upgrade_job(): could not create '", archive, "'.", call. = FALSE)
+  }
+  if (!.path_within(normalizePath(archive, winslash = "/", mustWork = TRUE), root)) {
+    stop("upgrade_job(): the job folder's _archive resolves outside the study root.", call. = FALSE)
+  }
   # The current template's provenance checks need the study's hooks, which a
   # study older than them may lack; add_job() installs them the same way.
   .install_provenance_hooks(root)
@@ -162,6 +177,10 @@ upgrade_job <- function(path, dir = NULL) {
   ok <- TRUE
   .open_in_editor(target)
 }
+
+# The stamp that pairs one upgrade's old job with its report, to the second so
+# two upgrades in a day do not collide. A function so tests can fix it.
+.upgrade_stamp <- function() format(Sys.time(), "%Y%m%d-%H%M%S")
 
 # list(prefix, qualifier, subject, type) from a job's file name, or NULL.
 # `<prefix>[.<qualifier>].<subject>.<type>.qmd` since 2026-10, and
