@@ -171,16 +171,9 @@ guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
 # A matching file under REFIT is read here and again by cache_fit(): the cost of that one case, against refusing a
 # session for memory it would not use.
 .cache_would_fit <- function(name, code, seed = NULL, dir, refit = FALSE, packages = NULL, env = parent.frame()) {
-  path <- file.path(dir, paste0(name, ".rds"))
-  if (!file.exists(path)) return(TRUE)
-  if (!isTRUE(refit)) return(FALSE)
-  ns <- asNamespace("hvtiRutilities")
-  if (!all(vapply(c(".cache_key", ".cache_key_diff", ".cache_is_record"), exists, NA, envir = ns, inherits = FALSE))) {
-    return(TRUE)
-  }
-  stored <- tryCatch(readRDS(path), error = function(e) NULL)
-  if (!ns$.cache_is_record(stored)) return(TRUE)
-  if (!is.null(seed)) seed <- as.integer(seed)
-  key <- tryCatch(ns$.cache_key(code, env, seed, as.character(packages)), error = function(e) NULL)
-  is.null(key) || length(ns$.cache_key_diff(stored$key, key)) > 0L
+  # Kept for jobs scaffolded before 1.5.0, which call hvtiRtemplates:::.cache_would_fit() with a quoted call.
+  # The decision is hvtiRutilities::cache_would_fit()'s (>= 1.5.11), the one cache_fit() itself makes.
+  call <- bquote(hvtiRutilities::cache_would_fit(.(name), .(code), seed = .(seed), dir = .(dir),
+                                                  refit = .(refit), packages = .(packages)))
+  eval(call, env)
 }

@@ -1,3 +1,187 @@
+# hvtiRtemplates 1.5.0
+
+* Requires hvtiRutilities 1.5.11. `nb-boostmtree` asks
+  `hvtiRutilities::cache_would_fit()` whether its fit will run, the same
+  decision `cache_fit()` makes, instead of reaching into hvtiRutilities'
+  internals. A job scaffolded from the development version that still calls
+  `hvtiRtemplates:::.cache_would_fit()` keeps working: that now passes through
+  to the exported function. The `vp` templates also need hvtiRutilities 1.5.10 or
+  later.
+
+* Upgrading a study's jobs to 1.5.0: an `nb-boostmtree` job refits once,
+  because its fit now reports progress and boostmtree 2.0.8 changes the cached
+  fit's key; set `REFIT <- TRUE` for that one render. Large fits need a large
+  session: an ordinal fit on about 5,500 patients and 13,900 visits needed more
+  than Medium's 76.8 GiB. A `dc-tables` job now leaves out rows that are
+  constant in the cohort (`DROP_CONSTANT <- TRUE`, the default), and lists them
+  in a note; set `DROP_CONSTANT <- FALSE` to keep them.
+
+* New `submit_job()` and `job_status()` render a job in the background,
+  detached from the session, so a long fit survives a Workbench session that
+  times out. The render is `render_job()` unchanged; it writes `<job>.run.log`
+  and `<job>.run.yml` beside the job. Not available on Windows.
+* New `guard_long_fit()` stops a long fit from starting in an interactive
+  session when it is not cached yet, and names the `submit_job()` call to use.
+  `nb-boostmtree` calls it before its cross-validated fit.
+
+* `migrate_job()` words the reason for the `MANUSCRIPT_LAYOUT` it chose for a `dc-tables` job by what was migrated:
+  a grouped table says one `n` column sits beside the groups, an overall table with no `by=` says one `n` column covers
+  the whole cohort. The `dc-tables` template now says the report shows each variable's column name beside its label
+  only while `SHOW_VARIABLE` is `TRUE`.
+
+* A render records its progress in `<job>.run.progress`: the chunk running, the step within
+  it, and how long each finished chunk took. `job_status()` prints it, with an estimate of
+  the time left in the chunk, flags a render that has not moved for half an hour, and reads
+  a render started without `submit_job()` from that file alone. A chunk that reports steps
+  writes a line to the render log at most every `hvtiRtemplates.progress_every` minutes (default 10).
+
+* `nb-boostmtree`'s setup chunk, when boostmtree is missing or too old, now
+  gives the install line for boostmtree 2.0.8 (`v2.0.8-ccf`). Its partial
+  effects walk the boosting steps one at a time instead of holding every step
+  for every patient at once, and match each distinct time vector to the fitted
+  grid once: on a synthetic ordinal fit, one `partial.plot()` call fell from
+  87 s and 4.5 GB to 2.4 s and 0.4 GB, with results unchanged. The floor stays
+  at 2.0.4.
+
+* `nb-boostmtree` reports each boosting iteration and each partial-effect prediction to
+  `<job>.run.progress` and the render log, so `job_status()` can say how far a fit has got
+  and how long its stage has left. It needs boostmtree 2.0.8. Existing jobs need not
+  change: they still report stages. Two things make an existing job's cached fit stale, so
+  the next render stops until `REFIT`, and each is worth doing only when hours of refitting
+  are acceptable: adding these lines to a job, which `upgrade_job()` does, and installing
+  boostmtree 2.0.8, which the new floor requires, because `cache_fit()` records package
+  versions.
+
+* The `ac` template takes the biostats team's review of 2026-10-21. It now reports the number at risk beside
+  survival at every horizon, overall and by stratum; prints the whole life table, with `EVENT_ONLY <- FALSE`
+  adding a row for each censored patient as SAS `PEVENT=0` does; compares strata with the log-rank, Wilcoxon and
+  `-2Log(LR)` tests; summarizes follow-up overall and among survivors with SAS's percentile definition; and draws
+  its own figures: survival and four views of the cumulative hazard for reading, and a manuscript survival figure
+  with the numbers at risk, saved as `ac-survival` (and `ac-survival-<variable>` for each stratification). A
+  missing or mean-imputed stratum is now dropped, as `%KAPLAN` drops it, and the dropped patients are listed.
+  `EXPECTED` is optional (`NULL` by default), `STRATA` defaults to the whole cohort only, derived strata are an
+  optional, commented example, `labs` may be `NULL` to label each horizon by its value, and `TYPE` is explained as
+  the chain the set belongs to. The nested-stratification chunk is gone: run a second job with a `WHERE` instead.
+* New exported functions `life_table()`, `life_table_at()`, `life_table_tests()` and `life_table_keep()`, the
+  R counterpart of `%KAPLAN` that the `ac` job calls, so its helpers are documented in `?life_table` rather than
+  written out in every job. The tests reproduce SAS `PROC LIFETEST` on the Gehan leukemia data.
+
+* The template catalog lists `vp-fit` and `vp-explain`, a VarPro variable screen and its partial dependence, at status `intake` until hvtiRutilities adds the `vp` prefix to `hvti_taxonomy()`.
+
+* `hz`, `hm` and `hs-setup` now draw a figure in their own report, so each step
+  can be checked before the next job reads it. `hz` draws its fitted survival
+  over the Kaplan-Meier estimate of the rows it fitted (`hz-fit`). `hm` draws
+  observed against expected events in each group of predicted risk
+  (`hm-calibration`). `hs-setup` draws the cohort's model-predicted survival
+  against the matched population's, on a grid out to the last horizon
+  (`hs-setup-expected`). Each is saved through the job's `save_figure()`
+  under the new `SAVE_FIGURES` and `FIGURES` study choices, and each job now
+  stops in its setup chunk when hvtiPlotR is not installed. `upgrade_job()`
+  brings an existing job up to date, keeping its own choices.
+
+* New `vp-fit` and `vp-explain` templates, in flight, for a VarPro variable screen. `vp-fit` reports which candidates VarPro tested (z = 0 means untested, not unimportant), selects a variable only when it beats permuted noise of its own kind, checks the selection across subsamples of the patients, and saves the selected set in `vp.rds`. `vp-explain` draws VarPro partial dependence for that set and refuses a survival horizon past the longest follow-up. The `rfs`, `rfc` and `rfr` explain templates point to them.
+
+* `upgrade_job()` carries the job's own description. Where the template opens
+  with an `EDIT:` comment asking which job this replaces, the text the old job
+  wrote there, once its marker is deleted, is kept instead of the comment
+  returning, which had left an upgraded, finished job with an open marker and
+  without its description.
+* The `upgrade_job()` report lists comment lines above a carried choice that the
+  current template lacks, under "Review", since they are not carried, and has a
+  new "Description" section saying what happened to the job's description.
+* An empty "Carried", "Not placed", "New" or "Markers left" list in the
+  `upgrade_job()` report reads "None." rather than one blank entry.
+
+* `render_job()`, and so `submit_job()`, now runs the job's chunks on the R
+  that called it: it sets `QUARTO_R` to `R.home("bin")` for the render, unless
+  `QUARTO_R` is already set. Quarto otherwise starts the first R on the `PATH`,
+  which on a server with several R versions can be one whose `renv` library
+  lacks the study's packages. Studies no longer need `QUARTO_R` in `.Renviron`.
+
+- `add_job()` now records the template's SHA-256 in the job's stamp, beside the template and package version. A version
+  names a range of texts (nine for `nb.boostmtree` at 1.4.1); the hash names the one the job was copied from, which
+  the coming three-way merge in `upgrade_job()` needs as its base. The package ships the archive of every template
+  text on `main` since stamping began, in `inst/extdata/template-history.rds` (about 140 KB).
+
+* `rfs-explain`, `rfc-explain` and `rfr-explain` no longer fit VarPro. The VarPro importance panel and the VarPro partial dependence moved to the `vp` family: a `vp-fit` job screens the variables and a `vp-explain` job draws their VarPro partials. The explain jobs keep VIMP, minimal depth and the marginal and partial dependence plots of the saved forest, and no longer attach varPro. An explain job already in a study keeps its own copy of the code and is unchanged.
+
+* `dc-tables` has a `TABLE_ORIENTATION` choice for the Word table's page,
+  passed to `hvtiRtables::hv_man_table_save()`. `"auto"`, the default, turns
+  a table too wide for portrait landscape, as before; `"portrait"` or
+  `"landscape"` always wins. The job now needs hvtiRtables 1.0.11.
+
+* New `cancel_job()` stops a job `submit_job()` started, on the job's own host:
+  SIGTERM, then SIGKILL after a grace period, to the render and every process
+  it started. It then records `cancelled` in `<job>.run.yml` and removes
+  `<job>.run.progress`, so the job can be submitted again. `submit_job()` now
+  marks the render's environment, which is how `cancel_job()` finds the Quarto
+  and knitr processes that run in sessions of their own, out of reach of a
+  `kill` on the runner's process group. It refuses a job recorded on another
+  host, naming the host, and never signals a pid another process has since
+  taken. A run whose runner is already gone is recorded `failed`, with the
+  reason, after any render it left running is stopped.
+* `submit_job()`'s "already running" refusal now points at `cancel_job()` and,
+  for a job recorded on another host, names both `<job>.run.yml` and
+  `<job>.run.progress`: deleting the status file alone left the job refused.
+
+* `dc-tables` leaves out a row whose every recorded value is the same, such as
+  a finding every patient has by inclusion, and names each one in a note under
+  the report's table. A constant binary row no longer stops the job.
+  `DROP_CONSTANT <- FALSE` keeps every row.
+
+* The `ac` template's manuscript survival figure can mark confidence limits at chosen times, as the SAS figures do.
+  `CI_TIMES` draws a bar at each time given, spanning the `CLEVEL` limits the horizon tables report there, and
+  `CI_BAND` (still `TRUE` by default) controls the continuous band, so a figure carries the band, the bars, both or
+  neither. `CI_BAND <- FALSE` with `CI_TIMES` set gives the SAS figure's bars alone. A time before the first event or
+  past the end of follow-up draws no bar.
+
+* The `cancel_job()` test of a live process without the run's marker no longer
+  fails intermittently on Linux. It called `cancel_job()` while its bystander
+  was still exec'ing from `sh` to `Rscript` to `R`, when Linux cannot read a
+  process's environment, and `cancel_job()` rightly refused the process as
+  ambiguous. The test now waits until R itself is running. `cancel_job()` is
+  unchanged.
+
+* New templates `vt-fit` and `vt-explain`, released for review (`in-flight`): virtual twins with one survival forest per arm, out-of-bag own-arm and swapped-arm curves, a per-patient RMST difference, and eligibility judged by a choice of methods (Gower, SID) combined by a stated rule. `vt-fit` reads a `vp-fit` screen's selected set or a list, and one completed dataset from stacked imputations; `vt-explain` reports the contrast by arm, eligibility rule and stratum, standardized betas and who might benefit.
+
+* New templates `sid-fit` and `sid-clusters` (in flight). `sid-fit` fills
+  missing values by mice or forest imputation, `M` times, grows one seeded
+  SID clustering forest on each and averages their distances. It saves the
+  distance in `sid.rds` keyed by a study-keyed digest of the patient ID, never
+  the ID.
+  `sid-clusters` runs PAM on that distance over a range of K, reports the
+  elbow and silhouette, gives letters that keep their identity across K,
+  saves the chosen solution for `vt` (by digest, as in `sid.rds`), and
+  registers the assignments as a dataset carrying the study's own ID, by
+  design, so a later job can `JOIN` them. The `sid` prefix
+  is now qualified, so `add_job("sid", ...)` needs `qualifier = "fit"` or
+  `"clusters"`.
+
+* New `run_job()` checks a job before it starts a long render, then submits it with
+  `submit_job()`. It refuses, all at once and with what fixes each, a session
+  on a different R from the one `renv.lock` records (`r_version`), packages missing, unrecorded
+  in `renv.lock`, or at a different version from it (`packages`), no Quarto (`quarto`), a job already running
+  (`run_state`) and another job already rendering, or submitted and about to, in the same study (`study_render`).
+  It then waits for the render's own checks, the R it runs on (`render_r`) and the memory
+  its fit needs (`memory`), and prints the diagnosis if one fails. A job scaffolded before
+  the setup consolidation has no in-render checks; `run_job()` says so and names
+  `upgrade_job()`.
+* New `hvti` shell command and `install_hvti()`, which copies it onto your `PATH`.
+  `hvti run <job> [--final]`, `hvti status <job>` and `hvti cancel <job>` run
+  `run_job()`, `job_status()` and `cancel_job()` on the R the study's `renv.lock` records,
+  whichever R your own session started. `install_hvti("~/bin")` is the usual call; `dir` has no
+  default. Run it again after updating the package.
+* New `guard_memory()` stops a fit in the first minutes of a render when its expected
+  memory exceeds 90 percent of the session's limit, and names the Workbench profile that
+  would hold it and, given `cores_fit`, the largest core count that fits. Its estimator
+  for boostmtree refuses the two fits measured being killed; it is not verified between
+  them, and its coefficients are provisional until they are reviewed.
+* `job_status()` now says why a failed run failed, with a fix, for out of memory, a package
+  missing on the render's R, and the chunk and lines where the job stopped. It also shows
+  the memory in use while the job runs, and its peak against the session's limit after.
+* `nb-boostmtree` calls `guard_memory()` ahead of its cross-validated fit, with an
+  estimate from the patients, visits, family and cores.
+
 # hvtiRtemplates 1.4.2
 
 * `dc-tables` draws the `%summarytable` table the team asked for on
