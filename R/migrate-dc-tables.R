@@ -333,6 +333,10 @@
   if (is.null(varlist) || !grepl("^[[:space:]]*/\\*", varlist)) {
     stop("Every table variable must follow a /* group */ heading.", call. = FALSE)
   }
+  # SAS comments do not nest, so a `/*` left after removing closed comments is unclosed.
+  if (grepl("/*", gsub("(?s)/\\*.*?\\*/", "", varlist, perl = TRUE), fixed = TRUE)) {
+    stop("A /* group */ heading in a %desc_tab varlist is not closed.", call. = FALSE)
+  }
   # Parse each original comment segment with the shared helper, then merge.
   # The helper deliberately rejects duplicate headings within a single input.
   starts <- gregexpr("(?s)/\\*.*?\\*/", varlist, perl = TRUE)[[1L]]
