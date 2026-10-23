@@ -1,6 +1,7 @@
-# Random-forest family: the three fit/explain pairs, one set each. Each
-# explain job reads the forest its fit job saved in the same (subject, type)
-# set, so the fit is listed first.
+# Random-forest family: the three fit/explain pairs, one set each, and the
+# in-flight VarPro pair, vp-fit and vp-explain. Each explain job reads the
+# forest its fit job saved in the same (subject, type) set, so the fit is
+# listed first.
 #
 # rfs grows on the demo's own death outcome. rfc and rfr need outcomes the
 # demo cohort does not carry, so columns() adds a major postoperative
@@ -79,6 +80,23 @@ gallery_family(
       rf_fit_choices("postoperative length of stay, logged (log_los)", "na.impute"),
       list("^RESPONSE <- " = "RESPONSE <- \"log_los\"")
     )),
-    "rfr-explain" = list(subject = "los", type = "rf", choices = rf_explain_choices("rfr"))
+    "rfr-explain" = list(subject = "los", type = "rf", choices = rf_explain_choices("rfr")),
+    # The VarPro screen, in flight: survival after operation on the nine
+    # predictors rfs-fit grows on, so the two read side by side. Five stability
+    # refits, not twenty, keep the render short; the selection frequencies are
+    # rough for it.
+    "vp-fit" = list(subject = "dead", type = "vp", choices = list(
+      "^<!-- EDIT: say what this screen is for" = paste0(
+        "Gallery job on the synthetic cohort: a VarPro screen of survival after operation (iv_dead, dead) ",
+        "on the nine preoperative predictors rfs-fit grows on.\n\n<!--"
+      ),
+      "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
+      "^PREDICTORS <- " = rf_predictors,
+      "^REPEATS <- " = "REPEATS <- 5"
+    )),
+    "vp-explain" = list(subject = "dead", type = "vp", choices = list(
+      "^<!-- EDIT: say which vp-fit screen" =
+        "Explains the `vp-fit` screen in this set: survival at five years along each selected predictor.\n\n<!--"
+    ))
   )
 )

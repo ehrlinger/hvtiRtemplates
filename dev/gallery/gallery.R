@@ -1,5 +1,6 @@
-# The template gallery: every shipped template rendered once, on one synthetic
-# study, so the group can read what each job produces without running it.
+# The template gallery: every shipped and in-flight template rendered once, on
+# one synthetic study, so the group can read what each job produces without
+# running it. package.py marks the in-flight ones, from the catalog's status.
 #
 #   Rscript dev/gallery/gallery.R [output folder]
 #
@@ -47,6 +48,22 @@ gallery_jobs <- function() {
   dup <- names(jobs)[duplicated(names(jobs))]
   if (length(dup)) stop("Gallery job named twice: ", paste(dup, collapse = ", "), call. = FALSE)
   jobs
+}
+
+# Every template on disk whose catalog status is shipped or in-flight must have
+# a gallery job. The status is read from the catalog, so a template that moves
+# into flight is missed loudly rather than left out of the gallery. Returns the
+# names that have none.
+gallery_missing <- function(jobs = gallery_jobs()) {
+  repo <- file.path(.gallery_dir, "..", "..")
+  rows <- jsonlite::read_json(file.path(repo, "inst", "extdata", "templates.json"))$templates
+  wanted <- vapply(rows, function(r) {
+    if (!r$status %in% c("shipped", "in-flight")) return(NA_character_)
+    if (is.null(r$qualifier)) r$prefix else paste0(r$prefix, "-", r$qualifier)
+  }, character(1L))
+  disk <- sub("[.]qmd$", "", basename(list.files(file.path(repo, "inst", "templates"), "[.]qmd$", recursive = TRUE)))
+  have <- vapply(names(jobs), function(name) jobs[[name]]$template %||% name, character(1L))
+  setdiff(intersect(stats::na.omit(wanted), disk), have)
 }
 
 # ---- The study ---------------------------------------------------------------
@@ -108,6 +125,10 @@ gallery_build <- function(root, quiet = TRUE, only = NULL) {
   # variables, not options(): Quarto renders in a process of its own.
   withr::local_envvar(c(HVTI_RUN_USER = "gallery", HVTI_RUN_HOST = "gallery"))
   jobs <- gallery_jobs()
+  if (is.null(only) && length(missing <- gallery_missing(jobs))) {
+    stop("No gallery job for shipped or in-flight template(s): ", paste(missing, collapse = ", "),
+         ". Add one to a family file.", call. = FALSE)
+  }
   if (!is.null(only)) jobs <- jobs[names(jobs) %in% only]
   rows <- lapply(names(jobs), function(name) {
     spec <- jobs[[name]]
