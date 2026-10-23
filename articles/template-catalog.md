@@ -29,9 +29,9 @@ existing file, because a job accumulates a study’s edits.
 Each template carries a light.
 
 - 🟢 **Shipped** (34): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (21): on disk but being reworked, or scheduled into
+- 🟡 **In progress** (23): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
-- 🔴 **Not yet on the way** (13): waiting on a function in another
+- 🔴 **Not yet on the way** (12): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
   now, write it by hand.
 
@@ -93,6 +93,8 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `rfs-fit` | Grows a random survival forest and checks it learned something: out-of-bag error, predicted survival and the Brier score. | `add_job("rfs", subject, type, qualifier = "fit")` |
 | 🟢 Shipped | `rm-balancing_continuous` | Least-squares balancing score for a continuous exposure: the averaged fitted value and its strata. | `add_job("rm", subject, type, qualifier = "balancing_continuous")` |
 | 🟢 Shipped | `rm-linear` | Ordinary least-squares outcome model with Rubin-pooled inference. | `add_job("rm", subject, type, qualifier = "linear")` |
+| 🟡 In progress | `sid-clusters` | PAM on a sid-fit dissimilarity over a range of K: metrics for choosing K, letters stable across K, a Sankey, and the assignments registered for later jobs to join. | `add_job("sid", subject, type, qualifier = "clusters")` |
+| 🟡 In progress | `sid-fit` | An unsupervised sidClustering forest on the clustering variables, after mice or forest imputation pooled over M, saving a digest-keyed SID dissimilarity for sid-clusters and vt. | `add_job("sid", subject, type, qualifier = "fit")` |
 | 🟡 In progress | `vp-explain` | VarPro partial dependence for the variables a vp-fit screen selected. It never fits varPro. | `add_job("vp", subject, type, qualifier = "explain")` |
 | 🟡 In progress | `vp-fit` | A VarPro variable screen that says which variables were tested, judges selection against permuted noise of the same kind, and checks the selection across subsamples. | `add_job("vp", subject, type, qualifier = "fit")` |
 
@@ -143,7 +145,6 @@ as zero.
 | 🔴 Not yet on the way | `cp` | Cumulative probability plot | 4 | hvtiPlotR#135 |
 | 🔴 Not yet on the way | `bq` | Bootstrap quantile | 2 | hvtiRbootstrap#16 |
 | 🔴 Not yet on the way | `nb-boostmlr` | Boosting: BoostMLR | unmeasured |  |
-| 🔴 Not yet on the way | `sid` | Random forest clustering (sidClustering) | unmeasured | hvtiRforests#1 |
 | 🔴 Not yet on the way | `vt` | Virtual twins | unmeasured | hvtiRforests#1 |
 
 ## Where to read more

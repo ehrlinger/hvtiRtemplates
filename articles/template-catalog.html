@@ -87,8 +87,8 @@
 <p>Each template carries a light.</p>
 <ul>
 <li>🟢 <strong>Shipped</strong> (34): on disk and supported. Scaffold it and use it.</li>
-<li>🟡 <strong>In progress</strong> (21): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
-<li>🔴 <strong>Not yet on the way</strong> (13): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
+<li>🟡 <strong>In progress</strong> (23): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
+<li>🔴 <strong>Not yet on the way</strong> (12): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
 </h2>
 <p>Every template on disk, grouped by the study folder a job lands in, named without its digits (<code>graphs</code> is <code>40_graphs</code> in a new study). <code><a href="../reference/add_job.html">add_job()</a></code> places each one; you do not choose the folder.</p>
@@ -351,6 +351,18 @@
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>sid-clusters</code></td>
+<td style="text-align: left;">PAM on a sid-fit dissimilarity over a range of K: metrics for choosing K, letters stable across K, a Sankey, and the assignments registered for later jobs to join.</td>
+<td style="text-align: left;"><code>add_job("sid", subject, type, qualifier = "clusters")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>sid-fit</code></td>
+<td style="text-align: left;">An unsupervised sidClustering forest on the clustering variables, after mice or forest imputation pooled over M, saving a digest-keyed SID dissimilarity for sid-clusters and vt.</td>
+<td style="text-align: left;"><code>add_job("sid", subject, type, qualifier = "fit")</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>vp-explain</code></td>
 <td style="text-align: left;">VarPro partial dependence for the variables a vp-fit screen selected. It never fits varPro.</td>
 <td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "explain")</code></td>
@@ -412,9 +424,9 @@
 <colgroup>
 <col style="width: 20%">
 <col style="width: 14%">
-<col style="width: 38%">
+<col style="width: 37%">
 <col style="width: 10%">
-<col style="width: 16%">
+<col style="width: 17%">
 </colgroup>
 <thead><tr class="header">
 <th style="text-align: left;">Delivery</th>
@@ -621,13 +633,6 @@
 <td style="text-align: left;"></td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">🔴 Not yet on the way</td>
-<td style="text-align: left;"><code>sid</code></td>
-<td style="text-align: left;">Random forest clustering (sidClustering)</td>
-<td style="text-align: left;">unmeasured</td>
-<td style="text-align: left;">hvtiRforests#1</td>
-</tr>
-<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>vt</code></td>
 <td style="text-align: left;">Virtual twins</td>
