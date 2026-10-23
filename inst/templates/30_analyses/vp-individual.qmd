@@ -283,13 +283,14 @@ every candidate gradients, rerun `vp-fit` with `SPLIT_WEIGHT <- FALSE` and
 #| results: asis
 icov <- vpi_coverage(grad, .parent, cov)
 .ref <- vpi_noise_ref(icov, grad)
-cat("Each gradient is the local slope of ", switch(fit$family,
+.slope_of <- switch(fit$family,
   surv = "varPro's ensemble mortality, in expected events, not a probability",
   class = sprintf("the predicted probability of class %s", .target),
   sprintf("the predicted %s, in its own units", .target)
-), ".", if (identical(fit$family, "class") && is.data.frame(ivp_all)) {
-  " With two classes, the other class's gradient is this one with its sign reversed."
-}, "\n\n", sep = "")
+)
+.two_class <- identical(fit$family, "class") && is.data.frame(ivp_all)
+cat("Each gradient is the local slope of ", .slope_of, ".",
+    if (.two_class) " With two classes, the other class's gradient is this one with its sign reversed.", "\n\n", sep = "")
 cat(.ref$text, "\n\n", sep = "")
 if (is.null(SHOW)) {
   show <- icov$term[icov$variable %in% selected]
