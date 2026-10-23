@@ -2,7 +2,7 @@
   `submit_job()`. It refuses, all at once and with what fixes each, a session
   on a different R from the one `renv.lock` records (`r_version`), packages missing, unrecorded
   in `renv.lock`, or at a different version from it (`packages`), no Quarto (`quarto`), a job already running
-  (`run_state`) and another job already rendering in the same study (`study_render`).
+  (`run_state`) and another job already rendering, or submitted and about to, in the same study (`study_render`).
   It then waits for the render's own checks, the R it runs on (`render_r`) and the memory
   its fit needs (`memory`), and prints the diagnosis if one fails. A job scaffolded before
   the setup consolidation has no in-render checks; `run_job()` says so and names
