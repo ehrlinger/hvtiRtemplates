@@ -198,7 +198,8 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 #| fig-height: 10.5
 #| message: true
 vi <- cache_fit("rfc-vimp", vimp(forest, seed = -abs(SEED)), seed = SEED, dir = CACHE_DIR, refit = REFIT)
-# Free size: one row per predictor, and one panel per class, at the 6.5 in page width.
+# Free size: one row per predictor, and one panel per class, at the 6.5 in page width
+# drawn half as large again in the report.
 # The manuscript theme hides the legend and its title, and the caption reads the colors from the legend.
 .fig <- plot(gg_vimp(vi)) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())

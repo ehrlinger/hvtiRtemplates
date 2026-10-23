@@ -55,6 +55,12 @@ figure_standard_scan <- function(templates) {
         }
       }
     }
+    # A paged figure writes its chunk size at render time; it must be the report's size.
+    for (i in grep("fig-(width|height): %g", src)) {
+      if (!grepl(".report_size(", src[[i]], fixed = TRUE)) {
+        out <- c(out, paste0(label, ":", i, ": a chunk size written at render time without .report_size()"))
+      }
+    }
     for (i in grep("^#\\| label: fig-", src)) {
       opts <- src[i:length(src)]
       opts <- opts[seq_len(match(FALSE, c(startsWith(opts, "#|"), FALSE)) - 1L)]
@@ -136,4 +142,13 @@ test_that("the report's size and the saved size are held to different limits", {
                "save_figure(p, \"page\", width = 9, height = 6)", "```"),
              file.path(dir, "split.qmd"))
   expect_identical(figure_standard_scan(dir), "split.qmd:12: width = 9 in is larger than the 6.5 by 9 in page")
+})
+
+test_that("a chunk size written at render time must go through .report_size()", {
+  dir <- withr::local_tempdir()
+  writeLines(c("---", "format:", "  html:", "    fig-width: 9", "    fig-height: 6", "---", "```{r}",
+               "code <- c(sprintf(\"#| fig-width: %g\", page$width),",
+               "          sprintf(\"#| fig-height: %g\", hvtiRtemplates:::.report_size(page$height)))", "```"),
+             file.path(dir, "paged.qmd"))
+  expect_identical(figure_standard_scan(dir), "paged.qmd:8: a chunk size written at render time without .report_size()")
 })

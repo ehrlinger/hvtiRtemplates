@@ -64,7 +64,7 @@ A template draws a figure in the report in one of two ways, and each has its own
 | plot printed in the chunk | `fig-width`/`fig-height`, unset | Quarto's 7 by 5 default |
 | saved PNG linked with `include_graphics()` | `save_figure(width, height)` | 6 by 4 by default, overridden in nine places |
 
-So the report path gets `fig-width: 6` and `fig-height: 4` in each template's own `format:`
+So the report path gets `fig-width: 6` and `fig-height: 4` (9 and 6 since 2026-10-23, see "Report size" above) in each template's own `format:`
 block. A template carries its own `format:` block, never a project `_quarto.yml`. The saved
 path keeps `.save_figure()`'s 6 by 4 default and loses its overrides, except where a figure is
 faceted.
