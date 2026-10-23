@@ -265,7 +265,9 @@
   running <- list()
   for (job in jobs) {
     st <- tryCatch(job_status(job, quiet = TRUE), error = function(e) NULL)  # an unreadable file must not stop preflight
-    if (!is.null(st) && identical(st$state, "running")) running[[job]] <- st
+    # "submitted" too: between submit_job() and its runner recording "running", a second job would pass and then fail on
+    # Quarto's lock. job_status() reads a submit older than 120 s as vanished, so an unstarted one stops blocking.
+    if (!is.null(st) && st$state %in% c("running", "submitted")) running[[job]] <- st
   }
   rel_of <- function(job) .study_rel(job, root)
   # An editor render that errored never ends its progress file, so from another host it reads running for good.
@@ -284,8 +286,14 @@
   }
   running <- running[!editor_dead]
   if (length(running)) {
+    pending <- vapply(running, function(st) identical(st$state, "submitted"), NA)
     describe <- function(job) {
       st <- running[[job]]
+      if (identical(st$state, "submitted")) {
+        at <- as.POSIXct(st$submitted, format = "%Y-%m-%dT%H:%M:%S%z")
+        ago <- as.numeric(difftime(Sys.time(), at, units = "secs"))
+        return(sprintf("%s, submitted %s ago and not started yet", rel_of(job), .fmt_dur(max(ago, 0))))
+      }
       pr <- st$progress
       stage <- if (is.character(pr$stage) && length(pr$stage) == 1L) {
         paste0("in stage ", pr$stage,
@@ -304,7 +312,8 @@
     }
     # Stale on a host other than this one is the only case the wait advice cannot resolve; a missing host gets the live wording.
     is_stale <- vapply(running, function(st) isTRUE(st$progress$stale) && .on_other_host(st), NA)
-    live <- paste(vapply(names(running)[!is_stale], rel_of, ""), collapse = ", ")
+    live <- paste(vapply(names(running)[!is_stale & !pending], rel_of, ""), collapse = ", ")
+    queued <- paste(vapply(names(running)[pending], rel_of, ""), collapse = ", ")
     routes <- vapply(names(running)[is_stale], function(j) {
       st <- running[[j]]
       # Without a marker the abandon route's own confirmation is `hvti status` on that host, so it is not said twice.
@@ -313,11 +322,15 @@
       }
       paste0(check, .abandon_route(st, j, rel_of(j)))
     }, "")
-    fix <- c(if (any(!is_stale)) {
+    fix <- c(if (any(!is_stale & !pending)) {
       sprintf("Wait for it to finish (hvti status %s), or stop it (hvti cancel %s), then run again.", live, live)
+    }, if (any(pending)) {
+      # cancel_job() refuses a submit whose runner has not recorded itself, so cancel is not offered yet.
+      sprintf("Wait for it to start and finish (hvti status %s), then run again.", queued)
     }, routes)
     return(.check("study_render", FALSE,
-                  sprintf("another job is rendering in this study: %s. Quarto renders one job at a time in a study.",
+                  sprintf("another job is %s in this study: %s. Quarto renders one job at a time in a study.",
+                          if (all(pending)) "about to render" else "rendering",
                           paste(vapply(names(running), describe, ""), collapse = "; ")),
                   paste(fix, collapse = " "), note))
   }

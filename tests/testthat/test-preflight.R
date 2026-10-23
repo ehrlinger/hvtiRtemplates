@@ -298,6 +298,23 @@ test_that("study_render names every running job", {
   expect_match(ck$message, "graphs/b.qmd", fixed = TRUE)
 })
 
+test_that("study_render refuses another job freshly submitted and not started yet", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  writeLines("---\ntitle: x\n---", mine)
+  other <- file.path(root, "analyses", "a.qmd")
+  writeLines("---\ntitle: x\n---", other)
+  .write_status(.run_files(other)$status, state = "submitted", submitted = .stamp())
+  ck <- .check_study_render(mine, root)
+  expect_false(ck$ok)
+  expect_match(ck$message, "^study_render: another job is about to render in this study: analyses/a.qmd, submitted")
+  expect_match(ck$fix, "hvti status analyses/a.qmd", fixed = TRUE)
+  expect_no_match(ck$fix, "hvti cancel", fixed = TRUE)   # cancel_job() refuses a submit that has not started
+  # A submit older than two minutes reads vanished, so it no longer blocks.
+  .write_status(.run_files(other)$status, state = "submitted", submitted = .stamp(Sys.time() - 600))
+  expect_true(.check_study_render(mine, root)$ok)
+})
+
 test_that("study_render leaves the job's own run to run_state", {
   root <- lock_study()
   mine <- other_running_job(root, "mine.qmd")
