@@ -1,8 +1,12 @@
 # Working data, registered data and the freeze: how a study's jobs become final
 
 **Date:** 2026-10-05
-**Status:** draft for review. Decision 1 (section 3) was made by John Ehrlinger on 2026-10-05.
-Everything else is proposed. Nothing is built yet.
+**Status:** superseded on 2026-10-23, never built. hvtiRutilities
+`dev/specs/2026-10-13-one-version-scheme-design.md` replaced it: that design retired releases and
+`PUBLISH`, and chose dated versions with provenance plus `working=` / `HVTI_DATA=working` reads,
+limited to dataset and descriptive jobs and the console. Kept as the record of the reasoning, and
+for the review findings in section 12, which still bear on any future freeze. Decision 1
+(section 3) was made by John Ehrlinger on 2026-10-05.
 **Reads with:** `2026-09-29-template-data-contract-design.md` (the selection record this
 extends), `2026-10-02-bd-build-job-design.md` (the draft and release files this names) and
 `2026-08-13-templates-and-provenance-design.md` (the sidecars the audit reads).
@@ -156,3 +160,22 @@ job" needs no further scoping.
 
 Changing `publish_dataset()`'s release naming, the `bd` template's cohort steps, and the
 hvtiRutilities update functions of section 2.
+
+## 12. Review findings carried forward
+
+Codex reviewed this note on 2026-10-23 ([#413](https://github.com/ehrlinger/hvtiRtemplates/pull/413)),
+after it had been superseded. Three findings still hold for whatever design next decides when a
+study's results are final, so they are recorded here as open questions rather than fixed in a
+design nobody will build.
+
+1. **Currency must compare content, not status.** The audit of section 7 asks whether each
+   producer is current. A consumer is stale when a hand-off it read has changed since, so compare
+   the SHA-256 each consumer recorded for each hand-off (the `.read_handoff()` lineage) against
+   the hand-off on disk.
+2. **The source hash has to persist.** Post-render publication removes `.hvti_source_sha256`
+   (`R/provenance.R`), so nothing durable records which job text produced a result. The record
+   must also cover the study `R/*.R` helpers that `.job_setup()` sources, since a change there
+   changes results without touching the job.
+3. **Rerender order is a graph, not a folder number.** Ordering by the numbered taxonomy folder
+   breaks when a later folder feeds an earlier one or two jobs share a folder, as `rfc-fit` and
+   `rfc-explain` do. Derive the order topologically from the hand-offs each job consumed.
