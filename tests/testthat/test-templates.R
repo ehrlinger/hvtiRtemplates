@@ -294,7 +294,8 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "study_abbreviations",  # >= 1.4.2
     "label_map", "get_label",
     "cache_fit", "capture_provenance", "provenance_data", "publish_provenance",  # >= 1.3.1
-    "register_data", "update_manifest"  # >= 1.5.3 (claims bd's build record)
+    "register_data", "update_manifest",  # >= 1.5.3 (claims bd's build record)
+    "cache_would_fit"  # >= 1.5.11 (nb-boostmtree's memory guard asks whether the fit will run)
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")
