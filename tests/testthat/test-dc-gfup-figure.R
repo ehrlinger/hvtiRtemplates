@@ -197,7 +197,7 @@ gfup_drawn <- function(events, echo = NULL, colors = NULL) {
   d$iv_echo <- ifelse(seq_len(nrow(d)) %% 5L == 0L, NA, d$iv_dead * 0.6)
   saved <- list()
   env <- new.env(parent = globalenv())
-  list2env(list(d = d, OPYRS = "iv_opyrs", ORIGIN_YEAR = 1990, CLOSE_DATE = NULL, ECHO = echo, EVENTS = events,
+  list2env(list(d = d, EVENT = "dead", OPYRS = "iv_opyrs", ORIGIN_YEAR = 1990, CLOSE_DATE = NULL, ECHO = echo, EVENTS = events,
                 PANELS = list(all = list(status = "dead", time = "iv_dead", title = "All deaths")),
                 ALPHA = 0.5, COLORS = colors, .in = NULL,
                 save_figure = function(plot, name, ...) {

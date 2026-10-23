@@ -72,8 +72,12 @@ bd_run <- function(root, choices,
 
 # The dated versions registered from the study's working file, and the provenance
 # row the manifest records for one of them.
+# Since hvtiRutilities#243 a superseded version moves to datasets/_archive/, so
+# both folders are listed, current and superseded alike.
 bd_versions <- function(root, stem = "study_cohort") {
-  list.files(hvtiRutilities::study_dir("datasets", root), pattern = paste0("^", stem, "_[0-9]{8}(_r[0-9]+)?[.]parquet$"))
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  pattern <- paste0("^", stem, "_[0-9]{8}(_r[0-9]+)?[.]parquet$")
+  sort(c(list.files(datasets, pattern = pattern), list.files(file.path(datasets, "_archive"), pattern = pattern)))
 }
 
 bd_current_version <- function(root) {

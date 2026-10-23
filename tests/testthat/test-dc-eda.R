@@ -435,6 +435,12 @@ test_that("dc-gfup and dc-eda build their follow-up table with the same function
   }
   expect_gt(length(block("dc", "gfup")), 10L)
   expect_identical(block("dc", "gfup"), block("dc", "eda"))
+  # And with the same statistics, so neither table gains a column alone.
+  stats <- function(prefix, qualifier) {
+    grep("^\\.followup_stats <- ", readLines(template_path(prefix, qualifier), warn = FALSE), value = TRUE)
+  }
+  expect_length(stats("dc", "gfup"), 1L)
+  expect_identical(stats("dc", "gfup"), stats("dc", "eda"))
 })
 
 # The variable sections, run through the template's own set, spec and sections
