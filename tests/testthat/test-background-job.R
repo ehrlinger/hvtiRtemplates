@@ -359,8 +359,10 @@ test_that("a process the job starts while shutting down is found by a fresh scan
   job <- status_job()
   d <- dirname(job)
   # A render whose SIGTERM handler starts a marked process in a session of its own, after the first scan has run.
-  writeLines("writeLines(as.character(Sys.getpid()), 'late.pid'); Sys.sleep(61)", file.path(d, "late.R"))
-  writeLines(c(sprintf("trap 'perl -MPOSIX -e \"POSIX::setsid(); exec @ARGV\" %s late.R > /dev/null 2>&1 &' TERM",
+  # perl records the pid before it execs R, so a scan that stops R before R runs anything still leaves the pid to check.
+  writeLines("Sys.sleep(61)", file.path(d, "late.R"))
+  writeLines(c(sprintf(paste0("trap 'perl -MPOSIX -e \"open(F, q(>late.pid)); print F POSIX::getpid(), qq(\\n); close(F); ",
+                              "POSIX::setsid(); exec @ARGV\" %s late.R > /dev/null 2>&1 &' TERM"),
                        shQuote(file.path(R.home("bin"), "Rscript"))),
                "while :; do sleep 1; done"), file.path(d, "render.sh"))
   .submit_job(job, final = FALSE, render_call = "system('sh render.sh')", root = d)

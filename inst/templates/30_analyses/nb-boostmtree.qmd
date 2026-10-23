@@ -364,7 +364,7 @@ hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
 # left TRUE, and a stale file stops it before any fit unless REFIT is set. The call itself is
 # unconditional, so a cached rerender still records the memory check that run_job() waits for.
 .need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(.patient)), nrow(d), FAMILY, k, M)
-.fitting <- hvtiRtemplates:::.cache_would_fit("nb-boostmtree-fit", .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
+.fitting <- hvtiRutilities::cache_would_fit("nb-boostmtree-fit", .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
 hvtiRtemplates::guard_memory(if (.fitting) .need(CORES) else 0,
                              sprintf("this boostmtree fit (%s patients, %s visits, %s)",
                                      format(length(unique(.patient)), big.mark = ","), format(nrow(d), big.mark = ","),

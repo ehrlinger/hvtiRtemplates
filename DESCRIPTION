@@ -1,8 +1,8 @@
 Package: hvtiRtemplates
 Type: Package
 Title: Analysis Job Templates for the HVTI CORR Group
-Version: 1.4.2
-Date: 2026-10-20
+Version: 1.5.0
+Date: 2026-10-23
 Authors@R: c(
     person(
       "John", "Ehrlinger",
@@ -26,7 +26,7 @@ Depends:
     R (>= 4.4.0)
 Imports:
     digest,
-    hvtiRutilities (>= 1.5.7),
+    hvtiRutilities (>= 1.5.11),
     jsonlite,
     openssl,
     ps,

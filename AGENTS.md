@@ -1,8 +1,14 @@
 # hvtiRtemplates
 
 Analysis job templates for the HVTI CORR group, plus the prefix taxonomy that names them.
-Eight exports across eleven source files: `hvti_taxonomy()`, `hvti_non_prefixes()`,
-`template_list()`, `template_path()`, `add_job()`, `open_job()`, `render_job()` and `migrate_job()`.
+Twenty-four exports across 42 source files (counted at 1.5.0), in four groups:
+- the taxonomy and catalog: `hvti_taxonomy()`, `hvti_non_prefixes()`, `template_list()`, `template_path()`
+  and `template_catalog()`;
+- scaffolding and upgrading jobs: `add_job()`, `open_job()`, `migrate_job()`, `upgrade_job()`,
+  `read_job_data()`, `build_cohort()` and `stop_here()`;
+- running jobs: `render_job()`, `submit_job()`, `job_status()`, `cancel_job()`, `run_job()`, `install_hvti()`,
+  `guard_long_fit()` and `guard_memory()`;
+- the `ac` template's life tables: `life_table()`, `life_table_at()`, `life_table_keep()` and `life_table_tests()`.
 
 The package is small; the **templates are the product**. `inst/templates/README.md` promises
 that files there are supported and runnable, and that promise is the reason most of the rules
@@ -303,14 +309,15 @@ substituting a guess.
   branch: no deletion, no force-push, pull-request-only, and an **automatic Copilot code
   review**. A direct push to `main` is rejected by the server, which is the ruleset and not a
   local hook, and the fix is to branch, never to force past it.
-  ⚠️ **Copilot review credits are EXHAUSTED again, measured 2026-10-19.** Every Copilot
+  ⚠️ **Copilot review credits are EXHAUSTED, measured 2026-10-23.** Every Copilot
   review here from [#315](https://github.com/ehrlinger/hvtiRtemplates/pull/315) (2026-10-12)
-  to [#357](https://github.com/ehrlinger/hvtiRtemplates/pull/357) (2026-10-17) carries the
-  quota body, with three exceptions:
-  [#323](https://github.com/ehrlinger/hvtiRtemplates/pull/323) (2026-10-13) and
+  to [#401](https://github.com/ehrlinger/hvtiRtemplates/pull/401) (2026-10-23) carries the
+  quota body, with these exceptions, which drew real reviews:
+  [#323](https://github.com/ehrlinger/hvtiRtemplates/pull/323) (2026-10-13),
   [#352](https://github.com/ehrlinger/hvtiRtemplates/pull/352) and
-  [#353](https://github.com/ehrlinger/hvtiRtemplates/pull/353) (2026-10-16), which drew real
-  reviews. [hvtiRtables#84](https://github.com/ehrlinger/hvtiRtables/pull/84) and
+  [#353](https://github.com/ehrlinger/hvtiRtemplates/pull/353) (2026-10-16), and
+  [#390](https://github.com/ehrlinger/hvtiRtemplates/pull/390) and
+  [#392](https://github.com/ehrlinger/hvtiRtemplates/pull/392) (2026-10-22). [hvtiRtables#84](https://github.com/ehrlinger/hvtiRtables/pull/84) and
   [#85](https://github.com/ehrlinger/hvtiRtables/pull/85) drew the quota body on 2026-10-18,
   so it is the account's quota and covers the family, not this repo alone. The exceptions
   mean credits can return for a day and go again, and nothing available from here says

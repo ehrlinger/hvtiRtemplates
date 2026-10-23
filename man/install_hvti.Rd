@@ -32,7 +32,9 @@ is the usual call.
 }
 \examples{
 if (.Platform$OS.type != "windows") {
-  install_hvti(file.path(tempdir(), "bin"))
+  d <- tempfile("bin")
+  install_hvti(d)
+  unlink(d, recursive = TRUE)
 }
 }
 \seealso{
