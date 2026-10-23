@@ -316,7 +316,9 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     in_chunk <- cumsum(fence) %% 2 == 1 & !fence
     code <- src[in_chunk]
     code <- sub("#.*$", "", code)          # and not in a code comment either
-    hits <- gregexpr("[A-Za-z_][A-Za-z0-9_.]*(?=\\()", code, perl = TRUE)
+    # A name inside a longer one is not a call to it: `.cache_would_fit(` is this
+    # package's own helper, not hvtiRutilities' cache_would_fit().
+    hits <- gregexpr("(?<![A-Za-z0-9_.])[A-Za-z_][A-Za-z0-9_.]*(?=\\()", code, perl = TRUE)
     calls <- unlist(regmatches(code, hits))
     used <- c(used, intersect(unique(calls), ns))
   }

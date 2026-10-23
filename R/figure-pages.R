@@ -37,3 +37,10 @@
   }
   x
 }
+
+# A report shows each figure half as large again as the copy saved for the
+# manuscript: 9 by 6 in for the 6 by 4 standard, at the same 12 pt type, so the
+# plot gets more room in the report's 2000 px body while the saved copy still
+# fits the printed page. Applied to the chunk options a template writes for a
+# paged figure; save_figure() keeps the page size (2026-10-23).
+.report_size <- function(inches) inches * 1.5

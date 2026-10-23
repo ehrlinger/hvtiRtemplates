@@ -406,7 +406,9 @@ as on a Mac without XQuartz.
 
 A plot method that returns several plots saves them as `<name>-1`, `<name>-2`
 and so on. Sizes are the template's own, or 6 x 4 in where a figure was not
-saved before. Figure sizes, axis labels and confidence-interval style are team
+saved before. The report draws each figure half as large again, 9 x 6 in for
+the 6 x 4 standard, at the same 12 pt type; the saved copy keeps the page
+size. Figure sizes, axis labels and confidence-interval style are team
 standards still to be settled.
 
 ## Editing a scaffolded job

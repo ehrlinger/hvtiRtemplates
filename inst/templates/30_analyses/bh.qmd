@@ -13,8 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
-    fig-width: 6
-    fig-height: 4
+    fig-width: 9
+    fig-height: 6
     theme: cosmo
     toc: true
     toc-location: left
@@ -720,7 +720,7 @@ result as an absence of collinearity.
 
 ```{r}
 #| label: fig-frequencies
-#| fig-height: 7
+#| fig-height: 10.5
 #| fig-cap: "Bootstrap selection frequency of each candidate variable, one panel per phase. Black filled circles mark the
 #|   percent of replicates selecting the variable, horizontal black bars ±1 Monte Carlo error, and the dashed
 #|   vertical line the retention threshold."

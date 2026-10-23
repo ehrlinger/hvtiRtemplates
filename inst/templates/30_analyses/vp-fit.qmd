@@ -13,8 +13,8 @@ date-format: "YYYY-MM-DD HH:mm"
 # file, which is the property that actually matters when a report is sent on.
 format:
   html:
-    fig-width: 6
-    fig-height: 4
+    fig-width: 9
+    fig-height: 6
     theme: cosmo
     toc: true
     toc-location: left
@@ -531,7 +531,7 @@ knitr::kable(data.frame(
 #| fig-cap: "Importance against coverage for every eligible variable, one panel per kind. Black points are real
 #|   candidates and gray points permuted noise; the dashed horizontal line is the bar a real variable must beat and the
 #|   dotted vertical line the coverage below which a variable is untested."
-#| fig-width: 6.5
+#| fig-width: 9.75
 .plot_cov <- cov[cov$eligible & !is.na(cov$z), ]
 .plot_cov$source <- ifelse(.plot_cov$noise, "noise", "real")
 .bars <- unique(.plot_cov[!is.na(.plot_cov$bar), c("kind", "bar")])
@@ -552,7 +552,7 @@ save_figure(.fig, "vp-fit-coverage", width = 6.5)
 #| fig-cap: "VarPro's own importance plot, noise columns included. Each box spans the 15th to the 85th percentile of a
 #|   variable's per-tree importance, with a line at the median and whiskers to the 5th and 95th percentiles; the dashed
 #|   red line is varPro's default cutoff, which is not the selection rule in this report."
-#| fig-height: 7
+#| fig-height: 10.5
 # Free size: one row per variable, so the height grows with the list.
 .fig <- plot(gg_varpro(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "vp-fit-varpro", height = 7)

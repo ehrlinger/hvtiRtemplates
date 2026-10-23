@@ -5,8 +5,10 @@ hvtiGraphics book, which gets a pull request of its own.
 
 ## The rule
 
-1. **A single-panel figure is 6 in wide by 4 in tall**, both in the report and in the saved
-   PNG and PDF.
+1. **A single-panel figure is saved 6 in wide by 4 in tall**, as PNG, PDF and TIFF, and **drawn
+   in the report at 9 by 6 in**, the same 3:2, at the same 12 pt type (2026-10-23, see
+   "Report size" below). <sub>History (superseded 2026-10-23): "6 in wide by 4 in tall, both in
+   the report and in the saved PNG and PDF."</sub>
 2. **A faceted or multi-panel figure is sized freely** for now. Facets, small multiples, a
    scatter-plot matrix and a correlation matrix are the cases where 6 by 4 leaves each panel too
    small to read. Each exception carries a comment saying why it is one.
@@ -23,7 +25,8 @@ hvtiGraphics book, which gets a pull request of its own.
 4. **Every figure has a numbered caption**, meaning a chunk label starting `fig-` with a
    `fig-cap`. The caption says what is plotted, and names the point type and color of each
    mark, so a reader can decode the figure from its legend alone.
-5. **No figure is larger than the printed page, 6.5 in wide by 9 in tall**, single panel or
+5. **No saved figure is larger than the printed page, 6.5 in wide by 9 in tall**, and no report
+   figure larger than half as large again, 9.75 by 13.5 in, single panel or
    free-size alike. A figure whose panel count follows the study is paged instead: the RF and
    nb figures through `.figure_pages()`, `dc-eda`'s grid pages, `dc-stddiff`'s balance plot at
    30 rows a page. **The one exception is `dc-tables`' scatter-plot matrix**, saved at 10 by
@@ -31,6 +34,26 @@ hvtiGraphics book, which gets a pull request of its own.
    it to the page would shrink every cell with it. John decided this on 2026-10-15.
    `test-figure-standard.R` enforces the limit on chunk options and `save_figure()` sizes,
    and exempts that one `save_figure()` line and nothing else.
+
+## Report size, decided 2026-10-23
+
+At 6 by 4 in a report figure rendered at 576 by 384 screen pixels, under a third of the 2000 px
+body every template's `page-layout: full` sets, and read as small (John, measured on #1356's
+`nb-boostmtree` report). The report now draws every figure half as large again as its saved
+copy, keeping `base_size = 12`, so the plot gains room and the type stays the same size on
+screen. Options weighed: drawing 6 by 4 and displaying it larger (scales the type with it,
+declined) and 9 by 6 everywhere (a saved figure wider than the 6.5 in page, its 12 pt printing
+near 8.7 pt in a column, declined).
+
+- Each template's `format:` block reads `fig-width: 9` and `fig-height: 6`.
+- A free-size figure's chunk options are its old sizes times 1.5. A paged figure writes
+  `.report_size()` (`R/figure-pages.R`) of its page into the chunk options and passes the page
+  itself to `save_figure()`.
+- `save_figure()` keeps its 6 by 4 default and the page cap. A figure the report shows from the
+  saved PNG (`include_graphics()`, the `linked` path) is unchanged: knitr already displays a
+  300 dpi 6 by 4 PNG at 900 px, about the inline figures' 864.
+- So the report and the manuscript copy of a figure now differ in proportion of type to plot:
+  the saved copy is the one to judge for print.
 
 ## Where the sizes come from
 
@@ -41,7 +64,7 @@ A template draws a figure in the report in one of two ways, and each has its own
 | plot printed in the chunk | `fig-width`/`fig-height`, unset | Quarto's 7 by 5 default |
 | saved PNG linked with `include_graphics()` | `save_figure(width, height)` | 6 by 4 by default, overridden in nine places |
 
-So the report path gets `fig-width: 6` and `fig-height: 4` in each template's own `format:`
+So the report path gets `fig-width: 6` and `fig-height: 4` (9 and 6 since 2026-10-23, see "Report size" above) in each template's own `format:`
 block. A template carries its own `format:` block, never a project `_quarto.yml`. The saved
 path keeps `.save_figure()`'s 6 by 4 default and loses its overrides, except where a figure is
 faceted.
