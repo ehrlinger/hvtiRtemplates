@@ -410,19 +410,23 @@ and the table says how many patients have any.
 # the diagonal agree.
 .potential_row <- function(title, status, time) {
   op <- as.Date(paste0(ORIGIN_YEAR, "-01-01")) + d[[OPYRS]] * 365.2425
-  potential <- pmax(as.numeric(close_date - op) / 365.2425, 0)
+  calendar <- pmax(as.numeric(close_date - op) / 365.2425, 0)
   st <- d[[status]]
   observed <- d[[time]]
-  keep <- !is.na(st) & !is.na(observed) & !is.na(potential)
+  keep <- !is.na(st) & !is.na(observed) & !is.na(calendar)
   st <- st[keep]
   observed <- observed[keep]
-  potential <- ifelse(st == 1, observed, potential[keep])
+  calendar <- calendar[keep]
+  # Follow-up counts up to the close date, an event's included: one recorded
+  # after it is past the close like any other, and complete only up to it.
+  recorded <- pmin(observed, calendar)
+  possible <- ifelse(st == 1, recorded, calendar)
+  past_close <- sum(observed > calendar)
   # No patient with all three columns leaves nothing to sum; the row says so.
-  if (!length(observed)) observed <- potential <- NA_real_
-  data.frame(panel = title, patients = sum(keep), recorded = sum(pmin(observed, potential)),
-             possible = sum(potential), percent = 100 * sum(pmin(observed, potential)) / sum(potential),
-             max_recorded = max(observed), max_possible = max(potential), past_close = sum(observed > potential),
-             row.names = NULL)
+  if (!length(observed)) observed <- recorded <- possible <- NA_real_
+  data.frame(panel = title, patients = sum(keep), recorded = sum(recorded), possible = sum(possible),
+             percent = 100 * sum(recorded) / sum(possible), max_recorded = max(observed),
+             max_possible = max(possible), past_close = past_close, row.names = NULL)
 }
 potential_table <- if (figure_drawn) {
   do.call(rbind, lapply(names(PANELS), function(nm) {
@@ -497,12 +501,13 @@ for (nm in names(PANELS)) {
 # The table above checks EVENT and the figures draw PANELS and EVENTS, set
 # apart, so a job can check one event and draw another without a sign of it:
 # a reoperation table beside a death figure. The figures must draw EVENT too.
-.drawn <- c(unlist(lapply(PANELS, `[[`, "status")), unlist(lapply(EVENTS, `[[`, "event")))
+# An EVENTS panel draws its competing death as well as its event.
+.drawn_events <- unique(unlist(lapply(EVENTS, function(e) c(e$event, e$death))))
+.drawn <- c(unlist(lapply(PANELS, `[[`, "status")), .drawn_events)
 if (!EVENT %in% .drawn) {
   .why <- paste0("EVENT is ", EVENT, ", which no figure draws: PANELS draws ",
                  paste(unique(unlist(lapply(PANELS, `[[`, "status"))), collapse = ", "),
-                 if (length(EVENTS)) paste0(" and EVENTS ", paste(unique(unlist(lapply(EVENTS, `[[`, "event"))),
-                                                                  collapse = ", ")) else " and EVENTS none",
+                 if (length(EVENTS)) paste0(" and EVENTS ", paste(.drawn_events, collapse = ", ")) else " and EVENTS none",
                  ". Add an EVENTS entry for a non-fatal event, or a PANELS entry, with `levels`, for its two groups.")
   if (!tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
     stop("The follow-up table and the figures describe different events. ", .why,

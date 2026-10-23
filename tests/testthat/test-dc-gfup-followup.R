@@ -40,6 +40,21 @@ test_that("follow-up recorded past the close date counts only up to it, and is c
   expect_lte(env$potential_table$percent, 100)
 })
 
+test_that("an event recorded after the close date is capped there and counted past it", {
+  # Codex review on #408: a death at 12 years against a 10-year window.
+  d <- data.frame(iv_opyrs = 0, dead = c(1, 0), iv_dead = c(12, 4))
+  env <- list2env(list(d = d, OPYRS = "iv_opyrs", ORIGIN_YEAR = 2000, close_date = as.Date("2010-01-01"),
+                       figure_drawn = TRUE, PANELS = list(all = list(status = "dead", time = "iv_dead"))))
+  eval(gfup_chunk("potential"), env)
+  row <- env$potential_table
+  ten <- as.numeric(as.Date("2010-01-01") - as.Date("2000-01-01")) / 365.2425
+  expect_equal(row$recorded, ten + 4)
+  expect_equal(row$possible, 2 * ten)
+  expect_equal(row$max_possible, ten)
+  expect_identical(row$past_close, 1L)
+  expect_equal(row$max_recorded, 12)
+})
+
 # The figures chunk with no figure drawn: enough to run its checks and print
 # its callouts without drawing a panel.
 gfup_checks <- function(event, panels, events = list()) {
@@ -72,6 +87,19 @@ test_that("EVENT drawn by a PANELS or an EVENTS entry passes the check", {
   expect_no_warning(gfup_checks("ev_reop", deaths, reop))
   two <- c(deaths, list(reop = list(status = "ev_reop", time = "iv_reop", levels = c("No reoperation", "Reoperation"))))
   expect_no_warning(gfup_checks("ev_reop", two))
+})
+
+test_that("EVENT drawn as an EVENTS panel's competing death passes, in draft and final", {
+  # Codex review on #408: the reoperation panel draws `dead` as its third state.
+  panels <- list(all = list(status = "deads", time = "iv_deads"))
+  for (strict in c("", "1")) {
+    withr::local_envvar(HVTI_TEMPLATE_STRICT = strict)
+    expect_no_warning(out <- gfup_checks("dead", panels, reop))
+    expect_no_match(out, "different events", fixed = TRUE)
+  }
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "")
+  expect_warning(out <- gfup_checks("ev_other", panels, reop), "different events")
+  expect_match(out, "PANELS draws deads and EVENTS ev_reop, dead", fixed = TRUE)
 })
 
 test_that("a panel's levels must be two distinct names", {
