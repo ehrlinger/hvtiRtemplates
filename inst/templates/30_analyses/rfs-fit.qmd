@@ -348,11 +348,14 @@ save_figure(.fig, "rfs-fit-diagnostics-error")
 ```{r}
 #| label: fig-diagnostics-survival
 #| fig-cap: "Out-of-bag predicted survival, one curve per patient. Each step line is one patient's predicted survival over
-#|   follow-up, one color for patients who had the event and another for those who did not, as in the legend."
+#|   follow-up, red for patients who had the event and blue for those censored."
 # Out-of-bag predicted survival, one curve per patient.
 surv <- gg_rfsrc(forest)
 # The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.
+# Red for the event and blue for censored, as in every house figure: ggRandomForests sets no
+# scale, and ggplot's default would draw the censored patients red.
 .fig <- plot(surv) +
+  hvtiPlotR::scale_color_hv(event = "TRUE", censored = "FALSE", labels = c(`FALSE` = "Censored", `TRUE` = "Event")) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(.fig, "rfs-fit-diagnostics-survival")
 .fig

@@ -215,6 +215,25 @@ test_that("numeric strata keep one color for curve, band and bars (1, 2, 10 sort
   expect_identical(unname(line), unname(bar))
 })
 
+test_that("one curve is black, and no stratum takes the event's red or censored blue", {
+  skip_ac()
+  local_child_chunks()
+  col_aes <- ggplot2::standardise_aes_names("color")
+  # Both the role colors and the rotation's look-alikes, so the test holds on either hvtiPlotR.
+  roles <- c(hvtiPlotR::hv_role_palette(c("e", "c"), event = "e", censored = "c"), "#0072B2", "#D55E00")
+  d <- hazard_data()
+  d$grp3 <- rep(c(1, 2, 10), length.out = nrow(d))
+  env <- ac_run(d, list(STRATA = "grp3"))
+  one <- unique(built_layers(env$km_figure()[[1]])$GeomStep[[col_aes]])
+  expect_identical(one, "#000000")
+  expect_identical(unique(ggplot2::ggplot_build(env$km_views(env$km)[[1]])$data[[1]][[col_aes]]), "#000000")
+  three <- unique(built_layers(env$km_figure("grp3")[[1]])$GeomStep[[col_aes]])
+  expect_length(three, 3L)
+  expect_false(any(toupper(three) %in% toupper(roles)))
+  views <- unique(ggplot2::ggplot_build(env$km_views(env$strata_fits$grp3)[[1]])$data[[1]][[col_aes]])
+  expect_identical(sort(views), sort(three))
+})
+
 test_that("bars at close early times on a long axis stay at their own time and after zero", {
   skip_ac()
   local_child_chunks()

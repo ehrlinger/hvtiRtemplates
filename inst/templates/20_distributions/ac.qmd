@@ -521,9 +521,13 @@ km_views <- function(fit) {
   # The cumulative hazard is infinite once survival reaches zero; it is left off a figure.
   haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
   haz$stratum <- factor(haz$stratum, levels = counts$stratum)
+  # One curve is black. Strata never take red or blue, which mean the event and
+  # censored in every house figure, so no stratum reads as the deaths.
+  cols <- hvtiRtemplates:::.group_colors(counts$stratum)
   step <- function(data, y, ylab) {
     ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum)) +
       ggplot2::geom_step() +
+      ggplot2::scale_color_manual(values = cols) +
       ggplot2::labs(x = "Years", y = ylab, color = NULL) +
       hvtiPlotR::theme_hv_manuscript(base_size = 12)
   }
@@ -563,7 +567,11 @@ km_figure <- function(strata = NULL) {
   # sort as text ("1", "10", "2"). The curve, band, bars and at-risk rows all use the
   # tables' order instead, so each stratum keeps one color throughout.
   if (!is.null(strata)) hv$data$strata <- factor(as.character(hv$data$strata), levels = levels(dd[[strata]]))
+  # The same colors as the page above: black for one curve, and no stratum in red or blue.
+  cols <- hvtiRtemplates:::.group_colors(if (is.null(strata)) "All" else levels(dd[[strata]]))
   curve <- plot(hv, conf_int = isTRUE(CI_BAND)) +
+    ggplot2::scale_color_manual(values = cols) +
+    ggplot2::scale_fill_manual(values = cols) +
     ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
