@@ -763,17 +763,28 @@
 }
 
 # The render's owner is the Quarto process that runs the hooks and the knitr
-# session alike. Its start time guards against a reused process id.
+# session alike. Its start time guards against a reused process id, and its host
+# against a study shared by sessions on several servers.
 .provenance_render_owner <- function() {
   parent <- ps::ps_parent()
-  list(pid = ps::ps_pid(parent), created = sprintf("%.6f", as.numeric(ps::ps_create_time(parent))))
+  list(pid = ps::ps_pid(parent), created = sprintf("%.6f", as.numeric(ps::ps_create_time(parent))),
+       host = Sys.info()[["nodename"]])
 }
 
+# A process can only be checked on its own host, so an owner recorded on another
+# host is taken as alive: reading it as dead would recover its live render state
+# as though it had crashed. A lock with no host predates the field and keeps the
+# local check.
 .provenance_owner_alive <- function(owner) {
+  if (.on_other_host(owner)) return(TRUE)
   tryCatch({
     handle <- ps::ps_handle(as.integer(owner$pid))
     ps::ps_is_running(handle) && identical(sprintf("%.6f", as.numeric(ps::ps_create_time(handle))), owner$created)
   }, error = function(e) FALSE)
+}
+
+.provenance_owner_label <- function(owner) {
+  paste0("process ", owner$pid, if (.on_other_host(owner)) paste0(" on ", owner$host))
 }
 
 # One render at a time per study: the render state, the sidecar backups and the
@@ -797,8 +808,11 @@
       difftime(Sys.time(), file.info(lock)$mtime, units = "secs") < 60
     if (unwritten_recently || (!is.null(current) && .provenance_owner_alive(current))) {
       stop("Another Quarto render is in progress in this study",
-           if (!is.null(current)) paste0(" (process ", current$pid, ")"),
-           ". Wait for it to finish, then render again.", call. = FALSE)
+           if (!is.null(current)) paste0(" (", .provenance_owner_label(current), ")"),
+           ". Wait for it to finish, then render again.",
+           if (!is.null(current) && .on_other_host(current)) {
+             paste0(" If it is no longer running, delete ", lock, ".")
+           }, call. = FALSE)
     }
     # The owner is gone. Moving its lock aside is atomic, so of two renders
     # that both find it stale, only one takes it over.

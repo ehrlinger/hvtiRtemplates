@@ -339,9 +339,11 @@
   owner <- if (file.exists(owner_file)) tryCatch(jsonlite::read_json(owner_file), error = function(e) NULL)
   if (!is.null(owner) && .provenance_owner_alive(owner)) {
     return(.check("study_render", FALSE,
-                  sprintf(paste("another Quarto render holds this study's render lock (process %s), started outside run_job(),",
-                                "so its job is not known."), owner$pid),
-                  "Wait for it to finish, then run again.", note))
+                  sprintf(paste("another Quarto render holds this study's render lock (%s), started outside run_job(),",
+                                "so its job is not known."), .provenance_owner_label(owner)),
+                  paste0("Wait for it to finish, then run again.",
+                         if (.on_other_host(owner)) paste0(" If it is no longer running, delete ", lock, ".")),
+                  note))
   }
   .check("study_render", TRUE, note = note)
 }

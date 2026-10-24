@@ -1049,6 +1049,45 @@ test_that("the render owner is the live process that launched this one", {
   expect_false(.provenance_owner_alive(list(pid = owner$pid, created = "0.000000")))
 })
 
+test_that("the render owner records its host, and a host's own dead owner is still dead", {
+  owner <- .provenance_render_owner()
+  expect_identical(owner$host, Sys.info()[["nodename"]])
+  expect_false(.provenance_owner_alive(list(pid = owner$pid, created = "0.000000", host = owner$host)))
+})
+
+test_that("an owner on another host is taken as alive, and a lock with no host keeps the local check", {
+  # The pid and start time would read as dead here; another host's process cannot be checked from this one.
+  expect_true(.provenance_owner_alive(list(pid = 101L, created = "1.000000", host = "elsewhere.invalid")))
+  expect_false(.provenance_owner_alive(list(pid = 101L, created = "1.000000")))
+})
+
+test_that("a render on another host keeps its lock and its state", {
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  first <- list(pid = 101L, created = "1.000000", host = "elsewhere.invalid")
+  second <- list(pid = 202L, created = "2.000000", host = Sys.info()[["nodename"]])
+  source <- file.path(root, "managed.qmd")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+
+  testthat::with_mocked_bindings(
+    .provenance_pre_render(root, inputs = source),
+    .provenance_render_owner = function() first,
+    .package = "hvtiRtemplates"
+  )
+  state_before <- .provenance_file_state(.provenance_state_path(root))
+
+  expect_error(
+    testthat::with_mocked_bindings(
+      .provenance_pre_render(root, inputs = source),
+      .provenance_render_owner = function() second,
+      .package = "hvtiRtemplates"
+    ),
+    "[(]process 101 on elsewhere[.]invalid[)].*If it is no longer running, delete"
+  )
+  expect_identical(.provenance_file_state(.provenance_state_path(root)), state_before)
+  expect_identical(jsonlite::read_json(file.path(.provenance_lock_path(root), "owner.json")), first)
+})
+
 test_that("a console run stops at provenance and says to render the job", {
   # The template passes knitr::current_input(dir = TRUE), which is NULL when a
   # study author steps through chunks in the console rather than rendering.
