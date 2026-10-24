@@ -156,7 +156,9 @@ invisible(hvtiRutilities::study_setup(
 add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
 
 # A qualified template by its full name, the form template_list()$call prints.
-add_job("dc.gfup", subject = "cohort", type = "eda", dir = d)
+# A follow-up check belongs to the analysis it checks, so it takes that
+# set's subject and type: here, the hazard analysis of reoperation.
+add_job("dc.gfup", subject = "reop", type = "hz", dir = d)
 
 # A template's name before a rename still works, and the warning names the
 # new one.
@@ -166,10 +168,9 @@ tryCatch(add_job("dp.trends", subject = "cohort", type = "eda", dir = d),
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
 try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
-#> Error : add_job(): '/tmp/RtmpXDYden/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
+#> Error : add_job(): '/tmp/Rtmpf7PNlr/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
-#> [1] "10_descriptive/dc.gfup.cohort.eda.qmd"
-#> [2] "20_distributions/ac.death.hz.qmd"     
+#> [1] "10_descriptive/dc.gfup.reop.hz.qmd" "20_distributions/ac.death.hz.qmd"  
 unlink(d, recursive = TRUE)
 ```

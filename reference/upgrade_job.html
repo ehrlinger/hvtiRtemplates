@@ -140,6 +140,11 @@ own folder is left holding the job, and the same job can be upgraded again
 with nothing moved aside: each upgrade adds its own pair. A pair whose
 stamp is already used, from an upgrade in the same second, takes a shared
 <code>-2</code>, <code>-3</code> suffix after the stamp.</p>
+<p>An upgrade before version 1.5.1 left its pair beside the job instead, as
+<code>&lt;job&gt;.qmd.pre-upgrade</code> and <code>&lt;job&gt;-upgrade.md</code>. The next upgrade
+moves such a pair into <code>_archive</code> under the same names, stamped with
+the time of the upgrade that wrote it, read from the report. A copy renamed
+by hand, such as <code>&lt;job&gt;.qmd.pre-upgrade-20261020</code>, is left where it is.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
