@@ -17,7 +17,7 @@ refuses to overwrite an existing job.
 | `40_graphs/hs-concordance.qmd` | every patient through every treatment group's model, with an optional best-treatment table | `40_graphs/` or `graphs/` |
 | `40_graphs/lp-mirror.qmd` | mirrored histogram of a saved propensity score: all patients, under the matching weights, and matched | `40_graphs/` or `graphs/` |
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dc-gfup.qmd` | follow-up interval checks and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-gfup.qmd` | follow-up interval checks, potential follow-up and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-stddiff.qmd` | balance table: standardized differences between two groups, unadjusted, matched and weighted | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-eda.qmd` | the whole EDA report: overview, follow-up, then the continuous, percent and count sections, each with its table | `10_descriptive/` or `descriptive/` |
@@ -636,3 +636,16 @@ The user and host are the person's login name and the machine's name, and a
 report shared outside the group carries them. `HVTI_RUN_USER` and
 `HVTI_RUN_HOST` replace the two (the template gallery sets both to `gallery`,
 so the published reports name no one).
+
+A login the group's people file names is shown as the person's name with the
+login, as `Pat Example (pexample)`, in the box under the title and in the
+table. The file is YAML, one line per person under `people:`, and lives on the
+server at `/studies/general/administrative/hvti_people.yml`; `HVTI_PEOPLE`
+names another. The names live in that file and never in this package. A login
+the file does not list, or no file, shows the login alone. The provenance JSON
+keeps the login under `user` and adds the name under `user_name`.
+
+```yaml
+people:
+  pexample: Pat Example
+```

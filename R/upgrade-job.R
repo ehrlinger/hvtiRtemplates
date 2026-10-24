@@ -30,6 +30,12 @@
 #' stamp is already used, from an upgrade in the same second, takes a shared
 #' \code{-2}, \code{-3} suffix after the stamp.
 #'
+#' An upgrade before version 1.5.1 left its pair beside the job instead, as
+#' \code{<job>.qmd.pre-upgrade} and \code{<job>-upgrade.md}. The next upgrade
+#' moves such a pair into \code{_archive} under the same names, stamped with
+#' the time of the upgrade that wrote it, read from the report. A copy renamed
+#' by hand, such as \code{<job>.qmd.pre-upgrade-20261020}, is left where it is.
+#'
 #' @details
 #' The template is read from the job's file name, in either spelling
 #' \code{\link{add_job}} has used. A study's choices are the top-level
@@ -144,8 +150,9 @@ upgrade_job <- function(path, dir = NULL) {
   report_path <- files[[2L]]
   # Any other spelling of this job, current, before 2026-10 or under the
   # template's name before a rename, is a second copy of the same set's edits.
-  others <- c(target, .job_path_legacy(row, fields$subject, fields$type, root),
-              .job_paths_renamed(row, fields$subject, fields$type, root))
+  others_all <- c(.job_path_legacy(row, fields$subject, fields$type, root),
+                  .job_paths_renamed(row, fields$subject, fields$type, root))
+  others <- c(target, others_all)
   others <- others[taken(others) & normalizePath(others, winslash = "/", mustWork = FALSE) != path]
   if (length(others)) {
     stop("upgrade_job(): '", others[[1L]], "' is another copy of this job; refusing to write a second.",
@@ -174,6 +181,7 @@ upgrade_job <- function(path, dir = NULL) {
   if (!.path_within(normalizePath(archive, winslash = "/", mustWork = TRUE), root)) {
     stop("upgrade_job(): the job folder's _archive resolves outside the study root.", call. = FALSE)
   }
+  .archive_legacy_upgrade(unique(c(path, target, others_all)), archive, taken, files, root)
   # The current template's provenance checks need the study's hooks, which a
   # study older than them may lack; add_job() installs them the same way.
   .install_provenance_hooks(root)
@@ -190,6 +198,55 @@ upgrade_job <- function(path, dir = NULL) {
   Sys.chmod(c(target, report_path), mode, use_umask = FALSE)
   ok <- TRUE
   .open_in_editor(target)
+}
+
+# Before 1.5.1 an upgrade left the old job beside the job as <job>.qmd.pre-upgrade
+# and its report as <stem>-upgrade.md, and refused to run again while they stood.
+# Move every such file, under any spelling of this job in `jobs`, into `archive`
+# the way an upgrade names its own, never over a file there and never one in
+# `reserved`. They share one stamp, since an upgrade that renamed the job left
+# the old job under the old spelling and the report under the new. The report's
+# time is the old upgrade's; the old job's is its last edit, which the rename
+# kept, so it stamps them only when no report is left. A file an analyst renamed
+# by hand is not one upgrade_job() wrote and is left alone. Every check runs
+# before the first move, so a refusal leaves each file where it was.
+.archive_legacy_upgrade <- function(jobs, archive, taken, reserved, root) {
+  reports <- sub("[.]qmd$", "-upgrade.md", jobs)
+  from <- c(paste0(jobs, ".pre-upgrade"), reports)
+  from <- unique(from[file.exists(from) & !dir.exists(from)])
+  if (!length(from)) return(invisible())
+  # An old spelling's folder can be a link out of the study, and a sweep moves what it finds.
+  outside <- !.path_within(normalizePath(dirname(from), winslash = "/", mustWork = TRUE), root)
+  if (any(outside)) {
+    stop("upgrade_job(): '", from[outside][[1L]], "' resolves outside the study root; refusing to move it.",
+         call. = FALSE)
+  }
+  is_report <- from %in% reports
+  stem <- ifelse(is_report, sub("-upgrade[.]md$", "", basename(from)), sub("[.]qmd[.]pre-upgrade$", "", basename(from)))
+  suffix <- ifelse(is_report, "-upgrade.md", ".pre-upgrade")
+  stamp <- format(file.mtime(from[[if (any(is_report)) which(is_report)[[1L]] else 1L]]), "%Y%m%d-%H%M%S")
+  to <- function(s) file.path(archive, paste0(stem, ".", s, suffix))
+  blocked <- function(d) taken(d) | d %in% reserved
+  dest <- to(stamp)
+  # Spellings in different folders can share a file name, and the later move would replace the earlier.
+  if (anyDuplicated(dest)) {
+    same <- from[dest == dest[duplicated(dest)][[1L]]]
+    stop("upgrade_job(): '", same[[1L]], "' and '", same[[2L]], "' would be archived under one name; ",
+         "move one into _archive by hand first.", call. = FALSE)
+  }
+  n <- 1L
+  while (any(blocked(dest)) && n < 99L) {
+    n <- n + 1L
+    dest <- to(paste0(stamp, "-", n))
+  }
+  if (any(blocked(dest))) {
+    stop("upgrade_job(): '", dest[blocked(dest)][[1L]], "' already exists; refusing to overwrite.", call. = FALSE)
+  }
+  for (k in seq_along(from)) {
+    if (!file.rename(from[[k]], dest[[k]])) {
+      stop("upgrade_job(): could not move '", from[[k]], "' into _archive.", call. = FALSE)
+    }
+  }
 }
 
 # The stamp that pairs one upgrade's old job with its report, to the second so

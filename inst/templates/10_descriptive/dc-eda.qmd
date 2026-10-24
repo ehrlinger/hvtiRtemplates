@@ -509,11 +509,13 @@ if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLOR
 }
 # Dead or Death is the event and Alive or No event the censored level, so a
 # non-fatal event takes the house rule's next color, green.
-status_colors <- function(levels) {
-  if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
+status_colors <- function(levels, labels = stats::setNames(levels, levels)) {
+  if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event"), labels = labels))
   keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
-  scale_color_manual(values = stats::setNames(COLORS[keys], levels))
+  scale_color_manual(values = stats::setNames(COLORS[keys], levels), labels = labels)
 }
+# The statistics dc-gfup's follow-up table shows, total follow-up (sum) included.
+.followup_stats <- c("n", "nmiss", "mean", "std", "min", "p15", "median", "p75", "p85", "p90", "max", "sum")
 # dc-gfup's follow-up table, one row per interval and patient group, so a panel
 # here shows the table that job shows. test-dc-eda.R keeps the two copies equal.
 .followup_table <- function(fc, d, event) {
@@ -526,7 +528,7 @@ status_colors <- function(levels) {
     data.frame(interval = m$variable, patients = groups[[g]], n = m$n, missing = m$nmiss,
                negative = count(function(x) x < 0), zero = count(function(x) x == 0),
                mean = m$mean, sd = m$std, min = m$min, p15 = m$p15, median = m$median,
-               p85 = m$p85, max = m$max, row.names = NULL)
+               p75 = m$p75, p85 = m$p85, p90 = m$p90, max = m$max, total = m$sum, row.names = NULL)
   })
   out <- do.call(rbind, rows)
   out[order(match(out$interval, unique(out$interval))), , drop = FALSE]
@@ -542,7 +544,8 @@ for (i in seq_len(nrow(fp$data))) {
   # The caption key names the house colors that COLORS <- NULL draws and the
   # shapes set here, so a study that sets COLORS renames them in .key below.
   if (row$type == "followup") {
-    fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time)
+    fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time,
+                                         stats = .followup_stats)
     .followup <- .followup_table(fc, d, PANELS[[nm]]$status)
     .child(paste("tbl gfup", nm, "followup"),
            paste0("Follow-up, ", row$title, ", by patient group: missing, negative and zero values, ",

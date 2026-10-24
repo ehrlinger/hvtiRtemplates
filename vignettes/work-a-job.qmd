@@ -60,25 +60,29 @@ call that adds it.
 Copy the call, and change two words before you run it:
 
 ```{r}
-add_job("dc.gfup", subject = "cohort", type = "eda")
+add_job("dc.gfup", subject = "reop", type = "hz")
 ```
 
 `subject` and `type` name *your* job, not the template. Together they say which
-set of work the job belongs to: here, exploratory checks (`eda`) on the whole
-cohort (`cohort`). A job modeling death might be `subject = "dead"`,
-`type = "hz"`. Use letters, digits and underscores only, because the two words
-become part of the filename.
+set of work the job belongs to, and every job of that set shares them, which is
+how one job's output finds the next. A follow-up check belongs to the analysis
+it checks, so this one, checking follow-up for a hazard analysis of
+reoperation, takes that analysis's words: `subject = "reop"`, `type = "hz"`.
+The checks for a death analysis would be `subject = "dead"`, `type = "hz"`.
+Name the event, not `cohort` and `eda`, whenever the job has one. Use letters,
+digits and underscores only, because the two words become part of the
+filename.
 
 The job lands in the folder the template belongs in, named
 `<template>.<subject>.<type>.qmd`, so the line above writes
-`10_descriptive/dc.gfup.cohort.eda.qmd` (or `descriptive/...` in a study that
+`10_descriptive/dc.gfup.reop.hz.qmd` (or `descriptive/...` in a study that
 kept the older, unnumbered folder names). `add_job()` never overwrites a job
 that already exists, because a job collects your edits. To open a job, creating
 it first if it is not there yet, use `open_job()` with the same arguments; it
 opens the file in RStudio.
 
 ```{r}
-job <- open_job("dc.gfup", subject = "cohort", type = "eda")
+job <- open_job("dc.gfup", subject = "reop", type = "hz")
 ```
 
 ## Find what you have to change
@@ -156,7 +160,7 @@ A final render is the accepted result. It refuses to finish while any `EDIT:`
 marker remains, rather than producing a report that looks done and is not. It
 also records the job's *provenance*, which data it read and a fingerprint of the
 job file that read it, and writes it beside the report as
-`dc.gfup.cohort.eda.provenance.json`, so the numbers can be traced back later.
+`dc.gfup.reop.hz.provenance.json`, so the numbers can be traced back later.
 
 ## Render part of a job
 
