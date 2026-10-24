@@ -73,13 +73,15 @@ test_that("a people file that cannot be read warns and shows the login", {
   expect_null(hvtiRtemplates:::.person_name("tester"))
 })
 
-test_that("the top box names final or draft, the dataset version and its registration, who ran it, and the package", {
+test_that("the top box names final or draft, the dataset version and its date, who ran it, and the package", {
   withr::local_envvar(HVTI_RUN_USER = "tester", HVTI_RUN_HOST = "testhost")
   rf <- run_fixture("DATASET <- \"built\"")
   box <- grep("^\\*\\*final\\*\\*", rf$out, value = TRUE)
   expect_length(box, 1L)
-  expect_match(box, "data `built` `built_[0-9]{8}[.]parquet`, registered [0-9]{4}-[0-9]{2}-[0-9]{2}")
-  expect_match(box, paste0("registered ", format(Sys.Date())), fixed = TRUE)
+  expect_match(box, "data `built` `built_[0-9]{8}[.]parquet`, dated [0-9]{4}-[0-9]{2}-[0-9]{2}")
+  expect_match(box, paste0("dated ", format(Sys.Date())), fixed = TRUE)
+  # The date is the version's, not the day it was registered, which the manifest does not record.
+  expect_false(grepl("registered", box, fixed = TRUE))
   expect_match(box, "rendered by tester on testhost", fixed = TRUE)
   expect_match(box, paste0("hvtiRtemplates ", utils::packageVersion("hvtiRtemplates")), fixed = TRUE)
   expect_match(rf$out[[2L]], "^::: \\{\\.callout")
@@ -102,7 +104,7 @@ test_that("a study with no registered dataset gets a box that names the dataset 
   box <- grep("^\\*\\*final\\*\\*", r$out, value = TRUE)
   expect_length(box, 1L)
   expect_match(box, "data `built` ·", fixed = TRUE)
-  expect_false(grepl("registered", box, fixed = TRUE))
+  expect_false(grepl(", dated", box, fixed = TRUE))
   expect_match(box, "rendered by ", fixed = TRUE)
 })
 
@@ -418,7 +420,7 @@ test_that("the table holds every field, by group", {
   job <- read_job_data(rf$cfg, where = quote(age >= 30))
   table <- paste(hvtiRtemplates:::.run_table(run_facts(rf, data = list(job$provenance))), collapse = "\n")
   for (field in c("Started", "Ended", "Duration", "Status", "Rendered by", "Host", "File", "Template", "Subject",
-                  "Type", "hvtiRtemplates", "Version file", "Registered", "Source file", "Rows kept", "WHERE",
+                  "Type", "hvtiRtemplates", "Version file", "Version date", "Source file", "Rows kept", "WHERE",
                   "sha256", "Manifest", "renv")) {
     expect_match(table, field, fixed = TRUE, info = field)
   }
