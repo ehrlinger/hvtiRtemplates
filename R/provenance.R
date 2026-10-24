@@ -811,7 +811,7 @@
            if (!is.null(current)) paste0(" (", .provenance_owner_label(current), ")"),
            ". Wait for it to finish, then render again.",
            if (!is.null(current) && .on_other_host(current)) {
-             paste0(" If it is no longer running, delete ", lock, ".")
+             paste0(" If it is no longer running, delete the directory ", lock, ".")
            }, call. = FALSE)
     }
     # The owner is gone. Moving its lock aside is atomic, so of two renders

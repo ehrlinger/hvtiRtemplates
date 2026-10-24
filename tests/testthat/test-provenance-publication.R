@@ -1082,7 +1082,7 @@ test_that("a render on another host keeps its lock and its state", {
       .provenance_render_owner = function() second,
       .package = "hvtiRtemplates"
     ),
-    "[(]process 101 on elsewhere[.]invalid[)].*If it is no longer running, delete"
+    "[(]process 101 on elsewhere[.]invalid[)].*If it is no longer running, delete the directory"
   )
   expect_identical(.provenance_file_state(.provenance_state_path(root)), state_before)
   expect_identical(jsonlite::read_json(file.path(.provenance_lock_path(root), "owner.json")), first)

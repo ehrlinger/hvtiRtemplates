@@ -372,6 +372,7 @@ test_that("study_render refuses a render lock held on another host and names the
   ck <- .check_study_render(mine, root)
   expect_false(ck$ok)
   expect_match(ck$message, "process 4242 on elsewhere.invalid", fixed = TRUE)
+  expect_match(ck$fix, paste("delete the directory", lock), fixed = TRUE)
 })
 
 test_that("study_render copes with a study root holding regex metacharacters", {
