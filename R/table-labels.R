@@ -77,6 +77,9 @@
 # A column carrying value labels as a factor of its level text, the levels in
 # code order and only the codes the data hold, so a declared but unseen level
 # does not print a row of zeros. A code with no declared text keeps its code.
+# Two codes may share one text (8 and 9 both "Unknown"); they become one level,
+# and attribute "codes" keeps each code's text, so nothing reads that map back
+# from the levels, which are fewer than the codes.
 .level_factor <- function(x) {
   labels <- attr(x, "labels", exact = TRUE)
   label <- attr(x, "label", exact = TRUE)
@@ -88,6 +91,7 @@
   text[!is.na(hit)] <- names(labels)[hit[!is.na(hit)]]
   out <- factor(values, levels = codes, labels = text)
   attr(out, "label") <- label
+  attr(out, "codes") <- stats::setNames(text, codes)
   out
 }
 
@@ -143,9 +147,10 @@
   }
   levels <- list()
   for (v in c(carried, names(mine))) {
-    codes <- sort(unique(as.vector(unclass(data[[v]]))))
     data[[v]] <- .level_factor(data[[v]])
-    levels[[v]] <- stats::setNames(levels(data[[v]]), codes)
+    levels[[v]] <- attr(data[[v]], "codes")
+    attr(data[[v]], "codes") <- NULL
+    codes <- names(levels[[v]])
     origin <- if (v %in% carried) "value labels carried by the data" else basename(value_labels_file)
     changes <- c(changes, list(note(v, paste("levels", paste(codes, collapse = ", ")),
                                     paste("levels", paste(levels(data[[v]]), collapse = ", ")), origin)))

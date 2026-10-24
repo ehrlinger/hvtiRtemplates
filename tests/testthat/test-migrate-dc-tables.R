@@ -750,6 +750,24 @@ test_that("the Word table prints the study's table labels and levels, says what 
   expect_identical(attr(env$d_table$bmi, "label"), "Preoperative Body Mass Index (kg/m2)")
   expect_identical(attr(env$d_table$age, "label"), "Age (years)")
   expect_identical(levels(env$d_table$race_grp), c("White", "Black", "Other"))
+  # A binary row keeps its event codes whatever value_labels.yml says, named
+  # BINARY or binary by its data; only a row named categorical takes the text.
+  writeLines(c("race_grp:", "  1: White", "  2: Black", "  3: Other", "treatment:", "  0: Medical", "  1: Surgical",
+               "repair:", "  0: Absent", "  1: Present"), file.path(root, "value_labels.yml"))
+  env$TABLE_LABEL_RULES <- TRUE
+  invisible(eval_table(template, env))
+  expect_true(is.numeric(env$d_table$repair))
+  expect_true("repair" %in% env$BINARY)
+  env$CONTINUOUS <- c("age", "bmi")
+  env$BINARY <- c("female", "repair")
+  env$CATEGORICAL <- "race_grp"
+  invisible(eval_table(template, env))
+  expect_true(is.numeric(env$d_table$repair))
+  env$BINARY <- "female"
+  env$CATEGORICAL <- c("race_grp", "repair")
+  invisible(eval_table(template, env))
+  expect_identical(levels(env$d_table$repair), c("Absent", "Present"))
+  env$CONTINUOUS <- env$BINARY <- env$CATEGORICAL <- NULL
   # A 0/1 BY given level text keeps STDDIFF's treated group without GROUP_1.
   # The table is drawn and %stddiff computed; a missing mapping stops it.
   skip_if_not_installed("hvtiRpropensity", "0.2.0")

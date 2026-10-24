@@ -449,10 +449,20 @@ listed under the table.
 ```{r}
 #| label: table-labels
 # unnumbered: relabels the copy of the data the table is drawn from
+# A binary row prints one line, its label, counting the event (1, Yes or TRUE),
+# so level text would print nowhere, and hv_tbl_summary() could not find the
+# event among, say, Absent and Present. Binary rows therefore keep their codes:
+# those BINARY or OVERRIDES name, and those the data make binary unless named
+# categorical. Continuous rows keep theirs too: they are summarized as numbers.
+.rows <- intersect(unlist(GROUPS, use.names = FALSE), names(d))
+.binary_by_data <- .rows[vapply(d[.rows], function(x) {
+  is.logical(x) || is.numeric(x) && all(x[!is.na(x)] %in% c(0, 1))
+}, logical(1))]
 .labeled <- hvtiRtemplates:::.table_labels(
   d, c(unlist(GROUPS, use.names = FALSE), BY), .root, rules = TABLE_LABEL_RULES,
   protect = c(unname(hvtiRutilities::study_abbreviations(.cfg)), names(ABBREVIATIONS)),
-  keep_codes = c(CONTINUOUS, OVERRIDES$continuous)
+  keep_codes = c(CONTINUOUS, BINARY, OVERRIDES$continuous, OVERRIDES$binary,
+                 setdiff(.binary_by_data, c(CATEGORICAL, OVERRIDES$categorical)))
 )
 d_table <- .labeled$data
 # A BY given level text still names STDDIFF's treated group: GROUP_1 may be

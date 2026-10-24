@@ -116,6 +116,20 @@ test_that("an unquoted No or Yes in value_labels.yml is level text, not a logica
   expect_identical(out$levels$f, c(`0` = "No", `1` = "Yes"))
 })
 
+test_that("two codes may share one text, and the map names each code", {
+  root <- withr::local_tempdir()
+  writeLines(c("disp:", "  1: Home", "  8: Unknown", "  9: Unknown"), file.path(root, "value_labels.yml"))
+  out <- hvtiRtemplates:::.table_labels(data.frame(disp = c(1, 8, 9, 1)), "disp", root)
+  expect_identical(levels(out$data$disp), c("Home", "Unknown"))
+  expect_identical(as.character(out$data$disp), c("Home", "Unknown", "Unknown", "Home"))
+  expect_identical(out$levels$disp, c(`1` = "Home", `8` = "Unknown", `9` = "Unknown"))
+  expect_null(attr(out$data$disp, "codes"))
+  # A partial mapping whose text matches a code left undeclared.
+  writeLines(c("disp:", "  1: \"8\""), file.path(root, "value_labels.yml"))
+  out <- hvtiRtemplates:::.table_labels(data.frame(disp = c(1, 8)), "disp", root)
+  expect_identical(out$levels$disp, c(`1` = "8", `8` = "8"))
+})
+
 test_that("a column summarized as a number keeps its codes", {
   s <- label_study()
   out <- hvtiRtemplates:::.table_labels(s$d, c("nyha", "tri"), s$root, keep_codes = "nyha")
