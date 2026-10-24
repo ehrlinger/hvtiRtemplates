@@ -200,10 +200,17 @@
                 version_file = if (file.exists(file.path(datasets, parquet))) parquet))
   }
   if (is.null(dataset) || is.na(dataset)) return(NULL)
-  found <- tryCatch({
-    cfg <- hvtiRutilities::study_config(start = root)
-    .manifest_find(root, source = basename(hvtiRutilities::built_path(cfg, dataset)))
-  }, error = function(e) NULL)
+  # HVTI_DATA = "working" makes read_built() read the source file instead of the
+  # registered version (hvtiRutilities' .hvti_working_default(), which refuses any
+  # other non-empty value). The box then names that file, never the version.
+  mode <- Sys.getenv("HVTI_DATA", "")
+  if (nzchar(mode) && !identical(mode, "working")) return(NULL)
+  source <- tryCatch(basename(hvtiRutilities::built_path(hvtiRutilities::study_config(start = root), dataset)),
+                     error = function(e) NULL)
+  if (identical(mode, "working")) {
+    return(list(name = dataset, kind = "data", version_file = source, working = TRUE))
+  }
+  found <- if (!is.null(source)) tryCatch(.manifest_find(root, source = source), error = function(e) NULL)
   c(list(name = dataset, kind = "data", how = "dated"), found)
 }
 
@@ -217,7 +224,8 @@
     "data: see About this run"
   } else {
     paste0(dataset$kind, " `", dataset$name, "`", if (!is.null(dataset$version_file)) paste0(" `", dataset$version_file, "`"),
-           if (!is.null(dataset$registered)) paste0(", ", dataset$how, " ", dataset$registered))
+           if (!is.null(dataset$registered)) paste0(", ", dataset$how, " ", dataset$registered),
+           if (isTRUE(dataset$working)) ", working read, not a registered version")
   }
   who <- paste0("rendered by ", .md_text(.who(run$user, run$user_name)), " on ", .md_text(run$host))
   line <- paste(c(state, data, who, paste0("hvtiRtemplates ", .package_version())), collapse = " \u00b7 ")

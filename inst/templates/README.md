@@ -619,8 +619,11 @@ Every report says four things about the run that made it.
   manifest does not record, so a version registered on the 23rd from a file
   dated the 21st reads `dated 2026-10-21`. The box is printed
   before the job reads its data, so its dataset is the one the job's file
-  declares (`DATASET <- "name"`) or, failing that, the study dataset, `built`;
-  the table below is the record of what was read.
+  declares (`DATASET <- "name"` or `ANALYSIS_SET <- "name"`); when the file
+  does not settle it, the box says so and points to the table below, which is
+  the record of what was read. On a working read (`HVTI_DATA=working`, allowed
+  in datasets and descriptive jobs) the box names the working source file,
+  such as `built.csv`, and says it is a working read, not a registered version.
 - **An "About this run" table as the last section,** unnumbered so it moves no
   figure or table number: the run (start and end with time zone, duration,
   status, user, host), the job (file, template, subject, type, hvtiRtemplates
