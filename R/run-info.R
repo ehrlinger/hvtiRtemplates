@@ -30,6 +30,31 @@
   list(user = pick("HVTI_RUN_USER", "user"), host = pick("HVTI_RUN_HOST", "nodename"))
 }
 
+# The name a report shows beside a login, from the group's people file:
+#   people:
+#     <login>: <First Last>
+# HVTI_PEOPLE names the file, and the shared one on the server is read when it
+# is unset. The names live there, never in this package. A login the file lacks,
+# or no file, gives NULL and the report shows the login alone; a file that
+# cannot be read warns, because a render should not stop for a display name.
+.people_file <- "/studies/general/administrative/hvti_people.yml"
+.person_name <- function(user) {
+  if (length(user) != 1L || is.na(user) || !nzchar(user)) return(NULL)
+  path <- Sys.getenv("HVTI_PEOPLE", .people_file)
+  if (!nzchar(path) || !file.exists(path)) return(NULL)
+  people <- tryCatch(yaml::read_yaml(path)$people, error = function(e) {
+    warning("The people file ", path, " could not be read, so the report shows the login: ",
+            conditionMessage(e), call. = FALSE)
+    NULL
+  })
+  if (!is.list(people) || is.null(names(people))) return(NULL)
+  name <- people[[match(tolower(user), tolower(names(people)))[1L]]]
+  if (is.character(name) && length(name) == 1L && !is.na(name) && nzchar(name)) name else NULL
+}
+
+# "First Last (login)" when the people file names the login, else the login.
+.who <- function(user, name) if (is.null(name)) user else paste0(name, " (", user, ")")
+
 .package_version <- function() as.character(utils::packageVersion("hvtiRtemplates"))
 
 # Quarto knits through an intermediate (.rmarkdown), so the name is put back to .qmd.
@@ -45,7 +70,7 @@
   who <- .run_identity()
   list(
     started = started, file = .job_file_name(input), subject = subject, type = type,
-    user = who$user, host = who$host,
+    user = who$user, user_name = .person_name(who$user), host = who$host,
     markers = as.integer(markers), skipped = sum(kinds == "skip"), stopped = any(kinds == "stop"),
     state = if (markers > 0L || length(kinds) > 0L) "draft" else "final"
   )
@@ -191,7 +216,7 @@
     paste0(dataset$kind, " `", dataset$name, "`", if (!is.null(dataset$version_file)) paste0(" `", dataset$version_file, "`"),
            if (!is.null(dataset$registered)) paste0(", ", dataset$how, " ", dataset$registered))
   }
-  who <- paste0("rendered by ", .md_text(run$user), " on ", .md_text(run$host))
+  who <- paste0("rendered by ", .md_text(.who(run$user, run$user_name)), " on ", .md_text(run$host))
   line <- paste(c(state, data, who, paste0("hvtiRtemplates ", .package_version())), collapse = " \u00b7 ")
   paste0("\n::: {.callout-note appearance=\"simple\" icon=false}\n", line, "\n:::\n\n")
 }
@@ -242,7 +267,7 @@
     duration_seconds = round(as.numeric(difftime(ended, run$started, units = "secs")), 1),
     status = run$state, open_markers = run$markers, skipped_chunks = run$skipped,
     stopped_early = run$stopped, draft_reasons = if (length(run$reasons)) as.list(run$reasons),
-    user = run$user, host = run$host
+    user = run$user, user_name = run$user_name, host = run$host
   ))
 }
 
@@ -386,7 +411,7 @@
   rows <- c(
     group_rows("Run", list(c("Started", .clock(facts$start, facts$time_zone)), c("Ended", .clock(facts$end, facts$time_zone)),
                            c("Duration", .fmt_duration(facts$duration_seconds)), c("Status", status),
-                           c("Rendered by", facts$user), c("Host", facts$host))),
+                           c("Rendered by", .who(facts$user, facts$user_name)), c("Host", facts$host))),
     group_rows("Job", list(c("File", j$file), c("Template", j$template), c("Subject", j$subject), c("Type", j$type),
                            c("hvtiRtemplates", j$hvtiRtemplates))),
     unlist(lapply(facts$datasets, function(d) {
