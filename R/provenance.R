@@ -634,6 +634,22 @@
   lineage
 }
 
+# A hand-off whose rows came from the working file is a draft's result. A final render must
+# not carry it one job removed, so it stops and names the way out: register, then rerender
+# upstream. A lineage written before records carried `working` reads as registered (design
+# 2026-10-23, section 7.2).
+.check_handoff_working <- function(lineage, path, rebuild) {
+  working <- Filter(function(r) isTRUE(r$working), lineage$data)
+  if (!length(working)) return(invisible(lineage))
+  file <- basename(working[[1L]]$path)
+  if (.strict_render()) {
+    stop(basename(path), " was saved from the working ", file, ", not a registered version. Register the build with ",
+         "hvtiRutilities::update_manifest(), render ", rebuild, " again, then render this one.", call. = FALSE)
+  }
+  .run_mark_draft(paste0("it read ", basename(path), ", which was saved from the unregistered ", file))
+  invisible(lineage)
+}
+
 .read_handoff <- function(path, role, cfg, rebuild) {
   before <- hvtiRutilities::provenance_artifact(path, role = role, cfg = cfg)
   value <- readRDS(path)
@@ -642,6 +658,7 @@
     stop("The artifact changed while it was read; discard this render and read it again.", call. = FALSE)
   }
   lineage <- .validate_handoff_lineage(value, path, rebuild)
+  .check_handoff_working(lineage, path, rebuild)
   .note_handoff(before, lineage)
   list(value = value, record = before, lineage = lineage)
 }
@@ -660,6 +677,7 @@
          call. = FALSE)
   }
   lineage <- .validate_handoff_lineage(value, path, "the bootstrap runner")
+  .check_handoff_working(lineage, path, "the bootstrap runner")
   .note_handoff(before, lineage)
   list(value = value, record = before, lineage = lineage)
 }

@@ -923,3 +923,49 @@ test_that("a managed standalone render without configured hooks fails", {
   expect_error(render_provenance_job(job, root), "quarto CLI")
   expect_false(file.exists(file.path(root, "cohort-standalone-dc-general.provenance.json")))
 })
+
+working_lineage <- function(working) {
+  rec <- list(dataset = "study", path = "datasets/built.rds", role = "analysis", bytes = 1, mtime = "t", sha256 = "s")
+  if (working) rec$working <- TRUE
+  list(data = list(rec), artifacts = list(), analysis = NULL, cohort = NULL)
+}
+
+test_that("a final render refuses a hand-off saved from working data", {
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "1")
+  expect_error(hvtiRtemplates:::.check_handoff_working(working_lineage(TRUE), "hz.rds", "the hz job"),
+               "hz.rds was saved from the working built.rds")
+  expect_error(hvtiRtemplates:::.check_handoff_working(working_lineage(TRUE), "hz.rds", "the hz job"),
+               "render the hz job again")
+})
+
+test_that("a draft reads it and becomes a draft", {
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "")
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  .run_state$draft_reasons <- character()
+  expect_no_error(hvtiRtemplates:::.check_handoff_working(working_lineage(TRUE), "hz.rds", "the hz job"))
+  expect_match(.run_state$draft_reasons, "hz.rds", fixed = TRUE)
+})
+
+test_that("a hand-off with no working field reads as registered, final or not", {
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "1")
+  expect_no_error(hvtiRtemplates:::.check_handoff_working(working_lineage(FALSE), "hz.rds", "the hz job"))
+})
+
+test_that("a saved working hand-off is refused when read back in a final render and drafts a draft one", {
+  root <- rf_study()
+  cfg <- hvtiRutilities::study_config(root)
+  path <- file.path(hvtiRutilities::study_dir("estimates", root), "working-handoff.rds")
+  saveRDS(hvtiRtemplates:::.attach_handoff_lineage(list(), data = working_lineage(TRUE)$data), path)
+
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "1")
+  expect_error(hvtiRtemplates:::.read_handoff(path, "model", cfg, "the hz job"),
+               "working-handoff.rds was saved from the working built.rds")
+
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "")
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  .run_state$draft_reasons <- character()
+  expect_no_error(hvtiRtemplates:::.read_handoff(path, "model", cfg, "the hz job"))
+  expect_match(.run_state$draft_reasons, "working-handoff.rds", fixed = TRUE)
+})
