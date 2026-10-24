@@ -50,6 +50,9 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   groups <- grep("^GROUPS <- list\\($", lines)
   lines <- c(lines[seq_len(groups)], '  Demography = c("age", "female", "race", "redo"),',
              '  Clinical = c("creat", "nyha")', ")", lines[-seq_len(groups + 3L)])
+  # The study's table labels and level text, read only when the table is drawn.
+  writeLines("creat: \"Creatinine (mg/dL)\"", file.path(root, "table_labels.yml"))
+  writeLines(c("nyha:", "  1: I", "  2: II", "  3: III", "  4: IV"), file.path(root, "value_labels.yml"))
   # Worked markers, as helper-rm.R does, so the render is the same draft or final.
   writeLines(gsub("EDIT:", "REVIEWED:", lines, fixed = TRUE), job)
 
@@ -83,4 +86,14 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   expect_identical(nrow(hvtiRtables::hv_check_docx(docx, style = "manuscript")), 0L)
   doc <- officer::docx_summary(officer::read_docx(docx))
   expect_identical(doc$text[doc$content_type == "paragraph"][[1L]], "Table 1. Patient characteristics")
+  cells <- doc$text[doc$content_type == "table cell"]
+  expect_true(all(c("Creatinine (mg/dL)", "I", "II", "III", "IV") %in% cells))
+  # The report says what it relabelled, and the file what built it.
+  expect_match(html, "The labels and levels this table prints in place of the dataset", fixed = TRUE)
+  expect_match(html, "table_labels.yml", fixed = TRUE)
+  props <- officer::doc_properties(officer::read_docx(docx))
+  expect_match(props$value[props$tag == "hvti_job"], "[.]qmd$")
+  expect_identical(props$value[props$tag == "hvti_status"], "final")
+  expect_match(props$value[props$tag == "hvti_hvtiRtemplates"], as.character(utils::packageVersion("hvtiRtemplates")),
+               fixed = TRUE)
 })
