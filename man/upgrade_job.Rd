@@ -87,6 +87,12 @@ own folder is left holding the job, and the same job can be upgraded again
 with nothing moved aside: each upgrade adds its own pair. A pair whose
 stamp is already used, from an upgrade in the same second, takes a shared
 \code{-2}, \code{-3} suffix after the stamp.
+
+An upgrade before version 1.5.1 left its pair beside the job instead, as
+\code{<job>.qmd.pre-upgrade} and \code{<job>-upgrade.md}. The next upgrade
+moves such a pair into \code{_archive} under the same names, stamped with
+the time of the upgrade that wrote it, read from the report. A copy renamed
+by hand, such as \code{<job>.qmd.pre-upgrade-20261020}, is left where it is.
 }
 
 \examples{

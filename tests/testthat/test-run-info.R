@@ -30,6 +30,49 @@ test_that("the run is stamped with the user and host, which two environment vari
   })
 })
 
+# A people file naming one login, as the group's shared one does.
+local_people <- function(lines, .local_envir = parent.frame()) {
+  path <- withr::local_tempfile(fileext = ".yml", .local_envir = .local_envir)
+  writeLines(lines, path)
+  withr::local_envvar(HVTI_PEOPLE = path, .local_envir = .local_envir)
+  path
+}
+
+test_that("a login in the people file is shown as its name with the login, and kept as the login", {
+  withr::local_envvar(HVTI_RUN_USER = "tester", HVTI_RUN_HOST = "testhost")
+  local_people(c("people:", "  Tester: Pat Example"))
+  rf <- run_fixture("DATASET <- \"built\"")
+  expect_identical(rf$run$user, "tester")
+  expect_identical(rf$run$user_name, "Pat Example")
+  box <- grep("^\\*\\*final\\*\\*", rf$out, value = TRUE)
+  expect_match(box, "rendered by Pat Example (tester) on testhost", fixed = TRUE)
+  facts <- run_facts(rf)
+  expect_identical(facts$user, "tester")
+  expect_identical(facts$user_name, "Pat Example")
+  table <- hvtiRtemplates:::.run_table(facts)
+  expect_true(any(grepl("Rendered by.*Pat Example \\(tester\\)", table)))
+})
+
+test_that("a login the people file lacks, or no people file, shows the login alone", {
+  withr::local_envvar(HVTI_RUN_USER = "tester", HVTI_RUN_HOST = "testhost")
+  local_people(c("people:", "  someone: Somebody Else"))
+  expect_null(hvtiRtemplates:::.person_name("tester"))
+  withr::local_envvar(HVTI_PEOPLE = file.path(tempdir(), "no-such-people.yml"))
+  expect_null(hvtiRtemplates:::.person_name("tester"))
+  rf <- run_fixture("DATASET <- \"built\"")
+  expect_null(rf$run$user_name)
+  expect_match(grep("^\\*\\*final\\*\\*", rf$out, value = TRUE), "rendered by tester on testhost", fixed = TRUE)
+  expect_null(run_facts(rf)$user_name)
+})
+
+test_that("a people file that cannot be read warns and shows the login", {
+  local_people(c("people: [unclosed"))
+  expect_warning(name <- hvtiRtemplates:::.person_name("tester"), "people file")
+  expect_null(name)
+  local_people(c("people:", "  tester: [a, list]"))
+  expect_null(hvtiRtemplates:::.person_name("tester"))
+})
+
 test_that("the top box names final or draft, the dataset version and its date, who ran it, and the package", {
   withr::local_envvar(HVTI_RUN_USER = "tester", HVTI_RUN_HOST = "testhost")
   rf <- run_fixture("DATASET <- \"built\"")
