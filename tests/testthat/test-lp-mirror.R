@@ -25,8 +25,11 @@ test_that("the job's package guards ask for the versions DESCRIPTION suggests", 
     minimum <- sub(paste0(".*", pkg, " \\(>= ([0-9.]+)\\).*"), "\\1", suggests)
     guard <- regmatches(src, regexpr(paste0("packageVersion[(]\"", pkg, "\"[)] < \"[0-9.]+\""), src))
     expect_length(guard, 1L)
-    expect_identical(sub('.*< "([0-9.]+)"$', "\\1", guard), minimum, info = pkg)
-    expect_true(any(grepl(paste0(pkg, " >= ", minimum), src, fixed = TRUE)), info = pkg)
+    # DESCRIPTION's floor is the highest any template asks for (test-templates.R),
+    # so a guard may ask for less, never more, and its message names its own.
+    floor <- sub('.*< "([0-9.]+)"$', "\\1", guard)
+    expect_true(package_version(floor) <= package_version(minimum), info = pkg)
+    expect_true(any(grepl(paste0(pkg, " >= ", floor), src, fixed = TRUE)), info = pkg)
   }
 })
 

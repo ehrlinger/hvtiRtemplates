@@ -503,16 +503,28 @@ close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE
 # the suspicious rows themselves.
 if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
                                               "(study-choices in a job made before that rename).", call. = FALSE)
-if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLORS) == 3L &&
-                            setequal(names(COLORS), c("alive", "dead", "event")))) {
-  stop("COLORS must be NULL or name exactly alive, dead and event.", call. = FALSE)
+if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && all(names(COLORS) %in% c("alive", "dead", "event")) &&
+                            sum(names(COLORS) == "alive") == 1L && sum(names(COLORS) == "dead") == 1L &&
+                            any(names(COLORS) == "event"))) {
+  stop("COLORS must be NULL, or name alive and dead once each and event once per competing event.", call. = FALSE)
 }
-# Dead or Death is the event and Alive or No event the censored level, so a
-# non-fatal event takes the house rule's next color, green.
+# A panel draws at most four competing events: each needs a shape of its own,
+# and the house palette names its colors only up to four.
+.n_events <- vapply(EVENTS, function(e) if (is.list(e)) length(e$event) else 0L, integer(1L))
+if (any(.n_events > 4L)) {
+  stop("An EVENTS entry lists ", max(.n_events), " events; a panel draws at most four.", call. = FALSE)
+}
+if (!is.null(COLORS) && any(.n_events > sum(names(COLORS) == "event"))) {
+  stop("COLORS names ", sum(names(COLORS) == "event"), " event color(s), and an EVENTS entry lists ",
+       max(.n_events), " events. Repeat event in COLORS, one color per event.", call. = FALSE)
+}
+# Dead or Death is the event and Alive or No event the censored level, so
+# non-fatal events take the house rule's next colors, green first. With COLORS
+# set, the event colors are taken in order, one per event in the panel.
 status_colors <- function(levels, labels = stats::setNames(levels, levels)) {
   if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event"), labels = labels))
-  keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
-  scale_color_manual(values = stats::setNames(COLORS[keys], levels), labels = labels)
+  events <- unname(COLORS[names(COLORS) == "event"])[seq_len(length(levels) - 2L)]
+  scale_color_manual(values = stats::setNames(c(COLORS[["alive"]], events, COLORS[["dead"]]), levels), labels = labels)
 }
 # The statistics dc-gfup's follow-up table shows, total follow-up (sum) included.
 .followup_stats <- c("n", "nmiss", "mean", "std", "min", "p15", "median", "p75", "p85", "p90", "max", "sum")
@@ -556,12 +568,19 @@ for (i in seq_len(nrow(fp$data))) {
       scale_shape_manual(values = c(Alive = 1, Dead = 4))
     .key <- "Blue open circles mark patients alive and vermillion crosses patients who died"
   } else {
-    levels <- c("No event", row$title, "Death")
+    # The levels are the panel's own: "No event", one per event in the order
+    # EVENTS lists them, and "Death".
+    levels <- fp$tables$panels[[nm]]$meta$event_levels
+    k <- length(levels) - 2L
     p <- plots[[nm]] +
       status_colors(levels) +
-      scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
-    .key <- paste0("Blue open circles mark patients without the event, green open triangles patients with the event, ",
-                   "and vermillion crosses patients who died")
+      scale_shape_manual(values = stats::setNames(c(1, c(2, 0, 5, 6)[seq_len(k)], 4), levels))
+    .with <- if (k == 1L) "patients with the event" else paste("patients whose first event was", levels[1L + seq_len(k)])
+    .key <- paste0("Blue open circles mark patients without ", if (k == 1L) "the event" else "an event", ", ",
+                   paste(c("green", "reddish purple", "olive", "black")[seq_len(k)],
+                         c("open triangles", "open squares", "open diamonds", "open inverted triangles")[seq_len(k)],
+                         .with, collapse = ", "),
+                   ", and vermillion crosses patients who died")
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript(base_size = 12)

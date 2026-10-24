@@ -57,8 +57,8 @@ if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
   stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles; ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
-  stop("This job needs hvtiPlotR >= 2.8.0 for hv_followup_panels() and scale_color_hv(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.17") {
+  stop("This job needs hvtiPlotR >= 2.8.17 for hv_followup_panels()'s competing events and echo layer; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -169,22 +169,38 @@ PANELS <- list(
   all = list(status = "dead", time = "iv_dead", title = "All deaths")
 )
 
-# EDIT: optional event panels, one entry per non-fatal event. `event` and
-# `time` are the event's indicator and interval; `death` and `death_time` the
-# death it competes with. A flagged event counts only when it comes strictly
-# before death, so ties go to death. list() draws none. For example
+# EDIT: optional event panels, one entry per panel. `event` and `time` are the
+# event's indicator and interval; `death` and `death_time` the death it
+# competes with. A flagged event counts only when it comes strictly before
+# death, so ties go to death. list() draws none. For example
 #   reop = list(event = "ev_reop", time = "iv_reop", death = "dead",
 #               death_time = "iv_dead", label = "Reoperation")
+# Competing non-fatal events share one panel when `event`, `time` and `label`
+# are vectors, one element per event and at most four; `death` and
+# `death_time` stay single. Each patient shows the earliest event before death,
+# and a tie between two events goes to the one listed first, so list the event
+# that should win a tie first:
+#   nonfatal = list(event = c("ev_reop", "ev_stroke"), time = c("iv_reop", "iv_stroke"),
+#                   death = "dead", death_time = "iv_dead", label = c("Reoperation", "Stroke"))
 EVENTS <- list()
+
+# EDIT: NULL draws no echoes. Name the column holding each patient's echo
+# interval in years, such as "iv_echo" from a JOIN reduced to one echo per
+# patient, to mark it on every panel with a gray tick. A patient with no echo
+# (NA) gets no tick.
+ECHO <- NULL
 
 # EDIT: point transparency. 0.5 lets a dense cohort read as a distribution
 # rather than a blob; raise it for a small one.
 ALPHA <- 0.5
 
 # EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
-# vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
-# all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
-# event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
+# vermillion, alive blue and non-fatal events green, then reddish purple, olive
+# and black, all colorblind safe. Name alive, dead and event to choose your own;
+# c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A") is ColorBrewer
+# Set1, what these jobs drew before 1.2.3. For competing events, repeat event,
+# one color per event in the order EVENTS lists them, as many as the largest
+# panel has: c(alive = ..., dead = ..., event = ..., event = ...).
 # Each figure caption names these colors, so choosing your own means naming them
 # in the caption key too, where the figures are drawn.
 COLORS <- NULL
@@ -350,7 +366,8 @@ itself.
 panel_counts <- list()
 fp <- tryCatch(
   hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
-                                panels = PANELS, events = EVENTS, close_date = CLOSE_DATE),
+                                panels = PANELS, events = EVENTS, close_date = CLOSE_DATE,
+                                echo_time_col = ECHO),
   error = function(e) e
 )
 figure_drawn <- !inherits(fp, "error")
@@ -449,6 +466,9 @@ knitr::kable(potential_table, row.names = FALSE, digits = 1)
 A point below the diagonal is follow-up short of what the close date allows. A
 dead patient's point is where the death was recorded, so it is expected below
 the line; it is the **blue** points drifting below it that need an explanation.
+When `ECHO` names a column, a gray tick marks each patient's echo, so a
+patient followed by echo but not by the follow-up record shows as a tick above
+their point.
 
 ```{r}
 #| label: figures
@@ -478,16 +498,28 @@ figure_link <- function(file) {
 }
 if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
                                               "(study-choices in a job made before that rename).", call. = FALSE)
-if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLORS) == 3L &&
-                            setequal(names(COLORS), c("alive", "dead", "event")))) {
-  stop("COLORS must be NULL or name exactly alive, dead and event.", call. = FALSE)
+if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && all(names(COLORS) %in% c("alive", "dead", "event")) &&
+                            sum(names(COLORS) == "alive") == 1L && sum(names(COLORS) == "dead") == 1L &&
+                            any(names(COLORS) == "event"))) {
+  stop("COLORS must be NULL, or name alive and dead once each and event once per competing event.", call. = FALSE)
 }
-# Dead or Death is the event and Alive or No event the censored level, so a
-# non-fatal event takes the house rule's next color, green.
+# A panel draws at most four competing events: each needs a shape of its own,
+# and the house palette names its colors only up to four.
+.n_events <- vapply(EVENTS, function(e) if (is.list(e)) length(e$event) else 0L, integer(1L))
+if (any(.n_events > 4L)) {
+  stop("An EVENTS entry lists ", max(.n_events), " events; a panel draws at most four.", call. = FALSE)
+}
+if (!is.null(COLORS) && any(.n_events > sum(names(COLORS) == "event"))) {
+  stop("COLORS names ", sum(names(COLORS) == "event"), " event color(s), and an EVENTS entry lists ",
+       max(.n_events), " events. Repeat event in COLORS, one color per event.", call. = FALSE)
+}
+# Dead or Death is the event and Alive or No event the censored level, so
+# non-fatal events take the house rule's next colors, green first. With COLORS
+# set, the event colors are taken in order, one per event in the panel.
 status_colors <- function(levels, labels = stats::setNames(levels, levels)) {
   if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event"), labels = labels))
-  keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
-  scale_color_manual(values = stats::setNames(COLORS[keys], levels), labels = labels)
+  events <- unname(COLORS[names(COLORS) == "event"])[seq_len(length(levels) - 2L)]
+  scale_color_manual(values = stats::setNames(c(COLORS[["alive"]], events, COLORS[["dead"]]), levels), labels = labels)
 }
 # A panel's optional `levels` names its two groups, censored first, for a panel
 # whose 1/0 status is not a death.
@@ -525,7 +557,9 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   nm <- row$panel
   panel_counts[[nm]] <- list(drawn = row$n_drawn, excluded = row$n_excluded)
   cat("\n### ", row$title, "\n\n", row$n_drawn, " patients drawn; ", row$n_excluded,
-      " missing a column this panel needs.\n\n", sep = "")
+      " missing a column this panel needs.", sep = "")
+  if (!is.null(ECHO)) cat(" ", fp$tables$panels[[nm]]$meta$n_echo, " with an echo marked.", sep = "")
+  cat("\n\n")
   # The caption key names the house colors that COLORS <- NULL draws and the
   # shapes set here, so a study that sets COLORS renames them in .key below.
   if (row$type == "followup") {
@@ -541,13 +575,21 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
       paste0("Blue open circles mark ", .lv[["Alive"]], " and vermillion crosses ", .lv[["Dead"]])
     }
   } else {
-    levels <- c("No event", row$title, "Death")
+    # The levels are the panel's own: "No event", one per event in the order
+    # EVENTS lists them, and "Death".
+    levels <- fp$tables$panels[[nm]]$meta$event_levels
+    k <- length(levels) - 2L
     p <- plots[[nm]] +
       status_colors(levels) +
-      scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
-    .key <- paste0("Blue open circles mark patients without the event, green open triangles patients with the event, ",
-                   "and vermillion crosses patients who died")
+      scale_shape_manual(values = stats::setNames(c(1, c(2, 0, 5, 6)[seq_len(k)], 4), levels))
+    .with <- if (k == 1L) "patients with the event" else paste("patients whose first event was", levels[1L + seq_len(k)])
+    .key <- paste0("Blue open circles mark patients without ", if (k == 1L) "the event" else "an event", ", ",
+                   paste(c("green", "reddish purple", "olive", "black")[seq_len(k)],
+                         c("open triangles", "open squares", "open diamonds", "open inverted triangles")[seq_len(k)],
+                         .with, collapse = ", "),
+                   ", and vermillion crosses patients who died")
   }
+  if (!is.null(ECHO)) .key <- paste0(.key, ", gray ticks the follow-up at each patient's echo,")
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript(base_size = 12)
   file <- save_figure(p, paste0("dc-gfup-", nm), linked = TRUE)

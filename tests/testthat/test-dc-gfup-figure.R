@@ -163,7 +163,7 @@ test_dc_gfup_window <- function(close_date) {
   start <- match("#| label: window", lines)
   end <- start + match("```", lines[-seq_len(start)])
   env <- list2env(list(d = hvtiPlotR::sample_goodness_followup_data(n = 60, seed = 3), OPYRS = "iv_opyrs",
-                       ORIGIN_YEAR = 1990, CLOSE_DATE = close_date, EVENTS = list(),
+                       ORIGIN_YEAR = 1990, CLOSE_DATE = close_date, EVENTS = list(), ECHO = NULL,
                        PANELS = list(all = list(status = "dead", time = "iv_dead"))))
   suppressWarnings(eval(parse(text = lines[seq.int(start + 1L, end - 1L)]), env))
   env$close_source
@@ -173,4 +173,103 @@ test_that("dc-gfup reports the close date's source by the job's own edit point",
   skip_if_not_installed("hvtiPlotR", "2.7.17")
   expect_identical(test_dc_gfup_window(as.Date("2023-01-01")), "set in CLOSE_DATE")
   expect_match(test_dc_gfup_window(NULL), "estimated")
+})
+
+# The window and figures chunks over hvtiPlotR's sample data, with a second
+# non-fatal event and an echo column derived from it, as a render would run them
+# after its data step. save_figure() keeps each panel instead of writing it.
+# Returns the environment and everything the chunks printed.
+gfup_drawn <- function(events, echo = NULL, colors = NULL) {
+  withr::local_package("ggplot2")
+  withr::local_package("hvtiPlotR")
+  # Each child chunk is printed as written, so its caption can be read: knitr
+  # outside a render drops Quarto's fig-cap.
+  testthat::local_mocked_bindings(knit_child = function(text, ...) paste(text, collapse = "\n"), .package = "knitr")
+  lines <- readLines(template_path("dc", "gfup"), warn = FALSE)
+  chunk <- function(label) {
+    start <- match(paste0("#| label: ", label), lines)
+    end <- start + match("```", lines[-seq_len(start)])
+    parse(text = lines[seq.int(start + 1L, end - 1L)])
+  }
+  d <- hvtiPlotR::sample_goodness_followup_data(n = 80, seed = 5)
+  d$ev_stroke <- !d$ev_event & seq_len(nrow(d)) %% 4L == 0L
+  # Every fifth patient has no echo: NA draws no tick and raises nothing.
+  d$iv_echo <- ifelse(seq_len(nrow(d)) %% 5L == 0L, NA, d$iv_dead * 0.6)
+  saved <- list()
+  env <- new.env(parent = globalenv())
+  list2env(list(d = d, EVENT = "dead", OPYRS = "iv_opyrs", ORIGIN_YEAR = 1990, CLOSE_DATE = NULL, ECHO = echo, EVENTS = events,
+                PANELS = list(all = list(status = "dead", time = "iv_dead", title = "All deaths")),
+                ALPHA = 0.5, COLORS = colors, .in = NULL,
+                save_figure = function(plot, name, ...) {
+                  saved[[name]] <<- plot
+                  file.path(tempdir(), paste0(name, ".png"))
+                }), env)
+  out <- utils::capture.output(for (label in c("window", "figures")) eval(chunk(label), env))
+  env$saved <- saved
+  list(env = env, out = paste(out, collapse = "\n"))
+}
+
+# A built layer's colors; ggplot_build() names the column in British spelling.
+drawn_colors <- function(layer) unlist(lapply(list(layer), `[[`, "colour"))
+
+two_events <- list(nonfatal = list(event = c("ev_event", "ev_stroke"), time = c("iv_event", "iv_event"),
+                                   death = "dead", death_time = "iv_dead", label = c("Reoperation", "Stroke")))
+
+test_that("dc-gfup draws competing events in one panel, each in its own house color and shape", {
+  skip_if_not_installed("hvtiPlotR", "2.8.17")
+  r <- gfup_drawn(two_events)
+  expect_true(r$env$figure_drawn)
+  expect_named(r$env$saved, c("dc-gfup-all", "dc-gfup-nonfatal"))
+  expect_match(r$out, "### Reoperation, Stroke", fixed = TRUE)
+  expect_match(r$out, paste0("Blue open circles mark patients without an event, green open triangles patients whose ",
+                             "first event was Reoperation, reddish purple open squares patients whose first event ",
+                             "was Stroke, and vermillion crosses patients who died and the dashed"), fixed = TRUE)
+  expect_no_match(r$out, "gray ticks", fixed = TRUE)
+  built <- ggplot2::ggplot_build(r$env$saved[["dc-gfup-nonfatal"]])
+  points <- built$data[[1L]]
+  levels <- c("No event", "Reoperation", "Stroke", "Death")
+  house <- hvtiPlotR::hv_role_palette(levels, event = "Death", censored = "No event")
+  # The caption names these colors, so they are pinned here.
+  expect_identical(unname(house), c("#0072B2", "#009E73", "#CC79A7", "#D55E00"))
+  # Green, reddish purple, olive and black, up to the four events a panel draws.
+  four <- hvtiPlotR::hv_role_palette(c("No event", LETTERS[1:4], "Death"), event = "Death", censored = "No event")
+  expect_identical(unname(four[2:5]), c("#009E73", "#CC79A7", "#9D952B", "#000000"))
+  expect_setequal(unique(drawn_colors(points)), house)
+  expect_setequal(unique(points$shape), c(1, 2, 0, 4))
+})
+
+test_that("dc-gfup marks each patient's echo with a gray tick, and an NA echo with none", {
+  skip_if_not_installed("hvtiPlotR", "2.8.17")
+  expect_no_warning(r <- gfup_drawn(two_events, echo = "iv_echo"))
+  expect_match(r$out, "64 with an echo marked.", fixed = TRUE)
+  expect_match(r$out, "vermillion crosses patients who died, gray ticks the follow-up at each patient's echo, and the dashed",
+               fixed = TRUE)
+  for (p in r$env$saved) {
+    built <- ggplot2::ggplot_build(p)
+    ticks <- Filter(function(layer) "shape" %in% names(layer) && all(drawn_colors(layer) == "gray40"), built$data)
+    expect_length(ticks, 1L)
+    expect_identical(nrow(ticks[[1L]]), 64L)
+  }
+})
+
+test_that("dc-gfup takes COLORS' event colors in order, one per competing event", {
+  skip_if_not_installed("hvtiPlotR", "2.8.17")
+  own <- c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A", event = "#984EA3")
+  r <- gfup_drawn(two_events, colors = own)
+  built <- ggplot2::ggplot_build(r$env$saved[["dc-gfup-nonfatal"]])
+  expect_setequal(unique(drawn_colors(built$data[[1L]])), unname(own))
+  expect_error(gfup_drawn(two_events, colors = own[1:3]), "COLORS names 1 event color(s)", fixed = TRUE)
+  expect_error(gfup_drawn(two_events, colors = c(alive = "blue", event = "green")), "COLORS must be NULL")
+  five <- list(many = list(event = rep("ev_event", 5L), time = rep("iv_event", 5L), death = "dead",
+                           death_time = "iv_dead", label = LETTERS[1:5]))
+  expect_error(gfup_drawn(five), "a panel draws at most four", fixed = TRUE)
+})
+
+test_that("dc-gfup's single-event caption is unchanged by competing events", {
+  skip_if_not_installed("hvtiPlotR", "2.8.17")
+  one <- list(reop = list(event = "ev_event", time = "iv_event", death = "dead", death_time = "iv_dead",
+                          label = "Reoperation"))
+  r <- gfup_drawn(one)
+  expect_match(r$out, paste0("Blue open circles mark patients without the event, green open triangles patients with ",
+                             "the event, and vermillion crosses patients who died and the dashed"), fixed = TRUE)
 })
