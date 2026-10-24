@@ -1472,3 +1472,25 @@ test_that("read_job_data() records the identifiers it dropped, and why a column 
   # A column dropped by its name needs no note: the name says why.
   expect_false(any(grepl("`ssn`", notes, fixed = TRUE)))
 })
+
+test_that("a working read is a draft, and the data table says so", {
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  .run_state$draft_reasons <- character()
+  signal <- function() {
+    message(structure(class = c("hvtiRutilities_working_read", "message", "condition"),
+                      list(message = "Read the working built.rds, not a registered version.\n", call = NULL)))
+    list(value = data.frame(ccfid = 1:2), record = list(dataset = "study", path = "datasets/built.rds"))
+  }
+  read <- .with_out_of_date_notes(.with_working_read(signal()))
+  expect_true(isTRUE(read$record$working))
+  expect_match(read$notes[[1L]], "**Unregistered data.**", fixed = TRUE)
+  expect_match(read$notes[[1L]], "update_manifest()", fixed = TRUE)
+  expect_match(.run_state$draft_reasons, "unregistered", fixed = TRUE)
+})
+
+test_that("a registered read is left as it was", {
+  read <- .with_working_read(list(value = data.frame(ccfid = 1L), record = list(dataset = "study")))
+  expect_null(read$record$working)
+  expect_null(read$notes)
+})
