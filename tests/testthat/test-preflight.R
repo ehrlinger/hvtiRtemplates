@@ -362,6 +362,19 @@ test_that("study_render refuses a live render lock with no running job, and pass
   expect_true(.check_study_render(mine, root)$ok)
 })
 
+test_that("study_render refuses a render lock held on another host and names the host", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  lock <- .provenance_lock_path(root)
+  dir.create(lock, recursive = TRUE)
+  jsonlite::write_json(list(pid = 4242L, created = "1.000000", host = "elsewhere.invalid"),
+                       file.path(lock, "owner.json"), auto_unbox = TRUE)
+  ck <- .check_study_render(mine, root)
+  expect_false(ck$ok)
+  expect_match(ck$message, "process 4242 on elsewhere.invalid", fixed = TRUE)
+  expect_match(ck$fix, paste("delete the directory", lock), fixed = TRUE)
+})
+
 test_that("study_render copes with a study root holding regex metacharacters", {
   root <- lock_study()
   odd <- file.path(dirname(root), "st(udy)+1")
