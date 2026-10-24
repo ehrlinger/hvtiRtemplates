@@ -275,6 +275,113 @@ test_that("upgrades within one second each keep their pair", {
                           paste0("dc.general.cohort.eda.20261023-121500", c("", "-2", "-3"), "-upgrade.md"))))
 })
 
+# The pair an upgrade before 1.5.1 left beside the job: the old job as
+# <job>.qmd.pre-upgrade and the report as <stem>-upgrade.md, written at `when`.
+legacy_pair <- function(job, when) {
+  backup <- paste0(job, ".pre-upgrade")
+  report <- sub("[.]qmd$", "-upgrade.md", job)
+  writeLines("the old job", backup)
+  writeLines("the old report", report)
+  # The old job keeps its last edit's time through the rename, a day earlier.
+  Sys.setFileTime(report, as.POSIXct(when))
+  Sys.setFileTime(backup, as.POSIXct(when) - 86400)
+  c(backup = backup, report = report)
+}
+
+test_that("an upgrade moves the pair an older upgrade left beside the job into _archive/", {
+  # The old upgrade refused to run while its pair was there, so studies hold
+  # them beside the job, and some hold hand-renamed copies made to get past it.
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  legacy <- legacy_pair(job, "2026-10-20 10:13:00")
+  hand <- paste0(job, ".pre-upgrade-20261020")
+  writeLines("an analyst's copy", hand)
+  local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
+  upgrade_job(job)
+  expect_false(any(file.exists(legacy)))
+  arch <- file.path(dirname(job), "_archive")
+  # The report's time is the old upgrade's, so the pair takes it; the old
+  # job's own time is its last edit, which file.rename() kept.
+  expect_identical(readLines(file.path(arch, "dc.general.cohort.eda.20261020-101300.pre-upgrade")), "the old job")
+  expect_identical(readLines(file.path(arch, "dc.general.cohort.eda.20261020-101300-upgrade.md")), "the old report")
+  expect_true(file.exists(file.path(arch, "dc.general.cohort.eda.20261023-121500.pre-upgrade")))
+  # A file the analyst named is theirs, and stays where they put it.
+  expect_identical(readLines(hand), "an analyst's copy")
+})
+
+test_that("a legacy pair whose archived name is taken keeps both, under a suffix", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  arch <- file.path(dirname(job), "_archive")
+  dir.create(arch)
+  writeLines("already archived", file.path(arch, "dc.general.cohort.eda.20261020-101300.pre-upgrade"))
+  legacy_pair(job, "2026-10-20 10:13:00")
+  local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
+  upgrade_job(job)
+  expect_identical(readLines(file.path(arch, "dc.general.cohort.eda.20261020-101300.pre-upgrade")),
+                   "already archived")
+  expect_identical(readLines(file.path(arch, "dc.general.cohort.eda.20261020-101300-2.pre-upgrade")), "the old job")
+  expect_identical(readLines(file.path(arch, "dc.general.cohort.eda.20261020-101300-2-upgrade.md")), "the old report")
+})
+
+test_that("a legacy pair split across a rename keeps one stamp", {
+  # An old upgrade that renamed the job left the old job under the old
+  # spelling and the report under the new; they are still one upgrade's pair.
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  legacy <- legacy_pair(job, "2026-10-20 10:13:00")
+  old_spelling <- file.path(dirname(job), "cohort-eda-dc-general.qmd.pre-upgrade")
+  file.rename(legacy[["backup"]], old_spelling)
+  local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
+  upgrade_job(job)
+  arch <- file.path(dirname(job), "_archive")
+  expect_identical(readLines(file.path(arch, "cohort-eda-dc-general.20261020-101300.pre-upgrade")), "the old job")
+  expect_identical(readLines(file.path(arch, "dc.general.cohort.eda.20261020-101300-upgrade.md")), "the old report")
+})
+
+test_that("a legacy old job without its report is archived under its own time", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  legacy <- legacy_pair(job, "2026-10-19 08:00:00")
+  unlink(legacy[["report"]])
+  local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
+  upgrade_job(job)
+  expect_identical(readLines(file.path(dirname(job), "_archive", "dc.general.cohort.eda.20261018-080000.pre-upgrade")),
+                   "the old job")
+})
+
+test_that("two legacy pairs that would share an archived name stop the upgrade before anything moves", {
+  # A job moved below its stage folder and its canonical path are both spellings
+  # of it, and their pairs have the same file names.
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  nested <- file.path(dirname(job), "nested", basename(job))
+  dir.create(dirname(nested))
+  file.rename(job, nested)
+  here <- legacy_pair(nested, "2026-10-20 10:13:00")
+  there <- legacy_pair(job, "2026-10-20 10:13:00")
+  writeLines("the canonical old job", there[["backup"]])
+  expect_error(upgrade_job(nested), "would be archived under one name", fixed = TRUE)
+  expect_identical(readLines(here[["backup"]]), "the old job")
+  expect_identical(readLines(there[["backup"]]), "the canonical old job")
+  expect_true(all(file.exists(c(here, there))))
+  expect_length(list.files(file.path(dirname(job), "_archive"), pattern = "20261020"), 0L)
+})
+
+test_that("a legacy file under an old spelling that resolves outside the study is not moved", {
+  skip_on_os("windows")
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "trends")
+  # dc-trends was dp-trends, under graphs/; make graphs/ a link out of the study.
+  outside <- withr::local_tempdir()
+  unlink(file.path(root, "graphs"), recursive = TRUE)
+  file.symlink(outside, file.path(root, "graphs"))
+  stray <- file.path(outside, "dp.trends.cohort.eda.qmd.pre-upgrade")
+  writeLines("not this study's", stray)
+  expect_error(upgrade_job(job), "resolves outside the study root", fixed = TRUE)
+  expect_identical(readLines(stray), "not this study's")
+})
+
 test_that("upgrade_job() installs the study's provenance hooks", {
   root <- migration_study_fixture()
   path <- old_rfs_job(root)
