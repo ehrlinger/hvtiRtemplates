@@ -1,7 +1,7 @@
 - `dc-tables` prints its own labels, so a manuscript table no longer carries the
   dataset's analysis labels or raw codes, and nobody edits them in Word. The
   dataset's labels are left as read; only the copy the table is drawn from is
-  relabelled. Two optional files at the study root, shared by every table job in
+  relabeled. Two optional files at the study root, shared by every table job in
   the study: `table_labels.yml` gives a variable the label its table prints, in
   the format of `labels_overrides.yml`, and `value_labels.yml` gives a coded
   column its level text (NYHA 1 to 4 as I to IV). Every other label is tidied by

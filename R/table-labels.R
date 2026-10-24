@@ -104,7 +104,7 @@
   read
 }
 
-# The data the table is drawn from, relabelled, and a data frame of what
+# The data the table is drawn from, relabeled, and a data frame of what
 # changed: variable, from, to, rule. `vars` are the columns the table shows
 # (its rows and its BY column); nothing else is touched. `rules` is TRUE for
 # every rule, FALSE for none, or the names of the rules to apply. `keep_codes`

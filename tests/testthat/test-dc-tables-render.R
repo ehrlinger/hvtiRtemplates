@@ -88,7 +88,7 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   expect_identical(doc$text[doc$content_type == "paragraph"][[1L]], "Table 1. Patient characteristics")
   cells <- doc$text[doc$content_type == "table cell"]
   expect_true(all(c("Creatinine (mg/dL)", "I", "II", "III", "IV") %in% cells))
-  # The report says what it relabelled, and the file what built it.
+  # The report says what it relabeled, and the file what built it.
   expect_match(html, "The labels and levels this table prints in place of the dataset", fixed = TRUE)
   expect_match(html, "table_labels.yml", fixed = TRUE)
   props <- officer::doc_properties(officer::read_docx(docx))

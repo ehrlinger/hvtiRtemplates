@@ -139,7 +139,7 @@ tables_chunk <- function(job, label) {
   chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)  # nolint: object_usage_linter.
 }
 
-# tbl-table draws from the relabelled copy the table-labels chunk makes, and
+# tbl-table draws from the relabeled copy the table-labels chunk makes, and
 # word-file stamps the run into the .docx, so each runs with what the chunks
 # before it leave behind, at the template's defaults where a test sets none.
 eval_table <- function(job, env) {
@@ -713,7 +713,7 @@ test_that("the Word table prints the study's table labels and levels, says what 
   eval(tables_chunk(template, "helpers"), env)
   invisible(eval_table(template, env))
   invisible(eval_word(template, env))
-  # The analysis data are untouched: only the table's copy is relabelled.
+  # The analysis data are untouched: only the table's copy is relabeled.
   expect_identical(attr(env$d$bmi, "label"), "Preoperative Body Mass Index (kg/m2)")
   expect_true(is.numeric(env$d$race_grp))
   word <- file.path(root, "documents", "cohort-eda", "dc-tables.docx")
@@ -736,7 +736,7 @@ test_that("the Word table prints the study's table labels and levels, says what 
   changes <- paste(capture.output(eval(tables_chunk(template, "table-label-changes"), env)), collapse = "\n")
   expect_match(changes, "levels White, Black, Other", fixed = TRUE)
   expect_true(all(c("table_labels.yml", "value_labels.yml", "preoperative, case, units", "coding, case") %in%
-                    env$.labelled$changes$rule))
+                    env$.labeled$changes$rule))
   # The file names the job, its state and the release that built it.
   props <- officer::doc_properties(officer::read_docx(word))
   expect_identical(props$value[props$tag == "hvti_job"], "cohort.eda.dc.tables.qmd")

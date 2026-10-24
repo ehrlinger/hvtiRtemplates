@@ -449,15 +449,15 @@ listed under the table.
 ```{r}
 #| label: table-labels
 # unnumbered: relabels the copy of the data the table is drawn from
-.labelled <- hvtiRtemplates:::.table_labels(
+.labeled <- hvtiRtemplates:::.table_labels(
   d, c(unlist(GROUPS, use.names = FALSE), BY), .root, rules = TABLE_LABEL_RULES,
   protect = c(unname(hvtiRutilities::study_abbreviations(.cfg)), names(ABBREVIATIONS)),
   keep_codes = c(CONTINUOUS, OVERRIDES$continuous)
 )
-d_table <- .labelled$data
+d_table <- .labeled$data
 # A BY given level text still names STDDIFF's treated group: GROUP_1 may be
 # its code, and a 0/1 BY's 1 is treated, as it was before the text replaced it.
-.by_levels <- .labelled$levels[[BY %||% ""]]
+.by_levels <- .labeled$levels[[BY %||% ""]]
 if (!is.null(.by_levels) && (!is.null(GROUP_1) || setequal(names(.by_levels), c("0", "1")))) {
   .treated <- if (is.null(GROUP_1)) "1" else as.character(GROUP_1)
   if (.treated %in% names(.by_levels)) GROUP_1 <- .by_levels[[.treated]]
@@ -546,12 +546,12 @@ if (length(constant_rows)) {
 #| label: table-label-changes
 #| results: asis
 # unnumbered: its child chunk carries its own label and caption
-if (nrow(.labelled$changes)) {
+if (nrow(.labeled$changes)) {
   .fence <- strrep("`", 3)
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), "#| label: tbl-table-labels",
     "#| tbl-cap: \"The labels and levels this table prints in place of the dataset's, and why\"",
-    "knitr::kable(.labelled$changes, col.names = c(\"Variable\", \"Dataset\", \"Table\", \"Rule\"))", .fence
+    "knitr::kable(.labeled$changes, col.names = c(\"Variable\", \"Dataset\", \"Table\", \"Rule\"))", .fence
   ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
