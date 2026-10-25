@@ -621,9 +621,10 @@ Every report says four things about the run that made it.
   before the job reads its data, so its dataset is the one the job's file
   declares (`DATASET <- "name"` or `ANALYSIS_SET <- "name"`); when the file
   does not settle it, the box says so and points to the table below, which is
-  the record of what was read. On a working read (`HVTI_DATA=working`, allowed
-  in datasets and descriptive jobs) the box names the working source file,
-  such as `built.csv`, and says it is a working read, not a registered version.
+  the record of what was read. On a working read (`HVTI_DATA=working`, or a
+  build with no dated version, allowed in a draft only) the box names the
+  working source file, such as `built.csv`, and says it is a working read, not
+  a registered version.
 - **An "About this run" table as the last section,** unnumbered so it moves no
   figure or table number: the run (start and end with time zone, duration,
   status, user, host), the job (file, template, subject, type, hvtiRtemplates
@@ -637,6 +638,11 @@ Every report says four things about the run that made it.
 - **The same facts in the provenance JSON,** under `run`. A dataset's version
   date is saved there as `registered`, the key it has carried since 1.3.1, so
   reports rendered before and after the label changed can be read alike.
+
+A draft may read a build that is not registered yet, and says so in its data table
+and in 'About this run'. A final render (`render_job(final = TRUE)`) reads
+registered data only. Register the build with `hvtiRutilities::update_manifest()`
+first.
 
 The user and host are the person's login name and the machine's name, and a
 report shared outside the group carries them. `HVTI_RUN_USER` and

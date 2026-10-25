@@ -3,8 +3,8 @@
 # parquet and its sidecar are the real formats. Every value is simulated.
 
 bd_skip <- function() {
-  # The job stops below 1.5.3, the first hvtiRutilities to claim its build record.
-  testthat::skip_if_not_installed("hvtiRutilities", "1.5.3")
+  # The job stops below 1.5.12, the first hvtiRutilities with declare_data() for its working file.
+  testthat::skip_if_not_installed("hvtiRutilities", "1.5.12")
   testthat::skip_if_not_installed("hvtiRdatabuild", "0.3.0")
   testthat::skip_if_not_installed("arrow")
   testthat::skip_if_not_installed("haven")

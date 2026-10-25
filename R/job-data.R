@@ -1101,7 +1101,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     notes <<- c(notes, trimws(conditionMessage(m)))
     invokeRestart("muffleMessage")
   })
-  read$notes <- unique(notes)
+  read$notes <- unique(c(read$notes, notes))
   read
 }
 
@@ -1111,7 +1111,29 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # for the job's data table, where a reader sees it beside the file the job
 # read, instead of a bare message wherever the chunk happens to print it.
 .read_registered <- function(dataset, cfg) {
-  .with_out_of_date_notes(.provenance_read(dataset, cfg, function() hvtiRutilities::read_built(cfg = cfg, dataset = dataset)))
+  .with_out_of_date_notes(.with_working_read(.provenance_read(dataset, cfg, function() {
+    hvtiRutilities::read_built(cfg = cfg, dataset = dataset)
+  })))
+}
+
+# A read of the working file, not a registered version, is a draft whatever the render
+# was asked to be. hvtiRutilities signals it as hvtiRutilities_working_read. The run is
+# marked a draft, so "About this run" opens with the notice. The data table's first note
+# says so beside the file read, and the record carries working = TRUE, so a hand-off
+# saved from these rows is refused by a final render downstream (.check_handoff_working()).
+.with_working_read <- function(read) {
+  file <- NULL
+  read <- withCallingHandlers(read, hvtiRutilities_working_read = function(m) {
+    file <<- sub("^Read the working (.+?), not a registered version.*$", "\\1", trimws(conditionMessage(m)))
+    invokeRestart("muffleMessage")
+  })
+  if (is.null(file)) return(read)
+  read$record$working <- TRUE
+  read$notes <- c(paste0("**Unregistered data.** This job read the working ", file, ", which has no registered ",
+                         "version, so every number here is a draft. Register the build with ",
+                         "hvtiRutilities::update_manifest() and render again."), read$notes)
+  .run_mark_draft(paste0("it read the working ", file, ", which is unregistered"))
+  read
 }
 
 # Checked before anything else, hvtiRdatabuild included: a new study has no

@@ -1472,3 +1472,55 @@ test_that("read_job_data() records the identifiers it dropped, and why a column 
   # A column dropped by its name needs no note: the name says why.
   expect_false(any(grepl("`ssn`", notes, fixed = TRUE)))
 })
+
+test_that("a working read is a draft, and the data table says so", {
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  .run_state$draft_reasons <- character()
+  signal <- function() {
+    message(structure(class = c("hvtiRutilities_working_read", "message", "condition"),
+                      list(message = "Read the working built.rds, not a registered version.\n", call = NULL)))
+    list(value = data.frame(ccfid = 1:2), record = list(dataset = "study", path = "datasets/built.rds"))
+  }
+  read <- .with_out_of_date_notes(.with_working_read(signal()))
+  expect_true(isTRUE(read$record$working))
+  expect_match(read$notes[[1L]], "**Unregistered data.**", fixed = TRUE)
+  expect_match(read$notes[[1L]], "update_manifest()", fixed = TRUE)
+  expect_match(.run_state$draft_reasons, "unregistered", fixed = TRUE)
+})
+
+test_that("the note names the file from the message hvtiRutilities really signals", {
+  skip_if_not(exists(".working_read_condition", asNamespace("hvtiRutilities")))
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  real <- get(".working_read_condition", asNamespace("hvtiRutilities"))
+  read <- .with_working_read({
+    message(real("built.csv"))
+    list(value = data.frame(ccfid = 1L), record = list(dataset = "study"))
+  })
+  expect_match(read$notes[[1L]], "read the working built.csv, which has no registered version", fixed = TRUE)
+})
+
+test_that("a registered read is left as it was", {
+  read <- .with_working_read(list(value = data.frame(ccfid = 1L), record = list(dataset = "study")))
+  expect_null(read$record$working)
+  expect_null(read$notes)
+})
+
+test_that("a draft ac render reads an unregistered build and says so, and a final render refuses it", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  skip_if_not_installed("hvtiRutilities", "1.5.12")
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.12")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.7.0")
+  skip_if_not_installed("patchwork")
+  html <- render_unregistered_ac()  # nolint: object_usage_linter.
+  expect_match(html, "Unregistered data.", fixed = TRUE)
+  expect_match(html, "This run ended as a draft", fixed = TRUE)
+  # The refusal is the gate's, raised by the first read: quiet = FALSE puts Quarto's message in the error.
+  utils::capture.output(
+    expect_error(render_unregistered_ac(final = TRUE, quiet = FALSE),  # nolint: object_usage_linter.
+                 "is a final render, so it can")
+  )
+})

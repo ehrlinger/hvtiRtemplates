@@ -9,7 +9,9 @@ render_job(path, final = FALSE, quiet = FALSE)
 \arguments{
 \item{path}{Character. Path to a job \code{.qmd} file.}
 
-\item{final}{Logical. \code{TRUE} for the accepted result.}
+\item{final}{Logical. \code{TRUE} for the accepted result. A final render reads registered data
+only: a job whose data, or whose upstream hand-off, came from an unregistered build stops and
+names \code{hvtiRutilities::update_manifest()}.}
 
 \item{quiet}{Logical. Passed to \code{quarto::quarto_render()}.}
 }
