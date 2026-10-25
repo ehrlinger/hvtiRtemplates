@@ -11,3 +11,10 @@ test_that(".group_colors() draws one group black and never the role colors", {
   # Factor levels are taken as text, so numeric strata keep their order.
   expect_identical(names(.group_colors(factor(c(1, 2, 10)))), c("1", "2", "10"))
 })
+
+test_that("more groups than the house colors hold fall back with a warning, not an error", {
+  many <- paste0("g", 1:8)
+  expect_warning(cols <- .group_colors(many), "more than the house colors tell apart")
+  expect_named(cols, many)
+  expect_length(unique(cols), 8L)
+})
