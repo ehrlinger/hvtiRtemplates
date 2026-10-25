@@ -34,9 +34,11 @@ PATHS=(
 #                     study-choices chunk, its test, and NEWS. Upper case only, so
 #                     prose "colours" is still caught.
 #   `[[`, "colour"    ggplot_build() names its data column colour; a test reads it.
+#   $colour           the same ggplot2 name read as a field, and a built layer's
+#                     aes_params, which ggplot2 does not rename after the layer is made.
 #   aria-labelledby   the HTML attribute, in the new-study vignette's SVG.
 #   haven_labelled, labelled::   the labelled package's class and namespace.
-ALLOW='COLOURS|`\[\[`, "colour"|aria-labelledby|haven_labelled|\blabelled::'
+ALLOW='COLOURS|`\[\[`, "colour"|\$colour\b|aria-labelledby|haven_labelled|\blabelled::'
 
 hits=$(grep -rniIE "$WORDS" "${PATHS[@]}" 2>/dev/null |
   perl -ne 'my ($loc, $text) = /^([^:]+:\d+:)(.*)$/s or next; $text =~ s/'"$ALLOW"'//g;

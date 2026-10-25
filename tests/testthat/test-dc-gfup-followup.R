@@ -124,7 +124,7 @@ test_that("a two-group panel draws and captions its own group names", {
   ))
   quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
   html <- paste(readLines(sub("[.]qmd$", ".html", s$job), warn = FALSE), collapse = "\n")
-  expect_match(html, "Blue open circles mark No repair and vermillion crosses Repair", fixed = TRUE)
+  expect_match(html, "Blue open circles mark No repair and red crosses Repair", fixed = TRUE)
   expect_match(html, "Follow-up recorded against follow-up possible", fixed = TRUE)
   # The phrase the callout prints, which the folded code does not contain.
   expect_no_match(html, "EVENT is repair", fixed = TRUE)

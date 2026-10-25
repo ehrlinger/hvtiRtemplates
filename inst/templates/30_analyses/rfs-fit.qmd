@@ -88,6 +88,10 @@ if (utils::packageVersion("ggRandomForests") < "4.0.0") {
   stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
+if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
+  stop("This job needs hvtiPlotR >= 2.7.18 for scale_color_hv(); ", utils::packageVersion("hvtiPlotR"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -348,11 +352,14 @@ save_figure(.fig, "rfs-fit-diagnostics-error")
 ```{r}
 #| label: fig-diagnostics-survival
 #| fig-cap: "Out-of-bag predicted survival, one curve per patient. Each step line is one patient's predicted survival over
-#|   follow-up, one color for patients who had the event and another for those who did not, as in the legend."
+#|   follow-up, red for patients who had the event and blue for those censored."
 # Out-of-bag predicted survival, one curve per patient.
 surv <- gg_rfsrc(forest)
 # The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.
+# Red for the event and blue for censored, as in every house figure: ggRandomForests sets no
+# scale, and ggplot's default would draw the censored patients red.
 .fig <- plot(surv) +
+  hvtiPlotR::scale_color_hv(event = "TRUE", censored = "FALSE", labels = c(`FALSE` = "Censored", `TRUE` = "Event")) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(.fig, "rfs-fit-diagnostics-survival")
 .fig

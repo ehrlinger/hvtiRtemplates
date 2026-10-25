@@ -603,6 +603,12 @@ test_that("rfs-explain draws no smooth through a predictor with few values (#167
   has_smooth <- function(p) any(vapply(p$layers, function(l) inherits(l$geom, "GeomSmooth"), logical(1L)))
   smooths <- vapply(rf_panels(env$.fig), has_smooth, logical(1L))
   expect_identical(smooths, c(FALSE, TRUE))   # celltype has no smooth, age keeps its own
+  # The smooth is black and the points take the role colors: no default blue to read as censored.
+  age <- ggplot2::ggplot_build(rf_panels(env$.fig)[[2L]])
+  geoms <- vapply(age$plot$layers, function(l) class(l$geom)[[1L]], "")
+  expect_identical(unique(age$data[[match("GeomSmooth", geoms)]]$colour), "black")
+  roles <- hvtiPlotR::hv_role_palette(c("TRUE", "FALSE"), event = "TRUE", censored = "FALSE")
+  expect_setequal(unique(age$data[[match("GeomPoint", geoms)]]$colour), unname(roles))
 })
 
 # ---- #165: the error-by-trees curve ---------------------------------------------

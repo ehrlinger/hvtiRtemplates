@@ -216,21 +216,22 @@ two_events <- list(nonfatal = list(event = c("ev_event", "ev_stroke"), time = c(
                                    death = "dead", death_time = "iv_dead", label = c("Reoperation", "Stroke")))
 
 test_that("dc-gfup draws competing events in one panel, each in its own house color and shape", {
-  skip_if_not_installed("hvtiPlotR", "2.8.17")
+  # 2.8.18 made the event red and censored a Tol blue; the caption names them.
+  skip_if_not_installed("hvtiPlotR", "2.8.18")
   r <- gfup_drawn(two_events)
   expect_true(r$env$figure_drawn)
   expect_named(r$env$saved, c("dc-gfup-all", "dc-gfup-nonfatal"))
   expect_match(r$out, "### Reoperation, Stroke", fixed = TRUE)
   expect_match(r$out, paste0("Blue open circles mark patients without an event, green open triangles patients whose ",
                              "first event was Reoperation, reddish purple open squares patients whose first event ",
-                             "was Stroke, and vermillion crosses patients who died and the dashed"), fixed = TRUE)
+                             "was Stroke, and red crosses patients who died and the dashed"), fixed = TRUE)
   expect_no_match(r$out, "gray ticks", fixed = TRUE)
   built <- ggplot2::ggplot_build(r$env$saved[["dc-gfup-nonfatal"]])
   points <- built$data[[1L]]
   levels <- c("No event", "Reoperation", "Stroke", "Death")
   house <- hvtiPlotR::hv_role_palette(levels, event = "Death", censored = "No event")
   # The caption names these colors, so they are pinned here.
-  expect_identical(unname(house), c("#0072B2", "#009E73", "#CC79A7", "#D55E00"))
+  expect_identical(unname(house), c("#0077BB", "#009E73", "#CC79A7", "#CC3311"))
   # Green, reddish purple, olive and black, up to the four events a panel draws.
   four <- hvtiPlotR::hv_role_palette(c("No event", LETTERS[1:4], "Death"), event = "Death", censored = "No event")
   expect_identical(unname(four[2:5]), c("#009E73", "#CC79A7", "#9D952B", "#000000"))
@@ -242,7 +243,7 @@ test_that("dc-gfup marks each patient's echo with a gray tick, and an NA echo wi
   skip_if_not_installed("hvtiPlotR", "2.8.17")
   expect_no_warning(r <- gfup_drawn(two_events, echo = "iv_echo"))
   expect_match(r$out, "64 with an echo marked.", fixed = TRUE)
-  expect_match(r$out, "vermillion crosses patients who died, gray ticks the follow-up at each patient's echo, and the dashed",
+  expect_match(r$out, "red crosses patients who died, gray ticks the follow-up at each patient's echo, and the dashed",
                fixed = TRUE)
   for (p in r$env$saved) {
     built <- ggplot2::ggplot_build(p)
@@ -271,5 +272,5 @@ test_that("dc-gfup's single-event caption is unchanged by competing events", {
                           label = "Reoperation"))
   r <- gfup_drawn(one)
   expect_match(r$out, paste0("Blue open circles mark patients without the event, green open triangles patients with ",
-                             "the event, and vermillion crosses patients who died and the dashed"), fixed = TRUE)
+                             "the event, and red crosses patients who died and the dashed"), fixed = TRUE)
 })
