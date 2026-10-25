@@ -152,6 +152,23 @@ test_that("a build with no dated version is a working read in the box, HVTI_DATA
   expect_false(grepl(", dated", box, fixed = TRUE))
 })
 
+test_that("the box reads the SELECTED dataset's release pin, not the default dataset's", {
+  withr::local_envvar(HVTI_DATA = NA)
+  s <- box_of("DATASET <- \"echo\"")
+  writeLines("datasets: []", file.path(s$root, "manifest.yaml"))
+  pin <- list(dataset_id = "x", release_id = "r1")
+  box_with <- function(study_release, echo_release) {
+    cfg <- list(root = s$root, built = "built.csv", release = study_release,
+                additional_datasets = list(echo = list(built = "echo.csv", release = echo_release)))
+    testthat::local_mocked_bindings(study_config = function(...) cfg, .package = "hvtiRutilities")
+    hvtiRtemplates:::.box_dataset(s$root, s$job)
+  }
+  # echo is pinned and the default is not: echo is not a working read.
+  expect_false(isTRUE(box_with(NULL, pin)$working))
+  # The default is pinned and echo is not: echo, undated, is a working read.
+  expect_true(isTRUE(box_with(pin, NULL)$working))
+})
+
 test_that("the box names a literal analysis set, and its version when the set was written", {
   s <- box_of(c("DATASET <- \"built\"", "ANALYSIS_SET <- \"eda\""))
   expect_match(s$box, "analysis set `eda`", fixed = TRUE)

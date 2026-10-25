@@ -213,8 +213,10 @@
   found <- if (!is.null(source)) tryCatch(.manifest_find(root, source = source), error = function(e) NULL)
   # A build with no dated version (declared by bd and not yet registered, or registered before
   # dated versions) is read from its working file too, so the box says so rather than naming a date.
-  # A catalog-release study pins its data another way and is left alone.
-  if (!is.null(source) && is.null(cfg$release) && is.null(found$version_file)) {
+  # A dataset pinned to a catalog release is read another way and is left alone; the pin is the
+  # selected dataset's own, not the default study dataset's.
+  release <- if (identical(.canonical_job_dataset(dataset), "study")) cfg$release else cfg$additional_datasets[[dataset]]$release
+  if (!is.null(source) && is.null(release) && is.null(found$version_file)) {
     return(list(name = dataset, kind = "data", version_file = source, working = TRUE))
   }
   c(list(name = dataset, kind = "data", how = "dated"), found)
