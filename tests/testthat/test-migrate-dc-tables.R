@@ -139,6 +139,26 @@ tables_chunk <- function(job, label) {
   chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)  # nolint: object_usage_linter.
 }
 
+# tbl-table draws from the relabeled copy the table-labels chunk makes, and
+# word-file stamps the run into the .docx, so each runs with what the chunks
+# before it leave behind, at the template's defaults where a test sets none.
+eval_table <- function(job, env) {
+  if (is.null(env$.root)) env$.root <- withr::local_tempdir(.local_envir = parent.frame())
+  if (is.null(env$.cfg)) {
+    env$.cfg <- if (file.exists(file.path(env$.root, "_study.yml"))) hvtiRutilities::study_config(env$.root) else list()
+  }
+  if (is.null(env$TABLE_LABEL_RULES)) env$TABLE_LABEL_RULES <- TRUE
+  if (is.null(env$ABBREVIATIONS)) env$ABBREVIATIONS <- character(0)
+  eval(tables_chunk(job, "table-labels"), env)
+  eval(tables_chunk(job, "tbl-table"), env)
+}
+
+eval_word <- function(job, env) {
+  if (is.null(env$.job)) env$.job <- list(run = list(started = Sys.time(), file = "cohort.eda.dc.tables.qmd", state = "draft"))
+  if (is.null(env$.provenance_data)) env$.provenance_data <- list()
+  eval(tables_chunk(job, "word-file"), env)
+}
+
 test_that("dc-tables refuses a set cut from another dataset and reads a named registered dataset", {
   root <- migration_study_fixture("dc-tables")
   template <- template_path("dc", "tables")
@@ -185,8 +205,8 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   eval(parse(text = tables_region(out, "dc-tables-config")), env)
   eval(tables_chunk(out, "helpers"), env)
-  invisible(eval(tables_chunk(out, "tbl-table"), env))
-  invisible(eval(tables_chunk(out, "word-file"), env))
+  invisible(eval_table(out, env))
+  invisible(eval_word(out, env))
   word <- file.path(root, "documents", "cohort-eda", "dc-tables.docx")
   expect_true(file.exists(word))
   expect_equal(nrow(hvtiRtables::hv_check_docx(word)), 0L)
@@ -194,13 +214,13 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   expect_true(any(doc$content_type == "table cell"))
   expect_true(any(grepl("Demography", doc$text, fixed = TRUE)))
   env$BINARY <- c("female", "repair", "age")
-  expect_error(eval(tables_chunk(out, "tbl-table"), env), "exactly one explicit bucket")
+  expect_error(eval_table(out, env), "exactly one explicit bucket")
   env$BINARY <- NULL
-  expect_error(eval(tables_chunk(out, "tbl-table"), env), "all three buckets")
+  expect_error(eval_table(out, env), "all three buckets")
   env$BINARY <- c("female", "repair")
   env$WORD_FILE <- "../escape.docx"
-  invisible(eval(tables_chunk(out, "tbl-table"), env))
-  expect_error(invisible(eval(tables_chunk(out, "word-file"), env)), "plain .docx filename", fixed = TRUE)
+  invisible(eval_table(out, env))
+  expect_error(invisible(eval_word(out, env)), "plain .docx filename", fixed = TRUE)
   expect_false(file.exists(file.path(root, "documents", "escape.docx")))
 })
 
@@ -556,8 +576,8 @@ test_that("the Word table is drawn in the manuscript style, under the study's ca
   env$TABLE_ORIENTATION <- "landscape"
   env$DROP_CONSTANT <- TRUE
   eval(tables_chunk(template, "helpers"), env)
-  invisible(eval(tables_chunk(template, "tbl-table"), env))
-  invisible(eval(tables_chunk(template, "word-file"), env))
+  invisible(eval_table(template, env))
+  invisible(eval_word(template, env))
   word <- file.path(root, "documents", "cohort-eda", "dc-tables.docx")
   # The report keeps the Variable column; the Word table never has it.
   expect_true("hv_variable" %in% env$ft$col_keys)
@@ -580,15 +600,15 @@ test_that("the Word table is drawn in the manuscript style, under the study's ca
   # The describe layout draws both statistics, with a count beside each group.
   env$CONTINUOUS_STAT <- "both"
   env$MANUSCRIPT_LAYOUT <- "describe"
-  invisible(eval(tables_chunk(template, "tbl-table"), env))
-  invisible(eval(tables_chunk(template, "word-file"), env))
+  invisible(eval_table(template, env))
+  invisible(eval_word(template, env))
   cells <- officer::docx_summary(officer::read_docx(word))
   cells <- cells[cells$content_type == "table cell" & cells$row_id == 2L, ]
   expect_gt(sum(cells$text == "n*"), 1L)
   expect_identical(nrow(hvtiRtables::hv_check_docx(word, style = "manuscript")), 0L)
   # A manuscript table is never saved without its caption.
   env$MANUSCRIPT_CAPTION <- NULL
-  expect_error(eval(tables_chunk(template, "word-file"), env), "needs `caption`", fixed = TRUE)
+  expect_error(eval_word(template, env), "needs `caption`", fixed = TRUE)
 })
 
 test_that("a row with one value for every patient is left out of the table and named in the report", {
@@ -617,7 +637,7 @@ test_that("a row with one value for every patient is left out of the table and n
   env$SHOW_VARIABLE <- TRUE
   env$DROP_CONSTANT <- TRUE
   eval(tables_chunk(template, "helpers"), env)
-  invisible(eval(tables_chunk(template, "tbl-table"), env))
+  invisible(eval_table(template, env))
   expect_identical(env$constant_rows, "mr_preop")
   expect_false(any(grepl("mr_preop", unlist(env$ft$body$dataset), fixed = TRUE)))
   expect_identical(env$GROUPS$Procedure, "repair")
@@ -629,26 +649,135 @@ test_that("a row with one value for every patient is left out of the table and n
   env$GROUPS <- list(Demography = c("age", "female"), Procedure = c("repair", "mr_preop"))
   env$BINARY <- c("female", "repair", "mr_preop")
   env$DROP_CONSTANT <- FALSE
-  expect_error(eval(tables_chunk(template, "tbl-table"), env), "mr_preop")
+  expect_error(eval_table(template, env), "mr_preop")
   env$BINARY <- c("female", "repair")
   env$CATEGORICAL <- "mr_preop"
-  invisible(eval(tables_chunk(template, "tbl-table"), env))
+  invisible(eval_table(template, env))
   expect_identical(env$constant_rows, character(0))
   expect_true(any(grepl("mr_preop", unlist(env$ft$body$dataset), fixed = TRUE)))
   expect_identical(capture.output(eval(tables_chunk(template, "constant-rows"), env)), character(0))
   env$DROP_CONSTANT <- NA
-  expect_error(eval(tables_chunk(template, "tbl-table"), env), "DROP_CONSTANT must be TRUE or FALSE")
+  expect_error(eval_table(template, env), "DROP_CONSTANT must be TRUE or FALSE")
   # With the buckets left to the data, a section that holds only constant rows
   # goes with them.
   env$DROP_CONSTANT <- TRUE
   env$GROUPS <- list(Demography = c("age", "female"), Inclusion = "mr_preop")
   env$CONTINUOUS <- env$BINARY <- env$CATEGORICAL <- NULL
-  invisible(eval(tables_chunk(template, "tbl-table"), env))
+  invisible(eval_table(template, env))
   expect_identical(env$constant_rows, "mr_preop")
   expect_identical(names(env$GROUPS), "Demography")
   expect_false(any(grepl("Inclusion", unlist(env$ft$body$dataset), fixed = TRUE)))
   # A table of nothing but constant rows is refused, not drawn empty.
   env$GROUPS <- list(Inclusion = "mr_preop")
   env$CONTINUOUS <- env$BINARY <- env$CATEGORICAL <- NULL
-  expect_error(eval(tables_chunk(template, "tbl-table"), env), "no table to draw")
+  expect_error(eval_table(template, env), "no table to draw")
+})
+
+test_that("the Word table prints the study's table labels and levels, says what changed, and names its build", {
+  skip_on_cran()
+  root <- migration_study_fixture("dc-tables")
+  template <- template_path("dc", "tables")
+  env <- new.env()
+  env$.root <- root
+  env$SUBJECT <- "cohort"
+  env$TYPE <- "eda"
+  env$study_dir <- hvtiRutilities::study_dir
+  env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  # Labels as a SAS dataset carries them for the analysis.
+  attr(env$d$bmi, "label") <- "Preoperative Body Mass Index (kg/m2)"
+  attr(env$d$repair, "label") <- "MV Repair (for analysis)"
+  attr(env$d$age, "label") <- "AGE AT SURGERY"
+  writeLines("age: \"Age (years)\"", file.path(root, "table_labels.yml"))
+  writeLines(c("race_grp:", "  1: White", "  2: Black", "  3: Other",
+               "treatment:", "  0: Medical", "  1: Surgical"), file.path(root, "value_labels.yml"))
+  env$GROUPS <- list(Demography = c("age", "bmi", "female", "race_grp"), Procedure = "repair")
+  env$BY <- "treatment"
+  env$CONTINUOUS <- env$BINARY <- env$CATEGORICAL <- NULL
+  env$COMPARE <- "none"
+  env$CONTINUOUS_STAT <- "median"
+  env$PERCENTILES <- c(15, 85)
+  env$ABBREVIATIONS <- c(MV = "Mitral valve")
+  env$WORD_FILE <- "dc-tables.docx"
+  env$OVERRIDES <- list()
+  env$MEAN_SD <- env$ORDINAL <- character(0)
+  env$STDDIFF <- FALSE
+  env$GROUP_1 <- NULL
+  env$SHOW_VARIABLE <- TRUE
+  env$MANUSCRIPT_LAYOUT <- "compare"
+  env$MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"
+  env$MANUSCRIPT_FILL <- "#CAEDFB"
+  env$TABLE_ORIENTATION <- "auto"
+  env$DROP_CONSTANT <- TRUE
+  env$.job <- list(run = list(started = Sys.time(), file = "cohort.eda.dc.tables.qmd", state = "final"))
+  env$.provenance_data <- list(list(dataset = "study", path = "datasets/built.csv", sha256 = strrep("0f", 32L)))
+  eval(tables_chunk(template, "helpers"), env)
+  invisible(eval_table(template, env))
+  invisible(eval_word(template, env))
+  # The analysis data are untouched: only the table's copy is relabeled.
+  expect_identical(attr(env$d$bmi, "label"), "Preoperative Body Mass Index (kg/m2)")
+  expect_true(is.numeric(env$d$race_grp))
+  word <- file.path(root, "documents", "cohort-eda", "dc-tables.docx")
+  expect_identical(nrow(hvtiRtables::hv_check_docx(word, style = "manuscript")), 0L)
+  doc <- officer::docx_summary(officer::read_docx(word))
+  cells <- doc$text[doc$content_type == "table cell"]
+  expect_true("Age (years)" %in% cells)
+  expect_true(any(startsWith(cells, "Body mass index (kg/m")))
+  expect_true("MV repair" %in% cells)
+  expect_true(all(c("White", "Black", "Other") %in% cells))
+  expect_true(any(grepl("Surgical", cells, fixed = TRUE)) && any(grepl("Medical", cells, fixed = TRUE)))
+  expect_false(any(grepl("Preoperative|for analysis|AGE AT", cells)))
+  # The m2 of the unit is a superscript run, not the text "^2^".
+  xml <- xml2::read_xml(unzip(word, "word/document.xml", exdir = withr::local_tempdir()))
+  ns <- xml2::xml_ns(xml)
+  sup <- xml2::xml_find_all(xml, "//w:r[w:rPr/w:vertAlign[@w:val='superscript']]/w:t", ns)
+  expect_true("2" %in% xml2::xml_text(sup))
+  expect_false(any(grepl("^2^", cells, fixed = TRUE)))
+  # The report lists every change and the rule or file behind it.
+  changes <- paste(capture.output(eval(tables_chunk(template, "table-label-changes"), env)), collapse = "\n")
+  expect_match(changes, "levels White, Black, Other", fixed = TRUE)
+  expect_true(all(c("table_labels.yml", "value_labels.yml", "preoperative, case, units", "coding, case") %in%
+                    env$.labeled$changes$rule))
+  # The file names the job, its state and the release that built it.
+  props <- officer::doc_properties(officer::read_docx(word))
+  expect_identical(props$value[props$tag == "hvti_job"], "cohort.eda.dc.tables.qmd")
+  expect_identical(props$value[props$tag == "hvti_status"], "final")
+  expect_match(props$value[props$tag == "hvti_data"], "datasets/built.csv sha256 0f0f0f", fixed = TRUE)
+  expect_match(props$value[props$tag == "hvti_hvtiRtables"], as.character(utils::packageVersion("hvtiRtables")),
+               fixed = TRUE)
+  # TABLE_LABEL_RULES <- FALSE prints the dataset's labels, and the study's files still apply.
+  env$TABLE_LABEL_RULES <- FALSE
+  invisible(eval_table(template, env))
+  expect_identical(attr(env$d_table$bmi, "label"), "Preoperative Body Mass Index (kg/m2)")
+  expect_identical(attr(env$d_table$age, "label"), "Age (years)")
+  expect_identical(levels(env$d_table$race_grp), c("White", "Black", "Other"))
+  # A binary row keeps its event codes whatever value_labels.yml says, named
+  # BINARY or binary by its data; only a row named categorical takes the text.
+  writeLines(c("race_grp:", "  1: White", "  2: Black", "  3: Other", "treatment:", "  0: Medical", "  1: Surgical",
+               "repair:", "  0: Absent", "  1: Present"), file.path(root, "value_labels.yml"))
+  env$TABLE_LABEL_RULES <- TRUE
+  invisible(eval_table(template, env))
+  expect_true(is.numeric(env$d_table$repair))
+  expect_true("repair" %in% env$BINARY)
+  env$CONTINUOUS <- c("age", "bmi")
+  env$BINARY <- c("female", "repair")
+  env$CATEGORICAL <- "race_grp"
+  invisible(eval_table(template, env))
+  expect_true(is.numeric(env$d_table$repair))
+  env$BINARY <- "female"
+  env$CATEGORICAL <- c("race_grp", "repair")
+  invisible(eval_table(template, env))
+  expect_identical(levels(env$d_table$repair), c("Absent", "Present"))
+  env$CONTINUOUS <- env$BINARY <- env$CATEGORICAL <- NULL
+  # A 0/1 BY given level text keeps STDDIFF's treated group without GROUP_1.
+  # The table is drawn and %stddiff computed; a missing mapping stops it.
+  skip_if_not_installed("hvtiRpropensity", "0.2.0")
+  env$STDDIFF <- TRUE
+  env$GROUP_1 <- NULL
+  invisible(eval_table(template, env))
+  expect_identical(env$GROUP_1, "Surgical")
+  expect_true(inherits(env$tbl, "gtsummary"))
+  # GROUP_1 given as the code means the same group.
+  env$GROUP_1 <- 0L
+  invisible(eval_table(template, env))
+  expect_identical(env$GROUP_1, "Medical")
 })
