@@ -1494,3 +1494,21 @@ test_that("a registered read is left as it was", {
   expect_null(read$record$working)
   expect_null(read$notes)
 })
+
+test_that("a draft ac render reads an unregistered build and says so, and a final render refuses it", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  skip_if_not_installed("hvtiRutilities", "1.5.12")
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.12")
+  skip_if_not_installed("hvtiPlotR", minimum_version = "2.7.0")
+  skip_if_not_installed("patchwork")
+  html <- render_unregistered_ac()  # nolint: object_usage_linter.
+  expect_match(html, "Unregistered data.", fixed = TRUE)
+  expect_match(html, "This run ended as a draft", fixed = TRUE)
+  # The refusal is the gate's, raised by the first read: quiet = FALSE puts Quarto's message in the error.
+  utils::capture.output(
+    expect_error(render_unregistered_ac(final = TRUE, quiet = FALSE),  # nolint: object_usage_linter.
+                 "is a final render, so it can")
+  )
+})

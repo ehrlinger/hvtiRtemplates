@@ -72,3 +72,27 @@ run_setup <- function(subject = "cohort", type = "eda", env = new.env(parent = g
 }
 
 edit_marker <- function(text = "choose the endpoint") paste0("# ", paste0("ED", "IT", ":"), " ", text)
+
+# A genuinely fresh study (study_setup() and nothing else) whose built.rds is DECLARED with
+# declare_data() and never registered, so every read of it is a working read. An ac job is
+# scaffolded in it, its EDIT: markers resolved the way an author finishing it would, so the only
+# thing a final render can refuse is the unregistered data. Returns the rendered report's text for a
+# draft; a final render raises the error. The render runs against the library this session
+# resolves packages from (the private one, under R_LIBS), so a concurrent session's install cannot
+# change the package under it.
+render_unregistered_ac <- function(final = FALSE, quiet = TRUE, .local_envir = parent.frame()) {
+  root <- withr::local_tempdir("unregistered-study-", .local_envir = .local_envir)
+  suppressMessages(hvtiRutilities::study_setup(
+    root, study = "Unregistered test", study_tracker_id = 8L,
+    adopt = TRUE, cleanup = FALSE, renv = FALSE
+  ))
+  root <- normalizePath(root)
+  saveRDS(hazard_data(), file.path(hvtiRutilities::study_dir("datasets", root), "built.rds"))  # nolint: object_usage_linter.
+  suppressMessages(hvtiRutilities::declare_data(root, built = "built.rds"))
+  job <- add_job("ac", "dead", "pa", dir = root)
+  lines <- readLines(job, warn = FALSE)
+  writeLines(gsub("EDIT:", "SET:", lines, fixed = TRUE), job)
+  withr::local_envvar(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep), .local_envir = .local_envir)
+  render_job(job, final = final, quiet = quiet)
+  paste(readLines(sub("[.]qmd$", ".html", job), warn = FALSE), collapse = "\n")
+}

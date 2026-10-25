@@ -638,6 +638,11 @@ Every report says four things about the run that made it.
   date is saved there as `registered`, the key it has carried since 1.3.1, so
   reports rendered before and after the label changed can be read alike.
 
+A draft may read a build that is not registered yet, and says so in its data table
+and in 'About this run'. A final render (`render_job(final = TRUE)`) reads
+registered data only. Register the build with `hvtiRutilities::update_manifest()`
+first.
+
 The user and host are the person's login name and the machine's name, and a
 report shared outside the group carries them. `HVTI_RUN_USER` and
 `HVTI_RUN_HOST` replace the two (the template gallery sets both to `gallery`,

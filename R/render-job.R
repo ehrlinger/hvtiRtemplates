@@ -46,7 +46,9 @@
 #' crashed is taken over automatically.
 #'
 #' @param path Character. Path to a job \code{.qmd} file.
-#' @param final Logical. \code{TRUE} for the accepted result.
+#' @param final Logical. \code{TRUE} for the accepted result. A final render reads registered data
+#'   only: a job whose data, or whose upstream hand-off, came from an unregistered build stops and
+#'   names \code{hvtiRutilities::update_manifest()}.
 #' @param quiet Logical. Passed to \code{quarto::quarto_render()}.
 #'
 #' @return \code{path}, invisibly.
