@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:34
+2026-10-25 18:27
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
-· rendered by gallery on gallery · hvtiRtemplates 1.5.0
+**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -127,6 +127,17 @@ JOIN_KEY <- NULL
 # `labels` names the series in the legend (default: the column names). Fixing
 # `ylim` and `ybreaks` keeps figures for different subgroups comparable; either
 # may be set alone, and `ylim` zooms without dropping any patient.
+# `ylim` is drawn with coord_cartesian(), never as scale_y_continuous(limits =).
+# A scale limit removes whatever falls outside it. For a percent trend every
+# patient's 0 or 100 is inside c(0, 100), so what goes is the smooth itself
+# wherever it dips below 0 or tops 100: the line stops short at the ends of
+# the year range instead of showing the overshoot. A limit narrower than the
+# data is worse, because it drops patients and the smooth is refitted without
+# them. Leave a little room instead, c(-3, 103) say, so the points clear the
+# axis. A smooth that overshoots is not proof of thin data, since loess can
+# overshoot a steep trend near the ends; if the end years are thin, widen the
+# year bins in the data, or give the plot call where the figures are drawn a
+# smaller `span` (0.75, ggplot2's default, is used now).
 # `summary` is the per-year point drawn under the smooth. Percent trends must
 # use "mean" (the default); continuous trends may use "mean" or "median".
 # MIGRATE-BEGIN: dc-trends-trends
@@ -179,7 +190,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261023.parquet) |
+| Source              | dataset `built` (built_20261025.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -465,8 +476,8 @@ against an older figure by its shape and not point by point.
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-23 13:34:29 EDT  |
-|                 | Ended            | 2026-10-23 13:34:31 EDT  |
+| Run             | Started          | 2026-10-25 18:27:43 EDT  |
+|                 | Ended            | 2026-10-25 18:27:44 EDT  |
 |                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -475,9 +486,9 @@ against an older figure by its shape and not point by point.
 |                 | Template         | dc.trends                |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.0                    |
-| Dataset `built` | Version file     | built_20261023.parquet   |
-|                 | Registered       | 2026-10-23               |
+|                 | hvtiRtemplates   | 1.5.1                    |
+| Dataset `built` | Version file     | built_20261025.parquet   |
+|                 | Version date     | 2026-10-25               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

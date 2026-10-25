@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:35
+2026-10-25 18:28
 
 An `ac` job is the first look at an outcome: the Kaplan-Meier life
 table, survival and patients at risk at the reporting horizons, the
@@ -25,8 +25,8 @@ if (utils::packageVersion("TemporalHazard") < "1.2.12") {
   stop("This job needs TemporalHazard >= 1.2.12 for hzr_kaplan(); ",
        utils::packageVersion("TemporalHazard"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.7.0") {
-  stop("This job needs hvtiPlotR >= 2.7.0 for hv_atrisk_compose(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
+  stop("This job needs hvtiPlotR >= 2.7.18 for hv_atrisk_compose() and hv_role_palette(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (!requireNamespace("patchwork", quietly = TRUE)) {
@@ -56,8 +56,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
-· rendered by gallery on gallery · hvtiRtemplates 1.5.0
+**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -191,7 +191,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261023.parquet) |
+| Source              | dataset `built` (built_20261025.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -1897,9 +1897,14 @@ km_views <- function(fit) {
   # The cumulative hazard is infinite once survival reaches zero; it is left off a figure.
   haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
   haz$stratum <- factor(haz$stratum, levels = counts$stratum)
+  # One curve is black. Strata never take red or blue, which mean the event and
+  # censored in every house figure, so no stratum reads as the deaths.
+  cols <- hvtiRtemplates:::.group_colors(counts$stratum)
   step <- function(data, y, ylab) {
     ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum)) +
       ggplot2::geom_step() +
+      # The limits keep an empty panel (no events, so no cumulative hazard) from warning.
+      ggplot2::scale_color_manual(values = cols, limits = names(cols)) +
       ggplot2::labs(x = "Years", y = ylab, color = NULL) +
       hvtiPlotR::theme_hv_manuscript(base_size = 12)
   }
@@ -1939,7 +1944,11 @@ km_figure <- function(strata = NULL) {
   # sort as text ("1", "10", "2"). The curve, band, bars and at-risk rows all use the
   # tables' order instead, so each stratum keeps one color throughout.
   if (!is.null(strata)) hv$data$strata <- factor(as.character(hv$data$strata), levels = levels(dd[[strata]]))
+  # The same colors as the page above: black for one curve, and no stratum in red or blue.
+  cols <- hvtiRtemplates:::.group_colors(if (is.null(strata)) "All" else levels(dd[[strata]]))
   curve <- plot(hv, conf_int = isTRUE(CI_BAND)) +
+    ggplot2::scale_color_manual(values = cols) +
+    ggplot2::scale_fill_manual(values = cols) +
     ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
@@ -1979,7 +1988,7 @@ Code
 km_views(km)
 ```
 
-![](assets/c61fea67b8a666459d307eff28508d91.png)
+![](assets/5158d253e2a063db87ad2c4c3d59b112.png)
 
 Figure 1: Overall: survival and the cumulative hazard on four scales
 
@@ -1991,7 +2000,7 @@ save_figure(.fig, "ac-survival", width = 6, height = 5)
 .fig
 ```
 
-![](assets/3c14b91cf7d2874011df22f0fb93d291.png)
+![](assets/12762ce95908c57a774fd07f24fbc017.png)
 
 Figure 2: Overall survival, with patients at risk
 
@@ -2016,7 +2025,7 @@ Code
 .views
 ```
 
-![](assets/cbb40d42b2888de224e62a7b3e11dd16.png)
+![](assets/1b31dfcb2c55d92e427486d2060b93c1.png)
 
 Figure 3: By lvef_grp: survival and the cumulative hazard on four scales
 
@@ -2026,7 +2035,7 @@ Code
 .fig
 ```
 
-![](assets/127cb3ff33c938042a7f34fee6d0d260.png)
+![](assets/3888fed2a498a7afb4c63d6322447ee4.png)
 
 Figure 4: Survival by lvef_grp, with patients at risk
 
@@ -2036,7 +2045,7 @@ Code
 .views
 ```
 
-![](assets/2b15eb5d44da892b561d469c86a1bd55.png)
+![](assets/acb26838ae016cbfef286c444d10106f.png)
 
 Figure 5: By hx_chf: survival and the cumulative hazard on four scales
 
@@ -2046,7 +2055,7 @@ Code
 .fig
 ```
 
-![](assets/22cefa024970dd889d6c9828f45c30bf.png)
+![](assets/62e1cfbbe3e8e7d8c8603f12b2dd2be8.png)
 
 Figure 6: Survival by hx_chf, with patients at risk
 
@@ -2054,8 +2063,8 @@ Figure 6: Survival by hx_chf, with patients at risk
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-23 13:35:39 EDT  |
-|                 | Ended            | 2026-10-23 13:35:43 EDT  |
+| Run             | Started          | 2026-10-25 18:28:44 EDT  |
+|                 | Ended            | 2026-10-25 18:28:48 EDT  |
 |                 | Duration         | 4 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -2064,9 +2073,9 @@ Figure 6: Survival by hx_chf, with patients at risk
 |                 | Template         | ac                       |
 |                 | Subject          | dead                     |
 |                 | Type             | hz                       |
-|                 | hvtiRtemplates   | 1.5.0                    |
-| Dataset `built` | Version file     | built_20261023.parquet   |
-|                 | Registered       | 2026-10-23               |
+|                 | hvtiRtemplates   | 1.5.1                    |
+| Dataset `built` | Version file     | built_20261025.parquet   |
+|                 | Version date     | 2026-10-25               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 725 rows on 725 patients |
 |                 | WHERE            | `!is.na(creat_pr)`       |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:31
+2026-10-25 18:24
 
 This job cuts the study’s dataset from a master snapshot, records who
 was excluded and why, and writes the study’s working dataset with its
@@ -18,7 +18,7 @@ sees them); imputation, propensity scores and variables for one model (a
 `vars` job); printing patient rows to check them (do that in the
 console, never in a report).
 
-**final** · rendered by gallery on gallery · hvtiRtemplates 1.5.0
+**final** · rendered by gallery on gallery · hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -38,9 +38,9 @@ console, never in a report).
 | Rows in the dataset | 683 |
 | Patients | 683 |
 | Columns | 14 |
-| Study dataset before | built_20261023.parquet |
-| Study dataset after | built_20261023.parquet |
-| Registration | Working file only: nothing registered |
+| Study dataset before | built_20261025.parquet |
+| Study dataset after | built_20261025.parquet |
+| Registration | Working file only: the study’s dataset is still built.rds, so this build was not declared or registered |
 
 Table 1: Run mode, master snapshot, row counts and dataset registration
 for this render
@@ -81,8 +81,8 @@ Table 3: Type, missing count and range of each column
 
 | Group           | Item             | Value                   |
 |:----------------|:-----------------|:------------------------|
-| Run             | Started          | 2026-10-23 13:31:09 EDT |
-|                 | Ended            | 2026-10-23 13:31:09 EDT |
+| Run             | Started          | 2026-10-25 18:24:55 EDT |
+|                 | Ended            | 2026-10-25 18:24:56 EDT |
 |                 | Duration         | 0 s                     |
 |                 | Status           | final                   |
 |                 | Rendered by      | gallery                 |
@@ -91,6 +91,6 @@ Table 3: Type, missing count and range of each column
 |                 | Template         | bd                      |
 |                 | Subject          | study                   |
 |                 | Type             | build                   |
-|                 | hvtiRtemplates   | 1.5.0                   |
+|                 | hvtiRtemplates   | 1.5.1                   |
 | Reproducibility | renv             | not active              |
 |                 | renv.lock sha256 | d09f96b6cd21            |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:34
+2026-10-25 18:27
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -63,8 +63,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
-· rendered by gallery on gallery · hvtiRtemplates 1.5.0
+**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -118,6 +118,55 @@ JOIN_KEY <- NULL
 # becomes a row group in the table, in this order. These are the /* Demography */
 # style banners from the SAS varlist; carry them across unchanged so the R table
 # reads like the SAS one. Commented-out SAS blocks stay out.
+# A fuller grouping to start from, the house summary-table categories with the
+# SAS template's added where they differ. The names are CORR database columns, not
+# one study's. Uncomment it in place of the GROUPS below, then delete the groups
+# and rows your data does not have, since a name missing from the data stops the
+# table. Race is race_grp; some studies spell it race_gp.
+# GROUPS-EXAMPLE-BEGIN
+# GROUPS <- list(
+#   Demography = c("female", "age", "bsa", "bmi", "wt", "ht", "wtht", "race_bl", "race_wh", "race_ot", "race_grp"),
+#   Symptoms = c("surgstat", "nyha_pr", "srgstat", "srg_ele", "srg_emg", "srg_emgs", "srg_urg", "srg_urem", "emgsrg"),
+#   `AV hemodynamics` = c("avrgrg", "avrg_com", "avsten", "pavmngra", "pavpkgra", "pav_area"),
+#   `Other valve pathology` = c("mvrgrg", "mvrg_com", "mvsten", "pvrgrg", "pvrgsev", "pvsten", "tvrgrg", "tvrg_com",
+#                               "pmvmngra", "pmvpkgra", "tvsten"),
+#   `LV function` = c("hx_mi", "plv_sfun", "lvef_pr", "pfs"),
+#   `LV geometry` = c("plvidd", "plvisd", "plvedv", "plvedvol", "plvesv", "plvesvol", "plvedvi", "plvesvi"),
+#   `LV mass` = c("prwt", "pivswt", "ppwt", "plvmass", "plvmassi"),
+#   `Aorta diameter` = c("pmidaadm", "paosindm"),
+#   `Cardiac comorbidity` = c("afib_pr", "chb_pr", "varr_pr", "hx_csurg", "hx_chf", "surg_num"),
+#   `Non-Cardiac comorbidity` = c("hx_endo", "hx_pad", "hx_htn", "hx_dmtrt", "hx_iddm", "hx_niddm", "hx_copd", "hx_smoke",
+#                                 "dial_pr", "hx_cva", "blrbn_pr", "creat_pr", "crcl_pr", "gfr_pr", "bun_pr", "hct_pr",
+#                                 "chol_pr", "hdl_pr", "ldl_pr", "trig_pr", "meld_pr", "ptinr_pr"),
+#   Procedure = c("avsize", "sp_cabg", "sp_av", "sp_mv", "sp_tv", "sp_avrpl", "sp_mvrpr", "sp_mvrpl", "sp_tvrpr",
+#                 "sp_tvrpl", "sp_aotic", "sp_afib", "sp_asdpf", "sp_dscao", "sp_chd", "sp_anlre", "ita_any", "stsproc",
+#                 "sp_pv", "sp_avrpr", "spc_tavr", "sp_lv", "sp_cend", "sp_sepmy", "sp_atrmy", "sp_tx", "sp_peric",
+#                 "sp_tmr", "numcomp", "numcomp2", "ita_none", "ita_sin", "ita_bil", "ita_num"),
+#   `Discharge medication` = c("dantico", "dccoum", "dcadp", "dcasa", "dcoanplt"),
+#   Support = c("iv_aocc", "iv_cpb", "aoxclmp", "onpump", "circarr", "iabp", "iabpwhn", "iv_tca"),
+#   `LA Dimensions` = c("pla_ge6", "pladia", "plavol", "plavoli", "plasarea", "pladarea"),
+#   `Right Ventricular Function` = c("prvsp", "prvspnew", "ptv_rvel"),
+#   Etiology = c("aet_rheu", "aet_degn", "aet_endo", "aet_cong", "aet_rgrg", "aet_nos", "avetiol", "met_isch", "met_degn",
+#                "met_endo", "met_rgrg", "met_nos", "mvetiol", "tet_rheu", "tet_degn", "tet_rgrg", "tet_nos", "tvetiol"),
+#   `Coronary Anatomy` = c("cad_sys", "vd0", "vd1", "vd2", "vd3", "lmt50", "lad50", "lad70", "lcx50", "lcx70", "rca50",
+#                          "rca70", "lmt", "lad", "lcx", "rca"),
+#   `STS Predicted Risk Scores` = c("sts14d", "sts6d", "stsdeep", "stsmm", "stsmort", "stsrenf", "stsreop", "stsstro",
+#                                   "stsvent"),
+#   `Incision Detail` = c("incision", "robot"),
+#   `Intraoperative Management` = c("bldicry", "bldiffp", "bldiplt", "bldirbc", "bldiprod", "bldicryu", "bldiffpu",
+#                                   "bldipltu", "bldirbcu"),
+#   `Postoperative Management` = c("bldpcry", "bldpffp", "bldpplt", "bldprbc", "bldpprod", "bldpcryu", "bldpffpu",
+#                                  "bldppltu", "bldprbcu"),
+#   `Combined Blood Products` = c("bldtcry", "bldtffp", "bldtplt", "bldtrbc", "bldtprod", "trsf_all", "trsf_noc",
+#                                 "bldtcryu", "bldtffpu", "bldtpltu", "bldtrbcu"),
+#   `Postoperative Complications` = c("spu_asdv", "cotafib", "ciseptic", "cistdeep", "cnstrokp", "crenfail", "crendial",
+#                                     "cpvntlng", "coprebld", "copregft", "coprenon", "copreoth", "coprevlv", "copreany",
+#                                     "hdeath", "opmort", "co_stsmm", "los_lt6", "los_gt14"),
+#   `Length of Stay` = c("los_hos", "los_op", "los_icu"),
+#   Experience = c("iv_opyrs"),
+#   `Time-related Outcomes` = c("dead", "iv_dead")
+# )
+# GROUPS-EXAMPLE-END
 # MIGRATE-BEGIN: dc-tables-config
 GROUPS <- list(
   Demography = c("age", "female", "race_grp", "bmi"),
@@ -161,6 +210,13 @@ TABLE_ORIENTATION <- "auto"
 # one has no event to count. The report names each row left out. FALSE keeps
 # every row, and a constant binary row then stops the table.
 DROP_CONSTANT <- TRUE
+# Demo: the table's labels are tidied from the dataset's, which serve the
+# analysis: TRUE strips a leading "Preoperative" and a coding such as "(Y/N)"
+# or "(for analysis)", writes sentence case keeping the study's abbreviations,
+# and turns kg/m2 into kg/m^2^. FALSE prints the labels as they are, or name
+# the rules to keep, e.g. c("preoperative", "coding", "case", "units"). A
+# label the rules get wrong belongs in table_labels.yml; see "Table" below.
+TABLE_LABEL_RULES <- TRUE
 # Demo: force a bucket where the data guess wrong, e.g. an ordinal score you
 # want summarized as continuous: list(continuous = c("nyha_pr")). list() for none.
 OVERRIDES <- list()
@@ -218,7 +274,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261023.parquet) |
+| Source              | dataset `built` (built_20261025.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -355,6 +411,48 @@ stddiff_values <- function(d, by, buckets, mean_sd = character(0), ordinal = cha
 
 ## Table
 
+The table’s labels are its own, so the dataset’s labels, which the
+analyses use, are never changed. Two files at the study root, shared by
+every table job in the study, say what a rule cannot. `table_labels.yml`
+gives a variable the label its table prints, as `labels_overrides.yml`
+does, `nyha_pr: "NYHA class"` on a line, and wins over the rules.
+`value_labels.yml` gives a coded column its level text,
+`hvtiRutilities::apply_value_labels()`’s format, so NYHA 1 to 4 prints
+as I to IV. A column whose data already carry value labels, such as a
+haven labeled column, prints its level text without either file. Every
+label changed, and every variable with no label, is listed under the
+table.
+
+Code
+
+``` r
+# unnumbered: relabels the copy of the data the table is drawn from
+# A binary row prints one line, its label, counting the event (1, Yes or TRUE),
+# so level text would print nowhere, and hv_tbl_summary() could not find the
+# event among, say, Absent and Present. Binary rows therefore keep their codes:
+# those BINARY or OVERRIDES name, and those the data make binary unless named
+# categorical. Continuous rows named in CONTINUOUS or OVERRIDES keep theirs too:
+# they are summarized as numbers.
+.rows <- intersect(unlist(GROUPS, use.names = FALSE), names(d))
+.binary_by_data <- .rows[vapply(d[.rows], function(x) {
+  is.logical(x) || is.numeric(x) && all(x[!is.na(x)] %in% c(0, 1))
+}, logical(1))]
+.labeled <- hvtiRtemplates:::.table_labels(
+  d, c(unlist(GROUPS, use.names = FALSE), BY), .root, rules = TABLE_LABEL_RULES,
+  protect = c(unname(hvtiRutilities::study_abbreviations(.cfg)), names(ABBREVIATIONS)),
+  keep_codes = c(CONTINUOUS, BINARY, OVERRIDES$continuous, OVERRIDES$binary,
+                 setdiff(.binary_by_data, c(CATEGORICAL, OVERRIDES$categorical)))
+)
+d_table <- .labeled$data
+# A BY given level text still names STDDIFF's treated group: GROUP_1 may be
+# its code, and a 0/1 BY's 1 is treated, as it was before the text replaced it.
+.by_levels <- .labeled$levels[[BY %||% ""]]
+if (!is.null(.by_levels) && (!is.null(GROUP_1) || setequal(names(.by_levels), c("0", "1")))) {
+  .treated <- if (is.null(GROUP_1)) "1" else as.character(GROUP_1)
+  if (.treated %in% names(.by_levels)) GROUP_1 <- .by_levels[[.treated]]
+}
+```
+
 Code
 
 ``` r
@@ -363,7 +461,7 @@ if (!is.logical(DROP_CONSTANT) || length(DROP_CONSTANT) != 1L || is.na(DROP_CONS
 }
 explicit <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
 if (all(vapply(explicit, is.null, logical(1)))) {
-  b <- classify_buckets(d, unlist(GROUPS, use.names = FALSE), OVERRIDES)
+  b <- classify_buckets(d_table, unlist(GROUPS, use.names = FALSE), OVERRIDES)
   CONTINUOUS <- b$continuous
   BINARY <- b$binary
   CATEGORICAL <- b$categorical
@@ -376,7 +474,7 @@ if (all(vapply(explicit, is.null, logical(1)))) {
   if (anyDuplicated(rows) || anyDuplicated(classified) || !setequal(rows, classified)) {
     stop("Every grouped row must appear in exactly one explicit bucket.", call. = FALSE)
   }
-  invisible(classify_buckets(d, rows, explicit))
+  invisible(classify_buckets(d_table, rows, explicit))
 }
 # A missing value is not a second value: a row is constant when every
 # recorded value is the same. A row with nothing recorded is kept, since an
@@ -384,7 +482,7 @@ if (all(vapply(explicit, is.null, logical(1)))) {
 constant_rows <- character(0)
 if (DROP_CONSTANT) {
   rows <- unlist(GROUPS, use.names = FALSE)
-  constant_rows <- rows[vapply(d[rows], function(x) length(unique(x[!is.na(x)])) == 1L, logical(1))]
+  constant_rows <- rows[vapply(d_table[rows], function(x) length(unique(x[!is.na(x)])) == 1L, logical(1))]
   GROUPS <- Filter(length, lapply(GROUPS, setdiff, y = constant_rows))
   if (!length(GROUPS)) stop("Every row has one value for every patient; there is no table to draw.", call. = FALSE)
   CONTINUOUS <- setdiff(CONTINUOUS, constant_rows)
@@ -394,7 +492,7 @@ if (DROP_CONSTANT) {
   ORDINAL <- setdiff(ORDINAL, constant_rows)
 }
 tbl <- hvtiRtables::hv_tbl_summary(
-  d, by = BY, groups = GROUPS, continuous = CONTINUOUS,
+  d_table, by = BY, groups = GROUPS, continuous = CONTINUOUS,
   binary = BINARY, categorical = CATEGORICAL, compare = COMPARE,
   percentiles = PERCENTILES, continuous_stat = CONTINUOUS_STAT,
   mean_sd = MEAN_SD, show_variable = SHOW_VARIABLE
@@ -412,7 +510,7 @@ if (STDDIFF) {
     stop("STDDIFF needs hvtiRpropensity >= 0.2.0 for ps_stddiff().", call. = FALSE)
   }
   buckets <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
-  tbl <- hvtiRtables::hv_tbl_compare(tbl, stddiff_values(d, BY, buckets, MEAN_SD, ORDINAL, GROUP_1),
+  tbl <- hvtiRtables::hv_tbl_compare(tbl, stddiff_values(d_table, BY, buckets, MEAN_SD, ORDINAL, GROUP_1),
                                      label = "Std. Diff. (%)")
 }
 # The report's table, in the report style. hv_man_table_display() adds the
@@ -464,6 +562,34 @@ if (length(constant_rows)) {
 Code
 
 ``` r
+# unnumbered: its child chunk carries its own label and caption
+if (nrow(.labeled$changes)) {
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-table-labels",
+    "#| tbl-cap: \"The labels and levels this table prints in place of the dataset's, and why\"",
+    "knitr::kable(.labeled$changes, col.names = c(\"Variable\", \"Dataset\", \"Table\", \"Rule\"))", .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
+Code
+
+``` r
+knitr::kable(.labeled$changes, col.names = c("Variable", "Dataset", "Table", "Rule"))
+```
+
+| Variable | Dataset                 | Table                   | Rule  |
+|:---------|:------------------------|:------------------------|:------|
+| bmi      | Body mass index (kg/m2) | Body mass index (kg/m²) | units |
+| plvmassi | LV mass index (g/m2)    | LV mass index (g/m²)    | units |
+
+Table 3: The labels and levels this table prints in place of the
+dataset’s, and why
+
+Code
+
+``` r
 # unnumbered: writes the Word file; the table below shows what it holds
 # The same summary, drawn for the manuscript. MANUSCRIPT_CAPTION is written into
 # the .docx above the table; this report numbers its own tables. The tbl-word
@@ -481,6 +607,11 @@ word_path <- file.path(study_dir("documents", .root), paste0(SUBJECT, "-", TYPE)
 dir.create(dirname(word_path), recursive = TRUE, showWarnings = FALSE)
 hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS, caption = MANUSCRIPT_CAPTION,
                                orientation = TABLE_ORIENTATION)
+# The file carries what wrote it, the job, the render and the package versions,
+# as document properties (File > Info in Word), so a copy that is emailed on
+# says which release built it without anyone opening this report.
+hvtiRtemplates:::.stamp_docx(word_path, hvtiRtemplates:::.run_reconcile(.job$run), data = .provenance_data,
+                             caption = MANUSCRIPT_CAPTION)
 # The manuscript style merges its header and section rows, and nothing else.
 check <- hvtiRtables::hv_check_docx(word_path, style = "manuscript")
 if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)
@@ -518,7 +649,7 @@ hvtiRtables::hv_man_table_display(word_ft, abbreviations = ABBREVIATIONS)
 | \*Patients with non-missing data. |  |  |
 | †Values are No. (%) or median \[15th, 85th percentiles\]. |  |  |
 
-Table 3: The table as saved to Word, in the manuscript style
+Table 4: The table as saved to Word, in the manuscript style
 
 ## Correlations
 
@@ -561,9 +692,9 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-23 13:34:20 EDT  |
-|                 | Ended            | 2026-10-23 13:34:21 EDT  |
-|                 | Duration         | 1 s                      |
+| Run             | Started          | 2026-10-25 18:27:37 EDT  |
+|                 | Ended            | 2026-10-25 18:27:38 EDT  |
+|                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -571,9 +702,9 @@ Correlation variant not requested (`CORR <- NULL`).
 |                 | Template         | dc.tables                |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.0                    |
-| Dataset `built` | Version file     | built_20261023.parquet   |
-|                 | Registered       | 2026-10-23               |
+|                 | hvtiRtemplates   | 1.5.1                    |
+| Dataset `built` | Version file     | built_20261025.parquet   |
+|                 | Version date     | 2026-10-25               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

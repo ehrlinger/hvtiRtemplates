@@ -12,7 +12,7 @@ window.GALLERY = [
   "call": "add_job(\"bd\", subject = \"study\", type = \"build\")",
   "tables": 3,
   "figures": 0,
-  "seconds": 6.7,
+  "seconds": 10.1,
   "report": true,
   "issues": [],
   "note": ""
@@ -29,7 +29,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.eda\", subject = \"cohort\", type = \"eda\")",
   "tables": 6,
   "figures": 11,
-  "seconds": 34.3,
+  "seconds": 31.7,
   "report": true,
   "issues": [],
   "note": "No grouping variable, which the legacy EDA report had."
@@ -46,7 +46,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.general\", subject = \"cohort\", type = \"eda\")",
   "tables": 14,
   "figures": 0,
-  "seconds": 6.3,
+  "seconds": 4.8,
   "report": true,
   "issues": [],
   "note": ""
@@ -61,9 +61,9 @@ window.GALLERY = [
   "spec": "https://github.com/ehrlinger/hvtiRtemplates/blob/main/dev/specs/2026-09-02-dp-dc-decomposition-design.md",
   "feedback": "https://github.com/ehrlinger/hvtiRtemplates/issues/new?title=dc-gfup%3A%20",
   "call": "add_job(\"dc.gfup\", subject = \"cohort\", type = \"eda\")",
-  "tables": 4,
+  "tables": 5,
   "figures": 2,
-  "seconds": 6.6,
+  "seconds": 5.8,
   "report": true,
   "issues": [],
   "note": ""
@@ -80,7 +80,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.stddiff\", subject = \"cohort\", type = \"balance\")",
   "tables": 5,
   "figures": 1,
-  "seconds": 7.1,
+  "seconds": 6.0,
   "report": true,
   "issues": [],
   "note": ""
@@ -95,9 +95,9 @@ window.GALLERY = [
   "spec": "https://github.com/ehrlinger/hvtiRtemplates/blob/main/dev/specs/2026-09-02-dp-dc-decomposition-design.md",
   "feedback": "https://github.com/ehrlinger/hvtiRtemplates/issues/new?title=dc-tables%3A%20",
   "call": "add_job(\"dc.tables\", subject = \"cohort\", type = \"eda\")",
-  "tables": 3,
+  "tables": 4,
   "figures": 0,
-  "seconds": 9.7,
+  "seconds": 6.4,
   "report": true,
   "issues": [],
   "note": "The session asked whether this should become a named Table 1 job."
@@ -114,7 +114,7 @@ window.GALLERY = [
   "call": "add_job(\"dc.trends\", subject = \"cohort\", type = \"eda\")",
   "tables": 2,
   "figures": 4,
-  "seconds": 6.8,
+  "seconds": 6.0,
   "report": true,
   "issues": [],
   "note": ""
@@ -131,7 +131,7 @@ window.GALLERY = [
   "call": "add_job(\"lg\", subject = \"dead\", type = \"calibration\")",
   "tables": 5,
   "figures": 2,
-  "seconds": 8.4,
+  "seconds": 7.0,
   "report": true,
   "issues": [],
   "note": "Death against age and NYHA class on the constant-hazard link, with the scale chosen for each. A real study reads the figures before it fills chosen in."
@@ -148,7 +148,7 @@ window.GALLERY = [
   "call": "add_job(\"ac\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 15,
   "figures": 6,
-  "seconds": 19.6,
+  "seconds": 14.7,
   "report": true,
   "issues": [
    177,
@@ -168,7 +168,7 @@ window.GALLERY = [
   "call": "add_job(\"hz\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 8,
   "figures": 1,
-  "seconds": 12.6,
+  "seconds": 8.7,
   "report": true,
   "issues": [
    169,
@@ -189,7 +189,7 @@ window.GALLERY = [
   "call": "add_job(\"bc\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 14.8,
+  "seconds": 12.2,
   "report": true,
   "issues": [
    185,
@@ -211,7 +211,7 @@ window.GALLERY = [
   "call": "add_job(\"bh\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 143.6,
+  "seconds": 120.0,
   "report": true,
   "issues": [
    185,
@@ -234,7 +234,7 @@ window.GALLERY = [
   "call": "add_job(\"bl\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 15.8,
+  "seconds": 12.6,
   "report": true,
   "issues": [
    185,
@@ -255,7 +255,7 @@ window.GALLERY = [
   "call": "add_job(\"br\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 2,
   "figures": 1,
-  "seconds": 10.2,
+  "seconds": 8.4,
   "report": true,
   "issues": [
    185,
@@ -276,7 +276,7 @@ window.GALLERY = [
   "call": "add_job(\"hm\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 12,
   "figures": 1,
-  "seconds": 16.4,
+  "seconds": 10.6,
   "report": true,
   "issues": [
    228,
@@ -300,7 +300,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.balancing_count\", subject = \"exposure\", type = \"balancing\")",
   "tables": 6,
   "figures": 0,
-  "seconds": 8.1,
+  "seconds": 4.7,
   "report": true,
   "issues": [
    174
@@ -319,7 +319,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.binary\", subject = \"outcome\", type = \"analysis\")",
   "tables": 5,
   "figures": 0,
-  "seconds": 7.2,
+  "seconds": 4.5,
   "report": true,
   "issues": [
    174
@@ -338,7 +338,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.checkpred\", subject = \"outcome\", type = \"analysis\")",
   "tables": 3,
   "figures": 0,
-  "seconds": 8.6,
+  "seconds": 4.4,
   "report": true,
   "issues": [],
   "note": "AUC 0.75 and observed/expected 1.16 on the 2015-onward cohort."
@@ -355,7 +355,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.nominal\", subject = \"outcome\", type = \"analysis\")",
   "tables": 5,
   "figures": 0,
-  "seconds": 8.2,
+  "seconds": 4.6,
   "report": true,
   "issues": [
    174
@@ -374,7 +374,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.ordinal\", subject = \"outcome\", type = \"analysis\")",
   "tables": 5,
   "figures": 0,
-  "seconds": 7.4,
+  "seconds": 4.4,
   "report": true,
   "issues": [
    174
@@ -393,7 +393,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.propensity_binary\", subject = \"treatment\", type = \"propensity\")",
   "tables": 7,
   "figures": 0,
-  "seconds": 8.2,
+  "seconds": 4.6,
   "report": true,
   "issues": [
    174
@@ -412,7 +412,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.propensity_nominal\", subject = \"treatment\", type = \"propensity\")",
   "tables": 7,
   "figures": 0,
-  "seconds": 8.0,
+  "seconds": 4.8,
   "report": true,
   "issues": [
    174
@@ -431,7 +431,7 @@ window.GALLERY = [
   "call": "add_job(\"lm.propensity_ordinal\", subject = \"treatment\", type = \"propensity\")",
   "tables": 9,
   "figures": 0,
-  "seconds": 9.1,
+  "seconds": 4.8,
   "report": true,
   "issues": [
    174
@@ -450,7 +450,7 @@ window.GALLERY = [
   "call": "add_job(\"nb.boostmtree\", subject = \"lvef\", type = \"boost\")",
   "tables": 3,
   "figures": 7,
-  "seconds": 181.9,
+  "seconds": 105.9,
   "report": true,
   "issues": [],
   "note": "Reads a synthetic echo series, 300 patients with 2 to 6 visits; M = 200, so it is the slowest job here."
@@ -467,7 +467,7 @@ window.GALLERY = [
   "call": "add_job(\"rfc.explain\", subject = \"dead\", type = \"rfc\")",
   "tables": 2,
   "figures": 3,
-  "seconds": 15.4,
+  "seconds": 11.8,
   "report": true,
   "issues": [
    166,
@@ -487,7 +487,7 @@ window.GALLERY = [
   "call": "add_job(\"rfc.fit\", subject = \"dead\", type = \"rfc\")",
   "tables": 2,
   "figures": 2,
-  "seconds": 13.4,
+  "seconds": 9.0,
   "report": true,
   "issues": [
    165,
@@ -508,7 +508,7 @@ window.GALLERY = [
   "call": "add_job(\"rfr.explain\", subject = \"los\", type = \"rfr\")",
   "tables": 2,
   "figures": 3,
-  "seconds": 13.7,
+  "seconds": 11.2,
   "report": true,
   "issues": [
    166,
@@ -528,7 +528,7 @@ window.GALLERY = [
   "call": "add_job(\"rfr.fit\", subject = \"los\", type = \"rfr\")",
   "tables": 2,
   "figures": 2,
-  "seconds": 10.5,
+  "seconds": 8.7,
   "report": true,
   "issues": [
    165,
@@ -549,7 +549,7 @@ window.GALLERY = [
   "call": "add_job(\"rfs.explain\", subject = \"dead\", type = \"rfs\")",
   "tables": 2,
   "figures": 4,
-  "seconds": 21.5,
+  "seconds": 13.9,
   "report": true,
   "issues": [
    166,
@@ -569,7 +569,7 @@ window.GALLERY = [
   "call": "add_job(\"rfs.fit\", subject = \"dead\", type = \"rfs\")",
   "tables": 2,
   "figures": 3,
-  "seconds": 21.0,
+  "seconds": 12.8,
   "report": true,
   "issues": [
    165,
@@ -590,7 +590,7 @@ window.GALLERY = [
   "call": "add_job(\"rm.balancing_continuous\", subject = \"exposure\", type = \"balancing\")",
   "tables": 6,
   "figures": 0,
-  "seconds": 7.9,
+  "seconds": 4.6,
   "report": true,
   "issues": [],
   "note": ""
@@ -607,7 +607,7 @@ window.GALLERY = [
   "call": "add_job(\"rm.linear\", subject = \"outcome\", type = \"linear\")",
   "tables": 6,
   "figures": 2,
-  "seconds": 7.5,
+  "seconds": 6.1,
   "report": true,
   "issues": [],
   "note": ""
@@ -624,7 +624,7 @@ window.GALLERY = [
   "call": "add_job(\"sid.clusters\", subject = \"morphology\", type = \"sid\")",
   "tables": 3,
   "figures": 4,
-  "seconds": 13.0,
+  "seconds": 9.9,
   "report": true,
   "issues": [],
   "note": ""
@@ -641,7 +641,24 @@ window.GALLERY = [
   "call": "add_job(\"sid.fit\", subject = \"morphology\", type = \"sid\")",
   "tables": 3,
   "figures": 0,
-  "seconds": 14.0,
+  "seconds": 9.4,
+  "report": true,
+  "issues": [],
+  "note": ""
+ },
+ {
+  "name": "vp-dependence",
+  "folder": "30_analyses",
+  "title": "VarPro: dependence",
+  "use": "Unsupervised VarPro: how the variables depend on each other, as a graph whose edges must beat permuted noise, checked across subsamples.",
+  "deprecated_by": null,
+  "in_flight": true,
+  "spec": "https://github.com/ehrlinger/hvtiRtemplates/blob/main/dev/specs/2026-10-22-vp-dependence-individual-design.md",
+  "feedback": "https://github.com/ehrlinger/hvtiRtemplates/issues/new?title=vp-dependence%3A%20",
+  "call": "add_job(\"vp.dependence\", subject = \"dead\", type = \"dependence\")",
+  "tables": 4,
+  "figures": 2,
+  "seconds": 54.9,
   "report": true,
   "issues": [],
   "note": ""
@@ -658,7 +675,7 @@ window.GALLERY = [
   "call": "add_job(\"vp.explain\", subject = \"dead\", type = \"vp\")",
   "tables": 1,
   "figures": 1,
-  "seconds": 11.7,
+  "seconds": 9.7,
   "report": true,
   "issues": [],
   "note": ""
@@ -675,7 +692,24 @@ window.GALLERY = [
   "call": "add_job(\"vp.fit\", subject = \"dead\", type = \"vp\")",
   "tables": 5,
   "figures": 2,
-  "seconds": 56.1,
+  "seconds": 47.5,
+  "report": true,
+  "issues": [],
+  "note": ""
+ },
+ {
+  "name": "vp-individual",
+  "folder": "30_analyses",
+  "title": "VarPro: individual",
+  "use": "Individual VarPro: each patient's local gradient for each predictor, from the fit a vp-fit screen saved.",
+  "deprecated_by": null,
+  "in_flight": true,
+  "spec": "https://github.com/ehrlinger/hvtiRtemplates/blob/main/dev/specs/2026-10-22-vp-dependence-individual-design.md",
+  "feedback": "https://github.com/ehrlinger/hvtiRtemplates/issues/new?title=vp-individual%3A%20",
+  "call": "add_job(\"vp.individual\", subject = \"dead\", type = \"vp\")",
+  "tables": 2,
+  "figures": 2,
+  "seconds": 9.0,
   "report": true,
   "issues": [],
   "note": ""
@@ -692,7 +726,7 @@ window.GALLERY = [
   "call": "add_job(\"vt.explain\", subject = \"dead\", type = \"vt\")",
   "tables": 4,
   "figures": 5,
-  "seconds": 10.8,
+  "seconds": 8.9,
   "report": true,
   "issues": [],
   "note": ""
@@ -709,7 +743,7 @@ window.GALLERY = [
   "call": "add_job(\"vt.fit\", subject = \"dead\", type = \"vt\")",
   "tables": 4,
   "figures": 2,
-  "seconds": 20.2,
+  "seconds": 16.5,
   "report": true,
   "issues": [],
   "note": ""
@@ -726,7 +760,7 @@ window.GALLERY = [
   "call": "add_job(\"hp\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 4,
   "figures": 3,
-  "seconds": 8.4,
+  "seconds": 5.1,
   "report": true,
   "issues": [
    177,
@@ -746,7 +780,7 @@ window.GALLERY = [
   "call": "add_job(\"hs.concordance\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 7,
   "figures": 0,
-  "seconds": 49.5,
+  "seconds": 34.7,
   "report": true,
   "issues": [
    227,
@@ -766,7 +800,7 @@ window.GALLERY = [
   "call": "add_job(\"hs.setup\", subject = \"dead_pa\", type = \"hz\")",
   "tables": 5,
   "figures": 1,
-  "seconds": 8.8,
+  "seconds": 6.0,
   "report": true,
   "issues": [
    183,
@@ -786,10 +820,10 @@ window.GALLERY = [
   "call": "add_job(\"lp.mirror\", subject = \"treatment\", type = \"propensity\")",
   "tables": 3,
   "figures": 2,
-  "seconds": 10.5,
+  "seconds": 5.9,
   "report": true,
   "issues": [],
   "note": "Two figures, all patients and under the matching weights. A second gallery job, lp-mirror-matched, sets MATCH to a simulated flag and adds the matched figure."
  }
 ];
-window.GALLERY_BUILT = "1.5.0 \u00b7 built 2026-10-23";
+window.GALLERY_BUILT = "1.5.1 \u00b7 built 2026-10-25";

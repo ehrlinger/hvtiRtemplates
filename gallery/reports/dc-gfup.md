@@ -4,16 +4,16 @@
 
 Published
 
-2026-10-23 13:34
+2026-10-25 18:27
 
 Replaces `descriptive/dc.gfup`.
 
 A `dc-gfup` job checks follow-up before time-related analyses. We
 summarize the full cohort and the event and censored subsets, review
 missing, negative and zero intervals, then draw the
-goodness-of-follow-up figure. Follow-up units must be years. Derive any
-potential-follow-up measures in the data build and register them before
-selecting them here.
+goodness-of-follow-up figure. Follow-up units must be years. The
+potential follow-up, how much follow-up the close date allows, is
+computed here from the operation year and the close date.
 
 The tables describe recorded follow-up. The figure measures it against a
 close date: every patient is one point, the year of operation across and
@@ -43,9 +43,9 @@ if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
   stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles; ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
-  stop("This job needs hvtiPlotR >= 2.8.0 for hv_followup_panels() and scale_color_hv(); ",
-       utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
+if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
+  stop("This job needs hvtiPlotR >= 2.8.18 for hv_followup_panels()'s competing events and echo layer, ",
+       "and the red and blue its captions name; ", utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
-· rendered by gallery on gallery · hvtiRtemplates 1.5.0
+**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -149,26 +149,48 @@ CLOSE_DATE <- as.Date("2025-12-31")
 # EVENT and FOLLOWUP defaults above. A study that ascertains deaths two ways draws both,
 # for example
 #   systematic = list(status = "deads", time = "iv_deads", title = "Systematic deaths")
+# A non-fatal event drawn on its own, without death, is a panel too; `levels`
+# names its two groups, censored first, in place of Alive and Dead:
+#   reop = list(status = "ev_reop", time = "iv_reop", title = "Reoperation",
+#               levels = c("No reoperation", "Reoperation"))
+# EVENT above must be drawn by one entry here or in EVENTS below, or the
+# report's table and its figures describe different events.
 PANELS <- list(
   all = list(status = "dead", time = "iv_dead", title = "All deaths")
 )
 
-# Demo: optional event panels, one entry per non-fatal event. `event` and
-# `time` are the event's indicator and interval; `death` and `death_time` the
-# death it competes with. A flagged event counts only when it comes strictly
-# before death, so ties go to death. list() draws none. For example
+# Demo: optional event panels, one entry per panel. `event` and `time` are the
+# event's indicator and interval; `death` and `death_time` the death it
+# competes with. A flagged event counts only when it comes strictly before
+# death, so ties go to death. list() draws none. For example
 #   reop = list(event = "ev_reop", time = "iv_reop", death = "dead",
 #               death_time = "iv_dead", label = "Reoperation")
+# Competing non-fatal events share one panel when `event`, `time` and `label`
+# are vectors, one element per event and at most four; `death` and
+# `death_time` stay single. Each patient shows the earliest event before death,
+# and a tie between two events goes to the one listed first, so list the event
+# that should win a tie first:
+#   nonfatal = list(event = c("ev_reop", "ev_stroke"), time = c("iv_reop", "iv_stroke"),
+#                   death = "dead", death_time = "iv_dead", label = c("Reoperation", "Stroke"))
 EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", death_time = "iv_dead", label = "Reoperation"))
+
+# Demo: NULL draws no echoes. Name the column holding each patient's echo
+# interval in years, such as "iv_echo" from a JOIN reduced to one echo per
+# patient, to mark it on every panel with a gray tick. A patient with no echo
+# (NA) gets no tick.
+ECHO <- NULL
 
 # Demo: point transparency. 0.5 lets a dense cohort read as a distribution
 # rather than a blob; raise it for a small one.
 ALPHA <- 0.5
 
 # Demo: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
-# vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
-# all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
-# event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
+# red, alive blue and non-fatal events green, then reddish purple, olive
+# and black, all colorblind safe. Name alive, dead and event to choose your own;
+# c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A") is ColorBrewer
+# Set1, what these jobs drew before 1.2.3. For competing events, repeat event,
+# one color per event in the order EVENTS lists them, as many as the largest
+# panel has: c(alive = ..., dead = ..., event = ..., event = ...).
 # Each figure caption names these colors, so choosing your own means naming them
 # in the caption key too, where the figures are drawn.
 COLORS <- NULL
@@ -199,7 +221,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261023.parquet) |
+| Source              | dataset `built` (built_20261025.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -226,21 +248,26 @@ if (!is.null(job_data$attrition)) {
 One row per follow-up interval and patient group: every patient, those
 with the event and those censored. A patient with no event status counts
 among all patients only, and the report says how many there are. The
-15th and 85th percentiles and the median are SAS `QNTLDEF=5`, as
-`proc_means()` computes them. Suspicious rows have missing event status
-or at least one missing, negative or zero interval. The local review
-prints at most `MAX_REVIEW_ROWS` of them, in source order, with only the
-selected fields. Identifiers stay out until you select one; check the
-output before sharing a report that contains an identifier.
+15th, 75th, 85th and 90th percentiles and the median are SAS
+`QNTLDEF=5`, as `proc_means()` computes them, and `total` is the group’s
+follow-up summed, in patient-years, the figure a paper reports as total
+follow-up. Suspicious rows have missing event status or at least one
+missing, negative or zero interval. The local review prints at most
+`MAX_REVIEW_ROWS` of them, in source order, with only the selected
+fields. Identifiers stay out until you select one; check the output
+before sharing a report that contains an identifier.
 
 Code
 
 ``` r
+# The statistics the follow-up table shows, total follow-up (sum) included, in
+# patient-years; dc-eda carries the same line.
+.followup_stats <- c("n", "nmiss", "mean", "std", "min", "p15", "median", "p75", "p85", "p90", "max", "sum")
 # The checks are hvtiRutilities::followup_check(), the function the EDA report
 # calls too, so the two reports cannot disagree. It checks every choice above
 # before computing anything, and names every missing column at once.
-fc <- hvtiRutilities::followup_check(d, event = EVENT, followup = FOLLOWUP,
-                                     identifier = IDENTIFIER, max_rows = MAX_REVIEW_ROWS)
+fc <- hvtiRutilities::followup_check(d, event = EVENT, followup = FOLLOWUP, identifier = IDENTIFIER,
+                                     max_rows = MAX_REVIEW_ROWS, stats = .followup_stats)
 cohort_counts <- fc$cohort
 review_rows <- fc$review
 # followup_check() returns five one-row tables: the group counts, the interval
@@ -259,7 +286,7 @@ review_rows <- fc$review
     data.frame(interval = m$variable, patients = groups[[g]], n = m$n, missing = m$nmiss,
                negative = count(function(x) x < 0), zero = count(function(x) x == 0),
                mean = m$mean, sd = m$std, min = m$min, p15 = m$p15, median = m$median,
-               p85 = m$p85, max = m$max, row.names = NULL)
+               p75 = m$p75, p85 = m$p85, p90 = m$p90, max = m$max, total = m$sum, row.names = NULL)
   })
   out <- do.call(rbind, rows)
   out[order(match(out$interval, unique(out$interval))), , drop = FALSE]
@@ -273,11 +300,11 @@ Code
 knitr::kable(followup_table, row.names = FALSE, digits = 3)
 ```
 
-| interval | patients | n | missing | negative | zero | mean | sd | min | p15 | median | p85 | max |
-|:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| iv_dead | All patients | 800 | 0 | 0 | 0 | 9.479 | 8.087 | 0 | 1.538 | 7.137 | 18.964 | 34.604 |
-| iv_dead | Event | 445 | 0 | 0 | 0 | 7.064 | 6.403 | 0 | 0.957 | 5.022 | 14.135 | 26.513 |
-| iv_dead | Censored | 355 | 0 | 0 | 0 | 12.508 | 8.926 | 0 | 2.987 | 10.221 | 24.694 | 34.604 |
+| interval | patients | n | missing | negative | zero | mean | sd | min | p15 | median | p75 | p85 | p90 | max | total |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| iv_dead | All patients | 800 | 0 | 0 | 0 | 9.479 | 8.087 | 0 | 1.538 | 7.137 | 14.286 | 18.964 | 22.244 | 34.604 | 7583.503 |
+| iv_dead | Event | 445 | 0 | 0 | 0 | 7.064 | 6.403 | 0 | 0.957 | 5.022 | 11.120 | 14.135 | 17.266 | 26.513 | 3143.312 |
+| iv_dead | Censored | 355 | 0 | 0 | 0 | 12.508 | 8.926 | 0 | 2.987 | 10.221 | 18.923 | 24.694 | 25.908 | 34.604 | 4440.190 |
 
 Table 2: Follow-up by interval and patient group: missing, negative and
 zero values, and the distribution (years)
@@ -323,7 +350,8 @@ Code
 panel_counts <- list()
 fp <- tryCatch(
   hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
-                                panels = PANELS, events = EVENTS, close_date = CLOSE_DATE),
+                                panels = PANELS, events = EVENTS, close_date = CLOSE_DATE,
+                                echo_time_col = ECHO),
   error = function(e) e
 )
 figure_drawn <- !inherits(fp, "error")
@@ -375,12 +403,73 @@ knitr::kable(data.frame(
 
 Table 3: Operation years and the close date
 
+## Potential follow-up
+
+A patient’s potential follow-up runs from their operation to the close
+date: the dashed diagonal in the figures below. A patient who reached
+the panel’s event is followed completely, so their potential is the
+follow-up recorded. Each panel’s **percent of potential** is the
+follow-up recorded over the follow-up possible, summed over its
+patients, the “follow-up was 92% complete” a paper reports. Follow-up
+recorded past the close date counts only up to it, and the table says
+how many patients have any.
+
+Code
+
+``` r
+# unnumbered: computes the potential follow-up; the table chunk below shows it
+# The operation date is ORIGIN_YEAR's 1 January plus OPYRS years of 365.2425
+# days, the arithmetic hv_followup() draws its diagonal with, so the table and
+# the diagonal agree.
+.potential_row <- function(title, status, time) {
+  op <- as.Date(paste0(ORIGIN_YEAR, "-01-01")) + d[[OPYRS]] * 365.2425
+  calendar <- pmax(as.numeric(close_date - op) / 365.2425, 0)
+  st <- d[[status]]
+  observed <- d[[time]]
+  keep <- !is.na(st) & !is.na(observed) & !is.na(calendar)
+  st <- st[keep]
+  observed <- observed[keep]
+  calendar <- calendar[keep]
+  # Follow-up counts up to the close date, an event's included: one recorded
+  # after it is past the close like any other, and complete only up to it.
+  recorded <- pmin(observed, calendar)
+  possible <- ifelse(st == 1, recorded, calendar)
+  past_close <- sum(observed > calendar)
+  # No patient with all three columns leaves nothing to sum; the row says so.
+  if (!length(observed)) observed <- recorded <- possible <- NA_real_
+  data.frame(panel = title, patients = sum(keep), recorded = sum(recorded), possible = sum(possible),
+             percent = 100 * sum(recorded) / sum(possible), max_recorded = max(observed),
+             max_possible = max(possible), past_close = past_close, row.names = NULL)
+}
+potential_table <- if (figure_drawn) {
+  do.call(rbind, lapply(names(PANELS), function(nm) {
+    p <- PANELS[[nm]]
+    .potential_row(if (is.null(p$title)) nm else p$title, p$status, p$time)
+  }))
+}
+```
+
+Code
+
+``` r
+knitr::kable(potential_table, row.names = FALSE, digits = 1)
+```
+
+| panel | patients | recorded | possible | percent | max_recorded | max_possible | past_close |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+| All deaths | 800 | 7583.5 | 8334.3 | 91 | 34.6 | 35.7 | 0 |
+
+Table 4: Follow-up recorded against follow-up possible by the close
+date, per panel (patient-years)
+
 ## Goodness of follow-up
 
 A point below the diagonal is follow-up short of what the close date
 allows. A dead patient’s point is where the death was recorded, so it is
 expected below the line; it is the **blue** points drifting below it
-that need an explanation.
+that need an explanation. When `ECHO` names a column, a gray tick marks
+each patient’s echo, so a patient followed by echo but not by the
+follow-up record shows as a tick above their point.
 
 Code
 
@@ -410,16 +499,58 @@ figure_link <- function(file) {
 }
 if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
                                               "(study-choices in a job made before that rename).", call. = FALSE)
-if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLORS) == 3L &&
-                            setequal(names(COLORS), c("alive", "dead", "event")))) {
-  stop("COLORS must be NULL or name exactly alive, dead and event.", call. = FALSE)
+if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && all(names(COLORS) %in% c("alive", "dead", "event")) &&
+                            sum(names(COLORS) == "alive") == 1L && sum(names(COLORS) == "dead") == 1L &&
+                            any(names(COLORS) == "event"))) {
+  stop("COLORS must be NULL, or name alive and dead once each and event once per competing event.", call. = FALSE)
 }
-# Dead or Death is the event and Alive or No event the censored level, so a
-# non-fatal event takes the house rule's next color, green.
-status_colors <- function(levels) {
-  if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
-  keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
-  scale_color_manual(values = stats::setNames(COLORS[keys], levels))
+# A panel draws at most four competing events: each needs a shape of its own,
+# and the house palette names its colors only up to four.
+.n_events <- vapply(EVENTS, function(e) if (is.list(e)) length(e$event) else 0L, integer(1L))
+if (any(.n_events > 4L)) {
+  stop("An EVENTS entry lists ", max(.n_events), " events; a panel draws at most four.", call. = FALSE)
+}
+if (!is.null(COLORS) && any(.n_events > sum(names(COLORS) == "event"))) {
+  stop("COLORS names ", sum(names(COLORS) == "event"), " event color(s), and an EVENTS entry lists ",
+       max(.n_events), " events. Repeat event in COLORS, one color per event.", call. = FALSE)
+}
+# Dead or Death is the event and Alive or No event the censored level, so
+# non-fatal events take the house rule's next colors, green first. With COLORS
+# set, the event colors are taken in order, one per event in the panel.
+status_colors <- function(levels, labels = stats::setNames(levels, levels)) {
+  if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event"), labels = labels))
+  events <- unname(COLORS[names(COLORS) == "event"])[seq_len(length(levels) - 2L)]
+  scale_color_manual(values = stats::setNames(c(COLORS[["alive"]], events, COLORS[["dead"]]), levels), labels = labels)
+}
+# A panel's optional `levels` names its two groups, censored first, for a panel
+# whose 1/0 status is not a death.
+for (nm in names(PANELS)) {
+  lv <- PANELS[[nm]]$levels
+  if (!is.null(lv) && !(is.character(lv) && length(lv) == 2L && !anyNA(lv) && all(nzchar(lv)) && !anyDuplicated(lv))) {
+    stop("PANELS entry ", nm, ": `levels` must be two distinct names, censored first, such as ",
+         "c(\"No reoperation\", \"Reoperation\").", call. = FALSE)
+  }
+}
+# The table above checks EVENT and the figures draw PANELS and EVENTS, set
+# apart, so a job can check one event and draw another without a sign of it:
+# a reoperation table beside a death figure. The figures must draw EVENT too.
+# An EVENTS panel draws its competing death as well as its event.
+.drawn_events <- unique(unlist(lapply(EVENTS, function(e) c(e$event, e$death))))
+.drawn <- c(unlist(lapply(PANELS, `[[`, "status")), .drawn_events)
+if (!EVENT %in% .drawn) {
+  .why <- paste0("EVENT is ", EVENT, ", which no figure draws: PANELS draws ",
+                 paste(unique(unlist(lapply(PANELS, `[[`, "status"))), collapse = ", "),
+                 if (length(EVENTS)) paste0(" and EVENTS ", paste(.drawn_events, collapse = ", ")) else " and EVENTS none",
+                 ". Add an EVENTS entry for a non-fatal event, or a PANELS entry, with `levels`, for its two groups.")
+  if (!tolower(Sys.getenv("HVTI_TEMPLATE_STRICT")) %in% c("", "0", "false", "no")) {
+    stop("The follow-up table and the figures describe different events. ", .why,
+         "\nThis render stops because HVTI_TEMPLATE_STRICT is set; a draft render reports it and carries on.",
+         call. = FALSE)
+  }
+  warning("The follow-up table and the figures describe different events. ", .why, call. = FALSE)
+  hvtiRtemplates:::.run_mark_draft("the follow-up table and the figures describe different events")
+  cat("\n::: {.callout-warning title=\"The table and the figures describe different events\"}\n",
+      .why, "\n:::\n\n", sep = "")
 }
 plots <- if (figure_drawn) plot(fp, alpha = ALPHA) else list()
 for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
@@ -427,22 +558,39 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   nm <- row$panel
   panel_counts[[nm]] <- list(drawn = row$n_drawn, excluded = row$n_excluded)
   cat("\n### ", row$title, "\n\n", row$n_drawn, " patients drawn; ", row$n_excluded,
-      " missing a column this panel needs.\n\n", sep = "")
+      " missing a column this panel needs.", sep = "")
+  if (!is.null(ECHO)) cat(" ", fp$tables$panels[[nm]]$meta$n_echo, " with an echo marked.", sep = "")
+  cat("\n\n")
   # The caption key names the house colors that COLORS <- NULL draws and the
   # shapes set here, so a study that sets COLORS renames them in .key below.
   if (row$type == "followup") {
+    # The plot's groups are Alive and Dead whatever the status; `levels` renames them.
+    .lv <- stats::setNames(if (is.null(PANELS[[nm]]$levels)) c("Alive", "Dead") else PANELS[[nm]]$levels,
+                           c("Alive", "Dead"))
     p <- plots[[nm]] +
-      status_colors(c("Alive", "Dead")) +
-      scale_shape_manual(values = c(Alive = 1, Dead = 4))
-    .key <- "Blue open circles mark patients alive and vermillion crosses patients who died"
+      status_colors(c("Alive", "Dead"), .lv) +
+      scale_shape_manual(values = c(Alive = 1, Dead = 4), labels = .lv)
+    .key <- if (is.null(PANELS[[nm]]$levels)) {
+      "Blue open circles mark patients alive and red crosses patients who died"
+    } else {
+      paste0("Blue open circles mark ", .lv[["Alive"]], " and red crosses ", .lv[["Dead"]])
+    }
   } else {
-    levels <- c("No event", row$title, "Death")
+    # The levels are the panel's own: "No event", one per event in the order
+    # EVENTS lists them, and "Death".
+    levels <- fp$tables$panels[[nm]]$meta$event_levels
+    k <- length(levels) - 2L
     p <- plots[[nm]] +
       status_colors(levels) +
-      scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
-    .key <- paste0("Blue open circles mark patients without the event, green open triangles patients with the event, ",
-                   "and vermillion crosses patients who died")
+      scale_shape_manual(values = stats::setNames(c(1, c(2, 0, 5, 6)[seq_len(k)], 4), levels))
+    .with <- if (k == 1L) "patients with the event" else paste("patients whose first event was", levels[1L + seq_len(k)])
+    .key <- paste0("Blue open circles mark patients without ", if (k == 1L) "the event" else "an event", ", ",
+                   paste(c("green", "reddish purple", "olive", "black")[seq_len(k)],
+                         c("open triangles", "open squares", "open diamonds", "open inverted triangles")[seq_len(k)],
+                         .with, collapse = ", "),
+                   ", and red crosses patients who died")
   }
+  if (!is.null(ECHO)) .key <- paste0(.key, ", gray ticks the follow-up at each patient's echo,")
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript(base_size = 12)
   file <- save_figure(p, paste0("dc-gfup-", nm), linked = TRUE)
@@ -464,12 +612,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/933604766f2cc62ffb78a4a93ac6713e.png)
+![](assets/38fa5e3bd8e6bc017e87ff2461284981.png)
 
 Figure 1: Follow-up against year of operation, All deaths. Blue open
-circles mark patients alive and vermillion crosses patients who died and
-the dashed orange diagonal the longest follow-up possible for each year
-of operation.
+circles mark patients alive and red crosses patients who died and the
+dashed orange diagonal the longest follow-up possible for each year of
+operation.
 
 ### Reoperation
 
@@ -481,13 +629,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/f1dc7a57c7ff21ca26fae9678b5ca3dc.png)
+![](assets/0a748c50859ad49e2b9c579dd9b7c1f0.png)
 
 Figure 2: Follow-up against year of operation, Reoperation. Blue open
 circles mark patients without the event, green open triangles patients
-with the event, and vermillion crosses patients who died and the dashed
-orange diagonal the longest follow-up possible for each year of
-operation.
+with the event, and red crosses patients who died and the dashed orange
+diagonal the longest follow-up possible for each year of operation.
 
 ## Event-coding consistency
 
@@ -529,14 +676,14 @@ knitr::kable(.check)
 | 0    | 1    |  114 |
 | 1    | 1    |   86 |
 
-Table 4: dead by reop
+Table 5: dead by reop
 
 ## About this run
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-23 13:34:36 EDT  |
-|                 | Ended            | 2026-10-23 13:34:37 EDT  |
+| Run             | Started          | 2026-10-25 18:27:49 EDT  |
+|                 | Ended            | 2026-10-25 18:27:50 EDT  |
 |                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -545,9 +692,9 @@ Table 4: dead by reop
 |                 | Template         | dc.gfup                  |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.0                    |
-| Dataset `built` | Version file     | built_20261023.parquet   |
-|                 | Registered       | 2026-10-23               |
+|                 | hvtiRtemplates   | 1.5.1                    |
+| Dataset `built` | Version file     | built_20261025.parquet   |
+|                 | Version date     | 2026-10-25               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

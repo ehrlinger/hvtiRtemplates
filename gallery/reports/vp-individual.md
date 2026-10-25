@@ -1,0 +1,509 @@
+# VarPro: individual
+
+# VarPro: individual
+
+Published
+
+2026-10-25 18:34
+
+Describes the `vp-fit` screen in this set patient by patient: each
+selected predictor’s local gradient.
+
+Draws each patient’s VarPro gradient for each predictor the `vp-fit` job
+in this set selected: how steeply the screen’s prediction changes with
+that predictor near that patient (`varPro::ivarpro()`).
+
+A `vp-individual` job never fits VarPro. It reads `vp.rds`, which the
+fit job writes, so the gradients describe exactly the screen that report
+judged. A predictor with no gradient for any patient, or one the fit cut
+before any rule was built, is listed and not drawn. The gradients are
+the expensive step and are cached.
+
+This template is **in flight**, with `vp-fit`.
+
+Code
+
+``` r
+SUBJECT <- "dead"
+TYPE    <- "vp"
+.in <- knitr::current_input(dir = TRUE)
+suppressPackageStartupMessages({
+  library(varPro)
+  library(ggRandomForests)
+  library(hvtiRutilities)
+})
+# One thread, so the gradients reproduce from machine to machine: each is
+# computed from VarPro's forests. ivarpro() takes no cores argument; mc.cores
+# reaches its workers.
+options(rf.cores = 1L, mc.cores = 1L)
+# The versions this template was verified against on 2026-10-22.
+if (utils::packageVersion("randomForestSRC") < "3.7.0") {
+  stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+# 3.3.0 fixes ivarpro()'s scale = "global"/"none" and its multiclass targets,
+# both study choices here, and records the encoded-column map (xvar.map) the
+# coverage table reads.
+if (utils::packageVersion("varPro") < "3.3.0") {
+  stop("This job needs varPro >= 3.3.0; ", utils::packageVersion("varPro"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+if (utils::packageVersion("ggRandomForests") < "4.0.0") {
+  stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. Here that is gradients for a placeholder set of
+# variables, which look exactly like a result.
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
+# `vp-individual` reads the screen `vp-fit` wrote in this same set, caches its
+# own work beside it, and writes individual.rds.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
+```
+
+**final** · data: see About this run · rendered by gallery on gallery ·
+hvtiRtemplates 1.5.1
+
+## Study choices
+
+Edit these values for this study before rendering. The outcome and
+candidates are not here: they come from the screen.
+
+Code
+
+``` r
+# Demo: the screen's selection is used; set any of these only to confirm it.
+# NULL takes the value the fit job used.
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
+
+# Demo: or name the variables yourself. NULL takes the screen's selected set.
+# A variable with no gradient for any patient is listed below and not drawn.
+SHOW <- NULL
+
+# Demo: the gradient scale. "local" measures each slope over the spread of the
+# patients near it; "global" over the predictor's spread in the whole cohort;
+# "none" per unit of the predictor.
+SCALE <- "local"
+
+# Demo: when the fit explains several targets (a multiclass outcome), the one
+# to draw, by name. Ignored when there is one.
+TARGET <- NULL
+
+# Demo: the seed. It is set before ivarpro() and is part of its cache key.
+SEED <- 2026
+
+# Set TRUE after changing a choice above. A cache whose inputs changed stops the
+# render instead of returning the old result; TRUE recomputes only the caches
+# that are out of date.
+REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("vp-individual-beeswarm"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
+```
+
+## The screen
+
+Code
+
+``` r
+.handoff <- set_path("estimates", "vp.rds")
+if (!file.exists(.handoff)) {
+  stop("No screen at ", .handoff, ". Render the vp-fit job in this set first; ",
+       "this job explains that screen and never fits its own.", call. = FALSE)
+}
+.cfg <- study_config(start = .root)
+.vp_read <- hvtiRtemplates:::.read_handoff(.handoff, "screen", .cfg, "the vp-fit job")
+fit <- .vp_read$value$fit
+cov <- .vp_read$value$coverage
+selected <- .vp_read$value$selected
+.provenance_data <- .vp_read$lineage$data
+.provenance_artifacts <- c(.vp_read$lineage$artifacts, list(.vp_read$record))
+CACHE_DIR <- dirname(.handoff)
+```
+
+Code
+
+``` r
+# This job reads no data: the screen carries its rows. The fit job recorded how
+# it chose them, and a setting above that differs from the fit's stops here.
+.sel <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, .vp_read$lineage, list(where = WHERE, id = ID, key = KEY), read = FALSE, source = "vp.rds"
+)$selection
+knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
+                        value = c(.sel$id, paste(.sel$key, collapse = ", "),
+                                  if (length(.sel$where_shown)) paste(.sel$where_shown, collapse = "; ") else "none",
+                                  .sel$rows)),
+             col.names = c("Data", ""))
+```
+
+| Data  |            |
+|:------|:-----------|
+| ID    | patient_id |
+| KEY   | patient_id |
+| WHERE | none       |
+| Rows  | 800        |
+
+Table 1: The data the fit job read
+
+Code
+
+``` r
+# The encoded-column map, read from the fit as vp-dependence reads it.
+vpi_parent <- function(fit) {
+  map <- attr(fit$x, "xvar.map")
+  if (is.null(map)) {
+    stop("This varPro fit records no xvar.map. Update varPro to 3.3.0 or later and re-render the vp-fit job.", call. = FALSE)
+  }
+  map
+}
+# One row per processed predictor the screen was given, taken from the map and
+# not from the gradient table: ivarpro() returns columns only for the
+# predictors the fit kept, so one cut by split weights or NVAR has no column at
+# all, and would otherwise vanish from the table instead of being listed.
+vpi_coverage <- function(grad, parent, screen) {
+  terms <- names(parent)
+  have <- terms %in% names(grad)
+  col_of <- function(t) if (t %in% names(grad)) grad[[t]] else NA_real_
+  out <- data.frame(
+    term = terms, variable = unname(parent),
+    share_na = vapply(terms, function(t) mean(is.na(col_of(t))), numeric(1L)),
+    median_abs = vapply(terms, function(t) {
+      g <- col_of(t)
+      if (all(is.na(g))) NA_real_ else stats::median(abs(g), na.rm = TRUE)
+    }, numeric(1L)),
+    row.names = NULL
+  )
+  out$gradients <- ifelse(!have, "removed before gradients", ifelse(out$share_na == 1, "none for any patient", "computed"))
+  m <- match(out$variable, screen$variable)
+  out$noise <- screen$noise[m] %in% TRUE
+  out$tested <- screen$tested[m] %in% TRUE
+  out$selected <- screen$selected[m] %in% TRUE
+  out$drawn <- out$share_na < 1
+  out
+}
+# The noise reference: the 95th percentile of the noise columns' absolute
+# gradients, when the rules released any noise column. With guided split
+# weights they usually did not, and the report says so rather than invent one.
+vpi_noise_ref <- function(cov, grad = NULL) {
+  nz <- cov$term[cov$noise & cov$drawn]
+  if (!length(nz) || is.null(grad)) {
+    return(list(value = NA_real_, text = "no noise reference: the screen's rules never released a noise column"))
+  }
+  v <- stats::quantile(abs(unlist(grad[nz])), 0.95, na.rm = TRUE, names = FALSE)
+  list(value = v, text = sprintf("noise reference (95th percentile of |gradient| over %d noise columns): %.3g", length(nz), v))
+}
+```
+
+## Gradients
+
+Code
+
+``` r
+# save.model = FALSE: the fit is in vp.rds already. path.store.membership =
+# FALSE: no figure here reads the rule memberships, the large part of the object.
+set.seed(abs(SEED))
+ivp_all <- cache_fit("vp-individual", ivarpro(fit, scale = SCALE, save.model = FALSE, path.store.membership = FALSE),
+                     seed = SEED, dir = CACHE_DIR, refit = REFIT)
+# ivarpro() attaches the predictors and targets it explained to the result as
+# a whole. For a multiclass fit that is a list of one table per class, and the
+# tables carry no data of their own, so the data is taken before a class is.
+.idata <- attr(ivp_all, "data")
+.targets <- attr(.idata, "response.names")
+if (is.data.frame(ivp_all)) {
+  ivp <- ivp_all
+  .target_col <- unname(.targets[[1L]])
+} else {
+  if (is.null(TARGET) || !TARGET %in% names(ivp_all)) {
+    stop("This fit explains several targets: ", paste(names(ivp_all), collapse = ", "), ". Name one in TARGET.", call. = FALSE)
+  }
+  ivp <- ivp_all[[TARGET]]
+  .target_col <- unname(.targets[[TARGET]])
+}
+grad <- as.data.frame(ivp)
+.parent <- vpi_parent(fit)
+# What each gradient is the slope of, named in the report and on the axes. A
+# two-class fit is explained through its FIRST class, which for a 0/1 outcome
+# is class 0, so a gradient's sign must be read against that class.
+.target <- if (is.data.frame(ivp_all)) attr(ivp_all, "target")[[1L]] else TARGET
+.target_label <- switch(fit$family,
+  surv = "ensemble mortality",
+  class = sprintf("P(class %s)", .target),
+  sprintf("predicted %s", .target)
+)
+```
+
+Every predictor the screen was given, and whether it has a gradient. A
+predictor is **removed before gradients** when the fit cut it before
+building any rule for it, by the split weights or `NVAR`; it has **none
+for any patient** when no rule released it. Neither is evidence of no
+effect. To give every candidate gradients, rerun `vp-fit` with
+`SPLIT_WEIGHT <- FALSE` and `NVAR` at least the number of candidates
+plus noise columns.
+
+Code
+
+``` r
+icov <- vpi_coverage(grad, .parent, cov)
+.ref <- vpi_noise_ref(icov, grad)
+.slope_of <- switch(fit$family,
+  surv = "varPro's ensemble mortality, in expected events, not a probability",
+  class = sprintf("the predicted probability of class %s", .target),
+  sprintf("the predicted %s, in its own units", .target)
+)
+.two_class <- identical(fit$family, "class") && is.data.frame(ivp_all)
+cat("Each gradient is the local slope of ", .slope_of, ".",
+    if (.two_class) " With two classes, the other class's gradient is this one with its sign reversed.", "\n\n", sep = "")
+```
+
+Code
+
+``` r
+cat(.ref$text, "\n\n", sep = "")
+```
+
+Code
+
+``` r
+if (is.null(SHOW)) {
+  show <- icov$term[icov$variable %in% selected]
+} else {
+  # A misspelt name would otherwise draw nothing and say nothing.
+  .unknown <- setdiff(SHOW, cov$variable[!cov$noise])
+  if (length(.unknown)) {
+    stop("SHOW names variable(s) the screen was not given: ", paste(.unknown, collapse = ", "), call. = FALSE)
+  }
+  show <- icov$term[icov$variable %in% SHOW]
+}
+.not_drawn <- icov[icov$term %in% show & !icov$drawn, ]
+if (nrow(.not_drawn)) {
+  cat("Not drawn: ", paste0(.not_drawn$term, " (", .not_drawn$gradients, ")", collapse = ", "), ".\n\n", sep = "")
+}
+show <- intersect(show, icov$term[icov$drawn])
+if (!length(show)) {
+  stop("No predictor in SHOW (or the screen's selected set, when SHOW is NULL) has a gradient for any patient. ",
+       "Name predictors the table lists as computed in SHOW.", call. = FALSE)
+}
+# The beeswarm's rows, and its height: a row per predictor, up to the 9 in page.
+.rows <- c(show, setdiff(icov$term[icov$noise & icov$drawn], show))
+bee_height <- min(9, 1 + 0.4 * length(.rows))
+knitr::kable(icov, digits = 3, row.names = FALSE)
+```
+
+Each gradient is the local slope of varPro’s ensemble mortality, in
+expected events, not a probability.
+
+noise reference (95th percentile of \|gradient\| over 1 noise columns):
+12.8
+
+| term | variable | share_na | median_abs | gradients | noise | tested | selected | drawn |
+|:---|:---|---:|---:|:---|:---|:---|:---|:---|
+| age | age | 0.305 | 8.547 | computed | FALSE | TRUE | FALSE | TRUE |
+| female | female | 1.000 | NA | none for any patient | FALSE | FALSE | FALSE | FALSE |
+| bmi | bmi | 1.000 | NA | none for any patient | FALSE | FALSE | FALSE | FALSE |
+| hx_chf | hx_chf | 0.022 | 26.049 | computed | FALSE | TRUE | TRUE | TRUE |
+| hx_dm | hx_dm | 0.214 | 7.767 | computed | FALSE | TRUE | TRUE | TRUE |
+| nyha_pr | nyha_pr | 1.000 | NA | none for any patient | FALSE | FALSE | FALSE | FALSE |
+| lvef | lvef | 0.662 | 5.160 | computed | FALSE | TRUE | FALSE | TRUE |
+| plvmassi | plvmassi | 0.659 | 3.660 | computed | FALSE | TRUE | FALSE | TRUE |
+| creat_pr | creat_pr | 0.717 | 2.413 | computed | FALSE | TRUE | FALSE | TRUE |
+| noise1_female | noise1_female | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise2_female | noise2_female | 0.674 | 2.833 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise3_female | noise3_female | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise4_hx_chf | noise4_hx_chf | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise5_female | noise5_female | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise6_hx_dm | noise6_hx_dm | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise7_hx_dm | noise7_hx_dm | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise8_nyha_pr | noise8_nyha_pr | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise9_nyha_pr | noise9_nyha_pr | 1.000 | NA | none for any patient | TRUE | TRUE | FALSE | FALSE |
+| noise10_nyha_pr | noise10_nyha_pr | 1.000 | NA | removed before gradients | TRUE | FALSE | FALSE | FALSE |
+| noise11_creat_pr | noise11_creat_pr | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise12_plvmassi | noise12_plvmassi | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise13_bmi | noise13_bmi | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise14_bmi | noise14_bmi | 1.000 | NA | removed before gradients | TRUE | FALSE | FALSE | FALSE |
+| noise15_lvef | noise15_lvef | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise16_creat_pr | noise16_creat_pr | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise17_age | noise17_age | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise18_plvmassi | noise18_plvmassi | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise19_bmi | noise19_bmi | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+| noise20_bmi | noise20_bmi | 1.000 | NA | none for any patient | TRUE | FALSE | FALSE | FALSE |
+
+Table 2: Local gradients for each predictor: patients without one, their
+typical size, and what the screen found
+
+Code
+
+``` r
+# Noise rows are drawn beside the real ones as a visual reference, never judged.
+.z <- function(x) {
+  s <- stats::sd(x, na.rm = TRUE)
+  if (is.finite(s) && s > 0) (x - mean(x, na.rm = TRUE)) / s else x * 0
+}
+.bee <- do.call(rbind, lapply(.rows, function(t) {
+  data.frame(term = t, gradient = grad[[t]], value = .z(as.numeric(.idata[[t]])), noise = icov$noise[icov$term == t])
+}))
+# A patient with no local estimate has no point to draw.
+.bee <- .bee[is.finite(.bee$gradient), ]
+.lab <- stats::setNames(sprintf("%s (%.0f%%)", icov$term, 100 * (1 - icov$share_na)), icov$term)
+.bee$label <- factor(.lab[.bee$term], levels = rev(.lab[.rows]))
+.jitter <- ggplot2::position_jitter(width = 0, height = 0.3, seed = abs(SEED))
+.fig <- ggplot2::ggplot(.bee, ggplot2::aes(gradient, label)) +
+  ggplot2::geom_vline(xintercept = 0, linetype = "dashed") +
+  ggplot2::geom_point(data = .bee[!.bee$noise, ], ggplot2::aes(color = value), position = .jitter, size = 0.8) +
+  ggplot2::geom_point(data = .bee[.bee$noise, ], color = "gray60", position = .jitter, size = 0.8) +
+  ggplot2::scale_color_gradient2(low = "steelblue4", mid = "gray85", high = "firebrick", name = "Value (z)") +
+  ggplot2::labs(x = paste("Local gradient of", .target_label), y = NULL) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "right", legend.title = ggplot2::element_text())
+save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = bee_height)
+.fig
+```
+
+![](assets/48a4191b7fd8ced1926a2bdd7d180a6f.png)
+
+Figure 1: Each patient’s local gradient for each drawn predictor, one
+row per predictor, colored by the patient’s standardized value of that
+predictor; permuted noise columns, when the rules released any, are
+gray. The dashed line is no change, and each label gives the share of
+patients with a gradient. The axis names what the gradient is the slope
+of.
+
+## Gradient against value
+
+Code
+
+``` r
+# unnumbered: each page below is a child chunk with its own label and caption
+# Each figure is drawn a page at a time, panels in a grid no larger than the
+# printed page (6.5 by 9 in), and each page is a child chunk of its own so
+# Quarto numbers it.
+.fence <- strrep("`", 3)
+.page_child <- function(kind, i, pages, vars, caption) {
+  page <- pages[[i]]
+  if (length(pages) > 1L) {
+    caption <- paste0(caption, " Page ", i, " of ", length(pages), ": ",
+                      paste(vars[page$index], collapse = ", "), ".")
+  }
+  code <- c(paste0(.fence, "{r}"), paste0("#| label: fig-", kind, "-", i),
+            paste0("#| fig-cap: ", encodeString(caption, quote = "\"")),
+            sprintf("#| fig-width: %g", hvtiRtemplates:::.report_size(page$width)),
+            sprintf("#| fig-height: %g", hvtiRtemplates:::.report_size(page$height)), ".fig", .fence)
+  cat(knitr::knit_child(text = code, envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
+.cap <- paste("Each patient's local gradient against their value of the predictor, one panel per drawn predictor.",
+              "Each point is a patient, and its height the local slope of the prediction against the predictor;",
+              "the dashed line is no change.")
+.pages <- hvtiRtemplates:::.figure_pages(length(show), panel_width = 3.25, panel_height = 3, page_height = 6)
+for (.i in seq_along(.pages)) {
+  .vars <- show[.pages[[.i]]$index]
+  .long <- do.call(rbind, lapply(.vars, function(t) {
+    data.frame(term = t, gradient = grad[[t]], value = as.numeric(.idata[[t]]))
+  }))
+  .long <- .long[is.finite(.long$gradient), ]
+  .long$term <- factor(.long$term, levels = .vars)
+  .fig <- ggplot2::ggplot(.long, ggplot2::aes(value, gradient)) +
+    ggplot2::geom_point(alpha = 0.5) +
+    ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+    ggplot2::facet_wrap(~ term, scales = "free") +
+    ggplot2::labs(x = "Value", y = paste("Local gradient of", .target_label)) +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  save_figure(.fig, sprintf("vp-individual-gradient-page-%02d", .i),
+              width = .pages[[.i]]$width, height = .pages[[.i]]$height)
+  .page_child("gradient", .i, .pages, show, .cap)
+}
+```
+
+Code
+
+``` r
+.fig
+```
+
+![](assets/493e9336ee78df82bde3b6afbcad5fa2.png)
+
+Figure 2: Each patient’s local gradient against their value of the
+predictor, one panel per drawn predictor. Each point is a patient, and
+its height the local slope of the prediction against the predictor; the
+dashed line is no change.
+
+## Reading the result
+
+**A gradient is the slope of the prediction, not of the outcome.** It
+says how quickly the screen’s prediction changes with a predictor among
+the patients like this one. For a survival screen the prediction is
+varPro’s ensemble mortality, a relative risk score in units of expected
+events, not a probability, so a gradient is in expected events per unit
+of the predictor (or per spread of it, under `SCALE`).
+
+**Its sign is a direction near that patient.** A positive gradient means
+the prediction rises with the predictor there; a negative one, that it
+falls. A predictor whose gradients change sign across patients does not
+act the same way on all of them.
+
+**No gradient is no estimate, not no effect.** A patient without a point
+for a predictor had no rule that released it near them. A predictor
+without gradients for anyone is listed in the table and not drawn.
+
+**Spread is where an interaction would show, not proof of one.**
+Gradients that fan out with another variable’s value suggest the
+predictor’s effect depends on it. A model job is what tests that.
+
+Code
+
+``` r
+# The product of this job: the gradients and the table that says which
+# predictors have them, in one file so they cannot drift apart.
+vpi_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
+  list(ivarpro = ivp_all, coverage = icov),
+  data = .provenance_data, artifacts = .provenance_artifacts,
+  analysis = .vp_read$lineage$analysis, cohort = .vp_read$lineage$cohort, selection = .vp_read$lineage$selection
+)
+saveRDS(vpi_handoff, set_path("estimates", "individual.rds"))
+```
+
+## About this run
+
+| Group | Item | Value |
+|:---|:---|:---|
+| Run | Started | 2026-10-25 18:34:44 EDT |
+|  | Ended | 2026-10-25 18:34:48 EDT |
+|  | Duration | 4 s |
+|  | Status | final |
+|  | Rendered by | gallery |
+|  | Host | gallery |
+| Job | File | vp.individual.dead.vp.qmd |
+|  | Template | vp.individual |
+|  | Subject | dead |
+|  | Type | vp |
+|  | hvtiRtemplates | 1.5.1 |
+| Dataset `built` | Version file | built_20261025.parquet |
+|  | Version date | 2026-10-25 |
+|  | Source file | built.rds |
+|  | sha256 | b236a472f1f3 |
+|  | Manifest | current |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-25 18:33:47 -0400, data built_20261025.parquet |
+| Reproducibility | Seed | 2026 |
+|  | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

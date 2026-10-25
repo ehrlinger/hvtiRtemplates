@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:42
+2026-10-25 18:33
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -45,6 +45,10 @@ if (utils::packageVersion("ggRandomForests") < "4.0.0") {
   stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
+if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
+  stop("This job needs hvtiPlotR >= 2.8.18 for the red and blue its captions name; ", utils::packageVersion("hvtiPlotR"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -75,7 +79,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.0
+hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -259,14 +263,23 @@ Code
 # with fewer than six, such as a stage or a grade, is drawn as points alone.
 .gv <- gg_variable(forest, time = TIMES)
 .panels <- lapply(sel, function(v) {
-  plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5) +
+  .p <- plot(.gv, xvar = v, smooth = length(unique(stats::na.omit(.gv[[v]]))) > 5)
+  # The smooth is black: ggRandomForests draws it in ggplot's default blue, which would read as
+  # the censored patients. Its `...` reaches the points as well, so the layer is set here.
+  for (.l in .p$layers) if (inherits(.l$geom, "GeomSmooth")) .l$aes_params$colour <- "black"
+  # Red for the event and blue for censored, as in every house figure: ggRandomForests sets no
+  # scale, and ggplot's default would draw the censored patients red.
+  .p +
+    hvtiPlotR::scale_color_hv(event = "TRUE", censored = "FALSE", labels = c(`FALSE` = "Censored", `TRUE` = "Event")) +
+    # The points' shape maps the same column, and takes the same labels so the two keys merge into one.
+    ggplot2::scale_shape_discrete(labels = c(`FALSE` = "Censored", `TRUE` = "Event")) +
     hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 })
 # The manuscript theme hides the legend and its title, and the caption reads the points from the legend.
 # One legend for the stack: every panel shares the same outcome levels.
 .cap <- paste("Predicted survival against each selected predictor, as observed, one panel per predictor and",
-              "follow-up time. Points are individual patients, one color and shape for those who had the",
-              "event and another for those who did not, as in the legend; the blue line is a loess smooth",
+              "follow-up time. Points are individual patients, red for those who had the event and blue for",
+              "those censored, each with its own shape; the black line is a loess smooth",
               "with its gray band, drawn for predictors with more than five distinct values, and for a",
               "categorical predictor the points are jittered over a gray box plot.")
 # Free size, paged: one panel per predictor.
@@ -293,15 +306,15 @@ Code
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/c248c0f1b94156859ec91836571ab707.png)
+![](assets/afb95940ecab22a9d254ba1d4dbe9db9.png)
 
 Figure 2: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
-individual patients, one color and shape for those who had the event and
-another for those who did not, as in the legend; the blue line is a
-loess smooth with its gray band, drawn for predictors with more than
-five distinct values, and for a categorical predictor the points are
-jittered over a gray box plot. Page 1 of 2: age, hx_chf.
+individual patients, red for those who had the event and blue for those
+censored, each with its own shape; the black line is a loess smooth with
+its gray band, drawn for predictors with more than five distinct values,
+and for a categorical predictor the points are jittered over a gray box
+plot. Page 1 of 2: age, hx_chf.
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
@@ -319,15 +332,15 @@ Code
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/4461e7aacf8b0dd2016227ff205fa1cb.png)
+![](assets/93d9d4ce7aa7a37278ad9b6b46aa0195.png)
 
 Figure 3: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
-individual patients, one color and shape for those who had the event and
-another for those who did not, as in the legend; the blue line is a
-loess smooth with its gray band, drawn for predictors with more than
-five distinct values, and for a categorical predictor the points are
-jittered over a gray box plot. Page 2 of 2: lvef, bmi.
+individual patients, red for those who had the event and blue for those
+censored, each with its own shape; the black line is a loess smooth with
+its gray band, drawn for predictors with more than five distinct values,
+and for a categorical predictor the points are jittered over a gray box
+plot. Page 2 of 2: lvef, bmi.
 
 Code
 
@@ -373,9 +386,9 @@ of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-23 13:42:25 EDT |
-|  | Ended | 2026-10-23 13:42:38 EDT |
-|  | Duration | 13 s |
+| Run | Started | 2026-10-25 18:32:52 EDT |
+|  | Ended | 2026-10-25 18:33:01 EDT |
+|  | Duration | 9 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -383,13 +396,13 @@ of a categorical one.
 |  | Template | rfs.explain |
 |  | Subject | dead |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.5.0 |
-| Dataset `built` | Version file | built_20261023.parquet |
-|  | Registered | 2026-10-23 |
+|  | hvtiRtemplates | 1.5.1 |
+| Dataset `built` | Version file | built_20261025.parquet |
+|  | Version date | 2026-10-25 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-23 13:42:07 -0400, data built_20261023.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-25 18:32:40 -0400, data built_20261025.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:42
+2026-10-25 18:32
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
@@ -50,6 +50,10 @@ if (utils::packageVersion("ggRandomForests") < "4.0.0") {
   stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
+if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
+  stop("This job needs hvtiPlotR >= 2.8.18 for the red and blue its captions name; ", utils::packageVersion("hvtiPlotR"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -81,8 +85,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
-· rendered by gallery on gallery · hvtiRtemplates 1.5.0
+**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -239,7 +243,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261023.parquet) |
+| Source              | dataset `built` (built_20261025.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -357,19 +361,21 @@ Code
 ``` r
 # Out-of-bag predicted survival, one curve per patient.
 surv <- gg_rfsrc(forest)
-# The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.
+# The manuscript theme hides the legend and its title, so the caption names the colors.
+# Red for the event and blue for censored, as in every house figure: ggRandomForests sets no
+# scale, and ggplot's default would draw the censored patients red.
 .fig <- plot(surv) +
+  hvtiPlotR::scale_color_hv(event = "TRUE", censored = "FALSE", labels = c(`FALSE` = "Censored", `TRUE` = "Event")) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(.fig, "rfs-fit-diagnostics-survival")
 .fig
 ```
 
-![](assets/87bd10daa0dd29798c8d02bd96160da5.png)
+![](assets/8d72e49b7e487f8dc5b9a1728bd3be4f.png)
 
 Figure 2: Out-of-bag predicted survival, one curve per patient. Each
-step line is one patient’s predicted survival over follow-up, one color
-for patients who had the event and another for those who did not, as in
-the legend.
+step line is one patient’s predicted survival over follow-up, red for
+patients who had the event and blue for those censored.
 
 Code
 
@@ -418,9 +424,9 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-23 13:42:07 EDT  |
-|                 | Ended            | 2026-10-23 13:42:17 EDT  |
-|                 | Duration         | 11 s                     |
+| Run             | Started          | 2026-10-25 18:32:40 EDT  |
+|                 | Ended            | 2026-10-25 18:32:47 EDT  |
+|                 | Duration         | 7 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -428,9 +434,9 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 |                 | Template         | rfs.fit                  |
 |                 | Subject          | dead                     |
 |                 | Type             | rf                       |
-|                 | hvtiRtemplates   | 1.5.0                    |
-| Dataset `built` | Version file     | built_20261023.parquet   |
-|                 | Registered       | 2026-10-23               |
+|                 | hvtiRtemplates   | 1.5.1                    |
+| Dataset `built` | Version file     | built_20261025.parquet   |
+|                 | Version date     | 2026-10-25               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

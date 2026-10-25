@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:35
+2026-10-25 18:28
 
 Replaces an older EDA report.
 
@@ -35,8 +35,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
-  stop("This job needs hvtiPlotR >= 2.8.0 for hv_eda_pages(), hv_followup_panels() and scale_color_hv(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
+  stop("This job needs hvtiPlotR >= 2.8.18 for hv_eda_pages(), hv_followup_panels() and the red and blue its captions name; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
-· rendered by gallery on gallery · hvtiRtemplates 1.5.0
+**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -145,12 +145,19 @@ PANELS <- list(
   all = list(status = "dead", time = "iv_dead", title = "All deaths")
 )
 
-# Demo: optional event panels, one entry per non-fatal event. `event` and
-# `time` are the event's indicator and interval; `death` and `death_time` the
-# death it competes with. A flagged event counts only when it comes strictly
-# before death, so ties go to death. list() draws none. For example
+# Demo: optional event panels, one entry per panel. `event` and `time` are the
+# event's indicator and interval; `death` and `death_time` the death it
+# competes with. A flagged event counts only when it comes strictly before
+# death, so ties go to death. list() draws none. For example
 #   reop = list(event = "ev_reop", time = "iv_reop", death = "dead",
 #               death_time = "iv_dead", label = "Reoperation")
+# Competing non-fatal events share one panel when `event`, `time` and `label`
+# are vectors, one element per event and at most four; `death` and
+# `death_time` stay single. Each patient shows the earliest event before death,
+# and a tie between two events goes to the one listed first, so list the event
+# that should win a tie first:
+#   nonfatal = list(event = c("ev_reop", "ev_stroke"), time = c("iv_reop", "iv_stroke"),
+#                   death = "dead", death_time = "iv_dead", label = c("Reoperation", "Stroke"))
 EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", death_time = "iv_dead", label = "Reoperation"))
 
 # Variables.
@@ -190,9 +197,12 @@ ALPHA <- 0.5
 X_LABEL <- "Year of operation"     # Demo: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 
 # Demo: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
-# vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
-# all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
-# event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
+# red, alive blue and non-fatal events green, then reddish purple, olive
+# and black, all colorblind safe. Name alive, dead and event to choose your own;
+# c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A") is ColorBrewer
+# Set1, what these jobs drew before 1.2.3. For competing events, repeat event,
+# one color per event in the order EVENTS lists them, as many as the largest
+# panel has: c(alive = ..., dead = ..., event = ..., event = ...).
 # Each figure caption names these colors, so choosing your own means naming them
 # in the caption key too, where the figures are drawn.
 COLORS <- NULL
@@ -236,7 +246,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261023.parquet) |
+| Source              | dataset `built` (built_20261025.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -575,17 +585,31 @@ Code
 # the suspicious rows themselves.
 if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
                                               "(study-choices in a job made before that rename).", call. = FALSE)
-if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && length(COLORS) == 3L &&
-                            setequal(names(COLORS), c("alive", "dead", "event")))) {
-  stop("COLORS must be NULL or name exactly alive, dead and event.", call. = FALSE)
+if (!is.null(COLORS) && !(is.character(COLORS) && !anyNA(COLORS) && all(names(COLORS) %in% c("alive", "dead", "event")) &&
+                            sum(names(COLORS) == "alive") == 1L && sum(names(COLORS) == "dead") == 1L &&
+                            any(names(COLORS) == "event"))) {
+  stop("COLORS must be NULL, or name alive and dead once each and event once per competing event.", call. = FALSE)
 }
-# Dead or Death is the event and Alive or No event the censored level, so a
-# non-fatal event takes the house rule's next color, green.
-status_colors <- function(levels) {
-  if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event")))
-  keys <- if (length(levels) == 2L) c("alive", "dead") else c("alive", "event", "dead")
-  scale_color_manual(values = stats::setNames(COLORS[keys], levels))
+# A panel draws at most four competing events: each needs a shape of its own,
+# and the house palette names its colors only up to four.
+.n_events <- vapply(EVENTS, function(e) if (is.list(e)) length(e$event) else 0L, integer(1L))
+if (any(.n_events > 4L)) {
+  stop("An EVENTS entry lists ", max(.n_events), " events; a panel draws at most four.", call. = FALSE)
 }
+if (!is.null(COLORS) && any(.n_events > sum(names(COLORS) == "event"))) {
+  stop("COLORS names ", sum(names(COLORS) == "event"), " event color(s), and an EVENTS entry lists ",
+       max(.n_events), " events. Repeat event in COLORS, one color per event.", call. = FALSE)
+}
+# Dead or Death is the event and Alive or No event the censored level, so
+# non-fatal events take the house rule's next colors, green first. With COLORS
+# set, the event colors are taken in order, one per event in the panel.
+status_colors <- function(levels, labels = stats::setNames(levels, levels)) {
+  if (is.null(COLORS)) return(scale_color_hv(event = c("Dead", "Death"), censored = c("Alive", "No event"), labels = labels))
+  events <- unname(COLORS[names(COLORS) == "event"])[seq_len(length(levels) - 2L)]
+  scale_color_manual(values = stats::setNames(c(COLORS[["alive"]], events, COLORS[["dead"]]), levels), labels = labels)
+}
+# The statistics dc-gfup's follow-up table shows, total follow-up (sum) included.
+.followup_stats <- c("n", "nmiss", "mean", "std", "min", "p15", "median", "p75", "p85", "p90", "max", "sum")
 # dc-gfup's follow-up table, one row per interval and patient group, so a panel
 # here shows the table that job shows. test-dc-eda.R keeps the two copies equal.
 .followup_table <- function(fc, d, event) {
@@ -598,7 +622,7 @@ status_colors <- function(levels) {
     data.frame(interval = m$variable, patients = groups[[g]], n = m$n, missing = m$nmiss,
                negative = count(function(x) x < 0), zero = count(function(x) x == 0),
                mean = m$mean, sd = m$std, min = m$min, p15 = m$p15, median = m$median,
-               p85 = m$p85, max = m$max, row.names = NULL)
+               p75 = m$p75, p85 = m$p85, p90 = m$p90, max = m$max, total = m$sum, row.names = NULL)
   })
   out <- do.call(rbind, rows)
   out[order(match(out$interval, unique(out$interval))), , drop = FALSE]
@@ -614,7 +638,8 @@ for (i in seq_len(nrow(fp$data))) {
   # The caption key names the house colors that COLORS <- NULL draws and the
   # shapes set here, so a study that sets COLORS renames them in .key below.
   if (row$type == "followup") {
-    fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time)
+    fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time,
+                                         stats = .followup_stats)
     .followup <- .followup_table(fc, d, PANELS[[nm]]$status)
     .child(paste("tbl gfup", nm, "followup"),
            paste0("Follow-up, ", row$title, ", by patient group: missing, negative and zero values, ",
@@ -623,14 +648,21 @@ for (i in seq_len(nrow(fp$data))) {
     p <- plots[[nm]] +
       status_colors(c("Alive", "Dead")) +
       scale_shape_manual(values = c(Alive = 1, Dead = 4))
-    .key <- "Blue open circles mark patients alive and vermillion crosses patients who died"
+    .key <- "Blue open circles mark patients alive and red crosses patients who died"
   } else {
-    levels <- c("No event", row$title, "Death")
+    # The levels are the panel's own: "No event", one per event in the order
+    # EVENTS lists them, and "Death".
+    levels <- fp$tables$panels[[nm]]$meta$event_levels
+    k <- length(levels) - 2L
     p <- plots[[nm]] +
       status_colors(levels) +
-      scale_shape_manual(values = stats::setNames(c(1, 2, 4), levels))
-    .key <- paste0("Blue open circles mark patients without the event, green open triangles patients with the event, ",
-                   "and vermillion crosses patients who died")
+      scale_shape_manual(values = stats::setNames(c(1, c(2, 0, 5, 6)[seq_len(k)], 4), levels))
+    .with <- if (k == 1L) "patients with the event" else paste("patients whose first event was", levels[1L + seq_len(k)])
+    .key <- paste0("Blue open circles mark patients without ", if (k == 1L) "the event" else "an event", ", ",
+                   paste(c("green", "reddish purple", "olive", "black")[seq_len(k)],
+                         c("open triangles", "open squares", "open diamonds", "open inverted triangles")[seq_len(k)],
+                         .with, collapse = ", "),
+                   ", and red crosses patients who died")
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript(base_size = 12)
@@ -654,11 +686,11 @@ Code
 knitr::kable(.followup, row.names = FALSE, digits = 3)
 ```
 
-| interval | patients | n | missing | negative | zero | mean | sd | min | p15 | median | p85 | max |
-|:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| iv_dead | All patients | 800 | 0 | 0 | 0 | 9.479 | 8.087 | 0 | 1.538 | 7.137 | 18.964 | 34.604 |
-| iv_dead | Event | 445 | 0 | 0 | 0 | 7.064 | 6.403 | 0 | 0.957 | 5.022 | 14.135 | 26.513 |
-| iv_dead | Censored | 355 | 0 | 0 | 0 | 12.508 | 8.926 | 0 | 2.987 | 10.221 | 24.694 | 34.604 |
+| interval | patients | n | missing | negative | zero | mean | sd | min | p15 | median | p75 | p85 | p90 | max | total |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| iv_dead | All patients | 800 | 0 | 0 | 0 | 9.479 | 8.087 | 0 | 1.538 | 7.137 | 14.286 | 18.964 | 22.244 | 34.604 | 7583.503 |
+| iv_dead | Event | 445 | 0 | 0 | 0 | 7.064 | 6.403 | 0 | 0.957 | 5.022 | 11.120 | 14.135 | 17.266 | 26.513 | 3143.312 |
+| iv_dead | Censored | 355 | 0 | 0 | 0 | 12.508 | 8.926 | 0 | 2.987 | 10.221 | 18.923 | 24.694 | 25.908 | 34.604 | 4440.190 |
 
 Table 4: Follow-up, All deaths, by patient group: missing, negative and
 zero values, and the distribution (years)
@@ -669,12 +701,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/933604766f2cc62ffb78a4a93ac6713e.png)
+![](assets/38fa5e3bd8e6bc017e87ff2461284981.png)
 
 Figure 1: Follow-up against year of operation, All deaths. Blue open
-circles mark patients alive and vermillion crosses patients who died and
-the dashed orange diagonal the longest follow-up possible for each year
-of operation.
+circles mark patients alive and red crosses patients who died and the
+dashed orange diagonal the longest follow-up possible for each year of
+operation.
 
 ### Reoperation
 
@@ -686,13 +718,12 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/f1dc7a57c7ff21ca26fae9678b5ca3dc.png)
+![](assets/0a748c50859ad49e2b9c579dd9b7c1f0.png)
 
 Figure 2: Follow-up against year of operation, Reoperation. Blue open
 circles mark patients without the event, green open triangles patients
-with the event, and vermillion crosses patients who died and the dashed
-orange diagonal the longest follow-up possible for each year of
-operation.
+with the event, and red crosses patients who died and the dashed orange
+diagonal the longest follow-up possible for each year of operation.
 
 Code
 
@@ -1026,9 +1057,9 @@ frequency table above names them.
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-23 13:34:43 EDT  |
-|                 | Ended            | 2026-10-23 13:35:08 EDT  |
-|                 | Duration         | 25 s                     |
+| Run             | Started          | 2026-10-25 18:27:55 EDT  |
+|                 | Ended            | 2026-10-25 18:28:19 EDT  |
+|                 | Duration         | 24 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -1036,9 +1067,9 @@ frequency table above names them.
 |                 | Template         | dc.eda                   |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.0                    |
-| Dataset `built` | Version file     | built_20261023.parquet   |
-|                 | Registered       | 2026-10-23               |
+|                 | hvtiRtemplates   | 1.5.1                    |
+| Dataset `built` | Version file     | built_20261025.parquet   |
+|                 | Version date     | 2026-10-25               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

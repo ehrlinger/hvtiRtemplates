@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:31
+2026-10-25 18:25
 
 This job reports a bootstrap variable selection screen over a **Cox
 proportional hazards** model: how often each candidate survived stepwise
@@ -103,7 +103,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.0
+hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -921,8 +921,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-23 13:31:48 EDT |
-|  | Ended | 2026-10-23 13:31:50 EDT |
+| Run | Started | 2026-10-25 18:25:30 EDT |
+|  | Ended | 2026-10-25 18:25:32 EDT |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -931,14 +931,14 @@ saveRDS(report, report_file)
 |  | Template | bc |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.5.0 |
-| Dataset `built` | Version file | built_20261023.parquet |
-|  | Registered | 2026-10-23 |
+|  | hvtiRtemplates | 1.5.1 |
+| Dataset `built` | Version file | built_20261025.parquet |
+|  | Version date | 2026-10-25 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bc.rds` (bootstrap-bag), rendered not recorded, data built_20261023.parquet |
+| Upstream | Handoff | `dead-boot/bc.rds` (bootstrap-bag), rendered not recorded, data built_20261025.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:44
+2026-10-25 18:34
 
 Explains the `vp-fit` screen in this set: survival at five years along
 each selected predictor.
@@ -76,7 +76,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.0
+hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -272,8 +272,8 @@ spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-23 13:44:36 EDT |
-|  | Ended | 2026-10-23 13:44:41 EDT |
+| Run | Started | 2026-10-25 18:34:35 EDT |
+|  | Ended | 2026-10-25 18:34:39 EDT |
 |  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -282,13 +282,13 @@ spread of the partial effect at each level.
 |  | Template | vp.explain |
 |  | Subject | dead |
 |  | Type | vp |
-|  | hvtiRtemplates | 1.5.0 |
-| Dataset `built` | Version file | built_20261023.parquet |
-|  | Registered | 2026-10-23 |
+|  | hvtiRtemplates | 1.5.1 |
+| Dataset `built` | Version file | built_20261025.parquet |
+|  | Version date | 2026-10-25 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-23 13:43:40 -0400, data built_20261023.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-25 18:33:47 -0400, data built_20261025.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

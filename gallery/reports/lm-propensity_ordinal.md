@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:38
+2026-10-25 18:30
 
 Fits a proportional-odds propensity model for an explicitly ordered
 treatment.
@@ -33,8 +33,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
-· rendered by gallery on gallery · hvtiRtemplates 1.5.0
+**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.1
 
 Code
 
@@ -114,7 +114,7 @@ hvtiRtemplates:::.check_job_columns(d, TREATMENT = TREATMENT, PREDICTORS = PREDI
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261023.parquet) |
+| Source              | dataset `built` (built_20261025.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -318,9 +318,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-23 13:38:38 EDT |
-|  | Ended | 2026-10-23 13:38:39 EDT |
-|  | Duration | 1 s |
+| Run | Started | 2026-10-25 18:30:39 EDT |
+|  | Ended | 2026-10-25 18:30:39 EDT |
+|  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -328,9 +328,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |  | Template | lm.propensity_ordinal |
 |  | Subject | valvesize |
 |  | Type | propensity |
-|  | hvtiRtemplates | 1.5.0 |
-| Dataset `built` | Version file | built_20261023.parquet |
-|  | Registered | 2026-10-23 |
+|  | hvtiRtemplates | 1.5.1 |
+| Dataset `built` | Version file | built_20261025.parquet |
+|  | Version date | 2026-10-25 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |

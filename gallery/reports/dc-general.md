@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-23 13:35
+2026-10-25 18:28
 
 Replaces `descriptive/dc.general`.
 
@@ -42,8 +42,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261023.parquet`, registered 2026-10-23
-· rendered by gallery on gallery · hvtiRtemplates 1.5.0
+**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.1
 
 ## Study choices
 
@@ -135,7 +135,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261023.parquet) |
+| Source              | dataset `built` (built_20261025.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -796,8 +796,8 @@ unless `ID_COL` is set under Study choices.
 
 | Group           | Item             | Value                     |
 |:----------------|:-----------------|:--------------------------|
-| Run             | Started          | 2026-10-23 13:35:17 EDT   |
-|                 | Ended            | 2026-10-23 13:35:17 EDT   |
+| Run             | Started          | 2026-10-25 18:28:26 EDT   |
+|                 | Ended            | 2026-10-25 18:28:27 EDT   |
 |                 | Duration         | 0 s                       |
 |                 | Status           | final                     |
 |                 | Rendered by      | gallery                   |
@@ -806,9 +806,9 @@ unless `ID_COL` is set under Study choices.
 |                 | Template         | dc.general                |
 |                 | Subject          | cohort                    |
 |                 | Type             | eda                       |
-|                 | hvtiRtemplates   | 1.5.0                     |
-| Dataset `built` | Version file     | built_20261023.parquet    |
-|                 | Registered       | 2026-10-23                |
+|                 | hvtiRtemplates   | 1.5.1                     |
+| Dataset `built` | Version file     | built_20261025.parquet    |
+|                 | Version date     | 2026-10-25                |
 |                 | Source file      | built.rds                 |
 |                 | Rows kept        | 800 rows on 800 patients  |
 |                 | WHERE            | none                      |
