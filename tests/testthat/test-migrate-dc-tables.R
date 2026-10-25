@@ -154,7 +154,11 @@ eval_table <- function(job, env) {
 }
 
 eval_word <- function(job, env) {
-  if (is.null(env$.job)) env$.job <- list(run = list(started = Sys.time(), file = "cohort.eda.dc.tables.qmd", state = "draft"))
+  # The fields .run_begin() sets that .run_reconcile() reads, which the Word chunk calls.
+  if (is.null(env$.job)) {
+    env$.job <- list(run = list(started = Sys.time(), file = "cohort.eda.dc.tables.qmd", state = "draft",
+                                markers = 1L, skipped = 0L, stopped = FALSE))
+  }
   if (is.null(env$.provenance_data)) env$.provenance_data <- list()
   eval(tables_chunk(job, "word-file"), env)
 }
@@ -708,7 +712,16 @@ test_that("the Word table prints the study's table labels and levels, says what 
   env$MANUSCRIPT_FILL <- "#CAEDFB"
   env$TABLE_ORIENTATION <- "auto"
   env$DROP_CONSTANT <- TRUE
-  env$.job <- list(run = list(started = Sys.time(), file = "cohort.eda.dc.tables.qmd", state = "final"))
+  env$.job <- list(run = list(started = Sys.time(), file = "cohort.eda.dc.tables.qmd", state = "final",
+                              markers = 0L, skipped = 0L, stopped = FALSE))
+  # A final record stays final only if nothing earlier in the session left a draft reason or a stop.
+  old <- list(reasons = .run_state$draft_reasons, points = .partial_state$points)
+  withr::defer({
+    .run_state$draft_reasons <- old$reasons
+    .partial_state$points <- old$points
+  })
+  .run_state$draft_reasons <- character()
+  .partial_state$points <- list()
   env$.provenance_data <- list(list(dataset = "study", path = "datasets/built.csv", sha256 = strrep("0f", 32L)))
   eval(tables_chunk(template, "helpers"), env)
   invisible(eval_table(template, env))
