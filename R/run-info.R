@@ -205,12 +205,18 @@
   # other non-empty value). The box then names that file, never the version.
   mode <- Sys.getenv("HVTI_DATA", "")
   if (nzchar(mode) && !identical(mode, "working")) return(NULL)
-  source <- tryCatch(basename(hvtiRutilities::built_path(hvtiRutilities::study_config(start = root), dataset)),
-                     error = function(e) NULL)
+  cfg <- tryCatch(hvtiRutilities::study_config(start = root), error = function(e) NULL)
+  source <- if (!is.null(cfg)) tryCatch(basename(hvtiRutilities::built_path(cfg, dataset)), error = function(e) NULL)
   if (identical(mode, "working")) {
     return(list(name = dataset, kind = "data", version_file = source, working = TRUE))
   }
   found <- if (!is.null(source)) tryCatch(.manifest_find(root, source = source), error = function(e) NULL)
+  # A build with no dated version (declared by bd and not yet registered, or registered before
+  # dated versions) is read from its working file too, so the box says so rather than naming a date.
+  # A catalog-release study pins its data another way and is left alone.
+  if (!is.null(source) && is.null(cfg$release) && is.null(found$version_file)) {
+    return(list(name = dataset, kind = "data", version_file = source, working = TRUE))
+  }
   c(list(name = dataset, kind = "data", how = "dated"), found)
 }
 

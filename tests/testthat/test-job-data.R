@@ -1489,6 +1489,18 @@ test_that("a working read is a draft, and the data table says so", {
   expect_match(.run_state$draft_reasons, "unregistered", fixed = TRUE)
 })
 
+test_that("the note names the file from the message hvtiRutilities really signals", {
+  skip_if_not(exists(".working_read_condition", asNamespace("hvtiRutilities")))
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  real <- get(".working_read_condition", asNamespace("hvtiRutilities"))
+  read <- .with_working_read({
+    message(real("built.csv"))
+    list(value = data.frame(ccfid = 1L), record = list(dataset = "study"))
+  })
+  expect_match(read$notes[[1L]], "read the working built.csv, which has no registered version", fixed = TRUE)
+})
+
 test_that("a registered read is left as it was", {
   read <- .with_working_read(list(value = data.frame(ccfid = 1L), record = list(dataset = "study")))
   expect_null(read$record$working)

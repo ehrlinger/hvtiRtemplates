@@ -97,13 +97,14 @@ test_that("a draft's box counts the open markers and the skipped chunks", {
   expect_match(box, "^\\*\\*draft\\*\\* \\(2 open markers, 1 skipped chunk\\)")
 })
 
-test_that("a study with no registered dataset gets a box that names the dataset and no version", {
+test_that("a study with no registered dataset gets a box that names the working file and no version", {
+  # With nothing registered, every read is of the working file, so the box says so.
   fx <- setup_fixture("DATASET <- \"built\"")
   unlink(file.path(fx$root, "manifest.yaml"))
   r <- run_setup()
   box <- grep("^\\*\\*final\\*\\*", r$out, value = TRUE)
   expect_length(box, 1L)
-  expect_match(box, "data `built` ·", fixed = TRUE)
+  expect_match(box, "data `built` `built.csv`, working read, not a registered version ·", fixed = TRUE)
   expect_false(grepl(", dated", box, fixed = TRUE))
   expect_match(box, "rendered by ", fixed = TRUE)
 })
@@ -135,6 +136,20 @@ test_that("on a working read the box names the working file, not the registered 
   # Any other value is refused when the data are read, so the box does not guess.
   withr::local_envvar(HVTI_DATA = "registered")
   expect_null(hvtiRtemplates:::.box_dataset(s$root, s$job))
+})
+
+test_that("a build with no dated version is a working read in the box, HVTI_DATA unset", {
+  # bd declares a new study's working file before anything is registered; every read of it is a
+  # working read, and the box must not attribute the report to a dated version it never had.
+  withr::local_envvar(HVTI_DATA = NA)
+  s <- box_of("DATASET <- \"built\"")
+  expect_false(grepl("working read", s$box, fixed = TRUE))
+  writeLines("datasets: []", file.path(s$root, "manifest.yaml"))
+  ds <- hvtiRtemplates:::.box_dataset(s$root, s$job)
+  expect_true(isTRUE(ds$working))
+  box <- hvtiRtemplates:::.run_box(list(state = "final", user = "u", host = "h"), ds)
+  expect_match(box, "working read, not a registered version", fixed = TRUE)
+  expect_false(grepl(", dated", box, fixed = TRUE))
 })
 
 test_that("the box names a literal analysis set, and its version when the set was written", {

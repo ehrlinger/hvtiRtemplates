@@ -622,8 +622,9 @@ Every report says four things about the run that made it.
   declares (`DATASET <- "name"` or `ANALYSIS_SET <- "name"`); when the file
   does not settle it, the box says so and points to the table below, which is
   the record of what was read. On a working read (`HVTI_DATA=working`, or a
-  build with no registered version, allowed in a draft only) the box names the working source file,
-  such as `built.csv`, and says it is a working read, not a registered version.
+  build with no dated version, allowed in a draft only) the box names the
+  working source file, such as `built.csv`, and says it is a working read, not
+  a registered version.
 - **An "About this run" table as the last section,** unnumbered so it moves no
   figure or table number: the run (start and end with time zone, duration,
   status, user, host), the job (file, template, subject, type, hvtiRtemplates

@@ -641,7 +641,7 @@
 .check_handoff_working <- function(lineage, path, rebuild) {
   working <- Filter(function(r) isTRUE(r$working), lineage$data)
   if (!length(working)) return(invisible(lineage))
-  file <- basename(working[[1L]]$path)
+  file <- if (is.character(working[[1L]]$path)) basename(working[[1L]]$path) else "build"
   if (.strict_render()) {
     stop(basename(path), " was saved from the working ", file, ", not a registered version. Register the build with ",
          "hvtiRutilities::update_manifest(), render ", rebuild, " again, then render this one.", call. = FALSE)
