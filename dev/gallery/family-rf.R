@@ -97,6 +97,23 @@ gallery_family(
     "vp-explain" = list(subject = "dead", type = "vp", choices = list(
       "^<!-- EDIT: say which vp-fit screen" =
         "Explains the `vp-fit` screen in this set: survival at five years along each selected predictor.\n\n<!--"
+    )),
+    "vp-individual" = list(subject = "dead", type = "vp", choices = list(
+      "^<!-- EDIT: say which vp-fit screen" =
+        "Describes the `vp-fit` screen in this set patient by patient: each selected predictor's local gradient.\n\n<!--"
+    )),
+    # No outcome: the nine predictors the rf fits grow on, with NYHA class entered as
+    # the grade it is. A smaller forest and three refits keep the render short.
+    "vp-dependence" = list(subject = "preop", type = "vp", choices = list(
+      "^<!-- EDIT: say which variables this studies" = paste0(
+        "Gallery job on the synthetic cohort: how the nine preoperative predictors the rf fits grow on ",
+        "depend on each other, with no outcome entered.\n\n<!--"
+      ),
+      "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
+      "^VARIABLES <- " = sub("^PREDICTORS", "VARIABLES", rf_predictors),
+      "^ORDINAL <- " = "ORDINAL <- \"nyha_pr\"",
+      "^NTREE <- " = "NTREE <- 200",
+      "^REPEATS <- " = "REPEATS <- 3"
     ))
   )
 )
