@@ -32,3 +32,20 @@ test_that("every template that colors by role guards hvtiPlotR at the release th
     expect_true(package_version(floor) >= "2.7.18", label = paste(basename(f), "guards hvtiPlotR at", floor))
   }
 })
+
+test_that("every template whose captions call the event red guards hvtiPlotR at 2.8.18", {
+  # 2.8.18 made the event Tol red #CC3311; before it the event was vermilion, so a
+  # caption saying red would misdescribe the figure an older hvtiPlotR draws.
+  files <- list.files(system.file("templates", package = "hvtiRtemplates"), "[.]qmd$", recursive = TRUE, full.names = TRUE)
+  if (!length(files)) files <- list.files(test_path("../../inst/templates"), "[.]qmd$", recursive = TRUE, full.names = TRUE)
+  red <- character()
+  for (f in files) {
+    txt <- readLines(f, warn = FALSE)
+    if (!any(grepl("\\bred (crosses|for|once)\\b", txt, ignore.case = TRUE))) next
+    red <- c(red, basename(f))
+    floor <- sub('.*< "([0-9.]+)".*', "\\1", grep('packageVersion\\("hvtiPlotR"\\) < "[0-9.]+"', txt, value = TRUE))
+    expect_length(floor, 1L)
+    expect_true(package_version(floor) >= "2.8.18", label = paste(basename(f), "guards hvtiPlotR at", floor))
+  }
+  expect_true(all(c("dc-gfup.qmd", "dc-eda.qmd", "rfs-fit.qmd", "rfs-explain.qmd") %in% red))
+})

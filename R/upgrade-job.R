@@ -32,8 +32,8 @@
 #'
 #' An upgrade before version 1.5.1 left its pair beside the job instead, as
 #' \code{<job>.qmd.pre-upgrade} and \code{<job>-upgrade.md}. The next upgrade
-#' moves such a pair into \code{_archive} under the same names, stamped with
-#' the time of the upgrade that wrote it, read from the report. A copy renamed
+#' moves such a pair into \code{_archive} as \code{<job>.<stamp>.pre-upgrade} and
+#' \code{<job>.<stamp>-upgrade.md}, the stamp taken from the report's modification time. A copy renamed
 #' by hand, such as \code{<job>.qmd.pre-upgrade-20261020}, is left where it is.
 #'
 #' @details

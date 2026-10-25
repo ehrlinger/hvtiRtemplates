@@ -195,3 +195,27 @@ test_that("the saved Word table says which job, render and releases built it", {
   expect_match(value("hvti_hvtiRtemplates"), as.character(utils::packageVersion("hvtiRtemplates")), fixed = TRUE)
   expect_identical(value("hvti_officer"), as.character(utils::packageVersion("officer")))
 })
+
+test_that("the saved Word table reads draft when the run turned draft after setup", {
+  skip_if_not_installed("officer")
+  # dc-tables stamps the reconciled run, not the record the box printed at setup:
+  # a working read found later (.run_mark_draft()) must reach the Word file too.
+  tpl <- readLines(system.file("templates", "10_descriptive", "dc-tables.qmd", package = "hvtiRtemplates"))
+  expect_true(any(grepl(".stamp_docx(word_path, hvtiRtemplates:::.run_reconcile(.job$run),", tpl, fixed = TRUE)))
+  old <- list(reasons = .run_state$draft_reasons, points = .partial_state$points)
+  withr::defer({
+    .run_state$draft_reasons <- old$reasons
+    .partial_state$points <- old$points
+  })
+  .run_state$draft_reasons <- character()
+  .partial_state$points <- list()
+  run <- list(started = as.POSIXct("2026-10-24 09:00:00", tz = "UTC"), file = "cohort.eda.dc.tables.qmd",
+              state = "final", markers = 0L, skipped = 0L, stopped = FALSE)
+  .run_mark_draft("it read the working built.csv, which is unregistered")
+  path <- withr::local_tempfile(fileext = ".docx")
+  print(officer::read_docx(), target = path)
+  hvtiRtemplates:::.stamp_docx(path, .run_reconcile(run))
+  props <- officer::doc_properties(officer::read_docx(path))
+  expect_identical(props$value[props$tag == "hvti_status"], "draft")
+  expect_match(props$value[props$tag == "description"], "(draft render)", fixed = TRUE)
+})

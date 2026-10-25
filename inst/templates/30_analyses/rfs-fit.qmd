@@ -355,7 +355,7 @@ save_figure(.fig, "rfs-fit-diagnostics-error")
 #|   follow-up, red for patients who had the event and blue for those censored."
 # Out-of-bag predicted survival, one curve per patient.
 surv <- gg_rfsrc(forest)
-# The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.
+# The manuscript theme hides the legend and its title, so the caption names the colors.
 # Red for the event and blue for censored, as in every house figure: ggRandomForests sets no
 # scale, and ggplot's default would draw the censored patients red.
 .fig <- plot(surv) +
