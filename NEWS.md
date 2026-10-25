@@ -127,9 +127,11 @@
   censored. An older hvtiPlotR draws vermilion and a different blue, and the captions
   would misdescribe it. The `Suggests` floor moves to `hvtiPlotR (>= 2.8.18)` with them.
 
-* hvtiRtemplates now needs hvtiRutilities 1.5.13 or later. That release reads a label
-  file's unquoted `No` and `Yes` as the text written, so a `value_labels.yml` declaring
-  `0: No` / `1: Yes` prints No and Yes in a table rather than FALSE and TRUE.
+* Install hvtiRutilities 1.5.13 or later with this release. It reads a label file's
+  unquoted `No` and `Yes` as the text written, so a `value_labels.yml` declaring
+  `0: No` / `1: Yes` prints No and Yes in a table rather than FALSE and TRUE. This
+  release's `DESCRIPTION` still declares `hvtiRutilities (>= 1.5.12)`; the 1.5.13 floor
+  follows in the next release.
 
 # hvtiRtemplates 1.5.0
 
