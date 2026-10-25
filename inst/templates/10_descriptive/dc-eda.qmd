@@ -48,8 +48,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
-  stop("This job needs hvtiPlotR >= 2.8.0 for hv_eda_pages(), hv_followup_panels() and scale_color_hv(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
+  stop("This job needs hvtiPlotR >= 2.8.18 for hv_eda_pages(), hv_followup_panels() and the red and blue its captions name; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiRutilities") < "1.4.5") {

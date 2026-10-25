@@ -57,9 +57,9 @@ if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
   stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles; ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.8.17") {
-  stop("This job needs hvtiPlotR >= 2.8.17 for hv_followup_panels()'s competing events and echo layer; ",
-       utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
+if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
+  stop("This job needs hvtiPlotR >= 2.8.18 for hv_followup_panels()'s competing events and echo layer, ",
+       "and the red and blue its captions name; ", utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
