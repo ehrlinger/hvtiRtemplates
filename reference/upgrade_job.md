@@ -104,9 +104,10 @@ shared `-2`, `-3` suffix after the stamp.
 
 An upgrade before version 1.5.1 left its pair beside the job instead, as
 `<job>.qmd.pre-upgrade` and `<job>-upgrade.md`. The next upgrade moves
-such a pair into `_archive` under the same names, stamped with the time
-of the upgrade that wrote it, read from the report. A copy renamed by
-hand, such as `<job>.qmd.pre-upgrade-20261020`, is left where it is.
+such a pair into `_archive` as `<job>.<stamp>.pre-upgrade` and
+`<job>.<stamp>-upgrade.md`, the stamp taken from the report's
+modification time. A copy renamed by hand, such as
+`<job>.qmd.pre-upgrade-20261020`, is left where it is.
 
 ## See also
 

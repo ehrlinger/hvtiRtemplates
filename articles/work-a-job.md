@@ -93,9 +93,9 @@ There are three ways to find them.
 **The report tells you.** Render the job (next section) and the top of
 the report carries a DRAFT banner listing every marker still in the
 file, with the first words of each line. A new `dc-gfup` job starts with
-sixteen:
+seventeen:
 
-    16 unresolved EDIT: marker(s) remain in this job:
+    17 unresolved EDIT: marker(s) remain in this job:
       - <!-- EDIT: name the job this replaces (descriptive/dc.gfup). -->
       - # EDIT: the registered dataset this job reads ("built" is the study dataset).
       - # EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.

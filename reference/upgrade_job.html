@@ -17,7 +17,7 @@ its template without re-entering every choice by hand."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -142,8 +142,8 @@ stamp is already used, from an upgrade in the same second, takes a shared
 <code>-2</code>, <code>-3</code> suffix after the stamp.</p>
 <p>An upgrade before version 1.5.1 left its pair beside the job instead, as
 <code>&lt;job&gt;.qmd.pre-upgrade</code> and <code>&lt;job&gt;-upgrade.md</code>. The next upgrade
-moves such a pair into <code>_archive</code> under the same names, stamped with
-the time of the upgrade that wrote it, read from the report. A copy renamed
+moves such a pair into <code>_archive</code> as <code>&lt;job&gt;.&lt;stamp&gt;.pre-upgrade</code> and
+<code>&lt;job&gt;.&lt;stamp&gt;-upgrade.md</code>, the stamp taken from the report's modification time. A copy renamed
 by hand, such as <code>&lt;job&gt;.qmd.pre-upgrade-20261020</code>, is left where it is.</p>
     </div>
     <div class="section level2">
