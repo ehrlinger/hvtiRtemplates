@@ -39,7 +39,7 @@ test_that("bd with REGISTER = FALSE declares the working file and registers noth
   expect_length(bd_versions(root), 0L)
 })
 
-test_that("a second bd render keeps the contract, and another DATASET_ID stops before changing it", {
+test_that("a second bd render keeps the contract, and another DATASET_ID is a working file only", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
@@ -48,7 +48,15 @@ test_that("a second bd render keeps the contract, and another DATASET_ID stops b
   first <- readLines(file.path(root, "_study.yml"))
   bd_run(root, choices)
   expect_identical(readLines(file.path(root, "_study.yml")), first)
-  err <- expect_error(bd_run(root, utils::modifyList(choices, list(DATASET_ID = "other_cohort"))), "^bd: register \\(")
+  # A comparison build under another DATASET_ID writes its own file and declares nothing.
+  env <- bd_run(root, utils::modifyList(choices, list(DATASET_ID = "other_cohort")))
+  expect_identical(readLines(file.path(root, "_study.yml")), first)
+  expect_match(env$.register_step, "still study_cohort.rds", fixed = TRUE)
+  expect_match(env$.register_step, "not declared or registered", fixed = TRUE)
+  expect_true(file.exists(file.path(hvtiRutilities::study_dir("datasets", root), "other_cohort.rds")))
+  # Registering under it is refused.
+  err <- expect_error(bd_run(root, utils::modifyList(choices, list(DATASET_ID = "other_cohort", REGISTER = TRUE))),
+                      "^bd: register \\(")
   expect_match(conditionMessage(err), "registered as study_cohort.rds")
   expect_identical(readLines(file.path(root, "_study.yml")), first)
 })

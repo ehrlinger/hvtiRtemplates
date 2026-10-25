@@ -308,28 +308,34 @@ yaml::write_yaml(.record, .record_file)
 .registered <- hvtiRutilities::study_config(.root, require_data = FALSE)
 .version_before <- .current_version(.registered$built)
 .register_step <- "Working file only: nothing registered"
-# A study registered under another file cannot take this one as its dataset.
-if (!is.null(.registered$built) && !identical(.registered$built, basename(.built))) {
-  # Name a DATASET_ID only for a file this job could have written: a dated name is a retired
-  # catalog release, whose bytes must never be overwritten.
-  .own <- grepl("^[a-z0-9_]+[.]rds$", .registered$built) && !grepl("_[0-9]{8}(_r[0-9]+)?[.]rds$", .registered$built)
-  .bd_stop("register", "this study's dataset is registered as ", .registered$built, ", and this job writes ",
-           basename(.built), ". ",
-           if (.own) {
-             paste0("Set DATASET_ID to \"", sub("[.]rds$", "", .registered$built), "\" if that file is this job's, or ")
-           } else {
-             ""
-           },
-           "move the study to this job's file deliberately.")
-}
 # A new study's first build is named in _study.yml with no version registered, so a draft job can
 # read it before it is registered (design 2026-10-23, section 7.1). Registering stays a separate
 # step: REGISTER = TRUE, or hvtiRutilities::update_manifest().
+.other_file <- !is.null(.registered$built) && !identical(.registered$built, basename(.built))
 if (!REGISTER && is.null(.registered$built)) {
   hvtiRutilities::declare_data(.root, built = basename(.built), key = KEY)
   .register_step <- "Declared as the study dataset: nothing registered"
+} else if (!REGISTER && .other_file) {
+  # A comparison build, such as an R rebuild beside a SAS-built dataset, is allowed to write its working
+  # file: it declares nothing and registers nothing, and the report says the study's dataset is unchanged.
+  .register_step <- paste0("Working file only: the study's dataset is still ", .registered$built,
+                           ", so this build was not declared or registered")
 }
 if (REGISTER) {
+  # A study registered under another file cannot take this one as its dataset.
+  if (.other_file) {
+    # Name a DATASET_ID only for a file this job could have written: a dated name is a retired
+    # catalog release, whose bytes must never be overwritten.
+    .own <- grepl("^[a-z0-9_]+[.]rds$", .registered$built) && !grepl("_[0-9]{8}(_r[0-9]+)?[.]rds$", .registered$built)
+    .bd_stop("register", "this study's dataset is registered as ", .registered$built, ", and this job writes ",
+             basename(.built), ". ",
+             if (.own) {
+               paste0("Set DATASET_ID to \"", sub("[.]rds$", "", .registered$built), "\" if that file is this job's, or ")
+             } else {
+               ""
+             },
+             "move the study to this job's file deliberately.")
+  }
   .register_step <- tryCatch({
     if (is.null(.registered$built)) {
       hvtiRutilities::register_data(.root, built = basename(.built))
