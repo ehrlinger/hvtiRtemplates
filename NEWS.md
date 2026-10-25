@@ -1,3 +1,129 @@
+# hvtiRtemplates 1.5.1
+
+* New `vp-dependence` and `vp-individual` templates, in flight. `vp-dependence` runs unsupervised VarPro (`varPro::uvarpro()`) over the study's variables, optionally with the outcome among them, and draws a dependence graph whose edges must beat the largest weight a permuted noise column reached, with edge and signal stability across subsamples. `vp-individual` reads the `vp-fit` screen and draws each patient's local gradient for each predictor (`varPro::ivarpro()`), listing the predictors with no local estimate rather than drawing them. `ggraph` joins `Suggests`, and the `varPro` floor in `Suggests` rises to 3.3.0.
+
+- `upgrade_job()` now keeps the old job and its report in an `_archive/` folder
+  beside the upgraded job, as `<job>.<stamp>.pre-upgrade` and
+  `<job>.<stamp>-upgrade.md`, where the stamp is the date and time of the
+  upgrade. The job's folder holds only the job, Quarto renders nothing in
+  `_archive/`, and the same job can be upgraded again without moving the last
+  upgrade's files aside by hand.
+
+- `dc-gfup` gains a **Potential follow-up** table. For each panel it shows the
+  follow-up recorded against the follow-up the close date allows, in
+  patient-years, the percent of potential achieved, and the longest of each.
+  It also counts patients with follow-up recorded past the close date. A
+  patient who reached the panel's event counts as followed completely.
+- The follow-up table in `dc-gfup` and in `dc-eda`'s follow-up section adds
+  the 75th and 90th percentiles and `total`, the follow-up summed in
+  patient-years.
+- `dc-gfup` now checks that its figures draw `EVENT`, the event its table
+  checks. A job checking reoperation in the table while drawing only deaths
+  had shown no sign of the mismatch. A draft render now says so in a callout
+  and marks itself a draft; a final render stops.
+- A `dc-gfup` `PANELS` entry takes an optional `levels`, naming its two groups
+  with the censored group first, for a non-fatal event drawn without death
+  (`levels = c("No reoperation", "Reoperation")`). The legend and the caption
+  use those names in place of Alive and Dead.
+
+* The `dc-tables` group-heading parser now names an unclosed `/*` heading
+  rather than failing with "subscript out of bounds" or folding the next group
+  into the last. `migrate_job()` never reaches it today, because the comment
+  masker treats an unclosed `/*` as running to end of file and the migration
+  already stops for want of a `%desc_tab` call. The guard keeps a later parser
+  change from reopening the confusing error.
+
+- `upgrade_job()` moves the pair an upgrade before 1.5.1 left beside a job,
+  `<job>.qmd.pre-upgrade` and `<job>-upgrade.md`, into the job folder's
+  `_archive/` the next time it upgrades that job. The pair is stamped with the
+  time of the upgrade that wrote it, read from the report, and an archived name
+  already taken gets a `-2` suffix rather than being overwritten. A copy renamed
+  by hand, such as `<job>.qmd.pre-upgrade-20261020`, is left where it is.
+  It refuses, before moving anything, when two of those files would take one
+  archived name, or when one sits in a folder that resolves outside the study.
+
+- `dc-tables` carries a fuller variable grouping to start from, commented out
+  above `GROUPS`: the house summary-table categories, with the SAS template's
+  added where they differ, 26 groups of CORR database columns. Uncomment it and
+  delete the groups and rows the study's data does not have. It sits outside the
+  block `migrate_job()` rewrites, so a migrated job keeps it too.
+
+- Reports now show who rendered them by name when the group's people file
+  lists their login: `Pat Example (pexample)`, in the box under the title and
+  in the "About this run" table. The file is YAML under `people:`, read from
+  `/studies/general/administrative/hvti_people.yml` or the path in
+  `HVTI_PEOPLE`. A login it does not list, or no file, shows the login alone,
+  as before. The provenance JSON keeps the login and adds `user_name`.
+- The `add_job()` example and the "Work a job" vignette scaffold `dc.gfup` as
+  `subject = "reop", type = "hz"`, the analysis it checks, in place of
+  `cohort` and `eda`. They explain that a job with an event names the event.
+- `dc-trends` explains, beside `ylim`, why its limits zoom with
+  `coord_cartesian()` and never with a scale limit. It also says what to do
+  when a percent smooth overshoots 0 or 100 at the ends of the year range.
+
+* A report's one-line box and its "About this run" table now call a dataset
+  version's date what it is. The box reads `dated 2026-10-21`, not
+  `registered 2026-10-21`, and the table's row is `Version date`, not
+  `Registered`. The date is the version's extract date, the source file's
+  modification date or the date given at registration, and never the day the
+  version was registered, which the manifest does not record; read as a
+  registration date, it made a version registered on a later day look like an
+  older one. An analysis set still reads `written <date>`. The provenance JSON
+  keeps the key `registered`, so reports rendered before and after read alike.
+
+- The box under a report's title no longer names a registered version for a
+  working read. With `HVTI_DATA=working` it names the working source file, such
+  as `built.csv`, and says "working read, not a registered version", matching
+  the "About this run" table. Before, it named the registered version file and
+  its registration date, though the job never read them. Any other value of
+  `HVTI_DATA` is refused when the data are read, so the box sends the reader to
+  "About this run" rather than guess.
+
+* `dc-gfup` draws competing non-fatal events and echoes, and needs hvtiPlotR 2.8.17; the `hvtiPlotR` floor in `Suggests` rises to 2.8.17. An `EVENTS` entry may give `event`, `time` and `label` as vectors, up to four events in one panel; each patient shows the earliest event before death, in its own house color and shape, and the caption names each. The new `ECHO` choice names a one-echo-per-patient column, such as `iv_echo` from a `JOIN` reduced to one row per patient, and marks it on every panel with a gray tick; a patient with no echo gets none. `COLORS` repeats `event` for competing events, one color per event in order; the three-color form still works. `dc-eda` shares the color checks and the event-panel code, so it accepts the same `COLORS` and competing `EVENTS`.
+
+* `rfs-fit` and `rfs-explain` draw patients who had the event in red and those censored
+  in blue, as every house figure does, under one "Event" / "Censored" key, with the loess smooth in black. They had
+  taken ggplot's default colors, which drew the censored patients red.
+* `ac` draws a single survival curve in black rather than ggplot's default red, and
+  strata in colors that are never the event's red or censored blue, so no stratum
+  reads as the deaths.
+* `dc-gfup` and `dc-eda` captions call the deaths "red crosses", matching hvtiPlotR 2.8.18, whose
+  event color is Paul Tol's red `#CC3311` rather than vermilion.
+* `ac`, `rfs-fit` and `rfs-explain` stop at setup on hvtiPlotR older than 2.7.18, the first release
+  with `hv_role_palette()` and `scale_color_hv()`, instead of failing mid-render. A test holds
+  every template that colors by role to that floor.
+
+* A study's render lock records the host that holds it, and a render on another server no longer takes it over. The lock's owner was checked against the local process table only, so a render started on one lri server read a render running on another as dead, took its lock and recovered its live provenance state as though it had crashed; the first render then stopped at its `provenance` chunk, after the fit had finished. A lock held on another host is now taken as alive, and the refusal, from Quarto or from `run_job()`'s preflight, names the host and the lock to delete if that render is no longer running. A lock written before this release has no host and keeps the local check.
+
+- `dc-tables` prints its own labels, so a manuscript table no longer carries the
+  dataset's analysis labels or raw codes, and nobody edits them in Word. The
+  dataset's labels are left as read; only the copy the table is drawn from is
+  relabeled. Two optional files at the study root, shared by every table job in
+  the study: `table_labels.yml` gives a variable the label its table prints, in
+  the format of `labels_overrides.yml`, and `value_labels.yml` gives a coded
+  column its level text (NYHA 1 to 4 as I to IV). Every other label is tidied by
+  rules: a leading "Preoperative" goes, as does a coding such as "(Y/N)" or
+  "(for analysis)"; the label is set in sentence case, keeping the study's
+  abbreviations and words already written as acronyms; and `kg/m2` becomes
+  `kg/m^2^`. The new study choice `TABLE_LABEL_RULES` turns the rules off
+  (`FALSE`) or keeps some of them. The report lists every label and level it
+  changed, the rule or file behind each, and every variable with no label. From
+  the 2026-10-22 Mitral umbrella meeting's feedback on a study's table.
+- The Word file `dc-tables` saves carries what built it as document properties
+  (File > Info in Word): the job, its render time and state, the hvtiRtemplates,
+  hvtiRtables, flextable and officer versions, and the data it read with its
+  checksum. A table that is emailed on can say which release made it without
+  anyone finding the report.
+
+* A job may now read an unregistered build in a draft rendered from its study folder, whatever the folder, and its report says so: the data table opens its notes with **Unregistered data**, the box at the top says it is a working read, and "About this run" marks the run a draft. A script run with `Rscript`, or a job at the study root, still reads registered data only. A final render reads registered data only, descriptive jobs included. A final render that reads a hand-off saved from an unregistered build stops and names `hvtiRutilities::update_manifest()`. Needs hvtiRutilities 1.5.12.
+
+* `bd` with `REGISTER = FALSE` now names its working file in `_study.yml` on a study's first build, with no version registered, so draft jobs can read the build before it is registered. In a study whose dataset is registered under another file, a `REGISTER = FALSE` build writes its working file, declares and registers nothing, and its report says the study's dataset is unchanged (a comparison build).
+
+* `dc-gfup`, `dc-eda`, `rfs-fit` and `rfs-explain` now need hvtiPlotR 2.8.18 or later,
+  because their captions name the red and blue that release draws for an event and for
+  censored. An older hvtiPlotR draws vermilion and a different blue, and the captions
+  would misdescribe it. The `Suggests` floor moves to `hvtiPlotR (>= 2.8.18)` with them.
+
 # hvtiRtemplates 1.5.0
 
 * Requires hvtiRutilities 1.5.11. `nb-boostmtree` asks
