@@ -444,7 +444,7 @@ label its table prints, as `labels_overrides.yml` does, `nyha_pr: "NYHA class"`
 on a line, and wins over the rules. `value_labels.yml` gives a coded column its
 level text, `hvtiRutilities::apply_value_labels()`'s format, so NYHA 1 to 4
 prints as I to IV. A column whose data already carry value labels, such as a
-haven labelled column, prints its level text without either file. Every label changed, and every variable with no label, is
+haven labeled column, prints its level text without either file. Every label changed, and every variable with no label, is
 listed under the table.
 
 ```{r}

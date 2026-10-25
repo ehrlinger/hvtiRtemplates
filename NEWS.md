@@ -103,7 +103,7 @@
   the study: `table_labels.yml` gives a variable the label its table prints, in
   the format of `labels_overrides.yml`, and `value_labels.yml` gives a coded
   column its level text (NYHA 1 to 4 as I to IV). A column whose data carry value
-  labels, such as a `haven` labelled column, prints its level text with no file and
+  labels, such as a `haven` labeled column, prints its level text with no file and
   whatever `TABLE_LABEL_RULES` says. Every other label is tidied by
   rules: a leading "Preoperative" goes, as does a coding such as "(Y/N)" or
   "(for analysis)"; the label is set in sentence case, keeping the study's
@@ -126,6 +126,10 @@
   because their captions name the red and blue that release draws for an event and for
   censored. An older hvtiPlotR draws vermilion and a different blue, and the captions
   would misdescribe it. The `Suggests` floor moves to `hvtiPlotR (>= 2.8.18)` with them.
+
+* hvtiRtemplates now needs hvtiRutilities 1.5.13 or later. That release reads a label
+  file's unquoted `No` and `Yes` as the text written, so a `value_labels.yml` declaring
+  `0: No` / `1: Yes` prints No and Yes in a table rather than FALSE and TRUE.
 
 # hvtiRtemplates 1.5.0
 
