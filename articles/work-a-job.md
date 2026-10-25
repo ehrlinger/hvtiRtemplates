@@ -138,6 +138,13 @@ clean R session, writes the HTML report beside the job, and shows the
 DRAFT banner while any marker remains. The numbers in a draft are not a
 result, and the banner says so.
 
+A draft may read a build that is not registered yet, and says so in its
+data table and in ‘About this run’. A final render
+(`render_job(final = TRUE)`) reads registered data only. Register the
+build with
+[`hvtiRutilities::update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
+first.
+
 **Render the job; do not run its chunks by hand.** Run All in RStudio
 runs the chunks in your current R session, where an object you made an
 hour ago, or a setting left by another job you had open, can quietly
