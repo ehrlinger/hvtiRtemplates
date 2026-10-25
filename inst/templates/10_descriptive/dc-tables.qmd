@@ -229,7 +229,7 @@ DROP_CONSTANT <- TRUE
 # or "(for analysis)", writes sentence case keeping the study's abbreviations,
 # and turns kg/m2 into kg/m^2^. FALSE prints the labels as they are, or name
 # the rules to keep, e.g. c("preoperative", "coding", "case", "units"). A
-# label the rules get wrong belongs in table_labels.yml; see "Table labels".
+# label the rules get wrong belongs in table_labels.yml; see "Table" below.
 TABLE_LABEL_RULES <- TRUE
 # EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you
 # want summarized as continuous: list(continuous = c("nyha_pr")). list() for none.
@@ -443,7 +443,8 @@ in the study, say what a rule cannot. `table_labels.yml` gives a variable the
 label its table prints, as `labels_overrides.yml` does, `nyha_pr: "NYHA class"`
 on a line, and wins over the rules. `value_labels.yml` gives a coded column its
 level text, `hvtiRutilities::apply_value_labels()`'s format, so NYHA 1 to 4
-prints as I to IV. Every label changed, and every variable with no label, is
+prints as I to IV. A column whose data already carry value labels, such as a
+haven labeled column, prints its level text without either file. Every label changed, and every variable with no label, is
 listed under the table.
 
 ```{r}
@@ -453,7 +454,8 @@ listed under the table.
 # so level text would print nowhere, and hv_tbl_summary() could not find the
 # event among, say, Absent and Present. Binary rows therefore keep their codes:
 # those BINARY or OVERRIDES name, and those the data make binary unless named
-# categorical. Continuous rows keep theirs too: they are summarized as numbers.
+# categorical. Continuous rows named in CONTINUOUS or OVERRIDES keep theirs too:
+# they are summarized as numbers.
 .rows <- intersect(unlist(GROUPS, use.names = FALSE), names(d))
 .binary_by_data <- .rows[vapply(d[.rows], function(x) {
   is.logical(x) || is.numeric(x) && all(x[!is.na(x)] %in% c(0, 1))
@@ -588,7 +590,8 @@ hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS
 # The file carries what wrote it, the job, the render and the package versions,
 # as document properties (File > Info in Word), so a copy that is emailed on
 # says which release built it without anyone opening this report.
-hvtiRtemplates:::.stamp_docx(word_path, .job$run, data = .provenance_data, caption = MANUSCRIPT_CAPTION)
+hvtiRtemplates:::.stamp_docx(word_path, hvtiRtemplates:::.run_reconcile(.job$run), data = .provenance_data,
+                             caption = MANUSCRIPT_CAPTION)
 # The manuscript style merges its header and section rows, and nothing else.
 check <- hvtiRtables::hv_check_docx(word_path, style = "manuscript")
 if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)

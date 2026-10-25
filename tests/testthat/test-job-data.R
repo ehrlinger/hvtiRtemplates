@@ -1474,6 +1474,7 @@ test_that("read_job_data() records the identifiers it dropped, and why a column 
 })
 
 test_that("a working read is a draft, and the data table says so", {
+  withr::local_envvar(HVTI_DATA = NA)
   old <- .run_state$draft_reasons
   withr::defer(.run_state$draft_reasons <- old)
   .run_state$draft_reasons <- character()
@@ -1491,6 +1492,7 @@ test_that("a working read is a draft, and the data table says so", {
 
 test_that("the note names the file from the message hvtiRutilities really signals", {
   skip_if_not(exists(".working_read_condition", asNamespace("hvtiRutilities")))
+  withr::local_envvar(HVTI_DATA = NA)
   old <- .run_state$draft_reasons
   withr::defer(.run_state$draft_reasons <- old)
   real <- get(".working_read_condition", asNamespace("hvtiRutilities"))
@@ -1499,6 +1501,23 @@ test_that("the note names the file from the message hvtiRutilities really signal
     list(value = data.frame(ccfid = 1L), record = list(dataset = "study"))
   })
   expect_match(read$notes[[1L]], "read the working built.csv, which has no registered version", fixed = TRUE)
+})
+
+test_that("under HVTI_DATA=working the note names the setting, not registration", {
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  .run_state$draft_reasons <- character()
+  withr::local_envvar(HVTI_DATA = "working")
+  read <- .with_working_read({
+    message(structure(class = c("hvtiRutilities_working_read", "message", "condition"),
+                      list(message = "Read the working built.rds, not a registered version.\n", call = NULL)))
+    list(value = data.frame(ccfid = 1L), record = list(dataset = "study"))
+  })
+  expect_true(isTRUE(read$record$working))
+  expect_match(read$notes[[1L]], "**Working data.**", fixed = TRUE)
+  expect_match(read$notes[[1L]], "Unset HVTI_DATA", fixed = TRUE)
+  expect_no_match(read$notes[[1L]], "update_manifest", fixed = TRUE)
+  expect_match(.run_state$draft_reasons, "HVTI_DATA=working", fixed = TRUE)
 })
 
 test_that("a registered read is left as it was", {

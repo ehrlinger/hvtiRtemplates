@@ -1121,6 +1121,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # marked a draft, so "About this run" opens with the notice. The data table's first note
 # says so beside the file read, and the record carries working = TRUE, so a hand-off
 # saved from these rows is refused by a final render downstream (.check_handoff_working()).
+# HVTI_DATA=working signals the same condition for a dataset that is registered, so the
+# note names that setting there rather than sending the analyst to register it again.
 .with_working_read <- function(read) {
   file <- NULL
   read <- withCallingHandlers(read, hvtiRutilities_working_read = function(m) {
@@ -1129,10 +1131,18 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   })
   if (is.null(file)) return(read)
   read$record$working <- TRUE
-  read$notes <- c(paste0("**Unregistered data.** This job read the working ", file, ", which has no registered ",
-                         "version, so every number here is a draft. Register the build with ",
-                         "hvtiRutilities::update_manifest() and render again."), read$notes)
-  .run_mark_draft(paste0("it read the working ", file, ", which is unregistered"))
+  if (identical(Sys.getenv("HVTI_DATA"), "working")) {
+    note <- paste0("**Working data.** HVTI_DATA=working made this job read the working ", file, " rather than ",
+                   "its registered version, so every number here is a draft. Unset HVTI_DATA and render again.")
+    reason <- paste0("HVTI_DATA=working made it read the working ", file)
+  } else {
+    note <- paste0("**Unregistered data.** This job read the working ", file, ", which has no registered ",
+                   "version, so every number here is a draft. Register the build with ",
+                   "hvtiRutilities::update_manifest() and render again.")
+    reason <- paste0("it read the working ", file, ", which is unregistered")
+  }
+  read$notes <- c(note, read$notes)
+  .run_mark_draft(reason)
   read
 }
 

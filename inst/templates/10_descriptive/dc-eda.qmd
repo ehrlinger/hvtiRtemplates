@@ -48,8 +48,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
-  stop("This job needs hvtiPlotR >= 2.8.0 for hv_eda_pages(), hv_followup_panels() and scale_color_hv(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
+  stop("This job needs hvtiPlotR >= 2.8.18 for hv_eda_pages(), hv_followup_panels() and the red and blue its captions name; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
@@ -153,12 +153,19 @@ PANELS <- list(
   all = list(status = "dead", time = "iv_dead", title = "All deaths")
 )
 
-# EDIT: optional event panels, one entry per non-fatal event. `event` and
-# `time` are the event's indicator and interval; `death` and `death_time` the
-# death it competes with. A flagged event counts only when it comes strictly
-# before death, so ties go to death. list() draws none. For example
+# EDIT: optional event panels, one entry per panel. `event` and `time` are the
+# event's indicator and interval; `death` and `death_time` the death it
+# competes with. A flagged event counts only when it comes strictly before
+# death, so ties go to death. list() draws none. For example
 #   reop = list(event = "ev_reop", time = "iv_reop", death = "dead",
 #               death_time = "iv_dead", label = "Reoperation")
+# Competing non-fatal events share one panel when `event`, `time` and `label`
+# are vectors, one element per event and at most four; `death` and
+# `death_time` stay single. Each patient shows the earliest event before death,
+# and a tie between two events goes to the one listed first, so list the event
+# that should win a tie first:
+#   nonfatal = list(event = c("ev_reop", "ev_stroke"), time = c("iv_reop", "iv_stroke"),
+#                   death = "dead", death_time = "iv_dead", label = c("Reoperation", "Stroke"))
 EVENTS <- list()
 
 # Variables.
@@ -198,9 +205,12 @@ ALPHA <- 0.5
 X_LABEL <- "Year of operation"     # EDIT: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 
 # EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
-# red, alive blue and a non-fatal event green, all colorblind safe. Name
-# all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
-# event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
+# red, alive blue and non-fatal events green, then reddish purple, olive
+# and black, all colorblind safe. Name alive, dead and event to choose your own;
+# c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A") is ColorBrewer
+# Set1, what these jobs drew before 1.2.3. For competing events, repeat event,
+# one color per event in the order EVENTS lists them, as many as the largest
+# panel has: c(alive = ..., dead = ..., event = ..., event = ...).
 # Each figure caption names these colors, so choosing your own means naming them
 # in the caption key too, where the figures are drawn.
 COLORS <- NULL

@@ -1,8 +1,8 @@
 Package: hvtiRtemplates
 Type: Package
 Title: Analysis Job Templates for the HVTI CORR Group
-Version: 1.5.0
-Date: 2026-10-23
+Version: 1.5.1
+Date: 2026-10-25
 Authors@R: c(
     person(
       "John", "Ehrlinger",
@@ -58,7 +58,7 @@ Suggests:
     ggplot2,
     ggraph,
     haven,
-    hvtiPlotR (>= 2.8.17),
+    hvtiPlotR (>= 2.8.18),
     hvtiRtables (>= 1.0.11),
     hvtiRdatabuild (>= 0.3.0),
     hvtiRbootstrap (>= 0.9.3),
