@@ -71,8 +71,8 @@ if (utils::packageVersion("TemporalHazard") < "1.2.12") {
   stop("This job needs TemporalHazard >= 1.2.12 for hzr_kaplan(); ",
        utils::packageVersion("TemporalHazard"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.7.0") {
-  stop("This job needs hvtiPlotR >= 2.7.0 for hv_atrisk_compose(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
+  stop("This job needs hvtiPlotR >= 2.7.18 for hv_atrisk_compose() and hv_role_palette(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (!requireNamespace("patchwork", quietly = TRUE)) {
@@ -527,7 +527,8 @@ km_views <- function(fit) {
   step <- function(data, y, ylab) {
     ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum)) +
       ggplot2::geom_step() +
-      ggplot2::scale_color_manual(values = cols) +
+      # The limits keep an empty panel (no events, so no cumulative hazard) from warning.
+      ggplot2::scale_color_manual(values = cols, limits = names(cols)) +
       ggplot2::labs(x = "Years", y = ylab, color = NULL) +
       hvtiPlotR::theme_hv_manuscript(base_size = 12)
   }

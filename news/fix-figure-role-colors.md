@@ -6,3 +6,6 @@
   reads as the deaths.
 * `dc-gfup` and `dc-eda` captions call the deaths "red crosses", matching hvtiPlotR 2.8.18, whose
   event color is Paul Tol's red `#CC3311` rather than vermilion.
+* `ac`, `rfs-fit` and `rfs-explain` stop at setup on hvtiPlotR older than 2.7.18, the first release
+  with `hv_role_palette()` and `scale_color_hv()`, instead of failing mid-render. A test holds
+  every template that colors by role to that floor.

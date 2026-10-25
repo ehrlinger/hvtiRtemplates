@@ -135,6 +135,10 @@ test_that("an ac job completes when no patient has the event", {
   expect_identical(nrow(env$km), 0L)
   surv <- env$km_views(env$km)[[1]]$data
   expect_identical(unique(surv$survival), 1)
+  # The cumulative-hazard panels are empty. The scale's warnings arrive only when the patchwork is
+  # drawn, not when it is built, so it is drawn.
+  withr::local_pdf(NULL)
+  expect_no_warning(print(env$km_views(env$km)))
   graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead_pa-hz")
   expect_true(file.exists(file.path(graphs, "ac-survival.png")))
 })
