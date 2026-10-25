@@ -195,7 +195,7 @@ ECHO <- NULL
 ALPHA <- 0.5
 
 # EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
-# vermillion, alive blue and non-fatal events green, then reddish purple, olive
+# red, alive blue and non-fatal events green, then reddish purple, olive
 # and black, all colorblind safe. Name alive, dead and event to choose your own;
 # c(alive = "#377EB8", dead = "#E41A1C", event = "#4DAF4A") is ColorBrewer
 # Set1, what these jobs drew before 1.2.3. For competing events, repeat event,
@@ -570,9 +570,9 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
       status_colors(c("Alive", "Dead"), .lv) +
       scale_shape_manual(values = c(Alive = 1, Dead = 4), labels = .lv)
     .key <- if (is.null(PANELS[[nm]]$levels)) {
-      "Blue open circles mark patients alive and vermillion crosses patients who died"
+      "Blue open circles mark patients alive and red crosses patients who died"
     } else {
-      paste0("Blue open circles mark ", .lv[["Alive"]], " and vermillion crosses ", .lv[["Dead"]])
+      paste0("Blue open circles mark ", .lv[["Alive"]], " and red crosses ", .lv[["Dead"]])
     }
   } else {
     # The levels are the panel's own: "No event", one per event in the order
@@ -587,7 +587,7 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
                    paste(c("green", "reddish purple", "olive", "black")[seq_len(k)],
                          c("open triangles", "open squares", "open diamonds", "open inverted triangles")[seq_len(k)],
                          .with, collapse = ", "),
-                   ", and vermillion crosses patients who died")
+                   ", and red crosses patients who died")
   }
   if (!is.null(ECHO)) .key <- paste0(.key, ", gray ticks the follow-up at each patient's echo,")
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +

@@ -210,7 +210,7 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead",
 
 ## `dc-gfup`: blue circles below the diagonal are follow-up falling short of the close date
 
-Each point is a patient. The dashed diagonal is the most follow-up the close date allows; vermillion crosses (deaths) belong below it. Living patients drift below it as their last contact ages, and a follow-up sweep, on one calendar date, leaves a band parallel to the diagonal and below it, and the few far below were lost early.
+Each point is a patient. The dashed diagonal is the most follow-up the close date allows; red crosses (deaths) belong below it. Living patients drift below it as their last contact ages, and a follow-up sweep, on one calendar date, leaves a band parallel to the diagonal and below it, and the few far below were lost early.
 
 :::: {.columns}
 ::: {.column width="50%"}

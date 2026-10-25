@@ -198,7 +198,7 @@ ALPHA <- 0.5
 X_LABEL <- "Year of operation"     # EDIT: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 
 # EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
-# vermillion, alive blue and a non-fatal event green, all colorblind safe. Name
+# red, alive blue and a non-fatal event green, all colorblind safe. Name
 # all three to choose your own; c(alive = "#377EB8", dead = "#E41A1C",
 # event = "#4DAF4A") is ColorBrewer Set1, what these jobs drew before 1.2.3.
 # Each figure caption names these colors, so choosing your own means naming them
@@ -566,7 +566,7 @@ for (i in seq_len(nrow(fp$data))) {
     p <- plots[[nm]] +
       status_colors(c("Alive", "Dead")) +
       scale_shape_manual(values = c(Alive = 1, Dead = 4))
-    .key <- "Blue open circles mark patients alive and vermillion crosses patients who died"
+    .key <- "Blue open circles mark patients alive and red crosses patients who died"
   } else {
     # The levels are the panel's own: "No event", one per event in the order
     # EVENTS lists them, and "Death".
@@ -580,7 +580,7 @@ for (i in seq_len(nrow(fp$data))) {
                    paste(c("green", "reddish purple", "olive", "black")[seq_len(k)],
                          c("open triangles", "open squares", "open diamonds", "open inverted triangles")[seq_len(k)],
                          .with, collapse = ", "),
-                   ", and vermillion crosses patients who died")
+                   ", and red crosses patients who died")
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript(base_size = 12)
