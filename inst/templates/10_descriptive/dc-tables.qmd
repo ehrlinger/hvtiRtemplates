@@ -591,7 +591,7 @@ hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS
 # as document properties (File > Info in Word), so a copy that is emailed on
 # says which release built it without anyone opening this report.
 hvtiRtemplates:::.stamp_docx(word_path, hvtiRtemplates:::.run_reconcile(.job$run), data = .provenance_data,
-                              caption = MANUSCRIPT_CAPTION)
+                             caption = MANUSCRIPT_CAPTION)
 # The manuscript style merges its header and section rows, and nothing else.
 check <- hvtiRtables::hv_check_docx(word_path, style = "manuscript")
 if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)
