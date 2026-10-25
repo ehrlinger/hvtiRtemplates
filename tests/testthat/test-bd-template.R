@@ -17,11 +17,52 @@ test_that("a run without REGISTER writes the working file and its record and reg
   expect_true(file.exists(file.path(datasets, "study_cohort.rds")))
   expect_true(file.exists(file.path(datasets, "study_cohort.build.yml")))
   expect_length(bd_versions(root), 0L)
-  expect_null(hvtiRutilities::study_config(root, require_data = FALSE)$built)
+  # The working file is declared as the study's dataset, with no version registered.
+  expect_identical(hvtiRutilities::study_config(root, require_data = FALSE)$built, "study_cohort.rds")
   expect_null(env$.version_after)
+  expect_identical(env$.register_step, "Declared as the study dataset: nothing registered")
   expect_identical(env$.cut$attrition$reason, c("Rows read", "Under 40"))
   # A missing age is not excluded.
   expect_identical(nrow(env$d), nrow(m$data) - sum(m$data$age < 40, na.rm = TRUE))
+})
+
+test_that("bd with REGISTER = FALSE declares the working file and registers nothing", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = FALSE))
+  yml <- yaml::read_yaml(file.path(root, "_study.yml"))
+  expect_identical(yml$built, "study_cohort.rds")
+  expect_false(is.null(yml$key))
+  manifest <- file.path(root, "manifest.yaml")
+  expect_true(!file.exists(manifest) || !length(yaml::read_yaml(manifest)$datasets))
+  expect_length(bd_versions(root), 0L)
+})
+
+test_that("a second bd render keeps the contract, and another DATASET_ID stops before changing it", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = FALSE)
+  bd_run(root, choices)
+  first <- readLines(file.path(root, "_study.yml"))
+  bd_run(root, choices)
+  expect_identical(readLines(file.path(root, "_study.yml")), first)
+  err <- expect_error(bd_run(root, utils::modifyList(choices, list(DATASET_ID = "other_cohort"))), "^bd: register \\(")
+  expect_match(conditionMessage(err), "registered as study_cohort.rds")
+  expect_identical(readLines(file.path(root, "_study.yml")), first)
+})
+
+test_that("REGISTER = TRUE registers the declared working file as the study's first version", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = FALSE)
+  bd_run(root, choices)
+  env <- bd_run(root, utils::modifyList(choices, list(REGISTER = TRUE)))
+  expect_match(env$.register_step, "^Registered as ")
+  expect_length(bd_versions(root), 1L)
+  expect_true(all(hvtiRutilities::verify_manifest(file.path(root, "manifest.yaml"))$status == "OK"))
 })
 
 test_that("the dataset carries ID, KEY, JOIN_BY and KEEP columns, and drops MRN", {
