@@ -118,6 +118,14 @@ SUBRATIO <- NULL
 # which reads better in black and white and where curves for several follow-up
 # times overlap. Categorical predictors always get error bars.
 BAND_STYLE <- "ribbon"
+
+# EDIT: with BAND_STYLE <- "bars", where to draw the bars, as a named list of
+# values per continuous predictor, e.g. list(age = c(50, 60, 70, 80), lvef = c(30, 50)).
+# NULL, or a predictor left out, draws a bar at every grid point. The values
+# must lie inside the predictor's observed range. Changing them only redraws:
+# each subsample curve is read off at these values the way the plotted line is
+# drawn, straight between grid points, so no forest is regrown.
+BAND_AT <- NULL
 ```
 
 - `BANDS_B` defaults to **0**, so a job scaffolded without edits, or an existing job
@@ -127,6 +135,17 @@ BAND_STYLE <- "ribbon"
   or `"bars"`; anything else stops the job. Both are checked where `TOP_K` is checked.
 - `BAND_STYLE` changes only the drawing, so it is not in any cache key: switching it
   redraws from the caches.
+- `BAND_AT` is a drawing choice too, and not in any cache key. Each of the B cached
+  curves, and the full forest's, is linearly interpolated at the requested values, and
+  the rescaled SE is computed from the interpolated values. That is exactly a band on the
+  piecewise-linear curve the figure draws, so the bar and the line agree. It stops the
+  job when it names a predictor that is not selected for the partials, a categorical
+  predictor (those always get a bar at every level), or a value outside the observed
+  range; it is ignored, with a message, under `BAND_STYLE = "ribbon"`.
+  Rejected: adding the `BAND_AT` values to the partial grid so they are evaluated
+  exactly. That puts a drawing choice in the band cache key, so moving one bar would
+  regrow all B forests, and the gain over interpolation is small at the default grid of
+  25 points.
 - **The 100 floor** (events per subsample for rfs, smallest class per subsample for rfc;
   rfr has none) is a working heuristic agreed 2026-10-26, not a published rule: a
   survival or classification forest needs cases of the rare outcome to split on.
@@ -190,7 +209,7 @@ Drawn only when `BANDS_B > 0`; with the bands off the job's figure list is uncha
 | figure | shows |
 |---|---|
 | `rf?-explain-importance-intervals` | each predictor's VIMP with its 95% subsampling interval, ranked as in the importance figure, a reference line at zero. Free height, one row per predictor |
-| `rf?-explain-dependence-partial-bands-page-NN` | the `dependence-partial` pages and panels, with a ribbon or, under `BAND_STYLE = "bars"`, error bars at the grid points around each continuous curve, and error bars on each categorical bar. For rfs, one band per horizon in that horizon's color; under `"bars"` the bars for the horizons are dodged so they do not overprint |
+| `rf?-explain-dependence-partial-bands-page-NN` | the `dependence-partial` pages and panels, with a ribbon or, under `BAND_STYLE = "bars"`, error bars at the grid points, or at the `BAND_AT` values, along each continuous curve, and error bars on each categorical bar. For rfs, one band per horizon in that horizon's color; under `"bars"` the bars for the horizons are dodged so they do not overprint |
 
 Captions state the method exactly, with B and the fraction filled in from the run, and
 say the band is pointwise: it bounds the curve at each value, not the whole curve. The
@@ -217,7 +236,9 @@ In `test-rf-templates.R`, on the synthetic cohorts with `BANDS_B = 3`:
    full cohort": every `rfsrc()` call in an explain job is inside `.partial_bands()`.
 7. Each `rf?-fit` grows with `forest = TRUE` and `bootstrap = "by.root"` (section 3a).
 8. `BAND_STYLE = "bars"` draws error bars and no ribbon, and changing it alone recomputes
-   no cache.
+   no cache. With `BAND_AT`, the bars sit at exactly the requested values, a value equal
+   to a grid point reproduces that grid point's band, changing `BAND_AT` recomputes no
+   cache, and each refusal in section 4 stops with a message naming `BAND_AT`.
 9. `SUBRATIO` out of range and an unknown `BAND_STYLE` each stop with a message naming
    the choice.
 10. The existing MRN scans cover the new caches unchanged.
