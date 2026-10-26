@@ -190,6 +190,109 @@ test_that("PARTIAL_VARS refuses a variable the forest was not grown on", {
   )
 })
 
+# The veteran cohort has 128 deaths, so SUBRATIO = 0.5 puts 64 events in a subsample, under the
+# floor of 100, and bands-plan warns. The first test below asserts the warning once; the rest muffle
+# it by its message, so any other warning still reaches the summary.
+# nolint start: object_usage_linter.
+rf_run_bands <- function(...) {
+  withCallingHandlers(
+    rf_run(...),
+    warning = function(w) {
+      if (grepl("under the 100 the bands need", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+    }
+  )
+}
+# nolint end
+
+band_labels <- c("bands-plan", "importance-intervals", "dependence-partial-bands")
+
+test_that("with BANDS_B at its default the explain writes no band cache and draws no band", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
+  env <- rfs_explained()
+  expect_identical(env$BANDS_B, 0)
+  rf_run("rfs", "explain", band_labels, env)
+  expect_length(list.files(env$CACHE_DIR, "band|subsample"), 0L)
+  expect_length(list.files(env$.root, "partial-bands|importance-intervals", recursive = TRUE), 0L)
+})
+
+test_that("rfs-explain draws the importance intervals and the partial bands from cached subsamples", {
+  skip_on_cran()
+  rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
+  withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
+  env <- new.env(parent = globalenv())
+  env$.root <- rfs_explained_copy()
+  choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
+  expect_warning(rf_run("rfs", "explain", c(explain_labels, band_labels), env, choices), "SUBRATIO")
+  for (nm in c("rfs-vimp-subsample", "rfs-band-rows", paste0("rfs-partial-band-", env$sel))) {
+    expect_true(file.exists(file.path(env$CACHE_DIR, paste0(nm, ".rds"))), info = nm)
+  }
+  expect_identical(dim(env$bands[[1]]$star)[2], 3L)
+  expect_gt(length(list.files(env$.root, "rfs-explain-importance-intervals", recursive = TRUE)), 0L)
+  expect_gt(length(list.files(env$.root, "rfs-explain-dependence-partial-bands-page-01", recursive = TRUE)), 0L)
+})
+
+test_that("a bigger TOP_K computes bands only for the new variables", {
+  skip_on_cran()
+  rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
+  withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
+  root <- rfs_explained_copy()
+  env <- new.env(parent = globalenv())
+  env$.root <- root
+  choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
+  rf_run_bands("rfs", "explain", c(explain_labels, band_labels), env, choices)
+  first <- file.path(env$CACHE_DIR, paste0("rfs-partial-band-", env$sel, ".rds"))
+  before <- tools::md5sum(first)
+  # A bigger TOP_K makes the full forest's partial stale, so REFIT is set, as a study
+  # author would set it. REFIT recomputes only stale caches: the two bands already cached
+  # are current, and must be left byte for byte as they were.
+  again <- new.env(parent = globalenv())
+  again$.root <- root
+  pooled <- NULL
+  # Taken before the mock is installed: hvtiRtemplates:::.band_pool, looked up inside the
+  # mock, is the mock, and the call recurses until the stack overflows.
+  real_pool <- hvtiRtemplates:::.band_pool
+  trace_pool <- function(vars, grids, progress = NULL) {
+    pooled <<- vars
+    real_pool(vars, grids, progress)
+  }
+  local_mocked_bindings(.band_pool = trace_pool, .package = "hvtiRtemplates")
+  rf_run_bands("rfs", "explain", c(explain_labels, band_labels), again, modifyList(choices, list(TOP_K = 3, REFIT = TRUE)))
+  expect_identical(pooled, again$sel[3])
+  expect_identical(tools::md5sum(first), before)
+  expect_true(file.exists(file.path(again$CACHE_DIR, paste0("rfs-partial-band-", again$sel[3], ".rds"))))
+})
+
+test_that("BAND_STYLE and BAND_AT only redraw", {
+  skip_on_cran()
+  rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
+  withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
+  root <- rfs_explained_copy()
+  choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
+  env <- new.env(parent = globalenv())
+  env$.root <- root
+  rf_run_bands("rfs", "explain", c(explain_labels, band_labels), env, choices)
+  caches <- list.files(env$CACHE_DIR, "band|subsample", full.names = TRUE)
+  before <- tools::md5sum(caches)
+  cont <- env$sel[vapply(env$sel, function(v) hvtiRtemplates:::.band_grid(env$pd, v)$type == "continuous", TRUE)][1]
+  at <- stats::setNames(list(stats::median(env$bands[[cont]]$x)), cont)
+  again <- new.env(parent = globalenv())
+  again$.root <- root
+  rf_run_bands("rfs", "explain", c(explain_labels, band_labels), again,
+               c(choices, list(BAND_STYLE = "bars", BAND_AT = at)))
+  expect_identical(tools::md5sum(caches), before)
+})
+
+test_that("an uncached band is refused at the console and names submit_job()", {
+  skip_on_cran()
+  rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
+  withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  env <- new.env(parent = globalenv())
+  env$.root <- rfs_explained_copy()
+  choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
+  expect_error(rf_run_bands("rfs", "explain", c(explain_labels, band_labels), env, choices), "submit_job(", fixed = TRUE)
+})
+
 # Classification data for rfc: two iris species, so the outcome is binary as
 # most clinical classification outcomes are.
 rfc_data <- function() {
