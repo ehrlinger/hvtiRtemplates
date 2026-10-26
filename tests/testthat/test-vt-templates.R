@@ -139,6 +139,51 @@ test_that("Gower declares a 0/1 predictor binary: no warning, the same distance"
   expect_equal(unname(m), unname(interval))
 })
 
+test_that("Gower ranks an ORDINAL grade: 0 against 3 is farther than 0 against 1", {
+  skip_if_not_installed("cluster")
+  h <- vt_helpers()
+  # Levels deliberately out of numeric order as factor() would sort text ("10" before "2").
+  d <- data.frame(ID = c("p0", "p1", "p3", "p10"), g = factor(c("0", "1", "3", "10")))
+  flat <- h$vt_elig_gower(d, "g", "ID")
+  ranked <- h$vt_elig_gower(d, "g", "ID", ordinal = "g")
+  expect_equal(flat["p0", "p1"], flat["p0", "p3"])
+  expect_lt(ranked["p0", "p1"], ranked["p0", "p3"])
+  expect_lt(ranked["p0", "p3"], ranked["p0", "p10"])
+  expect_equal(ranked["p0", "p10"], 1)
+  # A name the predictors do not include is ignored, not an error.
+  expect_equal(h$vt_elig_gower(d, "g", "ID", ordinal = "absent"), flat)
+})
+
+test_that("an ORDINAL predictor with non-numeric levels stops, naming them", {
+  skip_if_not_installed("cluster")
+  h <- vt_helpers()
+  d <- data.frame(ID = c("a", "b", "c"), g = factor(c("mild", "2", "severe")))
+  expect_error(h$vt_elig_gower(d, "g", "ID", ordinal = "g"), "ORDINAL predictor g .*mild, severe")
+})
+
+test_that("vt_ood_features names the predictor that puts a patient outside the arm", {
+  h <- vt_helpers()
+  d <- data.frame(ID = c("a1", "a2", "a3", "b1", "b2"), x = c(1, 2, 3, 9, 2.5),
+                  g = c("u", "u", "u", "w", "u"), dm = c(0, 0, 0, 1, 0))
+  arm_of <- c("A", "A", "A", "B", "B")
+  out <- data.frame(ID = c("b1", "b2"), arm = "A")
+  f <- h$vt_ood_features(out, d, "ID", arm_of, c("x", "g", "dm"))
+  expect_match(f[1], "x 9 outside A's range [1, 3]", fixed = TRUE)
+  expect_match(f[1], "g = w (0 of 3 in A)", fixed = TRUE)
+  expect_match(f[1], "dm = 1 (0 of 3 in A)", fixed = TRUE)
+  expect_equal(f[2], "none alone; unusual in combination")
+  expect_length(strsplit(h$vt_ood_features(out[1, ], d, "ID", arm_of, c("x", "g", "dm"), n = 2L), "; ")[[1]], 2L)
+})
+
+test_that("vt-fit lists each out-of-distribution patient's features", {
+  skip_on_cran()
+  env <- vt_fit_first()
+  out <- env$.elig_rows[!env$.elig_rows$in_distribution, ]
+  planted <- vt_digest(env, which(vt_data()$arm == "A")[1:5])
+  expect_true(all(grepl("^xs .* outside B's range", out$features[out$ID %in% planted & out$arm == "B"])))
+  expect_true(all(env$.elig_rows$features[env$.elig_rows$in_distribution] == ""))
+})
+
 test_that("methods combine by any and all, with one row shape", {
   h <- vt_helpers()
   base <- data.frame(ID = c("p1", "p2", "p3"), method = NA, arm = "A", nn_id = "q", distance = 1,
