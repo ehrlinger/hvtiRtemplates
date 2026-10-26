@@ -40,6 +40,16 @@ test_that("interpolating at a grid point reproduces that grid point", {
   expect_error(hvtiRtemplates:::.band_at(x, hat, star, 40), "observed range")
 })
 
+test_that("a failed subsample interpolates to NA, and the others are read as before", {
+  x <- c(10, 20, 30)
+  hat <- c(1, 2, 4)
+  star <- cbind(c(1, 3, 5), NA_real_)
+  at <- hvtiRtemplates:::.band_at(x, hat, star, 25)
+  expect_equal(at$star[1, 1], 4)
+  expect_true(is.na(at$star[1, 2]))
+  expect_equal(dim(at$star), c(1L, 2L))
+})
+
 test_that("the floor names the subratio that would give 100 rare cases", {
   expect_equal(hvtiRtemplates:::.band_floor_need(400), 0.25)
   expect_equal(hvtiRtemplates:::.band_floor_need(150), 100 / 150)

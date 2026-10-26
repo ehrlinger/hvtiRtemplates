@@ -31,7 +31,8 @@
     stop("BAND_AT asks for values outside the observed range, ", signif(min(x), 4), " to ", signif(max(x), 4),
          ".", call. = FALSE)
   }
-  lin <- function(y) stats::approx(x, y, xout = at)$y
+  # approx() errors on fewer than two non-NA points; a failed subsample reads as NA instead.
+  lin <- function(y) if (sum(!is.na(y)) < 2L) rep(NA_real_, length(at)) else stats::approx(x, y, xout = at)$y
   list(x = at, hat = lin(hat), star = matrix(apply(star, 2L, lin), nrow = length(at)))
 }
 
