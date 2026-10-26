@@ -205,6 +205,11 @@ RISK_TIMES <- NULL
 CI_BAND <- TRUE
 CI_TIMES <- NULL
 
+# How the figures join one event to the next. Each event is drawn as a point;
+# FALSE joins the points with straight lines, as the SAS %KAPLAN figures do;
+# TRUE draws the Kaplan-Meier steps, flat between events and dropping at each one.
+STEPS <- FALSE
+
 # Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("ac-survival"). The names are the
@@ -514,19 +519,22 @@ km_views <- function(fit) {
     v <- fit$survival[fit$stratum == s]
     if (length(v)) v[length(v)] else 1
   }, numeric(1))
-  surv <- rbind(data.frame(stratum = counts$stratum, time = 0, survival = 1),
-                fit[, c("stratum", "time", "survival")],
-                data.frame(stratum = counts$stratum, time = pmin(counts$max_fup, plot_max), survival = last))
+  # Only the event rows carry a point; time zero and the end of follow-up do not.
+  surv <- rbind(data.frame(stratum = counts$stratum, time = 0, survival = 1, event = FALSE),
+                data.frame(fit[, c("stratum", "time", "survival")], event = rep(TRUE, nrow(fit))),
+                data.frame(stratum = counts$stratum, time = pmin(counts$max_fup, plot_max), survival = last, event = FALSE))
   surv$stratum <- factor(surv$stratum, levels = counts$stratum)
   # The cumulative hazard is infinite once survival reaches zero; it is left off a figure.
   haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
+  haz$event <- rep(TRUE, nrow(haz))
   haz$stratum <- factor(haz$stratum, levels = counts$stratum)
   # One curve is black. Strata never take red or blue, which mean the event and
   # censored in every house figure, so no stratum reads as the deaths.
   cols <- hvtiRtemplates:::.group_colors(counts$stratum)
-  step <- function(data, y, ylab) {
+  view <- function(data, y, ylab) {
     ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum)) +
-      ggplot2::geom_step() +
+      (if (isTRUE(STEPS)) ggplot2::geom_step() else ggplot2::geom_line()) +
+      ggplot2::geom_point(data = data[data$event, , drop = FALSE], size = 1.2) +
       # The limits keep an empty panel (no events, so no cumulative hazard) from warning.
       ggplot2::scale_color_manual(values = cols, limits = names(cols)) +
       ggplot2::labs(x = "Years", y = ylab, color = NULL) +
@@ -535,11 +543,11 @@ km_views <- function(fit) {
   log_x <- ggplot2::scale_x_log10()
   log_y <- ggplot2::scale_y_log10()
   patchwork::wrap_plots(
-    step(surv, "survival", "Survival (%)") + ggplot2::scale_y_continuous(labels = function(p) 100 * p),
-    step(haz, "cumhaz", "Cumulative hazard"),
-    step(haz, "cumhaz", "Cumulative hazard") + log_x + ggplot2::labs(x = "Years (log scale)"),
-    step(haz, "cumhaz", "Cumulative hazard (log scale)") + log_y,
-    step(haz, "cumhaz", "Cumulative hazard (log scale)") + log_x + log_y + ggplot2::labs(x = "Years (log scale)"),
+    view(surv, "survival", "Survival (%)") + ggplot2::scale_y_continuous(labels = function(p) 100 * p),
+    view(haz, "cumhaz", "Cumulative hazard"),
+    view(haz, "cumhaz", "Cumulative hazard") + log_x + ggplot2::labs(x = "Years (log scale)"),
+    view(haz, "cumhaz", "Cumulative hazard (log scale)") + log_y,
+    view(haz, "cumhaz", "Cumulative hazard (log scale)") + log_x + log_y + ggplot2::labs(x = "Years (log scale)"),
     ncol = 2, guides = "collect"
   ) & ggplot2::theme(legend.position = "bottom")
 }
@@ -564,6 +572,12 @@ km_figure <- function(strata = NULL) {
   .zero <- hv$data$surv == 0
   hv$data$lower[.zero] <- 0
   hv$data$upper[.zero] <- 0
+  # Straight lines join the events alone, from time zero to the end of follow-up:
+  # a censored row between two events would put a corner where survival did not change.
+  if (!isTRUE(STEPS)) {
+    .last <- !duplicated(hv$data$strata, fromLast = TRUE)
+    hv$data <- hv$data[hv$data$time == 0 | hv$data$n.event > 0 | .last, , drop = FALSE]
+  }
   # hv_survival() returns the strata as text, which the color and fill scales would
   # sort as text ("1", "10", "2"). The curve, band, bars and at-risk rows all use the
   # tables' order instead, so each stratum keeps one color throughout.
@@ -576,6 +590,13 @@ km_figure <- function(strata = NULL) {
     ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  # hv_survival()'s plot always draws steps; the curve's layer is redrawn as a line.
+  if (!isTRUE(STEPS)) {
+    .curve <- curve$layers[[which(vapply(curve$layers, function(l) inherits(l$geom, "GeomStep"), logical(1)))]]
+    .curve$geom <- ggplot2::GeomLine
+  }
+  # A point at each event, so a reader sees where the estimate moves and how often.
+  curve <- curve + ggplot2::geom_point(data = hv$data[hv$data$n.event > 0, , drop = FALSE], size = 1.2, show.legend = FALSE)
   # Bars at the chosen times, from the same life table as the horizon tables, so a
   # bar and the table row for its time give the same limits.
   if (!is.null(CI_TIMES) && (!is.numeric(CI_TIMES) || anyNA(CI_TIMES) || any(CI_TIMES < 0))) {

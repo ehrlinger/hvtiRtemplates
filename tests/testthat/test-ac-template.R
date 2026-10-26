@@ -212,11 +212,37 @@ test_that("numeric strata keep one color for curve, band and bars (1, 2, 10 sort
   expect_identical(b$plot$scales$get_scales(col_aes)$get_limits(), c("1", "2", "10"))
   expect_identical(b$plot$scales$get_scales("fill")$get_limits(), c("1", "2", "10"))
   by_group <- function(x, col) tapply(x[[col]], x$group, function(v) unique(v)[[1]])
-  line <- by_group(layers$GeomStep, col_aes)
+  line <- by_group(layers$GeomLine, col_aes)
   band <- by_group(layers$GeomRibbon, "fill")
   bar <- by_group(layers$GeomErrorbar, col_aes)
   expect_identical(unname(line), unname(band))
   expect_identical(unname(line), unname(bar))
+})
+
+test_that("the curves join event points with straight lines by default, and STEPS draws steps", {
+  skip_ac()
+  local_child_chunks()
+  geoms <- function(p) vapply(p$layers, function(l) class(l$geom)[[1]], "")
+  env <- ac_run(ac_data(), list(STRATA = "grp"))
+  expect_identical(env$.warnings, character(0))
+  expect_false(env$STEPS)
+  events <- sort(unique(env$km$time[env$km$time <= env$plot_max]))
+  # The manuscript figure: a line through the events, with a point at each, and no corner at a censored time.
+  curve <- env$km_figure()[[1]]
+  expect_true(all(c("GeomLine", "GeomPoint") %in% geoms(curve)))
+  expect_false("GeomStep" %in% geoms(curve))
+  layers <- built_layers(curve)
+  expect_equal(sort(unique(layers$GeomPoint$x)), events)
+  expect_true(all(layers$GeomLine$x %in% c(0, events, max(layers$GeomLine$x))))
+  # The reading page: the same, panel by panel.
+  page <- env$km_views(env$km)
+  for (i in 1:5) expect_true(all(c("GeomLine", "GeomPoint") %in% geoms(page[[i]])))
+  expect_equal(sort(unique(ggplot2::ggplot_build(page[[1]])$data[[2]]$x)), events)
+  # STEPS = TRUE draws the Kaplan-Meier steps, and keeps the points.
+  env$STEPS <- TRUE
+  expect_true(all(c("GeomStep", "GeomPoint") %in% geoms(env$km_figure()[[1]])))
+  expect_true(all(c("GeomStep", "GeomPoint") %in% geoms(env$km_views(env$km)[[1]])))
+  expect_no_warning(print(env$km_figure("grp")))
 })
 
 test_that("one curve is black, and no stratum takes the event's red or censored blue", {
@@ -228,10 +254,10 @@ test_that("one curve is black, and no stratum takes the event's red or censored 
   d <- hazard_data()
   d$grp3 <- rep(c(1, 2, 10), length.out = nrow(d))
   env <- ac_run(d, list(STRATA = "grp3"))
-  one <- unique(built_layers(env$km_figure()[[1]])$GeomStep[[col_aes]])
+  one <- unique(built_layers(env$km_figure()[[1]])$GeomLine[[col_aes]])
   expect_identical(one, "#000000")
   expect_identical(unique(ggplot2::ggplot_build(env$km_views(env$km)[[1]])$data[[1]][[col_aes]]), "#000000")
-  three <- unique(built_layers(env$km_figure("grp3")[[1]])$GeomStep[[col_aes]])
+  three <- unique(built_layers(env$km_figure("grp3")[[1]])$GeomLine[[col_aes]])
   expect_length(three, 3L)
   expect_false(any(toupper(three) %in% toupper(roles)))
   views <- unique(ggplot2::ggplot_build(env$km_views(env$strata_fits$grp3)[[1]])$data[[1]][[col_aes]])
