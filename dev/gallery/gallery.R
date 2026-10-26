@@ -155,5 +155,9 @@ if (sys.nframe() == 0L) {
   print(built[, c("template", "family", "seconds", "error")], row.names = FALSE)
   saveRDS(built, file.path(root, "gallery-build.rds"))
   utils::write.csv(built, file.path(root, "gallery-build.csv"), row.names = FALSE)
+  # Each template's run sheet, read from the installed templates this build
+  # rendered. package.py publishes them as sheets/<template>.html.
+  jsonlite::write_json(hvtiRtemplates:::.run_sheets(), file.path(root, "run-sheets.json"),
+                       auto_unbox = TRUE, pretty = TRUE)
   if (anyNA(built$report)) quit(status = 1L)
 }
