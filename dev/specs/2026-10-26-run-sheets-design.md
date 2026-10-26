@@ -70,8 +70,8 @@ wording below is for `rfs-fit`, and section 3 lists the variants.
 | Prerequisites: runner | a `.read_bootstrap_artifact()` call | "Its screen runs in a companion script, `<prefix>.<subject>.<type>.runner.R`, which `add_job()` writes beside the job. Run that first; this job reports on what it saved." |
 | Prerequisites: packages | `.template_packages()`, already used by `add_job()` and the preflight checks | a package with no floor is listed bare |
 | Prerequisites: background | a `guard_long_fit()` call | "The `hvti` command on your PATH, from `install_hvti()`." |
-| Outline: sections | the template's `##` and `###` headings, read outside code chunks, in order | `###` nests under its `##` |
-| Outline: per-section notes | what the code in that section calls: `EDIT:` markers (counted), `read_job_data()` ("reads the data"), `.read_handoff()` ("reads *X*'s hand-off"), `cache_fit()` ("fits and caches"), `guard_long_fit(why = )` ("long: *why*; runs in the background"), `guard_memory()` ("checks memory against the session's limit first"), and `saveRDS(..., set_path("estimates", F))` ("saves `F`, which *Y* reads") | a section with none of these is listed by name alone. Markers above the first heading count under "Study choices" |
+| Outline: sections | the template's `##` and `###` headings, read outside code chunks, in order | `###` nests under its `##`. What sits above the first heading (the setup chunk, the "job this replaces" marker) is a lead entry, "Above the first section", shown only when it has a note. A template with no heading at all gets one entry, "The whole job" |
+| Outline: per-section notes | what the code in that section calls: `EDIT:` markers (counted), `read_job_data()` ("reads the data"), `.read_handoff()` ("reads *X*'s hand-off"), `.read_bootstrap_artifact()` ("reads what the runner saved"), `cache_fit()` ("fits and caches"; "`REFIT` recomputes it" when the call passes `refit = REFIT`), `guard_long_fit(why = )` ("long: *why*; runs in the background"), `guard_memory()` ("checks memory against the session's limit first"), and `saveRDS(..., <estimates file>)` ("saves `F`, which *Y* reads", only when a template reads it) | a section with none of these is listed by name alone |
 | Run it | whether `guard_long_fit()` is called | guarded: "Start it in the background with `hvti run <folder>/<job>.qmd` (add `--final` for the final), or `run_job(job)` from R. It checks the job before it starts, and `hvti status` follows it." |
 | Where to go next | the hand-off graph, read in the other direction | none: the section is left out |
 
@@ -83,11 +83,21 @@ path assigned once at top level (`MODEL_PATH <- set_path("estimates", "lm-binary
 literal. This links ac and hz → hp, hz → hm → hs-setup, the rf and vp fit → explain pairs, sid-fit →
 sid-clusters, and vt-fit → vt-explain.
 
-Two consumers take their model file from an `EDIT:` choice (`MODEL_FILE`): `lm-checkpred` and
-`lp-mirror`. No literal path links them. **For a consumer whose hand-off path is not literal, and only
-for one, the catalog's `upstream` field supplies the producers.** Its value is a prefix (`"lm"`), so every
-`lm-*` template counts. `lp-mirror` already lists `lm`. `lm-checkpred` lists nothing, so this change adds
-`"upstream": ["lm"]` to its row. The catalog's other `upstream` and `downstream` values are not used,
+Five reads are not literal. Measured with a prototype of the parser on 2026-10-26:
+
+| consumer | read | catalog `upstream` |
+|---|---|---|
+| `hs-concordance` | `.model_path[[m]]` | `["hm"]`, already there |
+| `lm-checkpred` | `MODEL_PATH`, from `MODEL_FILE`, an `EDIT:` choice | none: this change adds `["lm"]` |
+| `lp-mirror` | `MODEL_PATH`, from `MODEL_FILE` | `["lm"]`, already there |
+| `vt-fit` | `.vp_path`, and a reader's argument `p` | none: this change adds `["sid-fit", "vp-fit"]` |
+| `vt-explain` | a reader's argument `p` (its `vt.rds` read is literal) | none: this change adds `["sid-clusters"]` |
+
+**For a consumer whose hand-off path is not literal, and only for one, the catalog's `upstream` field
+supplies the producers.** A value may be a prefix (`"lm"`, meaning every `lm-*` template) or a template's
+full name (`"sid-fit"`). A template never links to itself. One read is literal and has no producer
+template: `hm` reads `hm-selection.rds`, which its companion selection runner writes, so the sheet
+quotes the `rebuild` text ("the companion hm selection runner"). The catalog's other `upstream` and `downstream` values are not used,
 because they are hand-written and at least one disagrees with the code: the catalog lists hm → hp, and
 `hp` reads `ac.rds` and `hz.rds`, not `hm.rds`. Reconciling the catalog with the generated graph is a
 follow-up, not part of this change.
@@ -155,9 +165,10 @@ In `tests/testthat/test-run-sheet.R`:
    shipped template.
 4. **The hand-off graph on the real templates.**
    - Every `.read_handoff()` call resolves to a producer on disk: through a literal path, or, for a
-     non-literal one, through a catalog `upstream` prefix with templates on disk. The test lists
-     exactly which consumers take the catalog route (`lm-checkpred`, `lp-mirror` today), so a new one
-     is a decision rather than an accident.
+     non-literal one, through a catalog `upstream` value that matches templates on disk. The test lists
+     exactly which consumers take the catalog route (`hs-concordance`, `lm-checkpred`, `lp-mirror`,
+     `vt-fit` and `vt-explain` today) and which literal reads have no producer (`hm`'s
+     `hm-selection.rds`), so a new one is a decision rather than an accident.
    - Edges named in section 3 are asserted: ac → hp, hz → hp, rfs-fit → rfs-explain.
 5. **Fixture templates written to a temporary file**, one for each variant: a hand-off read in a default
    argument, a `:::` call, a non-literal `rebuild`, a guard with `why`, `box_data = FALSE`,
@@ -192,3 +203,5 @@ needs no new step.
 - Reconcile the catalog's hand-written `upstream` and `downstream` with the generated hand-off graph
   (hm → hp is listed and is not in the code), or derive them from it.
 - A console `run_sheet()`, if the team asks for one.
+- Give the lm family and the two rm templates `##` sections. Seven of them have none (lm-binary has
+  two, and rm-linear's only one is "Figures"), so their outline is one entry until they do.
