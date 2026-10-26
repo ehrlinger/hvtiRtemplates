@@ -60,8 +60,12 @@ Every line below is an `EDIT:` choice unless it says otherwise.
   whole patients (§3.2).
 - `ID`, `START`, `STOP` and `EVENT`, naming the counting-process columns, and
   `KEY <- c(ID, START)`: many rows per patient.
-- **No `JOIN`.** Adding time-varying rows is dataset-building work, and the
-  template says so where `rfs-fit` offers the join.
+- `JOIN`, `JOIN_VARS`, `REDUCE` and `JOIN_KEY`, as every template that reads
+  its own data offers them (`test-template-data-routes.R` holds all of them
+  to it). Here the join is long, with no `REDUCE`: `DATASET` can be the
+  one-row cohort and `JOIN` the registered counting-process rows, or
+  `DATASET` can name the counting-process rows directly. *(Amended
+  2026-10-26 while planning: this read "No `JOIN`" when approved.)*
 - `PREDICTORS`, baseline and time-varying columns alike, named rather than
   taken from every column.
 - `EVENT` is a cause-specific event. A competing event (transplant, in Hsich)
@@ -92,7 +96,7 @@ the dataset job can be fixed:
 | an event on a row other than the subject's last | the event would end follow-up mid-record |
 | `EVENT` not coded 0/1 | a cause code would be read as an event |
 | a missing value in a predictor | `rhf()` has no `na.action`, and dropping a segment opens a hole in the risk set |
-| a `WHERE` that removes some, not all, of a patient's segments | it truncates follow-up silently |
+| a `WHERE` that removes some, not all, of a patient's segments | it truncates follow-up silently. Checked inside `read_job_data(whole_patients = TRUE)`, the one place holding the rows before and after `WHERE` |
 
 Gaps between a subject's segments are allowed, as `rhf()` allows them, and are
 counted in the cohort table. That table also gives patients, segments, events,
@@ -133,6 +137,10 @@ either fix would be a guess about the data.
 - The formula is `Surv(id, start, stop, event) ~ .` built from the choices,
   with its environment set to `globalenv()` as `rfs-fit` explains.
 - The repairs applied are part of the forest's cache key and lineage.
+- **The subject id is recoded to 1..n before the fit**, as `nb-boostmtree`
+  replaces its ids. `rhf()` needs the id in its data, and a saved forest keeps
+  its data, so the study's ids would otherwise be written into `rhf.rds`.
+  The forest's ids are therefore job-local numbers that cannot be read back.
 
 ### 3.5 Does the forest work?
 
@@ -159,8 +167,9 @@ report a draft too**, so the draft state cannot be lost across the hand-off.
 
 - `TAU`, the horizon for AUC(t), in the fit's time units; `NULL` takes the
   package default.
-- `N_CURVES <- 20` and `SEED` choose which subjects get hazard curves;
-  `CURVE_IDS <- NULL` names subjects instead.
+- `N_CURVES <- 20` and `SEED` choose which subjects get hazard curves, sampled
+  from the forest's job-local ids (§3.4); there is no way to name a study
+  subject, since study ids never reach the forest.
 - `MAX_RULES_TREE <- 150` and `MAX_TREE <- 150`, the package defaults for the
   VarPro cache. The comment says that the Hsich probe used 30 and 20 to finish
   on 400 patients, and that the cache is the slow step at full scale.
@@ -198,12 +207,14 @@ The checks and repairs of §3.2 and §3.3 live in a new internal function in
 `R/counting-process.R`, not in the template:
 
 ```r
-.cp_check(d, id, start, stop, event, predictors, repair = character(), n_before = NULL)
+.cp_check(d, id, start, stop, event, predictors, repair = character())
 ```
 
-It returns the rows to fit, a table of counts, and the problems found.
-`n_before` is each patient's segment count before `WHERE`, for the
-partial-patient check; how the job obtains it is settled in the plan (§6).
+It returns the rows to fit, a table of counts, and what was repaired. The
+partial-patient check is not here: it is `read_job_data(whole_patients =
+TRUE)`, a new argument, because only `read_job_data()` holds the rows both
+before and after `WHERE` (reading twice would list two reads in "About this
+run").
 Package code makes each defect unit-testable, as `.lg_choices()` is for `lg`,
 and a later time-varying template (a `bh` TVC port, say) can call it too.
 
@@ -212,6 +223,11 @@ and a later time-varying template (a `bh` TVC port, say) can call it too.
 - **`test-counting-process.R`**: one case per defect, each repair and its
   counts, and stop versus draft under strict mode. Proven by mutation: revert
   each check and confirm its test goes red.
+- **`test-job-data.R`**: `whole_patients = TRUE` stops on a `WHERE` that keeps
+  part of a patient and passes one that keeps whole patients; `FALSE`, the
+  default, changes nothing.
+- **A saved `rhf.rds` holds no study id**, by the byte scan the `rfs`, `rfc`
+  and `rfr` forests already pass (#203).
 - **Template smoke test**: a temporary study through `add_job()`, data from
   `randomForestRHF::hazard.simulation(n = 100, nrecords = 7)`, `ntree = 20`,
   fit then explain, chunks run the way the `rfs` template tests run them.
@@ -239,13 +255,14 @@ and a later time-varying template (a `bh` TVC port, say) can call it too.
      accepts;
    - a `news/` fragment.
 
-## 6. Left to the plan
+## 6. Settled while planning
 
-- How the job counts each patient's segments before `WHERE`: whether
-  `read_job_data()` can expose it, or the job reads the ids a second time.
-- `hazard.simulation()`'s column names, and whether the smoke test needs to
-  rename them to exercise the `ID`/`START`/`STOP`/`EVENT` choices.
-- The `FIGURES` names for both templates.
+- The partial-`WHERE` check is `read_job_data(whole_patients = TRUE)` (§5.1).
+- `hazard.simulation()` returns `id`, `start`, `stop`, `event`, `xtd` and
+  `x.1`..`x.p`; the smoke test renames `id` to `ccfid`.
+- The `FIGURES` names are `rhf-fit-tuning`, `rhf-explain-auc-cumulative`,
+  `rhf-explain-auc-incident`, `rhf-explain-hazard`, `rhf-explain-chf` and
+  `rhf-explain-importance`.
 
 ## 7. Out of scope
 
