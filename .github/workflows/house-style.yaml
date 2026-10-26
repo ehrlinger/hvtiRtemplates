@@ -24,11 +24,16 @@ concurrency:
 jobs:
   house-style:
     runs-on: ubuntu-latest
+    # R from a Docker image, not from setup-r. setup-r installs R through apt, and on
+    # 2026-10-23 the runners' Ubuntu mirror served it at 36 to 100 kB/s: this job, which
+    # needs a minute, took 22 to 42 of its 45. The image is pinned so a new R release
+    # cannot change the job under us; the composer needs no particular R version.
+    container: rocker/r-ver:4.5.1
 
     # Caps a hung job at 45m. A stalled apt mirror inside setup-r once ran
-    # out the full 6h default on two jobs before either reported. 45m is
-    # about 3x the slowest legitimate run here, so it bounds the damage
-    # without reddening a merely slow runner.
+    # out the full 6h default on two jobs before either reported. The job no
+    # longer uses setup-r, but an image pull or a CRAN install can still
+    # stall, and the cap costs nothing on a run that finishes in minutes.
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -50,10 +55,6 @@ jobs:
           ref: house-style-v1
           path: .house-style-tools
           persist-credentials: false
-
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
 
       # Only the composer's two dependencies. This job never builds the
       # package, so resolving the full DESCRIPTION tree would cost minutes
