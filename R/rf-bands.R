@@ -226,20 +226,20 @@
 }
 
 # Each predictor's importance with its 95% subsampling interval, ranked as the
-# importance figure ranks them, an interval clear of zero in one color and one that
-# reaches it in another.
+# importance figure ranks them, an interval above zero in one color and one that is
+# not in another.
 .plot_vimp_intervals <- function(ci) {
   d <- data.frame(vars = rownames(ci), vimp = ci$mean, lower = ci$lower, upper = ci$upper)
   d$vars <- factor(d$vars, levels = d$vars[order(d$vimp)])
-  d$clear <- factor(ifelse(d$lower > 0, "Interval above zero", "Interval reaches zero"),
-                    levels = c("Interval above zero", "Interval reaches zero"))
+  d$clear <- factor(ifelse(d$lower > 0, "Interval above zero", "Interval not above zero"),
+                    levels = c("Interval above zero", "Interval not above zero"))
   sym <- rlang::sym
   ggplot2::ggplot(d, ggplot2::aes(x = !!sym("vimp"), y = !!sym("vars"), color = !!sym("clear"))) +
     ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
     ggplot2::geom_errorbar(ggplot2::aes(xmin = !!sym("lower"), xmax = !!sym("upper")), width = 0.3,
                            orientation = "y") +
     ggplot2::geom_point(size = 2) +
-    ggplot2::scale_color_manual(values = c(`Interval above zero` = "black", `Interval reaches zero` = "gray55"),
+    ggplot2::scale_color_manual(values = c(`Interval above zero` = "black", `Interval not above zero` = "gray55"),
                                 drop = FALSE, name = NULL) +
     ggplot2::labs(x = "Permutation importance", y = NULL)
 }
