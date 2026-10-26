@@ -27,7 +27,7 @@
       
       ## Run it
       
-      **Run it in the background.** The fit is long (it takes hours at study size), and a fit run in the console dies with the session. From a terminal in the study, `hvti run 30_analyses/zz.fit.<subject>.<type>.qmd` checks the job, then renders it in the background on the R the study's `renv.lock` records; add `--final` for the final render. From R, `run_job(job)` does the same. `hvti status` follows it and `hvti cancel` stops it. Once the fit is cached, its chunks run interactively and load it.
+      **Run it in the background.** The fit is long (it takes hours at study size), and a fit run in the console dies with the session. From a terminal in the study, `hvti run 30_analyses/zz.fit.<subject>.<type>.qmd` (`analyses/` in an older study whose folders carry no number) checks the job, then renders it in the background on the R the study's `renv.lock` records; add `--final` for the final render. From R, `run_job(job)` does the same. `hvti status` follows it and `hvti cancel` stops it. Once the fit is cached, its chunks run interactively and load it.
       
       **Render a draft as you go.** `render_job(job)` runs the whole job in a clean R session and writes the report beside it. Render early and often: while any `EDIT:` marker is left, the report opens with a DRAFT banner listing them, and its numbers are not a result. [Work a job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#render-as-you-go) explains why to render rather than run chunks by hand.
       

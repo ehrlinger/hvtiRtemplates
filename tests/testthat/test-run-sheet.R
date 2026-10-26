@@ -66,6 +66,37 @@ test_that("headings inside a chunk are R comments, not sections", {
   expect_identical(h$level, c(2L, 3L))
 })
 
+test_that("a plain ``` block hides its lines from the headings and is not a chunk", {
+  f <- .sheet_fixture(.fx("## One", "```", "## shell comment", "x <- 1", "```", "```{r}", "y <- 2", "```", "## Two"))
+  facts <- .run_sheet_facts(f)
+  expect_identical(facts$layout$headings$text, c("One", "Two"))
+  expect_identical(vapply(facts$calls, `[[`, "", "fn"), "<-")
+})
+
+# A catalog with no rows, for a graph whose reads all name their file.
+.no_catalog <- function() {
+  cat <- data.frame(prefix = character(), qualifier = character())
+  cat$upstream <- list()
+  cat
+}
+
+test_that("a ### with no ## above it opens the outline rather than nesting", {
+  f <- .sheet_fixture(.fx("### Lead", "", "## Main"))
+  facts <- .run_sheet_facts(f)
+  out <- .sheet_outline(facts, .handoff_graph(list(facts), .no_catalog()))
+  expect_identical(substr(out, 1L, 3L), c("1. ", "1. "))
+})
+
+test_that("a runner's file read in two chunks is one prerequisite", {
+  read <- "x <- .read_handoff(set_path('estimates', 'runs.rds'), 'runs', cfg, 'the companion runner')"
+  f <- .sheet_fixture(.fx("```{r}", read, "```", "", "## Again", "", "```{r}", read, "```"))
+  facts <- .run_sheet_facts(f)
+  graph <- .handoff_graph(list(facts), .no_catalog())
+  expect_identical(nrow(graph), 2L)
+  pre <- .sheet_prerequisites(facts, graph, data.frame(package = character(), floor = character()), .no_catalog())
+  expect_identical(sum(grepl("Run the companion runner first", pre, fixed = TRUE)), 1L)
+})
+
 test_that(".call_name() reads bare and namespaced calls", {
   expect_identical(.call_name(quote(f(x))), "f")
   expect_identical(.call_name(quote(pkg::f(x))), "f")

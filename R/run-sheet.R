@@ -9,22 +9,28 @@
 # ---- Reading one template ----------------------------------------------------
 
 # Which lines sit in an R chunk (the chunk's number; 0 outside one), and the
-# ## and ### headings outside chunks, where a # line is a comment, not a section.
+# ## and ### headings outside any fenced block, where a # line is a comment or
+# code, not a section. A plain ``` block (hz shows theta's order in one) hides
+# its lines from the headings but is not an R chunk.
 .qmd_layout <- function(src) {
   chunk <- integer(length(src))
+  fenced <- logical(length(src))
   open <- FALSE
+  r <- FALSE
   k <- 0L
   for (i in seq_along(src)) {
-    if (!open && grepl("^```\\{r", src[i])) {
+    if (!open && grepl("^```", src[i])) {
       open <- TRUE
-      k <- k + 1L
+      r <- grepl("^```\\{r", src[i])
+      if (r) k <- k + 1L
     } else if (open && grepl("^```", src[i])) {
       open <- FALSE
     } else if (open) {
-      chunk[i] <- k
+      if (r) chunk[i] <- k
     }
+    fenced[i] <- open || grepl("^```", src[i])
   }
-  heads <- which(chunk == 0L & grepl("^#{2,3} \\S", src))
+  heads <- which(!fenced & grepl("^#{2,3} \\S", src))
   list(chunk = chunk,
        headings = data.frame(line = heads, level = nchar(sub(" .*$", "", src[heads])),
                              text = trimws(sub("^#+ ", "", src[heads])), stringsAsFactors = FALSE))
@@ -132,6 +138,12 @@
   if (is.null(matched)) NULL else matched[[arg]]
 }
 
+# The estimates file argument `arg` of a call names; NA when the template does not say.
+.call_file <- function(entry, arg, bindings) {
+  path <- .call_arg(entry, arg)
+  if (is.null(path)) NA_character_ else .estimates_file(path, bindings)
+}
+
 # A string literal argument, or NA: a sheet quotes only what the template states.
 .literal <- function(x) if (is.character(x) && length(x) == 1L) x else NA_character_
 
@@ -153,10 +165,7 @@
 .handoff_graph <- function(facts, catalog = template_catalog()) {
   names <- vapply(facts, `[[`, "", "name")
   writes <- do.call(rbind, c(list(data.frame(producer = character(), file = character())), lapply(facts, function(f) {
-    files <- vapply(.calls_to(f, "saveRDS"), function(e) {
-      path <- .call_arg(e, "file")
-      if (is.null(path)) NA_character_ else .estimates_file(path, f$bindings)
-    }, character(1L))
+    files <- vapply(.calls_to(f, "saveRDS"), .call_file, "", "file", f$bindings)
     files <- unique(files[!is.na(files)])
     if (length(files)) data.frame(producer = f$name, file = files) else NULL
   })))
@@ -164,8 +173,7 @@
   rows <- list()
   for (f in facts) {
     for (e in .calls_to(f, ".read_handoff")) {
-      path <- .call_arg(e, "path")
-      file <- if (is.null(path)) NA_character_ else .estimates_file(path, f$bindings)
+      file <- .call_file(e, "path", f$bindings)
       rebuild <- .literal(.call_arg(e, "rebuild"))
       if (!is.na(file)) {
         producers <- setdiff(writes$producer[writes$file == file], f$name)
@@ -217,33 +225,32 @@
 
 # What the code under each heading does, as notes: index 0 is above the first
 # heading. Calls are placed by their chunk's first line, markers by their own.
+# Each note is gathered as a line and its text, then filed under its section once.
 .section_notes <- function(facts, graph) {
   h <- facts$layout$headings
   notes <- replicate(nrow(h) + 1L, character(), simplify = FALSE)
-  add <- function(line, text) {
-    i <- .section_of(line, h) + 1L
-    if (!text %in% notes[[i]]) notes[[i]] <<- c(notes[[i]], text)
-  }
   marker_sections <- table(factor(.section_of(facts$markers$line, h), levels = 0:nrow(h)))
   for (i in seq_along(notes)) {
     n <- marker_sections[[i]]
     if (n) notes[[i]] <- paste(.plural(n, "choice"), "marked `EDIT:`")
   }
+  at <- integer()
+  say <- character()
   for (e in facts$calls) {
-    switch(e$fn,
-      read_job_data = add(e$line, "reads the study data"),
-      .read_bootstrap_artifact = add(e$line, "reads what the bootstrap runner saved"),
-      guard_memory = add(e$line, "checks the fit's memory need against this session's limit before it starts"),
+    text <- switch(e$fn,
+      read_job_data = "reads the study data",
+      .read_bootstrap_artifact = "reads what the bootstrap runner saved",
+      guard_memory = "checks the fit's memory need against this session's limit before it starts",
       guard_long_fit = {
         why <- .literal(.call_arg(e, "why"))
-        add(e$line, paste0("a long fit", if (!is.na(why)) paste0(" (", why, ")"), " that will not start in an ",
-                           "interactive session, so the job runs in the background"))
+        paste0("a long fit", if (!is.na(why)) paste0(" (", why, ")"), " that will not start in an ",
+               "interactive session, so the job runs in the background")
       },
       .read_handoff = {
         rows <- graph[graph$consumer == facts$name & graph$line == e$line, , drop = FALSE]
-        for (route in unique(rows$route)) {
+        vapply(unique(rows$route), function(route) {
           r <- rows[rows$route == route, , drop = FALSE]
-          text <- if (route == "literal") {
+          if (route == "literal") {
             paste0("reads what ", .bold_list(unique(r$producer)), " saved (",
                    paste0("`", unique(r$file), "`", collapse = ", "), ")")
           } else if (route == "catalog") {
@@ -252,30 +259,38 @@
             paste0("reads `", r$file[[1L]], "`, which ",
                    if (is.na(r$rebuild[[1L]])) "another step" else r$rebuild[[1L]], " writes")
           }
-          add(e$line, text)
-        }
+        }, "", USE.NAMES = FALSE)
       },
       NULL
     )
+    at <- c(at, rep(e$line, length(text)))
+    say <- c(say, text)
   }
   # cache_fit() calls are gathered per section, so a section of five cached steps says so once.
   fits <- .calls_to(facts, "cache_fit")
   for (i in unique(.section_of(vapply(fits, `[[`, 1L, "line"), h))) {
     here <- Filter(function(e) .section_of(e$line, h) == i, fits)
     refit <- any(vapply(here, function(e) identical(.call_arg(e, "refit"), quote(REFIT)), logical(1L)))
-    add(here[[1L]]$line, paste0("fits and caches its results, so a later render reloads them",
-                                if (refit) " (`REFIT <- TRUE` recomputes them)"))
+    at <- c(at, here[[1L]]$line)
+    say <- c(say, paste0("fits and caches its results, so a later render reloads them",
+                         if (refit) " (`REFIT <- TRUE` recomputes them)"))
   }
   # A saved file is worth a note only when another template reads it.
   for (e in .calls_to(facts, "saveRDS")) {
-    path <- .call_arg(e, "file")
-    file <- if (is.null(path)) NA_character_ else .estimates_file(path, facts$bindings)
+    file <- .call_file(e, "file", facts$bindings)
     if (is.na(file)) next
     readers <- unique(graph$consumer[graph$producer %in% facts$name & graph$route == "literal" & graph$file %in% file])
     chosen <- unique(graph$consumer[graph$producer %in% facts$name & graph$route == "catalog"])
     who <- c(if (length(readers)) paste0(.bold_list(readers), " read", if (length(readers) == 1L) "s"),
              if (length(chosen)) paste(.bold_list(chosen), "can read"))
-    if (length(who)) add(e$line, paste0("saves `", file, "`, which ", paste(who, collapse = " and ")))
+    if (length(who)) {
+      at <- c(at, e$line)
+      say <- c(say, paste0("saves `", file, "`, which ", paste(who, collapse = " and ")))
+    }
+  }
+  for (j in seq_along(say)) {
+    i <- .section_of(at[j], h) + 1L
+    if (!say[j] %in% notes[[i]]) notes[[i]] <- c(notes[[i]], say[j])
   }
   notes
 }
@@ -289,7 +304,8 @@
   if (length(notes[[1L]])) out <- paste("1.", entry("Above the first section", notes[[1L]]))
   for (i in seq_len(nrow(h))) {
     line <- entry(h$text[i], notes[[i + 1L]])
-    out <- c(out, if (h$level[i] == 2L) paste("1.", line) else paste("   -", line))
+    # A ### with nothing above it to nest under opens the list itself.
+    out <- c(out, if (h$level[i] == 2L || !length(out)) paste("1.", line) else paste("   -", line))
   }
   out
 }
@@ -334,7 +350,8 @@
     )
     out <- c(out, paste0("- **The job", if (n > 1L) "s", " it reads from.** ", paste(said, collapse = " ")))
   }
-  for (i in which(up$route == "none")) {
+  # One bullet per file, however many chunks read it.
+  for (i in which(up$route == "none" & !duplicated(up[c("file", "rebuild")]))) {
     who <- if (is.na(up$rebuild[i])) "the step that writes it" else up$rebuild[i]
     out <- c(out, paste0("- **Run ", who, " first.** It writes `", up$file[i], "`, which this job reads."))
   }
@@ -371,7 +388,8 @@
   job <- paste0(facts$folder, "/", .add_job_name(facts$name), ".<subject>.<type>.qmd")
   c(paste0("**Run it in the background.** The fit is long", if (!is.na(why)) paste0(" (", why, ")"),
            ", and a fit run in the console dies with the session. From a terminal in the study, `hvti run ", job,
-           "` checks the job, then renders it in the background on the R the study's `renv.lock` records; add ",
+           "` (`", sub("^[0-9]+_", "", facts$folder), "/` in an older study whose folders carry no number) ",
+           "checks the job, then renders it in the background on the R the study's `renv.lock` records; add ",
            "`--final` for the final render. From R, `run_job(job)` does the same. `hvti status` follows it and ",
            "`hvti cancel` stops it. Once the fit is cached, its chunks run interactively and load it."),
     "", draft, "", final)
