@@ -202,6 +202,9 @@ RISK_TIMES <- NULL
 # limits the horizon tables report at that time, and a time before the first
 # event or past the end of follow-up has none and draws no bar. Either, both or
 # neither: CI_BAND <- FALSE with CI_TIMES set gives the SAS figure's bars alone.
+# A bar reports the table's limits, which hold from one event to the next, so
+# under the straight lines below (STEPS <- FALSE) a bar between two distant
+# events can sit off the line; STEPS <- TRUE puts every bar on the curve.
 CI_BAND <- TRUE
 CI_TIMES <- NULL
 
