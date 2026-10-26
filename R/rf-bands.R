@@ -128,3 +128,88 @@
                                       partial.type = if (surv) "surv", partial.time = if (surv) times)
   as.numeric(randomForestSRC::get.partial.plot.data(p)$yhat)
 }
+
+# The B subsample forests are grown once for every variable whose band is missing, and
+# each forest is dropped as soon as its partials are read: B forests at once would not
+# fit in a session. The first .band_partial() call fills the pool; the rest read it.
+# The template reaches the pool through get(), so cache_fit() keys each band on its own
+# variable's grid and not on the pool, which changes with the set of missing variables.
+.band_pool <- function(vars, grids, progress = NULL) {
+  pool <- new.env(parent = emptyenv())
+  pool$vars <- vars
+  pool$grids <- grids
+  pool$progress <- progress
+  pool
+}
+
+.band_fill <- function(pool, forest, rows, times, seed) {
+  B <- length(rows) # nolint: object_name_linter. B is the subsample() argument's name.
+  m <- function(v) length(pool$grids[[v]]$x) * max(1L, length(times))
+  pool$star <- lapply(stats::setNames(pool$vars, pool$vars), function(v) matrix(NA_real_, m(v), B))
+  for (b in seq_len(B)) {
+    fit <- .band_refit(forest, rows[[b]], seed = abs(seed) + b)
+    for (v in pool$vars) {
+      # A factor level absent from this subsample, say, leaves its column NA; the SE is read from the rest.
+      value <- tryCatch(.partial_values(fit, v, pool$grids[[v]]$x, times), error = function(e) NULL)
+      if (length(value) == nrow(pool$star[[v]])) pool$star[[v]][, b] <- value
+    }
+    rm(fit)
+    if (is.function(pool$progress)) pool$progress(b, B)
+  }
+  invisible(pool)
+}
+
+# One variable's band: the full forest's partial and the B subsample forests' at the
+# same values, for cache_fit() to save under the variable's own name.
+.band_partial <- function(pool, forest, rows, var, grid, times, seed) {
+  if (!var %in% pool$vars) stop(var, " is not in the pool of variables still to compute.", call. = FALSE)
+  if (is.null(pool$star)) .band_fill(pool, forest, rows, times, seed)
+  list(var = var, type = grid$type, x = grid$x, time = times,
+       hat = .partial_values(forest, var, grid$x, times), star = pool$star[[var]])
+}
+
+# Checks the band choices before anything is grown, and the table the report prints.
+.band_plan <- function(forest, B, subratio, style, at, sel, pd) { # nolint: object_name_linter. B is the subsample() argument's name.
+  if (!is.character(style) || length(style) != 1L || !style %in% c("ribbon", "bars")) {
+    stop("BAND_STYLE must be \"ribbon\" or \"bars\".", call. = FALSE)
+  }
+  if (!is.null(at)) {
+    if (!is.list(at) || is.null(names(at)) || !all(vapply(at, is.numeric, logical(1)))) {
+      stop("BAND_AT must be NULL or a named list of numbers, e.g. list(age = c(50, 60, 70)).", call. = FALSE)
+    }
+    unknown <- setdiff(names(at), sel)
+    if (length(unknown)) stop("BAND_AT names predictor(s) with no partial plot: ", toString(unknown), call. = FALSE)
+    cat_vars <- names(at)[vapply(names(at), function(v) .band_grid(pd, v)$type == "categorical", logical(1))]
+    if (length(cat_vars)) {
+      stop("BAND_AT names categorical predictor(s), which get a bar at every level: ", toString(cat_vars),
+           call. = FALSE)
+    }
+    if (identical(style, "ribbon")) message("BAND_AT is ignored under BAND_STYLE = \"ribbon\".")
+  }
+  n <- forest$n
+  subratio <- .band_subratio(n, subratio)
+  b <- .band_size(n, subratio)
+  strata <- .band_strata(forest)
+  rare <- if (is.null(strata)) NA_integer_ else if (identical(forest$family, "surv")) sum(strata == "TRUE") else
+    min(table(strata))
+  per <- if (is.na(rare)) NA_integer_ else as.integer(round(subratio * rare))
+  what <- if (identical(forest$family, "surv")) "events" else "of the smallest class"
+  if (!is.na(per) && per < 100L) {
+    need <- .band_floor_need(rare)
+    msg <- paste0("Each subsample holds about ", per, " ", what, ", under the 100 the bands need. ",
+                  if (need <= 0.5) sprintf("SUBRATIO <- %.2f would give 100.", ceiling(need * 100) / 100) else
+                    "The cohort is too small to reach 100 at SUBRATIO <= 0.5; read the bands as rough.")
+    if (.strict_render()) {
+      stop(msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '", Sys.getenv("HVTI_TEMPLATE_STRICT"),
+           "'. Unset it, or set it to 0, false or no, to render a draft instead.", call. = FALSE)
+    }
+    warning(msg, call. = FALSE)
+    .run_mark_draft(paste0("the confidence bands rest on subsamples of about ", per, " ", what))
+  }
+  table <- data.frame(
+    item = c("Subsample forests", "Patients in each", "Fraction of the cohort",
+             if (!is.na(per)) paste("Expected", what, "in each")),
+    value = c(B, b, sprintf("%.3f", subratio), if (!is.na(per)) per)
+  )
+  list(subratio = subratio, table = table)
+}

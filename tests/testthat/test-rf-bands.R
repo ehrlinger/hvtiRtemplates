@@ -123,3 +123,63 @@ test_that("partial values agree with gg_partial_rfsrc on its own grid", {
   expect_length(cv, length(cg$x) * length(times))
   expect_true(all(cv >= 0 & cv <= 1))
 })
+
+test_that("the pool grows each subsample forest once for all its variables", {
+  skip_if_not_installed("randomForestSRC", "3.9.0")
+  skip_if_not_installed("ggRandomForests", "4.0.0")
+  f <- band_forest("surv")
+  pd <- ggRandomForests::gg_partial_rfsrc(f, xvar.names = c("karno", "age"), partial.time = c(30, 90))
+  times <- hvtiRtemplates:::.band_times(pd)
+  grids <- lapply(c(karno = "karno", age = "age"), function(v) hvtiRtemplates:::.band_grid(pd, v))
+  set.seed(1)
+  rows <- hvtiRtemplates:::.band_rows(f, 3, 0.4)
+  grown <- 0L
+  # The mock counts the refits and hands back the full forest, so the test grows nothing.
+  local_mocked_bindings(.band_refit = function(...) {
+    grown <<- grown + 1L
+    f
+  }, .package = "hvtiRtemplates")
+  steps <- integer()
+  pool <- hvtiRtemplates:::.band_pool(names(grids), grids, progress = function(step, steps_) steps <<- c(steps, step))
+  a <- hvtiRtemplates:::.band_partial(pool, f, rows, "karno", grids$karno, times, 1)
+  b <- hvtiRtemplates:::.band_partial(pool, f, rows, "age", grids$age, times, 1)
+  expect_identical(grown, 3L)
+  expect_identical(steps, 1:3)
+  expect_identical(dim(a$star), c(length(grids$karno$x) * length(times), 3L))
+  expect_length(b$hat, length(grids$age$x) * length(times))
+  expect_error(hvtiRtemplates:::.band_partial(pool, f, rows, "trt", grids$karno, times, 1), "not in the pool")
+})
+
+test_that("a subsample forest that cannot give a value leaves NA for that subsample only", {
+  skip_if_not_installed("randomForestSRC", "3.9.0")
+  f <- band_forest("regr")
+  grid <- list(type = "continuous", x = c(60, 80))
+  pool <- hvtiRtemplates:::.band_pool("Temp", list(Temp = grid))
+  calls <- 0L
+  local_mocked_bindings(.partial_values = function(forest, ...) {
+    calls <<- calls + 1L
+    if (calls == 2L) stop("level absent") else c(1, 2)
+  }, .package = "hvtiRtemplates")
+  out <- hvtiRtemplates:::.band_partial(pool, f, list(1:50, 1:50), "Temp", grid, NULL, 1)
+  expect_false(anyNA(out$star[, 1]))
+  expect_true(all(is.na(out$star[, 2])))
+})
+
+test_that("the plan refuses a bad style or BAND_AT, and warns below the floor", {
+  skip_if_not_installed("randomForestSRC", "3.9.0")
+  skip_if_not_installed("ggRandomForests", "4.0.0")
+  f <- band_forest("surv")
+  pd <- ggRandomForests::gg_partial_rfsrc(f, xvar.names = c("karno", "celltype"), partial.time = 30)
+  plan <- function(...) hvtiRtemplates:::.band_plan(f, 3, 0.4, ..., sel = c("karno", "celltype"), pd = pd)
+  expect_error(plan("dots", NULL), "BAND_STYLE")
+  expect_error(plan("bars", list(trt = 1)), "BAND_AT")
+  expect_error(plan("bars", list(celltype = 1)), "categorical")
+  expect_error(plan("bars", list(karno = "50")), "BAND_AT")
+  expect_message(suppressWarnings(plan("ribbon", list(karno = 50))), "BAND_AT is ignored")
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "")
+  # veteran has 128 deaths, so 40% of them is about 51, under the floor of 100.
+  expect_warning(p <- plan("ribbon", NULL), "SUBRATIO")
+  expect_identical(p$subratio, 0.4)
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "1")
+  expect_error(plan("ribbon", NULL), "HVTI_TEMPLATE_STRICT")
+})
