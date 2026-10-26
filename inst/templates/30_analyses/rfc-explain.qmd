@@ -40,6 +40,11 @@ changing how many variables get dependence plots recomputes the partials and
 nothing else. For a variable screen and VarPro partials, use the `vp-fit` and
 `vp-explain` jobs.
 
+With `BANDS_B` above 0 the job also grows subsample forests, each on a fraction of the
+patients, to put confidence intervals on the importance and bands on the partial plots.
+It still grows no forest on the full cohort, and with `BANDS_B <- 0`, the default, it
+draws neither.
+
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
@@ -128,6 +133,8 @@ KEY <- NULL
 
 # EDIT: how many variables get dependence plots, ranked by VIMP. The partials
 # are the expensive step, so keep this small.
+# With BANDS_B above 0, a bigger TOP_K computes bands only for the new variables, but
+# still regrows all BANDS_B subsample forests to do it.
 TOP_K <- 8
 
 # EDIT: or name the variables yourself. NULL takes the top TOP_K by VIMP.
@@ -137,6 +144,44 @@ PARTIAL_VARS <- NULL
 # cache_fit() seeds R's generator with it before each call, and vimp() is also
 # handed it as `seed =`, negated as randomForestSRC documents.
 SEED <- 2026
+
+# EDIT: subsample forests for the confidence intervals on importance and the
+# bands on the partial plots. 0 draws neither.
+#   25-50 for a first look at a draft; the bands are rough but show their shape.
+#   100 for a report. It is randomForestSRC's default, and enough because the
+#   intervals are estimate +/- 1.96 SE: they need a stable SE, not stable tail
+#   percentiles, which would take several hundred.
+#   200 or more only for 99% intervals, or when a rerun with another SEED moves
+#   the band edges by more than you would accept in a figure.
+# Cost is about BANDS_B x SUBRATIO fits of the full forest. Submit the job to
+# compute them; job_status() shows how many forests are grown and the time left.
+BANDS_B <- 0
+
+# EDIT: fraction of patients in each subsample. NULL takes randomForestSRC's
+# default, exp(-1) (0.37) up to 1000 patients and exp(-1) * sqrt(1000 / n) above,
+# so a larger cohort gets a smaller fraction. Leave it NULL unless the check
+# below warns.
+#   Raise it when a subsample would hold too few of the smallest class: the job
+#   warns below 100. Small subsamples grow shallow
+#   forests whose curves are flatter than the full forest's.
+#   Keep it at or below 0.5. Subsampling estimates the spread only while each
+#   subsample is a small part of the cohort; near 1 every subsample forest is
+#   nearly the full forest, and the bands shrink to the forest's own tree-to-tree
+#   noise, far narrower than the real uncertainty.
+SUBRATIO <- NULL
+
+# EDIT: how the partial plots draw their bands. "ribbon" shades a band around
+# each continuous curve; "bars" draws an error bar at each grid point instead,
+# which reads better in black and white. Categorical predictors always get error bars.
+BAND_STYLE <- "ribbon"
+
+# EDIT: with BAND_STYLE <- "bars", where to draw the bars, as a named list of
+# values per continuous predictor, e.g. list(age = c(50, 60, 70, 80), lvef = c(30, 50)).
+# NULL, or a predictor left out, draws a bar at every grid point. The values
+# must lie inside the predictor's observed range. Changing them only redraws:
+# each subsample curve is read off at these values the way the plotted line is
+# drawn, straight between grid points, so no forest is regrown.
+BAND_AT <- NULL
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
 # render instead of returning the old result; TRUE recomputes only the caches
@@ -318,6 +363,109 @@ for (.i in seq_along(.pages)) {
   save_figure(.fig, sprintf("rfc-explain-dependence-partial-page-%02d", .i),
               width = .pages[[.i]]$width, height = .pages[[.i]]$height)
   .page_child("dependence-partial", .i, .pages, sel, .cap)
+}
+```
+
+```{r}
+#| label: bands-plan
+#| results: asis
+# Checks the band choices before anything is grown, and says what will be. With BANDS_B at 0 it
+# writes nothing, so the job renders as it did before the bands existed.
+if (BANDS_B > 0) {
+  cat("## Confidence bands\n\n")
+  cat(paste(
+    "Each subsample forest is grown on a fraction of the patients, within class, and the intervals are",
+    "the full forest's value plus and minus 1.96 jackknife standard errors (Ishwaran and Lu, 2019). They are",
+    "pointwise: each bounds the curve at one value, not the whole curve."
+  ), "\n\n", sep = "")
+  .bands <- hvtiRtemplates:::.band_plan(forest, BANDS_B, SUBRATIO, BAND_STYLE, BAND_AT, sel, pd)
+  .subratio <- .bands$subratio
+  print(knitr::kable(.bands$table, col.names = c("Confidence bands", "")))
+}
+```
+
+```{r}
+#| label: importance-intervals
+#| results: asis
+#| message: true
+# unnumbered: the figure below is a child chunk with its own label and caption
+if (BANDS_B > 0) {
+  # "anti" is the importance vimp() computed for the figure above, and that figure is
+  # unstandardized, so the intervals bracket the same quantity. Quoted once, so the
+  # check below and cache_fit() read the same call.
+  .ci_code <- quote(extract.subsample(subsample(forest, B = BANDS_B, subratio = .subratio, importance = "anti",
+                                                verbose = FALSE), standardize = FALSE))
+  # Refused at the console only when the intervals will actually be computed: a current
+  # cache loads, even under REFIT.
+  if (hvtiRutilities::cache_would_fit("rfc-vimp-subsample", .ci_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                                      packages = "randomForestSRC")) {
+    hvtiRtemplates::guard_long_fit("rfc-vimp-subsample", dir = CACHE_DIR, refit = REFIT,
+                                   why = sprintf("the importance intervals regrow the forest %d times", BANDS_B))
+  }
+  vi_ci <- cache_fit("rfc-vimp-subsample", .ci_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                     packages = "randomForestSRC")
+  .fig <- hvtiRtemplates:::.plot_vimp_intervals(vi_ci$var.jk.sel.Z) +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
+  save_figure(.fig, "rfc-explain-importance-intervals", height = 7)
+  .cap <- sprintf(paste("Permutation importance of each predictor with its pointwise 95%% interval from %d",
+                        "subsample forests, each grown on %.0f%% of patients. Points give the importance and",
+                        "bars the interval, black where the interval lies above zero and gray where it does",
+                        "not, as in the legend; the dashed line marks zero."), BANDS_B, 100 * .subratio)
+  .page_child("importance-intervals", 1L, list(list(index = 1L, width = 6, height = 7)), "", .cap)
+}
+```
+
+```{r}
+#| label: dependence-partial-bands
+#| results: asis
+#| message: true
+# unnumbered: each page below is a child chunk with its own label and caption
+if (BANDS_B > 0) {
+  .rows <- cache_fit("rfc-band-rows", hvtiRtemplates:::.band_rows(forest, BANDS_B, .subratio),
+                     seed = SEED, dir = CACHE_DIR, refit = REFIT)
+  .grids <- lapply(stats::setNames(sel, sel), function(v) hvtiRtemplates:::.band_grid(pd, v))
+  .times <- hvtiRtemplates:::.band_times(pd)
+  # One band per variable, keyed on that variable's grid alone (.g), so a bigger TOP_K
+  # leaves the bands already cached current. get() keeps the pool out of the key: it
+  # changes with which variables still need a band.
+  .band_code <- quote(hvtiRtemplates:::.band_partial(get(".pool"), forest, .rows, .v, .g, .times, SEED))
+  # The variables whose band will be computed: no cache, or a stale one under REFIT. A
+  # current cache loads even under REFIT, which a bigger TOP_K needs for the partials above.
+  .todo <- character()
+  for (.v in sel) {
+    .g <- .grids[[.v]]
+    if (hvtiRutilities::cache_would_fit(paste0("rfc-partial-band-", .v), .band_code, seed = SEED, dir = CACHE_DIR,
+                                        refit = REFIT, packages = "randomForestSRC")) .todo <- c(.todo, .v)
+  }
+  if (length(.todo)) {
+    hvtiRtemplates::guard_long_fit(paste0("rfc-partial-band-", .todo), dir = CACHE_DIR, refit = REFIT,
+                                   why = sprintf("the partial-dependence bands regrow the forest %d times", BANDS_B))
+  }
+  # Reports each subsample forest to <job>.run.progress and the render log.
+  .pool <- hvtiRtemplates:::.band_pool(.todo, .grids[.todo], progress = .job$progress("subsample forest"))
+  bands <- list()
+  for (.v in sel) {
+    .g <- .grids[[.v]]
+    bands[[.v]] <- cache_fit(paste0("rfc-partial-band-", .v), .band_code, seed = SEED, dir = CACHE_DIR,
+                             refit = REFIT, packages = "randomForestSRC")
+  }
+  .drawn <- if (identical(BAND_STYLE, "bars")) "error bars" else "shaded bands"
+  .cap <- sprintf(paste("Partial dependence of the forest's prediction on each selected predictor, one panel",
+                        "per predictor, with pointwise 95%% intervals from %d subsample forests, each grown on",
+                        "%.0f%% of patients. Lines trace the predicted probability of the first outcome level, the",
+                        "partial effect, across a continuous predictor with %s around it, and points with error",
+                        "bars give it at each level of a categorical one."), BANDS_B, 100 * .subratio, .drawn)
+  .pages <- hvtiRtemplates:::.figure_pages(length(sel), panel_width = 3.25, panel_height = 3, page_height = 6)
+  for (.i in seq_along(.pages)) {
+    .vars <- sel[.pages[[.i]]$index]
+    .fig <- hvtiRtemplates:::.plot_partial_bands(bands[.vars], .subratio, BAND_STYLE, BAND_AT,
+                                                 ncol = .pages[[.i]]$ncol) &
+      hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top",
+                                     legend.title = ggplot2::element_text())
+    save_figure(.fig, sprintf("rfc-explain-dependence-partial-bands-page-%02d", .i),
+                width = .pages[[.i]]$width, height = .pages[[.i]]$height)
+    .page_child("dependence-partial-bands", .i, .pages, sel, .cap)
+  }
 }
 ```
 

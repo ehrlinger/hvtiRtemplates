@@ -376,19 +376,21 @@ for (.i in seq_along(.pages)) {
 }
 ```
 
-## Confidence bands
-
-Drawn only when `BANDS_B` is above 0. Each subsample forest is grown on a fraction of the patients, within
-event status, and the intervals are the full forest's value plus and minus 1.96 jackknife standard errors
-(Ishwaran and Lu, 2019). They are pointwise: each bounds the curve at one value, not the whole curve.
-
 ```{r}
 #| label: bands-plan
-# Checks the band choices before anything is grown, and says what will be.
+#| results: asis
+# Checks the band choices before anything is grown, and says what will be. With BANDS_B at 0 it
+# writes nothing, so the job renders as it did before the bands existed.
 if (BANDS_B > 0) {
+  cat("## Confidence bands\n\n")
+  cat(paste(
+    "Each subsample forest is grown on a fraction of the patients, within event status, and the intervals are",
+    "the full forest's value plus and minus 1.96 jackknife standard errors (Ishwaran and Lu, 2019). They are",
+    "pointwise: each bounds the curve at one value, not the whole curve."
+  ), "\n\n", sep = "")
   .bands <- hvtiRtemplates:::.band_plan(forest, BANDS_B, SUBRATIO, BAND_STYLE, BAND_AT, sel, pd)
   .subratio <- .bands$subratio
-  knitr::kable(.bands$table, col.names = c("Confidence bands", ""))
+  print(knitr::kable(.bands$table, col.names = c("Confidence bands", "")))
 }
 ```
 

@@ -216,6 +216,13 @@ test_that("with BANDS_B at its default the explain writes no band cache and draw
   expect_length(list.files(env$.root, "partial-bands|importance-intervals", recursive = TRUE), 0L)
 })
 
+test_that("with BANDS_B at its default bands-plan writes nothing, not even the section heading", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
+  env <- rfs_explained()
+  expect_identical(utils::capture.output(rf_run("rfs", "explain", "bands-plan", env)), character())
+})
+
 test_that("rfs-explain draws the importance intervals and the partial bands from cached subsamples", {
   skip_on_cran()
   rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
@@ -754,4 +761,24 @@ test_that("rfs-fit stops on a predictor with no values, which the forest would d
   env <- rf_env(d)
   expect_error(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "tbl-missing"), env, rfs_choices),
                "^PREDICTORS names a column with no values: prior[.]")
+})
+
+test_that("rfc-explain and rfr-explain draw the bands too", {
+  skip_on_cran()
+  withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
+  cases <- list(rfc = list(data = rfc_data(), choices = rfc_choices),
+                rfr = list(data = rfr_data(), choices = rfr_choices))
+  for (prefix in names(cases)) {
+    rf_skip_unless_stack(c(rf_template_packages(prefix, "explain"), "patchwork"))
+    fit_env <- rf_fit_first(prefix, cases[[prefix]]$data, cases[[prefix]]$choices)
+    env <- new.env(parent = globalenv())
+    env$.root <- fit_env$.root
+    rf_run_bands(prefix, "explain", c(explain_labels, band_labels), env,
+                 list(TOP_K = 2, SEED = 1, BANDS_B = 3, SUBRATIO = 0.5))
+    for (nm in c(paste0(prefix, "-vimp-subsample"), paste0(prefix, "-partial-band-", env$sel))) {
+      expect_true(file.exists(file.path(env$CACHE_DIR, paste0(nm, ".rds"))), info = nm)
+    }
+    expect_gt(length(list.files(env$.root, paste0(prefix, "-explain-dependence-partial-bands-page-01"),
+                                recursive = TRUE)), 0L)
+  }
 })
