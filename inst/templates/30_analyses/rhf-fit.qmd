@@ -287,7 +287,9 @@ CACHE_DIR <- dirname(set_path("estimates", "rhf.rds"))
 # patient.
 .fit_data <- data.frame(id = match(d[[.selection$id]], unique(d[[.selection$id]])),
                         start = d[[START]], stop = d[[STOP]], event = d[[EVENT]], d[PREDICTORS])
-model <- survival::Surv(id, start, stop, event) ~ .
+# Surv is written bare on purpose. randomForestRHF reads the call's head by name and
+# refuses survival::Surv(), and it finds Surv itself, so survival need not be attached.
+model <- Surv(id, start, stop, event) ~ .
 # The saved forest keeps this formula, and a formula keeps the environment it
 # was made in; set it, so a job run anywhere else does not write every object
 # beside the formula, `job_data` and its patient IDs included, into the forest.
