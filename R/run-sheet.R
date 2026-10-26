@@ -105,3 +105,79 @@
        layout = layout, calls = .template_calls(src, layout), bindings = .estimates_bindings(src, layout),
        markers = .edit_marker_lines(src))
 }
+
+# The signatures the sheet reads arguments through, so a call is read the same
+# whether its arguments are named or positional.
+.sheet_signatures <- list(
+  saveRDS = function(object, file = "", ...) NULL,
+  .read_handoff = function(path, role, cfg, rebuild) NULL,
+  cache_fit = function(name, code, seed = NULL, dir = NULL, refit = FALSE, packages = NULL) NULL,
+  guard_long_fit = function(name, dir, why, refit = FALSE) NULL,
+  .job_setup = function(subject, type, envir = NULL, show_markers = TRUE, box_data = TRUE) NULL
+)
+
+# Argument `arg` of a call to a function in .sheet_signatures; NULL when absent.
+.call_arg <- function(entry, arg) {
+  matched <- tryCatch(match.call(.sheet_signatures[[entry$fn]], entry$call), error = function(e) NULL)
+  if (is.null(matched)) NULL else matched[[arg]]
+}
+
+# A string literal argument, or NA: a sheet quotes only what the template states.
+.literal <- function(x) if (is.character(x) && length(x) == 1L) x else NA_character_
+
+.calls_to <- function(facts, fn) Filter(function(e) identical(e$fn, fn), facts$calls)
+
+# The catalog's name for a row, as the template files are named.
+.catalog_names <- function(catalog) {
+  ifelse(is.na(catalog$qualifier), catalog$prefix, paste0(catalog$prefix, "-", catalog$qualifier))
+}
+
+# Who reads what whom saves. A template that writes saveRDS(x, <estimates file>)
+# is the producer for every template whose .read_handoff() reads that file in the
+# same set. A read whose path the template does not state (a model file chosen
+# at an EDIT: marker, say) takes its producers from the consumer's catalog
+# `upstream`, a prefix or a template's full name; one with neither is an error,
+# because a sheet that silently drops a prerequisite is worse than none. A
+# literal read no template writes (a companion runner's file) has route "none".
+# One row per read and producer.
+.handoff_graph <- function(facts, catalog = template_catalog()) {
+  names <- vapply(facts, `[[`, "", "name")
+  writes <- do.call(rbind, c(list(data.frame(producer = character(), file = character())), lapply(facts, function(f) {
+    files <- vapply(.calls_to(f, "saveRDS"), function(e) {
+      path <- .call_arg(e, "file")
+      if (is.null(path)) NA_character_ else .estimates_file(path, f$bindings)
+    }, character(1L))
+    files <- unique(files[!is.na(files)])
+    if (length(files)) data.frame(producer = f$name, file = files) else NULL
+  })))
+  upstream <- stats::setNames(catalog$upstream, .catalog_names(catalog))
+  rows <- list()
+  for (f in facts) {
+    for (e in .calls_to(f, ".read_handoff")) {
+      path <- .call_arg(e, "path")
+      file <- if (is.null(path)) NA_character_ else .estimates_file(path, f$bindings)
+      rebuild <- .literal(.call_arg(e, "rebuild"))
+      if (!is.na(file)) {
+        producers <- setdiff(writes$producer[writes$file == file], f$name)
+        route <- if (length(producers)) "literal" else "none"
+      } else {
+        up <- upstream[[f$name]]
+        if (!length(up)) {
+          stop("Template ", f$name, " reads a hand-off whose file it does not name, and its catalog row lists ",
+               "no upstream. Add the templates it reads from to `upstream` in inst/extdata/templates.json.",
+               call. = FALSE)
+        }
+        producers <- setdiff(names[names %in% up | sub("-.*$", "", names) %in% up], f$name)
+        if (!length(producers)) {
+          stop("Template ", f$name, "'s catalog upstream (", toString(up), ") names no template on disk.", call. = FALSE)
+        }
+        route <- "catalog"
+      }
+      rows[[length(rows) + 1L]] <- data.frame(consumer = f$name, producer = if (length(producers)) producers else NA,
+                                              file = file, route = route, rebuild = rebuild, line = e$line)
+    }
+  }
+  out <- do.call(rbind, c(list(data.frame(consumer = character(), producer = character(), file = character(),
+                                          route = character(), rebuild = character(), line = integer())), rows))
+  unique(out)
+}
