@@ -162,7 +162,8 @@ test_that("CI_TIMES draws confidence bars at those times, with the tables' limit
   geoms <- function(p) vapply(p$layers, function(l) class(l$geom)[[1]], "")
   # 0.005 years is before the first event (follow-up starts at 0.01) and 50 is past follow-up:
   # neither has limits to draw.
-  env <- ac_run(ac_data(), list(STRATA = "grp", CI_TIMES = c(0.005, 1, 3, 50), CI_BAND = FALSE))
+  # On the steps a bar stands at the time asked for; the straight lines are the next test.
+  env <- ac_run(ac_data(), list(STRATA = "grp", CI_TIMES = c(0.005, 1, 3, 50), CI_BAND = FALSE, STEPS = TRUE))
   expect_identical(env$.warnings, character(0))
   curve <- env$km_figure("grp")[[1]]
   # CI_BAND = FALSE with CI_TIMES set: the SAS figure's bars alone.
@@ -190,6 +191,31 @@ test_that("CI_TIMES draws confidence bars at those times, with the tables' limit
   env$CI_BAND <- FALSE
   env$CI_TIMES <- NULL
   expect_false(any(c("GeomRibbon", "GeomErrorbar") %in% geoms(env$km_figure("grp")[[1]])))
+})
+
+test_that("under straight lines a bar stands at the last event before its time, on the line", {
+  skip_ac()
+  local_child_chunks()
+  # Sparse events, as the review of #426 posed them: one death at 1 year, nine at 10.
+  d <- hazard_data()[1:10, ]
+  d$iv_dead <- c(1, rep(10, 9))
+  d$dead <- 1L
+  env <- ac_run(d, list(CI_TIMES = 9.9, CI_BAND = FALSE, CLEVEL = 0.95))
+  expect_identical(env$.warnings, character(0))
+  expect_false(env$STEPS)
+  layers <- built_layers(env$km_figure()[[1]])
+  bar <- layers$GeomErrorbar
+  at <- life_table_at(env$d, env$TIME, env$EVENT, times = 9.9, conf_level = 0.95)
+  # At the event, 1 year, with the 9.9-year row's limits, and the line passes inside them.
+  expect_equal(bar$x, 1)
+  expect_equal(c(bar$ymin, bar$ymax), 100 * c(at$cl_lower, at$cl_upper))
+  y <- layers$GeomLine$y[layers$GeomLine$x == 1]
+  expect_true(y > bar$ymin && y < bar$ymax)
+  # On the steps it stands at 9.9 years, with the same limits.
+  env$STEPS <- TRUE
+  bar <- built_layers(env$km_figure()[[1]])$GeomErrorbar
+  expect_equal(bar$x, 9.9)
+  expect_equal(c(bar$ymin, bar$ymax), 100 * c(at$cl_lower, at$cl_upper))
 })
 
 test_that("by default the manuscript figure draws the band and no bars", {
@@ -279,7 +305,7 @@ test_that("bars at close early times on a long axis stay at their own time and a
   d <- hazard_data()
   d$grp3 <- rep(c(1, 2, 10), length.out = nrow(d))
   early <- c(30, 90) / 365.2425
-  env <- ac_run(d, list(STRATA = "grp3", CI_TIMES = early, CI_BAND = FALSE, PLOT_MAX = 20))
+  env <- ac_run(d, list(STRATA = "grp3", CI_TIMES = early, CI_BAND = FALSE, PLOT_MAX = 20, STEPS = TRUE))
   expect_identical(env$.warnings, character(0))
   curve <- env$km_figure("grp3")[[1]]
   expect_no_warning(layers <- built_layers(curve))

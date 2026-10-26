@@ -202,9 +202,10 @@ RISK_TIMES <- NULL
 # limits the horizon tables report at that time, and a time before the first
 # event or past the end of follow-up has none and draws no bar. Either, both or
 # neither: CI_BAND <- FALSE with CI_TIMES set gives the SAS figure's bars alone.
-# A bar reports the table's limits, which hold from one event to the next, so
-# under the straight lines below (STEPS <- FALSE) a bar between two distant
-# events can sit off the line; STEPS <- TRUE puts every bar on the curve.
+# Under the straight lines below (STEPS <- FALSE) a bar is drawn at the last
+# event at or before its time: the table's limits hold from that event on, and
+# only there does the line pass through the estimate they bracket. With sparse
+# events a bar can therefore stand well left of the time asked for.
 CI_BAND <- TRUE
 CI_TIMES <- NULL
 
@@ -608,17 +609,32 @@ km_figure <- function(strata = NULL) {
     ci <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = bars, strata = strata, conf_level = CLEVEL)
     ci <- ci[!is.na(ci$cl_lower), , drop = FALSE]
     ci$strata <- if (is.null(strata)) rep("All", nrow(ci)) else factor(ci$stratum, levels = levels(dd[[strata]]))
+    # The time asked for, which sets the bars' width below.
+    ci$at <- ci$time
+    # A straight line between two events leaves the estimate the bar brackets, so
+    # the bar moves back to the last event at or before its time, where the line
+    # passes through that estimate. Its limits are unchanged: the table's.
+    if (!isTRUE(STEPS) && nrow(ci)) {
+      ev <- hv$data[hv$data$n.event > 0, , drop = FALSE]
+      ci$time <- mapply(function(t, s) {
+        v <- ev$time[as.character(ev$strata) == s & ev$time <= t]
+        if (length(v)) max(v) else NA_real_
+      }, ci$time, as.character(ci$strata))
+      ci <- ci[!is.na(ci$time) & !duplicated(ci[c("strata", "time")]), , drop = FALSE]
+    }
   }
   if (length(bars) && nrow(ci)) {
     # The strata's bars at one time are dodged apart, across a width that must stay
     # inside the gap to the next chosen time and the distance to zero, or bars for
     # neighboring times interleave and one is drawn before time zero. A fortieth of
     # the axis is the most it takes; close early times take less.
-    times <- sort(unique(ci$time))
+    times <- sort(unique(ci$at))
     span <- min(plot_max / 40, 0.8 * min(c(diff(times), 2 * times[[1]])))
     curve <- curve + ggplot2::geom_errorbar(
       data = ci, ggplot2::aes(x = .data$time, ymin = 100 * .data$cl_lower, ymax = 100 * .data$cl_upper, color = .data$strata),
-      width = span, position = ggplot2::position_dodge(width = span),
+      # Under straight lines each stratum's bars stand at its own events, not at a
+      # shared time, so there is nothing to dodge apart.
+      width = span, position = if (isTRUE(STEPS)) ggplot2::position_dodge(width = span) else "identity",
       inherit.aes = FALSE, show.legend = FALSE
     )
   }
