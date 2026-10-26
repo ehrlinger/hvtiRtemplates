@@ -184,3 +184,40 @@ test_that("the plan refuses a bad style or BAND_AT, and warns below the floor", 
   withr::local_envvar(HVTI_TEMPLATE_STRICT = "1")
   expect_error(plan("ribbon", NULL), "HVTI_TEMPLATE_STRICT")
 })
+
+fake_band <- function(type = "continuous", times = NULL) {
+  x <- if (type == "continuous") c(1, 2, 3) else c("a", "b")
+  m <- length(x) * max(1L, length(times))
+  set.seed(3)
+  list(var = "v", type = type, x = x, time = times, hat = seq_len(m) / 10,
+       star = matrix(seq_len(m) / 10 + stats::rnorm(m * 4, sd = 0.02), m, 4))
+}
+
+test_that("a band frame is the full forest's value plus and minus 1.96 SE", {
+  band <- fake_band(times = c(30, 90))
+  fr <- hvtiRtemplates:::.band_frame(band, subratio = 0.3)
+  se <- hvtiRtemplates:::.band_se(band$hat, band$star, 0.3)
+  expect_equal(fr$upper - fr$hat, stats::qnorm(0.975) * se)
+  expect_identical(nrow(fr), 6L)
+  expect_identical(sort(unique(fr$time)), c(30, 90))
+  at <- hvtiRtemplates:::.band_frame(band, subratio = 0.3, at = 2.5)
+  expect_identical(nrow(at), 2L)
+  expect_true(all(at$x == 2.5))
+})
+
+test_that("the band figures build, with ribbons or bars as chosen", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  skip_if_not_installed("hvtiPlotR")
+  layers <- function(p) vapply(p[[1]]$layers, function(l) class(l$geom)[1], "")
+  bands <- list(v = fake_band(times = c(30, 90)), w = fake_band("categorical"))
+  bands$w$var <- "w"
+  ribbon <- hvtiRtemplates:::.plot_partial_bands(bands, 0.3, "ribbon", NULL, ncol = 2)
+  bars <- hvtiRtemplates:::.plot_partial_bands(bands, 0.3, "bars", list(v = c(1.5, 2.5)), ncol = 2)
+  expect_true("GeomRibbon" %in% layers(ribbon))
+  expect_false("GeomRibbon" %in% layers(bars))
+  expect_true("GeomErrorbar" %in% layers(bars))
+  for (p in list(ribbon, bars)) expect_s3_class(patchwork::patchworkGrob(p), "gtable")
+  ci <- data.frame(lower = c(-0.1, 0.2), mean = c(0, 0.3), upper = c(0.1, 0.4), row.names = c("a", "b"))
+  expect_s3_class(ggplot2::ggplot_build(hvtiRtemplates:::.plot_vimp_intervals(ci)), "ggplot_built")
+})

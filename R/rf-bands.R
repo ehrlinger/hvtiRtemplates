@@ -224,3 +224,83 @@
   )
   list(subratio = subratio, table = table)
 }
+
+# Each predictor's importance with its 95% subsampling interval, ranked as the
+# importance figure ranks them, an interval clear of zero in one color and one that
+# reaches it in another.
+.plot_vimp_intervals <- function(ci) {
+  d <- data.frame(vars = rownames(ci), vimp = ci$mean, lower = ci$lower, upper = ci$upper)
+  d$vars <- factor(d$vars, levels = d$vars[order(d$vimp)])
+  d$clear <- factor(ifelse(d$lower > 0, "Interval above zero", "Interval reaches zero"),
+                    levels = c("Interval above zero", "Interval reaches zero"))
+  sym <- rlang::sym
+  ggplot2::ggplot(d, ggplot2::aes(x = !!sym("vimp"), y = !!sym("vars"), color = !!sym("clear"))) +
+    ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
+    ggplot2::geom_errorbar(ggplot2::aes(xmin = !!sym("lower"), xmax = !!sym("upper")), width = 0.3,
+                           orientation = "y") +
+    ggplot2::geom_point(size = 2) +
+    ggplot2::scale_color_manual(values = c(`Interval above zero` = "black", `Interval reaches zero` = "gray55"),
+                                drop = FALSE, name = NULL) +
+    ggplot2::labs(x = "Permutation importance", y = NULL)
+}
+
+# A band as plotting rows: the full forest's value and its pointwise interval, at the
+# grid or, for a continuous predictor, at the values in `at`.
+.band_frame <- function(band, subratio, at = NULL, alpha = 0.05) {
+  nx <- length(band$x)
+  nt <- max(1L, length(band$time))
+  hat <- matrix(band$hat, nx, nt)
+  star <- band$star
+  x <- band$x
+  if (!is.null(at) && identical(band$type, "continuous")) {
+    parts <- lapply(seq_len(nt), function(t) {
+      rows <- (t - 1L) * nx + seq_len(nx)
+      .band_at(band$x, hat[, t], star[rows, , drop = FALSE], at)
+    })
+    hat <- do.call(cbind, lapply(parts, `[[`, "hat"))
+    star <- do.call(rbind, lapply(parts, `[[`, "star"))
+    x <- at
+    nx <- length(at)
+  }
+  se <- .band_se(as.numeric(hat), star, subratio)
+  z <- stats::qnorm(1 - alpha / 2)
+  data.frame(x = rep(x, times = nt), time = if (length(band$time)) rep(band$time, each = nx) else NA_real_,
+             hat = as.numeric(hat), lower = as.numeric(hat) - z * se, upper = as.numeric(hat) + z * se)
+}
+
+# One panel per predictor: the full forest's partial with a ribbon, or error bars, for
+# a continuous predictor, and a point with error bars at each level of a categorical
+# one. A survival forest's horizons share a color in line, band and bar.
+.plot_partial_bands <- function(bands, subratio, style, at, ncol) {
+  sym <- rlang::sym
+  panels <- lapply(bands, function(band) {
+    fr <- .band_frame(band, subratio, at = if (identical(style, "bars")) at[[band$var]])
+    line <- .band_frame(band, subratio)
+    timed <- !all(is.na(fr$time))
+    fr$time <- factor(fr$time)
+    line$time <- factor(line$time)
+    colour <- if (timed) ggplot2::aes(color = !!sym("time"), fill = !!sym("time"), group = !!sym("time"))
+    dodge <- ggplot2::position_dodge(width = if (identical(band$type, "continuous")) diff(range(line$x)) / 40 else 0.4)
+    p <- ggplot2::ggplot(fr, ggplot2::aes(x = !!sym("x"), y = !!sym("hat"))) + colour
+    if (identical(band$type, "categorical")) {
+      p <- p + ggplot2::geom_errorbar(ggplot2::aes(ymin = !!sym("lower"), ymax = !!sym("upper")), width = 0.2,
+                                      position = dodge) +
+        ggplot2::geom_point(size = 2, position = dodge)
+    } else if (identical(style, "ribbon")) {
+      p <- p + ggplot2::geom_ribbon(ggplot2::aes(ymin = !!sym("lower"), ymax = !!sym("upper")), alpha = 0.2,
+                                    color = NA) +
+        ggplot2::geom_line()
+    } else {
+      p <- p + ggplot2::geom_line(data = line) +
+        ggplot2::geom_errorbar(ggplot2::aes(ymin = !!sym("lower"), ymax = !!sym("upper")),
+                               width = diff(range(line$x)) / 30, position = dodge)
+    }
+    if (timed) {
+      cols <- .group_colors(levels(fr$time))
+      p <- p + ggplot2::scale_color_manual(values = cols, name = "Time") +
+        ggplot2::scale_fill_manual(values = cols, name = "Time")
+    }
+    p + ggplot2::labs(x = band$var, y = NULL)
+  })
+  patchwork::wrap_plots(panels, ncol = ncol, guides = "collect")
+}
