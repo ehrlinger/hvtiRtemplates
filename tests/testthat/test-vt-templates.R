@@ -184,6 +184,50 @@ test_that("vt-fit lists each out-of-distribution patient's features", {
   expect_true(all(env$.elig_rows$features[env$.elig_rows$in_distribution] == ""))
 })
 
+test_that("tbl-km reports each arm's patients, events and the at-risk count the figure draws", {
+  skip_on_cran()
+  env <- vt_fit_first()
+  k <- env$.km_tbl
+  dat <- vt_data()
+  expect_equal(k$arm, c("A", "B"))
+  expect_equal(k$patients, as.vector(table(dat$arm)[c("A", "B")]))
+  expect_equal(k$events, vapply(c("A", "B"), function(a) sum(dat$event[dat$arm %in% a]), numeric(1L)),
+               ignore_attr = TRUE)
+  risk <- env$.km$tables$risk
+  expect_equal(k$at_risk_2, risk$n.risk[risk$report_time == 2][match(k$arm, as.character(risk$strata[risk$report_time == 2]))])
+  expect_true(all(k$lower_2 <= k$survival_2 & k$survival_2 <= k$upper_2))
+  expect_s3_class(env$.fig, "ggplot")
+})
+
+test_that("vt_calibration groups by predicted survival at the horizon and reads Kaplan-Meier", {
+  h <- vt_helpers()
+  # Ten patients on a grid of 1, 2, 3, with distinct predictions at time 2 (tied ones
+  # would merge groups). Nobody has an event, so every group is observed at 1. The last
+  # patient was never out of bag.
+  s <- cbind(1, c(0.51, 0.52, 0.53, 0.54, 0.91, 0.92, 0.93, 0.94, 0.95, NA), 0.4)
+  s[10, ] <- NA
+  f <- list(time.interest = c(1, 2, 3), n = 10L, survival.oob = s,
+            yvar = data.frame(time = rep(5, 10), status = rep(0, 10)))
+  x <- h$vt_calibration(f, horizon = 2.5, groups = 2L)
+  # The median, 0.91, closes the lower group.
+  expect_equal(x$patients, c(5L, 4L))
+  expect_equal(x$predicted, c(mean(c(0.51, 0.52, 0.53, 0.54, 0.91)), mean(c(0.92, 0.93, 0.94, 0.95))))
+  expect_equal(x$observed, c(1, 1))
+  expect_equal(attr(x, "no_prediction"), 1L)
+  # Before the first event time everyone is predicted 1.
+  expect_equal(unique(h$vt_calibration(f, horizon = 0.5)$predicted), 1)
+})
+
+test_that("vt-fit reports calibration for each arm", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = c(vt_fit_labels, "fit", "tbl-performance", "calibration-helper", "tbl-calibration",
+                                 "fig-calibration"))
+  expect_setequal(env$.cal$arm, c("A", "B"))
+  expect_equal(sum(env$.cal$patients[env$.cal$arm == "A"]), env$.forests$A$n)
+  expect_true(all(env$.cal$predicted >= 0 & env$.cal$predicted <= 1))
+  expect_named(env$.cal_error, c("A", "B"))
+})
+
 test_that("methods combine by any and all, with one row shape", {
   h <- vt_helpers()
   base <- data.frame(ID = c("p1", "p2", "p3"), method = NA, arm = "A", nn_id = "q", distance = 1,
@@ -293,6 +337,9 @@ test_that("vt-fit saves one handoff with every element", {
   expect_false(is.null(attr(h, "hvti_provenance")))
   expect_setequal(h$settings$performance$arm, c("A", "B"))
   expect_true(all(c("events", "c_index", "lower") %in% names(h$settings$performance)))
+  expect_setequal(h$settings$calibration$arm, c("A", "B"))
+  expect_identical(h$eligibility$ordinal, character())
+  expect_true("features" %in% names(h$eligibility$rows))
 })
 
 test_that("curves are reproducible when predictors are missing under na.impute", {
@@ -465,6 +512,36 @@ test_that("a stratum cell under 5 patients shows no median but keeps its n", {
   expect_true(is.na(cell$median))
   expect_false(is.na(cell$n))
   expect_lt(cell$n, 5L)
+  # The figure boxes the same cells the table gives a median: never the tiny one.
+  expect_false(any(env$.box$stratum == "tiny" & env$.box$arm == "B"))
+  expect_true(all(env$.box$elig))
+  expect_setequal(unique(env$.sc$stratum), c("tiny", "big"))
+  expect_true(all(env$.sc$surv[env$.sc$time == 0] == 1))
+})
+
+test_that("fig-components sets each patient's own arm against the other, whichever arm they received", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_explain(env)
+  b <- env$.cp[env$.cp$arm == "B", ][1, ]
+  expect_equal(b$own, b$rmst_B)
+  expect_equal(b$twin, b$rmst_A)
+  expect_false(any(env$.cp$no_arm))
+})
+
+test_that("fig-distance puts each arm's eligibility line in the panel of the patients judged against it", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_explain(env)
+  # Arm A patients are judged against arm B, so B's reference belongs in the "Received A" panel.
+  ln <- env$.lines[env$.lines$arm == "B", ]
+  expect_equal(ln$panel, "Received A")
+  expect_equal(ln$reference, unique(env$.dd$reference[env$.dd$received == "A"]))
+  expect_true(all(env$.dd$arm != env$.dd$received))
+  # The planted arm A patients are out of distribution against B and counted in the table.
+  tab <- env$.dist_tab[env$.dist_tab$received == "A", ]
+  expect_gte(tab$out_of_distribution, 5L)
+  expect_true(is.finite(tab$spearman))
 })
 
 test_that("tbl-benefit honors GAIN_MIN and splits the no-arm patients between the arms", {

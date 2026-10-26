@@ -294,6 +294,54 @@ d <- d[, c(ID, ARM, TIME, STATUS, .predictors), drop = FALSE]
 cat("Predictors:", paste(.predictors, collapse = ", "), "\n")
 ```
 
+## The observed outcome
+
+What happened in each arm, before any model: Kaplan-Meier, with 70% confidence limits (about one standard
+error). The twins below predict each patient under both arms, so this is the check that each arm's
+follow-up reaches the horizon with patients still at risk. An arm with few at risk at `HORIZON` carries a
+twin curve there that rests on little data.
+
+```{r}
+#| label: tbl-km
+#| tbl-cap: "Each arm's observed outcome: patients, events, and Kaplan-Meier survival at the horizon with
+#|   70% confidence limits"
+.km_data <- d[.treated, c(TIME, STATUS, ARM), drop = FALSE]
+.km_data[[ARM]] <- factor(.km_data[[ARM]], levels = ARMS)
+.km_data[[STATUS]] <- as.integer(.km_data[[STATUS]])
+.km_times <- sort(unique(c(pretty(c(0, max(.km_data[[TIME]]))), HORIZON)))
+.km <- hvtiPlotR::hv_survival(.km_data, time_col = TIME, event_col = STATUS, group_col = ARM, conf_level = 0.70,
+                              report_times = .km_times)
+.km_at <- .km$tables$report[.km$tables$report$report_time == HORIZON, , drop = FALSE]
+# The number at risk comes from the risk table the figure draws, so table and figure agree; the report
+# table's own n.risk is survfit's, counted just before the time, and can differ by a patient.
+.km_risk <- .km$tables$risk[.km$tables$risk$report_time == HORIZON, , drop = FALSE]
+.km_tbl <- do.call(base::rbind, lapply(ARMS, function(a) {
+  x <- .km_data[.km_data[[ARM]] == a, , drop = FALSE]
+  h <- .km_at[as.character(.km_at$strata) == a, , drop = FALSE]
+  k <- .km_risk$n.risk[as.character(.km_risk$strata) == a]
+  data.frame(arm = a, patients = nrow(x), events = sum(x[[STATUS]] == 1L), last_follow_up = max(x[[TIME]]),
+             at_risk = if (length(k)) k else 0L, survival = if (nrow(h)) h$surv else NA_real_,
+             lower = if (nrow(h)) h$lower else NA_real_, upper = if (nrow(h)) h$upper else NA_real_)
+}))
+names(.km_tbl)[5:8] <- paste0(c("at_risk", "survival", "lower", "upper"), "_", HORIZON)
+knitr::kable(.km_tbl, digits = 3, row.names = FALSE)
+```
+
+```{r}
+#| label: fig-km
+#| fig-cap: "Kaplan-Meier survival in each arm, with 70% confidence limits and the numbers at risk. The
+#|   dashed line is the RMST horizon."
+.fig <- plot(.km) +
+  ggplot2::geom_vline(xintercept = HORIZON, linetype = "dashed") +
+  ggplot2::labs(x = "Time", y = "Survival (%)", color = "Arm", fill = "Arm") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12) +
+  # The house theme drops the legend; two arms need it to tell the curves apart.
+  ggplot2::theme(legend.position = "top")
+.fig <- hvtiPlotR::hv_atrisk_compose(.fig, hvtiPlotR::hv_atrisk(.km))
+save_figure(.fig, "vt-fit-km", height = 5)
+.fig
+```
+
 ## Eligibility
 
 A patient's twin curve for the arm they did not receive is only as good as the
@@ -623,6 +671,77 @@ if (length(.weak)) {
 }
 ```
 
+The C-index says whether a forest ranks patients; it says nothing about whether the survival it predicts
+is the right level, and the RMST difference is a difference of levels. Calibration checks that: each
+arm's patients are split into fifths by their out-of-bag predicted survival at the horizon, and each
+fifth's mean prediction is set beside its Kaplan-Meier survival. A small arm can rank well and still be
+far off here.
+
+```{r}
+#| label: calibration-helper
+# Out-of-bag predicted survival at the horizon against Kaplan-Meier within
+# groups of predicted survival, for one survival forest. survival.oob and yvar
+# share the training order, so no matching by ID is needed. A patient never out
+# of bag has no prediction and is left out, counted.
+vt_calibration <- function(f, horizon, groups = 5L) {
+  at <- findInterval(horizon, f$time.interest)
+  pred <- if (at == 0L) rep(1, f$n) else f$survival.oob[, at]
+  time <- f$yvar[[1]]
+  status <- f$yvar[[2]]
+  ok <- !is.na(pred)
+  pred <- pred[ok]
+  time <- time[ok]
+  status <- status[ok]
+  breaks <- unique(stats::quantile(pred, seq(0, 1, length.out = groups + 1L), names = FALSE))
+  g <- if (length(breaks) > 1L) cut(pred, breaks, include.lowest = TRUE, labels = FALSE) else rep(1L, length(pred))
+  out <- do.call(base::rbind, lapply(sort(unique(g)), function(k) {
+    s <- g == k
+    km <- summary(survival::survfit(survival::Surv(time[s], status[s]) ~ 1), times = horizon, extend = TRUE)
+    data.frame(group = k, patients = sum(s), events = sum(status[s] == 1), predicted = mean(pred[s]),
+               observed = if (length(km$surv)) km$surv else NA_real_)
+  }))
+  attr(out, "no_prediction") <- sum(!ok)
+  out
+}
+```
+
+```{r}
+#| label: tbl-calibration
+#| tbl-cap: "Calibration at the horizon: each arm's patients in fifths of out-of-bag predicted survival, the
+#|   fifth's mean prediction and its Kaplan-Meier survival"
+#| results: asis
+.cal <- do.call(base::rbind, lapply(ARMS, function(a) {
+  x <- vt_calibration(.forests[[a]], HORIZON)
+  if (attr(x, "no_prediction")) {
+    cat(attr(x, "no_prediction"), " ", a, " patient(s) were never out of bag and have no calibration prediction; ",
+        "raise NTREE.\n\n", sep = "")
+  }
+  cbind(arm = a, x)
+}))
+cat(knitr::kable(.cal, digits = 3, row.names = FALSE), sep = "\n")
+# One number per arm: the mean distance between predicted and observed over the fifths, in percentage points.
+.cal_error <- tapply(abs(.cal$predicted - .cal$observed), .cal$arm, mean, na.rm = TRUE)[ARMS]
+cat("\nMean calibration error at ", HORIZON, ", in percentage points: ",
+    paste0(ARMS, " ", format(round(100 * .cal_error, 1), nsmall = 1), collapse = ", "), ".\n", sep = "")
+```
+
+```{r}
+#| label: fig-calibration
+#| fig-cap: "Calibration at the horizon. Each point is a fifth of an arm's patients; the dashed line is
+#|   perfect agreement. Points below it: the forest predicts better survival than was observed."
+.lim <- range(c(.cal$predicted, .cal$observed), na.rm = TRUE)
+.fig <- ggplot2::ggplot(.cal, ggplot2::aes(x = predicted, y = observed)) +
+  ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
+  ggplot2::geom_line() +
+  ggplot2::geom_point(size = 2) +
+  ggplot2::facet_wrap(~ arm) +
+  ggplot2::coord_equal(xlim = .lim, ylim = .lim) +
+  ggplot2::labs(x = paste("Predicted survival at", HORIZON, "(out of bag)"), y = "Observed, Kaplan-Meier") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "vt-fit-calibration")
+.fig
+```
+
 ## Twin curves
 
 ```{r}
@@ -749,7 +868,8 @@ vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
        eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ordinal = ORDINAL,
                           ps = .ps),
        predictors = list(names = .predictors, vp_set = VP_SET),
-       settings = list(performance = .perf, arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED, time = TIME, status = STATUS,
+       settings = list(performance = .perf, calibration = .cal, arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED,
+                       time = TIME, status = STATUS,
                        id = ID, id_key = hvtiRtemplates:::.id_key_fingerprint(.id_key),
                        arm = ARM, imputation = IMPUTATION, imputation_use = IMPUTATION_USE,
                        imputation_m = if (!is.null(IMPUTATION)) .m,

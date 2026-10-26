@@ -277,6 +277,33 @@ if (!nrow(.rb)) {
 }
 ```
 
+The difference is two predictions, and either can carry it. Set side by side, they show which: a cloud
+spread along one axis and flat along the other means one forest gives almost everyone the same
+prediction, so the difference follows the other forest alone.
+
+```{r}
+#| label: fig-components
+#| fig-cap: "Each treated patient in distribution: predicted RMST under the arm received (own) against under
+#|   the other arm (twin). On the dashed line the two are equal."
+.cp <- r[.eligible & !r$no_arm, ]
+if (!nrow(.cp)) {
+  cat(.no_elig_note, "\n")
+} else {
+  .first <- .cp$arm == ARMS[1]
+  .cp$own <- ifelse(.first, .cp[[paste0("rmst_", ARMS[1])]], .cp[[paste0("rmst_", ARMS[2])]])
+  .cp$twin <- ifelse(.first, .cp[[paste0("rmst_", ARMS[2])]], .cp[[paste0("rmst_", ARMS[1])]])
+  .cp$panel <- paste("Received", .cp$arm)
+  .fig <- ggplot(.cp, aes(x = own, y = twin)) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
+    geom_point(alpha = 0.6, size = 1.4) +
+    facet_wrap(~ panel) +
+    coord_equal() +
+    labs(x = "Predicted RMST under the arm received", y = "Predicted RMST under the other arm")
+  save_figure(.fig, "vt-explain-components")
+  .fig
+}
+```
+
 ## Eligibility rules
 
 How the contrast changes with the rule that decides which patients it
@@ -296,6 +323,73 @@ summarizes. The combined rule is the one used above.
   }))
 }))
 knitr::kable(.sens, digits = 2, row.names = FALSE)
+```
+
+### The difference against the distance to the other arm
+
+Eligibility is a line; this shows what lies near it. Each treated patient's difference is set against
+their distance to the nearest patient of the other arm, the arm whose forest gives their twin. A
+difference that grows as patients approach the line is borrowing from the edge of what the other arm
+covers.
+
+```{r}
+#| label: fig-distance
+#| fig-cap: "Each treated patient's RMST difference against their distance to the nearest patient of the other
+#|   arm. Dashed: that arm's largest own gap, the eligibility line; dotted: its typical (median) gap. Ringed:
+#|   out of distribution."
+.dd <- merge(r[!r$no_arm, c("ID", "received", "diff")],
+             .vt$eligibility$rows[, c("ID", "method", "arm", "distance", "reference", "ratio", "in_distribution")],
+             by = "ID")
+.dd_none <- sum(!is.finite(.dd$distance))
+.dd <- .dd[is.finite(.dd$distance), , drop = FALSE]
+if (.dd_none) cat(.dd_none, "patient-by-method distance(s) are unavailable (no predictor in common) and not drawn.\n\n")
+if (!nrow(.dd)) {
+  cat("No treated patient has a distance to draw.\n")
+} else {
+  # The median gap is not saved; ratio is distance over it, so any row with a positive ratio recovers it.
+  .lines <- do.call(base::rbind, lapply(split(.dd, list(.dd$method, .dd$arm), drop = TRUE), function(x) {
+    k <- which(is.finite(x$ratio) & x$ratio > 0)[1L]
+    data.frame(method = x$method[1L], arm = x$arm[1L], reference = x$reference[1L],
+               median = if (is.na(k)) NA_real_ else x$distance[k] / x$ratio[k])
+  }))
+  .dd$favors <- factor(ifelse(.dd$diff > 0, ARMS[1], ifelse(.dd$diff < 0, ARMS[2], "neither")),
+                       levels = c(ARMS, "neither"))
+  .dd$panel <- paste("Received", .dd$received)
+  # A treated patient is judged against the other arm, so that arm's lines belong in the panel of the arm received.
+  .lines$panel <- paste("Received", ifelse(.lines$arm == ARMS[1], ARMS[2], ARMS[1]))
+  .fig <- ggplot(.dd, aes(x = distance, y = diff)) +
+    geom_hline(yintercept = 0, color = "gray40") +
+    geom_vline(data = .lines, aes(xintercept = reference), linetype = "dashed") +
+    geom_vline(data = .lines[!is.na(.lines$median), , drop = FALSE], aes(xintercept = median), linetype = "dotted") +
+    geom_point(aes(color = favors), alpha = 0.7, size = 1.4) +
+    geom_point(data = .dd[!.dd$in_distribution, , drop = FALSE], shape = 1, size = 3.4, stroke = 0.9,
+               color = "#B2182B") +
+    facet_grid(method ~ panel, scales = "free_x") +
+    labs(x = "Distance to the nearest patient of the other arm",
+         y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"), color = "Favors") +
+    theme(legend.position = "bottom")
+  save_figure(.fig, "vt-explain-distance")
+  .fig
+}
+```
+
+```{r}
+#| label: tbl-distance
+#| tbl-cap: "Treated patients by arm received and method: how many, how many are out of distribution, and the
+#|   rank correlation of the RMST difference with the distance to the other arm"
+if (nrow(.dd)) {
+  .dist_tab <- do.call(base::rbind, lapply(split(.dd, list(.dd$method, .dd$received), drop = TRUE), function(x) {
+    data.frame(method = x$method[1L], received = x$received[1L], patients = nrow(x),
+               out_of_distribution = sum(!x$in_distribution),
+               # A column that does not vary has no rank correlation; NA, not a warning.
+               spearman = if (nrow(x) > 2L && stats::sd(x$diff) > 0 && stats::sd(x$distance) > 0) {
+                 stats::cor(x$diff, x$distance, method = "spearman")
+               } else {
+                 NA_real_
+               })
+  }))
+  knitr::kable(.dist_tab, digits = 2, row.names = FALSE)
+}
 ```
 
 ## Strata
@@ -359,6 +453,57 @@ if (is.null(.strata)) {
   }))
   rownames(.st) <- NULL
   knitr::kable(.st, digits = 2, row.names = FALSE)
+}
+```
+
+```{r}
+#| label: fig-stratum
+#| fig-cap: "The RMST difference by stratum, one panel per arm received. Box: 15th to 85th percentile of the
+#|   patients in distribution, whiskers 5th to 95th, drawn where a cell holds at least 5; every patient is a
+#|   point, and the ringed ones are out of distribution."
+if (!is.null(.strata)) {
+  .sa <- merge(r[!r$no_arm, c("ID", "arm", "diff", "elig")], .strata, by = "ID")
+  .sa$panel <- paste("Received", .sa$arm)
+  .box <- .sa[.sa$elig, , drop = FALSE]
+  .box <- .box[stats::ave(.box$diff, .box$stratum, .box$arm, FUN = length) >= 5, , drop = FALSE]
+  # The rings reuse every row with the points' jitter seed, so each lands on its point; rows in
+  # distribution are drawn invisible.
+  .jit <- position_jitter(width = 0.15, height = 0, seed = 1)
+  .fig <- ggplot(.sa, aes(x = stratum, y = diff)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+    stat_summary(data = .box, fun.data = function(x) {
+      q <- stats::quantile(x, c(0.05, 0.15, 0.5, 0.85, 0.95), names = FALSE)
+      data.frame(ymin = q[1], lower = q[2], middle = q[3], upper = q[4], ymax = q[5])
+    }, geom = "boxplot", width = 0.6, fill = NA) +
+    geom_point(position = .jit, alpha = 0.6, size = 1.2) +
+    geom_point(aes(alpha = !elig), position = .jit, shape = 1, size = 3.4, stroke = 0.9, color = "#B2182B",
+               show.legend = FALSE) +
+    scale_alpha_manual(values = c(`TRUE` = 1, `FALSE` = 0), guide = "none") +
+    facet_wrap(~ panel) +
+    labs(x = "Stratum", y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"))
+  save_figure(.fig, "vt-explain-stratum")
+  .fig
+}
+```
+
+```{r}
+#| label: fig-stratum-curves
+#| fig-cap: "Mean predicted survival under each arm's forest, patients in distribution, one panel per stratum.
+#|   The shaded area to the horizon is the restricted mean survival time."
+.sc <- if (!is.null(.strata)) merge(.vt$curves[.vt$curves$ID %in% r$ID[.eligible], ], .strata, by = "ID")
+if (!is.null(.sc) && nrow(.sc)) {
+  # Each arm's curves come from one forest and share its time grid, so a mean at each time is a mean curve.
+  .sc <- stats::aggregate(surv ~ stratum + arm_of_curve + time, data = .sc, FUN = mean)
+  # hv_rmst_curves() wants right-continuous steps that start at time 0 with surv 1.
+  .sc <- do.call(base::rbind, lapply(split(.sc, list(.sc$stratum, .sc$arm_of_curve), drop = TRUE), function(x) {
+    base::rbind(data.frame(stratum = x$stratum[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1),
+                x[order(x$time), ])
+  }))
+  .sc$arm <- .sc$arm_of_curve
+  .fig <- plot(hvtiPlotR::hv_rmst_curves(.sc, tau = HORIZON, facet = "stratum", arm = "arm")) +
+    labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
+  save_figure(.fig, "vt-explain-stratum-curves")
+  .fig
 }
 ```
 

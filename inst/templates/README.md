@@ -404,8 +404,8 @@ as on a Mac without XQuartz.
 | vp-dependence | `vp-dependence-graph`, `-heatmap` |
 | vp-individual | `vp-individual-beeswarm`, `vp-individual-gradient-page-<NN>` |
 | sid-clusters | `sid-clusters-metrics`, `-sankey`, `-silhouette`, `-mds` |
-| vt-fit | `vt-fit-eligibility`, `-curves` |
-| vt-explain | `vt-explain-contrast`, `-ranking`, `-twin-curves`, `-received-best`, `-betas` |
+| vt-fit | `vt-fit-km`, `-eligibility`, `-calibration`, `-curves` |
+| vt-explain | `vt-explain-contrast`, `-ranking`, `-twin-curves`, `-received-best`, `-components`, `-distance`, `-stratum`, `-stratum-curves`, `-betas` |
 | rm-linear | `rm-linear-residuals`, `rm-linear-qq` |
 
 A plot method that returns several plots saves them as `<name>-1`, `<name>-2`
