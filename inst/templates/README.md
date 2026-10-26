@@ -153,6 +153,13 @@ forest that was checked. Scaffold both into the same set, for example
 `add_job("rfs", "dead", "rfs", qualifier = "explain")`, and render the fit job
 first.
 
+**Confidence bands.** Set `BANDS_B` in an explain job to draw 95% intervals on the importance and pointwise
+bands on the partial plots. Each band regrows the forest on `BANDS_B` subsamples of the patients, so at study
+size the job runs for hours: start it with `hvtiRtemplates::submit_job()`, and the console refuses it until
+the bands are cached. 100 is right for a report and 25 to 50 for a first look. Leave `SUBRATIO` at `NULL`
+unless the job warns that a subsample holds fewer than 100 events or of the smallest class. `BAND_STYLE` and
+`BAND_AT` change only the drawing, and redraw from the cache.
+
 Older studies name these jobs `rfsrc.*` or `rf.*`, whatever the outcome. They
 map by the outcome in the job's fit call, not by the name:
 
@@ -395,7 +402,7 @@ as on a Mac without XQuartz.
 | lp-mirror | `lp-mirror-unmatched`, `lp-mirror-weighted`, and `lp-mirror-matched` when `MATCH` is set |
 | bc, bh, bl, br | `<prefix>-frequencies` |
 | nb-boostmtree | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>`, `-traces` |
-| rfc-, rfr-, rfs-explain | `<template>-importance`, `-dependence-marginal`, `-dependence-partial` |
+| rfc-, rfr-, rfs-explain | `<template>-importance`, `-dependence-marginal`, `-dependence-partial`, and with `BANDS_B` above 0 `-importance-intervals` and `-dependence-partial-bands` |
 | rfc-fit | `rfc-fit-diagnostics-error`, `-roc` |
 | rfr-fit | `rfr-fit-diagnostics-error`, `-predicted` |
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |

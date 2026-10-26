@@ -219,6 +219,9 @@ test_that("the band figures build, with ribbons or bars as chosen", {
   expect_true("GeomRibbon" %in% layers(ribbon))
   expect_false("GeomRibbon" %in% layers(bars))
   expect_true("GeomErrorbar" %in% layers(bars))
+  # patchworkGrob() opens a device when none is open and leaves it; hold a null one and close it.
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
   for (p in list(ribbon, bars)) expect_s3_class(patchwork::patchworkGrob(p), "gtable")
   ci <- data.frame(lower = c(-0.1, 0.2), mean = c(0, 0.3), upper = c(0.1, 0.4), row.names = c("a", "b"))
   expect_s3_class(ggplot2::ggplot_build(hvtiRtemplates:::.plot_vimp_intervals(ci)), "ggplot_built")

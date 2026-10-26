@@ -354,6 +354,7 @@ for (.i in seq_along(.pages)) {
 #| results: asis
 # Checks the band choices before anything is grown, and says what will be. With BANDS_B at 0 it
 # writes nothing, so the job renders as it did before the bands existed.
+# unnumbered: a three-row summary of the band settings, not a result the report cites
 if (BANDS_B > 0) {
   cat("## Confidence bands\n\n")
   cat(paste(

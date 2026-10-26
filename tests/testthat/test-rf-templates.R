@@ -417,7 +417,7 @@ test_that("rfc-explain ranks by overall importance, not per class", {
   expect_s3_class(ggplot2::ggplot_build(plot(env$pd)), "ggplot_built")
 })
 
-test_that("no explain template grows a forest", {
+test_that("no explain template grows a forest on the full cohort", {
   # The design's central promise: an explanation describes the forest the fit
   # job saved. A refit here, however helpful it looks when the handoff is
   # missing, would explain a different forest in a report that says otherwise.
@@ -442,6 +442,16 @@ test_that("no explain template grows a forest", {
   for (f in templates) {
     code <- sub("#.*$", "", readLines(f, warn = FALSE))
     expect_false(any(grepl(grows_forest, code)), info = basename(f))
+  }
+  # The one place a forest is grown for an explain is a subsample refit.
+  expect_match(paste(deparse(body(hvtiRtemplates:::.band_refit)), collapse = "\n"), "rfsrc(", fixed = TRUE)
+})
+
+test_that("every fit grows the forest subsample() needs: saved, by.root", {
+  for (t in c("rfs", "rfc", "rfr")) {
+    src <- paste(readLines(template_path(t, "fit"), warn = FALSE), collapse = "\n")
+    expect_false(grepl("forest\\s*=\\s*FALSE", src), info = t)
+    expect_false(grepl("bootstrap\\s*=", src), info = t)
   }
 })
 

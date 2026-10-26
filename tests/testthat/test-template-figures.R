@@ -43,7 +43,8 @@ test_that("every printed figure is also saved, under its documented name", {
     `sid-clusters` = c("sid-clusters-metrics", "sid-clusters-sankey", "sid-clusters-silhouette", "sid-clusters-mds")
   )
   for (t in c("rfc-explain", "rfr-explain", "rfs-explain")) {
-    expected[[t]] <- paste0(t, c("-importance", "-dependence-marginal", "-dependence-partial"))
+    expected[[t]] <- paste0(t, c("-importance", "-dependence-marginal", "-dependence-partial",
+                                 "-importance-intervals", "-dependence-partial-bands"))
   }
   for (name in names(expected)) {
     src <- template_source(name)
