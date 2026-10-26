@@ -160,7 +160,8 @@ test_that("a subsample forest that cannot give a value leaves NA for that subsam
     calls <<- calls + 1L
     if (calls == 2L) stop("level absent") else c(1, 2)
   }, .package = "hvtiRtemplates")
-  out <- hvtiRtemplates:::.band_partial(pool, f, list(1:50, 1:50), "Temp", grid, NULL, 1)
+  expect_warning(out <- hvtiRtemplates:::.band_partial(pool, f, list(1:50, 1:50), "Temp", grid, NULL, 1),
+                 "Temp: 1 of 2 subsample forests gave no partial value")
   expect_false(anyNA(out$star[, 1]))
   expect_true(all(is.na(out$star[, 2])))
 })

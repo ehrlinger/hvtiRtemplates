@@ -156,6 +156,17 @@
     rm(fit)
     if (is.function(pool$progress)) pool$progress(b, B)
   }
+  # Warn once per variable when subsample forests gave it no value; the NA columns are left as they are.
+  for (v in pool$vars) {
+    mat <- pool$star[[v]]
+    lost <- sum(colSums(is.na(mat)) == nrow(mat))
+    if (lost == B) {
+      warning(v, ": ", B, " of ", B, " subsample forests gave no partial value; it has no band.", call. = FALSE)
+    } else if (lost > 0L) {
+      warning(v, ": ", lost, " of ", B, " subsample forests gave no partial value; its band rests on the other ",
+              B - lost, ".", call. = FALSE)
+    }
+  }
   invisible(pool)
 }
 
