@@ -43,6 +43,12 @@ skip_ac <- function(env = parent.frame()) {
   skip_if_not_installed("patchwork")
   withr::local_package("hvtiRutilities", .local_envir = env)
 }
+
+# Built layers of the manuscript figure's curve, by geom, from ggplot_build().
+built_layers <- function(curve) {
+  b <- ggplot2::ggplot_build(curve)
+  stats::setNames(b$data, vapply(curve$layers, function(l) class(l$geom)[[1]], ""))
+}
 # nolint end
 
 test_that("an ac job runs unedited but for its strata, with no warning, and saves its figures", {
@@ -122,6 +128,13 @@ test_that("an ac job completes when one stratum is all censored", {
   b <- surv[surv$stratum == "b", ]
   expect_identical(unique(b$survival), 1)
   expect_identical(max(b$time), counts$max_fup[counts$stratum == "b"])
+  # The manuscript figure's straight line runs flat for it too, with no event point.
+  layers <- built_layers(env$km_figure("grp")[[1]])
+  b_group <- match("b", counts$stratum)
+  line_b <- layers$GeomLine[layers$GeomLine$group == b_group, ]
+  expect_identical(unique(line_b$y), 100)
+  expect_identical(max(line_b$x), counts$max_fup[counts$stratum == "b"])
+  expect_false(b_group %in% layers$GeomPoint$group)
 })
 
 test_that("an ac job completes when no patient has the event", {
@@ -149,7 +162,8 @@ test_that("CI_TIMES draws confidence bars at those times, with the tables' limit
   geoms <- function(p) vapply(p$layers, function(l) class(l$geom)[[1]], "")
   # 0.005 years is before the first event (follow-up starts at 0.01) and 50 is past follow-up:
   # neither has limits to draw.
-  env <- ac_run(ac_data(), list(STRATA = "grp", CI_TIMES = c(0.005, 1, 3, 50), CI_BAND = FALSE))
+  # On the steps a bar stands at the time asked for; the straight lines are the next test.
+  env <- ac_run(ac_data(), list(STRATA = "grp", CI_TIMES = c(0.005, 1, 3, 50), CI_BAND = FALSE, STEPS = TRUE))
   expect_identical(env$.warnings, character(0))
   curve <- env$km_figure("grp")[[1]]
   # CI_BAND = FALSE with CI_TIMES set: the SAS figure's bars alone.
@@ -179,6 +193,31 @@ test_that("CI_TIMES draws confidence bars at those times, with the tables' limit
   expect_false(any(c("GeomRibbon", "GeomErrorbar") %in% geoms(env$km_figure("grp")[[1]])))
 })
 
+test_that("under straight lines a bar stands at the last event before its time, on the line", {
+  skip_ac()
+  local_child_chunks()
+  # Sparse events, as the review of #426 posed them: one death at 1 year, nine at 10.
+  d <- hazard_data()[1:10, ]
+  d$iv_dead <- c(1, rep(10, 9))
+  d$dead <- 1L
+  env <- ac_run(d, list(CI_TIMES = 9.9, CI_BAND = FALSE, CLEVEL = 0.95))
+  expect_identical(env$.warnings, character(0))
+  expect_false(env$STEPS)
+  layers <- built_layers(env$km_figure()[[1]])
+  bar <- layers$GeomErrorbar
+  at <- life_table_at(env$d, env$TIME, env$EVENT, times = 9.9, conf_level = 0.95)
+  # At the event, 1 year, with the 9.9-year row's limits, and the line passes inside them.
+  expect_equal(bar$x, 1)
+  expect_equal(c(bar$ymin, bar$ymax), 100 * c(at$cl_lower, at$cl_upper))
+  y <- layers$GeomLine$y[layers$GeomLine$x == 1]
+  expect_true(y > bar$ymin && y < bar$ymax)
+  # On the steps it stands at 9.9 years, with the same limits.
+  env$STEPS <- TRUE
+  bar <- built_layers(env$km_figure()[[1]])$GeomErrorbar
+  expect_equal(bar$x, 9.9)
+  expect_equal(c(bar$ymin, bar$ymax), 100 * c(at$cl_lower, at$cl_upper))
+})
+
 test_that("by default the manuscript figure draws the band and no bars", {
   skip_ac()
   local_child_chunks()
@@ -190,12 +229,6 @@ test_that("by default the manuscript figure draws the band and no bars", {
   expect_true("GeomRibbon" %in% geoms(curve))
   expect_false("GeomErrorbar" %in% geoms(curve))
 })
-
-# Built layers of the manuscript figure's curve, by geom, from ggplot_build().
-built_layers <- function(curve) {
-  b <- ggplot2::ggplot_build(curve)
-  stats::setNames(b$data, vapply(curve$layers, function(l) class(l$geom)[[1]], ""))
-}
 
 test_that("numeric strata keep one color for curve, band and bars (1, 2, 10 sort as numbers)", {
   skip_ac()
@@ -212,11 +245,39 @@ test_that("numeric strata keep one color for curve, band and bars (1, 2, 10 sort
   expect_identical(b$plot$scales$get_scales(col_aes)$get_limits(), c("1", "2", "10"))
   expect_identical(b$plot$scales$get_scales("fill")$get_limits(), c("1", "2", "10"))
   by_group <- function(x, col) tapply(x[[col]], x$group, function(v) unique(v)[[1]])
-  line <- by_group(layers$GeomStep, col_aes)
+  line <- by_group(layers$GeomLine, col_aes)
   band <- by_group(layers$GeomRibbon, "fill")
   bar <- by_group(layers$GeomErrorbar, col_aes)
   expect_identical(unname(line), unname(band))
   expect_identical(unname(line), unname(bar))
+})
+
+test_that("the curves join event points with straight lines by default, and STEPS draws steps", {
+  skip_ac()
+  local_child_chunks()
+  geoms <- function(p) vapply(p$layers, function(l) class(l$geom)[[1]], "")
+  env <- ac_run(ac_data(), list(STRATA = "grp"))
+  expect_identical(env$.warnings, character(0))
+  expect_false(env$STEPS)
+  events <- sort(unique(env$km$time[env$km$time <= env$plot_max]))
+  # The manuscript figure: a line through the events, with a point at each, and no corner at a censored time.
+  curve <- env$km_figure()[[1]]
+  expect_true(all(c("GeomLine", "GeomPoint") %in% geoms(curve)))
+  expect_false("GeomStep" %in% geoms(curve))
+  layers <- built_layers(curve)
+  expect_equal(sort(unique(layers$GeomPoint$x)), events)
+  expect_true(all(layers$GeomLine$x %in% c(0, events, max(layers$GeomLine$x))))
+  # The reading page: the same, panel by panel.
+  page <- env$km_views(env$km)
+  for (i in 1:5) expect_true(all(c("GeomLine", "GeomPoint") %in% geoms(page[[i]])))
+  expect_equal(sort(unique(ggplot2::ggplot_build(page[[1]])$data[[2]]$x)), events)
+  # STEPS = TRUE draws the Kaplan-Meier steps, and keeps the points.
+  env$STEPS <- TRUE
+  expect_true(all(c("GeomStep", "GeomPoint") %in% geoms(env$km_figure()[[1]])))
+  expect_true(all(c("GeomStep", "GeomPoint") %in% geoms(env$km_views(env$km)[[1]])))
+  # Drawn to a scoped null device, so no device is left open for the tests after this one.
+  withr::local_pdf(NULL)
+  expect_no_warning(print(env$km_figure("grp")))
 })
 
 test_that("one curve is black, and no stratum takes the event's red or censored blue", {
@@ -228,10 +289,10 @@ test_that("one curve is black, and no stratum takes the event's red or censored 
   d <- hazard_data()
   d$grp3 <- rep(c(1, 2, 10), length.out = nrow(d))
   env <- ac_run(d, list(STRATA = "grp3"))
-  one <- unique(built_layers(env$km_figure()[[1]])$GeomStep[[col_aes]])
+  one <- unique(built_layers(env$km_figure()[[1]])$GeomLine[[col_aes]])
   expect_identical(one, "#000000")
   expect_identical(unique(ggplot2::ggplot_build(env$km_views(env$km)[[1]])$data[[1]][[col_aes]]), "#000000")
-  three <- unique(built_layers(env$km_figure("grp3")[[1]])$GeomStep[[col_aes]])
+  three <- unique(built_layers(env$km_figure("grp3")[[1]])$GeomLine[[col_aes]])
   expect_length(three, 3L)
   expect_false(any(toupper(three) %in% toupper(roles)))
   views <- unique(ggplot2::ggplot_build(env$km_views(env$strata_fits$grp3)[[1]])$data[[1]][[col_aes]])
@@ -244,7 +305,7 @@ test_that("bars at close early times on a long axis stay at their own time and a
   d <- hazard_data()
   d$grp3 <- rep(c(1, 2, 10), length.out = nrow(d))
   early <- c(30, 90) / 365.2425
-  env <- ac_run(d, list(STRATA = "grp3", CI_TIMES = early, CI_BAND = FALSE, PLOT_MAX = 20))
+  env <- ac_run(d, list(STRATA = "grp3", CI_TIMES = early, CI_BAND = FALSE, PLOT_MAX = 20, STEPS = TRUE))
   expect_identical(env$.warnings, character(0))
   curve <- env$km_figure("grp3")[[1]]
   expect_no_warning(layers <- built_layers(curve))
