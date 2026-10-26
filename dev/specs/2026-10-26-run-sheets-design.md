@@ -40,7 +40,7 @@ wording below is for `rfs-fit`, and section 3 lists the variants.
 > - The study dataset, named by `DATASET` (`"built"` by default). While you work, a draft can read a
 >   build that is not registered yet, and the report says so on its first page. The final render needs
 >   the build registered with `hvtiRutilities::update_manifest()`.
-> - Packages: randomForestSRC ≥ 3.7.0, ggRandomForests ≥ 4.0.0, hvtiPlotR ≥ 2.8.18 and hvtiRutilities.
+> - Packages: randomForestSRC (>= 3.7.0), ggRandomForests (>= 4.0.0), hvtiPlotR (>= 2.8.18) and hvtiRutilities.
 >   Each floor is checked when the job starts.
 >
 > **Outline.** These are the job's own sections, in order. The comments at each `EDIT:` marker say what
@@ -89,13 +89,13 @@ Five reads are not literal. Measured with a prototype of the parser on 2026-10-2
 |---|---|---|
 | `hs-concordance` | `.model_path[[m]]` | `["hm"]`, already there |
 | `lm-checkpred` | `MODEL_PATH`, from `MODEL_FILE`, an `EDIT:` choice | none: this change adds `["lm"]` |
-| `lp-mirror` | `MODEL_PATH`, from `MODEL_FILE` | `["lm"]`, already there |
+| `lp-mirror` | `MODEL_PATH`, from `MODEL_FILE` | `["lm"]`, narrowed by this change to `["lm-propensity_binary"]`, the bundle its description and its `MODEL_FILE` name. With `"lm"`, every lm model, `lm-checkpred` included, read as a mirror's input |
 | `vt-fit` | `.vp_path`, and a reader's argument `p` | none: this change adds `["sid-fit", "vp-fit"]` |
 | `vt-explain` | a reader's argument `p` (its `vt.rds` read is literal) | none: this change adds `["sid-clusters"]` |
 
 **For a consumer whose hand-off path is not literal, and only for one, the catalog's `upstream` field
-supplies the producers.** A value may be a prefix (`"lm"`, meaning every `lm-*` template) or a template's
-full name (`"sid-fit"`). A template never links to itself. One read is literal and has no producer
+supplies the producers.** A value may be a prefix (`"lm"`, meaning every `lm-*` template that saves a hand-off) or a
+template's full name (`"sid-fit"`). A template never links to itself. One read is literal and has no producer
 template: `hm` reads `hm-selection.rds`, which its companion selection runner writes, so the sheet
 quotes the `rebuild` text ("the companion hm selection runner"). The catalog's other `upstream` and `downstream` values are not used,
 because they are hand-written and at least one disagrees with the code: the catalog lists hm → hp, and

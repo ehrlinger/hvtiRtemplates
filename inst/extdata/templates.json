@@ -810,7 +810,7 @@
       "r_exemplars": 186,
       "r_jobs": 606,
       "upstream": [
-        "lm"
+        "lm-propensity_binary"
       ],
       "downstream": [],
       "workflows": [
