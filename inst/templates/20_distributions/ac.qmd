@@ -534,7 +534,7 @@ km_views <- function(fit) {
   view <- function(data, y, ylab) {
     ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum)) +
       (if (isTRUE(STEPS)) ggplot2::geom_step() else ggplot2::geom_line()) +
-      ggplot2::geom_point(data = data[data$event, , drop = FALSE], size = 1.2) +
+      ggplot2::geom_point(data = data[data$event, , drop = FALSE], size = 1.2, show.legend = FALSE) +
       # The limits keep an empty panel (no events, so no cumulative hazard) from warning.
       ggplot2::scale_color_manual(values = cols, limits = names(cols)) +
       ggplot2::labs(x = "Years", y = ylab, color = NULL) +
@@ -590,11 +590,9 @@ km_figure <- function(strata = NULL) {
     ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
-  # hv_survival()'s plot always draws steps; the curve's layer is redrawn as a line.
-  if (!isTRUE(STEPS)) {
-    .curve <- curve$layers[[which(vapply(curve$layers, function(l) inherits(l$geom, "GeomStep"), logical(1)))]]
-    .curve$geom <- ggplot2::GeomLine
-  }
+  # hv_survival()'s plot draws steps; its curve is redrawn as a line. A layer is
+  # changed in place, and an hvtiPlotR that draws no step layer is left as it draws.
+  if (!isTRUE(STEPS)) for (.l in curve$layers) if (inherits(.l$geom, "GeomStep")) .l$geom <- ggplot2::GeomLine
   # A point at each event, so a reader sees where the estimate moves and how often.
   curve <- curve + ggplot2::geom_point(data = hv$data[hv$data$n.event > 0, , drop = FALSE], size = 1.2, show.legend = FALSE)
   # Bars at the chosen times, from the same life table as the horizon tables, so a

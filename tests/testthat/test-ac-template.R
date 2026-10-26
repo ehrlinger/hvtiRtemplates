@@ -43,6 +43,12 @@ skip_ac <- function(env = parent.frame()) {
   skip_if_not_installed("patchwork")
   withr::local_package("hvtiRutilities", .local_envir = env)
 }
+
+# Built layers of the manuscript figure's curve, by geom, from ggplot_build().
+built_layers <- function(curve) {
+  b <- ggplot2::ggplot_build(curve)
+  stats::setNames(b$data, vapply(curve$layers, function(l) class(l$geom)[[1]], ""))
+}
 # nolint end
 
 test_that("an ac job runs unedited but for its strata, with no warning, and saves its figures", {
@@ -122,6 +128,13 @@ test_that("an ac job completes when one stratum is all censored", {
   b <- surv[surv$stratum == "b", ]
   expect_identical(unique(b$survival), 1)
   expect_identical(max(b$time), counts$max_fup[counts$stratum == "b"])
+  # The manuscript figure's straight line runs flat for it too, with no event point.
+  layers <- built_layers(env$km_figure("grp")[[1]])
+  b_group <- match("b", counts$stratum)
+  line_b <- layers$GeomLine[layers$GeomLine$group == b_group, ]
+  expect_identical(unique(line_b$y), 100)
+  expect_identical(max(line_b$x), counts$max_fup[counts$stratum == "b"])
+  expect_false(b_group %in% layers$GeomPoint$group)
 })
 
 test_that("an ac job completes when no patient has the event", {
@@ -190,12 +203,6 @@ test_that("by default the manuscript figure draws the band and no bars", {
   expect_true("GeomRibbon" %in% geoms(curve))
   expect_false("GeomErrorbar" %in% geoms(curve))
 })
-
-# Built layers of the manuscript figure's curve, by geom, from ggplot_build().
-built_layers <- function(curve) {
-  b <- ggplot2::ggplot_build(curve)
-  stats::setNames(b$data, vapply(curve$layers, function(l) class(l$geom)[[1]], ""))
-}
 
 test_that("numeric strata keep one color for curve, band and bars (1, 2, 10 sort as numbers)", {
   skip_ac()
