@@ -223,6 +223,37 @@ test_that("with BANDS_B at its default bands-plan writes nothing, not even the s
   expect_identical(utils::capture.output(rf_run("rfs", "explain", "bands-plan", env)), character())
 })
 
+test_that("the confidence-band heading is written only from inside the bands-plan chunk", {
+  # Source-level: the heading must never be static markdown, or it renders even when BANDS_B is 0.
+  files <- template_list()$file
+  for (name in c("rfs-explain", "rfc-explain", "rfr-explain")) {
+    f <- files[basename(files) == paste0(name, ".qmd")]
+    expect_length(f, 1L)
+    lines <- readLines(f, warn = FALSE)
+    in_chunk <- FALSE
+    label <- NA_character_
+    outside <- integer()
+    inside_labels <- character()
+    for (i in seq_along(lines)) {
+      line <- lines[i]
+      if (!in_chunk && grepl("^```\\{", line)) {
+        in_chunk <- TRUE
+        label <- NA_character_
+      } else if (in_chunk && grepl("^```\\s*$", line)) {
+        in_chunk <- FALSE
+      } else if (in_chunk && grepl("^#\\|\\s*label:", line)) {
+        label <- sub("^#\\|\\s*label:\\s*", "", line)
+      } else if (in_chunk && grepl("## Confidence bands", line, fixed = TRUE)) {
+        inside_labels <- c(inside_labels, label)
+      } else if (!in_chunk && grepl("^## Confidence bands", line)) {
+        outside <- c(outside, i)
+      }
+    }
+    expect_length(outside, 0L)
+    expect_true("bands-plan" %in% inside_labels, info = name)
+  }
+})
+
 test_that("rfs-explain draws the importance intervals and the partial bands from cached subsamples", {
   skip_on_cran()
   rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
