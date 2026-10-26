@@ -169,7 +169,7 @@ analysis_templates <- function() {
 
 test_that("every shipped template ends with one embedded provenance chunk", {
   templates <- analysis_templates()
-  expect_equal(nrow(templates), 44L)
+  expect_equal(nrow(templates), 45L)
 
   for (path in templates$file) {
     source <- readLines(path, warn = FALSE)
