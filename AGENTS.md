@@ -77,17 +77,18 @@ feedback faster than a public release allows, not to lower the bar.
 | `lint.yaml` | two jobs. `lint`, [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html). `docs-current`, **PRs only**: runs `roxygen2::roxygenise()` with roxygen2 pinned and fails if `man/`, `NAMESPACE` or `DESCRIPTION` change, so a PR that skips `devtools::document()` fails here |
 | `pkgdown.yaml` | the site build |
 | `spec-counts.yaml` | three checks. `check-spec-counts.py`, the prose in `dev/specs/` must agree with the generated map. `check-flow-counts.py`, every `data-check` anchored number in the job flow diagrams must agree with the maps they copy from. `check-roadmap-counts.py`, the roadmap ledger and `inst/templates/` must agree **in both directions**, so a template no ledger row claims fails the PR just as a row claiming an absent template does. Editing a count without regenerating fails the PR |
-| `test-coverage.yaml` | coverage upload |
+| `test-coverage.yaml` | coverage upload. **Post-merge only**: it ran the whole suite a second time on every PR and is not a required check |
 
 ⚠️ **`check-manual.yaml` is not a PR gate.** Its triggers are `push` to
 `main` and `workflow_dispatch`; there is no `pull_request` among them,
 so the PDF manual build runs for the first time *after* a change has
 already merged. A change that breaks the manual therefore passes every
 check on its PR and fails on `main`, where there is no PR left to fix it
-in. Every other workflow in this table does run on `pull_request`. If a
-change touches Rd markup (Greek, `\eqn{}` content, combining marks,
-anything the PDF pipeline renders), build the manual locally before
-merging rather than trusting a green PR.
+in. Every other workflow in this table does run on `pull_request`,
+except `test-coverage.yaml`, which is post-merge by choice. If a change
+touches Rd markup (Greek, `\eqn{}` content, combining marks, anything
+the PDF pipeline renders), build the manual locally before merging
+rather than trusting a green PR.
 
 ⚠️ **A green `R-CMD-check` job can hide a suite that skipped the tests
 you care about.** The job’s conclusion reports whether `R CMD check`
@@ -525,17 +526,20 @@ guess.
   `required_approving_review_count` is **0** here, measured 2026-09-10,
   so a solo-authored PR merges on its required status checks alone and
   needs neither a second reviewer nor an `--admin` bypass. The gate that
-  does exist is `required_status_checks`: six contexts, all of which
-  must report `SUCCESS`, which is why a PR briefly shows `BLOCKED` while
-  its checks are still running. Only one of them is an `R-CMD-check`
-  leg, `ubuntu-latest (release)`: a pull request runs no other, so
-  requiring macOS, Windows, devel or oldrel-1 would leave every PR
-  waiting on a check that never starts. Those legs run on a push to
-  `main` and in the weekly sweep (since 2026-10-12; until then all five
-  legs ran on every PR and all five were required). Copilot reviews are
-  `COMMENTED`, never `APPROVED`, and would not have satisfied an
-  approval rule anyway. `require_code_owner_review` is **false**, and no
-  repository in the family has a `CODEOWNERS` file.
+  does exist is `required_status_checks`: six contexts (`docs-current`,
+  `house-style`, `lint`, `news-fragment`, `pkgdown`,
+  `ubuntu-latest (release)`; `test-coverage` was dropped on 2026-10-26
+  when coverage moved post-merge), all of which must report `SUCCESS`,
+  which is why a PR briefly shows `BLOCKED` while its checks are still
+  running. Only one of them is an `R-CMD-check` leg,
+  `ubuntu-latest (release)`: a pull request runs no other, so requiring
+  macOS, Windows, devel or oldrel-1 would leave every PR waiting on a
+  check that never starts. Those legs run on a push to `main` and in the
+  weekly sweep (since 2026-10-12; until then all five legs ran on every
+  PR and all five were required). Copilot reviews are `COMMENTED`, never
+  `APPROVED`, and would not have satisfied an approval rule anyway.
+  `require_code_owner_review` is **false**, and no repository in the
+  family has a `CODEOWNERS` file.
   _(History (superseded 2026-09-10): this paragraph read “A PR needs one approving review, and you cannot give it to your own PR … `required_approving_review_count` is **1** in eleven of the twelve”, and recommended an admin merge or a second reviewer. That matched the 2026-09-02 measurement below and had stopped being true by 2026-09-10, when [\#101](https://github.com/ehrlinger/hvtiRtemplates/pull/101) showed `CLEAN` with no review decision at all.)
   ⚠️ **The ruleset is near-uniform across the family, with one
   outlier.** Measured over all fifteen `hvti*`/`TemporalHazard`
