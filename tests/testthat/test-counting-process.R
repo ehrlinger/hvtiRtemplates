@@ -31,6 +31,17 @@ test_that(".cp_check() stops on an overlap unless REPAIR clips it", {
   expect_match(out$repaired[["clip"]], "1 overlapping interval clipped")
 })
 
+test_that("a tie on start is settled by stop, whatever order the rows arrive in", {
+  # Patient 1's second and third rows both start at 1; the longer one sorts last, so the event row is last and clean.
+  d <- cp_rows()
+  d$t0[3] <- 1
+  d$t1[2] <- 3
+  d$t1[3] <- 2                        # rows 2 and 3 tie on start, and the event row is the shorter
+  fwd <- tryCatch(cp(d, "clip"), error = conditionMessage)
+  rev <- tryCatch(cp(d[nrow(d):1, ], "clip"), error = conditionMessage)
+  expect_identical(fwd, rev)
+})
+
 test_that("clip drops an interval it leaves empty, and refuses to drop an event", {
   d <- rbind(cp_rows(), data.frame(id = 2L, t0 = 1.2, t1 = 1.8, dead = 0L, lab = 5, age = 70))
   out <- cp(d, "clip")                # the extra interval lies inside patient 2's second
@@ -116,4 +127,64 @@ test_that(".cp_repair_notice() marks a draft, and stops a final render", {
   withr::local_envvar(HVTI_TEMPLATE_STRICT = "1")
   expect_error(hvtiRtemplates:::.cp_repair_notice(c(clip = "1 overlapping interval clipped")),
                "HVTI_TEMPLATE_STRICT")
+})
+
+test_that(".cp_check() stops on a start or stop that is not numeric", {
+  d <- cp_rows()
+  d$t0 <- as.character(d$t0)
+  expect_error(cp(d), "t0 must be numeric")
+  d <- cp_rows()
+  d$t1 <- as.character(d$t1)
+  expect_error(cp(d), "t1 must be numeric")
+})
+
+test_that("a message names a ccfid-style id but never an MRN", {
+  d <- cp_rows()
+  d$t0[2] <- 0.5
+  expect_error(cp(d), "1 overlapping interval \\(1\\)")
+  for (name in c("mrn", "MRN", "emrn")) {
+    m <- cp_rows()
+    names(m)[names(m) == "id"] <- name
+    m[[name]] <- m[[name]] + 7300000L
+    m$t0[2] <- 0.5
+    msg <- tryCatch(hvtiRtemplates:::.cp_check(m, id = name, start = "t0", stop = "t1", event = "dead",
+                                               predictors = c("lab", "age")), error = conditionMessage)
+    expect_match(msg, "1 overlapping interval")
+    expect_false(grepl("73000", msg, fixed = TRUE), info = name)
+    expect_match(msg, "row")
+    # The other messages that name patients hold to it too.
+    m <- cp_rows()
+    names(m)[names(m) == "id"] <- name
+    m[[name]] <- m[[name]] + 7300000L
+    m$dead[1] <- 1L
+    msg <- tryCatch(hvtiRtemplates:::.cp_check(m, id = name, start = "t0", stop = "t1", event = "dead",
+                                               predictors = c("lab", "age")), error = conditionMessage)
+    expect_match(msg, "an event before their last interval")
+    expect_false(grepl("73000", msg, fixed = TRUE), info = name)
+  }
+})
+
+test_that(".cp_check() reads an integer64 id by value, as Parquet hands one over", {
+  skip_if_not_installed("bit64")
+  ids <- bit64::as.integer64(9100000000000 + c(1, 1, 1, 2, 2, 3))
+  d <- cp_rows()
+  d$id <- ids
+  # Clean rows pass: every patient's last interval is found, not the first.
+  out <- cp(d)
+  expect_identical(out$counts$value[out$counts$measure == "Patients"], "3")
+  expect_s3_class(out$data$id, "integer64")
+  # An event on a first row with later rows stops, and names the id with its digits.
+  early <- d
+  early$dead[1] <- 1L
+  expect_error(cp(early), "1 patient has an event before their last interval \\(9100000000001\\)")
+  # The same event on the last row of its patient passes.
+  late <- d
+  late$dead[4:5] <- c(0L, 1L)
+  expect_length(cp(late)$repaired, 0L)
+  # An overlap names the id too, rows come back in patient order, and a patient's rows are not mixed.
+  over <- d
+  over$t0[5] <- 0.5
+  expect_error(cp(over), "1 overlapping interval \\(9100000000002\\)")
+  shuffled <- cp(d[c(6, 3, 5, 1, 4, 2), ])
+  expect_identical(as.character(shuffled$data$id), as.character(ids))
 })

@@ -132,7 +132,9 @@ long dataset, not an imputation.}
 patient's follow-up, such as a random hazard forest on counting-process
 rows. With a \code{where}, it stops when a patient kept by \code{where}
 lost some of their rows but not all, since that shortens follow-up without
-a word. \code{FALSE}, the default, checks nothing.}
+a word. An \code{analysis_set} is not checked: one that selects intervals
+rather than patients shortens follow-up unnoticed. \code{FALSE}, the
+default, checks nothing.}
 }
 \value{
 A list:

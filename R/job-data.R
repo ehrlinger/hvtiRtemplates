@@ -642,7 +642,9 @@
 #'   patient's follow-up, such as a random hazard forest on counting-process
 #'   rows. With a \code{where}, it stops when a patient kept by \code{where}
 #'   lost some of their rows but not all, since that shortens follow-up without
-#'   a word. \code{FALSE}, the default, checks nothing.
+#'   a word. An \code{analysis_set} is not checked: one that selects intervals
+#'   rather than patients shortens follow-up unnoticed. \code{FALSE}, the
+#'   default, checks nothing.
 #' @param imputation \code{NULL}, the default, or the name of the column that
 #'   numbers the imputations of stacked multiple imputations, one row per
 #'   patient per imputation. With \code{one_row_per_patient = TRUE} the rows
@@ -908,9 +910,11 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # that models intervals asks for whole patients: each one kept with every row,
 # or dropped. Counts only; no identifier reaches the message.
 .check_whole_patients <- function(before, after, id) {
-  n_before <- table(.id_text(before[[id]]))
-  n_after <- table(.id_text(after[[id]]))
-  kept <- names(n_after)
+  # Matched on the column itself, not on its text: .id_text() writes every integer64 ID as "0".
+  patients <- unique(before[[id]][!is.na(before[[id]])])
+  n_before <- tabulate(match(before[[id]], patients), length(patients))
+  n_after <- tabulate(match(after[[id]], patients), length(patients))
+  kept <- n_after > 0L
   partial <- sum(n_after[kept] < n_before[kept])
   if (partial) {
     stop(partial, if (partial == 1L) " patient" else " patients", " kept by WHERE lost some of their rows but not ",

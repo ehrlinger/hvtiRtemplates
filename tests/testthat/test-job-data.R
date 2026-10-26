@@ -1562,3 +1562,22 @@ test_that("read_job_data(whole_patients = TRUE) refuses a WHERE that keeps part 
   expect_identical(nrow(read_job_data(cfg, key = key, whole_patients = TRUE)$data), 6L)
   expect_error(read_job_data(cfg, key = key, whole_patients = NA), "whole_patients must be TRUE or FALSE")
 })
+
+test_that("whole_patients reads an integer64 ID by value, as Parquet hands one over", {
+  skip_if_not_installed("bit64")
+  skip_if_not_installed("arrow")
+  # .id_text() writes every integer64 as "0", so counting rows per patient by text made one patient of all of them
+  # and a WHERE that dropped a patient whole looked like one that cut a patient short.
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, "Integer64", 42L, renv = FALSE))
+  long <- data.frame(ccfid = bit64::as.integer64(9100000000000 + c(1, 1, 1, 2, 2, 3)), iv_start = c(0, 1, 2, 0, 1, 0),
+                     iv_stop = c(1, 2, 3, 1, 2, 4), lab = c(5, 9, 5, 5, 5, 9), female = c(1, 1, 1, 0, 0, 1))
+  arrow::write_parquet(long, file.path(hvtiRutilities::study_dir("datasets", root), "built.parquet"))
+  suppressMessages(hvtiRutilities::register_data(root, "built.parquet", key = c("ccfid", "iv_start")))
+  cfg <- hvtiRutilities::study_config(root)
+  key <- c("ccfid", "iv_start")
+  out <- read_job_data(cfg, where = quote(female == 1), key = key, whole_patients = TRUE)
+  expect_identical(nrow(out$data), 4L)
+  expect_error(read_job_data(cfg, where = quote(lab < 9), key = key, whole_patients = TRUE),
+               "1 patient kept by WHERE lost some of their rows")
+})
