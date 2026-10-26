@@ -1,8 +1,8 @@
-# Run sheets: a "before you run" panel for every template
+# Run sheets: a generated run book for every template
 
 **Date:** 2026-10-26
 **Status:** designed, approved in conversation 2026-10-26.
-**Reads with:** `2026-10-22-run-job-design.md` (`hvti run`, `run_job()`, `guard_memory()`), the
+**Reads with:** `2026-10-22-run-job-design.md` (`hvti run`, `run_job()`, `guard_memory()`), and the
 working-read gate of PR #421 (a draft may read an unregistered build, a final render may not).
 **Packages:** hvtiRtemplates only.
 
@@ -11,8 +11,14 @@ working-read gate of PR #421 (a draft may read an unregistered build, a final re
 On 2026-10-23 John asked for run books: guidance that ships with the templates and tells an analyst
 how to run a job. That session proposed two layers. Layer 1 shipped in PR #407: every gallery row
 links its `add_job()` call to the "Work a job" vignette ("Then run it"). Layer 2 was deferred until
-the working-read gate settled. It is a short sheet per template that says what *this* template needs
-before it runs.
+the working-read gate settled. It is a sheet for each template that says what *this* template needs,
+how its job is laid out and what comes after it.
+
+The readers are the biostatistics team, and the sheets double as training material. So they are
+written in sentences that explain, not in terse labels. **The sheet is the outline, and the template
+holds the details.** The sheet says what to have ready, what sections the job walks through, how to
+run it and where to go next. The comments at each `EDIT:` marker in the template say what to set and
+why. The sheet never repeats them.
 
 The hand-written runbook for one study, `dev/TemporalHazard_runbook.md`, shows what goes wrong. Every
 warning in it is real, and it described one study's jobs on one date. A sheet written by hand for each
@@ -21,94 +27,149 @@ fails when the two disagree.
 
 ## 2. What a sheet says
 
-A sheet has up to five lines. Choices, packages and run are always there; data and fit appear when
-the template reads data or fits something. The wording below is for `rfs-fit`, and section 3 lists the
-variants.
+One page per template, with up to five sections. "What it does", Prerequisites, Outline and Run it
+are always present. Where to go next appears only when a template reads this one's output. The
+wording below is for `rfs-fit`, and section 3 lists the variants.
 
-> **Before you run `rfs-fit`**
+> ## `rfs-fit`: Random survival forest
 >
-> - **10 choices to make.** Each is an `EDIT:` marker. The job renders as a draft until all of them are
->   worked. ▸ *(the first line of each marker, as the DRAFT banner shows it)*
-> - **Packages:** randomForestSRC ≥ 3.7.0, ggRandomForests ≥ 4.0.0, hvtiPlotR ≥ 2.8.18, hvtiRutilities.
-> - **Data:** a registered dataset (`DATASET`, `"built"` by default) or an analysis set. A draft may
->   read an unregistered build and is marked as a draft. A final render needs the build registered first,
->   with `hvtiRutilities::update_manifest()`.
-> - **Fit:** cached by `cache_fit()`, so the next render reloads it. `REFIT` recomputes it.
-> - **Run it:** `render_job(job)` for a draft, `render_job(job, final = TRUE)` for the final.
+> *What it does.* The catalog's description.
+>
+> **Prerequisites**
+> - A study set up with `_study.yml`. *Start a new study* shows how.
+> - The study dataset, named by `DATASET` (`"built"` by default). While you work, a draft can read a
+>   build that is not registered yet, and the report says so on its first page. The final render needs
+>   the build registered with `hvtiRutilities::update_manifest()`.
+> - Packages: randomForestSRC ≥ 3.7.0, ggRandomForests ≥ 4.0.0, hvtiPlotR ≥ 2.8.18 and hvtiRutilities.
+>   Each floor is checked when the job starts.
+>
+> **Outline.** These are the job's own sections, in order. The comments at each `EDIT:` marker say what
+> to set and why.
+> 1. **Study choices**: 10 choices marked `EDIT:`.
+> 2. **Cohort**: reads the data.
+> 3. **Forest**: fits the forest and caches it, so a later render reloads it (`REFIT` recomputes it).
+>    Saves `rfs.rds`, which **rfs-explain** reads.
+> 4. **Does the forest work?**
+>
+> **Run it.** `render_job(job)` renders a draft. Render early and often; the DRAFT banner lists the
+> markers still open. Once none are left, `render_job(job, final = TRUE)` renders the final report, which
+> refuses unregistered data and any open marker. *Work a job* walks this loop.
+>
+> **Where to go next.** **rfs-explain** reads the forest this job saves. Add it to the same set, giving
+> it this job's subject and type, because that shared pair is how it finds the forest:
+> `add_job("rfs.explain", subject = "<this job's subject>", type = "<this job's type>")`.
 
-The gallery's render time is **not** on the sheet. It is already on the row, and a render on 800
-synthetic rows says little about how long a fit on a real cohort takes.
+## 3. Where each part comes from
 
-## 3. Where each line comes from
-
-| Line | Source in the template | Variants |
+| Part | Source | Variants |
 |---|---|---|
-| Choices | the lines carrying the `EDIT:` token, found by `.edit_marker_lines()`. `.guard_edits()` uses the same helper, so the sheet and the DRAFT banner cannot disagree | none |
-| Packages | `.template_packages()`, already used by `add_job()` and the preflight checks | a package with no floor is listed bare |
-| Data | a literal top-level `DATASET <-` assignment | **`.read_handoff(path, role, cfg, rebuild)`**: "Reads a hand-off (*role*) from *rebuild*. Render that first, in this set; a final render refuses one saved from unregistered data." **`.read_bootstrap_artifact()`**: "Reads what its companion bootstrap runner writes; run the runner first." **`.job_setup(..., box_data = FALSE)`**, the template's own statement that it reads no registered dataset: "Builds the study dataset rather than reading one." `DATASET <- NULL` with no other read: no dataset line |
-| Fit | `cache_fit()`, `guard_long_fit(why = )` and `guard_memory()` calls | no `cache_fit()`: no fit line. **guard**: "Refuses to start in an interactive session: *why*. Run it in the background." **memory**: "Checks the fit's memory against this session's limit before it starts." |
-| Run it | whether `guard_long_fit()` is called | guarded: `hvti run <folder>/<job>.qmd`, or `run_job(job)` from R, with `--final` / `final = TRUE` for the final |
+| Title and "What it does" | the catalog row's `name` and `description` | a deprecated template adds its `deprecation_note` |
+| Prerequisites: study | always present | none |
+| Prerequisites: data | a literal top-level `DATASET <-` assignment | `.job_setup(..., box_data = FALSE)`, the template's own statement that it reads no registered dataset: "Builds the study dataset rather than reading one; it needs the master snapshot named in its choices." `DATASET <- NULL` with no read: no data line |
+| Prerequisites: upstream jobs | the **hand-off graph** (below): each template whose saved file this one reads | "Render **ac** and **hz** first, in this same set. For a final render, render them final from registered data, because a final refuses a hand-off saved from an unregistered build." A read with no producer on disk quotes the `rebuild` text instead ("the companion hm selection runner") |
+| Prerequisites: runner | a `.read_bootstrap_artifact()` call | "Its screen runs in a companion script, `<prefix>.<subject>.<type>.runner.R`, which `add_job()` writes beside the job. Run that first; this job reports on what it saved." |
+| Prerequisites: packages | `.template_packages()`, already used by `add_job()` and the preflight checks | a package with no floor is listed bare |
+| Prerequisites: background | a `guard_long_fit()` call | "The `hvti` command on your PATH, from `install_hvti()`." |
+| Outline: sections | the template's `##` and `###` headings, read outside code chunks, in order | `###` nests under its `##` |
+| Outline: per-section notes | what the code in that section calls: `EDIT:` markers (counted), `read_job_data()` ("reads the data"), `.read_handoff()` ("reads *X*'s hand-off"), `cache_fit()` ("fits and caches"), `guard_long_fit(why = )` ("long: *why*; runs in the background"), `guard_memory()` ("checks memory against the session's limit first"), and `saveRDS(..., set_path("estimates", F))` ("saves `F`, which *Y* reads") | a section with none of these is listed by name alone. Markers above the first heading count under "Study choices" |
+| Run it | whether `guard_long_fit()` is called | guarded: "Start it in the background with `hvti run <folder>/<job>.qmd` (add `--final` for the final), or `run_job(job)` from R. It checks the job before it starts, and `hvti status` follows it." |
+| Where to go next | the hand-off graph, read in the other direction | none: the section is left out |
 
-The `rebuild` text is quoted as the template wrote it ("the ac job", "the companion hm selection
-runner"). It is free text, so the sheet does not try to resolve it to a template name.
+### The hand-off graph
 
-A call is read only from **literal** arguments. When `why`, `role` or `rebuild` is not a string
-literal, the sheet uses a generic phrase ("another job's hand-off") instead of guessing.
+A template that writes `saveRDS(x, set_path("estimates", "rfs.rds"))` is linked to every template that
+reads `.read_handoff(set_path("estimates", "rfs.rds"), …)`. Both sides are found by the parser, and a
+path assigned once at top level (`MODEL_PATH <- set_path("estimates", "lm-binary.rds")`) counts as
+literal. This links ac and hz → hp, hz → hm → hs-setup, the rf and vp fit → explain pairs, sid-fit →
+sid-clusters, and vt-fit → vt-explain.
+
+Two consumers take their model file from an `EDIT:` choice (`MODEL_FILE`): `lm-checkpred` and
+`lp-mirror`. No literal path links them. **For a consumer whose hand-off path is not literal, and only
+for one, the catalog's `upstream` field supplies the producers.** Its value is a prefix (`"lm"`), so every
+`lm-*` template counts. `lp-mirror` already lists `lm`. `lm-checkpred` lists nothing, so this change adds
+`"upstream": ["lm"]` to its row. The catalog's other `upstream` and `downstream` values are not used,
+because they are hand-written and at least one disagrees with the code: the catalog lists hm → hp, and
+`hp` reads `ac.rds` and `hz.rds`, not `hm.rds`. Reconciling the catalog with the generated graph is a
+follow-up, not part of this change.
+
+### Literal arguments only
+
+A call is read only from **literal** arguments. When `why`, `role`, `rebuild` or a path is not a string
+literal (or a top-level variable bound to one), the sheet uses a generic phrase such as "another job's
+hand-off" instead of guessing.
 
 The rf templates gain `guard_long_fit()` on the confidence-bands branch. Their sheets switch to the
-background command with no change here, because the sheet reads the guard rather than keeping a list
-of which templates are long.
+background route with no change here, because the sheet reads the guard rather than keeping a list of
+which templates are long.
 
 ## 4. Architecture
 
 ```
 inst/templates/*.qmd ──► R/run-sheet.R (internal, new)
-                           .run_sheet(file)        the facts: markers, packages, data, fit
-                           .run_sheet_lines(sheet) the wording; the only place it lives
-                           .run_sheets(dir)        every template → named list
+inst/extdata/templates.json  .run_sheet_facts(file)   one template: sections, markers, calls, data
+                             .handoff_graph(facts)    producer → consumer links, across templates
+                             .run_sheet_md(name, ...) the wording, as Markdown; the only place it lives
+                             .run_sheets(dir)         every template → list(name, title, markdown, html)
                                 │
 dev/gallery/gallery.R ──────────┘  writes <study>/run-sheets.json beside gallery-build.csv,
                                 │  from the INSTALLED templates, the same ones it rendered
-dev/gallery/package.py ─────────┘  attaches each sheet to its row in gallery-data.js and exits
-                                   when a template on disk has none
-dev/gallery/index.html             <details> "Before you run" under "Then run it"
+dev/gallery/package.py ─────────┘  writes <out>/sheets/<name>.html, wrapping each sheet's html in
+                                │  the page shell; exits when a template on disk has no sheet
+dev/gallery/index.html             a "Run sheet" link on each row, beside "Then run it"
 ```
 
 - **Parsing.** Each R chunk of the `.qmd` (between a ```` ```{r ```` fence and the next ```` ``` ````)
-  goes through `parse()`. A recursive walk then visits every call, including function bodies and
-  default arguments: `vt-fit` reads its sid hand-off in a default argument. A function name matches
-  bare, as `pkg::fn` or as `pkg:::fn`. Comments never reach the parser, so a commented-out call
-  states nothing.
+  goes through `parse()`, keeping its line numbers. A recursive walk then visits every call, including
+  function bodies and default arguments (`vt-fit` reads its sid hand-off in a default argument). A
+  function name matches bare, as `pkg::fn` or as `pkg:::fn`. Comments never reach the parser, so a
+  commented-out call states nothing. Every fact keeps its source line, which places it under the
+  heading above it.
+- **Headings.** Lines matching `^#{2,3} ` outside code fences, so an R comment is never taken for one.
 - **The marker helper is shared.** The `EDIT:` token (built, never written literally) and the 96-character
-  cut move out of `.guard_edits()` into `.edit_marker_lines(src)`, and both call it. This is the
-  one change to existing code, and its purpose is to keep the count from drifting.
-- **The JSON carries the finished lines and the marker list.** The page's JavaScript only escapes text
-  and turns backticks into `<code>`. All the wording stays in R, where testthat can see it.
-- **Gallery only.** No new export, and no change to the vignette or the catalog. The sheet is built by
-  an internal function, so adding a console `run_sheet()` later is a small step if one is wanted.
+  cut move out of `.guard_edits()` into `.edit_marker_lines(src)`, and both call it. This is the one
+  change to existing code, and its purpose is to keep the count from drifting.
+- **Wording and markup both stay in R.** `.run_sheet_md()` writes Markdown, which reads well in a
+  snapshot. A small `.md_inline_html()` converts the three forms the sheets use (`` `code` ``,
+  `**bold**`, `[text](href)`) and escapes everything else. Links to the vignettes are relative to the
+  site root, and `package.py` adds the `../../` a page in `gallery/sheets/` needs. `package.py`
+  only wraps the html in a page shell that matches the gallery's look. It writes no wording of its own.
+- **The sheet links back** to its template's gallery report, and its sections link into *Work a job*
+  (`#find-what-you-have-to-change`, `#render-as-you-go`) and *Start a new study*. That is the training
+  thread: the sheet outlines, the vignette explains, and the template holds the details.
+- **Gallery only.** No new export, and no change to the vignette. The catalog gains one `upstream`
+  value (section 3). The sheets are built by an internal function, so adding a console `run_sheet()`
+  later is a small step if one is wanted.
 
 ## 5. Testing
 
 In `tests/testthat/test-run-sheet.R`:
 
-1. **Every template on disk** produces a sheet with no error, and the sheet always has its choices,
-   packages and run lines; the data and fit lines appear only when section 3 says so. This also
-   catches a chunk the parser cannot read.
+1. **Every template on disk** produces a sheet with no error, with its "What it does", Prerequisites,
+   Outline and Run it sections. This also catches a chunk the parser cannot read.
 2. **It agrees with the existing readers.** The sheet's packages are `identical()` to
-   `.template_packages(f)`. Its marker count equals a plain count of lines carrying the token.
+   `.template_packages(f)`. The outline's marker counts sum to a plain count of lines carrying the
+   token. Its headings are the template's headings, in order.
 3. **The parse walk agrees with a text scan, on the real templates.** Wherever a template's uncommented
    text contains `.read_handoff(`, `.read_bootstrap_artifact(`, `cache_fit(`, `guard_long_fit(` or
    `guard_memory(`, the sheet must report that fact. A walker that loses a call form fails on a
    shipped template.
-4. **Fixture templates written to a temporary file**, one for each variant: a hand-off read in a default
-   argument, a `:::` call, a `rebuild` that is not a literal, a guard with `why`, `box_data = FALSE` and
-   `DATASET <- NULL`. Each fixture's wording is pinned with `expect_snapshot()`. Snapshots use fixtures,
-   never real templates, so editing a template does not churn them.
-5. **Mutation proof.** With the walker cut back to top-level calls, tests 3 and 4 must fail. The result
-   is recorded in the pull request.
-6. **The existing `.guard_edits()` tests stay green** once the marker helper is shared.
-7. **The round trip.** `.run_sheets()` through `jsonlite` gives each template's `lines` and `markers`,
-   which is the shape `package.py` reads.
+4. **The hand-off graph on the real templates.**
+   - Every `.read_handoff()` call resolves to a producer on disk: through a literal path, or, for a
+     non-literal one, through a catalog `upstream` prefix with templates on disk. The test lists
+     exactly which consumers take the catalog route (`lm-checkpred`, `lp-mirror` today), so a new one
+     is a decision rather than an accident.
+   - Edges named in section 3 are asserted: ac → hp, hz → hp, rfs-fit → rfs-explain.
+5. **Fixture templates written to a temporary file**, one for each variant: a hand-off read in a default
+   argument, a `:::` call, a non-literal `rebuild`, a guard with `why`, `box_data = FALSE`,
+   `DATASET <- NULL`, a `###` heading, and markers above the first heading. Each fixture's Markdown is
+   pinned with `expect_snapshot()`. Snapshots use fixtures, never real templates, so editing a template
+   does not churn them.
+6. **`.md_inline_html()`** escapes `<`, `>`, `&` and quotes, and converts exactly the three forms.
+7. **Mutation proof.** With the walker cut back to top-level calls, tests 3, 4 and 5 must fail. The
+   result is recorded in the pull request.
+8. **The existing `.guard_edits()` tests stay green** once the marker helper is shared.
+9. **The round trip.** `.run_sheets()` through `jsonlite` gives each template's `name`, `title`,
+   `markdown` and `html`, the shape `package.py` reads.
 
 `package.py` has no CI tests, so it fails loudly instead when a template has no sheet.
 
@@ -125,3 +186,9 @@ bash dev/gallery/publish.sh
 
 Then rerun `pkgdown.yaml`. That is the release-day gallery rebuild AGENTS.md already prescribes, so it
 needs no new step.
+
+## 7. Follow-ups, not in this change
+
+- Reconcile the catalog's hand-written `upstream` and `downstream` with the generated hand-off graph
+  (hm → hp is listed and is not in the code), or derive them from it.
+- A console `run_sheet()`, if the team asks for one.
