@@ -170,9 +170,9 @@ BANDS_B <- 0
 # default, exp(-1) (0.37) up to 1000 patients and exp(-1) * sqrt(1000 / n) above,
 # so a larger cohort gets a smaller fraction. Leave it NULL unless the check
 # below warns.
-#   Raise it when a subsample would hold too few events (rfs) or too few of the
-#   smallest class (rfc): the job warns below 100. Small subsamples grow shallow
-#   forests whose curves are flatter than the full forest's.
+#   Raise it when a subsample would hold too few events: the job warns below 100.
+#   Small subsamples grow shallow forests whose curves are flatter than the full
+#   forest's.
 #   Keep it at or below 0.5. Subsampling estimates the spread only while each
 #   subsample is a small part of the cohort; near 1 every subsample forest is
 #   nearly the full forest, and the bands shrink to the forest's own tree-to-tree

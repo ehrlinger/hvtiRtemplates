@@ -159,8 +159,8 @@ BANDS_B <- 0
 
 # EDIT: fraction of patients in each subsample. NULL takes randomForestSRC's
 # default, exp(-1) (0.37) up to 1000 patients and exp(-1) * sqrt(1000 / n) above,
-# so a larger cohort gets a smaller fraction. Leave it NULL unless the check
-# below warns.
+# so a larger cohort gets a smaller fraction. Leave it NULL unless you have a
+# reason to change it.
 #   Small subsamples grow shallow forests whose curves are flatter than the full
 #   forest's.
 #   Keep it at or below 0.5. Subsampling estimates the spread only while each
