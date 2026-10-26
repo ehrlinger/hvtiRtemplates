@@ -72,9 +72,16 @@ test pins this, so a later edit to a fit job cannot break the bands without noti
    The forest is then **discarded**.
 4. **Cache per variable**: `rf?-partial-band-<var>` holds a B × grid matrix (× `TIMES`
    for rfs).
-5. **Summarize** pointwise: the full forest's value ± z × SE, with the subsampling
-   variance rescaled to the full cohort as b / (n − b) × the mean squared deviation of
-   the B curves about their mean, and z from `alpha = 0.05`.
+5. **Summarize** pointwise: the full forest's value θ̂ ± z × SE, with z from
+   `alpha = 0.05` and the delete-d jackknife SE that `extract.subsample()` reports as
+   `se.jk.Z`:
+
+   SE = √( (b / n) × mean over the B subsamples of (θ*ᵦ − θ̂)² )
+
+   The deviations are about the full forest's θ̂, not about the mean of the B curves.
+   This is randomForestSRC's own formula, read from `extract.subsample()` in 3.9.0 and
+   reproduced exactly from a `subsample()` object's `vmp` and `vmpS` on 2026-10-26.
+   (This section first said b / (n − b); that was wrong, and is corrected here.)
 
 What the per-variable cache saves: raising `TOP_K` skips the partials of variables
 already cached, **but still regrows all B forests**, because they are not kept. Keeping
@@ -98,8 +105,8 @@ In `edit-study-choices`, after `SEED`, with the guidance as it will read:
 #   percentiles, which would take several hundred.
 #   200 or more only for 99% intervals, or when a rerun with another SEED moves
 #   the band edges by more than you would accept in a figure.
-# Cost is about BANDS_B x SUBRATIO fits of the full forest; the job prints its
-# estimate before it starts. Submit the job to compute them.
+# Cost is about BANDS_B x SUBRATIO fits of the full forest. Submit the job to
+# compute them; job_status() shows how many forests are grown and the time left.
 BANDS_B <- 0
 
 # EDIT: fraction of patients in each subsample. NULL takes randomForestSRC's
@@ -109,8 +116,10 @@ BANDS_B <- 0
 #   Raise it when a subsample would hold too few events (rfs) or too few of the
 #   smallest class (rfc): the job warns below 100. Small subsamples grow shallow
 #   forests whose curves are flatter than the full forest's.
-#   Keep it at or below 0.5. The variance is rescaled by b / (n - b), which grows
-#   without bound as the fraction nears 1, and at 1 there is no variation left.
+#   Keep it at or below 0.5. Subsampling estimates the spread only while each
+#   subsample is a small part of the cohort; near 1 every subsample forest is
+#   nearly the full forest, and the bands shrink to the forest's own tree-to-tree
+#   noise, far narrower than the real uncertainty.
 SUBRATIO <- NULL
 
 # EDIT: how the partial plots draw their bands. "ribbon" shades a band around
@@ -131,7 +140,7 @@ BAND_AT <- NULL
 - `BANDS_B` defaults to **0**, so a job scaffolded without edits, or an existing job
   brought forward by `upgrade_job()`, renders exactly as before. The bands never start
   costing hours without someone choosing them.
-- `SUBRATIO` above 0.5 or at or below 0 stops the job. `BAND_STYLE` must be `"ribbon"`
+- `SUBRATIO` above 0.5, at or below 0, or not a single number stops the job. `BAND_STYLE` must be `"ribbon"`
   or `"bars"`; anything else stops the job. Both are checked where `TOP_K` is checked.
 - `BAND_STYLE` changes only the drawing, so it is not in any cache key: switching it
   redraws from the caches.
@@ -160,15 +169,19 @@ Runs when `BANDS_B > 0`, before any guard, and prints:
 |---|---|
 | subsample size b, and the fraction used | the subratio rule |
 | events (rfs) or smallest class (rfc) per subsample | the forest's own data |
-| estimated run time | `BANDS_B` × fraction × the fit's elapsed time, **if** the fit's run record holds it |
+| subsample forests to grow | `BANDS_B`, and how many variables still lack a band cache |
 
-Below the floor it warns in a draft, naming the `SUBRATIO` that would restore 100, and a
-final render refuses, as it refuses an unresolved marker.
+Below the floor it warns and marks the report a draft (`.run_mark_draft()`), naming the
+`SUBRATIO` that would restore 100; under `HVTI_TEMPLATE_STRICT` it stops instead. This is
+the pattern `lg.qmd` uses for a covariate with no scale chosen.
 
-Open for the plan: whether the `rf?-fit` run record or handoff carries an elapsed time.
-`R/run-info.R` and `R/provenance.R` record times, but it is not confirmed that the
-explain job can read the fit's. If it cannot, the time row is left out rather than
-estimated from anything else.
+**No run-time estimate in the table.** Checked 2026-10-26: neither the handoff nor the
+run record carries the fit's elapsed time in a form the explain job can read, so the
+estimate is not printed rather than guessed. The refit loop instead reports through the
+job's progress callback, `.job$progress("subsample forest")`, as `nb-boostmtree` reports
+its iterations: `job_status()` and the render log then show `subsample forest k/B` and a
+time left measured from the forests already grown. The `BANDS_B` comment drops "the job
+prints its estimate before it starts" accordingly.
 
 ### 5b. Caches
 
@@ -192,7 +205,13 @@ if (BANDS_B > 0) hvtiRtemplates::guard_long_fit("rfs-vimp-subsample", dir = CACH
   why = sprintf("the importance intervals regrow the forest %d times", BANDS_B))
 ```
 
-The partial-band step guards on **every** selected variable's cache, so
+Each guard is called only when `hvtiRutilities::cache_would_fit()` says the step will compute,
+which is no cache, or a stale one under `REFIT`. A current cache loads even under `REFIT`, and
+a bigger `TOP_K` needs `REFIT` for the full forest's partial, so a guard on file existence alone
+would refuse, or a pool built from it would recompute, bands that are already current. The same
+check decides which variables the refit pool computes.
+
+The partial-band step guards on **every** selected variable that will compute, so
 `guard_long_fit()`'s `name` accepts a character vector and refuses when any is missing.
 It is exported, so this change carries its own test and its own `news/` fragment.
 
@@ -227,9 +246,10 @@ In `test-rf-templates.R`, on the synthetic cohorts with `BANDS_B = 3`:
    figure families.
 3. Raising `TOP_K` adds caches only for the new variables; the existing band caches are
    byte-identical afterwards.
-4. The rescaling in `.partial_bands()` agrees with `extract.subsample()`'s VIMP SE when
-   both are computed from the same row sets on one variable, pinning the two methods
-   together.
+4. The SE helper the partial bands use, given a `subsample()` object's `vmp` as θ̂ and
+   its `vmpS` replicates as θ*, reproduces `extract.subsample(standardize = FALSE)$se.jk.Z`
+   exactly, pinning the two band types to one formula. A randomForestSRC release that
+   changes its formula turns this red.
 5. With `interactive()` mocked, a missing band cache stops with the `submit_job()`
    message; `guard_long_fit()` accepts a vector of names and refuses when any is missing.
 6. "no explain template grows a forest" becomes "no explain template grows a forest on the
