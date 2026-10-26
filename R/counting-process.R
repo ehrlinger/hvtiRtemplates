@@ -1,0 +1,125 @@
+# Counting-process rows: one row per interval of a patient's follow-up, each
+# with its start, stop and event, so a predictor may change over time. The rhf
+# templates fit a hazard forest on them, and randomForestRHF refuses some
+# defects only after the data are loaded, naming no patient. These checks run
+# first and say what to fix.
+
+.cp_repairs <- c("clip", "drop_na")
+
+.cp_n <- function(n, noun, plural = paste0(noun, "s")) paste(n, if (n == 1L) noun else plural)
+
+# The first few patients `ids` names, for a message that has to say where to look.
+.cp_ids <- function(ids) {
+  ids <- unique(.id_text(ids))
+  paste0(" (", paste(utils::head(ids, 5L), collapse = ", "), if (length(ids) > 5L) ", ...", ")")
+}
+
+# Checks counting-process rows and, when `repair` names it, repairs a defect a
+# job may repair while the dataset fix is in flight. Returns the rows ordered by
+# patient and start, a table of counts, and what each repair changed. A defect
+# not repaired stops, naming its kind, its count and the first few patients.
+.cp_check <- function(d, id, start, stop, event, predictors, repair = character()) {
+  unknown <- setdiff(repair, .cp_repairs)
+  if (length(unknown)) {
+    stop("REPAIR may name only \"clip\" and \"drop_na\"; it names ", paste(unknown, collapse = ", "), ".", call. = FALSE)
+  }
+  d <- d[, c(id, start, stop, event, predictors), drop = FALSE]
+  incomplete <- is.na(d[[id]]) | is.na(d[[start]]) | is.na(d[[stop]]) | is.na(d[[event]])
+  if (any(incomplete)) {
+    stop(.cp_n(sum(incomplete), "interval has", "intervals have"), " no id, start, stop or event. ",
+         "Resolve them in the dataset build; no repair can.", call. = FALSE)
+  }
+  if (!all(d[[event]] %in% c(0, 1))) {
+    stop(event, " must be coded 0 and 1 (1 = event); found ", paste(sort(unique(d[[event]])), collapse = ", "),
+         ". Code a competing event 0, so it censors.", call. = FALSE)
+  }
+  empty <- predictors[vapply(d[predictors], function(x) all(is.na(x)), logical(1L))]
+  if (length(empty)) {
+    stop("PREDICTORS names a column with no values: ", paste(empty, collapse = ", "), ". Remove it from PREDICTORS.",
+         call. = FALSE)
+  }
+  d <- d[order(d[[id]], d[[start]]), , drop = FALSE]
+  rownames(d) <- NULL
+  repaired <- character()
+  same <- function(d) c(FALSE, d[[id]][-1L] == d[[id]][-nrow(d)])
+  prev_stop <- function(d) c(-Inf, d[[stop]][-nrow(d)])
+  # An event on a row that would be removed is an outcome lost, which no repair may do.
+  refuse_event_drop <- function(drop, why) {
+    if (any(d[[event]][drop] == 1)) {
+      stop("REPAIR \"", why, "\" would drop an interval that carries the event", .cp_ids(d[[id]][drop & d[[event]] == 1]),
+           ". Fix it in the dataset build.", call. = FALSE)
+    }
+  }
+
+  overlap <- same(d) & d[[start]] < prev_stop(d)
+  if (any(overlap)) {
+    if (!"clip" %in% repair) {
+      stop(.cp_n(sum(overlap), "overlapping interval"), .cp_ids(d[[id]][overlap]), ": an interval starts before the ",
+           "one before it ends. Fix it in the dataset build, or set REPAIR <- \"clip\" to render a draft meanwhile.",
+           call. = FALSE)
+    }
+    d[[start]][overlap] <- prev_stop(d)[overlap]
+  }
+  short <- d[[stop]] <= d[[start]]
+  if (any(short)) {
+    if (!"clip" %in% repair) {
+      stop(.cp_n(sum(short), "interval"), " of zero or negative length", .cp_ids(d[[id]][short]),
+           ". Fix it in the dataset build, or set REPAIR <- \"clip\" to render a draft meanwhile.", call. = FALSE)
+    }
+    refuse_event_drop(short, "clip")
+    d <- d[!short, , drop = FALSE]
+  }
+  if (any(overlap) || any(short)) {
+    repaired[["clip"]] <- paste0(.cp_n(sum(overlap), "overlapping interval"), " clipped, ",
+                                 .cp_n(sum(short), "interval"), " left empty and dropped")
+  }
+
+  last <- !duplicated(d[[id]], fromLast = TRUE)
+  early <- d[[event]] == 1 & !last
+  if (any(early)) {
+    n <- length(unique(d[[id]][early]))
+    stop(.cp_n(n, "patient has", "patients have"), " an event before their last interval", .cp_ids(d[[id]][early]),
+         ". An event ends follow-up; fix it in the dataset build.", call. = FALSE)
+  }
+
+  missing <- !stats::complete.cases(d[predictors])
+  if (any(missing)) {
+    if (!"drop_na" %in% repair) {
+      stop(.cp_n(sum(missing), "interval is", "intervals are"), " missing a predictor", .cp_ids(d[[id]][missing]),
+           ". randomForestRHF cannot use them and dropping one opens a hole in the time at risk. Fill them in the ",
+           "dataset build, or set REPAIR <- \"drop_na\" to render a draft meanwhile.", call. = FALSE)
+    }
+    refuse_event_drop(missing, "drop_na")
+    d <- d[!missing, , drop = FALSE]
+    repaired[["drop_na"]] <- paste(.cp_n(sum(missing), "interval"), "missing a predictor dropped")
+  }
+
+  gaps <- sum(same(d) & d[[start]] > prev_stop(d))
+  per <- as.integer(table(d[[id]]))
+  counts <- data.frame(
+    measure = c("Patients", "Intervals", "Events", "Intervals per patient, median (range)", "Gaps between intervals",
+                "Follow-up, from earliest start to latest stop"),
+    value = c(length(per), nrow(d), sum(d[[event]] == 1),
+              sprintf("%g (%d to %d)", stats::median(per), min(per), max(per)), gaps,
+              paste(signif(min(d[[start]]), 4), "to", signif(max(d[[stop]]), 4))),
+    stringsAsFactors = FALSE
+  )
+  list(data = d, counts = counts, repaired = repaired)
+}
+
+# What a job says when it repaired its own rows. A repair belongs in the dataset
+# build, so that every job in the study reads the same rows: a draft may carry
+# one, marked as a draft, and a final render refuses it, as it refuses an open
+# EDIT: marker.
+.cp_repair_notice <- function(repaired) {
+  if (!length(repaired)) return("")
+  msg <- paste0("The counting-process rows were repaired in this job, not in the dataset: ",
+                paste(repaired, collapse = "; "), ". Fix them in the dataset build, then set REPAIR <- character().")
+  if (.strict_render()) {
+    stop(msg, "\nThis render stops because HVTI_TEMPLATE_STRICT is '", Sys.getenv("HVTI_TEMPLATE_STRICT"),
+         "': a final report rests on the dataset's own rows. Unset it, or set it to 0, false or no, to render a ",
+         "draft instead.", call. = FALSE)
+  }
+  .run_mark_draft(paste0("rows repaired in the job: ", paste(repaired, collapse = "; ")))
+  paste0("\n::: {.callout-important title=\"DRAFT -- rows repaired in the job\"}\n", msg, "\n:::\n\n")
+}
