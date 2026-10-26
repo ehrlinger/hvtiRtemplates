@@ -249,6 +249,8 @@ test_that("the curves join event points with straight lines by default, and STEP
   env$STEPS <- TRUE
   expect_true(all(c("GeomStep", "GeomPoint") %in% geoms(env$km_figure()[[1]])))
   expect_true(all(c("GeomStep", "GeomPoint") %in% geoms(env$km_views(env$km)[[1]])))
+  # Drawn to a scoped null device, so no device is left open for the tests after this one.
+  withr::local_pdf(NULL)
   expect_no_warning(print(env$km_figure("grp")))
 })
 
