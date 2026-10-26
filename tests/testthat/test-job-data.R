@@ -1543,3 +1543,22 @@ test_that("a draft ac render reads an unregistered build and says so, and a fina
                  "is a final render, so it can")
   )
 })
+
+test_that("read_job_data(whole_patients = TRUE) refuses a WHERE that keeps part of a patient", {
+  long <- data.frame(ccfid = c(1L, 1L, 1L, 2L, 2L, 3L), iv_start = c(0, 1, 2, 0, 1, 0),
+                     iv_stop = c(1, 2, 3, 1, 2, 4), lab = c(5, 9, 5, 5, 5, 9), female = c(1, 1, 1, 0, 0, 1))
+  cfg <- job_study(long)
+  key <- c("ccfid", "iv_start")
+  # A baseline column keeps or drops a patient whole.
+  out <- read_job_data(cfg, where = quote(female == 1), key = key, whole_patients = TRUE)
+  expect_identical(sort(unique(out$data$ccfid)), c(1L, 3L))
+  expect_identical(nrow(out$data), 4L)
+  # A time-varying one keeps part of patient 1 (and drops patient 3 whole, which is fine).
+  expect_error(read_job_data(cfg, where = quote(lab < 9), key = key, whole_patients = TRUE),
+               "1 patient kept by WHERE lost some of their rows")
+  # The default changes nothing: the same WHERE keeps the partial patient.
+  expect_identical(nrow(read_job_data(cfg, where = quote(lab < 9), key = key)$data), 4L)
+  # No WHERE, nothing to check.
+  expect_identical(nrow(read_job_data(cfg, key = key, whole_patients = TRUE)$data), 6L)
+  expect_error(read_job_data(cfg, key = key, whole_patients = NA), "whole_patients must be TRUE or FALSE")
+})
