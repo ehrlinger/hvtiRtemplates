@@ -31,9 +31,9 @@ jobs:
     container: rocker/r-ver:4.5.1
 
     # Caps a hung job at 45m. A stalled apt mirror inside setup-r once ran
-    # out the full 6h default on two jobs before either reported. 45m is
-    # about 3x the slowest legitimate run here, so it bounds the damage
-    # without reddening a merely slow runner.
+    # out the full 6h default on two jobs before either reported. The job no
+    # longer uses setup-r, but an image pull or a CRAN install can still
+    # stall, and the cap costs nothing on a run that finishes in minutes.
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4

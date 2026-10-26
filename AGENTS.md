@@ -49,14 +49,14 @@ to lower the bar.
 | `lint.yaml` | two jobs. `lint`, `lintr::lint_package()`. `docs-current`, **PRs only**: runs `roxygen2::roxygenise()` with roxygen2 pinned and fails if `man/`, `NAMESPACE` or `DESCRIPTION` change, so a PR that skips `devtools::document()` fails here |
 | `pkgdown.yaml` | the site build |
 | `spec-counts.yaml` | three checks. `check-spec-counts.py`, the prose in `dev/specs/` must agree with the generated map. `check-flow-counts.py`, every `data-check` anchored number in the job flow diagrams must agree with the maps they copy from. `check-roadmap-counts.py`, the roadmap ledger and `inst/templates/` must agree **in both directions**, so a template no ledger row claims fails the PR just as a row claiming an absent template does. Editing a count without regenerating fails the PR |
-| `test-coverage.yaml` | coverage upload. **Post-merge only** since 2026-10-26: it ran the whole suite a second time on every PR and is not a required check |
+| `test-coverage.yaml` | coverage upload. **Post-merge only**: it ran the whole suite a second time on every PR and is not a required check |
 
 ⚠️ **`check-manual.yaml` is not a PR gate.** Its triggers are `push` to `main` and
 `workflow_dispatch`; there is no `pull_request` among them, so the PDF manual build
 runs for the first time *after* a change has already merged. A change that breaks the
 manual therefore passes every check on its PR and fails on `main`, where there is no PR
-left to fix it in. Every other workflow in this table does run on `pull_request`, except `test-coverage.yaml`, which is post-merge by choice. If a
-change touches Rd markup (Greek, `\eqn{}` content, combining marks, anything the PDF
+left to fix it in. Every other workflow in this table does run on `pull_request`,
+except `test-coverage.yaml`, which is post-merge by choice. If a change touches Rd markup (Greek, `\eqn{}` content, combining marks, anything the PDF
 pipeline renders), build the manual locally before merging rather than trusting a green
 PR.
 
