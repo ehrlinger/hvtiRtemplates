@@ -1,3 +1,10 @@
+# hvtiRtemplates 1.5.2
+
+* hvtiRtemplates now needs hvtiRutilities 1.5.13 or later. That release reads a label
+  file's unquoted `No` and `Yes` as the text written, so a `value_labels.yml` declaring
+  `0: No` / `1: Yes` prints No and Yes in a table rather than FALSE and TRUE. 1.5.1 asked
+  for this release in its NEWS but declared only `>= 1.5.12`.
+
 # hvtiRtemplates 1.5.1
 
 * New `vp-dependence` and `vp-individual` templates, in flight. `vp-dependence` runs unsupervised VarPro (`varPro::uvarpro()`) over the study's variables, optionally with the outcome among them, and draws a dependence graph whose edges must beat the largest weight a permuted noise column reached, with edge and signal stability across subsamples. `vp-individual` reads the `vp-fit` screen and draws each patient's local gradient for each predictor (`varPro::ivarpro()`), listing the predictors with no local estimate rather than drawing them. `ggraph` joins `Suggests`, and the `varPro` floor in `Suggests` rises to 3.3.0.
