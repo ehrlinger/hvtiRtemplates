@@ -42,7 +42,12 @@
   rownames(d) <- NULL
   repaired <- character()
   same <- function(d) c(FALSE, d[[id]][-1L] == d[[id]][-nrow(d)])
-  prev_stop <- function(d) c(-Inf, d[[stop]][-nrow(d)])
+  # The furthest stop among a patient's earlier rows, -Inf on their first: a row is measured against all of them,
+  # not only the one before, so a short interval nested in a long one cannot hide a later one.
+  prev_stop <- function(d) {
+    furthest <- stats::ave(d[[stop]], d[[id]], FUN = cummax)
+    ifelse(same(d), c(-Inf, furthest[-nrow(d)]), -Inf)
+  }
   # An event on a row that would be removed is an outcome lost, which no repair may do.
   refuse_event_drop <- function(drop, why) {
     if (any(d[[event]][drop] == 1)) {
@@ -70,8 +75,10 @@
     d <- d[!short, , drop = FALSE]
   }
   if (any(overlap) || any(short)) {
-    repaired[["clip"]] <- paste0(.cp_n(sum(overlap), "overlapping interval"), " clipped, ",
-                                 .cp_n(sum(short), "interval"), " left empty and dropped")
+    kept <- sum(overlap & !short)
+    repaired[["clip"]] <- paste(c(if (kept) paste(.cp_n(kept, "overlapping interval"), "clipped"),
+                                  if (any(short)) paste(.cp_n(sum(short), "interval"), "left empty and dropped")),
+                                collapse = ", ")
   }
 
   last <- !duplicated(d[[id]], fromLast = TRUE)

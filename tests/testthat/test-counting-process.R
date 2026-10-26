@@ -42,6 +42,19 @@ test_that("clip drops an interval it leaves empty, and refuses to drop an event"
   expect_error(cp(d, "clip"), "would drop an interval that carries the event")
 })
 
+test_that("clip leaves no overlap behind when short intervals nest inside a long one", {
+  d <- data.frame(id = c(1L, 1L, 1L, 2L), t0 = c(0, 1, 3, 0), t1 = c(10, 2, 4, 5),
+                  dead = c(0L, 0L, 0L, 0L), lab = c(5, 5, 5, 5), age = c(60, 60, 60, 50))
+  expect_error(cp(d), "2 overlapping intervals")
+  out <- cp(d, "clip")
+  expect_identical(out$data$t0[out$data$id == 1L], 0)
+  expect_identical(out$data$t1[out$data$id == 1L], 10)
+  expect_identical(out$repaired[["clip"]], "2 intervals left empty and dropped")
+  furthest <- ave(out$data$t1, out$data$id, FUN = cummax)
+  earlier <- ifelse(duplicated(out$data$id), c(-Inf, furthest[-nrow(out$data)]), -Inf)
+  expect_false(any(out$data$t0 < earlier))
+})
+
 test_that(".cp_check() stops on a zero-length interval unless REPAIR clips it", {
   d <- cp_rows()
   d$t1[6] <- 0
