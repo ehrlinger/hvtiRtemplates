@@ -1135,6 +1135,34 @@
       ]
     },
     {
+      "prefix": "rhf",
+      "qualifier": "fit",
+      "name": "Random hazard forest: fit",
+      "description": "Grows a random hazard forest on counting-process rows with time-varying predictors: checks the rows, tunes the tree size and saves the forest.",
+      "folder": "analyses",
+      "family": "machine-learning",
+      "kind": "job",
+      "status": "in-flight",
+      "batch": null,
+      "sas_breadth": null,
+      "r_exemplars": null,
+      "r_jobs": null,
+      "upstream": [],
+      "downstream": [],
+      "workflows": [],
+      "blocked_on": null,
+      "spec": "dev/specs/2026-10-26-rhf-templates-design.md",
+      "note": "Saves rhf.rds for rhf-explain in the same set. In flight on one study; a second study's job promotes it.",
+      "sas_breadth_jobs": null,
+      "disposition": "scaffold",
+      "uses": [
+        "randomForestRHF::rhf",
+        "randomForestRHF::tune.treesize.rhf",
+        "hvtiRutilities::cache_fit",
+        "ggRandomForests::gg_tune_rhf"
+      ]
+    },
+    {
       "prefix": "rg",
       "qualifier": null,
       "name": "Regression trends",
