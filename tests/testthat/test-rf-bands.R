@@ -92,6 +92,14 @@ test_that("a survival subsample with no event stops, naming SUBRATIO", {
   expect_error(hvtiRtemplates:::.band_rows(f, 2, 0.05), "SUBRATIO")
 })
 
+test_that("a classification subsample that would hold no row of a class stops, naming SUBRATIO", {
+  skip_if_not_installed("randomForestSRC", "3.9.0")
+  f <- band_forest("class")
+  f$yvar <- factor(c(rep("a", f$n - 1L), "b"))
+  # One "b" in n patients: a subsample of a few rows rounds its share to zero.
+  expect_error(hvtiRtemplates:::.band_rows(f, 2, 0.05), "SUBRATIO")
+})
+
 test_that("a refit keeps the forest's settings and grows on the rows given", {
   skip_if_not_installed("randomForestSRC", "3.9.0")
   for (fam in c("surv", "class", "regr")) {
@@ -176,6 +184,9 @@ test_that("the plan refuses a bad style or BAND_AT, and warns below the floor", 
   expect_error(plan("bars", list(trt = 1)), "BAND_AT")
   expect_error(plan("bars", list(celltype = 1)), "categorical")
   expect_error(plan("bars", list(karno = "50")), "BAND_AT")
+  # An out-of-range or missing value stops here, before any band is computed, and names BAND_AT.
+  expect_error(plan("bars", list(karno = 1000)), "BAND_AT.*outside")
+  expect_error(plan("bars", list(karno = c(50, NA))), "BAND_AT.*missing")
   expect_message(suppressWarnings(plan("ribbon", list(karno = 50))), "BAND_AT is ignored")
   withr::local_envvar(HVTI_TEMPLATE_STRICT = "")
   # veteran has 128 deaths, so 40% of them is about 51, under the floor of 100.
@@ -223,9 +234,37 @@ test_that("the band figures build, with ribbons or bars as chosen", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
   for (p in list(ribbon, bars)) expect_s3_class(patchwork::patchworkGrob(p), "gtable")
-  ci <- data.frame(lower = c(-0.1, 0.2), mean = c(0, 0.3), upper = c(0.1, 0.4), row.names = c("a", "b"))
-  expect_s3_class(ggplot2::ggplot_build(hvtiRtemplates:::.plot_vimp_intervals(ci)), "ggplot_built")
-  ci2 <- data.frame(lower = -0.4, mean = -0.3, upper = -0.1, row.names = "c")
-  p <- hvtiRtemplates:::.plot_vimp_intervals(ci2)
-  expect_identical(as.character(p$data$clear), "Interval not above zero")
+})
+
+test_that("a page mixing continuous and categorical survival panels shows one Time legend", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  skip_if_not_installed("hvtiPlotR")
+  bands <- list(v = fake_band(times = c(30, 90)), w = fake_band("categorical", times = c(30, 90)))
+  bands$w$var <- "w"
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  for (style in c("ribbon", "bars")) {
+    p <- hvtiRtemplates:::.plot_partial_bands(bands, 0.3, style, list(v = c(1.5, 2.5)), ncol = 2) &
+      hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+    g <- patchwork::patchworkGrob(p)
+    box <- g$grobs[[which(grepl("guide-box", g$layout$name))[1]]]
+    expect_identical(sum(box$layout$name == "guides"), 1L, info = style)
+  }
+})
+
+test_that("the importance-interval figure centres on the importance estimate, +/- 1.96 SE, ranked by it", {
+  skip_if_not_installed("ggplot2")
+  est <- c(a = 0.05, b = 0.30, c = -0.02)
+  se <- c(c = 0.04, a = 0.10, b = 0.05) # deliberately not in the estimate's order
+  p <- hvtiRtemplates:::.plot_vimp_intervals(est, se)
+  expect_s3_class(ggplot2::ggplot_build(p), "ggplot_built")
+  d <- p$data
+  expect_equal(d$vimp[match(names(est), d$vars)], unname(est))
+  expect_equal(d$upper - d$vimp, stats::qnorm(0.975) * unname(se[as.character(d$vars)]))
+  expect_equal(d$vimp - d$lower, stats::qnorm(0.975) * unname(se[as.character(d$vars)]))
+  expect_identical(levels(d$vars), c("c", "a", "b")) # ascending, so the largest plots at the top
+  # Labelled by the lower bound: a is 0.05 - 0.196 < 0, b is 0.30 - 0.098 > 0.
+  expect_identical(as.character(d$clear[match(c("a", "b", "c"), d$vars)]),
+                   c("Interval not above zero", "Interval above zero", "Interval not above zero"))
 })

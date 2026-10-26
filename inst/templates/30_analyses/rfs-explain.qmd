@@ -378,6 +378,7 @@ for (.i in seq_along(.pages)) {
 
 ```{r}
 #| label: bands-plan
+#| include: !expr 'BANDS_B > 0'
 #| results: asis
 # Checks the band choices before anything is grown, and says what will be. With BANDS_B at 0 it
 # writes nothing, so the job renders as it did before the bands existed.
@@ -397,13 +398,14 @@ if (BANDS_B > 0) {
 
 ```{r}
 #| label: importance-intervals
+#| include: !expr 'BANDS_B > 0'
 #| results: asis
 #| message: true
 # unnumbered: the figure below is a child chunk with its own label and caption
 if (BANDS_B > 0) {
-  # "anti" is the importance vimp() computed for the figure above, and that figure is
-  # unstandardized, so the intervals bracket the same quantity. Quoted once, so the
-  # check below and cache_fit() read the same call.
+  # The subsample forests give the standard error. "anti" is the importance vimp() computed for the
+  # figure above, so the SE is that quantity's, and extract.subsample() leaves it unstandardized as
+  # that figure is. Quoted once, so the check below and cache_fit() read the same call.
   .ci_code <- quote(extract.subsample(subsample(forest, B = BANDS_B, subratio = .subratio, importance = "anti",
                                                 verbose = FALSE), standardize = FALSE))
   # Refused at the console only when the intervals will actually be computed: a current
@@ -415,10 +417,13 @@ if (BANDS_B > 0) {
   }
   vi_ci <- cache_fit("rfs-vimp-subsample", .ci_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
                      packages = "randomForestSRC")
-  .fig <- hvtiRtemplates:::.plot_vimp_intervals(vi_ci$var.jk.sel.Z) +
+  # The points are the importance figure's own estimate, so the two figures cannot disagree in sign or
+  # order; the bars are that estimate plus and minus 1.96 of the subsample forests' standard errors.
+  .fig <- hvtiRtemplates:::.plot_vimp_intervals(vi$importance, vi_ci$se.jk.Z) +
     hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
   save_figure(.fig, "rfs-explain-importance-intervals", height = 7)
-  .cap <- sprintf(paste("Permutation importance of each predictor with its pointwise 95%% interval from %d",
+  .cap <- sprintf(paste("Permutation importance of each predictor, as in the importance figure, with a",
+                        "pointwise 95%% interval of plus and minus 1.96 jackknife standard errors from %d",
                         "subsample forests, each grown on %.0f%% of patients. Points give the importance and",
                         "bars the interval, black where the interval lies above zero and gray where it does",
                         "not, as in the legend; the dashed line marks zero."), BANDS_B, 100 * .subratio)
@@ -428,6 +433,7 @@ if (BANDS_B > 0) {
 
 ```{r}
 #| label: dependence-partial-bands
+#| include: !expr 'BANDS_B > 0'
 #| results: asis
 #| message: true
 # unnumbered: each page below is a child chunk with its own label and caption

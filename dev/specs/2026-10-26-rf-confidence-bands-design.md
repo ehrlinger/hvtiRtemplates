@@ -48,8 +48,13 @@ The existing `rf?-vimp` cache and figure stay as they are. `extract.subsample(al
 gives the interval drawn beside them.
 
 The `importance` method must match the method the existing `vimp()` call uses, so the
-interval brackets the estimate the importance figure shows. The fit grows the forest with
-`importance = "none"`, so `subsample()` computes VIMP itself with what it is handed.
+standard error is that quantity's. The fit grows the forest with `importance = "none"`, so
+`subsample()` computes VIMP itself with what it is handed. The figure does not plot
+`subsample()`'s own re-estimate of the importance, which differs from `vimp()`'s by
+permutation noise: it draws the importance figure's estimate, `vi$importance`, plus and minus
+1.96 times `se.jk.Z` (`standardize = FALSE`), ranked as the importance figure ranks it, so
+the two figures cannot disagree in sign or order. The interval is labelled "above zero" by its
+lower bound.
 
 The fit jobs grow with rfsrc's defaults `forest = TRUE` and `bootstrap = "by.root"`, which
 `subsample()` requires (checked 2026-10-26 in `rf?-fit.qmd`: neither is overridden). A

@@ -56,12 +56,17 @@
   n <- forest$n
   b <- .band_size(n, subratio)
   strata <- .band_strata(forest)
+  share <- function(i) min(length(i), as.integer(round(b * length(i) / n)))
+  # A class that rounds to no rows is missing from every subsample forest, and a partial of a
+  # classification forest is the first level's probability, which then means another class's.
+  if (identical(forest$family, "class") && any(vapply(split(seq_len(n), strata), function(i) {
+    length(i) > 0L && share(i) == 0L
+  }, logical(1)))) {
+    stop("A subsample of ", b, " patients would hold none of the smallest class. Raise SUBRATIO.", call. = FALSE)
+  }
   draw <- function() {
     if (is.null(strata)) return(sort(sample.int(n, b)))
-    sort(unlist(lapply(split(seq_len(n), strata), function(i) {
-      k <- min(length(i), as.integer(round(b * length(i) / n)))
-      i[sample.int(length(i), k)]
-    }), use.names = FALSE))
+    sort(unlist(lapply(split(seq_len(n), strata), function(i) i[sample.int(length(i), share(i))]), use.names = FALSE))
   }
   rows <- lapply(seq_len(B), function(i) draw())
   if (identical(forest$family, "surv")) {
@@ -195,7 +200,19 @@
       stop("BAND_AT names categorical predictor(s), which get a bar at every level: ", toString(cat_vars),
            call. = FALSE)
     }
-    if (identical(style, "ribbon")) message("BAND_AT is ignored under BAND_STYLE = \"ribbon\".")
+    if (identical(style, "ribbon")) {
+      message("BAND_AT is ignored under BAND_STYLE = \"ribbon\".")
+    } else {
+      # Refused here, before any band is computed, rather than when the figure is drawn.
+      for (v in names(at)) {
+        if (anyNA(at[[v]])) stop("BAND_AT for ", v, " has a missing value.", call. = FALSE)
+        x <- .band_grid(pd, v)$x
+        if (any(at[[v]] < min(x) | at[[v]] > max(x))) {
+          stop("BAND_AT for ", v, " asks for values outside the observed range, ", signif(min(x), 4), " to ",
+               signif(max(x), 4), ".", call. = FALSE)
+        }
+      }
+    }
   }
   n <- forest$n
   subratio <- .band_subratio(n, subratio)
@@ -225,11 +242,14 @@
   list(subratio = subratio, table = table)
 }
 
-# Each predictor's importance with its 95% subsampling interval, ranked as the
-# importance figure ranks them, an interval above zero in one color and one that is
-# not in another.
-.plot_vimp_intervals <- function(ci) {
-  d <- data.frame(vars = rownames(ci), vimp = ci$mean, lower = ci$lower, upper = ci$upper)
+# Each predictor's importance, the estimate the importance figure shows, with a 95% interval of
+# plus and minus 1.96 subsampling jackknife SEs, ranked as that figure ranks them (largest at the
+# top). Intervals above zero are drawn in one color and the rest in another.
+.plot_vimp_intervals <- function(vimp, se, alpha = 0.05) {
+  se <- se[names(vimp)]
+  z <- stats::qnorm(1 - alpha / 2)
+  d <- data.frame(vars = names(vimp), vimp = as.numeric(vimp), lower = as.numeric(vimp) - z * as.numeric(se),
+                  upper = as.numeric(vimp) + z * as.numeric(se))
   d$vars <- factor(d$vars, levels = d$vars[order(d$vimp)])
   d$clear <- factor(ifelse(d$lower > 0, "Interval above zero", "Interval not above zero"),
                     levels = c("Interval above zero", "Interval not above zero"))
@@ -279,26 +299,36 @@
     timed <- !all(is.na(fr$time))
     fr$time <- factor(fr$time)
     line$time <- factor(line$time)
-    colour <- if (timed) ggplot2::aes(color = !!sym("time"), fill = !!sym("time"), group = !!sym("time"))
+    colour <- if (timed) ggplot2::aes(color = !!sym("time"), group = !!sym("time"))
     dodge <- ggplot2::position_dodge(width = if (identical(band$type, "continuous")) diff(range(line$x)) / 40 else 0.4)
     p <- ggplot2::ggplot(fr, ggplot2::aes(x = !!sym("x"), y = !!sym("hat"))) + colour
+    # A layer is drawn in the legend only if it is the empty line added below, the same in every panel,
+    # because patchwork's guides = "collect" merges the panels' Time keys only when they are identical.
     if (identical(band$type, "categorical")) {
       p <- p + ggplot2::geom_errorbar(ggplot2::aes(ymin = !!sym("lower"), ymax = !!sym("upper")), width = 0.2,
-                                      position = dodge) +
-        ggplot2::geom_point(size = 2, position = dodge)
+                                      position = dodge, show.legend = FALSE) +
+        ggplot2::geom_point(size = 2, position = dodge, show.legend = FALSE)
     } else if (identical(style, "ribbon")) {
-      p <- p + ggplot2::geom_ribbon(ggplot2::aes(ymin = !!sym("lower"), ymax = !!sym("upper")), alpha = 0.2,
-                                    color = NA) +
-        ggplot2::geom_line()
+      # Only the ribbon takes the horizon as a fill, so no fill key joins the legend.
+      ribbon <- if (timed) {
+        ggplot2::aes(ymin = !!sym("lower"), ymax = !!sym("upper"), fill = !!sym("time"))
+      } else {
+        ggplot2::aes(ymin = !!sym("lower"), ymax = !!sym("upper"))
+      }
+      p <- p + ggplot2::geom_ribbon(ribbon, alpha = 0.2, color = NA, show.legend = FALSE) +
+        ggplot2::geom_line(show.legend = FALSE)
     } else {
-      p <- p + ggplot2::geom_line(data = line) +
+      p <- p + ggplot2::geom_line(data = line, show.legend = FALSE) +
         ggplot2::geom_errorbar(ggplot2::aes(ymin = !!sym("lower"), ymax = !!sym("upper")),
-                               width = diff(range(line$x)) / 30, position = dodge)
+                               width = diff(range(line$x)) / 30, position = dodge, show.legend = FALSE)
     }
     if (timed) {
       cols <- .group_colors(levels(fr$time))
-      p <- p + ggplot2::scale_color_manual(values = cols, name = "Time") +
-        ggplot2::scale_fill_manual(values = cols, name = "Time")
+      p <- p + ggplot2::geom_line(data = fr[0, ], show.legend = TRUE) +
+        ggplot2::scale_color_manual(values = cols, name = "Time")
+      if (identical(band$type, "continuous") && identical(style, "ribbon")) {
+        p <- p + ggplot2::scale_fill_manual(values = cols, name = "Time", guide = "none")
+      }
     }
     p + ggplot2::labs(x = band$var, y = NULL)
   })

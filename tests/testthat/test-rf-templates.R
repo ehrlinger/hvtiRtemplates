@@ -206,6 +206,15 @@ rf_run_bands <- function(...) {
 
 band_labels <- c("bands-plan", "importance-intervals", "dependence-partial-bands")
 
+test_that("each family's SUBRATIO comment names only its own floor", {
+  files <- template_list()$file
+  text <- function(name) paste(readLines(files[basename(files) == paste0(name, ".qmd")], warn = FALSE), collapse = "\n")
+  # rfr has no floor, so nothing there warns; rfs and rfc each name their own.
+  expect_false(grepl("unless the check\n# below warns", text("rfr-explain"), fixed = TRUE))
+  expect_false(grepl("(rfc)", text("rfs-explain"), fixed = TRUE))
+  expect_false(grepl("(rfs)", text("rfs-explain"), fixed = TRUE))
+})
+
 test_that("with BANDS_B at its default the explain writes no band cache and draws no band", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
@@ -254,6 +263,36 @@ test_that("the confidence-band heading is written only from inside the bands-pla
   }
 })
 
+test_that("every band chunk is left out of the report, source and all, when BANDS_B is 0", {
+  # code-fold: true prints a folded Code block for every chunk that is included, even one that
+  # writes nothing, so the three band chunks must carry the include option themselves.
+  files <- template_list()$file
+  for (name in c("rfs-explain", "rfc-explain", "rfr-explain")) {
+    f <- files[basename(files) == paste0(name, ".qmd")]
+    lines <- readLines(f, warn = FALSE)
+    for (label in band_labels) {
+      at <- which(lines == paste0("#| label: ", label))
+      expect_length(at, 1L)
+      # The chunk's option lines, up to its first line of code.
+      opts <- lines[at:(at + which(!startsWith(lines[at:length(lines)], "#|"))[1L] - 2L)]
+      expect_true("#| include: !expr 'BANDS_B > 0'" %in% opts, info = paste(name, label))
+    }
+  }
+})
+
+# The interval figure's points are the importance figure's own estimate, so the two cannot disagree
+# in sign or order. The chunk is run again on the same job: its subsample cache loads.
+# nolint start: object_usage_linter.
+expect_intervals_on_importance <- function(prefix, env) {
+  local_child_chunks()
+  rf_run(prefix, "explain", "importance-intervals", env)
+  imp <- env$vi$importance
+  if (is.matrix(imp)) imp <- imp[, "all"]
+  d <- env$.fig$data
+  expect_equal(d$vimp[match(names(imp), d$vars)], unname(imp), info = prefix)
+}
+# nolint end
+
 test_that("rfs-explain draws the importance intervals and the partial bands from cached subsamples", {
   skip_on_cran()
   rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
@@ -266,6 +305,7 @@ test_that("rfs-explain draws the importance intervals and the partial bands from
     expect_true(file.exists(file.path(env$CACHE_DIR, paste0(nm, ".rds"))), info = nm)
   }
   expect_identical(dim(env$bands[[1]]$star)[2], 3L)
+  expect_intervals_on_importance("rfs", env)
   expect_gt(length(list.files(env$.root, "rfs-explain-importance-intervals", recursive = TRUE)), 0L)
   expect_gt(length(list.files(env$.root, "rfs-explain-dependence-partial-bands-page-01", recursive = TRUE)), 0L)
 })
@@ -819,6 +859,7 @@ test_that("rfc-explain and rfr-explain draw the bands too", {
     for (nm in c(paste0(prefix, "-vimp-subsample"), paste0(prefix, "-partial-band-", env$sel))) {
       expect_true(file.exists(file.path(env$CACHE_DIR, paste0(nm, ".rds"))), info = nm)
     }
+    expect_intervals_on_importance(prefix, env)
     expect_gt(length(list.files(env$.root, paste0(prefix, "-explain-dependence-partial-bands-page-01"),
                                 recursive = TRUE)), 0L)
   }
