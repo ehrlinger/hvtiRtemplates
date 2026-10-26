@@ -409,7 +409,9 @@ substituting a guess.
   ⚠️ **No approving review is required.** `required_approving_review_count` is **0** here,
   measured 2026-09-10, so a solo-authored PR merges on its required status checks alone and
   needs neither a second reviewer nor an `--admin` bypass. The gate that does exist is
-  `required_status_checks`: six contexts, all of which must report `SUCCESS`, which is why a
+  `required_status_checks`: six contexts (`docs-current`, `house-style`, `lint`,
+  `news-fragment`, `pkgdown`, `ubuntu-latest (release)`; `test-coverage` was dropped on
+  2026-10-26 when coverage moved post-merge), all of which must report `SUCCESS`, which is why a
   PR briefly shows `BLOCKED` while its checks are still running. Only one of them is an
   `R-CMD-check` leg, `ubuntu-latest (release)`: a pull request runs no other, so requiring
   macOS, Windows, devel or oldrel-1 would leave every PR waiting on a check that never
