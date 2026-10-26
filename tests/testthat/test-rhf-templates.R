@@ -30,6 +30,12 @@ test_that("a saved rhf forest holds no study id", {
   env <- rhf_fit_first(d)
   bytes <- rf_rds_bytes(file.path(env$CACHE_DIR, "rhf.rds"))
   for (id in unique(d$ccfid)) expect_false(rf_bytes_hold(bytes, id), info = format(id, scientific = FALSE))
+  # Every file the fit cached, the tree-size search and the forest alike, not only the saved one.
+  expect_identical(rf_files_holding(env$CACHE_DIR, unique(d$ccfid)), character())
+  # The scan finds the ids in a file known to hold them, so a clean result above is not an empty search.
+  known <- withr::local_tempdir()
+  saveRDS(d, file.path(known, "rows.rds"))
+  expect_identical(rf_files_holding(known, unique(d$ccfid)), "rows.rds")
 })
 
 test_that("rhf-fit stops on an overlap, and REPAIR clips it in a draft only", {

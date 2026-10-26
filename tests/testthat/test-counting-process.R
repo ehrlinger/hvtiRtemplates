@@ -37,9 +37,9 @@ test_that("a tie on start is settled by stop, whatever order the rows arrive in"
   d$t0[3] <- 1
   d$t1[2] <- 3
   d$t1[3] <- 2                        # rows 2 and 3 tie on start, and the event row is the shorter
-  fwd <- tryCatch(cp(d, "clip"), error = conditionMessage)
-  rev <- tryCatch(cp(d[nrow(d):1, ], "clip"), error = conditionMessage)
-  expect_identical(fwd, rev)
+  forward <- tryCatch(cp(d, "clip"), error = conditionMessage)
+  backward <- tryCatch(cp(d[rev(seq_len(nrow(d))), ], "clip"), error = conditionMessage)
+  expect_identical(forward, backward)
 })
 
 test_that("clip drops an interval it leaves empty, and refuses to drop an event", {
