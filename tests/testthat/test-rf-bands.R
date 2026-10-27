@@ -427,3 +427,11 @@ test_that("the interval figure's axis names the importance it draws: anti-split 
   expect_match(label, "anti-split", fixed = TRUE)
   expect_no_match(label, "ermutation")
 })
+
+test_that("a band's cache name is a file stem for any predictor name, and plain names keep theirs", {
+  nm <- hvtiRtemplates:::.band_cache_name("rfr", c("age", "a/b", "a_b", "a\\b", "x:y?", "lv.ef-2"))
+  expect_identical(nm[c(1, 3, 6)], c("rfr-partial-band-age", "rfr-partial-band-a_b", "rfr-partial-band-lv.ef-2"))
+  expect_true(all(grepl("^[A-Za-z0-9._-]+$", nm)))
+  expect_identical(anyDuplicated(nm), 0L)
+  expect_identical(hvtiRtemplates:::.band_cache_name("rfr", "a/b"), nm[2])
+})

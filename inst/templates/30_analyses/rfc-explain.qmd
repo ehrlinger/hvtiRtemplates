@@ -447,11 +447,11 @@ if (BANDS_B > 0) {
   .todo <- character()
   for (.v in sel) {
     .g <- .grids[[.v]]
-    if (hvtiRutilities::cache_would_fit(paste0("rfc-partial-band-", .v), .band_code, seed = SEED, dir = CACHE_DIR,
+    if (hvtiRutilities::cache_would_fit(hvtiRtemplates:::.band_cache_name("rfc", .v), .band_code, seed = SEED, dir = CACHE_DIR,
                                         refit = REFIT, packages = "randomForestSRC")) .todo <- c(.todo, .v)
   }
   if (length(.todo)) {
-    hvtiRtemplates::guard_long_fit(paste0("rfc-partial-band-", .todo), dir = CACHE_DIR, refit = REFIT,
+    hvtiRtemplates::guard_long_fit(hvtiRtemplates:::.band_cache_name("rfc", .todo), dir = CACHE_DIR, refit = REFIT,
                                    why = sprintf("the partial-dependence bands regrow the forest %d times", BANDS_B))
   }
   # Reports each subsample forest to <job>.run.progress and the render log.
@@ -459,7 +459,7 @@ if (BANDS_B > 0) {
   bands <- list()
   for (.v in sel) {
     .g <- .grids[[.v]]
-    bands[[.v]] <- cache_fit(paste0("rfc-partial-band-", .v), .band_code, seed = SEED, dir = CACHE_DIR,
+    bands[[.v]] <- cache_fit(hvtiRtemplates:::.band_cache_name("rfc", .v), .band_code, seed = SEED, dir = CACHE_DIR,
                              refit = REFIT, packages = "randomForestSRC")
   }
   .drawn <- if (identical(BAND_STYLE, "bars")) "error bars" else "shaded bands"

@@ -894,3 +894,13 @@ test_that("rfc-explain and rfr-explain draw the bands too", {
                                 recursive = TRUE)), 0L)
   }
 })
+
+test_that("no explain template names a band cache with the raw predictor name", {
+  # A predictor such as `a/b` is no file stem; .band_cache_name() encodes it, in the check, guard and write alike.
+  files <- template_list()$file
+  for (prefix in c("rfs", "rfc", "rfr")) {
+    text <- readLines(files[basename(files) == paste0(prefix, "-explain.qmd")], warn = FALSE)
+    expect_false(any(grepl(paste0("\"", prefix, "-partial-band-\""), text, fixed = TRUE)), info = prefix)
+    expect_length(grep(paste0(".band_cache_name(\"", prefix, "\""), text, fixed = TRUE), 3L)
+  }
+})

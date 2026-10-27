@@ -16,6 +16,17 @@
 
 .band_size <- function(n, subratio) max(2L, as.integer(round(subratio * n)))
 
+# The cache file stem for one variable's band. A predictor name is any string rfsrc() accepts, and
+# one such as `a/b` is no file name; a name that is not plain letters, digits, `.`, `_` and `-` is
+# encoded, with a hash of the original so two names that encode alike stay apart. Plain names
+# are kept as they are, so their caches keep their names.
+.band_cache_name <- function(prefix, var) {
+  plain <- grepl("^[A-Za-z0-9._-]+$", var)
+  safe <- gsub("[^A-Za-z0-9._-]", "_", var)
+  hash <- vapply(var, digest::digest, "", algo = "xxhash32", serialize = FALSE, USE.NAMES = FALSE)
+  paste0(prefix, "-partial-band-", ifelse(plain, var, paste0(safe, "-", hash)))
+}
+
 # The delete-d jackknife standard error extract.subsample() reports as se.jk.Z: the
 # mean squared deviation of the subsample estimates about the full forest's, scaled by
 # the subsample fraction. `star` has one row per point and one column per subsample;
