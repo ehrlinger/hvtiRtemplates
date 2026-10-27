@@ -1079,7 +1079,7 @@ test_that("a job that models one row per patient refuses a long join, before any
   expect_match(err, "REDUCE <- list(rule = \"last\", by = \"<date>\")", fixed = TRUE)
   expect_match(err, "a template that takes repeated records")
   # It names the templates that take a long join, read from the templates themselves.
-  expect_match(err, "such as dc-eda, dc-general, dc-tables, dc-trends or nb-boostmtree.", fixed = TRUE)
+  expect_match(err, "such as dc-eda, dc-general, dc-tables, dc-trends, nb-boostmtree or rhf-fit.", fixed = TRUE)
   expect_no_match(err, "gfup|dc-\\*|dp-\\*")
   expect_no_match(err, "data was read")
   expect_error(read_job_data(cfg, join = "echo", one_row_per_patient = NA), "one_row_per_patient must be TRUE or FALSE")
@@ -1542,4 +1542,42 @@ test_that("a draft ac render reads an unregistered build and says so, and a fina
     expect_error(render_unregistered_ac(final = TRUE, quiet = FALSE),  # nolint: object_usage_linter.
                  "is a final render, so it can")
   )
+})
+
+test_that("read_job_data(whole_patients = TRUE) refuses a WHERE that keeps part of a patient", {
+  long <- data.frame(ccfid = c(1L, 1L, 1L, 2L, 2L, 3L), iv_start = c(0, 1, 2, 0, 1, 0),
+                     iv_stop = c(1, 2, 3, 1, 2, 4), lab = c(5, 9, 5, 5, 5, 9), female = c(1, 1, 1, 0, 0, 1))
+  cfg <- job_study(long)
+  key <- c("ccfid", "iv_start")
+  # A baseline column keeps or drops a patient whole.
+  out <- read_job_data(cfg, where = quote(female == 1), key = key, whole_patients = TRUE)
+  expect_identical(sort(unique(out$data$ccfid)), c(1L, 3L))
+  expect_identical(nrow(out$data), 4L)
+  # A time-varying one keeps part of patient 1 (and drops patient 3 whole, which is fine).
+  expect_error(read_job_data(cfg, where = quote(lab < 9), key = key, whole_patients = TRUE),
+               "1 patient kept by WHERE lost some of their rows")
+  # The default changes nothing: the same WHERE keeps the partial patient.
+  expect_identical(nrow(read_job_data(cfg, where = quote(lab < 9), key = key)$data), 4L)
+  # No WHERE, nothing to check.
+  expect_identical(nrow(read_job_data(cfg, key = key, whole_patients = TRUE)$data), 6L)
+  expect_error(read_job_data(cfg, key = key, whole_patients = NA), "whole_patients must be TRUE or FALSE")
+})
+
+test_that("whole_patients reads an integer64 ID by value, as Parquet hands one over", {
+  skip_if_not_installed("bit64")
+  skip_if_not_installed("arrow")
+  # .id_text() writes every integer64 as "0", so counting rows per patient by text made one patient of all of them
+  # and a WHERE that dropped a patient whole looked like one that cut a patient short.
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, "Integer64", 42L, renv = FALSE))
+  long <- data.frame(ccfid = bit64::as.integer64(9100000000000 + c(1, 1, 1, 2, 2, 3)), iv_start = c(0, 1, 2, 0, 1, 0),
+                     iv_stop = c(1, 2, 3, 1, 2, 4), lab = c(5, 9, 5, 5, 5, 9), female = c(1, 1, 1, 0, 0, 1))
+  arrow::write_parquet(long, file.path(hvtiRutilities::study_dir("datasets", root), "built.parquet"))
+  suppressMessages(hvtiRutilities::register_data(root, "built.parquet", key = c("ccfid", "iv_start")))
+  cfg <- hvtiRutilities::study_config(root)
+  key <- c("ccfid", "iv_start")
+  out <- read_job_data(cfg, where = quote(female == 1), key = key, whole_patients = TRUE)
+  expect_identical(nrow(out$data), 4L)
+  expect_error(read_job_data(cfg, where = quote(lab < 9), key = key, whole_patients = TRUE),
+               "1 patient kept by WHERE lost some of their rows")
 })

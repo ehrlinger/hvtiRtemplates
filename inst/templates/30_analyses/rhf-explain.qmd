@@ -1,0 +1,294 @@
+---
+title: "Random hazard forest: explain"
+date: now
+date-format: "YYYY-MM-DD HH:mm"
+# Carried in the file rather than inherited from _quarto.yml. A file meant to be
+# COPIED should not depend on settings from the directory it happens to sit in:
+# rendered as a standalone document the project's format block never applies,
+# which is how server-rendered reports end up with sibling _files/ trees instead
+# of being self-contained.
+#
+# NOTE: output-dir is a PROJECT setting and cannot be set here, so the .html
+# lands next to its source. With embed-resources that is a single standalone
+# file, which is the property that actually matters when a report is sent on.
+format:
+  html:
+    fig-width: 9
+    fig-height: 6
+    theme: cosmo
+    toc: true
+    toc-location: left
+    page-layout: full
+    grid:
+      body-width: 2000px
+      sidebar-width: 250px
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: say which rhf-fit job in this set this explains, and what question
+     the importance and hazard curves are meant to answer. -->
+
+Explains the forest the `rhf-fit` job in this set saved.
+
+An `rhf-explain` job never grows a forest. It reads `rhf.rds`, which the fit job
+writes, and reports how well the forest separates patients who have the event
+from those still at risk, over follow-up; the hazard it predicts for a sample of
+patients; and how much each predictor matters, at several points of follow-up.
+Each expensive step is cached on its own. The importance step builds a VarPro
+cache, `rhf-varpro-cache`, which later VarPro work on this forest reads instead
+of building again.
+
+<!-- The two values below are written by add_job() from the subject/type it
+     was called with, which are also the filename's first two fields. They
+     name the SET this job belongs to, and every artifact path in the
+     document is computed from them, so no output path below needs editing.
+
+     Do NOT hand-edit these declarations: the render-time guard below checks
+     them against this file's own name and stops if they disagree. To put
+     this job in a different set, call add_job() again with the new
+     subject/type rather than editing this copy in place. -->
+
+```{r}
+#| label: setup
+#| results: asis
+SUBJECT <- "dead"
+TYPE    <- "rhf"
+.in <- knitr::current_input(dir = TRUE)
+suppressPackageStartupMessages({
+  library(randomForestRHF)
+  library(ggRandomForests)
+  library(hvtiRutilities)
+})
+# One thread, so the VarPro cache reproduces from machine to machine; see rhf-fit.
+options(rf.cores = 1L)
+# The versions this template was verified against, end to end, on 2026-10-26.
+if (utils::packageVersion("randomForestRHF") < "2.1.0") {
+  stop("This job needs randomForestRHF >= 2.1.0; ", utils::packageVersion("randomForestRHF"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+if (utils::packageVersion("ggRandomForests") < "4.0.0") {
+  stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
+  stop("This job needs hvtiPlotR >= 2.8.18 for the house theme; ", utils::packageVersion("hvtiPlotR"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+# The study root, the guards and the run record come from .job_setup(); see rhf-fit.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+# `rhf-explain` reads the forest `rhf-fit` wrote in this same set, and caches
+# its own results beside it.
+.job$notice
+```
+
+## Study choices
+
+Edit these values for this study before rendering. The outcome and predictors
+are not here: they come from the forest.
+
+```{r}
+#| label: edit-study-choices
+# EDIT: the fit's selection is used; set any of these only to confirm it.
+# NULL takes the value the fit job used.
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
+
+# EDIT: the horizon for AUC(t), in the units of the fit job's interval columns.
+# NULL takes randomForestRHF's default, the range of follow-up.
+TAU <- NULL
+
+# EDIT: how many patients get hazard curves, drawn at random. The forest's
+# patients are numbered 1 to n by the fit job, so a curve cannot be asked for by
+# study identifier, and the plots carry no legend that could print one.
+N_CURVES <- 20
+
+# EDIT: the VarPro cache behind importance, at randomForestRHF's defaults. It is
+# the slow step at full scale: a first study needed 30 rules and 20 trees to
+# finish on 400 patients. Smaller values are faster and coarser.
+MAX_RULES_TREE <- 150
+MAX_TREE <- 150
+
+# EDIT: importance at this many evenly spaced points of follow-up. A hazard
+# forest's importance changes with time, so one number per predictor would hide
+# when it matters.
+N_TIMES <- 5
+
+# EDIT: seed for the sample of curves and the VarPro cache. It is part of every
+# cache key.
+SEED <- 2026
+
+# Set TRUE after changing a choice above. A cache whose inputs changed stops the
+# render instead of returning the old result; TRUE recomputes only the caches
+# that are out of date.
+REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("rhf-explain-importance").
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
+```
+
+## The forest
+
+```{r}
+#| label: forest
+#| results: asis
+.handoff <- set_path("estimates", "rhf.rds")
+if (!file.exists(.handoff)) {
+  stop("No forest at ", .handoff, ". Render the rhf-fit job in this set first; ",
+       "this job explains that forest and never grows its own.", call. = FALSE)
+}
+.cfg <- study_config(start = .root)
+.forest_read <- hvtiRtemplates:::.read_handoff(.handoff, "forest", .cfg, "the rhf-fit job")
+forest <- .forest_read$value
+.provenance_data <- .forest_read$lineage$data
+.provenance_artifacts <- c(.forest_read$lineage$artifacts, list(.forest_read$record))
+if (!inherits(forest, "rhf")) {
+  stop("rhf.rds does not hold a random hazard forest.", call. = FALSE)
+}
+CACHE_DIR <- dirname(.handoff)
+# A forest grown on rows the fit job repaired is a draft's, and so is every
+# explanation of it: a final render stops here.
+cat(hvtiRtemplates:::.cp_repair_notice(unlist(.forest_read$lineage$analysis$repair)))
+```
+
+```{r}
+#| label: tbl-data
+#| tbl-cap: "The data the fit job read"
+# This job reads no data: the forest carries its training rows. A setting above
+# that differs from the fit's stops here.
+.sel <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, .forest_read$lineage, list(where = WHERE, id = ID, key = KEY), read = FALSE, source = "rhf.rds"
+)$selection
+knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
+                        value = c(.sel$id, paste(.sel$key, collapse = ", "),
+                                  if (length(.sel$where_shown)) paste(.sel$where_shown, collapse = "; ") else "none",
+                                  .sel$rows)),
+             col.names = c("Data", ""))
+```
+
+## Discrimination over follow-up
+
+```{r}
+#| label: fig-auc-cumulative
+#| fig-cap: "Cumulative AUC(t): how well the predicted cumulative hazard separates patients who have had the event by
+#|   time t from those still at risk. 0.5 is chance."
+#| message: true
+auc_cum <- cache_fit("rhf-auc-cumulative",
+                     auct.rhf(forest, marker = "cumhaz", method = "cumulative", tau = TAU, verbose = FALSE),
+                     seed = SEED, dir = CACHE_DIR, refit = REFIT)
+.fig <- plot(gg_auct(forest, auct_fit = auc_cum)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "rhf-explain-auc-cumulative")
+.fig
+```
+
+```{r}
+#| label: fig-auc-incident
+#| fig-cap: "Incident AUC(t): how well the predicted hazard separates patients who have the event at time t from those
+#|   still at risk then. 0.5 is chance."
+#| message: true
+auc_inc <- cache_fit("rhf-auc-incident",
+                     auct.rhf(forest, marker = "hazard", method = "incident", riskset = "subject", tau = TAU,
+                              verbose = FALSE),
+                     seed = SEED, dir = CACHE_DIR, refit = REFIT)
+.fig <- plot(gg_auct(forest, auct_fit = auc_inc)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "rhf-explain-auc-incident")
+.fig
+```
+
+```{r}
+#| label: tbl-auc
+#| tbl-cap: "Integrated AUC over follow-up"
+data.frame(measure = c("Cumulative", "Incident"),
+           iAUC = round(c(auc_cum$iAUC.uno, auc_inc$iAUC.uno), 3))
+```
+
+## Hazard curves
+
+```{r}
+#| label: curves
+# The forest's patients are numbered 1 to n, so the sample says nothing about who
+# they are.
+haz <- gg_rhf(forest, source = "oob")
+set.seed(abs(SEED))
+.curve_ids <- sort(sample(unique(haz$id), min(N_CURVES, length(unique(haz$id)))))
+```
+
+```{r}
+#| label: fig-hazard
+#| fig-cap: "Out-of-bag predicted hazard over follow-up for a random sample of patients, one line per patient."
+.fig <- plot(haz, idx = .curve_ids, hazard.only = TRUE) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "none")
+save_figure(.fig, "rhf-explain-hazard")
+.fig
+```
+
+```{r}
+#| label: fig-chf
+#| fig-cap: "Out-of-bag predicted cumulative hazard over follow-up for the same patients, one line per patient."
+.fig <- plot(haz, idx = .curve_ids, hazard.only = FALSE) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "none")
+save_figure(.fig, "rhf-explain-chf")
+.fig
+```
+
+## Importance
+
+```{r}
+#| label: fig-importance
+#| fig-cap: "VarPro importance of each predictor at points across follow-up."
+#| fig-height: 10.5
+#| message: true
+# The cache is the slow step, and its name is fixed on purpose: later VarPro
+# work on this forest reads rhf-varpro-cache rather than building it again.
+hvtiRtemplates::guard_long_fit("rhf-varpro-cache", dir = CACHE_DIR,
+                               why = "the VarPro cache walks every rule of every tree at study size", refit = REFIT)
+vp_cache <- cache_fit("rhf-varpro-cache",
+                      varpro.cache.rhf(forest, max.rules.tree = MAX_RULES_TREE, max.tree = MAX_TREE, verbose = FALSE),
+                      seed = SEED, dir = CACHE_DIR, refit = REFIT)
+.time_index <- unique(as.integer(round(seq.int(1L, vp_cache$K, length.out = N_TIMES))))
+imp <- cache_fit("rhf-importance",
+                 importance.rhf(forest, cache = vp_cache, time.index = .time_index, verbose = FALSE),
+                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
+.fig <- plot(gg_rhf_importance(forest, importance_fit = imp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "rhf-explain-importance", height = 7)
+.fig
+```
+
+```{r}
+#| label: tbl-importance
+#| tbl-cap: "VarPro importance of each predictor at each point of follow-up"
+as.data.frame(imp)
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  run = .job$run,
+  artifacts = .provenance_artifacts,
+  extra = list(
+    subject = SUBJECT,
+    type = TYPE,
+    analysis = .forest_read$lineage$analysis,
+    cohort = .forest_read$lineage$cohort
+  )
+))
+```
