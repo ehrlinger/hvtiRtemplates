@@ -44,28 +44,37 @@
   NA_character_
 }
 
-# Every call in `x`, depth first. Arguments, function bodies and default
-# arguments are all searched: vt-fit reads a hand-off inside a default argument.
-.walk_calls <- function(x, acc = list()) {
+# Every call in `x`, depth first, each with whether it runs only on a condition.
+# Arguments, function bodies and default arguments are all searched: vt-fit reads
+# a hand-off inside a default argument. A call in an if or switch, or in a
+# function's body or defaults, is `optional`: it runs only when a choice takes
+# that branch or something calls the function, so a sheet must not present it as
+# a step every run takes (vt-fit's screen, hm's selection runner).
+.walk_calls <- function(x, acc = list(), optional = FALSE) {
   if (!is.call(x) && !is.pairlist(x)) return(acc)
-  if (is.call(x)) acc[[length(acc) + 1L]] <- x
+  if (is.call(x)) {
+    acc[[length(acc) + 1L]] <- list(call = x, optional = optional)
+    optional <- optional || isTRUE(.call_name(x) %in% c("if", "switch", "function"))
+  }
   parts <- as.list(x)
   for (i in seq_along(parts)) {
     # A formal with no default is the empty symbol, which cannot be touched as a value.
     if (identical(parts[[i]], quote(expr = ))) next
-    acc <- .walk_calls(parts[[i]], acc)
+    acc <- .walk_calls(parts[[i]], acc, optional)
   }
   acc
 }
 
 # One entry per call in the template's R chunks: the chunk's first line, the
-# function's name and the call itself.
+# function's name, the call itself and whether it runs only on a condition.
 .template_calls <- function(src, layout) {
   out <- list()
   for (k in setdiff(unique(layout$chunk), 0L)) {
     lines <- which(layout$chunk == k)
     for (e in as.list(parse(text = src[lines], keep.source = FALSE))) {
-      for (call in .walk_calls(e)) out[[length(out) + 1L]] <- list(line = lines[1L], fn = .call_name(call), call = call)
+      for (w in .walk_calls(e)) {
+        out[[length(out) + 1L]] <- list(line = lines[1L], fn = .call_name(w$call), call = w$call, optional = w$optional)
+      }
     }
   }
   out
@@ -193,11 +202,13 @@
         route <- "catalog"
       }
       rows[[length(rows) + 1L]] <- data.frame(consumer = f$name, producer = if (length(producers)) producers else NA,
-                                              file = file, route = route, rebuild = rebuild, line = e$line)
+                                              file = file, route = route, rebuild = rebuild, line = e$line,
+                                              optional = e$optional)
     }
   }
   out <- do.call(rbind, c(list(data.frame(consumer = character(), producer = character(), file = character(),
-                                          route = character(), rebuild = character(), line = integer())), rows))
+                                          route = character(), rebuild = character(), line = integer(),
+                                          optional = logical())), rows))
   unique(out)
 }
 
@@ -212,8 +223,9 @@
 # The name add_job() takes for a template: "rfs-explain" is "rfs.explain".
 .add_job_name <- function(name) sub("-", ".", name, fixed = TRUE)
 
-.and_list <- function(x) {
-  if (length(x) <= 2L) paste(x, collapse = " and ") else paste0(paste(x[-length(x)], collapse = ", "), " and ", x[length(x)])
+.and_list <- function(x, and = "and") {
+  if (length(x) <= 2L) return(paste(x, collapse = paste0(" ", and, " ")))
+  paste0(paste(x[-length(x)], collapse = ", "), " ", and, " ", x[length(x)])
 }
 
 .bold_list <- function(x) .and_list(paste0("**", x, "**"))
@@ -252,12 +264,13 @@
           r <- rows[rows$route == route, , drop = FALSE]
           if (route == "literal") {
             paste0("reads what ", .bold_list(unique(r$producer)), " saved (",
-                   paste0("`", unique(r$file), "`", collapse = ", "), ")")
+                   paste0("`", unique(r$file), "`", collapse = ", "), ")", if (all(r$optional)) " when its choices ask")
           } else if (route == "catalog") {
-            "reads a saved result from the job its choices name"
+            paste0("reads a saved result from the job its choices name", if (all(r$optional)) ", when they name one")
           } else {
             paste0("reads `", r$file[[1L]], "`, which ",
-                   if (is.na(r$rebuild[[1L]])) "another step" else r$rebuild[[1L]], " writes")
+                   if (is.na(r$rebuild[[1L]])) "another step" else r$rebuild[[1L]], " writes",
+                   if (all(r$optional)) ", when it is there")
           }
         }, "", USE.NAMES = FALSE)
       },
@@ -279,8 +292,11 @@
   for (e in .calls_to(facts, "saveRDS")) {
     file <- .call_file(e, "file", facts$bindings)
     if (is.na(file)) next
-    readers <- unique(graph$consumer[graph$producer %in% facts$name & graph$route == "literal" & graph$file %in% file])
-    chosen <- unique(graph$consumer[graph$producer %in% facts$name & graph$route == "catalog"])
+    mine <- graph$producer %in% facts$name
+    literal <- mine & graph$route == "literal" & graph$file %in% file
+    readers <- unique(graph$consumer[literal & !graph$optional])
+    # A reader that takes it only when its choices ask can read it, as one whose choices name it can.
+    chosen <- setdiff(unique(graph$consumer[(mine & graph$route == "catalog") | (literal & graph$optional)]), readers)
     who <- c(if (length(readers)) paste0(.bold_list(readers), " read", if (length(readers) == 1L) "s"),
              if (length(chosen)) paste(.bold_list(chosen), "can read"))
     if (length(who)) {
@@ -329,32 +345,9 @@
                         "reads registered data only: register the build with `hvtiRutilities::update_manifest()` first."))
   }
   up <- graph[graph$consumer == facts$name, , drop = FALSE]
-  literal <- unique(up$producer[up$route == "literal"])
-  # A catalog value is a template's name, or a prefix standing for any of its templates.
-  from <- if (any(up$route == "catalog")) unlist(catalog$upstream[.catalog_names(catalog) == facts$name]) else character()
-  from <- ifelse(from %in% .catalog_names(catalog), paste0("**", from, "**"), paste0("one of the **", from, "** jobs"))
-  if (length(literal) || length(from)) {
-    n <- length(literal) + length(from)
-    said <- c(
-      if (length(literal)) {
-        paste0("Render ", .bold_list(literal), " first, in this same set: the same `subject` and `type` as this job, ",
-               "which is how it finds what ", if (length(literal) == 1L) "that job" else "they", " saved (",
-               paste0("`", unique(up$file[up$route == "literal"]), "`", collapse = ", "), ").")
-      },
-      if (length(from)) {
-        paste0("Render ", .and_list(from), " first", if (length(literal)) " too", "; its choices marked `EDIT:` name ",
-               "the file it saved and the set it sits in.")
-      },
-      paste0("For a final render, render ", if (n == 1L) "it" else "them", " final too: a final render refuses a ",
-             "hand-off saved from unregistered data.")
-    )
-    out <- c(out, paste0("- **The job", if (n > 1L) "s", " it reads from.** ", paste(said, collapse = " ")))
-  }
-  # One bullet per file, however many chunks read it.
-  for (i in which(up$route == "none" & !duplicated(up[c("file", "rebuild")]))) {
-    who <- if (is.na(up$rebuild[i])) "the step that writes it" else up$rebuild[i]
-    out <- c(out, paste0("- **Run ", who, " first.** It writes `", up$file[i], "`, which this job reads."))
-  }
+  # A read every run makes is a prerequisite; one a choice or a file decides on is said as optional.
+  out <- c(out, .sheet_upstream(facts, up[!up$optional, , drop = FALSE], catalog, optional = FALSE),
+           .sheet_upstream(facts, up[up$optional, , drop = FALSE], catalog, optional = TRUE))
   if (".read_bootstrap_artifact" %in% fns) {
     prefix <- sub("-.*$", "", facts$name)
     out <- c(out, paste0("- **Its bootstrap runner, run first.** The screen runs in a companion script, `", prefix,
@@ -370,6 +363,51 @@
   if ("guard_long_fit" %in% fns) {
     out <- c(out, paste("- **The `hvti` command.** A long job starts from a terminal with `hvti run`;",
                         "`install_hvti()` puts the command on your PATH, once."))
+  }
+  out
+}
+
+# The prerequisite bullets for the reads in `up`: the jobs to render first, and
+# a runner's file. `optional` reads are said as such: the job runs without them.
+.sheet_upstream <- function(facts, up, catalog, optional) {
+  out <- character()
+  literal <- unique(up$producer[up$route == "literal"])
+  # A catalog value is a template's name, or a prefix standing for any of its templates.
+  from <- if (any(up$route == "catalog")) unlist(catalog$upstream[.catalog_names(catalog) == facts$name]) else character()
+  from <- ifelse(from %in% .catalog_names(catalog), paste0("**", from, "**"), paste0("one of the **", from, "** jobs"))
+  n <- length(literal) + length(from)
+  final <- paste0("For a final render, render ", if (n == 1L) "it" else "them", " final too: a final render refuses a ",
+                  "hand-off saved from unregistered data.")
+  if (n && optional) {
+    out <- paste0("- **Optional: the job", if (n > 1L) "s", " it can read from.** Some of its choices read a saved ",
+                  "result from ", .and_list(c(if (length(literal)) paste0("**", literal, "**"), from), "or"),
+                  ". Left as the template sets them, the job runs without one. A choice that names one needs ",
+                  "that job rendered first, in ",
+                  "the set the choice names. ", final)
+  } else if (n) {
+    said <- c(
+      if (length(literal)) {
+        paste0("Render ", .bold_list(literal), " first, in this same set: the same `subject` and `type` as this job, ",
+               "which is how it finds what ", if (length(literal) == 1L) "that job" else "they", " saved (",
+               paste0("`", unique(up$file[up$route == "literal"]), "`", collapse = ", "), ").")
+      },
+      if (length(from)) {
+        paste0("Render ", .and_list(from), " first", if (length(literal)) " too", "; its choices marked `EDIT:` name ",
+               "the file it saved and the set it sits in.")
+      },
+      final
+    )
+    out <- paste0("- **The job", if (n > 1L) "s", " it reads from.** ", paste(said, collapse = " "))
+  }
+  # One bullet per file, however many chunks read it.
+  for (i in which(up$route == "none" & !duplicated(up[c("file", "rebuild")]))) {
+    who <- if (is.na(up$rebuild[i])) "the step that writes it" else up$rebuild[i]
+    out <- c(out, if (optional) {
+      paste0("- **Optional: ", who, ".** It writes `", up$file[i], "`. This job reads it when it is there, and ",
+             "runs without it otherwise.")
+    } else {
+      paste0("- **Run ", who, " first.** It writes `", up$file[i], "`, which this job reads.")
+    })
   }
   out
 }
@@ -402,7 +440,7 @@
   for (consumer in unique(down$consumer[order(down$route != "literal", down$consumer)])) {
     r <- down[down$consumer == consumer, , drop = FALSE]
     call <- paste0("`add_job(\"", .add_job_name(consumer), "\", subject = \"<subject>\", type = \"<type>\")`")
-    out <- c(out, if (all(r$route == "literal")) {
+    out <- c(out, if (all(r$route == "literal" & !r$optional)) {
       paste0("- **", consumer, "** reads what this job saves (", paste0("`", unique(r$file), "`", collapse = ", "),
              "). Add it to the same set, with this job's `subject` and `type`, because that shared pair is how it ",
              "finds the file: ", call, ".")
@@ -439,8 +477,10 @@
 # turned into HTML here, where a test can see it, rather than in package.py.
 
 # One line of Markdown to HTML: everything escaped, then `code`, **bold** and
-# [text](href) converted, the only forms a sheet writes. Nothing inside a code
-# span is converted. `base` goes before a relative href.
+# [text](href) converted, the only forms a sheet writes. Code spans stand aside
+# as numbered placeholders while bold and links are converted, so bold can wrap
+# one (hz's "Fit 3 -- `noconserve` sensitivity" heading) and nothing inside one
+# is converted. `base` goes before a relative href.
 .md_inline_html <- function(x, base = "") {
   esc <- function(s) {
     for (p in list(c("&", "&amp;"), c("<", "&lt;"), c(">", "&gt;"), c("\"", "&quot;"))) s <- gsub(p[1L], p[2L], s, fixed = TRUE)
@@ -448,23 +488,21 @@
   }
   parts <- strsplit(x, "`", fixed = TRUE)[[1L]]
   if (endsWith(x, "`")) parts <- c(parts, "")
-  for (i in seq_along(parts)) {
-    p <- esc(parts[i])
-    if (i %% 2L == 0L) {
-      parts[i] <- paste0("<code>", p, "</code>")
-      next
-    }
-    p <- gsub("\\*\\*([^*]+)\\*\\*", "<strong>\\1</strong>", p)
-    links <- regmatches(p, gregexpr("\\[[^]]+\\]\\([^)]+\\)", p))[[1L]]
-    for (l in links) {
-      text <- sub("^\\[([^]]+)\\].*$", "\\1", l)
-      href <- sub("^.*\\]\\(([^)]+)\\)$", "\\1", l)
-      if (!grepl("^([a-z]+:|#|/)", href)) href <- paste0(base, href)
-      p <- sub(l, paste0("<a href=\"", href, "\">", text, "</a>"), p, fixed = TRUE)
-    }
-    parts[i] <- p
+  code <- seq_along(parts) %% 2L == 0L
+  spans <- paste0("<code>", esc(parts[code]), "</code>")
+  holder <- paste0("\001", seq_along(spans), "\002")
+  parts[code] <- holder
+  p <- esc(paste(parts, collapse = ""))
+  p <- gsub("\\*\\*([^*]+)\\*\\*", "<strong>\\1</strong>", p)
+  links <- regmatches(p, gregexpr("\\[[^]]+\\]\\([^)]+\\)", p))[[1L]]
+  for (l in links) {
+    text <- sub("^\\[([^]]+)\\].*$", "\\1", l)
+    href <- sub("^.*\\]\\(([^)]+)\\)$", "\\1", l)
+    if (!grepl("^([a-z]+:|#|/)", href)) href <- paste0(base, href)
+    p <- sub(l, paste0("<a href=\"", href, "\">", text, "</a>"), p, fixed = TRUE)
   }
-  paste(parts, collapse = "")
+  for (i in seq_along(spans)) p <- sub(holder[i], spans[i], p, fixed = TRUE)
+  p
 }
 
 # A sheet's Markdown to block HTML. Blocks are separated by blank lines, and a

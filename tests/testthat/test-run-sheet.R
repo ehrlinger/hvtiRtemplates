@@ -153,6 +153,39 @@ test_that("the hand-off graph on the shipped templates", {
   # The one literal read no template writes: a companion runner does.
   expect_identical(g$consumer[g$route == "none"], "hm")
   expect_identical(g$rebuild[g$route == "none"], "the companion hm selection runner")
+  # The reads a default run does not make: vt-fit's screen and SID distance (VP_SET and
+  # SID_SET are NULL), vt-explain's SID strata (STRATIFY is NULL) and hm's selection runner
+  # (the selection reports "not run" without it). Every other read is required.
+  opt <- g[g$optional, , drop = FALSE]
+  expect_setequal(paste(opt$consumer, opt$route), c("vt-fit catalog", "vt-explain catalog", "hm none"))
+  expect_false(any(g$optional & g$consumer == "vt-explain" & g$producer == "vt-fit", na.rm = TRUE))
+  expect_false(any(g$optional & g$consumer == "hm" & g$producer == "hz", na.rm = TRUE))
+})
+
+test_that("a read inside an if or a function is optional, and one at top level is not", {
+  f <- .sheet_fixture(.fx(
+    "```{r}",
+    "a <- .read_handoff(set_path('estimates', 'a.rds'), 'a', cfg, 'x')",
+    "if (!is.null(B_SET)) b <- .read_handoff(set_path('estimates', 'b.rds'), 'b', cfg, 'x') else b <- NULL",
+    "reader <- function(p, read = function(q) .read_handoff(set_path('estimates', 'c.rds'), 'c', cfg, 'x')) read(p)",
+    "```"
+  ))
+  rh <- Filter(function(e) identical(e$fn, ".read_handoff"), .run_sheet_facts(f)$calls)
+  expect_identical(vapply(rh, `[[`, NA, "optional"), c(FALSE, TRUE, TRUE))
+})
+
+test_that("the shipped sheets say an optional read is optional, and never as a step to run first", {
+  sheets <- .run_sheets()
+  md <- function(n) sheets[[which(vapply(sheets, `[[`, "", "name") == n)]]$markdown
+  expect_match(md("vt-fit"), "**Optional: the jobs it can read from.**", fixed = TRUE)
+  expect_no_match(md("vt-fit"), "it reads from.**", fixed = TRUE)
+  expect_match(md("vt-explain"), "Render **vt-fit** first", fixed = TRUE)
+  expect_match(md("vt-explain"),
+               "**Optional: the job it can read from.** Some of its choices read a saved result from **sid-clusters**", fixed = TRUE)
+  expect_no_match(md("vt-explain"), "Render **sid-clusters** first", fixed = TRUE)
+  expect_match(md("hm"), "**Optional: the companion hm selection runner.**", fixed = TRUE)
+  expect_no_match(md("hm"), "Run the companion hm selection runner first", fixed = TRUE)
+  expect_match(md("hm"), "Render **hz** first", fixed = TRUE)
 })
 
 test_that("a non-literal read with no catalog upstream is an error naming the template", {
@@ -265,6 +298,8 @@ test_that(".md_inline_html() escapes everything and converts only code, bold and
   expect_identical(.md_inline_html("a < b & \"c\" > d"), "a &lt; b &amp; &quot;c&quot; &gt; d")
   expect_identical(.md_inline_html("`x <- 1` and **y**"), "<code>x &lt;- 1</code> and <strong>y</strong>")
   expect_identical(.md_inline_html("`**not bold**`"), "<code>**not bold**</code>")
+  expect_identical(.md_inline_html("**A `code` heading**"), "<strong>A <code>code</code> heading</strong>")
+  expect_identical(.md_inline_html("[a `b`](c.html) `[d](e)`"), "<a href=\"c.html\">a <code>b</code></a> <code>[d](e)</code>")
   expect_identical(.md_inline_html("[t](u.html)", base = "../"), "<a href=\"../u.html\">t</a>")
   expect_identical(.md_inline_html("[t](https://x.org/a#b)", base = "../"), "<a href=\"https://x.org/a#b\">t</a>")
   expect_identical(.md_inline_html("*one* _two_"), "*one* _two_")

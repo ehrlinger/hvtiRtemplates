@@ -134,6 +134,13 @@ dev/gallery/index.html             a "Run sheet" link on each row, beside "Then 
   function name matches bare, as `pkg::fn` or as `pkg:::fn`. Comments never reach the parser, so a
   commented-out call states nothing. Every fact keeps its source line, which places it under the
   heading above it.
+- **Optional reads.** A call inside an `if` or `switch`, or in a function's body or defaults, runs
+  only when a choice takes that branch or something calls the function, so the walk marks it
+  `optional`. An optional hand-off read is said as such: "Optional: the jobs it can read from", and
+  never "Render X first". On the shipped templates these are `vt-fit`'s screen and SID distance,
+  `vt-explain`'s SID strata and `hm`'s selection runner, all of which a default run does without.
+  Raised by the Codex review of #430. A required read wrapped in a helper function would read as
+  optional too; none ships, and the graph test pins the optional set so one would be noticed.
 - **Headings.** Lines matching `^#{2,3} ` outside code fences, so an R comment is never taken for one.
 - **The marker helper is shared.** The `EDIT:` token (built, never written literally) and the 96-character
   cut move out of `.guard_edits()` into `.edit_marker_lines(src)`, and both call it. This is the one
