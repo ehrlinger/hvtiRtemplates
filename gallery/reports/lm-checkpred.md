@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-25 18:30
+2026-10-27 15:17
 
 Applies a saved `lm-binary` bundle to a declared validation cohort. This
 job never refits, updates, or overwrites the source model.
@@ -33,8 +33,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.1
+**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.2
 
 Code
 
@@ -122,7 +122,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME)
 
 | Data |  |
 |:---|:---|
-| Source | dataset `built` (built_20261025.parquet) |
+| Source | dataset `built` (built_20261027.parquet) |
 | Rows read | 800 |
 | ID | `patient_id` |
 | Identifiers dropped | none |
@@ -272,9 +272,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-25 18:30:08 EDT |
-|  | Ended | 2026-10-25 18:30:09 EDT |
-|  | Duration | 0 s |
+| Run | Started | 2026-10-27 15:17:17 EDT |
+|  | Ended | 2026-10-27 15:17:18 EDT |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -282,14 +282,14 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 |  | Template | lm.checkpred |
 |  | Subject | stroke |
 |  | Type | model |
-|  | hvtiRtemplates | 1.5.1 |
-| Dataset `built` | Version file | built_20261025.parquet |
-|  | Version date | 2026-10-25 |
+|  | hvtiRtemplates | 1.5.2 |
+| Dataset `built` | Version file | built_20261027.parquet |
+|  | Version date | 2026-10-27 |
 |  | Source file | built.rds |
 |  | Rows kept | 228 rows on 228 patients |
 |  | WHERE | `as.integer(format(dt_surg, "%Y")) >= 2015` |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-25 18:30:04 -0400, data built_20261025.parquet |
+| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-27 15:16:03 -0400, data built_20261027.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

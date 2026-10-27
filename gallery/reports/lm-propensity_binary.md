@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-25 18:30
+2026-10-27 15:17
 
 Fits a binary-treatment propensity model, including pooled inference for
 stacked imputations and the scored columns used by matching and
@@ -36,8 +36,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.1
+**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.2
 
 Code
 
@@ -118,7 +118,7 @@ hvtiRtemplates:::.check_job_columns(d, TREATMENT = TREATMENT, PREDICTORS = PREDI
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261025.parquet) |
+| Source              | dataset `built` (built_20261027.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -264,9 +264,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-25 18:30:22 EDT |
-|  | Ended | 2026-10-25 18:30:22 EDT |
-|  | Duration | 0 s |
+| Run | Started | 2026-10-27 15:17:48 EDT |
+|  | Ended | 2026-10-27 15:17:49 EDT |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -274,9 +274,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |  | Template | lm.propensity_binary |
 |  | Subject | approach |
 |  | Type | propensity |
-|  | hvtiRtemplates | 1.5.1 |
-| Dataset `built` | Version file | built_20261025.parquet |
-|  | Version date | 2026-10-25 |
+|  | hvtiRtemplates | 1.5.2 |
+| Dataset `built` | Version file | built_20261027.parquet |
+|  | Version date | 2026-10-27 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |

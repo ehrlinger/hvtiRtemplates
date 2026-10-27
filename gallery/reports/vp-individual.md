@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-25 18:34
+2026-10-27 15:32
 
 Describes the `vp-fit` screen in this set patient by patient: each
 selected predictor’s local gradient.
@@ -79,7 +79,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.1
+hvtiRtemplates 1.5.2
 
 ## Study choices
 
@@ -487,9 +487,9 @@ saveRDS(vpi_handoff, set_path("estimates", "individual.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-25 18:34:44 EDT |
-|  | Ended | 2026-10-25 18:34:48 EDT |
-|  | Duration | 4 s |
+| Run | Started | 2026-10-27 15:31:58 EDT |
+|  | Ended | 2026-10-27 15:32:06 EDT |
+|  | Duration | 7 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -497,13 +497,13 @@ saveRDS(vpi_handoff, set_path("estimates", "individual.rds"))
 |  | Template | vp.individual |
 |  | Subject | dead |
 |  | Type | vp |
-|  | hvtiRtemplates | 1.5.1 |
-| Dataset `built` | Version file | built_20261025.parquet |
-|  | Version date | 2026-10-25 |
+|  | hvtiRtemplates | 1.5.2 |
+| Dataset `built` | Version file | built_20261027.parquet |
+|  | Version date | 2026-10-27 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-25 18:33:47 -0400, data built_20261025.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-27 15:30:10 -0400, data built_20261027.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-25 18:36
+2026-10-27 15:36
 
 This job turns a `sid-fit` dissimilarity into clusters. It runs PAM
 (partitioning around medoids) on the SID distance for each K in a range,
@@ -64,7 +64,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.1
+hvtiRtemplates 1.5.2
 
 ## Study choices
 
@@ -637,17 +637,18 @@ if (!is.null(.reg)) {
 }
 ```
 
-     [1] "Study: /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/cd7905b7-02af-4ba0-b8ac-2dc917269fb8/scratchpad/gallery-study"
-     [2] ""                                                                                                                                           
-     [3] "[x] _study.yml — study: Template gallery (synthetic)"                                                                                       
-     [4] "[x] renv.lock — renv.lock present"                                                                                                          
-     [5] "[x] manifest.yaml — 3 dataset entries verified by checksum"                                                                                 
-     [6] "[x] dataset — built.rds, registered as built_20261025.parquet"                                                                              
-     [7] "[x] dataset:echo — echo.rds, registered as echo_20261025.parquet"                                                                           
-     [8] "[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261025.parquet"                                  
-     [9] "[!] provenance — 2 of 47 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, sid.clusters.echo.sid"                          
-    [10] ""                                                                                                                                           
-    [11] "4 .R  |  47 .qmd/.Rmd  |  3 .sas  |  75 provenance sidecars"                                                                                
+     [1] "Study: /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/8a6ce6b2-d9bd-4e4c-8597-a11f84aa45cf/scratchpad/gallery-full"
+     [2] ""                                                                                                                                          
+     [3] "[x] _study.yml — study: Template gallery (synthetic)"                                                                                      
+     [4] "[x] renv.lock — renv.lock present"                                                                                                         
+     [5] "[x] manifest.yaml — 4 dataset entries verified by checksum"                                                                                
+     [6] "[x] dataset — built.rds, registered as built_20261027.parquet"                                                                             
+     [7] "[x] dataset:echo — echo.rds, registered as echo_20261027.parquet"                                                                          
+     [8] "[x] dataset:intervals — intervals.rds, registered as intervals_20261027.parquet"                                                           
+     [9] "[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261027.parquet"                                 
+    [10] "[!] provenance — 2 of 49 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, sid.clusters.echo.sid"                         
+    [11] ""                                                                                                                                          
+    [12] "4 .R  |  49 .qmd/.Rmd  |  3 .sas  |  83 provenance sidecars"                                                                               
 
 Code
 
@@ -664,9 +665,9 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-25 18:36:08 EDT |
-|  | Ended | 2026-10-25 18:36:13 EDT |
-|  | Duration | 5 s |
+| Run | Started | 2026-10-27 15:36:37 EDT |
+|  | Ended | 2026-10-27 15:36:46 EDT |
+|  | Duration | 9 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -674,14 +675,14 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 |  | Template | sid.clusters |
 |  | Subject | echo |
 |  | Type | sid |
-|  | hvtiRtemplates | 1.5.1 |
-| Dataset `built` | Version file | built_20261025.parquet |
-|  | Version date | 2026-10-25 |
+|  | hvtiRtemplates | 1.5.2 |
+| Dataset `built` | Version file | built_20261027.parquet |
+|  | Version date | 2026-10-27 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-10-25 18:35:59 -0400, data built_20261025.parquet |
+| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-10-27 15:36:17 -0400, data built_20261027.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

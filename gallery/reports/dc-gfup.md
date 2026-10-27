@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-25 18:27
+2026-10-27 14:52
 
 Replaces `descriptive/dc.gfup`.
 
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.1
+**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.2
 
 ## Study choices
 
@@ -221,7 +221,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261025.parquet) |
+| Source              | dataset `built` (built_20261027.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -682,9 +682,9 @@ Table 5: dead by reop
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-25 18:27:49 EDT  |
-|                 | Ended            | 2026-10-25 18:27:50 EDT  |
-|                 | Duration         | 1 s                      |
+| Run             | Started          | 2026-10-27 14:52:14 EDT  |
+|                 | Ended            | 2026-10-27 14:52:37 EDT  |
+|                 | Duration         | 23 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -692,9 +692,9 @@ Table 5: dead by reop
 |                 | Template         | dc.gfup                  |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.1                    |
-| Dataset `built` | Version file     | built_20261025.parquet   |
-|                 | Version date     | 2026-10-25               |
+|                 | hvtiRtemplates   | 1.5.2                    |
+| Dataset `built` | Version file     | built_20261027.parquet   |
+|                 | Version date     | 2026-10-27               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

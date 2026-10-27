@@ -1,0 +1,536 @@
+# Random hazard forest: fit
+
+# Random hazard forest: fit
+
+Published
+
+2026-10-27 15:34
+
+Gallery job on the synthetic intervals: the hazard of the simulated
+event, from one time-varying marker (xtd) and three baseline markers.
+
+An `rhf-fit` job grows a random hazard forest on counting-process data:
+one row for each interval of a patient’s follow-up, with its start, stop
+and event, so a predictor such as a laboratory value or a device may
+change over time. It checks those rows, chooses the tree size, and saves
+the forest. **Discrimination, hazard curves and importance are not
+here.** They are the `rhf-explain` job in this same set, which reads the
+forest this job saves instead of growing its own.
+
+A random hazard forest models one event. A competing event, such as
+transplant when the event is death on the waiting list, is coded 0 and
+censors, so the forest estimates the cause-specific hazard of the event
+alone.
+
+Code
+
+``` r
+SUBJECT <- "event"
+TYPE    <- "rhf"
+.in <- knitr::current_input(dir = TRUE)
+suppressPackageStartupMessages({
+  library(randomForestRHF)
+  library(ggRandomForests)
+  library(hvtiRutilities)
+})
+# One thread, so a forest reproduces from machine to machine. Left unset,
+# randomForestRHF runs on every core its OpenMP build can see. Raise it for
+# speed on a large forest, at the cost of that guarantee: a cached fit records
+# its seed, data and package versions, never the threads it ran on.
+options(rf.cores = 1L)
+# The versions this template was verified against, end to end, on 2026-10-26.
+# Below them a call here can fail or change meaning, and the message would
+# arrive mid-render rather than here.
+if (utils::packageVersion("randomForestRHF") < "2.1.0") {
+  stop("This job needs randomForestRHF >= 2.1.0; ", utils::packageVersion("randomForestRHF"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+if (utils::packageVersion("ggRandomForests") < "4.0.0") {
+  stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
+  stop("This job needs hvtiPlotR >= 2.8.18 for the house theme; ", utils::packageVersion("hvtiPlotR"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
+# The study root is the nearest directory above this file holding _study.yml,
+# so the job renders the same from the Render button, quarto render, or
+# render_job(), at any depth, with no path in this document to edit.
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis: a forest grown on the template's placeholder columns.
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+# `rhf-fit` writes the forest through set_path() and `rhf-explain` reads it
+# back, both by set. The write is the `save` chunk at the foot of this file.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
+```
+
+**final** · data `intervals` `intervals_20261027.parquet`, dated
+2026-10-27 · rendered by gallery on gallery · hvtiRtemplates 1.5.2
+
+## Study choices
+
+Edit these values for this study before rendering.
+
+Code
+
+``` r
+# Demo: the registered dataset this job reads ("built" is the study dataset).
+# It can be the counting-process rows themselves, or the one-row cohort with
+# the rows named in JOIN below.
+DATASET <- "intervals"
+
+# Demo: an hvtiRdatabuild analysis set, or NULL to read the whole dataset. WHERE
+# below is checked to keep a patient whole; an analysis set is not, so one that
+# selects intervals rather than patients would shorten follow-up unchecked.
+ANALYSIS_SET <- NULL
+
+# Demo: rows to keep, dplyr::filter() style, or NULL to keep every row. A
+# condition must keep or drop a patient whole, so name a column whose value is
+# the same on every row of a patient, such as age at listing. A condition on a
+# time-varying column would cut follow-up short, and stops the render.
+WHERE <- NULL
+
+# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN.
+ID <- "patient_id"
+
+# Demo: each interval's start and stop, and its event, coded 1 when the event
+# ends that interval and 0 otherwise. Only a patient's last interval can carry
+# an event. Code a competing event 0: it censors.
+START <- "start"
+STOP  <- "stop"
+EVENT <- "event"
+
+# Demo: what makes a row unique: the patient and the start of the interval.
+KEY <- c(ID, START)
+
+# Optional, and needs no edit: NULL reads DATASET alone. When DATASET is the
+# one-row cohort, name the registered counting-process dataset here and leave
+# REDUCE NULL, so each joined record is one interval of a patient's follow-up.
+# The cohort decides the patients; the joined records of other patients are
+# dropped and counted in the data table.
+#   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
+#     and a column both datasets have stops, so list only those the job needs,
+#     such as the baseline predictors.
+#   REDUCE: keeps one record per patient, which this job does not want.
+#   JOIN_KEY: overrides the joined dataset's registered key.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
+
+# Demo: the candidate predictors, baseline and time-varying alike. Name them
+# rather than taking every column: a dataset carries identifiers, dates and
+# derived outcomes, and a forest will split on a date that encodes follow-up.
+PREDICTORS <- c("xtd", "x_1", "x_2", "x_3")
+
+# Demo: forest size and seed. SEED makes the forest reproducible and is part of
+# its cache key. It is used three times, on purpose: cache_fit() seeds R's
+# generator with it, rhf() is handed it as `seed =`, negated as randomForestRHF
+# documents, and tune.treesize.rhf() is handed its absolute value.
+NTREE <- 300
+SEED  <- 2026
+
+# Demo: the number of terminal nodes in each tree. NULL chooses it by
+# out-of-bag risk with tune.treesize.rhf(), and the figure below shows the
+# search. Tree size is the setting a hazard forest is most sensitive to, which
+# is why this template tunes it where the rfs templates tune nothing; a number
+# skips the search, which is slow on a large study.
+TREESIZE <- NULL
+
+# Needs no edit unless the dataset has a defect. Repairs this job makes to the
+# counting-process rows while the dataset fix is in flight; each one marks the
+# report a draft, and a final render refuses it, because the rows a final
+# result rests on come from the dataset, so every job in the study agrees.
+#   "clip"    clips an interval that starts before the one before it ends back
+#             to that end, and drops an interval left empty
+#   "drop_na" drops intervals missing a predictor
+REPAIR <- character()
+
+# Demo: caps on predictors with implausible tails, as c(column = cap), or NULL for
+# none. A forest splits on the order of a value, so a cap rescales nothing: it
+# puts every value above it with the cap, so a few unit errors cannot carve out a
+# node of their own. Set them from the clinical range, not from the data.
+CAPS <- NULL
+
+# Demo: the look-ahead check, a screen for timing problems, not proof of one.
+# randomForestRHF assumes each interval's predictors were known when it began,
+# and cannot tell when they were not. A dataset build that moves a value
+# recorded on the day of the event back by a fraction of a day puts it on a
+# short final interval that ends in the event: the first real study found 251
+# of 300 deaths on such an interval, with a lab changing on it. A patient who
+# truly deteriorates before the event, measured before that interval began,
+# shows the same pattern, so check when each value became available against
+# START in the dataset build before calling it leakage.
+# LOOKAHEAD_INTERVAL is that interval's length in the units of START and STOP,
+# such as 0.25 / 365.2425 for a quarter day in years; NULL checks every final
+# interval. "reset" gives each checked final interval the predictor values of
+# the interval before it: a sensitivity analysis, beside the forest grown "keep",
+# and not a correction, since it also discards legitimate late updates. In the
+# first study it moved cumulative iAUC from 0.919 to 0.915 and incident from
+# 0.799 to 0.790, with the same six predictors on top: a small effect in that
+# cohort, which says nothing about another.
+LOOKAHEAD_INTERVAL <- NULL
+LOOKAHEAD <- "keep"
+
+# Set TRUE after changing a choice above. A cache whose inputs changed stops the
+# render instead of returning the old forest; TRUE recomputes only the caches
+# that are out of date, so it is safe to leave on while iterating.
+REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("rhf-fit-tuning"). The names
+# are the file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
+```
+
+## Cohort
+
+Code
+
+``` r
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, whole_patients = TRUE)
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
+knitr::kable(job_data$record, col.names = c("Data", ""))
+.selection <- attr(job_data$record, "selection")
+.outcomes <- intersect(c(START, STOP, EVENT), PREDICTORS)
+if (length(.outcomes)) {
+  stop("Do not include the interval or event columns in PREDICTORS: ", paste(.outcomes, collapse = ", "), ".",
+       call. = FALSE)
+}
+.duplicated <- unique(PREDICTORS[duplicated(PREDICTORS)])
+if (length(.duplicated)) {
+  stop("PREDICTORS names a variable more than once: ", paste(.duplicated, collapse = ", "), ".", call. = FALSE)
+}
+# A forest must not be trained on an identifier. It would split on who a
+# patient is, and the saved forest keeps its training columns.
+.identifiers <- PREDICTORS[tolower(PREDICTORS) %in% tolower(c(.selection$id, .selection$key))]
+if (length(.identifiers)) {
+  stop("Do not include the patient identifier or a KEY column in PREDICTORS: ",
+       paste(.identifiers, collapse = ", "), ".", call. = FALSE)
+}
+# The forest is grown on columns named id, start, stop and event, so a
+# predictor may not take one of those names.
+.reserved <- intersect(tolower(PREDICTORS), c("id", "start", "stop", "event"))
+if (length(.reserved)) {
+  stop("PREDICTORS may not name a column id, start, stop or event: ", paste(.reserved, collapse = ", "),
+       ". Rename it in the dataset build.", call. = FALSE)
+}
+.missing <- setdiff(c(START, STOP, EVENT, PREDICTORS), names(d))
+if (length(.missing)) {
+  stop("Not in the data this job read: ", paste(.missing, collapse = ", "), call. = FALSE)
+}
+# A forest splits a text column only as a factor, so text predictors are
+# converted here, and named, rather than left for the fit to refuse or coerce.
+.chr <- PREDICTORS[vapply(d[PREDICTORS], is.character, logical(1L))]
+if (length(.chr)) {
+  d[.chr] <- lapply(d[.chr], factor)
+  cat("Text predictors converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
+}
+```
+
+| Data                |                                                  |
+|:--------------------|:-------------------------------------------------|
+| Source              | dataset `intervals` (intervals_20261027.parquet) |
+| Rows read           | 471                                              |
+| ID                  | `patient_id`                                     |
+| Identifiers dropped | none                                             |
+| Rows kept           | 471 rows on 150 patients                         |
+
+Table 1: The data this job read
+
+## Cleanup before the fit
+
+Every change this job makes to the rows happens here, before the forest
+sees them, and is counted: the caps, the repairs, and the look-ahead
+check.
+
+Code
+
+``` r
+# A cap that cannot be read stops rather than being skipped: an unnamed CAPS
+# would otherwise cap nothing while the forest's lineage recorded it.
+if (!is.null(CAPS)) {
+  .names <- names(CAPS)
+  if (!is.numeric(CAPS) || !length(CAPS) || is.null(.names) || anyNA(.names) || any(.names == "") ||
+        anyDuplicated(.names) || !all(is.finite(CAPS))) {
+    stop("CAPS must be NULL or a numeric vector of finite caps, each named once for its predictor, ",
+         "such as c(alt = 2000).", call. = FALSE)
+  }
+  .uncappable <- setdiff(.names, PREDICTORS)
+  if (length(.uncappable)) {
+    stop("CAPS names a column that is not in PREDICTORS: ", paste(.uncappable, collapse = ", "), ".", call. = FALSE)
+  }
+  .not_numeric <- .names[!vapply(d[.names], is.numeric, logical(1L))]
+  if (length(.not_numeric)) {
+    stop("CAPS names a predictor that is not numeric: ", paste(.not_numeric, collapse = ", "), ".", call. = FALSE)
+  }
+}
+for (.v in names(CAPS)) {
+  .over <- which(d[[.v]] > CAPS[[.v]])
+  # Assigned in place, so an integer predictor stays integer: its cap is rounded down.
+  d[[.v]][.over] <- if (is.integer(d[[.v]])) as.integer(floor(CAPS[[.v]])) else CAPS[[.v]]
+  cat(.v, ": ", length(.over), " interval", if (length(.over) != 1L) "s", " capped at ", CAPS[[.v]], "\n", sep = "")
+}
+```
+
+Code
+
+``` r
+# randomForestRHF refuses overlapping intervals only after the data are loaded,
+# and names no patient. These checks run first and say what to fix: an overlap,
+# an interval of zero length, an event before a patient's last interval, an
+# event not coded 0/1, or a missing predictor stops the render here. Gaps
+# between intervals are allowed, and counted.
+.cp <- hvtiRtemplates:::.cp_check(d, id = .selection$id, start = START, stop = STOP, event = EVENT,
+                                  predictors = PREDICTORS, repair = REPAIR)
+d <- .cp$data
+knitr::kable(.cp$counts, col.names = c("Rows", ""))
+```
+
+| Rows                                          |            |
+|:----------------------------------------------|:-----------|
+| Patients                                      | 150        |
+| Intervals                                     | 471        |
+| Events                                        | 127        |
+| Intervals per patient, median (range)         | 3 (1 to 4) |
+| Gaps between intervals                        | 0          |
+| Follow-up, from earliest start to latest stop | 0 to 1.582 |
+
+Table 2: The counting-process rows the forest is grown on
+
+Code
+
+``` r
+# A repair is a draft's: this says so where the reader looks, and a final render
+# stops here instead.
+cat(hvtiRtemplates:::.cp_repair_notice(.cp$repaired))
+```
+
+Code
+
+``` r
+LOOKAHEAD <- match.arg(LOOKAHEAD, c("keep", "reset"))
+# .cp_check() returned the rows ordered by patient, start and stop. The ID is
+# matched to a plain integer because duplicated() on an integer64 ignores fromLast.
+.pt <- match(d[[.selection$id]], unique(d[[.selection$id]]))
+.final <- which(!duplicated(.pt, fromLast = TRUE) & c(FALSE, .pt[-1L] == .pt[-length(.pt)]))
+if (!is.null(LOOKAHEAD_INTERVAL)) {
+  .final <- .final[abs(d[[STOP]][.final] - d[[START]][.final] - LOOKAHEAD_INTERVAL) < LOOKAHEAD_INTERVAL / 25]
+}
+.changed <- matrix(vapply(PREDICTORS, function(p) d[[p]][.final] != d[[p]][.final - 1L], logical(length(.final))),
+                   ncol = length(PREDICTORS), dimnames = list(NULL, PREDICTORS))
+.is_event <- d[[EVENT]][.final] == 1
+.lookahead <- data.frame(final = c("Event", "No event"),
+                         checked = c(sum(.is_event), sum(!.is_event)),
+                         changed = c(sum(rowSums(.changed[.is_event, , drop = FALSE]) > 0),
+                                     sum(rowSums(.changed[!.is_event, , drop = FALSE]) > 0)))
+.on_events <- sort(colSums(.changed[.is_event, , drop = FALSE]), decreasing = TRUE)
+.on_events <- .on_events[.on_events > 0]
+if (length(.on_events)) {
+  cat("Changing most often on an event's final interval: ",
+      paste0(names(utils::head(.on_events, 5L)), " (", utils::head(.on_events, 5L), ")", collapse = ", "), "\n", sep = "")
+}
+```
+
+    Changing most often on an event's final interval: xtd (124)
+
+Code
+
+``` r
+if (LOOKAHEAD == "reset" && length(.final)) {
+  d[.final, PREDICTORS] <- d[.final - 1L, PREDICTORS]
+  cat(length(.final), " final intervals given the predictors of the interval before (LOOKAHEAD = \"reset\").\n", sep = "")
+}
+knitr::kable(.lookahead, col.names = c("Final interval", "Checked", "A predictor changes"))
+```
+
+| Final interval | Checked | A predictor changes |
+|:---------------|--------:|--------------------:|
+| Event          |     124 |                 124 |
+| No event       |      22 |                  22 |
+
+Table 3: Final intervals whose predictors change from the interval
+before. Far more among events than among the censored is a reason to
+check when those values became available; it may be a timing problem in
+the build, or real deterioration measured before the event.
+
+## Forest
+
+Code
+
+``` r
+# cache_fit() writes <dir>/<name>.rds and its default dir is the study's
+# estimates folder, not this set's, so every call here names the set's.
+CACHE_DIR <- dirname(set_path("estimates", "rhf.rds"))
+# rhf() needs each row's patient, and a saved forest keeps its data, so the
+# study's identifiers would be written into rhf.rds. Each patient is numbered
+# 1 to n instead, in the order of the rows: the forest can still tell one
+# patient's intervals from another's, and no study identifier is stored.
+.fit_data <- data.frame(id = match(d[[.selection$id]], unique(d[[.selection$id]])),
+                        start = d[[START]], stop = d[[STOP]], event = d[[EVENT]], d[PREDICTORS])
+# Surv is written bare on purpose. randomForestRHF reads the call's head by name and
+# refuses survival::Surv(), and it finds Surv itself, so survival need not be attached.
+model <- Surv(id, start, stop, event) ~ .
+# The saved forest keeps this formula, and a formula keeps the environment it
+# was made in; set it, so a job run anywhere else does not write every object
+# beside the formula, `job_data` and its patient IDs included, into the forest.
+environment(model) <- globalenv()
+# Each cache holds the forest and so every interval it was grown on: written
+# owner-only from the start, and set so if an older cache is already there.
+.cache_files <- file.path(CACHE_DIR, c("rhf-treesize.rds", "rhf-forest.rds"))
+# Hours at study size. Started from the console it dies with the session, so an
+# uncached fit is refused there: run the job with hvtiRtemplates::submit_job().
+hvtiRtemplates::guard_long_fit("rhf-forest", dir = CACHE_DIR,
+                               why = "a hazard forest on every interval of follow-up takes hours at study size",
+                               refit = REFIT)
+if (is.null(TREESIZE)) {
+  hvtiRtemplates::guard_long_fit("rhf-treesize", dir = CACHE_DIR,
+                                 why = "the tree-size search grows a forest at each size it tries",
+                                 refit = REFIT)
+  tuned <- hvtiRtemplates:::.owner_only(.cache_files, cache_fit(
+    "rhf-treesize",
+    tune.treesize.rhf(model, .fit_data, ntree = NTREE, perf = "risk", seed = abs(SEED), verbose = FALSE,
+                      forest = FALSE),
+    seed = SEED, dir = CACHE_DIR, refit = REFIT
+  ))
+  .treesize <- tuned$best.size
+} else {
+  tuned <- NULL
+  .treesize <- TREESIZE
+}
+forest <- hvtiRtemplates:::.owner_only(.cache_files, cache_fit(
+  "rhf-forest",
+  rhf(model, data = .fit_data, ntree = NTREE, treesize = .treesize, seed = -abs(SEED)),
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+))
+forest
+```
+
+                     Number of records: 471
+              Sample size (unique IDs): 150
+                Average records per ID: 3.14
+               Number of deaths/events: 127
+                       Number of trees: 300
+            Average tree size (leaves): 5
+                     Average node size: 59.602
+      No. features tried at each split: 2
+       Total no. time-varying features: 1
+                    Total no. features: 4
+                                Family: surv-tdc
+                             Splitrule: hazard.loglik *random*
+                  No. of random splits: 10
+                              OOB risk: -1.524
+                          TDC analysis: YES
+
+`forest = FALSE` in the search is deliberate. The search would otherwise
+return a forest at the size it chose, and the cache would hold a second
+copy of the forest the next call grows. Growing it once, under its own
+cache, stores the forest once. `NTREE` is part of the search’s cache key
+too, so changing it reruns the search as well as the forest, which takes
+hours at study size.
+
+## Does the forest work?
+
+Code
+
+``` r
+# Drawn only when this job searched. A TREESIZE given as a number has nothing to show.
+if (!is.null(tuned)) {
+  .fig <- plot(gg_tune_rhf(tuned)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  save_figure(.fig, "rhf-fit-tuning")
+  .fig
+}
+```
+
+![](assets/f0d37e625eb0452a2384941b5f25a880.png)
+
+Figure 1: Out-of-bag risk at each tree size the search tried. The lowest
+point is the size the forest was grown at; a curve still falling at its
+right edge says the search stopped short.
+
+Code
+
+``` r
+# The product of this job, and what rhf-explain reads. It is separate from the
+# cache on purpose: cache_fit() stores a keyed record rather than the bare
+# forest, so the cache is this job's internals and this file is its interface.
+.forest_cohort <- list(
+  n = length(unique(.fit_data$id)),
+  n_events = as.integer(sum(.fit_data$event == 1)),
+  n_censored = length(unique(.fit_data$id)) - as.integer(sum(.fit_data$event == 1))
+)
+.forest_analysis <- list(
+  start = list(variable = START),
+  stop = list(variable = STOP),
+  event = list(variable = EVENT, event = 1L, censored = 0L),
+  # rhf-explain reads this: a forest grown on rows this job repaired makes its
+  # report a draft too.
+  repair = as.list(.cp$repaired),
+  caps = as.list(CAPS),
+  lookahead = list(interval = LOOKAHEAD_INTERVAL, action = LOOKAHEAD, final_intervals = length(.final))
+)
+forest <- hvtiRtemplates:::.attach_handoff_lineage(
+  forest,
+  data = .provenance_data,
+  analysis = .forest_analysis,
+  cohort = .forest_cohort,
+  # rhf-explain takes the rows, ID and KEY of this fit from this record.
+  selection = .selection
+)
+# The forest keeps every interval it was grown on, predictors included, so the
+# file is patient-level data even with the ID recoded: readable by its owner
+# only, from the first byte written. Delete it, and the caches beside it, once
+# the set's results are reported.
+hvtiRtemplates:::.owner_only(set_path("estimates", "rhf.rds"), saveRDS(forest, set_path("estimates", "rhf.rds")))
+```
+
+    NULL
+
+## About this run
+
+| Group               | Item             | Value                      |
+|:--------------------|:-----------------|:---------------------------|
+| Run                 | Started          | 2026-10-27 15:34:43 EDT    |
+|                     | Ended            | 2026-10-27 15:34:48 EDT    |
+|                     | Duration         | 5 s                        |
+|                     | Status           | final                      |
+|                     | Rendered by      | gallery                    |
+|                     | Host             | gallery                    |
+| Job                 | File             | rhf.fit.event.rhf.qmd      |
+|                     | Template         | rhf.fit                    |
+|                     | Subject          | event                      |
+|                     | Type             | rhf                        |
+|                     | hvtiRtemplates   | 1.5.2                      |
+| Dataset `intervals` | Version file     | intervals_20261027.parquet |
+|                     | Version date     | 2026-10-27                 |
+|                     | Source file      | intervals.rds              |
+|                     | Rows kept        | 471 rows on 150 patients   |
+|                     | WHERE            | none                       |
+|                     | sha256           | f3770c09d63a               |
+|                     | Manifest         | current                    |
+| Reproducibility     | Seed             | 2026                       |
+|                     | renv             | not active                 |
+|                     | renv.lock sha256 | d09f96b6cd21               |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-25 18:36
+2026-10-27 15:38
 
 Explains the `vt-fit` job in this set: which patients the twins say
 repair suits, stratified by the echo-phenotype clusters.
@@ -72,7 +72,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.1
+hvtiRtemplates 1.5.2
 
 ## Study choices
 
@@ -281,6 +281,39 @@ if (!nrow(.rb)) {
 Figure 4: In each arm, the share of patients in distribution whose own
 arm’s predicted RMST is the larger.
 
+The difference is two predictions, and either can carry it. Set side by
+side, they show which: a cloud spread along one axis and flat along the
+other means one forest gives almost everyone the same prediction, so the
+difference follows the other forest alone.
+
+Code
+
+``` r
+.cp <- r[.eligible & !r$no_arm, ]
+if (!nrow(.cp)) {
+  cat(.no_elig_note, "\n")
+} else {
+  .first <- .cp$arm == ARMS[1]
+  .cp$own <- ifelse(.first, .cp[[paste0("rmst_", ARMS[1])]], .cp[[paste0("rmst_", ARMS[2])]])
+  .cp$twin <- ifelse(.first, .cp[[paste0("rmst_", ARMS[2])]], .cp[[paste0("rmst_", ARMS[1])]])
+  .cp$panel <- paste("Received", .cp$arm)
+  .fig <- ggplot(.cp, aes(x = own, y = twin)) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
+    geom_point(alpha = 0.6, size = 1.4) +
+    facet_wrap(~ panel) +
+    coord_equal() +
+    labs(x = "Predicted RMST under the arm received", y = "Predicted RMST under the other arm")
+  save_figure(.fig, "vt-explain-components")
+  .fig
+}
+```
+
+![](assets/3fe74874bff334a06db71768230ff79b.png)
+
+Figure 5: Each treated patient in distribution: predicted RMST under the
+arm received (own) against under the other arm (twin). On the dashed
+line the two are equal.
+
 ## Eligibility rules
 
 How the contrast changes with the rule that decides which patients it
@@ -317,6 +350,91 @@ knitr::kable(.sens, digits = 2, row.names = FALSE)
 Table 1: The RMST difference under each eligibility rule: patients kept,
 median with 15th and 85th percentiles, and the share favoring the first
 arm
+
+### The difference against the distance to the other arm
+
+Eligibility is a line; this shows what lies near it. Each treated
+patient’s difference is set against their distance to the nearest
+patient of the other arm, the arm whose forest gives their twin. A
+difference that grows as patients approach the line is borrowing from
+the edge of what the other arm covers.
+
+Code
+
+``` r
+.dd <- merge(r[!r$no_arm, c("ID", "received", "diff")],
+             .vt$eligibility$rows[, c("ID", "method", "arm", "distance", "reference", "ratio", "in_distribution")],
+             by = "ID")
+.dd_none <- sum(!is.finite(.dd$distance))
+.dd <- .dd[is.finite(.dd$distance), , drop = FALSE]
+if (.dd_none) cat(.dd_none, "patient-by-method distance(s) are unavailable (no predictor in common) and not drawn.\n\n")
+if (!nrow(.dd)) {
+  cat("No treated patient has a distance to draw.\n")
+} else {
+  # The median gap is not saved; ratio is distance over it, so any row with a positive ratio recovers it.
+  .lines <- do.call(base::rbind, lapply(split(.dd, list(.dd$method, .dd$arm), drop = TRUE), function(x) {
+    k <- which(is.finite(x$ratio) & x$ratio > 0)[1L]
+    data.frame(method = x$method[1L], arm = x$arm[1L], reference = x$reference[1L],
+               median = if (is.na(k)) NA_real_ else x$distance[k] / x$ratio[k])
+  }))
+  # Keys, not arm names: an arm may itself be called "neither". The scale below puts the names back.
+  .dd$favors <- factor(ifelse(.dd$diff > 0, "first", ifelse(.dd$diff < 0, "second", "tie")),
+                       levels = c("first", "second", "tie"))
+  .dd$panel <- paste("Received", .dd$received)
+  # A treated patient is judged against the other arm, so that arm's lines belong in the panel of the arm received.
+  .lines$panel <- paste("Received", ifelse(.lines$arm == ARMS[1], ARMS[2], ARMS[1]))
+  .fig <- ggplot(.dd, aes(x = distance, y = diff)) +
+    geom_hline(yintercept = 0, color = "gray40") +
+    geom_vline(data = .lines, aes(xintercept = reference), linetype = "dashed") +
+    geom_vline(data = .lines[!is.na(.lines$median), , drop = FALSE], aes(xintercept = median), linetype = "dotted") +
+    geom_point(aes(color = favors), alpha = 0.7, size = 1.4) +
+    geom_point(data = .dd[!.dd$in_distribution, , drop = FALSE], shape = 1, size = 3.4, stroke = 0.9,
+               color = "#B2182B") +
+    facet_grid(method ~ panel, scales = "free_x") +
+    labs(x = "Distance to the nearest patient of the other arm",
+         y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"), color = "Favors") +
+    scale_color_discrete(breaks = c("first", "second", "tie"), labels = c(ARMS, "neither")) +
+    theme(legend.position = "bottom")
+  save_figure(.fig, "vt-explain-distance")
+  .fig
+}
+```
+
+![](assets/11244f74364c28e0c7366534bdb3ffc1.png)
+
+Figure 6: Each treated patient’s RMST difference against their distance
+to the nearest patient of the other arm. Dashed: that arm’s largest own
+gap, the eligibility line; dotted: its typical (median) gap. Ringed: out
+of distribution.
+
+Code
+
+``` r
+if (nrow(.dd)) {
+  .dist_tab <- do.call(base::rbind, lapply(split(.dd, list(.dd$method, .dd$received), drop = TRUE), function(x) {
+    data.frame(method = x$method[1L], received = x$received[1L], patients = nrow(x),
+               out_of_distribution = sum(!x$in_distribution),
+               # A column that does not vary has no rank correlation; NA, not a warning.
+               spearman = if (nrow(x) > 2L && stats::sd(x$diff) > 0 && stats::sd(x$distance) > 0) {
+                 stats::cor(x$diff, x$distance, method = "spearman")
+               } else {
+                 NA_real_
+               })
+  }))
+  knitr::kable(.dist_tab, digits = 2, row.names = FALSE)
+}
+```
+
+| method | received | patients | out_of_distribution | spearman |
+|:-------|:---------|---------:|--------------------:|---------:|
+| gower  | repair   |      412 |                   0 |     0.05 |
+| sid    | repair   |      412 |                   0 |    -0.02 |
+| gower  | replace  |      388 |                   0 |    -0.06 |
+| sid    | replace  |      388 |                   0 |    -0.12 |
+
+Table 2: Treated patients by arm received and method: how many, how many
+are out of distribution, and the rank correlation of the RMST difference
+with the distance to the other arm
 
 ## Strata
 
@@ -398,9 +516,71 @@ Patients by stratum and arm received:
 | B       | replace | 126 |  -1.08 |        0.01 |
 | C       | replace |  63 |   0.25 |        0.87 |
 
-Table 2: The RMST difference by stratum and arm received, patients in
+Table 3: The RMST difference by stratum and arm received, patients in
 distribution. A median is shown only where a cell holds at least 5
 patients.
+
+Code
+
+``` r
+.sa <- if (!is.null(.strata)) merge(r[!r$no_arm, c("ID", "arm", "diff", "elig")], .strata, by = "ID")
+if (!is.null(.sa) && !nrow(.sa)) cat("No treated patient is in the stratifier's set; there is nothing to draw.\n")
+if (!is.null(.sa) && nrow(.sa)) {
+  .sa$panel <- paste("Received", .sa$arm)
+  .box <- .sa[.sa$elig, , drop = FALSE]
+  .box <- .box[stats::ave(.box$diff, .box$stratum, .box$arm, FUN = length) >= 5, , drop = FALSE]
+  # The rings reuse every row with the points' jitter seed, so each lands on its point; rows in
+  # distribution are drawn invisible.
+  .jit <- position_jitter(width = 0.15, height = 0, seed = 1)
+  .fig <- ggplot(.sa, aes(x = stratum, y = diff)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+    stat_summary(data = .box, fun.data = function(x) {
+      q <- stats::quantile(x, c(0.05, 0.15, 0.5, 0.85, 0.95), names = FALSE)
+      data.frame(ymin = q[1], lower = q[2], middle = q[3], upper = q[4], ymax = q[5])
+    }, geom = "boxplot", width = 0.6, fill = NA) +
+    geom_point(position = .jit, alpha = 0.6, size = 1.2) +
+    geom_point(aes(alpha = !elig), position = .jit, shape = 1, size = 3.4, stroke = 0.9, color = "#B2182B",
+               show.legend = FALSE) +
+    scale_alpha_manual(values = c(`TRUE` = 1, `FALSE` = 0), guide = "none") +
+    facet_wrap(~ panel) +
+    labs(x = "Stratum", y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"))
+  save_figure(.fig, "vt-explain-stratum")
+  .fig
+}
+```
+
+![](assets/210e460991687079deaf24708dcf85c5.png)
+
+Figure 7: The RMST difference by stratum, one panel per arm received.
+Box: 15th to 85th percentile of the patients in distribution, whiskers
+5th to 95th, drawn where a cell holds at least 5; every patient is a
+point, and the ringed ones are out of distribution.
+
+Code
+
+``` r
+.sc <- if (!is.null(.strata)) merge(.vt$curves[.vt$curves$ID %in% r$ID[.eligible], ], .strata, by = "ID")
+if (!is.null(.sc) && nrow(.sc)) {
+  # Each arm's curves come from one forest and share its time grid, so a mean at each time is a mean curve.
+  .sc <- stats::aggregate(surv ~ stratum + arm_of_curve + time, data = .sc, FUN = mean)
+  # hv_rmst_curves() wants right-continuous steps that start at time 0 with surv 1.
+  .sc <- do.call(base::rbind, lapply(split(.sc, list(.sc$stratum, .sc$arm_of_curve), drop = TRUE), function(x) {
+    base::rbind(data.frame(stratum = x$stratum[1L], arm_of_curve = x$arm_of_curve[1L], time = 0, surv = 1),
+                x[order(x$time), ])
+  }))
+  .sc$arm <- .sc$arm_of_curve
+  .fig <- plot(hvtiPlotR::hv_rmst_curves(.sc, tau = HORIZON, facet = "stratum", arm = "arm")) +
+    labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
+  save_figure(.fig, "vt-explain-stratum-curves")
+  .fig
+}
+```
+
+![](assets/438cb198bd7d42d0736d54a5401c4d0c.png)
+
+Figure 8: Mean predicted survival under each arm’s forest, patients in
+distribution, one panel per stratum. The shaded area to the horizon is
+the restricted mean survival time.
 
 ## What goes with the difference
 
@@ -494,21 +674,21 @@ print(knitr::kable(.betas, digits = 2, row.names = FALSE))
 
 | variable |  beta | lower | upper | unestimable |
 |:---------|------:|------:|------:|------------:|
-| age      |  0.26 |  0.18 |  0.34 |           0 |
-| female   |  0.06 | -0.01 |  0.13 |           0 |
-| bmi      | -0.01 | -0.08 |  0.06 |           0 |
-| hx_chf   | -0.05 | -0.13 |  0.03 |           0 |
+| age      |  0.26 |  0.20 |  0.32 |           0 |
+| female   |  0.06 |  0.00 |  0.13 |           0 |
+| bmi      | -0.01 | -0.07 |  0.07 |           0 |
+| hx_chf   | -0.05 | -0.13 |  0.02 |           0 |
 | hx_dm    |  0.00 | -0.06 |  0.07 |           0 |
 | nyha_pr  |  0.07 |  0.00 |  0.13 |           0 |
-| lvef     | -0.07 | -0.15 | -0.02 |           0 |
+| lvef     | -0.07 | -0.14 |  0.00 |           0 |
 | creat_pr | -0.02 | -0.10 |  0.04 |           0 |
-| lvedd    |  0.83 |  0.80 |  0.88 |           0 |
-| lvesd    |  0.85 |  0.81 |  0.89 |           0 |
-| la_diam  |  0.17 |  0.11 |  0.24 |           0 |
+| lvedd    |  0.83 |  0.80 |  0.87 |           0 |
+| lvesd    |  0.85 |  0.81 |  0.88 |           0 |
+| la_diam  |  0.17 |  0.10 |  0.24 |           0 |
 | rvsp     |  0.18 |  0.10 |  0.26 |           0 |
 | e_e      |  0.09 |  0.03 |  0.17 |           0 |
 
-Table 3: Standardized beta for each characteristic. A positive beta: the
+Table 4: Standardized beta for each characteristic. A positive beta: the
 characteristic goes with a higher relative risk of the event by 8 under
 repair than under replace. unestimable: bootstrap resamples in which the
 characteristic did not vary.
@@ -531,9 +711,9 @@ if (!nrow(.bp)) {
 }
 ```
 
-![](assets/51ac7935fe91517474b048315be2bf30.png)
+![](assets/50c4644d212cff32bc33341c73c76b02.png)
 
-Figure 5: Standardized association of each characteristic with the
+Figure 9: Standardized association of each characteristic with the
 estimated effect, by overlap-weighted regression. A positive beta: the
 characteristic goes with a higher relative risk of the event by 8 under
 repair than under replace. Bars, where drawn, are the 2.5th to 97.5th
@@ -648,7 +828,7 @@ Patients with no arm, by the arm their twin favors:
 | Freq |
 |------|
 
-Table 4: Patients in distribution whose twin favors the arm they did not
+Table 5: Patients in distribution whose twin favors the arm they did not
 receive, by more than GAIN_MIN
 
 ## Reading the result
@@ -682,9 +862,9 @@ receive, by more than GAIN_MIN
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-25 18:36:35 EDT |
-|  | Ended | 2026-10-25 18:36:38 EDT |
-|  | Duration | 4 s |
+| Run | Started | 2026-10-27 15:37:51 EDT |
+|  | Ended | 2026-10-27 15:38:02 EDT |
+|  | Duration | 10 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -692,16 +872,16 @@ receive, by more than GAIN_MIN
 |  | Template | vt.explain |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.5.1 |
-| Dataset `built` | Version file | built_20261025.parquet |
-|  | Version date | 2026-10-25 |
+|  | hvtiRtemplates | 1.5.2 |
+| Dataset `built` | Version file | built_20261027.parquet |
+|  | Version date | 2026-10-27 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
 | Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered not recorded |
-|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-10-25 18:36:18 -0400, data built_20261025.parquet |
-|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-10-25 18:36:08 -0400, data built_20261025.parquet |
+|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-10-27 15:37:07 -0400, data built_20261027.parquet |
+|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-10-27 15:36:37 -0400, data built_20261027.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

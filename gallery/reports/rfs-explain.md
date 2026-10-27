@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-25 18:33
+2026-10-27 15:28
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -79,7 +79,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.1
+hvtiRtemplates 1.5.2
 
 ## Study choices
 
@@ -97,6 +97,8 @@ KEY <- NULL
 
 # Demo: how many variables get dependence plots, ranked by VIMP. The partials
 # are the expensive step, so keep this small.
+# With BANDS_B above 0, a bigger TOP_K computes bands only for the new variables, but
+# still regrows all BANDS_B subsample forests to do it.
 TOP_K <- 4
 
 # Demo: or name the variables yourself. NULL takes the top TOP_K by VIMP.
@@ -110,6 +112,47 @@ TIMES <- c(1, 5, 10)
 # cache_fit() seeds R's generator with it before each call, and vimp() is also
 # handed it as `seed =`, negated as randomForestSRC documents.
 SEED <- 2026
+
+# Demo: subsample forests for the confidence intervals on importance and the
+# bands on the partial plots. 0 draws neither.
+#   25-50 for a first look at a draft; the bands are rough but show their shape.
+#   100 for a report. It is randomForestSRC's default, and enough because the
+#   intervals are estimate +/- 1.96 SE: they need a stable SE, not stable tail
+#   percentiles, which would take several hundred.
+#   200 or more only for 99% intervals, or when a rerun with another SEED moves
+#   the band edges by more than you would accept in a figure.
+# Cost is about BANDS_B x SUBRATIO fits of the full forest. Submit the job to
+# compute them; job_status() shows how many forests are grown and the time left.
+BANDS_B <- 0
+
+# Demo: fraction of patients in each subsample. NULL takes randomForestSRC's
+# default, exp(-1) (0.37) up to 1000 patients and exp(-1) * sqrt(1000 / n) above,
+# so a larger cohort gets a smaller fraction. Leave it NULL unless the check
+# below warns.
+#   Raise it when a subsample would hold too few events: the job warns below 100.
+#   Small subsamples grow shallow forests whose curves are flatter than the full
+#   forest's.
+#   Keep it at or below 0.5. Subsampling estimates the spread only while each
+#   subsample is a small part of the cohort; near 1 every subsample forest is
+#   nearly the full forest, and the bands shrink to the forest's own tree-to-tree
+#   noise, far narrower than the real uncertainty.
+SUBRATIO <- NULL
+
+# Demo: how the partial plots draw their bands. "ribbon" shades a band around
+# each continuous curve; "bars" draws an error bar at each grid point instead,
+# which reads better in black and white and where curves for several follow-up
+# times overlap. Categorical predictors always get error bars.
+BAND_STYLE <- "ribbon"
+
+# Demo: with BAND_STYLE <- "bars", where to draw the bars, as a named list of
+# values per continuous predictor, e.g. list(age = c(50, 60, 70, 80), lvef = c(30, 50)).
+# NULL, or a predictor left out, draws a bar at every grid point. The values
+# must lie inside the range of the predictor's partial plot, which can be
+# narrower than its observed range; the job stops before growing anything if one
+# does not. Changing them only redraws: each subsample curve is read off at
+# these values the way the plotted line is drawn, straight between grid points,
+# so no forest is regrown.
+BAND_AT <- NULL
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
 # render instead of returning the old result; TRUE recomputes only the caches
@@ -186,15 +229,15 @@ save_figure(.fig, "rfs-explain-importance", height = 7)
 
 ![](assets/42cb24955bb04ef97d741b24511fa610.png)
 
-Figure 1: Permutation importance of each predictor. Horizontal bars give
-the importance of each predictor, in one color where the importance is
-positive and another where it is not, as in the legend.
+Figure 1: VIMP (anti-split importance) of each predictor. Horizontal
+bars give the importance of each predictor, in one color where the
+importance is positive and another where it is not, as in the legend.
 
 Code
 
 ``` r
 # Minimal depth ranks by how near the root a variable first splits, a second
-# opinion that needs no permutation. Cheap, so not cached.
+# opinion that needs no VIMP calculation. Cheap, so not cached.
 ranked <- names(sort(vi$importance, decreasing = TRUE))
 depth <- max.subtree(forest)$order[, 1]
 data.frame(variable = ranked,
@@ -214,8 +257,8 @@ data.frame(variable = ranked,
     8  nyha_pr  0.0053      4.41
     9   female -0.0004      6.96
 
-Table 2: Permutation importance and minimal depth of each predictor, in
-order of importance
+Table 2: VIMP (anti-split importance) and minimal depth of each
+predictor, in order of importance
 
 Code
 
@@ -306,7 +349,7 @@ Code
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/afb95940ecab22a9d254ba1d4dbe9db9.png)
+![](assets/db2f55e364dd708a4ad35e4281814fa3.png)
 
 Figure 2: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -386,9 +429,9 @@ of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-25 18:32:52 EDT |
-|  | Ended | 2026-10-25 18:33:01 EDT |
-|  | Duration | 9 s |
+| Run | Started | 2026-10-27 15:28:02 EDT |
+|  | Ended | 2026-10-27 15:28:19 EDT |
+|  | Duration | 17 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -396,13 +439,13 @@ of a categorical one.
 |  | Template | rfs.explain |
 |  | Subject | dead |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.5.1 |
-| Dataset `built` | Version file | built_20261025.parquet |
-|  | Version date | 2026-10-25 |
+|  | hvtiRtemplates | 1.5.2 |
+| Dataset `built` | Version file | built_20261027.parquet |
+|  | Version date | 2026-10-27 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-25 18:32:40 -0400, data built_20261025.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-27 15:27:40 -0400, data built_20261027.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

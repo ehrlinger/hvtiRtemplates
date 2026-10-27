@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-25 18:27
+2026-10-27 14:51
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -63,8 +63,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.1
+**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.2
 
 ## Study choices
 
@@ -274,7 +274,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261025.parquet) |
+| Source              | dataset `built` (built_20261027.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -692,9 +692,9 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-25 18:27:37 EDT  |
-|                 | Ended            | 2026-10-25 18:27:38 EDT  |
-|                 | Duration         | 2 s                      |
+| Run             | Started          | 2026-10-27 14:49:40 EDT  |
+|                 | Ended            | 2026-10-27 14:51:57 EDT  |
+|                 | Duration         | 2 min 17 s               |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -702,9 +702,9 @@ Correlation variant not requested (`CORR <- NULL`).
 |                 | Template         | dc.tables                |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.1                    |
-| Dataset `built` | Version file     | built_20261025.parquet   |
-|                 | Version date     | 2026-10-25               |
+|                 | hvtiRtemplates   | 1.5.2                    |
+| Dataset `built` | Version file     | built_20261027.parquet   |
+|                 | Version date     | 2026-10-27               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

@@ -2235,7 +2235,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-25 18:33</p>
+      <p class="date">2026-10-27 15:28</p>
     </div>
   </div>
   
@@ -2247,11 +2247,15 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: rfs.explain 1.5.1 sha256:5baf18a1a45e8e3526dd6501d074f9998fd986402adac0e72dc10f387abc06de -->
+<!-- hvtiRtemplates: rfs.explain 1.5.2 sha256:86b9f34282ca6ac1c0504fad7f4c6d94b3cd3325296012febe4a54cae273e7d5 -->
 <!-- Demo: say which rfs-fit job in this set this explains, and what question
      the importance and dependence plots are meant to answer. -->
 <p>Explains the forest the <code>rfs-fit</code> job in this set saved: which predictors drive it, and how.</p>
 <p>An <code>rfs-explain</code> job never grows a forest. It reads <code>rfs.rds</code>, which the fit job writes. VIMP, minimal depth and the partial-dependence plots all describe that saved forest and no other. Each expensive step is cached on its own: changing how many variables get dependence plots recomputes the partials and nothing else. For a variable screen and VarPro partials, use the <code>vp-fit</code> and <code>vp-explain</code> jobs.</p>
+<!-- With `BANDS_B` above 0 the job also grows subsample forests, each on a fraction of the
+     patients, to put confidence intervals on the importance and bands on the partial plots.
+     It still grows no forest on the full cohort, and with `BANDS_B <- 0`, the default, it
+     draws neither. -->
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
@@ -2333,7 +2337,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.1</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.2</p>
 </div>
 </div>
 </div>
@@ -2351,31 +2355,74 @@ vertical-align: -.125em;
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how many variables get dependence plots, ranked by VIMP. The partials</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># are the expensive step, so keep this small.</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>TOP_K <span class="ot">&lt;-</span> <span class="dv">4</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: or name the variables yourself. NULL takes the top TOP_K by VIMP.</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>PARTIAL_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: survival horizons for the partial plots, in the units of the fit job&#39;s</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># time variable.</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>TIMES <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>)</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: seed for VIMP and the partials. It is part of every cache key.</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="co"># cache_fit() seeds R&#39;s generator with it before each call, and vimp() is also</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># handed it as `seed =`, negated as randomForestSRC documents.</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># With BANDS_B above 0, a bigger TOP_K computes bands only for the new variables, but</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># still regrows all BANDS_B subsample forests to do it.</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>TOP_K <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: or name the variables yourself. NULL takes the top TOP_K by VIMP.</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>PARTIAL_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: survival horizons for the partial plots, in the units of the fit job&#39;s</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># time variable.</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>TIMES <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: seed for VIMP and the partials. It is part of every cache key.</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co"># cache_fit() seeds R&#39;s generator with it before each call, and vimp() is also</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="co"># handed it as `seed =`, negated as randomForestSRC documents.</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: subsample forests for the confidence intervals on importance and the</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"># bands on the partial plots. 0 draws neither.</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co">#   25-50 for a first look at a draft; the bands are rough but show their shape.</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co">#   100 for a report. It is randomForestSRC&#39;s default, and enough because the</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co">#   intervals are estimate +/- 1.96 SE: they need a stable SE, not stable tail</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co">#   percentiles, which would take several hundred.</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co">#   200 or more only for 99% intervals, or when a rerun with another SEED moves</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co">#   the band edges by more than you would accept in a figure.</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Cost is about BANDS_B x SUBRATIO fits of the full forest. Submit the job to</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co"># compute them; job_status() shows how many forests are grown and the time left.</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>BANDS_B <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: fraction of patients in each subsample. NULL takes randomForestSRC&#39;s</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="co"># default, exp(-1) (0.37) up to 1000 patients and exp(-1) * sqrt(1000 / n) above,</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co"># so a larger cohort gets a smaller fraction. Leave it NULL unless the check</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># below warns.</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co">#   Raise it when a subsample would hold too few events: the job warns below 100.</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co">#   Small subsamples grow shallow forests whose curves are flatter than the full</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co">#   forest&#39;s.</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co">#   Keep it at or below 0.5. Subsampling estimates the spread only while each</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co">#   subsample is a small part of the cohort; near 1 every subsample forest is</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co">#   nearly the full forest, and the bands shrink to the forest&#39;s own tree-to-tree</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co">#   noise, far narrower than the real uncertainty.</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>SUBRATIO <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how the partial plots draw their bands. &quot;ribbon&quot; shades a band around</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co"># each continuous curve; &quot;bars&quot; draws an error bar at each grid point instead,</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># which reads better in black and white and where curves for several follow-up</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co"># times overlap. Categorical predictors always get error bars.</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>BAND_STYLE <span class="ot">&lt;-</span> <span class="st">&quot;ribbon&quot;</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: with BAND_STYLE &lt;- &quot;bars&quot;, where to draw the bars, as a named list of</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># values per continuous predictor, e.g. list(age = c(50, 60, 70, 80), lvef = c(30, 50)).</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># NULL, or a predictor left out, draws a bar at every grid point. The values</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># must lie inside the range of the predictor&#39;s partial plot, which can be</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># narrower than its observed range; the job stops before growing anything if one</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># does not. Changing them only redraws: each subsample curve is read off at</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># these values the way the plotted line is drawn, straight between grid points,</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># so no forest is regrown.</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>BAND_AT <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2474,7 +2521,7 @@ Table 1: The data the fit job read
 <img role="img" src="assets/42cb24955bb04ef97d741b24511fa610.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 1: Permutation importance of each predictor. Horizontal bars give the importance of each predictor, in one color where the importance is positive and another where it is not, as in the legend.
+Figure 1: VIMP (anti-split importance) of each predictor. Horizontal bars give the importance of each predictor, in one color where the importance is positive and another where it is not, as in the legend.
 </figcaption>
 </figure>
 </div>
@@ -2483,7 +2530,7 @@ Figure 1: Permutation importance of each predictor. Horizontal bars give the im
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Minimal depth ranks by how near the root a variable first splits, a second</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># opinion that needs no permutation. Cheap, so not cached.</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># opinion that needs no VIMP calculation. Cheap, so not cached.</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>ranked <span class="ot">&lt;-</span> <span class="fu">names</span>(<span class="fu">sort</span>(vi<span class="sc">$</span>importance, <span class="at">decreasing =</span> <span class="cn">TRUE</span>))</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>depth <span class="ot">&lt;-</span> <span class="fu">max.subtree</span>(forest)<span class="sc">$</span>order[, <span class="dv">1</span>]</span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(<span class="at">variable =</span> ranked,</span>
@@ -2494,7 +2541,7 @@ Figure 1: Permutation importance of each predictor. Horizontal bars give the im
 <div id="tbl-importance" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 2: Permutation importance and minimal depth of each predictor, in order of importance
+Table 2: VIMP (anti-split importance) and minimal depth of each predictor, in order of importance
 </figcaption>
 <div aria-describedby="tbl-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output cell-output-stdout">
@@ -2603,7 +2650,7 @@ Table 2: Permutation importance and minimal depth of each predictor, in order o
 <div id="fig-dependence-marginal-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-dependence-marginal-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/afb95940ecab22a9d254ba1d4dbe9db9.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/db2f55e364dd708a4ad35e4281814fa3.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dependence-marginal-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: Predicted survival against each selected predictor, as observed, one panel per predictor and follow-up time. Points are individual patients, red for those who had the event and blue for those censored, each with its own shape; the black line is a loess smooth with its gray band, drawn for predictors with more than five distinct values, and for a categorical predictor the points are jittered over a gray box plot. Page 1 of 2: age, hx_chf.
@@ -2702,17 +2749,17 @@ Figure 4: Partial dependence of the forest’s prediction on each selected pred
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-25 18:32:52 EDT</td>
+<td style="text-align: left;">2026-10-27 15:28:02 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-25 18:33:01 EDT</td>
+<td style="text-align: left;">2026-10-27 15:28:19 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">9 s</td>
+<td style="text-align: left;">17 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2752,17 +2799,17 @@ Figure 4: Partial dependence of the forest’s prediction on each selected pred
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.1</td>
+<td style="text-align: left;">1.5.2</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261025.parquet</td>
+<td style="text-align: left;">built_20261027.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-25</td>
+<td style="text-align: left;">2026-10-27</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2782,7 +2829,7 @@ Figure 4: Partial dependence of the forest’s prediction on each selected pred
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-rf/rfs.rds</code> (forest), rendered 2026-10-25 18:32:40 -0400, data built_20261025.parquet</td>
+<td style="text-align: left;"><code>dead-rf/rfs.rds</code> (forest), rendered 2026-10-27 15:27:40 -0400, data built_20261027.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -2802,7 +2849,7 @@ Figure 4: Partial dependence of the forest’s prediction on each selected pred
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"rfs.explain.dead.rf","rendered":"2026-10-25T22:33:01Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"94b57b7a33f74115c61a45a8234fdbd25a8befa5"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":null},{"package":"hvtiRtemplates","version":"1.5.1","source":null},{"package":"hvtiRutilities","version":"1.5.13","source":null},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.4","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261025.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-25T22:24:51Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/dead-rf/rfs.rds","role":"forest","bytes":17355072,"mtime":"2026-10-25T22:32:47Z","sha256":"b89ea8f7b4ef5902c257558193cc9b4452d4f3bc5c5e7f135baef03863fe38e2"}],"subject":"dead","type":"rf","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-25T18:32:52-0400","end":"2026-10-25T18:33:01-0400","time_zone":"EDT","duration_seconds":8.9,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rfs.explain.dead.rf.qmd","template":"rfs.explain","prefix":"rfs","qualifier":"explain","subject":"dead","type":"rf","hvtiRtemplates":"1.5.1"},"datasets":[{"name":"built","version_file":"built_20261025.parquet","registered":"2026-10-25","source_file":"built.rds","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-rf/rfs.rds","set":"dead-rf","role":"forest","rendered_at":"2026-10-25T18:32:40-0400","dataset_version":"built_20261025.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/rfs.explain.dead.rf.qmd",".hvti_render_id":"b387aae4c22ae3d91a72cddda6ac83f3ac21f58eefd0846e87b3096cab0e441b",".hvti_source_sha256":"258bf59c9c4d1cad0ead9c271670d3eec43b2d192c678f5e55cff2f34ac45e13"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"rfs.explain.dead.rf","rendered":"2026-10-27T19:28:19Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"bccdc1ae7147d294ef45730f93bb6309375c6381"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.2","source":null},{"package":"hvtiRutilities","version":"1.5.15","source":"github","sha":"31d447bfe3c2ae20fd2f4512aaedcc988cd5320b"},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.4","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261027.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-27T18:36:56Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/dead-rf/rfs.rds","role":"forest","bytes":17355061,"mtime":"2026-10-27T19:27:52Z","sha256":"8afa82601ff2d49140d75c4537baada05424c66c9354543b71d642cfc24b587c"}],"subject":"dead","type":"rf","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-27T15:28:02-0400","end":"2026-10-27T15:28:19-0400","time_zone":"EDT","duration_seconds":16.6,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rfs.explain.dead.rf.qmd","template":"rfs.explain","prefix":"rfs","qualifier":"explain","subject":"dead","type":"rf","hvtiRtemplates":"1.5.2"},"datasets":[{"name":"built","version_file":"built_20261027.parquet","registered":"2026-10-27","source_file":"built.rds","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-rf/rfs.rds","set":"dead-rf","role":"forest","rendered_at":"2026-10-27T15:27:40-0400","dataset_version":"built_20261027.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/rfs.explain.dead.rf.qmd",".hvti_render_id":"7807b4c3845fd698a2bff1d237069cd62a52e7811a03a38db8c09168d4176a6e",".hvti_source_sha256":"840996c39a86971a7b3be2d78e6b20787d4dbcd80eaf8f2fa15eaad6145772c1"}</script>
 </section>
 
 </main>

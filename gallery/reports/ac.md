@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-25 18:28
+2026-10-27 14:54
 
 An `ac` job is the first look at an outcome: the Kaplan-Meier life
 table, survival and patients at risk at the reporting horizons, the
@@ -56,8 +56,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.1
+**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.2
 
 ## Study choices
 
@@ -160,8 +160,17 @@ RISK_TIMES <- NULL
 # limits the horizon tables report at that time, and a time before the first
 # event or past the end of follow-up has none and draws no bar. Either, both or
 # neither: CI_BAND <- FALSE with CI_TIMES set gives the SAS figure's bars alone.
+# Under the straight lines below (STEPS <- FALSE) a bar is drawn at the last
+# event at or before its time: the table's limits hold from that event on, and
+# only there does the line pass through the estimate they bracket. With sparse
+# events a bar can therefore stand well left of the time asked for.
 CI_BAND <- TRUE
 CI_TIMES <- NULL
+
+# How the figures join one event to the next. Each event is drawn as a point;
+# FALSE joins the points with straight lines, as the SAS %KAPLAN figures do;
+# TRUE draws the Kaplan-Meier steps, flat between events and dropping at each one.
+STEPS <- FALSE
 
 # Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
@@ -191,7 +200,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261025.parquet) |
+| Source              | dataset `built` (built_20261027.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -1890,19 +1899,22 @@ km_views <- function(fit) {
     v <- fit$survival[fit$stratum == s]
     if (length(v)) v[length(v)] else 1
   }, numeric(1))
-  surv <- rbind(data.frame(stratum = counts$stratum, time = 0, survival = 1),
-                fit[, c("stratum", "time", "survival")],
-                data.frame(stratum = counts$stratum, time = pmin(counts$max_fup, plot_max), survival = last))
+  # Only the event rows carry a point; time zero and the end of follow-up do not.
+  surv <- rbind(data.frame(stratum = counts$stratum, time = 0, survival = 1, event = FALSE),
+                data.frame(fit[, c("stratum", "time", "survival")], event = rep(TRUE, nrow(fit))),
+                data.frame(stratum = counts$stratum, time = pmin(counts$max_fup, plot_max), survival = last, event = FALSE))
   surv$stratum <- factor(surv$stratum, levels = counts$stratum)
   # The cumulative hazard is infinite once survival reaches zero; it is left off a figure.
   haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
+  haz$event <- rep(TRUE, nrow(haz))
   haz$stratum <- factor(haz$stratum, levels = counts$stratum)
   # One curve is black. Strata never take red or blue, which mean the event and
   # censored in every house figure, so no stratum reads as the deaths.
   cols <- hvtiRtemplates:::.group_colors(counts$stratum)
-  step <- function(data, y, ylab) {
+  view <- function(data, y, ylab) {
     ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum)) +
-      ggplot2::geom_step() +
+      (if (isTRUE(STEPS)) ggplot2::geom_step() else ggplot2::geom_line()) +
+      ggplot2::geom_point(data = data[data$event, , drop = FALSE], size = 1.2, show.legend = FALSE) +
       # The limits keep an empty panel (no events, so no cumulative hazard) from warning.
       ggplot2::scale_color_manual(values = cols, limits = names(cols)) +
       ggplot2::labs(x = "Years", y = ylab, color = NULL) +
@@ -1911,11 +1923,11 @@ km_views <- function(fit) {
   log_x <- ggplot2::scale_x_log10()
   log_y <- ggplot2::scale_y_log10()
   patchwork::wrap_plots(
-    step(surv, "survival", "Survival (%)") + ggplot2::scale_y_continuous(labels = function(p) 100 * p),
-    step(haz, "cumhaz", "Cumulative hazard"),
-    step(haz, "cumhaz", "Cumulative hazard") + log_x + ggplot2::labs(x = "Years (log scale)"),
-    step(haz, "cumhaz", "Cumulative hazard (log scale)") + log_y,
-    step(haz, "cumhaz", "Cumulative hazard (log scale)") + log_x + log_y + ggplot2::labs(x = "Years (log scale)"),
+    view(surv, "survival", "Survival (%)") + ggplot2::scale_y_continuous(labels = function(p) 100 * p),
+    view(haz, "cumhaz", "Cumulative hazard"),
+    view(haz, "cumhaz", "Cumulative hazard") + log_x + ggplot2::labs(x = "Years (log scale)"),
+    view(haz, "cumhaz", "Cumulative hazard (log scale)") + log_y,
+    view(haz, "cumhaz", "Cumulative hazard (log scale)") + log_x + log_y + ggplot2::labs(x = "Years (log scale)"),
     ncol = 2, guides = "collect"
   ) & ggplot2::theme(legend.position = "bottom")
 }
@@ -1940,6 +1952,12 @@ km_figure <- function(strata = NULL) {
   .zero <- hv$data$surv == 0
   hv$data$lower[.zero] <- 0
   hv$data$upper[.zero] <- 0
+  # Straight lines join the events alone, from time zero to the end of follow-up:
+  # a censored row between two events would put a corner where survival did not change.
+  if (!isTRUE(STEPS)) {
+    .last <- !duplicated(hv$data$strata, fromLast = TRUE)
+    hv$data <- hv$data[hv$data$time == 0 | hv$data$n.event > 0 | .last, , drop = FALSE]
+  }
   # hv_survival() returns the strata as text, which the color and fill scales would
   # sort as text ("1", "10", "2"). The curve, band, bars and at-risk rows all use the
   # tables' order instead, so each stratum keeps one color throughout.
@@ -1952,6 +1970,11 @@ km_figure <- function(strata = NULL) {
     ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  # hv_survival()'s plot draws steps; its curve is redrawn as a line. A layer is
+  # changed in place, and an hvtiPlotR that draws no step layer is left as it draws.
+  if (!isTRUE(STEPS)) for (.l in curve$layers) if (inherits(.l$geom, "GeomStep")) .l$geom <- ggplot2::GeomLine
+  # A point at each event, so a reader sees where the estimate moves and how often.
+  curve <- curve + ggplot2::geom_point(data = hv$data[hv$data$n.event > 0, , drop = FALSE], size = 1.2, show.legend = FALSE)
   # Bars at the chosen times, from the same life table as the horizon tables, so a
   # bar and the table row for its time give the same limits.
   if (!is.null(CI_TIMES) && (!is.numeric(CI_TIMES) || anyNA(CI_TIMES) || any(CI_TIMES < 0))) {
@@ -1962,17 +1985,32 @@ km_figure <- function(strata = NULL) {
     ci <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = bars, strata = strata, conf_level = CLEVEL)
     ci <- ci[!is.na(ci$cl_lower), , drop = FALSE]
     ci$strata <- if (is.null(strata)) rep("All", nrow(ci)) else factor(ci$stratum, levels = levels(dd[[strata]]))
+    # The time asked for, which sets the bars' width below.
+    ci$at <- ci$time
+    # A straight line between two events leaves the estimate the bar brackets, so
+    # the bar moves back to the last event at or before its time, where the line
+    # passes through that estimate. Its limits are unchanged: the table's.
+    if (!isTRUE(STEPS) && nrow(ci)) {
+      ev <- hv$data[hv$data$n.event > 0, , drop = FALSE]
+      ci$time <- mapply(function(t, s) {
+        v <- ev$time[as.character(ev$strata) == s & ev$time <= t]
+        if (length(v)) max(v) else NA_real_
+      }, ci$time, as.character(ci$strata))
+      ci <- ci[!is.na(ci$time) & !duplicated(ci[c("strata", "time")]), , drop = FALSE]
+    }
   }
   if (length(bars) && nrow(ci)) {
     # The strata's bars at one time are dodged apart, across a width that must stay
     # inside the gap to the next chosen time and the distance to zero, or bars for
     # neighboring times interleave and one is drawn before time zero. A fortieth of
     # the axis is the most it takes; close early times take less.
-    times <- sort(unique(ci$time))
+    times <- sort(unique(ci$at))
     span <- min(plot_max / 40, 0.8 * min(c(diff(times), 2 * times[[1]])))
     curve <- curve + ggplot2::geom_errorbar(
       data = ci, ggplot2::aes(x = .data$time, ymin = 100 * .data$cl_lower, ymax = 100 * .data$cl_upper, color = .data$strata),
-      width = span, position = ggplot2::position_dodge(width = span),
+      # Under straight lines each stratum's bars stand at its own events, not at a
+      # shared time, so there is nothing to dodge apart.
+      width = span, position = if (isTRUE(STEPS)) ggplot2::position_dodge(width = span) else "identity",
       inherit.aes = FALSE, show.legend = FALSE
     )
   }
@@ -1988,7 +2026,7 @@ Code
 km_views(km)
 ```
 
-![](assets/5158d253e2a063db87ad2c4c3d59b112.png)
+![](assets/285d2eb2b2cbc41c013997aebe087deb.png)
 
 Figure 1: Overall: survival and the cumulative hazard on four scales
 
@@ -2000,7 +2038,7 @@ save_figure(.fig, "ac-survival", width = 6, height = 5)
 .fig
 ```
 
-![](assets/12762ce95908c57a774fd07f24fbc017.png)
+![](assets/6e64d48f0d8e81a3cdaf7ce98acfa0b1.png)
 
 Figure 2: Overall survival, with patients at risk
 
@@ -2025,7 +2063,7 @@ Code
 .views
 ```
 
-![](assets/1b31dfcb2c55d92e427486d2060b93c1.png)
+![](assets/c76166ef42543611e6418426780c94b8.png)
 
 Figure 3: By lvef_grp: survival and the cumulative hazard on four scales
 
@@ -2035,7 +2073,7 @@ Code
 .fig
 ```
 
-![](assets/3888fed2a498a7afb4c63d6322447ee4.png)
+![](assets/4f4dcbdfce81bce7bff3171a34505571.png)
 
 Figure 4: Survival by lvef_grp, with patients at risk
 
@@ -2045,7 +2083,7 @@ Code
 .views
 ```
 
-![](assets/acb26838ae016cbfef286c444d10106f.png)
+![](assets/1989b83e5381ca20b4694bb6521d63d2.png)
 
 Figure 5: By hx_chf: survival and the cumulative hazard on four scales
 
@@ -2055,7 +2093,7 @@ Code
 .fig
 ```
 
-![](assets/62e1cfbbe3e8e7d8c8603f12b2dd2be8.png)
+![](assets/f611b6e1f933c5a49862b69a056a0d46.png)
 
 Figure 6: Survival by hx_chf, with patients at risk
 
@@ -2063,9 +2101,9 @@ Figure 6: Survival by hx_chf, with patients at risk
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-25 18:28:44 EDT  |
-|                 | Ended            | 2026-10-25 18:28:48 EDT  |
-|                 | Duration         | 4 s                      |
+| Run             | Started          | 2026-10-27 14:54:49 EDT  |
+|                 | Ended            | 2026-10-27 14:54:55 EDT  |
+|                 | Duration         | 6 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -2073,9 +2111,9 @@ Figure 6: Survival by hx_chf, with patients at risk
 |                 | Template         | ac                       |
 |                 | Subject          | dead                     |
 |                 | Type             | hz                       |
-|                 | hvtiRtemplates   | 1.5.1                    |
-| Dataset `built` | Version file     | built_20261025.parquet   |
-|                 | Version date     | 2026-10-25               |
+|                 | hvtiRtemplates   | 1.5.2                    |
+| Dataset `built` | Version file     | built_20261027.parquet   |
+|                 | Version date     | 2026-10-27               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 725 rows on 725 patients |
 |                 | WHERE            | `!is.na(creat_pr)`       |

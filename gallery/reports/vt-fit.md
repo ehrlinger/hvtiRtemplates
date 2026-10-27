@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-25 18:36
+2026-10-27 15:37
 
 Gallery job on the synthetic cohort: mitral repair against replacement,
 and freedom from reintervention to eight years.
@@ -76,8 +76,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261025.parquet`, dated 2026-10-25 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.1
+**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.2
 
 ## Study choices
 
@@ -128,6 +128,10 @@ EXCLUDE <- character()
 ELIGIBILITY <- c("gower", "sid")
 COMBINE <- "any"                            # Demo: "any" flags a patient any method flags; "all" only when all do.
 SID_SET <- "echo-sid"
+# Demo: graded predictors coded as numbers (a 0 to 3 degree, say). The Gower
+# distance ranks them, so 0 against 3 is farther than 0 against 1; unnamed, every
+# mismatched grade counts the same. Names the predictors do not include are ignored.
+ORDINAL <- character()
 # Demo: "na.impute" imputes missing predictors inside each forest; "na.omit"
 # drops the patient. The outcome is required either way.
 NA_ACTION <- "na.impute"
@@ -233,7 +237,7 @@ knitr::kable(.counts)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261025.parquet) |
+| Source              | dataset `built` (built_20261027.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -290,6 +294,67 @@ cat("Predictors:", paste(.predictors, collapse = ", "), "\n")
 ```
 
     Predictors: age, female, bmi, hx_chf, hx_dm, nyha_pr, lvef, creat_pr, lvedd, lvesd, la_diam, rvsp, e_e 
+
+## The observed outcome
+
+What happened in each arm, before any model: Kaplan-Meier, with 70%
+confidence limits (about one standard error). The twins below predict
+each patient under both arms, so this is the check that each arm’s
+follow-up reaches the horizon with patients still at risk. An arm with
+few at risk at `HORIZON` carries a twin curve there that rests on little
+data.
+
+Code
+
+``` r
+.km_data <- d[.treated, c(TIME, STATUS, ARM), drop = FALSE]
+.km_data[[ARM]] <- factor(.km_data[[ARM]], levels = ARMS)
+.km_data[[STATUS]] <- as.integer(.km_data[[STATUS]])
+.km_times <- sort(unique(c(pretty(c(0, max(.km_data[[TIME]]))), HORIZON)))
+.km <- hvtiPlotR::hv_survival(.km_data, time_col = TIME, event_col = STATUS, group_col = ARM, conf_level = 0.70,
+                              report_times = .km_times)
+.km_at <- .km$tables$report[.km$tables$report$report_time == HORIZON, , drop = FALSE]
+# The number at risk comes from the risk table the figure draws, so table and figure agree; the report
+# table's own n.risk is survfit's, counted just before the time, and can differ by a patient.
+.km_risk <- .km$tables$risk[.km$tables$risk$report_time == HORIZON, , drop = FALSE]
+.km_tbl <- do.call(base::rbind, lapply(ARMS, function(a) {
+  x <- .km_data[.km_data[[ARM]] == a, , drop = FALSE]
+  h <- .km_at[as.character(.km_at$strata) == a, , drop = FALSE]
+  k <- .km_risk$n.risk[as.character(.km_risk$strata) == a]
+  data.frame(arm = a, patients = nrow(x), events = sum(x[[STATUS]] == 1L), last_follow_up = max(x[[TIME]]),
+             at_risk = if (length(k)) k else 0L, survival = if (nrow(h)) h$surv else NA_real_,
+             lower = if (nrow(h)) h$lower else NA_real_, upper = if (nrow(h)) h$upper else NA_real_)
+}))
+names(.km_tbl)[5:8] <- paste0(c("at_risk", "survival", "lower", "upper"), "_", HORIZON)
+knitr::kable(.km_tbl, digits = 3, row.names = FALSE)
+```
+
+| arm     | patients | events | last_follow_up | at_risk_8 | survival_8 | lower_8 | upper_8 |
+|:--------|---------:|-------:|---------------:|----------:|-----------:|--------:|--------:|
+| repair  |      412 |     72 |         34.426 |       168 |      0.818 |   0.793 |   0.840 |
+| replace |      388 |     57 |         30.877 |       147 |      0.855 |   0.829 |   0.877 |
+
+Table 2: Each arm’s observed outcome: patients, events, and Kaplan-Meier
+survival at the horizon with 70% confidence limits
+
+Code
+
+``` r
+.fig <- plot(.km) +
+  ggplot2::geom_vline(xintercept = HORIZON, linetype = "dashed") +
+  ggplot2::labs(x = "Time", y = "Survival (%)", color = "Arm", fill = "Arm") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12) +
+  # The house theme drops the legend; two arms need it to tell the curves apart.
+  ggplot2::theme(legend.position = "top")
+.fig <- hvtiPlotR::hv_atrisk_compose(.fig, hvtiPlotR::hv_atrisk(.km))
+save_figure(.fig, "vt-fit-km", height = 5)
+.fig
+```
+
+![](assets/214504ee434ed5ad81cb324958738553.png)
+
+Figure 1: Kaplan-Meier survival in each arm, with 70% confidence limits
+and the numbers at risk. The dashed line is the RMST horizon.
 
 ## Eligibility
 
@@ -361,14 +426,57 @@ vt_ood <- function(dist, ids, arm, arms) {
 # Gower over the model predictors only: mixed types, no model, bounded in [0, 1].
 # A 0/1 column is declared symmetric binary. daisy() would otherwise treat it as
 # interval scaled, which gives the same distance, and warn in every report.
-vt_elig_gower <- function(d, predictors, id) {
-  binary <- predictors[vapply(d[predictors], function(x) {
-    x <- stats::na.omit(x)
-    is.numeric(x) && length(unique(x)) == 2L && all(x %in% c(0, 1))
+# daisy() scores any mismatch of an unordered factor as 1, so a grade of 0
+# against 3 would count the same as 0 against 1. The `ordinal` predictors become
+# ordered factors, levels sorted by their numeric codes, which daisy ranks and
+# scales to [0, 1]. Only the distance sees this; the forests keep the data as read.
+vt_elig_gower <- function(d, predictors, id, ordinal = character()) {
+  x <- d[predictors]
+  for (v in intersect(ordinal, predictors)) {
+    lv <- levels(factor(x[[v]]))
+    num <- suppressWarnings(as.numeric(lv))
+    if (anyNA(num)) {
+      stop("ORDINAL predictor ", v, " has levels that are not numeric codes: ", paste(lv[is.na(num)], collapse = ", "),
+           ".", call. = FALSE)
+    }
+    x[[v]] <- factor(as.character(x[[v]]), levels = lv[order(num)], ordered = TRUE)
+  }
+  binary <- predictors[vapply(x, function(col) {
+    col <- stats::na.omit(col)
+    is.numeric(col) && length(unique(col)) == 2L && all(col %in% c(0, 1))
   }, logical(1L))]
-  m <- as.matrix(cluster::daisy(d[predictors], metric = "gower", type = if (length(binary)) list(symm = binary) else list()))
+  m <- as.matrix(cluster::daisy(x, metric = "gower", type = if (length(binary)) list(symm = binary) else list()))
   dimnames(m) <- list(d[[id]], d[[id]])
   m
+}
+
+# Which predictors put an out-of-distribution patient outside the arm they were
+# judged against: a number outside the range the arm's patients span, or a level
+# that at most `rare` of them share. A distance says how far; this says why, in
+# terms a clinician can check against the chart. At most `n` are named; a patient
+# with none is unusual only in combination.
+vt_ood_features <- function(out_rows, d, id, arm_of, predictors, n = 3L, rare = 2L) {
+  vapply(seq_len(nrow(out_rows)), function(i) {
+    p <- d[match(out_rows$ID[i], d[[id]]), , drop = FALSE]
+    members <- d[arm_of %in% out_rows$arm[i], , drop = FALSE]
+    why <- character()
+    for (v in predictors) {
+      a <- p[[v]]
+      u <- members[[v]]
+      if (is.na(a)) next
+      if (is.numeric(u) && !all(stats::na.omit(u) %in% c(0, 1))) {
+        rg <- range(u, na.rm = TRUE)
+        if (a < rg[1] || a > rg[2]) {
+          why <- c(why, sprintf("%s %s outside %s's range [%s, %s]", v, format(signif(a, 3)), out_rows$arm[i],
+                                format(signif(rg[1], 3)), format(signif(rg[2], 3))))
+        }
+      } else {
+        k <- sum(as.character(u) == as.character(a), na.rm = TRUE)
+        if (k <= rare) why <- c(why, sprintf("%s = %s (%d of %d in %s)", v, as.character(a), k, nrow(members), out_rows$arm[i]))
+      }
+    }
+    if (!length(why)) "none alone; unusual in combination" else paste(utils::head(why, n), collapse = "; ")
+  }, character(1L))
 }
 
 # The SID distance a sid job saved. Read, never refit, and refused when it does
@@ -411,7 +519,7 @@ Code
 .arm <- ifelse(.no_arm, NA_character_, as.character(d[[ARM]]))
 .sid_read <- NULL
 .dist <- list(
-  gower = function() vt_elig_gower(d, .predictors, ID),
+  gower = function() vt_elig_gower(d, .predictors, ID, ORDINAL),
   sid = function() {
     if (is.null(SID_SET)) stop("ELIGIBILITY includes \"sid\"; name the sid set in SID_SET.", call. = FALSE)
     m <- vt_elig_sid(file.path(dirname(dirname(set_path("estimates", "vt.rds"))), SID_SET, "sid.rds"), .ids, .cfg,
@@ -429,6 +537,12 @@ if (anyNA(.elig_rows$reference)) {
   stop("An arm has no two patients with a finite distance by ", paste(.bad, collapse = ", "),
        ", so its reference gap is undefined. Check the predictors' missingness.", call. = FALSE)
 }
+.elig_rows$features <- ""
+.ood_at <- which(!.elig_rows$in_distribution)
+.elig_rows$features[.ood_at] <- vt_ood_features(.elig_rows[.ood_at, ], d, ID, .arm, .predictors)
+# With no finite distance there is no comparison to explain; vt_ood()'s reason says why.
+.nofin <- .ood_at[!is.finite(.elig_rows$distance[.ood_at])]
+.elig_rows$features[.nofin] <- .elig_rows$reason[.nofin]
 .elig <- vt_combine(.elig_rows, COMBINE)
 for (m in .methods) {
   .one <- vt_combine(.elig_rows[.elig_rows$method == m, ], "any")
@@ -474,7 +588,7 @@ set.seed(SEED)
 Code
 
 ``` r
-.out <- .elig_rows[!.elig_rows$in_distribution, c("ID", "method", "arm", "distance", "reference", "reason")]
+.out <- .elig_rows[!.elig_rows$in_distribution, c("ID", "method", "arm", "distance", "reference", "features")]
 if (nrow(.out)) {
   .out$distance <- round(.out$distance, 3)
   .out$reference <- round(.out$reference, 3)
@@ -490,10 +604,10 @@ Code
 knitr::kable(.out, row.names = FALSE)
 ```
 
-| ID  | method | arm | distance | reference | reason |
-|-----|--------|-----|----------|-----------|--------|
+| ID  | method | arm | distance | reference | features |
+|-----|--------|-----|----------|-----------|----------|
 
-Table 2: Patients out of distribution, by method and the arm they were
+Table 3: Patients out of distribution, by method and the arm they were
 judged against
 
 Code
@@ -518,7 +632,7 @@ save_figure(.fig, "vt-fit-eligibility")
 
 ![](assets/9a17487454c0a39071f9fbcbcb738114.png)
 
-Figure 1: Distance to the nearest patient of the arm judged against,
+Figure 2: Distance to the nearest patient of the arm judged against,
 patients ranked within each panel. The dashed line is that arm’s largest
 nearest-neighbor gap among its own patients: points above it are out of
 distribution.
@@ -546,7 +660,7 @@ Eligible under gower (rows) and sid (columns):
 |:-----|-----:|
 | TRUE |  800 |
 
-Table 3: Eligibility under each pair of methods
+Table 4: Eligibility under each pair of methods
 
 ## The arm forests
 
@@ -611,8 +725,116 @@ if (length(.weak)) {
 | repair  |      412 |     72 |   0.741 | 0.684 | 0.798 |
 | replace |      388 |     57 |   0.398 | 0.311 | 0.484 |
 
-Table 4: **The interval for replace includes 0.5.** That arm’s half of
+Table 5: **The interval for replace includes 0.5.** That arm’s half of
 every contrast below is exploratory.
+
+The C-index says whether a forest ranks patients; it says nothing about
+whether the survival it predicts is the right level, and the RMST
+difference is a difference of levels. Calibration checks that: each
+arm’s patients are split into fifths by their out-of-bag predicted
+survival at the horizon, and each fifth’s mean prediction is set beside
+its Kaplan-Meier survival. A small arm can rank well and still be far
+off here.
+
+Code
+
+``` r
+# Out-of-bag predicted survival at the horizon against Kaplan-Meier within
+# groups of predicted survival, for one survival forest. survival.oob and yvar
+# share the training order, so no matching by ID is needed. A patient never out
+# of bag has no prediction and is left out, counted. A group whose follow-up
+# ends before the horizon has no observed survival there: extending its curve
+# would treat the last censored patients as immortal. It is NA, counted, unless
+# the curve had already reached zero.
+vt_calibration <- function(f, horizon, groups = 5L) {
+  at <- findInterval(horizon, f$time.interest)
+  pred <- if (at == 0L) rep(1, f$n) else f$survival.oob[, at]
+  time <- f$yvar[[1]]
+  status <- f$yvar[[2]]
+  ok <- !is.na(pred)
+  pred <- pred[ok]
+  time <- time[ok]
+  status <- status[ok]
+  breaks <- unique(stats::quantile(pred, seq(0, 1, length.out = groups + 1L), names = FALSE))
+  g <- if (length(breaks) > 1L) cut(pred, breaks, include.lowest = TRUE, labels = FALSE) else rep(1L, length(pred))
+  out <- do.call(base::rbind, lapply(sort(unique(g)), function(k) {
+    s <- g == k
+    km <- summary(survival::survfit(survival::Surv(time[s], status[s]) ~ 1), times = horizon, extend = TRUE)
+    observed <- if (length(km$surv)) km$surv else NA_real_
+    if (max(time[s]) < horizon && !isTRUE(observed == 0)) observed <- NA_real_
+    data.frame(group = k, patients = sum(s), events = sum(status[s] == 1), predicted = mean(pred[s]),
+               observed = observed)
+  }))
+  attr(out, "no_prediction") <- sum(!ok)
+  attr(out, "unsupported") <- sum(is.na(out$observed))
+  out
+}
+```
+
+Code
+
+``` r
+.cal <- do.call(base::rbind, lapply(ARMS, function(a) {
+  x <- vt_calibration(.forests[[a]], HORIZON)
+  if (attr(x, "no_prediction")) {
+    cat(attr(x, "no_prediction"), " ", a, " patient(s) were never out of bag and have no calibration prediction; ",
+        "raise NTREE.\n\n", sep = "")
+  }
+  if (attr(x, "unsupported")) {
+    cat(attr(x, "unsupported"), " ", a, " fifth(s) have no follow-up to ", HORIZON,
+        " and no observed survival there; they are left out of the error.\n\n", sep = "")
+  }
+  cbind(arm = a, x)
+}))
+cat(knitr::kable(.cal, digits = 3, row.names = FALSE), sep = "\n")
+```
+
+Code
+
+``` r
+# One number per arm: the mean distance between predicted and observed over the fifths, in percentage points.
+.cal_error <- tapply(abs(.cal$predicted - .cal$observed), .cal$arm, mean, na.rm = TRUE)[ARMS]
+cat("\nMean calibration error at ", HORIZON, ", in percentage points: ",
+    paste0(ARMS, " ", format(round(100 * .cal_error, 1), nsmall = 1), collapse = ", "), ".\n", sep = "")
+```
+
+| arm     | group | patients | events | predicted | observed |
+|:--------|------:|---------:|-------:|----------:|---------:|
+| repair  |     1 |       83 |     31 |     0.510 |    0.536 |
+| repair  |     2 |       82 |     19 |     0.754 |    0.726 |
+| repair  |     3 |       82 |      8 |     0.888 |    0.904 |
+| repair  |     4 |       82 |     11 |     0.927 |    0.921 |
+| repair  |     5 |       83 |      3 |     0.961 |    0.968 |
+| replace |     1 |       78 |      7 |     0.767 |    0.915 |
+| replace |     2 |       77 |     13 |     0.824 |    0.857 |
+| replace |     3 |       78 |     10 |     0.851 |    0.918 |
+| replace |     4 |       77 |     11 |     0.876 |    0.866 |
+| replace |     5 |       78 |     16 |     0.910 |    0.722 |
+
+Table 6: Mean calibration error at 8, in percentage points: repair 1.6,
+replace 8.9.
+
+Code
+
+``` r
+.lim <- range(c(.cal$predicted, .cal$observed), na.rm = TRUE)
+.fig <- ggplot2::ggplot(.cal[!is.na(.cal$observed), , drop = FALSE], ggplot2::aes(x = predicted, y = observed)) +
+  ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
+  ggplot2::geom_line() +
+  ggplot2::geom_point(size = 2) +
+  ggplot2::facet_wrap(~ arm) +
+  ggplot2::coord_equal(xlim = .lim, ylim = .lim) +
+  ggplot2::labs(x = paste("Predicted survival at", HORIZON, "(out of bag)"), y = "Observed, Kaplan-Meier") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "vt-fit-calibration")
+.fig
+```
+
+![](assets/d6791edce3a2c8ec7730ff2a3d05cba7.png)
+
+Figure 3: Calibration at the horizon. Each point is a fifth of an arm’s
+patients; the dashed line is perfect agreement. Points below it: the
+forest predicts better survival than was observed.
 
 ## Twin curves
 
@@ -734,7 +956,7 @@ if (!length(.in_dist)) {
 
 ![](assets/16b85c593c7a7ff8a4735151d6051354.png)
 
-Figure 2: Mean predicted survival under each arm’s forest, for patients
+Figure 4: Mean predicted survival under each arm’s forest, for patients
 in distribution, by the arm they received. The shaded area to the
 horizon is the restricted mean survival time.
 
@@ -747,9 +969,11 @@ Code
 # cannot drift apart. The forests are kept so vt-explain grows none.
 vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   list(rmst = .rmst, curves = .curves, forests = .forests,
-       eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ps = .ps),
+       eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ordinal = ORDINAL,
+                          ps = .ps),
        predictors = list(names = .predictors, vp_set = VP_SET),
-       settings = list(performance = .perf, arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED, time = TIME, status = STATUS,
+       settings = list(performance = .perf, calibration = .cal, arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED,
+                       time = TIME, status = STATUS,
                        id = ID, id_key = hvtiRtemplates:::.id_key_fingerprint(.id_key),
                        arm = ARM, imputation = IMPUTATION, imputation_use = IMPUTATION_USE,
                        imputation_m = if (!is.null(IMPUTATION)) .m,
@@ -771,9 +995,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-25 18:36:18 EDT  |
-|                 | Ended            | 2026-10-25 18:36:30 EDT  |
-|                 | Duration         | 11 s                     |
+| Run             | Started          | 2026-10-27 15:37:07 EDT  |
+|                 | Ended            | 2026-10-27 15:37:29 EDT  |
+|                 | Duration         | 22 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -781,9 +1005,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 |                 | Template         | vt.fit                   |
 |                 | Subject          | reint                    |
 |                 | Type             | vt                       |
-|                 | hvtiRtemplates   | 1.5.1                    |
-| Dataset `built` | Version file     | built_20261025.parquet   |
-|                 | Version date     | 2026-10-25               |
+|                 | hvtiRtemplates   | 1.5.2                    |
+| Dataset `built` | Version file     | built_20261027.parquet   |
+|                 | Version date     | 2026-10-27               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
