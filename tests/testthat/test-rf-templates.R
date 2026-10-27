@@ -514,7 +514,7 @@ test_that("no explain template grows a forest on the full cohort", {
     expect_false(any(grepl(grows_forest, code)), info = basename(f))
   }
   # The one place a forest is grown for an explain is a subsample refit.
-  expect_match(paste(deparse(body(hvtiRtemplates:::.band_refit)), collapse = "\n"), "rfsrc(", fixed = TRUE)
+  expect_match(paste(deparse(body(hvtiRtemplates:::.band_refit)), collapse = "\n"), "randomForestSRC::rfsrc", fixed = TRUE)
 })
 
 test_that("every fit grows the forest subsample() needs: saved, by.root", {
