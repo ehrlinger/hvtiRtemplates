@@ -47,7 +47,7 @@ test_that("the importance SE is taken about the plotted estimate, not subsample(
   se <- hvtiRtemplates:::.band_vimp_se(est, star, 0.4)
   expect_identical(names(se), names(est))
   expect_equal(unname(se), sqrt(0.4 * c(mean((star["b", ] - 2.5)^2), mean((star["a", ] - 1.5)^2))))
-  # Centred on subsample()'s own estimate the SE would differ.
+  # Centered on subsample()'s own estimate the SE would differ.
   expect_false(isTRUE(all.equal(unname(se), unname(hvtiRtemplates:::.band_se(c(b = 2, a = 1), star, 0.4)[c("b", "a")]))))
   expect_error(hvtiRtemplates:::.band_vimp_se(c(zz = 1), star, 0.4), "zz")
 })
@@ -401,11 +401,10 @@ test_that("the Time legend labels the horizons to two decimals, as the partial f
   skip_if_not_installed("patchwork")
   bands <- list(v = fake_band(times = c(0.953492154067233, 3.04605413203369)))
   p <- hvtiRtemplates:::.plot_partial_bands(bands, 0.3, "ribbon", NULL, ncol = 1)
-  b <- ggplot2::ggplot_build(p[[1]])
-  expect_identical(trimws(b$plot$scales$get_scales("colour")$get_labels()), c("0.95", "3.05"))
+  expect_identical(trimws(ggplot2::get_guide_data(p[[1]], "color")$.label), c("0.95", "3.05"))
 })
 
-test_that("the importance-interval figure centres on the importance estimate, +/- 1.96 SE, ranked by it", {
+test_that("the importance-interval figure centers on the importance estimate, +/- 1.96 SE, ranked by it", {
   skip_if_not_installed("ggplot2")
   est <- c(a = 0.05, b = 0.30, c = -0.02)
   se <- c(c = 0.04, a = 0.10, b = 0.05) # deliberately not in the estimate's order
@@ -416,7 +415,7 @@ test_that("the importance-interval figure centres on the importance estimate, +/
   expect_equal(d$upper - d$vimp, stats::qnorm(0.975) * unname(se[as.character(d$vars)]))
   expect_equal(d$vimp - d$lower, stats::qnorm(0.975) * unname(se[as.character(d$vars)]))
   expect_identical(levels(d$vars), c("c", "a", "b")) # ascending, so the largest plots at the top
-  # Labelled by the lower bound: a is 0.05 - 0.196 < 0, b is 0.30 - 0.098 > 0.
+  # Labeled by the lower bound: a is 0.05 - 0.196 < 0, b is 0.30 - 0.098 > 0.
   expect_identical(as.character(d$clear[match(c("a", "b", "c"), d$vars)]),
                    c("Interval not above zero", "Interval above zero", "Interval not above zero"))
 })

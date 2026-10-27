@@ -383,9 +383,9 @@
     timed <- !all(is.na(fr$time))
     fr$time <- factor(fr$time)
     line$time <- factor(line$time)
-    colour <- if (timed) ggplot2::aes(color = !!sym("time"), group = !!sym("time"))
+    color <- if (timed) ggplot2::aes(color = !!sym("time"), group = !!sym("time"))
     dodge <- ggplot2::position_dodge(width = if (identical(band$type, "continuous")) diff(range(line$x)) / 40 else 0.4)
-    p <- ggplot2::ggplot(fr, ggplot2::aes(x = !!sym("x"), y = !!sym("hat"))) + colour
+    p <- ggplot2::ggplot(fr, ggplot2::aes(x = !!sym("x"), y = !!sym("hat"))) + color
     # A layer is drawn in the legend only if it is the empty line added below, the same in every panel,
     # because patchwork's guides = "collect" merges the panels' Time keys only when they are identical.
     if (identical(band$type, "categorical")) {
