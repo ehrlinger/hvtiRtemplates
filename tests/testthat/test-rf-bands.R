@@ -253,6 +253,15 @@ test_that("a page mixing continuous and categorical survival panels shows one Ti
   }
 })
 
+test_that("the Time legend labels the horizons to two decimals, as the partial figure does", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  bands <- list(v = fake_band(times = c(0.953492154067233, 3.04605413203369)))
+  p <- hvtiRtemplates:::.plot_partial_bands(bands, 0.3, "ribbon", NULL, ncol = 1)
+  b <- ggplot2::ggplot_build(p[[1]])
+  expect_identical(trimws(b$plot$scales$get_scales("colour")$get_labels()), c("0.95", "3.05"))
+})
+
 test_that("the importance-interval figure centres on the importance estimate, +/- 1.96 SE, ranked by it", {
   skip_if_not_installed("ggplot2")
   est <- c(a = 0.05, b = 0.30, c = -0.02)

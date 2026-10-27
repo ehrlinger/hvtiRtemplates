@@ -40,10 +40,10 @@ changing how many variables get dependence plots recomputes the partials and
 nothing else. For a variable screen and VarPro partials, use the `vp-fit` and
 `vp-explain` jobs.
 
-With `BANDS_B` above 0 the job also grows subsample forests, each on a fraction of the
-patients, to put confidence intervals on the importance and bands on the partial plots.
-It still grows no forest on the full cohort, and with `BANDS_B <- 0`, the default, it
-draws neither.
+<!-- With `BANDS_B` above 0 the job also grows subsample forests, each on a fraction of the
+     patients, to put confidence intervals on the importance and bands on the partial plots.
+     It still grows no forest on the full cohort, and with `BANDS_B <- 0`, the default, it
+     draws neither. -->
 
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They

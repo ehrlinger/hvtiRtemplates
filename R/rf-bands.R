@@ -325,7 +325,7 @@
     if (timed) {
       cols <- .group_colors(levels(fr$time))
       p <- p + ggplot2::geom_line(data = fr[0, ], show.legend = TRUE) +
-        ggplot2::scale_color_manual(values = cols, name = "Time")
+        ggplot2::scale_color_manual(values = cols, name = "Time", labels = function(b) format(round(as.numeric(b), 2)))
       if (identical(band$type, "continuous") && identical(style, "ribbon")) {
         p <- p + ggplot2::scale_fill_manual(values = cols, name = "Time", guide = "none")
       }
