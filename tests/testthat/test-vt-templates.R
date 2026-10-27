@@ -218,6 +218,20 @@ test_that("vt_calibration groups by predicted survival at the horizon and reads 
   expect_equal(unique(h$vt_calibration(f, horizon = 0.5)$predicted), 1)
 })
 
+test_that("vt_calibration gives no observed survival to a fifth whose follow-up ends before the horizon", {
+  h <- vt_helpers()
+  # Fifth 1 is censored at 0.5 and 1, before the horizon of 2: unsupported. Fifth 2 died
+  # at 1.5 and 1.8: zero is already established and stays.
+  s <- cbind(1, seq(0.1, 1, by = 0.1), 0.05)
+  f <- list(time.interest = c(1, 2, 3), n = 10L, survival.oob = s,
+            yvar = data.frame(time = c(0.5, 1, 1.5, 1.8, rep(3, 6)), status = c(0, 0, 1, 1, rep(1, 6))))
+  x <- h$vt_calibration(f, horizon = 2)
+  expect_equal(x$patients, rep(2L, 5))
+  expect_true(is.na(x$observed[1]))
+  expect_equal(x$observed[2], 0)
+  expect_equal(attr(x, "unsupported"), 1L)
+})
+
 test_that("vt-fit reports calibration for each arm", {
   skip_on_cran()
   env <- vt_fit_first(labels = c(vt_fit_labels, "fit", "tbl-performance", "calibration-helper", "tbl-calibration",
@@ -542,6 +556,26 @@ test_that("fig-distance puts each arm's eligibility line in the panel of the pat
   tab <- env$.dist_tab[env$.dist_tab$received == "A", ]
   expect_gte(tab$out_of_distribution, 5L)
   expect_true(is.finite(tab$spearman))
+})
+
+test_that("fig-distance survives an arm named like the tie category", {
+  skip_on_cran()
+  d <- vt_data()
+  d$arm[d$arm == "A"] <- "neither"
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all,
+                      choices = utils::modifyList(vt_choices, list(ARMS = c("neither", "B"))))
+  vt_explain(env)
+  expect_equal(levels(env$.dd$favors), c("first", "second", "tie"))
+  expect_setequal(env$.dd$received, c("neither", "B"))
+})
+
+test_that("fig-stratum draws nothing when no treated patient is in the stratifier's set", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_sid_fixture(env, data.frame(id = vt_digest(env, factor(-(1:5))), cluster = "a"))
+  out <- utils::capture.output(vt_explain(env, vt_explain_labels_all, vt_strat_choices()))
+  expect_equal(nrow(env$.sa), 0L)
+  expect_true(any(grepl("nothing to draw", out)))
 })
 
 test_that("tbl-benefit honors GAIN_MIN and splits the no-arm patients between the arms", {

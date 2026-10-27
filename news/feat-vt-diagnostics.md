@@ -2,7 +2,8 @@
   the numbers at risk, and a table of each arm's patients, events and survival at `HORIZON`
   (`vt-fit-km`).
 * `vt-fit` checks each arm forest's calibration at `HORIZON`: out-of-bag predicted survival in fifths
-  against Kaplan-Meier, with one mean error per arm in percentage points (`vt-fit-calibration`). The
+  against Kaplan-Meier, with one mean error per arm in percentage points (`vt-fit-calibration`). A fifth
+  whose follow-up ends before `HORIZON` shows no observed survival and is counted rather than extrapolated. The
   C-index says whether a forest ranks patients; calibration says whether its survival is the right
   level, which is what an RMST difference compares. The table is saved in `vt.rds` as
   `settings$calibration`.

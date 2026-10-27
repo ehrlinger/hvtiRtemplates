@@ -352,8 +352,9 @@ if (!nrow(.dd)) {
     data.frame(method = x$method[1L], arm = x$arm[1L], reference = x$reference[1L],
                median = if (is.na(k)) NA_real_ else x$distance[k] / x$ratio[k])
   }))
-  .dd$favors <- factor(ifelse(.dd$diff > 0, ARMS[1], ifelse(.dd$diff < 0, ARMS[2], "neither")),
-                       levels = c(ARMS, "neither"))
+  # Keys, not arm names: an arm may itself be called "neither". The scale below puts the names back.
+  .dd$favors <- factor(ifelse(.dd$diff > 0, "first", ifelse(.dd$diff < 0, "second", "tie")),
+                       levels = c("first", "second", "tie"))
   .dd$panel <- paste("Received", .dd$received)
   # A treated patient is judged against the other arm, so that arm's lines belong in the panel of the arm received.
   .lines$panel <- paste("Received", ifelse(.lines$arm == ARMS[1], ARMS[2], ARMS[1]))
@@ -367,6 +368,7 @@ if (!nrow(.dd)) {
     facet_grid(method ~ panel, scales = "free_x") +
     labs(x = "Distance to the nearest patient of the other arm",
          y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"), color = "Favors") +
+    scale_color_discrete(breaks = c("first", "second", "tie"), labels = c(ARMS, "neither")) +
     theme(legend.position = "bottom")
   save_figure(.fig, "vt-explain-distance")
   .fig
@@ -461,8 +463,9 @@ if (is.null(.strata)) {
 #| fig-cap: "The RMST difference by stratum, one panel per arm received. Box: 15th to 85th percentile of the
 #|   patients in distribution, whiskers 5th to 95th, drawn where a cell holds at least 5; every patient is a
 #|   point, and the ringed ones are out of distribution."
-if (!is.null(.strata)) {
-  .sa <- merge(r[!r$no_arm, c("ID", "arm", "diff", "elig")], .strata, by = "ID")
+.sa <- if (!is.null(.strata)) merge(r[!r$no_arm, c("ID", "arm", "diff", "elig")], .strata, by = "ID")
+if (!is.null(.sa) && !nrow(.sa)) cat("No treated patient is in the stratifier's set; there is nothing to draw.\n")
+if (!is.null(.sa) && nrow(.sa)) {
   .sa$panel <- paste("Received", .sa$arm)
   .box <- .sa[.sa$elig, , drop = FALSE]
   .box <- .box[stats::ave(.box$diff, .box$stratum, .box$arm, FUN = length) >= 5, , drop = FALSE]

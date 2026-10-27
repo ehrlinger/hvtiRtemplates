@@ -682,7 +682,10 @@ far off here.
 # Out-of-bag predicted survival at the horizon against Kaplan-Meier within
 # groups of predicted survival, for one survival forest. survival.oob and yvar
 # share the training order, so no matching by ID is needed. A patient never out
-# of bag has no prediction and is left out, counted.
+# of bag has no prediction and is left out, counted. A group whose follow-up
+# ends before the horizon has no observed survival there: extending its curve
+# would treat the last censored patients as immortal. It is NA, counted, unless
+# the curve had already reached zero.
 vt_calibration <- function(f, horizon, groups = 5L) {
   at <- findInterval(horizon, f$time.interest)
   pred <- if (at == 0L) rep(1, f$n) else f$survival.oob[, at]
@@ -697,10 +700,13 @@ vt_calibration <- function(f, horizon, groups = 5L) {
   out <- do.call(base::rbind, lapply(sort(unique(g)), function(k) {
     s <- g == k
     km <- summary(survival::survfit(survival::Surv(time[s], status[s]) ~ 1), times = horizon, extend = TRUE)
+    observed <- if (length(km$surv)) km$surv else NA_real_
+    if (max(time[s]) < horizon && !isTRUE(observed == 0)) observed <- NA_real_
     data.frame(group = k, patients = sum(s), events = sum(status[s] == 1), predicted = mean(pred[s]),
-               observed = if (length(km$surv)) km$surv else NA_real_)
+               observed = observed)
   }))
   attr(out, "no_prediction") <- sum(!ok)
+  attr(out, "unsupported") <- sum(is.na(out$observed))
   out
 }
 ```
@@ -716,6 +722,10 @@ vt_calibration <- function(f, horizon, groups = 5L) {
     cat(attr(x, "no_prediction"), " ", a, " patient(s) were never out of bag and have no calibration prediction; ",
         "raise NTREE.\n\n", sep = "")
   }
+  if (attr(x, "unsupported")) {
+    cat(attr(x, "unsupported"), " ", a, " fifth(s) have no follow-up to ", HORIZON,
+        " and no observed survival there; they are left out of the error.\n\n", sep = "")
+  }
   cbind(arm = a, x)
 }))
 cat(knitr::kable(.cal, digits = 3, row.names = FALSE), sep = "\n")
@@ -730,7 +740,7 @@ cat("\nMean calibration error at ", HORIZON, ", in percentage points: ",
 #| fig-cap: "Calibration at the horizon. Each point is a fifth of an arm's patients; the dashed line is
 #|   perfect agreement. Points below it: the forest predicts better survival than was observed."
 .lim <- range(c(.cal$predicted, .cal$observed), na.rm = TRUE)
-.fig <- ggplot2::ggplot(.cal, ggplot2::aes(x = predicted, y = observed)) +
+.fig <- ggplot2::ggplot(.cal[!is.na(.cal$observed), , drop = FALSE], ggplot2::aes(x = predicted, y = observed)) +
   ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray40") +
   ggplot2::geom_line() +
   ggplot2::geom_point(size = 2) +
