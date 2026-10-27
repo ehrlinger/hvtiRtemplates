@@ -116,8 +116,10 @@ TAU <- NULL
 N_CURVES <- 20
 
 # EDIT: the VarPro cache behind importance, at randomForestRHF's defaults. It is
-# the slow step at full scale: a first study needed 30 rules and 20 trees to
-# finish on 400 patients. Smaller values are faster and coarser.
+# the slow step at full scale, and smaller values are faster and coarser in a way
+# that shows: a predictor no rule tested gets NA. On the first real study, 2,386
+# patients and 35 predictors, 30 rules and 20 trees left 13 untested; 150 and 150
+# left 6 to 8, and which ones depended on the seed.
 MAX_RULES_TREE <- 150
 MAX_TREE <- 150
 
@@ -161,6 +163,9 @@ if (!inherits(forest, "rhf")) {
   stop("rhf.rds does not hold a random hazard forest.", call. = FALSE)
 }
 CACHE_DIR <- dirname(.handoff)
+# Every cache below is built from the forest's patient-level rows, so each is
+# written owner-only, as rhf.rds is.
+.cache_file <- function(name) file.path(CACHE_DIR, paste0(name, ".rds"))
 # A forest grown on rows the fit job repaired is a draft's, and so is every
 # explanation of it: a final render stops here.
 cat(hvtiRtemplates:::.cp_repair_notice(unlist(.forest_read$lineage$analysis$repair)))
@@ -188,9 +193,14 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 #| fig-cap: "Cumulative AUC(t): how well the predicted cumulative hazard separates patients who have had the event by
 #|   time t from those still at risk. 0.5 is chance."
 #| message: true
-auc_cum <- cache_fit("rhf-auc-cumulative",
-                     auct.rhf(forest, marker = "cumhaz", method = "cumulative", tau = TAU, verbose = FALSE),
-                     seed = SEED, dir = CACHE_DIR, refit = REFIT)
+# The marker here is a cumulative hazard the trees aggregate on the full time
+# grid, not the out-of-bag path chf.oob drawn under Hazard curves, so the AUC and
+# those curves are not the same estimate.
+auc_cum <- hvtiRtemplates:::.owner_only(.cache_file("rhf-auc-cumulative"), cache_fit(
+  "rhf-auc-cumulative",
+  auct.rhf(forest, marker = "cumhaz", method = "cumulative", tau = TAU, verbose = FALSE),
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+))
 .fig <- plot(gg_auct(forest, auct_fit = auc_cum)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rhf-explain-auc-cumulative")
 .fig
@@ -201,10 +211,12 @@ save_figure(.fig, "rhf-explain-auc-cumulative")
 #| fig-cap: "Incident AUC(t): how well the predicted hazard separates patients who have the event at time t from those
 #|   still at risk then. 0.5 is chance."
 #| message: true
-auc_inc <- cache_fit("rhf-auc-incident",
-                     auct.rhf(forest, marker = "hazard", method = "incident", riskset = "subject", tau = TAU,
-                              verbose = FALSE),
-                     seed = SEED, dir = CACHE_DIR, refit = REFIT)
+auc_inc <- hvtiRtemplates:::.owner_only(.cache_file("rhf-auc-incident"), cache_fit(
+  "rhf-auc-incident",
+  auct.rhf(forest, marker = "hazard", method = "incident", riskset = "subject", tau = TAU,
+           verbose = FALSE),
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+))
 .fig <- plot(gg_auct(forest, auct_fit = auc_inc)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rhf-explain-auc-incident")
 .fig
@@ -213,6 +225,9 @@ save_figure(.fig, "rhf-explain-auc-incident")
 ```{r}
 #| label: tbl-auc
 #| tbl-cap: "Integrated AUC over follow-up"
+# Uno's iAUC, not iAUC.std. In randomForestRHF 2.1.0 iAUC.std is wrong when an
+# AUC(t) is NA: it drops the NA from the integral but still divides by the whole
+# time range, so it reads low.
 data.frame(measure = c("Cumulative", "Incident"),
            iAUC = round(c(auc_cum$iAUC.uno, auc_inc$iAUC.uno), 3))
 ```
@@ -222,7 +237,12 @@ data.frame(measure = c("Cumulative", "Incident"),
 ```{r}
 #| label: curves
 # The forest's patients are numbered 1 to n, so the sample says nothing about who
-# they are.
+# they are. gg_rhf() labels each curve with its patient. Reading forest$chf.oob
+# or forest$hazard.oob directly, note that their rows follow the sorted
+# ensemble.id, not the order patients first appear in the data: join by id.
+# A forest grown outside this template on the study's own id keeps that id as
+# given in forest$id (text, zero-padded, say), while ensemble.id, and so gg_rhf(),
+# carries as.integer() of it: join back to study data on as.integer(id).
 haz <- gg_rhf(forest, source = "oob")
 set.seed(abs(SEED))
 .curve_ids <- sort(sample(unique(haz$id), min(N_CURVES, length(unique(haz$id)))))
@@ -255,15 +275,22 @@ save_figure(.fig, "rhf-explain-chf")
 #| message: true
 # The cache is the slow step, and its name is fixed on purpose: later VarPro
 # work on this forest reads rhf-varpro-cache rather than building it again.
+# The cache draws on R's generator, which rhf(seed =) does not cover. cache_fit()
+# seeds it with SEED; unseeded, identical reruns on the first real study moved
+# importance medians by about 3 and reordered ranks 2 to 6.
 hvtiRtemplates::guard_long_fit("rhf-varpro-cache", dir = CACHE_DIR,
                                why = "the VarPro cache walks every rule of every tree at study size", refit = REFIT)
-vp_cache <- cache_fit("rhf-varpro-cache",
-                      varpro.cache.rhf(forest, max.rules.tree = MAX_RULES_TREE, max.tree = MAX_TREE, verbose = FALSE),
-                      seed = SEED, dir = CACHE_DIR, refit = REFIT)
+vp_cache <- hvtiRtemplates:::.owner_only(.cache_file("rhf-varpro-cache"), cache_fit(
+  "rhf-varpro-cache",
+  varpro.cache.rhf(forest, max.rules.tree = MAX_RULES_TREE, max.tree = MAX_TREE, verbose = FALSE),
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+))
 .time_index <- unique(as.integer(round(seq.int(1L, vp_cache$K, length.out = N_TIMES))))
-imp <- cache_fit("rhf-importance",
-                 importance.rhf(forest, cache = vp_cache, time.index = .time_index, verbose = FALSE),
-                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
+imp <- hvtiRtemplates:::.owner_only(.cache_file("rhf-importance"), cache_fit(
+  "rhf-importance",
+  importance.rhf(forest, cache = vp_cache, time.index = .time_index, verbose = FALSE),
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+))
 .fig <- plot(gg_rhf_importance(forest, importance_fit = imp)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rhf-explain-importance", height = 7)
 .fig
@@ -274,6 +301,19 @@ save_figure(.fig, "rhf-explain-importance", height = 7)
 #| tbl-cap: "VarPro importance of each predictor at each point of follow-up"
 as.data.frame(imp)
 ```
+
+**NA means untested, not unimportant.** A predictor gets NA when no rule in the
+cache split on it, and a larger cache (`MAX_RULES_TREE`, `MAX_TREE`) tests more
+of them. A 0 means it was tested and had no effect. Which predictors go
+untested depends on the seed, so an NA is no evidence either way.
+
+**Rank the top tier only once it holds across seeds.** One seed fixes one cache,
+and the order below the first predictor or two can move with it. Before a
+ranking goes into a report, render this job again with two or three other
+`SEED` values and keep the predictors that stay near the top in every run.
+
+<!-- TODO: partial dependence for a hazard forest, once ggRandomForests has it.
+     There is no RHF partial dependence in ggRandomForests yet. -->
 
 ```{r}
 #| label: provenance

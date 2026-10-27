@@ -19,7 +19,8 @@ rhf_data <- function(n = 150L) {
 rhf_choices <- list(KEY = c("ccfid", "start"), START = "start", STOP = "stop", EVENT = "event",
                     PREDICTORS = c("xtd", "x_1", "x_2", "x_3"), NTREE = 20, SEED = 1, TREESIZE = NULL)
 
-rhf_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "tbl-cohort", "repair", "fit", "fig-tuning", "save")
+rhf_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "cap", "tbl-cohort", "repair", "tbl-lookahead", "fit", "fig-tuning",
+                    "save")
 
 # A fit in a throwaway study; returns its chunk environment.
 rhf_fit_first <- function(data = rhf_data(), choices = rhf_choices, .local_envir = parent.frame()) {
