@@ -134,6 +134,38 @@ test_that("every subsample holds exactly b rows, the number the plan table repor
   expect_identical(plan$table$value[plan$table$item == "Patients in each"], "6")
 })
 
+test_that("rows whose outcome the fit imputed stay in the cohort the subsamples are drawn from", {
+  skip_if_not_installed("randomForestSRC", "3.9.0")
+  # na.action = "na.impute" keeps a patient with a missing status in the saved forest, with an NA outcome.
+  srv <- band_stub("surv", c(NA, NA, rep(c(0, 1), 9)))
+  set.seed(1)
+  rows <- hvtiRtemplates:::.band_rows(srv, 60, 0.4)
+  expect_identical(lengths(rows), rep(8L, 60L))
+  expect_true(all(c(1L, 2L) %in% unlist(rows)))
+  cls <- band_stub("class", factor(c(NA, NA, rep(c("a", "b", "c"), each = 6)), levels = c("a", "b", "c")))
+  rows <- hvtiRtemplates:::.band_rows(cls, 60, 0.4)
+  expect_identical(lengths(rows), rep(8L, 60L))
+  expect_true(all(c(1L, 2L) %in% unlist(rows)))
+  expect_true(all(vapply(rows, function(r) all(table(cls$yvar[r]) >= 1L), TRUE)))
+  # The missing rows are not a class: the smallest one is still the smallest of a, b and c.
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "")
+  plan <- suppressWarnings(hvtiRtemplates:::.band_plan(cls, 5, 0.4, "ribbon", NULL, character(), NULL))
+  expect_identical(plan$table$value[plan$table$item == "Expected of the smallest class in each"], "2")
+  # A real forest grown with na.impute is refit on such rows.
+  e <- new.env()
+  utils::data("veteran", package = "randomForestSRC", envir = e)
+  v <- e$veteran
+  v$status[c(3, 10)] <- NA
+  Surv <- survival::Surv # nolint: object_name_linter, object_usage_linter.
+  f <- randomForestSRC::rfsrc(Surv(time, status) ~ ., v, ntree = 10, na.action = "na.impute", seed = -1)
+  expect_identical(sum(is.na(f$yvar$status)), 2L)
+  r <- hvtiRtemplates:::.band_rows(f, 2, 0.5)
+  expect_identical(lengths(r), rep(hvtiRtemplates:::.band_size(f$n, 0.5), 2L))
+  g <- hvtiRtemplates:::.band_refit(f, r[[1]], seed = -3)
+  expect_identical(g$n, length(r[[1]]))
+  expect_identical(g$forest$na.action, "na.impute")
+})
+
 test_that("a survival subsample with no event stops, naming SUBRATIO", {
   skip_if_not_installed("randomForestSRC", "3.9.0")
   f <- band_forest("surv")

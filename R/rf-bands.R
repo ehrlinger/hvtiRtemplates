@@ -61,12 +61,27 @@
 # cohort's count of it.
 .band_floor_need <- function(rare_total, floor = 100) floor / rare_total
 
+# The label of the stratum holding rows whose outcome is missing. With na.action = "na.impute"
+# the saved forest keeps such a patient, with an NA outcome that rfsrc() imputed while growing.
+.band_missing <- "(missing)"
+
 # The groups a subsample is drawn within, as subsample() draws them: event status for a
-# survival forest, the class for a classification forest, none for regression.
+# survival forest, the class for a classification forest, none for regression. A row with a
+# missing outcome is a stratum of its own, so it is drawn from like any other and not dropped.
 .band_strata <- function(forest) {
   switch(forest$family,
-    surv = factor(forest$yvar[[forest$yvar.names[2]]] > 0, levels = c(FALSE, TRUE)),
-    class = factor(forest$yvar),
+    surv = {
+      status <- forest$yvar[[forest$yvar.names[2]]]
+      factor(ifelse(is.na(status), .band_missing, as.character(status > 0)),
+             levels = c("FALSE", "TRUE", if (anyNA(status)) .band_missing))
+    },
+    class = {
+      cls <- factor(forest$yvar)
+      if (anyNA(cls)) {
+        cls <- factor(ifelse(is.na(cls), .band_missing, as.character(cls)), levels = c(levels(cls), .band_missing))
+      }
+      cls
+    },
     NULL
   )
 }
@@ -94,7 +109,8 @@
   share <- if (!is.null(strata)) .band_shares(lengths(groups), b)
   # A class that gets no rows is missing from every subsample forest, and a partial of a
   # classification forest is the first level's probability, which then means another class's.
-  if (identical(forest$family, "class") && any(lengths(groups) > 0L & share == 0L)) {
+  if (identical(forest$family, "class") &&
+        any(lengths(groups) > 0L & share == 0L & names(groups) != .band_missing)) {
     stop("A subsample of ", b, " patients would hold none of the smallest class. Raise SUBRATIO.", call. = FALSE)
   }
   draw <- function() {
@@ -104,7 +120,8 @@
   }
   rows <- lapply(seq_len(B), function(i) draw())
   if (identical(forest$family, "surv")) {
-    event <- forest$yvar[[forest$yvar.names[2]]] > 0
+    status <- forest$yvar[[forest$yvar.names[2]]]
+    event <- !is.na(status) & status > 0
     if (any(vapply(rows, function(r) !any(event[r]), logical(1)))) {
       stop("A subsample of ", b, " patients holds no event. Raise SUBRATIO.", call. = FALSE)
     }
@@ -289,7 +306,7 @@
   b <- .band_size(n, subratio)
   strata <- .band_strata(forest)
   rare <- if (is.null(strata)) NA_integer_ else if (identical(forest$family, "surv")) sum(strata == "TRUE") else
-    min(table(strata))
+    min(table(strata)[setdiff(levels(strata), .band_missing)])
   per <- if (is.na(rare)) NA_integer_ else as.integer(round(subratio * rare))
   what <- if (identical(forest$family, "surv")) "events" else "of the smallest class"
   if (!is.na(per) && per < 100L) {
