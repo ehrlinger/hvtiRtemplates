@@ -172,25 +172,35 @@
   B <- length(rows) # nolint: object_name_linter. B is the subsample() argument's name.
   m <- function(v) length(pool$grids[[v]]$x) * max(1L, length(times))
   pool$star <- lapply(stats::setNames(pool$vars, pool$vars), function(v) matrix(NA_real_, m(v), B))
+  failed <- character()
   for (b in seq_len(B)) {
-    fit <- .band_refit(forest, rows[[b]], seed = abs(seed) + b)
-    for (v in pool$vars) {
-      # A factor level absent from this subsample, say, leaves its column NA; the SE is read from the rest.
-      value <- tryCatch(.partial_values(fit, v, pool$grids[[v]]$x, times), error = function(e) NULL)
-      if (length(value) == nrow(pool$star[[v]])) pool$star[[v]][, b] <- value
+    # A subsample whose refit fails leaves its column NA for every variable; the forests grown before it are kept.
+    fit <- tryCatch(.band_refit(forest, rows[[b]], seed = abs(seed) + b), error = function(e) {
+      failed <<- c(failed, conditionMessage(e))
+      NULL
+    })
+    if (!is.null(fit)) {
+      for (v in pool$vars) {
+        # A factor level absent from this subsample, say, leaves its column NA; the SE is read from the rest.
+        value <- tryCatch(.partial_values(fit, v, pool$grids[[v]]$x, times), error = function(e) NULL)
+        if (length(value) == nrow(pool$star[[v]])) pool$star[[v]][, b] <- value
+      }
+      rm(fit)
     }
-    rm(fit)
     if (is.function(pool$progress)) pool$progress(b, B)
   }
   # Warn once per variable when subsample forests gave it no value; the NA columns are left as they are.
+  why <- if (length(failed)) {
+    paste0(" ", length(failed), " subsample refit", if (length(failed) > 1L) "s", " failed: ", failed[1L], ".")
+  }
   for (v in pool$vars) {
     mat <- pool$star[[v]]
     lost <- sum(colSums(is.na(mat)) == nrow(mat))
     if (lost == B) {
-      warning(v, ": ", B, " of ", B, " subsample forests gave no partial value; it has no band.", call. = FALSE)
+      warning(v, ": ", B, " of ", B, " subsample forests gave no partial value; it has no band.", why, call. = FALSE)
     } else if (lost > 0L) {
       warning(v, ": ", lost, " of ", B, " subsample forests gave no partial value; its band rests on the other ",
-              B - lost, ".", call. = FALSE)
+              B - lost, ".", why, call. = FALSE)
     }
   }
   invisible(pool)

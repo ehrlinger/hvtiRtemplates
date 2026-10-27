@@ -189,6 +189,37 @@ test_that("a subsample forest that cannot give a value leaves NA for that subsam
   expect_true(all(is.na(out$star[, 2])))
 })
 
+test_that("a subsample refit that fails leaves that column NA and keeps every other forest's partials", {
+  skip_if_not_installed("randomForestSRC", "3.9.0")
+  f <- band_forest("regr")
+  grid <- list(type = "continuous", x = c(60, 80))
+  pool <- hvtiRtemplates:::.band_pool(c("Temp", "Wind"), list(Temp = grid, Wind = grid))
+  calls <- 0L
+  local_mocked_bindings(
+    .band_refit = function(...) {
+      calls <<- calls + 1L
+      if (calls == 2L) stop("no events in these rows") else f
+    },
+    .partial_values = function(...) c(1, 2),
+    .package = "hvtiRtemplates"
+  )
+  warnings <- character()
+  withCallingHandlers(
+    out <- hvtiRtemplates:::.band_partial(pool, f, list(1:50, 1:50, 1:50), "Temp", grid, NULL, 1),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_identical(calls, 3L) # the third forest is still grown after the second failed
+  expect_identical(dim(out$star), c(2L, 3L))
+  expect_false(anyNA(out$star[, c(1, 3)]))
+  expect_true(all(is.na(out$star[, 2])))
+  expect_match(warnings, "Temp: 1 of 3 subsample forests gave no partial value", all = FALSE)
+  expect_match(warnings, "refit failed: no events in these rows", all = FALSE)
+  expect_true(all(is.na(pool$star$Wind[, 2])) && !anyNA(pool$star$Wind[, c(1, 3)]))
+})
+
 test_that("the plan refuses a bad style or BAND_AT, and warns below the floor", {
   skip_if_not_installed("randomForestSRC", "3.9.0")
   skip_if_not_installed("ggRandomForests", "4.0.0")
