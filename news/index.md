@@ -1,5 +1,121 @@
 # Changelog
 
+## hvtiRtemplates 1.5.2
+
+- hvtiRtemplates now needs hvtiRutilities 1.5.15 or later. 1.5.15 adds
+  the `rhf` row to
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
+  which this package re-exports, so the taxonomy classifies the prefix
+  of the new `rhf-fit` and `rhf-explain` templates. 1.5.13 reads a label
+  file’s unquoted `No` and `Yes` as the text written, so a
+  `value_labels.yml` declaring `0: No` / `1: Yes` prints No and Yes in a
+  table rather than FALSE and TRUE. 1.5.1 asked for that release in its
+  NEWS but declared only `>= 1.5.12`.
+
+- The `ac` template’s figures now mark each event with a point and join
+  the points with straight lines, as the SAS `%KAPLAN` figures do. Set
+  `STEPS <- TRUE` in a job for the Kaplan-Meier steps instead; the
+  points stay either way. On the manuscript figure the line joins the
+  events alone, so a censored time no longer puts a corner where
+  survival did not change.
+
+- Under the straight lines, a `CI_TIMES` bar stands at the last event at
+  or before its time, where the line passes through the estimate the
+  bar’s limits bracket. The limits are still the horizon table’s, but
+  with sparse events a bar can stand well left of the time asked for.
+  With `STEPS <- TRUE` a bar stands at its time.
+
+- `officer` in Suggests now carries a floor, `>= 0.6.0`, the same as
+  hvtiPlotR and hvtiRtables. The dc-tables Word output writes custom
+  document properties with `officer::set_doc_properties(values =)`,
+  which older officer releases do not accept.
+
+- Every template in the gallery now has a run sheet, a page linked from
+  its row beside “Then run it”. The sheet outlines the job, and the
+  template keeps the details. It says what to have ready, such as the
+  registered data (a draft can read an unregistered build and a final
+  render cannot), the jobs to render first in the same set, a bootstrap
+  runner and the package floors. A saved result the job reads only when
+  a choice asks for it, such as `vt-fit`’s screen or `hm`’s selection
+  runner, is said as optional. It lists the job’s own sections with what
+  each one does, says how to run the job (in the background with
+  `hvti run` when the fit is guarded as long) and names the jobs that
+  read what it saves. Every sheet is generated from its template, so it
+  cannot drift from it. The catalog’s `upstream` now names what
+  `lm-checkpred`, `vt-fit` and `vt-explain` read, and narrows
+  `lp-mirror`’s to `lm-propensity_binary`.
+
+- New in-flight templates `rhf-fit` and `rhf-explain`: a random hazard
+  forest (randomForestRHF) on counting-process rows, one row per
+  interval of a patient’s follow-up, so a predictor may change over
+  time. `rhf-fit` checks the rows before fitting and stops on an
+  overlap, an interval of zero length, an event before a patient’s last
+  interval, or a missing predictor, naming the first few patients,
+  unless the ID is an MRN, when it names row positions;
+  `REPAIR <- "clip"` repairs the first two kinds and `"drop_na"` the
+  last, in a draft while the dataset fix is in flight, and a final
+  render refuses either. An event before the last interval has no
+  repair. It tunes the tree size and saves `rhf.rds`. `rhf-explain`
+  reads it and reports cumulative and incident AUC(t), out-of-bag hazard
+  curves and VarPro importance at points across follow-up, caching the
+  VarPro cache as `rhf-varpro-cache`. Patients are numbered 1 to n
+  before the fit, so the saved forest holds no study identifier.
+
+- [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+  has a `whole_patients` argument. With `TRUE` it stops when `where`
+  keeps some of a patient’s rows and drops others, which would shorten
+  follow-up without a word.
+
+- `rfs-explain`, `rfc-explain` and `rfr-explain` can draw 95%
+  subsampling intervals on VIMP (randomForestSRC’s anti-split
+  importance) and pointwise bands on the partial-dependence plots. Set
+  `BANDS_B` to the number of subsample forests (0, the default, draws
+  none); `SUBRATIO`, `BAND_STYLE` (`"ribbon"` or `"bars"`) and `BAND_AT`
+  tune them. The bands are cached per variable and run for hours at
+  study size, so submit the job with
+  [`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md).
+  The importance interval is the figure’s own estimate plus and minus
+  1.96 jackknife standard errors taken about that estimate.
+
+- The importance figure and table captions in `rfs-explain`,
+  `rfc-explain` and `rfr-explain` now call the quantity VIMP (anti-split
+  importance), which is what `vimp()` computes here, and not permutation
+  importance.
+
+- [`guard_long_fit()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_long_fit.md)
+  takes several cache names and refuses while any of them is missing.
+
+- `vt-fit` shows the observed outcome before any model: Kaplan-Meier by
+  arm with 70% confidence limits, the numbers at risk, and a table of
+  each arm’s patients, events and survival at `HORIZON` (`vt-fit-km`).
+
+- `vt-fit` checks each arm forest’s calibration at `HORIZON`: out-of-bag
+  predicted survival in fifths against Kaplan-Meier, with one mean error
+  per arm in percentage points (`vt-fit-calibration`). A fifth whose
+  follow-up ends before `HORIZON` shows no observed survival and is
+  counted rather than extrapolated. The C-index says whether a forest
+  ranks patients; calibration says whether its survival is the right
+  level, which is what an RMST difference compares. The table is saved
+  in `vt.rds` as `settings$calibration`.
+
+- `vt-fit` gains the `ORDINAL` study choice: graded predictors coded as
+  numbers are ranked in the Gower distance, so a grade of 0 against 3 is
+  farther than 0 against 1. Left empty, every mismatched grade counts
+  the same, as before.
+
+- `vt-fit` names why each out-of-distribution patient is out: up to
+  three predictors outside the range of the arm they were judged
+  against, or at a level at most two of its patients share. The out-of-
+  distribution table shows them, and `vt.rds` carries them as
+  `eligibility$rows$features`.
+
+- `vt-explain` adds three views: each patient’s predicted RMST under the
+  arm received against the other (`vt-explain-components`); the
+  difference against the distance to the other arm, with its eligibility
+  line and a rank correlation per arm (`vt-explain-distance`); and, with
+  `STRATIFY` set, the difference by stratum and the mean twin curves per
+  stratum (`vt-explain-stratum`, `vt-explain-stratum-curves`).
+
 ## hvtiRtemplates 1.5.1
 
 - New `vp-dependence` and `vp-individual` templates, in flight.
