@@ -13,8 +13,12 @@ test_that("rhf-fit tunes, grows a hazard forest and saves the handoff", {
   expect_identical(lineage$analysis$event$variable, "event")
   expect_length(lineage$analysis$repair, 0L)
   expect_identical(lineage$analysis$lookahead$action, "keep")
-  # The saved forest holds every patient's intervals, so only its owner may read it.
-  if (.Platform$OS.type != "windows") expect_identical(format(file.mode(file.path(env$CACHE_DIR, "rhf.rds"))), "600")
+  # The saved forest and both caches hold every patient's intervals, so only their owner may read them.
+  if (.Platform$OS.type != "windows") {
+    for (nm in c("rhf.rds", "rhf-forest.rds", "rhf-treesize.rds")) {
+      expect_identical(format(file.mode(file.path(env$CACHE_DIR, nm))), "600", info = nm)
+    }
+  }
   expect_s3_class(ggplot2::ggplot_build(plot(ggRandomForests::gg_tune_rhf(env$tuned))), "ggplot_built")
 })
 
@@ -96,6 +100,33 @@ test_that("rhf-fit caps a predictor's tail and refuses a cap on a column it does
                "CAPS names a column that is not in PREDICTORS: age")
 })
 
+test_that("rhf-fit refuses a CAPS it cannot read rather than capping nothing", {
+  rf_skip_unless_stack(rf_template_packages("rhf", "fit"))
+  d <- rhf_data()
+  bad <- list(unnamed = 2, partly_named = c(x_1 = 2, 3), duplicated = c(x_1 = 2, x_1 = 3), missing = c(x_1 = NA_real_),
+              infinite = c(x_1 = Inf), text = c(x_1 = "2"), empty = numeric())
+  for (nm in names(bad)) {
+    env <- rf_env(d)
+    expect_error(rf_run("rhf", "fit", rhf_cleanup_labels, env, utils::modifyList(rhf_choices, list(CAPS = bad[[nm]]))),
+                 "CAPS must be NULL or a numeric vector", info = nm)
+  }
+  d$x_1 <- factor(d$x_1 > 0)
+  env <- rf_env(d)
+  expect_error(rf_run("rhf", "fit", rhf_cleanup_labels, env, utils::modifyList(rhf_choices, list(CAPS = c(x_1 = 1)))),
+               "CAPS names a predictor that is not numeric: x_1")
+})
+
+test_that("a cap keeps an integer predictor integer", {
+  rf_skip_unless_stack(rf_template_packages("rhf", "fit"))
+  d <- rhf_data()
+  d$x_1 <- as.integer(round(d$x_1 * 10))
+  env <- rf_env(d)
+  utils::capture.output(rf_run("rhf", "fit", rhf_cleanup_labels, env,
+                               utils::modifyList(rhf_choices, list(CAPS = c(x_1 = 2.5)))))
+  expect_type(env$d$x_1, "integer")
+  expect_identical(max(env$d$x_1), 2L)
+})
+
 test_that("rhf-fit counts predictor changes on final intervals, and LOOKAHEAD = \"reset\" undoes them", {
   rf_skip_unless_stack(rf_template_packages("rhf", "fit"))
   d <- rhf_data()
@@ -138,6 +169,11 @@ test_that("rhf-explain explains the saved forest without refitting", {
   for (p in list(ggRandomForests::gg_auct(env$forest, auct_fit = env$auc_cum), env$haz,
                  ggRandomForests::gg_rhf_importance(env$forest, importance_fit = env$imp))) {
     expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
+  }
+  if (.Platform$OS.type != "windows") {
+    for (nm in c("rhf-auc-cumulative", "rhf-auc-incident", "rhf-varpro-cache", "rhf-importance")) {
+      expect_identical(format(file.mode(file.path(env$CACHE_DIR, paste0(nm, ".rds")))), "600", info = nm)
+    }
   }
   # It never regrows: the fit's forest cache is untouched by the explain run.
   expect_identical(file.mtime(forest_cache), grown_at)

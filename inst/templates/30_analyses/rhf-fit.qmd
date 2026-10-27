@@ -192,15 +192,23 @@ REPAIR <- character()
 # node of their own. Set them from the clinical range, not from the data.
 CAPS <- NULL
 
-# EDIT: the look-ahead check. randomForestRHF assumes each interval's predictors
-# were known when it began, and cannot tell when they were not. A dataset build
-# that moves a value recorded on the day of the event back by a fraction of a day
-# puts it on a short final interval that ends in the event: the first real study
-# found 251 of 300 deaths on such an interval, with a lab changing on it.
+# EDIT: the look-ahead check, a screen for timing problems, not proof of one.
+# randomForestRHF assumes each interval's predictors were known when it began,
+# and cannot tell when they were not. A dataset build that moves a value
+# recorded on the day of the event back by a fraction of a day puts it on a
+# short final interval that ends in the event: the first real study found 251
+# of 300 deaths on such an interval, with a lab changing on it. A patient who
+# truly deteriorates before the event, measured before that interval began,
+# shows the same pattern, so check when each value became available against
+# START in the dataset build before calling it leakage.
 # LOOKAHEAD_INTERVAL is that interval's length in the units of START and STOP,
 # such as 0.25 / 365.2425 for a quarter day in years; NULL checks every final
 # interval. "reset" gives each checked final interval the predictor values of
-# the interval before it: a sensitivity analysis, beside the forest grown "keep".
+# the interval before it: a sensitivity analysis, beside the forest grown "keep",
+# and not a correction, since it also discards legitimate late updates. In the
+# first study it moved cumulative iAUC from 0.919 to 0.915 and incident from
+# 0.799 to 0.790, with the same six predictors on top: a small effect in that
+# cohort, which says nothing about another.
 LOOKAHEAD_INTERVAL <- NULL
 LOOKAHEAD <- "keep"
 
@@ -277,14 +285,29 @@ them, and is counted: the caps, the repairs, and the look-ahead check.
 
 ```{r}
 #| label: cap
-.uncappable <- setdiff(names(CAPS), PREDICTORS)
-if (length(.uncappable)) {
-  stop("CAPS names a column that is not in PREDICTORS: ", paste(.uncappable, collapse = ", "), ".", call. = FALSE)
+# A cap that cannot be read stops rather than being skipped: an unnamed CAPS
+# would otherwise cap nothing while the forest's lineage recorded it.
+if (!is.null(CAPS)) {
+  .names <- names(CAPS)
+  if (!is.numeric(CAPS) || !length(CAPS) || is.null(.names) || anyNA(.names) || any(.names == "") ||
+        anyDuplicated(.names) || !all(is.finite(CAPS))) {
+    stop("CAPS must be NULL or a numeric vector of finite caps, each named once for its predictor, ",
+         "such as c(alt = 2000).", call. = FALSE)
+  }
+  .uncappable <- setdiff(.names, PREDICTORS)
+  if (length(.uncappable)) {
+    stop("CAPS names a column that is not in PREDICTORS: ", paste(.uncappable, collapse = ", "), ".", call. = FALSE)
+  }
+  .not_numeric <- .names[!vapply(d[.names], is.numeric, logical(1L))]
+  if (length(.not_numeric)) {
+    stop("CAPS names a predictor that is not numeric: ", paste(.not_numeric, collapse = ", "), ".", call. = FALSE)
+  }
 }
 for (.v in names(CAPS)) {
-  .over <- sum(d[[.v]] > CAPS[[.v]], na.rm = TRUE)
-  d[[.v]] <- pmin(d[[.v]], CAPS[[.v]])
-  cat(.v, ": ", .over, " interval", if (.over != 1L) "s", " capped at ", CAPS[[.v]], "\n", sep = "")
+  .over <- which(d[[.v]] > CAPS[[.v]])
+  # Assigned in place, so an integer predictor stays integer: its cap is rounded down.
+  d[[.v]][.over] <- if (is.integer(d[[.v]])) as.integer(floor(CAPS[[.v]])) else CAPS[[.v]]
+  cat(.v, ": ", length(.over), " interval", if (length(.over) != 1L) "s", " capped at ", CAPS[[.v]], "\n", sep = "")
 }
 ```
 
@@ -313,7 +336,8 @@ cat(hvtiRtemplates:::.cp_repair_notice(.cp$repaired))
 ```{r}
 #| label: tbl-lookahead
 #| tbl-cap: "Final intervals whose predictors change from the interval before. Far more among events than among the
-#|   censored says a value from the day of the event reached the interval that ends in it."
+#|   censored is a reason to check when those values became available; it may be a timing problem in the build, or
+#|   real deterioration measured before the event."
 LOOKAHEAD <- match.arg(LOOKAHEAD, c("keep", "reset"))
 # .cp_check() returned the rows ordered by patient, start and stop. The ID is
 # matched to a plain integer because duplicated() on an integer64 ignores fromLast.
@@ -363,6 +387,9 @@ model <- Surv(id, start, stop, event) ~ .
 # was made in; set it, so a job run anywhere else does not write every object
 # beside the formula, `job_data` and its patient IDs included, into the forest.
 environment(model) <- globalenv()
+# Each cache holds the forest and so every interval it was grown on: written
+# owner-only from the start, and set so if an older cache is already there.
+.cache_files <- file.path(CACHE_DIR, c("rhf-treesize.rds", "rhf-forest.rds"))
 # Hours at study size. Started from the console it dies with the session, so an
 # uncached fit is refused there: run the job with hvtiRtemplates::submit_job().
 hvtiRtemplates::guard_long_fit("rhf-forest", dir = CACHE_DIR,
@@ -372,22 +399,22 @@ if (is.null(TREESIZE)) {
   hvtiRtemplates::guard_long_fit("rhf-treesize", dir = CACHE_DIR,
                                  why = "the tree-size search grows a forest at each size it tries",
                                  refit = REFIT)
-  tuned <- cache_fit(
+  tuned <- hvtiRtemplates:::.owner_only(.cache_files, cache_fit(
     "rhf-treesize",
     tune.treesize.rhf(model, .fit_data, ntree = NTREE, perf = "risk", seed = abs(SEED), verbose = FALSE,
                       forest = FALSE),
     seed = SEED, dir = CACHE_DIR, refit = REFIT
-  )
+  ))
   .treesize <- tuned$best.size
 } else {
   tuned <- NULL
   .treesize <- TREESIZE
 }
-forest <- cache_fit(
+forest <- hvtiRtemplates:::.owner_only(.cache_files, cache_fit(
   "rhf-forest",
   rhf(model, data = .fit_data, ntree = NTREE, treesize = .treesize, seed = -abs(SEED)),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
-)
+))
 forest
 ```
 
@@ -441,9 +468,9 @@ forest <- hvtiRtemplates:::.attach_handoff_lineage(
 )
 # The forest keeps every interval it was grown on, predictors included, so the
 # file is patient-level data even with the ID recoded: readable by its owner
-# only. Delete it, and the caches beside it, once the set's results are reported.
-saveRDS(forest, set_path("estimates", "rhf.rds"))
-Sys.chmod(set_path("estimates", "rhf.rds"), mode = "0600")
+# only, from the first byte written. Delete it, and the caches beside it, once
+# the set's results are reported.
+hvtiRtemplates:::.owner_only(set_path("estimates", "rhf.rds"), saveRDS(forest, set_path("estimates", "rhf.rds")))
 ```
 
 ```{r}
