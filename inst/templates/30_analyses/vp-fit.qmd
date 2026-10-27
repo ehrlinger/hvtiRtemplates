@@ -199,16 +199,16 @@ TRIM <- 0.1
 # tests as many candidates as it can: no guided split weights, so every
 # candidate gets release rules. Under varPro's own defaults a lasso screen
 # picks the variables first, and in a known-signal simulation of 30
-# candidates it left about 8 tested.
+# candidates it left about 11 tested at 60 events, and 10 at 150.
 #
 # MTRY must be lowered once the weights are off. varPro then grows its rule
 # forest with mtry = Inf, every candidate at every split, and a binary
 # predictor, with one cut point against a continuous one's hundreds, was
 # split in about 1 tree in 10. NULL takes ceiling(sqrt(p)), p the candidates
-# plus noise columns, which tested about 26 of 30 and kept the recovery of
-# the true signals. p counts a factor once, though varPro's forest sees a
-# column per level, so the share of columns tried at a split is a little
-# below 1 in sqrt(p).
+# plus noise columns. For 30 candidates that is 6, which tested about 28
+# of them and recovered the true signals about as well as the defaults.
+# p counts a factor once, though varPro's forest sees a column per level,
+# so the share of columns tried at a split is a little below 1 in sqrt(p).
 #
 # NODESIZE_EXTERNAL applies to a survival screen: varPro first grows a survival
 # forest, and its leaves need events in them. NULL takes
@@ -216,9 +216,10 @@ TRIM <- 0.1
 #
 # MAX_TREE and MAX_RULES_TREE are the trees and rules per tree varPro samples
 # for its rules. With roughly 150 events or more, the larger setting below
-# raised the z of a rare binary signal from 4.9 to 7.1 in that simulation, at
-# about three times the time; at 60 events it barely helped. Uncomment its
-# line below the settings to use it.
+# raised the z of a rare binary signal from 5.1 to 6.9, and of a weak
+# continuous one from 2.8 to 3.8, in that simulation, at about three times the
+# time; at 60 events it barely helped. Uncomment its line below the settings
+# to use it.
 #
 # The parsimonious screen is varPro's own defaults. It is a SCREEN, not a
 # selection: a guided first forest keeps NVAR columns, noise included, and cuts
@@ -675,16 +676,17 @@ z beside coverage: a z of 0 with low coverage means untested.
 **Tested is not the same as detectable.** With few events, a real effect can
 be tested and still score z of about 0. In a simulation with 60 events in
 1,900 patients, a binary predictor present in 10% of them, with a hazard ratio
-of 2.7, scored z near 0.1 at every setting tried. Before reading a z of 0 for a
-rare binary predictor as no effect, count the events among the patients who
-have it: a handful of events cannot move a forest.
+of 2.7, was tested in about 8% of trees with every candidate tried at each
+split and in 12% to 25% with 6 tried, and scored z below 0.3 in every such
+fit. Before reading a z of 0 for a rare binary predictor as no effect, count
+the events among the patients who have it: a handful of events cannot move a forest.
 
 **A stand-in scores like the real thing.** A variable correlated with a true
 signal shares its splits and earns importance it would not have on its own.
-In the same simulation, a noise variable correlated 0.7 with a signal scored
-well above zero. The noise columns here are permuted, so they cannot catch
-this; check the correlations among the selected set before naming one of them
-the cause.
+In the same simulation, a noise variable correlated 0.7 with a signal scored z
+above 0 in 15 of 16 fits, and above the signal itself in 2. The noise columns
+here are permuted, so they cannot catch this; check the correlations among
+the selected set before naming one of them the cause.
 
 **Selected means it beat chance in this fit.** The bar is the best score any
 tested noise column of the same kind reached. A categorical variable is held
