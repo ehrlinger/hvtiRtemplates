@@ -107,8 +107,34 @@ test_that("TUNE_NODESIZE grows the forest at the leaf size the search picks", {
                                utils::modifyList(rfs_choices, list(TUNE_NODESIZE = TRUE))))
   expect_true(file.exists(file.path(env$CACHE_DIR, "rfs-nodesize.rds")))
   expect_identical(as.integer(env$forest$nodesize), as.integer(env$tuned$nsize.opt))
-  # The search reached beyond tune.nodesize()'s default top of 150 only as far as the sample allows: half of 63.2%.
-  expect_lte(max(env$tuned$err$nodesize), floor(0.632 * nrow(rfs_data())) %/% 2)
+  # tune.nodesize() itself drops grid values above half its sample.
+  expect_lte(max(env$tuned$err$nodesize), as.integer(round(0.632 * nrow(rfs_data()))) %/% 2)
+})
+
+test_that("TUNE_NODESIZE hands tune.nodesize() a 63.2% sample and a grid past 150 for sparse events", {
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
+  d <- rfs_data()
+  # 3 deaths in 137 patients: 2 events per leaf is ceiling(2 * 137 / 3) = 92, so the grid runs to 180.
+  d$status[d$status == 1][-(1:3)] <- 0
+  env <- rf_env(d)
+  seen <- new.env()
+  # Found ahead of randomForestSRC's in the chunk environment, so the call's arguments are seen without a fit.
+  env$tune.nodesize <- function(formula, data, ...) {
+    seen$grid <- list(...)$nodesize.try
+    seen$sampsize <- list(...)$sampsize
+    list(nsize.opt = 30L, err = data.frame(nodesize = 30L, err = 0.3))
+  }
+  utils::capture.output(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit"), env,
+                               utils::modifyList(rfs_choices, list(TUNE_NODESIZE = TRUE))))
+  expect_identical(max(seen$grid), 180)
+  expect_identical(seen$sampsize(1900), 0.632 * 1900)
+  expect_identical(as.integer(env$forest$nodesize), 30L)
+  # A search that found nothing stops rather than growing a forest at nodesize NA.
+  env <- rf_env(d)
+  env$tune.nodesize <- function(...) list(nsize.opt = NA_integer_, err = data.frame())
+  expect_error(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit"), env,
+                      utils::modifyList(rfs_choices, list(TUNE_NODESIZE = TRUE))),
+               "found no leaf size")
 })
 
 test_that("rf_skip_unless_stack does not error on a package with no floor", {

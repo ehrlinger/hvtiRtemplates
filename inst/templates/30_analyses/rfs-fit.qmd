@@ -209,7 +209,8 @@ SPLITRULE <- "logrank"
 # 1,900 patients and 1,830 of 12,000, which is about 13 and 23 deaths at the
 # event rates above, too few to tell one leaf size from another. And its grid
 # reaches twice the 2-death size rather than stopping at 150, which a large
-# sparse cohort needs.
+# sparse cohort needs. The search always drops patients missing a predictor,
+# so with NA_ACTION <- "na.impute" it tunes on the complete cases only.
 TUNE_NODESIZE <- FALSE
 
 # EDIT: "na.omit" drops a patient missing any predictor; "na.impute" keeps them
@@ -363,6 +364,9 @@ if (isTRUE(TUNE_NODESIZE)) {
     seed = SEED, dir = CACHE_DIR, refit = REFIT
   )
   .nodesize <- tuned$nsize.opt
+  if (is.na(.nodesize)) {
+    stop("tune.nodesize() found no leaf size: every grid value failed. Set NODESIZE instead.", call. = FALSE)
+  }
 } else {
   .nodesize <- if (is.null(NODESIZE)) .nodesize_rule else NODESIZE
 }
