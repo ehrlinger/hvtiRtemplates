@@ -10,12 +10,12 @@
 
 # Where, among the rows `rows` of `d`, a message points: the first few patients when the ID is a study number, and the
 # first few row positions when it falls back to an MRN, which must not reach a render error or a submit_job() log.
-# A position is the row's place in the sorted data as first read, kept in .cp_row, so a repair that dropped an
-# earlier row does not move it.
+# A position is the row's place in the sorted data as first read, kept in the column `pos`, so a repair that dropped
+# an earlier row does not move it.
 # An integer64 ID is written by as.character(), which reads its value; .id_text() would write it as "0".
-.cp_ids <- function(d, id, rows) {
+.cp_ids <- function(d, id, rows, pos) {
   if (tolower(id) %in% .job_identifier_names) {
-    at <- d[[.cp_row]][rows]
+    at <- d[[pos]][rows]
     return(paste0(" (row", if (length(at) > 1L) "s", " ", paste(utils::head(at, 5L), collapse = ", "),
                   if (length(at) > 5L) ", ...", " of the rows ordered by patient, start and stop)"))
   }
@@ -26,7 +26,8 @@
 
 # The column the checks group a patient's rows by. An ID is matched here rather than compared as it is: duplicated()
 # on an integer64 ignores fromLast, and ave() and == read its bits as a double. Numbering the patients in the order of
-# their ID gives the checks a plain integer, and leaves the ID in the data as it was read.
+# their ID gives the checks a plain integer, and leaves the ID in the data as it was read. .cp_check() makes the two
+# names unique against the data's own, so a predictor that happens to carry one is neither overwritten nor dropped.
 .cp_group <- ".cp_patient"
 .cp_row <- ".cp_row"
 
@@ -61,6 +62,9 @@
     stop("PREDICTORS names a column with no values: ", paste(empty, collapse = ", "), ". Remove it from PREDICTORS.",
          call. = FALSE)
   }
+  own <- utils::tail(make.unique(c(names(d), .cp_group, .cp_row)), 2L)
+  .cp_group <- own[[1L]]
+  .cp_row <- own[[2L]]
   ids <- unique(d[[id]])
   d[[.cp_group]] <- match(d[[id]], sort(ids))
   # Ties on start are settled by stop, so the outcome does not depend on the order the rows arrived in.
@@ -78,7 +82,7 @@
   # An event on a row that would be removed is an outcome lost, which no repair may do.
   refuse_event_drop <- function(drop, why) {
     if (any(d[[event]][drop] == 1)) {
-      stop("REPAIR \"", why, "\" would drop an interval that carries the event", .cp_ids(d, id, drop & d[[event]] == 1),
+      stop("REPAIR \"", why, "\" would drop an interval that carries the event", .cp_ids(d, id, drop & d[[event]] == 1, .cp_row),
            ". Fix it in the dataset build.", call. = FALSE)
     }
   }
@@ -86,7 +90,7 @@
   overlap <- same(d) & d[[start]] < prev_stop(d)
   if (any(overlap)) {
     if (!"clip" %in% repair) {
-      stop(.cp_n(sum(overlap), "overlapping interval"), .cp_ids(d, id, overlap), ": an interval starts before the ",
+      stop(.cp_n(sum(overlap), "overlapping interval"), .cp_ids(d, id, overlap, .cp_row), ": an interval starts before the ",
            "one before it ends. Fix it in the dataset build, or set REPAIR <- \"clip\" to render a draft meanwhile.",
            call. = FALSE)
     }
@@ -95,7 +99,7 @@
   short <- d[[stop]] <= d[[start]]
   if (any(short)) {
     if (!"clip" %in% repair) {
-      stop(.cp_n(sum(short), "interval"), " of zero or negative length", .cp_ids(d, id, short),
+      stop(.cp_n(sum(short), "interval"), " of zero or negative length", .cp_ids(d, id, short, .cp_row),
            ". Fix it in the dataset build, or set REPAIR <- \"clip\" to render a draft meanwhile.", call. = FALSE)
     }
     refuse_event_drop(short, "clip")
@@ -112,14 +116,14 @@
   early <- d[[event]] == 1 & !last
   if (any(early)) {
     n <- length(unique(d[[.cp_group]][early]))
-    stop(.cp_n(n, "patient has", "patients have"), " an event before their last interval", .cp_ids(d, id, early),
+    stop(.cp_n(n, "patient has", "patients have"), " an event before their last interval", .cp_ids(d, id, early, .cp_row),
          ". An event ends follow-up; fix it in the dataset build.", call. = FALSE)
   }
 
   missing <- !stats::complete.cases(d[predictors])
   if (any(missing)) {
     if (!"drop_na" %in% repair) {
-      stop(.cp_n(sum(missing), "interval is", "intervals are"), " missing a predictor", .cp_ids(d, id, missing),
+      stop(.cp_n(sum(missing), "interval is", "intervals are"), " missing a predictor", .cp_ids(d, id, missing, .cp_row),
            ". randomForestRHF cannot use them and dropping one opens a hole in the time at risk. Fill them in the ",
            "dataset build, or set REPAIR <- \"drop_na\" to render a draft meanwhile.", call. = FALSE)
     }

@@ -208,3 +208,21 @@ test_that("an MRN message points at the row's place in the sorted data, not in t
                                     predictors = "lab", repair = "clip")
   expect_identical(names(out$data), c("mrn", "t0", "t1", "dead", "lab"))
 })
+
+test_that("a predictor that shares a name with the checker's own columns comes back unchanged", {
+  # Values that differ from what the checker would write there, so an overwrite cannot pass for the original.
+  d <- cp_rows()
+  d$.cp_patient <- c(9, 8, 7, 6, 5, 4)
+  d$.cp_row <- c(-1, -2, -3, -4, -5, -6)
+  out <- hvtiRtemplates:::.cp_check(d[c(6, 2, 1, 3, 5, 4), ], id = "id", start = "t0", stop = "t1", event = "dead",
+                                    predictors = c("lab", ".cp_patient", ".cp_row"))
+  expect_identical(names(out$data), c("id", "t0", "t1", "dead", "lab", ".cp_patient", ".cp_row"))
+  expect_identical(out$data$.cp_patient, c(9, 8, 7, 6, 5, 4))
+  expect_identical(out$data$.cp_row, c(-1, -2, -3, -4, -5, -6))
+  # The checker still points at the right row when the ID is an MRN.
+  names(d)[1L] <- "mrn"
+  d$dead[2L] <- 1L
+  msg <- tryCatch(hvtiRtemplates:::.cp_check(d, id = "mrn", start = "t0", stop = "t1", event = "dead",
+                                             predictors = c(".cp_patient", ".cp_row")), error = conditionMessage)
+  expect_match(msg, "an event before their last interval \\(row 2 of the rows")
+})
