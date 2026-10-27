@@ -32,11 +32,11 @@ vt_choices <- list(
 )
 
 # Every chunk of vt-fit, in order. Tasks 2 and 3 extend it.
-vt_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "predictors",
+vt_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "predictors", "tbl-km", "fig-km",
                    "ood", "eligibility", "tbl-ood", "fig-ood", "tbl-agreement")
 
-vt_fit_labels_all <- c(vt_fit_labels, "fit", "tbl-performance", "curves-helper", "curves", "rmst-helper",
-                       "rmst", "fig-curves", "save")
+vt_fit_labels_all <- c(vt_fit_labels, "fit", "tbl-performance", "calibration-helper", "tbl-calibration",
+                       "fig-calibration", "curves-helper", "curves", "rmst-helper", "rmst", "fig-curves", "save")
 
 # The digest the job keys a raw ID by, in a fixture study.
 vt_digest <- function(env, ids) hvtiRtemplates:::.id_digest(ids, hvtiRtemplates:::.study_id_key(env$.root))
@@ -56,7 +56,7 @@ vt_fit_first <- function(data = vt_data(), choices = vt_choices, labels = vt_fit
 vt_helpers <- function() {
   env <- new.env()
   src <- readLines(template_path("vt", "fit"), warn = FALSE)
-  for (label in c("ood", "curves-helper", "rmst-helper")) {
+  for (label in c("ood", "calibration-helper", "curves-helper", "rmst-helper")) {
     if (any(trimws(src) == paste0("#| label: ", label))) {
       eval(parse(text = rf_chunk(src, label)), envir = env)  # nolint: object_usage_linter.
     }
@@ -65,9 +65,11 @@ vt_helpers <- function() {
 }
 
 vt_explain_labels <- c("setup", "edit-study-choices", "handoff", "explain-data", "fig-contrast", "fig-ranking",
-                       "fig-twin-curves", "fig-received-best", "tbl-sensitivity")
+                       "fig-twin-curves", "fig-received-best", "fig-components", "tbl-sensitivity", "fig-distance",
+                       "tbl-distance")
 # Not "provenance": that chunk refuses to run outside a render.
-vt_explain_labels_all <- c(vt_explain_labels, "stratify", "tbl-stratum", "overlap-weights", "tbl-betas", "fig-betas", "tbl-benefit")
+vt_explain_labels_all <- c(vt_explain_labels, "stratify", "tbl-stratum", "fig-stratum", "fig-stratum-curves",
+                           "overlap-weights", "tbl-betas", "fig-betas", "tbl-benefit")
 
 # rf_run() strips library() from setup; attach the explain stack itself.
 vt_explain_defaults <- list(STRATIFY = NULL, BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE)
