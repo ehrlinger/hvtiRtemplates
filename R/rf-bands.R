@@ -24,6 +24,27 @@
   sqrt(subratio * rowMeans((star - hat)^2, na.rm = TRUE))
 }
 
+# The VIMP of every subsample forest, read off a subsample() object: one row per predictor, one
+# column per subsample, in the column the importance figure plots (a classification forest's
+# "all", otherwise the only one). Only this matrix is cached. The object is large because it
+# carries the full forest, and the standard error needs nothing else from it.
+.band_vimp_star <- function(s) {
+  hat <- s$vmp[[1L]]
+  col <- if ("all" %in% colnames(hat)) "all" else 1L
+  star <- do.call(cbind, lapply(s$vmpS, function(v) as.numeric(v[[1L]][[col]])))
+  dimnames(star) <- list(rownames(hat), NULL)
+  star
+}
+
+# The SE of the importance figure's own estimate `est`, about that estimate and not about the full
+# forest's VIMP inside subsample(), which is another Monte Carlo draw of the same quantity. The
+# rows of `star` are matched to `est` by name.
+.band_vimp_se <- function(est, star, subratio) {
+  absent <- setdiff(names(est), rownames(star))
+  if (length(absent)) stop("No subsample VIMP for ", toString(absent), ".", call. = FALSE)
+  .band_se(est, star[names(est), , drop = FALSE], subratio)
+}
+
 # The band read off at the values a study chose for its bars, each subsample's curve
 # taken straight between grid points, as the figure draws the line.
 .band_at <- function(x, hat, star, at) {

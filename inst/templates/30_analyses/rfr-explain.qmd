@@ -377,10 +377,11 @@ if (BANDS_B > 0) {
 # unnumbered: the figure below is a child chunk with its own label and caption
 if (BANDS_B > 0) {
   # The subsample forests give the standard error. "anti" is the importance vimp() computed for the
-  # figure above, so the SE is that quantity's, and extract.subsample() leaves it unstandardized as
-  # that figure is. Quoted once, so the check below and cache_fit() read the same call.
-  .ci_code <- quote(extract.subsample(subsample(forest, B = BANDS_B, subratio = .subratio, importance = "anti",
-                                                verbose = FALSE), standardize = FALSE))
+  # figure above. Only the VIMP of each subsample forest is cached, one column per subsample: the whole
+  # subsample() object carries a forest, and the SE needs nothing else. Quoted once, so the check below
+  # and cache_fit() read the same call.
+  .ci_code <- quote(hvtiRtemplates:::.band_vimp_star(subsample(forest, B = BANDS_B, subratio = .subratio,
+                                                               importance = "anti", verbose = FALSE)))
   # Refused at the console only when the intervals will actually be computed: a current
   # cache loads, even under REFIT.
   if (hvtiRutilities::cache_would_fit("rfr-vimp-subsample", .ci_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
@@ -388,11 +389,14 @@ if (BANDS_B > 0) {
     hvtiRtemplates::guard_long_fit("rfr-vimp-subsample", dir = CACHE_DIR, refit = REFIT,
                                    why = sprintf("the importance intervals regrow the forest %d times", BANDS_B))
   }
-  vi_ci <- cache_fit("rfr-vimp-subsample", .ci_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
-                     packages = "randomForestSRC")
+  vi_star <- cache_fit("rfr-vimp-subsample", .ci_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                       packages = "randomForestSRC")
   # The points are the importance figure's own estimate, so the two figures cannot disagree in sign or
-  # order; the bars are that estimate plus and minus 1.96 of the subsample forests' standard errors.
-  .fig <- hvtiRtemplates:::.plot_vimp_intervals(vi$importance, vi_ci$se.jk.Z) +
+  # order. The SE is taken about that same estimate: the spread of the subsample forests' VIMP around it,
+  # scaled by the subsample fraction (the delete-d jackknife). subsample() reports its own SE about the VIMP
+  # of its internal full forest, a different draw from the figure's, so it is not used.
+  .vi_est <- vi$importance
+  .fig <- hvtiRtemplates:::.plot_vimp_intervals(.vi_est, hvtiRtemplates:::.band_vimp_se(.vi_est, vi_star, .subratio)) +
     hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
   save_figure(.fig, "rfr-explain-importance-intervals", height = 7)
   .cap <- sprintf(paste("Permutation importance of each predictor, as in the importance figure, with a",

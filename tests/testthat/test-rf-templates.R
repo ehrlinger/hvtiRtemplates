@@ -215,6 +215,16 @@ test_that("each family's SUBRATIO comment names only its own floor", {
   expect_false(grepl("(rfs)", text("rfs-explain"), fixed = TRUE))
 })
 
+test_that("the importance intervals cache the subsample VIMP matrix and take the SE about the plotted estimate", {
+  files <- template_list()$file
+  for (name in c("rfs-explain", "rfc-explain", "rfr-explain")) {
+    text <- paste(readLines(files[basename(files) == paste0(name, ".qmd")], warn = FALSE), collapse = "\n")
+    expect_false(grepl("se.jk.Z|extract.subsample", text), info = name)
+    expect_true(grepl("hvtiRtemplates:::.band_vimp_star(subsample(", text, fixed = TRUE), info = name)
+    expect_true(grepl("hvtiRtemplates:::.band_vimp_se(.vi_est, vi_star, .subratio)", text, fixed = TRUE), info = name)
+  }
+})
+
 test_that("with BANDS_B at its default the explain writes no band cache and draws no band", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
@@ -290,6 +300,11 @@ expect_intervals_on_importance <- function(prefix, env) {
   if (is.matrix(imp)) imp <- imp[, "all"]
   d <- env$.fig$data
   expect_equal(d$vimp[match(names(imp), d$vars)], unname(imp), info = prefix)
+  # What is cached is the matrix of subsample VIMPs, not the subsample() object with its forest, and
+  # the bars are the estimate +/- 1.96 SE taken about that estimate.
+  expect_true(is.matrix(env$vi_star), info = prefix)
+  se <- hvtiRtemplates:::.band_se(imp, env$vi_star[names(imp), , drop = FALSE], env$.subratio)
+  expect_equal(d$upper - d$vimp, stats::qnorm(0.975) * unname(se[as.character(d$vars)]), info = prefix)
 }
 # nolint end
 

@@ -1,3 +1,16 @@
+band_forest <- function(family = c("surv", "class", "regr")) {
+  family <- match.arg(family)
+  e <- new.env()
+  utils::data("veteran", package = "randomForestSRC", envir = e)
+  # rfsrc() parses the formula text and does not accept survival::Surv.
+  Surv <- survival::Surv # nolint: object_name_linter, object_usage_linter.
+  switch(family,
+    surv = randomForestSRC::rfsrc(Surv(time, status) ~ ., e$veteran, ntree = 20, seed = -1),
+    class = randomForestSRC::rfsrc(Species ~ ., datasets::iris, ntree = 20, seed = -1),
+    regr = randomForestSRC::rfsrc(Ozone ~ ., stats::na.omit(datasets::airquality), ntree = 20, seed = -1)
+  )
+}
+
 test_that("the default subratio follows randomForestSRC's rule, and a chosen one is checked", {
   expect_equal(hvtiRtemplates:::.band_subratio(500, NULL), exp(-1))
   expect_equal(hvtiRtemplates:::.band_subratio(4000, NULL), exp(-1) * sqrt(1000 / 4000))
@@ -9,19 +22,34 @@ test_that("the default subratio follows randomForestSRC's rule, and a chosen one
   expect_identical(hvtiRtemplates:::.band_size(3, 0.1), 2L)
 })
 
-test_that("the SE is the jackknife SE extract.subsample() reports", {
+test_that("with theta_hat as subsample()'s own VIMP, the SE is the jackknife SE extract.subsample() reports", {
   skip_if_not_installed("randomForestSRC", "3.9.0")
-  e <- new.env()
-  utils::data("veteran", package = "randomForestSRC", envir = e)
-  Surv <- survival::Surv # rfsrc() parses the formula text and does not accept survival::Surv  # nolint: object_name_linter
-  f <- randomForestSRC::rfsrc(Surv(time, status) ~ ., e$veteran, ntree = 30,
-                              importance = "none", seed = -1)
-  set.seed(2)
-  s <- randomForestSRC::subsample(f, B = 4, importance = "anti", verbose = FALSE)
-  hat <- s$vmp[[1]][, 1]
-  star <- sapply(s$vmpS, function(v) v[[1]][[1]])
-  expect_equal(unname(hvtiRtemplates:::.band_se(hat, star, s$subratio)),
-               unname(randomForestSRC::extract.subsample(s, standardize = FALSE)$se.jk.Z))
+  for (fam in c("surv", "class", "regr")) {
+    f <- band_forest(fam)
+    set.seed(2)
+    s <- randomForestSRC::subsample(f, B = 4, subratio = 0.4, importance = "anti", verbose = FALSE)
+    star <- hvtiRtemplates:::.band_vimp_star(s)
+    # One row per predictor, one column per subsample; a classification forest's overall column.
+    expect_identical(dim(star), c(length(f$xvar.names), 4L), info = fam)
+    expect_identical(rownames(star), f$xvar.names, info = fam)
+    hat <- s$vmp[[1]][, if (fam == "class") "all" else 1]
+    expect_equal(hvtiRtemplates:::.band_se(hat, star, s$subratio),
+                 randomForestSRC::extract.subsample(s, standardize = FALSE)$se.jk.Z, tolerance = 1e-10, info = fam)
+    # The cache holds the matrix and not the object, which carries a forest.
+    expect_lt(as.numeric(utils::object.size(star)), as.numeric(utils::object.size(s)) / 10)
+  }
+})
+
+test_that("the importance SE is taken about the plotted estimate, not subsample()'s own full-forest VIMP", {
+  star <- cbind(c(1, 2), c(3, 2), c(2, 6))
+  rownames(star) <- c("a", "b")
+  est <- c(b = 2.5, a = 1.5) # the importance figure's order, which is not the subsample matrix's
+  se <- hvtiRtemplates:::.band_vimp_se(est, star, 0.4)
+  expect_identical(names(se), names(est))
+  expect_equal(unname(se), sqrt(0.4 * c(mean((star["b", ] - 2.5)^2), mean((star["a", ] - 1.5)^2))))
+  # Centred on subsample()'s own estimate the SE would differ.
+  expect_false(isTRUE(all.equal(unname(se), unname(hvtiRtemplates:::.band_se(c(b = 2, a = 1), star, 0.4)[c("b", "a")]))))
+  expect_error(hvtiRtemplates:::.band_vimp_se(c(zz = 1), star, 0.4), "zz")
 })
 
 test_that("an NA replicate is left out of the SE rather than making it NA", {
@@ -54,19 +82,6 @@ test_that("the floor names the subratio that would give 100 rare cases", {
   expect_equal(hvtiRtemplates:::.band_floor_need(400), 0.25)
   expect_equal(hvtiRtemplates:::.band_floor_need(150), 100 / 150)
 })
-
-band_forest <- function(family = c("surv", "class", "regr")) {
-  family <- match.arg(family)
-  e <- new.env()
-  utils::data("veteran", package = "randomForestSRC", envir = e)
-  # rfsrc() parses the formula text and does not accept survival::Surv.
-  Surv <- survival::Surv # nolint: object_name_linter, object_usage_linter.
-  switch(family,
-    surv = randomForestSRC::rfsrc(Surv(time, status) ~ ., e$veteran, ntree = 20, seed = -1),
-    class = randomForestSRC::rfsrc(Species ~ ., datasets::iris, ntree = 20, seed = -1),
-    regr = randomForestSRC::rfsrc(Ozone ~ ., stats::na.omit(datasets::airquality), ntree = 20, seed = -1)
-  )
-}
 
 test_that("rows are drawn within event status, at the subsample size, the same under the same seed", {
   skip_if_not_installed("randomForestSRC", "3.9.0")
