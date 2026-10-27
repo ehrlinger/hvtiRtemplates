@@ -264,10 +264,10 @@ test_that("every template that reads its own data offers the join and records th
                      info = basename(f))
   }
   # Every first job of a set reads its own data; a drop here means one stopped offering the join.
-  expect_identical(readers, 28L)
+  expect_identical(readers, 29L)
   # The refusal names the rest, read from the same templates.
   expect_identical(hvtiRtemplates:::.long_join_templates(normalizePath(template_root)),
-                   c("dc-eda", "dc-general", "dc-tables", "dc-trends", "nb-boostmtree"))
+                   c("dc-eda", "dc-general", "dc-tables", "dc-trends", "nb-boostmtree", "rhf-fit"))
 })
 
 test_that("descriptive templates join an ancillary dataset, long and one row per patient", {

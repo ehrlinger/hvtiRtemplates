@@ -73,6 +73,7 @@ Suggests:
     patchwork (>= 1.1.0),
     quarto,
     ragg (>= 1.2.1),
+    randomForestRHF (>= 2.1.0),
     randomForestSRC (>= 3.7.0),
     survival,
     TemporalHazard (>= 1.2.12),
