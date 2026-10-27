@@ -188,9 +188,11 @@ BAND_STYLE <- "ribbon"
 # EDIT: with BAND_STYLE <- "bars", where to draw the bars, as a named list of
 # values per continuous predictor, e.g. list(age = c(50, 60, 70, 80), lvef = c(30, 50)).
 # NULL, or a predictor left out, draws a bar at every grid point. The values
-# must lie inside the predictor's observed range. Changing them only redraws:
-# each subsample curve is read off at these values the way the plotted line is
-# drawn, straight between grid points, so no forest is regrown.
+# must lie inside the range of the predictor's partial plot, which can be
+# narrower than its observed range; the job stops before growing anything if one
+# does not. Changing them only redraws: each subsample curve is read off at
+# these values the way the plotted line is drawn, straight between grid points,
+# so no forest is regrown.
 BAND_AT <- NULL
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the

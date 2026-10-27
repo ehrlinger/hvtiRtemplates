@@ -48,10 +48,7 @@
 # The band read off at the values a study chose for its bars, each subsample's curve
 # taken straight between grid points, as the figure draws the line.
 .band_at <- function(x, hat, star, at) {
-  if (any(at < min(x) | at > max(x))) {
-    stop("BAND_AT asks for values outside the observed range, ", signif(min(x), 4), " to ", signif(max(x), 4),
-         ".", call. = FALSE)
-  }
+  # A value off the grid reads NA; .band_plan() refuses such a BAND_AT before any band is computed.
   # approx() errors on fewer than two non-NA points; a failed subsample reads as NA instead.
   lin <- function(y) if (sum(!is.na(y)) < 2L) rep(NA_real_, length(at)) else stats::approx(x, y, xout = at)$y
   list(x = at, hat = lin(hat), star = matrix(apply(star, 2L, lin), nrow = length(at)))
@@ -295,8 +292,8 @@
         if (anyNA(at[[v]])) stop("BAND_AT for ", v, " has a missing value.", call. = FALSE)
         x <- .band_grid(pd, v)$x
         if (any(at[[v]] < min(x) | at[[v]] > max(x))) {
-          stop("BAND_AT for ", v, " asks for values outside the observed range, ", signif(min(x), 4), " to ",
-               signif(max(x), 4), ".", call. = FALSE)
+          stop("BAND_AT for ", v, " asks for values outside the range of the partial plot's grid, ", signif(min(x), 4),
+               " to ", signif(max(x), 4), ".", call. = FALSE)
         }
       }
     }

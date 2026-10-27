@@ -65,7 +65,10 @@ test_that("interpolating at a grid point reproduces that grid point", {
   at <- hvtiRtemplates:::.band_at(x, hat, star, c(20, 25))
   expect_equal(at$hat, c(2, 3))
   expect_equal(at$star, rbind(c(3, 2), c(4, 2)))
-  expect_error(hvtiRtemplates:::.band_at(x, hat, star, 40), "observed range")
+  # The range is checked once, in .band_plan(), before anything is grown; here a value off the grid reads NA.
+  off <- hvtiRtemplates:::.band_at(x, hat, star, c(20, 40))
+  expect_equal(off$hat, c(2, NA))
+  expect_true(all(is.na(off$star[2, ])))
 })
 
 test_that("a failed subsample interpolates to NA, and the others are read as before", {
@@ -324,7 +327,8 @@ test_that("the plan refuses a bad style or BAND_AT, and warns below the floor", 
   expect_error(plan("bars", list(celltype = 1)), "categorical")
   expect_error(plan("bars", list(karno = "50")), "BAND_AT")
   # An out-of-range or missing value stops here, before any band is computed, and names BAND_AT.
-  expect_error(plan("bars", list(karno = 1000)), "BAND_AT.*outside")
+  expect_error(plan("bars", list(karno = 1000)),
+               "BAND_AT for karno asks for values outside the range of the partial plot's grid, [0-9.]+ to [0-9.]+\\.")
   expect_error(plan("bars", list(karno = c(50, NA))), "BAND_AT.*missing")
   expect_message(suppressWarnings(plan("ribbon", list(karno = 50))), "BAND_AT is ignored")
   withr::local_envvar(HVTI_TEMPLATE_STRICT = "")
