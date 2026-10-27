@@ -128,6 +128,32 @@ test_that("a refit keeps the forest's settings and grows on the rows given", {
   }
 })
 
+test_that("a refit carries every growing setting the saved forest records, rescaled to the subsample", {
+  skip_if_not_installed("randomForestSRC", "3.9.0")
+  d <- stats::na.omit(datasets::airquality)
+  set.seed(5)
+  case_wt <- stats::runif(nrow(d))
+  xvar_wt <- stats::runif(ncol(d) - 1L)
+  f <- randomForestSRC::rfsrc(Ozone ~ ., d, ntree = 15, nodedepth = 3, samptype = "swr", sampsize = 40,
+                              case.wt = case_wt, xvar.wt = xvar_wt, seed = -1)
+  rows <- seq(1L, f$n, by = 2L)
+  g <- hvtiRtemplates:::.band_refit(f, rows, seed = -7)
+  expect_identical(g$nodedepth, 3)
+  expect_identical(g$forest$samptype, "swr")
+  # 40 of 111 patients is the same share of the 56 in the subsample, and never more than the subsample holds.
+  expect_equal(g$forest$sampsize(g$n), round(40 * length(rows) / f$n))
+  expect_equal(g$forest$case.wt, case_wt[rows])
+  expect_equal(g$xvar.wt, xvar_wt)
+  f2 <- randomForestSRC::rfsrc(Ozone ~ ., d, ntree = 15, samptype = "swr", sampsize = 500, seed = -1)
+  expect_equal(hvtiRtemplates:::.band_refit(f2, rows, seed = -7)$forest$sampsize(length(rows)), length(rows))
+  # A forest grown on the defaults is refit on them: no depth limit, 0.632 of the subsample, unit weights.
+  h <- hvtiRtemplates:::.band_refit(band_forest("regr"), seq(1L, 111L, by = 2L), seed = -7)
+  expect_identical(h$nodedepth, -1)
+  expect_identical(h$forest$samptype, "swor")
+  expect_equal(h$forest$sampsize(h$n), round(0.632 * h$n))
+  expect_true(all(h$forest$case.wt == 1))
+})
+
 test_that("partial values agree with gg_partial_rfsrc on its own grid", {
   skip_if_not_installed("randomForestSRC", "3.9.0")
   skip_if_not_installed("ggRandomForests", "4.0.0")

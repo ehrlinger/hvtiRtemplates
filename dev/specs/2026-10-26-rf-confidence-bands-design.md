@@ -79,7 +79,8 @@ test pins this, so a later edit to a fit job cannot break the bands without noti
    naming `SUBRATIO`, as `subsample()` does. The row sets are cached on their own, so
    every per-variable cache below describes the same B subsamples.
 3. **For each row set**, grow a forest on those rows with the fit's settings, read from
-   the saved forest (ntree, mtry, nodesize, splitrule, na.action, the formula), and
+   the saved forest (ntree, mtry, nodesize, nodedepth, nsplit, splitrule, bootstrap, samptype, sampsize
+   rescaled to the subsample's share, the case and variable weights, na.action, the formula), and
    compute `partial.rfsrc()` for each selected variable whose band cache is missing.
    The forest is then **discarded**.
 4. **Cache per variable**: `rf?-partial-band-<var>` holds a B × grid matrix (× `TIMES`

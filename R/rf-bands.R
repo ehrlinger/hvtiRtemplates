@@ -102,6 +102,12 @@
 # A forest grown on `rows` with the settings of `forest`, read off the saved forest
 # rather than its call: the fit job's call names its own variables (model, NTREE), which
 # do not exist here. The seed is handed to rfsrc(), negated as randomForestSRC documents.
+# What the object records and rfsrc() accepts is carried: the tree settings (ntree, mtry,
+# nodesize, nodedepth, nsplit, splitrule), how each tree's sample is drawn (bootstrap, samptype,
+# sampsize), the case and variable weights and the missing-data handling. Settings that
+# only matter for importance, proximities or performance are left out, and so is ntime, which the
+# object does not record. sampsize is stored as a function of the sample size; it is rescaled
+# to the same share of the subsample as the full forest took of the cohort, and never exceeds it.
 .band_refit <- function(forest, rows, seed) {
   y <- forest$yvar.names
   d <- forest$xvar
@@ -113,10 +119,30 @@
   } else {
     stats::as.formula(paste(tick(y), "~ ."))
   }
-  na_action <- if (length(forest$imputed.indv)) "na.impute" else "na.omit"
-  randomForestSRC::rfsrc(formula, data = d, ntree = forest$ntree, mtry = forest$mtry,
-                         nodesize = forest$nodesize, nsplit = forest$nsplit, splitrule = forest$splitrule,
-                         na.action = na_action, importance = "none", seed = -abs(seed))
+  grown <- forest$forest
+  args <- list(formula, data = d, ntree = forest$ntree, mtry = forest$mtry, nodesize = forest$nodesize,
+               nsplit = forest$nsplit, splitrule = forest$splitrule, importance = "none", seed = -abs(seed))
+  if (isTRUE(forest$nodedepth >= 0)) args$nodedepth <- forest$nodedepth
+  # Weights are carried when the fit set them: unit weights are rfsrc()'s default.
+  uneven <- function(w) length(unique(w)) > 1L
+  if (uneven(forest$xvar.wt)) args$xvar.wt <- forest$xvar.wt
+  if (uneven(forest$split.wt)) args$split.wt <- forest$split.wt
+  if (length(grown$case.wt) == forest$n && uneven(grown$case.wt)) args$case.wt <- grown$case.wt[rows]
+  if (identical(grown$bootstrap, "by.user")) {
+    stop("The forest was grown with bootstrap = \"by.user\", whose samples cannot be redrawn for a subsample.",
+         call. = FALSE)
+  }
+  if (!is.null(grown$bootstrap)) args$bootstrap <- grown$bootstrap
+  if (!is.null(grown$samptype)) args$samptype <- grown$samptype
+  if (!is.null(grown$sampsize)) {
+    full <- if (is.function(grown$sampsize)) grown$sampsize(forest$n) else grown$sampsize
+    args$sampsize <- max(1, min(length(rows), round(full * length(rows) / forest$n)))
+  }
+  na_action <- grown$na.action
+  if (is.null(na_action)) na_action <- if (length(forest$imputed.indv)) "na.impute" else "na.omit"
+  args$na.action <- na_action
+  if (identical(na_action, "na.impute")) args$nimpute <- forest$nimpute
+  do.call(randomForestSRC::rfsrc, args)
 }
 
 # The values a variable's partial was drawn at, read from the full forest's
