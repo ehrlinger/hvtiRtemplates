@@ -246,7 +246,7 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 
 ```{r}
 #| label: fig-importance
-#| fig-cap: "Permutation importance of each predictor. Horizontal bars give the importance of each predictor, in one
+#| fig-cap: "VIMP (anti-split importance) of each predictor. Horizontal bars give the importance of each predictor, in one
 #|   color where the importance is positive and another where it is not, as in the legend."
 #| fig-height: 10.5
 #| message: true
@@ -261,9 +261,9 @@ save_figure(.fig, "rfs-explain-importance", height = 7)
 
 ```{r}
 #| label: tbl-importance
-#| tbl-cap: "Permutation importance and minimal depth of each predictor, in order of importance"
+#| tbl-cap: "VIMP (anti-split importance) and minimal depth of each predictor, in order of importance"
 # Minimal depth ranks by how near the root a variable first splits, a second
-# opinion that needs no permutation. Cheap, so not cached.
+# opinion that needs no VIMP calculation. Cheap, so not cached.
 ranked <- names(sort(vi$importance, decreasing = TRUE))
 depth <- max.subtree(forest)$order[, 1]
 data.frame(variable = ranked,
@@ -426,9 +426,9 @@ if (BANDS_B > 0) {
   .fig <- hvtiRtemplates:::.plot_vimp_intervals(.vi_est, hvtiRtemplates:::.band_vimp_se(.vi_est, vi_star, .subratio)) +
     hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
   save_figure(.fig, "rfs-explain-importance-intervals", height = 7)
-  .cap <- sprintf(paste("Permutation importance of each predictor, as in the importance figure, with a",
-                        "pointwise 95%% interval of plus and minus 1.96 jackknife standard errors from %d",
-                        "subsample forests, each grown on %.0f%% of patients. Points give the importance and",
+  .cap <- sprintf(paste("VIMP (anti-split importance) of each predictor, as in the importance figure, with a",
+                        "pointwise 95%% interval of plus and minus 1.96 jackknife standard errors, taken about that",
+                        "importance, from %d subsample forests, each grown on %.0f%% of patients. Points give the importance and",
                         "bars the interval, black where the interval lies above zero and gray where it does",
                         "not, as in the legend; the dashed line marks zero."), BANDS_B, 100 * .subratio)
   .page_child("importance-intervals", 1L, list(list(index = 1L, width = 6, height = 7)), "", .cap)

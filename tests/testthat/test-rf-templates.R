@@ -225,6 +225,21 @@ test_that("the importance intervals cache the subsample VIMP matrix and take the
   }
 })
 
+test_that("the explain templates call their importance VIMP (anti-split), never permutation importance", {
+  # vimp() and subsample() are both called with importance = "anti", randomForestSRC's anti-split
+  # (noising-up) VIMP, so a caption or a comment saying permutation describes another quantity.
+  files <- template_list()$file
+  for (name in c("rfs-explain", "rfc-explain", "rfr-explain")) {
+    lines <- readLines(files[basename(files) == paste0(name, ".qmd")], warn = FALSE)
+    expect_false(any(grepl("ermutation", lines)), info = name)
+    caps <- paste(lines, collapse = "\n")
+    expect_true(grepl("#| fig-cap: \"VIMP (anti-split importance)", caps, fixed = TRUE), info = name)
+    expect_true(grepl("#| tbl-cap: \"VIMP (anti-split importance) and minimal depth", caps, fixed = TRUE), info = name)
+    expect_true(grepl(".cap <- sprintf(paste(\"VIMP (anti-split importance) of each predictor", caps, fixed = TRUE),
+                info = name)
+  }
+})
+
 test_that("with BANDS_B at its default the explain writes no band cache and draws no band", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))

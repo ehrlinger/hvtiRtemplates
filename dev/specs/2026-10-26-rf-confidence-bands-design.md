@@ -8,7 +8,8 @@
 
 ## 1. The problem
 
-`rfs-explain`, `rfc-explain` and `rfr-explain` report permutation importance and
+`rfs-explain`, `rfc-explain` and `rfr-explain` report VIMP (randomForestSRC's
+anti-split importance, `importance = "anti"`) and
 partial dependence as point estimates. A reader cannot tell a predictor whose
 importance is clearly above zero from one that is noise, or a partial curve that
 bends from one whose bend is within its own uncertainty.
@@ -27,7 +28,8 @@ console session should hold, so the bands are computed in a job started with
 Bands are optional, cached steps inside the three existing explain templates. No new
 template, ledger row or `.lintr` entry.
 
-- **VIMP intervals**: one cached `subsample()` call, read with `extract.subsample()`.
+- **VIMP intervals**: one cached `subsample()` call, of which only the per-subsample VIMP matrix
+  is kept; the SE is taken about the importance figure's own estimate (section 3a).
 - **Partial-dependence bands**: a refit loop of our own, using the same subsampling and
   the same variance rescaling as `subsample()` (Ishwaran and Lu, 2019), so the two kinds
   of interval rest on one method.
@@ -40,20 +42,25 @@ Approaches not taken are in section 8.
 
 ```r
 cache_fit("rfs-vimp-subsample",
-          subsample(forest, B = BANDS_B, subratio = SUBRATIO, importance = <the vimp chunk's method>),
+          hvtiRtemplates:::.band_vimp_star(
+            subsample(forest, B = BANDS_B, subratio = SUBRATIO, importance = "anti", verbose = FALSE)),
           seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
 ```
 
-The existing `rf?-vimp` cache and figure stay as they are. `extract.subsample(alpha = 0.05)`
-gives the interval drawn beside them.
+The existing `rf?-vimp` cache and figure stay as they are. The cache holds the matrix of
+subsample VIMPs (one row per predictor, one column per subsample; for rfc the `"all"` column),
+not the `subsample()` object, which carries a forest.
 
 The `importance` method must match the method the existing `vimp()` call uses, so the
 standard error is that quantity's. The fit grows the forest with `importance = "none"`, so
 `subsample()` computes VIMP itself with what it is handed. The figure does not plot
 `subsample()`'s own re-estimate of the importance, which differs from `vimp()`'s by
-permutation noise: it draws the importance figure's estimate, `vi$importance`, plus and minus
-1.96 times `se.jk.Z` (`standardize = FALSE`), ranked as the importance figure ranks it, so
-the two figures cannot disagree in sign or order. The interval is labelled "above zero" by its
+Monte Carlo noise: it draws the importance figure's estimate, `vi$importance`, plus and minus
+1.96 times the delete-d jackknife SE taken about that estimate (`.band_vimp_se()`), ranked as the
+importance figure ranks it, so the two figures cannot disagree in sign or order. `se.jk.Z` is
+not used: it is centred on `subsample()`'s own full-forest VIMP, a different draw, so it would
+measure the spread about a point the figure does not show. With that VIMP as the centre the
+helper reproduces `se.jk.Z` exactly, which a test pins. The interval is labelled "above zero" by its
 lower bound.
 
 The fit jobs grow with rfsrc's defaults `forest = TRUE` and `bootstrap = "by.root"`, which
@@ -194,7 +201,7 @@ All in `CACHE_DIR`, beside the forest, seeded by `SEED`.
 
 | cache | holds | stale when |
 |---|---|---|
-| `rf?-vimp-subsample` | the `subsample()` object | forest, `BANDS_B`, `SUBRATIO`, `SEED` |
+| `rf?-vimp-subsample` | the subsample VIMP matrix | forest, `BANDS_B`, `SUBRATIO`, `SEED` |
 | `rf?-band-rows` | B integer row-index vectors | n, `BANDS_B`, `SUBRATIO`, `SEED` |
 | `rf?-partial-band-<var>` | B × grid partial values for one variable | the rows, the grid, `TIMES` |
 

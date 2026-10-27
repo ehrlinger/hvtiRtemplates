@@ -292,3 +292,11 @@ test_that("the importance-interval figure centres on the importance estimate, +/
   expect_identical(as.character(d$clear[match(c("a", "b", "c"), d$vars)]),
                    c("Interval not above zero", "Interval above zero", "Interval not above zero"))
 })
+
+test_that("the interval figure's axis names the importance it draws: anti-split VIMP, not permutation", {
+  skip_if_not_installed("ggplot2")
+  p <- hvtiRtemplates:::.plot_vimp_intervals(c(a = 0.1, b = 0.2), c(a = 0.01, b = 0.02))
+  label <- ggplot2::get_labs(p)$x
+  expect_match(label, "anti-split", fixed = TRUE)
+  expect_no_match(label, "ermutation")
+})

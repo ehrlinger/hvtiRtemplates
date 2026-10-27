@@ -282,7 +282,7 @@
     ggplot2::geom_point(size = 2) +
     ggplot2::scale_color_manual(values = c(`Interval above zero` = "black", `Interval not above zero` = "gray55"),
                                 drop = FALSE, name = NULL) +
-    ggplot2::labs(x = "Permutation importance", y = NULL)
+    ggplot2::labs(x = "VIMP (anti-split importance)", y = NULL)
 }
 
 # A band as plotting rows: the full forest's value and its pointwise interval, at the
