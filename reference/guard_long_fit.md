@@ -18,8 +18,9 @@ guard_long_fit(name, dir, why, refit = FALSE)
 
 - name:
 
-  Character(1). The `cache_fit()` name; the cache file is
-  `<dir>/<name>.rds`.
+  Character. The `cache_fit()` name, or several when one long step
+  writes several caches; each cache file is `<dir>/<name>.rds`, and the
+  call is refused while any of them is missing.
 
 - dir:
 

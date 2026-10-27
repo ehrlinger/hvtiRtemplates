@@ -70,8 +70,8 @@ with the session. A render, a cached result, or
 
 
 <dl><dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
-<dd><p>Character(1). The <code>cache_fit()</code> name; the cache file is
-<code>&lt;dir&gt;/&lt;name&gt;.rds</code>.</p></dd>
+<dd><p>Character. The <code>cache_fit()</code> name, or several when one long step writes several caches;
+each cache file is <code>&lt;dir&gt;/&lt;name&gt;.rds</code>, and the call is refused while any of them is missing.</p></dd>
 
 
 <dt id="arg-dir">dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
