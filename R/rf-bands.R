@@ -71,23 +71,36 @@
   )
 }
 
+# How many of `b` rows each stratum gives, in proportion to its size, by the largest remainder:
+# the shares sum to exactly `b`, where rounding each share alone can miss it by a row or more.
+.band_shares <- function(sizes, b) {
+  exact <- b * sizes / sum(sizes)
+  share <- floor(exact + 1e-9)
+  extra <- b - sum(share)
+  if (extra > 0L) {
+    pick <- order(exact - share, decreasing = TRUE)[seq_len(extra)]
+    share[pick] <- share[pick] + 1
+  }
+  as.integer(share)
+}
+
 # B subsamples of the forest's rows, each a fraction `subratio` of them, drawn without
 # replacement within the strata. R's generator draws them, which cache_fit() seeds.
 .band_rows <- function(forest, B, subratio) { # nolint: object_name_linter. B is the subsample() argument's name.
   n <- forest$n
   b <- .band_size(n, subratio)
   strata <- .band_strata(forest)
-  share <- function(i) min(length(i), as.integer(round(b * length(i) / n)))
-  # A class that rounds to no rows is missing from every subsample forest, and a partial of a
+  groups <- if (!is.null(strata)) split(seq_len(n), strata)
+  share <- if (!is.null(strata)) .band_shares(lengths(groups), b)
+  # A class that gets no rows is missing from every subsample forest, and a partial of a
   # classification forest is the first level's probability, which then means another class's.
-  if (identical(forest$family, "class") && any(vapply(split(seq_len(n), strata), function(i) {
-    length(i) > 0L && share(i) == 0L
-  }, logical(1)))) {
+  if (identical(forest$family, "class") && any(lengths(groups) > 0L & share == 0L)) {
     stop("A subsample of ", b, " patients would hold none of the smallest class. Raise SUBRATIO.", call. = FALSE)
   }
   draw <- function() {
     if (is.null(strata)) return(sort(sample.int(n, b)))
-    sort(unlist(lapply(split(seq_len(n), strata), function(i) i[sample.int(length(i), share(i))]), use.names = FALSE))
+    sort(unlist(lapply(seq_along(groups), function(k) groups[[k]][sample.int(length(groups[[k]]), share[k])]),
+                use.names = FALSE))
   }
   rows <- lapply(seq_len(B), function(i) draw())
   if (identical(forest$family, "surv")) {

@@ -99,6 +99,41 @@ test_that("rows are drawn within event status, at the subsample size, the same u
   }
 })
 
+# A stand-in with only what .band_rows() and .band_plan() read, so strata of any size can be set.
+band_stub <- function(family, outcome) {
+  if (family == "surv") {
+    list(family = "surv", n = length(outcome), yvar = data.frame(time = seq_along(outcome), status = outcome),
+         yvar.names = c("time", "status"))
+  } else {
+    list(family = "class", n = length(outcome), yvar = outcome, yvar.names = "y")
+  }
+}
+
+test_that("every subsample holds exactly b rows, the number the plan table reports", {
+  skip_if_not_installed("randomForestSRC", "3.9.0")
+  # Four classes of 5 at b = 6: rounding each class's 1.5 to 2 would give 8 rows.
+  cls <- band_stub("class", factor(rep(letters[1:4], each = 5)))
+  set.seed(1)
+  rows <- hvtiRtemplates:::.band_rows(cls, 5, 0.3)
+  expect_identical(lengths(rows), rep(6L, 5L))
+  expect_true(all(vapply(rows, function(r) all(table(cls$yvar[r]) >= 1L), TRUE)))
+  # Two strata of 10 at b = 7: 3.5 each rounds to 4 and 4.
+  srv <- band_stub("surv", rep(c(0, 1), 10))
+  rows <- hvtiRtemplates:::.band_rows(srv, 5, 0.35)
+  expect_identical(lengths(rows), rep(7L, 5L))
+  # Real forests, across subsample fractions.
+  for (fam in c("surv", "class")) {
+    f <- band_forest(fam)
+    for (ratio in c(0.2, 0.31, 0.37, 0.45)) {
+      rows <- hvtiRtemplates:::.band_rows(f, 3, ratio)
+      expect_identical(lengths(rows), rep(hvtiRtemplates:::.band_size(f$n, ratio), 3L), info = paste(fam, ratio))
+    }
+  }
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "")
+  plan <- suppressWarnings(hvtiRtemplates:::.band_plan(cls, 5, 0.3, "ribbon", NULL, character(), NULL))
+  expect_identical(plan$table$value[plan$table$item == "Patients in each"], "6")
+})
+
 test_that("a survival subsample with no event stops, naming SUBRATIO", {
   skip_if_not_installed("randomForestSRC", "3.9.0")
   f <- band_forest("surv")
