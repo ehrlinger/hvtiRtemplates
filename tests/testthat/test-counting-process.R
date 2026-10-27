@@ -32,7 +32,8 @@ test_that(".cp_check() stops on an overlap unless REPAIR clips it", {
 })
 
 test_that("a tie on start is settled by stop, whatever order the rows arrive in", {
-  # Patient 1's second and third rows both start at 1; the longer one sorts last, so the event row is last and clean.
+  # Patient 1's second and third rows both start at 1, and the event row is the shorter. It sorts second, so both
+  # input orders end in the "event before their last interval" error; the assertion is that they end in the same one.
   d <- cp_rows()
   d$t0[3] <- 1
   d$t1[2] <- 3
@@ -135,7 +136,11 @@ test_that(".cp_check() stops on a start or stop that is not numeric", {
   expect_error(cp(d), "t0 must be numeric")
   d <- cp_rows()
   d$t1 <- as.character(d$t1)
-  expect_error(cp(d), "t1 must be numeric")
+  expect_error(cp(d), "t1 must be numeric.*sort as text")
+  d <- cp_rows()
+  d$t1 <- as.Date("2026-01-01") + d$t1
+  msg <- tryCatch(cp(d), error = conditionMessage)
+  expect_match(msg, "t1 must be numeric; it is Date\\.$")
 })
 
 test_that("a message names a ccfid-style id but never an MRN", {
@@ -187,4 +192,19 @@ test_that(".cp_check() reads an integer64 id by value, as Parquet hands one over
   expect_error(cp(over), "1 overlapping interval \\(9100000000002\\)")
   shuffled <- cp(d[c(6, 3, 5, 1, 4, 2), ])
   expect_identical(as.character(shuffled$data$id), as.character(ids))
+})
+
+test_that("an MRN message points at the row's place in the sorted data, not in the data left after a repair", {
+  # Patient 100's middle interval nests inside the first and clip drops it, which would move every later row up one.
+  d <- data.frame(mrn = c(100, 100, 100, 200, 200), t0 = c(0, 1, 2, 0, 1), t1 = c(2, 1.5, 3, 1, 2),
+                  dead = c(0L, 0L, 0L, 1L, 0L), lab = 5)
+  msg <- tryCatch(hvtiRtemplates:::.cp_check(d, id = "mrn", start = "t0", stop = "t1", event = "dead",
+                                             predictors = "lab", repair = "clip"), error = conditionMessage)
+  expect_match(msg, "an event before their last interval \\(row 4 of the rows")
+  expect_false(grepl("100|200", msg))
+  # The positions are internal: the rows come back without the column that carried them.
+  d$dead <- 0L
+  out <- hvtiRtemplates:::.cp_check(d, id = "mrn", start = "t0", stop = "t1", event = "dead",
+                                    predictors = "lab", repair = "clip")
+  expect_identical(names(out$data), c("mrn", "t0", "t1", "dead", "lab"))
 })

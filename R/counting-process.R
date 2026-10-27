@@ -10,12 +10,14 @@
 
 # Where, among the rows `rows` of `d`, a message points: the first few patients when the ID is a study number, and the
 # first few row positions when it falls back to an MRN, which must not reach a render error or a submit_job() log.
+# A position is the row's place in the sorted data as first read, kept in .cp_row, so a repair that dropped an
+# earlier row does not move it.
 # An integer64 ID is written by as.character(), which reads its value; .id_text() would write it as "0".
 .cp_ids <- function(d, id, rows) {
   if (tolower(id) %in% .job_identifier_names) {
-    at <- which(rows)
+    at <- d[[.cp_row]][rows]
     return(paste0(" (row", if (length(at) > 1L) "s", " ", paste(utils::head(at, 5L), collapse = ", "),
-                  if (length(at) > 5L) ", ...", " of the rows ordered by patient and start)"))
+                  if (length(at) > 5L) ", ...", " of the rows ordered by patient, start and stop)"))
   }
   x <- d[[id]][rows]
   ids <- unique(if (inherits(x, "integer64")) as.character(x) else .id_text(x))
@@ -26,10 +28,11 @@
 # on an integer64 ignores fromLast, and ave() and == read its bits as a double. Numbering the patients in the order of
 # their ID gives the checks a plain integer, and leaves the ID in the data as it was read.
 .cp_group <- ".cp_patient"
+.cp_row <- ".cp_row"
 
 # Checks counting-process rows and, when `repair` names it, repairs a defect a
 # job may repair while the dataset fix is in flight. Returns the rows ordered by
-# patient and start, a table of counts, and what each repair changed. A defect
+# patient, start and stop, a table of counts, and what each repair changed. A defect
 # not repaired stops, naming its kind, its count and the first few patients, or
 # their row positions when the ID is an MRN.
 .cp_check <- function(d, id, start, stop, event, predictors, repair = character()) {
@@ -40,7 +43,8 @@
   d <- d[, c(id, start, stop, event, predictors), drop = FALSE]
   for (col in c(start, stop)) {
     if (!is.numeric(d[[col]])) {
-      stop(col, " must be numeric; it is ", class(d[[col]])[[1L]], ", and times read as text sort as text.", call. = FALSE)
+      stop(col, " must be numeric; it is ", class(d[[col]])[[1L]], if (is.character(d[[col]])) ", and times read as text sort as text",
+           ".", call. = FALSE)
     }
   }
   incomplete <- is.na(d[[id]]) | is.na(d[[start]]) | is.na(d[[stop]]) | is.na(d[[event]])
@@ -62,6 +66,7 @@
   # Ties on start are settled by stop, so the outcome does not depend on the order the rows arrived in.
   d <- d[order(d[[.cp_group]], d[[start]], d[[stop]]), , drop = FALSE]
   rownames(d) <- NULL
+  d[[.cp_row]] <- seq_len(nrow(d))
   repaired <- character()
   same <- function(d) c(FALSE, d[[.cp_group]][-1L] == d[[.cp_group]][-nrow(d)])
   # The furthest stop among a patient's earlier rows, -Inf on their first: a row is measured against all of them,
@@ -135,6 +140,7 @@
     stringsAsFactors = FALSE
   )
   d[[.cp_group]] <- NULL
+  d[[.cp_row]] <- NULL
   list(data = d, counts = counts, repaired = repaired)
 }
 
