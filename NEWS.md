@@ -1,9 +1,11 @@
 # hvtiRtemplates 1.5.2
 
-* hvtiRtemplates now needs hvtiRutilities 1.5.13 or later. That release reads a label
-  file's unquoted `No` and `Yes` as the text written, so a `value_labels.yml` declaring
-  `0: No` / `1: Yes` prints No and Yes in a table rather than FALSE and TRUE. 1.5.1 asked
-  for this release in its NEWS but declared only `>= 1.5.12`.
+* hvtiRtemplates now needs hvtiRutilities 1.5.15 or later. 1.5.15 adds the `rhf` row to
+  `hvti_taxonomy()`, which this package re-exports, so the taxonomy classifies the prefix of
+  the new `rhf-fit` and `rhf-explain` templates. 1.5.13 reads a label file's unquoted `No` and `Yes` as the text
+  written, so a `value_labels.yml` declaring `0: No` / `1: Yes` prints No and Yes in a table
+  rather than FALSE and TRUE. 1.5.1 asked for that release in its NEWS but declared only
+  `>= 1.5.12`.
 
 * The `ac` template's figures now mark each event with a point and join the points with straight
   lines, as the SAS `%KAPLAN` figures do. Set `STEPS <- TRUE` in a job for the Kaplan-Meier steps instead;

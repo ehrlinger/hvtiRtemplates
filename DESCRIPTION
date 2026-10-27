@@ -26,7 +26,7 @@ Depends:
     R (>= 4.4.0)
 Imports:
     digest,
-    hvtiRutilities (>= 1.5.13),
+    hvtiRutilities (>= 1.5.15),
     jsonlite,
     openssl,
     ps,
