@@ -755,7 +755,9 @@
       "sas_breadth": null,
       "r_exemplars": 0,
       "r_jobs": 0,
-      "upstream": [],
+      "upstream": [
+        "lm"
+      ],
       "downstream": [],
       "workflows": [],
       "blocked_on": null,
@@ -808,7 +810,7 @@
       "r_exemplars": 186,
       "r_jobs": 606,
       "upstream": [
-        "lm"
+        "lm-propensity_binary"
       ],
       "downstream": [],
       "workflows": [
@@ -1595,7 +1597,10 @@
       "sas_breadth": null,
       "r_exemplars": null,
       "r_jobs": null,
-      "upstream": [],
+      "upstream": [
+        "sid-fit",
+        "vp-fit"
+      ],
       "downstream": [],
       "workflows": [],
       "blocked_on": null,
@@ -1623,7 +1628,9 @@
       "sas_breadth": null,
       "r_exemplars": null,
       "r_jobs": null,
-      "upstream": [],
+      "upstream": [
+        "sid-clusters"
+      ],
       "downstream": [],
       "workflows": [],
       "blocked_on": null,

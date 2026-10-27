@@ -85,6 +85,14 @@
   invisible(NULL)
 }
 
+# The lines of `src` carrying the marker token, each cut as the draft banner shows
+# it. The run sheets count markers with this too, so the sheet and the banner
+# cannot disagree about how many there are.
+.edit_marker_lines <- function(src) {
+  hits <- grep(paste0("ED", "IT", ":"), src, fixed = TRUE)
+  data.frame(line = hits, text = trimws(substr(src[hits], 1L, 96L)), stringsAsFactors = FALSE)
+}
+
 # The markers in a template's own text name work a study author still has to do,
 # and a job that still contains one has not been finished. This guard is what
 # makes that TRUE rather than merely stated: an unedited job would otherwise
@@ -110,12 +118,12 @@
 .guard_edits <- function(input = knitr::current_input(), show_source = TRUE) {
   if (is.null(input)) return(invisible(0L))
   token <- paste0("ED", "IT", ":")
-  src <- readLines(input, warn = FALSE)
-  hits <- grep(token, src, fixed = TRUE)
+  markers <- .edit_marker_lines(readLines(input, warn = FALSE))
+  hits <- markers$line
   if (!length(hits)) return(invisible(0L))
   msg <- paste0(
     length(hits), " unresolved ", token, " marker(s) remain in this job:\n",
-    paste0("  - ", trimws(substr(src[hits], 1L, 96L)), collapse = "\n"),
+    paste0("  - ", markers$text, collapse = "\n"),
     if (show_source) "\nA job that still contains one has not been finished. Work each marker and delete it."
   )
   if (!.strict_render()) {
