@@ -42,6 +42,8 @@ refuses to overwrite an existing job.
 | `30_analyses/sid-clusters.qmd` | PAM over K on a `sid-fit` distance: K metrics, letters stable across K, Sankey, registered assignments (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/vt-fit.qmd` | virtual twins: one survival forest per arm, out-of-bag own-arm and swapped-arm curves, a per-patient RMST difference, eligibility by Gower and SID combined by a stated rule (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/vt-explain.qmd` | the virtual-twins contrast by arm, eligibility rule and stratum, standardized betas and who might benefit (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/rhf-fit.qmd` | random hazard forest on counting-process rows with time-varying predictors: the rows checked, tree size tuned, forest grown (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/rhf-explain.qmd` | AUC over follow-up, hazard curves and VarPro importance over time for an `rhf` forest (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/nb-boostmtree.qmd` | boosted multivariate trees for a response measured at each visit | `30_analyses/` or `analyses/` |
 
 `dc-eda` and `dc-trends` were `dp-eda` and `dp-trends` until 2026-10-10, and
@@ -91,7 +93,7 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dc-trends`,
-`dc-eda`, `hs-setup`, `hs-concordance`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr` and `vp` fit and explain jobs, `vp-dependence`, `vp-individual`, `sid-fit`, `sid-clusters`, and the eight
+`dc-eda`, `hs-setup`, `hs-concordance`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr`, `rhf` and `vp` fit and explain jobs, `vp-dependence`, `vp-individual`, `sid-fit`, `sid-clusters`, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so
 in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
@@ -406,6 +408,8 @@ as on a Mac without XQuartz.
 | rfc-fit | `rfc-fit-diagnostics-error`, `-roc` |
 | rfr-fit | `rfr-fit-diagnostics-error`, `-predicted` |
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |
+| rhf-fit | `rhf-fit-tuning` |
+| rhf-explain | `rhf-explain-auc-cumulative`, `-auc-incident`, `-hazard`, `-chf`, `-importance` |
 | vp-fit | `vp-fit-coverage`, `-varpro` |
 | vp-explain | `vp-explain-dependence-varpro-page-<NN>` |
 | vp-dependence | `vp-dependence-graph`, `-heatmap` |

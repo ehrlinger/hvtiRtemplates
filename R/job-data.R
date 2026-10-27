@@ -638,6 +638,13 @@
 #'   would, after the rows are selected. \code{FALSE},
 #'   the default, accepts the long form, as descriptive jobs and jobs that model
 #'   repeated measures need.
+#' @param whole_patients \code{TRUE} for a job that models intervals of a
+#'   patient's follow-up, such as a random hazard forest on counting-process
+#'   rows. With a \code{where}, it stops when a patient kept by \code{where}
+#'   lost some of their rows but not all, since that shortens follow-up without
+#'   a word. An \code{analysis_set} is not checked: one that selects intervals
+#'   rather than patients shortens follow-up unnoticed. \code{FALSE}, the
+#'   default, checks nothing.
 #' @param imputation \code{NULL}, the default, or the name of the column that
 #'   numbers the imputations of stacked multiple imputations, one row per
 #'   patient per imputation. With \code{one_row_per_patient = TRUE} the rows
@@ -746,9 +753,10 @@
 #' @export
 read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = NULL,
                           id = "ccfid", key = NULL, join = NULL, join_vars = NULL, reduce = NULL,
-                          join_key = NULL, one_row_per_patient = FALSE, imputation = NULL) {
+                          join_key = NULL, one_row_per_patient = FALSE, imputation = NULL,
+                          whole_patients = FALSE) {
   .check_job_settings(dataset, analysis_set, where, id, key, join, join_vars, reduce, join_key, one_row_per_patient,
-                      imputation)
+                      imputation, whole_patients)
   # The registration JOIN needs is checked before either dataset is read.
   join_shape <- if (!is.null(join)) .join_shape(cfg, join, join_key)
   read <- .read_job_source(cfg, dataset, analysis_set)
@@ -814,6 +822,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   kept <- .apply_where(ids$data, if (!all(on_records)) .where_conditions(where)[!on_records], env = caller,
                        cols = c(who$id, key), identifiers = identifiers,
                        id_values = if (is.null(id_values)) list() else id_values)
+  if (whole_patients && !is.null(where)) .check_whole_patients(ids$data, kept$data, who$id)
   counts <- .check_job_key(kept$data, key, who$id)
   imputation_col <- if (!is.null(imputation)) .match_imputation(imputation, names(kept$data), who$id, kept$data)
   if (!is.null(imputation_col)) {
@@ -893,6 +902,26 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
        " (", counts$rows, " rows on ", counts$patients, " patients). Read a ",
        "dataset of one row per patient, and JOIN the repeated records with REDUCE to keep one per patient, or use a ",
        "template that takes repeated records", .such_as(.long_join_templates()), ".", call. = FALSE)
+}
+
+# A WHERE that keeps some of a patient's rows and drops others shortens that
+# patient's follow-up without a word, and a job over intervals of follow-up
+# cannot tell the rows it lost from time the patient was not at risk. So a job
+# that models intervals asks for whole patients: each one kept with every row,
+# or dropped. Counts only; no identifier reaches the message.
+.check_whole_patients <- function(before, after, id) {
+  # Matched on the column itself, not on its text: .id_text() writes every integer64 ID as "0".
+  patients <- unique(before[[id]][!is.na(before[[id]])])
+  n_before <- tabulate(match(before[[id]], patients), length(patients))
+  n_after <- tabulate(match(after[[id]], patients), length(patients))
+  kept <- n_after > 0L
+  partial <- sum(n_after[kept] < n_before[kept])
+  if (partial) {
+    stop(partial, if (partial == 1L) " patient" else " patients", " kept by WHERE lost some of their rows but not ",
+         "all. This job models intervals of follow-up, so WHERE must keep or drop a patient whole: select on a ",
+         "column whose value is the same on every row of a patient, such as a baseline one.", call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 # The key a dataset was registered with, and its kind. The study dataset's
@@ -990,7 +1019,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 
 # Every setting is checked before the read, so a typo fails fast and is named.
 .check_job_settings <- function(dataset, analysis_set, where, id, key, join = NULL, join_vars = NULL, reduce = NULL,
-                                join_key = NULL, one_row_per_patient = FALSE, imputation = NULL) {
+                                join_key = NULL, one_row_per_patient = FALSE, imputation = NULL,
+                                whole_patients = FALSE) {
   if (!is.character(dataset) || length(dataset) != 1L || is.na(dataset) || !nzchar(dataset)) {
     stop("DATASET must name one dataset registered in _study.yml, such as \"built\".", call. = FALSE)
   }
@@ -1029,6 +1059,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   }
   if (!is.logical(one_row_per_patient) || length(one_row_per_patient) != 1L || is.na(one_row_per_patient)) {
     stop("one_row_per_patient must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (!is.logical(whole_patients) || length(whole_patients) != 1L || is.na(whole_patients)) {
+    stop("whole_patients must be TRUE or FALSE.", call. = FALSE)
   }
   if (!is.null(imputation) && (!is.character(imputation) || length(imputation) != 1L || is.na(imputation) ||
                                  !nzchar(imputation))) {

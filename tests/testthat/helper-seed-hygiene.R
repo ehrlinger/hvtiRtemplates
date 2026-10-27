@@ -14,13 +14,17 @@
 seed_random_calls <- c(
   "rfsrc", "rfsrc.fast", "imbalanced", "isopro", "varpro", "cv.varpro", "uvarpro", "impute", "impute.rfsrc",
   "sidClustering", "mice", "partialpro", "gg_partial_varpro", "outpro", "get.beta.entropy", "vimp",
-  "tune.rfsrc", "boostmtree", "vimp.boostmtree", "sample", "sample.int", "runif", "rnorm", "rbinom", "rpois", "rexp"
+  "tune.rfsrc", "rhf", "tune.treesize.rhf", "varpro.cache.rhf", "importance.rhf", "boostmtree", "vimp.boostmtree",
+  "sample", "sample.int", "runif", "rnorm", "rbinom", "rpois", "rexp"
 )
 
 # The subset that must also be handed a negative `seed =`: the randomForestSRC
 # family members that HAVE a `seed` argument (randomForestSRC 3.9.0, varPro
-# 3.3.0). imbalanced(), impute() and isopro() have none to require.
-seed_negative_calls <- c("rfsrc", "vimp", "tune.rfsrc", "varpro", "cv.varpro", "uvarpro")
+# 3.3.0), and randomForestRHF 2.1.0's rhf(), which takes a negative `seed =` as
+# rfsrc() does. imbalanced(), impute() and isopro() have none to require.
+# tune.treesize.rhf() has a `seed` too, but takes a positive one for set.seed(),
+# so it is seeded as a random call and not required to carry a negative one.
+seed_negative_calls <- c("rfsrc", "vimp", "tune.rfsrc", "varpro", "cv.varpro", "uvarpro", "rhf")
 
 # A call counts as seeded when a set.seed() starts this many lines before it or
 # fewer, in the same chunk. "Just before", as the study put it; a seed further
