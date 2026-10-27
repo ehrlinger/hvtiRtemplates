@@ -179,11 +179,68 @@ test_that("every varpro() call in vp-fit runs on one core", {
   lines <- readLines(template_path("vp", "fit"), warn = FALSE)
   # Comments mention varpro() in prose; only code lines are calls.
   src <- paste(lines[!grepl("^\\s*#", lines)], collapse = "\n")
-  calls <- regmatches(src, gregexpr("(?<![_[:alnum:]])varpro\\([^\n]*", src, perl = TRUE))[[1L]]
+  # A call spans several lines, so each is read from varpro( to its seed, which comes last.
+  calls <- regmatches(src, gregexpr("(?s)(?<![_[:alnum:]])varpro\\(.*?seed = ", src, perl = TRUE))[[1L]]
   # The full fit and the stability refit.
   expect_length(calls, 2L)
   expect_true(all(grepl("cores = 1L", calls, fixed = TRUE)))
   expect_match(src, "options(rf.cores = 1L, mc.cores = 1L)", fixed = TRUE)
+})
+
+test_that("both varpro() calls in vp-fit carry the exploration settings, and the defaults are them", {
+  lines <- readLines(template_path("vp", "fit"), warn = FALSE)
+  src <- paste(lines[!grepl("^\\s*#", lines)], collapse = "\n")
+  calls <- regmatches(src, gregexpr("(?s)(?<![_[:alnum:]])varpro\\(.*?seed = ", src, perl = TRUE))[[1L]]
+  expect_length(calls, 2L)
+  for (arg in c("split.weight = SPLIT_WEIGHT", "sparse = SPARSE", "mtry = .mtry", "nodesize.external = vp_nodesize_external(",
+                "max.tree = .max_tree", "max.rules.tree = MAX_RULES_TREE")) {
+    expect_true(all(grepl(arg, calls, fixed = TRUE)), info = arg)
+  }
+  choices <- rf_chunk(lines, "edit-study-choices")
+  for (default in c("NTREE <- 500", "MTRY <- NULL", "NODESIZE_EXTERNAL <- NULL", "SPLIT_WEIGHT <- FALSE", "SPARSE <- FALSE")) {
+    expect_true(default %in% choices, info = default)
+  }
+  # The larger setting and the parsimonious screen stay one uncomment away, and
+  # take effect: their lines sit below the assignments they override.
+  options <- list(
+    "# NTREE <- 1000; MAX_TREE <- 1000; MAX_RULES_TREE <- 300" = list(NTREE = 1000, MAX_TREE = 1000, MAX_RULES_TREE = 300),
+    "# SPLIT_WEIGHT <- TRUE; SPARSE <- TRUE; MTRY <- Inf; NVAR <- 30" = list(SPLIT_WEIGHT = TRUE, SPARSE = TRUE, MTRY = Inf, NVAR = 30)
+  )
+  for (line in names(options)) {
+    at <- which(choices == line)
+    expect_length(at, 1L)
+    env <- new.env()
+    eval(parse(text = replace(choices, at, sub("^# ", "", line))), envir = env)
+    expect_identical(mget(names(options[[line]]), envir = env), options[[line]], info = line)
+  }
+  # The figure is scored on every tree, as the coverage table is.
+  expect_match(src, "gg_varpro(fit, max.tree = fit$rf$ntree)", fixed = TRUE)
+  expect_match(src, "varpro_coverage(fit, by = \"variable\", trim = TRIM, max.tree = fit$rf$ntree,", fixed = TRUE)
+  expect_match(src, "varpro_coverage(fr, by = \"variable\", trim = TRIM, max.tree = fr$rf$ntree,", fixed = TRUE)
+})
+
+test_that("vp-fit hands varPro a lowered mtry and a survival leaf of about two events", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- rf_env(vp_data())
+  rf_run("vp", "fit", c(vp_data_labels, "noise", "judge", "fit"), env, vp_choices)
+  # Five candidates and 20 noise columns: ceiling(sqrt(25)) is 5, where varPro alone would use every column.
+  expect_equal(env$.mtry, 5)
+  expect_equal(env$fit$rf$mtry, 5)
+  events <- sum(env$d_noise$event == 1)
+  expect_identical(env$vp_nodesize_external(env$d_noise), max(10, round(2 * nrow(env$d_noise) / events)))
+  # The rule sampling settings reach the fit: 150 trees capped at the 50 grown.
+  expect_equal(env$fit$max.tree, 50)
+  expect_equal(env$fit$max.rules.tree, 150)
+  # The rule follows the patients a refit is given: every censored patient and five events.
+  few <- rbind(env$d_noise[env$d_noise$event == 0, ], utils::head(env$d_noise[env$d_noise$event == 1, ], 5L))
+  expect_identical(env$vp_nodesize_external(few), max(10, round(2 * nrow(few) / sum(few$event == 1))))
+  expect_gt(env$vp_nodesize_external(few), 10)
+  env$NODESIZE_EXTERNAL <- 25
+  expect_identical(env$vp_nodesize_external(few), 25)
+  # A classification screen grows no survival forest, so it passes nothing.
+  env$.survival <- FALSE
+  expect_null(env$vp_nodesize_external(few))
 })
 
 test_that("vp-fit selects a planted signal", {
@@ -545,7 +602,8 @@ test_that("vp-individual names the class a two-class screen's gradients explain"
 test_that("vp-individual gives the planted signal larger gradients than the nulls", {
   skip_on_cran()
   vp33_skip_unless_stack(rf_template_packages("vp", "individual"))
-  fit <- vp_fit_first(choices = utils::modifyList(vp_choices, list(SPLIT_WEIGHT = FALSE, NVAR = 50)))
+  # 500 trees: with the default mtry, 50 trees on 200 patients left xs no rule ivarpro() could release.
+  fit <- vp_fit_first(choices = utils::modifyList(vp_choices, list(NTREE = 500, REPEATS = 0)))
   env <- vpi_run(fit, list(SHOW = c("xs", "x1", "x2"), SEED = 1, SAVE_FIGURES = FALSE))
   cov <- env$icov
   xs <- cov$median_abs[cov$term == "xs"]

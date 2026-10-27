@@ -273,9 +273,10 @@ grad <- as.data.frame(ivp)
 Every predictor the screen was given, and whether it has a gradient. A
 predictor is **removed before gradients** when the fit cut it before building
 any rule for it, by the split weights or `NVAR`; it has **none for any
-patient** when no rule released it. Neither is evidence of no effect. To give
-every candidate gradients, rerun `vp-fit` with `SPLIT_WEIGHT <- FALSE` and
-`NVAR` at least the number of candidates plus noise columns.
+patient** when no rule released it. Neither is evidence of no effect. A
+predictor is removed before gradients chiefly under `vp-fit`'s parsimonious
+screen (`SPLIT_WEIGHT <- TRUE`); rerun `vp-fit` with its default exploration
+setting to give every candidate rules.
 
 ```{r}
 #| label: tbl-coverage
