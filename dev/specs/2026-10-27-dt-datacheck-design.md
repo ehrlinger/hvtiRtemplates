@@ -2,9 +2,9 @@
 
 **Date:** 2026-10-27
 **Status:** design. Sections 3 to 6 were decided by John Ehrlinger on 2026-10-27, in the order
-they appear. Where the checks live (section 7) is decided by a rule applied to a census that is
-staged on the share and has not been run; its numbers will be added here when it has.
-Implementation waits on the census and on John's go-ahead.
+they appear. Where the checks live (section 7) was decided by a rule John set the same day and
+a census run on lri that evening: **`dt` ships as its own template.** Implementation waits on
+John's go-ahead.
 **Reads with:** `2026-10-14-bd-vars-action-items-design.md` (the diagnostics row of section 4
 and its open item 3, which this note settles); `2026-08-29-template-conversion-roadmap-design.md`
 (the "Datasets last" rule, section 2 here); `inst/templates/00_datasets/bd.qmd`.
@@ -118,7 +118,38 @@ something `bd` does not hold, such as a `vars` output or an analysis set. The ce
 datasets by member name, so members named through macro variables fall into `other_only`.
 Skim a sample of that class in the private CSV before applying the rule.
 
-Census results: *not yet run.*
+**Census results, and the decision: separate `dt`.** Two runs on 2026-10-27 over `/studies`,
+738 `dt` jobs in 517 studies, all SAS, 729 of them in `datasets/`; 1,072 `tp.` template copies
+skipped. (The catalog's 503 jobs come from `job_census()`'s own counting; the two are not
+reconciled here.)
+
+| class | run 1 | run 2, work reads set aside |
+|---|---|---|
+| `bd_only` | 344 | **369 (50.0%)** |
+| `bd_and_other` | 307 | 279 |
+| `other_only` | 83 | 83 |
+| `work_only`, `none` | 4 | 7 |
+
+Run 1 counted a WORK dataset the job did not create itself as another source; 287 of its 307
+`bd_and_other` jobs read one, so its 46.6% was a floor and 88.2% the ceiling. Run 2 sets every
+work read aside and is the one the rule reads. No `dt` job `%include`s a `bd` job.
+
+What the other half reads, from the private CSV by name shape only: most reads are in the
+`library` libref that `bd` writes to (554), as members no `bd` job in the study writes. 104
+jobs read a member with a date in its name, which reads as a check against an earlier release,
+and 11 read an imputation, propensity or `vars` output. Only 7 jobs read a macro-named member,
+so the blind spot does not move the answer. The `modules`, `master` and `main` librefs (58
+reads) are checks against the source.
+
+Two consequences for the template, beyond the home:
+
+- **The rebuild diff earns its place.** Checking against a dated earlier release is the commonest
+  non-`bd` read; `review_built()` is that check for an R-built study.
+- **50 legacy `dt` jobs write a permanent dataset.** The template does not carry that over
+  (section 3): a check that writes becomes a `bd` or `vars` step.
+
+Commands, script and both runs' output: `/studies/general/_development/dt-census-20261027/`
+(`out-run1/`, `out/`). The private CSVs name study paths and stay there.
 
 ## 8. Report conventions
 
@@ -141,11 +172,12 @@ the console. The study-specific lines are `EDIT:` markers: `DATASET_ID` (separat
 
 ## 10. Open
 
-1. The census numbers, and the home the rule then picks.
+1. Whether `dt` should also take a second input, such as an earlier dated release or a `vars`
+   output, since half the corpus reads something beyond `bd`'s output. The first template reads
+   only the working file; the rebuild diff covers the dated-release case.
 2. The hvtiRutilities helper's name and API, in that package's own design.
-3. Whether a merged `bd` later wants a way to re-run only its checks against an existing
-   working file. Not designed here: wait until the iteration cost is measured on the cardiac
-   master.
+3. Merging into `bd` stays possible, because every section is written to move. Revisit it only
+   if a later census, after R `dt` jobs exist, shows they read nothing but `bd`'s output.
 
 ## 11. Out of scope
 
