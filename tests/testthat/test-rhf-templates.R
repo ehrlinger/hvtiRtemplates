@@ -179,6 +179,58 @@ test_that("rhf-explain explains the saved forest without refitting", {
   expect_identical(file.mtime(forest_cache), grown_at)
 })
 
+test_that("rhf-explain's partial dependence is off by default and its choices parse", {
+  src <- readLines(template_path("rhf", "explain"), warn = FALSE)
+  env <- new.env()
+  eval(parse(text = rf_chunk(src, "edit-study-choices")), envir = env)
+  expect_null(env$PD_VARS)
+  expect_identical(c(env$PD_N, env$PD_GRID, env$PD_MIN_RISK), c(300, 9, 20))
+  # With PD_VARS NULL neither chunk computes anything, so nothing else they read is needed.
+  for (label in c("tbl-pd-exposure", "fig-partial")) {
+    expect_null(eval(parse(text = rf_chunk(src, label)), envir = env), info = label)
+  }
+  expect_false(exists("pd", envir = env, inherits = FALSE))
+  # The lessons of the first real run travel with the template.
+  text <- paste(src, collapse = " ")
+  expect_match(text, "These paths are not calibrated probabilities", fixed = TRUE)
+  expect_match(text, "should come from a pooled model", fixed = TRUE)
+})
+
+test_that("rhf-explain counts exposure in aggregate only, then draws partial dependence", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("rhf", "explain"))
+  d <- rhf_data()
+  d$xb <- as.integer(d$x_1 > stats::median(d$x_1))
+  fit <- rhf_fit_first(d, utils::modifyList(rhf_choices, list(PREDICTORS = c("xtd", "x_1", "xb"), TREESIZE = 5L)))
+  env <- new.env(parent = globalenv())
+  env$.root <- fit$.root
+  utils::capture.output(rf_run("rhf", "explain", c(rhf_explain_labels, "tbl-pd-exposure", "fig-partial"), env,
+                               c(rhf_explain_choices, list(PD_VARS = c("xtd", "xb"), PD_N = 60, PD_GRID = 3,
+                                                           PD_MIN_RISK = 1))))
+  ex <- env$pd_exposure
+  expect_identical(names(ex), c("variable", "value", "time.index", "start", "stop", "patients", "patient_years", "deaths"))
+  # One block for everyone and one for each value of the 0/1 predictor; the continuous one gets none.
+  n_win <- nrow(env$imp$window.info)
+  expect_identical(nrow(ex), 3L * n_win)
+  expect_setequal(unique(ex$variable), c("(all)", "xb"))
+  everyone <- ex[ex$variable == "(all)", ]
+  by_value <- ex[ex$variable == "xb", ]
+  expect_equal(everyone$deaths, by_value$deaths[by_value$value == "0"] + by_value$deaths[by_value$value == "1"])
+  expect_equal(everyone$patient_years, by_value$patient_years[by_value$value == "0"] +
+                 by_value$patient_years[by_value$value == "1"])
+  expect_true(all(everyone$patients <= length(unique(d$ccfid))))
+  # Aggregate only: no study id, and no more rows than points times values.
+  expect_false(any(unlist(lapply(ex, as.character)) %in% as.character(unique(d$ccfid))))
+  # The partial dependence: 3 values for xtd and 2 for xb at each importance point still at risk.
+  expect_setequal(unique(env$pd$variable), c("xtd", "xb"))
+  expect_setequal(env$pd$value[env$pd$variable == "xb"], c(0, 1))
+  expect_true(all(env$pd$n.risk >= 1L & env$pd$n.risk <= 60L))
+  expect_s3_class(ggplot2::ggplot_build(env$.fig), "ggplot_built")
+  if (.Platform$OS.type != "windows") {
+    expect_identical(format(file.mode(file.path(env$CACHE_DIR, "rhf-partial.rds"))), "600")
+  }
+})
+
 test_that("rhf-explain stops when no fit has run in its set", {
   rf_skip_unless_stack(rf_template_packages("rhf", "explain"))
   env <- new.env(parent = globalenv())

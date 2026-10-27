@@ -38,7 +38,7 @@ test_that("every printed figure is also saved, under its documented name", {
     `rfs-fit` = c("rfs-fit-diagnostics-error", "rfs-fit-diagnostics-survival", "rfs-fit-diagnostics-brier"),
     `rhf-fit` = "rhf-fit-tuning",
     `rhf-explain` = c("rhf-explain-auc-cumulative", "rhf-explain-auc-incident", "rhf-explain-hazard", "rhf-explain-chf",
-                      "rhf-explain-importance"),
+                      "rhf-explain-importance", "rhf-explain-partial"),
     `vp-fit` = c("vp-fit-coverage", "vp-fit-varpro"),
     `vp-explain` = "vp-explain-dependence-varpro",
     `vp-dependence` = c("vp-dependence-graph", "vp-dependence-heatmap"),

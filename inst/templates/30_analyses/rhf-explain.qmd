@@ -128,8 +128,23 @@ MAX_TREE <- 150
 # when it matters.
 N_TIMES <- 5
 
-# EDIT: seed for the sample of curves and the VarPro cache. It is part of every
-# cache key.
+# EDIT: partial dependence for these predictors, at the importance points above.
+# NULL, the default, draws none: it is the slowest step here. Each value on a
+# predictor's grid predicts the hazard for PD_N patients over every interval
+# they have; on the first real study, 500 trees and 172,000 intervals, that was
+# about 2.7 minutes per value.
+PD_VARS <- NULL
+# Patients drawn from the forest's own training rows, and values per continuous
+# predictor, spread from its 5th to its 95th percentile. A 0/1 predictor gets 0
+# and 1.
+PD_N <- 300
+PD_GRID <- 9
+# A point of follow-up is left out of the partial dependence when fewer than
+# this many of the PD_N patients are still at risk there.
+PD_MIN_RISK <- 20
+
+# EDIT: seed for the sample of curves, the VarPro cache and the partial
+# dependence sample. It is part of every cache key.
 SEED <- 2026
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
@@ -266,6 +281,14 @@ save_figure(.fig, "rhf-explain-chf")
 .fig
 ```
 
+**These paths are not calibrated probabilities.** No check has yet compared the
+survival implied by a forest's predicted hazard with what happened to the
+patients. On the first real study it looked badly off: patients who did not die
+had path survival near 0.1, because the predicted hazard spiked to 3 to 10 per
+year along their paths. Until a calibration check is done, read a path as
+relative risk along follow-up, higher or lower than another patient's and when,
+and do not quote a survival probability from it.
+
 ## Importance
 
 ```{r}
@@ -312,8 +335,105 @@ and the order below the first predictor or two can move with it. Before a
 ranking goes into a report, render this job again with two or three other
 `SEED` values and keep the predictors that stay near the top in every run.
 
-<!-- TODO: partial dependence for a hazard forest, once ggRandomForests has it.
-     There is no RHF partial dependence in ggRandomForests yet. -->
+## Partial dependence
+
+ggRandomForests has no partial dependence for a hazard forest yet, so this job
+builds it from `predict()`, and only for the predictors named in `PD_VARS`. For
+each value on a predictor's grid, it sets the predictor to that value on every
+interval of a sample of patients, predicts their hazard, and averages it at each
+importance point over the patients still at risk there. The hazard at a time
+depends only on the interval covering that time, so setting the whole path is
+the same as setting the one interval. The curves are marginal: they say nothing
+about two predictors acting together.
+
+**Count the exposure before reading a curve.** The table below gives, at each
+importance point, the patients at risk, the patient-years and the deaths, and
+for a 0/1 predictor each of those for both values. A curve at a point with
+little exposure is decided by a handful of deaths. On the first real study a
+rare time-varying 0/1 predictor, intubation, had a hazard ratio between its two
+values that flipped from point to point: 13, 0.59, 74, 0.57. It was not
+look-ahead, since a refit with the final intervals reset showed the same
+pattern. Each point held 0.12 to 0.33 intubated patient-years, with 2, 0, 4 and
+0 intubated deaths, and those deaths drew the curve. The direction of such a
+predictor should come from a pooled model, such as a `hz` job, not from these
+curves.
+
+```{r}
+#| label: tbl-pd-exposure
+#| tbl-cap: "Exposure at each importance point: patients at risk, patient-years and deaths, by value for a 0/1 predictor"
+# Counted on every patient the forest was grown on, not only the PD_N sample, and
+# reported as counts alone: no row here describes one patient.
+if (length(PD_VARS)) {
+  .absent <- setdiff(PD_VARS, forest$xvar.names)
+  if (length(.absent)) {
+    stop("PD_VARS names a predictor the forest was not grown on: ", paste(.absent, collapse = ", "), call. = FALSE)
+  }
+  .train <- data.frame(id = forest$id, forest$yvar, forest$xvar)
+  .windows <- imp$window.info
+  .exposure <- function(k, var, value) {
+    data.frame(variable = var, value = value, time.index = .windows$index, start = .windows$start,
+               stop = .windows$stop, t(vapply(seq_len(nrow(.windows)), function(i) {
+                 a <- .windows$start[i]
+                 b <- .windows$stop[i]
+                 overlap <- pmax(0, pmin(.train$stop, b) - pmax(.train$start, a))
+                 at <- k & overlap > 0
+                 c(patients = length(unique(.train$id[at])), patient_years = sum(overlap[at]),
+                   deaths = sum(.train$event[at] == 1 & .train$stop[at] <= b))
+               }, numeric(3L))), row.names = NULL)
+  }
+  pd_exposure <- do.call(rbind, c(
+    list(.exposure(rep(TRUE, nrow(.train)), "(all)", "all")),
+    lapply(PD_VARS, function(v) {
+      x <- .train[[v]]
+      if (!all(x %in% c(0, 1))) return(NULL)
+      rbind(.exposure(x == 0, v, "0"), .exposure(x == 1, v, "1"))
+    })
+  ))
+  knitr::kable(pd_exposure, digits = c(0, 0, 0, 3, 3, 0, 2, 0))
+}
+```
+
+```{r}
+#| label: fig-partial
+#| fig-cap: "Partial dependence: the mean predicted hazard at each importance point, as each predictor is set to each
+#|   value on every interval of a sample of patients."
+#| message: true
+if (length(PD_VARS)) {
+  hvtiRtemplates::guard_long_fit("rhf-partial", dir = CACHE_DIR,
+                                 why = "each grid value predicts the hazard over every interval of the sample",
+                                 refit = REFIT)
+  pd <- hvtiRtemplates:::.owner_only(.cache_file("rhf-partial"), cache_fit(
+    "rhf-partial",
+    local({
+      train <- data.frame(id = forest$id, forest$yvar, forest$xvar)
+      ids <- sample(unique(train$id), min(PD_N, length(unique(train$id))))
+      nd <- train[train$id %in% ids, ]
+      do.call(rbind, lapply(PD_VARS, function(v) {
+        x <- nd[[v]]
+        grid <- if (all(x %in% c(0, 1))) c(0, 1) else
+          unique(stats::quantile(x, seq(0.05, 0.95, length.out = PD_GRID), names = FALSE))
+        do.call(rbind, lapply(grid, function(g) {
+          nd[[v]] <- g
+          h <- predict(forest, nd)$hazard.test[, .time_index, drop = FALSE]
+          data.frame(variable = v, value = g, time.index = .time_index, time = forest$time.interest[.time_index],
+                     hazard = colMeans(h, na.rm = TRUE), n.risk = colSums(!is.na(h)))
+        }))
+      }))
+    }),
+    seed = SEED, dir = CACHE_DIR, refit = REFIT
+  ))
+  pd <- pd[pd$n.risk >= PD_MIN_RISK, ]
+  pd$point <- factor(sprintf("%.2f", pd$time), levels = sprintf("%.2f", sort(unique(pd$time))))
+  .fig <- ggplot2::ggplot(pd, ggplot2::aes(value, hazard, colour = point)) +
+    ggplot2::geom_line() +
+    ggplot2::geom_point(size = 1) +
+    ggplot2::facet_wrap(~variable, scales = "free_x") +
+    ggplot2::labs(x = "Value set on every interval", y = "Mean predicted hazard", colour = "Time") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+  save_figure(.fig, "rhf-explain-partial")
+  .fig
+}
+```
 
 ```{r}
 #| label: provenance
