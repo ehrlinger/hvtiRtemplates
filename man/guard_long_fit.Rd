@@ -7,8 +7,8 @@
 guard_long_fit(name, dir, why, refit = FALSE)
 }
 \arguments{
-\item{name}{Character(1). The \code{cache_fit()} name; the cache file is
-\code{<dir>/<name>.rds}.}
+\item{name}{Character. The \code{cache_fit()} name, or several when one long step writes several caches;
+each cache file is \code{<dir>/<name>.rds}, and the call is refused while any of them is missing.}
 
 \item{dir}{Character(1). The \code{cache_fit()} directory.}
 

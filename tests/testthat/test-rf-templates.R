@@ -190,6 +190,217 @@ test_that("PARTIAL_VARS refuses a variable the forest was not grown on", {
   )
 })
 
+# The veteran cohort has 128 deaths, so SUBRATIO = 0.5 puts 64 events in a subsample, under the
+# floor of 100, and bands-plan warns. The first test below asserts the warning once; the rest muffle
+# it by its message, so any other warning still reaches the summary.
+# nolint start: object_usage_linter.
+rf_run_bands <- function(...) {
+  withCallingHandlers(
+    rf_run(...),
+    warning = function(w) {
+      if (grepl("under the 100 the bands need", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+    }
+  )
+}
+# nolint end
+
+band_labels <- c("bands-plan", "importance-intervals", "dependence-partial-bands")
+
+test_that("each family's SUBRATIO comment names only its own floor", {
+  files <- template_list()$file
+  text <- function(name) paste(readLines(files[basename(files) == paste0(name, ".qmd")], warn = FALSE), collapse = "\n")
+  # rfr has no floor, so nothing there warns; rfs and rfc each name their own.
+  expect_false(grepl("unless the check\n# below warns", text("rfr-explain"), fixed = TRUE))
+  expect_false(grepl("(rfc)", text("rfs-explain"), fixed = TRUE))
+  expect_false(grepl("(rfs)", text("rfs-explain"), fixed = TRUE))
+})
+
+test_that("the importance intervals cache the subsample VIMP matrix and take the SE about the plotted estimate", {
+  files <- template_list()$file
+  for (name in c("rfs-explain", "rfc-explain", "rfr-explain")) {
+    text <- paste(readLines(files[basename(files) == paste0(name, ".qmd")], warn = FALSE), collapse = "\n")
+    expect_false(grepl("se.jk.Z|extract.subsample", text), info = name)
+    expect_true(grepl("hvtiRtemplates:::.band_vimp_star(subsample(", text, fixed = TRUE), info = name)
+    expect_true(grepl("hvtiRtemplates:::.band_vimp_se(.vi_est, vi_star, .subratio)", text, fixed = TRUE), info = name)
+  }
+})
+
+test_that("the explain templates call their importance VIMP (anti-split), never permutation importance", {
+  # vimp() and subsample() are both called with importance = "anti", randomForestSRC's anti-split
+  # (noising-up) VIMP, so a caption or a comment saying permutation describes another quantity.
+  files <- template_list()$file
+  for (name in c("rfs-explain", "rfc-explain", "rfr-explain")) {
+    lines <- readLines(files[basename(files) == paste0(name, ".qmd")], warn = FALSE)
+    expect_false(any(grepl("ermutation", lines)), info = name)
+    caps <- paste(lines, collapse = "\n")
+    expect_true(grepl("#| fig-cap: \"VIMP (anti-split importance)", caps, fixed = TRUE), info = name)
+    expect_true(grepl("#| tbl-cap: \"VIMP (anti-split importance) and minimal depth", caps, fixed = TRUE), info = name)
+    expect_true(grepl(".cap <- sprintf(paste(\"VIMP (anti-split importance) of each predictor", caps, fixed = TRUE),
+                info = name)
+  }
+})
+
+test_that("with BANDS_B at its default the explain writes no band cache and draws no band", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
+  env <- rfs_explained()
+  expect_identical(env$BANDS_B, 0)
+  rf_run("rfs", "explain", band_labels, env)
+  expect_length(list.files(env$CACHE_DIR, "band|subsample"), 0L)
+  expect_length(list.files(env$.root, "partial-bands|importance-intervals", recursive = TRUE), 0L)
+})
+
+test_that("with BANDS_B at its default bands-plan writes nothing, not even the section heading", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
+  env <- rfs_explained()
+  expect_identical(utils::capture.output(rf_run("rfs", "explain", "bands-plan", env)), character())
+})
+
+test_that("the confidence-band heading is written only from inside the bands-plan chunk", {
+  # Source-level: the heading must never be static markdown, or it renders even when BANDS_B is 0.
+  files <- template_list()$file
+  for (name in c("rfs-explain", "rfc-explain", "rfr-explain")) {
+    f <- files[basename(files) == paste0(name, ".qmd")]
+    expect_length(f, 1L)
+    lines <- readLines(f, warn = FALSE)
+    in_chunk <- FALSE
+    label <- NA_character_
+    outside <- integer()
+    inside_labels <- character()
+    for (i in seq_along(lines)) {
+      line <- lines[i]
+      if (!in_chunk && grepl("^```\\{", line)) {
+        in_chunk <- TRUE
+        label <- NA_character_
+      } else if (in_chunk && grepl("^```\\s*$", line)) {
+        in_chunk <- FALSE
+      } else if (in_chunk && grepl("^#\\|\\s*label:", line)) {
+        label <- sub("^#\\|\\s*label:\\s*", "", line)
+      } else if (in_chunk && grepl("## Confidence bands", line, fixed = TRUE)) {
+        inside_labels <- c(inside_labels, label)
+      } else if (!in_chunk && grepl("^## Confidence bands", line)) {
+        outside <- c(outside, i)
+      }
+    }
+    expect_length(outside, 0L)
+    expect_true("bands-plan" %in% inside_labels, info = name)
+  }
+})
+
+test_that("every band chunk is left out of the report, source and all, when BANDS_B is 0", {
+  # code-fold: true prints a folded Code block for every chunk that is included, even one that
+  # writes nothing, so the three band chunks must carry the include option themselves.
+  files <- template_list()$file
+  for (name in c("rfs-explain", "rfc-explain", "rfr-explain")) {
+    f <- files[basename(files) == paste0(name, ".qmd")]
+    lines <- readLines(f, warn = FALSE)
+    for (label in band_labels) {
+      at <- which(lines == paste0("#| label: ", label))
+      expect_length(at, 1L)
+      # The chunk's option lines, up to its first line of code.
+      opts <- lines[at:(at + which(!startsWith(lines[at:length(lines)], "#|"))[1L] - 2L)]
+      expect_true("#| include: !expr 'BANDS_B > 0'" %in% opts, info = paste(name, label))
+    }
+  }
+})
+
+# The interval figure's points are the importance figure's own estimate, so the two cannot disagree
+# in sign or order. The chunk is run again on the same job: its subsample cache loads.
+# nolint start: object_usage_linter.
+expect_intervals_on_importance <- function(prefix, env) {
+  local_child_chunks()
+  rf_run(prefix, "explain", "importance-intervals", env)
+  imp <- env$vi$importance
+  if (is.matrix(imp)) imp <- imp[, "all"]
+  d <- env$.fig$data
+  expect_equal(d$vimp[match(names(imp), d$vars)], unname(imp), info = prefix)
+  # What is cached is the matrix of subsample VIMPs, not the subsample() object with its forest, and
+  # the bars are the estimate +/- 1.96 SE taken about that estimate.
+  expect_true(is.matrix(env$vi_star), info = prefix)
+  se <- hvtiRtemplates:::.band_se(imp, env$vi_star[names(imp), , drop = FALSE], env$.subratio)
+  expect_equal(d$upper - d$vimp, stats::qnorm(0.975) * unname(se[as.character(d$vars)]), info = prefix)
+}
+# nolint end
+
+test_that("rfs-explain draws the importance intervals and the partial bands from cached subsamples", {
+  skip_on_cran()
+  rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
+  withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
+  env <- new.env(parent = globalenv())
+  env$.root <- rfs_explained_copy()
+  choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
+  expect_warning(rf_run("rfs", "explain", c(explain_labels, band_labels), env, choices), "SUBRATIO")
+  for (nm in c("rfs-vimp-subsample", "rfs-band-rows", paste0("rfs-partial-band-", env$sel))) {
+    expect_true(file.exists(file.path(env$CACHE_DIR, paste0(nm, ".rds"))), info = nm)
+  }
+  expect_identical(dim(env$bands[[1]]$star)[2], 3L)
+  expect_intervals_on_importance("rfs", env)
+  expect_gt(length(list.files(env$.root, "rfs-explain-importance-intervals", recursive = TRUE)), 0L)
+  expect_gt(length(list.files(env$.root, "rfs-explain-dependence-partial-bands-page-01", recursive = TRUE)), 0L)
+})
+
+test_that("a bigger TOP_K computes bands only for the new variables", {
+  skip_on_cran()
+  rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
+  withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
+  root <- rfs_explained_copy()
+  env <- new.env(parent = globalenv())
+  env$.root <- root
+  choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
+  rf_run_bands("rfs", "explain", c(explain_labels, band_labels), env, choices)
+  first <- file.path(env$CACHE_DIR, paste0("rfs-partial-band-", env$sel, ".rds"))
+  before <- tools::md5sum(first)
+  # A bigger TOP_K makes the full forest's partial stale, so REFIT is set, as a study
+  # author would set it. REFIT recomputes only stale caches: the two bands already cached
+  # are current, and must be left byte for byte as they were.
+  again <- new.env(parent = globalenv())
+  again$.root <- root
+  pooled <- NULL
+  # Taken before the mock is installed: hvtiRtemplates:::.band_pool, looked up inside the
+  # mock, is the mock, and the call recurses until the stack overflows.
+  real_pool <- hvtiRtemplates:::.band_pool
+  trace_pool <- function(vars, grids, progress = NULL) {
+    pooled <<- vars
+    real_pool(vars, grids, progress)
+  }
+  local_mocked_bindings(.band_pool = trace_pool, .package = "hvtiRtemplates")
+  rf_run_bands("rfs", "explain", c(explain_labels, band_labels), again, modifyList(choices, list(TOP_K = 3, REFIT = TRUE)))
+  expect_identical(pooled, again$sel[3])
+  expect_identical(tools::md5sum(first), before)
+  expect_true(file.exists(file.path(again$CACHE_DIR, paste0("rfs-partial-band-", again$sel[3], ".rds"))))
+})
+
+test_that("BAND_STYLE and BAND_AT only redraw", {
+  skip_on_cran()
+  rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
+  withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
+  root <- rfs_explained_copy()
+  choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
+  env <- new.env(parent = globalenv())
+  env$.root <- root
+  rf_run_bands("rfs", "explain", c(explain_labels, band_labels), env, choices)
+  caches <- list.files(env$CACHE_DIR, "band|subsample", full.names = TRUE)
+  before <- tools::md5sum(caches)
+  cont <- env$sel[vapply(env$sel, function(v) hvtiRtemplates:::.band_grid(env$pd, v)$type == "continuous", TRUE)][1]
+  at <- stats::setNames(list(stats::median(env$bands[[cont]]$x)), cont)
+  again <- new.env(parent = globalenv())
+  again$.root <- root
+  rf_run_bands("rfs", "explain", c(explain_labels, band_labels), again,
+               c(choices, list(BAND_STYLE = "bars", BAND_AT = at)))
+  expect_identical(tools::md5sum(caches), before)
+})
+
+test_that("an uncached band is refused at the console and names submit_job()", {
+  skip_on_cran()
+  rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
+  withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  env <- new.env(parent = globalenv())
+  env$.root <- rfs_explained_copy()
+  choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
+  expect_error(rf_run_bands("rfs", "explain", c(explain_labels, band_labels), env, choices), "submit_job(", fixed = TRUE)
+})
+
 # Classification data for rfc: two iris species, so the outcome is binary as
 # most clinical classification outcomes are.
 rfc_data <- function() {
@@ -276,7 +487,7 @@ test_that("rfc-explain ranks by overall importance, not per class", {
   expect_s3_class(ggplot2::ggplot_build(plot(env$pd)), "ggplot_built")
 })
 
-test_that("no explain template grows a forest", {
+test_that("no explain template grows a forest on the full cohort", {
   # The design's central promise: an explanation describes the forest the fit
   # job saved. A refit here, however helpful it looks when the handoff is
   # missing, would explain a different forest in a report that says otherwise.
@@ -301,6 +512,16 @@ test_that("no explain template grows a forest", {
   for (f in templates) {
     code <- sub("#.*$", "", readLines(f, warn = FALSE))
     expect_false(any(grepl(grows_forest, code)), info = basename(f))
+  }
+  # The one place a forest is grown for an explain is a subsample refit.
+  expect_match(paste(deparse(body(hvtiRtemplates:::.band_refit)), collapse = "\n"), "randomForestSRC::rfsrc", fixed = TRUE)
+})
+
+test_that("every fit grows the forest subsample() needs: saved, by.root", {
+  for (t in c("rfs", "rfc", "rfr")) {
+    src <- paste(readLines(template_path(t, "fit"), warn = FALSE), collapse = "\n")
+    expect_false(grepl("forest\\s*=\\s*FALSE", src), info = t)
+    expect_false(grepl("bootstrap\\s*=", src), info = t)
   }
 })
 
@@ -651,4 +872,35 @@ test_that("rfs-fit stops on a predictor with no values, which the forest would d
   env <- rf_env(d)
   expect_error(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "tbl-missing"), env, rfs_choices),
                "^PREDICTORS names a column with no values: prior[.]")
+})
+
+test_that("rfc-explain and rfr-explain draw the bands too", {
+  skip_on_cran()
+  withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
+  cases <- list(rfc = list(data = rfc_data(), choices = rfc_choices),
+                rfr = list(data = rfr_data(), choices = rfr_choices))
+  for (prefix in names(cases)) {
+    rf_skip_unless_stack(c(rf_template_packages(prefix, "explain"), "patchwork"))
+    fit_env <- rf_fit_first(prefix, cases[[prefix]]$data, cases[[prefix]]$choices)
+    env <- new.env(parent = globalenv())
+    env$.root <- fit_env$.root
+    rf_run_bands(prefix, "explain", c(explain_labels, band_labels), env,
+                 list(TOP_K = 2, SEED = 1, BANDS_B = 3, SUBRATIO = 0.5))
+    for (nm in c(paste0(prefix, "-vimp-subsample"), paste0(prefix, "-partial-band-", env$sel))) {
+      expect_true(file.exists(file.path(env$CACHE_DIR, paste0(nm, ".rds"))), info = nm)
+    }
+    expect_intervals_on_importance(prefix, env)
+    expect_gt(length(list.files(env$.root, paste0(prefix, "-explain-dependence-partial-bands-page-01"),
+                                recursive = TRUE)), 0L)
+  }
+})
+
+test_that("no explain template names a band cache with the raw predictor name", {
+  # A predictor such as `a/b` is no file stem; .band_cache_name() encodes it, in the check, guard and write alike.
+  files <- template_list()$file
+  for (prefix in c("rfs", "rfc", "rfr")) {
+    text <- readLines(files[basename(files) == paste0(prefix, "-explain.qmd")], warn = FALSE)
+    expect_false(any(grepl(paste0("\"", prefix, "-partial-band-\""), text, fixed = TRUE)), info = prefix)
+    expect_length(grep(paste0(".band_cache_name(\"", prefix, "\""), text, fixed = TRUE), 3L)
+  }
 })

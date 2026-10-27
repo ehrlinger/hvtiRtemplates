@@ -16,7 +16,8 @@ read_job_data(
   reduce = NULL,
   join_key = NULL,
   one_row_per_patient = FALSE,
-  imputation = NULL
+  imputation = NULL,
+  whole_patients = FALSE
 )
 }
 \arguments{
@@ -126,6 +127,14 @@ still stops the read. The column must be in the data read, and in
 identifier. The record says how many imputations the rows hold. It is
 not inferred from \code{key}, since a visit column in \code{key} makes a
 long dataset, not an imputation.}
+
+\item{whole_patients}{\code{TRUE} for a job that models intervals of a
+patient's follow-up, such as a random hazard forest on counting-process
+rows. With a \code{where}, it stops when a patient kept by \code{where}
+lost some of their rows but not all, since that shortens follow-up without
+a word. An \code{analysis_set} is not checked: one that selects intervals
+rather than patients shortens follow-up unnoticed. \code{FALSE}, the
+default, checks nothing.}
 }
 \value{
 A list:

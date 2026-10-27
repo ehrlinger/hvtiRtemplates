@@ -104,6 +104,7 @@ environment(rf_gg_partial_varpro) <- baseenv()
 # so a package a template does not use is never looked up here.
 rf_pkg_floors <- c(
   randomForestSRC  = "3.7.0",
+  randomForestRHF  = "2.1.0",
   varPro           = "3.2.0",
   ggRandomForests  = "4.0.0",
   hvtiRutilities   = "1.3.0",
