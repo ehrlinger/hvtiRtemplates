@@ -186,6 +186,24 @@ TREESIZE <- NULL
 #   "drop_na" drops intervals missing a predictor
 REPAIR <- character()
 
+# EDIT: caps on predictors with implausible tails, as c(column = cap), or NULL for
+# none. A forest splits on the order of a value, so a cap rescales nothing: it
+# puts every value above it with the cap, so a few unit errors cannot carve out a
+# node of their own. Set them from the clinical range, not from the data.
+CAPS <- NULL
+
+# EDIT: the look-ahead check. randomForestRHF assumes each interval's predictors
+# were known when it began, and cannot tell when they were not. A dataset build
+# that moves a value recorded on the day of the event back by a fraction of a day
+# puts it on a short final interval that ends in the event: the first real study
+# found 251 of 300 deaths on such an interval, with a lab changing on it.
+# LOOKAHEAD_INTERVAL is that interval's length in the units of START and STOP,
+# such as 0.25 / 365.2425 for a quarter day in years; NULL checks every final
+# interval. "reset" gives each checked final interval the predictor values of
+# the interval before it: a sensitivity analysis, beside the forest grown "keep".
+LOOKAHEAD_INTERVAL <- NULL
+LOOKAHEAD <- "keep"
+
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
 # render instead of returning the old forest; TRUE recomputes only the caches
 # that are out of date, so it is safe to leave on while iterating.
@@ -252,6 +270,24 @@ if (length(.chr)) {
 }
 ```
 
+## Cleanup before the fit
+
+Every change this job makes to the rows happens here, before the forest sees
+them, and is counted: the caps, the repairs, and the look-ahead check.
+
+```{r}
+#| label: cap
+.uncappable <- setdiff(names(CAPS), PREDICTORS)
+if (length(.uncappable)) {
+  stop("CAPS names a column that is not in PREDICTORS: ", paste(.uncappable, collapse = ", "), ".", call. = FALSE)
+}
+for (.v in names(CAPS)) {
+  .over <- sum(d[[.v]] > CAPS[[.v]], na.rm = TRUE)
+  d[[.v]] <- pmin(d[[.v]], CAPS[[.v]])
+  cat(.v, ": ", .over, " interval", if (.over != 1L) "s", " capped at ", CAPS[[.v]], "\n", sep = "")
+}
+```
+
 ```{r}
 #| label: tbl-cohort
 #| tbl-cap: "The counting-process rows the forest is grown on"
@@ -272,6 +308,38 @@ knitr::kable(.cp$counts, col.names = c("Rows", ""))
 # A repair is a draft's: this says so where the reader looks, and a final render
 # stops here instead.
 cat(hvtiRtemplates:::.cp_repair_notice(.cp$repaired))
+```
+
+```{r}
+#| label: tbl-lookahead
+#| tbl-cap: "Final intervals whose predictors change from the interval before. Far more among events than among the
+#|   censored says a value from the day of the event reached the interval that ends in it."
+LOOKAHEAD <- match.arg(LOOKAHEAD, c("keep", "reset"))
+# .cp_check() returned the rows ordered by patient, start and stop. The ID is
+# matched to a plain integer because duplicated() on an integer64 ignores fromLast.
+.pt <- match(d[[.selection$id]], unique(d[[.selection$id]]))
+.final <- which(!duplicated(.pt, fromLast = TRUE) & c(FALSE, .pt[-1L] == .pt[-length(.pt)]))
+if (!is.null(LOOKAHEAD_INTERVAL)) {
+  .final <- .final[abs(d[[STOP]][.final] - d[[START]][.final] - LOOKAHEAD_INTERVAL) < LOOKAHEAD_INTERVAL / 25]
+}
+.changed <- matrix(vapply(PREDICTORS, function(p) d[[p]][.final] != d[[p]][.final - 1L], logical(length(.final))),
+                   ncol = length(PREDICTORS), dimnames = list(NULL, PREDICTORS))
+.is_event <- d[[EVENT]][.final] == 1
+.lookahead <- data.frame(final = c("Event", "No event"),
+                         checked = c(sum(.is_event), sum(!.is_event)),
+                         changed = c(sum(rowSums(.changed[.is_event, , drop = FALSE]) > 0),
+                                     sum(rowSums(.changed[!.is_event, , drop = FALSE]) > 0)))
+.on_events <- sort(colSums(.changed[.is_event, , drop = FALSE]), decreasing = TRUE)
+.on_events <- .on_events[.on_events > 0]
+if (length(.on_events)) {
+  cat("Changing most often on an event's final interval: ",
+      paste0(names(utils::head(.on_events, 5L)), " (", utils::head(.on_events, 5L), ")", collapse = ", "), "\n", sep = "")
+}
+if (LOOKAHEAD == "reset" && length(.final)) {
+  d[.final, PREDICTORS] <- d[.final - 1L, PREDICTORS]
+  cat(length(.final), " final intervals given the predictors of the interval before (LOOKAHEAD = \"reset\").\n", sep = "")
+}
+knitr::kable(.lookahead, col.names = c("Final interval", "Checked", "A predictor changes"))
 ```
 
 ## Forest
@@ -359,7 +427,9 @@ if (!is.null(tuned)) {
   event = list(variable = EVENT, event = 1L, censored = 0L),
   # rhf-explain reads this: a forest grown on rows this job repaired makes its
   # report a draft too.
-  repair = as.list(.cp$repaired)
+  repair = as.list(.cp$repaired),
+  caps = as.list(CAPS),
+  lookahead = list(interval = LOOKAHEAD_INTERVAL, action = LOOKAHEAD, final_intervals = length(.final))
 )
 forest <- hvtiRtemplates:::.attach_handoff_lineage(
   forest,
@@ -369,7 +439,11 @@ forest <- hvtiRtemplates:::.attach_handoff_lineage(
   # rhf-explain takes the rows, ID and KEY of this fit from this record.
   selection = .selection
 )
+# The forest keeps every interval it was grown on, predictors included, so the
+# file is patient-level data even with the ID recoded: readable by its owner
+# only. Delete it, and the caches beside it, once the set's results are reported.
 saveRDS(forest, set_path("estimates", "rhf.rds"))
+Sys.chmod(set_path("estimates", "rhf.rds"), mode = "0600")
 ```
 
 ```{r}
