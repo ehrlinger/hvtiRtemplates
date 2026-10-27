@@ -63,7 +63,8 @@ test_that("the start travels in hz's selection, and hm fits Surv(START, TIME, EV
   before <- ls(env, all.names = TRUE)
   withr::defer(rm(list = setdiff(ls(env, all.names = TRUE), before), envir = env))
   list2env(as.list(hazard_env(root), all.names = TRUE), envir = env)
-  hm_labels <- c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit")
+  hm_labels <- c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit", "edit-reported",
+                 "tbl-calibration", "tbl-gof", "save")
   suppressWarnings(utils::capture.output({
     hazard_run("hz", c("set", "edit-study-choices"), env,
                c(list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)),
@@ -80,6 +81,11 @@ test_that("the start travels in hz's selection, and hm fits Surv(START, TIME, EV
   expect_identical(env$START, "iv_start")
   expect_identical(deparse(env$form), "Surv(iv_start, iv_dead, dead) ~ 1")
   expect_equal(env$stage1$data$time_lower, data$iv_start)
+  # hm.rds carries the start on, and hs-setup stops on it.
+  expect_identical(attr(readRDS(hazard_set_path(root, "hm.rds")), "hvti_provenance")$selection$start, "iv_start")
+  hs <- hazard_env(root)
+  hazard_run("hs-setup", c("set", "edit-study-choices"), hs, list(HORIZONS = c(1, 2), VINTAGE = "table2023"))
+  expect_error(hazard_run("hs-setup", "read-upstream", hs), "start/stop rows.*hvtiRtemplates/issues/436")
 
   # An hm whose response drops the start stops rather than fit from zero.
   src <- readLines(hazard_template("hm"), warn = FALSE)
@@ -129,7 +135,10 @@ test_that("a start/stop bootstrap stops, naming TemporalHazard#667, and other re
   boot_at <- grep("^bs <- hzr_bootstrap\\(", runner)
   expect_true(length(guard_at) == 1L && base_at < guard_at && guard_at < boot_at)
   report <- readLines(hazard_template("bh"), warn = FALSE)
-  expect_length(grep(".stop_row_bootstrap(isTRUE(.sel$rows > .sel$patients))", report, fixed = TRUE), 1L)
+  expect_length(grep(".stop_row_bootstrap(isTRUE(.sel$rows > .sel$patients) && is.null(.sel$imputation))", report,
+                     fixed = TRUE), 1L)
+  conc <- readLines(hazard_template("hs-concordance"), warn = FALSE)
+  expect_length(grep(".stop_start_stop_prediction(.rec$start,", conc, fixed = TRUE), 1L)
 })
 
 test_that("hz's start settings stop before the read", {
