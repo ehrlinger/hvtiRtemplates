@@ -211,6 +211,8 @@ hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
   set_path("estimates", "hm.rds"), "hazard-regression-model", .cfg, "the hm job"
 )
 hm_art <- .hm_read$value
+# A start/stop model has no single covariate row per patient to predict from.
+hvtiRtemplates:::.stop_start_stop_prediction(.hm_read$lineage$selection$start, "hm.rds")
 .provenance_data <- c(.hm_read$lineage$data, .provenance_data)
 .provenance_artifacts <- c(.hm_read$lineage$artifacts, list(.hm_read$record))
 ```

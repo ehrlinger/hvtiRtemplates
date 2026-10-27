@@ -87,6 +87,8 @@ d <- job$data[c("iv_dead", "dead", POOL)]
 phases <- list(early = hzr_phase("cdf", t_half = 0.05, nu = 1, m = 1, fixed = "shapes"),
                constant = hzr_phase("constant"))
 base <- hazard(survival::Surv(iv_dead, dead) ~ 1, data = d, dist = "multiphase", phases = phases, fit = TRUE)
+# A start/stop base, Surv(start, stop, event), stops here: hzr_bootstrap() resamples rows, not patients.
+hvtiRtemplates:::.stop_row_bootstrap(hvtiRtemplates:::.has_entry_times(base))
 t0 <- Sys.time()
 # EDIT: the scope, written literally per phase: the same columns as POOL.
 bs <- hzr_bootstrap(base, n_boot = N_BOOT, seed = SEED, scope = list(early = ~ age + female, constant = ~ age + female),
