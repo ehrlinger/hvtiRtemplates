@@ -20,7 +20,8 @@ read_job_data(
   reduce = NULL,
   join_key = NULL,
   one_row_per_patient = FALSE,
-  imputation = NULL
+  imputation = NULL,
+  whole_patients = FALSE
 )
 ```
 
@@ -161,6 +162,15 @@ read_job_data(
   not inferred from `key`, since a visit column in `key` makes a long
   dataset, not an imputation.
 
+- whole_patients:
+
+  `TRUE` for a job that models intervals of a patient's follow-up, such
+  as a random hazard forest on counting-process rows. With a `where`, it
+  stops when a patient kept by `where` lost some of their rows but not
+  all, since that shortens follow-up without a word. An `analysis_set`
+  is not checked: one that selects intervals rather than patients
+  shortens follow-up unnoticed. `FALSE`, the default, checks nothing.
+
 ## Value
 
 A list:
@@ -259,7 +269,7 @@ written.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE)
-#> Study: /tmp/RtmpZNCnOV/job-data-example
+#> Study: /tmp/RtmpdkVZ06/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -272,12 +282,12 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/RtmpZNCnOV/job-data-example
+#> Study: /tmp/RtmpdkVZ06/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
-#> [x] dataset — built.csv, registered as built_20261026.parquet
+#> [x] dataset — built.csv, registered as built_20261027.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
@@ -285,7 +295,7 @@ cfg <- hvtiRutilities::study_config(start = root)
 job <- read_job_data(cfg, where = quote(age >= 18))
 job$record
 #>                  step                                    value
-#> 1              Source dataset `study` (built_20261026.parquet)
+#> 1              Source dataset `study` (built_20261027.parquet)
 #> 2           Rows read                                        4
 #> 3                  ID                                  `ccfid`
 #> 4 Identifiers dropped                                     none

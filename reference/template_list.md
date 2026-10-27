@@ -92,21 +92,23 @@ tl
 #> 28                 rfr.fit    rfr                  fit      analyses
 #> 29             rfs.explain    rfs              explain      analyses
 #> 30                 rfs.fit    rfs                  fit      analyses
-#> 31 rm.balancing_continuous     rm balancing_continuous      analyses
-#> 32               rm.linear     rm               linear      analyses
-#> 33            sid.clusters    sid             clusters      analyses
-#> 34                 sid.fit    sid                  fit      analyses
-#> 35           vp.dependence     vp           dependence      analyses
-#> 36              vp.explain     vp              explain      analyses
-#> 37                  vp.fit     vp                  fit      analyses
-#> 38           vp.individual     vp           individual      analyses
-#> 39              vt.explain     vt              explain      analyses
-#> 40                  vt.fit     vt                  fit      analyses
-#> 41                      hp     hp                 <NA>        graphs
-#> 42          hs.concordance     hs          concordance        graphs
-#> 43                hs.setup     hs                setup        graphs
-#> 44               lp.mirror     lp               mirror        graphs
-#> # 44 templates; `call` and `file` not shown. Read them with $call and $file.
+#> 31             rhf.explain    rhf              explain      analyses
+#> 32                 rhf.fit    rhf                  fit      analyses
+#> 33 rm.balancing_continuous     rm balancing_continuous      analyses
+#> 34               rm.linear     rm               linear      analyses
+#> 35            sid.clusters    sid             clusters      analyses
+#> 36                 sid.fit    sid                  fit      analyses
+#> 37           vp.dependence     vp           dependence      analyses
+#> 38              vp.explain     vp              explain      analyses
+#> 39                  vp.fit     vp                  fit      analyses
+#> 40           vp.individual     vp           individual      analyses
+#> 41              vt.explain     vt              explain      analyses
+#> 42                  vt.fit     vt                  fit      analyses
+#> 43                      hp     hp                 <NA>        graphs
+#> 44          hs.concordance     hs          concordance        graphs
+#> 45                hs.setup     hs                setup        graphs
+#> 46               lp.mirror     lp               mirror        graphs
+#> # 46 templates; `call` and `file` not shown. Read them with $call and $file.
 
 # Every template, where its job is written, and the call that scaffolds it.
 tl[, c("name", "folder", "call")]
@@ -141,20 +143,22 @@ tl[, c("name", "folder", "call")]
 #> 28                 rfr.fit      analyses
 #> 29             rfs.explain      analyses
 #> 30                 rfs.fit      analyses
-#> 31 rm.balancing_continuous      analyses
-#> 32               rm.linear      analyses
-#> 33            sid.clusters      analyses
-#> 34                 sid.fit      analyses
-#> 35           vp.dependence      analyses
-#> 36              vp.explain      analyses
-#> 37                  vp.fit      analyses
-#> 38           vp.individual      analyses
-#> 39              vt.explain      analyses
-#> 40                  vt.fit      analyses
-#> 41                      hp        graphs
-#> 42          hs.concordance        graphs
-#> 43                hs.setup        graphs
-#> 44               lp.mirror        graphs
+#> 31             rhf.explain      analyses
+#> 32                 rhf.fit      analyses
+#> 33 rm.balancing_continuous      analyses
+#> 34               rm.linear      analyses
+#> 35            sid.clusters      analyses
+#> 36                 sid.fit      analyses
+#> 37           vp.dependence      analyses
+#> 38              vp.explain      analyses
+#> 39                  vp.fit      analyses
+#> 40           vp.individual      analyses
+#> 41              vt.explain      analyses
+#> 42                  vt.fit      analyses
+#> 43                      hp        graphs
+#> 44          hs.concordance        graphs
+#> 45                hs.setup        graphs
+#> 46               lp.mirror        graphs
 #>                                                                            call
 #> 1                              add_job("bd", subject = "study", type = "build")
 #> 2                           add_job("dc.eda", subject = "cohort", type = "eda")
@@ -186,20 +190,22 @@ tl[, c("name", "folder", "call")]
 #> 28                            add_job("rfr.fit", subject = "los", type = "rfr")
 #> 29                       add_job("rfs.explain", subject = "dead", type = "rfs")
 #> 30                           add_job("rfs.fit", subject = "dead", type = "rfs")
-#> 31 add_job("rm.balancing_continuous", subject = "exposure", type = "balancing")
-#> 32                   add_job("rm.linear", subject = "outcome", type = "linear")
-#> 33                add_job("sid.clusters", subject = "morphology", type = "sid")
-#> 34                     add_job("sid.fit", subject = "morphology", type = "sid")
-#> 35              add_job("vp.dependence", subject = "dead", type = "dependence")
-#> 36                         add_job("vp.explain", subject = "dead", type = "vp")
-#> 37                             add_job("vp.fit", subject = "dead", type = "vp")
-#> 38                      add_job("vp.individual", subject = "dead", type = "vp")
-#> 39                         add_job("vt.explain", subject = "dead", type = "vt")
-#> 40                             add_job("vt.fit", subject = "dead", type = "vt")
-#> 41                              add_job("hp", subject = "dead_pa", type = "hz")
-#> 42                  add_job("hs.concordance", subject = "dead_pa", type = "hz")
-#> 43                        add_job("hs.setup", subject = "dead_pa", type = "hz")
-#> 44             add_job("lp.mirror", subject = "treatment", type = "propensity")
+#> 31                       add_job("rhf.explain", subject = "dead", type = "rhf")
+#> 32                           add_job("rhf.fit", subject = "dead", type = "rhf")
+#> 33 add_job("rm.balancing_continuous", subject = "exposure", type = "balancing")
+#> 34                   add_job("rm.linear", subject = "outcome", type = "linear")
+#> 35                add_job("sid.clusters", subject = "morphology", type = "sid")
+#> 36                     add_job("sid.fit", subject = "morphology", type = "sid")
+#> 37              add_job("vp.dependence", subject = "dead", type = "dependence")
+#> 38                         add_job("vp.explain", subject = "dead", type = "vp")
+#> 39                             add_job("vp.fit", subject = "dead", type = "vp")
+#> 40                      add_job("vp.individual", subject = "dead", type = "vp")
+#> 41                         add_job("vt.explain", subject = "dead", type = "vt")
+#> 42                             add_job("vt.fit", subject = "dead", type = "vt")
+#> 43                              add_job("hp", subject = "dead_pa", type = "hz")
+#> 44                  add_job("hs.concordance", subject = "dead_pa", type = "hz")
+#> 45                        add_job("hs.setup", subject = "dead_pa", type = "hz")
+#> 46             add_job("lp.mirror", subject = "treatment", type = "propensity")
 
 # Find a template by its qualifier, then copy its call: the follow-up jobs.
 subset(tl, qualifier == "gfup", c(name, folder, call))

@@ -29,7 +29,7 @@ existing file, because a job accumulates a study’s edits.
 Each template carries a light.
 
 - 🟢 **Shipped** (34): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (27): on disk but being reworked, or scheduled into
+- 🟡 **In progress** (29): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
 - 🔴 **Not yet on the way** (11): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
@@ -91,6 +91,8 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `rfr-fit` | Grows a regression forest and checks it: out-of-bag error and predicted against observed. | `add_job("rfr", subject, type, qualifier = "fit")` |
 | 🟢 Shipped | `rfs-explain` | Explains a saved survival forest: variable importance and dependence plots. It never grows a forest. | `add_job("rfs", subject, type, qualifier = "explain")` |
 | 🟢 Shipped | `rfs-fit` | Grows a random survival forest and checks it learned something: out-of-bag error, predicted survival and the Brier score. | `add_job("rfs", subject, type, qualifier = "fit")` |
+| 🟡 In progress | `rhf-explain` | Explains a saved hazard forest: AUC over follow-up, predicted hazard curves and VarPro importance over time. It never grows a forest. | `add_job("rhf", subject, type, qualifier = "explain")` |
+| 🟡 In progress | `rhf-fit` | Grows a random hazard forest on counting-process rows with time-varying predictors: checks the rows, tunes the tree size and saves the forest. | `add_job("rhf", subject, type, qualifier = "fit")` |
 | 🟢 Shipped | `rm-balancing_continuous` | Least-squares balancing score for a continuous exposure: the averaged fitted value and its strata. | `add_job("rm", subject, type, qualifier = "balancing_continuous")` |
 | 🟢 Shipped | `rm-linear` | Ordinary least-squares outcome model with Rubin-pooled inference. | `add_job("rm", subject, type, qualifier = "linear")` |
 | 🟡 In progress | `sid-clusters` | PAM on a sid-fit dissimilarity over a range of K: metrics for choosing K, letters stable across K, a Sankey, and the assignments registered for later jobs to join. | `add_job("sid", subject, type, qualifier = "clusters")` |

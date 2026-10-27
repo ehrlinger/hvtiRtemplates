@@ -64,7 +64,7 @@
       <h1>The template catalog</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-10-26</p>
+      <p class="date">2026-10-27</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/vignettes/template-catalog.qmd" class="external-link"><code>vignettes/template-catalog.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -87,7 +87,7 @@
 <p>Each template carries a light.</p>
 <ul>
 <li>🟢 <strong>Shipped</strong> (34): on disk and supported. Scaffold it and use it.</li>
-<li>🟡 <strong>In progress</strong> (27): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
+<li>🟡 <strong>In progress</strong> (29): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
 <li>🔴 <strong>Not yet on the way</strong> (11): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
 </h2>
@@ -336,6 +336,18 @@
 <td style="text-align: left;"><code>rfs-fit</code></td>
 <td style="text-align: left;">Grows a random survival forest and checks it learned something: out-of-bag error, predicted survival and the Brier score.</td>
 <td style="text-align: left;"><code>add_job("rfs", subject, type, qualifier = "fit")</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>rhf-explain</code></td>
+<td style="text-align: left;">Explains a saved hazard forest: AUC over follow-up, predicted hazard curves and VarPro importance over time. It never grows a forest.</td>
+<td style="text-align: left;"><code>add_job("rhf", subject, type, qualifier = "explain")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>rhf-fit</code></td>
+<td style="text-align: left;">Grows a random hazard forest on counting-process rows with time-varying predictors: checks the rows, tunes the tree size and saves the forest.</td>
+<td style="text-align: left;"><code>add_job("rhf", subject, type, qualifier = "fit")</code></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🟢 Shipped</td>

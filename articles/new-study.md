@@ -79,7 +79,7 @@ directly, in a temporary directory:
 # A vignette builds a throwaway study; in a real study, run hvtiR::setup().
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L,
             renv = FALSE)
-#> Study: /tmp/Rtmp7gQDi3/file212952fefb64/new-study
+#> Study: /tmp/RtmpgP0tQE/file21b25055aa85/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -125,12 +125,12 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp7gQDi3/file212952fefb64/new-study
+#> Study: /tmp/RtmpgP0tQE/file21b25055aa85/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
-#> [x] dataset — built.csv, registered as built_20261026.parquet
+#> [x] dataset — built.csv, registered as built_20261027.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
