@@ -20,7 +20,6 @@ test_that("a cached fit, the escape option, or a non-interactive render lets the
 })
 
 test_that("guard_long_fit() checks its arguments", {
-  expect_error(guard_long_fit(c("a", "b"), dir = ".", why = "slow"), "`name`")
   expect_error(guard_long_fit("a", dir = NA_character_, why = "slow"), "`dir`")
 })
 
@@ -31,4 +30,20 @@ test_that("refit = TRUE is refused even with a cached fit, and refit = FALSE pas
   expect_error(guard_long_fit("x", dir = dir, why = "slow", refit = TRUE), "REFIT")
   expect_false(guard_long_fit("x", dir = dir, why = "slow", refit = FALSE))
   expect_error(guard_long_fit("x", dir = dir, why = "slow", refit = NA), "`refit`")
+})
+
+test_that("several names pass only when every cache exists", {
+  dir <- withr::local_tempdir()
+  withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  saveRDS(1, file.path(dir, "a.rds"))
+  expect_error(guard_long_fit(c("a", "b"), dir = dir, why = "slow"), "submit_job(", fixed = TRUE)
+  saveRDS(1, file.path(dir, "b.rds"))
+  expect_false(guard_long_fit(c("a", "b"), dir = dir, why = "slow"))
+  expect_error(guard_long_fit(c("a", "b"), dir = dir, why = "slow", refit = TRUE), "REFIT")
+})
+
+test_that("a name vector with an empty or NA element is refused", {
+  expect_error(guard_long_fit(c("a", ""), dir = ".", why = "slow"), "`name`")
+  expect_error(guard_long_fit(c("a", NA), dir = ".", why = "slow"), "`name`")
+  expect_error(guard_long_fit(character(), dir = ".", why = "slow"), "`name`")
 })
