@@ -366,7 +366,7 @@ substituting a guess.
 
   ```sh
   gh api --paginate repos/<o>/<r>/pulls/<n>/reviews \
-    --jq '.[] | select(.user.login | startswith("copilot")) | "\(.submitted_at) quota=\(.body | test("quota limit"))"' \
+    --jq '.[] | select(.user.login | startswith("copilot")) | "\(.submitted_at) quota=\(.body | test("quota"; "i"))"' \
     | tail -1
   ```
 
@@ -374,6 +374,11 @@ substituting a guess.
   first, so the last line printed across all pages is the newest review. An empty result on its own is
   ambiguous; the timeline check above is what separates slow from not-requested, so use both
   rather than concluding from this one.
+  ⚠️ **Match `quota`, not the notice's wording, because the wording changes.** The test read
+  `"quota limit"` until 2026-10-27, when the notice on
+  [#440](https://github.com/ehrlinger/hvtiRtemplates/pull/440) read "insufficient remaining
+  quota" and the check printed `quota=false` for both of its quota notices. A real review that
+  discusses the quota would also match, so read the body before acting on a `true`.
   ⚠️ **A merge can still reach `main` unread, for reasons that outlive the quota.** The
   `copilot_code_review` rule stays in the ruleset and does not block a merge, so a PR that
   draws no review opens and goes green exactly like one that did. Three ways that happens
