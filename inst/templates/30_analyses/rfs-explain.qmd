@@ -274,6 +274,13 @@ data.frame(variable = ranked,
            row.names = NULL)
 ```
 
+**A VIMP of 0 or below is expected for noise when events are few.** VIMP is how
+much the forest's error grows when a predictor is scrambled. For a predictor
+the forest does not use, that change is chance, so at 60 or 150 deaths it lands
+at 0, or below it about as often as above. Read such a value as "no evidence of
+an effect", and set `BANDS_B` above 0 for `subsample()` intervals before
+ranking the predictors near the bottom.
+
 ```{r}
 #| label: select
 if (is.null(PARTIAL_VARS)) {

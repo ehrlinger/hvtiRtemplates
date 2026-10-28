@@ -179,6 +179,91 @@ test_that("rhf-explain explains the saved forest without refitting", {
   expect_identical(file.mtime(forest_cache), grown_at)
 })
 
+test_that("rhf-explain's partial dependence is off by default and its choices parse", {
+  src <- readLines(template_path("rhf", "explain"), warn = FALSE)
+  env <- new.env()
+  eval(parse(text = rf_chunk(src, "edit-study-choices")), envir = env)
+  expect_null(env$PD_VARS)
+  expect_identical(c(env$PD_N, env$PD_GRID, env$PD_MIN_RISK), c(300, 9, 20))
+  # With PD_VARS NULL neither chunk computes anything, so nothing else they read is needed.
+  for (label in c("tbl-pd-exposure", "fig-partial")) {
+    expect_null(eval(parse(text = rf_chunk(src, label)), envir = env), info = label)
+  }
+  expect_false(exists("pd", envir = env, inherits = FALSE))
+  # The lessons of the first real run travel with the template.
+  text <- paste(src, collapse = " ")
+  expect_match(text, "These paths are not calibrated probabilities", fixed = TRUE)
+  expect_match(text, "should come from a pooled model", fixed = TRUE)
+})
+
+test_that("rhf-explain counts exposure in aggregate only, then draws partial dependence", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("rhf", "explain"))
+  d <- rhf_data()
+  d$xb <- as.integer(d$x_1 > stats::median(d$x_1))
+  # Text predictors, which rhf-fit makes factors: one ordinary, one labeled 0 and 1, whose codes are 1 and 2.
+  d$xf <- c("a", "b", "c")[1L + d$ccfid %% 3L]
+  d$xg <- as.character(as.integer(d$x_2 > stats::median(d$x_2)))
+  # Days, not years: the exposure is in the units of the interval columns, whatever they are.
+  d$start <- d$start * 365.25
+  d$stop <- d$stop * 365.25
+  fit <- rhf_fit_first(d, utils::modifyList(rhf_choices, list(PREDICTORS = c("xtd", "x_1", "xb", "xf", "xg"),
+                                                              TREESIZE = 5L)))
+  env <- new.env(parent = globalenv())
+  env$.root <- fit$.root
+  # Records what each prediction is handed, then predicts as the template would.
+  handed <- new.env()
+  handed$xg <- list()
+  env$predict <- function(object, newdata, ...) {
+    handed$xg[[length(handed$xg) + 1L]] <- newdata$xg
+    stats::predict(object, newdata, ...)
+  }
+  utils::capture.output(rf_run("rhf", "explain", c(rhf_explain_labels, "tbl-pd-exposure", "fig-partial"), env,
+                               c(rhf_explain_choices, list(PD_VARS = c("xtd", "xb", "xf", "xg"), PD_N = 60,
+                                                           PD_GRID = 3, PD_MIN_RISK = 1))))
+  ex <- env$pd_exposure
+  expect_identical(names(ex), c("variable", "value", "time.index", "start", "stop", "patients", "patient_time", "deaths"))
+  # One block for everyone and one for each value of a 0/1 or factor predictor; the continuous one gets none.
+  n_win <- nrow(env$imp$window.info)
+  expect_identical(nrow(ex), (1L + 2L + 3L + 2L) * n_win)
+  expect_setequal(unique(ex$variable), c("(all)", "xb", "xf", "xg"))
+  everyone <- ex[ex$variable == "(all)", ]
+  for (v in c("xb", "xf", "xg")) {
+    by_value <- ex[ex$variable == v, ]
+    expect_equal(everyone$deaths, as.numeric(tapply(by_value$deaths, by_value$time.index, sum)), info = v)
+    expect_equal(everyone$patient_time, as.numeric(tapply(by_value$patient_time, by_value$time.index, sum)), info = v)
+  }
+  expect_setequal(ex$value[ex$variable == "xf"], c("a", "b", "c"))
+  # In the interval columns' own units: no window holds more patient-time than its patients could spend in it.
+  expect_true(all(everyone$patient_time <= everyone$patients * (everyone$stop - everyone$start) + 1e-8))
+  expect_gt(max(everyone$stop), 100)
+  expect_true(all(everyone$patients <= length(unique(d$ccfid))))
+  # Aggregate only: no study id.
+  expect_false(any(unlist(lapply(ex, as.character)) %in% as.character(unique(d$ccfid))))
+  # The partial dependence: 3 values for xtd, 0 and 1 for xb, and each level of the factors.
+  expect_setequal(unique(env$pd$variable), c("xtd", "xb", "xf", "xg"))
+  expect_setequal(env$pd$level[env$pd$variable == "xb"], c("0", "1"))
+  expect_setequal(env$pd$level[env$pd$variable == "xf"], c("a", "b", "c"))
+  expect_true(all(env$pd$n.risk >= 1L & env$pd$n.risk <= 60L))
+  # The factor labeled 0 and 1 is set by level and stays a factor: each of its two predictions holds one level.
+  set_xg <- Filter(function(x) is.factor(x) && length(unique(x)) == 1L, handed$xg)
+  expect_length(set_xg, 2L)
+  expect_identical(vapply(set_xg, function(x) as.character(x[[1L]]), ""), c("0", "1"))
+  expect_identical(levels(set_xg[[1L]]), c("0", "1"))
+  expect_s3_class(ggplot2::ggplot_build(env$.fig), "ggplot_built")
+  # predict() dispatches to randomForestRHF, so its version is part of the cache key.
+  cache <- file.path(env$CACHE_DIR, "rhf-partial.rds")
+  rec <- readRDS(cache)
+  expect_identical(rec$key$packages$randomForestRHF, format(utils::packageVersion("randomForestRHF")))
+  # A cache written by another randomForestRHF is stale, and the render stops rather than reuse it.
+  rec$key$packages$randomForestRHF <- "0.0.1"
+  saveRDS(rec, cache)
+  expect_error(utils::capture.output(rf_run("rhf", "explain", "fig-partial", env)), "randomForestRHF")
+  if (.Platform$OS.type != "windows") {
+    expect_identical(format(file.mode(file.path(env$CACHE_DIR, "rhf-partial.rds"))), "600")
+  }
+})
+
 test_that("rhf-explain stops when no fit has run in its set", {
   rf_skip_unless_stack(rf_template_packages("rhf", "explain"))
   env <- new.env(parent = globalenv())

@@ -409,7 +409,7 @@ as on a Mac without XQuartz.
 | rfr-fit | `rfr-fit-diagnostics-error`, `-predicted` |
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |
 | rhf-fit | `rhf-fit-tuning` |
-| rhf-explain | `rhf-explain-auc-cumulative`, `-auc-incident`, `-hazard`, `-chf`, `-importance` |
+| rhf-explain | `rhf-explain-auc-cumulative`, `-auc-incident`, `-hazard`, `-chf`, `-importance`, and with `PD_VARS` set `-partial` |
 | vp-fit | `vp-fit-coverage`, `-varpro` |
 | vp-explain | `vp-explain-dependence-varpro-page-<NN>` |
 | vp-dependence | `vp-dependence-graph`, `-heatmap` |
