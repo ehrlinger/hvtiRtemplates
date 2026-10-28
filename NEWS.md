@@ -14,11 +14,6 @@
   A start/stop `hm` needs TemporalHazard 1.2.13 or later: before it, `hzr_deciles()` counted
   each segment's exposure before its start, so the calibration table was wrong though the fit
   was right.
-* A start/stop `bh` screen stops: in the runner right after its read, on a selection with several
-  rows per patient, before any fit, so a formula that leaves the start out cannot reach the
-  screen; and in the report on such a bag. `hzr_bootstrap()` resamples rows, which splits a patient's
-  segments across replicates; SAS `%HAZBOOT _TVC=1 _IDVAR=` resamples patients. It waits on
-  [TemporalHazard#667](https://github.com/ehrlinger/TemporalHazard/issues/667).
 * `hp` and `hs-setup` stop on a start/stop fit. They predict one row per patient per horizon,
   which a time-varying model does not define, and the rule to use instead is still open (#436).
 
@@ -26,6 +21,18 @@
 
 * `rfs-fit` sizes its trees for the events a cohort has. `NODESIZE <- NULL` now grows leaves of about 2 events, `2 * n / events`, never below randomForestSRC's survival default of 15, so a common-event cohort is unchanged and 60 deaths in 1,900 patients gets about 60. `NSPLIT`, `MTRY` and `SPLITRULE` write out randomForestSRC's defaults (10, `NULL`, `"logrank"`) so the report says what was used, and the fit prints the events per leaf. `TUNE_NODESIZE <- TRUE`, off by default, searches with `tune.nodesize()` instead, on 63.2% of patients rather than its default `min(0.632 n, max(150, n^0.8))`, which keeps about 13 deaths of 60 in 1,900, and on a grid reaching twice the 2-event size rather than stopping at 150. `rfs-fit` and `rfs-explain` say that a VIMP of 0 or below is the expected reading for noise when events are few.
 * `rhf-explain` has partial dependence for a hazard forest, off until `PD_VARS` names predictors. It predicts over every interval of `PD_N` patients from the forest's own training rows with the predictor set to each grid value (5th to 95th percentile, 0 and 1, or each level of a factor, set without losing the factor's levels), averages the hazard at each importance point over the patients still at risk, and leaves out a point with fewer than `PD_MIN_RISK` at risk. Its cache key carries randomForestRHF's version, since `predict()` reaches it only by dispatch. Before it, a table counts at each point the patients at risk, patient-time (in the units of the interval columns) and deaths, overall and for each value of a 0/1 or factor predictor, in aggregate only, and the prose says why: on the first real run a rare time-varying 0/1 predictor's hazard ratio flipped from point to point on 0 to 4 deaths, so its direction should come from a pooled model. The hazard-curve section now says the paths are not calibrated probabilities.
+
+* A start/stop `bh` screen resamples patients, not rows (#436). When the runner reads several rows
+  per patient, it passes the patient of each row to `hzr_bootstrap(id =)`, so each replicate
+  keeps every segment of each patient it draws, as SAS `%HAZBOOT _TVC=1 _IDVAR=` does. With one
+  row per patient it resamples rows, as before. The runner stops before the screen on segmented
+  rows fitted without their start, and the report stops on a segmented bag that resampled rows.
+  The bag records which it did, as `resampled`. A start/stop report reads the runner's chunk
+  files only: a pre-pooled `bh.rds` keeps its first chunk's record alone, so it cannot show that
+  every chunk resampled patients.
+* The `bh` runner, and hvtiRtemplates' suggested TemporalHazard, now need TemporalHazard 1.2.17
+  or later, which added `hzr_bootstrap(id =)`
+  ([TemporalHazard#667](https://github.com/ehrlinger/TemporalHazard/issues/667)).
 
 # hvtiRtemplates 1.5.2
 

@@ -76,7 +76,7 @@ Suggests:
     randomForestRHF (>= 2.1.0),
     randomForestSRC (>= 3.7.0),
     survival,
-    TemporalHazard (>= 1.2.12),
+    TemporalHazard (>= 1.2.17),
     testthat (>= 3.0.0),
     varPro (>= 3.3.0),
     withr,

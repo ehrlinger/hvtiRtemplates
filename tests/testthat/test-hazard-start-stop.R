@@ -122,9 +122,8 @@ test_that("a downstream response must match the selection's start", {
   expect_error(check(Surv(iv_start, iv_dead, dead) ~ 1, NULL, "iv_dead", "dead"), "Surv\\(iv_dead, dead\\)")
 })
 
-test_that("a start/stop bootstrap stops, naming TemporalHazard#667, and other responses pass", {
+test_that("entry times and repeated patients are told apart from other responses", {
   skip_start_stop()
-  stop_row <- hvtiRtemplates:::.stop_row_bootstrap
   entry <- hvtiRtemplates:::.has_entry_times
   data <- start_stop_data(60L)
   fit <- function(f, d) {
@@ -134,15 +133,24 @@ test_that("a start/stop bootstrap stops, naming TemporalHazard#667, and other re
   expect_false(entry(fit(survival::Surv(iv_dead, dead) ~ 1, data)))
   interval <- data.frame(lo = c(1, 2, 3, 1, 2, 0.5, 2, 3), hi = c(1, NA, 4, 2, NA, 1, 2.5, NA))
   expect_false(entry(fit(survival::Surv(lo, hi, type = "interval2") ~ 1, interval)))
-  expect_error(stop_row(TRUE), "TemporalHazard/issues/667")
-  expect_true(stop_row(FALSE))
   repeats <- hvtiRtemplates:::.repeats_patients
   expect_true(repeats(list(rows = 87L, patients = 30L)))
   expect_false(repeats(list(rows = 30L, patients = 30L)))
   expect_false(repeats(list(rows = 90L, patients = 30L, imputation = "imp")))
   expect_false(repeats(list()))
-  report <- readLines(hazard_template("bh"), warn = FALSE)
-  expect_length(grep(".stop_row_bootstrap(hvtiRtemplates:::.repeats_patients(.sel))", report, fixed = TRUE), 1L)
+  # A segmented bag must have resampled patients; one row per patient may resample rows.
+  check <- hvtiRtemplates:::.check_bag_resampling
+  expect_true(check(TRUE, list(list(resampled = "patients"), list(resampled = "patients"))))
+  expect_true(check(FALSE, list(list(resampled = "rows"), list())))
+  expect_error(check(TRUE, list(list(resampled = "patients"), list())), "1 of 2 bag file\\(s\\) resampled rows")
+  expect_error(check(TRUE, list(list(resampled = "patients")), pooled = TRUE), "one pooled bag")
+  expect_true(check(FALSE, list(list(resampled = "rows")), pooled = TRUE))
+  # Jobs scaffolded before patient resampling call the old helper by name, in
+  # these two forms; a study's copy is not updated with the package.
+  old <- hvtiRtemplates:::.stop_row_bootstrap
+  expect_true(old(repeats(list(rows = 30L, patients = 30L))))
+  expect_true(old(isTRUE(list(rows = 30L, patients = 30L)$rows > 30L)))
+  expect_error(old(repeats(list(rows = 87L, patients = 30L))), "TemporalHazard/issues/667")
   conc <- readLines(hazard_template("hs-concordance"), warn = FALSE)
   expect_length(grep(".stop_start_stop_prediction(.rec$start,", conc, fixed = TRUE), 1L)
 })
@@ -157,33 +165,81 @@ test_that("hz's start settings stop before the read", {
   expect_error(check("iv_start", c("ccfid", "iv_start"), join = "labs"), "JOIN has no REDUCE")
 })
 
-test_that("the bh runner stops on segmented rows before it fits, whatever response its formula names", {
-  skip_start_stop()
-  root <- hazard_study(start_stop_data(60L))
-  runner <- readLines(system.file("runners", "bh-runner.R", package = "hvtiRtemplates"), warn = FALSE)
-  edit <- function(pattern, value) {
-    at <- grep(pattern, runner)
-    expect_length(at, 1L)
-    runner[[at]] <<- value
+# The bh runner add_job() writes in `root`, edited as a study author would for
+# start/stop rows, run in `env` with hzr_bootstrap() traced to record its `id`.
+# `with_start = FALSE` keeps the shipped formula and columns, which leave the start
+# out. Returns what hzr_bootstrap() was called with, NULL when it was not.
+start_stop_runner <- function(root, env, with_start = TRUE) {
+  path <- boot_scaffold("bh", root)  # nolint: object_usage_linter.
+  runner <- readLines(path, warn = FALSE)
+  # Each edit as text to find and its replacement; the scope's is on two phases.
+  edits <- list(c("FINISHED <- FALSE", "FINISHED <- TRUE"), c('POOL <- c("age", "female")', 'POOL <- c("age", "x1")'),
+                c("KEY <- ID", 'KEY <- c(ID, "iv_start")'), c("N_BOOT <- 20L", "N_BOOT <- 4L"),
+                c("~ age + female", "~ age + x1"))
+  if (with_start) {
+    edits <- c(edits, list(c('job$data[c("iv_dead", "dead", POOL)]', 'job$data[c("iv_start", "iv_dead", "dead", POOL)]'),
+                           c("survival::Surv(iv_dead, dead)", "survival::Surv(iv_start, iv_dead, dead)")))
   }
-  edit("^FINISHED <- FALSE$", "FINISHED <- TRUE")
-  edit("^POOL <- ", 'POOL <- c("age", "male")')
-  edit("^KEY <- ID$", 'KEY <- c(ID, "iv_start")')
-  # The shipped formula, Surv(iv_dead, dead), drops the start: the base fit then
-  # has no entry times, which is why the guard reads the selection instead.
-  env <- new.env(parent = globalenv())
-  called <- character()
-  env$hazard <- function(...) {
-    called <<- c(called, "hazard")
-    stop("fitted")
+  for (e in edits) {
+    at <- grep(e[[1L]], runner, fixed = TRUE)
+    testthat::expect_gte(length(at), 1L)
+    runner[at] <- gsub(e[[1L]], e[[2L]], runner[at], fixed = TRUE)
   }
-  env$hzr_bootstrap <- function(...) {
-    called <<- c(called, "hzr_bootstrap")
-    stop("bootstrapped")
-  }
+  writeLines(runner, path)
+  seen <- new.env()
+  # Traced where the runner finds it, on the search path: skip_start_stop() attached it.
+  suppressMessages(trace("hzr_bootstrap", where = as.environment("package:TemporalHazard"), print = FALSE,
+                         tracer = bquote(assign("id", id, envir = .(seen)))))
+  on.exit(suppressMessages(untrace("hzr_bootstrap", where = as.environment("package:TemporalHazard"))), add = TRUE)
   withr::local_dir(root)
-  expect_error(suppressMessages(eval(parse(text = runner), envir = env)), "TemporalHazard/issues/667")
-  expect_identical(called, character())
+  suppressWarnings(suppressMessages(sys.source(path, envir = env)))
+  if (exists("id", envir = seen, inherits = FALSE)) list(id = seen$id) else NULL
+}
+
+test_that("the bh runner resamples patients on start/stop rows, and its replicates differ", {
+  skip_start_stop()
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.17")
+  boot_skip_unless_stack("bh")  # nolint: object_usage_linter.
+  data <- start_stop_data(60L)
+  root <- hazard_study(data)
+  env <- new.env(parent = globalenv())
+  called <- start_stop_runner(root, env)
+  expect_false(is.null(called))
+  # One patient per row, in the rows the fit used: each patient's segments travel together.
+  expect_identical(as.numeric(called$id), as.numeric(env$job$data$ccfid))
+  expect_gt(length(called$id), length(unique(called$id)))
+  bag <- readRDS(file.path(hvtiRutilities::study_dir("estimates", root), "dead_pa-hz", "bh.chunk01.rds"))
+  expect_identical(bag$resampled, "patients")
+  reps <- bag$boot$replicates
+  expect_gt(length(unique(reps$replicate)), 1L)
+  first <- reps$estimate[reps$parameter == unique(reps$parameter)[[1L]]]
+  expect_gt(stats::sd(first), 0)
+  # The report reads the bag; one that resampled rows stops it.
+  report <- c("set", "edit-study-choices", "load", "tbl-data")
+  settings <- list(EXPECT_BOOT = bag$n_boot, EXPECT_CHUNKS = 1L)
+  expect_no_error(boot_report("bh", boot_env(root), report, settings))  # nolint: object_usage_linter.
+  set_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "dead_pa-hz")
+  bag$resampled <- "rows"
+  saveRDS(bag, file.path(set_dir, "bh.chunk01.rds"))
+  expect_error(boot_report("bh", boot_env(root), report, settings), "resampled rows")  # nolint: object_usage_linter.
+  # A pre-pooled bag keeps only its first chunk's record, so even one that says
+  # "patients" cannot show every chunk did: the report wants the chunk files.
+  bag$resampled <- "patients"
+  saveRDS(bag, file.path(set_dir, "bh.rds"))
+  unlink(file.path(set_dir, "bh.chunk01.rds"))
+  expect_error(boot_report("bh", boot_env(root), report, settings),  # nolint: object_usage_linter.
+               "found one pooled bag rather than the runner's chunk files")
+})
+
+test_that("the bh runner stops on start/stop rows fitted without their start, before the screen", {
+  skip_start_stop()
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.17")
+  boot_skip_unless_stack("bh")  # nolint: object_usage_linter.
+  root <- hazard_study(start_stop_data(60L))
+  env <- new.env(parent = globalenv())
+  # The shipped formula, Surv(iv_dead, dead), fits every segment from zero.
+  expect_error(start_stop_runner(root, env, with_start = FALSE), "base fit has no entry times")
+  expect_false(exists("bs", envir = env, inherits = FALSE))
 })
 
 test_that("hm refuses start/stop rows on a TemporalHazard whose calibration ignores entry", {
