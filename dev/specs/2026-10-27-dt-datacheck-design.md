@@ -125,8 +125,9 @@ John's view is that `dt` may merge into `bd`. The two homes:
   changed* moves above Register, where `bd`'s comments tell the author to review the rebuild
   (they name `review_built()`, which section 4 explains is not this comparison). One render
   builds and checks, which is the SAS loop: the bd-vars note's diagnostics row records
-  `proc print` and `proc means` inside SAS `bd` jobs. The `dt` row leaves `templates.json`, and the taxonomy keeps its `dt` row, as it kept `dp`'s, because
-  `job_census()` still counts the legacy `dt` jobs. Costs: every change to a check re-reads the
+  `proc print` and `proc means` inside SAS `bd` jobs. The `dt` row leaves `templates.json`,
+  and the taxonomy keeps its `dt` row, as it kept `dp`'s, because `job_census()` still counts
+  the legacy `dt` jobs. Costs: every change to a check re-reads the
   master and re-cuts, and `skip` and `stop_here()` skip chunks below a point, not above it; and
   `bd` is under line-by-line review by the stat programmers, so the section lands after that
   review closes.
