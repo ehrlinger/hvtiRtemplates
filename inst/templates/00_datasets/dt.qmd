@@ -58,10 +58,10 @@ TYPE    <- "check"
 .job_file <- if (is.null(.in)) "this job" else sub("[.][^.]+$", ".qmd", basename(.in))
 # Every stop names its step and this file, and never a data value.
 .dt_stop <- function(step, ...) stop("dt: ", step, " (", .job_file, "): ", ..., call. = FALSE)
-# The named checks need proc_print(), added to hvtiRutilities after 1.5.16; the rebuild
+# The named checks need proc_print(), released in hvtiRutilities 1.5.17; the rebuild
 # comparison needs compare_built(), released in hvtiRdatabuild 0.3.3.
-if (!"proc_print" %in% getNamespaceExports("hvtiRutilities")) {
-  .dt_stop("setup", "this job needs an hvtiRutilities with proc_print(); ",
+if (utils::packageVersion("hvtiRutilities") < "1.5.17") {
+  .dt_stop("setup", "this job needs hvtiRutilities >= 1.5.17 for proc_print(); ",
            utils::packageVersion("hvtiRutilities"), " is installed.")
 }
 if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.3.3") {

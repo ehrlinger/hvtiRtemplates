@@ -327,9 +327,9 @@
       "upstream": [],
       "downstream": [],
       "workflows": [],
-      "blocked_on": "hvtiRutilities#262",
+      "blocked_on": null,
       "spec": "dev/specs/2026-10-27-dt-datacheck-design.md",
-      "note": "On disk for review. Its named checks need proc_print() from hvtiRutilities#262; the floor moves to that release when it is cut. Shipped once a bd and dt loop has run in a real study.",
+      "note": "On disk for review. Its named checks need proc_print(), released in hvtiRutilities 1.5.17. Shipped once a bd and dt loop has run in a real study.",
       "sas_breadth_jobs": 503,
       "disposition": "scaffold",
       "uses": []

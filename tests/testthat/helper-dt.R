@@ -4,8 +4,8 @@
 
 dt_skip <- function() {
   bd_skip()  # nolint: object_usage_linter.
-  # The named checks need proc_print(), added to hvtiRutilities after 1.5.16 (hvtiRutilities#262).
-  testthat::skip_if_not("proc_print" %in% getNamespaceExports("hvtiRutilities"), "hvtiRutilities has no proc_print()")
+  # The job stops below 1.5.17, the first hvtiRutilities with proc_print() for its named checks.
+  testthat::skip_if_not_installed("hvtiRutilities", "1.5.17")
   testthat::skip_if_not_installed("hvtiRdatabuild", "0.3.3")
 }
 
