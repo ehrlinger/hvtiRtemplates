@@ -32,12 +32,14 @@ Measured 2026-10-27 against `origin/main` of both repositories.
   shipped against it in hvtiRtemplates 1.2.4, and hvtiRdatabuild 0.3.3 is released.
 - `bd.qmd` names one hvtiRdatabuild function, `snapshot_master()`, and only in an `EDIT:`
   comment. Its working calls are to hvtiRtemplates and hvtiRutilities.
-- hvtiRdatabuild's 21 exports hold no check or summary helper. The helpers a data check needs
-  are in **hvtiRutilities**: `proc_freq()`, `proc_means()`, `proc_contents()`,
-  `proc_univariate()`, `review_built()`, `compare_datasets()`, `followup_check()`.
+- Most helpers a data check needs are in **hvtiRutilities**: `proc_freq()`, `proc_means()`,
+  `proc_contents()`, `proc_univariate()`, `read_built()`, `followup_check()`. The one it needs
+  from hvtiRdatabuild is `compare_built()`, the keyed value comparison (section 6), which is in
+  the released 0.3.3.
 - The one missing piece is #71's targeted-print helper (section 5).
 
-So `blocked_on` should name that helper, not hvtiRdatabuild. The catalog row is changed with
+So `blocked_on` should name that helper, not hvtiRdatabuild: what the check uses there has
+shipped. The catalog row is changed with
 the implementation, not by this note.
 
 ## 3. Ownership: `bd` keeps its receipt, the checks only read
@@ -58,6 +60,20 @@ same `DATASET_ID` and validated the same way. They do not read the registered `b
 is build, check, fix, rebuild, and it runs before a version is registered and dated. This is
 also the input that survives a merge into `bd` unchanged (section 7).
 
+**The baseline is bound to that file explicitly, never looked up on its own.** The rebuild
+comparison (section 6, item 1) compares the candidate `d` it was handed against the version
+registered for the study's declared dataset, read with `hvtiRutilities::read_built(cfg)`. It
+does not call `review_built()`, which resolves its file from `cfg` independently of
+`DATASET_ID`: in a `bd` comparison build (`REGISTER = FALSE` with a new `DATASET_ID`, which
+leaves the declared dataset alone) it would review the declared file while every other section
+checks the new one. Three outcomes, each stated in the report:
+
+- **`DATASET_ID` is the declared dataset.** The working file against its own registered version.
+- **`DATASET_ID` is another file**, a comparison build. The working file against the declared
+  dataset's registered version, and the report names both files and says it is a comparison
+  build, so nobody reads it as the declared dataset's rebuild.
+- **Nothing is registered.** No comparison, and a plain statement saying so.
+
 ## 5. Patient rows: console only, counts in the report
 
 A targeted print shows patient rows, and a rendered report gets shared. So each named check
@@ -75,8 +91,17 @@ knitted output.
 
 Four sections, in this order:
 
-1. **What this rebuild changed.** `hvtiRutilities::review_built()`: the working file against
-   the version registered now, or a plain statement that none is registered yet.
+1. **What this rebuild changed.** The candidate against its baseline, bound as section 4 says,
+   through `hvtiRdatabuild::compare_built(baseline, d, id = <ID, or KEY when there are repeated
+   measures>)`. It joins on the identifier, so it reports **membership** (rows only in the
+   baseline, rows only in the candidate) apart from **values** (per column: identical, within
+   tolerance, differs, with how many rows differ and the largest difference), and it never
+   collapses that into a pass or fail. The report gets the per-column table and the two
+   membership **counts**. The membership identifiers themselves (`attr(, "rows")$only_oracle`
+   and `$only_r`) go to the console only, as section 5's rows do.
+   `hvtiRutilities::compare_datasets()` alone is not enough here: it compares row counts,
+   column names, types and labels, so a rebuild that changes every event indicator and keeps
+   the shape reports "No differences detected".
 2. **Cross-tabs.** `CROSSTABS`, an `EDIT:` list of column pairs, each through
    `proc_freq(missing = TRUE)`, so a missing value is its own level, as `PROC FREQ / MISSING`
    shows it. The typical pair is a derived column against its source, such as an event
@@ -97,9 +122,9 @@ another section made, so a section moves between files without edits.
 John's view is that `dt` may merge into `bd`. The two homes:
 
 - **In `bd`.** The checks become a Checks section after `bd`'s Report, and *What this rebuild
-  changed* moves above Register, where `bd`'s comments already tell the author to run
-  `review_built()`. One render builds and checks, which is the SAS loop: the bd-vars note's
-  diagnostics row records `proc print` and `proc means` inside SAS `bd` jobs. The `dt` row
+  changed* moves above Register, where `bd`'s comments tell the author to review the rebuild
+  (they name `review_built()`, which section 4 explains is not this comparison). One render
+  builds and checks, which is the SAS loop: the bd-vars note's diagnostics row records `proc print` and `proc means` inside SAS `bd` jobs. The `dt` row
   leaves `templates.json`, and the taxonomy keeps its `dt` row, as it kept `dp`'s, because
   `job_census()` still counts the legacy `dt` jobs. Costs: every change to a check re-reads the
   master and re-cuts, and `skip` and `stop_here()` skip chunks below a point, not above it; and
@@ -143,8 +168,9 @@ reads) are checks against the source.
 
 Two consequences for the template, beyond the home:
 
-- **The rebuild diff earns its place.** Checking against a dated earlier release is the commonest
-  non-`bd` read; `review_built()` is that check for an R-built study.
+- **The rebuild comparison earns its place, and has to compare values.** Checking against a
+  dated earlier release is the commonest non-`bd` read. Section 6's keyed comparison covers the
+  version registered now; an older dated release is open item 1.
 - **50 legacy `dt` jobs write a permanent dataset.** The template does not carry that over
   (section 3): a check that writes becomes a `bd` or `vars` step.
 
@@ -165,6 +191,15 @@ the console. The study-specific lines are `EDIT:` markers: `DATASET_ID` (separat
 - **The PHI guard, proved by mutation:** a fixture whose `PRINT_COLS` values are distinctive
   strings, and a test that none appears in the HTML. Reverting the console routing must turn it
   red.
+- **The baseline binding (section 4), one test per outcome:** a comparison build, with a
+  registered `legacy` dataset and a changed working file under another `DATASET_ID`, must
+  compare the new file and say it is a comparison build; a rebuild of the declared dataset; and
+  a study with nothing registered.
+- **Values, not shape:** a same-shape rebuild that changes every event indicator and follow-up
+  value must report those columns as `differs` with their row counts. A membership change (one
+  patient swapped for another, the row count unchanged) must report one row on each side. Both
+  are the cases `review_built()` reports as unchanged, so reverting to it must turn them red.
+- The membership identifiers must not appear in the HTML, by the same mutation as the PHI guard.
 - For a separate `dt`: its own `.lintr` file key, the `SUBJECT`/`TYPE` lines, the
   no-study-identifier test, and the roadmap ledger row.
 - For a merge into `bd`: the existing `bd` tests stay green and the new section is covered by
@@ -174,7 +209,8 @@ the console. The study-specific lines are `EDIT:` markers: `DATASET_ID` (separat
 
 1. Whether `dt` should also take a second input, such as an earlier dated release or a `vars`
    output, since half the corpus reads something beyond `bd`'s output. The first template reads
-   only the working file; the rebuild diff covers the dated-release case.
+   only the working file, and its rebuild comparison is against the version registered now, not
+   an older dated release.
 2. The hvtiRutilities helper's name and API, in that package's own design.
 3. Merging into `bd` stays possible, because every section is written to move. Revisit it only
    if a later census, after R `dt` jobs exist, shows they read nothing but `bd`'s output.
