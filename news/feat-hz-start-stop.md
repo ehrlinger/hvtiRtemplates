@@ -10,10 +10,5 @@
   A start/stop `hm` needs TemporalHazard 1.2.13 or later: before it, `hzr_deciles()` counted
   each segment's exposure before its start, so the calibration table was wrong though the fit
   was right.
-* A start/stop `bh` screen stops: in the runner right after its read, on a selection with several
-  rows per patient, before any fit, so a formula that leaves the start out cannot reach the
-  screen; and in the report on such a bag. `hzr_bootstrap()` resamples rows, which splits a patient's
-  segments across replicates; SAS `%HAZBOOT _TVC=1 _IDVAR=` resamples patients. It waits on
-  [TemporalHazard#667](https://github.com/ehrlinger/TemporalHazard/issues/667).
 * `hp` and `hs-setup` stop on a start/stop fit. They predict one row per patient per horizon,
   which a time-varying model does not define, and the rule to use instead is still open (#436).

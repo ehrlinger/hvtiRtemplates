@@ -94,18 +94,32 @@
   invisible(TRUE)
 }
 
-# A bootstrap that resamples rows of start/stop data splits patients across
-# replicates: a patient's segments are drawn independently, so a replicate can
-# hold a patient's later segment without the earlier one. SAS's %HAZBOOT
-# resamples patients (_TVC=1 _IDVAR=). hzr_bootstrap() resamples rows until
-# the patient-level bootstrap of TemporalHazard issue 667 lands.
-.stop_row_bootstrap <- function(entry) {
-  if (isTRUE(entry)) {
-    stop("This bootstrap is on start/stop rows: several rows per patient, one per segment. ",
-         "hzr_bootstrap() resamples rows, which splits each patient's segments across replicates, and the ",
-         "selection frequencies it gives are not those of a patient-level bootstrap (SAS %HAZBOOT _TVC=1 ",
-         "_IDVAR=). It waits on a patient-level bootstrap in TemporalHazard ",
-         "(https://github.com/ehrlinger/TemporalHazard/issues/667).", call. = FALSE)
+# A bootstrap of start/stop data resamples patients, keeping each one's segments
+# together, as SAS's %HAZBOOT does with _TVC=1 _IDVAR=; resampling rows splits a
+# patient's segments across replicates. The bh runner passes the patient ID to
+# hzr_bootstrap(id =), which TemporalHazard 1.2.17 added.
+
+# The runner's base fit against its rows. Segmented rows fitted without the
+# start treat every segment as followed from time zero: another model, which
+# converges, and which the screen would then resample by patient regardless.
+.check_segmented_fit <- function(segmented, fit) {
+  if (isTRUE(segmented) && !.has_entry_times(fit)) {
+    stop("The runner read several rows per patient, one per start/stop segment, but its base fit has no entry ",
+         "times. Fit Surv(<start>, <stop>, <event>), and keep the start among the columns of `d`.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+# The report's check on what it reads: a bag screened on segmented rows must say
+# it resampled patients. A bag from a runner before patient resampling did not,
+# and its frequencies are those of a row bootstrap.
+.check_bag_resampling <- function(segmented, bags) {
+  rows <- !vapply(bags, function(b) identical(b$resampled, "patients"), logical(1L))
+  if (isTRUE(segmented) && any(rows)) {
+    stop("The bootstrap screened several rows per patient, one per start/stop segment, and ", sum(rows), " of ",
+         length(rows), " bag file(s) resampled rows, which splits each patient's segments across replicates. ",
+         "Rerun the runner as add_job() now writes it, which resamples patients (hzr_bootstrap(id =)), then ",
+         "render this report again.", call. = FALSE)
   }
   invisible(TRUE)
 }

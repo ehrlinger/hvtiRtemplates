@@ -38,10 +38,12 @@ suppressPackageStartupMessages(library(TemporalHazard))
 # this runner runs, in 1.2.1. Below 1.2.8 a screen's candidate refits dropped
 # the base fit's objective, so a run on objective = "sas" selected against a
 # different likelihood from the one it was fitted to, without a warning.
-if (utils::packageVersion("TemporalHazard") < "1.2.8") {
-  stop("This runner needs TemporalHazard >= 1.2.8; ", utils::packageVersion("TemporalHazard"),
+# 1.2.17 added hzr_bootstrap(id =), which resamples patients on start/stop rows.
+if (utils::packageVersion("TemporalHazard") < "1.2.17") {
+  stop("This runner needs TemporalHazard >= 1.2.17; ", utils::packageVersion("TemporalHazard"),
        " is installed. Below 1.2.8 hzr_bootstrap()'s selection refits dropped the base fit's objective, ",
-       "so a screen could select against a different likelihood without a warning.\nUpdate it, then rerun.",
+       "so a screen could select against a different likelihood without a warning, and below 1.2.17 it ",
+       "cannot resample patients on start/stop rows.\nUpdate it, then rerun.",
        call. = FALSE)
 }
 
@@ -76,9 +78,10 @@ SEED <- 20260100L + CHUNK
 cfg <- hvtiRutilities::study_config()
 job <- hvtiRtemplates::read_job_data(cfg, dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY)
 selection <- attr(job$record, "selection")
-# Several rows per patient is start/stop data, which a row bootstrap gets wrong:
-# stopped here, before the fit, whatever response the formula below names.
-hvtiRtemplates:::.stop_row_bootstrap(hvtiRtemplates:::.repeats_patients(selection))
+# Several rows per patient is start/stop data, one row per patient segment. The
+# screen then resamples patients, keeping each one's segments together, as SAS
+# %HAZBOOT _TVC=1 _IDVAR= does; with one row per patient it resamples rows.
+segmented <- hvtiRtemplates:::.repeats_patients(selection)
 
 # Only the model's columns are resampled, so the patient identifier never
 # reaches the screen.
@@ -87,15 +90,20 @@ d <- job$data[c("iv_dead", "dead", POOL)]
 # EDIT: the shapes, from your hz job, held fixed as %hazboot does, and the time
 # and event columns. The model formula is written literally in the hazard()
 # call: the report's health check shows what a formula held in a variable does.
+# For start/stop rows (SAS lcensor), add the start to `d` above and fit
+# Surv(<start>, <stop>, <event>), as the hz job does.
 phases <- list(early = hzr_phase("cdf", t_half = 0.05, nu = 1, m = 1, fixed = "shapes"),
                constant = hzr_phase("constant"))
 base <- hazard(survival::Surv(iv_dead, dead) ~ 1, data = d, dist = "multiphase", phases = phases, fit = TRUE)
-# A start/stop base, Surv(start, stop, event), stops here: hzr_bootstrap() resamples rows, not patients.
-hvtiRtemplates:::.stop_row_bootstrap(hvtiRtemplates:::.has_entry_times(base))
+# Segmented rows fitted without their start stop here, before the screen.
+hvtiRtemplates:::.check_segmented_fit(segmented, base)
 t0 <- Sys.time()
 # EDIT: the scope, written literally per phase: the same columns as POOL.
+# id: the patient of each row, given as values rather than a column of `d`, so
+# the identifier still never reaches the screen's data. NULL resamples rows.
 bs <- hzr_bootstrap(base, n_boot = N_BOOT, seed = SEED, scope = list(early = ~ age + female, constant = ~ age + female),
-                    slentry = SLENTRY, slstay = SLSTAY, max_steps = MAX_STEPS)
+                    slentry = SLENTRY, slstay = SLSTAY, max_steps = MAX_STEPS,
+                    id = if (segmented) job$data[[selection$id]])
 
 # The bag is a plain list. `boot` takes four fields of the result and no more:
 # its `scope` holds formulas, and a formula saved whole carries the environment
@@ -107,7 +115,8 @@ bag <- list(
   base_params = c("early.log_mu", "constant.log_mu"), requested = offered, usable = offered, n_rows = nrow(d),
   elapsed_mins = as.numeric(difftime(Sys.time(), t0, units = "mins")),
   manifest = list(sha256 = job$provenance$sha256), th_version = format(utils::packageVersion("TemporalHazard")),
-  boot = bs[c("replicates", "summary", "n_success", "n_failed")]
+  boot = bs[c("replicates", "summary", "n_success", "n_failed")],
+  resampled = if (segmented) "patients" else "rows"
 )
 attr(bag, "hvti_provenance") <- list(data = list(job$provenance), artifacts = list(), analysis = NULL, cohort = NULL,
                                      selection = selection)
