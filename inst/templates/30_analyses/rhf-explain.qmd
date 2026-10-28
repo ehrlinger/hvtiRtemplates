@@ -136,7 +136,7 @@ N_TIMES <- 5
 PD_VARS <- NULL
 # Patients drawn from the forest's own training rows, and values per continuous
 # predictor, spread from its 5th to its 95th percentile. A 0/1 predictor gets 0
-# and 1.
+# and 1, and a factor each of its levels.
 PD_N <- 300
 PD_GRID <- 9
 # A point of follow-up is left out of the partial dependence when fewer than
@@ -347,8 +347,9 @@ the same as setting the one interval. The curves are marginal: they say nothing
 about two predictors acting together.
 
 **Count the exposure before reading a curve.** The table below gives, at each
-importance point, the patients at risk, the patient-years and the deaths, and
-for a 0/1 predictor each of those for both values. A curve at a point with
+importance point, the patients at risk, the patient-time and the deaths, and
+for a 0/1 or factor predictor each of those for every value. Patient-time is in
+the units of the fit's interval columns, years if they are in years. A curve at a point with
 little exposure is decided by a handful of deaths. On the first real study a
 rare time-varying 0/1 predictor, intubation, had a hazard ratio between its two
 values that flipped from point to point: 13, 0.59, 74, 0.57. It was not
@@ -360,7 +361,8 @@ curves.
 
 ```{r}
 #| label: tbl-pd-exposure
-#| tbl-cap: "Exposure at each importance point: patients at risk, patient-years and deaths, by value for a 0/1 predictor"
+#| tbl-cap: "Exposure at each importance point: patients at risk, patient-time (in the units of the fit's interval columns)
+#|   and deaths, by value for a 0/1 or factor predictor"
 # Counted on every patient the forest was grown on, not only the PD_N sample, and
 # reported as counts alone: no row here describes one patient.
 if (length(PD_VARS)) {
@@ -377,7 +379,7 @@ if (length(PD_VARS)) {
                  b <- .windows$stop[i]
                  overlap <- pmax(0, pmin(.train$stop, b) - pmax(.train$start, a))
                  at <- k & overlap > 0
-                 c(patients = length(unique(.train$id[at])), patient_years = sum(overlap[at]),
+                 c(patients = length(unique(.train$id[at])), patient_time = sum(overlap[at]),
                    deaths = sum(.train$event[at] == 1 & .train$stop[at] <= b))
                }, numeric(3L))), row.names = NULL)
   }
@@ -385,8 +387,8 @@ if (length(PD_VARS)) {
     list(.exposure(rep(TRUE, nrow(.train)), "(all)", "all")),
     lapply(PD_VARS, function(v) {
       x <- .train[[v]]
-      if (!all(x %in% c(0, 1))) return(NULL)
-      rbind(.exposure(x == 0, v, "0"), .exposure(x == 1, v, "1"))
+      values <- if (is.factor(x)) levels(x) else if (all(x %in% c(0, 1))) c("0", "1") else return(NULL)
+      do.call(rbind, lapply(values, function(value) .exposure(as.character(x) == value, v, value)))
     })
   ))
   knitr::kable(pd_exposure, digits = c(0, 0, 0, 3, 3, 0, 2, 0))
@@ -410,25 +412,35 @@ if (length(PD_VARS)) {
       nd <- train[train$id %in% ids, ]
       do.call(rbind, lapply(PD_VARS, function(v) {
         x <- nd[[v]]
-        grid <- if (all(x %in% c(0, 1))) c(0, 1) else
+        # A factor keeps its levels, so a factor labeled 0 and 1 is set by level, not by its codes.
+        grid <- if (is.factor(x)) levels(x) else if (all(x %in% c(0, 1))) c(0, 1) else
           unique(stats::quantile(x, seq(0.05, 0.95, length.out = PD_GRID), names = FALSE))
         do.call(rbind, lapply(grid, function(g) {
-          nd[[v]] <- g
+          # [] <- keeps the column's class and levels.
+          nd[[v]][] <- g
           h <- predict(forest, nd)$hazard.test[, .time_index, drop = FALSE]
-          data.frame(variable = v, value = g, time.index = .time_index, time = forest$time.interest[.time_index],
-                     hazard = colMeans(h, na.rm = TRUE), n.risk = colSums(!is.na(h)))
+          data.frame(variable = v, level = if (is.factor(x)) g else format(signif(g, 3)), time.index = .time_index,
+                     time = forest$time.interest[.time_index], hazard = colMeans(h, na.rm = TRUE),
+                     n.risk = colSums(!is.na(h)))
         }))
       }))
     }),
-    seed = SEED, dir = CACHE_DIR, refit = REFIT
+    # predict() dispatches to randomForestRHF's method, which cache_fit() cannot see in the code, so an
+    # upgrade of the package would otherwise reuse curves its old version predicted.
+    seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestRHF"
   ))
   pd <- pd[pd$n.risk >= PD_MIN_RISK, ]
   pd$point <- factor(sprintf("%.2f", pd$time), levels = sprintf("%.2f", sort(unique(pd$time))))
-  .fig <- ggplot2::ggplot(pd, ggplot2::aes(value, hazard, colour = point)) +
+  # Each predictor's values in grid order on a discrete axis, keyed by predictor so two predictors sharing a
+  # label do not share a place.
+  .key <- paste(pd$variable, pd$level, sep = "\r")
+  pd$at <- factor(.key, levels = unique(.key))
+  .fig <- ggplot2::ggplot(pd, ggplot2::aes(at, hazard, color = point, group = point)) +
     ggplot2::geom_line() +
     ggplot2::geom_point(size = 1) +
+    ggplot2::scale_x_discrete(labels = function(b) sub("^.*\r", "", b)) +
     ggplot2::facet_wrap(~variable, scales = "free_x") +
-    ggplot2::labs(x = "Value set on every interval", y = "Mean predicted hazard", colour = "Time") +
+    ggplot2::labs(x = "Value set on every interval", y = "Mean predicted hazard", color = "Time") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
   save_figure(.fig, "rhf-explain-partial")
   .fig
