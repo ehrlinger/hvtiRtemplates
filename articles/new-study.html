@@ -135,7 +135,7 @@
 <code class="sourceCode R"><span><span class="co"># A vignette builds a throwaway study; in a real study, run hvtiR::setup().</span></span>
 <span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">new_root</span>, study <span class="op">=</span> <span class="st">"Synthetic new study"</span>, study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>            renv <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpfPOmNC/file226532dad734/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpYuutzM/file1f94274a5324/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -170,7 +170,7 @@
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpfPOmNC/file226532dad734/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpYuutzM/file1f94274a5324/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -267,15 +267,15 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/template_list.html">template_list</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"prefix"</span>, <span class="st">"qualifier"</span>, <span class="st">"folder"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          name prefix qualifier        folder</span></span>
 <span><span class="co">#&gt; 1          bd     bd      &lt;NA&gt;      datasets</span></span>
-<span><span class="co">#&gt; 2      dc.eda     dc       eda   descriptive</span></span>
-<span><span class="co">#&gt; 3  dc.general     dc   general   descriptive</span></span>
-<span><span class="co">#&gt; 4     dc.gfup     dc      gfup   descriptive</span></span>
-<span><span class="co">#&gt; 5  dc.stddiff     dc   stddiff   descriptive</span></span>
-<span><span class="co">#&gt; 6   dc.tables     dc    tables   descriptive</span></span>
-<span><span class="co">#&gt; 7   dc.trends     dc    trends   descriptive</span></span>
-<span><span class="co">#&gt; 8          lg     lg      &lt;NA&gt;   descriptive</span></span>
-<span><span class="co">#&gt; 9          ac     ac      &lt;NA&gt; distributions</span></span>
-<span><span class="co">#&gt; 10         hz     hz      &lt;NA&gt; distributions</span></span></code></pre></div>
+<span><span class="co">#&gt; 2          dt     dt      &lt;NA&gt;      datasets</span></span>
+<span><span class="co">#&gt; 3      dc.eda     dc       eda   descriptive</span></span>
+<span><span class="co">#&gt; 4  dc.general     dc   general   descriptive</span></span>
+<span><span class="co">#&gt; 5     dc.gfup     dc      gfup   descriptive</span></span>
+<span><span class="co">#&gt; 6  dc.stddiff     dc   stddiff   descriptive</span></span>
+<span><span class="co">#&gt; 7   dc.tables     dc    tables   descriptive</span></span>
+<span><span class="co">#&gt; 8   dc.trends     dc    trends   descriptive</span></span>
+<span><span class="co">#&gt; 9          lg     lg      &lt;NA&gt;   descriptive</span></span>
+<span><span class="co">#&gt; 10         ac     ac      &lt;NA&gt; distributions</span></span></code></pre></div>
 </div>
 <p>The other chains follow the same pattern: a fitting job saves a handoff that later jobs read. The random forest jobs (<code>rfc</code>, <code>rfr</code>, <code>rfs</code>) pair a <code>-fit</code> job with an <code>-explain</code> job; the logistic family (<code>lm</code>) fits and validates outcome and propensity models; <code>bh</code> reports bootstrap variable selection.</p>
 </section><script id="quarto-html-after-body" type="application/javascript">

@@ -29,9 +29,9 @@ existing file, because a job accumulates a study’s edits.
 Each template carries a light.
 
 - 🟢 **Shipped** (35): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (29): on disk but being reworked, or scheduled into
+- 🟡 **In progress** (30): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
-- 🔴 **Not yet on the way** (11): waiting on a function in another
+- 🔴 **Not yet on the way** (10): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
   now, write it by hand.
 
@@ -47,6 +47,7 @@ places each one; you do not choose the folder.
 | Delivery | Template | Description | Scaffold |
 |:---|:---|:---|:---|
 | 🟡 In progress | `bd` | Cuts a study’s dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then the working file and its build record, registered as a dated version of the study dataset. | `add_job("bd", subject, type)` |
+| 🟡 In progress | `dt` | Checks the working file a bd job writes, before it is registered: what the rebuild changed against the version registered now, cross-tabs, follow-up and named checks, with counts in the report and the rows behind them in the console only. | `add_job("dt", subject, type)` |
 
 ### descriptive
 
@@ -142,7 +143,6 @@ as zero.
 | 🟡 In progress | `ls` | Life table / STS | 32 |  |
 | 🟡 In progress | `si` | Single imputation | 1 |  |
 | 🔴 Not yet on the way | `vars` | Variables | 912 | hvtiRdatabuild |
-| 🔴 Not yet on the way | `dt` | Data check | 503 | hvtiRdatabuild |
 | 🔴 Not yet on the way | `ce` | Competing events | 128 | hvtiPlotR#134 |
 | 🔴 Not yet on the way | `bn` | Bootstrap non-linear | 108 |  |
 | 🔴 Not yet on the way | `gp` | Generalized model plot | 50 | hvtiPlotR#136 |

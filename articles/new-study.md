@@ -79,7 +79,7 @@ directly, in a temporary directory:
 # A vignette builds a throwaway study; in a real study, run hvtiR::setup().
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L,
             renv = FALSE)
-#> Study: /tmp/RtmpfPOmNC/file226532dad734/new-study
+#> Study: /tmp/RtmpYuutzM/file1f94274a5324/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -125,7 +125,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpfPOmNC/file226532dad734/new-study
+#> Study: /tmp/RtmpYuutzM/file1f94274a5324/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -302,15 +302,15 @@ lists every template with its prefix, qualifier and folder:
 head(template_list()[, c("name", "prefix", "qualifier", "folder")], 10)
 #>          name prefix qualifier        folder
 #> 1          bd     bd      <NA>      datasets
-#> 2      dc.eda     dc       eda   descriptive
-#> 3  dc.general     dc   general   descriptive
-#> 4     dc.gfup     dc      gfup   descriptive
-#> 5  dc.stddiff     dc   stddiff   descriptive
-#> 6   dc.tables     dc    tables   descriptive
-#> 7   dc.trends     dc    trends   descriptive
-#> 8          lg     lg      <NA>   descriptive
-#> 9          ac     ac      <NA> distributions
-#> 10         hz     hz      <NA> distributions
+#> 2          dt     dt      <NA>      datasets
+#> 3      dc.eda     dc       eda   descriptive
+#> 4  dc.general     dc   general   descriptive
+#> 5     dc.gfup     dc      gfup   descriptive
+#> 6  dc.stddiff     dc   stddiff   descriptive
+#> 7   dc.tables     dc    tables   descriptive
+#> 8   dc.trends     dc    trends   descriptive
+#> 9          lg     lg      <NA>   descriptive
+#> 10         ac     ac      <NA> distributions
 ```
 
 The other chains follow the same pattern: a fitting job saves a handoff

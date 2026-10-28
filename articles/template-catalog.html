@@ -87,8 +87,8 @@
 <p>Each template carries a light.</p>
 <ul>
 <li>🟢 <strong>Shipped</strong> (35): on disk and supported. Scaffold it and use it.</li>
-<li>🟡 <strong>In progress</strong> (29): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
-<li>🔴 <strong>Not yet on the way</strong> (11): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
+<li>🟡 <strong>In progress</strong> (30): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
+<li>🔴 <strong>Not yet on the way</strong> (10): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
 </h2>
 <p>Every template on disk, grouped by the study folder a job lands in, named without its digits (<code>graphs</code> is <code>40_graphs</code> in a new study). <code><a href="../reference/add_job.html">add_job()</a></code> places each one; you do not choose the folder.</p>
@@ -98,8 +98,8 @@
 <colgroup>
 <col style="width: 5%">
 <col style="width: 3%">
-<col style="width: 78%">
-<col style="width: 11%">
+<col style="width: 81%">
+<col style="width: 10%">
 </colgroup>
 <thead><tr class="header">
 <th style="text-align: left;">Delivery</th>
@@ -107,12 +107,20 @@
 <th style="text-align: left;">Description</th>
 <th style="text-align: left;">Scaffold</th>
 </tr></thead>
-<tbody><tr class="odd">
+<tbody>
+<tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>bd</code></td>
 <td style="text-align: left;">Cuts a study’s dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then the working file and its build record, registered as a dated version of the study dataset.</td>
 <td style="text-align: left;"><code>add_job("bd", subject, type)</code></td>
-</tr></tbody>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>dt</code></td>
+<td style="text-align: left;">Checks the working file a bd job writes, before it is registered: what the rebuild changed against the version registered now, cross-tabs, follow-up and named checks, with counts in the report and the rows behind them in the console only.</td>
+<td style="text-align: left;"><code>add_job("dt", subject, type)</code></td>
+</tr>
+</tbody>
 </table></section><section class="level3"><h3 id="descriptive">descriptive<a class="anchor" aria-label="anchor" href="#descriptive"></a>
 </h3>
 <table class="table caption-top">
@@ -606,68 +614,61 @@
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
-<td style="text-align: left;"><code>dt</code></td>
-<td style="text-align: left;">Data check</td>
-<td style="text-align: left;">503</td>
-<td style="text-align: left;">hvtiRdatabuild</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>ce</code></td>
 <td style="text-align: left;">Competing events</td>
 <td style="text-align: left;">128</td>
 <td style="text-align: left;">hvtiPlotR#134</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>bn</code></td>
 <td style="text-align: left;">Bootstrap non-linear</td>
 <td style="text-align: left;">108</td>
 <td style="text-align: left;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>gp</code></td>
 <td style="text-align: left;">Generalized model plot</td>
 <td style="text-align: left;">50</td>
 <td style="text-align: left;">hvtiPlotR#136</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>mi</code></td>
 <td style="text-align: left;">Multiple imputation</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: left;">hvtiRimputation</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>fp</code></td>
 <td style="text-align: left;">Forest plot</td>
 <td style="text-align: left;">11</td>
 <td style="text-align: left;">hvtiPlotR#133</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>dc-boxplot</code></td>
 <td style="text-align: left;">Descriptive plot: boxplot</td>
 <td style="text-align: left;">9</td>
 <td style="text-align: left;"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>cp</code></td>
 <td style="text-align: left;">Cumulative probability plot</td>
 <td style="text-align: left;">4</td>
 <td style="text-align: left;">hvtiPlotR#135</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>bq</code></td>
 <td style="text-align: left;">Bootstrap quantile</td>
 <td style="text-align: left;">2</td>
 <td style="text-align: left;">hvtiRbootstrap#16</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🔴 Not yet on the way</td>
 <td style="text-align: left;"><code>nb-boostmlr</code></td>
 <td style="text-align: left;">Boosting: BoostMLR</td>
