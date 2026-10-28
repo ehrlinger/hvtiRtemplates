@@ -78,14 +78,14 @@ test_that("each boot_select() runner refuses an hvtiRbootstrap below 0.9.3 befor
   }
 })
 
-test_that("the bh runner refuses a TemporalHazard below 1.2.8 before it fits", {
+test_that("the bh runner refuses a TemporalHazard below 1.2.17 before it fits", {
   boot_skip_unless_stack("bh")
   root <- rf_study(rf_mrn_data(id = "ccfid"))
   env <- new.env(parent = globalenv())
   testthat::with_mocked_bindings(
     expect_error(boot_run_runner("bh", root, env, list(FINISHED = TRUE)),
-                 "^This runner needs TemporalHazard >= 1[.]2[.]8; 1[.]2[.]7 is installed"),
-    packageVersion = function(pkg, ...) package_version("1.2.7"), .package = "utils"
+                 "^This runner needs TemporalHazard >= 1[.]2[.]17; 1[.]2[.]16 is installed"),
+    packageVersion = function(pkg, ...) package_version("1.2.16"), .package = "utils"
   )
   expect_false(exists("job", envir = env, inherits = FALSE))
 })
