@@ -44,7 +44,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**74 templates in scope**, of which 47 exist on disk.
+**75 templates in scope**, of which 48 exist on disk.
 
 ## By family
 
@@ -55,6 +55,7 @@ row has no template on disk.
 | `hs-setup` | shipped | 144 | 140 | 7 | — |
 | `hm` | shipped | 383 | 373 | 2 | — |
 | `hs-concordance` | shipped | — | 3 | 0 | — |
+| `hs-score` | shipped | — | — | 0 | — |
 
 ### bootstrap (batches 0–2)
 
@@ -176,9 +177,9 @@ row has no template on disk.
 
 A workflow spans all template rows in this package. A member is complete when its template is shipped, being revisited, or in flight.
 
-### hazard-chain — 6/6
+### hazard-chain — 7/7
 
-Members: `ac`, `hm`, `hp`, `hs-concordance`, `hs-setup`, `hz`
+Members: `ac`, `hm`, `hp`, `hs-concordance`, `hs-score`, `hs-setup`, `hz`
 
 **Complete.**
 

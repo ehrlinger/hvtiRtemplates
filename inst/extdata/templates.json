@@ -532,6 +532,35 @@
       ]
     },
     {
+      "prefix": "hs",
+      "qualifier": "score",
+      "name": "Hazard segment score",
+      "description": "Each start/stop segment scored with the time-varying hm model at its own start: the hazard and the predicted mortality, in percent.",
+      "folder": "graphs",
+      "family": "hazard-chain",
+      "kind": "job",
+      "status": "shipped",
+      "batch": null,
+      "sas_breadth": null,
+      "r_exemplars": 0,
+      "r_jobs": 0,
+      "upstream": [
+        "hm"
+      ],
+      "downstream": [],
+      "workflows": [
+        "hazard-chain"
+      ],
+      "blocked_on": null,
+      "spec": "dev/specs/2026-10-28-hs-score-design.md",
+      "note": "Admitted 2026-10-28 on the maintainer's decision (#436 item 4), from one SAS job read line by line: hs.st_dead.mort_score.tvc in the HSICH study, which sets the prediction time to each segment's start and runs %HAZPRED on the time-varying model. The two-study gate was not measured: a census of score jobs on time-varying models runs on the server and has not been run.",
+      "sas_breadth_jobs": null,
+      "disposition": "scaffold",
+      "uses": [
+        "TemporalHazard::hazard"
+      ]
+    },
+    {
       "prefix": "hz",
       "qualifier": null,
       "name": "Hazard fit",

@@ -6,7 +6,7 @@ test_that("jobs present their study choices before reading data", {
              "30_analyses/br.qmd", "30_analyses/hm.qmd",
              "10_descriptive/dc-trends.qmd",
              "40_graphs/hp.qmd", "40_graphs/hs-concordance.qmd",
-             "40_graphs/hs-setup.qmd")
+             "40_graphs/hs-setup.qmd", "40_graphs/hs-score.qmd")
   required <- list(
     `dc-general.qmd` = c("DATASET", "ANALYSIS_SET", "CATEGORICAL", "CONTINUOUS", "ID"),
     `dc-gfup.qmd` = c("DATASET", "ANALYSIS_SET", "EVENT", "FOLLOWUP", "CHECKS", "OPYRS", "ORIGIN_YEAR",
@@ -27,7 +27,8 @@ test_that("jobs present their study choices before reading data", {
     `hs-concordance.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "MODELS", "GROUP",
                              "HORIZON", "CARRY", "OVERLAP", "CROSS_STUDY"),
     `hs-setup.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "HORIZONS", "AGE_COL",
-                       "MALE_COL", "SCALE")
+                       "MALE_COL", "SCALE"),
+    `hs-score.qmd` = c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "KEY", "TIME", "EVENT", "CARRY")
   )
   root <- system.file("templates", package = "hvtiRtemplates")
   if (!nzchar(root)) {

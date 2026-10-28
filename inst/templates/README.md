@@ -16,6 +16,7 @@ refuses to overwrite an existing job.
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-setup.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-concordance.qmd` | every patient through every treatment group's model, with an optional best-treatment table | `40_graphs/` or `graphs/` |
+| `40_graphs/hs-score.qmd` | each start/stop segment scored at its own start with a time-varying model | `40_graphs/` or `graphs/` |
 | `40_graphs/lp-mirror.qmd` | mirrored histogram of a saved propensity score: all patients, under the matching weights, and matched | `40_graphs/` or `graphs/` |
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-gfup.qmd` | follow-up interval checks, potential follow-up and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
@@ -94,13 +95,14 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dc-trends`,
-`dc-eda`, `hs-setup`, `hs-concordance`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr`, `rhf` and `vp` fit and explain jobs, `vp-dependence`, `vp-individual`, `sid-fit`, `sid-clusters`, and the eight
+`dc-eda`, `hs-setup`, `hs-concordance`, `hs-score`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr`, `rhf` and `vp` fit and explain jobs, `vp-dependence`, `vp-individual`, `sid-fit`, `sid-clusters`, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so
 in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
 existing job by its file. Use `hs-setup` for one model's predictions against the matched population, and
 `hs-concordance` when each treatment group has its own `hm` model and every patient is to be predicted through
-each of them. `nb-boostmtree` is qualified from the start, because `nb` will also hold a BoostMLR job,
+each of them. `hs-score` is for an `hm` model fitted on start/stop segments, which `hs-setup` refuses:
+it scores each segment at its own start, as the SAS jobs for a time-varying model do. `nb-boostmtree` is qualified from the start, because `nb` will also hold a BoostMLR job,
 `nb-boostmlr`, which is still to come.
 `lp` is qualified from its first template, `lp-mirror`, so a later `lp` shape, such as calibration, arrives as a
 qualifier of its own. The other prefixes here remain unqualified. A
