@@ -274,6 +274,8 @@ for (m in .mn) {
          "Rerun that hm job, then this one.", call. = FALSE)
   }
   hvtiRtemplates:::.check_upstream_selection(.rec, list(time = TIME, event = EVENT))
+  # A start/stop model has no single covariate row per patient to predict from.
+  hvtiRtemplates:::.stop_start_stop_prediction(.rec$start, paste0("the hm model for ", m))
   .times[[m]] <- .rec$time
   .events[[m]] <- .rec$event
   models[[m]] <- .read$value

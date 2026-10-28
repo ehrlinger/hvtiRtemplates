@@ -76,6 +76,9 @@ SEED <- 20260100L + CHUNK
 cfg <- hvtiRutilities::study_config()
 job <- hvtiRtemplates::read_job_data(cfg, dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY)
 selection <- attr(job$record, "selection")
+# Several rows per patient is start/stop data, which a row bootstrap gets wrong:
+# stopped here, before the fit, whatever response the formula below names.
+hvtiRtemplates:::.stop_row_bootstrap(hvtiRtemplates:::.repeats_patients(selection))
 
 # Only the model's columns are resampled, so the patient identifier never
 # reaches the screen.
@@ -87,6 +90,8 @@ d <- job$data[c("iv_dead", "dead", POOL)]
 phases <- list(early = hzr_phase("cdf", t_half = 0.05, nu = 1, m = 1, fixed = "shapes"),
                constant = hzr_phase("constant"))
 base <- hazard(survival::Surv(iv_dead, dead) ~ 1, data = d, dist = "multiphase", phases = phases, fit = TRUE)
+# A start/stop base, Surv(start, stop, event), stops here: hzr_bootstrap() resamples rows, not patients.
+hvtiRtemplates:::.stop_row_bootstrap(hvtiRtemplates:::.has_entry_times(base))
 t0 <- Sys.time()
 # EDIT: the scope, written literally per phase: the same columns as POOL.
 bs <- hzr_bootstrap(base, n_boot = N_BOOT, seed = SEED, scope = list(early = ~ age + female, constant = ~ age + female),

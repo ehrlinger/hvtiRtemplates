@@ -259,7 +259,7 @@ test_that("every template that reads its own data offers the join and records th
     expect_true(grepl("list(job_data$provenance_join)", text, fixed = TRUE), info = basename(f))
     # A job that models one row per patient says so to read_job_data(), and its JOIN comment says what follows.
     one_row <- basename(f) %in% patient_level_templates
-    expect_identical(grepl("one_row_per_patient = TRUE", text, fixed = TRUE), one_row, info = basename(f))
+    expect_identical(grepl("one_row_per_patient = (TRUE|is[.]null[(]START[)])", text), one_row, info = basename(f))
     expect_identical(any(grepl("so a JOIN without REDUCE stops here", src[(at - 11L):at], fixed = TRUE)), one_row,
                      info = basename(f))
   }
@@ -355,7 +355,7 @@ test_that("templates that model one row per patient refuse a long join; long-dat
     env$.root <- "."
     env$study_config <- hvtiRutilities::study_config
     # Only the settings the read takes: other choices call the model's packages.
-    read_settings <- c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "TIME", "KEY", "JOIN", "JOIN_VARS", "REDUCE", "JOIN_KEY",
+    read_settings <- c("DATASET", "ANALYSIS_SET", "WHERE", "ID", "TIME", "START", "KEY", "JOIN", "JOIN_VARS", "REDUCE", "JOIN_KEY",
                        "IMPUTATION")
     for (expr in code) {
       if (is.call(expr) && identical(expr[[1L]], quote(`<-`)) && is.name(expr[[2L]]) &&

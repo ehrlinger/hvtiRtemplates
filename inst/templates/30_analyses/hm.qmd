@@ -198,6 +198,10 @@ job_data <- .up$job_data
 d <- job_data$data
 TIME <- .up$selection$time
 EVENT <- .up$selection$event
+# NULL unless hz was fitted on start/stop rows, when it names the segment start.
+START <- .up$selection$start
+# Start/stop calibration needs an hzr_deciles() that subtracts H(start).
+hvtiRtemplates:::.check_start_engine(START)
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
@@ -315,11 +319,12 @@ if (any(grepl("^ERROR", audit$action))) {
 # hazard() cannot take a missing value, and failed on one with "Predictor rows
 # must match the length of 'time'", naming neither the column nor why. Stop
 # here instead, naming each column and how many rows it is missing.
-invisible(hvtiRtemplates:::.missing_cases(d, TIME = TIME, EVENT = EVENT, COVARIATES = unlist(COVARIATES), action = "stop"))
+invisible(hvtiRtemplates:::.missing_cases(d, START = START, TIME = TIME, EVENT = EVENT, COVARIATES = unlist(COVARIATES),
+                                          action = "stop"))
 
 # Only the columns the model uses. A hazard() fit keeps a copy of its data,
 # which is saved in hm.rds, and `d` also holds the patient identifier.
-dd <- covariates_to_numeric(d[unique(c(TIME, EVENT, unlist(COVARIATES)))], unlist(COVARIATES))
+dd <- covariates_to_numeric(d[unique(c(START, TIME, EVENT, unlist(COVARIATES)))], unlist(COVARIATES))
 ```
 
 One column can be genuinely categorical, and there a factor is the right call.
@@ -412,7 +417,10 @@ set.seed(20260827)   # any fixed value; it must not change between renders
 # formula for the model would offer every covariate to every phase, and the
 # estimates would then not be comparable with the SAS model this replaces. A
 # phase with no entry in COVARIATES is offered none.
-form <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ 1"))
+# With START, the response is hz's start/stop one, Surv(START, TIME, EVENT).
+form <- stats::as.formula(paste0("Surv(", paste(c(START, TIME, EVENT), collapse = ", "), ") ~ 1"))
+# Stops on a response that drops the start hz fitted with, or names one it did not.
+hvtiRtemplates:::.check_surv_start(form, START, TIME, EVENT)
 # Each entry names one phase, once: [[ ]] takes the first of two entries with
 # one name and finds nothing in an unnamed list, so either would drop
 # covariates without a word.

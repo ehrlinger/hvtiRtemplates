@@ -14,9 +14,9 @@ hazard_template <- function(name) {
 
 # Evaluate the chunks `labels` of template `prefix` in `env`. After
 # `edit-study-choices` runs, `choices` overwrites its values, as a study
-# author's edits would.
-hazard_run <- function(prefix, labels, env, choices = list()) {
-  src <- readLines(hazard_template(prefix), warn = FALSE)
+# author's edits would. `src` replaces the template's lines, for a test that
+# runs an edited copy.
+hazard_run <- function(prefix, labels, env, choices = list(), src = readLines(hazard_template(prefix), warn = FALSE)) {
   # "set" is the old name of the setup chunk, and a list that names both runs it once.
   for (label in unique(vapply(labels, setup_label, ""))) {  # nolint: object_usage_linter.
     at <- which(trimws(src) == paste0("#| label: ", label))
@@ -123,8 +123,8 @@ hazard_downstream <- function(prefix, root, choices = list()) {
 
 # Run hz on `data` through chunk `last`, in a fresh environment, recording every
 # warning rather than letting it reach the console. Returns the environment, with
-# the warnings' messages in `.warnings`.
-hz_fit_run <- function(last = "noconserve", data = hazard_data(), .local_envir = parent.frame()) {
+# the warnings' messages in `.warnings`. `choices` adds to the study choices.
+hz_fit_run <- function(last = "noconserve", data = hazard_data(), choices = list(), .local_envir = parent.frame()) {
   root <- hazard_study(data, .local_envir = .local_envir)
   cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
   env <- hazard_env(root)
@@ -134,7 +134,7 @@ hz_fit_run <- function(last = "noconserve", data = hazard_data(), .local_envir =
   withCallingHandlers(
     utils::capture.output({
       hazard_run("hz", c("set", "edit-study-choices"), env,
-                 list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)))
+                 c(list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)), choices))
       hazard_run("hz", labels[seq_len(match(last, labels))], env)
     }),
     warning = function(w) {
@@ -368,3 +368,27 @@ expect_time_guard <- function(prefix) {
   testthat::expect_error(cohort_run(prefix, negative), "iv_dead has 0 time\\(s\\) of exactly zero and 1 negative")
   testthat::expect_error(cohort_run(prefix, both), "iv_dead has 3 time\\(s\\) of exactly zero and 1 negative")
 }
+
+# ---- #436: start/stop rows (SAS lcensor) ----------------------------------------
+
+# hazard_data() with each patient's follow-up split into one to four segments,
+# keyed ccfid x iv_start, with x1 changing at each split. A death falls on the
+# last segment. The cuts are rounded so the CSV round trip keeps every segment
+# meeting the next exactly.
+start_stop_data <- function(n = 160L) {
+  base <- hazard_data(n)
+  withr::local_seed(20261027)
+  rows <- lapply(seq_len(n), function(i) {
+    p <- base[i, ]
+    cuts <- round(stats::runif(sample(0:3, 1L), 0, p$iv_dead), 4)
+    cuts <- sort(unique(cuts[cuts > 0 & cuts < p$iv_dead]))
+    k <- length(cuts) + 1L
+    data.frame(ccfid = p$ccfid, iv_start = c(0, cuts), iv_dead = c(cuts, p$iv_dead),
+               dead = c(rep(0L, k - 1L), p$dead), x1 = p$x1 + stats::rnorm(k, sd = 0.5),
+               age = p$age, male = p$male, other = p$other)
+  })
+  do.call(rbind, rows)
+}
+
+# hz's study choices for start/stop rows.
+start_stop_choices <- list(START = "iv_start", KEY = c("ccfid", "iv_start"))

@@ -1079,13 +1079,14 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # The templates that take a long join: each one that reads its own data with
 # read_job_data() and does not set one_row_per_patient = TRUE. Read from the
 # installed templates, where that setting is written, so the refusal above
-# cannot name a template that refuses too.
+# cannot name a template that refuses too. hz sets it to is.null(START): its
+# start/stop rows refuse a long join too, in .check_start_settings().
 .long_join_templates <- function(root = system.file("templates", package = "hvtiRtemplates")) {
   files <- list.files(root, pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
   takes <- vapply(files, function(f) {
     text <- paste(readLines(f, warn = FALSE), collapse = "\n")
     grepl("read_job_data(.cfg, dataset = DATASET", text, fixed = TRUE) &&
-      !grepl("one_row_per_patient = TRUE", text, fixed = TRUE)
+      !grepl("one_row_per_patient = (TRUE|is[.]null[(]START[)])", text)
   }, logical(1L))
   sort(sub("[.]qmd$", "", basename(files[takes])), method = "radix")
 }
