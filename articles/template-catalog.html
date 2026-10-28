@@ -86,7 +86,7 @@
 </h2>
 <p>Each template carries a light.</p>
 <ul>
-<li>🟢 <strong>Shipped</strong> (34): on disk and supported. Scaffold it and use it.</li>
+<li>🟢 <strong>Shipped</strong> (35): on disk and supported. Scaffold it and use it.</li>
 <li>🟡 <strong>In progress</strong> (29): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
 <li>🔴 <strong>Not yet on the way</strong> (11): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
@@ -440,11 +440,17 @@
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🟢 Shipped</td>
+<td style="text-align: left;"><code>hs-score</code></td>
+<td style="text-align: left;">Each start/stop segment scored with the time-varying hm model at its own start: the hazard and the predicted mortality, in percent.</td>
+<td style="text-align: left;"><code>add_job("hs", subject, type, qualifier = "score")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>hs-setup</code></td>
 <td style="text-align: left;">Patient-level predictions from the hm model, set against the survival of a matched general population.</td>
 <td style="text-align: left;"><code>add_job("hs", subject, type, qualifier = "setup")</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🟢 Shipped</td>
 <td style="text-align: left;"><code>lp-mirror</code></td>
 <td style="text-align: left;">The mirrored histogram of the propensity score, treated above the axis and controls below, drawn from a saved lm-propensity_binary bundle without refitting: all patients, under the matching weights, and matched when the study has a match flag.</td>

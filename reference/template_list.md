@@ -106,9 +106,10 @@ tl
 #> 42                  vt.fit     vt                  fit      analyses
 #> 43                      hp     hp                 <NA>        graphs
 #> 44          hs.concordance     hs          concordance        graphs
-#> 45                hs.setup     hs                setup        graphs
-#> 46               lp.mirror     lp               mirror        graphs
-#> # 46 templates; `call` and `file` not shown. Read them with $call and $file.
+#> 45                hs.score     hs                score        graphs
+#> 46                hs.setup     hs                setup        graphs
+#> 47               lp.mirror     lp               mirror        graphs
+#> # 47 templates; `call` and `file` not shown. Read them with $call and $file.
 
 # Every template, where its job is written, and the call that scaffolds it.
 tl[, c("name", "folder", "call")]
@@ -157,8 +158,9 @@ tl[, c("name", "folder", "call")]
 #> 42                  vt.fit      analyses
 #> 43                      hp        graphs
 #> 44          hs.concordance        graphs
-#> 45                hs.setup        graphs
-#> 46               lp.mirror        graphs
+#> 45                hs.score        graphs
+#> 46                hs.setup        graphs
+#> 47               lp.mirror        graphs
 #>                                                                            call
 #> 1                              add_job("bd", subject = "study", type = "build")
 #> 2                           add_job("dc.eda", subject = "cohort", type = "eda")
@@ -204,8 +206,9 @@ tl[, c("name", "folder", "call")]
 #> 42                             add_job("vt.fit", subject = "dead", type = "vt")
 #> 43                              add_job("hp", subject = "dead_pa", type = "hz")
 #> 44                  add_job("hs.concordance", subject = "dead_pa", type = "hz")
-#> 45                        add_job("hs.setup", subject = "dead_pa", type = "hz")
-#> 46             add_job("lp.mirror", subject = "treatment", type = "propensity")
+#> 45                        add_job("hs.score", subject = "dead_pa", type = "hz")
+#> 46                        add_job("hs.setup", subject = "dead_pa", type = "hz")
+#> 47             add_job("lp.mirror", subject = "treatment", type = "propensity")
 
 # Find a template by its qualifier, then copy its call: the follow-up jobs.
 subset(tl, qualifier == "gfup", c(name, folder, call))
