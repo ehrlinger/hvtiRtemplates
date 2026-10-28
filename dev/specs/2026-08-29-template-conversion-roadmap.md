@@ -162,7 +162,7 @@ row has no template on disk.
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
 | `bd` | *in flight* | 1134 | 1094 | 15 | — |
-| `dt` | *in flight* | 512 | 503 | 0 | hvtiRutilities#262 |
+| `dt` | *in flight* | 512 | 503 | 0 | — |
 | `mi` | queued | — | 18 | — | hvtiRimputation |
 | `si` | queued | — | 1 | — | — |
 | `vars` | queued | 959 | 912 | 2 | hvtiRdatabuild |
