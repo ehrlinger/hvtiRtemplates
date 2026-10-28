@@ -158,7 +158,8 @@ test_that("every template's setup chunk runs the EDIT: guard through .job_setup(
                 info = info)
     expect_false(any(grepl("unresolved", src, fixed = TRUE) & grepl("marker(s)", src, fixed = TRUE)), info = info)
     expect_false(any(grepl("label: guard-edits", src, fixed = TRUE)), info = info)
-    # bd alone keeps a marker's source line out of its report.
+    # bd alone keeps a marker's source line out of its report and names no data in its box. dt keeps the
+    # marker's source line out too, and its box keeps the data clause.
     keeps_source_out <- grepl("^\\.job <- .*\\(SUBJECT, TYPE, envir = environment\\(\\), show_markers = FALSE, ", src)
     expect_identical(any(keeps_source_out & grepl("box_data = FALSE\\)$", src)), identical(info, "bd.qmd"), info = info)
   }
@@ -296,7 +297,8 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "cache_fit", "capture_provenance", "provenance_data", "publish_provenance",  # >= 1.3.1
     "register_data", "update_manifest",  # >= 1.5.3 (claims bd's build record)
     "cache_would_fit",  # >= 1.5.11 (nb-boostmtree's memory guard asks whether the fit will run)
-    "declare_data"  # >= 1.5.12 (bd names its working file in _study.yml on a first render)
+    "declare_data",  # >= 1.5.12 (bd names its working file in _study.yml on a first render)
+    "proc_print"  # hvtiRutilities#262, after 1.5.16 (dt's named checks print rows to the console only)
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")

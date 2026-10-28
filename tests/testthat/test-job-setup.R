@@ -183,8 +183,8 @@ test_that("every template has one chunk before its study choices, labeled setup"
     expect_identical(sum(grepl("^SUBJECT\\s+<- ", src)), 1L, info = info)
     expect_identical(sum(grepl("^TYPE\\s+<- ", src)), 1L, info = info)
     expect_true(any(grepl("^\\.root <- \\.job\\$root$", head)), info = info)
-    # bd builds a dataset and writes through no set.
-    if (!identical(info, "bd.qmd")) expect_true(any(grepl("^set_path <- \\.job\\$set_path$", head)), info = info)
+    # bd builds a dataset and dt checks one; neither writes through a set.
+    if (!info %in% c("bd.qmd", "dt.qmd")) expect_true(any(grepl("^set_path <- \\.job\\$set_path$", head)), info = info)
     expect_true(any(grepl("^\\.provenance_data <- list\\(\\)$", head)), info = info)
     # The output comes after all of the chunk's code, so the report shows one fold.
     at <- which(src == "#| label: setup")

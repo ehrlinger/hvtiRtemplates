@@ -10,6 +10,7 @@ refuses to overwrite an existing job.
 | template | job type | a job scaffolds into |
 |---|---|---|
 | `00_datasets/bd.qmd` | study dataset build: master snapshot to a registered dated version | `00_datasets/` or `datasets/` |
+| `00_datasets/dt.qmd` | study dataset check: what a `bd` rebuild changed, cross-tabs, follow-up and named checks, counts in the report and rows in the console | `00_datasets/` or `datasets/` |
 | `20_distributions/ac.qmd` | Kaplan-Meier life tables, numbers at risk, strata tests and survival figures | `20_distributions/` or `distributions/` |
 | `20_distributions/hz.qmd` | multiphase parametric hazard fit | `20_distributions/` or `distributions/` |
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
