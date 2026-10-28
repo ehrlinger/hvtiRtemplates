@@ -29,6 +29,21 @@
   invisible(TRUE)
 }
 
+# Kept for bh runners and reports scaffolded before patient resampling, which
+# call it by name: a study's copy of a job is not updated with the package. It
+# keeps their behavior, a stop on start/stop rows and nothing otherwise. New
+# scaffolds use .check_segmented_fit() and .check_bag_resampling() instead.
+.stop_row_bootstrap <- function(entry) {
+  if (isTRUE(entry)) {
+    stop("This bootstrap is on start/stop rows: several rows per patient, one per segment. ",
+         "hzr_bootstrap() resamples rows, which splits each patient's segments across replicates, and the ",
+         "selection frequencies it gives are not those of a patient-level bootstrap (SAS %HAZBOOT _TVC=1 ",
+         "_IDVAR=). It waits on a patient-level bootstrap in TemporalHazard ",
+         "(https://github.com/ehrlinger/TemporalHazard/issues/667).", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 # Every segment must start before it stops, at or after time zero. A segment
 # with start >= stop contributes nothing to the likelihood, or a negative
 # amount, and is a split made wrongly in the dataset build.
@@ -112,8 +127,18 @@
 
 # The report's check on what it reads: a bag screened on segmented rows must say
 # it resampled patients. A bag from a runner before patient resampling did not,
-# and its frequencies are those of a row bootstrap.
-.check_bag_resampling <- function(segmented, bags) {
+# and its frequencies are those of a row bootstrap. Each chunk file says so for
+# itself. A pre-pooled bag cannot: boot_pool_chunks() keeps its first chunk's
+# fields and does not compare `resampled`, so a pool of a patient chunk and a
+# row chunk would read as patients. A segmented screen is therefore read from
+# its chunk files only.
+.check_bag_resampling <- function(segmented, bags, pooled = FALSE) {
+  if (isTRUE(segmented) && isTRUE(pooled)) {
+    stop("The bootstrap screened several rows per patient, one per start/stop segment, and this report found ",
+         "one pooled bag rather than the runner's chunk files. A pooled bag keeps only its first chunk's record ",
+         "of how it resampled, so whether every chunk resampled patients cannot be read from it. Keep the chunk ",
+         "files the runner wrote, remove the pooled bag, and render this report again.", call. = FALSE)
+  }
   rows <- !vapply(bags, function(b) identical(b$resampled, "patients"), logical(1L))
   if (isTRUE(segmented) && any(rows)) {
     stop("The bootstrap screened several rows per patient, one per start/stop segment, and ", sum(rows), " of ",

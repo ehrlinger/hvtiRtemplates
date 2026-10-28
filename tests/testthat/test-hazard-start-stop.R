@@ -143,6 +143,14 @@ test_that("entry times and repeated patients are told apart from other responses
   expect_true(check(TRUE, list(list(resampled = "patients"), list(resampled = "patients"))))
   expect_true(check(FALSE, list(list(resampled = "rows"), list())))
   expect_error(check(TRUE, list(list(resampled = "patients"), list())), "1 of 2 bag file\\(s\\) resampled rows")
+  expect_error(check(TRUE, list(list(resampled = "patients")), pooled = TRUE), "one pooled bag")
+  expect_true(check(FALSE, list(list(resampled = "rows")), pooled = TRUE))
+  # Jobs scaffolded before patient resampling call the old helper by name, in
+  # these two forms; a study's copy is not updated with the package.
+  old <- hvtiRtemplates:::.stop_row_bootstrap
+  expect_true(old(repeats(list(rows = 30L, patients = 30L))))
+  expect_true(old(isTRUE(list(rows = 30L, patients = 30L)$rows > 30L)))
+  expect_error(old(repeats(list(rows = 87L, patients = 30L))), "TemporalHazard/issues/667")
   conc <- readLines(hazard_template("hs-concordance"), warn = FALSE)
   expect_length(grep(".stop_start_stop_prediction(.rec$start,", conc, fixed = TRUE), 1L)
 })
@@ -210,9 +218,17 @@ test_that("the bh runner resamples patients on start/stop rows, and its replicat
   report <- c("set", "edit-study-choices", "load", "tbl-data")
   settings <- list(EXPECT_BOOT = bag$n_boot, EXPECT_CHUNKS = 1L)
   expect_no_error(boot_report("bh", boot_env(root), report, settings))  # nolint: object_usage_linter.
+  set_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "dead_pa-hz")
   bag$resampled <- "rows"
-  saveRDS(bag, file.path(hvtiRutilities::study_dir("estimates", root), "dead_pa-hz", "bh.chunk01.rds"))
+  saveRDS(bag, file.path(set_dir, "bh.chunk01.rds"))
   expect_error(boot_report("bh", boot_env(root), report, settings), "resampled rows")  # nolint: object_usage_linter.
+  # A pre-pooled bag keeps only its first chunk's record, so even one that says
+  # "patients" cannot show every chunk did: the report wants the chunk files.
+  bag$resampled <- "patients"
+  saveRDS(bag, file.path(set_dir, "bh.rds"))
+  unlink(file.path(set_dir, "bh.chunk01.rds"))
+  expect_error(boot_report("bh", boot_env(root), report, settings),  # nolint: object_usage_linter.
+               "found one pooled bag rather than the runner's chunk files")
 })
 
 test_that("the bh runner stops on start/stop rows fitted without their start, before the screen", {
