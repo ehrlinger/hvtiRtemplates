@@ -40,3 +40,16 @@ test_that("a dt render after bd shows counts, and no patient row or identifier r
   leaked <- ids[vapply(ids, grepl, logical(1L), x = html, fixed = TRUE)]
   expect_identical(leaked, character())
 })
+
+test_that("a dt render with nothing registered says so, and a cross-tab named twice still renders", {
+  skip_on_cran()
+  dt_quarto_skip()
+  s <- dt_study(register = FALSE)
+  # The same pair twice: each cross-tab's chunk label carries its position, so the labels stay apart.
+  job <- dt_job(s$root, list("^CROSSTABS <- " = "CROSSTABS <- list(c(\"dead\", \"sex\"), c(\"dead\", \"sex\"))"))
+  html <- dt_render(job)
+  expect_match(html, "Nothing is registered for this study yet", fixed = TRUE)
+  expect_false(grepl("Rows in the registered version", html, fixed = TRUE))
+  expect_false(grepl("compared by value", html, fixed = TRUE))
+  expect_identical(lengths(regmatches(html, gregexpr("dead by sex, with a missing value", html, fixed = TRUE))), 2L)
+})

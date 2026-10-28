@@ -48,6 +48,7 @@ chunks in an interactive session to read them. A render leaves them out.
 ```{r}
 #| label: setup
 #| results: asis
+# unnumbered: setup, and the box under the title
 # add_job() writes SUBJECT and TYPE from the file's name; a hand-edited
 # declaration that drifts from it stops the render in .job_setup().
 SUBJECT <- "study"
@@ -68,6 +69,17 @@ if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion
 }
 # Later chunks send warnings and messages to the console rather than the report.
 knitr::opts_chunk$set(warning = NA, message = NA)
+# One numbered table, for a section that shows a table only when it has one or shows several: a
+# child chunk with its own label and caption while rendering, and a plain table in the console,
+# where a child's label would collide with the same chunk run before.
+.dt_table <- function(tab, label, cap, ...) {
+  if (!isTRUE(getOption("knitr.in.progress"))) return(print(knitr::kable(tab, ...)))
+  child <- new.env(parent = environment())
+  fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(paste0(fence, "{r}"), paste0("#| label: ", label),
+                                 paste0("#| tbl-cap: ", encodeString(cap, quote = "\"")),
+                                 "knitr::kable(tab, ...)", fence), envir = child, quiet = TRUE), sep = "\n")
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -165,6 +177,7 @@ if (length(.absent)) {
 ```{r}
 #| label: rebuild
 #| results: asis
+# unnumbered: its two tables are child chunks with their own labels and captions
 # The baseline is the version registered now for the study's declared dataset, read
 # with read_built(working = FALSE) and bound to this check here, never looked up by a
 # helper on its own. review_built() resolves its file from _study.yml and not from
@@ -198,6 +211,8 @@ if (is.null(.found)) {
   .join <- function(x) {
     if (length(KEY) == 1L) return(x)
     x$.dt_key <- do.call(paste, c(unname(as.list(x[KEY])), sep = "\r"))
+    # A missing part leaves the key missing, which compare_built() refuses, rather than the text "NA".
+    x$.dt_key[!stats::complete.cases(x[KEY])] <- NA
     x
   }
   .id <- if (length(KEY) == 1L) KEY else ".dt_key"
@@ -210,38 +225,30 @@ if (is.null(.found)) {
     cat("\n", if (.side == "only_oracle") "In the registered version only" else "In this build only", ": ",
         length(.ids), " row(s)\n", sep = "", file = stderr())
     if (length(.ids)) cat(utils::head(.ids, 100L), sep = "\n", file = stderr())
+    if (length(.ids) > 100L) cat("... ", length(.ids) - 100L, " more not shown\n", sep = "", file = stderr())
   }
 }
 cat(.rebuild_state, "\n")
-```
-
-```{r}
-#| label: tbl-rebuild-rows
-#| tbl-cap: "Rows in the registered version and in this build, joined on the dataset's key"
+# Per column: identical, within tolerance or differs, with how many rows differ and by
+# how much. It is never collapsed into a pass or a fail: a difference is read, not counted.
+# The tables are shown only when there is a comparison, so a study with nothing registered shows no empty caption.
 if (!is.null(.comparison)) {
-  knitr::kable(data.frame(
+  .rows_tab <- data.frame(
     Item = c("Rows in the registered version", "Rows in this build", "Rows in both",
              "In the registered version only", "In this build only"),
     Value = c(.rows$n_oracle, .rows$n_r, .rows$n_common, length(.rows$only_oracle), length(.rows$only_r))
-  ))
-}
-```
-
-```{r}
-#| label: tbl-rebuild-columns
-#| tbl-cap: "Each column of the rows in both, compared by value"
-# Per column: identical, within tolerance or differs, with how many rows differ and by
-# how much. It is never collapsed into a pass or a fail: a difference is read, not counted.
-if (!is.null(.comparison)) {
+  )
   .verdicts <- c(absent_in_r = "in the registered version only", absent_in_sas = "in this build only",
                  type_mismatch = "type changed")
-  knitr::kable(data.frame(
+  .columns_tab <- data.frame(
     Column = .comparison$variable,
     Verdict = ifelse(.comparison$verdict %in% names(.verdicts), .verdicts[.comparison$verdict], .comparison$verdict),
     `Rows differing` = .comparison$n_differ,
     `Largest difference` = signif(.comparison$max_abs_diff, 4),
     check.names = FALSE
-  ))
+  )
+  .dt_table(.rows_tab, "tbl-rebuild-rows", "Rows in the registered version and in this build, joined on the dataset's key")
+  .dt_table(.columns_tab, "tbl-rebuild-columns", "Each column of the rows in both, compared by value")
 }
 ```
 
@@ -253,9 +260,9 @@ if (!is.null(.comparison)) {
 # unnumbered: each cross-tab is a child chunk with its own label and caption
 # Counts the author needs to see: a small cell is flagged, never suppressed.
 .small <- 5L
-.fence <- strrep("`", 3)
 if (!length(CROSSTABS)) cat("No cross-tabs are named in CROSSTABS.\n")
-for (.pair in CROSSTABS) {
+for (.i in seq_along(CROSSTABS)) {
+  .pair <- CROSSTABS[[.i]]
   .tab <- tryCatch(hvtiRutilities::proc_freq(d, .pair, missing = TRUE),
                    error = function(e) .dt_stop("crosstabs", conditionMessage(e)))
   .tab <- .tab[, intersect(c(.pair, "Frequency", "Percent"), names(.tab)), drop = FALSE]
@@ -263,12 +270,11 @@ for (.pair in CROSSTABS) {
   .tab[.pair] <- lapply(.tab[.pair], function(x) ifelse(is.na(x), "(missing)", as.character(x)))
   .by <- paste(.pair, collapse = " by ")
   cat("\n\n### ", .by, "\n\n", sep = "")
-  # A label holds letters, digits and hyphens, so an underscore in a name cannot be read as markup.
-  cat(knitr::knit_child(text = c(
-    paste0(.fence, "{r}"), paste0("#| label: tbl-crosstab-", gsub("[^A-Za-z0-9]+", "-", paste(.pair, collapse = "-"))),
-    paste0("#| tbl-cap: ", encodeString(paste0(.by, ", with a missing value as a level of its own"), quote = "\"")),
-    "knitr::kable(.tab, row.names = FALSE)", .fence
-  ), envir = environment(), quiet = TRUE), sep = "\n")
+  # A label holds letters, digits and hyphens, so an underscore in a name cannot be read as markup. The
+  # position keeps two labels apart when two pairs' names reduce to the same letters.
+  .slug <- gsub("[^A-Za-z0-9]+", "-", paste(.pair, collapse = "-"))
+  .dt_table(.tab, paste0("tbl-crosstab-", .i, "-", .slug), paste0(.by, ", with a missing value as a level of its own"),
+            row.names = FALSE)
 }
 ```
 
@@ -280,18 +286,13 @@ for (.pair in CROSSTABS) {
 # unnumbered: its two tables are child chunks with their own labels and captions
 # identifier = NULL: the report holds aggregates only. The suspicious rows the check
 # finds go to the console, without an identifier, for the author to look at.
-.fence <- strrep("`", 3)
 if (is.null(EVENT)) {
   cat("No follow-up pair is named in EVENT.\n")
 } else {
   .fc <- tryCatch(hvtiRutilities::followup_check(d, event = EVENT, followup = FOLLOWUP, identifier = NULL),
                   error = function(e) .dt_stop("followup", conditionMessage(e)))
-  cat(knitr::knit_child(text = c(
-    paste0(.fence, "{r}"), "#| label: tbl-followup-cohort", "#| tbl-cap: \"Patients by event status\"",
-    "knitr::kable(.fc$cohort)", .fence, "",
-    paste0(.fence, "{r}"), "#| label: tbl-followup-intervals", "#| tbl-cap: \"Each follow-up interval\"",
-    "knitr::kable(.fc$intervals, digits = 3)", .fence
-  ), envir = environment(), quiet = TRUE), sep = "\n")
+  .dt_table(.fc$cohort, "tbl-followup-cohort", "Patients by event status")
+  .dt_table(.fc$intervals, "tbl-followup-intervals", "Each follow-up interval", digits = 3)
   cat("\n", nrow(.fc$review), " row(s) look suspicious, listed in the console.\n", sep = "")
   if (nrow(.fc$review)) cat(utils::capture.output(print(.fc$review, row.names = FALSE)), sep = "\n", file = stderr())
 }

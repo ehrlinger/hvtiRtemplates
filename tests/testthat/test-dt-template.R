@@ -107,3 +107,13 @@ test_that("the cross-tab, follow-up and named-check sections report counts", {
   # A missing value is a level of its own in a cross-tab.
   expect_true(all(c("dead", "sex", "Frequency", "Small") %in% names(env$.tab)))
 })
+
+test_that("a KEY of several columns with a missing part is refused, not joined on the text NA", {
+  dt_skip()
+  s <- dt_study()
+  dt_rebuild(s$root, function(d) {
+    d$dt_surg[[2L]] <- NA
+    d
+  })
+  expect_error(dt_run(s$root, dt_choices(KEY = c("ccfid", "dt_surg"))), "dt: rebuild .*missing value", perl = TRUE)
+})
