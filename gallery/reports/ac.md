@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 14:54
+2026-10-28 09:19
 
 An `ac` job is the first look at an outcome: the Kaplan-Meier life
 table, survival and patients at risk at the reporting horizons, the
@@ -56,8 +56,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.2
+**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -200,7 +200,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261027.parquet) |
+| Source              | dataset `built` (built_20261028.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -2101,9 +2101,9 @@ Figure 6: Survival by hx_chf, with patients at risk
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-27 14:54:49 EDT  |
-|                 | Ended            | 2026-10-27 14:54:55 EDT  |
-|                 | Duration         | 6 s                      |
+| Run             | Started          | 2026-10-28 09:18:56 EDT  |
+|                 | Ended            | 2026-10-28 09:19:01 EDT  |
+|                 | Duration         | 5 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -2111,9 +2111,9 @@ Figure 6: Survival by hx_chf, with patients at risk
 |                 | Template         | ac                       |
 |                 | Subject          | dead                     |
 |                 | Type             | hz                       |
-|                 | hvtiRtemplates   | 1.5.2                    |
-| Dataset `built` | Version file     | built_20261027.parquet   |
-|                 | Version date     | 2026-10-27               |
+|                 | hvtiRtemplates   | 1.5.3                    |
+| Dataset `built` | Version file     | built_20261028.parquet   |
+|                 | Version date     | 2026-10-28               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 725 rows on 725 patients |
 |                 | WHERE            | `!is.na(creat_pr)`       |

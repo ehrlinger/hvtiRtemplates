@@ -2239,7 +2239,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-27 15:36</p>
+      <p class="date">2026-10-28 09:29</p>
     </div>
   </div>
   
@@ -2251,7 +2251,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: sid.clusters 1.5.2 sha256:b28a4cdb045753cf511781444cceae3eb164b29295f8e9648f7846eea39017c1 -->
+<!-- hvtiRtemplates: sid.clusters 1.5.3 sha256:b28a4cdb045753cf511781444cceae3eb164b29295f8e9648f7846eea39017c1 -->
 <p>This job turns a <code>sid-fit</code> dissimilarity into clusters. It runs PAM (partitioning around medoids) on the SID distance for each K in a range, reports what the elbow and the silhouette say about K, and gives every solution letters that keep their identity as K grows, so cluster A at K = 4 is recognisably cluster A at K = 5. It never fits the forest: it reads <code>sid.rds</code>, so choosing K and pinning letters cost seconds and can be repeated freely.</p>
 <p>The assignments are written to the study’s datasets folder and registered, so a later job reads them with <code>JOIN</code>: a <code>dc-tables</code> job to describe the clusters, a <code>vp-fit</code> job with the cluster as its outcome to ask which variables separate them.</p>
 <p>This template is <strong>in flight</strong>: no study has yet run it end to end.</p>
@@ -2310,7 +2310,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.2</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.3</p>
 </div>
 </div>
 </div>
@@ -3168,18 +3168,18 @@ Figure 4: Patients placed in two dimensions by classical MDS of the SID distanc
 <span id="cb17-73"><a href="#cb17-73" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code> [1] &quot;Study: /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/8a6ce6b2-d9bd-4e4c-8597-a11f84aa45cf/scratchpad/gallery-full&quot;
- [2] &quot;&quot;                                                                                                                                          
- [3] &quot;[x] _study.yml — study: Template gallery (synthetic)&quot;                                                                                      
- [4] &quot;[x] renv.lock — renv.lock present&quot;                                                                                                         
- [5] &quot;[x] manifest.yaml — 4 dataset entries verified by checksum&quot;                                                                                
- [6] &quot;[x] dataset — built.rds, registered as built_20261027.parquet&quot;                                                                             
- [7] &quot;[x] dataset:echo — echo.rds, registered as echo_20261027.parquet&quot;                                                                          
- [8] &quot;[x] dataset:intervals — intervals.rds, registered as intervals_20261027.parquet&quot;                                                           
- [9] &quot;[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261027.parquet&quot;                                 
-[10] &quot;[!] provenance — 2 of 49 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, sid.clusters.echo.sid&quot;                         
-[11] &quot;&quot;                                                                                                                                          
-[12] &quot;4 .R  |  49 .qmd/.Rmd  |  3 .sas  |  83 provenance sidecars&quot;                                                                               </code></pre>
+<pre><code> [1] &quot;Study: /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/8a6ce6b2-d9bd-4e4c-8597-a11f84aa45cf/scratchpad/gallery-153&quot;
+ [2] &quot;&quot;                                                                                                                                         
+ [3] &quot;[x] _study.yml — study: Template gallery (synthetic)&quot;                                                                                     
+ [4] &quot;[x] renv.lock — renv.lock present&quot;                                                                                                        
+ [5] &quot;[x] manifest.yaml — 4 dataset entries verified by checksum&quot;                                                                               
+ [6] &quot;[x] dataset — built.rds, registered as built_20261028.parquet&quot;                                                                            
+ [7] &quot;[x] dataset:echo — echo.rds, registered as echo_20261028.parquet&quot;                                                                         
+ [8] &quot;[x] dataset:intervals — intervals.rds, registered as intervals_20261028.parquet&quot;                                                          
+ [9] &quot;[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261028.parquet&quot;                                
+[10] &quot;[!] provenance — 2 of 49 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, sid.clusters.echo.sid&quot;                        
+[11] &quot;&quot;                                                                                                                                         
+[12] &quot;4 .R  |  49 .qmd/.Rmd  |  3 .sas  |  83 provenance sidecars&quot;                                                                              </code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -3212,17 +3212,17 @@ A job that models one row per patient also sets REDUCE &lt;- list(rule = &quot;f
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-27 15:36:37 EDT</td>
+<td style="text-align: left;">2026-10-28 09:29:17 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-27 15:36:46 EDT</td>
+<td style="text-align: left;">2026-10-28 09:29:23 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">9 s</td>
+<td style="text-align: left;">6 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3262,17 +3262,17 @@ A job that models one row per patient also sets REDUCE &lt;- list(rule = &quot;f
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.2</td>
+<td style="text-align: left;">1.5.3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261027.parquet</td>
+<td style="text-align: left;">built_20261028.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-27</td>
+<td style="text-align: left;">2026-10-28</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3302,7 +3302,7 @@ A job that models one row per patient also sets REDUCE &lt;- list(rule = &quot;f
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>echo-sid/sid.rds</code> (SID fit), rendered 2026-10-27 15:36:17 -0400, data built_20261027.parquet</td>
+<td style="text-align: left;"><code>echo-sid/sid.rds</code> (SID fit), rendered 2026-10-28 09:29:06 -0400, data built_20261028.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -3317,7 +3317,7 @@ A job that models one row per patient also sets REDUCE &lt;- list(rule = &quot;f
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"sid.clusters.echo.sid","rendered":"2026-10-27T19:36:46Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"e17eb91864ba1b70d535e285aae63afdeeb4581aaf2087677673b3ae187e1f09"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"cluster","version":"2.1.8.2","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggsankey","version":"0.0.99999","source":"github","sha":"b675d0d5144b1b5758d3b2b41e86ceee66a1e071"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.2","source":null},{"package":"hvtiRutilities","version":"1.5.15","source":"github","sha":"31d447bfe3c2ae20fd2f4512aaedcc988cd5320b"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261027.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-27T18:36:56Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261027.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-27T18:36:56Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/echo-sid/sid.rds","role":"SID fit","bytes":4861437,"mtime":"2026-10-27T19:36:24Z","sha256":"4e557cc792ff7010aadfc6956f4d0f2d86c80547cffee7ac5ebbbd279cbf2edc"}],"subject":"echo","type":"sid","cohort":{"n":800},"run":{"start":"2026-10-27T15:36:37-0400","end":"2026-10-27T15:36:46-0400","time_zone":"EDT","duration_seconds":8.9,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"sid.clusters.echo.sid.qmd","template":"sid.clusters","prefix":"sid","qualifier":"clusters","subject":"echo","type":"sid","hvtiRtemplates":"1.5.2"},"datasets":[{"name":"built","version_file":"built_20261027.parquet","registered":"2026-10-27","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/echo-sid/sid.rds","set":"echo-sid","role":"SID fit","rendered_at":"2026-10-27T15:36:17-0400","dataset_version":"built_20261027.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/sid.clusters.echo.sid.qmd",".hvti_render_id":"ac30c0a766b1e720dd9c3fe7e08160d7fd8adb824fab6e196f0caaf0f14e3b90",".hvti_source_sha256":"2ca42edeffddcab716d034a1d863c60c5e77e0fd0380d9a80d898b2eae7cf24f"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"sid.clusters.echo.sid","rendered":"2026-10-28T13:29:23Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"e17eb91864ba1b70d535e285aae63afdeeb4581aaf2087677673b3ae187e1f09"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"cluster","version":"2.1.8.2","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggsankey","version":"0.0.99999","source":"github","sha":"b675d0d5144b1b5758d3b2b41e86ceee66a1e071"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.3","source":null},{"package":"hvtiRutilities","version":"1.5.16","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261028.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-28T13:14:43Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261028.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-28T13:14:43Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/echo-sid/sid.rds","role":"SID fit","bytes":4861476,"mtime":"2026-10-28T13:29:11Z","sha256":"eeb367c33e509f75a6a707ae25e0b48a0cd076de9e2d49a71c75d930d99b4ebb"}],"subject":"echo","type":"sid","cohort":{"n":800},"run":{"start":"2026-10-28T09:29:17-0400","end":"2026-10-28T09:29:23-0400","time_zone":"EDT","duration_seconds":5.8,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"sid.clusters.echo.sid.qmd","template":"sid.clusters","prefix":"sid","qualifier":"clusters","subject":"echo","type":"sid","hvtiRtemplates":"1.5.3"},"datasets":[{"name":"built","version_file":"built_20261028.parquet","registered":"2026-10-28","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/echo-sid/sid.rds","set":"echo-sid","role":"SID fit","rendered_at":"2026-10-28T09:29:06-0400","dataset_version":"built_20261028.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/sid.clusters.echo.sid.qmd",".hvti_render_id":"9ef79cddc8b8b2d76b3501ead417e8b97fd42945ecde8c17d982e6755af39d02",".hvti_source_sha256":"c321186abef5c370239828921f5079b726caa69147d9aa518883e0b613f0cf65"}</script>
 </section>
 
 </main>

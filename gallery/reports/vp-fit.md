@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:31
+2026-10-28 09:25
 
 Gallery job on the synthetic cohort: a VarPro screen of survival after
 operation (iv_dead, dead) on the nine preoperative predictors rfs-fit
@@ -97,8 +97,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.2
+**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -168,15 +168,52 @@ NOISE_N <- 20
 # 0.1 matches varPro's own trimming: below it, z is 0 by construction.
 TRIM <- 0.1
 
-# Demo: varPro's forest. NVAR caps how many variables get release rules, and
-# counts the noise columns too; with SPLIT_WEIGHT = TRUE a guided first forest
-# picks them, and the rest are cut before any rule is built (104 of 154 terms
-# in the screen behind this template). Those cut variables show as not eligible below,
-# which is not evidence of no effect. To give every candidate rules, set NVAR
-# to at least length(PREDICTORS) + NOISE_N and SPLIT_WEIGHT to FALSE.
+# Demo: varPro's forest. The defaults are the exploration setting, which
+# tests as many candidates as it can: no guided split weights, so every
+# candidate gets release rules. Under varPro's own defaults a lasso screen
+# picks the variables first, and in a known-signal simulation of 30
+# candidates it left about 11 tested at 60 events, and 10 at 150.
+#
+# MTRY must be lowered once the weights are off. varPro then grows its rule
+# forest with mtry = Inf, every candidate at every split, and a binary
+# predictor, with one cut point against a continuous one's hundreds, was
+# split in about 1 tree in 10. NULL takes ceiling(sqrt(p)), p the candidates
+# plus noise columns. For 30 candidates that is 6, which tested about 28
+# of them and recovered the true signals about as well as the defaults.
+# p counts a factor once, though varPro's forest sees a column per level,
+# so the share of columns tried at a split is a little below 1 in sqrt(p).
+#
+# NODESIZE_EXTERNAL applies to a survival screen: varPro first grows a survival
+# forest, and its leaves need events in them. NULL takes
+# max(10, round(2 * n / events)), about two events per leaf.
+#
+# MAX_TREE and MAX_RULES_TREE are the trees and rules per tree varPro samples
+# for its rules. With roughly 150 events or more, the larger setting below
+# raised the z of a rare binary signal from 5.1 to 6.9, and of a weak
+# continuous one from 2.8 to 3.8, in that simulation, at about three times the
+# time; at 60 events it barely helped. Uncomment its line below the settings
+# to use it.
+#
+# The parsimonious screen is varPro's own defaults. It is a SCREEN, not a
+# selection: a guided first forest keeps NVAR columns, noise included, and cuts
+# the rest before any rule is built (104 of 154 terms in the screen behind this
+# template). A cut variable shows as not eligible below, which is not evidence
+# of no effect. Uncomment its line below the settings to run it.
+#
+# The simulation is the one in ggRandomForests' varpro-small-data vignette.
 NTREE <- 500
+MTRY <- NULL
+NODESIZE_EXTERNAL <- NULL
+MAX_TREE <- 150
+MAX_RULES_TREE <- 150
+SPLIT_WEIGHT <- FALSE
+SPARSE <- FALSE
+# Read only when SPLIT_WEIGHT is TRUE.
 NVAR <- 30
-SPLIT_WEIGHT <- TRUE
+# The larger setting, for roughly 150 events or more:
+# NTREE <- 1000; MAX_TREE <- 1000; MAX_RULES_TREE <- 300
+# The parsimonious screen, varPro's own defaults:
+# SPLIT_WEIGHT <- TRUE; SPARSE <- TRUE; MTRY <- Inf; NVAR <- 30
 
 # Demo: the stability check. REPEATS refits, each on SUBSAMPLE of the patients
 # drawn without replacement and with a fresh noise draw. 0 skips it; it costs
@@ -302,7 +339,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261027.parquet) |
+| Source              | dataset `built` (built_20261028.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -468,10 +505,28 @@ Code
 # cache_fit() writes <dir>/<name>.rds and its default dir is the study's
 # estimates folder, not this set's, so every call here names the set's.
 CACHE_DIR <- dirname(set_path("estimates", "vp.rds"))
+# The settings the full fit and every refit share; the study choices say why.
+.p <- ncol(d_noise) - length(.outcome)
+.mtry <- if (is.null(MTRY)) ceiling(sqrt(.p)) else MTRY
+.max_tree <- min(MAX_TREE, NTREE)
+# A survival screen's leaf size follows the events of the patients it is given,
+# so a refit on a subsample gets its own.
+vp_nodesize_external <- function(data) {
+  if (!.survival) return(NULL)
+  if (!is.null(NODESIZE_EXTERNAL)) return(NODESIZE_EXTERNAL)
+  # max(1, ...): a refit with no events would otherwise ask for leaves of infinite size.
+  max(10, round(2 * nrow(data) / max(1, sum(data[[EVENT]] == 1))))
+}
+# The leaf size is worked out before each cache_fit() and handed in as a value.
+# cache_fit() keys the code's own variables, not what a helper reads inside it,
+# so a call to vp_nodesize_external() in the code would not see NODESIZE_EXTERNAL
+# change, and a changed choice would reload the old fit even with REFIT <- TRUE.
+.nodesize_external <- vp_nodesize_external(d_noise)
 fit <- cache_fit(
   "vp-fit",
-  varpro(model, d_noise, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, verbose = FALSE, cores = 1L,
-         seed = -abs(SEED)),
+  varpro(model, d_noise, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, sparse = SPARSE, mtry = .mtry,
+         nodesize.external = .nodesize_external, max.tree = .max_tree, max.rules.tree = MAX_RULES_TREE,
+         verbose = FALSE, cores = 1L, seed = -abs(SEED)),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
 )
 ```
@@ -494,7 +549,7 @@ set.seed(abs(SEED))
 # vp_judge() replaces varpro_coverage()'s own selection, which reads an empty noise check as "select every tested
 # row", so its warning about that case would mislead here: vp_judge() selects nothing then, and says so.
 cov <- vp_judge(withCallingHandlers(
-  ggRandomForests::varpro_coverage(fit, by = "variable", trim = TRIM, noise = "^noise"),
+  ggRandomForests::varpro_coverage(fit, by = "variable", trim = TRIM, max.tree = fit$rf$ntree, noise = "^noise"),
   warning = function(w) {
     if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
   }
@@ -509,15 +564,15 @@ knitr::kable(data.frame(
 
 | variable | kind | eligible | trees | coverage | z | tested | bar | judged_against | selected |
 |:---|:---|:---|---:|---:|---:|:---|---:|:---|:---|
-| age | continuous | TRUE | 500 | 1.000 | 2.778 | TRUE | NA | no usable noise bar | FALSE |
-| hx_chf | categorical | TRUE | 500 | 1.000 | 3.496 | TRUE | 0.694 | categorical | TRUE |
-| lvef | continuous | TRUE | 500 | 1.000 | 1.379 | TRUE | NA | no usable noise bar | FALSE |
-| plvmassi | continuous | TRUE | 500 | 1.000 | 0.926 | TRUE | NA | no usable noise bar | FALSE |
-| creat_pr | continuous | TRUE | 500 | 1.000 | 0.795 | TRUE | NA | no usable noise bar | FALSE |
-| hx_dm | categorical | TRUE | 483 | 0.966 | 1.347 | TRUE | 0.694 | categorical | TRUE |
-| female | categorical | TRUE | 0 | 0.000 | NA | FALSE | 0.694 | categorical | FALSE |
-| bmi | continuous | TRUE | 0 | 0.000 | NA | FALSE | NA | no usable noise bar | FALSE |
-| nyha_pr | categorical | TRUE | 0 | 0.000 | NA | FALSE | 0.694 | categorical | FALSE |
+| age | continuous | TRUE | 500 | 1.000 | 2.659 | TRUE | 0.604 | continuous | TRUE |
+| hx_chf | categorical | TRUE | 485 | 0.970 | 3.251 | TRUE | 0.422 | categorical | TRUE |
+| lvef | continuous | TRUE | 472 | 0.944 | 1.354 | TRUE | 0.604 | continuous | TRUE |
+| plvmassi | continuous | TRUE | 467 | 0.934 | 0.694 | TRUE | 0.604 | continuous | TRUE |
+| creat_pr | continuous | TRUE | 447 | 0.894 | 0.594 | TRUE | 0.604 | continuous | FALSE |
+| bmi | continuous | TRUE | 436 | 0.872 | 0.515 | TRUE | 0.604 | continuous | FALSE |
+| hx_dm | categorical | TRUE | 357 | 0.714 | 0.798 | TRUE | 0.422 | categorical | TRUE |
+| nyha_pr | categorical | TRUE | 254 | 0.508 | 0.289 | TRUE | 0.422 | categorical | FALSE |
+| female | categorical | TRUE | 114 | 0.228 | 0.143 | TRUE | 0.422 | categorical | FALSE |
 
 Table 3: Coverage, importance and selection of each candidate, most
 covered first
@@ -538,10 +593,10 @@ knitr::kable(data.frame(
 |:--------------|----------:|
 | Candidates    |         9 |
 | Eligible      |         9 |
-| Tested        |         6 |
-| Selected      |         2 |
+| Tested        |         9 |
+| Selected      |         5 |
 | Noise columns |        20 |
-| Noise tested  |         2 |
+| Noise tested  |        20 |
 
 Table 4: How the candidates become the selected set
 
@@ -563,7 +618,7 @@ save_figure(.fig, "vp-fit-coverage", width = 6.5)
 .fig
 ```
 
-![](assets/e52bcb6cff83b43140bc268b38d7b570.png)
+![](assets/f3a4d037d6cdd67b7f04fad535ee5de0.png)
 
 Figure 1: Importance against coverage for every eligible variable, one
 panel per kind. Black points are real candidates and gray points
@@ -575,12 +630,14 @@ Code
 
 ``` r
 # Free size: one row per variable, so the height grows with the list.
-.fig <- plot(gg_varpro(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+# Scored on every tree, as the coverage table is: left to its default,
+# gg_varpro() samples MAX_TREE of them, and the figure would disagree with the table.
+.fig <- plot(gg_varpro(fit, max.tree = fit$rf$ntree)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "vp-fit-varpro", height = 7)
 .fig
 ```
 
-![](assets/b9d18cb0e7623d2a6a79593ea44207fe.png)
+![](assets/d0965d87b85c0157fbcc842ef1068c3c.png)
 
 Figure 2: VarPro’s own importance plot, noise columns included. Each box
 spans the 15th to the 85th percentile of a variable’s per-tree
@@ -607,16 +664,18 @@ if (REPEATS > 0) {
     set.seed(abs(SEED) + r)
     rows <- sort(sample.int(nrow(d), floor(SUBSAMPLE * nrow(d))))
     dr <- vp_add_noise(d[rows, , drop = FALSE], PREDICTORS, NOISE_N, SEED + r)
+    .nodesize_external <- vp_nodesize_external(dr)
     fr <- cache_fit(
       sprintf("vp-repeat-%02d", r),
-      varpro(model, dr, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, verbose = FALSE, cores = 1L,
-             seed = -abs(SEED + r)),
+      varpro(model, dr, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, sparse = SPARSE, mtry = .mtry,
+             nodesize.external = .nodesize_external, max.tree = .max_tree, max.rules.tree = MAX_RULES_TREE,
+             verbose = FALSE, cores = 1L, seed = -abs(SEED + r)),
       seed = SEED + r, dir = CACHE_DIR, refit = REFIT
     )
     set.seed(abs(SEED) + r)
     # As for the full fit: vp_judge() makes the selection, so varpro_coverage()'s empty-noise warning is muffled.
     cr <- vp_judge(withCallingHandlers(
-      ggRandomForests::varpro_coverage(fr, by = "variable", trim = TRIM, noise = "^noise"),
+      ggRandomForests::varpro_coverage(fr, by = "variable", trim = TRIM, max.tree = fr$rf$ntree, noise = "^noise"),
       warning = function(w) {
         if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
       }
@@ -646,13 +705,13 @@ if (REPEATS > 0) {
 |:---------|-------------:|---------------:|
 | age      |          1.0 |            1.0 |
 | hx_chf   |          1.0 |            1.0 |
-| lvef     |          1.0 |            0.8 |
+| lvef     |          1.0 |            1.0 |
 | hx_dm    |          1.0 |            0.6 |
-| plvmassi |          0.8 |            0.4 |
-| creat_pr |          0.6 |            0.2 |
-| bmi      |          0.0 |            0.0 |
-| female   |          0.0 |            0.0 |
-| nyha_pr  |          0.0 |            0.0 |
+| plvmassi |          1.0 |            0.6 |
+| nyha_pr  |          1.0 |            0.2 |
+| bmi      |          1.0 |            0.0 |
+| creat_pr |          1.0 |            0.0 |
+| female   |          0.8 |            0.0 |
 
 Table 5: How often each candidate was tested and selected across the
 refits
@@ -664,7 +723,25 @@ mean of its importance in each tree, and a tree with no usable rule for
 the variable counts as zero. A variable tested in fewer than `TRIM` of
 the trees therefore scores exactly 0. A variable that is not eligible
 was never tested at all. Neither is evidence of no effect; the variable
-simply was not examined.
+simply was not examined. Read z beside coverage: a z of 0 with low
+coverage means untested.
+
+**Tested is not the same as detectable.** With few events, a real effect
+can be tested and still score z of about 0. In a simulation with 60
+events in 1,900 patients, a binary predictor present in 10% of them,
+with a hazard ratio of 2.7, was tested in about 8% of trees with every
+candidate tried at each split and in 12% to 25% with 6 tried, and scored
+z below 0.3 in every such fit. Before reading a z of 0 for a rare binary
+predictor as no effect, count the events among the patients who have it:
+a handful of events cannot move a forest.
+
+**A stand-in scores like the real thing.** A variable correlated with a
+true signal shares its splits and earns importance it would not have on
+its own. In the same simulation, a noise variable correlated 0.7 with a
+signal scored z above 0 in 15 of 16 fits, and above the signal itself in
+2. The noise columns here are permuted, so they cannot catch this; check
+the correlations among the selected set before naming one of them the
+cause.
 
 **Selected means it beat chance in this fit.** The bar is the best score
 any tested noise column of the same kind reached. A categorical variable
@@ -672,12 +749,14 @@ is held to the continuous bar whenever categorical noise sets no bar of
 its own, which makes the rule strict for categorical variables.
 
 **This is a screen, not a selection.** It keeps everything it could not
-rule out, and its settings matter: guided split weights and `NVAR`
-decide which variables are examined at all. A selection would also need
-the unguided screen (`SPLIT_WEIGHT <- FALSE`), the stability above, and
-ideally cross-validation to agree. Read the stability table before the
-coverage table: a variable selected in the full fit but rarely in the
-refits is a weak candidate.
+rule out, and its settings matter. The default here is the exploration
+setting: no guided split weights, so every candidate gets rules, and
+`MTRY` lowered so binary candidates are split. The parsimonious screen,
+varPro’s own defaults, lets guided split weights and `NVAR` decide which
+variables are examined at all. A selection would also need the two
+settings, the stability above, and ideally cross-validation to agree.
+Read the stability table before the coverage table: a variable selected
+in the full fit but rarely in the refits is a weak candidate.
 
 Code
 
@@ -702,9 +781,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-27 15:30:10 EDT  |
-|                 | Ended            | 2026-10-27 15:31:21 EDT  |
-|                 | Duration         | 1 min 11 s               |
+| Run             | Started          | 2026-10-28 09:24:24 EDT  |
+|                 | Ended            | 2026-10-28 09:25:20 EDT  |
+|                 | Duration         | 56 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -712,9 +791,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 |                 | Template         | vp.fit                   |
 |                 | Subject          | dead                     |
 |                 | Type             | vp                       |
-|                 | hvtiRtemplates   | 1.5.2                    |
-| Dataset `built` | Version file     | built_20261027.parquet   |
-|                 | Version date     | 2026-10-27               |
+|                 | hvtiRtemplates   | 1.5.3                    |
+| Dataset `built` | Version file     | built_20261028.parquet   |
+|                 | Version date     | 2026-10-28               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

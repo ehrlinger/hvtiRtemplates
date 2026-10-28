@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:31
+2026-10-28 09:27
 
 Explains the `vp-fit` screen in this set: survival at five years along
 each selected predictor.
@@ -76,7 +76,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.2
+hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -244,11 +244,11 @@ for (.i in seq_along(.pages)) {
 }
 ```
 
-    Warning: Removed 280 rows containing non-finite outside the scale range
+    Warning: Removed 152 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 280 rows containing non-finite outside the scale range
+    Removed 152 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 280 rows containing non-finite outside the scale range
+    Removed 152 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
 Code
@@ -257,24 +257,50 @@ Code
 .fig
 ```
 
-    Warning: Removed 280 rows containing non-finite outside the scale range
+    Warning: Removed 152 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/5a356a2ddf7d25b2b659333b823c1e33.png)
+![](assets/6219edc3b91a3b638a7a8584887ac77f.png)
 
 Figure 1: VarPro partial dependence on each drawn predictor, one panel
 per predictor. For a continuous predictor a black solid line marks the
 nonparametric partial effect and a black dashed line the parametric one,
 as in the legend; for a categorical predictor black box plots show the
-spread of the partial effect at each level.
+spread of the partial effect at each level. Page 1 of 2: age, hx_chf,
+lvef, plvmassi.
+
+    Warning: Removed 112 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
+
+    Warning: Removed 112 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
+    Removed 112 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
+
+Code
+
+``` r
+.fig
+```
+
+    Warning: Removed 112 rows containing non-finite outside the scale range
+    (`stat_boxplot()`).
+
+![](assets/81e206d902b0fa7bad0623a2ad648144.png)
+
+Figure 2: VarPro partial dependence on each drawn predictor, one panel
+per predictor. For a continuous predictor a black solid line marks the
+nonparametric partial effect and a black dashed line the parametric one,
+as in the legend; for a categorical predictor black box plots show the
+spread of the partial effect at each level. Page 2 of 2: hx_dm.
 
 ## About this run
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-27 15:31:39 EDT |
-|  | Ended | 2026-10-27 15:31:48 EDT |
-|  | Duration | 9 s |
+| Run | Started | 2026-10-28 09:25:29 EDT |
+|  | Ended | 2026-10-28 09:27:06 EDT |
+|  | Duration | 1 min 37 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -282,13 +308,13 @@ spread of the partial effect at each level.
 |  | Template | vp.explain |
 |  | Subject | dead |
 |  | Type | vp |
-|  | hvtiRtemplates | 1.5.2 |
-| Dataset `built` | Version file | built_20261027.parquet |
-|  | Version date | 2026-10-27 |
+|  | hvtiRtemplates | 1.5.3 |
+| Dataset `built` | Version file | built_20261028.parquet |
+|  | Version date | 2026-10-28 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-27 15:30:10 -0400, data built_20261027.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-28 09:24:24 -0400, data built_20261028.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

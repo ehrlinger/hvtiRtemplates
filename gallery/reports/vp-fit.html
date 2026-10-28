@@ -2238,7 +2238,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-27 15:31</p>
+      <p class="date">2026-10-28 09:25</p>
     </div>
   </div>
   
@@ -2250,7 +2250,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: vp.fit 1.5.2 sha256:803a9b0ddc98848249bbeb81ee226d1f13ea20df42183eb87590ef56ee7e70a4 -->
+<!-- hvtiRtemplates: vp.fit 1.5.3 sha256:fb4c02c383766ba5f2a85d23f81f56a6a4e6509d78f4d8d313a75051e153f35a -->
 <p>Gallery job on the synthetic cohort: a VarPro screen of survival after operation (iv_dead, dead) on the nine preoperative predictors rfs-fit grows on.</p>
 <!--
      whether its selected set feeds a later model job or stands alone. Replace
@@ -2338,7 +2338,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261027.parquet</code>, dated 2026-10-27 · rendered by gallery on gallery · hvtiRtemplates 1.5.2</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261028.parquet</code>, dated 2026-10-28 · rendered by gallery on gallery · hvtiRtemplates 1.5.3</p>
 </div>
 </div>
 </div>
@@ -2409,39 +2409,76 @@ vertical-align: -.125em;
 <span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># 0.1 matches varPro&#39;s own trimming: below it, z is 0 by construction.</span></span>
 <span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>TRIM <span class="ot">&lt;-</span> <span class="fl">0.1</span></span>
 <span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: varPro&#39;s forest. NVAR caps how many variables get release rules, and</span></span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># counts the noise columns too; with SPLIT_WEIGHT = TRUE a guided first forest</span></span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># picks them, and the rest are cut before any rule is built (104 of 154 terms</span></span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co"># in the screen behind this template). Those cut variables show as not eligible below,</span></span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># which is not evidence of no effect. To give every candidate rules, set NVAR</span></span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co"># to at least length(PREDICTORS) + NOISE_N and SPLIT_WEIGHT to FALSE.</span></span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>NTREE <span class="ot">&lt;-</span> <span class="dv">500</span></span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>NVAR <span class="ot">&lt;-</span> <span class="dv">30</span></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>SPLIT_WEIGHT <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the stability check. REPEATS refits, each on SUBSAMPLE of the patients</span></span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn without replacement and with a fresh noise draw. 0 skips it; it costs</span></span>
-<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co"># REPEATS times one fit.</span></span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>REPEATS <span class="ot">&lt;-</span> <span class="dv">5</span></span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>SUBSAMPLE <span class="ot">&lt;-</span> <span class="fl">0.632</span></span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the seed. It is part of every cache key, seeds R&#39;s generator before</span></span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># each random step, and is handed to varpro() as `seed =`, negated as</span></span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC documents. Both halves matter: varpro() draws from R&#39;s</span></span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># generator as well as from its own seed.</span></span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
-<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
-<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
-<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;vp-fit-coverage&quot;). The names are the</span></span>
-<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
-<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: varPro&#39;s forest. The defaults are the exploration setting, which</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># tests as many candidates as it can: no guided split weights, so every</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># candidate gets release rules. Under varPro&#39;s own defaults a lasso screen</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co"># picks the variables first, and in a known-signal simulation of 30</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># candidates it left about 11 tested at 60 events, and 10 at 150.</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># MTRY must be lowered once the weights are off. varPro then grows its rule</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co"># forest with mtry = Inf, every candidate at every split, and a binary</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co"># predictor, with one cut point against a continuous one&#39;s hundreds, was</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># split in about 1 tree in 10. NULL takes ceiling(sqrt(p)), p the candidates</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># plus noise columns. For 30 candidates that is 6, which tested about 28</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># of them and recovered the true signals about as well as the defaults.</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co"># p counts a factor once, though varPro&#39;s forest sees a column per level,</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="co"># so the share of columns tried at a split is a little below 1 in sqrt(p).</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co"># NODESIZE_EXTERNAL applies to a survival screen: varPro first grows a survival</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># forest, and its leaves need events in them. NULL takes</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># max(10, round(2 * n / events)), about two events per leaf.</span></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># MAX_TREE and MAX_RULES_TREE are the trees and rules per tree varPro samples</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># for its rules. With roughly 150 events or more, the larger setting below</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># raised the z of a rare binary signal from 5.1 to 6.9, and of a weak</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># continuous one from 2.8 to 3.8, in that simulation, at about three times the</span></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="co"># time; at 60 events it barely helped. Uncomment its line below the settings</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># to use it.</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="co"># The parsimonious screen is varPro&#39;s own defaults. It is a SCREEN, not a</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># selection: a guided first forest keeps NVAR columns, noise included, and cuts</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co"># the rest before any rule is built (104 of 154 terms in the screen behind this</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># template). A cut variable shows as not eligible below, which is not evidence</span></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># of no effect. Uncomment its line below the settings to run it.</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="co"># The simulation is the one in ggRandomForests&#39; varpro-small-data vignette.</span></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>NTREE <span class="ot">&lt;-</span> <span class="dv">500</span></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a>MTRY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>NODESIZE_EXTERNAL <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>MAX_TREE <span class="ot">&lt;-</span> <span class="dv">150</span></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>MAX_RULES_TREE <span class="ot">&lt;-</span> <span class="dv">150</span></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>SPLIT_WEIGHT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>SPARSE <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="co"># Read only when SPLIT_WEIGHT is TRUE.</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>NVAR <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="co"># The larger setting, for roughly 150 events or more:</span></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="co"># NTREE &lt;- 1000; MAX_TREE &lt;- 1000; MAX_RULES_TREE &lt;- 300</span></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="co"># The parsimonious screen, varPro&#39;s own defaults:</span></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a><span class="co"># SPLIT_WEIGHT &lt;- TRUE; SPARSE &lt;- TRUE; MTRY &lt;- Inf; NVAR &lt;- 30</span></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the stability check. REPEATS refits, each on SUBSAMPLE of the patients</span></span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn without replacement and with a fresh noise draw. 0 skips it; it costs</span></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="co"># REPEATS times one fit.</span></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>REPEATS <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>SUBSAMPLE <span class="ot">&lt;-</span> <span class="fl">0.632</span></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the seed. It is part of every cache key, seeds R&#39;s generator before</span></span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a><span class="co"># each random step, and is handed to varpro() as `seed =`, negated as</span></span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC documents. Both halves matter: varpro() draws from R&#39;s</span></span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a><span class="co"># generator as well as from its own seed.</span></span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;vp-fit-coverage&quot;). The names are the</span></span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2558,7 +2595,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261027.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261028.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2766,12 +2803,30 @@ Table 2: Missing values in the screen’s variables
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cache_fit() writes &lt;dir&gt;/&lt;name&gt;.rds and its default dir is the study&#39;s</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># estimates folder, not this set&#39;s, so every call here names the set&#39;s.</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="fu">dirname</span>(<span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;vp.rds&quot;</span>))</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;vp-fit&quot;</span>,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">varpro</span>(model, d_noise, <span class="at">ntree =</span> NTREE, <span class="at">nvar =</span> NVAR, <span class="at">split.weight =</span> SPLIT_WEIGHT, <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">cores =</span> <span class="dv">1</span>L,</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED)),</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The settings the full fit and every refit share; the study choices say why.</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>.p <span class="ot">&lt;-</span> <span class="fu">ncol</span>(d_noise) <span class="sc">-</span> <span class="fu">length</span>(.outcome)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>.mtry <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(MTRY)) <span class="fu">ceiling</span>(<span class="fu">sqrt</span>(.p)) <span class="cf">else</span> MTRY</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>.max_tree <span class="ot">&lt;-</span> <span class="fu">min</span>(MAX_TREE, NTREE)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co"># A survival screen&#39;s leaf size follows the events of the patients it is given,</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co"># so a refit on a subsample gets its own.</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>vp_nodesize_external <span class="ot">&lt;-</span> <span class="cf">function</span>(data) {</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span>.survival) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(NODESIZE_EXTERNAL)) <span class="fu">return</span>(NODESIZE_EXTERNAL)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># max(1, ...): a refit with no events would otherwise ask for leaves of infinite size.</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">max</span>(<span class="dv">10</span>, <span class="fu">round</span>(<span class="dv">2</span> <span class="sc">*</span> <span class="fu">nrow</span>(data) <span class="sc">/</span> <span class="fu">max</span>(<span class="dv">1</span>, <span class="fu">sum</span>(data[[EVENT]] <span class="sc">==</span> <span class="dv">1</span>))))</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="co"># The leaf size is worked out before each cache_fit() and handed in as a value.</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="co"># cache_fit() keys the code&#39;s own variables, not what a helper reads inside it,</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="co"># so a call to vp_nodesize_external() in the code would not see NODESIZE_EXTERNAL</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="co"># change, and a changed choice would reload the old fit even with REFIT &lt;- TRUE.</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>.nodesize_external <span class="ot">&lt;-</span> <span class="fu">vp_nodesize_external</span>(d_noise)</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;vp-fit&quot;</span>,</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">varpro</span>(model, d_noise, <span class="at">ntree =</span> NTREE, <span class="at">nvar =</span> NVAR, <span class="at">split.weight =</span> SPLIT_WEIGHT, <span class="at">sparse =</span> SPARSE, <span class="at">mtry =</span> .mtry,</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>         <span class="at">nodesize.external =</span> .nodesize_external, <span class="at">max.tree =</span> .max_tree, <span class="at">max.rules.tree =</span> MAX_RULES_TREE,</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>         <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">cores =</span> <span class="dv">1</span>L, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED)),</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2786,7 +2841,7 @@ Table 2: Missing values in the screen’s variables
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># vp_judge() replaces varpro_coverage()&#39;s own selection, which reads an empty noise check as &quot;select every tested</span></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># row&quot;, so its warning about that case would mislead here: vp_judge() selects nothing then, and says so.</span></span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>cov <span class="ot">&lt;-</span> <span class="fu">vp_judge</span>(<span class="fu">withCallingHandlers</span>(</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  ggRandomForests<span class="sc">::</span><span class="fu">varpro_coverage</span>(fit, <span class="at">by =</span> <span class="st">&quot;variable&quot;</span>, <span class="at">trim =</span> TRIM, <span class="at">noise =</span> <span class="st">&quot;^noise&quot;</span>),</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  ggRandomForests<span class="sc">::</span><span class="fu">varpro_coverage</span>(fit, <span class="at">by =</span> <span class="st">&quot;variable&quot;</span>, <span class="at">trim =</span> TRIM, <span class="at">max.tree =</span> fit<span class="sc">$</span>rf<span class="sc">$</span>ntree, <span class="at">noise =</span> <span class="st">&quot;^noise&quot;</span>),</span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">warning =</span> <span class="cf">function</span>(w) {</span>
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">&quot;no noise variable was tested&quot;</span>, <span class="fu">conditionMessage</span>(w), <span class="at">fixed =</span> <span class="cn">TRUE</span>)) <span class="fu">invokeRestart</span>(<span class="st">&quot;muffleWarning&quot;</span>)</span>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  }</span>
@@ -2807,16 +2862,16 @@ Table 3: Coverage, importance and selection of each candidate, most covered fir
 <div class="cell-output-display">
 <table class="cell caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 9%">
-<col style="width: 12%">
-<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 13%">
+<col style="width: 10%">
 <col style="width: 6%">
-<col style="width: 9%">
+<col style="width: 10%">
 <col style="width: 6%">
 <col style="width: 7%">
 <col style="width: 6%">
-<col style="width: 21%">
-<col style="width: 9%">
+<col style="width: 17%">
+<col style="width: 10%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2839,21 +2894,21 @@ Table 3: Coverage, importance and selection of each candidate, most covered fir
 <td style="text-align: left;">TRUE</td>
 <td style="text-align: right;">500</td>
 <td style="text-align: right;">1.000</td>
-<td style="text-align: right;">2.778</td>
+<td style="text-align: right;">2.659</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: left;">no usable noise bar</td>
-<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">0.604</td>
+<td style="text-align: left;">continuous</td>
+<td style="text-align: left;">TRUE</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">hx_chf</td>
 <td style="text-align: left;">categorical</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">500</td>
-<td style="text-align: right;">1.000</td>
-<td style="text-align: right;">3.496</td>
+<td style="text-align: right;">485</td>
+<td style="text-align: right;">0.970</td>
+<td style="text-align: right;">3.251</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">0.694</td>
+<td style="text-align: right;">0.422</td>
 <td style="text-align: left;">categorical</td>
 <td style="text-align: left;">TRUE</td>
 </tr>
@@ -2861,83 +2916,83 @@ Table 3: Coverage, importance and selection of each candidate, most covered fir
 <td style="text-align: left;">lvef</td>
 <td style="text-align: left;">continuous</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">500</td>
-<td style="text-align: right;">1.000</td>
-<td style="text-align: right;">1.379</td>
+<td style="text-align: right;">472</td>
+<td style="text-align: right;">0.944</td>
+<td style="text-align: right;">1.354</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: left;">no usable noise bar</td>
-<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">0.604</td>
+<td style="text-align: left;">continuous</td>
+<td style="text-align: left;">TRUE</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">plvmassi</td>
 <td style="text-align: left;">continuous</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">500</td>
-<td style="text-align: right;">1.000</td>
-<td style="text-align: right;">0.926</td>
+<td style="text-align: right;">467</td>
+<td style="text-align: right;">0.934</td>
+<td style="text-align: right;">0.694</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: left;">no usable noise bar</td>
-<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">0.604</td>
+<td style="text-align: left;">continuous</td>
+<td style="text-align: left;">TRUE</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">creat_pr</td>
 <td style="text-align: left;">continuous</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">500</td>
-<td style="text-align: right;">1.000</td>
-<td style="text-align: right;">0.795</td>
+<td style="text-align: right;">447</td>
+<td style="text-align: right;">0.894</td>
+<td style="text-align: right;">0.594</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: left;">no usable noise bar</td>
-<td style="text-align: left;">FALSE</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">hx_dm</td>
-<td style="text-align: left;">categorical</td>
-<td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">483</td>
-<td style="text-align: right;">0.966</td>
-<td style="text-align: right;">1.347</td>
-<td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">0.694</td>
-<td style="text-align: left;">categorical</td>
-<td style="text-align: left;">TRUE</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">female</td>
-<td style="text-align: left;">categorical</td>
-<td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0.000</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: left;">FALSE</td>
-<td style="text-align: right;">0.694</td>
-<td style="text-align: left;">categorical</td>
+<td style="text-align: right;">0.604</td>
+<td style="text-align: left;">continuous</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">bmi</td>
 <td style="text-align: left;">continuous</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0.000</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: left;">FALSE</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: left;">no usable noise bar</td>
+<td style="text-align: right;">436</td>
+<td style="text-align: right;">0.872</td>
+<td style="text-align: right;">0.515</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">0.604</td>
+<td style="text-align: left;">continuous</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">hx_dm</td>
+<td style="text-align: left;">categorical</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">357</td>
+<td style="text-align: right;">0.714</td>
+<td style="text-align: right;">0.798</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">0.422</td>
+<td style="text-align: left;">categorical</td>
+<td style="text-align: left;">TRUE</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">nyha_pr</td>
 <td style="text-align: left;">categorical</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">0.000</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">254</td>
+<td style="text-align: right;">0.508</td>
+<td style="text-align: right;">0.289</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">0.422</td>
+<td style="text-align: left;">categorical</td>
 <td style="text-align: left;">FALSE</td>
-<td style="text-align: right;">0.694</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">female</td>
+<td style="text-align: left;">categorical</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">114</td>
+<td style="text-align: right;">0.228</td>
+<td style="text-align: right;">0.143</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">0.422</td>
 <td style="text-align: left;">categorical</td>
 <td style="text-align: left;">FALSE</td>
 </tr>
@@ -2984,11 +3039,11 @@ Table 4: How the candidates become the selected set
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Tested</td>
-<td style="text-align: right;">6</td>
+<td style="text-align: right;">9</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Selected</td>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">5</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Noise columns</td>
@@ -2996,7 +3051,7 @@ Table 4: How the candidates become the selected set
 </tr>
 <tr class="even">
 <td style="text-align: left;">Noise tested</td>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">20</td>
 </tr>
 </tbody>
 </table>
@@ -3026,7 +3081,7 @@ Table 4: How the candidates become the selected set
 <div id="fig-coverage" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-coverage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/e52bcb6cff83b43140bc268b38d7b570.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/f3a4d037d6cdd67b7f04fad535ee5de0.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-coverage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 1: Importance against coverage for every eligible variable, one panel per kind. Black points are real candidates and gray points permuted noise; the dashed horizontal line is the bar a real variable must beat and the dotted vertical line the coverage below which a variable is untested.
@@ -3039,15 +3094,17 @@ Figure 1: Importance against coverage for every eligible variable, one panel pe
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one row per variable, so the height grows with the list.</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_varpro</span>(fit)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;vp-fit-varpro&quot;</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Scored on every tree, as the coverage table is: left to its default,</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># gg_varpro() samples MAX_TREE of them, and the figure would disagree with the table.</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_varpro</span>(fit, <span class="at">max.tree =</span> fit<span class="sc">$</span>rf<span class="sc">$</span>ntree)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;vp-fit-varpro&quot;</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-varpro" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-varpro-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/b9d18cb0e7623d2a6a79593ea44207fe.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/d0965d87b85c0157fbcc842ef1068c3c.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-varpro-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: VarPro’s own importance plot, noise columns included. Each box spans the 15th to the 85th percentile of a variable’s per-tree importance, with a line at the median and whiskers to the 5th and 95th percentiles; the dashed red line is varPro’s default cutoff, which is not the selection rule in this report.
@@ -3072,37 +3129,39 @@ Figure 2: VarPro’s own importance plot, noise columns included. Each box span
 <span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED) <span class="sc">+</span> r)</span>
 <span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    rows <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">sample.int</span>(<span class="fu">nrow</span>(d), <span class="fu">floor</span>(SUBSAMPLE <span class="sc">*</span> <span class="fu">nrow</span>(d))))</span>
 <span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    dr <span class="ot">&lt;-</span> <span class="fu">vp_add_noise</span>(d[rows, , <span class="at">drop =</span> <span class="cn">FALSE</span>], PREDICTORS, NOISE_N, SEED <span class="sc">+</span> r)</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    fr <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sprintf</span>(<span class="st">&quot;vp-repeat-%02d&quot;</span>, r),</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">varpro</span>(model, dr, <span class="at">ntree =</span> NTREE, <span class="at">nvar =</span> NVAR, <span class="at">split.weight =</span> SPLIT_WEIGHT, <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">cores =</span> <span class="dv">1</span>L,</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>             <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED <span class="sc">+</span> r)),</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">seed =</span> SEED <span class="sc">+</span> r, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED) <span class="sc">+</span> r)</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># As for the full fit: vp_judge() makes the selection, so varpro_coverage()&#39;s empty-noise warning is muffled.</span></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    cr <span class="ot">&lt;-</span> <span class="fu">vp_judge</span>(<span class="fu">withCallingHandlers</span>(</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>      ggRandomForests<span class="sc">::</span><span class="fu">varpro_coverage</span>(fr, <span class="at">by =</span> <span class="st">&quot;variable&quot;</span>, <span class="at">trim =</span> TRIM, <span class="at">noise =</span> <span class="st">&quot;^noise&quot;</span>),</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">warning =</span> <span class="cf">function</span>(w) {</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">&quot;no noise variable was tested&quot;</span>, <span class="fu">conditionMessage</span>(w), <span class="at">fixed =</span> <span class="cn">TRUE</span>)) <span class="fu">invokeRestart</span>(<span class="st">&quot;muffleWarning&quot;</span>)</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    ))</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    cr <span class="ot">&lt;-</span> cr[<span class="sc">!</span>cr<span class="sc">$</span>noise, ]</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">r =</span> r, <span class="at">variable =</span> cr<span class="sc">$</span>variable, <span class="at">selected =</span> cr<span class="sc">$</span>selected, <span class="at">tested =</span> cr<span class="sc">$</span>tested)</span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  }))</span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>  .per <span class="ot">&lt;-</span> <span class="fu">tapply</span>(.stab<span class="sc">$</span>selected, .stab<span class="sc">$</span>r, sum)</span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Selected per refit: &quot;</span>, <span class="fu">min</span>(.per), <span class="st">&quot; to &quot;</span>, <span class="fu">max</span>(.per), <span class="st">&quot; variables.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Over REPEATS, not over the refits a variable appears in: a refit that drops a variable counts against it.</span></span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  .n_tested <span class="ot">&lt;-</span> <span class="fu">tapply</span>(.stab<span class="sc">$</span>tested, .stab<span class="sc">$</span>variable, sum)</span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  .freq <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">variable =</span> <span class="fu">names</span>(.n_tested),</span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">share_tested =</span> <span class="fu">as.vector</span>(.n_tested) <span class="sc">/</span> REPEATS,</span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">share_selected =</span> <span class="fu">as.vector</span>(<span class="fu">tapply</span>(.stab<span class="sc">$</span>selected, .stab<span class="sc">$</span>variable, sum)[<span class="fu">names</span>(.n_tested)]) <span class="sc">/</span> REPEATS</span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>  .freq <span class="ot">&lt;-</span> .freq[<span class="fu">order</span>(<span class="sc">-</span>.freq<span class="sc">$</span>share_selected, <span class="sc">-</span>.freq<span class="sc">$</span>share_tested), ]</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(.freq, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Skipped: REPEATS is 0.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    .nodesize_external <span class="ot">&lt;-</span> <span class="fu">vp_nodesize_external</span>(dr)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    fr <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sprintf</span>(<span class="st">&quot;vp-repeat-%02d&quot;</span>, r),</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">varpro</span>(model, dr, <span class="at">ntree =</span> NTREE, <span class="at">nvar =</span> NVAR, <span class="at">split.weight =</span> SPLIT_WEIGHT, <span class="at">sparse =</span> SPARSE, <span class="at">mtry =</span> .mtry,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>             <span class="at">nodesize.external =</span> .nodesize_external, <span class="at">max.tree =</span> .max_tree, <span class="at">max.rules.tree =</span> MAX_RULES_TREE,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>             <span class="at">verbose =</span> <span class="cn">FALSE</span>, <span class="at">cores =</span> <span class="dv">1</span>L, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED <span class="sc">+</span> r)),</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">seed =</span> SEED <span class="sc">+</span> r, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED) <span class="sc">+</span> r)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># As for the full fit: vp_judge() makes the selection, so varpro_coverage()&#39;s empty-noise warning is muffled.</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    cr <span class="ot">&lt;-</span> <span class="fu">vp_judge</span>(<span class="fu">withCallingHandlers</span>(</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>      ggRandomForests<span class="sc">::</span><span class="fu">varpro_coverage</span>(fr, <span class="at">by =</span> <span class="st">&quot;variable&quot;</span>, <span class="at">trim =</span> TRIM, <span class="at">max.tree =</span> fr<span class="sc">$</span>rf<span class="sc">$</span>ntree, <span class="at">noise =</span> <span class="st">&quot;^noise&quot;</span>),</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">warning =</span> <span class="cf">function</span>(w) {</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">&quot;no noise variable was tested&quot;</span>, <span class="fu">conditionMessage</span>(w), <span class="at">fixed =</span> <span class="cn">TRUE</span>)) <span class="fu">invokeRestart</span>(<span class="st">&quot;muffleWarning&quot;</span>)</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    ))</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    cr <span class="ot">&lt;-</span> cr[<span class="sc">!</span>cr<span class="sc">$</span>noise, ]</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">r =</span> r, <span class="at">variable =</span> cr<span class="sc">$</span>variable, <span class="at">selected =</span> cr<span class="sc">$</span>selected, <span class="at">tested =</span> cr<span class="sc">$</span>tested)</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  }))</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  .per <span class="ot">&lt;-</span> <span class="fu">tapply</span>(.stab<span class="sc">$</span>selected, .stab<span class="sc">$</span>r, sum)</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Selected per refit: &quot;</span>, <span class="fu">min</span>(.per), <span class="st">&quot; to &quot;</span>, <span class="fu">max</span>(.per), <span class="st">&quot; variables.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Over REPEATS, not over the refits a variable appears in: a refit that drops a variable counts against it.</span></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  .n_tested <span class="ot">&lt;-</span> <span class="fu">tapply</span>(.stab<span class="sc">$</span>tested, .stab<span class="sc">$</span>variable, sum)</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  .freq <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">variable =</span> <span class="fu">names</span>(.n_tested),</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">share_tested =</span> <span class="fu">as.vector</span>(.n_tested) <span class="sc">/</span> REPEATS,</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">share_selected =</span> <span class="fu">as.vector</span>(<span class="fu">tapply</span>(.stab<span class="sc">$</span>selected, .stab<span class="sc">$</span>variable, sum)[<span class="fu">names</span>(.n_tested)]) <span class="sc">/</span> REPEATS</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>  .freq <span class="ot">&lt;-</span> .freq[<span class="fu">order</span>(<span class="sc">-</span>.freq<span class="sc">$</span>share_selected, <span class="sc">-</span>.freq<span class="sc">$</span>share_tested), ]</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(.freq, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Skipped: REPEATS is 0.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Selected per refit: 3 to 5 variables.</code></pre>
@@ -3136,7 +3195,7 @@ Table 5: How often each candidate was tested and selected across the refits
 <tr class="odd">
 <td style="text-align: left;">lvef</td>
 <td style="text-align: right;">1.0</td>
-<td style="text-align: right;">0.8</td>
+<td style="text-align: right;">1.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">hx_dm</td>
@@ -3145,27 +3204,27 @@ Table 5: How often each candidate was tested and selected across the refits
 </tr>
 <tr class="odd">
 <td style="text-align: left;">plvmassi</td>
-<td style="text-align: right;">0.8</td>
-<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">0.6</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">creat_pr</td>
-<td style="text-align: right;">0.6</td>
+<td style="text-align: left;">nyha_pr</td>
+<td style="text-align: right;">1.0</td>
 <td style="text-align: right;">0.2</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">bmi</td>
-<td style="text-align: right;">0.0</td>
+<td style="text-align: right;">1.0</td>
 <td style="text-align: right;">0.0</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">female</td>
-<td style="text-align: right;">0.0</td>
+<td style="text-align: left;">creat_pr</td>
+<td style="text-align: right;">1.0</td>
 <td style="text-align: right;">0.0</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">nyha_pr</td>
-<td style="text-align: right;">0.0</td>
+<td style="text-align: left;">female</td>
+<td style="text-align: right;">0.8</td>
 <td style="text-align: right;">0.0</td>
 </tr>
 </tbody>
@@ -3178,9 +3237,11 @@ Table 5: How often each candidate was tested and selected across the refits
 </section>
 <section id="reading-the-result" class="level2">
 <h2 class="anchored" data-anchor-id="reading-the-result">Reading the result</h2>
-<p><strong>Untested is not unimportant.</strong> VarPro scores a variable by a trimmed mean of its importance in each tree, and a tree with no usable rule for the variable counts as zero. A variable tested in fewer than <code>TRIM</code> of the trees therefore scores exactly 0. A variable that is not eligible was never tested at all. Neither is evidence of no effect; the variable simply was not examined.</p>
+<p><strong>Untested is not unimportant.</strong> VarPro scores a variable by a trimmed mean of its importance in each tree, and a tree with no usable rule for the variable counts as zero. A variable tested in fewer than <code>TRIM</code> of the trees therefore scores exactly 0. A variable that is not eligible was never tested at all. Neither is evidence of no effect; the variable simply was not examined. Read z beside coverage: a z of 0 with low coverage means untested.</p>
+<p><strong>Tested is not the same as detectable.</strong> With few events, a real effect can be tested and still score z of about 0. In a simulation with 60 events in 1,900 patients, a binary predictor present in 10% of them, with a hazard ratio of 2.7, was tested in about 8% of trees with every candidate tried at each split and in 12% to 25% with 6 tried, and scored z below 0.3 in every such fit. Before reading a z of 0 for a rare binary predictor as no effect, count the events among the patients who have it: a handful of events cannot move a forest.</p>
+<p><strong>A stand-in scores like the real thing.</strong> A variable correlated with a true signal shares its splits and earns importance it would not have on its own. In the same simulation, a noise variable correlated 0.7 with a signal scored z above 0 in 15 of 16 fits, and above the signal itself in 2. The noise columns here are permuted, so they cannot catch this; check the correlations among the selected set before naming one of them the cause.</p>
 <p><strong>Selected means it beat chance in this fit.</strong> The bar is the best score any tested noise column of the same kind reached. A categorical variable is held to the continuous bar whenever categorical noise sets no bar of its own, which makes the rule strict for categorical variables.</p>
-<p><strong>This is a screen, not a selection.</strong> It keeps everything it could not rule out, and its settings matter: guided split weights and <code>NVAR</code> decide which variables are examined at all. A selection would also need the unguided screen (<code>SPLIT_WEIGHT &lt;- FALSE</code>), the stability above, and ideally cross-validation to agree. Read the stability table before the coverage table: a variable selected in the full fit but rarely in the refits is a weak candidate.</p>
+<p><strong>This is a screen, not a selection.</strong> It keeps everything it could not rule out, and its settings matter. The default here is the exploration setting: no guided split weights, so every candidate gets rules, and <code>MTRY</code> lowered so binary candidates are split. The parsimonious screen, varPro’s own defaults, lets guided split weights and <code>NVAR</code> decide which variables are examined at all. A selection would also need the two settings, the stability above, and ideally cross-validation to agree. Read the stability table before the coverage table: a variable selected in the full fit but rarely in the refits is a weak candidate.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -3215,17 +3276,17 @@ Table 5: How often each candidate was tested and selected across the refits
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-27 15:30:10 EDT</td>
+<td style="text-align: left;">2026-10-28 09:24:24 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-27 15:31:21 EDT</td>
+<td style="text-align: left;">2026-10-28 09:25:20 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">1 min 11 s</td>
+<td style="text-align: left;">56 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3265,17 +3326,17 @@ Table 5: How often each candidate was tested and selected across the refits
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.2</td>
+<td style="text-align: left;">1.5.3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261027.parquet</td>
+<td style="text-align: left;">built_20261028.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-27</td>
+<td style="text-align: left;">2026-10-28</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3320,7 +3381,7 @@ Table 5: How often each candidate was tested and selected across the refits
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"vp.fit.dead.vp","rendered":"2026-10-27T19:31:21Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"bccdc1ae7147d294ef45730f93bb6309375c6381"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.2","source":null},{"package":"hvtiRutilities","version":"1.5.15","source":"github","sha":"31d447bfe3c2ae20fd2f4512aaedcc988cd5320b"},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261027.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-27T18:36:56Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"dead","type":"vp","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-27T15:30:10-0400","end":"2026-10-27T15:31:21-0400","time_zone":"EDT","duration_seconds":70.8,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vp.fit.dead.vp.qmd","template":"vp.fit","prefix":"vp","qualifier":"fit","subject":"dead","type":"vp","hvtiRtemplates":"1.5.2"},"datasets":[{"name":"built","version_file":"built_20261027.parquet","registered":"2026-10-27","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/vp.fit.dead.vp.qmd",".hvti_render_id":"b17a6d1925aa38d7bffe2dfcf11bbebca4ac94621297f4ce793339a751e16e6c",".hvti_source_sha256":"a765d55d00bc9d5e85e86b95c659db7d790b0df045662c7c50678a0da3315d1f"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"vp.fit.dead.vp","rendered":"2026-10-28T13:25:20Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"f3000e9fc91ad4bca249ae3d402a61e9190c67a778b060f86e5aa0fbb1b52543"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"bccdc1ae7147d294ef45730f93bb6309375c6381"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.3","source":null},{"package":"hvtiRutilities","version":"1.5.16","source":null},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261028.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-28T13:14:43Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"dead","type":"vp","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-28T09:24:24-0400","end":"2026-10-28T09:25:20-0400","time_zone":"EDT","duration_seconds":56.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vp.fit.dead.vp.qmd","template":"vp.fit","prefix":"vp","qualifier":"fit","subject":"dead","type":"vp","hvtiRtemplates":"1.5.3"},"datasets":[{"name":"built","version_file":"built_20261028.parquet","registered":"2026-10-28","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/vp.fit.dead.vp.qmd",".hvti_render_id":"baf0fb0c7652b972a343dab314e2e14f269906e81285c9c808b71498935da276",".hvti_source_sha256":"f59f528838c9eeeb71c4c796c7d5fe0caa249a5a5ff0a376311045eea1d9a1f6"}</script>
 </section>
 
 </main>

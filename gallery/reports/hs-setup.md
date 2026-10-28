@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:07
+2026-10-28 09:19
 
 An `hs` job turns the risk-factor model an `hm` job fitted into
 **predictions for individual patients**, and sets those against the
@@ -93,7 +93,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.2
+hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -167,6 +167,8 @@ hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
   set_path("estimates", "hm.rds"), "hazard-regression-model", .cfg, "the hm job"
 )
 hm_art <- .hm_read$value
+# A start/stop model has no single covariate row per patient to predict from.
+hvtiRtemplates:::.stop_start_stop_prediction(.hm_read$lineage$selection$start, "hm.rds")
 .provenance_data <- c(.hm_read$lineage$data, .provenance_data)
 .provenance_artifacts <- c(.hm_read$lineage$artifacts, list(.hm_read$record))
 ```
@@ -191,7 +193,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261027.parquet) |
+| Source              | dataset `study` (built_20261028.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -623,8 +625,8 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-27 15:07:44 EDT |
-|  | Ended | 2026-10-27 15:07:45 EDT |
+| Run | Started | 2026-10-28 09:19:40 EDT |
+|  | Ended | 2026-10-28 09:19:42 EDT |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -633,15 +635,15 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 |  | Template | hs.setup |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.5.2 |
-| Dataset `built` | Version file | built_20261027.parquet |
-|  | Version date | 2026-10-27 |
+|  | hvtiRtemplates | 1.5.3 |
+| Dataset `built` | Version file | built_20261028.parquet |
+|  | Version date | 2026-10-28 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-27 15:06:55 -0400, data built_20261027.parquet |
+|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-10-28 09:19:23 -0400, data built_20261028.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

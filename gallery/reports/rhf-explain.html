@@ -2215,6 +2215,7 @@ vertical-align: -.125em;
   <li><a href="#discrimination-over-follow-up" id="toc-discrimination-over-follow-up" class="nav-link" data-scroll-target="#discrimination-over-follow-up">Discrimination over follow-up</a></li>
   <li><a href="#hazard-curves" id="toc-hazard-curves" class="nav-link" data-scroll-target="#hazard-curves">Hazard curves</a></li>
   <li><a href="#importance" id="toc-importance" class="nav-link" data-scroll-target="#importance">Importance</a></li>
+  <li><a href="#partial-dependence" id="toc-partial-dependence" class="nav-link" data-scroll-target="#partial-dependence">Partial dependence</a></li>
   <li><a href="#about-this-run" id="toc-about-this-run" class="nav-link" data-scroll-target="#about-this-run">About this run</a></li>
   </ul>
 </nav>
@@ -2236,7 +2237,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-27 15:35</p>
+      <p class="date">2026-10-28 09:28</p>
     </div>
   </div>
   
@@ -2248,7 +2249,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: rhf.explain 1.5.2 sha256:ce4277655ff71ce1c5bfe150481bbb09aeb6b18de05b90d7fedcff3beafcf548 -->
+<!-- hvtiRtemplates: rhf.explain 1.5.3 sha256:7d4c22d81ad21e27a1cb2dfba723ff6e7d1be748b005bcbaa5f631838ab4153f -->
 <p>Explains the forest the <code>rhf-fit</code> job in this set saved: how well it ranks patients over follow-up, their hazard curves, and which markers drive it.</p>
 <!--
      the importance and hazard curves are meant to answer. -->
@@ -2309,7 +2310,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.2</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.3</p>
 </div>
 </div>
 </div>
@@ -2347,20 +2348,35 @@ vertical-align: -.125em;
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"># when it matters.</span></span>
 <span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>N_TIMES <span class="ot">&lt;-</span> <span class="dv">5</span></span>
 <span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: seed for the sample of curves and the VarPro cache. It is part of every</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co"># cache key.</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;rhf-explain-importance&quot;).</span></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: partial dependence for these predictors, at the importance points above.</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co"># NULL, the default, draws none: it is the slowest step here. Each value on a</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co"># predictor&#39;s grid predicts the hazard for PD_N patients over every interval</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co"># they have; on the first real study, 500 trees and 172,000 intervals, that was</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># about 2.7 minutes per value.</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>PD_VARS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Patients drawn from the forest&#39;s own training rows, and values per continuous</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co"># predictor, spread from its 5th to its 95th percentile. A 0/1 predictor gets 0</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># and 1, and a factor each of its levels.</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>PD_N <span class="ot">&lt;-</span> <span class="dv">300</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>PD_GRID <span class="ot">&lt;-</span> <span class="dv">9</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># A point of follow-up is left out of the partial dependence when fewer than</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co"># this many of the PD_N patients are still at risk there.</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>PD_MIN_RISK <span class="ot">&lt;-</span> <span class="dv">20</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: seed for the sample of curves, the VarPro cache and the partial</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co"># dependence sample. It is part of every cache key.</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;rhf-explain-importance&quot;).</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2580,6 +2596,7 @@ Figure 4: Out-of-bag predicted cumulative hazard over follow-up for the same pa
 </div>
 </div>
 </div>
+<p><strong>These paths are not calibrated probabilities.</strong> No check has yet compared the survival implied by a forest’s predicted hazard with what happened to the patients. On the first real study it looked badly off: patients who did not die had path survival near 0.1, because the predicted hazard spiked to 3 to 10 per year along their paths. Until a calibration check is done, read a path as relative risk along follow-up, higher or lower than another patient’s and when, and do not quote a survival probability from it.</p>
 </section>
 <section id="importance" class="level2">
 <h2 class="anchored" data-anchor-id="importance">Importance</h2>
@@ -2680,8 +2697,103 @@ Table 3: VarPro importance of each predictor at each point of follow-up
 </div>
 <p><strong>NA means untested, not unimportant.</strong> A predictor gets NA when no rule in the cache split on it, and a larger cache (<code>MAX_RULES_TREE</code>, <code>MAX_TREE</code>) tests more of them. A 0 means it was tested and had no effect. Which predictors go untested depends on the seed, so an NA is no evidence either way.</p>
 <p><strong>Rank the top tier only once it holds across seeds.</strong> One seed fixes one cache, and the order below the first predictor or two can move with it. Before a ranking goes into a report, render this job again with two or three other <code>SEED</code> values and keep the predictors that stay near the top in every run.</p>
-<!-- TODO: partial dependence for a hazard forest, once ggRandomForests has it.
-     There is no RHF partial dependence in ggRandomForests yet. -->
+</section>
+<section id="partial-dependence" class="level2">
+<h2 class="anchored" data-anchor-id="partial-dependence">Partial dependence</h2>
+<p>ggRandomForests has no partial dependence for a hazard forest yet, so this job builds it from <code>predict()</code>, and only for the predictors named in <code>PD_VARS</code>. For each value on a predictor’s grid, it sets the predictor to that value on every interval of a sample of patients, predicts their hazard, and averages it at each importance point over the patients still at risk there. The hazard at a time depends only on the interval covering that time, so setting the whole path is the same as setting the one interval. The curves are marginal: they say nothing about two predictors acting together.</p>
+<p><strong>Count the exposure before reading a curve.</strong> The table below gives, at each importance point, the patients at risk, the patient-time and the deaths, and for a 0/1 or factor predictor each of those for every value. Patient-time is in the units of the fit’s interval columns, years if they are in years. A curve at a point with little exposure is decided by a handful of deaths. On the first real study a rare time-varying 0/1 predictor, intubation, had a hazard ratio between its two values that flipped from point to point: 13, 0.59, 74, 0.57. It was not look-ahead, since a refit with the final intervals reset showed the same pattern. Each point held 0.12 to 0.33 intubated patient-years, with 2, 0, 4 and 0 intubated deaths, and those deaths drew the curve. The direction of such a predictor should come from a pooled model, such as a <code>hz</code> job, not from these curves.</p>
+<div id="tbl-pd-exposure" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-pd-exposure-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 4: Exposure at each importance point: patients at risk, patient-time (in the units of the fit’s interval columns) and deaths, by value for a 0/1 or factor predictor
+</figcaption>
+<div aria-describedby="tbl-pd-exposure-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Counted on every patient the forest was grown on, not only the PD_N sample, and</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># reported as counts alone: no row here describes one patient.</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(PD_VARS)) {</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  .absent <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(PD_VARS, forest<span class="sc">$</span>xvar.names)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(.absent)) {</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;PD_VARS names a predictor the forest was not grown on: &quot;</span>, <span class="fu">paste</span>(.absent, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  .train <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> forest<span class="sc">$</span>id, forest<span class="sc">$</span>yvar, forest<span class="sc">$</span>xvar)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  .windows <span class="ot">&lt;-</span> imp<span class="sc">$</span>window.info</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  .exposure <span class="ot">&lt;-</span> <span class="cf">function</span>(k, var, value) {</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">variable =</span> var, <span class="at">value =</span> value, <span class="at">time.index =</span> .windows<span class="sc">$</span>index, <span class="at">start =</span> .windows<span class="sc">$</span>start,</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>               <span class="at">stop =</span> .windows<span class="sc">$</span>stop, <span class="fu">t</span>(<span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(.windows)), <span class="cf">function</span>(i) {</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>                 a <span class="ot">&lt;-</span> .windows<span class="sc">$</span>start[i]</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>                 b <span class="ot">&lt;-</span> .windows<span class="sc">$</span>stop[i]</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>                 overlap <span class="ot">&lt;-</span> <span class="fu">pmax</span>(<span class="dv">0</span>, <span class="fu">pmin</span>(.train<span class="sc">$</span>stop, b) <span class="sc">-</span> <span class="fu">pmax</span>(.train<span class="sc">$</span>start, a))</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>                 at <span class="ot">&lt;-</span> k <span class="sc">&amp;</span> overlap <span class="sc">&gt;</span> <span class="dv">0</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">c</span>(<span class="at">patients =</span> <span class="fu">length</span>(<span class="fu">unique</span>(.train<span class="sc">$</span>id[at])), <span class="at">patient_time =</span> <span class="fu">sum</span>(overlap[at]),</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>                   <span class="at">deaths =</span> <span class="fu">sum</span>(.train<span class="sc">$</span>event[at] <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> .train<span class="sc">$</span>stop[at] <span class="sc">&lt;=</span> b))</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>               }, <span class="fu">numeric</span>(<span class="dv">3</span>L))), <span class="at">row.names =</span> <span class="cn">NULL</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>  pd_exposure <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">c</span>(</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="fu">.exposure</span>(<span class="fu">rep</span>(<span class="cn">TRUE</span>, <span class="fu">nrow</span>(.train)), <span class="st">&quot;(all)&quot;</span>, <span class="st">&quot;all&quot;</span>)),</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">lapply</span>(PD_VARS, <span class="cf">function</span>(v) {</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>      x <span class="ot">&lt;-</span> .train[[v]]</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>      values <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.factor</span>(x)) <span class="fu">levels</span>(x) <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">all</span>(x <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))) <span class="fu">c</span>(<span class="st">&quot;0&quot;</span>, <span class="st">&quot;1&quot;</span>) <span class="cf">else</span> <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(values, <span class="cf">function</span>(value) <span class="fu">.exposure</span>(<span class="fu">as.character</span>(x) <span class="sc">==</span> value, v, value)))</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(pd_exposure, <span class="at">digits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">0</span>))</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</figure>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(PD_VARS)) {</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rhf-partial&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">why =</span> <span class="st">&quot;each grid value predicts the hazard over every interval of the sample&quot;</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">refit =</span> REFIT)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  pd <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(<span class="fu">.cache_file</span>(<span class="st">&quot;rhf-partial&quot;</span>), <span class="fu">cache_fit</span>(</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;rhf-partial&quot;</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">local</span>({</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>      train <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> forest<span class="sc">$</span>id, forest<span class="sc">$</span>yvar, forest<span class="sc">$</span>xvar)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>      ids <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">unique</span>(train<span class="sc">$</span>id), <span class="fu">min</span>(PD_N, <span class="fu">length</span>(<span class="fu">unique</span>(train<span class="sc">$</span>id))))</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>      nd <span class="ot">&lt;-</span> train[train<span class="sc">$</span>id <span class="sc">%in%</span> ids, ]</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(PD_VARS, <span class="cf">function</span>(v) {</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>        x <span class="ot">&lt;-</span> nd[[v]]</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>        <span class="co"># A factor keeps its levels, so a factor labeled 0 and 1 is set by level, not by its codes.</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>        grid <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.factor</span>(x)) <span class="fu">levels</span>(x) <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">all</span>(x <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))) <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>) <span class="cf">else</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>          <span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">quantile</span>(x, <span class="fu">seq</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="at">length.out =</span> PD_GRID), <span class="at">names =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>        <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(grid, <span class="cf">function</span>(g) {</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>          <span class="co"># [] &lt;- keeps the column&#39;s class and levels.</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>          nd[[v]][] <span class="ot">&lt;-</span> g</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>          h <span class="ot">&lt;-</span> <span class="fu">predict</span>(forest, nd)<span class="sc">$</span>hazard.test[, .time_index, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>          <span class="fu">data.frame</span>(<span class="at">variable =</span> v, <span class="at">level =</span> <span class="cf">if</span> (<span class="fu">is.factor</span>(x)) g <span class="cf">else</span> <span class="fu">format</span>(<span class="fu">signif</span>(g, <span class="dv">3</span>)), <span class="at">time.index =</span> .time_index,</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>                     <span class="at">time =</span> forest<span class="sc">$</span>time.interest[.time_index], <span class="at">hazard =</span> <span class="fu">colMeans</span>(h, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>                     <span class="at">n.risk =</span> <span class="fu">colSums</span>(<span class="sc">!</span><span class="fu">is.na</span>(h)))</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>        }))</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>      }))</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>    }),</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># predict() dispatches to randomForestRHF&#39;s method, which cache_fit() cannot see in the code, so an</span></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># upgrade of the package would otherwise reuse curves its old version predicted.</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT, <span class="at">packages =</span> <span class="st">&quot;randomForestRHF&quot;</span></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>  pd <span class="ot">&lt;-</span> pd[pd<span class="sc">$</span>n.risk <span class="sc">&gt;=</span> PD_MIN_RISK, ]</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>  pd<span class="sc">$</span>point <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">sprintf</span>(<span class="st">&quot;%.2f&quot;</span>, pd<span class="sc">$</span>time), <span class="at">levels =</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.2f&quot;</span>, <span class="fu">sort</span>(<span class="fu">unique</span>(pd<span class="sc">$</span>time))))</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Each predictor&#39;s values in grid order on a discrete axis, keyed by predictor so two predictors sharing a</span></span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># label do not share a place.</span></span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>  .key <span class="ot">&lt;-</span> <span class="fu">paste</span>(pd<span class="sc">$</span>variable, pd<span class="sc">$</span>level, <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\r</span><span class="st">&quot;</span>)</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>  pd<span class="sc">$</span>at <span class="ot">&lt;-</span> <span class="fu">factor</span>(.key, <span class="at">levels =</span> <span class="fu">unique</span>(.key))</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>  .fig <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(pd, ggplot2<span class="sc">::</span><span class="fu">aes</span>(at, hazard, <span class="at">color =</span> point, <span class="at">group =</span> point)) <span class="sc">+</span></span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> <span class="cf">function</span>(b) <span class="fu">sub</span>(<span class="st">&quot;^.*</span><span class="sc">\r</span><span class="st">&quot;</span>, <span class="st">&quot;&quot;</span>, b)) <span class="sc">+</span></span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>variable, <span class="at">scales =</span> <span class="st">&quot;free_x&quot;</span>) <span class="sc">+</span></span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Value set on every interval&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Mean predicted hazard&quot;</span>, <span class="at">color =</span> <span class="st">&quot;Time&quot;</span>) <span class="sc">+</span></span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.fig, <span class="st">&quot;rhf-explain-partial&quot;</span>)</span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>  .fig</span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
 </section>
 <section id="about-this-run" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="about-this-run">About this run</h2>
@@ -2702,17 +2814,17 @@ Table 3: VarPro importance of each predictor at each point of follow-up
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-27 15:35:02 EDT</td>
+<td style="text-align: left;">2026-10-28 09:28:43 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-27 15:35:07 EDT</td>
+<td style="text-align: left;">2026-10-28 09:28:45 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">5 s</td>
+<td style="text-align: left;">2 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2752,17 +2864,17 @@ Table 3: VarPro importance of each predictor at each point of follow-up
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.2</td>
+<td style="text-align: left;">1.5.3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>intervals</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">intervals_20261027.parquet</td>
+<td style="text-align: left;">intervals_20261028.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-27</td>
+<td style="text-align: left;">2026-10-28</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2782,7 +2894,7 @@ Table 3: VarPro importance of each predictor at each point of follow-up
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>event-rhf/rhf.rds</code> (forest), rendered 2026-10-27 15:34:43 -0400, data intervals_20261027.parquet</td>
+<td style="text-align: left;"><code>event-rhf/rhf.rds</code> (forest), rendered 2026-10-28 09:28:34 -0400, data intervals_20261028.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -2802,7 +2914,7 @@ Table 3: VarPro importance of each predictor at each point of follow-up
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"rhf.explain.event.rhf","rendered":"2026-10-27T19:35:07Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"a7bb961dabb1feff86b94a0ed4c8292d67e6068bd2ffc1d61b8a19a44ed564d6"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"bccdc1ae7147d294ef45730f93bb6309375c6381"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.2","source":null},{"package":"hvtiRutilities","version":"1.5.15","source":"github","sha":"31d447bfe3c2ae20fd2f4512aaedcc988cd5320b"},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestRHF","version":"2.1.0","source":"CRAN"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"intervals","path":"00_datasets/intervals_20261027.parquet","role":"analysis","bytes":28287,"mtime":"2026-10-27T19:34:35Z","sha256":"f3770c09d63a15b5df82641f5ec3cd624ccb3feffc8346b2fac496c327c91fa4"}],"artifacts":[{"path":"90_estimates/event-rhf/rhf.rds","role":"forest","bytes":2231862,"mtime":"2026-10-27T19:34:48Z","sha256":"feae2d74d82ca363c03429f45cd3fa7771871aeab72dfd46b805650821373e30"}],"subject":"event","type":"rhf","analysis":{"start":{"variable":"start"},"stop":{"variable":"stop"},"event":{"variable":"event","event":1,"censored":0},"repair":[],"caps":[],"lookahead":{"interval":null,"action":"keep","final_intervals":146}},"cohort":{"n":150,"n_events":127,"n_censored":23},"run":{"start":"2026-10-27T15:35:02-0400","end":"2026-10-27T15:35:07-0400","time_zone":"EDT","duration_seconds":5.1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rhf.explain.event.rhf.qmd","template":"rhf.explain","prefix":"rhf","qualifier":"explain","subject":"event","type":"rhf","hvtiRtemplates":"1.5.2"},"datasets":[{"name":"intervals","version_file":"intervals_20261027.parquet","registered":"2026-10-27","source_file":"intervals.rds","sha256":"f3770c09d63a","manifest":"current"}],"upstream":[{"file":"90_estimates/event-rhf/rhf.rds","set":"event-rhf","role":"forest","rendered_at":"2026-10-27T15:34:43-0400","dataset_version":"intervals_20261027.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/rhf.explain.event.rhf.qmd",".hvti_render_id":"4be57c5da0818162dcdc88c46269309dbc241398297f944fbb97ec52e4ba05fb",".hvti_source_sha256":"568c5199bf0e246e22f26bad4099eaf744337237036c29f34299198800dc2ad1"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"rhf.explain.event.rhf","rendered":"2026-10-28T13:28:45Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"a7bb961dabb1feff86b94a0ed4c8292d67e6068bd2ffc1d61b8a19a44ed564d6"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"bccdc1ae7147d294ef45730f93bb6309375c6381"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.3","source":null},{"package":"hvtiRutilities","version":"1.5.16","source":null},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestRHF","version":"2.1.0","source":"CRAN"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"intervals","path":"00_datasets/intervals_20261028.parquet","role":"analysis","bytes":28287,"mtime":"2026-10-28T13:28:32Z","sha256":"f3770c09d63a15b5df82641f5ec3cd624ccb3feffc8346b2fac496c327c91fa4"}],"artifacts":[{"path":"90_estimates/event-rhf/rhf.rds","role":"forest","bytes":2231862,"mtime":"2026-10-28T13:28:37Z","sha256":"a343388092a571130fb655146b68b02f3ca10ca6d744eae819018b52e456c8ba"}],"subject":"event","type":"rhf","analysis":{"start":{"variable":"start"},"stop":{"variable":"stop"},"event":{"variable":"event","event":1,"censored":0},"repair":[],"caps":[],"lookahead":{"interval":null,"action":"keep","final_intervals":146}},"cohort":{"n":150,"n_events":127,"n_censored":23},"run":{"start":"2026-10-28T09:28:43-0400","end":"2026-10-28T09:28:45-0400","time_zone":"EDT","duration_seconds":2.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rhf.explain.event.rhf.qmd","template":"rhf.explain","prefix":"rhf","qualifier":"explain","subject":"event","type":"rhf","hvtiRtemplates":"1.5.3"},"datasets":[{"name":"intervals","version_file":"intervals_20261028.parquet","registered":"2026-10-28","source_file":"intervals.rds","sha256":"f3770c09d63a","manifest":"current"}],"upstream":[{"file":"90_estimates/event-rhf/rhf.rds","set":"event-rhf","role":"forest","rendered_at":"2026-10-28T09:28:34-0400","dataset_version":"intervals_20261028.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/rhf.explain.event.rhf.qmd",".hvti_render_id":"91f73cc55b0dc92c425cc5c5029b23acb9d40db0571a8406333c6ff804387782",".hvti_source_sha256":"305952a552e9aefd5833a9d9d3d5ae2767a3b646850bf14d2373f01d1c6844eb"}</script>
 </section>
 
 </main>

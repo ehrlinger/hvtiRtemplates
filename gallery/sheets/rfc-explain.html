@@ -56,7 +56,7 @@
 <p><strong>Run it in the background.</strong> The fit is long, and a fit run in the console dies with the session. From a terminal in the study, <code>hvti run 30_analyses/rfc.explain.&lt;subject&gt;.&lt;type&gt;.qmd</code> (<code>analyses/</code> in an older study whose folders carry no number) checks the job, then renders it in the background on the R the study's <code>renv.lock</code> records; add <code>--final</code> for the final render. From R, <code>run_job(job)</code> does the same. <code>hvti status</code> follows it and <code>hvti cancel</code> stops it. Once the fit is cached, its chunks run interactively and load it.</p>
 <p><strong>Render a draft as you go.</strong> <code>render_job(job)</code> runs the whole job in a clean R session and writes the report beside it. Render early and often: while any <code>EDIT:</code> marker is left, the report opens with a DRAFT banner listing them, and its numbers are not a result. <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#render-as-you-go">Work a job</a> explains why to render rather than run chunks by hand.</p>
 <p><strong>Then the final.</strong> Once no marker is left, <code>render_job(job, final = TRUE)</code> renders the accepted result. It refuses an open marker, a skipped chunk, <code>stop_here()</code> and unregistered data, and it records the job's provenance beside the report.</p>
-<footer>Generated from the template by hvtiRtemplates, 1.5.2 · built 2026-10-27. The template holds the details; this sheet is its outline.</footer>
+<footer>Generated from the template by hvtiRtemplates, 1.5.3 · built 2026-10-28. The template holds the details; this sheet is its outline.</footer>
 </main>
 </body>
 </html>

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:22
+2026-10-28 09:21
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -54,8 +54,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.2
+**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -288,7 +288,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261027.parquet) |
+| Source              | dataset `study` (built_20261028.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -491,9 +491,9 @@ Table 5: Patients in each group, and those matched
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-27 15:21:49 EDT |
-|  | Ended | 2026-10-27 15:22:18 EDT |
-|  | Duration | 29 s |
+| Run | Started | 2026-10-28 09:20:58 EDT |
+|  | Ended | 2026-10-28 09:21:00 EDT |
+|  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -501,14 +501,14 @@ Table 5: Patients in each group, and those matched
 |  | Template | lp.mirror |
 |  | Subject | approach |
 |  | Type | matched |
-|  | hvtiRtemplates | 1.5.2 |
-| Dataset `built` | Version file | built_20261027.parquet |
-|  | Version date | 2026-10-27 |
+|  | hvtiRtemplates | 1.5.3 |
+| Dataset `built` | Version file | built_20261028.parquet |
+|  | Version date | 2026-10-28 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-27 15:17:48 -0400, data built_20261027.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-28 09:20:45 -0400, data built_20261028.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

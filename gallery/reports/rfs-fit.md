@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:27
+2026-10-28 09:23
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
@@ -85,8 +85,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.2
+**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -152,6 +152,32 @@ PREDICTORS <- c("age", "female", "bmi", "hx_chf", "hx_dm", "nyha_pr", "lvef", "p
 # on whatever ran before it.
 NTREE <- 300
 SEED  <- 2026
+
+# Demo: how the trees split, sized for the events this cohort has. A survival
+# split is decided by deaths, not patients, so a leaf needs a few deaths to say
+# anything. NULL sizes a leaf for about 2 deaths, nodesize = 2 * n / events, and
+# never below randomForestSRC's survival default of 15: about 60 for 60 deaths
+# in 1,900 patients, about 160 for 150 in 12,000, and 15 for a cohort where
+# deaths are common. A number overrides it.
+NODESIZE <- NULL
+# randomForestSRC's own defaults, written out so the report says what was used:
+# 10 random split points per variable, sqrt(predictors) tried at each split
+# (MTRY <- NULL), and log-rank splitting.
+NSPLIT    <- 10
+MTRY      <- NULL
+SPLITRULE <- "logrank"
+
+# Demo: TRUE searches for the leaf size with randomForestSRC::tune.nodesize()
+# instead, and the forest uses the size it picks. Off by default: each grid
+# value grows a 100-tree forest. The search here differs from that function's
+# defaults in two ways, both for sparse events. It grows each forest on 63.2% of
+# patients; the default, min(0.632 n, max(150, n^0.8)), keeps about 420 of
+# 1,900 patients and 1,830 of 12,000, which is about 13 and 23 deaths at the
+# event rates above, too few to tell one leaf size from another. And its grid
+# reaches twice the 2-death size rather than stopping at 150, which a large
+# sparse cohort needs. The search always drops patients missing a predictor,
+# so with NA_ACTION <- "na.impute" it tunes on the complete cases only.
+TUNE_NODESIZE <- FALSE
 
 # Demo: "na.omit" drops a patient missing any predictor; "na.impute" keeps them
 # and imputes inside the forest. The classification and regression exemplars
@@ -243,7 +269,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261027.parquet) |
+| Source              | dataset `built` (built_20261028.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -305,9 +331,43 @@ model <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ ."))
 # object beside the formula, `job_data` and its patient IDs included, into
 # the forest.
 environment(model) <- globalenv()
+# The leaf size for about 2 deaths per leaf, counted on the patients the forest
+# will be grown on: na.omit drops a patient missing any predictor.
+.grown <- if (NA_ACTION == "na.omit") stats::complete.cases(d) else rep(TRUE, nrow(d))
+.events <- sum(d[[EVENT]][.grown] == 1)
+.nodesize_rule <- max(15L, as.integer(ceiling(2 * sum(.grown) / max(.events, 1L))))
+if (isTRUE(TUNE_NODESIZE)) {
+  hvtiRtemplates::guard_long_fit("rfs-nodesize", dir = CACHE_DIR,
+                                 why = "the leaf-size search grows a 100-tree forest at each grid value", refit = REFIT)
+  tuned <- cache_fit(
+    "rfs-nodesize",
+    tune.nodesize(model, d, nodesize.try = c(1:9, seq(10, max(150L, 2L * .nodesize_rule), by = 5)),
+                  sampsize = function(x) x * 0.632, nsplit = NSPLIT, mtry = MTRY, splitrule = SPLITRULE,
+                  na.action = NA_ACTION, trace = FALSE, seed = abs(SEED)),
+    seed = SEED, dir = CACHE_DIR, refit = REFIT
+  )
+  .nodesize <- tuned$nsize.opt
+  if (is.na(.nodesize)) {
+    stop("tune.nodesize() found no leaf size: every grid value failed. Set NODESIZE instead.", call. = FALSE)
+  }
+} else {
+  .nodesize <- if (is.null(NODESIZE)) .nodesize_rule else NODESIZE
+}
+cat(sprintf("%d patients, %d events: nodesize %d (%s), about %.1f events per leaf.\n", sum(.grown), .events,
+            as.integer(.nodesize),
+            if (isTRUE(TUNE_NODESIZE)) "tuned" else if (is.null(NODESIZE)) "2 events per leaf" else "set",
+            .nodesize * .events / sum(.grown)))
+```
+
+    725 patients, 406 events: nodesize 15 (2 events per leaf), about 8.4 events per leaf.
+
+Code
+
+``` r
 forest <- cache_fit(
   "rfs-forest",
-  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none", block.size = 1, seed = -abs(SEED)),
+  rfsrc(model, data = d, ntree = NTREE, nodesize = .nodesize, nsplit = NSPLIT, mtry = MTRY, splitrule = SPLITRULE,
+        na.action = NA_ACTION, importance = "none", block.size = 1, seed = -abs(SEED)),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
 )
 forest
@@ -329,6 +389,11 @@ forest
                               (OOB) CRPS: 4.65700775
                  (OOB) standardized CRPS: 0.17564997
        (OOB) Requested performance error: 0.3259022
+
+**With few events, expect noise in importance.** At 60 or 150 deaths a
+predictor carrying no signal can get a VIMP of 0 or below in
+`rfs-explain`. That is the expected reading for noise, not a defect;
+`rfs-explain` says how to read it.
 
 `importance = "none"` is deliberate. Importance is the explain job’s
 work, and cached there on its own, so it can be recomputed without
@@ -424,9 +489,9 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-27 15:27:40 EDT  |
-|                 | Ended            | 2026-10-27 15:27:52 EDT  |
-|                 | Duration         | 13 s                     |
+| Run             | Started          | 2026-10-28 09:23:07 EDT  |
+|                 | Ended            | 2026-10-28 09:23:15 EDT  |
+|                 | Duration         | 8 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -434,9 +499,9 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 |                 | Template         | rfs.fit                  |
 |                 | Subject          | dead                     |
 |                 | Type             | rf                       |
-|                 | hvtiRtemplates   | 1.5.2                    |
-| Dataset `built` | Version file     | built_20261027.parquet   |
-|                 | Version date     | 2026-10-27               |
+|                 | hvtiRtemplates   | 1.5.3                    |
+| Dataset `built` | Version file     | built_20261028.parquet   |
+|                 | Version date     | 2026-10-28               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

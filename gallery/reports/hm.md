@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:07
+2026-10-28 09:19
 
 An `hm` job builds the risk-factor model **on top of** the shape
 parameters the `hz` job fitted. The shapes are not re-derived here; they
@@ -69,7 +69,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.2
+hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -156,6 +156,10 @@ job_data <- .up$job_data
 d <- job_data$data
 TIME <- .up$selection$time
 EVENT <- .up$selection$event
+# NULL unless hz was fitted on start/stop rows, when it names the segment start.
+START <- .up$selection$start
+# Start/stop calibration needs an hzr_deciles() that subtracts H(start).
+hvtiRtemplates:::.check_start_engine(START)
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
@@ -163,7 +167,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261027.parquet) |
+| Source              | dataset `study` (built_20261028.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -304,11 +308,12 @@ if (any(grepl("^ERROR", audit$action))) {
 # hazard() cannot take a missing value, and failed on one with "Predictor rows
 # must match the length of 'time'", naming neither the column nor why. Stop
 # here instead, naming each column and how many rows it is missing.
-invisible(hvtiRtemplates:::.missing_cases(d, TIME = TIME, EVENT = EVENT, COVARIATES = unlist(COVARIATES), action = "stop"))
+invisible(hvtiRtemplates:::.missing_cases(d, START = START, TIME = TIME, EVENT = EVENT, COVARIATES = unlist(COVARIATES),
+                                          action = "stop"))
 
 # Only the columns the model uses. A hazard() fit keeps a copy of its data,
 # which is saved in hm.rds, and `d` also holds the patient identifier.
-dd <- covariates_to_numeric(d[unique(c(TIME, EVENT, unlist(COVARIATES)))], unlist(COVARIATES))
+dd <- covariates_to_numeric(d[unique(c(START, TIME, EVENT, unlist(COVARIATES)))], unlist(COVARIATES))
 ```
 
 | variable | storage | n_levels | noninteger_levels | action          |
@@ -433,7 +438,10 @@ set.seed(20260827)   # any fixed value; it must not change between renders
 # formula for the model would offer every covariate to every phase, and the
 # estimates would then not be comparable with the SAS model this replaces. A
 # phase with no entry in COVARIATES is offered none.
-form <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ 1"))
+# With START, the response is hz's start/stop one, Surv(START, TIME, EVENT).
+form <- stats::as.formula(paste0("Surv(", paste(c(START, TIME, EVENT), collapse = ", "), ") ~ 1"))
+# Stops on a response that drops the start hz fitted with, or names one it did not.
+hvtiRtemplates:::.check_surv_start(form, START, TIME, EVENT)
 # Each entry names one phase, once: [[ ]] takes the first of two entries with
 # one name and finds nothing in an unnamed list, so either would drop
 # covariates without a word.
@@ -999,9 +1007,9 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-27 15:06:55 EDT |
-|  | Ended | 2026-10-27 15:07:05 EDT |
-|  | Duration | 10 s |
+| Run | Started | 2026-10-28 09:19:23 EDT |
+|  | Ended | 2026-10-28 09:19:29 EDT |
+|  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -1009,14 +1017,14 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 |  | Template | hm |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.5.2 |
-| Dataset `built` | Version file | built_20261027.parquet |
-|  | Version date | 2026-10-27 |
+|  | hvtiRtemplates | 1.5.3 |
+| Dataset `built` | Version file | built_20261028.parquet |
+|  | Version date | 2026-10-28 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-27 15:01:26 -0400, data built_20261027.parquet |
+| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-10-28 09:19:13 -0400, data built_20261028.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

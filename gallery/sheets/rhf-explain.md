@@ -41,7 +41,7 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 6 choices marked `EDIT:`.
+2.  **Study choices**: 7 choices marked `EDIT:`.
 3.  **The forest**: reads what **rhf-fit** saved (`rhf.rds`).
 4.  **Discrimination over follow-up**: fits and caches its results, so a
     later render reloads them (`REFIT <- TRUE` recomputes them).
@@ -51,6 +51,11 @@ shows three ways to find them.
     session, so the job runs in the background; fits and caches its
     results, so a later render reloads them (`REFIT <- TRUE` recomputes
     them).
+7.  **Partial dependence**: a long fit (each grid value predicts the
+    hazard over every interval of the sample) that will not start in an
+    interactive session, so the job runs in the background; fits and
+    caches its results, so a later render reloads them (`REFIT <- TRUE`
+    recomputes them).
 
 ## Run it
 
@@ -76,5 +81,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.2 · built 2026-10-27.
+Generated from the template by hvtiRtemplates, 1.5.3 · built 2026-10-28.
 The template holds the details; this sheet is its outline.

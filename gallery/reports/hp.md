@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:07
+2026-10-28 09:19
 
 An `hp` job **reads** its inputs and does not recompute them: the
 actuarial life table from the `ac` job and the parametric fit from the
@@ -60,7 +60,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.2
+hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -139,6 +139,9 @@ for (.field in c("analysis", "cohort")) {
          " lineage. Rebuild both with matching analysis choices and cohort.", call. = FALSE)
   }
 }
+# A start/stop fit has no single covariate row per patient to predict from.
+# Stopped first: its selection, carrying START, also differs from ac's.
+hvtiRtemplates:::.stop_start_stop_prediction(.hz_read$lineage$selection$start, "hz.rds")
 # The life table and the fit must describe the same rows. The data chunk below
 # rebuilds hz's rows, so an ac that chose other rows is stopped here.
 if (!is.null(.hz_read$lineage$selection) && is.null(.ac_read$lineage$selection)) {
@@ -191,7 +194,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261027.parquet) |
+| Source              | dataset `study` (built_20261028.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -500,9 +503,9 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-27 15:07:11 EDT |
-|  | Ended | 2026-10-27 15:07:38 EDT |
-|  | Duration | 28 s |
+| Run | Started | 2026-10-28 09:19:34 EDT |
+|  | Ended | 2026-10-28 09:19:35 EDT |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -510,15 +513,15 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 |  | Template | hp |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.5.2 |
-| Dataset `built` | Version file | built_20261027.parquet |
-|  | Version date | 2026-10-27 |
+|  | hvtiRtemplates | 1.5.3 |
+| Dataset `built` | Version file | built_20261028.parquet |
+|  | Version date | 2026-10-28 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-27 14:54:49 -0400, data built_20261027.parquet |
-|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-27 15:01:26 -0400, data built_20261027.parquet |
+| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-28 09:18:56 -0400, data built_20261028.parquet |
+|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-28 09:19:13 -0400, data built_20261028.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

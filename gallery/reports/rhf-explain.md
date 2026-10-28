@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:35
+2026-10-28 09:28
 
 Explains the forest the `rhf-fit` job in this set saved: how well it
 ranks patients over follow-up, their hazard curves, and which markers
@@ -63,7 +63,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.2
+hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -101,8 +101,23 @@ MAX_TREE <- 150
 # when it matters.
 N_TIMES <- 5
 
-# Demo: seed for the sample of curves and the VarPro cache. It is part of every
-# cache key.
+# Demo: partial dependence for these predictors, at the importance points above.
+# NULL, the default, draws none: it is the slowest step here. Each value on a
+# predictor's grid predicts the hazard for PD_N patients over every interval
+# they have; on the first real study, 500 trees and 172,000 intervals, that was
+# about 2.7 minutes per value.
+PD_VARS <- NULL
+# Patients drawn from the forest's own training rows, and values per continuous
+# predictor, spread from its 5th to its 95th percentile. A 0/1 predictor gets 0
+# and 1, and a factor each of its levels.
+PD_N <- 300
+PD_GRID <- 9
+# A point of follow-up is left out of the partial dependence when fewer than
+# this many of the PD_N patients are still at risk there.
+PD_MIN_RISK <- 20
+
+# Demo: seed for the sample of curves, the VarPro cache and the partial
+# dependence sample. It is part of every cache key.
 SEED <- 2026
 
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
@@ -273,6 +288,15 @@ save_figure(.fig, "rhf-explain-chf")
 Figure 4: Out-of-bag predicted cumulative hazard over follow-up for the
 same patients, one line per patient.
 
+**These paths are not calibrated probabilities.** No check has yet
+compared the survival implied by a forest’s predicted hazard with what
+happened to the patients. On the first real study it looked badly off:
+patients who did not die had path survival near 0.1, because the
+predicted hazard spiked to 3 to 10 per year along their paths. Until a
+calibration check is done, read a path as relative risk along follow-up,
+higher or lower than another patient’s and when, and do not quote a
+survival probability from it.
+
 ## Importance
 
 Code
@@ -369,13 +393,128 @@ it. Before a ranking goes into a report, render this job again with two
 or three other `SEED` values and keep the predictors that stay near the
 top in every run.
 
+## Partial dependence
+
+ggRandomForests has no partial dependence for a hazard forest yet, so
+this job builds it from `predict()`, and only for the predictors named
+in `PD_VARS`. For each value on a predictor’s grid, it sets the
+predictor to that value on every interval of a sample of patients,
+predicts their hazard, and averages it at each importance point over the
+patients still at risk there. The hazard at a time depends only on the
+interval covering that time, so setting the whole path is the same as
+setting the one interval. The curves are marginal: they say nothing
+about two predictors acting together.
+
+**Count the exposure before reading a curve.** The table below gives, at
+each importance point, the patients at risk, the patient-time and the
+deaths, and for a 0/1 or factor predictor each of those for every value.
+Patient-time is in the units of the fit’s interval columns, years if
+they are in years. A curve at a point with little exposure is decided by
+a handful of deaths. On the first real study a rare time-varying 0/1
+predictor, intubation, had a hazard ratio between its two values that
+flipped from point to point: 13, 0.59, 74, 0.57. It was not look-ahead,
+since a refit with the final intervals reset showed the same pattern.
+Each point held 0.12 to 0.33 intubated patient-years, with 2, 0, 4 and 0
+intubated deaths, and those deaths drew the curve. The direction of such
+a predictor should come from a pooled model, such as a `hz` job, not
+from these curves.
+
+Code
+
+``` r
+# Counted on every patient the forest was grown on, not only the PD_N sample, and
+# reported as counts alone: no row here describes one patient.
+if (length(PD_VARS)) {
+  .absent <- setdiff(PD_VARS, forest$xvar.names)
+  if (length(.absent)) {
+    stop("PD_VARS names a predictor the forest was not grown on: ", paste(.absent, collapse = ", "), call. = FALSE)
+  }
+  .train <- data.frame(id = forest$id, forest$yvar, forest$xvar)
+  .windows <- imp$window.info
+  .exposure <- function(k, var, value) {
+    data.frame(variable = var, value = value, time.index = .windows$index, start = .windows$start,
+               stop = .windows$stop, t(vapply(seq_len(nrow(.windows)), function(i) {
+                 a <- .windows$start[i]
+                 b <- .windows$stop[i]
+                 overlap <- pmax(0, pmin(.train$stop, b) - pmax(.train$start, a))
+                 at <- k & overlap > 0
+                 c(patients = length(unique(.train$id[at])), patient_time = sum(overlap[at]),
+                   deaths = sum(.train$event[at] == 1 & .train$stop[at] <= b))
+               }, numeric(3L))), row.names = NULL)
+  }
+  pd_exposure <- do.call(rbind, c(
+    list(.exposure(rep(TRUE, nrow(.train)), "(all)", "all")),
+    lapply(PD_VARS, function(v) {
+      x <- .train[[v]]
+      values <- if (is.factor(x)) levels(x) else if (all(x %in% c(0, 1))) c("0", "1") else return(NULL)
+      do.call(rbind, lapply(values, function(value) .exposure(as.character(x) == value, v, value)))
+    })
+  ))
+  knitr::kable(pd_exposure, digits = c(0, 0, 0, 3, 3, 0, 2, 0))
+}
+```
+
+Table 4: Exposure at each importance point: patients at risk,
+patient-time (in the units of the fit’s interval columns) and deaths, by
+value for a 0/1 or factor predictor
+
+Code
+
+``` r
+if (length(PD_VARS)) {
+  hvtiRtemplates::guard_long_fit("rhf-partial", dir = CACHE_DIR,
+                                 why = "each grid value predicts the hazard over every interval of the sample",
+                                 refit = REFIT)
+  pd <- hvtiRtemplates:::.owner_only(.cache_file("rhf-partial"), cache_fit(
+    "rhf-partial",
+    local({
+      train <- data.frame(id = forest$id, forest$yvar, forest$xvar)
+      ids <- sample(unique(train$id), min(PD_N, length(unique(train$id))))
+      nd <- train[train$id %in% ids, ]
+      do.call(rbind, lapply(PD_VARS, function(v) {
+        x <- nd[[v]]
+        # A factor keeps its levels, so a factor labeled 0 and 1 is set by level, not by its codes.
+        grid <- if (is.factor(x)) levels(x) else if (all(x %in% c(0, 1))) c(0, 1) else
+          unique(stats::quantile(x, seq(0.05, 0.95, length.out = PD_GRID), names = FALSE))
+        do.call(rbind, lapply(grid, function(g) {
+          # [] <- keeps the column's class and levels.
+          nd[[v]][] <- g
+          h <- predict(forest, nd)$hazard.test[, .time_index, drop = FALSE]
+          data.frame(variable = v, level = if (is.factor(x)) g else format(signif(g, 3)), time.index = .time_index,
+                     time = forest$time.interest[.time_index], hazard = colMeans(h, na.rm = TRUE),
+                     n.risk = colSums(!is.na(h)))
+        }))
+      }))
+    }),
+    # predict() dispatches to randomForestRHF's method, which cache_fit() cannot see in the code, so an
+    # upgrade of the package would otherwise reuse curves its old version predicted.
+    seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestRHF"
+  ))
+  pd <- pd[pd$n.risk >= PD_MIN_RISK, ]
+  pd$point <- factor(sprintf("%.2f", pd$time), levels = sprintf("%.2f", sort(unique(pd$time))))
+  # Each predictor's values in grid order on a discrete axis, keyed by predictor so two predictors sharing a
+  # label do not share a place.
+  .key <- paste(pd$variable, pd$level, sep = "\r")
+  pd$at <- factor(.key, levels = unique(.key))
+  .fig <- ggplot2::ggplot(pd, ggplot2::aes(at, hazard, color = point, group = point)) +
+    ggplot2::geom_line() +
+    ggplot2::geom_point(size = 1) +
+    ggplot2::scale_x_discrete(labels = function(b) sub("^.*\r", "", b)) +
+    ggplot2::facet_wrap(~variable, scales = "free_x") +
+    ggplot2::labs(x = "Value set on every interval", y = "Mean predicted hazard", color = "Time") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+  save_figure(.fig, "rhf-explain-partial")
+  .fig
+}
+```
+
 ## About this run
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-27 15:35:02 EDT |
-|  | Ended | 2026-10-27 15:35:07 EDT |
-|  | Duration | 5 s |
+| Run | Started | 2026-10-28 09:28:43 EDT |
+|  | Ended | 2026-10-28 09:28:45 EDT |
+|  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -383,13 +522,13 @@ top in every run.
 |  | Template | rhf.explain |
 |  | Subject | event |
 |  | Type | rhf |
-|  | hvtiRtemplates | 1.5.2 |
-| Dataset `intervals` | Version file | intervals_20261027.parquet |
-|  | Version date | 2026-10-27 |
+|  | hvtiRtemplates | 1.5.3 |
+| Dataset `intervals` | Version file | intervals_20261028.parquet |
+|  | Version date | 2026-10-28 |
 |  | Source file | intervals.rds |
 |  | sha256 | f3770c09d63a |
 |  | Manifest | current |
-| Upstream | Handoff | `event-rhf/rhf.rds` (forest), rendered 2026-10-27 15:34:43 -0400, data intervals_20261027.parquet |
+| Upstream | Handoff | `event-rhf/rhf.rds` (forest), rendered 2026-10-28 09:28:34 -0400, data intervals_20261028.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

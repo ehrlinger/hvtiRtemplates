@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 14:49
+2026-10-28 09:17
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.2
+hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -260,6 +260,11 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 for (.i in seq_along(.bags)) {
   hvtiRtemplates:::.check_bag_identifiers(.bags[[.i]], .sel$id, paste("The bootstrap bag", .bag_files[[.i]]))
 }
+# Several rows per patient is a start/stop screen, which must have resampled
+# patients; a bag from a runner that resampled rows stops here, and so does a
+# pre-pooled bag, which cannot show that every chunk did.
+hvtiRtemplates:::.check_bag_resampling(hvtiRtemplates:::.repeats_patients(.sel), .bags,
+                                       pooled = !length(.chunk_files))
 ```
 
 | Data  |                  |
@@ -369,8 +374,8 @@ provenance
     7                                                                      725
     8                                                                        8
     9                                                                        0
-    10                                                                     0.2
-    11                                                          version:1.2.16
+    10                                                                     0.1
+    11                                                          version:1.2.17
     12 sha256:b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6
     13                                               4 distinct (listed below)
 
@@ -917,9 +922,9 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-27 14:46:29 EDT |
-|  | Ended | 2026-10-27 14:49:28 EDT |
-|  | Duration | 2 min 58 s |
+| Run | Started | 2026-10-28 09:17:40 EDT |
+|  | Ended | 2026-10-28 09:17:41 EDT |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -927,17 +932,17 @@ saveRDS(report, report_file)
 |  | Template | bh |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.5.2 |
-| Dataset `built` | Version file | built_20261027.parquet |
-|  | Version date | 2026-10-27 |
+|  | hvtiRtemplates | 1.5.3 |
+| Dataset `built` | Version file | built_20261028.parquet |
+|  | Version date | 2026-10-28 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261027.parquet |
-|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261027.parquet |
-|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261027.parquet |
-|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261027.parquet |
+| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261028.parquet |
+|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261028.parquet |
+|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261028.parquet |
+|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261028.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

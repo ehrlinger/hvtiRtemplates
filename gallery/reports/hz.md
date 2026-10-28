@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:06
+2026-10-28 09:19
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.2
+**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -134,6 +134,15 @@ TIME   <- "iv_dead"
 
 EVENT  <- "dead"
 
+# Optional: NULL for one row per patient. For SAS `lcensor <start>; time <stop>;`,
+# the time-varying covariate layout, name the start here and the stop as TIME:
+# each row is one segment of a patient's follow-up, and the fit takes
+# Surv(START, TIME, EVENT). KEY must then include START, and EXPECTED counts
+# rows (segments), as SAS counts observations. hm, hp and hs take START from
+# this job. Pointing TIME at the stop and leaving START NULL fits every
+# segment from time zero: a different model, which converges without complaint.
+START  <- NULL
+
 EXPECTED <- list(n = 725L, n_events = 406L, n_censored = 319L)
 
 # Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
@@ -152,9 +161,12 @@ Code
 # read, so a result can name the data that produced it. It stops on a mismatch.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
+# With START, a patient has a row per segment and KEY must say so.
+hvtiRtemplates:::.check_start_settings(START, KEY, JOIN, REDUCE)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
                                           where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+                                          reduce = REDUCE, join_key = JOIN_KEY,
+                                          one_row_per_patient = is.null(START))
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -163,7 +175,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261027.parquet) |
+| Source              | dataset `built` (built_20261028.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -331,6 +343,15 @@ resp <- data.frame(time   = as.numeric(d[[TIME]]),
                    status = as.numeric(d[[EVENT]]))
 stopifnot(all(resp$status %in% c(0, 1)), !anyNA(resp$time))
 
+# ---- Shape C: start/stop, for time-varying covariates -----------------------
+# No edit here: START in the study choices turns it on. SAS
+# `lcensor <start>; time <stop>; event <e>;` maps onto Surv(start, time, status),
+# and each row contributes H(stop) - H(start). Shape A's time is the stop.
+if (!is.null(START)) {
+  resp$start <- as.numeric(d[[START]])
+  hvtiRtemplates:::.check_start_stop(resp$start, resp$time, START, TIME)
+}
+
 # ---- Shape B: interval-censored ---------------------------------------------
 # Demo: delete Shape A above and uncomment this, from SAS's
 #   time <upper>; icensor <flag>=<lower>;
@@ -354,7 +375,11 @@ stopifnot(all(resp$status %in% c(0, 1)), !anyNA(resp$time))
 # mismatched call usually errors on a missing column, an author who edits all
 # three INCONSISTENTLY gets no such warning.
 surv_formula <- if (all(c("lo", "hi") %in% names(resp))) {
+  if (!is.null(START)) stop("START is set and Shape B replaced the response: this template does not combine ",
+                            "interval censoring with start/stop rows.", call. = FALSE)
   Surv(lo, hi, type = "interval2") ~ 1
+} else if (!is.null(START)) {
+  Surv(start, time, status) ~ 1
 } else {
   Surv(time, status) ~ 1
 }
@@ -733,7 +758,13 @@ Code
 .fig <- ggplot2::ggplot(.grid, ggplot2::aes(x = .data$time, y = .data$survival))
 if (!all(c("lo", "hi") %in% names(resp))) {
   # 68%, one standard error either side, as hp and the SAS plots draw it.
-  .km <- survival::survfit(survival::Surv(time, status) ~ 1, data = resp, conf.int = 0.68268948)
+  # With START, the product-limit estimate over the segments' risk sets, so
+  # each row is at risk from its start and not from zero.
+  .km <- if (!is.null(START)) {
+    survival::survfit(survival::Surv(start, time, status) ~ 1, data = resp, conf.int = 0.68268948)
+  } else {
+    survival::survfit(survival::Surv(time, status) ~ 1, data = resp, conf.int = 0.68268948)
+  }
   .km <- data.frame(time = c(0, .km$time), survival = 100 * c(1, .km$surv),
                     lower = 100 * c(1, .km$lower), upper = 100 * c(1, .km$upper))
   .fig <- .fig +
@@ -774,7 +805,9 @@ hz_art <- hvtiRtemplates:::.attach_handoff_lineage(
   cohort = cc,
   # hm, hp and hs rebuild exactly these rows from this record, and take TIME
   # and EVENT from it, so the chain cannot drift from the fit it builds on.
-  selection = c(attr(job_data$record, "selection"), list(time = TIME, event = EVENT))
+  # START only when set: a selection without one compares identical to ac's.
+  selection = c(attr(job_data$record, "selection"), list(time = TIME, event = EVENT),
+                if (!is.null(START)) list(start = START))
 )
 saveRDS(hz_art, set_path("estimates", "hz.rds"))
 ```
@@ -783,9 +816,9 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-27 15:01:26 EDT  |
-|                 | Ended            | 2026-10-27 15:06:11 EDT  |
-|                 | Duration         | 4 min 45 s               |
+| Run             | Started          | 2026-10-28 09:19:13 EDT  |
+|                 | Ended            | 2026-10-28 09:19:17 EDT  |
+|                 | Duration         | 4 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -793,9 +826,9 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 |                 | Template         | hz                       |
 |                 | Subject          | dead                     |
 |                 | Type             | hz                       |
-|                 | hvtiRtemplates   | 1.5.2                    |
-| Dataset `built` | Version file     | built_20261027.parquet   |
-|                 | Version date     | 2026-10-27               |
+|                 | hvtiRtemplates   | 1.5.3                    |
+| Dataset `built` | Version file     | built_20261028.parquet   |
+|                 | Version date     | 2026-10-28               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 725 rows on 725 patients |
 |                 | WHERE            | `!is.na(creat_pr)`       |

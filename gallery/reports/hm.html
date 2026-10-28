@@ -2246,7 +2246,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-27 15:07</p>
+      <p class="date">2026-10-28 09:19</p>
     </div>
   </div>
   
@@ -2258,7 +2258,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: hm 1.5.2 sha256:ce076982a6c59fa85a15ca711d561ddbdde861c39fcbde2ea7f67bb05cddbd65 -->
+<!-- hvtiRtemplates: hm 1.5.3 sha256:c7cdcc8f65aea43c8a25da2c3ab35922a0af022dda814fe1f89be0b7748c2ccb -->
 <!-- Demo: name the SAS job this replaces, and say what its `selection`
      statement screened: which phases carried candidates, and at what
      entry/stay levels. Replace this comment with that text. -->
@@ -2337,7 +2337,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.2</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.3</p>
 </div>
 </div>
 </div>
@@ -2432,9 +2432,13 @@ vertical-align: -.125em;
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>TIME <span class="ot">&lt;-</span> .up<span class="sc">$</span>selection<span class="sc">$</span>time</span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>EVENT <span class="ot">&lt;-</span> .up<span class="sc">$</span>selection<span class="sc">$</span>event</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># NULL unless hz was fitted on start/stop rows, when it names the segment start.</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>START <span class="ot">&lt;-</span> .up<span class="sc">$</span>selection<span class="sc">$</span>start</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Start/stop calibration needs an hzr_deciles() that subtracts H(start).</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">:::</span><span class="fu">.check_start_engine</span>(START)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(job_data<span class="sc">$</span>record, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Data&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-data" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2453,7 +2457,7 @@ Table 1: The data this job read, as hz read it
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>study</code> (built_20261027.parquet)</td>
+<td style="text-align: left;">dataset <code>study</code> (built_20261028.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2640,11 +2644,12 @@ Table 3: Number and names of the covariates in each phase, and where the lists 
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co"># hazard() cannot take a missing value, and failed on one with &quot;Predictor rows</span></span>
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co"># must match the length of &#39;time&#39;&quot;, naming neither the column nor why. Stop</span></span>
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co"># here instead, naming each column and how many rows it is missing.</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.missing_cases</span>(d, <span class="at">TIME =</span> TIME, <span class="at">EVENT =</span> EVENT, <span class="at">COVARIATES =</span> <span class="fu">unlist</span>(COVARIATES), <span class="at">action =</span> <span class="st">&quot;stop&quot;</span>))</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Only the columns the model uses. A hazard() fit keeps a copy of its data,</span></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co"># which is saved in hm.rds, and `d` also holds the patient identifier.</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>dd <span class="ot">&lt;-</span> <span class="fu">covariates_to_numeric</span>(d[<span class="fu">unique</span>(<span class="fu">c</span>(TIME, EVENT, <span class="fu">unlist</span>(COVARIATES)))], <span class="fu">unlist</span>(COVARIATES))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.missing_cases</span>(d, <span class="at">START =</span> START, <span class="at">TIME =</span> TIME, <span class="at">EVENT =</span> EVENT, <span class="at">COVARIATES =</span> <span class="fu">unlist</span>(COVARIATES),</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">action =</span> <span class="st">&quot;stop&quot;</span>))</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Only the columns the model uses. A hazard() fit keeps a copy of its data,</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co"># which is saved in hm.rds, and `d` also holds the patient identifier.</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>dd <span class="ot">&lt;-</span> <span class="fu">covariates_to_numeric</span>(d[<span class="fu">unique</span>(<span class="fu">c</span>(START, TIME, EVENT, <span class="fu">unlist</span>(COVARIATES)))], <span class="fu">unlist</span>(COVARIATES))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-audit" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2864,69 +2869,72 @@ Table 6: Shape parameters inherited from the hz job
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># formula for the model would offer every covariate to every phase, and the</span></span>
 <span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co"># estimates would then not be comparable with the SAS model this replaces. A</span></span>
 <span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># phase with no entry in COVARIATES is offered none.</span></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>form <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">as.formula</span>(<span class="fu">paste0</span>(<span class="st">&quot;Surv(&quot;</span>, TIME, <span class="st">&quot;, &quot;</span>, EVENT, <span class="st">&quot;) ~ 1&quot;</span>))</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Each entry names one phase, once: [[ ]] takes the first of two entries with</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co"># one name and finds nothing in an unnamed list, so either would drop</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co"># covariates without a word.</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>.names <span class="ot">&lt;-</span> <span class="fu">names</span>(COVARIATES)</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(.names) <span class="sc">||</span> <span class="fu">anyNA</span>(.names) <span class="sc">||</span> <span class="sc">!</span><span class="fu">all</span>(<span class="fu">nzchar</span>(.names)) <span class="sc">||</span> <span class="fu">anyDuplicated</span>(.names)) {</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Name every COVARIATES entry by its phase, once each, e.g. list(early = c(</span><span class="sc">\&quot;</span><span class="st">age</span><span class="sc">\&quot;</span><span class="st">), late = c(</span><span class="sc">\&quot;</span><span class="st">age</span><span class="sc">\&quot;</span><span class="st">)).&quot;</span>,</span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>.unknown <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(.names, <span class="fu">names</span>(hz_art<span class="sc">$</span>phases))</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.unknown)) {</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;COVARIATES names phases the hz fit does not have: &quot;</span>, <span class="fu">paste</span>(.unknown, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;. Its phases are &quot;</span>, <span class="fu">paste</span>(<span class="fu">names</span>(hz_art<span class="sc">$</span>phases), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>with_covariates <span class="ot">&lt;-</span> <span class="cf">function</span>(phases) {</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (p <span class="cf">in</span> <span class="fu">names</span>(phases)) {</span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    rhs <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(COVARIATES[[p]])) <span class="fu">paste</span>(COVARIATES[[p]], <span class="at">collapse =</span> <span class="st">&quot; + &quot;</span>) <span class="cf">else</span> <span class="st">&quot;1&quot;</span></span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    phases[[p]]<span class="sc">$</span>formula <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="st">&quot;~&quot;</span>, rhs))</span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  phases</span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: conserve = FALSE if the SAS final model carries `noconserve`.</span></span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>ctl1 <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n_starts =</span> <span class="dv">5</span>, <span class="at">maxit =</span> <span class="dv">2000</span>, <span class="at">conserve =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>ctl2 <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n_starts =</span> <span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">5000</span>, <span class="at">conserve =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>ph1 <span class="ot">&lt;-</span> <span class="fu">with_covariates</span>(<span class="fu">make_phases</span>(<span class="cn">TRUE</span>))</span>
-<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>ph2 <span class="ot">&lt;-</span> <span class="fu">with_covariates</span>(<span class="fu">make_phases</span>(<span class="cn">FALSE</span>))</span>
-<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a><span class="co"># The fits run in an environment holding only what they use. A saved fit keeps</span></span>
-<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a><span class="co"># the environment of its formula and of its call, and hm.rds would then carry</span></span>
-<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a><span class="co"># every object there, `d` and its patient IDs included, whenever these chunks</span></span>
-<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a><span class="co"># run anywhere but the global environment.</span></span>
-<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a>fit_env <span class="ot">&lt;-</span> <span class="fu">list2env</span>(<span class="fu">list</span>(<span class="at">dd =</span> dd, <span class="at">form =</span> form, <span class="at">ph1 =</span> ph1, <span class="at">ph2 =</span> ph2, <span class="at">ctl1 =</span> ctl1, <span class="at">ctl2 =</span> ctl2),</span>
-<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>                    <span class="at">parent =</span> <span class="fu">globalenv</span>())</span>
-<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a><span class="fu">environment</span>(fit_env<span class="sc">$</span>form) <span class="ot">&lt;-</span> fit_env</span>
-<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a><span class="co"># The phase formulas too: each would otherwise keep this chunk&#39;s environment.</span></span>
-<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.ph <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;ph1&quot;</span>, <span class="st">&quot;ph2&quot;</span>)) {</span>
-<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (p <span class="cf">in</span> <span class="fu">names</span>(fit_env[[.ph]])) <span class="fu">environment</span>(fit_env[[.ph]][[p]]<span class="sc">$</span>formula) <span class="ot">&lt;-</span> fit_env</span>
-<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a><span class="fu">local</span>({</span>
-<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>  stage1 <span class="ot">&lt;-</span> <span class="fu">suppressWarnings</span>(</span>
-<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">hazard</span>(form,</span>
-<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>           <span class="at">data =</span> dd,</span>
-<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a>           <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
-<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>           <span class="at">phases =</span> ph1,</span>
-<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>           <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>           <span class="at">control =</span> ctl1)</span>
-<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>  stage2 <span class="ot">&lt;-</span> <span class="fu">suppressWarnings</span>(</span>
-<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>    <span class="fu">hazard</span>(form,</span>
-<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a>           <span class="at">data =</span> dd,</span>
-<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a>           <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
-<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>           <span class="at">phases =</span> ph2,</span>
-<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>           <span class="at">theta =</span> stage1<span class="sc">$</span>fit<span class="sc">$</span>theta,</span>
-<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>           <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>           <span class="at">control =</span> ctl2)</span>
-<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>}, <span class="at">envir =</span> fit_env)</span>
-<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a>stage1 <span class="ot">&lt;-</span> fit_env<span class="sc">$</span>stage1</span>
-<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a>stage2 <span class="ot">&lt;-</span> fit_env<span class="sc">$</span>stage2</span>
-<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(old_seed)) .GlobalEnv<span class="sc">$</span>.Random.seed <span class="ot">&lt;-</span> old_seed</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># With START, the response is hz&#39;s start/stop one, Surv(START, TIME, EVENT).</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>form <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">as.formula</span>(<span class="fu">paste0</span>(<span class="st">&quot;Surv(&quot;</span>, <span class="fu">paste</span>(<span class="fu">c</span>(START, TIME, EVENT), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;) ~ 1&quot;</span>))</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Stops on a response that drops the start hz fitted with, or names one it did not.</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">:::</span><span class="fu">.check_surv_start</span>(form, START, TIME, EVENT)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Each entry names one phase, once: [[ ]] takes the first of two entries with</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="co"># one name and finds nothing in an unnamed list, so either would drop</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="co"># covariates without a word.</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>.names <span class="ot">&lt;-</span> <span class="fu">names</span>(COVARIATES)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(.names) <span class="sc">||</span> <span class="fu">anyNA</span>(.names) <span class="sc">||</span> <span class="sc">!</span><span class="fu">all</span>(<span class="fu">nzchar</span>(.names)) <span class="sc">||</span> <span class="fu">anyDuplicated</span>(.names)) {</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Name every COVARIATES entry by its phase, once each, e.g. list(early = c(</span><span class="sc">\&quot;</span><span class="st">age</span><span class="sc">\&quot;</span><span class="st">), late = c(</span><span class="sc">\&quot;</span><span class="st">age</span><span class="sc">\&quot;</span><span class="st">)).&quot;</span>,</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>.unknown <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(.names, <span class="fu">names</span>(hz_art<span class="sc">$</span>phases))</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.unknown)) {</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;COVARIATES names phases the hz fit does not have: &quot;</span>, <span class="fu">paste</span>(.unknown, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;. Its phases are &quot;</span>, <span class="fu">paste</span>(<span class="fu">names</span>(hz_art<span class="sc">$</span>phases), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>with_covariates <span class="ot">&lt;-</span> <span class="cf">function</span>(phases) {</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (p <span class="cf">in</span> <span class="fu">names</span>(phases)) {</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    rhs <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(COVARIATES[[p]])) <span class="fu">paste</span>(COVARIATES[[p]], <span class="at">collapse =</span> <span class="st">&quot; + &quot;</span>) <span class="cf">else</span> <span class="st">&quot;1&quot;</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    phases[[p]]<span class="sc">$</span>formula <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="st">&quot;~&quot;</span>, rhs))</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>  phases</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: conserve = FALSE if the SAS final model carries `noconserve`.</span></span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>ctl1 <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n_starts =</span> <span class="dv">5</span>, <span class="at">maxit =</span> <span class="dv">2000</span>, <span class="at">conserve =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>ctl2 <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">n_starts =</span> <span class="dv">1</span>, <span class="at">maxit =</span> <span class="dv">5000</span>, <span class="at">conserve =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>ph1 <span class="ot">&lt;-</span> <span class="fu">with_covariates</span>(<span class="fu">make_phases</span>(<span class="cn">TRUE</span>))</span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>ph2 <span class="ot">&lt;-</span> <span class="fu">with_covariates</span>(<span class="fu">make_phases</span>(<span class="cn">FALSE</span>))</span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a><span class="co"># The fits run in an environment holding only what they use. A saved fit keeps</span></span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a><span class="co"># the environment of its formula and of its call, and hm.rds would then carry</span></span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a><span class="co"># every object there, `d` and its patient IDs included, whenever these chunks</span></span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a><span class="co"># run anywhere but the global environment.</span></span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>fit_env <span class="ot">&lt;-</span> <span class="fu">list2env</span>(<span class="fu">list</span>(<span class="at">dd =</span> dd, <span class="at">form =</span> form, <span class="at">ph1 =</span> ph1, <span class="at">ph2 =</span> ph2, <span class="at">ctl1 =</span> ctl1, <span class="at">ctl2 =</span> ctl2),</span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>                    <span class="at">parent =</span> <span class="fu">globalenv</span>())</span>
+<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a><span class="fu">environment</span>(fit_env<span class="sc">$</span>form) <span class="ot">&lt;-</span> fit_env</span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a><span class="co"># The phase formulas too: each would otherwise keep this chunk&#39;s environment.</span></span>
+<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.ph <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;ph1&quot;</span>, <span class="st">&quot;ph2&quot;</span>)) {</span>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (p <span class="cf">in</span> <span class="fu">names</span>(fit_env[[.ph]])) <span class="fu">environment</span>(fit_env[[.ph]][[p]]<span class="sc">$</span>formula) <span class="ot">&lt;-</span> fit_env</span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a><span class="fu">local</span>({</span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a>  stage1 <span class="ot">&lt;-</span> <span class="fu">suppressWarnings</span>(</span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>    <span class="fu">hazard</span>(form,</span>
+<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>           <span class="at">data =</span> dd,</span>
+<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>           <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
+<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>           <span class="at">phases =</span> ph1,</span>
+<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a>           <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>           <span class="at">control =</span> ctl1)</span>
+<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a>  stage2 <span class="ot">&lt;-</span> <span class="fu">suppressWarnings</span>(</span>
+<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>    <span class="fu">hazard</span>(form,</span>
+<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>           <span class="at">data =</span> dd,</span>
+<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>           <span class="at">dist =</span> <span class="st">&quot;multiphase&quot;</span>,</span>
+<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>           <span class="at">phases =</span> ph2,</span>
+<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a>           <span class="at">theta =</span> stage1<span class="sc">$</span>fit<span class="sc">$</span>theta,</span>
+<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>           <span class="at">fit =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a>           <span class="at">control =</span> ctl2)</span>
+<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a>}, <span class="at">envir =</span> fit_env)</span>
+<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a>stage1 <span class="ot">&lt;-</span> fit_env<span class="sc">$</span>stage1</span>
+<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a>stage2 <span class="ot">&lt;-</span> fit_env<span class="sc">$</span>stage2</span>
+<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(old_seed)) .GlobalEnv<span class="sc">$</span>.Random.seed <span class="ot">&lt;-</span> old_seed</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
@@ -3677,17 +3685,17 @@ Table 12: Observed vs parametric, last ten event times
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-27 15:06:55 EDT</td>
+<td style="text-align: left;">2026-10-28 09:19:23 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-27 15:07:05 EDT</td>
+<td style="text-align: left;">2026-10-28 09:19:29 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">10 s</td>
+<td style="text-align: left;">6 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3727,17 +3735,17 @@ Table 12: Observed vs parametric, last ten event times
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.2</td>
+<td style="text-align: left;">1.5.3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261027.parquet</td>
+<td style="text-align: left;">built_20261028.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-27</td>
+<td style="text-align: left;">2026-10-28</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3767,7 +3775,7 @@ Table 12: Observed vs parametric, last ten event times
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-hz/hz.rds</code> (hazard-shape-model), rendered 2026-10-27 15:01:26 -0400, data built_20261027.parquet</td>
+<td style="text-align: left;"><code>dead-hz/hz.rds</code> (hazard-shape-model), rendered 2026-10-28 09:19:13 -0400, data built_20261028.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -3782,7 +3790,7 @@ Table 12: Observed vs parametric, last ten event times
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"hm.dead.hz","rendered":"2026-10-27T19:07:05Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.2","source":null},{"package":"hvtiRutilities","version":"1.5.15","source":"github","sha":"31d447bfe3c2ae20fd2f4512aaedcc988cd5320b"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"numDeriv","version":"2016.8.1.1","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.2.16","source":"github","sha":"0ac28aaab0754dac9cfc8acc1112e15aa645188e"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261027.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-27T18:36:56Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261027.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-27T18:36:56Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/dead-hz/hz.rds","role":"hazard-shape-model","bytes":7279,"mtime":"2026-10-27T19:06:11Z","sha256":"d03ee4915cd412624e29f7c0939f62da69a46a022897ccc2c81a9d0f032d04aa"}],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-27T15:06:55-0400","end":"2026-10-27T15:07:05-0400","time_zone":"EDT","duration_seconds":10.2,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hm.dead.hz.qmd","template":"hm","prefix":"hm","subject":"dead","type":"hz","hvtiRtemplates":"1.5.2"},"datasets":[{"name":"built","version_file":"built_20261027.parquet","registered":"2026-10-27","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-hz/hz.rds","set":"dead-hz","role":"hazard-shape-model","rendered_at":"2026-10-27T15:01:26-0400","dataset_version":"built_20261027.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/hm.dead.hz.qmd",".hvti_render_id":"39ad799e450df4a2c37bea6a2994a58085131aa86b86dc3e4c252db7fb0e5876",".hvti_source_sha256":"9d78ea612c485108ccefda6e329795a31e9b92aa2a011f98b2732565bc727a03"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"hm.dead.hz","rendered":"2026-10-28T13:19:29Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.3","source":null},{"package":"hvtiRutilities","version":"1.5.16","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"numDeriv","version":"2016.8.1.1","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.2.17","source":null},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261028.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-28T13:14:43Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261028.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-28T13:14:43Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/dead-hz/hz.rds","role":"hazard-shape-model","bytes":7280,"mtime":"2026-10-28T13:19:17Z","sha256":"f2b6d8297789a02a4ffd4b359e3a94d8b67ffe6198203bb409f8a7c70c7cfce0"}],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-28T09:19:23-0400","end":"2026-10-28T09:19:29-0400","time_zone":"EDT","duration_seconds":6,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hm.dead.hz.qmd","template":"hm","prefix":"hm","subject":"dead","type":"hz","hvtiRtemplates":"1.5.3"},"datasets":[{"name":"built","version_file":"built_20261028.parquet","registered":"2026-10-28","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-hz/hz.rds","set":"dead-hz","role":"hazard-shape-model","rendered_at":"2026-10-28T09:19:13-0400","dataset_version":"built_20261028.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/hm.dead.hz.qmd",".hvti_render_id":"0e6eaafe62530f1a5e36e01cf1c08161c4add2c1599c64b217a204516b5e979d",".hvti_source_sha256":"165f5fd7e1741e1b54d2613668d0923a65e5a2c0e5c743f9e7b35c82e87b9b09"}</script>
 </section>
 
 </main>

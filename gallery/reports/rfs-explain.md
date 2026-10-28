@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:28
+2026-10-28 09:23
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -79,7 +79,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.2
+hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -260,6 +260,13 @@ data.frame(variable = ranked,
 Table 2: VIMP (anti-split importance) and minimal depth of each
 predictor, in order of importance
 
+**A VIMP of 0 or below is expected for noise when events are few.** VIMP
+is how much the forest’s error grows when a predictor is scrambled. For
+a predictor the forest does not use, that change is chance, so at 60 or
+150 deaths it lands at 0, or below it about as often as above. Read such
+a value as “no evidence of an effect”, and set `BANDS_B` above 0 for
+`subsample()` intervals before ranking the predictors near the bottom.
+
 Code
 
 ``` r
@@ -349,7 +356,7 @@ Code
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/db2f55e364dd708a4ad35e4281814fa3.png)
+![](assets/6895a3d1dc3e4839d473138c2bd1f586.png)
 
 Figure 2: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -429,9 +436,9 @@ of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-27 15:28:02 EDT |
-|  | Ended | 2026-10-27 15:28:19 EDT |
-|  | Duration | 17 s |
+| Run | Started | 2026-10-28 09:23:21 EDT |
+|  | Ended | 2026-10-28 09:23:32 EDT |
+|  | Duration | 11 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -439,13 +446,13 @@ of a categorical one.
 |  | Template | rfs.explain |
 |  | Subject | dead |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.5.2 |
-| Dataset `built` | Version file | built_20261027.parquet |
-|  | Version date | 2026-10-27 |
+|  | hvtiRtemplates | 1.5.3 |
+| Dataset `built` | Version file | built_20261028.parquet |
+|  | Version date | 2026-10-28 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-27 15:27:40 -0400, data built_20261027.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-28 09:23:07 -0400, data built_20261028.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

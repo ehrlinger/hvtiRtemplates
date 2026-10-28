@@ -65,5 +65,5 @@ and it records the job's provenance beside the report.
   name the file and its set. Add it with
   `add_job("lp.mirror", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.2 · built 2026-10-27.
+Generated from the template by hvtiRtemplates, 1.5.3 · built 2026-10-28.
 The template holds the details; this sheet is its outline.

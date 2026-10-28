@@ -31,6 +31,8 @@ on the gallery's synthetic study.
   4.0.0), `hvtiRutilities`, `hvtiPlotR` (\>= 2.8.18). The job checks
   each floor when it starts, so an older library stops it at the top
   rather than partway through.
+- **The `hvti` command.** A long job starts from a terminal with
+  `hvti run`; `install_hvti()` puts the command on your PATH, once.
 
 ## Outline
 
@@ -41,14 +43,26 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 9 choices marked `EDIT:`.
+2.  **Study choices**: 11 choices marked `EDIT:`.
 3.  **Cohort**: reads the study data.
-4.  **Forest**: fits and caches its results, so a later render reloads
-    them (`REFIT <- TRUE` recomputes them).
+4.  **Forest**: a long fit (the leaf-size search grows a 100-tree forest
+    at each grid value) that will not start in an interactive session,
+    so the job runs in the background; fits and caches its results, so a
+    later render reloads them (`REFIT <- TRUE` recomputes them).
 5.  **Does the forest work?**: saves `rfs.rds`, which **rfs-explain**
     reads.
 
 ## Run it
+
+**Run it in the background.** The fit is long (the leaf-size search
+grows a 100-tree forest at each grid value), and a fit run in the
+console dies with the session. From a terminal in the study,
+`hvti run 30_analyses/rfs.fit.<subject>.<type>.qmd` (`analyses/` in an
+older study whose folders carry no number) checks the job, then renders
+it in the background on the R the study's `renv.lock` records; add
+`--final` for the final render. From R, `run_job(job)` does the same.
+`hvti status` follows it and `hvti cancel` stops it. Once the fit is
+cached, its chunks run interactively and load it.
 
 **Render a draft as you go.** `render_job(job)` runs the whole job in a
 clean R session and writes the report beside it. Render early and often:
@@ -69,5 +83,5 @@ and it records the job's provenance beside the report.
   pair is how it finds the file:
   `add_job("rfs.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.2 · built 2026-10-27.
+Generated from the template by hvtiRtemplates, 1.5.3 · built 2026-10-28.
 The template holds the details; this sheet is its outline.

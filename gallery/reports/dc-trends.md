@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 14:52
+2026-10-28 09:17
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.2
+**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -190,7 +190,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261027.parquet) |
+| Source              | dataset `built` (built_20261028.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -476,9 +476,9 @@ against an older figure by its shape and not point by point.
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-27 14:52:05 EDT  |
-|                 | Ended            | 2026-10-27 14:52:07 EDT  |
-|                 | Duration         | 2 s                      |
+| Run             | Started          | 2026-10-28 09:17:53 EDT  |
+|                 | Ended            | 2026-10-28 09:17:54 EDT  |
+|                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -486,9 +486,9 @@ against an older figure by its shape and not point by point.
 |                 | Template         | dc.trends                |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.2                    |
-| Dataset `built` | Version file     | built_20261027.parquet   |
-|                 | Version date     | 2026-10-27               |
+|                 | hvtiRtemplates   | 1.5.3                    |
+| Dataset `built` | Version file     | built_20261028.parquet   |
+|                 | Version date     | 2026-10-28               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

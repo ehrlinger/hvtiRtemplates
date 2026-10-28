@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-27 15:29
+2026-10-28 09:24
 
 Gallery job on the synthetic cohort: postoperative length of stay,
 logged (log_los).
@@ -85,8 +85,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261027.parquet`, dated 2026-10-27 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.2
+**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.3
 
 ## Study choices
 
@@ -242,7 +242,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261027.parquet) |
+| Source              | dataset `built` (built_20261028.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -364,7 +364,7 @@ save_figure(.fig, "rfr-fit-diagnostics-predicted")
 .fig
 ```
 
-![](assets/e276cc759b069118021555b5ef338438.png)
+![](assets/f7c514aa3e9096bb910aa4a7b9fda047.png)
 
 Figure 2: Out-of-bag predicted values. Black circles, jittered sideways,
 mark the individual predictions, and the unfilled notched box plot marks
@@ -394,9 +394,9 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-27 15:29:18 EDT  |
-|                 | Ended            | 2026-10-27 15:29:25 EDT  |
-|                 | Duration         | 7 s                      |
+| Run             | Started          | 2026-10-28 09:24:01 EDT  |
+|                 | Ended            | 2026-10-28 09:24:05 EDT  |
+|                 | Duration         | 4 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -404,9 +404,9 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 |                 | Template         | rfr.fit                  |
 |                 | Subject          | los                      |
 |                 | Type             | rf                       |
-|                 | hvtiRtemplates   | 1.5.2                    |
-| Dataset `built` | Version file     | built_20261027.parquet   |
-|                 | Version date     | 2026-10-27               |
+|                 | hvtiRtemplates   | 1.5.3                    |
+| Dataset `built` | Version file     | built_20261028.parquet   |
+|                 | Version date     | 2026-10-28               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
