@@ -200,6 +200,8 @@ TIME <- .up$selection$time
 EVENT <- .up$selection$event
 # NULL unless hz was fitted on start/stop rows, when it names the segment start.
 START <- .up$selection$start
+# Start/stop calibration needs an hzr_deciles() that subtracts H(start).
+hvtiRtemplates:::.check_start_engine(START)
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))

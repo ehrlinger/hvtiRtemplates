@@ -7,8 +7,12 @@
 * The start travels in `hz.rds`'s selection, and `hm` builds `Surv(START, TIME, EVENT)` from it
   with no edit. `hm` stops on a response that drops the start: fitted without it, every segment
   is followed from time zero, a different model that converges without complaint.
-* A start/stop `bh` screen stops, in the runner before `hzr_bootstrap()` and in the report on a
-  bag with several rows per patient. `hzr_bootstrap()` resamples rows, which splits a patient's
+  A start/stop `hm` needs TemporalHazard 1.2.13 or later: before it, `hzr_deciles()` counted
+  each segment's exposure before its start, so the calibration table was wrong though the fit
+  was right.
+* A start/stop `bh` screen stops: in the runner right after its read, on a selection with several
+  rows per patient, before any fit, so a formula that leaves the start out cannot reach the
+  screen; and in the report on such a bag. `hzr_bootstrap()` resamples rows, which splits a patient's
   segments across replicates; SAS `%HAZBOOT _TVC=1 _IDVAR=` resamples patients. It waits on
   [TemporalHazard#667](https://github.com/ehrlinger/TemporalHazard/issues/667).
 * `hp` and `hs-setup` stop on a start/stop fit. They predict one row per patient per horizon,

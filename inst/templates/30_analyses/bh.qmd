@@ -287,8 +287,7 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
              col.names = c("Data", ""))
 # Several rows per patient is a start/stop screen, which a row bootstrap gets
 # wrong; the runner stops on one, and a bag from an older runner stops here.
-# Stacked imputations repeat each patient too, and are not segments.
-hvtiRtemplates:::.stop_row_bootstrap(isTRUE(.sel$rows > .sel$patients) && is.null(.sel$imputation))
+hvtiRtemplates:::.stop_row_bootstrap(hvtiRtemplates:::.repeats_patients(.sel))
 # The contract: runners read their data with hvtiRtemplates::read_job_data(), whose
 # selection travels in the bag's lineage.
 

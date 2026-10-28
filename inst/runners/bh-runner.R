@@ -76,6 +76,9 @@ SEED <- 20260100L + CHUNK
 cfg <- hvtiRutilities::study_config()
 job <- hvtiRtemplates::read_job_data(cfg, dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY)
 selection <- attr(job$record, "selection")
+# Several rows per patient is start/stop data, which a row bootstrap gets wrong:
+# stopped here, before the fit, whatever response the formula below names.
+hvtiRtemplates:::.stop_row_bootstrap(hvtiRtemplates:::.repeats_patients(selection))
 
 # Only the model's columns are resampled, so the patient identifier never
 # reaches the screen.

@@ -7,7 +7,8 @@
 # The templates attach these in their setup chunk, which the tests run without attaching.
 skip_start_stop <- function(.local_envir = parent.frame()) {
   testthat::skip_on_cran()
-  testthat::skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  # 1.2.13: hzr_deciles() subtracts H(start), which hm's calibration needs.
+  testthat::skip_if_not_installed("TemporalHazard", minimum_version = "1.2.13")
   withr::local_package("TemporalHazard", .local_envir = .local_envir)
   withr::local_package("hvtiRutilities", .local_envir = .local_envir)
 }
@@ -81,6 +82,13 @@ test_that("the start travels in hz's selection, and hm fits Surv(START, TIME, EV
   expect_identical(env$START, "iv_start")
   expect_identical(deparse(env$form), "Surv(iv_start, iv_dead, dead) ~ 1")
   expect_equal(env$stage1$data$time_lower, data$iv_start)
+  # The calibration's expected events are the fitted hazard over each segment,
+  # H(stop) - H(start) to the horizon, not H(stop): exposure before entry is not counted.
+  h <- function(t) unname(predict(env$reported, newdata = transform(env$dd, time = t), type = "cumulative_hazard"))
+  at <- env$dd$iv_start < env$DECILE_TIME
+  increments <- h(pmin(env$dd$iv_dead, env$DECILE_TIME)) - h(env$dd$iv_start)
+  expect_equal(sum(env$dec$expected), sum(increments[at]), tolerance = 1e-4)
+  expect_gt(sum(h(pmin(env$dd$iv_dead, env$DECILE_TIME))[at]) - sum(env$dec$expected), 1)
   # hm.rds carries the start on, and hs-setup stops on it.
   expect_identical(attr(readRDS(hazard_set_path(root, "hm.rds")), "hvti_provenance")$selection$start, "iv_start")
   hs <- hazard_env(root)
@@ -128,15 +136,13 @@ test_that("a start/stop bootstrap stops, naming TemporalHazard#667, and other re
   expect_false(entry(fit(survival::Surv(lo, hi, type = "interval2") ~ 1, interval)))
   expect_error(stop_row(TRUE), "TemporalHazard/issues/667")
   expect_true(stop_row(FALSE))
-  # The runner checks its base fit before the screen, and the report the rows it screened.
-  runner <- readLines(system.file("runners", "bh-runner.R", package = "hvtiRtemplates"), warn = FALSE)
-  base_at <- grep("^base <- hazard\\(", runner)
-  guard_at <- grep(".stop_row_bootstrap(hvtiRtemplates:::.has_entry_times(base))", runner, fixed = TRUE)
-  boot_at <- grep("^bs <- hzr_bootstrap\\(", runner)
-  expect_true(length(guard_at) == 1L && base_at < guard_at && guard_at < boot_at)
+  repeats <- hvtiRtemplates:::.repeats_patients
+  expect_true(repeats(list(rows = 87L, patients = 30L)))
+  expect_false(repeats(list(rows = 30L, patients = 30L)))
+  expect_false(repeats(list(rows = 90L, patients = 30L, imputation = "imp")))
+  expect_false(repeats(list()))
   report <- readLines(hazard_template("bh"), warn = FALSE)
-  expect_length(grep(".stop_row_bootstrap(isTRUE(.sel$rows > .sel$patients) && is.null(.sel$imputation))", report,
-                     fixed = TRUE), 1L)
+  expect_length(grep(".stop_row_bootstrap(hvtiRtemplates:::.repeats_patients(.sel))", report, fixed = TRUE), 1L)
   conc <- readLines(hazard_template("hs-concordance"), warn = FALSE)
   expect_length(grep(".stop_start_stop_prediction(.rec$start,", conc, fixed = TRUE), 1L)
 })
@@ -149,4 +155,40 @@ test_that("hz's start settings stop before the read", {
   expect_error(check("iv_start", "ccfid"), "set KEY <- c\\(ID, \"iv_start\"\\)")
   expect_error(check(c("a", "b"), c("a", "b")), "one column name")
   expect_error(check("iv_start", c("ccfid", "iv_start"), join = "labs"), "JOIN has no REDUCE")
+})
+
+test_that("the bh runner stops on segmented rows before it fits, whatever response its formula names", {
+  skip_start_stop()
+  root <- hazard_study(start_stop_data(60L))
+  runner <- readLines(system.file("runners", "bh-runner.R", package = "hvtiRtemplates"), warn = FALSE)
+  edit <- function(pattern, value) {
+    at <- grep(pattern, runner)
+    expect_length(at, 1L)
+    runner[[at]] <<- value
+  }
+  edit("^FINISHED <- FALSE$", "FINISHED <- TRUE")
+  edit("^POOL <- ", 'POOL <- c("age", "male")')
+  edit("^KEY <- ID$", 'KEY <- c(ID, "iv_start")')
+  # The shipped formula, Surv(iv_dead, dead), drops the start: the base fit then
+  # has no entry times, which is why the guard reads the selection instead.
+  env <- new.env(parent = globalenv())
+  called <- character()
+  env$hazard <- function(...) {
+    called <<- c(called, "hazard")
+    stop("fitted")
+  }
+  env$hzr_bootstrap <- function(...) {
+    called <<- c(called, "hzr_bootstrap")
+    stop("bootstrapped")
+  }
+  withr::local_dir(root)
+  expect_error(suppressMessages(eval(parse(text = runner), envir = env)), "TemporalHazard/issues/667")
+  expect_identical(called, character())
+})
+
+test_that("hm refuses start/stop rows on a TemporalHazard whose calibration ignores entry", {
+  check <- hvtiRtemplates:::.check_start_engine
+  expect_error(check("iv_start", package_version("1.2.12")), "Before 1.2.13 hzr_deciles\\(\\)")
+  expect_true(check("iv_start", package_version("1.2.13")))
+  expect_true(check(NULL, package_version("1.2.12")))
 })

@@ -71,6 +71,29 @@
   !is.null(fit$data$time_lower) && is.null(fit$data$time_upper)
 }
 
+# TRUE when a recorded selection holds several rows for some patient: start/stop
+# segments. Stacked imputations repeat each patient too, and are not segments.
+# Read from the selection rather than a fit, because a runner that drops the
+# start column fits a response with no entry times on the same segmented rows.
+.repeats_patients <- function(selection) {
+  isTRUE(selection$rows > selection$patients) && is.null(selection$imputation)
+}
+
+# A start/stop fit needs TemporalHazard 1.2.13: before it, hzr_deciles() counted
+# expected events as H(stop) and not H(stop) - H(start), so hm's calibration
+# counted each segment's exposure before its start again (TemporalHazard #545).
+# The fit itself was right; only the diagnostic was not, and it prints a table
+# that reads as a finding.
+.check_start_engine <- function(start, version = utils::packageVersion("TemporalHazard")) {
+  if (!is.null(start) && version < "1.2.13") {
+    stop("The hz fit is on start/stop rows (START = \"", start, "\"), and TemporalHazard ", format(version),
+         " is installed. Before 1.2.13 hzr_deciles() did not subtract each segment's hazard at its start, so this ",
+         "job's calibration table would count exposure before entry. Update TemporalHazard, then rerun.",
+         call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 # A bootstrap that resamples rows of start/stop data splits patients across
 # replicates: a patient's segments are drawn independently, so a replicate can
 # hold a patient's later segment without the earlier one. SAS's %HAZBOOT
