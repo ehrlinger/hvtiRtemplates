@@ -216,7 +216,7 @@ if (is.null(.found)) {
     x
   }
   .id <- if (length(KEY) == 1L) KEY else ".dt_key"
-  # read_built() reads a logical column as integer and drops a labelled column's value labels, so a copy of
+  # read_built() reads a logical column as integer and drops a labeled column's value labels, so a copy of
   # this file is read the same way: otherwise every logical derivation reads "type changed" and its values,
   # the thing a rebuild check is for, are never compared. The sections below check the file as written.
   .as_read <- d
