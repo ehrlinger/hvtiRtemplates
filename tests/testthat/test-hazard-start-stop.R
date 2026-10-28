@@ -59,24 +59,10 @@ test_that("the start travels in hz's selection, and hm fits Surv(START, TIME, EV
   skip_start_stop()
   data <- start_stop_data()
   root <- hazard_study(data)
-  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
   env <- globalenv()
   before <- ls(env, all.names = TRUE)
   withr::defer(rm(list = setdiff(ls(env, all.names = TRUE), before), envir = env))
-  list2env(as.list(hazard_env(root), all.names = TRUE), envir = env)
-  hm_labels <- c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit", "edit-reported",
-                 "tbl-calibration", "tbl-gof", "save")
-  suppressWarnings(utils::capture.output({
-    hazard_run("hz", c("set", "edit-study-choices"), env,
-               c(list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)),
-                 start_stop_choices))
-    hazard_run("hz", c("tbl-data", "tbl-cohort", "tbl-phases", "edit-start", "edit-response", "tbl-response-check",
-                       "guard", "fit-deterministic", "tbl-convergence", "edit-multistart", "tbl-multistart", "noconserve",
-                       "tbl-conservation-binding", "edit-estimates", "tbl-estimates", "fig-fit", "save"), env)
-    hazard_run("hm", c("set", "edit-study-choices"), env)
-    env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
-    hazard_run("hm", hm_labels, env)
-  }))
+  start_stop_hm(root, env, data)
   saved <- readRDS(hazard_set_path(root, "hz.rds"))
   expect_identical(attr(saved, "hvti_provenance")$selection$start, "iv_start")
   expect_identical(env$START, "iv_start")
@@ -93,7 +79,7 @@ test_that("the start travels in hz's selection, and hm fits Surv(START, TIME, EV
   expect_identical(attr(readRDS(hazard_set_path(root, "hm.rds")), "hvti_provenance")$selection$start, "iv_start")
   hs <- hazard_env(root)
   hazard_run("hs-setup", c("set", "edit-study-choices"), hs, list(HORIZONS = c(1, 2), VINTAGE = "table2023"))
-  expect_error(hazard_run("hs-setup", "read-upstream", hs), "start/stop rows.*hvtiRtemplates/issues/436")
+  expect_error(hazard_run("hs-setup", "read-upstream", hs), "start/stop rows.*SAS has no start/stop counterpart.*use hs-score")
 
   # An hm whose response drops the start stops rather than fit from zero.
   src <- readLines(hazard_template("hm"), warn = FALSE)
@@ -104,14 +90,21 @@ test_that("the start travels in hz's selection, and hm fits Surv(START, TIME, EV
                "Surv\\(iv_start, iv_dead, dead\\)")
 })
 
-test_that("hp and hs stop on a start/stop fit, naming the open question", {
+test_that("hp and hs stop on a start/stop fit, saying SAS has no counterpart", {
   root <- hazard_study()
   lineage <- hazard_lineage(root)
   lineage$selection$start <- "iv_start"
   hazard_upstream(root, lineage)
   for (prefix in c("hp", "hs-setup")) {
-    expect_error(hazard_downstream(prefix, root), "start/stop rows.*hvtiRtemplates/issues/436", info = prefix)
+    expect_error(hazard_downstream(prefix, root), "start/stop rows.*SAS has no start/stop counterpart", info = prefix)
   }
+  # Only hs-setup answers the question hs-score does; hp and hs-concordance name no alternative.
+  expect_error(hazard_downstream("hs-setup", root), "use hs-score")
+  hp <- tryCatch(hazard_downstream("hp", root), error = conditionMessage)
+  expect_false(grepl("hs-score", hp, fixed = TRUE))
+  expect_error(hvtiRtemplates:::.stop_start_stop_prediction("iv_start", "the hm model for a"),
+               "^The fit in the hm model for a is on start/stop rows.*one row per patient[.]$")
+  expect_true(hvtiRtemplates:::.stop_start_stop_prediction(NULL, "hm.rds"))
 })
 
 test_that("a downstream response must match the selection's start", {

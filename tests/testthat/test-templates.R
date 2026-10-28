@@ -941,15 +941,17 @@ test_that("every shipped template resolves from its own stem", {
   }
 })
 
-test_that("an unqualified hs is refused, naming both job types", {
-  # hs carries two templates since hs-concordance shipped
+test_that("an unqualified hs is refused, naming every job type", {
+  # hs carries several templates since hs-concordance shipped
   # (dev/specs/2026-09-30-hs-concordance-design.md), so a caller naming no
   # qualifier has not said which job they mean.
   tl <- template_list()
-  expect_setequal(tl$name[tl$prefix == "hs"], c("hs.concordance", "hs.setup"))
+  expect_setequal(tl$name[tl$prefix == "hs"], c("hs.concordance", "hs.score", "hs.setup"))
   expect_error(template_path("hs"), "concordance")
   expect_error(template_path("hs"), "setup")
+  expect_error(template_path("hs"), "score")
   expect_identical(basename(template_path("hs", qualifier = "setup")), "hs-setup.qmd")
+  expect_identical(basename(template_path("hs", qualifier = "score")), "hs-score.qmd")
   expect_identical(basename(template_path("hs", qualifier = "concordance")), "hs-concordance.qmd")
   dir <- withr::local_tempdir()
   expect_error(add_job("hs", subject = "dead", type = "x", dir = dir), "concordance")
