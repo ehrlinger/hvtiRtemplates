@@ -1,5 +1,136 @@
 # Changelog
 
+## hvtiRtemplates 1.5.3
+
+- `rhf-fit` and `rhf-explain` carry the lessons of their first real run,
+  a hazard forest on 2,386 waiting-list patients. `rhf-fit` has a
+  cleanup section before the fit. `CAPS` caps predictors with
+  implausible tails, and stops on a cap it cannot read (unnamed, named
+  twice, not finite, or on a predictor that is not numeric) rather than
+  capping nothing; an integer predictor stays integer. A look-ahead
+  check counts, for events and for the censored, the final intervals on
+  which a predictor changes from the interval before. It is a screen,
+  not proof: far more changes among events can mean a dataset build
+  moved a value from the day of the event back onto the interval ending
+  in it, which randomForestRHF cannot detect, or real deterioration
+  measured before the event, so check when each value became available
+  against the interval’s start before calling it leakage.
+  `LOOKAHEAD_INTERVAL` restricts the check to final intervals of one
+  length, and `LOOKAHEAD <- "reset"` gives each one the predictors of
+  the interval before it, as a sensitivity analysis rather than a
+  correction. Caps and the look-ahead setting are recorded in the
+  forest’s lineage. `rhf.rds` and every cache either job writes are
+  readable by their owner only from the moment they are created,
+  including a file written over or a write that is interrupted, since
+  each holds or is built from every patient’s intervals; a mode that
+  cannot be set stops the render. `rhf-explain` explains why its VarPro
+  cache is seeded, that an NA importance means untested rather than
+  unimportant and a 0 means tested with no effect, and that the top tier
+  should be ranked only once it holds across several seeds; it notes
+  that cumulative AUC(t) uses a tree-aggregated cumulative hazard rather
+  than `chf.oob`, why it reports Uno’s iAUC rather than `iAUC.std`, and
+  that `chf.oob` and `hazard.oob` rows follow the sorted `ensemble.id`,
+  which is [`as.integer()`](https://rdrr.io/r/base/integer.html) of the
+  id the forest was grown on.
+
+- `hz` fits a start/stop response, SAS
+  `lcensor <start>; time <stop>; event <e>;`, the layout HAZARD uses for
+  time-varying covariates
+  ([\#436](https://github.com/ehrlinger/hvtiRtemplates/issues/436)). Set
+  `START` beside `TIME` and `EVENT`, and `KEY <- c(ID, START)`, and the
+  fit takes `Surv(START, TIME, EVENT)`: one row per patient segment,
+  each contributing H(stop) − H(start). `hz` stops when `KEY` leaves out
+  the start, which would collapse the segments, and when a segment does
+  not start before it stops. `EXPECTED` then counts rows, as SAS counts
+  observations.
+
+- The start travels in `hz.rds`’s selection, and `hm` builds
+  `Surv(START, TIME, EVENT)` from it with no edit. `hm` stops on a
+  response that drops the start: fitted without it, every segment is
+  followed from time zero, a different model that converges without
+  complaint. A start/stop `hm` needs TemporalHazard 1.2.13 or later:
+  before it, `hzr_deciles()` counted each segment’s exposure before its
+  start, so the calibration table was wrong though the fit was right.
+
+- `hp` and `hs-setup` stop on a start/stop fit. They predict one row per
+  patient per horizon, which a time-varying model does not define, and
+  the rule to use instead is still open
+  ([\#436](https://github.com/ehrlinger/hvtiRtemplates/issues/436)).
+
+- `vp-fit` now fits VarPro with exploration settings by default, so that
+  it tests as many candidates as it can on a sparse survival cohort.
+  Guided split weights are off (`SPLIT_WEIGHT <- FALSE`,
+  `SPARSE <- FALSE`), so every candidate gets release rules; in a
+  known-signal simulation of 30 candidates, varPro’s own lasso screen
+  left about 11 tested at 60 events and 10 at 150. With the weights off,
+  varPro grows its rule forest with `mtry = Inf` and splits binary
+  predictors in about 1 tree in 10, so `MTRY` defaults to
+  `ceiling(sqrt(p))`, which for 30 candidates is 6, tested about 28 of
+  them and recovered the true signals about as well as the defaults did.
+  A survival screen also sets `nodesize.external` to
+  `max(10, round(2 * n / events))`, about two events per leaf in the
+  survival forest varPro grows first (`NODESIZE_EXTERNAL`). The
+  importance figure is now scored on every tree, as the coverage table
+  already was; before this it sampled 150 trees and could disagree with
+  the table. The larger setting for cohorts with roughly 150 events or
+  more (`NTREE`, `MAX_TREE` and `MAX_RULES_TREE` at 1000, 1000 and 300)
+  and varPro’s own defaults, kept as the parsimonious screen, are each
+  one uncommented line in the study choices. The report adds that a real
+  effect of a rare binary predictor can be tested and still score z of
+  about 0 at around 60 events, so count the events among the patients
+  who have it, and that a variable correlated with a true signal scores
+  like one. A job scaffolded before this release keeps its old settings
+  until it is upgraded.
+
+- `rfs-fit` sizes its trees for the events a cohort has.
+  `NODESIZE <- NULL` now grows leaves of about 2 events,
+  `2 * n / events`, never below randomForestSRC’s survival default of
+  15, so a common-event cohort is unchanged and 60 deaths in 1,900
+  patients gets about 60. `NSPLIT`, `MTRY` and `SPLITRULE` write out
+  randomForestSRC’s defaults (10, `NULL`, `"logrank"`) so the report
+  says what was used, and the fit prints the events per leaf.
+  `TUNE_NODESIZE <- TRUE`, off by default, searches with
+  `tune.nodesize()` instead, on 63.2% of patients rather than its
+  default `min(0.632 n, max(150, n^0.8))`, which keeps about 13 deaths
+  of 60 in 1,900, and on a grid reaching twice the 2-event size rather
+  than stopping at 150. `rfs-fit` and `rfs-explain` say that a VIMP of 0
+  or below is the expected reading for noise when events are few.
+
+- `rhf-explain` has partial dependence for a hazard forest, off until
+  `PD_VARS` names predictors. It predicts over every interval of `PD_N`
+  patients from the forest’s own training rows with the predictor set to
+  each grid value (5th to 95th percentile, 0 and 1, or each level of a
+  factor, set without losing the factor’s levels), averages the hazard
+  at each importance point over the patients still at risk, and leaves
+  out a point with fewer than `PD_MIN_RISK` at risk. Its cache key
+  carries randomForestRHF’s version, since
+  [`predict()`](https://rdrr.io/r/stats/predict.html) reaches it only by
+  dispatch. Before it, a table counts at each point the patients at
+  risk, patient-time (in the units of the interval columns) and deaths,
+  overall and for each value of a 0/1 or factor predictor, in aggregate
+  only, and the prose says why: on the first real run a rare
+  time-varying 0/1 predictor’s hazard ratio flipped from point to point
+  on 0 to 4 deaths, so its direction should come from a pooled model.
+  The hazard-curve section now says the paths are not calibrated
+  probabilities.
+
+- A start/stop `bh` screen resamples patients, not rows
+  ([\#436](https://github.com/ehrlinger/hvtiRtemplates/issues/436)).
+  When the runner reads several rows per patient, it passes the patient
+  of each row to `hzr_bootstrap(id =)`, so each replicate keeps every
+  segment of each patient it draws, as SAS `%HAZBOOT _TVC=1 _IDVAR=`
+  does. With one row per patient it resamples rows, as before. The
+  runner stops before the screen on segmented rows fitted without their
+  start, and the report stops on a segmented bag that resampled rows.
+  The bag records which it did, as `resampled`. A start/stop report
+  reads the runner’s chunk files only: a pre-pooled `bh.rds` keeps its
+  first chunk’s record alone, so it cannot show that every chunk
+  resampled patients.
+
+- The `bh` runner, and hvtiRtemplates’ suggested TemporalHazard, now
+  need TemporalHazard 1.2.17 or later, which added `hzr_bootstrap(id =)`
+  ([TemporalHazard#667](https://github.com/ehrlinger/TemporalHazard/issues/667)).
+
 ## hvtiRtemplates 1.5.2
 
 - hvtiRtemplates now needs hvtiRutilities 1.5.15 or later. 1.5.15 adds
