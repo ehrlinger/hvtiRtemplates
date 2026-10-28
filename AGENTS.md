@@ -482,7 +482,7 @@ guess.
 
   ``` sh
   gh api --paginate repos/<o>/<r>/pulls/<n>/reviews \
-    --jq '.[] | select(.user.login | startswith("copilot")) | "\(.submitted_at) quota=\(.body | test("quota limit"))"' \
+    --jq '.[] | select(.user.login | startswith("copilot")) | "\(.submitted_at) quota=\(.body | test("quota"; "i"))"' \
     | tail -1
   ```
 
@@ -490,22 +490,28 @@ guess.
   come back oldest first, so the last line printed across all pages is
   the newest review. An empty result on its own is ambiguous; the
   timeline check above is what separates slow from not-requested, so use
-  both rather than concluding from this one. ⚠️ **A merge can still
-  reach `main` unread, for reasons that outlive the quota.** The
-  `copilot_code_review` rule stays in the ruleset and does not block a
-  merge, so a PR that draws no review opens and goes green exactly like
-  one that did. Three ways that happens even with credits: the review
-  does not fire automatically (see \#98 above), the PR was opened
-  against a branch other than `main` so the rule never applied, and,
-  most often, the review covers only the commit the PR was opened with,
-  because the ruleset’s `review_on_push` is off (see below). Nothing
-  else in the ruleset reads the diff: it requires no approving review,
-  and CI checks compilation, tests, lint and the count guards, none of
-  which reads for correctness. ⚠️ **Run `/code-review` locally before
-  opening a PR**, and say in the PR body that it stood in for the bot,
-  so a reader can tell a reviewed change from an unreviewed one. Do it
-  for every substantive push, not only the first, because the bot will
-  not. Measured on
+  both rather than concluding from this one. ⚠️ **Match `quota`, not the
+  notice’s wording, because the wording changes.** The test read
+  `"quota limit"` until 2026-10-27, when the notice on
+  [\#440](https://github.com/ehrlinger/hvtiRtemplates/pull/440) read
+  “insufficient remaining quota” and the check printed `quota=false` for
+  both of its quota notices. A real review that discusses the quota
+  would also match, so read the body before acting on a `true`. ⚠️ **A
+  merge can still reach `main` unread, for reasons that outlive the
+  quota.** The `copilot_code_review` rule stays in the ruleset and does
+  not block a merge, so a PR that draws no review opens and goes green
+  exactly like one that did. Three ways that happens even with credits:
+  the review does not fire automatically (see \#98 above), the PR was
+  opened against a branch other than `main` so the rule never applied,
+  and, most often, the review covers only the commit the PR was opened
+  with, because the ruleset’s `review_on_push` is off (see below).
+  Nothing else in the ruleset reads the diff: it requires no approving
+  review, and CI checks compilation, tests, lint and the count guards,
+  none of which reads for correctness. ⚠️ **Run `/code-review` locally
+  before opening a PR**, and say in the PR body that it stood in for the
+  bot, so a reader can tell a reviewed change from an unreviewed one. Do
+  it for every substantive push, not only the first, because the bot
+  will not. Measured on
   [\#98](https://github.com/ehrlinger/hvtiRtemplates/pull/98): the
   review landed at 20:57:59Z and the commit that carried the whole point
   of the change was pushed at 21:01:52Z, so the standing approval was
