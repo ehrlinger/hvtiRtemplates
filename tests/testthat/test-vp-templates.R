@@ -192,7 +192,7 @@ test_that("both varpro() calls in vp-fit carry the exploration settings, and the
   src <- paste(lines[!grepl("^\\s*#", lines)], collapse = "\n")
   calls <- regmatches(src, gregexpr("(?s)(?<![_[:alnum:]])varpro\\(.*?seed = ", src, perl = TRUE))[[1L]]
   expect_length(calls, 2L)
-  for (arg in c("split.weight = SPLIT_WEIGHT", "sparse = SPARSE", "mtry = .mtry", "nodesize.external = vp_nodesize_external(",
+  for (arg in c("split.weight = SPLIT_WEIGHT", "sparse = SPARSE", "mtry = .mtry", "nodesize.external = .nodesize_external,",
                 "max.tree = .max_tree", "max.rules.tree = MAX_RULES_TREE")) {
     expect_true(all(grepl(arg, calls, fixed = TRUE)), info = arg)
   }
@@ -241,6 +241,34 @@ test_that("vp-fit hands varPro a lowered mtry and a survival leaf of about two e
   # A classification screen grows no survival forest, so it passes nothing.
   env$.survival <- FALSE
   expect_null(env$vp_nodesize_external(few))
+})
+
+test_that("changing NODESIZE_EXTERNAL makes both vp-fit caches stale, and REFIT refits them", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  # Run in the global environment, as a render runs its chunks. There cache_fit()
+  # keys a helper by its body and not the values it reads, so a leaf size read
+  # inside vp_nodesize_external() went unseen. A child environment hides that.
+  g <- globalenv()
+  before <- ls(g, all.names = TRUE)
+  withr::defer(rm(list = setdiff(ls(g, all.names = TRUE), before), envir = g))
+  data <- vp_data()
+  data$ccfid <- seq_len(nrow(data))
+  g$.root <- rf_study(data, environment())
+  labels <- c(vp_data_labels, "noise", "judge", "fit", "tbl-coverage", "tbl-stability")
+  choices <- utils::modifyList(vp_choices, list(NTREE = 20, REPEATS = 1))
+  run <- function(extra = list()) {
+    g$.provenance_data <- list()
+    rf_run("vp", "fit", labels, g, utils::modifyList(choices, extra))
+  }
+  run()
+  files <- file.path(g$CACHE_DIR, c("vp-fit.rds", "vp-repeat-01.rds"))
+  stamps <- file.mtime(files)
+  Sys.sleep(1.1)  # so a rewrite would show in the modification time
+  expect_error(run(list(NODESIZE_EXTERNAL = 25)), "stale")
+  run(list(NODESIZE_EXTERNAL = 25, REFIT = TRUE))
+  expect_identical(g$.nodesize_external, 25)
+  expect_true(all(file.mtime(files) > stamps))
 })
 
 test_that("vp-fit selects a planted signal", {

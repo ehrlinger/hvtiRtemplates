@@ -525,10 +525,15 @@ vp_nodesize_external <- function(data) {
   # max(1, ...): a refit with no events would otherwise ask for leaves of infinite size.
   max(10, round(2 * nrow(data) / max(1, sum(data[[EVENT]] == 1))))
 }
+# The leaf size is worked out before each cache_fit() and handed in as a value.
+# cache_fit() keys the code's own variables, not what a helper reads inside it,
+# so a call to vp_nodesize_external() in the code would not see NODESIZE_EXTERNAL
+# change, and a changed choice would reload the old fit even with REFIT <- TRUE.
+.nodesize_external <- vp_nodesize_external(d_noise)
 fit <- cache_fit(
   "vp-fit",
   varpro(model, d_noise, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, sparse = SPARSE, mtry = .mtry,
-         nodesize.external = vp_nodesize_external(d_noise), max.tree = .max_tree, max.rules.tree = MAX_RULES_TREE,
+         nodesize.external = .nodesize_external, max.tree = .max_tree, max.rules.tree = MAX_RULES_TREE,
          verbose = FALSE, cores = 1L, seed = -abs(SEED)),
   seed = SEED, dir = CACHE_DIR, refit = REFIT
 )
@@ -630,10 +635,11 @@ if (REPEATS > 0) {
     set.seed(abs(SEED) + r)
     rows <- sort(sample.int(nrow(d), floor(SUBSAMPLE * nrow(d))))
     dr <- vp_add_noise(d[rows, , drop = FALSE], PREDICTORS, NOISE_N, SEED + r)
+    .nodesize_external <- vp_nodesize_external(dr)
     fr <- cache_fit(
       sprintf("vp-repeat-%02d", r),
       varpro(model, dr, ntree = NTREE, nvar = NVAR, split.weight = SPLIT_WEIGHT, sparse = SPARSE, mtry = .mtry,
-             nodesize.external = vp_nodesize_external(dr), max.tree = .max_tree, max.rules.tree = MAX_RULES_TREE,
+             nodesize.external = .nodesize_external, max.tree = .max_tree, max.rules.tree = MAX_RULES_TREE,
              verbose = FALSE, cores = 1L, seed = -abs(SEED + r)),
       seed = SEED + r, dir = CACHE_DIR, refit = REFIT
     )
