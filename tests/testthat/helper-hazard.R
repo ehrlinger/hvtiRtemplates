@@ -392,3 +392,24 @@ start_stop_data <- function(n = 160L) {
 
 # hz's study choices for start/stop rows.
 start_stop_choices <- list(START = "iv_start", KEY = c("ccfid", "iv_start"))
+
+# Run hz then hm on the start/stop rows of `root` in `env`, through their save
+# chunks, so hm.rds holds a time-varying model. `env` is the global
+# environment, as a render's is: a saved fit refers to it by reference.
+start_stop_hm <- function(root, env, data) {
+  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  list2env(as.list(hazard_env(root), all.names = TRUE), envir = env)
+  suppressWarnings(utils::capture.output({
+    hazard_run("hz", c("set", "edit-study-choices"), env,
+               c(list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)),
+                 start_stop_choices))
+    hazard_run("hz", c("tbl-data", "tbl-cohort", "tbl-phases", "edit-start", "edit-response", "tbl-response-check",
+                       "guard", "fit-deterministic", "tbl-convergence", "edit-multistart", "tbl-multistart", "noconserve",
+                       "tbl-conservation-binding", "edit-estimates", "tbl-estimates", "fig-fit", "save"), env)
+    hazard_run("hm", c("set", "edit-study-choices"), env)
+    env$COVARIATES <- list(early = "x1", late = c("x1", "age"))
+    hazard_run("hm", c("read-upstream", "tbl-data", "tbl-cohort", "tbl-audit", "tbl-phases", "edit-fit",
+                       "edit-reported", "tbl-calibration", "tbl-gof", "save"), env)
+  }))
+  invisible(env)
+}

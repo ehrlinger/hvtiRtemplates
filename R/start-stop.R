@@ -150,14 +150,17 @@
 }
 
 # hp and hs predict one row per patient per horizon, which a time-varying
-# model does not define: a patient has a covariate row per segment. Which rule
-# to use is open, ehrlinger/hvtiRtemplates#436 item 4.
-.stop_start_stop_prediction <- function(start, source) {
+# model does not define: a patient has a covariate row per segment. The SAS jobs
+# they follow have no start/stop counterpart either; they predict from a model
+# fitted with one row per patient. SAS scores a time-varying model one way, each
+# segment at its own start, and hs-score does that (#436). `instead` names it
+# where it answers the same question.
+.stop_start_stop_prediction <- function(start, source, instead = NULL) {
   if (!is.null(start)) {
     stop("The fit in ", source, " is on start/stop rows (START = \"", start, "\"), with a covariate row per ",
          "patient segment. This job predicts one row per patient per horizon, which a time-varying model does ",
-         "not define, and it has no rule for choosing one yet: ",
-         "https://github.com/ehrlinger/hvtiRtemplates/issues/436.", call. = FALSE)
+         "not define, and SAS has no start/stop counterpart to follow: its prediction jobs read a model fitted ",
+         "with one row per patient.", if (!is.null(instead)) paste0(" ", instead), call. = FALSE)
   }
   invisible(TRUE)
 }
