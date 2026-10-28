@@ -117,3 +117,42 @@ test_that("a KEY of several columns with a missing part is refused, not joined o
   })
   expect_error(dt_run(s$root, dt_choices(KEY = c("ccfid", "dt_surg"))), "dt: rebuild .*missing value", perl = TRUE)
 })
+
+test_that("the follow-up section counts every suspicious row, not the 25 it lists", {
+  dt_skip()
+  s <- dt_study()
+  dt_rebuild(s$root, function(d) {
+    d$iv_dead[1:40] <- 0
+    d
+  })
+  d <- readRDS(dt_working(s$root))
+  expected <- sum(is.na(d$dead) | is.na(d$iv_dead) | d$iv_dead <= 0)
+  expect_gt(expected, 25L)
+  env <- dt_run(s$root, labels = c("setup", "edit-study-choices", "check-choices", "read-working", "followup"))
+  expect_match(paste(env$.stdout, collapse = "\n"), paste0("\n", expected, " row(s) look suspicious"), fixed = TRUE)
+})
+
+test_that("a logical derivation is compared by value, as read_built() reads it", {
+  dt_skip()
+  # A working file with a logical derivation, registered: read_built() serves it back as integer.
+  s <- dt_study(register = FALSE)
+  dt_rebuild(s$root, function(d) {
+    d$flag <- d$dead == 1L
+    d
+  })
+  withr::with_dir(s$root, suppressMessages(hvtiRutilities::update_manifest(dataset = "study")))
+  env <- dt_run(s$root)
+  cmp <- as.data.frame(env$.comparison)
+  expect_identical(cmp$verdict[cmp$variable == "flag"], "identical")
+  # The rebuild flips every value of it: every row in both differs.
+  dt_rebuild(s$root, function(d) {
+    d$flag <- !d$flag
+    d
+  })
+  env <- dt_run(s$root)
+  cmp <- as.data.frame(env$.comparison)
+  expect_identical(cmp$verdict[cmp$variable == "flag"], "differs")
+  expect_identical(cmp$n_differ[cmp$variable == "flag"], attr(env$.comparison, "rows")$n_common)
+  # The other sections still see the file as written.
+  expect_true(is.logical(env$d$flag))
+})

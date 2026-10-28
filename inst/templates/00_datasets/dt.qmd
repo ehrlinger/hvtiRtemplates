@@ -216,7 +216,18 @@ if (is.null(.found)) {
     x
   }
   .id <- if (length(KEY) == 1L) KEY else ".dt_key"
-  .comparison <- tryCatch(hvtiRdatabuild::compare_built(.join(.baseline), .join(d), id = .id),
+  # read_built() reads a logical column as integer and drops a labelled column's value labels, so a copy of
+  # this file is read the same way: otherwise every logical derivation reads "type changed" and its values,
+  # the thing a rebuild check is for, are never compared. The sections below check the file as written.
+  .as_read <- d
+  .as_read[] <- lapply(.as_read, function(x) {
+    if (is.logical(x)) return(as.integer(x))
+    if (!inherits(x, "haven_labelled")) return(x)
+    out <- as.vector(x)
+    attr(out, "label") <- attr(x, "label")
+    out
+  })
+  .comparison <- tryCatch(hvtiRdatabuild::compare_built(.join(.baseline), .join(.as_read), id = .id),
                           error = function(e) .dt_stop("rebuild", conditionMessage(e)))
   .rows <- attr(.comparison, "rows")
   # The patients on one side only are identifiers: the console has them, the report their count.
@@ -293,8 +304,13 @@ if (is.null(EVENT)) {
                   error = function(e) .dt_stop("followup", conditionMessage(e)))
   .dt_table(.fc$cohort, "tbl-followup-cohort", "Patients by event status")
   .dt_table(.fc$intervals, "tbl-followup-intervals", "Each follow-up interval", digits = 3)
-  cat("\n", nrow(.fc$review), " row(s) look suspicious, listed in the console.\n", sep = "")
+  # review lists at most 25 rows; n_suspicious counts them all.
+  .n_suspicious <- attr(.fc, "n_suspicious")
+  cat("\n", .n_suspicious, " row(s) look suspicious, listed in the console.\n", sep = "")
   if (nrow(.fc$review)) cat(utils::capture.output(print(.fc$review, row.names = FALSE)), sep = "\n", file = stderr())
+  if (.n_suspicious > nrow(.fc$review)) {
+    cat("... ", .n_suspicious - nrow(.fc$review), " more not shown\n", sep = "", file = stderr())
+  }
 }
 ```
 
