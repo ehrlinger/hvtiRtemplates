@@ -196,7 +196,8 @@ rf_mrn_data <- function(n = 120L, id = "MRN") {
 # The study choices that grow each forest on rf_mrn_data().
 rf_mrn_choices <- function(prefix, ...) {
   outcome <- list(
-    rfs = list(TIME = "iv_dead", EVENT = "dead"),
+    # These small cohorts are under the events-per-feature floor, which is not what they test.
+    rfs = list(TIME = "iv_dead", EVENT = "dead", MIN_EVENTS_PER_FEATURE = 0),
     rfc = list(RESPONSE = "dead", ROC_CLASS = "1"),
     rfr = list(RESPONSE = "los")
   )[[prefix]]

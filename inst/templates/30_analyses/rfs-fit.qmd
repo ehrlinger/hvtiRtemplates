@@ -176,6 +176,10 @@ EVENT  <- "dead"
 # built dataset carries identifiers, dates and derived outcomes, and a forest
 # will split on a date that quietly encodes follow-up.
 PREDICTORS <- c("age", "female", "hx_chf")
+# EDIT: the fewest events per candidate predictor before the report is marked
+# draft (a final render stops). 20 is a guess, the low end of a 20 to 30 rule of
+# thumb with no study behind it; 0 reports the ratio only.
+MIN_EVENTS_PER_FEATURE <- 20
 
 # EDIT: forest size and seed. The error-by-trees plot below says whether NTREE
 # was enough: a curve still falling at its right edge was not. SEED makes the
@@ -353,6 +357,7 @@ environment(model) <- globalenv()
 .grown <- if (NA_ACTION == "na.omit") stats::complete.cases(d) else rep(TRUE, nrow(d))
 .events <- sum(d[[EVENT]][.grown] == 1)
 .nodesize_rule <- max(15L, as.integer(ceiling(2 * sum(.grown) / max(.events, 1L))))
+.epf <- hvtiRtemplates:::.check_events_per_feature(c(cohort = .events), length(PREDICTORS), MIN_EVENTS_PER_FEATURE)
 if (isTRUE(TUNE_NODESIZE)) {
   hvtiRtemplates::guard_long_fit("rfs-nodesize", dir = CACHE_DIR,
                                  why = "the leaf-size search grows a 100-tree forest at each grid value", refit = REFIT)
@@ -374,6 +379,7 @@ cat(sprintf("%d patients, %d events: nodesize %d (%s), about %.1f events per lea
             as.integer(.nodesize),
             if (isTRUE(TUNE_NODESIZE)) "tuned" else if (is.null(NODESIZE)) "2 events per leaf" else "set",
             .nodesize * .events / sum(.grown)))
+cat(sprintf("%.1f events per candidate predictor (%d predictors).\n", .epf$events_per_feature, length(PREDICTORS)))
 forest <- cache_fit(
   "rfs-forest",
   rfsrc(model, data = d, ntree = NTREE, nodesize = .nodesize, nsplit = NSPLIT, mtry = MTRY, splitrule = SPLITRULE,
