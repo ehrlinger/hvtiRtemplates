@@ -65,6 +65,17 @@ test_that("an SSN name with a number suffix is dropped however few values it hol
   expect_setequal(out$dropped, c("ssn_num", "ssn_no", "SSNnumber", "pt_ssn_num"))
 })
 
+test_that("an SSN with a source qualifier and every masterid are dropped by name", {
+  # One SSN per linked source, and masterid copies, as a built dataset carries them.
+  d <- data.frame(ccfid = 1:3, ssn_base = 1:3, SSN_SSDI = 1:3, pt_ssn_base = 1:3, masterid = 1:3, masterid0 = 1:3,
+                  MasterID1 = 1:3, master_id = 1:3, ssn_numeric_flag = 1:3, soc_secondary = 1:3, mastery = 1:3)
+  out <- hvtiRtemplates:::.drop_identifiers(d, "ccfid")
+  expect_setequal(out$dropped, c("ssn_base", "SSN_SSDI", "pt_ssn_base", "masterid", "masterid0", "MasterID1", "master_id"))
+  expect_setequal(names(out$data), c("ccfid", "ssn_numeric_flag", "soc_secondary", "mastery"))
+  # masterid is kept when it is the ID.
+  expect_true("masterid" %in% names(hvtiRtemplates:::.drop_identifiers(d[-1], "masterid")$data))
+})
+
 test_that("a contact indicator held as a factor or as 0/1 text stays; contact text does not", {
   d <- data.frame(ccfid = 1:3, phone = factor(c(0, 1, 1)), email = c("1", "0", NA), cell_phone = factor(c("Y", "N", "Y")),
                   home_phone = factor(c("216-555-0100", "216-555-0101", NA)), name = factor(c("a", "b", "c")))

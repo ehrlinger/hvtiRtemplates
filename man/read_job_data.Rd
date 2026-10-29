@@ -195,8 +195,9 @@ The shared data step of every analysis template. It reads a
 \details{
 Direct identifiers are dropped unless one is the identifier, from a
   joined dataset too: columns named, ignoring case, \code{ccfid}, \code{MRN},
-  \code{eMRN}, a Social Security number (\code{ssn}, \code{soc_sec},
-  \code{social_security}, \code{pt_ssn}), and, held as text, a patient name
+  \code{eMRN}, \code{masterid} (\code{masterid0}, \code{masterid1}), a Social
+  Security number (\code{ssn}, \code{soc_sec}, \code{social_security},
+  \code{pt_ssn}, or one with a source qualifier such as \code{ssn_base}), and, held as text, a patient name
   (\code{name}, \code{first_name}, \code{pt_name}, \code{surname}) or contact
   details (\code{address}, \code{street}, \code{phone}, \code{email}). Any
   other column whose values are shaped like Social Security numbers is dropped

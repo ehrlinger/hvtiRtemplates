@@ -31,15 +31,17 @@
 }
 
 # Direct identifiers no analysis job needs, matched on the whole column name
-# ignoring case. ccfid, MRN, eMRN and a Social Security number are dropped
-# whatever the column holds. A patient name or contact detail is dropped only as
+# ignoring case. ccfid, MRN, eMRN, masterid (masterid0, masterid1) and a Social
+# Security number are dropped whatever the column holds. An SSN name may carry
+# one qualifier naming its source, ssn_base or ssn_ssdi, since a build that links
+# sources keeps one per source; ssn_numeric_flag, two tokens on, stays. A patient name or contact detail is dropped only as
 # text, so a 0/1 phone or email indicator, contact by that route, stays, whether
 # it is held as numbers, text or a factor. Whole
 # names only, so pt_mrn, surgeon_name_code and phone_followup stay. Dates and
 # zip codes are not here: the EDA reads dates, and a build may need either.
 .identifier_name_pattern <- paste0(
-  "^(ccfid|e?mrn|((pt|pat|patient)_?)?",
-  "(ssn|soc_?sec(urity)?|social_?security)(_?(no|num|number))?)$"
+  "^(ccfid|e?mrn|master_?id[0-9]*|((pt|pat|patient)_?)?",
+  "(ssn|soc_?sec(urity)?|social_?security)(_?(no|num|number)|_[a-z0-9]+)?)$"
 )
 .identifier_text_pattern <- paste0(
   "^(((pt|pat|patient)_?)?((first|last|middle|full|f|l|m)_?)?name|surname",
@@ -659,8 +661,9 @@
 #'
 #' @details Direct identifiers are dropped unless one is the identifier, from a
 #'   joined dataset too: columns named, ignoring case, \code{ccfid}, \code{MRN},
-#'   \code{eMRN}, a Social Security number (\code{ssn}, \code{soc_sec},
-#'   \code{social_security}, \code{pt_ssn}), and, held as text, a patient name
+#'   \code{eMRN}, \code{masterid} (\code{masterid0}, \code{masterid1}), a Social
+#'   Security number (\code{ssn}, \code{soc_sec}, \code{social_security},
+#'   \code{pt_ssn}, or one with a source qualifier such as \code{ssn_base}), and, held as text, a patient name
 #'   (\code{name}, \code{first_name}, \code{pt_name}, \code{surname}) or contact
 #'   details (\code{address}, \code{street}, \code{phone}, \code{email}). Any
 #'   other column whose values are shaped like Social Security numbers is dropped
