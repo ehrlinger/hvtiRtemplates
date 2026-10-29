@@ -603,29 +603,31 @@ for (m in .methods) {
 # saved `ps` stays on the predictors, because vt-explain weights the betas with
 # it, and weights from the eligibility set alone would leave the other
 # confounders unbalanced.
-.ps_vars <- union(.predictors, .elig_vars)
-.ps_data <- d[.treated, c(ID, ARM, .ps_vars), drop = FALSE]
-if (anyNA(.ps_data[.ps_vars])) {
-  .imp <- .ps_data[.ps_vars]
-  # impute() drops a patient who is missing every predictor, so the imputed
-  # rows are matched back by ID (its row names), never by position.
-  rownames(.imp) <- .ps_data[[ID]]
-  set.seed(SEED)
-  .imputed <- randomForestSRC::impute(data = .imp, ntree = 100L, seed = -abs(SEED), verbose = FALSE)
-  .back <- match(.ps_data[[ID]], rownames(.imputed))
-  if (anyNA(.back)) {
-    cat(sum(is.na(.back)), " treated patient(s) could not be scored for the propensity sensitivity ",
-        "(no predictor observed); they are not eligible under it.\n", sep = "")
-  }
-  .ps_data <- .ps_data[!is.na(.back), , drop = FALSE]
-  .ps_data[.ps_vars] <- .imputed[.back[!is.na(.back)], .ps_vars, drop = FALSE]
-}
-# The propensity forest keeps its formula too, and reformulate() would tie it to this
-# environment (and the raw IDs in `job_data`); point it at the global environment.
+# Each model imputes and fits on its own variables, so a column only the
+# eligibility set names cannot change how the predictors are filled in, nor the
+# saved model's scores.
 vt_ps <- function(vars) {
+  x <- d[.treated, c(ID, ARM, vars), drop = FALSE]
+  if (anyNA(x[vars])) {
+    imp <- x[vars]
+    # impute() drops a patient who is missing every predictor, so the imputed
+    # rows are matched back by ID (its row names), never by position.
+    rownames(imp) <- x[[ID]]
+    set.seed(SEED)
+    imputed <- randomForestSRC::impute(data = imp, ntree = 100L, seed = -abs(SEED), verbose = FALSE)
+    back <- match(x[[ID]], rownames(imputed))
+    if (anyNA(back)) {
+      cat(sum(is.na(back)), " treated patient(s) could not be scored for the propensity sensitivity ",
+          "(no predictor observed); they are not eligible under it.\n", sep = "")
+    }
+    x <- x[!is.na(back), , drop = FALSE]
+    x[vars] <- imputed[back[!is.na(back)], vars, drop = FALSE]
+  }
   set.seed(SEED)
-  ps_forest(stats::reformulate(vars, ARM, env = globalenv()), data = .ps_data[c(ID, ARM, vars)], treatment_col = ARM,
-            id_col = ID, treated_level = ARMS[1], ntree = NTREE, seed = -abs(SEED))
+  # The propensity forest keeps its formula too, and reformulate() would tie it to this
+  # environment (and the raw IDs in `job_data`); point it at the global environment.
+  ps_forest(stats::reformulate(vars, ARM, env = globalenv()), data = x, treatment_col = ARM, id_col = ID,
+            treated_level = ARMS[1], ntree = NTREE, seed = -abs(SEED))
 }
 .ps <- vt_ps(.predictors)
 .ps_elig <- if (setequal(.elig_vars, .predictors)) .ps else vt_ps(.elig_vars)

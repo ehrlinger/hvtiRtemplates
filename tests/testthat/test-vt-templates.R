@@ -285,6 +285,25 @@ test_that("ELIGIBILITY_VARS judges eligibility on its own set and the forests ke
   expect_true(all(c("propensity", "gower") %in% names(env$.flags)))
 })
 
+test_that("an eligibility-only column leaves the saved propensity scores as they were", {
+  skip_on_cran()
+  d <- vt_data()
+  d$x1[c(20, 40, 60)] <- NA
+  d$m1 <- withr::with_seed(7, stats::rnorm(nrow(d)))
+  d$m1[c(21, 41)] <- NA
+  base <- vt_fit_first(data = d)
+  with_m1 <- vt_fit_first(data = d, choices = utils::modifyList(vt_choices,
+                                                                list(ELIGIBILITY_VARS = c("xs", "x1", "g1", "m1"))))
+  # Each fixture study has its own ID key, so rows are matched by the raw ID.
+  treated <- d$ccfid[!is.na(d$arm)]
+  score <- function(env) {
+    env$.ps$data[match(vt_digest(env, treated), env$.ps$data[[env$ID]]), env$.ps$meta$score_col]
+  }
+  expect_false(anyNA(score(base)))
+  expect_identical(score(with_m1), score(base))
+  expect_setequal(all.vars(with_m1$.ps_elig$meta$formula)[-1L], c("xs", "x1", "g1", "m1"))
+})
+
 test_that("ELIGIBILITY_VARS refuses the outcome and a column the data lacks", {
   skip_on_cran()
   expect_error(vt_fit_first(choices = utils::modifyList(vt_choices, list(ELIGIBILITY_VARS = c("x1", "time")))),
