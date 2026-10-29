@@ -259,9 +259,11 @@ test_that("vt_overlap counts each exact set of flagging rules by arm and scores 
   h <- vt_helpers()
   flags <- data.frame(gower = c(FALSE, TRUE, TRUE, FALSE), propensity = c(FALSE, TRUE, FALSE, NA))
   o <- h$vt_overlap(flags, c("A", "A", "B", "No arm"))
-  expect_equal(o$combinations$flagged_by, c("none", "gower", "gower + propensity", "propensity"))
-  expect_equal(o$combinations$B, c(0L, 0L, 0L, 1L))
-  expect_equal(o$combinations[["No arm"]], c(0L, 1L, 0L, 0L))
+  rows <- stats::setNames(seq_len(nrow(o$combinations)), o$combinations$flagged_by)
+  expect_setequal(names(rows), c("none", "gower; not judged by propensity", "gower + propensity", "propensity"))
+  expect_identical(o$combinations$flagged_by[1L], "none")
+  expect_equal(o$combinations$B[rows["propensity"]], 1L)
+  expect_equal(o$combinations[["No arm"]][rows["gower; not judged by propensity"]], 1L)
   # The no-arm patient is not judged by propensity, so the pair covers three.
   expect_equal(o$pairs$judged, 3L)
   expect_equal(c(o$pairs$both_eligible, o$pairs$both_flagged, o$pairs$only_first, o$pairs$only_second),
@@ -302,6 +304,37 @@ test_that("an eligibility-only column leaves the saved propensity scores as they
   expect_false(anyNA(score(base)))
   expect_identical(score(with_m1), score(base))
   expect_setequal(all.vars(with_m1$.ps_elig$meta$formula)[-1L], c("xs", "x1", "g1", "m1"))
+})
+
+test_that("a treated patient with no propensity score is not judged by it in the overlap", {
+  skip_on_cran()
+  d <- vt_data()
+  d$m1 <- withr::with_seed(7, stats::rnorm(nrow(d)))
+  lost <- which(!is.na(d$arm))[1L]
+  d$x1[lost] <- NA
+  d$m1[lost] <- NA
+  env <- vt_fit_first(data = d, choices = utils::modifyList(vt_choices, list(ELIGIBILITY_VARS = c("x1", "m1"))))
+  id <- vt_digest(env, d$ccfid[lost])
+  expect_true(is.na(env$.flags$propensity[env$.elig$ID == id]))
+  expect_false(env$.elig$elig_propensity[env$.elig$ID == id])
+  treated <- sum(!is.na(d$arm))
+  expect_equal(env$.overlap$pairs$judged[env$.overlap$pairs$rules == "gower vs propensity"], treated - 1L)
+  combos <- env$.overlap$combinations
+  expect_true(any(grepl("not judged by propensity", combos$flagged_by[combos[[d$arm[lost]]] > 0L])))
+})
+
+test_that("each method's flags are explained by that method's own variables", {
+  h <- vt_helpers()
+  d <- data.frame(id = c("p", "q", "r", "s"), xs = c(9, 0, 1, 2), wrong = c(99, 0, 0, 0))
+  arm_of <- c(NA, "B", "B", "B")
+  rows <- data.frame(ID = c("p", "p"), method = c("gower", "sid"), arm = "B")
+  got <- h$vt_flag_features(rows, d, "id", arm_of, list(gower = "wrong", sid = "xs"))
+  expect_match(got[1L], "^wrong = |wrong 99")
+  expect_match(got[2L], "^xs 9 outside B's range")
+  expect_false(grepl("wrong", got[2L]))
+  got <- h$vt_flag_features(rows[2L, ], d, "id", arm_of, list(sid = "absent"))
+  expect_match(got, "not computed: sid used absent")
+  expect_match(h$vt_flag_features(rows[2L, ], d, "id", arm_of, list(sid = NULL)), "records no variables")
 })
 
 test_that("ELIGIBILITY_VARS refuses the outcome and a column the data lacks", {

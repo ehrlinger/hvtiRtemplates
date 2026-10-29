@@ -310,6 +310,8 @@ if (NA_ACTION == "na.omit") {
   .no_arm <- .no_arm[.kept]
   .treated <- .treated[.kept]
 }
+# Every column read, kept for explaining a sid set's flags: its variables are known only once the set is read.
+.d_read <- d
 d <- d[, c(ID, ARM, TIME, STATUS, union(.predictors, .elig_vars)), drop = FALSE]
 cat("Predictors:", paste(.predictors, collapse = ", "), "\n")
 if (!is.null(ELIGIBILITY_VARS)) cat("Eligibility variables:", paste(.elig_vars, collapse = ", "), "\n")
@@ -492,6 +494,27 @@ vt_ood_features <- function(out_rows, d, id, arm_of, predictors, n = 3L, rare = 
   }, character(1L))
 }
 
+# Each method's flags explained by the variables that method's distance used:
+# the eligibility set for Gower, the sid set's own for SID. Explaining a SID flag
+# by variables the distance never saw would name a cause it did not have, so
+# when a method's variables are unknown or absent from the data, say so.
+vt_flag_features <- function(out_rows, d, id, arm_of, vars_by_method) {
+  out <- character(nrow(out_rows))
+  for (m in unique(out_rows$method)) {
+    at <- which(out_rows$method == m)
+    vars <- vars_by_method[[m]]
+    absent <- setdiff(vars, names(d))
+    out[at] <- if (!length(vars)) {
+      sprintf("not computed: the %s set records no variables", m)
+    } else if (length(absent)) {
+      sprintf("not computed: %s used %s, not in this job's data", m, paste(absent, collapse = ", "))
+    } else {
+      vt_ood_features(out_rows[at, , drop = FALSE], d, id, arm_of, vars)
+    }
+  }
+  out
+}
+
 # The SID distance a sid job saved. Read, never refit, and refused when it does
 # not cover every patient here.
 # Returns the distance with the whole reader result as attribute "read", so the
@@ -526,18 +549,21 @@ vt_combine <- function(rows, combine = c("any", "all")) {
 # How far eligibility rules overlap. `flags` holds one column per rule, TRUE
 # where the patient is eligible and NA where the rule did not judge them;
 # `group` is each patient's arm. Returns the count of patients under each exact
-# set of flagging rules by group, and, for each pair of rules, their agreement
+# set of flagging rules by group, with the rules that did not judge them named,
+# and, for each pair of rules, their agreement
 # over the patients both judged, with Cohen's kappa (NA when both rules give
 # everyone the same answer, so chance agreement is total).
 vt_overlap <- function(flags, group) {
   combo <- apply(flags, 1L, function(x) {
     hit <- names(flags)[!is.na(x) & !x]
-    if (length(hit)) paste(hit, collapse = " + ") else "none"
+    unjudged <- names(flags)[is.na(x)]
+    paste0(if (length(hit)) paste(hit, collapse = " + ") else "none",
+           if (length(unjudged)) paste0("; not judged by ", paste(unjudged, collapse = ", ")))
   })
   tab <- table(combo, group)
   combinations <- data.frame(flagged_by = rownames(tab), unclass(tab)[, , drop = FALSE], check.names = FALSE,
                              row.names = NULL)
-  combinations <- combinations[order(combinations$flagged_by != "none", combinations$flagged_by), , drop = FALSE]
+  combinations <- combinations[order(!startsWith(combinations$flagged_by, "none"), combinations$flagged_by), , drop = FALSE]
   pairs <- if (ncol(flags) > 1L) {
     do.call(base::rbind, lapply(utils::combn(names(flags), 2L, simplify = FALSE), function(p) {
       a <- flags[[p[1]]]
@@ -583,7 +609,9 @@ if (anyNA(.elig_rows$reference)) {
 }
 .elig_rows$features <- ""
 .ood_at <- which(!.elig_rows$in_distribution)
-.elig_rows$features[.ood_at] <- vt_ood_features(.elig_rows[.ood_at, ], d, ID, .arm, .elig_vars)
+.sid_vars <- if (!is.null(.sid_read)) .sid_read$value$vars
+.elig_rows$features[.ood_at] <- vt_flag_features(.elig_rows[.ood_at, ], .d_read, ID, .arm,
+                                                 list(gower = .elig_vars, sid = .sid_vars))
 # With no finite distance there is no comparison to explain; vt_ood()'s reason says why.
 .nofin <- .ood_at[!is.finite(.elig_rows$distance[.ood_at])]
 .elig_rows$features[.nofin] <- .elig_rows$reason[.nofin]
@@ -688,8 +716,10 @@ rules in `ELIGIBILITY` for comparison only; it judges treated patients alone.
 .rules <- c(stats::setNames(.methods, .methods), propensity = "propensity")
 .flags <- as.data.frame(lapply(.rules, function(m) .elig[[paste0("elig_", m)]]))
 .elig_arm <- .arm[match(.elig$ID, .ids)]
-# A patient with no arm has no propensity score: not judged, rather than flagged.
-.flags$propensity[is.na(.elig_arm)] <- NA
+# A patient with no arm, or a treated patient the propensity model could not
+# score (every eligibility variable missing), has no propensity score: not
+# judged, rather than flagged. elig_propensity, vt-explain's sensitivity, still counts them ineligible.
+.flags$propensity[is.na(.elig_arm) | !.elig$ID %in% .support[[ID]]] <- NA
 .overlap <- vt_overlap(.flags, ifelse(is.na(.elig_arm), "No arm", .elig_arm))
 knitr::kable(.overlap$combinations, row.names = FALSE)
 ```
@@ -958,7 +988,7 @@ if (!length(.in_dist)) {
 vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   list(rmst = .rmst, curves = .curves, forests = .forests,
        eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ordinal = ORDINAL,
-                          variables = .elig_vars, ps = .ps),
+                          variables = .elig_vars, sid_variables = .sid_vars, ps = .ps),
        predictors = list(names = .predictors, vp_set = VP_SET),
        settings = list(performance = .perf, calibration = .cal, arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED,
                        time = TIME, status = STATUS,
