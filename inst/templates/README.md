@@ -357,7 +357,10 @@ figure's legend below, as the journals print them.
 
 Color follows the house rule of the hvtiGraphics recipes book: categorical
 groups take `hvtiPlotR::hv_palette()` (the Okabe-Ito colors) through
-`scale_*_manual()`, and ordered or diverging scales take `"RdBu"`. ColorBrewer
+`scale_*_manual()`, the groups compared in an outcome curve take
+`hvtiPlotR::hv_group_palette()` (black for one curve; two to five groups take
+red, blue, teal, magenta and cyan, and six or seven all switch to Paul Tol's
+muted colors), and ordered or diverging scales take `"RdBu"`. ColorBrewer
 `"Set1"`, `"Set2"`, `"Dark2"` and `"RdYlGn"` are retired. Color is never the
 only channel: groups also differ by line type or point shape, so a figure
 survives a grayscale printer and a color-blind reader. Box plots in these
