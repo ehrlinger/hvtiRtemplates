@@ -273,7 +273,7 @@ written.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE)
-#> Study: /tmp/Rtmp4awNwE/job-data-example
+#> Study: /tmp/RtmpBM1y0F/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -286,7 +286,7 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/Rtmp4awNwE/job-data-example
+#> Study: /tmp/RtmpBM1y0F/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
