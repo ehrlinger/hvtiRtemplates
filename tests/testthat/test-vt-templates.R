@@ -279,7 +279,9 @@ test_that("ELIGIBILITY_VARS judges eligibility on its own set and the forests ke
   # The outliers are planted in xs, which eligibility no longer sees.
   planted <- vt_digest(env, which(vt_data()$arm == "A")[1:5])
   expect_true(all(env$.elig$elig_gower[match(planted, env$.elig$ID)]))
-  expect_setequal(all.vars(env$.ps_model)[-1L], c("x1", "g1"))
+  # Support judges on the eligibility set; the saved propensity model, which weights vt-explain's betas, keeps the predictors.
+  expect_setequal(all.vars(env$.ps_elig$meta$formula)[-1L], c("x1", "g1"))
+  expect_setequal(all.vars(env$.ps$meta$formula)[-1L], c("xs", "x1", "g1"))
   expect_true(all(c("propensity", "gower") %in% names(env$.flags)))
 })
 

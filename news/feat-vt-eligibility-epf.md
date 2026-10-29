@@ -5,7 +5,8 @@
   it; 0 reports the ratio only.
 * `vt-fit` takes `ELIGIBILITY_VARS`, a separate set of variables to judge
   eligibility on: the Gower distance, the out-of-distribution features and the
-  propensity comparison use it, and the arm forests keep their predictors. NULL,
+  propensity common-support flag use it. The arm forests, and the propensity
+  model `vt-explain` weights its betas with, keep the predictors. NULL,
   the default, judges on the predictors as before. The saved handoff records the
   set under `eligibility$variables`.
 * `vt-fit` shows how far the eligibility rules overlap: patients counted by the

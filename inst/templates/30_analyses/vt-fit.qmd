@@ -598,10 +598,15 @@ for (m in .methods) {
 # of the treated patients' predictors, seeded, and the arm forests keep the
 # data as read. The arm is left out of the imputation, so the treatment does not
 # shape the predictors that then predict it. Under "na.omit" nothing is missing and the copy equals d.
-# Like Gower, it judges on the eligibility variables (the predictors unless ELIGIBILITY_VARS is set).
-.ps_data <- d[.treated, c(ID, ARM, .elig_vars), drop = FALSE]
-if (anyNA(.ps_data[.elig_vars])) {
-  .imp <- .ps_data[.elig_vars]
+# Two propensity models when ELIGIBILITY_VARS is set, one otherwise. The
+# common-support flag judges on the eligibility variables, as Gower does. The
+# saved `ps` stays on the predictors, because vt-explain weights the betas with
+# it, and weights from the eligibility set alone would leave the other
+# confounders unbalanced.
+.ps_vars <- union(.predictors, .elig_vars)
+.ps_data <- d[.treated, c(ID, ARM, .ps_vars), drop = FALSE]
+if (anyNA(.ps_data[.ps_vars])) {
+  .imp <- .ps_data[.ps_vars]
   # impute() drops a patient who is missing every predictor, so the imputed
   # rows are matched back by ID (its row names), never by position.
   rownames(.imp) <- .ps_data[[ID]]
@@ -613,17 +618,20 @@ if (anyNA(.ps_data[.elig_vars])) {
         "(no predictor observed); they are not eligible under it.\n", sep = "")
   }
   .ps_data <- .ps_data[!is.na(.back), , drop = FALSE]
-  .ps_data[.elig_vars] <- .imputed[.back[!is.na(.back)], .elig_vars, drop = FALSE]
+  .ps_data[.ps_vars] <- .imputed[.back[!is.na(.back)], .ps_vars, drop = FALSE]
 }
-set.seed(SEED)
 # The propensity forest keeps its formula too, and reformulate() would tie it to this
 # environment (and the raw IDs in `job_data`); point it at the global environment.
-.ps_model <- stats::reformulate(.elig_vars, ARM, env = globalenv())
-.ps <- ps_forest(.ps_model, data = .ps_data, treatment_col = ARM, id_col = ID,
-                 treated_level = ARMS[1], ntree = NTREE, seed = -abs(SEED))
+vt_ps <- function(vars) {
+  set.seed(SEED)
+  ps_forest(stats::reformulate(vars, ARM, env = globalenv()), data = .ps_data[c(ID, ARM, vars)], treatment_col = ARM,
+            id_col = ID, treated_level = ARMS[1], ntree = NTREE, seed = -abs(SEED))
+}
+.ps <- vt_ps(.predictors)
+.ps_elig <- if (setequal(.elig_vars, .predictors)) .ps else vt_ps(.elig_vars)
 # ps_support() adds weak_common (outside the range both arms occupy) to $data.
 # Patients with no arm have no propensity score and are not judged by it.
-.support <- ps_support(.ps)$data
+.support <- ps_support(.ps_elig)$data
 .elig$elig_propensity <- .elig$ID %in% .support[[ID]][!.support$weak_common]
 .elig$elig_none <- TRUE
 ```
