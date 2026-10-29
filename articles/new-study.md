@@ -79,7 +79,7 @@ directly, in a temporary directory:
 # A vignette builds a throwaway study; in a real study, run hvtiR::setup().
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L,
             renv = FALSE)
-#> Study: /tmp/Rtmp41DFy6/file1eda1e5de070/new-study
+#> Study: /tmp/RtmpbEpYFh/file1fea423c40ba/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -125,7 +125,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp41DFy6/file1eda1e5de070/new-study
+#> Study: /tmp/RtmpbEpYFh/file1fea423c40ba/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
