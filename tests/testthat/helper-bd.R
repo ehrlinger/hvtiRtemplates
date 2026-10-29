@@ -92,13 +92,14 @@ bd_provenance <- function(root, version = bd_current_version(root)) {
 # The build's own choices for the check tests, with the four check sections set to columns the
 # synthetic master carries. `...` overrides any of them.
 bd_check_choices <- function(m, register = FALSE, ...) {
-  utils::modifyList(
-    list(MASTER = m$parquet, KEEP = c("age", "sex", "iv_dead", "dead", "dt_surg"),
-         EXCLUDE = list(age < 40 ~ "Under 40"), REGISTER = register,
-         CROSSTABS = list(c("dead", "sex")), EVENT = "dead", FOLLOWUP = "iv_dead",
-         CHECKS = list(iv_dead <= 0 ~ "Follow-up of zero or less"), PRINT_COLS = c("ccfid", "iv_dead")),
-    list(...)
-  )
+  base <- list(MASTER = m$parquet, KEEP = c("age", "sex", "iv_dead", "dead", "dt_surg"),
+               EXCLUDE = list(age < 40 ~ "Under 40"), REGISTER = register,
+               CROSSTABS = list(c("dead", "sex")), EVENT = "dead", FOLLOWUP = "iv_dead",
+               CHECKS = list(iv_dead <= 0 ~ "Follow-up of zero or less"), PRINT_COLS = c("ccfid", "iv_dead"))
+  # Replaced, not merged: modifyList() merges two unnamed lists of rules into the first.
+  over <- list(...)
+  base[names(over)] <- over
+  base
 }
 
 bd_check_labels <- c("rebuild", "crosstabs", "followup", "tbl-checks")
@@ -114,4 +115,10 @@ bd_check_run <- function(root, choices, change = identity, labels = bd_check_lab
     hazard_run("bd", labels, env), type = "output"  # nolint: object_usage_linter.
   ))
   env
+}
+
+# A registering render registers only the bytes a draft render wrote, so a test that means a normal
+# registration runs the draft first: the same choices with REGISTER = FALSE.
+bd_draft <- function(root, choices, ...) {
+  bd_run(root, utils::modifyList(choices, list(REGISTER = FALSE)), ...)
 }

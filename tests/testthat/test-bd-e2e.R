@@ -7,6 +7,13 @@ bd_edits <- function(m, register, exclude = "list(age < 40 ~ \"Under 40\", ccfid
   )
 }
 
+# Set the job's REGISTER choice, as a study author does between the draft render and the registering one.
+bd_set_register <- function(job, register) {
+  lines <- readLines(job, warn = FALSE)
+  lines[grep("^REGISTER <- ", lines)] <- paste0("REGISTER <- ", register)
+  writeLines(lines, job)
+}
+
 bd_render <- function(job) {
   quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
   paste(readLines(sub("[.]qmd$", ".html", job), warn = FALSE), collapse = "\n")
@@ -22,7 +29,10 @@ bd_registered <- local({
     if (is.null(cache)) {
       m <- bd_master(.local_envir = testthat::teardown_env())
       root <- bd_study(.local_envir = testthat::teardown_env())
-      job <- bd_job(root, bd_edits(m, register = "TRUE"))
+      # A registering render registers the bytes of the draft render before it.
+      job <- bd_job(root, bd_edits(m, register = "FALSE"))
+      bd_render(job)
+      bd_set_register(job, "TRUE")
       cache <<- list(m = m, root = root, job = job, html = bd_render(job))
     }
     cache
@@ -82,8 +92,11 @@ test_that("the purled job runs as a script and registers the same dataset in a f
 
   # Study B: scaffold only (never render), then source the purled script.
   root_b <- bd_study()
-  job_b <- bd_job(root_b, bd_edits(m, register = "TRUE"))
+  job_b <- bd_job(root_b, bd_edits(m, register = "FALSE"))
   script <- withr::local_tempfile(fileext = ".R")
+  knitr::purl(job_b, output = script, documentation = 0L, quiet = TRUE)
+  withr::with_dir(dirname(job_b), utils::capture.output(source(script, local = new.env(parent = globalenv()))))
+  bd_set_register(job_b, "TRUE")
   knitr::purl(job_b, output = script, documentation = 0L, quiet = TRUE)
   withr::with_dir(dirname(job_b), utils::capture.output(source(script, local = new.env(parent = globalenv()))))
 
@@ -114,7 +127,10 @@ test_that("a second registering render with a changed rule registers _r2, and on
 
   lines <- readLines(job, warn = FALSE)
   lines[grep("^EXCLUDE <- ", lines)] <- "EXCLUDE <- list(age < 50 ~ \"Under 50\")"
+  lines[grep("^REGISTER <- ", lines)] <- "REGISTER <- FALSE"
   writeLines(lines, job)
+  bd_render(job)  # the draft the registering render below must match
+  bd_set_register(job, "TRUE")
   html <- bd_render(job)
   second <- bd_current_version(root)
   expect_match(second, "_r2[.]parquet$")
@@ -135,6 +151,7 @@ test_that("a bd render shows the checks' counts above Register, and no patient r
   bd_quarto_skip()
   m <- bd_master()
   root <- bd_study()
+  bd_draft(root, bd_check_choices(m))
   bd_run(root, bd_check_choices(m, register = TRUE))
   # The rebuild: a derivation that adds a column of distinctive strings, which a check prints.
   edits <- bd_edits(m, FALSE, exclude = "list(age < 40 ~ \"Under 40\")")
@@ -171,7 +188,7 @@ test_that("a first bd render says nothing is registered, and a cross-tab named t
   m <- bd_master()
   root <- bd_study()
   edits <- bd_edits(m, FALSE, exclude = "list(age < 40 ~ \"Under 40\")")
-  edits[["^CROSSTABS <- "]] <- "CROSSTABS <- list(c(\"dead\", \"sex\"), c(\"dead\", \"sex\"))"
+  edits[["^CROSSTABS <- list"]] <- "CROSSTABS <- list(c(\"dead\", \"sex\"), c(\"dead\", \"sex\"))"
   html <- bd_render(bd_job(root, edits))
   expect_match(html, "Nothing is registered for this study yet", fixed = TRUE)
   expect_false(grepl("Rows in the registered version", html, fixed = TRUE))

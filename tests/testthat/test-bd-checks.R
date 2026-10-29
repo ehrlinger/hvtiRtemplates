@@ -16,6 +16,7 @@ test_that("a rebuild of the study dataset is compared against its registered ver
   bd_skip()
   m <- bd_master()
   root <- bd_study()
+  bd_draft(root, bd_check_choices(m))
   bd_run(root, bd_check_choices(m, register = TRUE))
   env <- bd_check_run(root, bd_check_choices(m), labels = "rebuild")
   expect_match(env$.rebuild_state, "^A rebuild of the study dataset: study_cohort.rds against its registered version ")
@@ -29,6 +30,7 @@ test_that("the rebuild comparison reports values, not shape, against the registe
   bd_skip()
   m <- bd_master()
   root <- bd_study()
+  bd_draft(root, bd_check_choices(m))
   bd_run(root, bd_check_choices(m, register = TRUE))
   # HVTI_DATA = "working" makes read_built() serve the working file unless told not to;
   # the baseline must still be the registered version, or every column reads identical.
@@ -56,6 +58,7 @@ test_that("a comparison build is compared against the study dataset and says it 
   bd_skip()
   m <- bd_master()
   root <- bd_study()
+  bd_draft(root, bd_check_choices(m, DATASET_ID = "legacy"))
   bd_run(root, bd_check_choices(m, register = TRUE, DATASET_ID = "legacy"))
   rebuild <- bd_check_choices(m, DATASET_ID = "study_rebuild")
   # Assigned, not merged with modifyList(), which would merge the two lists of rules.
@@ -102,6 +105,7 @@ test_that("a KEY of several columns with a missing part is refused, not joined o
   bd_skip()
   m <- bd_master()
   root <- bd_study()
+  bd_draft(root, bd_check_choices(m, KEY = c("ccfid", "dt_surg")))
   bd_run(root, bd_check_choices(m, register = TRUE, KEY = c("ccfid", "dt_surg")))
   expect_error(
     bd_check_run(root, bd_check_choices(m, KEY = c("ccfid", "dt_surg")), labels = "rebuild", change = function(d) {
@@ -169,4 +173,59 @@ test_that("bad check choices stop in check-choices, naming no value", {
   ev <- bd_check_choices(m, EVENT = c("a", "b"))
   expect_error(bd_run(root, ev, labels = c("setup", "edit-study-choices", "check-choices")),
                "bd: check-choices .*EVENT must be one column name", perl = TRUE)
+})
+
+test_that("a cross-tab refuses the patient identifier and a column of KEY, naming it", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  err <- expect_error(bd_run(root, bd_check_choices(m, CROSSTABS = list(c("ccfid", "sex")))), "^bd: check-choices \\(")
+  expect_match(conditionMessage(err), "ccfid", fixed = TRUE)
+  # A column of a composite KEY, spelled in upper case: the screen reads the lower-cased names.
+  err <- expect_error(
+    bd_run(root, bd_check_choices(m, KEY = c("ccfid", "dt_surg"), CROSSTABS = list(c("DT_SURG", "sex")))),
+    "^bd: check-choices \\("
+  )
+  expect_match(conditionMessage(err), "dt_surg", fixed = TRUE)
+  expect_false(grepl("PT00", conditionMessage(err), fixed = TRUE))
+})
+
+test_that("a cross-tab of a column with more than 20 distinct values stops, naming the column and the count", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  err <- expect_error(
+    bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("grp", "sex"))), labels = "crosstabs", change = function(d) {
+      d$grp <- sprintf("ZQXG%02d", rep_len(1:21, nrow(d)))
+      d
+    }),
+    "^bd: crosstabs \\("
+  )
+  msg <- conditionMessage(err)
+  expect_match(msg, "grp has 21 distinct values", fixed = TRUE)
+  expect_false(any(grepl("ZQXG01", msg, fixed = TRUE), grepl("ZQXG21", msg, fixed = TRUE)))
+})
+
+test_that("a cross-tab of a column the data lacks stops in crosstabs and names it", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  err <- expect_error(
+    bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("no_such_col", "sex"))), labels = "crosstabs"),
+    "^bd: crosstabs \\("
+  )
+  expect_match(conditionMessage(err), "no_such_col", fixed = TRUE)
+})
+
+test_that("a CHECKS condition naming a missing column stops tbl-checks, and nothing is registered", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  with_checks <- c("setup", "set", "edit-study-choices", "check-choices", "read-master", "cohort", "derive",
+                   "write-built", bd_check_labels, "register")
+  bd_draft(root, bd_check_choices(m), labels = with_checks)
+  bad <- bd_check_choices(m, register = TRUE)
+  bad$CHECKS <- list(no_such_col > 1 ~ "A column the data lacks")
+  expect_error(bd_run(root, bad, labels = with_checks), "^bd: tbl-checks \\(")
+  expect_length(bd_versions(root), 0L)
 })

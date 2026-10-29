@@ -148,7 +148,8 @@ DATASET_ID <- "study_cohort"
 
 # EDIT: pairs of columns to cross-tabulate, typically a derived column against its source, such as an event
 # indicator against an indicator of its date. A missing value is a level of its own, as PROC FREQ / MISSING shows
-# it. A list of character vectors, or list() for none.
+# it. A list of character vectors, or list() for none. A cross-tab prints its levels in the report, so a column
+# that identifies a patient is refused: ID, a column of KEY, or any column with more than 20 distinct values.
 CROSSTABS <- list(c("dead", "sex"))
 
 # EDIT: the event indicator and its follow-up interval(s) in years, as the derive chunk makes them. EVENT <- NULL
@@ -171,7 +172,8 @@ PRINT_COLS <- c("dead", "iv_dead")
 # FALSE writes the working file and registers nothing. TRUE registers it as a
 # dated version of this study's "built" dataset, which every analysis job then
 # reads. Render with FALSE first and read the Checks section, which shows how this
-# build differs from the version registered now, then set TRUE and render again.
+# build differs from the version registered now, then set TRUE and render again. A registering render stops
+# unless its bytes match the last draft's: it registers only what the draft wrote and you read.
 REGISTER <- FALSE
 ```
 
@@ -207,6 +209,12 @@ KEEP <- tolower(KEEP)
 JOIN_BY <- tolower(JOIN_BY)
 ID <- tolower(ID)
 KEY <- tolower(KEY)
+CROSSTABS <- lapply(CROSSTABS, tolower)
+.unsafe <- intersect(unlist(CROSSTABS), c(ID, KEY))
+if (length(.unsafe)) {
+  .bd_stop("check-choices", "CROSSTABS names ", toString(.unsafe), ", the patient identifier or a column of KEY. ",
+           "A cross-tab prints its levels in the report, so it never takes an identifier.")
+}
 ```
 
 ```{r}
@@ -344,14 +352,21 @@ saveRDS(d, .built)
 )
 .record_file <- file.path(.datasets, paste0(DATASET_ID, ".build.yml"))
 yaml::write_yaml(.record, .record_file)
+# A draft render records the bytes it wrote, and a registering render registers only those bytes. Without it, the
+# second render re-cuts the master and could register data nobody read: a changed snapshot with VERIFY_MASTER off,
+# a changed cohort list, a derivation that differs run to run. It holds no key and no data value.
+.reviewed_file <- file.path(.datasets, paste0(DATASET_ID, ".reviewed.yml"))
+if (!REGISTER) yaml::write_yaml(list(built_sha256 = .record$built_sha256), .reviewed_file)
 ```
 
 ## Checks
 
 These checks read the dataset this render has just written. They report counts only: the rows behind a count,
 and the patients on one side of the rebuild only, are printed in the console, so run the chunks in an
-interactive session to read them. A check changes nothing and blocks nothing. A finding becomes a correction to
-the master, a rule in `EXCLUDE`, or a fix to the derive chunk; then render again, and register once the checks
+interactive session to read them. A finding changes nothing and blocks nothing. A check that cannot run,
+because a column it names is missing or a condition does not evaluate, stops the render, as a bad `EXCLUDE` rule
+does: a build whose checks did not run is never registered. A finding becomes a correction to the master, a rule
+in `EXCLUDE`, or a fix to the derive chunk; then render again, and register once the checks
 read right.
 
 ### What this rebuild changed
@@ -454,8 +469,18 @@ if (!is.null(.comparison)) {
 # Counts the author needs to see: a small cell is flagged, never suppressed.
 .small <- 5L
 if (!length(CROSSTABS)) cat("No cross-tabs are named in CROSSTABS.\n")
+.levels <- 20L
 for (.i in seq_along(CROSSTABS)) {
   .pair <- CROSSTABS[[.i]]
+  # The levels print in the report: a column the data lacks, or one with too many to be levels, stops here.
+  for (.col in .pair) {
+    if (!.col %in% names(d)) .bd_stop("crosstabs", "CROSSTABS names ", .col, ", which the built dataset does not have.")
+    .n <- length(unique(d[[.col]][!is.na(d[[.col]])]))
+    if (.n > .levels) {
+      .bd_stop("crosstabs", .col, " has ", .n, " distinct values, more than the ", .levels, " a cross-tab takes. ",
+               "That is the shape of an identifier, a date or free text, whose levels must not reach the report.")
+    }
+  }
   .tab <- tryCatch(hvtiRutilities::proc_freq(d, .pair, missing = TRUE),
                    error = function(e) .bd_stop("crosstabs", conditionMessage(e)))
   .tab <- .tab[, intersect(c(.pair, "Frequency", "Percent"), names(.tab)), drop = FALSE]
@@ -505,7 +530,7 @@ if (is.null(EVENT)) {
 # returns one count per check, which is all this report shows.
 if (length(CHECKS)) {
   .checked <- tryCatch(hvtiRutilities::proc_print(d, where = CHECKS, var = PRINT_COLS),
-                       error = function(e) .bd_stop("checks", conditionMessage(e)))
+                       error = function(e) .bd_stop("tbl-checks", conditionMessage(e)))
   knitr::kable(.checked, col.names = c("Check", "Rows matching", "Undecided (missing)"))
 } else {
   knitr::kable(data.frame(Check = "No checks are named in CHECKS."))
@@ -551,6 +576,12 @@ if (REGISTER) {
                ""
              },
              "move the study to this job's file deliberately.")
+  }
+  .reviewed <- if (file.exists(.reviewed_file)) yaml::read_yaml(.reviewed_file)$built_sha256
+  if (!identical(.reviewed, .record$built_sha256)) {
+    .bd_stop("register", if (is.null(.reviewed)) "no draft of this build has been rendered" else
+               "this build differs from the draft last rendered", ", so it was not registered. Render with ",
+             "REGISTER <- FALSE, read the Checks section, then render again with REGISTER <- TRUE.")
   }
   .register_step <- tryCatch({
     if (is.null(.registered$built)) {
