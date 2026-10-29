@@ -506,7 +506,7 @@ test_that("a rare factor level does not abort the bootstrap", {
   d$rare <- factor(ifelse(seq_len(nrow(d)) %in% c(3, 150), "yes", "no"))
   env <- vt_fit_first(data = d, labels = vt_fit_labels_all,
                       choices = utils::modifyList(vt_choices, list(PREDICTORS = c("xs", "x1", "g1", "rare"),
-                                                                 MIN_EVENTS_PER_FEATURE = 0)))
+                                                                   MIN_EVENTS_PER_FEATURE = 0)))
   vt_explain(env, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 50L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
   row <- env$.betas[startsWith(env$.betas$variable, "rare"), ]
   expect_match(row$variable, "yes vs no")
