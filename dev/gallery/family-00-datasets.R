@@ -1,5 +1,6 @@
 # Datasets family: bd, the job that cuts a study's dataset from a master
-# snapshot. Its prepare() makes the snapshot the way a real one is made, a SAS
+# snapshot, and dt, the check run on bd's cut before it is registered. bd's
+# prepare() makes the snapshot the way a real one is made, a SAS
 # dataset run through hvtiRdatabuild::snapshot_master(), so the parquet and its
 # .meta.json sidecar are the real formats. The "master" is the gallery's own
 # simulated cohort, read back from the study it is registered in, so it adds
@@ -56,6 +57,12 @@ gallery_family(
         "#   d$dead    <- as.integer(!is.na(d$dt_death))",
         "d$op_year <- as.integer(format(d$dt_surg, \"%Y\"))", sep = "\n"
       )
+    )),
+    # dt checks the working file bd just wrote, datasets/study_cohort.rds, its
+    # default DATASET_ID, against the registered dataset, and so renders after it.
+    "dt" = list(subject = "study", type = "check", choices = list(
+      "^ID  <- \"ccfid\"$" = "ID  <- \"patient_id\"",
+      "^CROSSTABS <- list\\(c\\(\"dead\", \"sex\"\\)\\)$" = "CROSSTABS <- list(c(\"dead\", \"female\"))"
     ))
   )
 )
