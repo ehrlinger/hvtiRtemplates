@@ -49,6 +49,7 @@ imputation, propensity scores and variables for one model (a `vars` job).
 ```{r}
 #| label: setup
 #| results: asis
+# unnumbered: defines .bd_table(), whose callers carry their own tbl- labels and captions
 # add_job() writes SUBJECT and TYPE from the file's name; a hand-edited
 # declaration that drifts from it stops the render in .job_setup().
 SUBJECT <- "study"
