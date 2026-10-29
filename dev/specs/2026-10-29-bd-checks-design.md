@@ -42,7 +42,9 @@ Three decisions, made by John on 2026-10-29:
    follow-up, and the named checks.
 2. **The standalone `dt` template is removed.** It shipped as `in-flight`, which carries no
    support promise, on the morning of the same day.
-3. **The checks sit above Register and only report.** No finding blocks registration.
+3. **The checks sit above Register and only report.** No finding blocks registration. (Refined
+   the same day after review, in section 4: an error in a check does stop the render, and a
+   registering render must match the build a draft reviewed.)
    `REGISTER` stays `FALSE` by default: the author reads the draft's checks, then sets
    `REGISTER <- TRUE` and renders again. That is the SAS loop as the stat programmers run it now.
 
@@ -78,6 +80,26 @@ Register -> Report -> about-run
   capture. That fits `bd` as it is: its report already shows no code, because its `EXCLUDE` rules
   may name patients.
 - **A check never writes,** and no finding changes what Register does.
+- **Cross-tab levels are values, so a cross-tab column is screened.** A cross-tab prints its
+  levels in the report. `check-choices` refuses a `CROSSTABS` column that is `ID` or a column of
+  `KEY`, and the `crosstabs` chunk refuses a column with more than 20 distinct non-missing values,
+  which is the shape of an identifier, a date or free text rather than a category. Both stops name
+  the column and never a value. The screen is what keeps "counts only" true; the comment above
+  `CROSSTABS` says so.
+- **A finding never blocks registration; an error does.** A finding is a count: rows matching a
+  check, a column that differs, a suspicious follow-up interval. A check that cannot run (a column
+  it names is missing, a condition does not evaluate, the comparison fails) is a broken job, and it
+  stops the render with `.bd_stop()`, as a bad `EXCLUDE` rule does. A build whose checks did not
+  run is never registered.
+- **The build registered is the build reviewed.** A render with `REGISTER <- FALSE` writes
+  `datasets/<DATASET_ID>.reviewed.yml` beside the working file, holding the `built_sha256` of the
+  bytes it wrote. A render with `REGISTER <- TRUE` re-cuts the master, and before registering it
+  compares its bytes' hash with that file. If they differ, or no draft has been rendered, it stops
+  in `register` before registering anything and says to render with `REGISTER <- FALSE` and review
+  that build. A registering render never writes `.reviewed.yml`, so repeating it cannot approve
+  bytes nobody reviewed. This closes the gap where a changed snapshot (with `VERIFY_MASTER <-
+  FALSE`), a changed cohort list or a nondeterministic derivation registers data the author never
+  saw. Like the build record, `.reviewed.yml` holds no key and no data value.
 - `bd` stays `in-flight`. The stat programmers' line-by-line review, still open, now covers the
   Checks section too, so the checks reach review with the rest of the build rather than after it.
 
@@ -119,12 +141,25 @@ revisit it then, with numbers.
   `dead` by `female`), and `gallery_missing()` no longer expects a `dt` job.
 - `check-roadmap-counts.py` passes with the `dt` row gone from the ledger.
 
-## 8. Open
+## 8. Review of this design, 2026-10-29
+
+John's review of PR #454 raised four findings, each settled by John the same day:
+
+1. Cross-tab levels reach the report, so "counts only" did not hold for an identifying or
+   free-text column. Settled by the screen in section 4. `dt` as released in 1.5.4 had the same gap.
+2. The second render re-cuts the master, so the registered bytes were not bound to the reviewed
+   ones. Settled by `.reviewed.yml` in section 4.
+3. A check error stopped the render, against the wording "blocks nothing". Settled by keeping the
+   stop and saying so: errors stop, findings never.
+4. Removing the catalog row left the generated roadmap stale and `check-roadmap-counts.py` red.
+   Settled in the plan: Task 3 regenerates the roadmap with `roadmap_render.py`.
+
+## 9. Open
 
 1. Whether `bd` should also take a second input to compare against, such as an earlier dated
    release or a `vars` output. This was open item 1 of the 2026-10-27 note, and it carries over.
 
-## 9. Out of scope
+## 10. Out of scope
 
 The meeting's other items: the `dc-eda` variable list, folding `gfup` into the EDA, composite
 uniqueness keys, and the render errors. The SAS workflow is being retired and stays as it is.
