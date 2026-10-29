@@ -174,7 +174,7 @@ EVENTS <- list()
 # decimal calendar year: whole years for the percent and count bars, the point
 # in the year for the continuous panels. Any other column is drawn as it is.
 # Set both when time 0 is not an operation, such as an enrollment date.
-# VARIABLES is NULL to draw every column, or the columns to draw, in page
+# VARIABLES is NULL to draw the VARIABLE_SET below, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
 # column here to draw it anyway. The job's ID is never drawn, even when named
@@ -194,7 +194,7 @@ EVENTS <- list()
 # panels: 0.5 lets a dense cohort read as a distribution rather than a blob.
 # MIGRATE-BEGIN: dc-eda-variables
 X_VAR <- "dt_surg"                 # EDIT: the reference date or year column
-VARIABLES <- NULL                  # EDIT: NULL draws every column, or name them
+VARIABLES <- NULL                  # EDIT: NULL draws VARIABLE_SET, or name them
 EXCLUDE <- character(0)
 GRID_NCOL <- 2L
 GRID_NROW <- 4L
@@ -202,6 +202,13 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dc-eda-variables
+# EDIT: what VARIABLES = NULL draws. "ods" draws the house descriptive list:
+# every variable the SAS ODS tables report, in their section order, and only
+# the ones this dataset has. The report lists the columns it leaves out, so a
+# study's own variables are one name away. "all" draws every column, as
+# dc-eda did before this choice existed. The list is
+# hvtiRtemplates:::.ods_groups(), the same one dc-tables starts from.
+VARIABLE_SET <- "ods"
 X_LABEL <- "Year of operation"     # EDIT: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 
 # EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
@@ -303,6 +310,9 @@ if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
   stop("VARIABLES must be NULL or name distinct columns.", call. = FALSE)
 }
 if (!column_names(EXCLUDE)) stop("EXCLUDE must name distinct columns.", call. = FALSE)
+if (!is.character(VARIABLE_SET) || length(VARIABLE_SET) != 1L || !VARIABLE_SET %in% c("ods", "all")) {
+  stop("VARIABLE_SET must be \"ods\" or \"all\".", call. = FALSE)
+}
 positive_whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x > 0 && x == floor(x)
 for (value in list(GRID_NCOL, GRID_NROW, UNIQUE_LIMIT)) {
   if (!positive_whole(value)) stop("Grid dimensions and UNIQUE_LIMIT must be positive whole numbers.", call. = FALSE)
@@ -352,6 +362,21 @@ looks_like_id <- function(v, job_key = TRUE) {
 }
 if (is.null(VARIABLES)) {
   candidates <- setdiff(names(d), c(X_VAR, EXCLUDE))
+  if (VARIABLE_SET == "ods") {
+    # The list's order, which is its section order, is the page order.
+    ods <- unlist(hvtiRtemplates:::.ods_groups(), use.names = FALSE)
+    outside <- setdiff(candidates, ods)
+    candidates <- intersect(ods, candidates)
+    if (!length(candidates)) {
+      stop("None of the house ODS list's columns is in this dataset. Set VARIABLE_SET <- \"all\", or name the ",
+           "columns in VARIABLES.", call. = FALSE)
+    }
+    cat(length(candidates), "of the", length(ods), "columns on the house ODS list are in this dataset.\n")
+    if (length(outside)) {
+      cat("Not drawn, as columns outside the house ODS list (name them in VARIABLES, or set VARIABLE_SET <- \"all\"):",
+          paste(outside, collapse = ", "), "\n")
+    }
+  }
   left_out <- candidates[looks_like_id(candidates)]
   VARIABLES <- setdiff(candidates, left_out)
   if (length(left_out)) {

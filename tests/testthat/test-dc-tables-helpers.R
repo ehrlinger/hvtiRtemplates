@@ -178,3 +178,19 @@ test_that("the commented GROUPS example uncomments to a grouping the template ac
   # The example sits above the block migrate_job() rewrites, so a migrated job keeps it.
   expect_lt(end, grep("^# MIGRATE-BEGIN: dc-tables-config$", template_lines))
 })
+
+test_that("the commented GROUPS example is the house ODS list dc-eda draws", {
+  # dc-tables keeps an inline copy a study author edits by deleting rows; the
+  # CSV behind .ods_groups() is the source. Edit both, or this fails.
+  begin <- grep("^# GROUPS-EXAMPLE-BEGIN$", template_lines)
+  end <- grep("^# GROUPS-EXAMPLE-END$", template_lines)
+  env <- new.env()
+  eval(parse(text = substring(template_lines[(begin + 1L):(end - 1L)], 3L)), envir = env)
+  expect_identical(env$GROUPS, hvtiRtemplates:::.ods_groups())
+})
+
+test_that(".ods_groups() keeps the columns a dataset has, and drops a section left empty", {
+  groups <- hvtiRtemplates:::.ods_groups(c("AGE", "female", "dead", "not_a_column"))
+  expect_identical(groups, list(Demography = c("female", "age"), `Time-related Outcomes` = "dead"))
+  expect_length(hvtiRtemplates:::.ods_groups(character()), 0L)
+})
