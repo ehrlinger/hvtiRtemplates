@@ -1,5 +1,47 @@
 # Changelog
 
+## hvtiRtemplates 1.5.4
+
+- New `dt` template, `00_datasets/dt.qmd`: the data check a programmer
+  runs after a `bd` build and before registering it, scaffolded as
+  `dt.<subject>.<type>.qmd`. It reads the working file `bd` writes,
+  `datasets/<DATASET_ID>.rds`, and checks it in four sections: what the
+  rebuild changed against the version registered now, compared by value
+  and joined on `KEY` through
+  [`hvtiRdatabuild::compare_built()`](https://ehrlinger.github.io/hvtiRdatabuild/reference/compare_built.html),
+  so a rebuild that keeps the shape and changes every event indicator is
+  reported, not passed; cross-tabs with a missing value as a level of
+  its own; the follow-up columns through
+  [`followup_check()`](https://ehrlinger.github.io/hvtiRutilities/reference/followup_check.html);
+  and the study’s named checks, written `condition ~ "Label"` as `bd`’s
+  `EXCLUDE` is. A comparison build, under a `DATASET_ID` that is not the
+  study’s dataset, is compared against the study’s dataset and the
+  report says so. The report holds counts only: the rows behind a check
+  and the patients on one side of a rebuild go to the console, never
+  into the HTML. A check never writes. It needs
+  [`hvtiRutilities::proc_print()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_print.html)
+  (hvtiRutilities#262) and hvtiRdatabuild 0.3.3. Design:
+  `dev/specs/2026-10-27-dt-datacheck-design.md`.
+
+- New template `hs-score` scores each start/stop segment with the
+  time-varying `hm` model at the segment’s own start, as the SAS
+  `hs.*.mort_score.tvc` jobs do: `scr_haz` is 100 times the hazard
+  there, and `scr_mort` is 100 times one minus the survival, one row per
+  segment
+  ([\#436](https://github.com/ehrlinger/hvtiRtemplates/issues/436)). It
+  saves a row and patient number, never the identifier, and stops on a
+  model fitted with one row per patient.
+
+- `hp`, `hs-setup` and `hs-concordance` still stop on a start/stop fit,
+  and now say why: SAS has no start/stop counterpart for their
+  predictions. `hs-setup`’s message points to `hs-score`.
+
+- The `dt` template now checks for hvtiRutilities 1.5.17 or later, the
+  first release with
+  [`proc_print()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_print.html),
+  which its named checks call. It had checked for the function alone
+  while that release was pending.
+
 ## hvtiRtemplates 1.5.3
 
 - `rhf-fit` and `rhf-explain` carry the lessons of their first real run,
