@@ -59,9 +59,10 @@ read_job_data(
   name for a function stays a name. Such a value must be a vector,
   `NULL`, a symbol or a call; a data frame, list, environment or S4
   object stops, since it would be saved whole. A condition that mentions
-  the `id` column or a column named `MRN` or `eMRN` (ignoring case),
-  directly or as `.data$x` or `.data[["x"]]`, stops before any row is
-  filtered, because each condition is saved, values included, in the
+  the `id` column, a column named `MRN` or `eMRN` (ignoring case), or an
+  SSN or `masterid` column dropped below, in this dataset or a joined
+  one, directly or as `.data$x` or `.data[["x"]]`, stops before any row
+  is filtered, because each condition is saved, values included, in the
   job's output. Exclude those patients in the dataset build, or with an
   hvtiRdatabuild analysis set, instead. A value from outside the data is
   fixed in before this check, so `.data[[nm]]` is judged by the column
@@ -72,10 +73,10 @@ read_job_data(
   as that lookup. Values are checked as well as names, after every name
   check: the check covers literal values (including a vector fixed in
   from outside) of five or more characters that equal a value of the
-  identifier, `MRN` or `eMRN` columns in the data, and folds only
-  arithmetic, [`c()`](https://rdrr.io/r/base/c.html), `paste`/`paste0`
-  and numeric or character coercion of constants (such as
-  `4730000000 + 1`) to check their result. So a wrapper function or a
+  identifier, `MRN`, `eMRN`, SSN or `masterid` columns in the data, and
+  folds only arithmetic, [`c()`](https://rdrr.io/r/base/c.html),
+  `paste`/`paste0` and numeric or character coercion of constants (such
+  as `4730000000 + 1`) to check their result. So a wrapper function or a
   copy of the identifier under another name is caught when it is
   compared with such a value. The check never calls any other function:
   a value produced by any other call, or computed from a data column, as
@@ -234,14 +235,17 @@ so a downstream job can rebuild the same rows:
 
 Direct identifiers are dropped unless one is the identifier, from a
 joined dataset too: columns named, ignoring case, `ccfid`, `MRN`,
-`eMRN`, a Social Security number (`ssn`, `soc_sec`, `social_security`,
-`pt_ssn`), and, held as text, a patient name (`name`, `first_name`,
-`pt_name`, `surname`) or contact details (`address`, `street`, `phone`,
-`email`). Any other column whose values are shaped like Social Security
-numbers is dropped too, and the record notes it by name; a column named
-as a date or time is not read for that shape. A KEY column is never
-dropped. The record lists every column dropped. An explicit `id` or
-`key` matches its column ignoring case, because
+`eMRN`, `masterid` (`masterid0`, `masterid1`), a Social Security number
+(`ssn`, `soc_sec`, `social_security`, `pt_ssn`, or one with a source
+qualifier such as `ssn_base` or `ssn_num_base`, unless every value is an
+indicator's, as in a 0/1 `ssn_missing`), and, held as text, a patient
+name (`name`, `first_name`, `pt_name`, `surname`) or contact details
+(`address`, `street`, `phone`, `email`). Any other column whose values
+are shaped like Social Security numbers is dropped too, and the record
+notes it by name; a column named as a date or time is not read for that
+shape. A KEY column is never dropped. The record lists every column
+dropped. An explicit `id` or `key` matches its column ignoring case,
+because
 [`hvtiRutilities::read_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html)
 lowercases column names. Identifier, key and date values are not
 printed: the record holds counts, and a `where` condition that mentions
@@ -269,7 +273,7 @@ written.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE)
-#> Study: /tmp/Rtmpn3D6bN/job-data-example
+#> Study: /tmp/Rtmp4awNwE/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -282,7 +286,7 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/Rtmpn3D6bN/job-data-example
+#> Study: /tmp/Rtmp4awNwE/job-data-example
 #> 
 #> [x] _study.yml — study: Example
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
