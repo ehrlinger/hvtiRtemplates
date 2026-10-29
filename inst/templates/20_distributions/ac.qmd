@@ -535,13 +535,20 @@ km_views <- function(fit) {
   # One curve is black. Strata never take red or blue, which mean the event and
   # censored in every house figure, so no stratum reads as the deaths.
   cols <- hvtiRtemplates:::.group_colors(counts$stratum)
+  # Color is never the only channel: each stratum also has its own line type and
+  # point shape, so the curves still read apart printed in grayscale.
+  ltys <- hvtiRtemplates:::.group_linetypes(counts$stratum)
+  shps <- hvtiRtemplates:::.group_shapes(counts$stratum)
   view <- function(data, y, ylab) {
-    ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum)) +
+    ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum,
+                                       linetype = .data$stratum, shape = .data$stratum)) +
       (if (isTRUE(STEPS)) ggplot2::geom_step() else ggplot2::geom_line()) +
-      ggplot2::geom_point(data = data[data$event, , drop = FALSE], size = 1.2, show.legend = FALSE) +
+      ggplot2::geom_point(data = data[data$event, , drop = FALSE], size = 1.2) +
       # The limits keep an empty panel (no events, so no cumulative hazard) from warning.
       ggplot2::scale_color_manual(values = cols, limits = names(cols)) +
-      ggplot2::labs(x = "Years", y = ylab, color = NULL) +
+      ggplot2::scale_linetype_manual(values = ltys, limits = names(ltys)) +
+      ggplot2::scale_shape_manual(values = shps, limits = names(shps)) +
+      ggplot2::labs(x = "Years", y = ylab, color = NULL, linetype = NULL, shape = NULL) +
       hvtiPlotR::theme_hv_manuscript(base_size = 12)
   }
   log_x <- ggplot2::scale_x_log10()
@@ -588,9 +595,17 @@ km_figure <- function(strata = NULL) {
   if (!is.null(strata)) hv$data$strata <- factor(as.character(hv$data$strata), levels = levels(dd[[strata]]))
   # The same colors as the page above: black for one curve, and no stratum in red or blue.
   cols <- hvtiRtemplates:::.group_colors(if (is.null(strata)) "All" else levels(dd[[strata]]))
+  ltys <- hvtiRtemplates:::.group_linetypes(names(cols))
+  shps <- hvtiRtemplates:::.group_shapes(names(cols))
+  # The stratum is mapped to line type at the plot, so hv_survival()'s own curve layer
+  # takes it too, and to shape on the event points below: the curves read apart in grayscale.
   curve <- plot(hv, conf_int = isTRUE(CI_BAND)) +
+    ggplot2::aes(linetype = .data$strata) +
     ggplot2::scale_color_manual(values = cols) +
     ggplot2::scale_fill_manual(values = cols) +
+    # The limits keep a cohort with no event, so no event points, from warning.
+    ggplot2::scale_linetype_manual(values = ltys, limits = names(ltys)) +
+    ggplot2::scale_shape_manual(values = shps, limits = names(shps)) +
     ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
@@ -598,7 +613,8 @@ km_figure <- function(strata = NULL) {
   # changed in place, and an hvtiPlotR that draws no step layer is left as it draws.
   if (!isTRUE(STEPS)) for (.l in curve$layers) if (inherits(.l$geom, "GeomStep")) .l$geom <- ggplot2::GeomLine
   # A point at each event, so a reader sees where the estimate moves and how often.
-  curve <- curve + ggplot2::geom_point(data = hv$data[hv$data$n.event > 0, , drop = FALSE], size = 1.2, show.legend = FALSE)
+  curve <- curve + ggplot2::geom_point(ggplot2::aes(shape = .data$strata), data = hv$data[hv$data$n.event > 0, , drop = FALSE],
+                                       size = 1.2)
   # Bars at the chosen times, from the same life table as the horizon tables, so a
   # bar and the table row for its time give the same limits.
   if (!is.null(CI_TIMES) && (!is.numeric(CI_TIMES) || anyNA(CI_TIMES) || any(CI_TIMES < 0))) {
@@ -639,7 +655,10 @@ km_figure <- function(strata = NULL) {
     )
   }
   # The house theme drops the legend; a stratified figure needs it to tell the curves apart.
-  if (!is.null(strata)) curve <- curve + ggplot2::theme(legend.position = "top") + ggplot2::labs(color = strata, fill = strata)
+  if (!is.null(strata)) {
+    curve <- curve + ggplot2::theme(legend.position = "top") +
+      ggplot2::labs(color = strata, fill = strata, linetype = strata, shape = strata)
+  }
   hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(risk))
 }
 ```

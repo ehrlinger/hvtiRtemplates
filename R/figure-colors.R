@@ -21,3 +21,19 @@
     }
   )
 }
+
+# Line types and point shapes for the same groups, so color is never the only channel and
+# the groups still read apart on a grayscale printer: the first group, or a single curve,
+# is solid with a filled circle. Past six groups the sequence repeats.
+#
+# Returns a vector named by `levels`, for a manual scale's `values`.
+.group_linetypes <- function(levels) {
+  levels <- as.character(levels)
+  types <- c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash")
+  stats::setNames(rep_len(types, length(levels)), levels)
+}
+
+.group_shapes <- function(levels) {
+  levels <- as.character(levels)
+  stats::setNames(rep_len(c(16L, 17L, 15L, 3L, 4L, 8L), length(levels)), levels)
+}

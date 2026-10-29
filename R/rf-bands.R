@@ -385,7 +385,8 @@
 
 # One panel per predictor: the full forest's partial with a ribbon, or error bars, for
 # a continuous predictor, and a point with error bars at each level of a categorical
-# one. A survival forest's horizons share a color in line, band and bar.
+# one. A survival forest's horizons share a color in line, band and bar, and differ by line type
+# and point shape as well, so they still read apart printed in grayscale.
 .plot_partial_bands <- function(bands, subratio, style, at, ncol) {
   sym <- rlang::sym
   panels <- lapply(bands, function(band) {
@@ -394,14 +395,15 @@
     timed <- !all(is.na(fr$time))
     fr$time <- factor(fr$time)
     line$time <- factor(line$time)
-    color <- if (timed) ggplot2::aes(color = !!sym("time"), group = !!sym("time"))
+    color <- if (timed) ggplot2::aes(color = !!sym("time"), linetype = !!sym("time"), shape = !!sym("time"), group = !!sym("time"))
     dodge <- ggplot2::position_dodge(width = if (identical(band$type, "continuous")) diff(range(line$x)) / 40 else 0.4)
     p <- ggplot2::ggplot(fr, ggplot2::aes(x = !!sym("x"), y = !!sym("hat"))) + color
-    # A layer is drawn in the legend only if it is the empty line added below, the same in every panel,
+    # A layer is drawn in the legend only if it is the empty line or point added below, the same in every panel,
     # because patchwork's guides = "collect" merges the panels' Time keys only when they are identical.
     if (identical(band$type, "categorical")) {
+      # Bars stay solid: a short dashed bar is hard to read, and the point marks the horizon.
       p <- p + ggplot2::geom_errorbar(ggplot2::aes(ymin = !!sym("lower"), ymax = !!sym("upper")), width = 0.2,
-                                      position = dodge, show.legend = FALSE) +
+                                      linetype = "solid", position = dodge, show.legend = FALSE) +
         ggplot2::geom_point(size = 2, position = dodge, show.legend = FALSE)
     } else if (identical(style, "ribbon")) {
       # Only the ribbon takes the horizon as a fill, so no fill key joins the legend.
@@ -415,12 +417,15 @@
     } else {
       p <- p + ggplot2::geom_line(data = line, show.legend = FALSE) +
         ggplot2::geom_errorbar(ggplot2::aes(ymin = !!sym("lower"), ymax = !!sym("upper")),
-                               width = diff(range(line$x)) / 30, position = dodge, show.legend = FALSE)
+                               width = diff(range(line$x)) / 30, linetype = "solid", position = dodge, show.legend = FALSE)
     }
     if (timed) {
       cols <- .group_colors(levels(fr$time))
-      p <- p + ggplot2::geom_line(data = fr[0, ], show.legend = TRUE) +
-        ggplot2::scale_color_manual(values = cols, name = "Time", labels = function(b) format(round(as.numeric(b), 2)))
+      label <- function(b) format(round(as.numeric(b), 2))
+      p <- p + ggplot2::geom_line(data = fr[0, ], show.legend = TRUE) + ggplot2::geom_point(data = fr[0, ], show.legend = TRUE) +
+        ggplot2::scale_color_manual(values = cols, name = "Time", labels = label) +
+        ggplot2::scale_linetype_manual(values = .group_linetypes(levels(fr$time)), name = "Time", labels = label) +
+        ggplot2::scale_shape_manual(values = .group_shapes(levels(fr$time)), name = "Time", labels = label)
       if (identical(band$type, "continuous") && identical(style, "ribbon")) {
         p <- p + ggplot2::scale_fill_manual(values = cols, name = "Time", guide = "none")
       }

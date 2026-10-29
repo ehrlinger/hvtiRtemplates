@@ -396,6 +396,30 @@ test_that("a page mixing continuous and categorical survival panels shows one Ti
   }
 })
 
+test_that("the horizons differ by line type and point shape as well as color, and bars stay solid", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  skip_if_not_installed("hvtiPlotR")
+  bands <- list(v = fake_band(times = c(30, 90)), w = fake_band("categorical", times = c(30, 90)))
+  bands$w$var <- "w"
+  built <- function(p) {
+    b <- ggplot2::ggplot_build(p)
+    stats::setNames(b$data, vapply(p$layers, function(l) class(l$geom)[[1]], ""))
+  }
+  for (style in c("ribbon", "bars")) {
+    p <- hvtiRtemplates:::.plot_partial_bands(bands, 0.3, style, list(v = c(1.5, 2.5)), ncol = 2)
+    line <- built(p[[1]])$GeomLine
+    expect_length(unique(line$linetype), 2L)
+    expect_true("solid" %in% line$linetype)
+    points <- built(p[[2]])
+    expect_length(unique(points$GeomPoint$shape), 2L)
+    expect_identical(unique(points$GeomErrorbar$linetype), "solid")
+    # The Time legend shows the line types and shapes it is read by.
+    expect_identical(nrow(ggplot2::get_guide_data(p[[1]], "linetype")), 2L)
+    expect_identical(nrow(ggplot2::get_guide_data(p[[2]], "shape")), 2L)
+  }
+})
+
 test_that("the Time legend labels the horizons to two decimals, as the partial figure does", {
   skip_if_not_installed("ggplot2")
   skip_if_not_installed("patchwork")

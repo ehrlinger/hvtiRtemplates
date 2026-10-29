@@ -299,6 +299,35 @@ test_that("one curve is black, and no stratum takes the event's red or censored 
   expect_identical(sort(views), sort(three))
 })
 
+test_that("strata differ by line type and point shape as well as color, so they read apart in grayscale", {
+  skip_ac()
+  local_child_chunks()
+  d <- hazard_data()
+  d$grp3 <- rep(c(1, 2, 10), length.out = nrow(d))
+  env <- ac_run(d, list(STRATA = "grp3"))
+  # The manuscript figure: hv_survival()'s own curve layer and the event points.
+  curve <- env$km_figure("grp3")[[1]]
+  layers <- built_layers(curve)
+  expect_length(unique(layers$GeomLine$linetype), 3L)
+  expect_true("solid" %in% layers$GeomLine$linetype)
+  expect_length(unique(layers$GeomPoint$shape), 3L)
+  # The legend carries the line types too, merged into the one stratum key.
+  expect_identical(nrow(ggplot2::get_guide_data(curve, "linetype")), 3L)
+  expect_identical(nrow(ggplot2::get_guide_data(curve, "shape")), 3L)
+  # One legend, not a color key beside a line-type key beside a shape key.
+  withr::local_pdf(NULL)
+  g <- ggplot2::ggplotGrob(curve)
+  box <- g$grobs[[which(grepl("guide-box", g$layout$name) & vapply(g$grobs, inherits, NA, "gtable"))[1]]]
+  expect_identical(sum(box$layout$name == "guides"), 1L)
+  # The page of views: its curves and points.
+  views <- ggplot2::ggplot_build(env$km_views(env$strata_fits$grp3)[[1]])$data
+  expect_length(unique(views[[1]]$linetype), 3L)
+  expect_length(unique(views[[2]]$shape), 3L)
+  # A single curve is solid.
+  expect_identical(unique(built_layers(env$km_figure()[[1]])$GeomLine$linetype), "solid")
+  expect_identical(unique(ggplot2::ggplot_build(env$km_views(env$km)[[1]])$data[[1]]$linetype), "solid")
+})
+
 test_that("bars at close early times on a long axis stay at their own time and after zero", {
   skip_ac()
   local_child_chunks()
