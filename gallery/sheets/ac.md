@@ -69,5 +69,5 @@ and it records the job's provenance beside the report.
   it finds the file:
   `add_job("hp", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.3 · built 2026-10-28.
+Generated from the template by hvtiRtemplates, 1.5.4 · built 2026-10-29.
 The template holds the details; this sheet is its outline.

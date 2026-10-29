@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-28 09:28
+2026-10-29 10:42
 
 Explains the forest the `rhf-fit` job in this set saved: how well it
 ranks patients over follow-up, their hazard curves, and which markers
@@ -63,7 +63,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.3
+hvtiRtemplates 1.5.4
 
 ## Study choices
 
@@ -512,8 +512,8 @@ if (length(PD_VARS)) {
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-28 09:28:43 EDT |
-|  | Ended | 2026-10-28 09:28:45 EDT |
+| Run | Started | 2026-10-29 10:41:57 EDT |
+|  | Ended | 2026-10-29 10:41:59 EDT |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -522,13 +522,13 @@ if (length(PD_VARS)) {
 |  | Template | rhf.explain |
 |  | Subject | event |
 |  | Type | rhf |
-|  | hvtiRtemplates | 1.5.3 |
-| Dataset `intervals` | Version file | intervals_20261028.parquet |
-|  | Version date | 2026-10-28 |
+|  | hvtiRtemplates | 1.5.4 |
+| Dataset `intervals` | Version file | intervals_20261029.parquet |
+|  | Version date | 2026-10-29 |
 |  | Source file | intervals.rds |
 |  | sha256 | f3770c09d63a |
 |  | Manifest | current |
-| Upstream | Handoff | `event-rhf/rhf.rds` (forest), rendered 2026-10-28 09:28:34 -0400, data intervals_20261028.parquet |
+| Upstream | Handoff | `event-rhf/rhf.rds` (forest), rendered 2026-10-29 10:41:50 -0400, data intervals_20261029.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

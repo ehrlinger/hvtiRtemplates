@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-28 09:28
+2026-10-29 10:41
 
 Gallery job on the synthetic intervals: the hazard of the simulated
 event, from one time-varying marker (xtd) and three baseline markers.
@@ -77,8 +77,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `intervals` `intervals_20261028.parquet`, dated
-2026-10-28 · rendered by gallery on gallery · hvtiRtemplates 1.5.3
+**final** · data `intervals` `intervals_20261029.parquet`, dated
+2026-10-29 · rendered by gallery on gallery · hvtiRtemplates 1.5.4
 
 ## Study choices
 
@@ -253,7 +253,7 @@ if (length(.chr)) {
 
 | Data                |                                                  |
 |:--------------------|:-------------------------------------------------|
-| Source              | dataset `intervals` (intervals_20261028.parquet) |
+| Source              | dataset `intervals` (intervals_20261029.parquet) |
 | Rows read           | 471                                              |
 | ID                  | `patient_id`                                     |
 | Identifiers dropped | none                                             |
@@ -513,9 +513,9 @@ hvtiRtemplates:::.owner_only(set_path("estimates", "rhf.rds"), saveRDS(forest, s
 
 | Group               | Item             | Value                      |
 |:--------------------|:-----------------|:---------------------------|
-| Run                 | Started          | 2026-10-28 09:28:34 EDT    |
-|                     | Ended            | 2026-10-28 09:28:37 EDT    |
-|                     | Duration         | 3 s                        |
+| Run                 | Started          | 2026-10-29 10:41:50 EDT    |
+|                     | Ended            | 2026-10-29 10:41:53 EDT    |
+|                     | Duration         | 2 s                        |
 |                     | Status           | final                      |
 |                     | Rendered by      | gallery                    |
 |                     | Host             | gallery                    |
@@ -523,9 +523,9 @@ hvtiRtemplates:::.owner_only(set_path("estimates", "rhf.rds"), saveRDS(forest, s
 |                     | Template         | rhf.fit                    |
 |                     | Subject          | event                      |
 |                     | Type             | rhf                        |
-|                     | hvtiRtemplates   | 1.5.3                      |
-| Dataset `intervals` | Version file     | intervals_20261028.parquet |
-|                     | Version date     | 2026-10-28                 |
+|                     | hvtiRtemplates   | 1.5.4                      |
+| Dataset `intervals` | Version file     | intervals_20261029.parquet |
+|                     | Version date     | 2026-10-29                 |
 |                     | Source file      | intervals.rds              |
 |                     | Rows kept        | 471 rows on 150 patients   |
 |                     | WHERE            | none                       |

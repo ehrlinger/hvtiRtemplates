@@ -51,8 +51,8 @@ shows three ways to find them.
 8.  **Selection**: reads `hm-selection.rds`, which the companion hm
     selection runner writes, when it is there.
 9.  **Calibration**
-10. **Save**: saves `hm.rds`, which **hs-setup** reads and
-    **hs-concordance** can read.
+10. **Save**: saves `hm.rds`, which **hs-score** and **hs-setup** read
+    and **hs-concordance** can read.
 
 ## Run it
 
@@ -70,6 +70,10 @@ and it records the job's provenance beside the report.
 
 ## Where to go next
 
+- **hs-score** reads what this job saves (`hm.rds`). Add it to the same
+  set, with this job's `subject` and `type`, because that shared pair is
+  how it finds the file:
+  `add_job("hs.score", subject = "<subject>", type = "<type>")`.
 - **hs-setup** reads what this job saves (`hm.rds`). Add it to the same
   set, with this job's `subject` and `type`, because that shared pair is
   how it finds the file:
@@ -78,5 +82,5 @@ and it records the job's provenance beside the report.
   `EDIT:` name the file and its set. Add it with
   `add_job("hs.concordance", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.3 · built 2026-10-28.
+Generated from the template by hvtiRtemplates, 1.5.4 · built 2026-10-29.
 The template holds the details; this sheet is its outline.

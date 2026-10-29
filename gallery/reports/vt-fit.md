@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-28 09:29
+2026-10-29 10:42
 
 Gallery job on the synthetic cohort: mitral repair against replacement,
 and freedom from reintervention to eight years.
@@ -76,8 +76,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.3
+**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.4
 
 ## Study choices
 
@@ -237,7 +237,7 @@ knitr::kable(.counts)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261028.parquet) |
+| Source              | dataset `built` (built_20261029.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -995,9 +995,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-28 09:29:30 EDT  |
-|                 | Ended            | 2026-10-28 09:29:44 EDT  |
-|                 | Duration         | 14 s                     |
+| Run             | Started          | 2026-10-29 10:42:35 EDT  |
+|                 | Ended            | 2026-10-29 10:42:47 EDT  |
+|                 | Duration         | 12 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -1005,9 +1005,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 |                 | Template         | vt.fit                   |
 |                 | Subject          | reint                    |
 |                 | Type             | vt                       |
-|                 | hvtiRtemplates   | 1.5.3                    |
-| Dataset `built` | Version file     | built_20261028.parquet   |
-|                 | Version date     | 2026-10-28               |
+|                 | hvtiRtemplates   | 1.5.4                    |
+| Dataset `built` | Version file     | built_20261029.parquet   |
+|                 | Version date     | 2026-10-29               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

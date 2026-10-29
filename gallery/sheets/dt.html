@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>dt: Data check | run sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root { --ground: #F5F7F4; --panel: #FFFFFF; --ink: #1B2420; --muted: #5A6962; --rule: #D8DED9; --accent: #1D6C75;
+          --accent-soft: #E3EFEF; --sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+          --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; --ground: #121816;
+          --panel: #19201D; --ink: #E4EBE7; --muted: #9AA9A2; --rule: #2C3632; --accent: #6FB9C1; --accent-soft: #1C3033; } }
+  :root[data-theme="dark"] { color-scheme: dark; --ground: #121816; --panel: #19201D; --ink: #E4EBE7; --muted: #9AA9A2;
+          --rule: #2C3632; --accent: #6FB9C1; --accent-soft: #1C3033; }
+  body { background: var(--ground); color: var(--ink); font: 16px/1.6 var(--sans); margin: 0; padding: 32px 20px 48px; }
+  main { max-width: 74ch; margin: 0 auto; }
+  nav { font-size: 14px; margin-bottom: 20px; }
+  a { color: var(--accent); }
+  h1 { font-size: 28px; line-height: 1.25; margin: 0 0 4px; font-weight: 600; }
+  h1 + .kind { color: var(--muted); font: 500 12px/1.6 var(--mono); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 24px; }
+  h2 { font-size: 19px; font-weight: 600; margin: 32px 0 8px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  li { margin: 6px 0; }
+  li ul { margin: 4px 0; }
+  code { font: 0.88em/1.4 var(--mono); background: var(--accent-soft); padding: 1px 4px; border-radius: 3px; overflow-wrap: anywhere; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 13px; }
+  @media (max-width: 520px) { body { padding: 20px 16px 40px; font-size: 15px; } h1 { font-size: 23px; } }
+</style>
+</head>
+<body>
+<main>
+<nav><a href="../index.html">&larr; The template gallery</a></nav>
+<h1>dt: Data check</h1>
+<p class="kind">Run sheet</p>
+<h2>What it does</h2>
+<p>Checks the working file a bd job writes, before it is registered: what the rebuild changed against the version registered now, cross-tabs, follow-up and named checks, with counts in the report and the rows behind them in the console only. <a href="../reports/dt.html">See the report it produces</a> on the gallery's synthetic study.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li><strong>A study.</strong> The job runs inside a study folder set up with <code>_study.yml</code>. <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html">Start a new study</a> shows how.</li>
+<li><strong>Packages:</strong> <code>hvtiRdatabuild</code> (&gt;= 0.3.3), <code>hvtiRutilities</code> (&gt;= 1.5.17). The job checks each floor when it starts, so an older library stops it at the top rather than partway through.</li>
+</ul>
+<h2>Outline</h2>
+<p>These are the job's own sections, in order. The detail lives in the template: the comments at each <code>EDIT:</code> marker say what to set and why, and <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-what-you-have-to-change">Work a job</a> shows three ways to find them.</p>
+<ol>
+<li><strong>Above the first section</strong>: 1 choice marked <code>EDIT:</code>.</li>
+<li><strong>Study choices</strong>: 5 choices marked <code>EDIT:</code>.</li>
+<li><strong>What this rebuild changed</strong></li>
+<li><strong>Cross-tabs</strong></li>
+<li><strong>Follow-up</strong></li>
+<li><strong>Named checks</strong></li>
+</ol>
+<h2>Run it</h2>
+<p><strong>Render a draft as you go.</strong> <code>render_job(job)</code> runs the whole job in a clean R session and writes the report beside it. Render early and often: while any <code>EDIT:</code> marker is left, the report opens with a DRAFT banner listing them, and its numbers are not a result. <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#render-as-you-go">Work a job</a> explains why to render rather than run chunks by hand.</p>
+<p><strong>Then the final.</strong> Once no marker is left, <code>render_job(job, final = TRUE)</code> renders the accepted result. It refuses an open marker, a skipped chunk, <code>stop_here()</code> and unregistered data, and it records the job's provenance beside the report.</p>
+<footer>Generated from the template by hvtiRtemplates, 1.5.4 · built 2026-10-29. The template holds the details; this sheet is its outline.</footer>
+</main>
+</body>
+</html>

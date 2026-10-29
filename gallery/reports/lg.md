@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-28 09:18
+2026-10-29 10:31
 
 An `lg` job decides which scale a covariate should enter a model on,
 before it goes into `PREDICTORS` in an `lm` job. A model of an event
@@ -60,8 +60,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.3
+**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.4
 
 ## Study choices
 
@@ -186,7 +186,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261028.parquet) |
+| Source              | dataset `built` (built_20261029.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -512,8 +512,8 @@ PREDICTORS <- c("age", "nyha_pr")
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-28 09:18:48 EDT  |
-|                 | Ended            | 2026-10-28 09:18:51 EDT  |
+| Run             | Started          | 2026-10-29 10:31:01 EDT  |
+|                 | Ended            | 2026-10-29 10:31:04 EDT  |
 |                 | Duration         | 3 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -522,9 +522,9 @@ PREDICTORS <- c("age", "nyha_pr")
 |                 | Template         | lg                       |
 |                 | Subject          | dead                     |
 |                 | Type             | calibration              |
-|                 | hvtiRtemplates   | 1.5.3                    |
-| Dataset `built` | Version file     | built_20261028.parquet   |
-|                 | Version date     | 2026-10-28               |
+|                 | hvtiRtemplates   | 1.5.4                    |
+| Dataset `built` | Version file     | built_20261029.parquet   |
+|                 | Version date     | 2026-10-29               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

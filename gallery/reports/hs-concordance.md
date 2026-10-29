@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-28 09:20
+2026-10-29 10:32
 
 An `hs-concordance` job predicts **every patient through every treatment
 group’s model**. Each group’s risk-factor model was fitted by its own
@@ -62,8 +62,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.3
+**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.4
 
 ## Study choices
 
@@ -165,7 +165,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261028.parquet) |
+| Source              | dataset `built` (built_20261029.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -635,9 +635,9 @@ saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-28 09:20:19 EDT |
-|  | Ended | 2026-10-28 09:20:19 EDT |
-|  | Duration | 0 s |
+| Run | Started | 2026-10-29 10:32:52 EDT |
+|  | Ended | 2026-10-29 10:32:53 EDT |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -645,17 +645,17 @@ saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 |  | Template | hs.concordance |
 |  | Subject | dead |
 |  | Type | approach |
-|  | hvtiRtemplates | 1.5.3 |
-| Dataset `built` | Version file | built_20261028.parquet |
-|  | Version date | 2026-10-28 |
+|  | hvtiRtemplates | 1.5.4 |
+| Dataset `built` | Version file | built_20261029.parquet |
+|  | Version date | 2026-10-29 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-surgical/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-10-28 09:19:54 -0400, data built_20261028.parquet |
+|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-10-29 10:32:24 -0400, data built_20261029.parquet |
 |  | Handoff | `dead-transcatheter/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-10-28 09:20:10 -0400, data built_20261028.parquet |
+|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-10-29 10:32:43 -0400, data built_20261029.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

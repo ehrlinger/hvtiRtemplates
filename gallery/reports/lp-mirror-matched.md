@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-28 09:21
+2026-10-29 10:34
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -54,8 +54,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.3
+**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.4
 
 ## Study choices
 
@@ -288,7 +288,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261028.parquet) |
+| Source              | dataset `study` (built_20261029.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -384,6 +384,14 @@ Code
 ``` r
 mh_unmatched <- mirror_hist(scores, "unmatched", groups, BINWIDTH)
 file <- save_figure(mirror_figure(mh_unmatched, "unmatched"), "lp-mirror-unmatched", linked = TRUE)
+```
+
+    Scale for fill is already present.
+    Adding another scale for fill, which will replace the existing scale.
+
+Code
+
+``` r
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
                         error = FALSE)
 ```
@@ -413,6 +421,14 @@ Code
 ``` r
 mh_weighted <- mirror_hist(scores, "weighted", groups, BINWIDTH)
 file <- save_figure(mirror_figure(mh_weighted, "weighted"), "lp-mirror-weighted", linked = TRUE)
+```
+
+    Scale for fill is already present.
+    Adding another scale for fill, which will replace the existing scale.
+
+Code
+
+``` r
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
                         error = FALSE)
 ```
@@ -461,6 +477,9 @@ if (!is.null(MATCH)) {
 }
 ```
 
+    Scale for fill is already present.
+    Adding another scale for fill, which will replace the existing scale.
+
 Code
 
 ``` r
@@ -491,9 +510,9 @@ Table 5: Patients in each group, and those matched
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-28 09:20:58 EDT |
-|  | Ended | 2026-10-28 09:21:00 EDT |
-|  | Duration | 2 s |
+| Run | Started | 2026-10-29 10:34:12 EDT |
+|  | Ended | 2026-10-29 10:34:13 EDT |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -501,14 +520,14 @@ Table 5: Patients in each group, and those matched
 |  | Template | lp.mirror |
 |  | Subject | approach |
 |  | Type | matched |
-|  | hvtiRtemplates | 1.5.3 |
-| Dataset `built` | Version file | built_20261028.parquet |
-|  | Version date | 2026-10-28 |
+|  | hvtiRtemplates | 1.5.4 |
+| Dataset `built` | Version file | built_20261029.parquet |
+|  | Version date | 2026-10-29 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-28 09:20:45 -0400, data built_20261028.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-29 10:33:59 -0400, data built_20261029.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

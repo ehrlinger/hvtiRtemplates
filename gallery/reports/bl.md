@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-28 09:14
+2026-10-29 10:27
 
 This job reports a bootstrap variable selection screen over a
 **logistic** model: how often each candidate survived stepwise selection
@@ -100,7 +100,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.3
+hvtiRtemplates 1.5.4
 
 ## Study choices
 
@@ -388,7 +388,7 @@ provenance
     8                                                                      100
     9                                                                        0
     10                                                                     0.0
-    11                                                           version:0.9.6
+    11                                                           version:0.9.7
     12 sha256:b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6
     13                                               1 distinct (listed below)
 
@@ -897,9 +897,9 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-28 09:14:57 EDT |
-|  | Ended | 2026-10-28 09:14:58 EDT |
-|  | Duration | 1 s |
+| Run | Started | 2026-10-29 10:27:03 EDT |
+|  | Ended | 2026-10-29 10:27:05 EDT |
+|  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -907,14 +907,14 @@ saveRDS(report, report_file)
 |  | Template | bl |
 |  | Subject | vent |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.5.3 |
-| Dataset `built` | Version file | built_20261028.parquet |
-|  | Version date | 2026-10-28 |
+|  | hvtiRtemplates | 1.5.4 |
+| Dataset `built` | Version file | built_20261029.parquet |
+|  | Version date | 2026-10-29 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `vent-boot/bl.rds` (bootstrap-bag), rendered not recorded, data built_20261028.parquet |
+| Upstream | Handoff | `vent-boot/bl.rds` (bootstrap-bag), rendered not recorded, data built_20261029.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

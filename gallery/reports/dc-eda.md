@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-28 09:18
+2026-10-29 10:30
 
 Replaces an older EDA report.
 
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261028.parquet`, dated 2026-10-28 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.3
+**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.4
 
 ## Study choices
 
@@ -246,7 +246,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261028.parquet) |
+| Source              | dataset `built` (built_20261029.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -1057,9 +1057,9 @@ frequency table above names them.
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-28 09:18:06 EDT  |
-|                 | Ended            | 2026-10-28 09:18:29 EDT  |
-|                 | Duration         | 24 s                     |
+| Run             | Started          | 2026-10-29 10:30:17 EDT  |
+|                 | Ended            | 2026-10-29 10:30:42 EDT  |
+|                 | Duration         | 25 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -1067,9 +1067,9 @@ frequency table above names them.
 |                 | Template         | dc.eda                   |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.3                    |
-| Dataset `built` | Version file     | built_20261028.parquet   |
-|                 | Version date     | 2026-10-28               |
+|                 | hvtiRtemplates   | 1.5.4                    |
+| Dataset `built` | Version file     | built_20261029.parquet   |
+|                 | Version date     | 2026-10-29               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

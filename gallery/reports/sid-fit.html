@@ -2237,7 +2237,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-28 09:29</p>
+      <p class="date">2026-10-29 10:42</p>
     </div>
   </div>
   
@@ -2249,7 +2249,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: sid.fit 1.5.3 sha256:915ed6782bc3bf0822d3b842afe0a6b396bd84c762cfc448f6b3b9993c77fb13 -->
+<!-- hvtiRtemplates: sid.fit 1.5.4 sha256:915ed6782bc3bf0822d3b842afe0a6b396bd84c762cfc448f6b3b9993c77fb13 -->
 <p>This job builds the dissimilarity that <code>sid-clusters</code> turns into clusters. SID clustering (Mantero and Ishwaran, 2021) is unsupervised: there is no outcome. It stretches the clustering variables into staggered copies and their pairwise interactions, grows a multivariate random forest predicting the one from the other, and measures how often two patients fall in the same terminal nodes. Two patients the forest cannot tell apart are close.</p>
 <p>The forest needs complete data, so the job first drops variables that are mostly missing and fills the rest with one imputation. The imputed values stay inside this job. Whatever describes the clusters later reads the study data, so it describes what was measured, not what was imputed.</p>
 <p>This template is <strong>in flight</strong>: no study has yet run it end to end.</p>
@@ -2304,7 +2304,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261028.parquet</code>, dated 2026-10-28 · rendered by gallery on gallery · hvtiRtemplates 1.5.3</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261029.parquet</code>, dated 2026-10-29 · rendered by gallery on gallery · hvtiRtemplates 1.5.4</p>
 </div>
 </div>
 </div>
@@ -2451,7 +2451,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261028.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261029.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2735,17 +2735,17 @@ Table 3: What the forests were grown on
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-28 09:29:06 EDT</td>
+<td style="text-align: left;">2026-10-29 10:42:15 EDT</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-28 09:29:11 EDT</td>
+<td style="text-align: left;">2026-10-29 10:42:19 EDT</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">5 s</td>
+<td style="text-align: left;">4 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2785,17 +2785,17 @@ Table 3: What the forests were grown on
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.3</td>
+<td style="text-align: left;">1.5.4</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261028.parquet</td>
+<td style="text-align: left;">built_20261029.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-28</td>
+<td style="text-align: left;">2026-10-29</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2840,7 +2840,7 @@ Table 3: What the forests were grown on
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"sid.fit.echo.sid","rendered":"2026-10-28T13:29:11Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"a7bb961dabb1feff86b94a0ed4c8292d67e6068bd2ffc1d61b8a19a44ed564d6"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"backports","version":"1.5.1","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"boot","version":"1.3.32","source":"CRAN"},{"package":"broom","version":"1.0.13","source":"CRAN"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.5.3","source":null},{"package":"hvtiRutilities","version":"1.5.16","source":null},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jomo","version":"2.7.6","source":"CRAN"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"lme4","version":"2.0.1","source":"CRAN"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"MASS","version":"7.3.65","source":"CRAN"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mice","version":"3.19.0","source":"CRAN"},{"package":"minqa","version":"1.2.8","source":"CRAN"},{"package":"mitml","version":"0.4.5","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"nloptr","version":"2.2.1","source":"CRAN"},{"package":"nnet","version":"7.3.20","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pan","version":"2.0","source":"CRAN"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"rbibutils","version":"2.4.1","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"Rdpack","version":"2.6.6","source":"CRAN"},{"package":"reformulas","version":"0.4.4","source":"CRAN"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rpart","version":"4.1.27","source":"CRAN"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261028.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-28T13:14:43Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"echo","type":"sid","cohort":{"n":800},"run":{"start":"2026-10-28T09:29:06-0400","end":"2026-10-28T09:29:11-0400","time_zone":"EDT","duration_seconds":4.7,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"sid.fit.echo.sid.qmd","template":"sid.fit","prefix":"sid","qualifier":"fit","subject":"echo","type":"sid","hvtiRtemplates":"1.5.3"},"datasets":[{"name":"built","version_file":"built_20261028.parquet","registered":"2026-10-28","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"1024","renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/sid.fit.echo.sid.qmd",".hvti_render_id":"dc4ed6c638d5ac441ad34e5fcba38f977d738e3696a89cadb0d3dcadccb1bc11",".hvti_source_sha256":"7ea72074a84d767fa57304967fb3e45262d159a9c1328de673bee18932e3f45f"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"sid.fit.echo.sid","rendered":"2026-10-29T14:42:19Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"61119a9ebfdfffe0ab2f05196c237f9bcf753aed0c7b9715508bbb357851d147"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"backports","version":"1.5.1","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"boot","version":"1.3.32","source":"CRAN"},{"package":"broom","version":"1.0.13","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glmnet","version":"5.2","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.5.4","source":"github","sha":"e5a013144da2bffeaf785e184641f59877be7878"},{"package":"hvtiRutilities","version":"1.5.17","source":"github","sha":"dea3c51f8ebf5a355fb6d29ecfba07b9d61e26e4"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jomo","version":"2.7.6","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"lme4","version":"2.1.0","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"MASS","version":"7.3.65","source":"CRAN"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mice","version":"3.19.0","source":"standard"},{"package":"minqa","version":"1.2.8","source":"standard"},{"package":"mitml","version":"0.4.5","source":"standard"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"nloptr","version":"2.2.1","source":"standard"},{"package":"nnet","version":"7.3.20","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pan","version":"2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"standard"},{"package":"rbibutils","version":"2.4.1","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"Rdpack","version":"2.6.6","source":"standard"},{"package":"reformulas","version":"0.4.4","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rpart","version":"4.1.27","source":"CRAN"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"xfun","version":"0.62","source":"standard"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261029.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-29T14:26:44Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"echo","type":"sid","cohort":{"n":800},"run":{"start":"2026-10-29T10:42:15-0400","end":"2026-10-29T10:42:19-0400","time_zone":"EDT","duration_seconds":4.2,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"sid.fit.echo.sid.qmd","template":"sid.fit","prefix":"sid","qualifier":"fit","subject":"echo","type":"sid","hvtiRtemplates":"1.5.4"},"datasets":[{"name":"built","version_file":"built_20261029.parquet","registered":"2026-10-29","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"1024","renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/sid.fit.echo.sid.qmd",".hvti_render_id":"d6992de7cdfd4c34a0f96c815176293397edc071e0f8bdc74e09f495d0945273",".hvti_source_sha256":"0be08c3452bfce4fa17bfa3f865c3e79559f8621e07d1b657fc312818320d6ca"}</script>
 </section>
 
 </main>

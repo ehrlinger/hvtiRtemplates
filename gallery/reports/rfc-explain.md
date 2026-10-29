@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-28 09:23
+2026-10-29 10:37
 
 Explains the forest the `rfc-fit` job in this set saved: which
 predictors drive it, and how.
@@ -74,7 +74,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.3
+hvtiRtemplates 1.5.4
 
 ## Study choices
 
@@ -425,8 +425,8 @@ level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-28 09:23:48 EDT |
-|  | Ended | 2026-10-28 09:23:56 EDT |
+| Run | Started | 2026-10-29 10:37:04 EDT |
+|  | Ended | 2026-10-29 10:37:12 EDT |
 |  | Duration | 7 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -435,13 +435,13 @@ level of a categorical one.
 |  | Template | rfc.explain |
 |  | Subject | complication |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.5.3 |
-| Dataset `built` | Version file | built_20261028.parquet |
-|  | Version date | 2026-10-28 |
+|  | hvtiRtemplates | 1.5.4 |
+| Dataset `built` | Version file | built_20261029.parquet |
+|  | Version date | 2026-10-29 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-28 09:23:38 -0400, data built_20261028.parquet |
+| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-29 10:36:55 -0400, data built_20261029.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |
