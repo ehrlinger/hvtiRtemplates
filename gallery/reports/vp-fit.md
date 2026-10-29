@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:39
+2026-10-29 12:49
 
 Gallery job on the synthetic cohort: a VarPro screen of survival after
 operation (iv_dead, dead) on the nine preoperative predictors rfs-fit
@@ -781,9 +781,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 10:38:10 EDT  |
-|                 | Ended            | 2026-10-29 10:39:06 EDT  |
-|                 | Duration         | 55 s                     |
+| Run             | Started          | 2026-10-29 12:48:47 EDT  |
+|                 | Ended            | 2026-10-29 12:49:51 EDT  |
+|                 | Duration         | 1 min 4 s                |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |

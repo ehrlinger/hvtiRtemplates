@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:33
+2026-10-29 12:43
 
 Fits a proportional-odds cumulative-logit model. The complete outcome
 order is declared rather than inferred, and thresholds remain distinct
@@ -243,9 +243,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 10:33:49 EDT  |
-|                 | Ended            | 2026-10-29 10:33:49 EDT  |
-|                 | Duration         | 0 s                      |
+| Run             | Started          | 2026-10-29 12:43:35 EDT  |
+|                 | Ended            | 2026-10-29 12:43:35 EDT  |
+|                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |

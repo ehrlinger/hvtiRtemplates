@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:30
+2026-10-29 12:39
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -476,9 +476,9 @@ against an older figure by its shape and not point by point.
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 10:30:03 EDT  |
-|                 | Ended            | 2026-10-29 10:30:05 EDT  |
-|                 | Duration         | 1 s                      |
+| Run             | Started          | 2026-10-29 12:39:10 EDT  |
+|                 | Ended            | 2026-10-29 12:39:11 EDT  |
+|                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:40
+2026-10-29 12:52
 
 Describes the `vp-fit` screen in this set patient by patient: each
 selected predictor’s local gradient.
@@ -500,9 +500,9 @@ saveRDS(vpi_handoff, set_path("estimates", "individual.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 10:40:48 EDT |
-|  | Ended | 2026-10-29 10:40:53 EDT |
-|  | Duration | 5 s |
+| Run | Started | 2026-10-29 12:52:02 EDT |
+|  | Ended | 2026-10-29 12:52:13 EDT |
+|  | Duration | 12 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -516,7 +516,7 @@ saveRDS(vpi_handoff, set_path("estimates", "individual.rds"))
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-29 10:38:10 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-29 12:48:47 -0400, data built_20261029.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

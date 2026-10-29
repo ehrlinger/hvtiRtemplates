@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:41
+2026-10-29 12:54
 
 Gallery job on the synthetic intervals: the hazard of the simulated
 event, from one time-varying marker (xtd) and three baseline markers.
@@ -513,9 +513,9 @@ hvtiRtemplates:::.owner_only(set_path("estimates", "rhf.rds"), saveRDS(forest, s
 
 | Group               | Item             | Value                      |
 |:--------------------|:-----------------|:---------------------------|
-| Run                 | Started          | 2026-10-29 10:41:50 EDT    |
-|                     | Ended            | 2026-10-29 10:41:53 EDT    |
-|                     | Duration         | 2 s                        |
+| Run                 | Started          | 2026-10-29 12:54:06 EDT    |
+|                     | Ended            | 2026-10-29 12:54:09 EDT    |
+|                     | Duration         | 3 s                        |
 |                     | Status           | final                      |
 |                     | Rendered by      | gallery                    |
 |                     | Host             | gallery                    |

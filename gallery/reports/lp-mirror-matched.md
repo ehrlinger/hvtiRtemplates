@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:34
+2026-10-29 12:44
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -384,14 +384,6 @@ Code
 ``` r
 mh_unmatched <- mirror_hist(scores, "unmatched", groups, BINWIDTH)
 file <- save_figure(mirror_figure(mh_unmatched, "unmatched"), "lp-mirror-unmatched", linked = TRUE)
-```
-
-    Scale for fill is already present.
-    Adding another scale for fill, which will replace the existing scale.
-
-Code
-
-``` r
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
                         error = FALSE)
 ```
@@ -421,14 +413,6 @@ Code
 ``` r
 mh_weighted <- mirror_hist(scores, "weighted", groups, BINWIDTH)
 file <- save_figure(mirror_figure(mh_weighted, "weighted"), "lp-mirror-weighted", linked = TRUE)
-```
-
-    Scale for fill is already present.
-    Adding another scale for fill, which will replace the existing scale.
-
-Code
-
-``` r
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
                         error = FALSE)
 ```
@@ -477,9 +461,6 @@ if (!is.null(MATCH)) {
 }
 ```
 
-    Scale for fill is already present.
-    Adding another scale for fill, which will replace the existing scale.
-
 Code
 
 ``` r
@@ -510,9 +491,9 @@ Table 5: Patients in each group, and those matched
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 10:34:12 EDT |
-|  | Ended | 2026-10-29 10:34:13 EDT |
-|  | Duration | 1 s |
+| Run | Started | 2026-10-29 12:44:11 EDT |
+|  | Ended | 2026-10-29 12:44:13 EDT |
+|  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -528,6 +509,6 @@ Table 5: Patients in each group, and those matched
 |  | WHERE | none |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-29 10:33:59 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-29 12:43:50 -0400, data built_20261029.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

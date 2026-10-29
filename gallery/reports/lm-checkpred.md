@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:33
+2026-10-29 12:43
 
 Applies a saved `lm-binary` bundle to a declared validation cohort. This
 job never refits, updates, or overwrites the source model.
@@ -272,8 +272,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 10:33:44 EDT |
-|  | Ended | 2026-10-29 10:33:44 EDT |
+| Run | Started | 2026-10-29 12:43:28 EDT |
+|  | Ended | 2026-10-29 12:43:28 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -290,6 +290,6 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 |  | WHERE | `as.integer(format(dt_surg, "%Y")) >= 2015` |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-29 10:33:39 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-10-29 12:43:21 -0400, data built_20261029.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

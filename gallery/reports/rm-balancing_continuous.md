@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:42
+2026-10-29 12:54
 
 Fits an ordinary least-squares balancing score for a continuous
 exposure, such as a nadir hematocrit or a dose: the exposure each
@@ -273,9 +273,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 10:42:10 EDT |
-|  | Ended | 2026-10-29 10:42:10 EDT |
-|  | Duration | 0 s |
+| Run | Started | 2026-10-29 12:54:44 EDT |
+|  | Ended | 2026-10-29 12:54:44 EDT |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |

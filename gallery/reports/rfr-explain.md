@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:38
+2026-10-29 12:48
 
 Explains the forest the `rfr-fit` job in this set saved: which
 predictors drive it, and how.
@@ -381,9 +381,9 @@ level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 10:37:57 EDT |
-|  | Ended | 2026-10-29 10:38:04 EDT |
-|  | Duration | 7 s |
+| Run | Started | 2026-10-29 12:48:31 EDT |
+|  | Ended | 2026-10-29 12:48:40 EDT |
+|  | Duration | 9 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -397,7 +397,7 @@ level of a categorical one.
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-29 10:37:17 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-29 12:48:19 -0400, data built_20261029.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

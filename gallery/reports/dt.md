@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:26
+2026-10-29 12:34
 
 This job checks the working dataset a `bd` job writes, before it is
 registered: what the rebuild changed against the version registered now,
@@ -133,8 +133,8 @@ console
 
 | Group           | Item             | Value                   |
 |:----------------|:-----------------|:------------------------|
-| Run             | Started          | 2026-10-29 10:26:51 EDT |
-|                 | Ended            | 2026-10-29 10:26:52 EDT |
+| Run             | Started          | 2026-10-29 12:34:31 EDT |
+|                 | Ended            | 2026-10-29 12:34:31 EDT |
 |                 | Duration         | 0 s                     |
 |                 | Status           | final                   |
 |                 | Rendered by      | gallery                 |

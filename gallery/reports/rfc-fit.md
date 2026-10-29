@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:37
+2026-10-29 12:47
 
 Gallery job on the synthetic cohort: major postoperative complication
 (complication, 0/1).
@@ -441,9 +441,9 @@ saveRDS(forest, set_path("estimates", "rfc.rds"))
 
 | Group           | Item             | Value                       |
 |:----------------|:-----------------|:----------------------------|
-| Run             | Started          | 2026-10-29 10:36:55 EDT     |
-|                 | Ended            | 2026-10-29 10:36:59 EDT     |
-|                 | Duration         | 4 s                         |
+| Run             | Started          | 2026-10-29 12:47:38 EDT     |
+|                 | Ended            | 2026-10-29 12:47:42 EDT     |
+|                 | Duration         | 5 s                         |
 |                 | Status           | final                       |
 |                 | Rendered by      | gallery                     |
 |                 | Host             | gallery                     |

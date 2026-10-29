@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:42
+2026-10-29 12:56
 
 Explains the `vt-fit` job in this set: which patients the twins say
 repair suits, stratified by the echo-phenotype clusters.
@@ -308,7 +308,7 @@ if (!nrow(.cp)) {
 }
 ```
 
-![](assets/ed32ceb951ed91a84d710a4bc25e7bc0.png)
+![](assets/d6055df4596009824f94500cfff9bcf1.png)
 
 Figure 5: Each treated patient in distribution: predicted RMST under the
 arm received (own) against under the other arm (twin). On the dashed
@@ -400,7 +400,7 @@ if (!nrow(.dd)) {
 }
 ```
 
-![](assets/dc373b67d931720338c144f05cc1c658.png)
+![](assets/41b8edc911b14da9ed47eb82c5ad2893.png)
 
 Figure 6: Each treated patient’s RMST difference against their distance
 to the nearest patient of the other arm. Dashed: that arm’s largest own
@@ -549,7 +549,7 @@ if (!is.null(.sa) && nrow(.sa)) {
 }
 ```
 
-![](assets/89d004bd39f1f0321831c7f16e19a2c8.png)
+![](assets/f583b68ddde6e71f3587667e6c0f6472.png)
 
 Figure 7: The RMST difference by stratum, one panel per arm received.
 Box: 15th to 85th percentile of the patients in distribution, whiskers
@@ -674,19 +674,19 @@ print(knitr::kable(.betas, digits = 2, row.names = FALSE))
 
 | variable |  beta | lower | upper | unestimable |
 |:---------|------:|------:|------:|------------:|
-| age      |  0.26 |  0.19 |  0.33 |           0 |
+| age      |  0.26 |  0.20 |  0.33 |           0 |
 | female   |  0.06 | -0.01 |  0.13 |           0 |
-| bmi      | -0.01 | -0.08 |  0.05 |           0 |
-| hx_chf   | -0.05 | -0.12 |  0.02 |           0 |
-| hx_dm    |  0.00 | -0.07 |  0.09 |           0 |
-| nyha_pr  |  0.07 | -0.01 |  0.13 |           0 |
-| lvef     | -0.07 | -0.13 |  0.00 |           0 |
-| creat_pr | -0.02 | -0.09 |  0.05 |           0 |
+| bmi      | -0.01 | -0.07 |  0.05 |           0 |
+| hx_chf   | -0.05 | -0.12 |  0.03 |           0 |
+| hx_dm    |  0.00 | -0.07 |  0.07 |           0 |
+| nyha_pr  |  0.07 | -0.02 |  0.13 |           0 |
+| lvef     | -0.07 | -0.15 |  0.00 |           0 |
+| creat_pr | -0.02 | -0.09 |  0.04 |           0 |
 | lvedd    |  0.83 |  0.80 |  0.87 |           0 |
-| lvesd    |  0.85 |  0.81 |  0.89 |           0 |
-| la_diam  |  0.17 |  0.11 |  0.24 |           0 |
-| rvsp     |  0.18 |  0.11 |  0.25 |           0 |
-| e_e      |  0.09 |  0.03 |  0.15 |           0 |
+| lvesd    |  0.85 |  0.81 |  0.88 |           0 |
+| la_diam  |  0.17 |  0.09 |  0.24 |           0 |
+| rvsp     |  0.18 |  0.10 |  0.25 |           0 |
+| e_e      |  0.09 |  0.02 |  0.16 |           0 |
 
 Table 4: Standardized beta for each characteristic. A positive beta: the
 characteristic goes with a higher relative risk of the event by 8 under
@@ -711,7 +711,7 @@ if (!nrow(.bp)) {
 }
 ```
 
-![](assets/ab8a52372ab3b250e125ade4492ec849.png)
+![](assets/253caafa2a78ef654b91a96c362444ce.png)
 
 Figure 9: Standardized association of each characteristic with the
 estimated effect, by overlap-weighted regression. A positive beta: the
@@ -862,9 +862,9 @@ receive, by more than GAIN_MIN
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 10:42:53 EDT |
-|  | Ended | 2026-10-29 10:42:59 EDT |
-|  | Duration | 6 s |
+| Run | Started | 2026-10-29 12:56:03 EDT |
+|  | Ended | 2026-10-29 12:56:15 EDT |
+|  | Duration | 12 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -881,7 +881,7 @@ receive, by more than GAIN_MIN
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
 | Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered not recorded |
-|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-10-29 10:42:35 -0400, data built_20261029.parquet |
-|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-10-29 10:42:25 -0400, data built_20261029.parquet |
+|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-10-29 12:55:31 -0400, data built_20261029.parquet |
+|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-10-29 12:55:09 -0400, data built_20261029.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

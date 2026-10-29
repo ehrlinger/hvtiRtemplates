@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:31
+2026-10-29 12:40
 
 An `ac` job is the first look at an outcome: the Kaplan-Meier life
 table, survival and patients at risk at the reporting horizons, the
@@ -2101,9 +2101,9 @@ Figure 6: Survival by hx_chf, with patients at risk
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 10:31:09 EDT  |
-|                 | Ended            | 2026-10-29 10:31:15 EDT  |
-|                 | Duration         | 5 s                      |
+| Run             | Started          | 2026-10-29 12:40:31 EDT  |
+|                 | Ended            | 2026-10-29 12:40:37 EDT  |
+|                 | Duration         | 6 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:27
+2026-10-29 12:34
 
 This job reports a bootstrap variable selection screen over a **linear**
 model: how often each candidate survived stepwise selection across
@@ -388,7 +388,7 @@ provenance
     8                                                                      100
     9                                                                        0
     10                                                                     0.0
-    11                                                           version:0.9.7
+    11                                                           version:0.9.6
     12 sha256:b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6
     13                                               1 distinct (listed below)
 
@@ -903,8 +903,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 10:27:14 EDT |
-|  | Ended | 2026-10-29 10:27:15 EDT |
+| Run | Started | 2026-10-29 12:34:55 EDT |
+|  | Ended | 2026-10-29 12:34:57 EDT |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |

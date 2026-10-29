@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:26
+2026-10-29 12:34
 
 This job cuts the study’s dataset from a master snapshot, records who
 was excluded and why, and writes the study’s working dataset with its
@@ -81,8 +81,8 @@ Table 3: Type, missing count and range of each column
 
 | Group           | Item             | Value                   |
 |:----------------|:-----------------|:------------------------|
-| Run             | Started          | 2026-10-29 10:26:46 EDT |
-|                 | Ended            | 2026-10-29 10:26:46 EDT |
+| Run             | Started          | 2026-10-29 12:34:26 EDT |
+|                 | Ended            | 2026-10-29 12:34:26 EDT |
 |                 | Duration         | 0 s                     |
 |                 | Status           | final                   |
 |                 | Rendered by      | gallery                 |

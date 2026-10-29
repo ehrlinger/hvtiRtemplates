@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:37
+2026-10-29 12:48
 
 Explains the forest the `rfc-fit` job in this set saved: which
 predictors drive it, and how.
@@ -425,9 +425,9 @@ level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 10:37:04 EDT |
-|  | Ended | 2026-10-29 10:37:12 EDT |
-|  | Duration | 7 s |
+| Run | Started | 2026-10-29 12:47:56 EDT |
+|  | Ended | 2026-10-29 12:48:10 EDT |
+|  | Duration | 14 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -441,7 +441,7 @@ level of a categorical one.
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-29 10:36:55 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-10-29 12:47:38 -0400, data built_20261029.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

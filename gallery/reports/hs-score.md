@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:33
+2026-10-29 12:43
 
 An `hs-score` job scores each **segment** of a start/stop cohort with
 the time-varying model an `hm` job fitted on it. A segment is a stretch
@@ -285,8 +285,8 @@ saveRDS(hs_art, set_path("estimates", "hs-score.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 10:33:34 EDT |
-|  | Ended | 2026-10-29 10:33:34 EDT |
+| Run | Started | 2026-10-29 12:43:15 EDT |
+|  | Ended | 2026-10-29 12:43:15 EDT |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -304,6 +304,6 @@ saveRDS(hs_art, set_path("estimates", "hs-score.rds"))
 |  | sha256 | 9590f19806c4 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead_segments-hz/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead_segments-hz/hm.rds` (hazard-regression-model), rendered 2026-10-29 10:33:13 -0400, data segments_20261029.parquet |
+|  | Handoff | `dead_segments-hz/hm.rds` (hazard-regression-model), rendered 2026-10-29 12:42:48 -0400, data segments_20261029.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

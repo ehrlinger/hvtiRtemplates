@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 10:30
+2026-10-29 12:40
 
 Replaces `descriptive/dc.general`.
 
@@ -796,8 +796,8 @@ unless `ID_COL` is set under Study choices.
 
 | Group           | Item             | Value                     |
 |:----------------|:-----------------|:--------------------------|
-| Run             | Started          | 2026-10-29 10:30:49 EDT   |
-|                 | Ended            | 2026-10-29 10:30:50 EDT   |
+| Run             | Started          | 2026-10-29 12:40:08 EDT   |
+|                 | Ended            | 2026-10-29 12:40:08 EDT   |
 |                 | Duration         | 0 s                       |
 |                 | Status           | final                     |
 |                 | Rendered by      | gallery                   |
