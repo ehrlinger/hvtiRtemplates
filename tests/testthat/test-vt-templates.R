@@ -255,6 +255,103 @@ test_that("methods combine by any and all, with one row shape", {
   expect_equal(all_$elig[order(all_$ID)], c(TRUE, TRUE, TRUE))
 })
 
+test_that("vt_overlap counts each exact set of flagging rules by arm and scores pairwise kappa", {
+  h <- vt_helpers()
+  flags <- data.frame(gower = c(FALSE, TRUE, TRUE, FALSE), propensity = c(FALSE, TRUE, FALSE, NA))
+  o <- h$vt_overlap(flags, c("A", "A", "B", "No arm"))
+  rows <- stats::setNames(seq_len(nrow(o$combinations)), o$combinations$flagged_by)
+  expect_setequal(names(rows), c("none", "gower; not judged by propensity", "gower + propensity", "propensity"))
+  expect_identical(o$combinations$flagged_by[1L], "none")
+  expect_equal(o$combinations$B[rows["propensity"]], 1L)
+  expect_equal(o$combinations[["No arm"]][rows["gower; not judged by propensity"]], 1L)
+  # The no-arm patient is not judged by propensity, so the pair covers three.
+  expect_equal(o$pairs$judged, 3L)
+  expect_equal(c(o$pairs$both_eligible, o$pairs$both_flagged, o$pairs$only_first, o$pairs$only_second),
+               c(1L, 1L, 0L, 1L))
+  expect_equal(o$pairs$kappa, 0.4)
+  # Both rules find everyone eligible: chance agreement is total, so kappa is undefined.
+  expect_true(is.na(h$vt_overlap(data.frame(a = c(TRUE, TRUE), b = c(TRUE, TRUE)), c("A", "B"))$pairs$kappa))
+})
+
+test_that("ELIGIBILITY_VARS judges eligibility on its own set and the forests keep the predictors", {
+  skip_on_cran()
+  ch <- utils::modifyList(vt_choices, list(ELIGIBILITY_VARS = c("x1", "g1")))
+  env <- vt_fit_first(choices = ch)
+  expect_setequal(env$.predictors, c("xs", "x1", "g1"))
+  # The outliers are planted in xs, which eligibility no longer sees.
+  planted <- vt_digest(env, which(vt_data()$arm == "A")[1:5])
+  expect_true(all(env$.elig$elig_gower[match(planted, env$.elig$ID)]))
+  # Support judges on the eligibility set; the saved propensity model, which weights vt-explain's betas, keeps the predictors.
+  expect_setequal(all.vars(env$.ps_elig$meta$formula)[-1L], c("x1", "g1"))
+  expect_setequal(all.vars(env$.ps$meta$formula)[-1L], c("xs", "x1", "g1"))
+  expect_true(all(c("propensity", "gower") %in% names(env$.flags)))
+})
+
+test_that("an eligibility-only column leaves the saved propensity scores as they were", {
+  skip_on_cran()
+  d <- vt_data()
+  d$x1[c(20, 40, 60)] <- NA
+  d$m1 <- withr::with_seed(7, stats::rnorm(nrow(d)))
+  d$m1[c(21, 41)] <- NA
+  base <- vt_fit_first(data = d)
+  with_m1 <- vt_fit_first(data = d, choices = utils::modifyList(vt_choices,
+                                                                list(ELIGIBILITY_VARS = c("xs", "x1", "g1", "m1"))))
+  # Each fixture study has its own ID key, so rows are matched by the raw ID.
+  treated <- d$ccfid[!is.na(d$arm)]
+  score <- function(env) {
+    env$.ps$data[match(vt_digest(env, treated), env$.ps$data[[env$ID]]), env$.ps$meta$score_col]
+  }
+  expect_false(anyNA(score(base)))
+  expect_identical(score(with_m1), score(base))
+  expect_setequal(all.vars(with_m1$.ps_elig$meta$formula)[-1L], c("xs", "x1", "g1", "m1"))
+})
+
+test_that("a treated patient with no propensity score is not judged by it in the overlap", {
+  skip_on_cran()
+  d <- vt_data()
+  d$m1 <- withr::with_seed(7, stats::rnorm(nrow(d)))
+  lost <- which(!is.na(d$arm))[1L]
+  d$x1[lost] <- NA
+  d$m1[lost] <- NA
+  env <- vt_fit_first(data = d, choices = utils::modifyList(vt_choices, list(ELIGIBILITY_VARS = c("x1", "m1"))))
+  id <- vt_digest(env, d$ccfid[lost])
+  expect_true(is.na(env$.flags$propensity[env$.elig$ID == id]))
+  expect_false(env$.elig$elig_propensity[env$.elig$ID == id])
+  treated <- sum(!is.na(d$arm))
+  expect_equal(env$.overlap$pairs$judged[env$.overlap$pairs$rules == "gower vs propensity"], treated - 1L)
+  combos <- env$.overlap$combinations
+  expect_true(any(grepl("not judged by propensity", combos$flagged_by[combos[[d$arm[lost]]] > 0L])))
+})
+
+test_that("each method's flags are explained by that method's own variables", {
+  h <- vt_helpers()
+  d <- data.frame(id = c("p", "q", "r", "s"), xs = c(9, 0, 1, 2), wrong = c(99, 0, 0, 0))
+  arm_of <- c(NA, "B", "B", "B")
+  rows <- data.frame(ID = c("p", "p"), method = c("gower", "sid"), arm = "B")
+  got <- h$vt_flag_features(rows, d, "id", arm_of, list(gower = "wrong", sid = "xs"))
+  expect_match(got[1L], "^wrong = |wrong 99")
+  expect_match(got[2L], "^xs 9 outside B's range")
+  expect_false(grepl("wrong", got[2L]))
+  got <- h$vt_flag_features(rows[2L, ], d, "id", arm_of, list(sid = "absent"))
+  expect_match(got, "not computed: sid used absent")
+  expect_match(h$vt_flag_features(rows[2L, ], d, "id", arm_of, list(sid = NULL)), "records no variables")
+})
+
+test_that("ELIGIBILITY_VARS refuses the outcome and a column the data lacks", {
+  skip_on_cran()
+  expect_error(vt_fit_first(choices = utils::modifyList(vt_choices, list(ELIGIBILITY_VARS = c("x1", "time")))),
+               "ELIGIBILITY_VARS includes")
+  expect_error(vt_fit_first(choices = utils::modifyList(vt_choices, list(ELIGIBILITY_VARS = "absent"))),
+               "ELIGIBILITY_VARS not in the data: absent")
+})
+
+test_that("an arm with too few events per predictor warns, naming the arm", {
+  skip_on_cran()
+  ch <- utils::modifyList(vt_choices, list(MIN_EVENTS_PER_FEATURE = 30))
+  expect_warning(vt_fit_first(choices = ch, labels = c("setup", "edit-study-choices", "tbl-data", "predictors")),
+                 "B has 74 event\\(s\\) for 3 feature\\(s\\)")
+})
+
 test_that("the sid method uses a set's distance and refuses a missing patient", {
   h <- vt_helpers()
   ids <- c("1", "2", "3")
@@ -460,7 +557,8 @@ test_that("a rare factor level does not abort the bootstrap", {
   d <- vt_data()
   d$rare <- factor(ifelse(seq_len(nrow(d)) %in% c(3, 150), "yes", "no"))
   env <- vt_fit_first(data = d, labels = vt_fit_labels_all,
-                      choices = utils::modifyList(vt_choices, list(PREDICTORS = c("xs", "x1", "g1", "rare"))))
+                      choices = utils::modifyList(vt_choices, list(PREDICTORS = c("xs", "x1", "g1", "rare"),
+                                                                   MIN_EVENTS_PER_FEATURE = 0)))
   vt_explain(env, vt_explain_labels_all, list(STRATIFY = NULL, BOOT = 50L, GAIN_MIN = 0, SAVE_FIGURES = FALSE))
   row <- env$.betas[startsWith(env$.betas$variable, "rare"), ]
   expect_match(row$variable, "yes vs no")

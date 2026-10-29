@@ -89,13 +89,15 @@ test_that("rfs-fit sizes a leaf for 2 events, never below 15, and a number overr
   # Sparse events: 10 deaths in 137 patients wants ceiling(2 * 137 / 10) = 28.
   d$status[d$status == 1][-(1:10)] <- 0
   env <- rf_env(d)
-  out <- utils::capture.output(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit"), env,
-                                      rfs_choices))
+  # 10 deaths for 6 predictors is under the events-per-feature floor, which warns.
+  expect_warning(out <- utils::capture.output(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit"),
+                                                     env, rfs_choices)),
+                 "cohort has 10 event\\(s\\) for 6 feature\\(s\\)")
   expect_identical(as.integer(env$forest$nodesize), 28L)
   expect_true(any(grepl("137 patients, 10 events: nodesize 28 (2 events per leaf)", out, fixed = TRUE)))
   env <- rf_env(d)
   utils::capture.output(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit"), env,
-                               utils::modifyList(rfs_choices, list(NODESIZE = 40))))
+                               utils::modifyList(rfs_choices, list(NODESIZE = 40, MIN_EVENTS_PER_FEATURE = 0))))
   expect_identical(as.integer(env$forest$nodesize), 40L)
 })
 
@@ -125,7 +127,7 @@ test_that("TUNE_NODESIZE hands tune.nodesize() a 63.2% sample and a grid past 15
     list(nsize.opt = 30L, err = data.frame(nodesize = 30L, err = 0.3))
   }
   utils::capture.output(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit"), env,
-                               utils::modifyList(rfs_choices, list(TUNE_NODESIZE = TRUE))))
+                               utils::modifyList(rfs_choices, list(TUNE_NODESIZE = TRUE, MIN_EVENTS_PER_FEATURE = 0))))
   expect_identical(max(seen$grid), 180)
   expect_identical(seen$sampsize(1900), 0.632 * 1900)
   expect_identical(as.integer(env$forest$nodesize), 30L)
@@ -133,7 +135,7 @@ test_that("TUNE_NODESIZE hands tune.nodesize() a 63.2% sample and a grid past 15
   env <- rf_env(d)
   env$tune.nodesize <- function(...) list(nsize.opt = NA_integer_, err = data.frame())
   expect_error(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit"), env,
-                      utils::modifyList(rfs_choices, list(TUNE_NODESIZE = TRUE))),
+                      utils::modifyList(rfs_choices, list(TUNE_NODESIZE = TRUE, MIN_EVENTS_PER_FEATURE = 0))),
                "found no leaf size")
 })
 

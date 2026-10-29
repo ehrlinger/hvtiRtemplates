@@ -33,7 +33,7 @@ vt_choices <- list(
 
 # Every chunk of vt-fit, in order. Tasks 2 and 3 extend it.
 vt_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "predictors", "tbl-km", "fig-km",
-                   "ood", "eligibility", "tbl-ood", "fig-ood", "tbl-agreement")
+                   "ood", "eligibility", "tbl-ood", "fig-ood", "tbl-overlap", "tbl-agreement")
 
 vt_fit_labels_all <- c(vt_fit_labels, "fit", "tbl-performance", "calibration-helper", "tbl-calibration",
                        "fig-calibration", "curves-helper", "curves", "rmst-helper", "rmst", "fig-curves", "save")
