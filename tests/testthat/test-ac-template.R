@@ -280,12 +280,11 @@ test_that("the curves join event points with straight lines by default, and STEP
   expect_no_warning(print(env$km_figure("grp")))
 })
 
-test_that("one curve is black, and no stratum takes the event's red or censored blue", {
+test_that("one curve is black, and strata take the group palette led by red and blue", {
   skip_ac()
+  skip_if_not_installed("hvtiPlotR", "2.8.20")
   local_child_chunks()
   col_aes <- ggplot2::standardise_aes_names("color")
-  # Both the role colors and the rotation's look-alikes, so the test holds on either hvtiPlotR.
-  roles <- c(hvtiPlotR::hv_role_palette(c("e", "c"), event = "e", censored = "c"), "#0072B2", "#D55E00")
   d <- hazard_data()
   d$grp3 <- rep(c(1, 2, 10), length.out = nrow(d))
   env <- ac_run(d, list(STRATA = "grp3"))
@@ -294,7 +293,8 @@ test_that("one curve is black, and no stratum takes the event's red or censored 
   expect_identical(unique(ggplot2::ggplot_build(env$km_views(env$km)[[1]])$data[[1]][[col_aes]]), "#000000")
   three <- unique(built_layers(env$km_figure("grp3")[[1]])$GeomLine[[col_aes]])
   expect_length(three, 3L)
-  expect_false(any(toupper(three) %in% toupper(roles)))
+  # Red and blue carry no role in an outcome curve (decided 2026-10-29).
+  expect_setequal(toupper(three), toupper(unname(hvtiPlotR::hv_group_palette(c("1", "2", "10")))))
   views <- unique(ggplot2::ggplot_build(env$km_views(env$strata_fits$grp3)[[1]])$data[[1]][[col_aes]])
   expect_identical(sort(views), sort(three))
 })

@@ -71,8 +71,8 @@ if (utils::packageVersion("TemporalHazard") < "1.2.12") {
   stop("This job needs TemporalHazard >= 1.2.12 for hzr_kaplan(); ",
        utils::packageVersion("TemporalHazard"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
-  stop("This job needs hvtiPlotR >= 2.7.18 for hv_atrisk_compose() and hv_role_palette(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.20") {
+  stop("This job needs hvtiPlotR >= 2.8.20 for hv_atrisk_compose() and hv_group_palette(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (!requireNamespace("patchwork", quietly = TRUE)) {
@@ -532,8 +532,9 @@ km_views <- function(fit) {
   haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
   haz$event <- rep(TRUE, nrow(haz))
   haz$stratum <- factor(haz$stratum, levels = counts$stratum)
-  # One curve is black. Strata never take red or blue, which mean the event and
-  # censored in every house figure, so no stratum reads as the deaths.
+  # One curve is black; two to five strata take red, blue, teal, magenta and cyan, in level
+  # order, and six or seven all take Paul Tol's muted colors.
+  # Red and blue mean the event and censored only in figures that color by outcome.
   cols <- hvtiRtemplates:::.group_colors(counts$stratum)
   # Color is never the only channel: each stratum also has its own line type and
   # point shape, so the curves still read apart printed in grayscale.
@@ -593,7 +594,7 @@ km_figure <- function(strata = NULL) {
   # sort as text ("1", "10", "2"). The curve, band, bars and at-risk rows all use the
   # tables' order instead, so each stratum keeps one color throughout.
   if (!is.null(strata)) hv$data$strata <- factor(as.character(hv$data$strata), levels = levels(dd[[strata]]))
-  # The same colors as the page above: black for one curve, and no stratum in red or blue.
+  # The same colors as the page above: black for one curve, red and blue for the first two strata.
   cols <- hvtiRtemplates:::.group_colors(if (is.null(strata)) "All" else levels(dd[[strata]]))
   ltys <- hvtiRtemplates:::.group_linetypes(names(cols))
   shps <- hvtiRtemplates:::.group_shapes(names(cols))
