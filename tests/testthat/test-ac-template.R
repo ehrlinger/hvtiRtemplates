@@ -328,6 +328,19 @@ test_that("strata differ by line type and point shape as well as color, so they 
   expect_identical(unique(ggplot2::ggplot_build(env$km_views(env$km)[[1]])$data[[1]]$linetype), "solid")
 })
 
+test_that("seven strata each take their own line type and shape", {
+  skip_ac()
+  local_child_chunks()
+  d <- hazard_data()
+  d$grp7 <- rep(1:7, length.out = nrow(d))
+  env <- ac_run(d, list(STRATA = "grp7"))
+  curve <- env$km_figure("grp7")[[1]]
+  layers <- built_layers(curve)
+  expect_length(unique(layers$GeomLine$linetype), 7L)
+  expect_length(unique(layers$GeomPoint$shape), 7L)
+  expect_identical(nrow(ggplot2::get_guide_data(curve, "linetype")), 7L)
+})
+
 test_that("bars at close early times on a long axis stay at their own time and after zero", {
   skip_ac()
   local_child_chunks()

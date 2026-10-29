@@ -35,16 +35,20 @@
 
 # Line types and point shapes for the same groups, so color is never the only channel and
 # the groups still read apart on a grayscale printer: the first group, or a single curve,
-# is solid with a filled circle. Past six groups the sequence repeats.
+# is solid with a filled circle. Seven of each, as many as hv_group_palette() has colors.
+# Past seven the shapes shift by one each time the line types come round again, so no two
+# groups share both: the colors there are a fallback that may not tell them apart.
 #
 # Returns a vector named by `levels`, for a manual scale's `values`.
 .group_linetypes <- function(levels) {
   levels <- as.character(levels)
-  types <- c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash")
-  stats::setNames(rep_len(types, length(levels)), levels)
+  # "331313" is dash-dot-dot, the seventh pattern none of R's named line types draws.
+  types <- c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash", "331313")
+  stats::setNames(types[(seq_along(levels) - 1L) %% 7L + 1L], levels)
 }
 
 .group_shapes <- function(levels) {
   levels <- as.character(levels)
-  stats::setNames(rep_len(c(16L, 17L, 15L, 3L, 4L, 8L), length(levels)), levels)
+  i <- seq_along(levels) - 1L
+  stats::setNames(c(16L, 17L, 15L, 3L, 4L, 8L, 18L)[(i + i %/% 7L) %% 7L + 1L], levels)
 }

@@ -420,6 +420,16 @@ test_that("the horizons differ by line type and point shape as well as color, an
   }
 })
 
+test_that("seven horizons each take their own line type", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  skip_if_not_installed("hvtiPlotR")
+  p <- hvtiRtemplates:::.plot_partial_bands(list(v = fake_band(times = seq(10, 70, 10))), 0.3, "ribbon", NULL, ncol = 1)
+  line <- ggplot2::ggplot_build(p[[1]])$data[[2]]
+  expect_length(unique(line$linetype), 7L)
+  expect_identical(nrow(ggplot2::get_guide_data(p[[1]], "linetype")), 7L)
+})
+
 test_that("the Time legend labels the horizons to two decimals, as the partial figure does", {
   skip_if_not_installed("ggplot2")
   skip_if_not_installed("patchwork")

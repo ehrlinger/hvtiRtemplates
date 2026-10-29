@@ -21,6 +21,17 @@ test_that("an hvtiPlotR without hv_group_palette() stops with an upgrade message
   expect_error(.group_colors("All"), "Update it, then re-render")
 })
 
+test_that("groups take distinct line types and shapes, and past seven never share both", {
+  expect_identical(.group_linetypes("All"), c(All = "solid"))
+  expect_identical(.group_shapes("All"), c(All = 16L))
+  seven <- paste0("g", 1:7)
+  expect_named(.group_linetypes(seven), seven)
+  expect_length(unique(.group_linetypes(seven)), 7L)
+  expect_length(unique(.group_shapes(seven)), 7L)
+  many <- paste0("g", 1:14)
+  expect_length(unique(paste(.group_linetypes(many), .group_shapes(many))), 14L)
+})
+
 test_that("more groups than the house colors hold fall back with a warning, not an error", {
   skip_if_not_installed("hvtiPlotR", "2.8.20")
   many <- paste0("g", 1:8)

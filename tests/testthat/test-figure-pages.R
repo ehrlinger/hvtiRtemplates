@@ -47,3 +47,23 @@ test_that("a partial-dependence result keeps only the page's variables, and its 
   empty <- structure(list(continuous = data.frame(name = "a"), categorical = data.frame()), class = "gg_partial_varpro")
   expect_identical(.partial_subset(empty, "a")$categorical, data.frame())
 })
+
+test_that(".partial_horizon_keys() gives each horizon a line type in every timed panel, under one legend", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  d <- data.frame(x = rep(1:3, 7), yhat = seq_len(21), time = rep(seq(10, 70, 10), each = 3))
+  d$.time_factor <- factor(d$time)
+  timed <- ggplot2::ggplot(d, ggplot2::aes(x = .data$x, y = .data$yhat, color = .data$.time_factor,
+                                           group = .data$.time_factor)) +
+    ggplot2::geom_line() + ggplot2::labs(color = "Time")
+  plain <- ggplot2::ggplot(d[c("x", "yhat")], ggplot2::aes(x = .data$x, y = .data$yhat)) + ggplot2::geom_line()
+  fig <- hvtiRtemplates:::.partial_horizon_keys(patchwork::wrap_plots(timed, plain, ncol = 1))
+  expect_length(unique(ggplot2::ggplot_build(fig[[1]])$data[[1]]$linetype), 7L)
+  expect_identical(unique(ggplot2::ggplot_build(fig[[2]])$data[[1]]$linetype), 1L)
+  withr::local_pdf(NULL)
+  g <- ggplot2::ggplotGrob(fig[[1]])
+  box <- g$grobs[[which(grepl("guide-box", g$layout$name) & vapply(g$grobs, inherits, NA, "gtable"))[1]]]
+  expect_identical(sum(box$layout$name == "guides"), 1L)
+  # A single ggplot, with no horizon, is returned as it is.
+  expect_identical(hvtiRtemplates:::.partial_horizon_keys(plain), plain)
+})

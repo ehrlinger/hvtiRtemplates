@@ -38,6 +38,24 @@
   x
 }
 
+# ggRandomForests draws a survival partial's horizons by color alone, lines and boxes alike. Each
+# panel that does gets a line type per horizon as well, under the same "Time" title and labels so
+# its legend stays one key, and the figure still reads apart printed in grayscale. `fig` is what
+# plot() returns for a gg_partial_rfsrc: one ggplot, or a patchwork of a continuous and a
+# categorical panel. A panel with no horizon is returned as it is.
+.partial_horizon_keys <- function(fig) {
+  key <- function(p) {
+    if (!inherits(p, "ggplot") || !".time_factor" %in% names(p$data)) return(p)
+    lv <- levels(p$data$.time_factor)
+    p + ggplot2::aes(linetype = !!rlang::sym(".time_factor")) +
+      ggplot2::scale_linetype_manual(values = .group_linetypes(lv), name = "Time",
+                                     labels = format(round(as.numeric(lv), 2), trim = TRUE))
+  }
+  if (!inherits(fig, "patchwork")) return(key(fig))
+  for (i in seq_along(fig)) fig[[i]] <- key(fig[[i]])
+  fig
+}
+
 # A report shows each figure half as large again as the copy saved for the
 # manuscript: 9 by 6 in for the 6 by 4 standard, at the same 12 pt type, so the
 # plot gets more room in the report's 2000 px body while the saved copy still

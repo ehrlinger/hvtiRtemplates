@@ -196,6 +196,20 @@ test_that("rfs-explain explains the saved forest without refitting", {
   }
 })
 
+test_that("rfs-explain's partial figure, drawn without bands, tells its horizons apart by line type", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
+  env <- rfs_explained()
+  expect_identical(env$BANDS_B, 0)
+  panels <- if (inherits(env$.fig, "patchwork")) lapply(seq_along(env$.fig), function(i) env$.fig[[i]]) else list(env$.fig)
+  timed <- Filter(function(p) ".time_factor" %in% names(p$data), panels)
+  expect_gt(length(timed), 0L)
+  for (p in timed) {
+    expect_length(unique(ggplot2::ggplot_build(p)$data[[1]]$linetype), length(env$TIMES))
+    expect_identical(nrow(ggplot2::get_guide_data(p, "linetype")), length(env$TIMES))
+  }
+})
+
 test_that("rfs-explain stops when no fit has run in its set", {
   rf_skip_unless_stack(rf_template_packages("rfs", "explain"))
   env <- new.env(parent = globalenv())
