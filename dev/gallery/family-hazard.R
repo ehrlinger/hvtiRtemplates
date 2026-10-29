@@ -72,6 +72,50 @@ hazard_write_sas <- function(root) {
   writeLines(hazard_sas, file.path(study_dir("analyses", root), "hm.dead.sas"))
 }
 
+# ---- hs-score ----------------------------------------------------------------
+# hs-score scores start/stop segments, so it needs an hz and an hm fitted on
+# them, in a set of their own (subject "dead_segments"). The segments are the
+# cohort's own follow-up cut at 1 and 5 years, the event on the last segment,
+# with creatinine re-measured at each cut: a time-varying covariate, which is
+# what the layout exists for. Registered as a second dataset, "segments". The
+# same WHERE keeps the same 725 patients, and the chain's starting values serve,
+# since cutting follow-up leaves a fixed covariate's likelihood unchanged.
+hazard_segment_cuts <- c(1, 5)
+
+hazard_segments <- function(built) {
+  d <- built[c("patient_id", "dead", "iv_dead", "age", "creat_pr", "hx_chf", "lvef", "hx_dm")]
+  withr::with_seed(20261029, {
+    rows <- lapply(seq_len(nrow(d)), function(i) {
+      p <- d[i, ]
+      cuts <- hazard_segment_cuts[hazard_segment_cuts < p$iv_dead]
+      k <- length(cuts) + 1L
+      seg <- p[rep(1L, k), ]
+      seg$iv_start <- c(0, cuts)
+      seg$iv_dead <- c(cuts, p$iv_dead)
+      seg$dead <- c(rep(0L, k - 1L), p$dead)
+      seg$creat_pr <- round(p$creat_pr * exp(cumsum(c(0, stats::rnorm(k - 1L, 0.05, 0.1)))), 2)
+      seg
+    })
+  })
+  s <- do.call(rbind, rows)
+  rownames(s) <- NULL
+  s <- s[c("patient_id", "iv_start", setdiff(names(s), c("patient_id", "iv_start")))]
+  attr(s$iv_start, "label") <- "Segment start (years)"
+  attr(s$iv_dead, "label") <- "Segment stop (years)"
+  attr(s$creat_pr, "label") <- "Creatinine at the segment's start (mg/dL)"
+  s
+}
+
+hazard_register_segments <- function(root, job) {
+  dir <- study_dir("datasets", root)
+  if (file.exists(file.path(dir, "segments.rds"))) return(invisible())
+  saveRDS(hazard_segments(readRDS(file.path(dir, "built.rds"))), file.path(dir, "segments.rds"))
+  invisible(utils::capture.output(suppressMessages(register_data(
+    root, built = "segments.rds", dataset = "segments", role = "named",
+    population = "Synthetic start/stop segments of the cohort's follow-up, cut at 1 and 5 years"
+  ))))
+}
+
 # ---- hs-concordance ----------------------------------------------------------
 # hs-concordance predicts every patient through every treatment group's hm
 # model, each fitted by its own hz and hm jobs on that group's patients, in
@@ -188,6 +232,24 @@ gallery_family(
         "^CARRY <- character\\(\\)$" = "CARRY <- c(\"age\")",
         "^OVERLAP <- NULL$" = "OVERLAP <- \"none\""
       ))
-    )
+    ),
+    "hz-segments" = list(
+      template = "hz", subject = "dead_segments", type = "hz", prepare = hazard_register_segments,
+      choices = c(hazard_rows, hazard_hz_choices, list(
+        "^DATASET <- \"built\"$" = "DATASET <- \"segments\"",
+        "^KEY <- ID$" = "KEY <- c(ID, \"iv_start\")",
+        "^START  <- NULL$" = "START  <- \"iv_start\"",
+        # Segments, as SAS counts observations: the chain's 406 events, one per patient who died.
+        "^EXPECTED <- (NULL$|list\\(n = NA_integer_)" = "EXPECTED <- list(n = 1823L, n_events = 406L, n_censored = 1417L)"
+      ))
+    ),
+    "hm-segments" = list(
+      template = "hm", subject = "dead_segments", type = "hz",
+      prepare = function(root, job) hazard_write_sas(root),
+      choices = list()
+    ),
+    "hs-score" = list(subject = "dead_segments", type = "hz", choices = list(
+      "^CARRY <- character\\(\\)$" = "CARRY <- \"creat_pr\""
+    ))
   )
 )
