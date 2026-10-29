@@ -371,14 +371,15 @@ pd <- cache_fit("rfs-partial", gg_partial_rfsrc(forest, xvar.names = sel, partia
                 packages = "randomForestSRC")
 # The manuscript theme hides the legend and its title, and the caption reads the colors from the legend.
 .cap <- paste("Partial dependence of the forest's prediction on each selected predictor, one panel per",
-              "predictor. Solid lines trace the predicted survival across a continuous predictor, one color",
-              "per follow-up time as in the legend, and dark gray bars give the partial effect at each",
+              "predictor. Lines trace the predicted survival across a continuous predictor, one color and line",
+              "type per follow-up time as in the legend, and dark gray bars give the partial effect at each",
               "level of a categorical one.")
 # Free size, paged: one facet per predictor, two by two.
 .pages <- hvtiRtemplates:::.figure_pages(length(sel), panel_width = 3.25, panel_height = 3, page_height = 6)
 for (.i in seq_along(.pages)) {
   .vars <- sel[.pages[[.i]]$index]
-  .fig <- plot(hvtiRtemplates:::.partial_subset(pd, .vars)) &
+  # A line type per horizon as well as a color, so the page reads apart in grayscale.
+  .fig <- hvtiRtemplates:::.partial_horizon_keys(plot(hvtiRtemplates:::.partial_subset(pd, .vars))) &
     hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
   save_figure(.fig, sprintf("rfs-explain-dependence-partial-page-%02d", .i),
               width = .pages[[.i]]$width, height = .pages[[.i]]$height)
