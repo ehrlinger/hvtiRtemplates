@@ -65,6 +65,29 @@ test_that("an SSN name with a number suffix is dropped however few values it hol
   expect_setequal(out$dropped, c("ssn_num", "ssn_no", "SSNnumber", "pt_ssn_num"))
 })
 
+test_that("an SSN with a source qualifier and every masterid are dropped by name", {
+  # One SSN per linked source, and masterid copies, as a built dataset carries them.
+  d <- data.frame(ccfid = 1:3, ssn_base = 1:3, SSN_SSDI = 1:3, pt_ssn_base = 1:3, masterid = 1:3, masterid0 = 1:3,
+                  MasterID1 = 1:3, master_id = 1:3, ssn_numeric_flag = 1:3, soc_secondary = 1:3, mastery = 1:3)
+  out <- hvtiRtemplates:::.drop_identifiers(d, "ccfid")
+  expect_setequal(out$dropped, c("ssn_base", "SSN_SSDI", "pt_ssn_base", "masterid", "masterid0", "MasterID1", "master_id"))
+  expect_setequal(names(out$data), c("ccfid", "ssn_numeric_flag", "soc_secondary", "mastery"))
+  # masterid is kept when it is the ID.
+  expect_true("masterid" %in% names(hvtiRtemplates:::.drop_identifiers(d[-1], "masterid")$data))
+})
+
+test_that("an SSN with a number suffix and a source qualifier drops past a placeholder; an SSN indicator stays", {
+  # A zero placeholder fails the value rule, so only the name can catch these.
+  ssn <- c(100000001:100000011, 0)
+  d <- data.frame(ccfid = 1:12, ssn_num_base = ssn, SSN_NO_SSDI = ssn, ssn_base = as.character(ssn),
+                  ssn_missing = rep(0:1, 6), ssn_flag = rep(c("Y", "N"), 6), soc_sec_status = factor(rep(0:1, 6)),
+                  ssn_valid = rep(c(TRUE, FALSE), 6))
+  out <- hvtiRtemplates:::.drop_identifiers(d, "ccfid")
+  expect_setequal(out$dropped, c("ssn_num_base", "SSN_NO_SSDI", "ssn_base"))
+  expect_setequal(names(out$data), c("ccfid", "ssn_missing", "ssn_flag", "soc_sec_status", "ssn_valid"))
+  expect_setequal(out$identifiers, out$dropped)
+})
+
 test_that("a contact indicator held as a factor or as 0/1 text stays; contact text does not", {
   d <- data.frame(ccfid = 1:3, phone = factor(c(0, 1, 1)), email = c("1", "0", NA), cell_phone = factor(c("Y", "N", "Y")),
                   home_phone = factor(c("216-555-0100", "216-555-0101", NA)), name = factor(c("a", "b", "c")))
@@ -373,6 +396,26 @@ test_that("a WHERE on the ID stops before any row is filtered, and never prints 
     # Checked before any condition runs, so a missing column is never looked up.
     expect_false(grepl("not found", err, fixed = TRUE), info = info)
   }
+})
+
+test_that("a WHERE on a dropped SSN or masterid stops and never prints its value; on an SSN indicator it runs", {
+  ssn <- c(100000001:100000005, 0)
+  cfg <- job_study(data.frame(ccfid = 9001:9006, ssn_base = ssn, masterid0 = 7000001:7000006,
+                              ssn_missing = c(0, 1, 0, 1, 1, 1), age = c(15, 40, 55, NA, 70, 80)))
+  for (where in list(quote(ssn_base == 100000005), quote(masterid0 != 7000002), quote(age > 18 & ssn_base > 0))) {
+    err <- refusal(read_job_data(cfg, where = where))
+    info <- paste(deparse(where), collapse = " ")
+    expect_match(err, "patient identifier", info = info)
+    expect_false(grepl("100000005|7000002", err), info = info)
+    expect_false(grepl("not found", err, fixed = TRUE), info = info)
+  }
+  # A value equal to one, under another column's name, is refused as well.
+  err <- refusal(read_job_data(cfg, where = quote(age != 100000003)))
+  expect_match(err, "`ssn_base`", fixed = TRUE)
+  expect_false(grepl("100000003", err, fixed = TRUE))
+  out <- read_job_data(cfg, where = quote(ssn_missing == 1))
+  expect_identical(nrow(out$data), 4L)
+  expect_false(any(c("ssn_base", "masterid0") %in% names(out$data)))
 })
 
 test_that("a WHERE on MRN or eMRN stops even when neither is the ID, and on a fallback ID", {
@@ -978,6 +1021,28 @@ test_that("WHERE applies to the joined rows, and refuses the joined dataset's id
   err <- tryCatch(read_job_data(cfg, join = "echo", where = quote(ef != 9100004)), error = conditionMessage)
   expect_match(err, "identifier")
   expect_no_match(err, "9100004")
+})
+
+test_that("WHERE refuses the joined dataset's SSN by name and by value", {
+  testthat::skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, "Join", 42L, renv = FALSE))
+  dd <- hvtiRutilities::study_dir("datasets", root)
+  utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70)), file.path(dd, "built.csv"), row.names = FALSE)
+  utils::write.csv(data.frame(ccfid = c(1L, 2L, 4L), echo_date = c(95, 95, 100), ef = c(50, 45, 40),
+                              ssn_base = c(100000001, 100000002, 0)), file.path(dd, "echo.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key = c("ccfid", "echo_date")))
+  cfg <- hvtiRutilities::study_config(root)
+  expect_false("ssn_base" %in% names(read_job_data(cfg, join = "echo")$data))
+  for (where in list(quote(ssn_base == 100000002), quote(ef != 100000002))) {
+    err <- refusal(read_job_data(cfg, join = "echo", where = where))
+    info <- paste(deparse(where), collapse = " ")
+    expect_match(err, "identifier", info = info)
+    expect_false(grepl("100000002", err, fixed = TRUE), info = info)
+    expect_false(grepl("not found", err, fixed = TRUE), info = info)
+  }
 })
 
 test_that("an unregistered key with no JOIN_KEY stops with both fixes", {

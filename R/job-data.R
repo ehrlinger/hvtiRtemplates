@@ -31,16 +31,23 @@
 }
 
 # Direct identifiers no analysis job needs, matched on the whole column name
-# ignoring case. ccfid, MRN, eMRN and a Social Security number are dropped
-# whatever the column holds. A patient name or contact detail is dropped only as
+# ignoring case. ccfid, MRN, eMRN, masterid (masterid0, masterid1) and a Social
+# Security number are dropped whatever the column holds. A patient name or contact detail is dropped only as
 # text, so a 0/1 phone or email indicator, contact by that route, stays, whether
 # it is held as numbers, text or a factor. Whole
 # names only, so pt_mrn, surgeon_name_code and phone_followup stay. Dates and
 # zip codes are not here: the EDA reads dates, and a build may need either.
 .identifier_name_pattern <- paste0(
-  "^(ccfid|e?mrn|((pt|pat|patient)_?)?",
+  "^(ccfid|e?mrn|master_?id[0-9]*|((pt|pat|patient)_?)?",
   "(ssn|soc_?sec(urity)?|social_?security)(_?(no|num|number))?)$"
 )
+# An SSN name with one qualifier after it, ssn_base, ssn_ssdi or ssn_num_base,
+# since a build that links sources keeps one SSN per source. The qualifier may
+# instead make it an indicator, ssn_missing or ssn_flag, so such a column stays
+# when every value it holds is an indicator's. ssn_numeric_flag, two tokens on,
+# is not matched.
+.identifier_qualified_pattern <-
+  "^((pt|pat|patient)_?)?(ssn|soc_?sec(urity)?|social_?security)(_?(no|num|number))?_[a-z0-9]+$"
 .identifier_text_pattern <- paste0(
   "^(((pt|pat|patient)_?)?((first|last|middle|full|f|l|m)_?)?name|surname",
   "|addr(ess)?[0-9]?|street(_?address)?|((home|cell|work)_?)?phone(_?(no|num|number))?|telephone",
@@ -67,26 +74,33 @@
   is.numeric(seen) && all(seen == floor(seen) & seen > 0 & seen < 1e9) && mean(seen >= 1e8) >= 0.5
 }
 
-# A name or contact column counts as text unless every value it holds is an
-# indicator's: 0/1, Y/N, yes/no or true/false, as text or as factor levels.
-.is_identifier_text <- function(x) {
-  if (!is.character(x) && !is.factor(x)) return(FALSE)
+# Every value an indicator's: 0/1, Y/N, yes/no or true/false, held as numbers,
+# logicals, text or factor levels.
+.is_indicator <- function(x) {
   seen <- unique(tolower(trimws(as.character(x[!is.na(x)]))))
-  !all(seen %in% c("0", "1", "y", "n", "yes", "no", "true", "false", "t", "f", ""))
+  all(seen %in% c("0", "1", "y", "n", "yes", "no", "true", "false", "t", "f", ""))
 }
 
+# A name or contact column counts as text unless it is an indicator.
+.is_identifier_text <- function(x) (is.character(x) || is.factor(x)) && !.is_indicator(x)
+
 # The ID and any KEY column are kept whatever their name: a job keyed on ccfid
-# under another ID still needs it.
+# under another ID still needs it. `identifiers` are the columns dropped for
+# their name or values as an identifier number, whose values WHERE refuses too;
+# a name or contact column is not among them.
 .drop_identifiers <- function(d, id, key = character()) {
   others <- setdiff(names(d), c(id, key))
   is_text <- vapply(d[others], .is_identifier_text, logical(1L))
-  by_name <- others[grepl(.identifier_name_pattern, others, ignore.case = TRUE) |
-                      (is_text & grepl(.identifier_text_pattern, others, ignore.case = TRUE))]
+  qualified <- grepl(.identifier_qualified_pattern, others, ignore.case = TRUE)
+  qualified[qualified] <- !vapply(d[others[qualified]], .is_indicator, logical(1L))
+  numbers <- others[grepl(.identifier_name_pattern, others, ignore.case = TRUE) | qualified]
+  by_name <- union(numbers, others[is_text & grepl(.identifier_text_pattern, others, ignore.case = TRUE)])
   rest <- setdiff(others, by_name)
   rest <- rest[!grepl(.date_name_pattern, rest, ignore.case = TRUE)]
   by_value <- rest[vapply(d[rest], .looks_like_ssn, logical(1L))]
   drop <- names(d)[names(d) %in% c(by_name, by_value)]
-  list(data = d[setdiff(names(d), drop)], dropped = drop, by_value = by_value)
+  list(data = d[setdiff(names(d), drop)], dropped = drop, by_value = by_value,
+       identifiers = names(d)[names(d) %in% c(numbers, by_value)])
 }
 
 # The record's note for a column dropped by its values: its name alone gives no reason.
@@ -571,8 +585,9 @@
 #'   written, and a name for a function stays a name. Such a value must be a
 #'   vector, \code{NULL}, a symbol or a call; a data frame, list, environment or
 #'   S4 object stops, since it would be saved whole. A condition
-#'   that mentions the \code{id} column or a column named \code{MRN} or
-#'   \code{eMRN} (ignoring case), directly or as \code{.data$x} or
+#'   that mentions the \code{id} column, a column named \code{MRN} or
+#'   \code{eMRN} (ignoring case), or an SSN or \code{masterid} column dropped
+#'   below, in this dataset or a joined one, directly or as \code{.data$x} or
 #'   \code{.data[["x"]]}, stops before any row is filtered, because each
 #'   condition is saved, values included, in the job's output. Exclude those
 #'   patients in the dataset build, or with an hvtiRdatabuild analysis set,
@@ -583,8 +598,8 @@
 #'   A function bound to such a lookup under another name is read as that
 #'   lookup. Values are checked as well as names, after every name check: the
 #'   check covers literal values (including a vector fixed in from outside) of
-#'   five or more characters that equal a value of the identifier, \code{MRN}
-#'   or \code{eMRN} columns in the data, and folds only arithmetic,
+#'   five or more characters that equal a value of the identifier, \code{MRN},
+#'   \code{eMRN}, SSN or \code{masterid} columns in the data, and folds only arithmetic,
 #'   \code{c()}, \code{paste}/\code{paste0} and numeric or character coercion
 #'   of constants (such as \code{4730000000 + 1}) to check their result. So a
 #'   wrapper function or a copy of the identifier under another name is caught
@@ -659,8 +674,11 @@
 #'
 #' @details Direct identifiers are dropped unless one is the identifier, from a
 #'   joined dataset too: columns named, ignoring case, \code{ccfid}, \code{MRN},
-#'   \code{eMRN}, a Social Security number (\code{ssn}, \code{soc_sec},
-#'   \code{social_security}, \code{pt_ssn}), and, held as text, a patient name
+#'   \code{eMRN}, \code{masterid} (\code{masterid0}, \code{masterid1}), a Social
+#'   Security number (\code{ssn}, \code{soc_sec}, \code{social_security},
+#'   \code{pt_ssn}, or one with a source qualifier such as \code{ssn_base} or
+#'   \code{ssn_num_base}, unless every value is an indicator's, as in a 0/1
+#'   \code{ssn_missing}), and, held as text, a patient name
 #'   (\code{name}, \code{first_name}, \code{pt_name}, \code{surname}) or contact
 #'   details (\code{address}, \code{street}, \code{phone}, \code{email}). Any
 #'   other column whose values are shaped like Social Security numbers is dropped
@@ -773,9 +791,11 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   key <- .match_columns(replace(resolved$key, resolved$key == id, who$id), names(d))
   ids <- .drop_identifiers(d, who$id, key)
   notes <- c(read$notes, resolved$note, .ssn_notes(ids$by_value))
-  # MRN and eMRN are refused even when dropped: the condition would be saved.
-  identifiers <- unique(c(who$id, names(d)[tolower(names(d)) %in% .job_identifier_names], .job_identifier_names))
-  # Their values too, read from `d` before MRN and eMRN are dropped.
+  # MRN, eMRN and every other identifier number dropped, an SSN or masterid,
+  # are refused even when dropped: the condition would be saved.
+  identifiers <- unique(c(who$id, names(d)[tolower(names(d)) %in% .job_identifier_names], .job_identifier_names,
+                          ids$identifiers))
+  # Their values too, read from `d` before they are dropped.
   id_values <- if (!is.null(where)) {
     lapply(d[intersect(identifiers, names(d))], function(x) unique(.id_text(x[!is.na(x)])))
   }
@@ -791,11 +811,12 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
       for (col in names(join_values)) values[[col]] <- unique(c(values[[col]], join_values[[col]]))
       .check_where_join_vars(where, setdiff(names(ids$data), names(records)))
       conditions <- lapply(.where_conditions(where), .resolve_outside, cols = names(records), env = caller)
-      .refuse_identifier_where(conditions, identifiers, c(who$id, key, join_shape$key), values,
+      .refuse_identifier_where(conditions, unique(c(identifiers, names(join_values))), c(who$id, key, join_shape$key), values,
                                data_cols = names(records), env = caller)
       on_records <<- vapply(conditions, function(cond) any(.where_columns(cond)$columns %in% record_cols), logical(1L))
       .apply_where(records, if (any(on_records)) .where_conditions(where)[on_records], env = caller,
-                   cols = c(who$id, key, join_shape$key), identifiers = identifiers, id_values = values)
+                   cols = c(who$id, key, join_shape$key), identifiers = unique(c(identifiers, names(join_values))),
+                   id_values = values)
     }
   }
   if (!is.null(join)) {
@@ -818,6 +839,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     key <- if (cohort_only) joined$key else .match_columns(key, names(joined$data))
     notes <- c(notes, joined$notes)
     for (col in names(joined$id_values)) id_values[[col]] <- unique(c(id_values[[col]], joined$id_values[[col]]))
+    identifiers <- unique(c(identifiers, names(joined$id_values)))
   }
   kept <- .apply_where(ids$data, if (!all(on_records)) .where_conditions(where)[!on_records], env = caller,
                        cols = c(who$id, key), identifiers = identifiers,
@@ -998,15 +1020,15 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     stop(repeats, if (repeats == 1L) " row" else " rows", " of `", join, "` repeat on its key (", toString(jkey),
          "). Set JOIN_KEY to columns that make each row unique.", call. = FALSE)
   }
-  # Identifier values of the joined dataset are refused in WHERE as the cohort's are.
-  id_values <- if (values) {
-    held <- names(a)[tolower(names(a)) %in% c(tolower(cohort_id), .job_identifier_names)]
-    stats::setNames(lapply(a[held], function(x) unique(.id_text(x[!is.na(x)]))), replace(held, held == a_id, cohort_id))
-  }
   # The job's KEY is kept as the join key is: it may name a joined column whose
   # values the SSN rule would otherwise read as identifiers.
   job_key <- .match_columns(replace(key, tolower(key) == tolower(cohort_id), a_id), names(a))
   a_ids <- .drop_identifiers(a, a_id, union(jkey, intersect(job_key, names(a))))
+  # Identifier values of the joined dataset are refused in WHERE as the cohort's are.
+  id_values <- if (values) {
+    held <- names(a)[tolower(names(a)) %in% c(tolower(cohort_id), .job_identifier_names, tolower(a_ids$identifiers))]
+    stats::setNames(lapply(a[held], function(x) unique(.id_text(x[!is.na(x)]))), replace(held, held == a_id, cohort_id))
+  }
   j <- .join_ancillary(cohort, a_ids$data, cohort_id, a_id, jkey, join_vars, reduce,
                        filter = if (!is.null(filter)) function(records, cols) filter(records, cols, id_values))
   list(

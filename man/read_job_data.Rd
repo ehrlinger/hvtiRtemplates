@@ -41,8 +41,9 @@ name and \code{.env$x} are fixed in; \code{x$y} and \code{x@y} are kept as
 written, and a name for a function stays a name. Such a value must be a
 vector, \code{NULL}, a symbol or a call; a data frame, list, environment or
 S4 object stops, since it would be saved whole. A condition
-that mentions the \code{id} column or a column named \code{MRN} or
-\code{eMRN} (ignoring case), directly or as \code{.data$x} or
+that mentions the \code{id} column, a column named \code{MRN} or
+\code{eMRN} (ignoring case), or an SSN or \code{masterid} column dropped
+below, in this dataset or a joined one, directly or as \code{.data$x} or
 \code{.data[["x"]]}, stops before any row is filtered, because each
 condition is saved, values included, in the job's output. Exclude those
 patients in the dataset build, or with an hvtiRdatabuild analysis set,
@@ -53,8 +54,8 @@ lookup such as \code{get()}, stops too, since it cannot be known.
 A function bound to such a lookup under another name is read as that
 lookup. Values are checked as well as names, after every name check: the
 check covers literal values (including a vector fixed in from outside) of
-five or more characters that equal a value of the identifier, \code{MRN}
-or \code{eMRN} columns in the data, and folds only arithmetic,
+five or more characters that equal a value of the identifier, \code{MRN},
+\code{eMRN}, SSN or \code{masterid} columns in the data, and folds only arithmetic,
 \code{c()}, \code{paste}/\code{paste0} and numeric or character coercion
 of constants (such as \code{4730000000 + 1}) to check their result. So a
 wrapper function or a copy of the identifier under another name is caught
@@ -195,8 +196,11 @@ The shared data step of every analysis template. It reads a
 \details{
 Direct identifiers are dropped unless one is the identifier, from a
   joined dataset too: columns named, ignoring case, \code{ccfid}, \code{MRN},
-  \code{eMRN}, a Social Security number (\code{ssn}, \code{soc_sec},
-  \code{social_security}, \code{pt_ssn}), and, held as text, a patient name
+  \code{eMRN}, \code{masterid} (\code{masterid0}, \code{masterid1}), a Social
+  Security number (\code{ssn}, \code{soc_sec}, \code{social_security},
+  \code{pt_ssn}, or one with a source qualifier such as \code{ssn_base} or
+  \code{ssn_num_base}, unless every value is an indicator's, as in a 0/1
+  \code{ssn_missing}), and, held as text, a patient name
   (\code{name}, \code{first_name}, \code{pt_name}, \code{surname}) or contact
   details (\code{address}, \code{street}, \code{phone}, \code{email}). Any
   other column whose values are shaped like Social Security numbers is dropped
