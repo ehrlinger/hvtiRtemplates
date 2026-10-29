@@ -37,11 +37,14 @@ dataset with its build record beside it. When `REGISTER` is `TRUE` it registers
 that file as a dated version of this study's `"built"` dataset (also called
 `"study"`), the one every analysis job reads.
 
+Before it registers, the job checks what it built: what the rebuild changed
+against the version registered now, cross-tabs, the follow-up columns and the
+study's own named checks. The report holds their counts; the rows behind them
+go to the console, never into the report.
+
 What does not belong here: corrections to a patient's values (they belong to
 the master's corrections, in hvtiRdatabuild, so every study sees them);
-imputation, propensity scores and variables for one model (a `vars` job);
-printing patient rows to check them (do that in the console, never in a
-report).
+imputation, propensity scores and variables for one model (a `vars` job).
 
 ```{r}
 #| label: setup
@@ -56,13 +59,28 @@ TYPE    <- "build"
 # Every stop names its step and this file, and never a data value.
 .bd_stop <- function(step, ...) stop("bd: ", step, " (", .job_file, "): ", ..., call. = FALSE)
 # Registering claims the build record only from hvtiRutilities 1.5.3, and declaring the working file
-# (declare_data()) needs 1.5.12; an older one would record a bd cut as legacy or cannot declare it.
-if (utils::packageVersion("hvtiRutilities") < "1.5.12") {
-  .bd_stop("setup", "this job needs hvtiRutilities >= 1.5.12 to declare its working file; ",
+# (declare_data()) needs 1.5.12; an older one would record a bd cut as legacy or cannot declare it. The named
+# checks need proc_print(), released in 1.5.17, and the rebuild comparison compare_built(), in hvtiRdatabuild 0.3.3.
+if (utils::packageVersion("hvtiRutilities") < "1.5.17") {
+  .bd_stop("setup", "this job needs hvtiRutilities >= 1.5.17 for proc_print(); ",
            utils::packageVersion("hvtiRutilities"), " is installed.")
+}
+if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.3.3") {
+  .bd_stop("setup", "this job needs hvtiRdatabuild >= 0.3.3 for compare_built().")
 }
 # Later chunks send warnings and messages to the console rather than the report.
 knitr::opts_chunk$set(warning = NA, message = NA)
+# One numbered table, for a section that shows a table only when it has one or shows several: a
+# child chunk with its own label and caption while rendering, and a plain table in the console,
+# where a child's label would collide with the same chunk run before.
+.bd_table <- function(tab, label, cap, ...) {
+  if (!isTRUE(getOption("knitr.in.progress"))) return(print(knitr::kable(tab, ...)))
+  child <- new.env(parent = environment())
+  fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(paste0(fence, "{r}"), paste0("#| label: ", label),
+                                 paste0("#| tbl-cap: ", encodeString(cap, quote = "\"")),
+                                 "knitr::kable(tab, ...)", fence), envir = child, quiet = TRUE), sep = "\n")
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -127,10 +145,32 @@ KEY <- ID
 # underscores. A study already registered keeps the name it was registered under.
 DATASET_ID <- "study_cohort"
 
+# EDIT: pairs of columns to cross-tabulate, typically a derived column against its source, such as an event
+# indicator against an indicator of its date. A missing value is a level of its own, as PROC FREQ / MISSING shows
+# it. A list of character vectors, or list() for none.
+CROSSTABS <- list(c("dead", "sex"))
+
+# EDIT: the event indicator and its follow-up interval(s) in years, as the derive chunk makes them. EVENT <- NULL
+# checks none.
+EVENT    <- "dead"
+FOLLOWUP <- "iv_dead"
+
+# EDIT: the rows that look wrong, as condition ~ "Label", the shape of EXCLUDE. The report shows each label and
+# how many rows match; the matching rows go to the console. A check may name a patient, for example
+#   ccfid == "<id>" ~ "The patient queried by the surgeon"
+# and a row for which a condition is missing is counted apart, never as a match. list() for none.
+CHECKS <- list(
+  dead == 1 & is.na(iv_dead) ~ "Event with no follow-up interval",
+  iv_dead <= 0 ~ "Follow-up interval of zero or less"
+)
+
+# EDIT: the columns printed in the console for each check's matching rows. NULL prints every column.
+PRINT_COLS <- c("dead", "iv_dead")
+
 # FALSE writes the working file and registers nothing. TRUE registers it as a
 # dated version of this study's "built" dataset, which every analysis job then
-# reads. Before registering a rebuild, hvtiRutilities::review_built() shows how
-# the working file differs from the version registered now.
+# reads. Render with FALSE first and read the Checks section, which shows how this
+# build differs from the version registered now, then set TRUE and render again.
 REGISTER <- FALSE
 ```
 
@@ -153,6 +193,15 @@ if (!is.logical(REGISTER) || length(REGISTER) != 1L || is.na(REGISTER)) {
 }
 if (!is.character(MASTER) || length(MASTER) != 1L) .bd_stop("check-choices", "MASTER must be one path.")
 if (inherits(EXCLUDE, "formula")) EXCLUDE <- list(EXCLUDE)
+if (is.character(CROSSTABS)) CROSSTABS <- list(CROSSTABS)
+if (!is.list(CROSSTABS) || !all(vapply(CROSSTABS, is.character, logical(1L)))) {
+  .bd_stop("check-choices", "CROSSTABS must be a list of column-name vectors, or list().")
+}
+if (inherits(CHECKS, "formula")) CHECKS <- list(CHECKS)
+if (!is.list(CHECKS)) .bd_stop("check-choices", "CHECKS must be a list of condition ~ \"Label\", or list().")
+if (!is.null(EVENT) && (!is.character(EVENT) || length(EVENT) != 1L || !is.character(FOLLOWUP) || !length(FOLLOWUP))) {
+  .bd_stop("check-choices", "EVENT must be one column name and FOLLOWUP one or more, or EVENT NULL.")
+}
 KEEP <- tolower(KEEP)
 JOIN_BY <- tolower(JOIN_BY)
 ID <- tolower(ID)
@@ -294,6 +343,172 @@ saveRDS(d, .built)
 )
 .record_file <- file.path(.datasets, paste0(DATASET_ID, ".build.yml"))
 yaml::write_yaml(.record, .record_file)
+```
+
+## Checks
+
+These checks read the dataset this render has just written. They report counts only: the rows behind a count,
+and the patients on one side of the rebuild only, are printed in the console, so run the chunks in an
+interactive session to read them. A check changes nothing and blocks nothing. A finding becomes a correction to
+the master, a rule in `EXCLUDE`, or a fix to the derive chunk; then render again, and register once the checks
+read right.
+
+### What this rebuild changed
+
+```{r}
+#| label: rebuild
+#| results: asis
+# unnumbered: its two tables are child chunks with their own labels and captions
+# The baseline is the version registered now for the study's declared dataset, read
+# with read_built(working = FALSE) and bound to this build here, never looked up by a
+# helper on its own. review_built() resolves its file from _study.yml and not from
+# DATASET_ID, so in a comparison build it would review the declared file while every
+# check below reads this one. working = FALSE is explicit: with nothing registered,
+# or with HVTI_DATA = "working", read_built() serves the working file, and the
+# comparison would be this file against itself.
+.cfg <- hvtiRutilities::study_config(.root, require_data = FALSE)
+.declared <- .cfg$built
+.found <- if (!is.null(.declared)) hvtiRtemplates:::.manifest_find(.root, source = .declared)
+.comparison <- NULL
+if (is.null(.found)) {
+  .rebuild_state <- "Nothing is registered for this study yet, so there is no version to compare this build against."
+} else {
+  # .provenance_read() stops if the registered version changes while it is read. Its record is not shown: it
+  # follows HVTI_DATA, and would name the working file under a working read where this read the registered one.
+  .baseline_read <- tryCatch(
+    hvtiRtemplates:::.provenance_read("study", .cfg, function() hvtiRutilities::read_built(.cfg, working = FALSE),
+                                      role = "baseline"),
+    error = function(e) .bd_stop("rebuild", conditionMessage(e))
+  )
+  .baseline <- .baseline_read$value
+  .rebuild_state <- if (identical(.declared, basename(.built))) {
+    paste0("A rebuild of the study dataset: ", basename(.built), " against its registered version ",
+           .found$version_file, ".")
+  } else {
+    paste0("A comparison build: ", basename(.built), " is not the study dataset. It is compared against the study ",
+           "dataset ", .declared, ", registered as ", .found$version_file, ", which this build leaves unchanged.")
+  }
+  # compare_built() joins on one column. A KEY of several columns is joined on all of them.
+  .join <- function(x) {
+    if (length(KEY) == 1L) return(x)
+    x$.bd_key <- do.call(paste, c(unname(as.list(x[KEY])), sep = "\r"))
+    # A missing part leaves the key missing, which compare_built() refuses, rather than the text "NA".
+    x$.bd_key[!stats::complete.cases(x[KEY])] <- NA
+    x
+  }
+  .id <- if (length(KEY) == 1L) KEY else ".bd_key"
+  # read_built() reads a logical column as integer and drops a labeled column's value labels, so this
+  # build is read the same way: otherwise every logical derivation reads "type changed" and its values,
+  # the thing a rebuild check is for, are never compared. The checks below read the data as written.
+  .as_read <- d
+  .as_read[] <- lapply(.as_read, function(x) {
+    if (is.logical(x)) return(as.integer(x))
+    if (!inherits(x, "haven_labelled")) return(x)
+    out <- as.vector(x)
+    attr(out, "label") <- attr(x, "label")
+    out
+  })
+  .comparison <- tryCatch(hvtiRdatabuild::compare_built(.join(.baseline), .join(.as_read), id = .id),
+                          error = function(e) .bd_stop("rebuild", conditionMessage(e)))
+  .rows <- attr(.comparison, "rows")
+  # The patients on one side only are identifiers: the console has them, the report their count.
+  for (.side in c("only_oracle", "only_r")) {
+    .ids <- .rows[[.side]]
+    cat("\n", if (.side == "only_oracle") "In the registered version only" else "In this build only", ": ",
+        length(.ids), " row(s)\n", sep = "", file = stderr())
+    if (length(.ids)) cat(utils::head(.ids, 100L), sep = "\n", file = stderr())
+    if (length(.ids) > 100L) cat("... ", length(.ids) - 100L, " more not shown\n", sep = "", file = stderr())
+  }
+}
+cat(.rebuild_state, "\n")
+# Per column: identical, within tolerance or differs, with how many rows differ and by
+# how much. It is never collapsed into a pass or a fail: a difference is read, not counted.
+# The tables are shown only when there is a comparison, so a study with nothing registered shows no empty caption.
+if (!is.null(.comparison)) {
+  .rows_tab <- data.frame(
+    Item = c("Rows in the registered version", "Rows in this build", "Rows in both",
+             "In the registered version only", "In this build only"),
+    Value = c(.rows$n_oracle, .rows$n_r, .rows$n_common, length(.rows$only_oracle), length(.rows$only_r))
+  )
+  .verdicts <- c(absent_in_r = "in the registered version only", absent_in_sas = "in this build only",
+                 type_mismatch = "type changed")
+  .columns_tab <- data.frame(
+    Column = .comparison$variable,
+    Verdict = ifelse(.comparison$verdict %in% names(.verdicts), .verdicts[.comparison$verdict], .comparison$verdict),
+    `Rows differing` = .comparison$n_differ,
+    `Largest difference` = signif(.comparison$max_abs_diff, 4),
+    check.names = FALSE
+  )
+  .bd_table(.rows_tab, "tbl-rebuild-rows", "Rows in the registered version and in this build, joined on the dataset's key")
+  .bd_table(.columns_tab, "tbl-rebuild-columns", "Each column of the rows in both, compared by value")
+}
+```
+
+### Cross-tabs
+
+```{r}
+#| label: crosstabs
+#| results: asis
+# unnumbered: each cross-tab is a child chunk with its own label and caption
+# Counts the author needs to see: a small cell is flagged, never suppressed.
+.small <- 5L
+if (!length(CROSSTABS)) cat("No cross-tabs are named in CROSSTABS.\n")
+for (.i in seq_along(CROSSTABS)) {
+  .pair <- CROSSTABS[[.i]]
+  .tab <- tryCatch(hvtiRutilities::proc_freq(d, .pair, missing = TRUE),
+                   error = function(e) .bd_stop("crosstabs", conditionMessage(e)))
+  .tab <- .tab[, intersect(c(.pair, "Frequency", "Percent"), names(.tab)), drop = FALSE]
+  .tab$Small <- ifelse(.tab$Frequency > 0 & .tab$Frequency < .small, paste("under", .small), "")
+  .tab[.pair] <- lapply(.tab[.pair], function(x) ifelse(is.na(x), "(missing)", as.character(x)))
+  .by <- paste(.pair, collapse = " by ")
+  cat("\n\n#### ", .by, "\n\n", sep = "")
+  # A label holds letters, digits and hyphens, so an underscore in a name cannot be read as markup. The
+  # position keeps two labels apart when two pairs' names reduce to the same letters.
+  .slug <- gsub("[^A-Za-z0-9]+", "-", paste(.pair, collapse = "-"))
+  .bd_table(.tab, paste0("tbl-crosstab-", .i, "-", .slug), paste0(.by, ", with a missing value as a level of its own"),
+            row.names = FALSE)
+}
+```
+
+### Follow-up
+
+```{r}
+#| label: followup
+#| results: asis
+# unnumbered: its two tables are child chunks with their own labels and captions
+# identifier = NULL: the report holds aggregates only. The suspicious rows the check
+# finds go to the console, without an identifier, for the author to look at.
+if (is.null(EVENT)) {
+  cat("No follow-up pair is named in EVENT.\n")
+} else {
+  .fc <- tryCatch(hvtiRutilities::followup_check(d, event = EVENT, followup = FOLLOWUP, identifier = NULL),
+                  error = function(e) .bd_stop("followup", conditionMessage(e)))
+  .bd_table(.fc$cohort, "tbl-followup-cohort", "Patients by event status")
+  .bd_table(.fc$intervals, "tbl-followup-intervals", "Each follow-up interval", digits = 3)
+  # review lists at most 25 rows; n_suspicious counts them all.
+  .n_suspicious <- attr(.fc, "n_suspicious")
+  cat("\n", .n_suspicious, " row(s) look suspicious, listed in the console.\n", sep = "")
+  if (nrow(.fc$review)) cat(utils::capture.output(print(.fc$review, row.names = FALSE)), sep = "\n", file = stderr())
+  if (.n_suspicious > nrow(.fc$review)) {
+    cat("... ", .n_suspicious - nrow(.fc$review), " more not shown\n", sep = "", file = stderr())
+  }
+}
+```
+
+### Named checks
+
+```{r}
+#| label: tbl-checks
+#| tbl-cap: "Rows matching each named check; the rows themselves are in the console"
+# proc_print() writes the matching rows to stderr(), which a render does not knit, and
+# returns one count per check, which is all this report shows.
+if (length(CHECKS)) {
+  .checked <- tryCatch(hvtiRutilities::proc_print(d, where = CHECKS, var = PRINT_COLS),
+                       error = function(e) .bd_stop("checks", conditionMessage(e)))
+  knitr::kable(.checked, col.names = c("Check", "Rows matching", "Undecided (missing)"))
+} else {
+  knitr::kable(data.frame(Check = "No checks are named in CHECKS."))
+}
 ```
 
 ## Register

@@ -1,7 +1,7 @@
 bd_edits <- function(m, register, exclude = "list(age < 40 ~ \"Under 40\", ccfid == \"PT00007\" ~ \"Withdrew consent\")") {
   list(
     "^MASTER <- " = paste0("MASTER <- ", encodeString(m$parquet, quote = "\"")),
-    "^KEEP <- c[(]" = "KEEP <- c(\"age\", \"iv_dead\", \"dead\", \"dt_surg\")",
+    "^KEEP <- c[(]" = "KEEP <- c(\"age\", \"sex\", \"iv_dead\", \"dead\", \"dt_surg\")",
     "^EXCLUDE <- " = paste0("EXCLUDE <- ", exclude),
     "^REGISTER <- " = paste0("REGISTER <- ", register)
   )

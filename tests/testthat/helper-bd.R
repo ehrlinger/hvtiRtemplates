@@ -3,9 +3,10 @@
 # parquet and its sidecar are the real formats. Every value is simulated.
 
 bd_skip <- function() {
-  # The job stops below 1.5.12, the first hvtiRutilities with declare_data() for its working file.
-  testthat::skip_if_not_installed("hvtiRutilities", "1.5.12")
-  testthat::skip_if_not_installed("hvtiRdatabuild", "0.3.0")
+  # The job stops below 1.5.17, the first hvtiRutilities with proc_print() for its named checks, and below
+  # hvtiRdatabuild 0.3.3, the first with compare_built() for the rebuild comparison.
+  testthat::skip_if_not_installed("hvtiRutilities", "1.5.17")
+  testthat::skip_if_not_installed("hvtiRdatabuild", "0.3.3")
   testthat::skip_if_not_installed("arrow")
   testthat::skip_if_not_installed("haven")
 }
@@ -86,4 +87,31 @@ bd_current_version <- function(root) {
 
 bd_provenance <- function(root, version = bd_current_version(root)) {
   yaml::read_yaml(file.path(root, "manifest.yaml"))$provenance[[version]]
+}
+
+# The build's own choices for the check tests, with the four check sections set to columns the
+# synthetic master carries. `...` overrides any of them.
+bd_check_choices <- function(m, register = FALSE, ...) {
+  utils::modifyList(
+    list(MASTER = m$parquet, KEEP = c("age", "sex", "iv_dead", "dead", "dt_surg"),
+         EXCLUDE = list(age < 40 ~ "Under 40"), REGISTER = register,
+         CROSSTABS = list(c("dead", "sex")), EVENT = "dead", FOLLOWUP = "iv_dead",
+         CHECKS = list(iv_dead <= 0 ~ "Follow-up of zero or less"), PRINT_COLS = c("ccfid", "iv_dead")),
+    list(...)
+  )
+}
+
+bd_check_labels <- c("rebuild", "crosstabs", "followup", "tbl-checks")
+
+# Run bd through write-built, apply `change` to the data frame it wrote, as a rebuild with a changed
+# derivation would leave it, then run the check chunks in `labels`. Returns the environment, with the
+# check chunks' stdout in $.stdout.
+bd_check_run <- function(root, choices, change = identity, labels = bd_check_labels) {
+  env <- bd_run(root, choices, labels = c("setup", "edit-study-choices", "check-choices", "read-master", "cohort",
+                                          "derive", "write-built"))
+  env$d <- change(env$d)
+  env$.stdout <- withr::with_dir(root, utils::capture.output(
+    hazard_run("bd", labels, env), type = "output"  # nolint: object_usage_linter.
+  ))
+  env
 }
