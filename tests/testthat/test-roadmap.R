@@ -15,6 +15,10 @@ test_that("every taxonomy prefix has a roadmap row", {
   # added upstream in hvtiRutilities fails here until the roadmap accounts for
   # it, which is the whole point -- otherwise it arrives silently and nobody
   # decides which family it belongs to.
+  #
+  # `dt` is the one prefix owed no row: its template was folded into `bd` on 2026-10-29, and the taxonomy keeps the
+  # row only because thousands of legacy SAS `dt` jobs are named for it and job_census() counts them.
+  tx <- setdiff(tx, "dt")
   expect_setequal(intersect(tx, in_ledger), as.character(tx))
 })
 

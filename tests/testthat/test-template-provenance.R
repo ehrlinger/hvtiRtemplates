@@ -161,12 +161,10 @@ test_that("embedded provenance calls are unique across all R chunks", {
 })
 
 # The bd build job is not an analysis: it writes the study's dataset and a build
-# record, not a report with embedded provenance, so it is outside these checks. The
-# dt check job reads bd's working file before it is registered and closes, as bd
-# does, on the About this run table, so it is outside them too.
+# record, not a report with embedded provenance, so it is outside these checks.
 analysis_templates <- function() {
   templates <- listed_templates()
-  templates[!templates$prefix %in% c("bd", "dt"), ]
+  templates[templates$prefix != "bd", ]
 }
 
 test_that("every shipped template ends with one embedded provenance chunk", {
