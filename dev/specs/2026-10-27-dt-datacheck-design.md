@@ -119,6 +119,11 @@ another section made, so a section moves between files without edits.
 
 ## 7. Where the checks live: decided by the census
 
+⚠️ **Superseded 2026-10-29 by `2026-10-29-bd-checks-design.md`: the checks fold into `bd`, and
+`dt` is removed.** The stat programmer meeting that day reported that the programmers check
+inside their builds, which the census below could not measure. The section is kept as written,
+as the record of the first decision.
+
 John's view is that `dt` may merge into `bd`. The two homes:
 
 - **In `bd`.** The checks become a Checks section after `bd`'s Report, and *What this rebuild
