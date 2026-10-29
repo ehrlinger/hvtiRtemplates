@@ -800,6 +800,18 @@ Create `news/feat-bd-checks.md`:
   `job_census()` still counts the legacy SAS `dt` jobs.
 ```
 
+- [ ] **Step 5b: Regenerate the roadmap**
+
+Removing the catalog row leaves the generated section of the roadmap stale, and `check-roadmap-counts.py` red.
+
+```bash
+python3 dev/specs/artifacts/roadmap_render.py
+git diff --stat dev/specs/2026-08-29-template-conversion-roadmap.md
+```
+
+Expected: the only change is the `dt` row leaving the generated tables and the counts beside them. Read the diff
+before staging it; a change anywhere else means the catalog moved under this branch, so stop and ask.
+
 - [ ] **Step 6: Run every gate locally**
 
 ```bash
@@ -818,7 +830,7 @@ only the known TemporalHazard skips if that package is older than 1.2.17; lint p
 ```bash
 git add inst/extdata/templates.json inst/templates/README.md .lintr dev/gallery/family-00-datasets.R \
   tests/testthat/test-templates.R tests/testthat/test-job-setup.R tests/testthat/test-template-provenance.R \
-  news/feat-bd-checks.md
+  news/feat-bd-checks.md dev/specs/2026-08-29-template-conversion-roadmap.md
 git commit -m "Remove the dt template: its checks are bd's
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -826,9 +838,144 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ---
 
-### Task 4: Gallery render, review and the pull request
+### Task 4: The review's three decisions (design section 4 and section 8)
 
-**Files:** none beyond Task 3.
+**Files:**
+- Modify: `inst/templates/00_datasets/bd.qmd` (the `CROSSTABS` comment, `check-choices`, `crosstabs`, `write-built`,
+  `register`, the Checks section's opening prose, and the `REGISTER` comment)
+- Modify: `tests/testthat/helper-bd.R`, `tests/testthat/test-bd-checks.R`, `tests/testthat/test-bd-template.R`,
+  `tests/testthat/test-bd-e2e.R`
+- Modify: `news/feat-bd-checks.md`
+
+**Interfaces:**
+- Consumes: `.bd_stop(step, ...)`; `.built`, `.datasets`, `.record` (whose `built_sha256` is the hash of the bytes
+  `write-built` wrote); `bd_run()`, `bd_check_run()`, `bd_expect_stop()` in the test helper.
+- Produces: `datasets/<DATASET_ID>.reviewed.yml`, a YAML file with one field, `built_sha256`. Task 5's gallery job
+  registers nothing, so it does not read it.
+
+- [ ] **Step 1: Screen the cross-tab columns (decision "Refuse unsafe columns")**
+
+In `check-choices`, after `ID` and `KEY` are lower-cased, lower-case the `CROSSTABS` names too and refuse any that
+is `ID` or a column of `KEY`:
+
+```r
+CROSSTABS <- lapply(CROSSTABS, tolower)
+.unsafe <- intersect(unlist(CROSSTABS), c(ID, KEY))
+if (length(.unsafe)) {
+  .bd_stop("check-choices", "CROSSTABS names ", toString(.unsafe), ", the patient identifier or a column of KEY. ",
+           "A cross-tab prints its levels in the report, so it never takes an identifier.")
+}
+```
+
+In `crosstabs`, before `proc_freq()`, stop on a column the data does not have and on one with more than 20 distinct
+non-missing values. Name the column and the count, never a value:
+
+```r
+.levels <- 20L
+for (.col in .pair) {
+  if (!.col %in% names(d)) .bd_stop("crosstabs", "CROSSTABS names ", .col, ", which the built dataset does not have.")
+  .n <- length(unique(d[[.col]][!is.na(d[[.col]])]))
+  if (.n > .levels) {
+    .bd_stop("crosstabs", .col, " has ", .n, " distinct values, more than the ", .levels, " a cross-tab takes. ",
+             "That is the shape of an identifier, a date or free text, whose levels must not reach the report.")
+  }
+}
+```
+
+Add to the comment above `CROSSTABS`: "A cross-tab prints its levels in the report, so a column that identifies a
+patient is refused: ID, a column of KEY, or any column with more than 20 distinct values."
+
+- [ ] **Step 2: Bind the registered build to the reviewed one (decision "Refuse when it differs")**
+
+At the end of `write-built`, after the build record is written:
+
+```r
+# A draft render records the bytes it wrote, and a registering render registers only those bytes. Without it, the
+# second render re-cuts the master and could register data nobody read: a changed snapshot with VERIFY_MASTER off,
+# a changed cohort list, a derivation that differs run to run. It holds no key and no data value.
+.reviewed_file <- file.path(.datasets, paste0(DATASET_ID, ".reviewed.yml"))
+if (!REGISTER) yaml::write_yaml(list(built_sha256 = .record$built_sha256), .reviewed_file)
+```
+
+At the top of `if (REGISTER) {` in `register`, after the `.other_file` stop and before anything is registered:
+
+```r
+.reviewed <- if (file.exists(.reviewed_file)) yaml::read_yaml(.reviewed_file)$built_sha256
+if (!identical(.reviewed, .record$built_sha256)) {
+  .bd_stop("register", if (is.null(.reviewed)) "no draft of this build has been rendered" else
+             "this build differs from the draft last rendered", ", so it was not registered. Render with ",
+           "REGISTER <- FALSE, read the Checks section, then render again with REGISTER <- TRUE.")
+}
+```
+
+A registering render never writes `.reviewed.yml`. Update the `REGISTER` comment to say a registering render stops
+unless its bytes match the last draft's.
+
+- [ ] **Step 3: State the error rule (decision "Errors stop, findings never")**
+
+Read `rebuild`, `followup` and `tbl-checks` and confirm each failure to run (a named column missing, a condition
+that does not evaluate, `compare_built()` failing) reaches `.bd_stop()` with that chunk's label. Fix any that warns,
+returns `NA` or prints instead. Then reword the Checks section's opening prose from "A check changes nothing and
+blocks nothing." to: "A finding changes nothing and blocks nothing. A check that cannot run, because a column it
+names is missing or a condition does not evaluate, stops the render, as a bad EXCLUDE rule does: a build whose
+checks did not run is never registered."
+
+- [ ] **Step 4: Tests**
+
+Existing tests that pass `REGISTER = TRUE` without a draft now stop in `register`. Give `bd_run()` the draft step
+explicitly where a test means a normal registration: run the same choices with `REGISTER = FALSE` first. Do not hide
+it inside the helper's default, because the new tests below need a registering run with no draft. In
+`test-bd-e2e.R`, a registering render is preceded by a draft render of the same job.
+
+New tests, in `test-bd-checks.R` unless noted:
+
+1. `CROSSTABS = list(c("ccfid", "sex"))` stops in `check-choices`, the message names `ccfid`, and so does a KEY
+   column under a composite `KEY`.
+2. A cross-tab of a column with 21 distinct values stops in `crosstabs`; the message names the column and the count
+   and contains none of its values (assert on two of them).
+3. A cross-tab of a column the data lacks stops in `crosstabs` and names it.
+4. (`test-bd-template.R`) `REGISTER = TRUE` with no draft stops in `register` and registers nothing: the manifest is
+   unchanged and no `.reviewed.yml` is written.
+5. (`test-bd-template.R`) A draft, then a change to the master's bytes (rewrite the synthetic master with one value
+   changed and `VERIFY_MASTER = FALSE` if the choices have it, otherwise a changed `EXCLUDE`), then `REGISTER = TRUE`:
+   stops in `register` with "differs from the draft", and nothing is registered.
+6. (`test-bd-template.R`) A draft and a registering render of the same choices with a `CHECKS` entry that matches
+   rows: registration succeeds. The finding does not block.
+7. A `CHECKS` condition naming a column that does not exist stops in `tbl-checks`, with `REGISTER = TRUE` after a
+   draft that had a valid condition, and nothing is registered.
+8. Mutation proof for 1 and 4: comment out the screen and the hash comparison in a scratch copy of `bd.qmd`, confirm
+   tests 1, 2, 4 and 5 go red, restore. Record the result in the report; do not commit the scratch copy.
+
+Run (with the private library holding this branch):
+
+```bash
+R CMD INSTALL -l "$LIB" . && NOT_CRAN=true R_LIBS="$LIB:$LIBBD" Rscript -e 'devtools::test(filter = "bd-")'
+```
+
+Expected: `FAIL 0 | WARN 0`.
+
+- [ ] **Step 5: News**
+
+Add to the `bd` bullet in `news/feat-bd-checks.md`: "A cross-tab refuses the patient identifier, a column of `KEY`
+and any column with more than 20 distinct values, so its levels never put an identifier in the report. A
+registering render registers only the bytes the last draft render wrote, and stops if the build differs. A check
+that cannot run stops the render; a finding never does."
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add inst/templates/00_datasets/bd.qmd tests/testthat/helper-bd.R tests/testthat/test-bd-checks.R \
+  tests/testthat/test-bd-template.R tests/testthat/test-bd-e2e.R news/feat-bd-checks.md
+git commit -m "bd: screen cross-tab columns, register only the reviewed build
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 5: Gallery render, review and the pull request
+
+**Files:** none beyond Tasks 3 and 4.
 
 - [ ] **Step 1: Render `bd` in the gallery against this branch**
 
