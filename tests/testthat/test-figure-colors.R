@@ -12,6 +12,15 @@ test_that(".group_colors() draws one group black and leads with red and blue", {
   expect_identical(names(.group_colors(factor(c(1, 2, 10)))), c("1", "2", "10"))
 })
 
+test_that("an hvtiPlotR without hv_group_palette() stops with an upgrade message, not mid-render", {
+  # A job copied before 2026-10-29 guards an older hvtiPlotR but calls this helper from the
+  # installed package, so the helper itself must name the version it needs.
+  skip_if_not_installed("hvtiPlotR")
+  local_mocked_bindings(.has_group_palette = function() FALSE)
+  expect_error(.group_colors(c("a", "b")), "needs hvtiPlotR >= 2\\.8\\.20 for hv_group_palette\\(\\)")
+  expect_error(.group_colors("All"), "Update it, then re-render")
+})
+
 test_that("more groups than the house colors hold fall back with a warning, not an error", {
   skip_if_not_installed("hvtiPlotR", "2.8.20")
   many <- paste0("g", 1:8)

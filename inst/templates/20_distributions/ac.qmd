@@ -532,7 +532,8 @@ km_views <- function(fit) {
   haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
   haz$event <- rep(TRUE, nrow(haz))
   haz$stratum <- factor(haz$stratum, levels = counts$stratum)
-  # One curve is black; strata take red, blue, teal, magenta and cyan, in level order.
+  # One curve is black; two to five strata take red, blue, teal, magenta and cyan, in level
+  # order, and six or seven all take Paul Tol's muted colors.
   # Red and blue mean the event and censored only in figures that color by outcome.
   cols <- hvtiRtemplates:::.group_colors(counts$stratum)
   view <- function(data, y, ylab) {
