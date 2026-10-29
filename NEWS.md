@@ -1,3 +1,31 @@
+# hvtiRtemplates 1.5.4
+
+* New `dt` template, `00_datasets/dt.qmd`: the data check a programmer runs after a `bd` build and
+  before registering it, scaffolded as `dt.<subject>.<type>.qmd`. It reads the working file `bd`
+  writes, `datasets/<DATASET_ID>.rds`, and checks it in four sections: what the rebuild changed against
+  the version registered now, compared by value and joined on `KEY` through
+  `hvtiRdatabuild::compare_built()`, so a rebuild that keeps the shape and changes every event
+  indicator is reported, not passed; cross-tabs with a missing value as a level of its own; the
+  follow-up columns through `followup_check()`; and the study's named checks, written
+  `condition ~ "Label"` as `bd`'s `EXCLUDE` is. A comparison build, under a `DATASET_ID` that is not
+  the study's dataset, is compared against the study's dataset and the report says so. The report
+  holds counts only: the rows behind a check and the patients on one side of a rebuild go to the
+  console, never into the HTML. A check never writes. It needs `hvtiRutilities::proc_print()`
+  (hvtiRutilities#262) and hvtiRdatabuild 0.3.3. Design: `dev/specs/2026-10-27-dt-datacheck-design.md`.
+
+* New template `hs-score` scores each start/stop segment with the time-varying
+  `hm` model at the segment's own start, as the SAS `hs.*.mort_score.tvc` jobs do:
+  `scr_haz` is 100 times the hazard there, and `scr_mort` is 100 times one minus
+  the survival, one row per segment (#436). It saves a row and patient number,
+  never the identifier, and stops on a model fitted with one row per patient.
+* `hp`, `hs-setup` and `hs-concordance` still stop on a start/stop fit, and now say
+  why: SAS has no start/stop counterpart for their predictions. `hs-setup`'s
+  message points to `hs-score`.
+
+* The `dt` template now checks for hvtiRutilities 1.5.17 or later, the first release with
+  `proc_print()`, which its named checks call. It had checked for the function alone while that
+  release was pending.
+
 # hvtiRtemplates 1.5.3
 
 * `rhf-fit` and `rhf-explain` carry the lessons of their first real run, a hazard forest on 2,386 waiting-list patients. `rhf-fit` has a cleanup section before the fit. `CAPS` caps predictors with implausible tails, and stops on a cap it cannot read (unnamed, named twice, not finite, or on a predictor that is not numeric) rather than capping nothing; an integer predictor stays integer. A look-ahead check counts, for events and for the censored, the final intervals on which a predictor changes from the interval before. It is a screen, not proof: far more changes among events can mean a dataset build moved a value from the day of the event back onto the interval ending in it, which randomForestRHF cannot detect, or real deterioration measured before the event, so check when each value became available against the interval's start before calling it leakage. `LOOKAHEAD_INTERVAL` restricts the check to final intervals of one length, and `LOOKAHEAD <- "reset"` gives each one the predictors of the interval before it, as a sensitivity analysis rather than a correction. Caps and the look-ahead setting are recorded in the forest's lineage. `rhf.rds` and every cache either job writes are readable by their owner only from the moment they are created, including a file written over or a write that is interrupted, since each holds or is built from every patient's intervals; a mode that cannot be set stops the render. `rhf-explain` explains why its VarPro cache is seeded, that an NA importance means untested rather than unimportant and a 0 means tested with no effect, and that the top tier should be ranked only once it holds across several seeds; it notes that cumulative AUC(t) uses a tree-aggregated cumulative hazard rather than `chf.oob`, why it reports Uno's iAUC rather than `iAUC.std`, and that `chf.oob` and `hazard.oob` rows follow the sorted `ensemble.id`, which is `as.integer()` of the id the forest was grown on.
