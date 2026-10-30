@@ -359,12 +359,16 @@ test_that("dc-eda VARIABLE_SET = \"ods\" draws the house list's columns the data
   ods <- unlist(hvtiRtemplates:::.ods_groups(), use.names = FALSE)
   expect_identical(env$VARIABLES, c("female", "age", "bmi"))
   expect_identical(env$VARIABLES, intersect(ods, env$VARIABLES))
-  expect_match(out, "3 of the 239 columns on the house ODS list", fixed = TRUE)
+  expect_match(out, paste("3 of the", length(ods), "columns on the house ODS list"), fixed = TRUE)
   expect_match(out, "hosp_tag, ccfid", fixed = TRUE)
   # Named columns are drawn as named, whatever the set.
   env$VARIABLES <- c("hosp_tag", "age")
   eval(spec, env)
   expect_identical(env$VARIABLES, c("hosp_tag", "age"))
+  # A name in capitals is still on the list, and keeps its own spelling.
+  env <- eda_spec_env(data.frame(year = 1:10, BMI = 21:30, Age = 41:50), VARIABLE_SET = "ods")
+  capture.output(eval(spec, env))
+  expect_identical(env$VARIABLES, c("Age", "BMI"))
   # A dataset with none of the list's columns stops, and says how to go on.
   env <- eda_spec_env(data.frame(year = 1:10, hosp_tag = 1:10), VARIABLE_SET = "ods")
   expect_error(eval(spec, env), "VARIABLE_SET <- \"all\"", fixed = TRUE)

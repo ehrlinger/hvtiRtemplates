@@ -181,7 +181,8 @@ EVENTS <- list()
 # here. A KEY column beside it, such as a visit time, is left out of NULL but
 # drawn when named here, as that column's own distribution; a measure's course
 # over visits is a spaghetti plot, drawn by hvtiPlotR::hv_spaghetti, not a page here.
-# The follow-up columns are drawn too, like any other column.
+# The follow-up columns are drawn too, like any other column, but the ODS list
+# carries only dead and iv_dead: name an event's columns here to draw them.
 # A named column that is not in the data stops the render, and the error
 # lists every missing name at once.
 # GRID_NCOL by GRID_NROW panels make a page, and a page is drawn on the printed
@@ -365,8 +366,11 @@ if (is.null(VARIABLES)) {
   if (VARIABLE_SET == "ods") {
     # The list's order, which is its section order, is the page order.
     ods <- unlist(hvtiRtemplates:::.ods_groups(), use.names = FALSE)
-    outside <- setdiff(candidates, ods)
-    candidates <- intersect(ods, candidates)
+    # Matched whatever the case: a joined dataset's names need not be lowercase.
+    on_list <- tolower(candidates) %in% ods
+    outside <- candidates[!on_list]
+    candidates <- candidates[on_list]
+    candidates <- candidates[order(match(tolower(candidates), ods))]
     if (!length(candidates)) {
       stop("None of the house ODS list's columns is in this dataset. Set VARIABLE_SET <- \"all\", or name the ",
            "columns in VARIABLES.", call. = FALSE)
