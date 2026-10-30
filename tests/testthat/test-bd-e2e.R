@@ -179,9 +179,16 @@ test_that("a bd render shows the checks' counts above Register, and no patient r
     "#   d$dead    <- as.integer(!is.na(d$dt_death))",
     "d$note <- sprintf(\"ZQXNOTE%04d\", seq_len(nrow(d)))",
     "d$vdate <- factor(rep_len(c(\"2020-01-01\", \"2020-02-02\"), nrow(d)))",
-    "d$label <- rep_len(c(\"PATIENT_A\", \"PATIENT_B\", \"PATIENT_C\"), nrow(d))", sep = "\n"
+    "d$label <- rep_len(c(\"PATIENT_A\", \"PATIENT_B\", \"PATIENT_C\"), nrow(d))",
+    "d$pt_mrn <- 4800000L + 12345L + seq_len(nrow(d))",
+    "d$mrn <- 5900000L + 12345L + seq_len(nrow(d))",
+    "d$medrec <- sprintf(\"ZQXREC%04d\", seq_len(nrow(d)))",
+    "d$clinic_no <- sprintf(\"ZQXMED%04d\", seq_len(nrow(d)))", sep = "\n"
   )
-  edits[["^CROSSTABS <- list"]] <- "CROSSTABS <- list(c(\"dead\", \"sex\"), c(\"vdate\", \"label\"))"
+  edits[["^CROSSTABS <- list"]] <- paste0("CROSSTABS <- list(c(\"dead\", \"sex\"), c(\"vdate\", \"label\"), ",
+                                          "c(\"pt_mrn\", \"sex\"), c(\"mrn\", \"sex\"), ",
+                                          "c(\"clinic_no\", \"sex\"), c(\"medrec\", \"sex\"))")
+  edits[["^OTHER_IDENTIFIERS <- character"]] <- "OTHER_IDENTIFIERS <- \"clinic_no\""
   job <- bd_job(root, edits)
   lines <- readLines(job, warn = FALSE)
   queried <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds"))$ccfid[[5L]]
@@ -198,17 +205,24 @@ test_that("a bd render shows the checks' counts above Register, and no patient r
   expect_match(html, "Every row", fixed = TRUE)
   expect_match(html, "Queried patient", fixed = TRUE)
   expect_match(html, "dead by sex", fixed = TRUE)
-  # A cross-tab's levels reach the console and never the report, whatever the column: the report has the shape.
+  # A cross-tab of ordinary columns shows its levels and its shape.
   expect_match(html, "vdate by label", fixed = TRUE)
   expect_match(html, "2 x 3", fixed = TRUE)
-  expect_false(grepl("2020-01-01", html, fixed = TRUE))
-  expect_false(grepl("PATIENT_A", html, fixed = TRUE))
+  expect_match(html, "2020-01-01", fixed = TRUE)
+  expect_match(html, "PATIENT_A", fixed = TRUE)
   # This draft's report names the bytes it wrote.
   expect_match(html, digest::digest(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds"),
                                     algo = "sha256", file = TRUE), fixed = TRUE)
   # The Checks section comes before Register in the report.
   expect_lt(regexpr("What this rebuild changed", html, fixed = TRUE), regexpr(">Register<", html, fixed = TRUE))
   expect_false(grepl("ZQXNOTE", html, fixed = TRUE))
+  # An MRN, one under a qualified name, and an identifier the job declares, stay in the data and out of the report.
+  expect_false(grepl("48123|48124|4[.]81[0-9]*e", html))
+  expect_false(grepl("59123|59124|5[.]91[0-9]*e", html))
+  expect_false(grepl("ZQXMED", html, fixed = TRUE))
+  expect_false(grepl("ZQXREC", html, fixed = TRUE))
+  built <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds"))
+  expect_true(all(c("pt_mrn", "mrn", "medrec", "clinic_no") %in% names(built)))
   leaked <- m$data$ccfid[vapply(m$data$ccfid, grepl, logical(1L), x = html, fixed = TRUE)]
   expect_identical(leaked, character())
 })
@@ -295,4 +309,33 @@ test_that("a draft that fails after the register chunk leaves no report, and reg
   expect_true(any(grepl("bd: register .*no draft report was found", console)))
   expect_false(file.exists(html))
   expect_length(bd_versions(root), 0L)
+})
+
+test_that("a draft under a custom output name authorizes registration", {
+  skip_on_cran()
+  bd_quarto_skip()
+  m <- bd_master()
+  root <- bd_study()
+  job <- bd_job(root, bd_edits(m, register = "FALSE"))
+  quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE, output_file = "custom-review.html")
+  expect_true(file.exists(file.path(dirname(job), "custom-review.html")))
+  expect_false(file.exists(sub("[.]qmd$", ".html", job)))
+  bd_set_register(job, "TRUE")
+  quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE, output_file = "custom-review.html")
+  expect_length(bd_versions(root), 1L)
+})
+
+test_that("a draft in a project's output-dir authorizes registration", {
+  skip_on_cran()
+  bd_quarto_skip()
+  m <- bd_master()
+  root <- bd_study()
+  writeLines(c("project:", "  type: default", "  output-dir: _out"), file.path(root, "_quarto.yml"))
+  job <- bd_job(root, bd_edits(m, register = "FALSE"))
+  quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
+  expect_false(file.exists(sub("[.]qmd$", ".html", job)))
+  expect_length(list.files(file.path(root, "_out"), pattern = "[.]html$", recursive = TRUE), 1L)
+  bd_set_register(job, "TRUE")
+  quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
+  expect_length(bd_versions(root), 1L)
 })

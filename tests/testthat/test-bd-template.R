@@ -73,12 +73,12 @@ test_that("REGISTER = TRUE registers the declared working file as the study's fi
   expect_true(all(hvtiRutilities::verify_manifest(file.path(root, "manifest.yaml"))$status == "OK"))
 })
 
-test_that("the dataset carries ID, KEY, JOIN_BY and KEEP columns, and drops MRN", {
+test_that("the dataset carries ID, KEY, JOIN_BY and KEEP columns, an MRN among them when the job keeps it", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
   env <- bd_run(root, list(MASTER = m$parquet, KEEP = c("age", "mrn"), EXCLUDE = NULL))
-  expect_setequal(names(env$d), c("ccfid", "dt_surg", "age"))
+  expect_setequal(names(env$d), c("ccfid", "dt_surg", "age", "mrn"))
   built <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds"))
   expect_identical(names(built), names(env$d))
 })

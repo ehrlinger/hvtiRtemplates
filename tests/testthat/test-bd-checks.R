@@ -241,7 +241,7 @@ test_that("a registered version without a column of the current KEY is reported,
   expect_false(is.null(before))
 })
 
-test_that("a cross-tab's levels go to the console, and the report holds only the shape", {
+test_that("a cross-tab's levels and its shape go in the report", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
@@ -255,13 +255,13 @@ test_that("a cross-tab's levels go to the console, and the report holds only the
   stdout <- paste(env$.stdout, collapse = "\n")
   stderr <- paste(env$.stderr, collapse = "\n")
   for (value in c("2020-01-01", "2020-02-02", "PATIENT_A", "PATIENT_B", "PATIENT_C")) {
-    expect_false(grepl(value, stdout, fixed = TRUE), info = value)
-    expect_true(grepl(value, stderr, fixed = TRUE), info = value)
+    expect_true(grepl(value, stdout, fixed = TRUE), info = value)
+    expect_false(grepl(value, stderr, fixed = TRUE), info = value)
   }
-  # The console table has the levels, the counts and the missing level.
-  expect_match(stderr, "(missing)", fixed = TRUE)
-  expect_match(stderr, "Frequency", fixed = TRUE)
-  # The report has one table, one row per pair: the levels of each column with missing as a level (3 x 3),
+  # The report has the levels, the counts and the missing level.
+  expect_match(stdout, "(missing)", fixed = TRUE)
+  expect_match(stdout, "Frequency", fixed = TRUE)
+  # The shape table has one row per pair: the levels of each column with missing as a level (3 x 3),
   # the cells, the nonzero cells under 5 and the rows with a missing value in either column.
   shape <- env$.shapes[[1L]]
   expect_identical(names(shape), c("Pair", "Levels", "Cells", "Cells under 5", "Missing"))
@@ -274,13 +274,39 @@ test_that("a cross-tab's levels go to the console, and the report holds only the
   expect_length(grep("Cells under 5", env$.stdout), 1L)
 })
 
-test_that("a cross-tab counts the small cells and takes an identifier column, printing it only to the console", {
+test_that("a cross-tab counts the small cells and prints a column of ID, KEY or JOIN_BY only to the console", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
   env <- bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("ccfid", "sex"))), labels = "crosstabs")
   expect_false(any(grepl("PT00", env$.stdout, fixed = TRUE)))
   expect_true(any(grepl("PT00", env$.stderr, fixed = TRUE)))
+  # JOIN_BY's date is the patient's, so its levels stay out of the report too.
+  dates <- bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("dt_surg", "sex"))), labels = "crosstabs")
+  shown <- format(dates$d$dt_surg[[1L]])
+  expect_false(any(grepl(shown, dates$.stdout, fixed = TRUE)))
+  expect_true(any(grepl(shown, dates$.stderr, fixed = TRUE)))
   # One patient per row: every nonzero cell holds one row, and every one is under 5.
   expect_identical(env$.shapes[[1L]]$`Cells under 5`, nrow(env$d))
+})
+
+test_that("the report keeps field values and leaves identifiers out, and a listed identifier stays in the built", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  bd_draft(root, bd_check_choices(m))
+  bd_run(root, bd_check_choices(m, register = TRUE))
+  env <- bd_check_run(root, bd_check_choices(m), labels = "rebuild", change = function(d) {
+    d$iv_dead[[1L]] <- d$iv_dead[[1L]] + 4812345
+    d$dt_surg[[1L]] <- d$dt_surg[[1L]] + 1000L
+    d
+  })
+  largest <- stats::setNames(env$.columns_tab$`Largest difference`, env$.columns_tab$Column)
+  expect_gt(largest[["iv_dead"]], 4e6)
+  expect_true(is.na(largest[["dt_surg"]]))
+  # Named in KEEP, an MRN stays in the built, for finding a patient, and has no value in the report.
+  kept <- bd_run(root, bd_check_choices(m, KEEP = c("age", "sex", "iv_dead", "dead", "dt_surg", "mrn")),
+                 labels = c("setup", "edit-study-choices", "check-choices", "read-master", "cohort", "derive", "write-built"))
+  expect_true("mrn" %in% names(kept$d))
+  expect_true("mrn" %in% kept$.no_values)
 })

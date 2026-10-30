@@ -138,7 +138,8 @@ KEEP <- c("age", "sex", "dt_surg")
 # rules, so a rule naming a patient stays in this file.
 EXCLUDE <- list(is.na(dt_surg) ~ "No surgery date")
 
-# The patient, and what makes a row unique: one row per patient unless repeated measures.
+# EDIT: the patient, and what makes a row unique: one row per patient unless repeated measures. A study with no
+# ccfid names the column that identifies its patients, such as its MRN, whatever it is called.
 ID  <- "ccfid"
 KEY <- ID
 
@@ -146,13 +147,17 @@ KEY <- ID
 # underscores. A study already registered keeps the name it was registered under.
 DATASET_ID <- "study_cohort"
 
+# EDIT: any column of this dataset that identifies a patient under a name the report cannot recognize, such as
+# "clinic_no". It stays in the data, and the report shows none of its values. A column named for an MRN, medical
+# record, CCFID or SSN, such as pt_mrn, medrec or ssn4, is recognized, and so are ID, KEY and JOIN_BY.
+# character() for none.
+OTHER_IDENTIFIERS <- character()
+
 # EDIT: pairs of columns to cross-tabulate, typically a derived column against its source, such as an event
 # indicator against an indicator of its date. A missing value is a level of its own, as PROC FREQ / MISSING shows
-# it. A list of character vectors, or list() for none. A cross-tab's levels are values, and a column's type or
-# number of values cannot show that its labels are not identifying (a factor of dates, a patient label repeated
-# in a repeated-measures dataset), so the levels and counts print in the console and never in the report. The
-# report holds each pair's shape: the number of levels of each column, the cells, the cells under 5 and the
-# rows with a missing value. Any column of the built dataset may be named.
+# it. A list of character vectors, or list() for none. The report shows each pair's levels and counts, with its
+# shape: the number of levels of each column, the cells, the cells under 5 and the rows with a missing value. A
+# pair with an identifier column prints its levels in the console instead.
 CROSSTABS <- list(c("dead", "sex"))
 
 # EDIT: the event indicator and its follow-up interval(s) in years, as the derive chunk makes them. EVENT <- NULL
@@ -216,6 +221,7 @@ JOIN_BY <- tolower(JOIN_BY)
 ID <- tolower(ID)
 KEY <- tolower(KEY)
 CROSSTABS <- lapply(CROSSTABS, tolower)
+OTHER_IDENTIFIERS <- tolower(OTHER_IDENTIFIERS)
 ```
 
 ```{r}
@@ -293,13 +299,12 @@ if (nrow(d) != .rows_before_derive) {
 .derived <- setdiff(names(d), .columns_before_derive)
 .carry <- unique(c(ID, KEY, JOIN_BY, KEEP, .derived))
 d <- d[, intersect(.carry, names(d)), drop = FALSE]
-# Direct identifiers are dropped unless one is the ID or KEY, as read_job_data() drops them: ccfid, MRN,
-# eMRN, Social Security numbers, patient names and contact details, by name, and a column whose
-# values are shaped like SSNs whatever its name. A lookup by identifier belongs in the query above,
-# never in the built a statistician reads.
-.dropped <- hvtiRtemplates:::.drop_identifiers(d, ID, KEY)
-d <- .dropped$data
-if (length(.dropped$dropped)) message("Identifiers dropped from the built: ", toString(.dropped$dropped))
+# A column the job keeps stays in the data, identifier or not, so a patient can be found to correct follow-up.
+# Tables and figures are another matter: the report shows no value of an identifier. That is ID, KEY, JOIN_BY,
+# OTHER_IDENTIFIERS, a column named for an MRN, medical record, CCFID or SSN, and whatever read_job_data() would keep from an
+# analysis job: names and contact details by name, and a column whose values are shaped like SSNs.
+.no_values <- unique(c(ID, KEY, JOIN_BY, OTHER_IDENTIFIERS, hvtiRtemplates:::.drop_identifiers(d, ID, KEY)$dropped,
+                       grep("mrn|ccfid|med_?rec|medical_?record|(^|_)ssn[0-9]*(_|$)", names(d), value = TRUE)))
 .repeats <- sum(duplicated(d[KEY]))
 if (.repeats) {
   .bd_stop("write-built", .repeats, " row(s) repeat a value of KEY (", toString(KEY), "). Exclude the extra rows in ",
@@ -463,7 +468,8 @@ if (!is.null(.comparison)) {
     Column = .comparison$variable,
     Verdict = ifelse(.comparison$verdict %in% names(.verdicts), .verdicts[.comparison$verdict], .comparison$verdict),
     `Rows differing` = .comparison$n_differ,
-    `Largest difference` = signif(.comparison$max_abs_diff, 4),
+    # Identifiers stay out of the report: a change from 0 would print the new value.
+    `Largest difference` = ifelse(.comparison$variable %in% .no_values, NA, signif(.comparison$max_abs_diff, 4)),
     check.names = FALSE
   )
   .bd_table(.rows_tab, "tbl-rebuild-rows", "Rows in the registered version and in this build, joined on the dataset's key")
@@ -477,10 +483,10 @@ if (!is.null(.comparison)) {
 ```{r}
 #| label: crosstabs
 #| results: asis
-# unnumbered: its table is a child chunk with its own label and caption
-# The levels of a cross-tab are values, so the full table of each pair, levels and counts, goes to the
-# console on stderr(), which knitr does not collect, as the rows behind a named check do. The report holds
-# each pair's shape and no label. A small cell is flagged in the console, never suppressed.
+# unnumbered: its tables are child chunks with their own labels and captions
+# This report prepares an analysis, so a cross-tab shows its levels and counts, with a small cell flagged and
+# never suppressed. A manuscript table is another job's, with its own rules. A pair with an identifier column
+# goes to the console on stderr(), which knitr does not collect, because its levels are identifiers.
 .small <- 5L
 if (!length(CROSSTABS)) cat("No cross-tabs are named in CROSSTABS.\n")
 .shapes <- vector("list", length(CROSSTABS))
@@ -495,8 +501,12 @@ for (.i in seq_along(CROSSTABS)) {
   .tab$Small <- ifelse(.tab$Frequency > 0 & .tab$Frequency < .small, paste("under", .small), "")
   .tab[.pair] <- lapply(.tab[.pair], function(x) ifelse(is.na(x), "(missing)", as.character(x)))
   .by <- paste(.pair, collapse = " by ")
-  cat("\n", .by, "\n", sep = "", file = stderr())
-  cat(utils::capture.output(print(.tab, row.names = FALSE)), sep = "\n", file = stderr())
+  if (any(.pair %in% .no_values)) {
+    cat("\n", .by, "\n", sep = "", file = stderr())
+    cat(utils::capture.output(print(.tab, row.names = FALSE)), sep = "\n", file = stderr())
+  } else {
+    .bd_table(.tab, paste0("tbl-crosstab-", .i), .by, row.names = FALSE)
+  }
   # A missing value counts as a level, as it does in the table.
   .nlevels <- vapply(.pair, function(col) length(unique(d[[col]])), 0L)
   .shapes[[.i]] <- data.frame(
@@ -507,7 +517,7 @@ for (.i in seq_along(CROSSTABS)) {
 }
 if (length(.shapes)) {
   .bd_table(do.call(rbind, .shapes), "tbl-crosstabs",
-            "Each cross-tab's shape, with a missing value as a level of its own; the levels and counts are in the console",
+            "Each cross-tab's shape, with a missing value as a level of its own",
             row.names = FALSE)
 }
 .checks_ran <- c(.checks_ran, "crosstabs")
@@ -619,13 +629,24 @@ if (REGISTER) {
              "move the study to this job's file deliberately.")
   }
   # The draft's report is the record of the review: the draft prints the SHA-256 of the bytes it wrote, and only
-  # a draft that rendered to the end leaves its HTML beside this job. The report is the job's own output file.
-  .draft_html <- file.path(dirname(.in), sub("[.]qmd$", ".html", .job_file))
-  .draft_report <- if (file.exists(.draft_html)) readLines(.draft_html, warn = FALSE)
-  if (is.null(.draft_report)) {
-    .bd_stop("register", "no draft report was found beside this job (", sub("[.]qmd$", ".html", .job_file), "), so the ",
-             "build was not registered. Render with REGISTER <- FALSE, read the report, then render again with ",
-             "REGISTER <- TRUE.")
+  # a draft that rendered to the end leaves its HTML. Quarto does not tell a render its output name, which
+  # --output or output-file can change, so every report beside this job is read, and, when the study's
+  # _quarto.yml sets an output-dir, every report in this job's folder there.
+  .draft_dirs <- dirname(.in)
+  .project <- Sys.getenv("QUARTO_PROJECT_DIR")
+  .project_yml <- file.path(.project, "_quarto.yml")
+  if (nzchar(.project) && file.exists(.project_yml)) {
+    .out_dir <- tryCatch(yaml::read_yaml(.project_yml)$project$`output-dir`, error = function(e) NULL)
+    if (is.character(.out_dir) && length(.out_dir) == 1L) {
+      .rel <- substring(normalizePath(dirname(.in)), nchar(normalizePath(.project)) + 2L)
+      .draft_dirs <- c(.draft_dirs, file.path(.project, .out_dir, .rel))
+    }
+  }
+  .draft_html <- list.files(unique(.draft_dirs), pattern = "[.]html$", full.names = TRUE)
+  .draft_report <- unlist(lapply(.draft_html, readLines, warn = FALSE))
+  if (!length(.draft_html)) {
+    .bd_stop("register", "no draft report was found beside this job, so the build was not registered. Render with ",
+             "REGISTER <- FALSE, read the report, then render again with REGISTER <- TRUE.")
   }
   # The working file is hashed again here, not trusted from the build record: the file registered is the file
   # read now. Nothing runs between this and the registration but choosing the call.
@@ -699,17 +720,16 @@ knitr::kable(.cut$attrition, col.names = c("Step", "Reason", "Rows before", "Rem
 ```{r}
 #| label: tbl-report-columns
 #| tbl-cap: "Type, missing count and range of each column"
-# Aggregates only: the type, missing count and range of each column. The ID, KEY
-# and JOIN_BY columns get no range: a range of identifiers is two identifiers,
+# Aggregates only: the type, missing count and range of each column. An identifier
+# column gets no range: a range of identifiers is two identifiers,
 # and a JOIN_BY date range is two patients' dates.
-.no_range <- c(ID, KEY, JOIN_BY)
 knitr::kable(data.frame(
   Column = names(d),
   Type = vapply(d, function(x) class(x)[[1L]], ""),
   Missing = vapply(d, function(x) sum(is.na(x)), 0L),
   Range = vapply(names(d), function(col) {
     x <- d[[col]]
-    if (col %in% .no_range || !is.numeric(x) || all(is.na(x))) {
+    if (col %in% .no_values || !is.numeric(x) || all(is.na(x))) {
       ""
     } else {
       paste(format(range(x, na.rm = TRUE), digits = 4), collapse = " to ")

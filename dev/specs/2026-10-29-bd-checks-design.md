@@ -75,18 +75,23 @@ Register -> Report -> about-run
 
 ## 4. Contract
 
-- **The report holds counts only.** The rows behind a named check, and the patients on one side
-  of a rebuild, go to the console through `proc_print()` on `stderr()`, which knitr does not
-  capture. That fits `bd` as it is: its report already shows no code, because its `EXCLUDE` rules
-  may name patients.
+- **The report is analysis prep, so it may show values of a field, and never a patient.** Ranges, summaries,
+  follow-up extremes, the largest rebuild difference and cross-tab levels stay in the report, because reading them
+  is what the check is for. Patient rows stay out: the rows behind a named check and the patients on one side of a
+  rebuild go to the console through `proc_print()` on `stderr()`, which knitr does not capture. **Identifiers stay in
+  the data if the job keeps them, and never appear in tables or figures** (John, 2026-10-30): a patient must be
+  findable to correct follow-up. `bd` no longer drops them from the built. The report shows no value of `ID`, `KEY`,
+  `JOIN_BY`, `OTHER_IDENTIFIERS`, any column named for an MRN, medical record, CCFID or SSN, or anything `.drop_identifiers()` lists.
+  `read_job_data()` still drops them for analysis jobs, which is what keeps them out of those jobs' tables and
+  figures. A link from study data to patient identifiers is later work. The report shows no code, because `EXCLUDE`
+  rules may name patients. Identifiability is a rule for manuscript tables, which other jobs make. (John,
+  2026-10-30; this replaces "the report holds counts only".)
 - **A check never writes,** and no finding changes what Register does.
-- **A cross-tab's levels are values, so they go to the console.** The full table of each `CROSSTABS` pair, levels
-  and counts, prints to `stderr()` through `proc_print()`'s route, as the rows behind a named check do. The report
-  shows each pair's shape only: the number of levels of each column, the cells, the cells under 5 and the
-  missing values. No screen on a column's type or cardinality can prove its labels are not identifying (a factor
-  of dates, a patient label repeated in a repeated-measures dataset), so the guarantee is made by where the
-  levels go, not by guessing which columns are safe. A column the data lacks still stops `crosstabs`. (John,
-  2026-10-30, after the review of #456; this replaces the screen and the allow-list.)
+- **A cross-tab shows its levels, unless a column is an identifier.** Each `CROSSTABS` pair prints its levels and
+  counts in the report, with a table of each pair's shape: levels per column, cells, cells under 5 and missing
+  values. A pair with a column of `ID`, `KEY` or `JOIN_BY` prints its levels to `stderr()` and only its shape in the
+  report. An identifier under an undeclared name is not caught. A column the data lacks still stops `crosstabs`.
+  (John, 2026-10-30; this replaces levels to the console for every pair.)
 - **A finding never blocks registration; an error does.** A finding is a count: rows matching a
   check, a column that differs, a suspicious follow-up interval. A check that cannot run (a column
   it names is missing, a condition does not evaluate, the comparison fails) is a broken job, and it
@@ -100,7 +105,8 @@ Register -> Report -> about-run
      can leave any check out;
   2. refuses when the render is partial (a `skip` or `stop_here()`);
   3. immediately before registering, hashes the working file on disk again, and registers only if that hash is
-     the one its own build record claims and the one printed in the draft's HTML beside the job.
+     the one its own build record claims and the one printed in a draft's HTML. Quarto does not tell a render its output name, so every `.html` beside the
+     job is read, and every one in the job's folder under the `output-dir` of the study's `_quarto.yml`.
   Otherwise it stops in `register`, names the cause, and says to render a draft and read it. A registering render
   prints no review hash, so repeating it cannot approve bytes nobody read. A failed or partial draft either leaves
   the previous HTML (whose hash names earlier bytes, refused unless they are these bytes) or writes an HTML with no
@@ -193,3 +199,10 @@ says. The allow-list, `.reviewed.yml` and its gap above are superseded.
 
 The meeting's other items: the `dc-eda` variable list, folding `gfup` into the EDA, composite
 uniqueness keys, and the render errors. The SAS workflow is being retired and stays as it is.
+
+Settled 2026-10-30, after the reviews of #457 and #458:
+
+- **The counts-only rule is withdrawn for this report (John).** The reviews asked to move follow-up extremes and the
+  largest difference to the console. A data check is analysis prep, not a manuscript table, so those values and the
+  Columns ranges stay, and cross-tab levels come back. #457, which removed the Columns ranges, is not needed.
+- **A custom output name or project `output-dir` no longer blocks registration.** See section 4.
