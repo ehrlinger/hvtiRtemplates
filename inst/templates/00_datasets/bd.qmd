@@ -148,9 +148,10 @@ DATASET_ID <- "study_cohort"
 
 # EDIT: pairs of columns to cross-tabulate, typically a derived column against its source, such as an event
 # indicator against an indicator of its date. A missing value is a level of its own, as PROC FREQ / MISSING shows
-# it. A list of character vectors, or list() for none. A cross-tab prints its levels in the report, so a column
-# that identifies a patient is refused: ID, a column of KEY or of JOIN_BY, a date or a time, or any column with
-# more than 20 distinct values.
+# it. A list of character vectors, or list() for none. A cross-tab prints its levels in the report, so only a
+# column that reads as a category is taken: logical, factor, whole numbers or text, with at most 20 levels, not
+# every value distinct, and no text that reads as a date. ID and the columns of KEY and JOIN_BY are refused by
+# name. Cross-tab an indicator of a date, never the date.
 CROSSTABS <- list(c("dead", "sex"))
 
 # EDIT: the event indicator and its follow-up interval(s) in years, as the derive chunk makes them. EVENT <- NULL
@@ -398,6 +399,8 @@ if (is.null(.found)) {
     error = function(e) .bd_stop("rebuild", conditionMessage(e))
   )
   .baseline <- .baseline_read$value
+  # A SAS-built version may name its columns in upper case; this build's names are lower case.
+  names(.baseline) <- tolower(names(.baseline))
   .rebuild_state <- if (identical(.declared, basename(.built))) {
     paste0("A rebuild of the study dataset: ", basename(.built), " against its registered version ",
            .found$version_file, ".")
@@ -427,7 +430,7 @@ if (is.null(.found)) {
   })
   # A KEY the registered version lacks cannot be joined on: report it and compare nothing, as a first build does.
   # Registering still proceeds, since that is how a changed key reaches the study. Any other failure stops.
-  .key_gone <- setdiff(KEY, tolower(names(.baseline)))
+  .key_gone <- setdiff(KEY, names(.baseline))
   if (length(.key_gone)) {
     .rebuild_state <- paste0(.rebuild_state, " The KEY (", toString(KEY), ") has changed since the registered version, ",
                              "which lacks ", toString(.key_gone), ", so nothing is compared.")
@@ -481,17 +484,30 @@ if (!length(CROSSTABS)) cat("No cross-tabs are named in CROSSTABS.\n")
 .levels <- 20L
 for (.i in seq_along(CROSSTABS)) {
   .pair <- CROSSTABS[[.i]]
-  # The levels print in the report: a column the data lacks, or one with too many to be levels, stops here.
+  # The levels print in the report, so a column is taken only if it reads as a category: an allow-list, since
+  # every block-list tried let some identifier through. Each stop names the column and never a value.
   for (.col in .pair) {
     if (!.col %in% names(d)) .bd_stop("crosstabs", "CROSSTABS names ", .col, ", which the built dataset does not have.")
-    if (inherits(d[[.col]], c("Date", "POSIXt", "difftime"))) {
-      .bd_stop("crosstabs", .col, " is a date or a time, whose levels would print in the report. ",
-               "Cross-tab an indicator of it, such as dead for the date of death.")
+    .x <- d[[.col]]
+    .seen <- .x[!is.na(.x)]
+    .whole <- is.numeric(.x) && !inherits(.x, c("Date", "POSIXt", "difftime")) &&
+      all(.seen == round(.seen))
+    if (!(is.logical(.x) || is.factor(.x) || is.character(.x) || .whole)) {
+      .bd_stop("crosstabs", .col, " is not a category (logical, factor, whole numbers or text). A date, a time or a ",
+               "measurement prints its values as levels. Cross-tab an indicator of it, such as dead for the date of death.")
     }
-    .n <- length(unique(d[[.col]][!is.na(d[[.col]])]))
+    if (is.character(.x) && any(grepl("^\\s*[0-9]{1,4}[-/.][0-9]{1,2}[-/.][0-9]{1,4}", .seen))) {
+      .bd_stop("crosstabs", .col, " holds text that reads as a date, whose levels would print in the report.")
+    }
+    .n <- length(unique(.seen))
     if (.n > .levels) {
       .bd_stop("crosstabs", .col, " has ", .n, " distinct values, more than the ", .levels, " a cross-tab takes. ",
                "That is the shape of an identifier, a date or free text, whose levels must not reach the report.")
+    }
+    # In a small cohort an identifier has few values; a category repeats them.
+    if (.n > 5L && .n == length(.seen)) {
+      .bd_stop("crosstabs", .col, " has a different value on every row, the shape of an identifier, whose levels ",
+               "must not reach the report.")
     }
   }
   .tab <- tryCatch(hvtiRutilities::proc_freq(d, .pair, missing = TRUE),
@@ -566,7 +582,12 @@ if (length(CHECKS)) {
 # read it before it is registered (design 2026-10-23, section 7.1). Registering stays a separate
 # step: REGISTER = TRUE, or hvtiRutilities::update_manifest().
 .other_file <- !is.null(.registered$built) && !identical(.registered$built, basename(.built))
-if (!REGISTER && is.null(.registered$built)) {
+# A render with a skipped chunk or a stop_here() did not run every check, so it declares nothing, reviews nothing
+# and registers nothing. Outside a render there is no file to be partial.
+.partial <- !is.null(.in) && length(hvtiRtemplates:::.partial_state$points) > 0L
+if (!REGISTER && .partial) {
+  .register_step <- "Partial render: nothing declared, reviewed or registered"
+} else if (!REGISTER && is.null(.registered$built)) {
   hvtiRutilities::declare_data(.root, built = basename(.built), key = KEY)
   .register_step <- "Declared as the study dataset: nothing registered"
 } else if (!REGISTER && .other_file) {
@@ -575,9 +596,6 @@ if (!REGISTER && is.null(.registered$built)) {
   .register_step <- paste0("Working file only: the study's dataset is still ", .registered$built,
                            ", so this build was not declared or registered")
 }
-# A render with a skipped chunk or a stop_here() did not run every check, so it reviews nothing and registers
-# nothing. Outside a render there is no file to be partial.
-.partial <- !is.null(.in) && length(hvtiRtemplates:::.partial_state$points) > 0L
 # A draft records the bytes it wrote, after everything above that could fail, so a draft that failed approves nothing.
 if (!REGISTER && !.partial) yaml::write_yaml(list(built_sha256 = .record$built_sha256), .reviewed_file)
 if (REGISTER) {
@@ -686,5 +704,7 @@ knitr::kable(data.frame(
 #| echo: false
 #| results: asis
 # unnumbered: the section is a table the package draws, headed "About this run"
-cat(hvtiRtemplates:::.about_run(.job$run, cfg = hvtiRutilities::study_config(start = .root), envir = environment()))
+# require_data = FALSE: a first draft that is partial declares no dataset, and still reports its run.
+.about_cfg <- hvtiRutilities::study_config(start = .root, require_data = FALSE)
+cat(hvtiRtemplates:::.about_run(.job$run, cfg = .about_cfg, envir = environment()))
 ```

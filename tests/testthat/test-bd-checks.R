@@ -300,3 +300,53 @@ test_that("a registered version without a column of the current KEY is reported,
   expect_true(length(bd_versions(root)) >= 1L)
   expect_false(is.null(before))
 })
+
+test_that("a cross-tab takes only a category: a measurement, a text date and an all-distinct column stop", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  crosstab <- function(change) {
+    err <- expect_error(
+      bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("probe", "sex"))), labels = "crosstabs",
+                   change = change),
+      "^bd: crosstabs \\("
+    )
+    conditionMessage(err)
+  }
+  msg <- crosstab(function(d) {
+    d$probe <- rep_len(c(1.5, 2.25, 3.75), nrow(d))
+    d
+  })
+  expect_match(msg, "probe is not a category", fixed = TRUE)
+  expect_false(grepl("2.25", msg, fixed = TRUE))
+  msg <- crosstab(function(d) {
+    d$probe <- rep_len(c("2019-03-04", "2020-11-30"), nrow(d))
+    d
+  })
+  expect_match(msg, "probe holds text that reads as a date", fixed = TRUE)
+  expect_false(grepl("2019", msg, fixed = TRUE))
+  # A second identifier in a small cohort: few values, but a different one on every row.
+  msg <- crosstab(function(d) {
+    d <- d[seq_len(12L), , drop = FALSE]
+    d$probe <- sprintf("ZQXM%02d", seq_len(12L))
+    d
+  })
+  expect_match(msg, "probe has a different value on every row", fixed = TRUE)
+  expect_false(grepl("ZQXM", msg, fixed = TRUE))
+})
+
+test_that("a cross-tab takes logical, factor, whole-number and text categories", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  env <- bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("lg", "fc"), c("wn", "tx"))), labels = "crosstabs",
+                      change = function(d) {
+                        d$lg <- rep_len(c(TRUE, FALSE), nrow(d))
+                        d$fc <- factor(rep_len(c("a", "b", "c"), nrow(d)))
+                        d$wn <- rep_len(c(1, 2, 3, 4), nrow(d))
+                        d$tx <- rep_len(c("left", "right"), nrow(d))
+                        d
+                      })
+  expect_match(env$.stdout, "lg by fc", fixed = TRUE, all = FALSE)
+  expect_match(env$.stdout, "wn by tx", fixed = TRUE, all = FALSE)
+})

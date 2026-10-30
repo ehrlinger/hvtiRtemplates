@@ -82,10 +82,10 @@ Register -> Report -> about-run
 - **A check never writes,** and no finding changes what Register does.
 - **Cross-tab levels are values, so a cross-tab column is screened.** A cross-tab prints its
   levels in the report. `check-choices` refuses a `CROSSTABS` column that is `ID`, a column of
-  `KEY` or a column of `JOIN_BY`, and the `crosstabs` chunk refuses a date or time column and a column with more
-  than 20 distinct non-missing values,
-  which is the shape of an identifier, a date or free text rather than a category. Both stops name
-  the column and never a value. The screen is what keeps "counts only" true; the comment above
+  `KEY` or a column of `JOIN_BY`. The `crosstabs` chunk takes a column only if it reads as a category, an
+  allow-list: logical, factor, whole numbers or text; at most 20 distinct non-missing values; not a different value
+  on every row once there are more than five; and no text that reads as a date. Every stop names the column and
+  never a value. The screen is what keeps "counts only" true; the comment above
   `CROSSTABS` says so.
 - **A finding never blocks registration; an error does.** A finding is a count: rows matching a
   check, a column that differs, a suspicious follow-up interval. A check that cannot run (a column
@@ -164,6 +164,11 @@ John's review of PR #454 raised four findings, each settled by John the same day
 The branch's final review then found that a cross-tab of a date column, a `skip` on a check chunk and a changed
 `KEY` each broke a promise above. The first two are closed by the screen and the partial-render rule; the third
 was settled by John as a finding, not an error.
+
+A `/code-review` of the branch found two more ways through the screen, a second identifier in a small cohort and a
+date stored as text. John chose an allow-list over a longer block-list (2026-10-29): a block-list had been passed
+twice, and an allow-list refuses whatever it has not named. A date stored as SAS day numbers, with ties and at most
+20 values, still reads as whole numbers; that gap is accepted and named here.
 
 ## 9. Open
 

@@ -206,6 +206,8 @@ test_that("a partial render writes no review and cannot register", {
   writeLines(append(lines, "#| skip: \"waiting on the corrected coding\"", after = at), job)
   suppressWarnings(bd_render(job))
   expect_false(file.exists(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.reviewed.yml")))
+  # A first build that is partial declares nothing either, so no job reads a build whose checks did not run.
+  expect_null(hvtiRutilities::study_config(root, require_data = FALSE)$built)
   bd_set_register(job, "TRUE")
   expect_error(suppressWarnings(bd_render(job)))
   expect_length(bd_versions(root), 0L)
