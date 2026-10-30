@@ -6,36 +6,42 @@
 .identifiability_date_pattern <- "(^|_)(dt|dttm|date|datetime)($|_)|_dt$"
 .identifiability_age_pattern <- "^age($|_)|_age$"
 
-# `vars` are the columns a table or figure shows by level, with `by` its columns. `age`
-# and `dates` add to what the names and classes of `vars` find. `extremes` are the columns
-# whose minimum or maximum is shown; a finding counts the patients more than 3 IQR beyond
-# the quartiles, because every column has a maximum and only an outlying one points to a
-# patient. One row per finding: check, column, count.
+# `vars` are the columns a table or figure shows and `by` its groups, all read for ages and
+# dates. `cells` are the columns it shows by level, which only the template can say, and
+# `tables` the cross-tabs it prints, each a character vector counted jointly with its
+# missing values. `age` and `dates` add to what the names and classes find. `extremes` are
+# the columns whose minimum or maximum is shown; a finding counts the patients more than
+# 3 IQR beyond the quartiles, because every column has a maximum and only an outlying one
+# points to a patient. One row per finding: check, column, count.
 .identifiability_check <- function(d, vars = character(), by = NULL, small = 5L, age = NULL, dates = NULL,
-                                   extremes = NULL) {
-  vars <- intersect(vars, names(d))
+                                   extremes = NULL, cells = NULL, tables = list()) {
+  cells <- intersect(cells, names(d))
   by <- intersect(by, names(d))
+  tables <- Filter(function(cc) all(cc %in% names(d)), tables)
+  shown <- intersect(unique(c(vars, cells, by, unlist(tables, use.names = FALSE))), names(d))
   rows <- list()
   add <- function(check, column, count) {
     if (count > 0L) rows[[length(rows) + 1L]] <<- data.frame(check = check, column = column, count = as.integer(count))
   }
-  for (v in vars) {
+  for (v in cells) {
     x <- d[[v]]
     if (inherits(x, c("Date", "POSIXt"))) next
-    if (!is.numeric(x) || length(unique(x[!is.na(x)])) <= 20L) {
-      tab <- if (length(by)) table(x, d[[by[[1L]]]]) else table(x)
-      add("small", v, sum(tab > 0L & tab < small))
-    }
+    tab <- if (length(by)) table(x, d[[by[[1L]]]]) else table(x)
+    add("small", v, sum(tab > 0L & tab < small))
+  }
+  for (cc in tables) {
+    tab <- table(d[cc], useNA = "ifany")
+    add("small", paste(cc, collapse = " by "), sum(tab > 0L & tab < small))
   }
   # A group is shown whatever the rows are: its N heads the column even over continuous rows alone.
   for (v in by) {
     tab <- table(d[[v]])
     add("group", v, sum(tab > 0L & tab < small))
   }
-  ages <- intersect(union(age, grep(.identifiability_age_pattern, vars, ignore.case = TRUE, value = TRUE)), names(d))
+  ages <- intersect(union(age, grep(.identifiability_age_pattern, shown, ignore.case = TRUE, value = TRUE)), names(d))
   for (v in ages) if (is.numeric(d[[v]])) add("age", v, sum(d[[v]] > 89, na.rm = TRUE))
-  named <- grep(.identifiability_date_pattern, vars, ignore.case = TRUE, value = TRUE)
-  classed <- vars[vapply(d[vars], inherits, logical(1L), what = c("Date", "POSIXt"))]
+  named <- grep(.identifiability_date_pattern, shown, ignore.case = TRUE, value = TRUE)
+  classed <- shown[vapply(d[shown], inherits, logical(1L), what = c("Date", "POSIXt"))]
   for (v in intersect(unique(c(dates, named, classed)), names(d))) add("date", v, sum(!is.na(d[[v]])))
   for (v in intersect(extremes, names(d))) {
     x <- suppressWarnings(as.numeric(d[[v]]))

@@ -480,9 +480,19 @@ if (!is.null(.by_levels) && (!is.null(GROUP_1) || setequal(names(.by_levels), c(
 #| label: identifiability
 #| results: asis
 # Flags what a reader could learn about one patient, by column and count. It changes no number.
-cat(hvtiRtemplates:::.identifiability_notice(
-  hvtiRtemplates:::.identifiability_check(d_table, unlist(GROUPS, use.names = FALSE), by = BY)
-))
+# Cells are counted only for the rows the table shows by level, and the correlation figure
+# draws from `d`, so its ages and dates count too.
+.rows <- unlist(GROUPS, use.names = FALSE)
+.by_level <- if (is.null(CONTINUOUS) && is.null(BINARY) && is.null(CATEGORICAL)) {
+  .b <- classify_buckets(d_table, .rows, OVERRIDES)
+  c(.b$binary, .b$categorical)
+} else {
+  c(BINARY, CATEGORICAL)
+}
+cat(hvtiRtemplates:::.identifiability_notice(unique(rbind(
+  hvtiRtemplates:::.identifiability_check(d_table, .rows, by = BY, cells = .by_level),
+  if (!is.null(CORR)) hvtiRtemplates:::.identifiability_check(d, c(CORR$vars, CORR$with), by = CORR$by)
+))))
 ```
 
 ```{r}

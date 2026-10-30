@@ -393,8 +393,10 @@ with the level.
 #| results: asis
 # Flags what a reader could learn about one patient, by column and count. It changes no number.
 # The follow-up table shows the longest follow-up, and a stratum's curve is its few patients' events.
+# The life tables leave out a row missing its time or its event, so the counts here do too.
 cat(hvtiRtemplates:::.identifiability_notice(
-  hvtiRtemplates:::.identifiability_check(d, STRATA, extremes = TIME)
+  hvtiRtemplates:::.identifiability_check(d[!is.na(d[[TIME]]) & !is.na(d[[EVENT]]), , drop = FALSE], STRATA,
+                                          cells = STRATA, extremes = TIME)
 ))
 ```
 
