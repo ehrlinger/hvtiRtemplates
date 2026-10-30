@@ -93,7 +93,7 @@ test_that("the cross-tab, follow-up and named-check sections report counts", {
                         d
                       })
   out <- paste(env$.stdout, collapse = "\n")
-  expect_match(out, "### dead by sex", fixed = TRUE)
+  expect_match(out, "dead by sex", fixed = TRUE)
   expect_match(out, "row(s) look suspicious, listed in the console", fixed = TRUE)
   expect_identical(env$.checked$label, "Follow-up of zero or less")
   expect_identical(env$.checked$n, 2L)
@@ -185,37 +185,6 @@ test_that("bad check choices stop in check-choices, naming no value", {
                "bd: check-choices .*EVENT must be one column name", perl = TRUE)
 })
 
-test_that("a cross-tab refuses the patient identifier and a column of KEY, naming it", {
-  bd_skip()
-  m <- bd_master()
-  root <- bd_study()
-  err <- expect_error(bd_run(root, bd_check_choices(m, CROSSTABS = list(c("ccfid", "sex")))), "^bd: check-choices \\(")
-  expect_match(conditionMessage(err), "ccfid", fixed = TRUE)
-  # A column of a composite KEY, spelled in upper case: the screen reads the lower-cased names.
-  err <- expect_error(
-    bd_run(root, bd_check_choices(m, KEY = c("ccfid", "dt_surg"), CROSSTABS = list(c("DT_SURG", "sex")))),
-    "^bd: check-choices \\("
-  )
-  expect_match(conditionMessage(err), "dt_surg", fixed = TRUE)
-  expect_false(grepl("PT00", conditionMessage(err), fixed = TRUE))
-})
-
-test_that("a cross-tab of a column with more than 20 distinct values stops, naming the column and the count", {
-  bd_skip()
-  m <- bd_master()
-  root <- bd_study()
-  err <- expect_error(
-    bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("grp", "sex"))), labels = "crosstabs", change = function(d) {
-      d$grp <- sprintf("ZQXG%02d", rep_len(1:21, nrow(d)))
-      d
-    }),
-    "^bd: crosstabs \\("
-  )
-  msg <- conditionMessage(err)
-  expect_match(msg, "grp has 21 distinct values", fixed = TRUE)
-  expect_false(any(grepl("ZQXG01", msg, fixed = TRUE), grepl("ZQXG21", msg, fixed = TRUE)))
-})
-
 test_that("a cross-tab of a column the data lacks stops in crosstabs and names it", {
   bd_skip()
   m <- bd_master()
@@ -240,7 +209,7 @@ test_that("a CHECKS condition naming a missing column stops tbl-checks, and noth
   expect_length(bd_versions(root), 0L)
 })
 
-test_that("a draft whose checks stop has reviewed nothing", {
+test_that("a draft whose checks stop leaves no report, so it names no hash", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
@@ -249,36 +218,7 @@ test_that("a draft whose checks stop has reviewed nothing", {
   bad <- bd_check_choices(m)
   bad$CHECKS <- list(no_such_col > 1 ~ "A column the data lacks")
   expect_error(bd_draft(root, bad, labels = with_checks), "^bd: tbl-checks \\(")
-  expect_false(file.exists(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.reviewed.yml")))
-})
-
-test_that("a cross-tab of a date column with few distinct values stops in crosstabs, naming no date", {
-  bd_skip()
-  m <- bd_master()
-  root <- bd_study()
-  err <- expect_error(
-    bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("dt_dead", "sex"))), labels = "crosstabs",
-                 change = function(d) {
-                   d$dt_dead <- as.Date("2020-03-01") + rep_len(0:14, nrow(d))
-                   d
-                 }),
-    "^bd: crosstabs \\("
-  )
-  msg <- conditionMessage(err)
-  expect_match(msg, "dt_dead", fixed = TRUE)
-  expect_false(grepl("20[0-9]{2}-[0-9]{2}-[0-9]{2}", msg))
-})
-
-test_that("a cross-tab refuses a column of JOIN_BY, naming it", {
-  bd_skip()
-  m <- bd_master()
-  root <- bd_study()
-  err <- expect_error(
-    bd_run(root, bd_check_choices(m, JOIN_BY = "dt_surg", CROSSTABS = list(c("DT_SURG", "sex"))),
-           labels = c("setup", "edit-study-choices", "check-choices")),
-    "^bd: check-choices \\("
-  )
-  expect_match(conditionMessage(err), "dt_surg", fixed = TRUE)
+  expect_false(file.exists(bd_sim_html(root)))
 })
 
 test_that("a registered version without a column of the current KEY is reported, compared against nothing", {
@@ -301,52 +241,46 @@ test_that("a registered version without a column of the current KEY is reported,
   expect_false(is.null(before))
 })
 
-test_that("a cross-tab takes only a category: a measurement, a text date and an all-distinct column stop", {
+test_that("a cross-tab's levels go to the console, and the report holds only the shape", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
-  crosstab <- function(change) {
-    err <- expect_error(
-      bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("probe", "sex"))), labels = "crosstabs",
-                   change = change),
-      "^bd: crosstabs \\("
-    )
-    conditionMessage(err)
-  }
-  msg <- crosstab(function(d) {
-    d$probe <- rep_len(c(1.5, 2.25, 3.75), nrow(d))
-    d
-  })
-  expect_match(msg, "probe is not a category", fixed = TRUE)
-  expect_false(grepl("2.25", msg, fixed = TRUE))
-  msg <- crosstab(function(d) {
-    d$probe <- rep_len(c("2019-03-04", "2020-11-30"), nrow(d))
-    d
-  })
-  expect_match(msg, "probe holds text that reads as a date", fixed = TRUE)
-  expect_false(grepl("2019", msg, fixed = TRUE))
-  # A second identifier in a small cohort: few values, but a different one on every row.
-  msg <- crosstab(function(d) {
-    d <- d[seq_len(12L), , drop = FALSE]
-    d$probe <- sprintf("ZQXM%02d", seq_len(12L))
-    d
-  })
-  expect_match(msg, "probe has a different value on every row", fixed = TRUE)
-  expect_false(grepl("ZQXM", msg, fixed = TRUE))
-})
-
-test_that("a cross-tab takes logical, factor, whole-number and text categories", {
-  bd_skip()
-  m <- bd_master()
-  root <- bd_study()
-  env <- bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("lg", "fc"), c("wn", "tx"))), labels = "crosstabs",
-                      change = function(d) {
-                        d$lg <- rep_len(c(TRUE, FALSE), nrow(d))
-                        d$fc <- factor(rep_len(c("a", "b", "c"), nrow(d)))
-                        d$wn <- rep_len(c(1, 2, 3, 4), nrow(d))
-                        d$tx <- rep_len(c("left", "right"), nrow(d))
+  env <- bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("vdate", "label"), c("dead", "sex"))),
+                      labels = "crosstabs", change = function(d) {
+                        d$vdate <- factor(rep_len(c("2020-01-01", "2020-02-02"), nrow(d)))
+                        d$label <- rep_len(c("PATIENT_A", "PATIENT_B", "PATIENT_C"), nrow(d))
+                        d$vdate[1:2] <- NA
                         d
                       })
-  expect_match(env$.stdout, "lg by fc", fixed = TRUE, all = FALSE)
-  expect_match(env$.stdout, "wn by tx", fixed = TRUE, all = FALSE)
+  stdout <- paste(env$.stdout, collapse = "\n")
+  stderr <- paste(env$.stderr, collapse = "\n")
+  for (value in c("2020-01-01", "2020-02-02", "PATIENT_A", "PATIENT_B", "PATIENT_C")) {
+    expect_false(grepl(value, stdout, fixed = TRUE), info = value)
+    expect_true(grepl(value, stderr, fixed = TRUE), info = value)
+  }
+  # The console table has the levels, the counts and the missing level.
+  expect_match(stderr, "(missing)", fixed = TRUE)
+  expect_match(stderr, "Frequency", fixed = TRUE)
+  # The report has one table, one row per pair: the levels of each column with missing as a level (3 x 3),
+  # the cells, the nonzero cells under 5 and the rows with a missing value in either column.
+  shape <- env$.shapes[[1L]]
+  expect_identical(names(shape), c("Pair", "Levels", "Cells", "Cells under 5", "Missing"))
+  expect_identical(shape$Pair, "vdate by label")
+  expect_identical(shape$Levels, "3 x 3")
+  expect_identical(shape$Cells, 9)
+  expect_identical(shape$Missing, 2L)
+  expect_match(stdout, "vdate by label", fixed = TRUE)
+  expect_match(stdout, "dead by sex", fixed = TRUE)
+  expect_length(grep("Cells under 5", env$.stdout), 1L)
+})
+
+test_that("a cross-tab counts the small cells and takes an identifier column, printing it only to the console", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  env <- bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("ccfid", "sex"))), labels = "crosstabs")
+  expect_false(any(grepl("PT00", env$.stdout, fixed = TRUE)))
+  expect_true(any(grepl("PT00", env$.stderr, fixed = TRUE)))
+  # One patient per row: every nonzero cell holds one row, and every one is under 5.
+  expect_identical(env$.shapes[[1L]]$`Cells under 5`, nrow(env$d))
 })

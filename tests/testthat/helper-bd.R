@@ -60,14 +60,41 @@ bd_job <- function(root, edits = list()) {
   job
 }
 
+# The job a simulated render stands for: in the study's datasets folder, as add_job() puts a bd job. It is never
+# written; a render's only trace the chunks read is where it sits and what it is called.
+bd_sim_job <- function(root) {
+  dir <- hvtiRutilities::study_dir("datasets", root)
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  file.path(normalizePath(dir), "bd.study.build.qmd")
+}
+
+# The draft report a render of the simulated job would leave beside it.
+bd_sim_html <- function(root) sub("[.]qmd$", ".html", bd_sim_job(root))
+
+# What a Quarto render has that running chunks by hand does not: knitr::current_input(), which the setup chunk
+# records as .in, and the job's name. Set after the setup chunk has run, because a chunk run by hand finds neither.
+bd_sim_render <- function(env, root) {
+  job <- bd_sim_job(root)
+  env$.in <- sub("[.]qmd$", ".rmarkdown", job)
+  env$.job_file <- basename(job)
+  invisible(env)
+}
+
 # Run the job's chunks in a fresh environment from inside the study, so the
 # setup chunk finds the root from the working directory as it does outside a
-# render. `choices` overwrite the study choices after that chunk runs.
+# render. `choices` overwrite the study choices after that chunk runs. `render = FALSE` leaves the chunks as
+# run by hand, with no input file. The stdout of the chunks is kept in $.run_stdout.
 bd_run <- function(root, choices,
                    labels = c("setup", "set", "edit-study-choices", "check-choices", "read-master",
-                              "cohort", "derive", "write-built", "register")) {
+                              "cohort", "derive", "write-built", "register"),
+                   render = TRUE) {
   env <- new.env(parent = globalenv())
-  withr::with_dir(root, utils::capture.output(hazard_run("bd", labels, env, choices))) # nolint: object_usage_linter.
+  is_setup <- labels %in% c("setup", "set")
+  env$.run_stdout <- withr::with_dir(root, utils::capture.output({
+    hazard_run("bd", labels[is_setup], env)  # nolint: object_usage_linter.
+    if (render) bd_sim_render(env, root)
+    hazard_run("bd", labels[!is_setup], env, choices)  # nolint: object_usage_linter.
+  }))
   env
 }
 
@@ -106,19 +133,38 @@ bd_check_labels <- c("rebuild", "crosstabs", "followup", "tbl-checks")
 
 # Run bd through write-built, apply `change` to the data frame it wrote, as a rebuild with a changed
 # derivation would leave it, then run the check chunks in `labels`. Returns the environment, with the
-# check chunks' stdout in $.stdout.
+# check chunks' stdout in $.stdout and what they wrote to stderr (the console) in $.stderr.
 bd_check_run <- function(root, choices, change = identity, labels = bd_check_labels) {
   env <- bd_run(root, choices, labels = c("setup", "edit-study-choices", "check-choices", "read-master", "cohort",
                                           "derive", "write-built"))
   env$d <- change(env$d)
-  env$.stdout <- withr::with_dir(root, utils::capture.output(
-    hazard_run("bd", labels, env), type = "output"  # nolint: object_usage_linter.
-  ))
+  env$.stderr <- utils::capture.output(
+    env$.stdout <- withr::with_dir(root, utils::capture.output(
+      hazard_run("bd", labels, env), type = "output"  # nolint: object_usage_linter.
+    )),
+    type = "message"
+  )
   env
 }
 
-# A registering render registers only the bytes a draft render wrote, so a test that means a normal
-# registration runs the draft first: the same choices with REGISTER = FALSE.
-bd_draft <- function(root, choices, ...) {
-  bd_run(root, utils::modifyList(choices, list(REGISTER = FALSE)), ...)
+# The code of one chunk of the template, for a test that prints the value a chunk ends on, as a render does.
+bd_chunk_code <- function(label) {
+  src <- readLines(hazard_template("bd"), warn = FALSE)  # nolint: object_usage_linter.
+  at <- which(trimws(src) == paste0("#| label: ", label))
+  end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
+  src[(at + 1L):(end - 1L)]
+}
+
+# A registering render registers only the bytes a draft render named in its report, so a test that means a normal
+# registration runs the draft first: the same choices with REGISTER = FALSE. A render leaves its report, the
+# stdout of its chunks and the table the Report section ends on, beside the job when it ran to the end; a draft
+# that stopped leaves none, as Quarto leaves no HTML for a failed render. The report is written by this one
+# helper and carries whatever the template printed: the hash only reaches it through the template's own table.
+bd_draft <- function(root, choices, labels = NULL, ...) {
+  choices <- utils::modifyList(choices, list(REGISTER = FALSE))
+  env <- if (is.null(labels)) bd_run(root, choices, ...) else bd_run(root, choices, labels, ...)
+  shown <- eval(parse(text = bd_chunk_code("tbl-report-source")), envir = env)
+  report <- withr::with_dir(root, utils::capture.output(print(shown)))
+  writeLines(c(env$.run_stdout, report), bd_sim_html(root))
+  invisible(env)
 }

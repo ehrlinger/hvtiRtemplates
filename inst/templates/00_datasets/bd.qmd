@@ -148,10 +148,11 @@ DATASET_ID <- "study_cohort"
 
 # EDIT: pairs of columns to cross-tabulate, typically a derived column against its source, such as an event
 # indicator against an indicator of its date. A missing value is a level of its own, as PROC FREQ / MISSING shows
-# it. A list of character vectors, or list() for none. A cross-tab prints its levels in the report, so only a
-# column that reads as a category is taken: logical, factor, whole numbers or text, with at most 20 levels, not
-# every value distinct, and no text that reads as a date. ID and the columns of KEY and JOIN_BY are refused by
-# name. Cross-tab an indicator of a date, never the date.
+# it. A list of character vectors, or list() for none. A cross-tab's levels are values, and a column's type or
+# number of values cannot show that its labels are not identifying (a factor of dates, a patient label repeated
+# in a repeated-measures dataset), so the levels and counts print in the console and never in the report. The
+# report holds each pair's shape: the number of levels of each column, the cells, the cells under 5 and the
+# rows with a missing value. Any column of the built dataset may be named.
 CROSSTABS <- list(c("dead", "sex"))
 
 # EDIT: the event indicator and its follow-up interval(s) in years, as the derive chunk makes them. EVENT <- NULL
@@ -173,9 +174,12 @@ PRINT_COLS <- c("dead", "iv_dead")
 
 # FALSE writes the working file and registers nothing. TRUE registers it as a
 # dated version of this study's "built" dataset, which every analysis job then
-# reads. Render with FALSE first and read the Checks section, which shows how this
-# build differs from the version registered now, then set TRUE and render again. A registering render stops
-# unless its bytes match the last draft's: it registers only what the draft wrote and you read.
+# reads. Render with FALSE first and read the report, which shows how this build
+# differs from the version registered now, then set TRUE and render again. A draft
+# prints the SHA-256 of the file it wrote in its report, and a registering render
+# registers a file only if that report, beside this job, names its bytes. It stops
+# when run outside a Quarto render, when no draft report is there, and when the
+# report names other bytes.
 REGISTER <- FALSE
 ```
 
@@ -212,11 +216,6 @@ JOIN_BY <- tolower(JOIN_BY)
 ID <- tolower(ID)
 KEY <- tolower(KEY)
 CROSSTABS <- lapply(CROSSTABS, tolower)
-.unsafe <- intersect(unlist(CROSSTABS), c(ID, KEY, JOIN_BY))
-if (length(.unsafe)) {
-  .bd_stop("check-choices", "CROSSTABS names ", toString(.unsafe), ", the patient identifier or a column of KEY or JOIN_BY. ",
-           "A cross-tab prints its levels in the report, so it never takes an identifier.")
-}
 ```
 
 ```{r}
@@ -354,22 +353,18 @@ saveRDS(d, .built)
 )
 .record_file <- file.path(.datasets, paste0(DATASET_ID, ".build.yml"))
 yaml::write_yaml(.record, .record_file)
-# A draft render records the bytes it wrote, and a registering render registers only those bytes. Without it, the
-# second render re-cuts the master and could register data nobody read: a changed snapshot with VERIFY_MASTER off,
-# a changed cohort list, a derivation that differs run to run. It holds no key and no data value. The register
-# chunk writes it, after the checks, so a draft whose checks did not run has reviewed nothing.
-.reviewed_file <- file.path(.datasets, paste0(DATASET_ID, ".reviewed.yml"))
 ```
 
 ## Checks
 
 These checks read the dataset this render has just written. They report counts only: the rows behind a count,
-and the patients on one side of the rebuild only, are printed in the console, so run the chunks in an
-interactive session to read them. A finding changes nothing and blocks nothing. A check that cannot run,
+the patients on one side of the rebuild only and the levels of each cross-tab are printed in the console, so
+run the chunks in an interactive session to read them. A finding changes nothing and blocks nothing. A check that cannot run,
 because a column it names is missing or a condition does not evaluate, stops the render, as a bad `EXCLUDE` rule
 does: a build whose checks did not run is never registered. A finding becomes a correction to the master, a rule
 in `EXCLUDE`, or a fix to the derive chunk; then render again, and register once the checks
-read right.
+read right. A draft's report prints the SHA-256 of the file it wrote, and a registering render registers only a
+file whose bytes that report names, so register from a render, never from chunks run by hand.
 
 ### What this rebuild changed
 
@@ -477,38 +472,17 @@ if (!is.null(.comparison)) {
 ```{r}
 #| label: crosstabs
 #| results: asis
-# unnumbered: each cross-tab is a child chunk with its own label and caption
-# Counts the author needs to see: a small cell is flagged, never suppressed.
+# unnumbered: its table is a child chunk with its own label and caption
+# The levels of a cross-tab are values, so the full table of each pair, levels and counts, goes to the
+# console on stderr(), which knitr does not collect, as the rows behind a named check do. The report holds
+# each pair's shape and no label. A small cell is flagged in the console, never suppressed.
 .small <- 5L
 if (!length(CROSSTABS)) cat("No cross-tabs are named in CROSSTABS.\n")
-.levels <- 20L
+.shapes <- vector("list", length(CROSSTABS))
 for (.i in seq_along(CROSSTABS)) {
   .pair <- CROSSTABS[[.i]]
-  # The levels print in the report, so a column is taken only if it reads as a category: an allow-list, since
-  # every block-list tried let some identifier through. Each stop names the column and never a value.
   for (.col in .pair) {
     if (!.col %in% names(d)) .bd_stop("crosstabs", "CROSSTABS names ", .col, ", which the built dataset does not have.")
-    .x <- d[[.col]]
-    .seen <- .x[!is.na(.x)]
-    .whole <- is.numeric(.x) && !inherits(.x, c("Date", "POSIXt", "difftime")) &&
-      all(.seen == round(.seen))
-    if (!(is.logical(.x) || is.factor(.x) || is.character(.x) || .whole)) {
-      .bd_stop("crosstabs", .col, " is not a category (logical, factor, whole numbers or text). A date, a time or a ",
-               "measurement prints its values as levels. Cross-tab an indicator of it, such as dead for the date of death.")
-    }
-    if (is.character(.x) && any(grepl("^\\s*[0-9]{1,4}[-/.][0-9]{1,2}[-/.][0-9]{1,4}", .seen))) {
-      .bd_stop("crosstabs", .col, " holds text that reads as a date, whose levels would print in the report.")
-    }
-    .n <- length(unique(.seen))
-    if (.n > .levels) {
-      .bd_stop("crosstabs", .col, " has ", .n, " distinct values, more than the ", .levels, " a cross-tab takes. ",
-               "That is the shape of an identifier, a date or free text, whose levels must not reach the report.")
-    }
-    # In a small cohort an identifier has few values; a category repeats them.
-    if (.n > 5L && .n == length(.seen)) {
-      .bd_stop("crosstabs", .col, " has a different value on every row, the shape of an identifier, whose levels ",
-               "must not reach the report.")
-    }
   }
   .tab <- tryCatch(hvtiRutilities::proc_freq(d, .pair, missing = TRUE),
                    error = function(e) .bd_stop("crosstabs", conditionMessage(e)))
@@ -516,11 +490,19 @@ for (.i in seq_along(CROSSTABS)) {
   .tab$Small <- ifelse(.tab$Frequency > 0 & .tab$Frequency < .small, paste("under", .small), "")
   .tab[.pair] <- lapply(.tab[.pair], function(x) ifelse(is.na(x), "(missing)", as.character(x)))
   .by <- paste(.pair, collapse = " by ")
-  cat("\n\n#### ", .by, "\n\n", sep = "")
-  # A label holds letters, digits and hyphens, so an underscore in a name cannot be read as markup. The
-  # position keeps two labels apart when two pairs' names reduce to the same letters.
-  .slug <- gsub("[^A-Za-z0-9]+", "-", paste(.pair, collapse = "-"))
-  .bd_table(.tab, paste0("tbl-crosstab-", .i, "-", .slug), paste0(.by, ", with a missing value as a level of its own"),
+  cat("\n", .by, "\n", sep = "", file = stderr())
+  cat(utils::capture.output(print(.tab, row.names = FALSE)), sep = "\n", file = stderr())
+  # A missing value counts as a level, as it does in the table.
+  .nlevels <- vapply(.pair, function(col) length(unique(d[[col]])), 0L)
+  .shapes[[.i]] <- data.frame(
+    Pair = .by, Levels = paste(.nlevels, collapse = " x "), Cells = prod(.nlevels),
+    `Cells under 5` = sum(.tab$Frequency > 0 & .tab$Frequency < .small),
+    Missing = sum(!stats::complete.cases(d[.pair])), check.names = FALSE
+  )
+}
+if (length(.shapes)) {
+  .bd_table(do.call(rbind, .shapes), "tbl-crosstabs",
+            "Each cross-tab's shape, with a missing value as a level of its own; the levels and counts are in the console",
             row.names = FALSE)
 }
 ```
@@ -582,8 +564,8 @@ if (length(CHECKS)) {
 # read it before it is registered (design 2026-10-23, section 7.1). Registering stays a separate
 # step: REGISTER = TRUE, or hvtiRutilities::update_manifest().
 .other_file <- !is.null(.registered$built) && !identical(.registered$built, basename(.built))
-# A render with a skipped chunk or a stop_here() did not run every check, so it declares nothing, reviews nothing
-# and registers nothing. Outside a render there is no file to be partial.
+# A render with a skipped chunk or a stop_here() did not run every check, so it declares nothing, prints no
+# review hash and registers nothing. Outside a render there is no file to be partial.
 .partial <- !is.null(.in) && length(hvtiRtemplates:::.partial_state$points) > 0L
 if (!REGISTER && .partial) {
   .register_step <- "Partial render: nothing declared, reviewed or registered"
@@ -596,9 +578,12 @@ if (!REGISTER && .partial) {
   .register_step <- paste0("Working file only: the study's dataset is still ", .registered$built,
                            ", so this build was not declared or registered")
 }
-# A draft records the bytes it wrote, after everything above that could fail, so a draft that failed approves nothing.
-if (!REGISTER && !.partial) yaml::write_yaml(list(built_sha256 = .record$built_sha256), .reviewed_file)
 if (REGISTER) {
+  # Running chunks by hand can leave any check out, and no report would show it.
+  if (is.null(.in)) {
+    .bd_stop("register", "this is not a Quarto render, and running chunks by hand can leave a check out. ",
+             "Render the job instead: with REGISTER <- FALSE first, then with REGISTER <- TRUE.")
+  }
   if (.partial) {
     .bd_stop("register", "this render is partial (a chunk is skipped or stop_here() is set), so its checks did not all run ",
              "and it was not registered. Remove each skip and stop_here(), draft again, then register.")
@@ -617,13 +602,27 @@ if (REGISTER) {
              },
              "move the study to this job's file deliberately.")
   }
-  .reviewed <- if (file.exists(.reviewed_file)) yaml::read_yaml(.reviewed_file)$built_sha256
-  if (!identical(.reviewed, .record$built_sha256)) {
-    .bd_stop("register", if (is.null(.reviewed)) "no draft of this build has been rendered" else
-               paste0("this build differs from the draft last rendered (a draft and a registering render under different ",
-                      "R versions always differ, since saveRDS records the version)"),
-             ", so it was not registered. Render with ",
-             "REGISTER <- FALSE, read the Checks section, then render again with REGISTER <- TRUE.")
+  # The draft's report is the record of the review: the draft prints the SHA-256 of the bytes it wrote, and only
+  # a draft that rendered to the end leaves its HTML beside this job. The report is the job's own output file.
+  .draft_html <- file.path(dirname(.in), sub("[.]qmd$", ".html", .job_file))
+  .draft_report <- if (file.exists(.draft_html)) readLines(.draft_html, warn = FALSE)
+  if (is.null(.draft_report)) {
+    .bd_stop("register", "no draft report was found beside this job (", sub("[.]qmd$", ".html", .job_file), "), so the ",
+             "build was not registered. Render with REGISTER <- FALSE, read the report, then render again with ",
+             "REGISTER <- TRUE.")
+  }
+  # The working file is hashed again here, not trusted from the build record: the file registered is the file
+  # read now. Nothing runs between this and the registration but choosing the call.
+  .built_now <- digest::digest(.built, algo = "sha256", file = TRUE)
+  if (!identical(.built_now, .record$built_sha256)) {
+    .bd_stop("register", "the working file changed after this render wrote it (another job or render wrote ",
+             basename(.built), "), so it was not registered. Render a draft again, read it, then register.")
+  }
+  if (!any(grepl(.built_now, .draft_report, fixed = TRUE))) {
+    .bd_stop("register", "the draft report names other bytes than this build (a draft and a registering render under ",
+             "different R versions always differ, since saveRDS records the version; a registering render's own report ",
+             "names none), so it was not registered. Render with REGISTER <- FALSE, read the report, then render again ",
+             "with REGISTER <- TRUE.")
   }
   .register_step <- tryCatch({
     if (is.null(.registered$built)) {
@@ -654,14 +653,19 @@ if (REGISTER) {
 ```{r}
 #| label: tbl-report-source
 #| tbl-cap: "Run mode, master snapshot, row counts and dataset registration for this render"
+# A draft that ran to the end prints the SHA-256 of the file it wrote: this report is the record of the review, and
+# a registering render registers only a file whose bytes it names. A partial draft and a registering render print none.
+.review_row <- !REGISTER && !.partial
 knitr::kable(data.frame(
   Item = c("Mode", "Master snapshot", "Master SHA-256", "Rehashed this render", "Master parent release",
-           "Rows in the dataset", "Patients", "Columns", "Study dataset before", "Study dataset after", "Registration"),
+           "Rows in the dataset", "Patients", "Columns", "Study dataset before", "Study dataset after", "Registration",
+           if (.review_row) "Build reviewed (sha256)"),
   Value = c(if (REGISTER) "Register" else "Working file only", basename(.master$file), .master$sha256,
             if (.master$verified) "yes" else "no", as.character(.master$parent_release), nrow(d),
             length(unique(d[[ID]])), ncol(d),
             if (is.null(.version_before)) "none" else .version_before,
-            if (is.null(.version_after)) "none" else .version_after, .register_step)
+            if (is.null(.version_after)) "none" else .version_after, .register_step,
+            if (.review_row) .record$built_sha256)
 ))
 ```
 

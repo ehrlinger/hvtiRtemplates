@@ -66,7 +66,7 @@ test_that("REGISTER = TRUE registers the declared working file as the study's fi
   m <- bd_master()
   root <- bd_study()
   choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = FALSE)
-  bd_run(root, choices)
+  bd_draft(root, choices)
   env <- bd_run(root, utils::modifyList(choices, list(REGISTER = TRUE)))
   expect_match(env$.register_step, "^Registered as ")
   expect_length(bd_versions(root), 1L)
@@ -299,37 +299,96 @@ test_that("a working file never overwrites a published release, even without REG
   expect_false(file.exists(file.path(datasets, "legacy_cut.build.yml")))
 })
 
-test_that("REGISTER = TRUE with no draft stops in register and registers nothing", {
+# The rest of the registration contract. A registering render registers only a file whose bytes a draft's report
+# beside the job names, and the helpers write that report only through the template's own Report table.
+bd_reg_labels <- c("setup", "edit-study-choices", "check-choices", "read-master", "cohort", "derive", "write-built",
+                   bd_check_labels, "register")
+
+test_that("REGISTER = TRUE with no draft report stops in register and registers nothing", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
   choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)
   err <- expect_error(bd_run(root, choices), "^bd: register \\(")
-  expect_match(conditionMessage(err), "no draft of this build has been rendered", fixed = TRUE)
-  datasets <- hvtiRutilities::study_dir("datasets", root)
-  expect_false(file.exists(file.path(datasets, "study_cohort.reviewed.yml")))
+  expect_match(conditionMessage(err), "no draft report was found", fixed = TRUE)
+  expect_false(file.exists(bd_sim_html(root)))
   expect_length(bd_versions(root), 0L)
   expect_null(hvtiRutilities::study_config(root, require_data = FALSE)$built)
+  # A draft that ran only to its checks wrote no report either.
+  bad <- bd_check_choices(m, CHECKS = list(no_such_col > 1 ~ "A column the data lacks"))
+  expect_error(bd_draft(root, bad, labels = bd_reg_labels), "^bd: tbl-checks \\(")
+  expect_false(file.exists(bd_sim_html(root)))
+  expect_error(bd_run(root, bd_check_choices(m, register = TRUE)), "no draft report was found")
+  expect_length(bd_versions(root), 0L)
 })
 
-test_that("a build that differs from the last draft is not registered", {
+test_that("the draft's report prints the hash of the file it wrote, and a registering render prints none", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = FALSE)
+  env <- bd_draft(root, choices)
+  report <- paste(readLines(bd_sim_html(root)), collapse = "\n")
+  hash <- digest::digest(env$.built, algo = "sha256", file = TRUE)
+  expect_match(report, "Build reviewed (sha256)", fixed = TRUE)
+  expect_match(report, hash, fixed = TRUE)
+  # The registering render's own Report table has no such row.
+  reg <- bd_run(root, utils::modifyList(choices, list(REGISTER = TRUE)))
+  shown <- utils::capture.output(print(eval(parse(text = bd_chunk_code("tbl-report-source")), envir = reg)))
+  expect_false(any(grepl("Build reviewed", shown, fixed = TRUE)))
+  expect_false(any(grepl(hash, shown, fixed = TRUE)))
+})
+
+test_that("chunks run by hand stop in register, even after a draft, and register nothing", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)
+  bd_draft(root, choices)
+  err <- expect_error(bd_run(root, choices, render = FALSE), "^bd: register \\(")
+  expect_match(conditionMessage(err), "not a Quarto render", fixed = TRUE)
+  expect_length(bd_versions(root), 0L)
+})
+
+test_that("a valid replacement of the working file after it was hashed is not registered", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  choices <- bd_check_choices(m)
+  bd_draft(root, choices)
+  # The registering render's chunks run through the checks, so the build record holds the draft's hash.
+  env <- bd_run(root, bd_check_choices(m, register = TRUE), labels = bd_reg_labels[bd_reg_labels != "register"])
+  expect_identical(env$.record$built_sha256, digest::digest(env$.built, algo = "sha256", file = TRUE))
+  # Another writer replaces the file with a valid RDS carrying a value the draft's report never showed.
+  changed <- readRDS(env$.built)
+  changed$age[[1L]] <- -123
+  saveRDS(changed, env$.built)
+  err <- expect_error(withr::with_dir(root, utils::capture.output(hazard_run("bd", "register", env))), # nolint: object_usage_linter.
+                      "^bd: register \\(")
+  expect_match(conditionMessage(err), "changed after this render wrote it", fixed = TRUE)
+  expect_length(bd_versions(root), 0L)
+  expect_false(grepl("-123", conditionMessage(err), fixed = TRUE))
+})
+
+test_that("a draft report that names other bytes than the build is not registered", {
   bd_skip()
   m <- bd_master()
   root <- bd_study()
   choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = list(age < 40 ~ "Under 40"), REGISTER = FALSE)
-  bd_run(root, choices)
+  bd_draft(root, choices)
   datasets <- hvtiRutilities::study_dir("datasets", root)
-  reviewed <- yaml::read_yaml(file.path(datasets, "study_cohort.reviewed.yml"))
-  expect_identical(names(reviewed), "built_sha256")
-  # A different cut of the same master: the bytes written are not the bytes the draft wrote.
+  # A different cut of the same master: the bytes written are not the bytes the draft's report names.
   changed <- choices
   changed$EXCLUDE <- list(age < 50 ~ "Under 50")
   changed$REGISTER <- TRUE
   err <- expect_error(bd_run(root, changed), "^bd: register \\(")
-  expect_match(conditionMessage(err), "differs from the draft last rendered", fixed = TRUE)
+  expect_match(conditionMessage(err), "draft report names other bytes", fixed = TRUE)
   expect_length(bd_versions(root), 0L)
-  # A registering render never writes the file.
-  expect_identical(yaml::read_yaml(file.path(datasets, "study_cohort.reviewed.yml")), reviewed)
+  # A report that is a registering render's own, which prints no hash, approves nothing either.
+  writeLines("<html>a registering render's report</html>", bd_sim_html(root))
+  expect_error(bd_run(root, utils::modifyList(choices, list(REGISTER = TRUE))), "draft report names other bytes")
+  expect_length(bd_versions(root), 0L)
+  expect_true(file.exists(file.path(datasets, "study_cohort.build.yml")))
 })
 
 test_that("a finding does not block registration: a CHECKS entry that matches rows still registers", {

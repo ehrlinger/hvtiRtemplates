@@ -31,9 +31,9 @@ bd_registered <- local({
       root <- bd_study(.local_envir = testthat::teardown_env())
       # A registering render registers the bytes of the draft render before it.
       job <- bd_job(root, bd_edits(m, register = "FALSE"))
-      bd_render(job)
+      draft <- bd_render(job)
       bd_set_register(job, "TRUE")
-      cache <<- list(m = m, root = root, job = job, html = bd_render(job))
+      cache <<- list(m = m, root = root, job = job, html = bd_render(job), draft = draft)
     }
     cache
   }
@@ -47,6 +47,15 @@ test_that("bd registers a dated version with its build record, and ac reads it",
   m <- pub$m
   root <- pub$root
   html <- pub$html
+
+  # The draft's report names the bytes the registering render registered, and the registering render's own
+  # report names none: it cannot approve a build nobody read.
+  sha <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds"),
+                        algo = "sha256", file = TRUE)
+  expect_match(pub$draft, "Build reviewed (sha256)", fixed = TRUE)
+  expect_match(pub$draft, sha, fixed = TRUE)
+  expect_false(grepl("Build reviewed", html, fixed = TRUE))
+  expect_false(grepl(sha, html, fixed = TRUE))
 
   cfg <- hvtiRutilities::study_config(root)
   expect_identical(cfg$built, "study_cohort.rds")
@@ -82,7 +91,7 @@ test_that("bd registers a dated version with its build record, and ac reads it",
   expect_setequal(env$d$ccfid, built$ccfid)
 })
 
-test_that("the purled job runs as a script and registers the same dataset in a fresh study", {
+test_that("the purled job runs as a script and writes the same working file, but never registers", {
   bd_quarto_skip()
   # Study A: the shared registering render establishes the expected dataset.
   pub <- bd_registered()
@@ -96,14 +105,18 @@ test_that("the purled job runs as a script and registers the same dataset in a f
   script <- withr::local_tempfile(fileext = ".R")
   knitr::purl(job_b, output = script, documentation = 0L, quiet = TRUE)
   withr::with_dir(dirname(job_b), utils::capture.output(source(script, local = new.env(parent = globalenv()))))
+  # A script is not a Quarto render, so it can leave a check out and registers nothing.
   bd_set_register(job_b, "TRUE")
   knitr::purl(job_b, output = script, documentation = 0L, quiet = TRUE)
-  withr::with_dir(dirname(job_b), utils::capture.output(source(script, local = new.env(parent = globalenv()))))
+  err <- expect_error(
+    withr::with_dir(dirname(job_b), utils::capture.output(source(script, local = new.env(parent = globalenv())))),
+    "not a Quarto render"
+  )
+  expect_match(conditionMessage(err), "^bd: register")
+  expect_length(bd_versions(root_b), 0L)
 
-  # Study B must have exactly one version, cut by bd, and its working file must match A's.
-  expect_length(bd_versions(root_b), 1L)
-  cfg_b <- hvtiRutilities::study_config(root_b)
-  expect_identical(bd_provenance(root_b)$origin, "bd")
+  # The script's working file matches A's, which the shared render registered.
+  cfg_b <- hvtiRutilities::study_config(root_b, require_data = FALSE)
   sha_a <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root_a), cfg_a$built),
                           algo = "sha256", file = TRUE)
   sha_b <- digest::digest(file.path(hvtiRutilities::study_dir("datasets", root_b), cfg_b$built),
@@ -120,8 +133,15 @@ test_that("a second registering render with a changed rule registers _r2, and on
   job <- pub$job
   first <- bd_current_version(root)
 
-  # The same job rendered again registers nothing.
+  # The same job rendered again with REGISTER = TRUE stops: the report beside it is a registering render's, which
+  # names no bytes. A draft first, then the registering render, registers nothing new.
+  expect_error(bd_render(job))
+  expect_identical(bd_current_version(root), first)
+  bd_set_register(job, "FALSE")
   bd_render(job)
+  bd_set_register(job, "TRUE")
+  html <- bd_render(job)
+  expect_match(html, "Unchanged since the version registered: nothing to do", fixed = TRUE)
   expect_identical(bd_current_version(root), first)
   expect_length(bd_versions(root), 1L)
 
@@ -157,8 +177,11 @@ test_that("a bd render shows the checks' counts above Register, and no patient r
   edits <- bd_edits(m, FALSE, exclude = "list(age < 40 ~ \"Under 40\")")
   edits[["^#   d\\$dead    <- "]] <- paste(
     "#   d$dead    <- as.integer(!is.na(d$dt_death))",
-    "d$note <- sprintf(\"ZQXNOTE%04d\", seq_len(nrow(d)))", sep = "\n"
+    "d$note <- sprintf(\"ZQXNOTE%04d\", seq_len(nrow(d)))",
+    "d$vdate <- factor(rep_len(c(\"2020-01-01\", \"2020-02-02\"), nrow(d)))",
+    "d$label <- rep_len(c(\"PATIENT_A\", \"PATIENT_B\", \"PATIENT_C\"), nrow(d))", sep = "\n"
   )
+  edits[["^CROSSTABS <- list"]] <- "CROSSTABS <- list(c(\"dead\", \"sex\"), c(\"vdate\", \"label\"))"
   job <- bd_job(root, edits)
   lines <- readLines(job, warn = FALSE)
   queried <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds"))$ccfid[[5L]]
@@ -175,6 +198,14 @@ test_that("a bd render shows the checks' counts above Register, and no patient r
   expect_match(html, "Every row", fixed = TRUE)
   expect_match(html, "Queried patient", fixed = TRUE)
   expect_match(html, "dead by sex", fixed = TRUE)
+  # A cross-tab's levels reach the console and never the report, whatever the column: the report has the shape.
+  expect_match(html, "vdate by label", fixed = TRUE)
+  expect_match(html, "2 x 3", fixed = TRUE)
+  expect_false(grepl("2020-01-01", html, fixed = TRUE))
+  expect_false(grepl("PATIENT_A", html, fixed = TRUE))
+  # This draft's report names the bytes it wrote.
+  expect_match(html, digest::digest(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds"),
+                                    algo = "sha256", file = TRUE), fixed = TRUE)
   # The Checks section comes before Register in the report.
   expect_lt(regexpr("What this rebuild changed", html, fixed = TRUE), regexpr(">Register<", html, fixed = TRUE))
   expect_false(grepl("ZQXNOTE", html, fixed = TRUE))
@@ -192,10 +223,11 @@ test_that("a first bd render says nothing is registered, and a cross-tab named t
   html <- bd_render(bd_job(root, edits))
   expect_match(html, "Nothing is registered for this study yet", fixed = TRUE)
   expect_false(grepl("Rows in the registered version", html, fixed = TRUE))
-  expect_identical(lengths(regmatches(html, gregexpr("dead by sex, with a missing value", html, fixed = TRUE))), 2L)
+  expect_identical(lengths(regmatches(html, gregexpr("<td[^>]*>dead by sex</td>", html))), 2L)
+  expect_identical(lengths(regmatches(html, gregexpr("tbl-crosstabs", html, fixed = TRUE))) > 0L, TRUE)
 })
 
-test_that("a partial render writes no review and cannot register", {
+test_that("a partial render prints no review hash and cannot register", {
   skip_on_cran()
   bd_quarto_skip()
   m <- bd_master()
@@ -204,11 +236,40 @@ test_that("a partial render writes no review and cannot register", {
   lines <- readLines(job, warn = FALSE)
   at <- grep("^#\\| label: tbl-checks$", lines)
   writeLines(append(lines, "#| skip: \"waiting on the corrected coding\"", after = at), job)
-  suppressWarnings(bd_render(job))
-  expect_false(file.exists(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.reviewed.yml")))
+  html <- suppressWarnings(bd_render(job))
+  expect_false(grepl("Build reviewed", html, fixed = TRUE))
+  expect_false(grepl(digest::digest(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds"),
+                                    algo = "sha256", file = TRUE), html, fixed = TRUE))
   # A first build that is partial declares nothing either, so no job reads a build whose checks did not run.
   expect_null(hvtiRutilities::study_config(root, require_data = FALSE)$built)
   bd_set_register(job, "TRUE")
   expect_error(suppressWarnings(bd_render(job)))
+  expect_length(bd_versions(root), 0L)
+})
+
+test_that("a draft that fails after the register chunk leaves no report, and registering after it stops", {
+  skip_on_cran()
+  bd_quarto_skip()
+  m <- bd_master()
+  root <- bd_study()
+  job <- bd_job(root, bd_edits(m, register = "FALSE"))
+  lines <- readLines(job, warn = FALSE)
+  at <- grep("^#\\| label: tbl-report-columns$", lines)
+  broken <- append(lines, "stop(\"injected failure in the report\")", after = at + 1L)
+  writeLines(broken, job)
+  expect_error(bd_render(job))
+  html <- sub("[.]qmd$", ".html", job)
+  expect_false(file.exists(html))
+  # The working file is there, written by the draft that failed, and nothing in the study approves it.
+  expect_true(file.exists(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds")))
+  # The failure fixed, a render with REGISTER = TRUE has no draft report to register from.
+  writeLines(lines, job)
+  bd_set_register(job, "TRUE")
+  # quiet = FALSE shows the render's console, where the stop's message is.
+  console <- utils::capture.output(
+    try(quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE), silent = TRUE), type = "output"
+  )
+  expect_true(any(grepl("bd: register .*no draft report was found", console)))
+  expect_false(file.exists(html))
   expect_length(bd_versions(root), 0L)
 })
