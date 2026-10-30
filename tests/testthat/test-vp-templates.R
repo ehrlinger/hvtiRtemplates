@@ -158,6 +158,66 @@ test_that("both varpro_coverage() calls in vp-fit muffle the empty-noise warning
   }
 })
 
+test_that("vp-fit holds the full fit to MAX_UNTESTED and leaves the refits to the stability table", {
+  lines <- readLines(template_path("vp", "fit"), warn = FALSE)
+  at <- grep("varpro_coverage\\(fit|varpro_coverage\\(fr", lines)
+  calls <- vapply(at, function(i) paste(lines[i:(i + 1L)], collapse = " "), "")
+  expect_match(calls[1], "max_untested = MAX_UNTESTED", fixed = TRUE)
+  expect_no_match(calls[2], "max_untested", fixed = TRUE)
+  expect_true("MAX_UNTESTED <- 0.5" %in% rf_chunk(lines, "edit-study-choices"))
+})
+
+test_that("vp-fit's figure takes its bar and selection from the table", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- rf_env(vp_data())
+  rf_run("vp", "fit", c(vp_data_labels, "noise", "judge", "fit", "tbl-coverage", "fig-varpro"), env, vp_choices)
+  imp <- env$.gv$imp
+  at <- match(imp$kind, env$cov$kind)
+  expect_false(anyNA(at))
+  bar <- env$cov$bar[at]
+  expect_identical(imp$noise_cut, ifelse(is.na(bar), 0, bar))
+  expect_identical(imp$selected, !imp$noise & imp$tested & (imp$z > bar) %in% TRUE)
+  expect_s3_class(ggplot2::ggplot_build(env$.fig), "ggplot_built")
+})
+
+test_that("vp-fit's figure holds categorical variables to the table's bar when categorical noise all scores 0", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  lines <- rf_chunk(readLines(template_path("vp", "fit"), warn = FALSE), "fig-varpro")
+  from <- grep("^\\.at <- ", lines)
+  to <- grep("^\\.fig <- plot", lines) - 1L
+  imp <- data.frame(variable = c("a", "b", "n1", "n2"), kind = c("categorical", "continuous", "categorical", "continuous"),
+                    z = c(0.5, 0.5, 0, 0.9), noise = c(FALSE, FALSE, TRUE, TRUE), tested = TRUE,
+                    noise_cut = c(0, 0.9, 0, 0.9), noise_ref = c("categorical", "continuous", "categorical", "continuous"),
+                    selected = c(TRUE, FALSE, FALSE, FALSE))
+  env <- list2env(list(.gv = list(imp = imp), cov = data.frame(
+    kind = c("categorical", "continuous"), bar = c(0.9, 0.9), bar_from = c("continuous (fallback)", "continuous")
+  )))
+  eval(parse(text = lines[from:to]), envir = env)
+  # gg_varpro() alone would select "a" against a bar of 0; the table's fallback does not.
+  expect_identical(env$.gv$imp$noise_cut, rep(0.9, 4))
+  expect_identical(env$.gv$imp$selected, rep(FALSE, 4))
+  expect_identical(env$.gv$imp$noise_ref[1], "continuous")
+  # With no usable bar nothing is selected, and the bar still draws.
+  env$.gv$imp <- imp
+  env$cov$bar <- NA_real_
+  env$cov$bar_from <- "no usable noise bar"
+  eval(parse(text = lines[from:to]), envir = env)
+  expect_identical(env$.gv$imp$noise_cut, rep(0, 4))
+  expect_identical(env$.gv$imp$selected, rep(FALSE, 4))
+})
+
+test_that("vp-fit stops when more candidates went untested than MAX_UNTESTED allows", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- rf_env(vp_data())
+  # A trim of 0.49 leaves at least one candidate untested on a cohort this small; a share of 0 tolerates none.
+  choices <- utils::modifyList(vp_choices, list(TRIM = 0.49, MAX_UNTESTED = 0))
+  expect_error(rf_run("vp", "fit", c(vp_data_labels, "noise", "judge", "fit", "tbl-coverage"), env, choices),
+               "real variables are untested")
+})
+
 test_that("vp-fit refuses a SUBSAMPLE that is not a share", {
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
   env <- rf_env(vp_data())
@@ -214,7 +274,7 @@ test_that("both varpro() calls in vp-fit carry the exploration settings, and the
     expect_identical(mget(names(options[[line]]), envir = env), options[[line]], info = line)
   }
   # The figure is scored on every tree, as the coverage table is.
-  expect_match(src, "gg_varpro(fit, max.tree = fit$rf$ntree)", fixed = TRUE)
+  expect_match(src, "gg_varpro(fit, max.tree = fit$rf$ntree, trim = TRIM, noise = \"^noise\")", fixed = TRUE)
   expect_match(src, "varpro_coverage(fit, by = \"variable\", trim = TRIM, max.tree = fit$rf$ntree,", fixed = TRUE)
   expect_match(src, "varpro_coverage(fr, by = \"variable\", trim = TRIM, max.tree = fr$rf$ntree,", fixed = TRUE)
 })
