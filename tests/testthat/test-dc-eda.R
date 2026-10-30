@@ -376,6 +376,31 @@ test_that("dc-eda VARIABLE_SET = \"ods\" draws the house list's columns the data
   expect_error(eval(spec, env), "VARIABLE_SET must be")
 })
 
+test_that("a follow-up-only dc-eda neither needs nor checks the house ODS list", {
+  # Raised in review of #455: a job drawing only follow-up stopped because an
+  # unused descriptive list had no column in the data.
+  env <- eda_spec_env(data.frame(year = 1:10, hospital = rep(1:2, 5)), VARIABLE_SET = "ods", SECTIONS = "followup")
+  expect_no_error(capture.output(eval(eda_chunk("spec"), env)))
+  # Any descriptive section brings the list back, and its stop.
+  env <- eda_spec_env(data.frame(year = 1:10, hospital = rep(1:2, 5)), VARIABLE_SET = "ods",
+                      SECTIONS = c("followup", "percent"))
+  expect_error(eval(eda_chunk("spec"), env), "None of the house ODS list")
+})
+
+test_that("dc-eda's setup stops, naming the update, under an hvtiRtemplates without the ODS list", {
+  # A job copied from this template can render in a study library that still
+  # holds an older hvtiRtemplates, possibly of the same version number.
+  lines <- readLines(template_path("dc", "eda"), warn = FALSE)
+  start <- grep('^if \\(!exists\\(".ods_groups"', lines)
+  expect_length(start, 1L)
+  end <- start + match("}", lines[-seq_len(start)])
+  check <- parse(text = lines[start:end])
+  older <- new.env()
+  older$asNamespace <- function(...) new.env()
+  expect_error(eval(check, older), "hvtiR::update(force = TRUE)", fixed = TRUE)
+  expect_no_error(eval(check, new.env()))
+})
+
 test_that("the template's VARIABLE_SET sits outside the region migrate_job() rewrites, defaulting to the ODS list", {
   lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   at <- grep("^VARIABLE_SET <- ", lines)
