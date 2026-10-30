@@ -26,6 +26,16 @@ test_that("small cells are counted within `by`, and a threshold can be raised", 
   expect_equal(nrow(hvtiRtemplates:::.identifiability_check(d, "nyha", small = 1L)), 0L)
 })
 
+test_that("a small group is flagged over continuous rows alone", {
+  d <- data.frame(arm = c(rep("A", 3L), rep("B", 27L)), measurement = seq_len(30L))
+  f <- hvtiRtemplates:::.identifiability_check(d, "measurement", by = "arm")
+  expect_equal(f$check, "group")
+  expect_equal(f$column, "arm")
+  expect_equal(f$count, 1L)
+  expect_match(hvtiRtemplates:::.identifiability_notice(f), "`arm` has 1 group of fewer than 5 patients", fixed = TRUE)
+  expect_equal(nrow(hvtiRtemplates:::.identifiability_check(d, "measurement", by = "arm", small = 3L)), 0L)
+})
+
 test_that("nothing found prints nothing, and absent columns are ignored", {
   f <- hvtiRtemplates:::.identifiability_check(identifiability_data(), c("arm", "absent"), age = "absent")
   expect_equal(nrow(f), 0L)

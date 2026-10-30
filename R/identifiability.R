@@ -27,6 +27,11 @@
       add("small", v, sum(tab > 0L & tab < small))
     }
   }
+  # A group is shown whatever the rows are: its N heads the column even over continuous rows alone.
+  for (v in by) {
+    tab <- table(d[[v]])
+    add("group", v, sum(tab > 0L & tab < small))
+  }
   ages <- intersect(union(age, grep(.identifiability_age_pattern, vars, ignore.case = TRUE, value = TRUE)), names(d))
   for (v in ages) if (is.numeric(d[[v]])) add("age", v, sum(d[[v]] > 89, na.rm = TRUE))
   named <- grep(.identifiability_date_pattern, vars, ignore.case = TRUE, value = TRUE)
@@ -44,6 +49,8 @@
   col <- paste0("`", column, "`")
   switch(check,
          small = paste0(.n_of(count, "cell"), " of ", col, " hold fewer than ", small, " patients. Combine levels, or ",
+                        "decide that the count can be shown."),
+         group = paste0(col, " has ", .n_of(count, "group"), " of fewer than ", small, " patients. Combine groups, or ",
                         "decide that the count can be shown."),
          age = paste0(.n_of(count, "patient"), " in ", col, " are older than 89. Wherever age is shown, report ages 90 ",
                       "and older as one group."),
