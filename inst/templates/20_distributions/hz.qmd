@@ -272,7 +272,8 @@ a numeric status. The `as.numeric()` coercions below are not decoration.
 # The table above counts events and censored patients, over the rows fitted, and the figure's
 # axis and its last Kaplan-Meier steps end at the longest follow-up.
 cat(hvtiRtemplates:::.identifiability_notice(
-  hvtiRtemplates:::.identifiability_check(d[!is.na(d[[TIME]]) & !is.na(d[[EVENT]]), , drop = FALSE], cells = EVENT, extremes = TIME)
+  hvtiRtemplates:::.identifiability_check(d[!is.na(d[[TIME]]) & !is.na(d[[EVENT]]), , drop = FALSE], cells = EVENT, extremes = TIME,
+                                          upper_only = TRUE)
 ))
 ```
 
