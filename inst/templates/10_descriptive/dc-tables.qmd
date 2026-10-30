@@ -616,7 +616,8 @@ if (is.null(CORR)) {
   cat("Correlation variant not requested (`CORR <- NULL`).\n")
 } else {
   .selection <- attr(job_data$record, "selection")
-  hvtiRtemplates:::.refuse_display(CORR[c("vars", "with", "by")], hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "CORR")
+  .no_values <- hvtiRtemplates:::.no_values(d, .selection$id, .selection$key)
+  hvtiRtemplates:::.refuse_display(CORR[c("vars", "with", "by")], .no_values, "CORR")
   ct <- hv_correlation_table(d, vars = CORR$vars, with = CORR$with)
   conf_level <- attr(ct, "conf_level")
   if (!is.null(CORR$by)) {
