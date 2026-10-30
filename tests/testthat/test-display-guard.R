@@ -18,6 +18,7 @@ test_that(".displayable leaves out identifiers by name and by their values", {
   expect_identical(out$left_out, c("rec", "nid"))
   expect_false(hvtiRtemplates:::.looks_like_identifier_values(c(1000, 1001, NA)))
   expect_false(hvtiRtemplates:::.looks_like_identifier_values(letters))
+  expect_false(hvtiRtemplates:::.looks_like_identifier_values(1990:2009))
 })
 
 test_that("a setting cannot name a column whose values look like record numbers, unless the job clears it", {
@@ -59,6 +60,12 @@ test_that("planted identifiers reach no report", {
   eda <- canary_report("dc", "eda", list("^VARIABLE_SET <- " = "VARIABLE_SET <- \"all\"", "^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL",
                                          "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980", "^X_VAR <- " = "X_VAR <- \"year\""))
   expect_false(grepl("90000(01|40)|77000(01|40)", eda))
+})
+
+test_that("vt-explain refuses a STRATIFY that is a column of the job's resolved KEY", {
+  # Read from the source: running the chunk needs a fitted vt.rds, and no fixture fit carries a KEY.
+  src <- paste(readLines(template_path("vt", "explain"), warn = FALSE), collapse = " ")
+  expect_match(src, ".no_values(.d_all, .vt$settings$id, attr(.jd$record, \"selection\")$key)", fixed = TRUE)
 })
 
 test_that("dc-tables stops when GROUPS names a record number under a name nobody listed", {

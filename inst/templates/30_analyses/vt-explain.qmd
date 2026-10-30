@@ -428,7 +428,8 @@ if (is.list(STRATIFY)) {
   .provenance_artifacts <- c(.provenance_artifacts, .sid_strata$lineage$artifacts, list(.sid_strata$record))
 } else if (is.character(STRATIFY)) {
   if (!STRATIFY %in% names(.d_all)) stop(STRATIFY, " is not in the data the fit read.", call. = FALSE)
-  hvtiRtemplates:::.refuse_display(STRATIFY, hvtiRtemplates:::.no_values(.d_all, .vt$settings$id), "STRATIFY")
+  hvtiRtemplates:::.refuse_display(STRATIFY, hvtiRtemplates:::.no_values(.d_all, .vt$settings$id, attr(.jd$record, "selection")$key),
+                                   "STRATIFY")
   .strata <- data.frame(ID = .d_all[[.vt$settings$id]], stratum = as.character(.d_all[[STRATIFY]]))
 }
 ```

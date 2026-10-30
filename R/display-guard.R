@@ -31,12 +31,13 @@
 
 # A column of record numbers under a name nobody listed: whole numbers of four
 # digits or more, nearly all different, in ten values or more. Age and a lab value
-# repeat; a small sequential number is not a record number.
+# repeat; a small sequential number is not a record number; nor is a calendar year,
+# which a small cohort can hold once each.
 .looks_like_identifier_values <- function(x) {
   if (!is.numeric(x)) return(FALSE)
   seen <- x[!is.na(x)]
   length(seen) >= 10L && all(seen == floor(seen)) && min(abs(seen)) >= 1000 &&
-    length(unique(seen)) >= 0.9 * length(seen)
+    length(unique(seen)) >= 0.9 * length(seen) && !all(seen >= 1900 & seen <= 2100)
 }
 
 # Stops when a setting names a column no report may show. The message names the

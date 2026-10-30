@@ -324,6 +324,12 @@ test_that("a numeric X_VAR is drawn as it is, under X_LABEL", {
   expect_identical(env$.d_eda[["Year of operation"]], d$year)
 })
 
+test_that("X_VAR cannot name a column no report may show", {
+  d <- data.frame(ccfid = rep(1:5, 2L), recordnumber = 7700000L + 1:10, year = rep(2001:2005, 2L), age = 41:50)
+  expect_error(eval(eda_chunk("spec"), eda_spec_env(d, X_VAR = "ccfid", VARIABLES = "age")), "X_VAR names ccfid")
+  expect_error(eval(eda_chunk("spec"), eda_spec_env(d, X_VAR = "recordnumber", VARIABLES = "age")), "look like record numbers")
+})
+
 test_that("a missing X_VAR stops and says where to set it", {
   env <- eda_spec_env(data.frame(year = 2001:2010, age = 41:50), X_VAR = "dt_surg", VARIABLES = "age")
   expect_error(eval(eda_chunk("spec"), env),

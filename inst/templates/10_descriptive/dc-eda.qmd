@@ -361,6 +361,7 @@ if (length(unknown)) {
 # ten or more of them.
 .job_selection <- attr(job_data$record, "selection")
 .no_values <- hvtiRtemplates:::.no_values(d, .job_selection$id, .job_selection$key)
+hvtiRtemplates:::.refuse_display(X_VAR, .no_values, "X_VAR")
 looks_like_id <- function(v) {
   !(v %in% hvtiRtemplates:::.displayable(v, .no_values)$keep) |
     grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
