@@ -354,9 +354,9 @@ saveRDS(d, .built)
 yaml::write_yaml(.record, .record_file)
 # A draft render records the bytes it wrote, and a registering render registers only those bytes. Without it, the
 # second render re-cuts the master and could register data nobody read: a changed snapshot with VERIFY_MASTER off,
-# a changed cohort list, a derivation that differs run to run. It holds no key and no data value.
+# a changed cohort list, a derivation that differs run to run. It holds no key and no data value. The register
+# chunk writes it, after the checks, so a draft whose checks did not run has reviewed nothing.
 .reviewed_file <- file.path(.datasets, paste0(DATASET_ID, ".reviewed.yml"))
-if (!REGISTER) yaml::write_yaml(list(built_sha256 = .record$built_sha256), .reviewed_file)
 ```
 
 ## Checks
@@ -553,6 +553,7 @@ if (length(CHECKS)) {
 # read it before it is registered (design 2026-10-23, section 7.1). Registering stays a separate
 # step: REGISTER = TRUE, or hvtiRutilities::update_manifest().
 .other_file <- !is.null(.registered$built) && !identical(.registered$built, basename(.built))
+if (!REGISTER) yaml::write_yaml(list(built_sha256 = .record$built_sha256), .reviewed_file)
 if (!REGISTER && is.null(.registered$built)) {
   hvtiRutilities::declare_data(.root, built = basename(.built), key = KEY)
   .register_step <- "Declared as the study dataset: nothing registered"

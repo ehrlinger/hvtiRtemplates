@@ -229,3 +229,15 @@ test_that("a CHECKS condition naming a missing column stops tbl-checks, and noth
   expect_error(bd_run(root, bad, labels = with_checks), "^bd: tbl-checks \\(")
   expect_length(bd_versions(root), 0L)
 })
+
+test_that("a draft whose checks stop has reviewed nothing", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  with_checks <- c("setup", "set", "edit-study-choices", "check-choices", "read-master", "cohort", "derive",
+                   "write-built", bd_check_labels, "register")
+  bad <- bd_check_choices(m)
+  bad$CHECKS <- list(no_such_col > 1 ~ "A column the data lacks")
+  expect_error(bd_draft(root, bad, labels = with_checks), "^bd: tbl-checks \\(")
+  expect_false(file.exists(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.reviewed.yml")))
+})
