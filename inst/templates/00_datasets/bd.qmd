@@ -149,7 +149,8 @@ DATASET_ID <- "study_cohort"
 # EDIT: pairs of columns to cross-tabulate, typically a derived column against its source, such as an event
 # indicator against an indicator of its date. A missing value is a level of its own, as PROC FREQ / MISSING shows
 # it. A list of character vectors, or list() for none. A cross-tab prints its levels in the report, so a column
-# that identifies a patient is refused: ID, a column of KEY, or any column with more than 20 distinct values.
+# that identifies a patient is refused: ID, a column of KEY or of JOIN_BY, a date or a time, or any column with
+# more than 20 distinct values.
 CROSSTABS <- list(c("dead", "sex"))
 
 # EDIT: the event indicator and its follow-up interval(s) in years, as the derive chunk makes them. EVENT <- NULL
@@ -210,9 +211,9 @@ JOIN_BY <- tolower(JOIN_BY)
 ID <- tolower(ID)
 KEY <- tolower(KEY)
 CROSSTABS <- lapply(CROSSTABS, tolower)
-.unsafe <- intersect(unlist(CROSSTABS), c(ID, KEY))
+.unsafe <- intersect(unlist(CROSSTABS), c(ID, KEY, JOIN_BY))
 if (length(.unsafe)) {
-  .bd_stop("check-choices", "CROSSTABS names ", toString(.unsafe), ", the patient identifier or a column of KEY. ",
+  .bd_stop("check-choices", "CROSSTABS names ", toString(.unsafe), ", the patient identifier or a column of KEY or JOIN_BY. ",
            "A cross-tab prints its levels in the report, so it never takes an identifier.")
 }
 ```
@@ -424,16 +425,24 @@ if (is.null(.found)) {
     attr(out, "label") <- attr(x, "label")
     out
   })
-  .comparison <- tryCatch(hvtiRdatabuild::compare_built(.join(.baseline), .join(.as_read), id = .id),
-                          error = function(e) .bd_stop("rebuild", conditionMessage(e)))
-  .rows <- attr(.comparison, "rows")
-  # The patients on one side only are identifiers: the console has them, the report their count.
-  for (.side in c("only_oracle", "only_r")) {
-    .ids <- .rows[[.side]]
-    cat("\n", if (.side == "only_oracle") "In the registered version only" else "In this build only", ": ",
-        length(.ids), " row(s)\n", sep = "", file = stderr())
-    if (length(.ids)) cat(utils::head(.ids, 100L), sep = "\n", file = stderr())
-    if (length(.ids) > 100L) cat("... ", length(.ids) - 100L, " more not shown\n", sep = "", file = stderr())
+  # A KEY the registered version lacks cannot be joined on: report it and compare nothing, as a first build does.
+  # Registering still proceeds, since that is how a changed key reaches the study. Any other failure stops.
+  .key_gone <- setdiff(KEY, tolower(names(.baseline)))
+  if (length(.key_gone)) {
+    .rebuild_state <- paste0(.rebuild_state, " The KEY (", toString(KEY), ") has changed since the registered version, ",
+                             "which lacks ", toString(.key_gone), ", so nothing is compared.")
+  } else {
+    .comparison <- tryCatch(hvtiRdatabuild::compare_built(.join(.baseline), .join(.as_read), id = .id),
+                            error = function(e) .bd_stop("rebuild", conditionMessage(e)))
+    .rows <- attr(.comparison, "rows")
+    # The patients on one side only are identifiers: the console has them, the report their count.
+    for (.side in c("only_oracle", "only_r")) {
+      .ids <- .rows[[.side]]
+      cat("\n", if (.side == "only_oracle") "In the registered version only" else "In this build only", ": ",
+          length(.ids), " row(s)\n", sep = "", file = stderr())
+      if (length(.ids)) cat(utils::head(.ids, 100L), sep = "\n", file = stderr())
+      if (length(.ids) > 100L) cat("... ", length(.ids) - 100L, " more not shown\n", sep = "", file = stderr())
+    }
   }
 }
 cat(.rebuild_state, "\n")
@@ -475,6 +484,10 @@ for (.i in seq_along(CROSSTABS)) {
   # The levels print in the report: a column the data lacks, or one with too many to be levels, stops here.
   for (.col in .pair) {
     if (!.col %in% names(d)) .bd_stop("crosstabs", "CROSSTABS names ", .col, ", which the built dataset does not have.")
+    if (inherits(d[[.col]], c("Date", "POSIXt", "difftime"))) {
+      .bd_stop("crosstabs", .col, " is a date or a time, whose levels would print in the report. ",
+               "Cross-tab an indicator of it, such as dead for the date of death.")
+    }
     .n <- length(unique(d[[.col]][!is.na(d[[.col]])]))
     if (.n > .levels) {
       .bd_stop("crosstabs", .col, " has ", .n, " distinct values, more than the ", .levels, " a cross-tab takes. ",
@@ -553,7 +566,6 @@ if (length(CHECKS)) {
 # read it before it is registered (design 2026-10-23, section 7.1). Registering stays a separate
 # step: REGISTER = TRUE, or hvtiRutilities::update_manifest().
 .other_file <- !is.null(.registered$built) && !identical(.registered$built, basename(.built))
-if (!REGISTER) yaml::write_yaml(list(built_sha256 = .record$built_sha256), .reviewed_file)
 if (!REGISTER && is.null(.registered$built)) {
   hvtiRutilities::declare_data(.root, built = basename(.built), key = KEY)
   .register_step <- "Declared as the study dataset: nothing registered"
@@ -563,7 +575,16 @@ if (!REGISTER && is.null(.registered$built)) {
   .register_step <- paste0("Working file only: the study's dataset is still ", .registered$built,
                            ", so this build was not declared or registered")
 }
+# A render with a skipped chunk or a stop_here() did not run every check, so it reviews nothing and registers
+# nothing. Outside a render there is no file to be partial.
+.partial <- !is.null(.in) && length(hvtiRtemplates:::.partial_state$points) > 0L
+# A draft records the bytes it wrote, after everything above that could fail, so a draft that failed approves nothing.
+if (!REGISTER && !.partial) yaml::write_yaml(list(built_sha256 = .record$built_sha256), .reviewed_file)
 if (REGISTER) {
+  if (.partial) {
+    .bd_stop("register", "this render is partial (a chunk is skipped or stop_here() is set), so its checks did not all run ",
+             "and it was not registered. Remove each skip and stop_here(), draft again, then register.")
+  }
   # A study registered under another file cannot take this one as its dataset.
   if (.other_file) {
     # Name a DATASET_ID only for a file this job could have written: a dated name is a retired
@@ -581,7 +602,9 @@ if (REGISTER) {
   .reviewed <- if (file.exists(.reviewed_file)) yaml::read_yaml(.reviewed_file)$built_sha256
   if (!identical(.reviewed, .record$built_sha256)) {
     .bd_stop("register", if (is.null(.reviewed)) "no draft of this build has been rendered" else
-               "this build differs from the draft last rendered", ", so it was not registered. Render with ",
+               paste0("this build differs from the draft last rendered (a draft and a registering render under different ",
+                      "R versions always differ, since saveRDS records the version)"),
+             ", so it was not registered. Render with ",
              "REGISTER <- FALSE, read the Checks section, then render again with REGISTER <- TRUE.")
   }
   .register_step <- tryCatch({

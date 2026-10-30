@@ -114,6 +114,16 @@ test_that("a KEY of several columns with a missing part is refused, not joined o
     }),
     "bd: rebuild .*missing value", perl = TRUE
   )
+  # The message names no identifier value from the synthetic data.
+  err <- expect_error(
+    bd_check_run(root, bd_check_choices(m, KEY = c("ccfid", "dt_surg")), labels = "rebuild", change = function(d) {
+      d$dt_surg[[2L]] <- NA
+      d
+    }),
+    "^bd: rebuild"
+  )
+  expect_false(any(vapply(c(m$data$ccfid, format(m$data$dt_surg)), grepl, logical(1L), x = conditionMessage(err),
+                          fixed = TRUE)))
 })
 
 test_that("the follow-up section counts every suspicious row, not the 25 it lists", {
@@ -240,4 +250,53 @@ test_that("a draft whose checks stop has reviewed nothing", {
   bad$CHECKS <- list(no_such_col > 1 ~ "A column the data lacks")
   expect_error(bd_draft(root, bad, labels = with_checks), "^bd: tbl-checks \\(")
   expect_false(file.exists(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.reviewed.yml")))
+})
+
+test_that("a cross-tab of a date column with few distinct values stops in crosstabs, naming no date", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  err <- expect_error(
+    bd_check_run(root, bd_check_choices(m, CROSSTABS = list(c("dt_dead", "sex"))), labels = "crosstabs",
+                 change = function(d) {
+                   d$dt_dead <- as.Date("2020-03-01") + rep_len(0:14, nrow(d))
+                   d
+                 }),
+    "^bd: crosstabs \\("
+  )
+  msg <- conditionMessage(err)
+  expect_match(msg, "dt_dead", fixed = TRUE)
+  expect_false(grepl("20[0-9]{2}-[0-9]{2}-[0-9]{2}", msg))
+})
+
+test_that("a cross-tab refuses a column of JOIN_BY, naming it", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  err <- expect_error(
+    bd_run(root, bd_check_choices(m, JOIN_BY = "dt_surg", CROSSTABS = list(c("DT_SURG", "sex"))),
+           labels = c("setup", "edit-study-choices", "check-choices")),
+    "^bd: check-choices \\("
+  )
+  expect_match(conditionMessage(err), "dt_surg", fixed = TRUE)
+})
+
+test_that("a registered version without a column of the current KEY is reported, compared against nothing", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  bd_draft(root, bd_check_choices(m))
+  bd_run(root, bd_check_choices(m, register = TRUE))
+  wider <- bd_check_choices(m, KEY = c("ccfid", "origin_year"))
+  env <- bd_check_run(root, wider, labels = "rebuild")
+  expect_null(env$.comparison)
+  expect_match(env$.rebuild_state, "The KEY (ccfid, origin_year) has changed since the registered version", fixed = TRUE)
+  expect_match(env$.rebuild_state, "which lacks origin_year, so nothing is compared", fixed = TRUE)
+  # The changed key registers: draft, then register.
+  before <- bd_current_version(root)
+  Sys.sleep(1.1)
+  bd_draft(root, wider)
+  expect_no_error(bd_run(root, utils::modifyList(wider, list(REGISTER = TRUE))))
+  expect_true(length(bd_versions(root)) >= 1L)
+  expect_false(is.null(before))
 })
