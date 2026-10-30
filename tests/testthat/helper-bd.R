@@ -23,6 +23,8 @@ bd_master <- function(n = 200L, .local_envir = parent.frame()) {
   d <- hvtiRutilities::generate_survival_data(n = n, seed = 20261002)
   d$dt_surg <- as.Date(paste0(d$origin_year, "-06-15"))
   d$mrn <- sprintf("M%07d", seq_len(n))
+  # A second record number, numeric and not ID or KEY: its values must stay out of the report.
+  d$rec2 <- 4800000 + 7 * seq_len(n)
   # write_sas() is superseded in haven, and warns so; it still writes a file
   # haven and snapshot_master() read back.
   suppressWarnings(haven::write_sas(d, file.path(dir, "built.sas7bdat")))

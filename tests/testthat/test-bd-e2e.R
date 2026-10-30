@@ -1,7 +1,7 @@
 bd_edits <- function(m, register, exclude = "list(age < 40 ~ \"Under 40\", ccfid == \"PT00007\" ~ \"Withdrew consent\")") {
   list(
     "^MASTER <- " = paste0("MASTER <- ", encodeString(m$parquet, quote = "\"")),
-    "^KEEP <- c[(]" = "KEEP <- c(\"age\", \"sex\", \"iv_dead\", \"dead\", \"dt_surg\")",
+    "^KEEP <- c[(]" = "KEEP <- c(\"age\", \"sex\", \"iv_dead\", \"dead\", \"dt_surg\", \"rec2\")",
     "^EXCLUDE <- " = paste0("EXCLUDE <- ", exclude),
     "^REGISTER <- " = paste0("REGISTER <- ", register)
   )
@@ -80,6 +80,16 @@ test_that("bd registers a dated version with its build record, and ac reads it",
     hazard_run("ac", c("tbl-data", "tbl-cohort", "km-helpers", "tbl-km-overall"), env)
   }))
   expect_setequal(env$d$ccfid, built$ccfid)
+})
+
+test_that("the report's column table carries no numeric column's values, only counts", {
+  skip_on_cran()
+  bd_quarto_skip()
+  pub <- bd_registered()
+  # rec2 is a second record number that is neither ID nor KEY: a range would print two of its values.
+  rec2 <- format(pub$m$data$rec2, scientific = FALSE, trim = TRUE)
+  expect_false(any(vapply(rec2, grepl, logical(1L), x = pub$html, fixed = TRUE)))
+  expect_match(pub$html, "rec2", fixed = TRUE)
 })
 
 test_that("the purled job runs as a script and registers the same dataset in a fresh study", {

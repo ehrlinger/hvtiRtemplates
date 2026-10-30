@@ -678,23 +678,22 @@ knitr::kable(.cut$attrition, col.names = c("Step", "Reason", "Rows before", "Rem
 
 ```{r}
 #| label: tbl-report-columns
-#| tbl-cap: "Type, missing count and range of each column"
-# Aggregates only: the type, missing count and range of each column. The ID, KEY
-# and JOIN_BY columns get no range: a range of identifiers is two identifiers,
-# and a JOIN_BY date range is two patients' dates.
-.no_range <- c(ID, KEY, JOIN_BY)
+#| tbl-cap: "Type and missing count of each column"
+# Counts only: the type and missing count of each column. A range is two values from
+# the data, and any numeric column can be a second record number or a date kept as SAS
+# day numbers, so no range goes in the report. The ranges go to stderr(), which a render
+# does not knit, as the Checks section's rows do: you see them in the console, and the
+# report you share does not carry them.
+.ranges <- vapply(d, function(x) {
+  if (!is.numeric(x) || all(is.na(x))) NA_character_ else paste(format(range(x, na.rm = TRUE), digits = 4), collapse = " to ")
+}, "")
+.ranges <- .ranges[!is.na(.ranges)]
+if (length(.ranges)) cat("Range of each numeric column (console only):\n", paste0("  ", names(.ranges), ": ", .ranges, "\n"),
+                         sep = "", file = stderr())
 knitr::kable(data.frame(
   Column = names(d),
   Type = vapply(d, function(x) class(x)[[1L]], ""),
   Missing = vapply(d, function(x) sum(is.na(x)), 0L),
-  Range = vapply(names(d), function(col) {
-    x <- d[[col]]
-    if (col %in% .no_range || !is.numeric(x) || all(is.na(x))) {
-      ""
-    } else {
-      paste(format(range(x, na.rm = TRUE), digits = 4), collapse = " to ")
-    }
-  }, ""),
   row.names = NULL
 ))
 ```
