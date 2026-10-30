@@ -15,12 +15,18 @@
 
 # The columns whose values no report shows: the ID, every KEY column, `also`, what
 # read_job_data() would drop, and the names above, unless the column is a 0/1 or Y/N
-# indicator, as mrn_num can be.
+# indicator, as mrn_num can be. Also the columns whose values look like record numbers,
+# kept apart in the "by_values" attribute because only those can be a mistake: a
+# measurement can have that shape, and options(hvtiRtemplates.not_identifiers =) lets a
+# job say so, by name. It clears nothing else.
 .no_values <- function(d, id, key = character(), also = character()) {
   present <- intersect(c(id, key), names(d))
   named <- grep(.display_name_pattern, names(d), ignore.case = TRUE, value = TRUE)
   named <- named[!vapply(d[named], .is_indicator, logical(1L))]
-  unique(c(id, key, also, .drop_identifiers(d, present)$dropped, named))
+  listed <- unique(c(id, key, also, .drop_identifiers(d, present)$dropped, named))
+  by_values <- names(d)[vapply(d, .looks_like_identifier_values, logical(1L))]
+  by_values <- setdiff(by_values, c(listed, getOption("hvtiRtemplates.not_identifiers")))
+  structure(c(listed, by_values), by_values = by_values)
 }
 
 # A column of record numbers under a name nobody listed: whole numbers of four
@@ -38,6 +44,12 @@
 .refuse_display <- function(vars, no_values, setting) {
   hit <- unique(unlist(vars, use.names = FALSE))
   hit <- hit[tolower(hit) %in% tolower(no_values)]
+  shaped <- hit[hit %in% attr(no_values, "by_values")]
+  if (length(shaped)) {
+    stop(setting, " names ", toString(shaped), ", whose values look like record numbers: whole numbers of four digits ",
+         "or more that nearly all differ. Remove it from ", setting, ". If it is a measurement, say so above this chunk: ",
+         "options(hvtiRtemplates.not_identifiers = \"", shaped[[1L]], "\").", call. = FALSE)
+  }
   if (length(hit)) {
     stop(setting, " names ", toString(hit), ", which identifies patients: its values cannot appear in a table or ",
          "figure. Remove it from ", setting, ".", call. = FALSE)
@@ -46,8 +58,7 @@
 }
 
 # Splits the columns a sweep reached into those it may show and those it leaves out.
-.displayable <- function(vars, d, no_values) {
-  out <- tolower(vars) %in% tolower(no_values) |
-    vapply(vars, function(v) .looks_like_identifier_values(d[[v]]), logical(1L))
+.displayable <- function(vars, no_values) {
+  out <- tolower(vars) %in% tolower(no_values)
   list(keep = vars[!out], left_out = vars[out])
 }

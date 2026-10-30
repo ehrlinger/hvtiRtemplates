@@ -218,7 +218,7 @@ if (length(key_overlap)) {
 .selection <- attr(job_data$record, "selection")
 .no_values <- hvtiRtemplates:::.no_values(d, .id, .selection$key, ID_COL)
 hvtiRtemplates:::.refuse_display(c(cat_vars, con_vars, CORR_VARS), .no_values, "CATEGORICAL, CONTINUOUS or CORR_VARS")
-.overall <- hvtiRtemplates:::.displayable(names(d)[vapply(d, is.numeric, logical(1))], d, .no_values)
+.overall <- hvtiRtemplates:::.displayable(names(d)[vapply(d, is.numeric, logical(1))], .no_values)
 overall_vars <- .overall$keep
 
 freqs <- lapply(CATEGORICAL, function(vars) {

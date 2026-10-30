@@ -13,11 +13,26 @@ test_that(".refuse_display stops on a named identifier, whatever its case, and n
 
 test_that(".displayable leaves out identifiers by name and by their values", {
   d <- data.frame(age = 40 + 1:20, counts = rep(1000:1009, 2L), lab = 1000.5 + 1:20, rec = 500000L + 1:20, nid = 1:20)
-  out <- hvtiRtemplates:::.displayable(names(d), d, "nid")
+  out <- hvtiRtemplates:::.displayable(names(d), hvtiRtemplates:::.no_values(d, "nid"))
   expect_identical(out$keep, c("age", "counts", "lab"))
   expect_identical(out$left_out, c("rec", "nid"))
   expect_false(hvtiRtemplates:::.looks_like_identifier_values(c(1000, 1001, NA)))
   expect_false(hvtiRtemplates:::.looks_like_identifier_values(letters))
+})
+
+test_that("a setting cannot name a column whose values look like record numbers, unless the job clears it", {
+  d <- data.frame(subject = 1:30, recordnumber = 7700000L + 1:30, age = 40 + 1:30 %% 20)
+  no_values <- hvtiRtemplates:::.no_values(d, "subject")
+  expect_error(hvtiRtemplates:::.refuse_display("recordnumber", no_values, "GROUPS"), "look like record numbers")
+  expect_error(hvtiRtemplates:::.refuse_display("recordnumber", no_values, "GROUPS"), "not_identifiers")
+  expect_true(hvtiRtemplates:::.refuse_display("age", no_values, "GROUPS"))
+
+  withr::local_options(hvtiRtemplates.not_identifiers = c("recordnumber", "subject"))
+  cleared <- hvtiRtemplates:::.no_values(d, "subject")
+  expect_true(hvtiRtemplates:::.refuse_display("recordnumber", cleared, "GROUPS"))
+  expect_identical(hvtiRtemplates:::.displayable("recordnumber", cleared)$keep, "recordnumber")
+  # It clears a shape, never a column the job or the names call an identifier.
+  expect_error(hvtiRtemplates:::.refuse_display("subject", cleared, "GROUPS"), "identifies patients")
 })
 
 # A canary: synthetic record numbers planted in the data must appear nowhere in the
@@ -44,6 +59,23 @@ test_that("planted identifiers reach no report", {
   eda <- canary_report("dc", "eda", list("^VARIABLE_SET <- " = "VARIABLE_SET <- \"all\"", "^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL",
                                          "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980", "^X_VAR <- " = "X_VAR <- \"year\""))
   expect_false(grepl("90000(01|40)|77000(01|40)", eda))
+})
+
+test_that("dc-tables stops when GROUPS names a record number under a name nobody listed", {
+  skip_on_cran()
+  skip_if_not(quarto::quarto_available())
+  root <- migration_study_fixture(NULL, edit_built = function(built) {  # nolint: object_usage_linter.
+    built$recordnumber <- 5500000L + seq_len(nrow(built))
+    built
+  })
+  edits <- list("^  Symptoms   = " = "  Symptoms   = c(\"recordnumber\")")
+  s <- scaffold_job("dc", "tables", edits, root = root)  # nolint: object_usage_linter.
+  # quarto_render(quiet = TRUE) hides why a render failed, and any failure would pass an expect_error().
+  out <- suppressWarnings(system2(quarto::quarto_path(), c("render", shQuote(s$job), "--execute-dir", shQuote(dirname(s$job))),
+                                  stdout = TRUE, stderr = TRUE))
+  expect_gt(attr(out, "status"), 0L)
+  expect_match(paste(out, collapse = " "), "names recordnumber, whose values look like record numbers", fixed = TRUE)
+  expect_false(any(grepl("5500001", out, fixed = TRUE)))
 })
 
 test_that("vt-fit's out-of-distribution table shows counts, and survives a job with none", {

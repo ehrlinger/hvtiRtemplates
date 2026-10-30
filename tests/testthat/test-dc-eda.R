@@ -224,7 +224,10 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
   env <- run(key = c("ccfid", "visit_mo"))
   expect_false("visit_mo" %in% env$VARIABLES)
   expect_error(run(key = c("ccfid", "visit_mo"), variables = c("age", "visit_mo")), "VARIABLES names visit_mo")
-  # The name, date and free-text rules still flag a column named there.
+  # hosp_id's values look like record numbers, so naming it stops the job.
+  expect_error(run(variables = c("age", "hosp_id")), "VARIABLES names hosp_id, whose values look like record numbers")
+  # Once the job clears that shape, the name, date and free-text rules still flag it.
+  withr::local_options(hvtiRtemplates.not_identifiers = "hosp_id")
   expect_warning(env <- run(variables = c("age", "hosp_id")),
                  "Selected likely identifier or date field\\(s\\): hosp_id")
   expect_identical(env$VARIABLES, c("age", "hosp_id"))
