@@ -106,7 +106,7 @@ Register -> Report -> about-run
   the previous HTML (whose hash names earlier bytes, refused unless they are these bytes) or writes an HTML with no
   review hash. Nothing here holds a key or a data value. **Accepted residual:** between the boundary rehash and
   `register_data()` / `update_manifest()` reading the file, another writer could still replace it; the window is
-  the length of one function call, and the only such writer is a second render of the same job. (John, 2026-10-30;
+  the length of one function call. The pre-render hook takes a study-wide lock, so renders cannot overlap; the remaining writers are chunks run by hand or a purled script with `REGISTER <- FALSE`, whose `write-built` saves the working file. The binding is to the bytes, not to the check settings: changing `CHECKS` or `CROSSTABS` between the draft and the registering render registers the same bytes without a draft that showed the new checks; this is accepted. (John, 2026-10-30;
   this replaces `.reviewed.yml`.)
 - **A changed `KEY` is a finding.** When the version registered now lacks a column of `KEY`, as when a study
   moves to repeated measures, the rebuild section says the key changed and compares nothing, as on a first build,

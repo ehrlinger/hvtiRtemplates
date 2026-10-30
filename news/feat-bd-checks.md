@@ -7,7 +7,7 @@
   cells, the cells under 5 and the missing values. Any column of the built dataset may be cross-tabulated. A draft
   render prints the SHA-256 of the file it wrote in its report, and a registering render registers only a file
   whose bytes that report names, rehashed at the registration boundary. It stops when run outside a Quarto render,
-  when no draft report sits beside the job and when the report names other bytes. A check that cannot run stops
+  when no draft report sits beside the job and when the report names other bytes. A draft whose check chunks did not all run (one set to `eval: false`, say, or deleted) reviews nothing, and a registering render stops naming them. A check that cannot run stops
   the render; a finding never does.
 * The `dt` template is removed, one release after it arrived as in-flight: its checks are `bd`'s Checks section.
   A job scaffolded from it should move its choices into the study's `bd` job. The taxonomy keeps its `dt` row, so

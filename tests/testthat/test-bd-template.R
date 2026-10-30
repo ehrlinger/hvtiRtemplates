@@ -339,6 +339,22 @@ test_that("the draft's report prints the hash of the file it wrote, and a regist
   expect_false(any(grepl(hash, shown, fixed = TRUE)))
 })
 
+test_that("a draft whose checks did not all run prints no review hash, and a registering run stops naming the check", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  choices <- bd_check_choices(m)
+  without <- bd_reg_labels[bd_reg_labels != "tbl-checks"]
+  env <- bd_draft(root, choices, labels = without)
+  report <- paste(readLines(bd_sim_html(root)), collapse = "\n")
+  expect_false(grepl("Build reviewed", report, fixed = TRUE))
+  expect_match(report, "Checks did not all run (tbl-checks)", fixed = TRUE)
+  expect_null(hvtiRutilities::study_config(root, require_data = FALSE)$built)
+  err <- expect_error(bd_run(root, bd_check_choices(m, register = TRUE), labels = without), "^bd: register \\(")
+  expect_match(conditionMessage(err), "did not run: tbl-checks", fixed = TRUE)
+  expect_length(bd_versions(root), 0L)
+})
+
 test_that("chunks run by hand stop in register, even after a draft, and register nothing", {
   bd_skip()
   m <- bd_master()

@@ -243,7 +243,30 @@ test_that("a partial render prints no review hash and cannot register", {
   # A first build that is partial declares nothing either, so no job reads a build whose checks did not run.
   expect_null(hvtiRutilities::study_config(root, require_data = FALSE)$built)
   bd_set_register(job, "TRUE")
-  expect_error(suppressWarnings(bd_render(job)))
+  console <- utils::capture.output(
+    try(quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE), silent = TRUE), type = "output"
+  )
+  expect_true(any(grepl("bd: register .*this render is partial", console)))
+  expect_length(bd_versions(root), 0L)
+})
+
+test_that("a render whose followup chunk has eval: false prints no review hash and cannot register", {
+  skip_on_cran()
+  bd_quarto_skip()
+  m <- bd_master()
+  root <- bd_study()
+  job <- bd_job(root, bd_edits(m, register = "FALSE"))
+  lines <- readLines(job, warn = FALSE)
+  at <- grep("^#\\| label: followup$", lines)
+  writeLines(append(lines, "#| eval: false", after = at), job)
+  html <- suppressWarnings(bd_render(job))
+  expect_false(grepl("Build reviewed", html, fixed = TRUE))
+  expect_true(grepl("Checks did not all run (followup)", html, fixed = TRUE))
+  bd_set_register(job, "TRUE")
+  console <- utils::capture.output(
+    try(quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE), silent = TRUE), type = "output"
+  )
+  expect_true(any(grepl("bd: register .*check chunks did not run: followup", console)))
   expect_length(bd_versions(root), 0L)
 })
 

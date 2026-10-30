@@ -86,9 +86,13 @@ bd_sim_render <- function(env, root) {
 # run by hand, with no input file. The stdout of the chunks is kept in $.run_stdout.
 bd_run <- function(root, choices,
                    labels = c("setup", "set", "edit-study-choices", "check-choices", "read-master",
-                              "cohort", "derive", "write-built", "register"),
+                              "cohort", "derive", "write-built", bd_check_labels, "register"),
                    render = TRUE) {
   env <- new.env(parent = globalenv())
+  # The template's default checks name columns of a study the test does not have: a run that names none runs none.
+  if (!"CROSSTABS" %in% names(choices)) choices$CROSSTABS <- list()
+  if (!"CHECKS" %in% names(choices)) choices$CHECKS <- list()
+  if (!"EVENT" %in% names(choices)) choices["EVENT"] <- list(NULL)
   is_setup <- labels %in% c("setup", "set")
   env$.run_stdout <- withr::with_dir(root, utils::capture.output({
     hazard_run("bd", labels[is_setup], env)  # nolint: object_usage_linter.

@@ -286,6 +286,10 @@ if (nrow(d) != .rows_before_derive) {
 ```{r}
 #| label: write-built
 .datasets <- hvtiRutilities::study_dir("datasets", .root)
+# The checks a build must run before it can be reviewed or registered. A chunk with eval: false, or one deleted, is not a
+# partial render, so each check chunk appends its label to .checks_ran when it finishes and Register compares the two.
+.checks_required <- c("rebuild", "crosstabs", "followup", "tbl-checks")
+.checks_ran <- character()
 .derived <- setdiff(names(d), .columns_before_derive)
 .carry <- unique(c(ID, KEY, JOIN_BY, KEEP, .derived))
 d <- d[, intersect(.carry, names(d)), drop = FALSE]
@@ -465,6 +469,7 @@ if (!is.null(.comparison)) {
   .bd_table(.rows_tab, "tbl-rebuild-rows", "Rows in the registered version and in this build, joined on the dataset's key")
   .bd_table(.columns_tab, "tbl-rebuild-columns", "Each column of the rows in both, compared by value")
 }
+.checks_ran <- c(.checks_ran, "rebuild")
 ```
 
 ### Cross-tabs
@@ -505,6 +510,7 @@ if (length(.shapes)) {
             "Each cross-tab's shape, with a missing value as a level of its own; the levels and counts are in the console",
             row.names = FALSE)
 }
+.checks_ran <- c(.checks_ran, "crosstabs")
 ```
 
 ### Follow-up
@@ -530,6 +536,7 @@ if (is.null(EVENT)) {
     cat("... ", .n_suspicious - nrow(.fc$review), " more not shown\n", sep = "", file = stderr())
   }
 }
+.checks_ran <- c(.checks_ran, "followup")
 ```
 
 ### Named checks
@@ -546,6 +553,7 @@ if (length(CHECKS)) {
 } else {
   knitr::kable(data.frame(Check = "No checks are named in CHECKS."))
 }
+.checks_ran <- c(.checks_ran, "tbl-checks")
 ```
 
 ## Register
@@ -567,8 +575,12 @@ if (length(CHECKS)) {
 # A render with a skipped chunk or a stop_here() did not run every check, so it declares nothing, prints no
 # review hash and registers nothing. Outside a render there is no file to be partial.
 .partial <- !is.null(.in) && length(hvtiRtemplates:::.partial_state$points) > 0L
+.checks_missing <- setdiff(.checks_required, .checks_ran)
+.unreviewable <- .partial || (!is.null(.in) && length(.checks_missing) > 0L)
 if (!REGISTER && .partial) {
   .register_step <- "Partial render: nothing declared, reviewed or registered"
+} else if (!REGISTER && .unreviewable) {
+  .register_step <- paste0("Checks did not all run (", toString(.checks_missing), "): nothing declared, reviewed or registered")
 } else if (!REGISTER && is.null(.registered$built)) {
   hvtiRutilities::declare_data(.root, built = basename(.built), key = KEY)
   .register_step <- "Declared as the study dataset: nothing registered"
@@ -587,6 +599,10 @@ if (REGISTER) {
   if (.partial) {
     .bd_stop("register", "this render is partial (a chunk is skipped or stop_here() is set), so its checks did not all run ",
              "and it was not registered. Remove each skip and stop_here(), draft again, then register.")
+  }
+  if (length(.checks_missing)) {
+    .bd_stop("register", "these check chunks did not run: ", toString(.checks_missing), ". A chunk with eval: false, or one ",
+             "deleted, leaves its check out, so the build was not registered. Restore each, draft again, then register.")
   }
   # A study registered under another file cannot take this one as its dataset.
   if (.other_file) {
@@ -655,7 +671,7 @@ if (REGISTER) {
 #| tbl-cap: "Run mode, master snapshot, row counts and dataset registration for this render"
 # A draft that ran to the end prints the SHA-256 of the file it wrote: this report is the record of the review, and
 # a registering render registers only a file whose bytes it names. A partial draft and a registering render print none.
-.review_row <- !REGISTER && !.partial
+.review_row <- !REGISTER && !.unreviewable
 knitr::kable(data.frame(
   Item = c("Mode", "Master snapshot", "Master SHA-256", "Rehashed this render", "Master parent release",
            "Rows in the dataset", "Patients", "Columns", "Study dataset before", "Study dataset after", "Registration",
