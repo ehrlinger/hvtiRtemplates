@@ -46,6 +46,7 @@
   .run_state$reads <- list()
   .run_state$handoffs <- list()
   .run_state$draft_reasons <- character()
+  .run_state$identifiability <- NULL
   # Any handoff bundle this job saves records when this render began.
   .run_state$rendered_at <- .iso_time(started)
   run <- .run_begin(started, input, subject, type, markers)

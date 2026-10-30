@@ -477,6 +477,15 @@ if (!is.null(.by_levels) && (!is.null(GROUP_1) || setequal(names(.by_levels), c(
 ```
 
 ```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(d_table, unlist(GROUPS, use.names = FALSE), by = BY)
+))
+```
+
+```{r}
 #| label: tbl-table
 #| tbl-cap: "Summary statistics for the study cohort"
 if (!is.logical(DROP_CONSTANT) || length(DROP_CONSTANT) != 1L || is.na(DROP_CONSTANT)) {

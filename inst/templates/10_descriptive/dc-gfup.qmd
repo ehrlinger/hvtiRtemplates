@@ -352,6 +352,16 @@ itself.
 ## Operation years and the close date
 
 ```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The figure draws each patient at a decimal operation year and their follow-up.
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(d, dates = OPYRS, extremes = FOLLOWUP)
+))
+```
+
+```{r}
 #| label: window
 # unnumbered: computes the follow-up window; the table chunk below shows it
 # hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
