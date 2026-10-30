@@ -75,38 +75,52 @@ Register -> Report -> about-run
 
 ## 4. Contract
 
-- **The report holds counts only.** The rows behind a named check, and the patients on one side
-  of a rebuild, go to the console through `proc_print()` on `stderr()`, which knitr does not
-  capture. That fits `bd` as it is: its report already shows no code, because its `EXCLUDE` rules
-  may name patients.
+- **The report is analysis prep, so it may show values of a field, and never a patient.** Ranges, summaries,
+  follow-up extremes, the largest rebuild difference and cross-tab levels stay in the report, because reading them
+  is what the check is for. Patient rows stay out: the rows behind a named check and the patients on one side of a
+  rebuild go to the console through `proc_print()` on `stderr()`, which knitr does not capture. **Identifiers stay in
+  the data if the job keeps them, and never appear in tables or figures** (John, 2026-10-30): a patient must be
+  findable to correct follow-up. `bd` no longer drops them from the built. The report shows no value of `ID`, `KEY`,
+  `JOIN_BY`, `OTHER_IDENTIFIERS`, any column named for an MRN, medical record, CCFID or SSN, or anything `.drop_identifiers()` lists.
+  `read_job_data()` still drops them for analysis jobs, which is what keeps them out of those jobs' tables and
+  figures. A link from study data to patient identifiers is later work. The report shows no code, because `EXCLUDE`
+  rules may name patients. Identifiability is a rule for manuscript tables, which other jobs make. (John,
+  2026-10-30; this replaces "the report holds counts only".)
 - **A check never writes,** and no finding changes what Register does.
-- **Cross-tab levels are values, so a cross-tab column is screened.** A cross-tab prints its
-  levels in the report. `check-choices` refuses a `CROSSTABS` column that is `ID`, a column of
-  `KEY` or a column of `JOIN_BY`. The `crosstabs` chunk takes a column only if it reads as a category, an
-  allow-list: logical, factor, whole numbers or text; at most 20 distinct non-missing values; not a different value
-  on every row once there are more than five; and no text that reads as a date. Every stop names the column and
-  never a value. The screen is what keeps "counts only" true; the comment above
-  `CROSSTABS` says so.
+- **A cross-tab shows its levels, unless a column is an identifier.** Each `CROSSTABS` pair prints its levels and
+  counts in the report, with a table of each pair's shape: levels per column, cells, cells under 5 and missing
+  values. A pair with a column of `ID`, `KEY` or `JOIN_BY` prints its levels to `stderr()` and only its shape in the
+  report. An identifier under an undeclared name is not caught. A column the data lacks still stops `crosstabs`.
+  (John, 2026-10-30; this replaces levels to the console for every pair.)
 - **A finding never blocks registration; an error does.** A finding is a count: rows matching a
   check, a column that differs, a suspicious follow-up interval. A check that cannot run (a column
   it names is missing, a condition does not evaluate, the comparison fails) is a broken job, and it
   stops the render with `.bd_stop()`, as a bad `EXCLUDE` rule does. A build whose checks did not
   run is never registered.
-- **The build registered is the build reviewed.** A render with `REGISTER <- FALSE` writes
-  `datasets/<DATASET_ID>.reviewed.yml` beside the working file, holding the `built_sha256` of the
-  bytes it wrote. A render with `REGISTER <- TRUE` re-cuts the master, and before registering it
-  compares its bytes' hash with that file. If they differ, or no draft has been rendered, it stops
-  in `register` before registering anything and says to render with `REGISTER <- FALSE` and review
-  that build. A registering render never writes `.reviewed.yml`, so repeating it cannot approve
-  bytes nobody reviewed. This closes the gap where a changed snapshot (with `VERIFY_MASTER <-
-  FALSE`), a changed cohort list or a nondeterministic derivation registers data the author never
-  saw. Like the build record, `.reviewed.yml` holds no key and no data value.
+- **The build registered is the build reviewed, and the draft's report is the record of the review.** A draft
+  render (`REGISTER <- FALSE`) prints the `built_sha256` of the bytes it wrote in its report. Only a draft that
+  rendered to the end leaves an HTML file, so the hash in that file means the whole report was produced and
+  could be read. A registering render (`REGISTER <- TRUE`):
+  1. refuses to run outside a Quarto render (`knitr::current_input()` is `NULL`), because running chunks by hand
+     can leave any check out;
+  2. refuses when the render is partial (a `skip` or `stop_here()`);
+  3. immediately before registering, hashes the working file on disk again, and registers only if that hash is
+     the one its own build record claims and the one printed in a draft's HTML. Quarto does not tell a render its output name, so every `.html` beside the
+     job is read, and every one in the job's folder under the `output-dir` of the study's `_quarto.yml`.
+  Otherwise it stops in `register`, names the cause, and says to render a draft and read it. A registering render
+  prints no review hash, so repeating it cannot approve bytes nobody read. A failed or partial draft either leaves
+  the previous HTML (whose hash names earlier bytes, refused unless they are these bytes) or writes an HTML with no
+  review hash. Nothing here holds a key or a data value. **Accepted residual:** between the boundary rehash and
+  `register_data()` / `update_manifest()` reading the file, another writer could still replace it; the window is
+  the length of one function call. The pre-render hook takes a study-wide lock, so renders cannot overlap; the remaining writers are chunks run by hand or a purled script with `REGISTER <- FALSE`, whose `write-built` saves the working file. The binding is to the bytes, not to the check settings: changing `CHECKS` or `CROSSTABS` between the draft and the registering render registers the same bytes without a draft that showed the new checks; this is accepted. (John, 2026-10-30;
+  this replaces `.reviewed.yml`.)
 - **A changed `KEY` is a finding.** When the version registered now lacks a column of `KEY`, as when a study
   moves to repeated measures, the rebuild section says the key changed and compares nothing, as on a first build,
   and registration proceeds. Any other failure of the comparison still stops the render. (John, 2026-10-29, after
   the branch's final review.)
 - **A partial render never reviews and never registers.** A `skip` or `stop_here()` above `register` would leave
-  checks unrun, so a partial draft writes no `.reviewed.yml` and a partial registering render stops.
+  checks unrun, so a partial draft declares nothing and prints no review hash, and a partial registering render
+  stops.
 - `bd` stays `in-flight`. The stat programmers' line-by-line review, still open, now covers the
   Checks section too, so the checks reach review with the rest of the build rather than after it.
 
@@ -170,6 +184,12 @@ date stored as text. John chose an allow-list over a longer block-list (2026-10-
 twice, and an allow-list refuses whatever it has not named. A date stored as SAS day numbers, with ties and at most
 20 values, still reads as whole numbers; that gap is accepted and named here.
 
+John's review of #456 (2026-10-30) then showed that the allow-list still printed a factor of dates and a repeated
+patient label, that the hash was cached before the checks and never checked against the file registered, that a
+draft which failed after `register` still wrote `.reviewed.yml`, and that running chunks by hand skipped every check.
+John chose to send cross-tab levels to the console and to make the draft's HTML the review record, as section 4 now
+says. The allow-list, `.reviewed.yml` and its gap above are superseded.
+
 ## 9. Open
 
 1. Whether `bd` should also take a second input to compare against, such as an earlier dated
@@ -179,3 +199,10 @@ twice, and an allow-list refuses whatever it has not named. A date stored as SAS
 
 The meeting's other items: the `dc-eda` variable list, folding `gfup` into the EDA, composite
 uniqueness keys, and the render errors. The SAS workflow is being retired and stays as it is.
+
+Settled 2026-10-30, after the reviews of #457 and #458:
+
+- **The counts-only rule is withdrawn for this report (John).** The reviews asked to move follow-up extremes and the
+  largest difference to the console. A data check is analysis prep, not a manuscript table, so those values and the
+  Columns ranges stay, and cross-tab levels come back. #457, which removed the Columns ranges, is not needed.
+- **A custom output name or project `output-dir` no longer blocks registration.** See section 4.
