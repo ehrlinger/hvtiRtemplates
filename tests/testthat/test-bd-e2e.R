@@ -1,10 +1,17 @@
 bd_edits <- function(m, register, exclude = "list(age < 40 ~ \"Under 40\", ccfid == \"PT00007\" ~ \"Withdrew consent\")") {
   list(
     "^MASTER <- " = paste0("MASTER <- ", encodeString(m$parquet, quote = "\"")),
-    "^KEEP <- c[(]" = "KEEP <- c(\"age\", \"iv_dead\", \"dead\", \"dt_surg\")",
+    "^KEEP <- c[(]" = "KEEP <- c(\"age\", \"sex\", \"iv_dead\", \"dead\", \"dt_surg\")",
     "^EXCLUDE <- " = paste0("EXCLUDE <- ", exclude),
     "^REGISTER <- " = paste0("REGISTER <- ", register)
   )
+}
+
+# Set the job's REGISTER choice, as a study author does between the draft render and the registering one.
+bd_set_register <- function(job, register) {
+  lines <- readLines(job, warn = FALSE)
+  lines[grep("^REGISTER <- ", lines)] <- paste0("REGISTER <- ", register)
+  writeLines(lines, job)
 }
 
 bd_render <- function(job) {
@@ -22,7 +29,10 @@ bd_registered <- local({
     if (is.null(cache)) {
       m <- bd_master(.local_envir = testthat::teardown_env())
       root <- bd_study(.local_envir = testthat::teardown_env())
-      job <- bd_job(root, bd_edits(m, register = "TRUE"))
+      # A registering render registers the bytes of the draft render before it.
+      job <- bd_job(root, bd_edits(m, register = "FALSE"))
+      bd_render(job)
+      bd_set_register(job, "TRUE")
       cache <<- list(m = m, root = root, job = job, html = bd_render(job))
     }
     cache
@@ -82,8 +92,11 @@ test_that("the purled job runs as a script and registers the same dataset in a f
 
   # Study B: scaffold only (never render), then source the purled script.
   root_b <- bd_study()
-  job_b <- bd_job(root_b, bd_edits(m, register = "TRUE"))
+  job_b <- bd_job(root_b, bd_edits(m, register = "FALSE"))
   script <- withr::local_tempfile(fileext = ".R")
+  knitr::purl(job_b, output = script, documentation = 0L, quiet = TRUE)
+  withr::with_dir(dirname(job_b), utils::capture.output(source(script, local = new.env(parent = globalenv()))))
+  bd_set_register(job_b, "TRUE")
   knitr::purl(job_b, output = script, documentation = 0L, quiet = TRUE)
   withr::with_dir(dirname(job_b), utils::capture.output(source(script, local = new.env(parent = globalenv()))))
 
@@ -114,7 +127,10 @@ test_that("a second registering render with a changed rule registers _r2, and on
 
   lines <- readLines(job, warn = FALSE)
   lines[grep("^EXCLUDE <- ", lines)] <- "EXCLUDE <- list(age < 50 ~ \"Under 50\")"
+  lines[grep("^REGISTER <- ", lines)] <- "REGISTER <- FALSE"
   writeLines(lines, job)
+  bd_render(job)  # the draft the registering render below must match
+  bd_set_register(job, "TRUE")
   html <- bd_render(job)
   second <- bd_current_version(root)
   expect_match(second, "_r2[.]parquet$")
@@ -128,4 +144,71 @@ test_that("a second registering render with a changed rule registers _r2, and on
   expect_match(html, "Working file only: nothing registered", fixed = TRUE)
   expect_length(bd_versions(root), 2L)
   expect_identical(bd_current_version(root), second)
+})
+
+test_that("a bd render shows the checks' counts above Register, and no patient row or identifier", {
+  skip_on_cran()
+  bd_quarto_skip()
+  m <- bd_master()
+  root <- bd_study()
+  bd_draft(root, bd_check_choices(m))
+  bd_run(root, bd_check_choices(m, register = TRUE))
+  # The rebuild: a derivation that adds a column of distinctive strings, which a check prints.
+  edits <- bd_edits(m, FALSE, exclude = "list(age < 40 ~ \"Under 40\")")
+  edits[["^#   d\\$dead    <- "]] <- paste(
+    "#   d$dead    <- as.integer(!is.na(d$dt_death))",
+    "d$note <- sprintf(\"ZQXNOTE%04d\", seq_len(nrow(d)))", sep = "\n"
+  )
+  job <- bd_job(root, edits)
+  lines <- readLines(job, warn = FALSE)
+  queried <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.rds"))$ccfid[[5L]]
+  from <- grep("^CHECKS <- list\\($", lines)
+  to <- from + which(lines[(from + 1L):length(lines)] == ")")[[1L]]
+  lines <- c(lines[seq_len(from - 1L)],
+             paste0("CHECKS <- list(!is.na(note) ~ \"Every row\", ccfid == \"", queried, "\" ~ \"Queried patient\")"),
+             lines[(to + 1L):length(lines)])
+  lines[grep("^PRINT_COLS <- ", lines)] <- "PRINT_COLS <- c(\"ccfid\", \"note\")"
+  writeLines(lines, job)
+  html <- bd_render(job)
+
+  expect_match(html, "A rebuild of the study dataset: study_cohort.rds", fixed = TRUE)
+  expect_match(html, "Every row", fixed = TRUE)
+  expect_match(html, "Queried patient", fixed = TRUE)
+  expect_match(html, "dead by sex", fixed = TRUE)
+  # The Checks section comes before Register in the report.
+  expect_lt(regexpr("What this rebuild changed", html, fixed = TRUE), regexpr(">Register<", html, fixed = TRUE))
+  expect_false(grepl("ZQXNOTE", html, fixed = TRUE))
+  leaked <- m$data$ccfid[vapply(m$data$ccfid, grepl, logical(1L), x = html, fixed = TRUE)]
+  expect_identical(leaked, character())
+})
+
+test_that("a first bd render says nothing is registered, and a cross-tab named twice still renders", {
+  skip_on_cran()
+  bd_quarto_skip()
+  m <- bd_master()
+  root <- bd_study()
+  edits <- bd_edits(m, FALSE, exclude = "list(age < 40 ~ \"Under 40\")")
+  edits[["^CROSSTABS <- list"]] <- "CROSSTABS <- list(c(\"dead\", \"sex\"), c(\"dead\", \"sex\"))"
+  html <- bd_render(bd_job(root, edits))
+  expect_match(html, "Nothing is registered for this study yet", fixed = TRUE)
+  expect_false(grepl("Rows in the registered version", html, fixed = TRUE))
+  expect_identical(lengths(regmatches(html, gregexpr("dead by sex, with a missing value", html, fixed = TRUE))), 2L)
+})
+
+test_that("a partial render writes no review and cannot register", {
+  skip_on_cran()
+  bd_quarto_skip()
+  m <- bd_master()
+  root <- bd_study()
+  job <- bd_job(root, bd_edits(m, register = "FALSE"))
+  lines <- readLines(job, warn = FALSE)
+  at <- grep("^#\\| label: tbl-checks$", lines)
+  writeLines(append(lines, "#| skip: \"waiting on the corrected coding\"", after = at), job)
+  suppressWarnings(bd_render(job))
+  expect_false(file.exists(file.path(hvtiRutilities::study_dir("datasets", root), "study_cohort.reviewed.yml")))
+  # A first build that is partial declares nothing either, so no job reads a build whose checks did not run.
+  expect_null(hvtiRutilities::study_config(root, require_data = FALSE)$built)
+  bd_set_register(job, "TRUE")
+  expect_error(suppressWarnings(bd_render(job)))
+  expect_length(bd_versions(root), 0L)
 })

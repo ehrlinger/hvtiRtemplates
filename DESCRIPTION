@@ -60,7 +60,7 @@ Suggests:
     haven,
     hvtiPlotR (>= 2.8.20),
     hvtiRtables (>= 1.0.11),
-    hvtiRdatabuild (>= 0.3.0),
+    hvtiRdatabuild (>= 0.3.3),
     hvtiRbootstrap (>= 0.9.3),
     hvtiRlifetables (>= 0.1.2),
     hvtiRpropensity (>= 0.2.0),

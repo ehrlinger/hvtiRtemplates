@@ -112,11 +112,13 @@ test_that("REGISTER registers the working file as a dated version whose provenan
   m <- bd_master()
   root <- bd_study()
   choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)
+  bd_draft(root, choices)
   env <- bd_run(root, choices)
   expect_identical(hvtiRutilities::study_config(root)$built, "study_cohort.rds")
   expect_null(env$.version_before)
   expect_identical(env$.version_after, bd_current_version(root))
-  expect_identical(env$.register_step, "Registered as the study dataset")
+  # The draft declared the working file, so registering it is a first version of a declared dataset.
+  expect_identical(env$.register_step, "Registered as a new version of the study dataset")
   prov <- bd_provenance(root)
   expect_identical(prov$origin, "bd")
   expect_identical(prov$build$view, basename(m$parquet))
@@ -140,6 +142,7 @@ test_that("a study registered under this job's file without a build record takes
   suppressMessages(hvtiRutilities::register_data(root, built = "study_cohort.rds"))
   legacy <- bd_current_version(root)
   expect_identical(bd_provenance(root, legacy)$origin, "legacy")
+  bd_draft(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL))
   env <- bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE))
   expect_identical(env$.version_before, legacy)
   expect_identical(env$.register_step, "Registered as a new version of the study dataset")
@@ -168,7 +171,7 @@ test_that("failures name the step and the file, never a value", {
   bd_expect_stop(root, utils::modifyList(ok, list(KEEP = c("age", "no_such_column"))), "read-master")
   bd_expect_stop(root, utils::modifyList(ok, list(EXCLUDE = list(ccfid == "PT00001" & nope ~ "Broken"))), "cohort")
   bd_expect_stop(root, utils::modifyList(ok, list(EXCLUDE = list(!is.na(ccfid) ~ "Everyone"))), "cohort")
-  bd_expect_stop(root, utils::modifyList(ok, list(KEY = "dead")), "write-built")
+  bd_expect_stop(root, utils::modifyList(ok, list(KEY = "dead", CROSSTABS = list())), "write-built")
   # A sidecar that disagrees with its parquet, under VERIFY_MASTER.
   bad <- bd_master()
   meta <- sub("[.]parquet$", ".meta.json", bad$parquet)
@@ -225,6 +228,7 @@ test_that("a DATASET_ID other than the registered one stops register before regi
   m <- bd_master()
   root <- bd_study()
   choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)
+  bd_draft(root, choices)
   bd_run(root, choices)
   expect_length(bd_versions(root), 1L)
   bd_expect_stop(root, utils::modifyList(choices, list(DATASET_ID = "other_cohort")), "register")
@@ -293,4 +297,51 @@ test_that("a working file never overwrites a published release, even without REG
   bd_expect_stop(root, utils::modifyList(ok, list(DATASET_ID = "legacy_cut")), "write-built")
   expect_identical(digest::digest(release, algo = "sha256", file = TRUE), sha)
   expect_false(file.exists(file.path(datasets, "legacy_cut.build.yml")))
+})
+
+test_that("REGISTER = TRUE with no draft stops in register and registers nothing", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)
+  err <- expect_error(bd_run(root, choices), "^bd: register \\(")
+  expect_match(conditionMessage(err), "no draft of this build has been rendered", fixed = TRUE)
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  expect_false(file.exists(file.path(datasets, "study_cohort.reviewed.yml")))
+  expect_length(bd_versions(root), 0L)
+  expect_null(hvtiRutilities::study_config(root, require_data = FALSE)$built)
+})
+
+test_that("a build that differs from the last draft is not registered", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  choices <- list(MASTER = m$parquet, KEEP = "age", EXCLUDE = list(age < 40 ~ "Under 40"), REGISTER = FALSE)
+  bd_run(root, choices)
+  datasets <- hvtiRutilities::study_dir("datasets", root)
+  reviewed <- yaml::read_yaml(file.path(datasets, "study_cohort.reviewed.yml"))
+  expect_identical(names(reviewed), "built_sha256")
+  # A different cut of the same master: the bytes written are not the bytes the draft wrote.
+  changed <- choices
+  changed$EXCLUDE <- list(age < 50 ~ "Under 50")
+  changed$REGISTER <- TRUE
+  err <- expect_error(bd_run(root, changed), "^bd: register \\(")
+  expect_match(conditionMessage(err), "differs from the draft last rendered", fixed = TRUE)
+  expect_length(bd_versions(root), 0L)
+  # A registering render never writes the file.
+  expect_identical(yaml::read_yaml(file.path(datasets, "study_cohort.reviewed.yml")), reviewed)
+})
+
+test_that("a finding does not block registration: a CHECKS entry that matches rows still registers", {
+  bd_skip()
+  m <- bd_master()
+  root <- bd_study()
+  with_checks <- c("setup", "set", "edit-study-choices", "check-choices", "read-master", "cohort", "derive",
+                   "write-built", bd_check_labels, "register")
+  choices <- bd_check_choices(m, CHECKS = list(!is.na(age) ~ "Every row"))
+  bd_draft(root, choices, labels = with_checks)
+  env <- bd_run(root, utils::modifyList(choices, list(REGISTER = TRUE)), labels = with_checks)
+  expect_gt(env$.checked$n, 0L)
+  expect_identical(env$.register_step, "Registered as a new version of the study dataset")
+  expect_length(bd_versions(root), 1L)
 })

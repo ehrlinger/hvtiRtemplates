@@ -81,10 +81,11 @@ Register -> Report -> about-run
   may name patients.
 - **A check never writes,** and no finding changes what Register does.
 - **Cross-tab levels are values, so a cross-tab column is screened.** A cross-tab prints its
-  levels in the report. `check-choices` refuses a `CROSSTABS` column that is `ID` or a column of
-  `KEY`, and the `crosstabs` chunk refuses a column with more than 20 distinct non-missing values,
-  which is the shape of an identifier, a date or free text rather than a category. Both stops name
-  the column and never a value. The screen is what keeps "counts only" true; the comment above
+  levels in the report. `check-choices` refuses a `CROSSTABS` column that is `ID`, a column of
+  `KEY` or a column of `JOIN_BY`. The `crosstabs` chunk takes a column only if it reads as a category, an
+  allow-list: logical, factor, whole numbers or text; at most 20 distinct non-missing values; not a different value
+  on every row once there are more than five; and no text that reads as a date. Every stop names the column and
+  never a value. The screen is what keeps "counts only" true; the comment above
   `CROSSTABS` says so.
 - **A finding never blocks registration; an error does.** A finding is a count: rows matching a
   check, a column that differs, a suspicious follow-up interval. A check that cannot run (a column
@@ -100,6 +101,12 @@ Register -> Report -> about-run
   bytes nobody reviewed. This closes the gap where a changed snapshot (with `VERIFY_MASTER <-
   FALSE`), a changed cohort list or a nondeterministic derivation registers data the author never
   saw. Like the build record, `.reviewed.yml` holds no key and no data value.
+- **A changed `KEY` is a finding.** When the version registered now lacks a column of `KEY`, as when a study
+  moves to repeated measures, the rebuild section says the key changed and compares nothing, as on a first build,
+  and registration proceeds. Any other failure of the comparison still stops the render. (John, 2026-10-29, after
+  the branch's final review.)
+- **A partial render never reviews and never registers.** A `skip` or `stop_here()` above `register` would leave
+  checks unrun, so a partial draft writes no `.reviewed.yml` and a partial registering render stops.
 - `bd` stays `in-flight`. The stat programmers' line-by-line review, still open, now covers the
   Checks section too, so the checks reach review with the rest of the build rather than after it.
 
@@ -153,6 +160,15 @@ John's review of PR #454 raised four findings, each settled by John the same day
    stop and saying so: errors stop, findings never.
 4. Removing the catalog row left the generated roadmap stale and `check-roadmap-counts.py` red.
    Settled in the plan: Task 3 regenerates the roadmap with `roadmap_render.py`.
+
+The branch's final review then found that a cross-tab of a date column, a `skip` on a check chunk and a changed
+`KEY` each broke a promise above. The first two are closed by the screen and the partial-render rule; the third
+was settled by John as a finding, not an error.
+
+A `/code-review` of the branch found two more ways through the screen, a second identifier in a small cohort and a
+date stored as text. John chose an allow-list over a longer block-list (2026-10-29): a block-list had been passed
+twice, and an allow-list refuses whatever it has not named. A date stored as SAS day numbers, with ties and at most
+20 values, still reads as whole numbers; that gap is accepted and named here.
 
 ## 9. Open
 
