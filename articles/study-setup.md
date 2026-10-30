@@ -112,7 +112,7 @@ study_setup(
   cleanup = FALSE,
   renv = FALSE
 )
-#> Study: /tmp/RtmpgTA3Qm/file20476fa9dbd4/legacy-study
+#> Study: /tmp/Rtmpw6r7RS/file1f7e2f33c2bd/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -186,7 +186,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpgTA3Qm/file20476fa9dbd4/legacy-study
+#> Study: /tmp/Rtmpw6r7RS/file1f7e2f33c2bd/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -313,15 +313,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/RtmpgTA3Qm/file20476fa9dbd4/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#> "/tmp/Rtmpw6r7RS/file1f7e2f33c2bd/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
 #>                                                                                tables 
-#>  "/tmp/RtmpgTA3Qm/file20476fa9dbd4/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>  "/tmp/Rtmpw6r7RS/file1f7e2f33c2bd/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/RtmpgTA3Qm/file20476fa9dbd4/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>    "/tmp/Rtmpw6r7RS/file1f7e2f33c2bd/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
 #>                                                                                trends 
-#>  "/tmp/RtmpgTA3Qm/file20476fa9dbd4/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
+#>  "/tmp/Rtmpw6r7RS/file1f7e2f33c2bd/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/RtmpgTA3Qm/file20476fa9dbd4/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
+#>     "/tmp/Rtmpw6r7RS/file1f7e2f33c2bd/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output
