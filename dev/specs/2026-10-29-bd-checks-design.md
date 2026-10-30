@@ -80,33 +80,41 @@ Register -> Report -> about-run
   capture. That fits `bd` as it is: its report already shows no code, because its `EXCLUDE` rules
   may name patients.
 - **A check never writes,** and no finding changes what Register does.
-- **Cross-tab levels are values, so a cross-tab column is screened.** A cross-tab prints its
-  levels in the report. `check-choices` refuses a `CROSSTABS` column that is `ID`, a column of
-  `KEY` or a column of `JOIN_BY`. The `crosstabs` chunk takes a column only if it reads as a category, an
-  allow-list: logical, factor, whole numbers or text; at most 20 distinct non-missing values; not a different value
-  on every row once there are more than five; and no text that reads as a date. Every stop names the column and
-  never a value. The screen is what keeps "counts only" true; the comment above
-  `CROSSTABS` says so.
+- **A cross-tab's levels are values, so they go to the console.** The full table of each `CROSSTABS` pair, levels
+  and counts, prints to `stderr()` through `proc_print()`'s route, as the rows behind a named check do. The report
+  shows each pair's shape only: the number of levels of each column, the cells, the cells under 5 and the
+  missing values. No screen on a column's type or cardinality can prove its labels are not identifying (a factor
+  of dates, a patient label repeated in a repeated-measures dataset), so the guarantee is made by where the
+  levels go, not by guessing which columns are safe. A column the data lacks still stops `crosstabs`. (John,
+  2026-10-30, after the review of #456; this replaces the screen and the allow-list.)
 - **A finding never blocks registration; an error does.** A finding is a count: rows matching a
   check, a column that differs, a suspicious follow-up interval. A check that cannot run (a column
   it names is missing, a condition does not evaluate, the comparison fails) is a broken job, and it
   stops the render with `.bd_stop()`, as a bad `EXCLUDE` rule does. A build whose checks did not
   run is never registered.
-- **The build registered is the build reviewed.** A render with `REGISTER <- FALSE` writes
-  `datasets/<DATASET_ID>.reviewed.yml` beside the working file, holding the `built_sha256` of the
-  bytes it wrote. A render with `REGISTER <- TRUE` re-cuts the master, and before registering it
-  compares its bytes' hash with that file. If they differ, or no draft has been rendered, it stops
-  in `register` before registering anything and says to render with `REGISTER <- FALSE` and review
-  that build. A registering render never writes `.reviewed.yml`, so repeating it cannot approve
-  bytes nobody reviewed. This closes the gap where a changed snapshot (with `VERIFY_MASTER <-
-  FALSE`), a changed cohort list or a nondeterministic derivation registers data the author never
-  saw. Like the build record, `.reviewed.yml` holds no key and no data value.
+- **The build registered is the build reviewed, and the draft's report is the record of the review.** A draft
+  render (`REGISTER <- FALSE`) prints the `built_sha256` of the bytes it wrote in its report. Only a draft that
+  rendered to the end leaves an HTML file, so the hash in that file means the whole report was produced and
+  could be read. A registering render (`REGISTER <- TRUE`):
+  1. refuses to run outside a Quarto render (`knitr::current_input()` is `NULL`), because running chunks by hand
+     can leave any check out;
+  2. refuses when the render is partial (a `skip` or `stop_here()`);
+  3. immediately before registering, hashes the working file on disk again, and registers only if that hash is
+     the one its own build record claims and the one printed in the draft's HTML beside the job.
+  Otherwise it stops in `register`, names the cause, and says to render a draft and read it. A registering render
+  prints no review hash, so repeating it cannot approve bytes nobody read. A failed or partial draft either leaves
+  the previous HTML (whose hash names earlier bytes, refused unless they are these bytes) or writes an HTML with no
+  review hash. Nothing here holds a key or a data value. **Accepted residual:** between the boundary rehash and
+  `register_data()` / `update_manifest()` reading the file, another writer could still replace it; the window is
+  the length of one function call, and the only such writer is a second render of the same job. (John, 2026-10-30;
+  this replaces `.reviewed.yml`.)
 - **A changed `KEY` is a finding.** When the version registered now lacks a column of `KEY`, as when a study
   moves to repeated measures, the rebuild section says the key changed and compares nothing, as on a first build,
   and registration proceeds. Any other failure of the comparison still stops the render. (John, 2026-10-29, after
   the branch's final review.)
 - **A partial render never reviews and never registers.** A `skip` or `stop_here()` above `register` would leave
-  checks unrun, so a partial draft writes no `.reviewed.yml` and a partial registering render stops.
+  checks unrun, so a partial draft declares nothing and prints no review hash, and a partial registering render
+  stops.
 - `bd` stays `in-flight`. The stat programmers' line-by-line review, still open, now covers the
   Checks section too, so the checks reach review with the rest of the build rather than after it.
 
@@ -169,6 +177,12 @@ A `/code-review` of the branch found two more ways through the screen, a second 
 date stored as text. John chose an allow-list over a longer block-list (2026-10-29): a block-list had been passed
 twice, and an allow-list refuses whatever it has not named. A date stored as SAS day numbers, with ties and at most
 20 values, still reads as whole numbers; that gap is accepted and named here.
+
+John's review of #456 (2026-10-30) then showed that the allow-list still printed a factor of dates and a repeated
+patient label, that the hash was cached before the checks and never checked against the file registered, that a
+draft which failed after `register` still wrote `.reviewed.yml`, and that running chunks by hand skipped every check.
+John chose to send cross-tab levels to the console and to make the draft's HTML the review record, as section 4 now
+says. The allow-list, `.reviewed.yml` and its gap above are superseded.
 
 ## 9. Open
 
