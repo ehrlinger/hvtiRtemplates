@@ -5,3 +5,5 @@
   as before; naming columns in `VARIABLES` works as it did. The list ships as
   `inst/extdata/ods-variables.csv`, and `dc-tables`'s commented `GROUPS` example
   is held to it by a test.
+  A job brought up to date with `upgrade_job()` or `migrate_job()` whose
+  `VARIABLES` is `NULL` also draws the list now, where it drew every column.
