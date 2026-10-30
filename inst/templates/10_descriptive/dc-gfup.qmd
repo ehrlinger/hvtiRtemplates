@@ -355,9 +355,9 @@ itself.
 #| label: identifiability
 #| results: asis
 # Flags what a reader could learn about one patient, by column and count. It changes no number.
-# The figure draws each patient at a decimal operation year and their follow-up.
+# The tables show the longest follow-up.
 cat(hvtiRtemplates:::.identifiability_notice(
-  hvtiRtemplates:::.identifiability_check(d, dates = OPYRS, extremes = FOLLOWUP)
+  hvtiRtemplates:::.identifiability_check(d, extremes = FOLLOWUP)
 ))
 ```
 

@@ -1,16 +1,21 @@
 identifiability_data <- function() {
   data.frame(nyha = c(rep(1L, 28L), 2L, 3L), age = c(rep(60, 28L), 91, 95), lab = seq_len(30L) + 0.5,
-             dt_surg = as.Date("2020-01-01") + seq_len(30L), arm = rep(c("a", "b"), 15L))
+             dt_surg = as.Date("2020-01-01") + seq_len(30L), arm = rep(c("a", "b"), 15L), far = c(seq_len(29L), 500))
 }
 
 test_that("each check finds its case, by column and count", {
   f <- hvtiRtemplates:::.identifiability_check(identifiability_data(), c("nyha", "age", "dt_surg", "lab"),
-                                               extremes = "lab")
+                                               extremes = "far")
   expect_equal(f[f$check == "small", "column"], c("nyha", "age"))
   expect_equal(f[f$check == "small" & f$column == "nyha", "count"], 2L)
   expect_equal(f[f$check == "age", "count"], 2L)
   expect_equal(f[f$check == "date", "column"], "dt_surg")
-  expect_equal(f[f$check == "extreme", "count"], 2L)
+  expect_equal(f[f$check == "extreme", "count"], 1L)
+  # Every column has a maximum: one with no outlier finds nothing.
+  expect_equal(nrow(hvtiRtemplates:::.identifiability_check(identifiability_data(), extremes = "lab")), 0L)
+  # All values equal, or all missing, finds nothing and does not fail.
+  same <- data.frame(a = rep(1, 10L), b = rep(NA_real_, 10L))
+  expect_equal(nrow(hvtiRtemplates:::.identifiability_check(same, extremes = c("a", "b"))), 0L)
   expect_named(f, c("check", "column", "count"))
 })
 

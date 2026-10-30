@@ -8,7 +8,9 @@
 
 # `vars` are the columns a table or figure shows by level, with `by` its columns. `age`
 # and `dates` add to what the names and classes of `vars` find. `extremes` are the columns
-# whose minimum or maximum is shown. One row per finding: check, column, count.
+# whose minimum or maximum is shown; a finding counts the patients more than 3 IQR beyond
+# the quartiles, because every column has a maximum and only an outlying one points to a
+# patient. One row per finding: check, column, count.
 .identifiability_check <- function(d, vars = character(), by = NULL, small = 5L, age = NULL, dates = NULL,
                                    extremes = NULL) {
   vars <- intersect(vars, names(d))
@@ -32,7 +34,8 @@
   for (v in intersect(unique(c(dates, named, classed)), names(d))) add("date", v, sum(!is.na(d[[v]])))
   for (v in intersect(extremes, names(d))) {
     x <- suppressWarnings(as.numeric(d[[v]]))
-    if (any(!is.na(x))) add("extreme", v, sum(x %in% range(x, na.rm = TRUE)))
+    q <- stats::quantile(x, c(0.25, 0.75), na.rm = TRUE, names = FALSE, type = 2)
+    add("extreme", v, sum(x < q[[1L]] - 3 * (q[[2L]] - q[[1L]]) | x > q[[2L]] + 3 * (q[[2L]] - q[[1L]]), na.rm = TRUE))
   }
   if (length(rows)) do.call(rbind, rows) else data.frame(check = character(), column = character(), count = integer())
 }
@@ -45,8 +48,8 @@
          age = paste0(.n_of(count, "patient"), " in ", col, " are older than 89. Wherever age is shown, report ages 90 ",
                       "and older as one group."),
          date = paste0(col, " holds an exact date for ", .n_of(count, "patient"), ". Show the year only."),
-         extreme = paste0(col, "'s minimum or maximum is shown, and ", .n_of(count, "patient"), " sit at those values. ",
-                          "Check that neither points to one patient."))
+         extreme = paste0(col, "'s minimum or maximum is shown, and ", .n_of(count, "patient"), " lie far beyond the ",
+                          "rest. Check that the shown value does not point to one patient."))
 }
 
 # The callout above a manuscript table or figure, and the same counts in the run record.
