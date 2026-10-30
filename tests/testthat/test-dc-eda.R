@@ -185,6 +185,8 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
     env$study_config <- hvtiRutilities::study_config
     env$label_map <- function(d, ...) data.frame(key = names(d), label = names(d))
     eval(chunk("edit-study-choices"), env)
+    # Every column, so the identifier rules below are what decide.
+    env$VARIABLE_SET <- "all"
     # The study's reference column, as a study sets X_VAR to its own.
     env$X_VAR <- "year"
     env$ID <- id
@@ -243,7 +245,8 @@ eda_chunk <- function(label) {
 # The choices the spec chunk reads, with a stand-in label_map(); `...` replaces
 # any of them, NULL included.
 eda_spec_env <- function(d, ...) {
-  env <- list2env(list(d = d, X_VAR = "year", X_LABEL = "Year of operation", VARIABLES = NULL, EXCLUDE = character(),
+  env <- list2env(list(d = d, X_VAR = "year", X_LABEL = "Year of operation", VARIABLES = NULL, VARIABLE_SET = "all",
+                       EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
                        .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL, job_data = eda_job_data("ccfid"),
@@ -258,7 +261,7 @@ test_that("dc-eda's spec chunk checks every variable and plotting choice", {
   env <- eda_spec_env(data.frame(year = 1:10, age = 41:50, patient_id = 11:20, visit_date = 21:30),
                       VARIABLES = "age")
   expect_no_error(eval(spec, env))
-  for (field in c("X_VAR", "X_LABEL", "VARIABLES", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SECTIONS",
+  for (field in c("X_VAR", "X_LABEL", "VARIABLES", "VARIABLE_SET", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SECTIONS",
                   "ALPHA", "LABEL_MAX", "ABBREVIATIONS")) {
     original <- env[[field]]
     env[[field]] <- NA
@@ -345,6 +348,67 @@ test_that("dc-eda VARIABLES = NULL draws every column but ids, dates and exclusi
   expect_error(eval(spec, env), "SECTIONS")
 })
 
+test_that("dc-eda VARIABLE_SET = \"ods\" draws the house list's columns the data has, in the list's order", {
+  spec <- eda_chunk("spec")
+  # bmi before female in the data; the list has female first. hosp_tag is a
+  # study's own column, outside the list.
+  env <- eda_spec_env(data.frame(year = 1:10, bmi = 21:30, hosp_tag = rep(1:2, 5), female = rep(0:1, 5), age = 41:50,
+                                 ccfid = 11:20, dead = rep(0:1, 5)),
+                      VARIABLE_SET = "ods", EXCLUDE = "dead")
+  out <- paste(capture.output(eval(spec, env)), collapse = " ")
+  ods <- unlist(hvtiRtemplates:::.ods_groups(), use.names = FALSE)
+  expect_identical(env$VARIABLES, c("female", "age", "bmi"))
+  expect_identical(env$VARIABLES, intersect(ods, env$VARIABLES))
+  expect_match(out, paste("3 of the", length(ods), "columns on the house ODS list"), fixed = TRUE)
+  expect_match(out, "hosp_tag, ccfid", fixed = TRUE)
+  # Named columns are drawn as named, whatever the set.
+  env$VARIABLES <- c("hosp_tag", "age")
+  eval(spec, env)
+  expect_identical(env$VARIABLES, c("hosp_tag", "age"))
+  # A name in capitals is still on the list, and keeps its own spelling.
+  env <- eda_spec_env(data.frame(year = 1:10, BMI = 21:30, Age = 41:50), VARIABLE_SET = "ods")
+  capture.output(eval(spec, env))
+  expect_identical(env$VARIABLES, c("Age", "BMI"))
+  # A dataset with none of the list's columns stops, and says how to go on.
+  env <- eda_spec_env(data.frame(year = 1:10, hosp_tag = 1:10), VARIABLE_SET = "ods")
+  expect_error(eval(spec, env), "VARIABLE_SET <- \"all\"", fixed = TRUE)
+  env$VARIABLE_SET <- "every"
+  expect_error(eval(spec, env), "VARIABLE_SET must be")
+})
+
+test_that("a follow-up-only dc-eda neither needs nor checks the house ODS list", {
+  # Raised in review of #455: a job drawing only follow-up stopped because an
+  # unused descriptive list had no column in the data.
+  env <- eda_spec_env(data.frame(year = 1:10, hospital = rep(1:2, 5)), VARIABLE_SET = "ods", SECTIONS = "followup")
+  expect_no_error(capture.output(eval(eda_chunk("spec"), env)))
+  # Any descriptive section brings the list back, and its stop.
+  env <- eda_spec_env(data.frame(year = 1:10, hospital = rep(1:2, 5)), VARIABLE_SET = "ods",
+                      SECTIONS = c("followup", "percent"))
+  expect_error(eval(eda_chunk("spec"), env), "None of the house ODS list")
+})
+
+test_that("dc-eda's setup stops, naming the update, under an hvtiRtemplates without the ODS list", {
+  # A job copied from this template can render in a study library that still
+  # holds an older hvtiRtemplates, possibly of the same version number.
+  lines <- readLines(template_path("dc", "eda"), warn = FALSE)
+  start <- grep('^if \\(!exists\\(".ods_groups"', lines)
+  expect_length(start, 1L)
+  end <- start + match("}", lines[-seq_len(start)])
+  check <- parse(text = lines[start:end])
+  older <- new.env()
+  older$asNamespace <- function(...) new.env()
+  expect_error(eval(check, older), "hvtiR::update(force = TRUE)", fixed = TRUE)
+  expect_no_error(eval(check, new.env()))
+})
+
+test_that("the template's VARIABLE_SET sits outside the region migrate_job() rewrites, defaulting to the ODS list", {
+  lines <- readLines(template_path("dc", "eda"), warn = FALSE)
+  at <- grep("^VARIABLE_SET <- ", lines)
+  expect_length(at, 1L)
+  expect_identical(lines[at], 'VARIABLE_SET <- "ods"')
+  expect_gt(at, grep("^# MIGRATE-END: dc-eda-variables$", lines))
+})
+
 test_that("dc-eda VARIABLES = NULL leaves out identifiers written without a separator", {
   spec <- eda_chunk("spec")
   # ccfid, the CCF patient identifier, has no "_" before "id", so the token rule
@@ -387,7 +451,8 @@ test_that("dc-eda's overview leaves out identifiers but keeps dates", {
                                       patientid = sprintf("P%03d", seq_len(n)), carotid = rep(0:1, 6), eMRN = 5000L + seq_len(n),
                                       mrn_num = rep(0:1, 6),
                                       bnp_mrna = 0.5 * seq_len(n), dt_surg = as.Date("2020-01-01") + seq_len(n)),
-                       X_VAR = "year", X_LABEL = "Year of operation", VARIABLES = c("age", "ccfid"), EXCLUDE = character(),
+                       X_VAR = "year", X_LABEL = "Year of operation", VARIABLES = c("age", "ccfid"),
+                       VARIABLE_SET = "all", EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
                        .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL, job_data = eda_job_data("ccfid"),
