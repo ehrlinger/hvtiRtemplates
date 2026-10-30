@@ -520,6 +520,29 @@ vp_judge <- function(cov) {
   cov$selected <- !cov$noise & cov$tested & (cov$z > cov$bar) %in% TRUE
   cov
 }
+
+# The coverage of each variable, judged as MAX_UNTESTED judges it. varpro_coverage(by = "variable") pools a factor's
+# levels, so a factor whose levels each fell below TRIM can pass as tested with every level's z trimmed to 0. Here a
+# factor's trees, coverage and tested are those of its best single level. A second, identically seeded call gets the
+# levels, because the first returns only the pooled row. It repeats the rule extraction, for each refit too.
+vp_coverage <- function(f, seed, max_untested = NULL) {
+  set.seed(seed)
+  # vp_judge() replaces varpro_coverage()'s own selection, which reads an empty noise check as "select every tested
+  # row", so its warning about that case would mislead here: vp_judge() selects nothing then, and says so.
+  cov <- withCallingHandlers(
+    ggRandomForests::varpro_coverage(f, by = "variable", trim = TRIM, max.tree = f$rf$ntree, noise = "^noise",
+                                     max_untested = max_untested),
+    warning = function(w) {
+      if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+    }
+  )
+  set.seed(seed)
+  terms <- ggRandomForests::varpro_coverage(f, by = "term", trim = TRIM, max.tree = f$rf$ntree)
+  cov$n_trees <- as.integer(tapply(terms$n_trees, terms$variable, max)[cov$variable])
+  cov$coverage <- as.vector(tapply(terms$coverage, terms$variable, max)[cov$variable])
+  cov$tested <- cov$n_trees > 0 & cov$coverage >= TRIM
+  cov[order(-cov$coverage), ]
+}
 ```
 
 ```{r}
@@ -559,24 +582,15 @@ fit <- cache_fit(
 Every candidate, and whether VarPro could test it. A variable is **eligible**
 when VarPro built release rules for it; one that is not was cut by the split
 weights or `NVAR` before any rule was built. It is **tested** when it was
-scored in at least `TRIM` of the trees; below that its z is 0 by construction,
-which is no evidence of no effect. It is **selected** when it is tested and its
+scored in at least `TRIM` of the trees, a factor by its best single level; below
+that its z is 0 by construction, which is no evidence of no effect. It is **selected** when it is tested and its
 z beats the bar named in the last columns.
 
 ```{r}
 #| label: tbl-coverage
 #| tbl-cap: "Coverage, importance and selection of each candidate, most covered first"
 # varpro_coverage() samples release rules, so it is seeded too.
-set.seed(abs(SEED))
-# vp_judge() replaces varpro_coverage()'s own selection, which reads an empty noise check as "select every tested
-# row", so its warning about that case would mislead here: vp_judge() selects nothing then, and says so.
-cov <- vp_judge(withCallingHandlers(
-  ggRandomForests::varpro_coverage(fit, by = "variable", trim = TRIM, max.tree = fit$rf$ntree, noise = "^noise",
-                                   max_untested = MAX_UNTESTED),
-  warning = function(w) {
-    if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
-  }
-))
+cov <- vp_judge(vp_coverage(fit, abs(SEED), max_untested = MAX_UNTESTED))
 .real <- cov[!cov$noise, ]
 knitr::kable(data.frame(
   variable = .real$variable, kind = .real$kind, eligible = .real$eligible, trees = .real$n_trees,
@@ -679,14 +693,7 @@ if (REPEATS > 0) {
              verbose = FALSE, cores = 1L, seed = -abs(SEED + r)),
       seed = SEED + r, dir = CACHE_DIR, refit = REFIT
     )
-    set.seed(abs(SEED) + r)
-    # As for the full fit: vp_judge() makes the selection, so varpro_coverage()'s empty-noise warning is muffled.
-    cr <- vp_judge(withCallingHandlers(
-      ggRandomForests::varpro_coverage(fr, by = "variable", trim = TRIM, max.tree = fr$rf$ntree, noise = "^noise"),
-      warning = function(w) {
-        if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
-      }
-    ))
+    cr <- vp_judge(vp_coverage(fr, abs(SEED) + r))
     cr <- cr[!cr$noise, ]
     data.frame(r = r, variable = cr$variable, selected = cr$selected, tested = cr$tested)
   }))

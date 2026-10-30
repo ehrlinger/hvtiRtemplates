@@ -146,22 +146,19 @@ test_that("vp_judge ignores a tested noise row whose z is NA", {
   expect_identical(unique(out$bar), 0.4)
 })
 
-test_that("both varpro_coverage() calls in vp-fit muffle the empty-noise warning", {
+test_that("vp-fit's coverage call muffles the empty-noise warning, and both fits go through it", {
   lines <- readLines(template_path("vp", "fit"), warn = FALSE)
-  at <- grep("varpro_coverage\\(fit|varpro_coverage\\(fr", lines)
-  expect_length(at, 2L)
-  for (i in at) {
-    before <- paste(lines[max(1L, i - 3L):i], collapse = "\n")
-    expect_match(before, "withCallingHandlers", fixed = TRUE)
-    after <- paste(lines[i:min(length(lines), i + 4L)], collapse = "\n")
-    expect_match(after, "no noise variable was tested", fixed = TRUE)
-  }
+  at <- grep("varpro_coverage\\(f, by = \"variable\"", lines)
+  expect_length(at, 1L)
+  expect_match(paste(lines[max(1L, at - 3L):at], collapse = "\n"), "withCallingHandlers", fixed = TRUE)
+  expect_match(paste(lines[at:min(length(lines), at + 4L)], collapse = "\n"), "no noise variable was tested", fixed = TRUE)
+  expect_length(grep("varpro_coverage\\((fit|fr),", lines), 0L)
+  expect_length(grep("vp_judge\\(vp_coverage\\((fit|fr),", lines), 2L)
 })
 
 test_that("vp-fit holds the full fit to MAX_UNTESTED and leaves the refits to the stability table", {
   lines <- readLines(template_path("vp", "fit"), warn = FALSE)
-  at <- grep("varpro_coverage\\(fit|varpro_coverage\\(fr", lines)
-  calls <- vapply(at, function(i) paste(lines[i:(i + 1L)], collapse = " "), "")
+  calls <- grep("vp_judge\\(vp_coverage\\((fit|fr),", lines, value = TRUE)
   expect_match(calls[1], "max_untested = MAX_UNTESTED", fixed = TRUE)
   expect_no_match(calls[2], "max_untested", fixed = TRUE)
   expect_true("MAX_UNTESTED <- 0.5" %in% rf_chunk(lines, "edit-study-choices"))
@@ -211,6 +208,31 @@ test_that("vp-fit's figure holds categorical variables to the table's bar when c
   eval(parse(text = grep("^\\.fig\\$labels\\$caption", lines, value = TRUE)), envir = env)
   expect_match(env$.fig$labels$caption, "categorical: no usable noise bar, nothing selected", fixed = TRUE)
   expect_no_match(env$.fig$labels$caption, "no noise tested", fixed = TRUE)
+})
+
+test_that("vp-fit judges a factor by its best level, as MAX_UNTESTED does, not by its pooled levels", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  labels <- c(vp_data_labels, "noise", "judge", "fit", "tbl-coverage", "tbl-funnel")
+  env <- rf_env(vp_data())
+  rf_run("vp", "fit", labels, env, utils::modifyList(vp_choices, list(TRIM = 0.3)))
+  set.seed(1)
+  pooled <- suppressWarnings(ggRandomForests::varpro_coverage(env$fit, by = "variable", trim = 0.3,
+                                                              max.tree = env$fit$rf$ntree, noise = "^noise"))
+  cov <- env$cov
+  gap <- pooled$variable[pooled$tested & !cov$tested[match(pooled$variable, cov$variable)]]
+  # The case at issue: its levels' trees together clear TRIM, and no single level does.
+  expect_true("g1" %in% gap)
+  expect_false(any(cov$selected[cov$variable %in% gap]))
+  expect_true(all(cov$coverage[cov$variable %in% gap] < 0.3))
+  # The stop and the table now count the same variables: one more untested than allowed stops, exactly that many passes.
+  real <- cov[!cov$noise, ]
+  untested <- sum(!real$tested) / nrow(real)
+  stop_env <- rf_env(vp_data())
+  expect_error(rf_run("vp", "fit", labels, stop_env, utils::modifyList(vp_choices, list(TRIM = 0.3, MAX_UNTESTED = untested - 0.01))),
+               "real variables are untested")
+  pass_env <- rf_env(vp_data())
+  expect_no_error(rf_run("vp", "fit", labels, pass_env, utils::modifyList(vp_choices, list(TRIM = 0.3, MAX_UNTESTED = untested))))
 })
 
 test_that("vp-fit stops when more candidates went untested than MAX_UNTESTED allows", {
@@ -280,8 +302,7 @@ test_that("both varpro() calls in vp-fit carry the exploration settings, and the
   }
   # The figure is scored on every tree, as the coverage table is.
   expect_match(src, "gg_varpro(fit, max.tree = fit$rf$ntree, trim = TRIM, noise = \"^noise\")", fixed = TRUE)
-  expect_match(src, "varpro_coverage(fit, by = \"variable\", trim = TRIM, max.tree = fit$rf$ntree,", fixed = TRUE)
-  expect_match(src, "varpro_coverage(fr, by = \"variable\", trim = TRIM, max.tree = fr$rf$ntree,", fixed = TRUE)
+  expect_match(src, "varpro_coverage(f, by = \"variable\", trim = TRIM, max.tree = f$rf$ntree,", fixed = TRUE)
 })
 
 test_that("vp-fit hands varPro a lowered mtry and a survival leaf of about two events", {
