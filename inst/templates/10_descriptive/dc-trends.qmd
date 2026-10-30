@@ -378,6 +378,8 @@ for (sg in names(SUBGROUPS)) {
   cat("\n### ", sg, " (n = ", nrow(dd), ")\n\n", sep = "")
   for (nm in names(TRENDS)) {
     spec <- TRENDS[[nm]]
+    .selection <- attr(job_data$record, "selection")
+    hvtiRtemplates:::.refuse_display(spec$cols, hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "TRENDS")
     tr <- hv_trends(trend_long(dd, spec), x_col = "year", y_col = "value",
                     group_col = if (length(spec$cols) == 1L) NULL else "series",
                     summary_fn = if (is.null(spec$summary)) "mean" else spec$summary)

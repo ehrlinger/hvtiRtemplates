@@ -42,7 +42,7 @@ run_derive <- function(d = synthetic(),
   env
 }
 
-test_that("extreme values carry no identifier unless ID_COL is set", {
+test_that("extreme values never carry an identifier, and ID_COL sends it to the console", {
   off <- run_derive()
   extremes <- off$cdfs$Demography$age$extremes
   expect_named(extremes, c("end", "value"))
@@ -51,9 +51,9 @@ test_that("extreme values carry no identifier unless ID_COL is set", {
   every_name <- unlist(lapply(off$cdfs, function(g) lapply(g, function(v) lapply(v, names))))
   expect_false("ccfid" %in% every_name)
 
-  on <- run_derive(id_col = "ccfid")
-  expect_named(on$cdfs$Demography$age$extremes, c("end", "value", "ccfid"))
-  expect_identical(on$cdfs$Demography$age$extremes$ccfid[[1L]], 1009L)
+  console <- utils::capture.output(on <- run_derive(id_col = "ccfid"), type = "message")
+  expect_named(on$cdfs$Demography$age$extremes, c("end", "value"))
+  expect_true(any(grepl("1009", console, fixed = TRUE)))
 })
 
 test_that("an unknown column stops and names every one", {

@@ -233,6 +233,9 @@ if (!is.null(job_data$attrition)) {
 # so a misspelled column stops here by name rather than as an error from inside
 # ps_stddiff().
 .id <- attr(job_data$record, "selection")$id
+.selection <- attr(job_data$record, "selection")
+.no_values <- hvtiRtemplates:::.no_values(d, .selection$id, .selection$key)
+hvtiRtemplates:::.refuse_display(c(GROUP, GAUSSIAN, NONG_ORD, BINARY, CATEGORICAL), .no_values, "GROUP or the variable lists")
 one_column <- function(x, setting) {
   if (!is.null(x) && !(is.character(x) && length(x) == 1L && !is.na(x))) {
     stop(setting, " must be NULL or a single column name.", call. = FALSE)

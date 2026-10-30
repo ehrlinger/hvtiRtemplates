@@ -88,7 +88,7 @@ test_that("GROUP_1 recodes a two-valued group, and three values are refused", {
 test_that("a bad choice stops by name before ps_stddiff() runs", {
   expect_error(run_stddiff(GAUSSIAN = c("age", "nope"), MATCH = "zilch"), "Unknown column\\(s\\): zilch, nope")
   expect_error(run_stddiff(GAUSSIAN = "age", BINARY = "age"), "one type only: age")
-  expect_error(run_stddiff(GAUSSIAN = c("age", "ccfid")), "Not a covariate.*ccfid")
+  expect_error(run_stddiff(GAUSSIAN = c("age", "ccfid")), "names ccfid, which identifies patients")
   expect_error(run_stddiff(GAUSSIAN = character(), BINARY = character()), "at least one variable")
   expect_error(run_stddiff(MATCH = "race"), "MATCH must be a 0/1")
   expect_error(run_stddiff(N_PERM = 2.5), "N_PERM must be 0")

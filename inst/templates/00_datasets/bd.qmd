@@ -303,8 +303,7 @@ d <- d[, intersect(.carry, names(d)), drop = FALSE]
 # Tables and figures are another matter: the report shows no value of an identifier. That is ID, KEY, JOIN_BY,
 # OTHER_IDENTIFIERS, a column named for an MRN, medical record, CCFID or SSN, and whatever read_job_data() would keep from an
 # analysis job: names and contact details by name, and a column whose values are shaped like SSNs.
-.no_values <- unique(c(ID, KEY, JOIN_BY, OTHER_IDENTIFIERS, hvtiRtemplates:::.drop_identifiers(d, ID, KEY)$dropped,
-                       grep("mrn|ccfid|med_?rec|medical_?record|(^|_)ssn[0-9]*(_|$)", names(d), value = TRUE)))
+.no_values <- hvtiRtemplates:::.no_values(d, ID, c(KEY, JOIN_BY), OTHER_IDENTIFIERS)
 .repeats <- sum(duplicated(d[KEY]))
 if (.repeats) {
   .bd_stop("write-built", .repeats, " row(s) repeat a value of KEY (", toString(KEY), "). Exclude the extra rows in ",

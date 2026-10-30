@@ -671,13 +671,11 @@ vt_ps <- function(vars) {
 ```{r}
 #| label: tbl-ood
 #| tbl-cap: "Patients out of distribution, by method and the arm they were judged against"
-.out <- .elig_rows[!.elig_rows$in_distribution, c("ID", "method", "arm", "distance", "reference", "features")]
-if (nrow(.out)) {
-  .out$distance <- round(.out$distance, 3)
-  .out$reference <- round(.out$reference, 3)
-}
-cat(nrow(.out), "patient-by-arm judgments are out of distribution; every one is listed.\n")
-knitr::kable(.out, row.names = FALSE)
+# Counts only. A row here would describe one patient, so the rows, with each patient's
+# distance and the features behind it, stay in vt.rds under eligibility$rows.
+.out <- .elig_rows[!.elig_rows$in_distribution, c("method", "arm")]
+cat(nrow(.out), "patient-by-arm judgments are out of distribution; each is in `vt.rds`, under `eligibility$rows`.\n")
+knitr::kable(as.data.frame(table(method = .out$method, arm = .out$arm), responseName = "patients"), row.names = FALSE)
 ```
 
 ```{r}

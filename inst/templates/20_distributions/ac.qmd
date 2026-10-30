@@ -465,6 +465,8 @@ in this job before the tests, and say so in the report.
 #| results: asis
 # unnumbered: each child chunk below carries its own label and caption
 strata_fits <- list()
+.selection <- attr(job_data$record, "selection")
+hvtiRtemplates:::.refuse_display(STRATA, hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "STRATA")
 for (v in STRATA) {
   .lt <- hvtiRtemplates::life_table(d, TIME, EVENT, strata = v, conf_level = CLEVEL)
   strata_fits[[v]] <- .lt

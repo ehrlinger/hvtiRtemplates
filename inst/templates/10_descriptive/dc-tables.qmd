@@ -482,6 +482,9 @@ if (!is.null(.by_levels) && (!is.null(GROUP_1) || setequal(names(.by_levels), c(
 if (!is.logical(DROP_CONSTANT) || length(DROP_CONSTANT) != 1L || is.na(DROP_CONSTANT)) {
   stop("DROP_CONSTANT must be TRUE or FALSE.", call. = FALSE)
 }
+.selection <- attr(job_data$record, "selection")
+.no_values <- hvtiRtemplates:::.no_values(d_table, .selection$id, .selection$key)
+hvtiRtemplates:::.refuse_display(c(GROUPS, BY), .no_values, "GROUPS or BY")
 explicit <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
 if (all(vapply(explicit, is.null, logical(1)))) {
   b <- classify_buckets(d_table, unlist(GROUPS, use.names = FALSE), OVERRIDES)
@@ -612,6 +615,8 @@ hvtiRtables::hv_man_table_display(word_ft, abbreviations = ABBREVIATIONS)
 if (is.null(CORR)) {
   cat("Correlation variant not requested (`CORR <- NULL`).\n")
 } else {
+  .selection <- attr(job_data$record, "selection")
+  hvtiRtemplates:::.refuse_display(CORR[c("vars", "with", "by")], hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "CORR")
   ct <- hv_correlation_table(d, vars = CORR$vars, with = CORR$with)
   conf_level <- attr(ct, "conf_level")
   if (!is.null(CORR$by)) {

@@ -1,4 +1,4 @@
-migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame()) {
+migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame(), edit_built = identity) {
   root <- withr::local_tempdir(.local_envir = .local_envir)
   folders <- c("datasets", "descriptive", "distributions", "analyses", "graphs", "documents", "estimates")
   for (folder in folders) dir.create(file.path(root, folder))
@@ -15,6 +15,7 @@ migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame()) 
   if (identical(kind, "dp-postage")) {
     for (j in seq_len(5L)) built[[paste0("panel", j)]] <- i + j / 10
   }
+  built <- edit_built(built)
   utils::write.csv(built, file.path(root, "datasets", "built.csv"), row.names = FALSE)
   utils::write.csv(built[1:24, ], file.path(root, "datasets", "complete_cases.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::study_setup(
