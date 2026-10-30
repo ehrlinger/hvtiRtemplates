@@ -675,7 +675,9 @@ vt_ps <- function(vars) {
 # distance and the features behind it, stay in vt.rds under eligibility$rows.
 .out <- .elig_rows[!.elig_rows$in_distribution, c("method", "arm")]
 cat(nrow(.out), "patient-by-arm judgments are out of distribution; each is in `vt.rds`, under `eligibility$rows`.\n")
-knitr::kable(as.data.frame(table(method = .out$method, arm = .out$arm), responseName = "patients"), row.names = FALSE)
+# Factors, so a job with no patient out of distribution still prints its table of zeros.
+.ood_counts <- table(method = factor(.out$method, unique(.elig_rows$method)), arm = factor(.out$arm, unique(.elig_rows$arm)))
+knitr::kable(as.data.frame(.ood_counts, responseName = "patients"), row.names = FALSE)
 ```
 
 ```{r}

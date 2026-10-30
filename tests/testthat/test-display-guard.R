@@ -45,3 +45,20 @@ test_that("planted identifiers reach no report", {
                                          "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980", "^X_VAR <- " = "X_VAR <- \"year\""))
   expect_false(grepl("90000(01|40)|77000(01|40)", eda))
 })
+
+test_that("vt-fit's out-of-distribution table shows counts, and survives a job with none", {
+  lines <- readLines(template_path("vt", "fit"), warn = FALSE)
+  start <- match("#| label: tbl-ood", lines)
+  end <- start + match("```", lines[(start + 1L):length(lines)])
+  code <- chunk_expression(lines[seq.int(start, end - 1L)], "tbl-ood")
+  rows <- data.frame(ID = c("digest1", "digest2"), method = "gower", arm = c("A", "B"), in_distribution = TRUE,
+                     distance = 1, reference = 2, features = "")
+  env <- list2env(list(.elig_rows = rows), parent = baseenv())
+  out <- capture.output(res <- eval(code, env))
+  expect_false(any(grepl("digest", c(out, res))))
+  rows$in_distribution[1L] <- FALSE
+  env <- list2env(list(.elig_rows = rows), parent = baseenv())
+  capture.output(res <- eval(code, env))
+  expect_false(any(grepl("digest", res)))
+  expect_true(any(grepl("gower.*A.*1", res)))
+})

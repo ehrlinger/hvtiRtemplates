@@ -295,7 +295,7 @@ review_rows <- fc$review
 # on stderr(), which knitr does not collect.
 if (!is.null(IDENTIFIER)) {
   utils::write.table(review_rows, stderr(), row.names = FALSE, quote = FALSE)
-  review_rows <- review_rows[setdiff(names(review_rows), IDENTIFIER)]
+  review_rows <- review_rows[setdiff(names(review_rows), setdiff(IDENTIFIER, c(EVENT, FOLLOWUP)))]
 }
 # followup_check() returns five one-row tables: the group counts, the interval
 # checks for all patients, and one proc_means() row per group. This is them as
