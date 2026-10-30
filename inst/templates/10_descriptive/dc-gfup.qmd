@@ -133,7 +133,7 @@ JOIN_KEY <- NULL
 # MIGRATE-BEGIN: dc-gfup-config
 EVENT <- "dead"       # EDIT: binary event indicator, 1=event and 0=censored
 FOLLOWUP <- "iv_dead" # EDIT: follow-up interval(s) this job checks, in years
-IDENTIFIER <- NULL    # EDIT: opt in only for local review
+IDENTIFIER <- NULL    # EDIT: a column to list suspicious rows with on the console, never in the report
 MAX_REVIEW_ROWS <- 25L
 # MIGRATE-END: dc-gfup-config
 # EDIT: optional event-coding cross-tabs, each a vector of column names.
@@ -291,6 +291,12 @@ fc <- hvtiRutilities::followup_check(d, event = EVENT, followup = FOLLOWUP, iden
                                      max_rows = MAX_REVIEW_ROWS, stats = .followup_stats)
 cohort_counts <- fc$cohort
 review_rows <- fc$review
+# The report shows no identifier. Named here, it goes with its rows to the console,
+# on stderr(), which knitr does not collect.
+if (!is.null(IDENTIFIER)) {
+  utils::write.table(review_rows, stderr(), row.names = FALSE, quote = FALSE)
+  review_rows <- review_rows[setdiff(names(review_rows), setdiff(IDENTIFIER, c(EVENT, FOLLOWUP)))]
+}
 # followup_check() returns five one-row tables: the group counts, the interval
 # checks for all patients, and one proc_means() row per group. This is them as
 # one table, a row per interval and group. The counts are each group's n, the
@@ -617,6 +623,9 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
 #| label: checks
 #| results: asis
 # unnumbered: each child chunk below carries its own label and caption
+.selection <- attr(job_data$record, "selection")
+.no_values <- hvtiRtemplates:::.no_values(d, .selection$id, .selection$key)
+hvtiRtemplates:::.refuse_display(CHECKS, .no_values, "CHECKS")
 unknown_checks <- setdiff(unlist(CHECKS, use.names = FALSE), names(d))
 if (length(unknown_checks)) {
   stop("Unknown event-check column(s): ", paste(unknown_checks, collapse = ", "), call. = FALSE)

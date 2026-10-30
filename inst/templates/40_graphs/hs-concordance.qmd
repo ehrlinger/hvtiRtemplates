@@ -314,6 +314,8 @@ if (is.null(OVERLAP) || length(OVERLAP) != 1L || !OVERLAP %in% .overlaps) {
 # Every group in the cohort must have a model: a patient whose own treatment
 # has none cannot be compared with what they received. An author who means to
 # leave a group out filters it with WHERE, where the choice is visible.
+.selection <- attr(job_data$record, "selection")
+hvtiRtemplates:::.refuse_display(GROUP, hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "GROUP")
 if (is.null(GROUP) || !GROUP %in% names(d)) {
   stop("GROUP must name the column recording each patient's treatment; got ",
        if (is.null(GROUP)) "NULL" else paste0("\"", GROUP, "\""), ".", call. = FALSE)

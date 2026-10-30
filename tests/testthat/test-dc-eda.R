@@ -215,19 +215,20 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
   # ccfid is dropped at read when it is not the ID.
   expect_false("ccfid" %in% names(env$d))
 
-  # Named in VARIABLES, the ID is still not drawn, and the report says so.
-  expect_warning(env <- run(id = "randid", variables = c("age", "randid")), "Not drawn, as the job's ID: randid")
-  expect_identical(env$VARIABLES, "age")
+  # Named in VARIABLES, the ID stops the job.
+  expect_error(run(id = "randid", variables = c("age", "randid")), "VARIABLES names randid")
 
   # A KEY column beside the ID, such as a visit time, is left out by default and
-  # drawn when named.
+  # stops the job when named.
   expect_true("visit_mo" %in% run()$VARIABLES)
   env <- run(key = c("ccfid", "visit_mo"))
   expect_false("visit_mo" %in% env$VARIABLES)
-  expect_no_warning(env <- run(key = c("ccfid", "visit_mo"), variables = c("age", "visit_mo")))
-  expect_identical(env$VARIABLES, c("age", "visit_mo"))
-  # The name, date and free-text rules still flag a KEY column named there.
-  expect_warning(env <- run(key = c("ccfid", "hosp_id"), variables = c("age", "hosp_id")),
+  expect_error(run(key = c("ccfid", "visit_mo"), variables = c("age", "visit_mo")), "VARIABLES names visit_mo")
+  # hosp_id's values look like record numbers, so naming it stops the job.
+  expect_error(run(variables = c("age", "hosp_id")), "VARIABLES names hosp_id, whose values look like record numbers")
+  # Once the job clears that shape, the name, date and free-text rules still flag it.
+  withr::local_options(hvtiRtemplates.not_identifiers = "hosp_id")
+  expect_warning(env <- run(variables = c("age", "hosp_id")),
                  "Selected likely identifier or date field\\(s\\): hosp_id")
   expect_identical(env$VARIABLES, c("age", "hosp_id"))
 })
@@ -258,7 +259,7 @@ eda_spec_env <- function(d, ...) {
 
 test_that("dc-eda's spec chunk checks every variable and plotting choice", {
   spec <- eda_chunk("spec")
-  env <- eda_spec_env(data.frame(year = 1:10, age = 41:50, patient_id = 11:20, visit_date = 21:30),
+  env <- eda_spec_env(data.frame(year = 1:10, age = 41:50, hosp_id = 11:20, visit_date = 21:30),
                       VARIABLES = "age")
   expect_no_error(eval(spec, env))
   for (field in c("X_VAR", "X_LABEL", "VARIABLES", "VARIABLE_SET", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SECTIONS",
@@ -279,7 +280,7 @@ test_that("dc-eda's spec chunk checks every variable and plotting choice", {
   env$ABBREVIATIONS <- NULL
   env$VARIABLES <- "absent"
   expect_error(eval(spec, env), "Unknown EDA")
-  env$VARIABLES <- c("patient_id", "visit_date")
+  env$VARIABLES <- c("hosp_id", "visit_date")
   expect_warning(eval(spec, env), "identifier or date")
   env$VARIABLES <- c("age", "year")
   env$EXCLUDE <- "year"
@@ -321,6 +322,12 @@ test_that("a numeric X_VAR is drawn as it is, under X_LABEL", {
   env <- eda_spec_env(d, VARIABLES = "age")
   eval(eda_chunk("spec"), env)
   expect_identical(env$.d_eda[["Year of operation"]], d$year)
+})
+
+test_that("X_VAR cannot name a column no report may show", {
+  d <- data.frame(ccfid = rep(1:5, 2L), recordnumber = 7700000L + 1:10, year = rep(2001:2005, 2L), age = 41:50)
+  expect_error(eval(eda_chunk("spec"), eda_spec_env(d, X_VAR = "ccfid", VARIABLES = "age")), "X_VAR names ccfid")
+  expect_error(eval(eda_chunk("spec"), eda_spec_env(d, X_VAR = "recordnumber", VARIABLES = "age")), "look like record numbers")
 })
 
 test_that("a missing X_VAR stops and says where to set it", {
@@ -451,7 +458,7 @@ test_that("dc-eda's overview leaves out identifiers but keeps dates", {
                                       patientid = sprintf("P%03d", seq_len(n)), carotid = rep(0:1, 6), eMRN = 5000L + seq_len(n),
                                       mrn_num = rep(0:1, 6),
                                       bnp_mrna = 0.5 * seq_len(n), dt_surg = as.Date("2020-01-01") + seq_len(n)),
-                       X_VAR = "year", X_LABEL = "Year of operation", VARIABLES = c("age", "ccfid"),
+                       X_VAR = "year", X_LABEL = "Year of operation", VARIABLES = "age",
                        VARIABLE_SET = "all", EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,

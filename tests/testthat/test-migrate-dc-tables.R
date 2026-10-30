@@ -149,6 +149,7 @@ eval_table <- function(job, env) {
   }
   if (is.null(env$TABLE_LABEL_RULES)) env$TABLE_LABEL_RULES <- TRUE
   if (is.null(env$ABBREVIATIONS)) env$ABBREVIATIONS <- character(0)
+  if (is.null(env$job_data)) env$job_data <- list(record = structure(list(), selection = list(id = "ccfid", key = "ccfid")))
   eval(tables_chunk(job, "table-labels"), env)
   eval(tables_chunk(job, "tbl-table"), env)
 }

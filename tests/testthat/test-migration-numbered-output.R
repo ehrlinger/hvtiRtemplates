@@ -42,6 +42,7 @@ test_that("numbered migrated jobs save and embed figures in their logical folder
     } else {
       env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
       env$CORR <- list(vars = "age", with = "bmi", by = NULL)
+      env$job_data <- list(record = structure(list(), selection = list(id = "ccfid", key = "ccfid")))
       env$SAVE_FIGURES <- TRUE
       env$FIGURES <- NULL
     }

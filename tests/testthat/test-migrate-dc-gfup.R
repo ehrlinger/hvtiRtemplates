@@ -89,11 +89,13 @@ test_that("dc-gfup QC reports literal summaries and caps private review rows", {
   expect_identical(names(env$review_rows), c("dead", "iv_dead", "iv_fup"))
   expect_false(any(grepl("local_id", output, fixed = TRUE)))
   env$IDENTIFIER <- "local_id"
-  capture.output({
+  console <- utils::capture.output(capture.output({
     eval(code, env)
     eval(review, env)
-  })
-  expect_identical(env$review_rows$local_id, c("a", "b"))
+  }), type = "message")
+  # Listed on the console, and never in the report's table.
+  expect_false("local_id" %in% names(env$review_rows))
+  expect_true(any(grepl("local_id", console, fixed = TRUE)))
 })
 
 test_that("dc-gfup validates every field and row cap before summarizing", {
@@ -264,7 +266,8 @@ test_that("dc-gfup retains optional event-coding cross-tabs with field checks", 
   local_child_chunks()
   code <- gfup_chunk(template_path("dc", "gfup"), "checks")
   env <- list2env(list(d = data.frame(dead = c(0, 1, NA), event_source = c(0, 1, NA)),
-                       CHECKS = list(c("dead", "event_source"))))
+                       CHECKS = list(c("dead", "event_source")),
+                       job_data = list(record = structure(list(), selection = list(id = "ccfid", key = "ccfid")))))
   output <- capture.output(eval(code, env))
   expect_true(any(grepl("NA", output, fixed = TRUE)))
   env$CHECKS <- list(c("dead", "missing_field"))

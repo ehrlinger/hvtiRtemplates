@@ -265,6 +265,8 @@ d <- .interval$data
 .time <- .interval$time
 variables <- hvtiRtemplates:::.lg_variables(VARIABLES, d, exclude = .id, event = .event,
                                             time = if (identical(LINK, "hazard")) .time)
+.selection <- attr(job_data$record, "selection")
+hvtiRtemplates:::.refuse_display(VARIABLES$name, hvtiRtemplates:::.no_values(d, .id, .selection$key), "VARIABLES")
 ```
 
 ```{r}
