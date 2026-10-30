@@ -206,6 +206,11 @@ test_that("vp-fit's figure holds categorical variables to the table's bar when c
   eval(parse(text = lines[from:to]), envir = env)
   expect_identical(env$.gv$imp$noise_cut, rep(0, 4))
   expect_identical(env$.gv$imp$selected, rep(FALSE, 4))
+  # The caption says so, in the words of the table. Built from ggRandomForests' own caption, so a change there fails here.
+  env$.fig <- ggplot2::ggplot() + ggplot2::labs(caption = ggRandomForests:::.varpro_noise_caption(env$.gv$imp))
+  eval(parse(text = grep("^\\.fig\\$labels\\$caption", lines, value = TRUE)), envir = env)
+  expect_match(env$.fig$labels$caption, "categorical: no usable noise bar, nothing selected", fixed = TRUE)
+  expect_no_match(env$.fig$labels$caption, "no noise tested", fixed = TRUE)
 })
 
 test_that("vp-fit stops when more candidates went untested than MAX_UNTESTED allows", {

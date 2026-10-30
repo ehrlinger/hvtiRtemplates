@@ -645,6 +645,9 @@ set.seed(abs(SEED))
 # No usable bar selects nothing, and draws at 0, as gg_varpro() draws an empty noise check.
 .gv$imp$noise_cut[is.na(.gv$imp$noise_cut)] <- 0
 .fig <- plot(.gv) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+# The plot's caption reads a missing bar as noise that was never tested. Noise that was tested and all scored 0 has
+# no bar either, so say what the table says.
+.fig$labels$caption <- gsub("(\\w+) 0, no noise tested", "\\1: no usable noise bar, nothing selected", .fig$labels$caption)
 save_figure(.fig, "vp-fit-varpro", height = 7)
 .fig
 ```
