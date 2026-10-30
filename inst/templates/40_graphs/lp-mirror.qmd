@@ -365,6 +365,21 @@ if (!is.null(MATCH)) {
 }
 ```
 
+```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The tables count each group, and the matched patients in it. A bar is a count too, and the tails
+# of a histogram are nearly always short ones; they are left out because a bar places a patient
+# on a model's score alone, which no reader can look up.
+.groups_shown <- stats::setNames(scores["group"], .meta$treatment_col)
+.groups_matched <- stats::setNames(scores[scores$matched == 1L, "group", drop = FALSE], paste0(.meta$treatment_col, ", matched"))
+cat(hvtiRtemplates:::.identifiability_notice(rbind(
+  hvtiRtemplates:::.identifiability_check(.groups_shown, by = names(.groups_shown)),
+  if (!is.null(MATCH)) hvtiRtemplates:::.identifiability_check(.groups_matched, by = names(.groups_matched))
+)))
+```
+
 ## Figures
 
 ```{r}

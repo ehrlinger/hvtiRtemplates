@@ -404,6 +404,21 @@ if (nrow(.small)) {
 ```
 
 ```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The table counts each cluster at every K, and the Sankey draws the patients who move from one K
+# to the next. MIN_SIZE above asks whether a cluster can be analyzed, and this whether a count can be
+# published. A silhouette or MDS point is a distance between patients, with no value of theirs in it.
+.ks_shown <- paste0("C", K_RANGE)
+.moves <- if (length(.ks_shown) > 1L) Map(c, utils::head(.ks_shown, -1L), .ks_shown[-1L]) else list()
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(sid_letters, cells = .ks_shown,
+                                          tables = .moves)
+))
+```
+
+```{r}
 #| label: fig-sankey
 #| fig-cap: "How patients move between clusters as K grows"
 #| include: !expr 'length(K_RANGE) > 1'

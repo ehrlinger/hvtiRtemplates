@@ -389,20 +389,13 @@ with the level.
 ## Estimation
 
 ```{r}
-#| label: identifiability
-#| results: asis
-# Flags what a reader could learn about one patient, by column and count. It changes no number.
-# The follow-up table shows the longest follow-up, and a stratum's curve is its few patients' events.
-# The life tables leave out a row missing its time or its event, so the counts here do too.
-cat(hvtiRtemplates:::.identifiability_notice(
-  hvtiRtemplates:::.identifiability_check(d[!is.na(d[[TIME]]) & !is.na(d[[EVENT]]), , drop = FALSE], STRATA,
-                                          cells = STRATA, extremes = TIME)
-))
-```
-
-```{r}
 #| label: km-helpers
 # unnumbered: defines helpers only
+# The times the manuscript figure counts patients at risk.
+risk_times <- function(plot_max) {
+  at <- if (is.null(RISK_TIMES)) pretty(c(0, plot_max)) else RISK_TIMES
+  at[at <= plot_max]
+}
 .fence <- strrep("`", 3)
 .seen <- new.env()
 # Prints `code` as a child chunk with its own label and caption, so each table
@@ -422,6 +415,30 @@ as_percent <- function(x) {
   for (col in intersect(c("survival", "cl_lower", "cl_upper"), names(x))) x[[col]] <- round(100 * x[[col]], 1)
   x
 }
+```
+
+```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The follow-up table shows the longest follow-up, and a stratum's curve is its few patients' events.
+# The life tables leave out a row missing its time or its event, so the counts here do too.
+# Numbers at risk are counted where the report states them as the deliverable, the horizon tables
+# and the figure's row. A life table's own rows are not: every table runs out to its last patient.
+.fu_rows <- !is.na(d[[TIME]]) & !is.na(d[[EVENT]])
+.fu_end <- max(as.numeric(d[[TIME]][.fu_rows]), 0)
+.at_risk <- function(strata, column) {
+  .times <- sort(unique(c(grid, risk_times(if (is.null(PLOT_MAX)) .fu_end else PLOT_MAX))))
+  hvtiRtemplates:::.identifiability_counts(
+    hvtiRtemplates::life_table_at(d, TIME, EVENT, times = .times, strata = strata, conf_level = CLEVEL)$n_risk,
+    column, check = "at_risk"
+  )
+}
+cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(
+  list(hvtiRtemplates:::.identifiability_check(d[.fu_rows, , drop = FALSE], STRATA, cells = STRATA, extremes = TIME),
+       .at_risk(NULL, "all patients")),
+  lapply(STRATA, function(v) .at_risk(v, v))
+))))
 ```
 
 ## Overall
@@ -584,8 +601,7 @@ km_figure <- function(strata = NULL) {
   dd[[EVENT]] <- as.numeric(dd[[EVENT]])
   # The strata in the order the tables list them.
   if (!is.null(strata)) dd[[strata]] <- factor(as.character(dd[[strata]]), levels = attr(strata_fits[[strata]], "counts")$stratum)
-  at <- if (is.null(RISK_TIMES)) pretty(c(0, plot_max)) else RISK_TIMES
-  at <- at[at <= plot_max]
+  at <- risk_times(plot_max)
   # The numbers at risk are the tables' own, counted after each time, so the
   # figure and the tables agree where a patient is followed to exactly that time.
   risk <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = at, strata = strata, conf_level = CLEVEL)

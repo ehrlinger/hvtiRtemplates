@@ -292,6 +292,17 @@ for (i in which(horizons$extrapolating)) {
 }
 ```
 
+```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The table above prints the longest follow-up, over the rows fitted, and the actuarial step line
+# ends there. The nomogram and the curves are model estimates at chosen times, and no count is shown.
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(d[fitted_rows, , drop = FALSE], extremes = TIME)
+))
+```
+
 ## Predictions
 
 Two settings must be right or every number below is wrong. Both were decoded

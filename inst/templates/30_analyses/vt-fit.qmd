@@ -731,6 +731,21 @@ knitr::kable(.overlap$combinations, row.names = FALSE)
 knitr::kable(.overlap$pairs, row.names = FALSE)
 ```
 
+```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# What this report counts: patients and events by arm, the longest follow-up and the numbers at risk
+# of the observed outcome, and the patients each rule flags. The rows behind them stay in vt.rds.
+cat(hvtiRtemplates:::.identifiability_notice(rbind(
+  hvtiRtemplates:::.identifiability_check(.km_data, extremes = TIME, tables = list(c(ARM, STATUS))),
+  hvtiRtemplates:::.identifiability_counts(.counts$Patients, "patients by arm"),
+  hvtiRtemplates:::.identifiability_counts(.km$tables$risk$n.risk, "each arm's observed outcome", check = "at_risk"),
+  hvtiRtemplates:::.identifiability_counts(.ood_counts, "out of distribution, by method and arm"),
+  hvtiRtemplates:::.identifiability_counts(as.matrix(.overlap$combinations[-1L]), "patients by the rules that flag them")
+)))
+```
+
 ## The arm forests
 
 One survival forest per arm, grown on the patients who received that arm. A patient's own-arm curve

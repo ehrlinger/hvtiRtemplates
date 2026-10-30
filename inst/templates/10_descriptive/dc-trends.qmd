@@ -337,6 +337,29 @@ trend_long <- function(d, spec) {
 }
 ```
 
+```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# A yearly point is the summary of that year's patients, so a year of few patients plots nearly
+# their own values. Only the point is drawn, with no count beside it, so a percent trend's
+# numerator cannot be read off and is not counted. The table above shows the first and last year.
+.year_cells <- list()
+for (sg in names(SUBGROUPS)) {
+  keep <- SUBGROUPS[[sg]](d)
+  # The figures chunk stops on a malformed filter, with the message that says how to fix it.
+  if (!is.logical(keep) || length(keep) != nrow(d)) next
+  for (.col in intersect(unlist(lapply(TRENDS, `[[`, "cols"), use.names = FALSE), names(d))) {
+    .y <- d$year[keep %in% TRUE & !is.na(d[[.col]]) & !is.na(d$year)]
+    .year_cells[[length(.year_cells) + 1L]] <- hvtiRtemplates:::.identifiability_counts(table(.y), paste0(.col, " by year, ", sg))
+  }
+}
+cat(hvtiRtemplates:::.identifiability_notice(unique(rbind(
+  hvtiRtemplates:::.identifiability_check(d, extremes = "year"),
+  do.call(rbind, .year_cells)
+))))
+```
+
 ## Figures
 
 ```{r}
