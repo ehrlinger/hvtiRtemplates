@@ -389,6 +389,18 @@ with the level.
 ## Estimation
 
 ```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The follow-up table shows the longest follow-up, and a stratum's curve is its few patients' events.
+# The life tables leave out a row missing its time or its event, so the counts here do too.
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(d[!is.na(d[[TIME]]) & !is.na(d[[EVENT]]), , drop = FALSE], STRATA,
+                                          cells = STRATA, extremes = TIME)
+))
+```
+
+```{r}
 #| label: km-helpers
 # unnumbered: defines helpers only
 .fence <- strrep("`", 3)

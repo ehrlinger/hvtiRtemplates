@@ -382,7 +382,7 @@
     datasets = .facts_datasets(data, cfg),
     upstream = .facts_upstream(artifacts),
     reproducibility = .facts_reproducibility(cfg, envir)
-  ))
+  ), if (!is.null(.run_state$identifiability)) list(identifiability = .run_state$identifiability))
 }
 
 # ---- The end table -----------------------------------------------------------
@@ -431,6 +431,10 @@
     group_rows("Run", list(c("Started", .clock(facts$start, facts$time_zone)), c("Ended", .clock(facts$end, facts$time_zone)),
                            c("Duration", .fmt_duration(facts$duration_seconds)), c("Status", status),
                            c("Rendered by", .who(facts$user, facts$user_name)), c("Host", facts$host))),
+    group_rows("Identifiability", lapply(seq_len(NROW(facts$identifiability)), function(i) {
+      f <- facts$identifiability[i, ]
+      c(paste0(f$check, ": `", f$column, "`"), format(f$count))
+    })),
     group_rows("Job", list(c("File", j$file), c("Template", j$template), c("Subject", j$subject), c("Type", j$type),
                            c("hvtiRtemplates", j$hvtiRtemplates))),
     unlist(lapply(facts$datasets, function(d) {

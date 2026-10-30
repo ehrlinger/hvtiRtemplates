@@ -1,0 +1,1 @@
+- **`dc-tables`, `dc-gfup` and `ac` now warn before their output goes in a manuscript.** A callout names each column and count of concern: cells and `BY` groups under 5 patients, patients older than 89, exact dates, and a minimum or maximum shown. It never shows a value, never changes a number, and prints nothing when nothing is found. "About this run" keeps the same counts.
