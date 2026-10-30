@@ -87,7 +87,7 @@
 <p>Each template carries a light.</p>
 <ul>
 <li>🟢 <strong>Shipped</strong> (35): on disk and supported. Scaffold it and use it.</li>
-<li>🟡 <strong>In progress</strong> (30): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
+<li>🟡 <strong>In progress</strong> (29): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
 <li>🔴 <strong>Not yet on the way</strong> (10): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
 </h2>
@@ -96,10 +96,10 @@
 </h3>
 <table class="table caption-top">
 <colgroup>
-<col style="width: 5%">
 <col style="width: 3%">
-<col style="width: 81%">
-<col style="width: 10%">
+<col style="width: 1%">
+<col style="width: 87%">
+<col style="width: 6%">
 </colgroup>
 <thead><tr class="header">
 <th style="text-align: left;">Delivery</th>
@@ -107,20 +107,12 @@
 <th style="text-align: left;">Description</th>
 <th style="text-align: left;">Scaffold</th>
 </tr></thead>
-<tbody>
-<tr class="odd">
+<tbody><tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>bd</code></td>
-<td style="text-align: left;">Cuts a study’s dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then the working file and its build record, registered as a dated version of the study dataset.</td>
+<td style="text-align: left;">Cuts a study’s dataset from a master snapshot: cohort list, exclusions with attrition and derived variables, then the working file and its build record. Before registering, it checks what it built: what the rebuild changed against the registered version, cross-tabs, follow-up and named checks, with counts in the report and rows in the console only. Registered as a dated version of the study dataset.</td>
 <td style="text-align: left;"><code>add_job("bd", subject, type)</code></td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">🟡 In progress</td>
-<td style="text-align: left;"><code>dt</code></td>
-<td style="text-align: left;">Checks the working file a bd job writes, before it is registered: what the rebuild changed against the version registered now, cross-tabs, follow-up and named checks, with counts in the report and the rows behind them in the console only.</td>
-<td style="text-align: left;"><code>add_job("dt", subject, type)</code></td>
-</tr>
-</tbody>
+</tr></tbody>
 </table></section><section class="level3"><h3 id="descriptive">descriptive<a class="anchor" aria-label="anchor" href="#descriptive"></a>
 </h3>
 <table class="table caption-top">
