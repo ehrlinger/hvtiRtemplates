@@ -28,8 +28,8 @@ canary_report <- function(prefix, qualifier, edits) {
     built$pt_mrn <- 9000000L + seq_len(nrow(built))
     built
   }
-  root <- migration_study_fixture(NULL, .local_envir = parent.frame(), edit_built = plant)
-  s <- scaffold_job(prefix, qualifier, edits, root = root)
+  root <- migration_study_fixture(NULL, .local_envir = parent.frame(), edit_built = plant)  # nolint: object_usage_linter.
+  s <- scaffold_job(prefix, qualifier, edits, root = root)  # nolint: object_usage_linter.
   quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
   html <- list.files(root, pattern = "[.]html$", recursive = TRUE, full.names = TRUE)
   gsub("base64,[A-Za-z0-9+/=]+", "", paste(unlist(lapply(html, readLines, warn = FALSE)), collapse = "\n"))
