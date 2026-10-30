@@ -367,6 +367,19 @@ if (N_PERM > 0) {
 }
 ```
 
+```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The report shows each comparison's group sizes and differences, never a variable's levels or
+# values. A weighted comparison has the unadjusted patients, so only the matched set adds a count.
+cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, lapply(setdiff(names(comparisons), "Weighted"), function(nm) {
+  .g <- comparisons[[nm]]$data[GROUP]
+  if (nm != "Unadjusted") names(.g) <- paste0(GROUP, ", ", nm)
+  hvtiRtemplates:::.identifiability_check(.g, by = names(.g))
+}))))
+```
+
 ## Groups compared
 
 Group 1 is **`r group_names[["1"]]`** and group 0 is **`r group_names[["0"]]`**.

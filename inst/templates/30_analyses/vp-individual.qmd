@@ -319,6 +319,21 @@ knitr::kable(icov, digits = 3, row.names = FALSE)
 ```
 
 ```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# Each panel below draws a patient's own value of a predictor, for the patients with a gradient.
+# Noise columns are permuted, so they describe no one. A predictor of few values draws a column of
+# points per value, so its levels are its cells; any other shows its extremes at the axis's ends.
+.shown_values <- as.data.frame(.idata)[show]
+for (.t in show) .shown_values[[.t]][!is.finite(grad[[.t]])] <- NA
+.few <- vapply(.shown_values, function(x) length(unique(x[!is.na(x)])) <= 10L, logical(1L))
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(.shown_values, show, cells = show[.few], extremes = show[!.few])
+))
+```
+
+```{r}
 #| label: fig-beeswarm
 #| fig-cap: "Each patient's local gradient for each drawn predictor, one row per predictor, colored by the patient's
 #|   standardized value of that predictor; permuted noise columns, when the rules released any, are gray. The dashed line

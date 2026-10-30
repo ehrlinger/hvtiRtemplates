@@ -265,6 +265,17 @@ a gate that passes silently tells the reader nothing about what it passed on.
 `read_clinical_data()` infers binary columns as logical while `Surv()` requires
 a numeric status. The `as.numeric()` coercions below are not decoration.
 
+```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The table above counts events and censored patients, over the rows fitted, and the figure's
+# axis and its last Kaplan-Meier steps end at the longest follow-up.
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(d[!is.na(d[[TIME]]) & !is.na(d[[EVENT]]), , drop = FALSE], cells = EVENT, extremes = TIME)
+))
+```
+
 ## Model
 
 <!-- EDIT: this prose. Say which parameters are free and which are fixed, and

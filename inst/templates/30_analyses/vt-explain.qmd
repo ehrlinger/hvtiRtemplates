@@ -668,6 +668,37 @@ cat("Patients with no arm, by the arm their twin favors:\n\n")
 print(knitr::kable(as.data.frame(table(favors = .future$favors))))
 ```
 
+```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# Every patient-level point here is a prediction, which no reader can look up, so what is counted is
+# what the tables count. The characteristics beside the patients a twin favors are quartiles, which
+# hide a patient unless the group is small, and that group is counted; a percent of a small group is a
+# count too, so each level is. tbl-stratum and tbl-distance count only when they had rows to show.
+.level_counts <- unlist(lapply(ARMS, function(a) {
+  .ids <- r$ID[r$arm %in% a & .eligible]
+  if (!any(.ids %in% .benefit$ID)) return(NULL)
+  .dd_arm <- .d_all[match(.ids, .d_all[[.vt$settings$id]]), , drop = FALSE]
+  lapply(split(.dd_arm, .ids %in% .benefit$ID), function(g) {
+    .named <- intersect(.vt$predictors$names, names(g))
+    lapply(g[.named[!vapply(g[.named], is.numeric, logical(1L))]], table)
+  })
+}))
+cat(hvtiRtemplates:::.identifiability_notice(rbind(
+  hvtiRtemplates:::.identifiability_counts(.sens$kept, "patients kept, by rule and arm"),
+  if (nrow(.dd)) {
+    hvtiRtemplates:::.identifiability_counts(c(.dist_tab$patients, .dist_tab$out_of_distribution), "patients by arm and method")
+  },
+  if (exists(".sr", inherits = FALSE)) {
+    hvtiRtemplates:::.identifiability_counts(table(.sr$stratum, .sr$arm), "patients by stratum and arm")
+  },
+  hvtiRtemplates:::.identifiability_counts(table(.benefit$arm), "patients whose twin favors the other arm"),
+  hvtiRtemplates:::.identifiability_counts(table(.future$favors), "patients with no arm, by the arm their twin favors"),
+  hvtiRtemplates:::.identifiability_counts(.level_counts, "levels of a characteristic, beside those patients")
+)))
+```
+
 ## Reading the result
 
 * **Out of distribution.** A patient far from every patient on the arm a twin

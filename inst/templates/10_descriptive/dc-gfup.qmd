@@ -358,16 +358,6 @@ itself.
 ## Operation years and the close date
 
 ```{r}
-#| label: identifiability
-#| results: asis
-# Flags what a reader could learn about one patient, by column and count. It changes no number.
-# The tables show the longest follow-up, split by EVENT, and CHECKS prints its cross-tabs.
-cat(hvtiRtemplates:::.identifiability_notice(
-  hvtiRtemplates:::.identifiability_check(d, by = EVENT, extremes = FOLLOWUP, tables = CHECKS)
-))
-```
-
-```{r}
 #| label: window
 # unnumbered: computes the follow-up window; the table chunk below shows it
 # hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
@@ -405,6 +395,20 @@ if (figure_drawn) {
   close_date <- NA
   close_source <- paste("not drawn:", conditionMessage(fp))
 }
+```
+
+```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The tables show the longest follow-up, split by EVENT, and CHECKS prints its cross-tabs.
+# The figure draws each patient at a decimal operation year, which is a date to within a point's
+# width. That position is the figure's whole purpose, so "show the year only" cannot apply to it,
+# and warning on every patient would warn on every report. A point in a crowded year cannot be
+# told from its neighbors; one in a year of few patients can, so those are the ones counted.
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(d, by = EVENT, extremes = FOLLOWUP, tables = CHECKS, sparse = if (figure_drawn) OPYRS)
+))
 ```
 
 ```{r}

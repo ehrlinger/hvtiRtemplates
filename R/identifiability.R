@@ -12,9 +12,12 @@
 # missing values. `age` and `dates` add to what the names and classes find. `extremes` are
 # the columns whose minimum or maximum is shown; a finding counts the patients more than
 # 3 IQR beyond the quartiles, because every column has a maximum and only an outlying one
-# points to a patient. One row per finding: check, column, count.
+# points to a patient. `sparse` are year columns a figure draws each patient at: a finding
+# counts the patients in a calendar year of fewer than `small`, because a point in a crowded
+# year cannot be told from its neighbors and a point alone can. One row per finding: check,
+# column, count.
 .identifiability_check <- function(d, vars = character(), by = NULL, small = 5L, age = NULL, dates = NULL,
-                                   extremes = NULL, cells = NULL, tables = list()) {
+                                   extremes = NULL, cells = NULL, tables = list(), sparse = NULL) {
   cells <- intersect(cells, names(d))
   by <- intersect(by, names(d))
   tables <- Filter(function(cc) all(cc %in% names(d)), tables)
@@ -48,7 +51,21 @@
     q <- stats::quantile(x, c(0.25, 0.75), na.rm = TRUE, names = FALSE, type = 2)
     add("extreme", v, sum(x < q[[1L]] - 3 * (q[[2L]] - q[[1L]]) | x > q[[2L]] + 3 * (q[[2L]] - q[[1L]]), na.rm = TRUE))
   }
+  for (v in intersect(sparse, names(d))) {
+    tab <- table(floor(suppressWarnings(as.numeric(d[[v]]))))
+    add("position", v, sum(tab[tab < small]))
+  }
   if (length(rows)) do.call(rbind, rows) else data.frame(check = character(), column = character(), count = integer())
+}
+
+# The same finding from counts a report already holds, for a count no column of the data
+# gives: patients at risk at a time, or a table of a saved result. `column` names what was
+# counted. A count of zero shows no patient.
+.identifiability_counts <- function(counts, column, small = 5L, check = "small") {
+  counts <- as.vector(counts)
+  n <- sum(!is.na(counts) & counts > 0 & counts < small)
+  if (!n) return(data.frame(check = character(), column = character(), count = integer()))
+  data.frame(check = check, column = column, count = as.integer(n))
 }
 
 .identifiability_sentence <- function(check, column, count, small) {
@@ -56,6 +73,11 @@
   switch(check,
          small = paste0(.n_of(count, "cell"), " of ", col, " hold fewer than ", small, " patients. Combine levels, or ",
                         "decide that the count can be shown."),
+         at_risk = paste0("Fewer than ", small, " patients are at risk at ", .n_of(count, "time"), " shown for ", col,
+                          ". End the table or figure sooner, or decide that the count can be shown."),
+         position = paste0(.n_of(count, "patient"), " in ", col, " had their operation in a calendar year of fewer than ",
+                           small, " patients, so the follow-up figure's point can be read as that patient's operation ",
+                           "date and follow-up. Leave those years off the published figure, or decide that it can be shown."),
          group = paste0(col, " has ", .n_of(count, "group"), " of fewer than ", small, " patients. Combine groups, or ",
                         "decide that the count can be shown."),
          age = paste0(.n_of(count, "patient"), " in ", col, " are older than 89. Wherever age is shown, report ages 90 ",

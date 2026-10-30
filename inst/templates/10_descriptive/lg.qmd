@@ -300,6 +300,26 @@ knitr::kable(variables, col.names = c("Covariate", "Kind", "Groups", "Constant",
              row.names = FALSE)
 ```
 
+```{r}
+#| label: identifiability
+#| results: asis
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# Each group's table shows its minimum and maximum, and its events, which with its patients give
+# those without one. A group under 5 patients already stops this job. An ordinal covariate's
+# minimum and maximum are its levels. Under "hazard" a patient with no follow-up is in no group.
+.lg_rows <- if (identical(LINK, "hazard")) !is.na(.time) else rep(TRUE, nrow(d))
+cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(
+  list(hvtiRtemplates:::.identifiability_check(d[.lg_rows, , drop = FALSE], variables$name,
+                                               extremes = variables$name[variables$kind == "continuous"])),
+  lapply(seq_len(nrow(variables)), function(i) {
+    .v <- variables[i, ]
+    .tab <- hvtiRtemplates:::.lg_table(d[[.v$name]], .event, if (identical(LINK, "hazard")) .time,
+                                       groups = .v$groups, kind = .v$kind, link = LINK)
+    hvtiRtemplates:::.identifiability_counts(c(.tab$events, .tab$n - .tab$events), paste(.v$name, "events by group"))
+  })
+))))
+```
+
 ## Calibration
 
 For each covariate, a table of its groups and the figure of the groups' link
