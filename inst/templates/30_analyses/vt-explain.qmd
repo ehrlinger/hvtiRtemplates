@@ -673,30 +673,40 @@ print(knitr::kable(as.data.frame(table(favors = .future$favors))))
 #| results: asis
 # Flags what a reader could learn about one patient, by column and count. It changes no number.
 # Every patient-level point here is a prediction, which no reader can look up, so what is counted is
-# what the tables count. The characteristics beside the patients a twin favors are quartiles, which
-# hide a patient unless the group is small, and that group is counted; a percent of a small group is a
-# count too, so each level is. tbl-stratum and tbl-distance count only when they had rows to show.
-.level_counts <- unlist(lapply(ARMS, function(a) {
+# what the tables count, and what their counts give by subtraction or a share. The characteristics
+# beside the patients a twin favors are quartiles, which hide a patient unless few values lie behind
+# them, and percents, which are counts. tbl-stratum and tbl-distance count only when they had rows.
+.ben_groups <- unlist(lapply(ARMS, function(a) {
   .ids <- r$ID[r$arm %in% a & .eligible]
   if (!any(.ids %in% .benefit$ID)) return(NULL)
-  .dd_arm <- .d_all[match(.ids, .d_all[[.vt$settings$id]]), , drop = FALSE]
-  lapply(split(.dd_arm, .ids %in% .benefit$ID), function(g) {
-    .named <- intersect(.vt$predictors$names, names(g))
-    lapply(g[.named[!vapply(g[.named], is.numeric, logical(1L))]], table)
-  })
+  split(.d_all[match(.ids, .d_all[[.vt$settings$id]]), , drop = FALSE], .ids %in% .benefit$ID)
+}), recursive = FALSE)
+.shown_names <- intersect(.vt$predictors$names, names(.d_all))
+.value_counts <- unlist(lapply(.ben_groups, function(g) {
+  lapply(g[.shown_names], function(x) if (is.numeric(x)) sum(!is.na(x)) else table(x))
 }))
-cat(hvtiRtemplates:::.identifiability_notice(rbind(
-  hvtiRtemplates:::.identifiability_counts(.sens$kept, "patients kept, by rule and arm"),
+# An age is shown only when a quartile of it passes 89; the check then counts the patients who do.
+.ben_ages <- lapply(.ben_groups, function(g) {
+  .v <- Filter(function(n) {
+    is.numeric(g[[n]]) && any(stats::quantile(g[[n]], c(0.25, 0.5, 0.75), na.rm = TRUE) > 89)
+  }, grep(hvtiRtemplates:::.identifiability_age_pattern, .shown_names, ignore.case = TRUE, value = TRUE))
+  hvtiRtemplates:::.identifiability_check(g, .v)
+})
+.kept_favored <- round(.sens$kept * .sens$favor_first)
+cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(list(
+  hvtiRtemplates:::.identifiability_counts(c(.sens$kept, .kept_favored, .sens$kept - .kept_favored), "patients kept, by rule and arm"),
   if (nrow(.dd)) {
-    hvtiRtemplates:::.identifiability_counts(c(.dist_tab$patients, .dist_tab$out_of_distribution), "patients by arm and method")
+    .ood <- .dist_tab$out_of_distribution
+    hvtiRtemplates:::.identifiability_counts(c(.dist_tab$patients, .ood, .dist_tab$patients - .ood), "patients by arm and method")
   },
   if (exists(".sr", inherits = FALSE)) {
-    hvtiRtemplates:::.identifiability_counts(table(.sr$stratum, .sr$arm), "patients by stratum and arm")
+    .by_stratum <- c(table(.sr$stratum, .sr$arm), table(.sr$stratum, .sr$arm, .sr$diff > 0))
+    hvtiRtemplates:::.identifiability_counts(.by_stratum, "patients by stratum and arm")
   },
   hvtiRtemplates:::.identifiability_counts(table(.benefit$arm), "patients whose twin favors the other arm"),
   hvtiRtemplates:::.identifiability_counts(table(.future$favors), "patients with no arm, by the arm their twin favors"),
-  hvtiRtemplates:::.identifiability_counts(.level_counts, "levels of a characteristic, beside those patients")
-)))
+  hvtiRtemplates:::.identifiability_counts(.value_counts, "characteristics, beside those patients")
+), .ben_ages))))
 ```
 
 ## Reading the result
