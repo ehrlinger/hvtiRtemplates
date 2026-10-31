@@ -435,7 +435,7 @@ as_percent <- function(x) {
   )
 }
 cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(
-  list(hvtiRtemplates:::.identifiability_check(d[.fu_rows, , drop = FALSE], STRATA, cells = STRATA, extremes = TIME),
+  list(hvtiRtemplates:::.identifiability_check(d[.fu_rows, , drop = FALSE], STRATA, cells = STRATA, extremes = TIME, within = STRATA),
        .at_risk(NULL, "all patients")),
   lapply(STRATA, function(v) .at_risk(v, v))
 ))))

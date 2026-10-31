@@ -400,15 +400,26 @@ if (figure_drawn) {
 ```{r}
 #| label: identifiability
 #| results: asis
+# unnumbered: a callout, with no figure or table of its own
 # Flags what a reader could learn about one patient, by column and count. It changes no number.
 # The tables show the longest follow-up, split by EVENT, and CHECKS prints its cross-tabs.
 # The figure draws each patient at a decimal operation year, which is a date to within a point's
 # width. That position is the figure's whole purpose, so "show the year only" cannot apply to it,
 # and warning on every patient would warn on every report. A point in a crowded year cannot be
-# told from its neighbors; one in a year of few patients can, so those are the ones counted.
-cat(hvtiRtemplates:::.identifiability_notice(
-  hvtiRtemplates:::.identifiability_check(d, by = EVENT, extremes = FOLLOWUP, tables = CHECKS, sparse = if (figure_drawn) OPYRS)
-))
+# told from its neighbors; one in a year of few patients can, so those are the ones counted, panel
+# by panel over the points it draws, by the date hv_followup() places each one at.
+.positions <- if (figure_drawn) lapply(names(fp$tables$panels), function(nm) {
+  .panel <- fp$tables$panels[[nm]]
+  .drawn <- if (fp$data$type[match(nm, fp$data$panel)] == "event") .panel$tables$event_data else .panel$data
+  .x <- .drawn$operation_year
+  .op <- as.Date(paste0(ORIGIN_YEAR, "-01-01")) + (.x - ORIGIN_YEAR) * 365.2425
+  .years <- stats::setNames(data.frame(as.numeric(format(.op, "%Y"))), paste0(OPYRS, ", ", nm))
+  hvtiRtemplates:::.identifiability_check(.years, sparse = names(.years))
+})
+cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(
+  list(hvtiRtemplates:::.identifiability_check(d, by = EVENT, extremes = FOLLOWUP, within = EVENT, tables = CHECKS)),
+  .positions
+))))
 ```
 
 ```{r}

@@ -409,13 +409,19 @@ if (nrow(.small)) {
 # Flags what a reader could learn about one patient, by column and count. It changes no number.
 # The table counts each cluster at every K, and the Sankey draws the patients who move from one K
 # to the next. MIN_SIZE above asks whether a cluster can be analyzed, and this whether a count can be
-# published. A silhouette or MDS point is a distance between patients, with no value of theirs in it.
+# published. A silhouette or MDS point is a distance between patients, with no value of theirs in it,
+# but the silhouette table's share of negative widths beside its n is a count, once K is set.
 .ks_shown <- paste0("C", K_RANGE)
 .moves <- if (length(.ks_shown) > 1L) Map(c, utils::head(.ks_shown, -1L), .ks_shown[-1L]) else list()
-cat(hvtiRtemplates:::.identifiability_notice(
-  hvtiRtemplates:::.identifiability_check(sid_letters, cells = .ks_shown,
-                                          tables = .moves)
-))
+.signs <- if (!is.null(K)) {
+  .widths <- sid_pam[[K]]$silinfo$widths
+  .negative <- .widths[match(rownames(sid$dist), rownames(.widths)), "sil_width"] < 0
+  hvtiRtemplates:::.identifiability_counts(table(sid_letters[[paste0("C", K)]], .negative), "silhouette widths by sign and cluster")
+}
+cat(hvtiRtemplates:::.identifiability_notice(rbind(
+  hvtiRtemplates:::.identifiability_check(sid_letters, cells = .ks_shown, tables = .moves),
+  .signs
+)))
 ```
 
 ```{r}

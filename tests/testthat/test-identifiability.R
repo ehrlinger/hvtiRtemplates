@@ -106,7 +106,17 @@ test_that("the counts helper counts what is shown, and a zero is no patient", {
   expect_equal(f$count, 2L)
   expect_equal(nrow(hvtiRtemplates:::.identifiability_counts(c(0, 5), "x")), 0L)
   expect_equal(hvtiRtemplates:::.identifiability_counts(table(c("a", "a", "b")), "x", small = 2L)$count, 1L)
-  expect_match(hvtiRtemplates:::.identifiability_sentence("at_risk", "all patients", 2L, 5L), "at risk at 2 times", fixed = TRUE)
+  expect_match(hvtiRtemplates:::.identifiability_sentence("at_risk", "all patients", 2L, 5L), "2 of the numbers at risk", fixed = TRUE)
+})
+
+test_that("extremes can be read within groups, and in the upper tail alone", {
+  # 80 is inside the fence of both arms pooled and far beyond its own arm's.
+  d <- data.frame(t = c(rep(10, 9L), 80, seq(1, 200, length.out = 20L)), arm = rep(c("x", "y"), c(10L, 20L)))
+  expect_equal(nrow(hvtiRtemplates:::.identifiability_check(d, extremes = "t")), 0L)
+  expect_equal(hvtiRtemplates:::.identifiability_check(d, extremes = "t", within = "arm")$count, 1L)
+  low <- data.frame(t = c(0.001, rep(100, 15L), rep(101, 15L)))
+  expect_equal(hvtiRtemplates:::.identifiability_check(low, extremes = "t")$count, 1L)
+  expect_equal(nrow(hvtiRtemplates:::.identifiability_check(low, extremes = "t", upper_only = TRUE)), 0L)
 })
 
 test_that("a sparse calendar year is counted by its patients, and a crowded one is not", {
@@ -149,27 +159,29 @@ test_that("lg reads its groups' extremes and events, over the patients in them",
   expect_equal(identifiability_chunk(template_path("lg"), env)[["age age"]], 1L)
 })
 
-test_that("lp-mirror counts its groups and, with MATCH, the matched in them, and no bar", {
+test_that("lp-mirror counts its groups and, with MATCH, the matched and unmatched in them, and no bar", {
   scores <- data.frame(score = 1:30, group = c(rep("a", 28L), "b", "b"), matched = c(rep(1L, 4L), rep(0L, 24L), 1L, 0L))
   f <- identifiability_chunk(template_path("lp", "mirror"), list(scores = scores, MATCH = "m", .meta = list(treatment_col = "tavr")))
-  expect_equal(f, c("group tavr" = 1L, "group tavr, matched" = 2L))
+  expect_equal(f, c("group tavr" = 1L, "group tavr, matched" = 2L, "group tavr, unmatched" = 1L))
   f <- identifiability_chunk(template_path("lp", "mirror"), list(scores = scores, MATCH = NULL, .meta = list(treatment_col = "tavr")))
   expect_equal(f, c("group tavr" = 1L))
 })
 
 test_that("hz counts events and the longest follow-up, over the rows fitted", {
-  d <- data.frame(t = c(1:30, 500, 900), e = c(1L, 1L, rep(0L, 29L), NA))
+  # The early 0.001 is far below the rest and never shown, so it is not counted.
+  d <- data.frame(t = c(rep(100, 15L), rep(101, 15L), 0.001, 500, 900), e = c(1L, 1L, rep(0L, 30L), NA))
   f <- identifiability_chunk(template_path("hz"), list(d = d, TIME = "t", EVENT = "e"))
   expect_equal(f, c("small e" = 1L, "extreme t" = 1L))
 })
 
 test_that("hp counts the longest follow-up alone, over the rows fitted", {
-  d <- data.frame(t = c(1:30, 500, 900), e = c(rep(1L, 31L), NA))
+  d <- data.frame(t = c(rep(100, 15L), rep(101, 15L), 0.001, 500, 900), e = c(rep(1L, 32L), NA))
   f <- identifiability_chunk(template_path("hp"), list(d = d, TIME = "t", EVENT = "e", fitted_rows = !is.na(d$e)))
   expect_equal(f, c("extreme t" = 1L))
 })
 
 test_that("ac counts small numbers at risk at the horizons and the figure's times, overall and by stratum", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.12")
   d <- data.frame(t = c(seq(0.5, 6, length.out = 40), 11, 12), e = 1L, s = rep(c("a", "b"), 21L))
   env <- list(d = d, TIME = "t", EVENT = "e", STRATA = "s", grid = c(1, 2), RISK_TIMES = NULL, PLOT_MAX = NULL, CLEVEL = 0.68,
               risk_times = function(plot_max) pretty(c(0, plot_max))[pretty(c(0, plot_max)) <= plot_max])
@@ -185,11 +197,27 @@ test_that("ac counts small numbers at risk at the horizons and the figure's time
 })
 
 test_that("dc-gfup warns of an operation year of few patients only when the figure is drawn", {
-  d <- data.frame(op = c(rep(1.5, 20L), 2.1, 2.2), fu = 1:22, dead = rep(0:1, 11L))
-  env <- list(d = d, EVENT = "dead", FOLLOWUP = "fu", CHECKS = list(), OPYRS = "op", figure_drawn = TRUE)
-  expect_equal(identifiability_chunk(template_path("dc", "gfup"), env)[["position op"]], 2L)
+  d <- data.frame(fu = 1:22, dead = rep(0:1, 11L))
+  # Panel a draws 2 in 1992, and panel b leaves both of them out. 1991.9995 is 1 January 1992 by the
+  # figure's 365.2425-day year, so it joins 1992 and not the crowded 1991.
+  panels <- list(a = list(data = data.frame(operation_year = c(rep(1991.5, 20L), 1991.9995, 1992.5))),
+                 b = list(data = data.frame(operation_year = rep(1991.5, 20L))))
+  env <- list(d = d, EVENT = "dead", FOLLOWUP = "fu", CHECKS = list(), OPYRS = "op", ORIGIN_YEAR = 1990,
+              fp = list(data = data.frame(panel = c("a", "b"), type = "followup"), tables = list(panels = panels)),
+              figure_drawn = TRUE)
+  f <- identifiability_chunk(template_path("dc", "gfup"), env)
+  expect_equal(f[["position op, a"]], 2L)
+  expect_false("position op, b" %in% names(f))
+  # An event panel draws event_data, which can leave out patients its death rows keep: five rows of
+  # 1992 in $data hide nothing when only one of them is drawn.
+  env$fp$data$type[[2L]] <- "event"
+  env$fp$tables$panels$b <- list(data = data.frame(operation_year = c(rep(1991.5, 20L), rep(1992.5, 5L))),
+                                 tables = list(event_data = data.frame(operation_year = c(rep(1991.5, 20L), 1992.5))))
+  expect_equal(identifiability_chunk(template_path("dc", "gfup"), env)[["position op, b"]], 1L)
+  env$fp$data$type[[2L]] <- "followup"
+  expect_false("position op, b" %in% names(identifiability_chunk(template_path("dc", "gfup"), env)))
   env$figure_drawn <- FALSE
-  expect_false("position op" %in% names(identifiability_chunk(template_path("dc", "gfup"), env)))
+  expect_false(any(grepl("position", names(identifiability_chunk(template_path("dc", "gfup"), env)))))
 })
 
 test_that("vt-fit counts its arms, events, numbers at risk and flagged patients", {
@@ -198,8 +226,13 @@ test_that("vt-fit counts its arms, events, numbers at risk and flagged patients"
     .km_data = km, TIME = "t", STATUS = "e", ARM = "a", .counts = data.frame(Patients = c(15L, 16L, 3L)),
     .km = list(tables = list(risk = data.frame(n.risk = c(15L, 2L, 0L)))),
     .ood_counts = table(c("g", "g"), c("x", "y")),
-    .overlap = list(combinations = data.frame(flagged_by = c("none", "gower"), x = c(20L, 1L), y = c(30L, 0L)))
+    .overlap = list(combinations = data.frame(flagged_by = c("none", "gower"), x = c(20L, 1L), y = c(30L, 0L))),
+    ARMS = c("x", "y"), .forests = list(x = list(n = 22L), y = list(n = 20L)),
+    .cal = data.frame(arm = c("x", "y"), patients = 20L, events = c(1L, 10L))
   ))
+  # 1 event in a fifth of 20, and 2 of arm x's patients never out of bag.
+  expect_equal(f[["small calibration fifths"]], 1L)
+  expect_equal(f[["small patients never out of bag"]], 1L)
   expect_equal(f[["extreme t"]], 1L)
   expect_equal(f[["small a by e"]], 2L)
   expect_equal(f[["small patients by arm"]], 1L)
@@ -210,27 +243,32 @@ test_that("vt-fit counts its arms, events, numbers at risk and flagged patients"
 
 test_that("vt-explain counts each table's patients, and a level beside the few a twin favors", {
   r <- data.frame(ID = letters[1:12], arm = "x", stringsAsFactors = FALSE)
-  d_all <- data.frame(id = letters[1:12], sex = c("f", rep("m", 11L)), age = 95)
+  d_all <- data.frame(id = letters[1:12], sex = c("f", rep("m", 11L)), age = c(95, 95, rep(60, 10L)))
   env <- list(
     ARMS = c("x", "y"), r = r, .eligible = rep(TRUE, 12L), .d_all = d_all, .benefit = r[1:2, ], .future = data.frame(favors = "x"),
     .vt = list(settings = list(id = "id"), predictors = list(names = c("sex", "age"))),
-    .sens = data.frame(kept = c(12L, 3L)), .dd = data.frame(a = 1), .dist_tab = data.frame(patients = 12L, out_of_distribution = 1L),
-    .sr = data.frame(stratum = "p", arm = "x")
+    .sens = data.frame(kept = c(12L, 30L), favor_first = c(1, 0.9)), .dd = data.frame(a = 1),
+    .dist_tab = data.frame(patients = 100L, out_of_distribution = 99L),
+    .sr = data.frame(stratum = "p", arm = "x", diff = 1)
   )
   f <- identifiability_chunk(template_path("vt", "explain"), env)
+  # 90% of 30 leaves 3 who do not favor the first arm, though both totals are large.
   expect_equal(f[["small patients kept, by rule and arm"]], 1L)
+  # 99 of 100 out of distribution leaves 1 in it.
   expect_equal(f[["small patients by arm and method"]], 1L)
-  expect_equal(f[["small patients by stratum and arm"]], 1L)
+  expect_equal(f[["small patients by stratum and arm"]], 2L)
   expect_equal(f[["small patients whose twin favors the other arm"]], 1L)
   expect_equal(f[["small patients with no arm, by the arm their twin favors"]], 1L)
-  # Beside the 2 favored: f 1 and m 1. Among the rest, m 10.
-  expect_equal(f[["small levels of a characteristic, beside those patients"]], 2L)
+  # Beside the 2 favored: f 1, m 1 and 2 ages. Among the rest, m 10 and 10 ages. The favored's
+  # quartiles are 95, so their ages are shown; the rest's are 60.
+  expect_equal(f[["small characteristics, beside those patients"]], 3L)
+  expect_equal(f[["age age"]], 2L)
   # With no favored patient the characteristics are not printed, so no level is counted, and a predictor
   # absent from the data stops nothing.
   none <- env
   none$.benefit <- r[0L, ]
   none$.vt$predictors$names <- c("sex", "age", "absent")
-  expect_false("small levels of a characteristic, beside those patients" %in%
+  expect_false("small characteristics, beside those patients" %in%
                  names(identifiability_chunk(template_path("vt", "explain"), none)))
   env <- env[names(env) != ".sr"]
   env$.dd <- data.frame()
@@ -240,10 +278,19 @@ test_that("vt-explain counts each table's patients, and a level beside the few a
 
 test_that("sid-clusters counts each cluster at every K and the moves between them", {
   letters_at <- data.frame(ccfid = 1:30, C2 = c(rep("A", 28L), "B", "B"), C3 = c(rep("A", 20L), rep("B", 9L), "C"))
-  f <- identifiability_chunk(template_path("sid", "clusters"), list(sid_letters = letters_at, K_RANGE = 2:3))
+  f <- identifiability_chunk(template_path("sid", "clusters"), list(sid_letters = letters_at, K_RANGE = 2:3, K = NULL))
   expect_equal(f, c("small C2" = 1L, "small C3" = 1L, "small C2 by C3" = 2L))
-  f <- identifiability_chunk(template_path("sid", "clusters"), list(sid_letters = letters_at, K_RANGE = 2L))
+  f <- identifiability_chunk(template_path("sid", "clusters"), list(sid_letters = letters_at, K_RANGE = 2L, K = NULL))
   expect_equal(f, c("small C2" = 1L))
+  # K set: one negative width in a cluster of 20 shows as 5%, and one patient.
+  ids <- as.character(1:40)
+  big <- data.frame(ccfid = ids, C2 = rep(c("A", "B"), each = 20L))
+  widths <- matrix(c(-0.1, rep(0.5, 39L)), ncol = 1L, dimnames = list(rev(ids), "sil_width"))
+  f <- identifiability_chunk(template_path("sid", "clusters"), list(
+    sid_letters = big, K_RANGE = 2L, K = 2L, sid = list(dist = matrix(0, 40L, 40L, dimnames = list(ids, ids))),
+    sid_pam = list(NULL, list(silinfo = list(widths = widths)))
+  ))
+  expect_equal(f, c("small silhouette widths by sign and cluster" = 1L))
 })
 
 test_that("vp-individual reads only the values it draws, for patients with a gradient", {

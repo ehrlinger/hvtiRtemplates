@@ -12,12 +12,15 @@
 # missing values. `age` and `dates` add to what the names and classes find. `extremes` are
 # the columns whose minimum or maximum is shown; a finding counts the patients more than
 # 3 IQR beyond the quartiles, because every column has a maximum and only an outlying one
-# points to a patient. `sparse` are year columns a figure draws each patient at: a finding
+# points to a patient. `within` adds a fence inside each level of those columns, for a table
+# that shows the extreme group by group, and `upper_only` is for one that shows only the
+# maximum. `sparse` are year columns a figure draws each patient at: a finding
 # counts the patients in a calendar year of fewer than `small`, because a point in a crowded
 # year cannot be told from its neighbors and a point alone can. One row per finding: check,
 # column, count.
 .identifiability_check <- function(d, vars = character(), by = NULL, small = 5L, age = NULL, dates = NULL,
-                                   extremes = NULL, cells = NULL, tables = list(), sparse = NULL) {
+                                   extremes = NULL, cells = NULL, tables = list(), sparse = NULL,
+                                   within = NULL, upper_only = FALSE) {
   cells <- intersect(cells, names(d))
   by <- intersect(by, names(d))
   tables <- Filter(function(cc) all(cc %in% names(d)), tables)
@@ -48,14 +51,23 @@
   for (v in intersect(unique(c(dates, named, classed)), names(d))) add("date", v, sum(!is.na(d[[v]])))
   for (v in intersect(extremes, names(d))) {
     x <- suppressWarnings(as.numeric(d[[v]]))
-    q <- stats::quantile(x, c(0.25, 0.75), na.rm = TRUE, names = FALSE, type = 2)
-    add("extreme", v, sum(x < q[[1L]] - 3 * (q[[2L]] - q[[1L]]) | x > q[[2L]] + 3 * (q[[2L]] - q[[1L]]), na.rm = TRUE))
+    far <- .identifiability_far(x, upper_only)
+    for (w in intersect(within, names(d))) {
+      for (i in split(seq_along(x), d[[w]])) far[i] <- far[i] | .identifiability_far(x[i], upper_only)
+    }
+    add("extreme", v, sum(far, na.rm = TRUE))
   }
   for (v in intersect(sparse, names(d))) {
     tab <- table(floor(suppressWarnings(as.numeric(d[[v]]))))
     add("position", v, sum(tab[tab < small]))
   }
   if (length(rows)) do.call(rbind, rows) else data.frame(check = character(), column = character(), count = integer())
+}
+
+.identifiability_far <- function(x, upper_only = FALSE) {
+  q <- stats::quantile(x, c(0.25, 0.75), na.rm = TRUE, names = FALSE, type = 2)
+  above <- x > q[[2L]] + 3 * (q[[2L]] - q[[1L]])
+  if (upper_only) above else above | x < q[[1L]] - 3 * (q[[2L]] - q[[1L]])
 }
 
 # The same finding from counts a report already holds, for a count no column of the data
@@ -73,8 +85,8 @@
   switch(check,
          small = paste0(.n_of(count, "cell"), " of ", col, " hold fewer than ", small, " patients. Combine levels, or ",
                         "decide that the count can be shown."),
-         at_risk = paste0("Fewer than ", small, " patients are at risk at ", .n_of(count, "time"), " shown for ", col,
-                          ". End the table or figure sooner, or decide that the count can be shown."),
+         at_risk = paste0(count, " of the numbers at risk shown for ", col, " are under ", small, " patients. End the table ",
+                          "or figure sooner, or decide that the count can be shown."),
          position = paste0(.n_of(count, "patient"), " in ", col, " had their operation in a calendar year of fewer than ",
                            small, " patients, so the follow-up figure's point can be read as that patient's operation ",
                            "date and follow-up. Leave those years off the published figure, or decide that it can be shown."),
