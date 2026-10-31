@@ -203,10 +203,19 @@ test_that("dc-gfup warns of an operation year of few patients only when the figu
   panels <- list(a = list(data = data.frame(operation_year = c(rep(1991.5, 20L), 1991.9995, 1992.5))),
                  b = list(data = data.frame(operation_year = rep(1991.5, 20L))))
   env <- list(d = d, EVENT = "dead", FOLLOWUP = "fu", CHECKS = list(), OPYRS = "op", ORIGIN_YEAR = 1990,
-              fp = list(tables = list(panels = panels)), figure_drawn = TRUE)
+              fp = list(data = data.frame(panel = c("a", "b"), type = "followup"), tables = list(panels = panels)),
+              figure_drawn = TRUE)
   f <- identifiability_chunk(template_path("dc", "gfup"), env)
   expect_equal(f[["position op, a"]], 2L)
   expect_false("position op, b" %in% names(f))
+  # An event panel draws event_data, which can leave out patients its death rows keep: five rows of
+  # 1992 in $data hide nothing when only one of them is drawn.
+  env$fp$data$type[[2L]] <- "event"
+  env$fp$tables$panels$b <- list(data = data.frame(operation_year = c(rep(1991.5, 20L), rep(1992.5, 5L))),
+                                 tables = list(event_data = data.frame(operation_year = c(rep(1991.5, 20L), 1992.5))))
+  expect_equal(identifiability_chunk(template_path("dc", "gfup"), env)[["position op, b"]], 1L)
+  env$fp$data$type[[2L]] <- "followup"
+  expect_false("position op, b" %in% names(identifiability_chunk(template_path("dc", "gfup"), env)))
   env$figure_drawn <- FALSE
   expect_false(any(grepl("position", names(identifiability_chunk(template_path("dc", "gfup"), env)))))
 })
