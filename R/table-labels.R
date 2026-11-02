@@ -17,7 +17,7 @@
 #      A study writes it once and every table job in the study shares it.
 #   3. Rules in code tidy every other label: a leading "Preoperative", a
 #      trailing coding hint, sentence case that keeps abbreviations, and the
-#      m2 of a unit as a superscript. Each can be turned off.
+#      power in a unit (m2, m^2) as a superscript. Each can be turned off.
 # Every label that changed, and every variable with no label at all, is
 # returned in `changes`, so the report can say what was rewritten and why.
 
@@ -36,7 +36,12 @@
     },
     coding = function(x) sub(hint, "", sub(hint, "", x, ignore.case = TRUE, perl = TRUE), ignore.case = TRUE, perl = TRUE),
     case = function(x) .sentence_case(x, protect),
-    units = function(x) gsub("/m2(?![0-9^])", "/m^2^", x, ignore.case = TRUE, perl = TRUE)
+    # A dataset writes the same power as kg/m2 or kg/m^2, and the second prints
+    # its caret: the table draws a superscript only from a closed ^2^.
+    units = function(x) {
+      closed <- gsub("([[:alnum:]])\\^(-?[0-9]+(?:[.][0-9]+)?)(?![0-9^]|[.][0-9])", "\\1^\\2^", x, perl = TRUE)
+      gsub("/m2(?![0-9^])", "/m^2^", closed, ignore.case = TRUE, perl = TRUE)
+    }
   )
   fired <- character(0)
   for (rule in intersect(names(rewrite), use)) {
