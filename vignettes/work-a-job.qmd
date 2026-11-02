@@ -253,12 +253,12 @@ so read the report before you render:
 upgrade_job(job)
 ```
 
-Nothing is printed. The job opens in RStudio, and the old copy and a report of the
-upgrade go in an `_archive` folder beside it, as `<job>.<stamp>.pre-upgrade` and
-`<job>.<stamp>-upgrade.md`. The stamp is the date and time, so sort by it to find
-the pair you have just made, and read the report for the chunks to check, restoring
-anything of yours from the archived copy. Upgrading a job whose template has not moved
-still rewrites it, and it adds another pair.
+The job opens in RStudio, and the old copy and a report of the upgrade go in an
+`_archive` folder beside it, as `<job>.<stamp>.pre-upgrade` and
+`<job>.<stamp>-upgrade.md`. The stamp is the date and time. The console names both
+files; read the report for the chunks to check, restoring anything of yours from the
+archived copy. A job the upgrade would not change is left alone: the console says so,
+and nothing is added to `_archive`.
 
 ## When the job stops you
 

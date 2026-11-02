@@ -66,10 +66,12 @@ carried, not placed and new, with the chunks to review. It names choices
 and lines but never quotes their values, since a value can identify a
 patient. The upgrade refuses to overwrite any existing file.
 
-\code{upgrade_job()} prints nothing and does not check first whether the job
-needs upgrading. It rewrites the job even when the template has not moved, so
-code you added outside the choices leaves the job then too, and it adds a new
-pair to \code{_archive} every time.
+A message says what happened and, after an upgrade, names both archived files.
+A job the upgrade would not change is left alone: the message says so, and no
+new pair is added to \code{_archive}. A pair an older upgrade left beside the job
+still moves there. A job holding code outside its choices is one the upgrade
+would change, even when the template has not moved: that code leaves the job,
+and the archived copy keeps it.
 }
 \section{Upgrading a job}{
 
@@ -89,7 +91,7 @@ folder beside it as \code{<job>.<stamp>-upgrade.md}, for the chunks to
 check. The old job is kept there too, as \code{<job>.<stamp>.pre-upgrade},
 and the stamp, the date and time of the upgrade, pairs the two. The job's
 own folder is left holding the job, and the same job can be upgraded again
-with nothing moved aside: each upgrade adds its own pair. A pair whose
+with nothing moved aside: each upgrade that changes it adds its own pair. A pair whose
 stamp is already used, from an upgrade in the same second, takes a shared
 \code{-2}, \code{-3} suffix after the stamp.
 

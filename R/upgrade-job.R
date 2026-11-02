@@ -26,7 +26,7 @@
 #' check. The old job is kept there too, as \code{<job>.<stamp>.pre-upgrade},
 #' and the stamp, the date and time of the upgrade, pairs the two. The job's
 #' own folder is left holding the job, and the same job can be upgraded again
-#' with nothing moved aside: each upgrade adds its own pair. A pair whose
+#' with nothing moved aside: each upgrade that changes it adds its own pair. A pair whose
 #' stamp is already used, from an upgrade in the same second, takes a shared
 #' \code{-2}, \code{-3} suffix after the stamp.
 #'
@@ -74,10 +74,12 @@
 #' and lines but never quotes their values, since a value can identify a
 #' patient. The upgrade refuses to overwrite any existing file.
 #'
-#' \code{upgrade_job()} prints nothing and does not check first whether the job
-#' needs upgrading. It rewrites the job even when the template has not moved, so
-#' code you added outside the choices leaves the job then too, and it adds a new
-#' pair to \code{_archive} every time.
+#' A message says what happened and, after an upgrade, names both archived files.
+#' A job the upgrade would not change is left alone: the message says so, and no
+#' new pair is added to \code{_archive}. A pair an older upgrade left beside the job
+#' still moves there. A job holding code outside its choices is one the upgrade
+#' would change, even when the template has not moved: that code leaves the job,
+#' and the archived copy keeps it.
 #'
 #' @param path The one job to upgrade: its \code{.qmd} file, relative to the
 #'   working directory or absolute, such as
@@ -127,7 +129,7 @@ upgrade_job <- function(path, dir = NULL) {
 
   target <- .job_path(row, fields$subject, fields$type, root)
   # Both files go to _archive/ beside the upgraded job, a folder Quarto does not
-  # render, under one stamp: a second upgrade adds a pair rather than stopping.
+  # render, under one stamp: a later upgrade adds a pair rather than stopping.
   archive <- file.path(dirname(target), "_archive")
   # A symbolic link counts as taken even when it dangles: file.exists() says
   # FALSE for one, and writing through it would create a file wherever it points.
@@ -172,6 +174,15 @@ upgrade_job <- function(path, dir = NULL) {
                                      qualifier = qualifier))
   old <- readLines(path, warn = FALSE)
   upgraded <- .upgrade_lines(old, readLines(staged, warn = FALSE))
+  # Nothing to change means nothing to archive: a pair per call buried the pairs
+  # that record a real change. A job under an old spelling still has its rename to do.
+  current <- identical(upgraded$lines, old) && normalizePath(target, winslash = "/", mustWork = FALSE) == path
+  jobs <- unique(c(path, target, others_all))
+  if (current && !length(.legacy_upgrade_files(jobs))) {
+    .install_provenance_hooks(root)
+    message("upgrade_job(): ", basename(path), " is already current with its template; nothing changed.")
+    return(invisible(path))
+  }
 
   report <- .upgrade_report(upgraded, row$name[[1L]], old, path, backup, root)
   # A renamed template can live in another folder, which the study may not have
@@ -186,7 +197,13 @@ upgrade_job <- function(path, dir = NULL) {
   if (!.path_within(normalizePath(archive, winslash = "/", mustWork = TRUE), root)) {
     stop("upgrade_job(): the job folder's _archive resolves outside the study root.", call. = FALSE)
   }
-  .archive_legacy_upgrade(unique(c(path, target, others_all)), archive, taken, files, root)
+  .archive_legacy_upgrade(jobs, archive, taken, files, root)
+  if (current) {
+    .install_provenance_hooks(root)
+    message("upgrade_job(): ", basename(path), " is already current with its template; ",
+            "an older upgrade's files beside it moved to ", archive, ".")
+    return(invisible(path))
+  }
   # The current template's provenance checks need the study's hooks, which a
   # study older than them may lack; add_job() installs them the same way.
   .install_provenance_hooks(root)
@@ -202,6 +219,8 @@ upgrade_job <- function(path, dir = NULL) {
   # The job keeps its permissions: a job closed to other readers stays closed.
   Sys.chmod(c(target, report_path), mode, use_umask = FALSE)
   ok <- TRUE
+  message("upgrade_job(): upgraded ", basename(target), ". The old job is ", backup,
+          "; the report, with the chunks to check, is ", report_path, ".")
   .open_in_editor(target)
 }
 
@@ -215,10 +234,14 @@ upgrade_job <- function(path, dir = NULL) {
 # kept, so it stamps them only when no report is left. A file an analyst renamed
 # by hand is not one upgrade_job() wrote and is left alone. Every check runs
 # before the first move, so a refusal leaves each file where it was.
+.legacy_upgrade_files <- function(jobs) {
+  from <- c(paste0(jobs, ".pre-upgrade"), sub("[.]qmd$", "-upgrade.md", jobs))
+  unique(from[file.exists(from) & !dir.exists(from)])
+}
+
 .archive_legacy_upgrade <- function(jobs, archive, taken, reserved, root) {
   reports <- sub("[.]qmd$", "-upgrade.md", jobs)
-  from <- c(paste0(jobs, ".pre-upgrade"), reports)
-  from <- unique(from[file.exists(from) & !dir.exists(from)])
+  from <- .legacy_upgrade_files(jobs)
   if (!length(from)) return(invisible())
   # An old spelling's folder can be a link out of the study, and a sweep moves what it finds.
   outside <- !.path_within(normalizePath(dirname(from), winslash = "/", mustWork = TRUE), root)

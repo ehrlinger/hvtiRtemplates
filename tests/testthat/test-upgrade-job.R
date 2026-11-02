@@ -7,6 +7,19 @@ archived <- function(job, suffix) {
 }
 upgrade_report <- function(job) archived(job, "-upgrade.md")
 
+# As though the template had moved since the job was written: an upgrade then
+# has something to change, whichever release the suite runs on.
+local_template_moved <- function(env = parent.frame()) {
+  real <- hvtiRtemplates:::.upgrade_lines
+  moves <- 0L
+  testthat::local_mocked_bindings(.upgrade_lines = function(old, new) {
+    moves <<- moves + 1L
+    upgraded <- real(old, new)
+    upgraded$lines <- c(upgraded$lines, paste("<!-- moved", moves, "-->"))
+    upgraded
+  }, .package = "hvtiRtemplates", .env = env)
+}
+
 # An rfs-fit job copied from the v1.3.0 template, before #303 folded its four
 # setup chunks into one, with a study's choices made in it.
 old_rfs_job <- function(root) {
@@ -111,6 +124,7 @@ test_that("upgrade_job() never overwrites an archived file and names a job it ca
 })
 
 test_that("add_job() stamps its job and upgrade_job() reads the stamp", {
+  local_template_moved()
   root <- migration_study_fixture()
   job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
   version <- as.character(utils::packageVersion("hvtiRtemplates"))
@@ -149,6 +163,7 @@ test_that("upgrade_job() refuses when another spelling of the job exists", {
 # Review of #313, at d3b741e: nine cases, one test each.
 
 test_that("the report names marker lines and never quotes them", {
+  local_template_moved()
   # dc-tables marks WORD_FILE inline, so a value left unresolved shares its
   # line with the marker the report lists.
   root <- migration_study_fixture()
@@ -251,6 +266,7 @@ test_that("an upgrade leaves the job folder holding the job alone", {
 })
 
 test_that("a job upgrades again without moving the last upgrade's files aside", {
+  local_template_moved()
   root <- migration_study_fixture()
   job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
   local_mocked_bindings(.upgrade_stamp = function() "20261020-101300")
@@ -265,6 +281,7 @@ test_that("a job upgrades again without moving the last upgrade's files aside", 
 })
 
 test_that("upgrades within one second each keep their pair", {
+  local_template_moved()
   # An upgrade finishes well inside a second, so back-to-back upgrades share a stamp.
   root <- migration_study_fixture()
   job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
@@ -273,6 +290,43 @@ test_that("upgrades within one second each keep their pair", {
   expect_identical(sort(list.files(file.path(dirname(job), "_archive"))),
                    sort(c(paste0("dc.general.cohort.eda.20261023-121500", c("", "-2", "-3"), ".pre-upgrade"),
                           paste0("dc.general.cohort.eda.20261023-121500", c("", "-2", "-3"), "-upgrade.md"))))
+})
+
+test_that("a job already current is left alone, and the message says so", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  writeLines(sub('^DATASET <- "built"', 'DATASET <- "built_r"', readLines(job)), job)
+  before <- readLines(job)
+  expect_message(out <- upgrade_job(job), "already current with its template; nothing changed", fixed = TRUE)
+  expect_identical(out, normalizePath(job, winslash = "/"))
+  expect_identical(readLines(job), before)
+  expect_false(dir.exists(file.path(dirname(job), "_archive")))
+})
+
+test_that("an upgrade names the two files it archived", {
+  local_template_moved()
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  local_mocked_bindings(.upgrade_stamp = function() "20261102-120000")
+  said <- capture_messages(upgrade_job(job))
+  said <- said[grepl("upgraded", said, fixed = TRUE)]
+  expect_length(said, 1L)
+  expect_match(said, "dc.general.cohort.eda.20261102-120000.pre-upgrade", fixed = TRUE)
+  expect_match(said, "dc.general.cohort.eda.20261102-120000-upgrade.md", fixed = TRUE)
+})
+
+test_that("a job already current still moves an older upgrade's pair, and adds none", {
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  before <- readLines(job)
+  backup <- paste0(job, ".pre-upgrade")
+  report <- sub("[.]qmd$", "-upgrade.md", job)
+  writeLines("the old job", backup)
+  writeLines("the old report", report)
+  expect_message(upgrade_job(job), "moved to", fixed = TRUE)
+  expect_identical(readLines(job), before)
+  expect_false(file.exists(backup) || file.exists(report))
+  expect_length(list.files(file.path(dirname(job), "_archive")), 2L)
 })
 
 # The pair an upgrade before 1.5.1 left beside the job: the old job as
@@ -289,6 +343,7 @@ legacy_pair <- function(job, when) {
 }
 
 test_that("an upgrade moves the pair an older upgrade left beside the job into _archive/", {
+  local_template_moved()
   # The old upgrade refused to run while its pair was there, so studies hold
   # them beside the job, and some hold hand-renamed copies made to get past it.
   root <- migration_study_fixture()
@@ -443,6 +498,7 @@ test_that(".read_stamp() reads a stamp with and without its template hash", {
 })
 
 test_that("an empty report section reads None, never a blank entry", {
+  local_template_moved()
   root <- migration_study_fixture()
   # Nothing unplaced and nothing new: the current template against its own copy.
   job <- upgrade_job(add_job("dc", "cohort", "eda", dir = root, qualifier = "general"))
@@ -458,6 +514,7 @@ test_that("an empty report section reads None, never a blank entry", {
 })
 
 test_that("the job's own description is carried in place of the template's comment", {
+  local_template_moved()
   root <- migration_study_fixture()
   job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
   token <- paste0("ED", "IT", ":")
