@@ -580,7 +580,7 @@ in a message to the team.
 | `packages` | Are the packages the job loads installed at the locked versions? A missing one otherwise stops the render partway. |
 | `quarto` | Can Quarto be found? A detached render has no console to say it cannot. |
 | `run_state` | Is this job already running, or did an earlier run leave a state file behind? Two renders of one job overwrite each other. |
-| `study_render` | Is another job already rendering in this study? Quarto allows one render per study, and a second one fails after the first has done its work. |
+| `study_render` | Is another job already rendering in this study? A study renders one job at a time, and a second one fails after the first has done its work. |
 | `render_r` | Inside the render: did it start on the R that was checked above? A detached job can pick up a different R than the one your session has. |
 | `memory` | Inside the render, for a job that calls `guard_memory()`: does the fit's expected memory fit the session's limit? A fit that outgrows the limit is killed without a message. |
 

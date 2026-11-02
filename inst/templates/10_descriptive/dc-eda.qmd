@@ -213,12 +213,15 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dc-eda-variables
-# EDIT: what VARIABLES = NULL draws. "ods" draws the house descriptive list:
-# every variable the SAS ODS tables report, in their section order, and only
-# the ones this dataset has. The report lists the columns it leaves out, so a
-# study's own variables are one name away. "all" draws every column, as
-# dc-eda did before this choice existed. The list is
-# hvtiRtemplates:::.ods_groups(), the same one dc-tables starts from.
+# EDIT: what VARIABLES = NULL draws. "ods" draws the house descriptive list, so
+# named because it is every variable the SAS ODS tables (dc.tables.ods.sas)
+# report, in their section order: a built dataset carries far more columns than
+# anyone wants a page for. Only the listed columns this dataset has are drawn,
+# and the report counts them. It also lists this dataset's columns left out, so a
+# study's own variables are one name away in VARIABLES. "all" draws every column, as dc-eda did before this choice existed.
+# The list ships with the package as extdata/ods-variables.csv, so a study adds to
+# VARIABLES rather than editing it. To read it: hvtiRtemplates:::.ods_groups().
+# dc-tables carries the same list as its commented GROUPS example.
 VARIABLE_SET <- "ods"
 X_LABEL <- "Year of operation"     # EDIT: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 

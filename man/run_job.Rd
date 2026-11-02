@@ -29,7 +29,7 @@ things that otherwise fail minutes or hours in: that this session's R is the
 one the study's \code{renv.lock} records, that the packages the job needs are
 installed at the versions locked, that Quarto can be found, that the job is
 not already running, and that no other job is rendering in the same study
-(Quarto allows one render per study). Every failure is listed with how to
+(one render at a time per study). Every failure is listed with how to
 fix it, and nothing is started until all of them are cleared.
 
 Then it submits the job with \code{\link{submit_job}} and waits for the
@@ -39,6 +39,12 @@ inside the render. If one fails, the diagnosis is printed here rather than
 left in a log.
 }
 \details{
+Use this rather than the Render button or a background job in RStudio for
+anything long. Those stay tied to your session, and when the session ends the
+render ends with it. A render started here is detached and carries on. Open a
+new session, call \code{\link{job_status}} with the same file, and it tells you
+where the job has got to. There is no R script to write.
+
 A job scaffolded before the setup consolidation has no in-render checks to
 wait for. \code{run_job()} says so and names \code{upgrade_job()}, which adds
 them. The wait ends early when the render finishes, fails or is cancelled.

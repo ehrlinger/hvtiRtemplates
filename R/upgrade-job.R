@@ -74,6 +74,11 @@
 #' and lines but never quotes their values, since a value can identify a
 #' patient. The upgrade refuses to overwrite any existing file.
 #'
+#' \code{upgrade_job()} prints nothing and does not check first whether the job
+#' needs upgrading. It rewrites the job even when the template has not moved, so
+#' code you added outside the choices leaves the job then too, and it adds a new
+#' pair to \code{_archive} every time.
+#'
 #' @param path The one job to upgrade: its \code{.qmd} file, relative to the
 #'   working directory or absolute, such as
 #'   \code{"10_descriptive/dc.general.cohort.eda.qmd"}.
