@@ -11,7 +11,7 @@ upgrade_job(path, dir = NULL)
   working directory or absolute, such as
   \code{"10_descriptive/dc.general.cohort.eda.qmd"}.
 A message says what happened and, after an upgrade, names both archived files.
-A job already current with its template, your edits included, is left alone:
+A job the upgrade would not change is left alone, its study choices included:
 the message says so, and no new pair is added to \code{_archive}. A pair an
 older upgrade left beside the job still moves there.}
 
