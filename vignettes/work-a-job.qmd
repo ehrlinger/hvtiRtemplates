@@ -256,8 +256,9 @@ upgrade_job(job)
 Nothing is printed. The job opens in RStudio, and the old copy and a report of the
 upgrade go in an `_archive` folder beside it, as `<job>.<stamp>.pre-upgrade` and
 `<job>.<stamp>-upgrade.md`. The stamp is the date and time, so sort by it to find
-the pair you have just made, and read the report for the chunks to check. Upgrading
-a job that is already current changes nothing in it, but it adds another pair.
+the pair you have just made, and read the report for the chunks to check, restoring
+anything of yours from the archived copy. Upgrading a job whose template has not moved
+still rewrites it, and it adds another pair.
 
 ## When the job stops you
 
@@ -279,12 +280,17 @@ for new work.
 `render_job(final = TRUE)`. The job is not finished. Find the markers as above,
 or render a draft to see them listed.
 
-**"Another Quarto render is in progress in this study"**, from `render_job()`, or
-**"another job is ... in this study"** from `run_job()`. A study renders one job at
-a time, whichever job it is, so renaming your job or rendering a copy meets the same
-lock. Wait for the other render to finish. If the message names another node and
-you know nothing is rendering there, a crashed render has left its lock behind:
-delete the directory the message names, then render again.
+**"Another Quarto render is in progress in this study"**, from `render_job()`. A
+study renders one job at a time, whichever job it is, so renaming your job or
+rendering a copy meets the same lock. Wait for the other render to finish. If the
+message names another node and you know nothing is rendering there, a crashed render
+has left its lock behind: delete the directory the message names, then render again.
+
+**"another job is ... in this study"**, from `run_job()`. This one comes from the
+other job's run record, not the lock, so renaming does not help here either. The
+message gives the way out: wait, or stop that job. If it is recorded on another node,
+check from a session there, and follow the printed route for abandoning the run only
+once you have confirmed it has stopped.
 
 **"This job is rendered in part"**, from a final render. A `skip` or
 `stop_here()` is still in the job. Remove it, or render a draft instead.
