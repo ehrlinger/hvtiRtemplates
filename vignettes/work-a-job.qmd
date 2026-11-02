@@ -167,6 +167,26 @@ also records the job's *provenance*, which data it read and a fingerprint of the
 job file that read it, and writes it beside the report as
 `dc.gfup.reop.hz.provenance.json`, so the numbers can be traced back later.
 
+## Paths in a job
+
+A job never needs `setwd()`, which encodes your own directory and breaks for the
+next person. Open the study from its `.Rproj`, through **Recent Projects** rather
+than the Files pane, and let the study say where things are. Inside a job, the
+setup chunk gives you `set_path()`, which writes into the job's own results folder:
+
+```r
+saveRDS(fit, set_path("estimates", "fit.rds"))
+```
+
+Anywhere else, `hvtiRutilities::study_dir("datasets")` finds the folder whether the
+study calls it `00_datasets` or `datasets`, and `here::here()` builds a path from
+the project root:
+
+```r
+file.path(hvtiRutilities::study_dir("datasets"), "built.csv")
+here::here("R", "helpers.R")
+```
+
 ## Render part of a job
 
 Sometimes a job is half built. The cohort tables are right, but the model below
@@ -299,6 +319,15 @@ a lock directory does not clear this one.
 
 **"This job is rendered in part"**, from a final render. A `skip` or
 `stop_here()` is still in the job. Remove it, or render a draft instead.
+
+**"object '...' not found"**, in a render, for something you can see in your
+Environment pane. A render starts from nothing and cannot see your session. Create
+or read the object inside the job. If a job or a session of yours was what made it,
+that is the dependency to write down.
+
+**"there is no package called ..."**, for a family package. Run `hvtiR::status()` to
+see what is missing and `renv::restore()` to rebuild from the lockfile. The family
+installs through `hvtiR`, not `pacman`.
 
 **"The figure was not drawn"**, in a `dc-gfup` report. The follow-up figure
 needs a sensible operation-year column and origin. The box names the problem,
