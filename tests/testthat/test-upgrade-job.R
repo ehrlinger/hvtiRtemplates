@@ -514,6 +514,7 @@ test_that("an empty report section reads None, never a blank entry", {
 })
 
 test_that("the job's own description is carried in place of the template's comment", {
+  local_template_moved()
   root <- migration_study_fixture()
   job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
   token <- paste0("ED", "IT", ":")
