@@ -103,8 +103,7 @@
 * `dc-tables` now prints a power a dataset's label wrote with one caret as a superscript: `m^2`, `kg/m^2` and `10^9/L` came
   through with the caret showing. The fix is in the package, so a job already in a study picks it up at its next render.
 
-* `?render_job` no longer says every stale render lock is taken over: one left on another node reads as still running and
-  must be deleted by hand. `work-a-job` gains sections on `run_job()` and `upgrade_job()` and an entry for the render-lock
+* `work-a-job` gains sections on `run_job()` and `upgrade_job()` and an entry for the render-lock
   error, which a renamed copy of a job does not get past. `?run_job`, `?job_status`, `?upgrade_job` and `dc-eda`'s
   `VARIABLE_SET` comment say more about what each does.
 
