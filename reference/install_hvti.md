@@ -51,5 +51,5 @@ if (.Platform$OS.type != "windows") {
   install_hvti(d)
   unlink(d, recursive = TRUE)
 }
-#> Add it to your PATH: echo 'export PATH="/tmp/RtmpgxJg6I/bin1cb065e83340:$PATH"' >> ~/.profile
+#> Add it to your PATH: echo 'export PATH="/tmp/Rtmp4UM7TT/bin1c5a7d796246:$PATH"' >> ~/.profile
 ```
