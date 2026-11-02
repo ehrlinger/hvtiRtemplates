@@ -39,7 +39,7 @@
     # A dataset writes the same power as kg/m2 or kg/m^2, and the second prints
     # its caret: the table draws a superscript only from a closed ^2^.
     units = function(x) {
-      closed <- gsub("([[:alnum:]])\\^([0-9]+)(?![0-9^])", "\\1^\\2^", x, perl = TRUE)
+      closed <- gsub("([[:alnum:]])\\^(-?[0-9]+(?:[.][0-9]+)?)(?![0-9^]|[.][0-9])", "\\1^\\2^", x, perl = TRUE)
       gsub("/m2(?![0-9^])", "/m^2^", closed, ignore.case = TRUE, perl = TRUE)
     }
   )

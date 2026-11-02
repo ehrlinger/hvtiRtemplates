@@ -32,7 +32,12 @@ test_that("a power the dataset wrote with one caret becomes a superscript", {
   expect_identical(rules("Body mass index (kg/m^2)")$label, "Body mass index (kg/m^2^)")
   expect_identical(rules("Valve area index (cm^2/m^2)")$label, "Valve area index (cm^2^/m^2^)")
   expect_identical(rules("Platelets (10^9/L)")$label, "Platelets (10^9^/L)")
+  expect_identical(rules("Flow (mL/min/cm^-2)")$label, "Flow (mL/min/cm^-2^)")
+  expect_identical(rules("Scaled by BSA^1.5")$label, "Scaled by BSA^1.5^")
+  expect_identical(rules("Area in m^2.")$label, "Area in m^2^.")
   expect_identical(rules("Index (kg/m^2^)")$rules, character(0))
+  expect_identical(rules("Index (kg/m^1.5^)")$rules, character(0))
+  expect_identical(rules("Index (kg/m^-2^)")$rules, character(0))
   expect_identical(rules("Body surface area (m^2)", use = "case")$label, "Body surface area (m^2)")
 })
 
