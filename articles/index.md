@@ -4,6 +4,8 @@
 
 - [Work a job, from template to final
   report](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.md):
+- [Running a job that takes
+  hours](https://ehrlinger.github.io/hvtiRtemplates/articles/long-running-jobs.md):
 - [Start a new study from a delivered
   dataset](https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.md):
 - [Adopt an existing study for descriptive and EDA

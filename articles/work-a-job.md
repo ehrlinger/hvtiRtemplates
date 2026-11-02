@@ -242,10 +242,13 @@ It checks first for what would otherwise stop the job hours in (the
 wrong R, a missing package, another render in the study), lists every
 problem it finds, and starts nothing until they are cleared. Then it
 starts the render detached from your session. Close RStudio if you like.
-When you come back, ask with the same file:
+A later session starts with nothing loaded, so load the package and name
+the same file again:
 
 ``` r
 
+library(hvtiRtemplates)
+job <- "10_descriptive/dc.gfup.reop.hz.qmd"
 job_status(job)
 ```
 
@@ -259,7 +262,11 @@ the log can say. `cancel_job(job)` stops a render.
 as `render_job(job, final = TRUE)`.
 
 [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
-is not available on Windows.
+is not available on Windows. [Running a job that takes
+hours](https://ehrlinger.github.io/hvtiRtemplates/articles/long-running-jobs.html)
+has the rest: every state
+[`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+reports, the guards that stop a job, and what to do about a lock.
 
 ## When the template moves on
 
@@ -321,8 +328,9 @@ directory the message names, then render again.
 This one comes from the other job’s run record, not the lock, so
 renaming does not help here either. The message gives the way out: wait,
 or stop that job. If it is recorded on another node, check from a
-session there, and follow the printed route for abandoning the run only
-once you have confirmed it has stopped.
+session there. Once you have confirmed it has stopped, clear its record
+with `cancel_job(other_job, other_host = "abandon")`, as the message
+prints it. Deleting a lock directory does not clear this one.
 
 **“This job is rendered in part”**, from a final render. A `skip` or
 [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md)

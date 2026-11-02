@@ -1,0 +1,188 @@
+# Running a job that takes hours
+
+Most jobs render in a minute or two, and the Render button is fine for
+them. A Boostmtree fit, a VarPro run or a set of SHAP plots is
+different. It can run for hours, and over those hours a Workbench
+session times out, or freezes, or hands you a 502. A render started from
+that session goes down with it, and so does a background job in RStudio,
+because both are still attached to the session.
+
+So a long job needs to run on its own, the way `nohup` runs a command
+from a terminal. You should not need to know Unix to get that. The
+functions here do it from the R console, and the job’s own guards send
+you to them when you forget.
+
+All of this is for Linux and the Workbench.
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+and
+[`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md)
+are not available on Windows.
+
+## Start it
+
+``` r
+
+library(hvtiRtemplates)
+job <- "analyses/nb.boostmtree.lvef.boost.qmd"
+run_job(job)
+```
+
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+first looks for what would otherwise stop the job minutes or hours in:
+that this session’s R is the one the study’s `renv.lock` records, that
+the packages are installed at the locked versions, that Quarto can be
+found, that this job is not already running, and that no other job is
+rendering in the study. It lists every problem it finds, with its fix,
+and starts nothing until they are cleared.
+
+Then it calls
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
+and waits up to five minutes (`wait = 300`) for the render’s own checks.
+When those have reported, or the wait runs out, you get your console
+back and the render carries on either way. `run_job(job, final = TRUE)`
+is the final render, under the same rules as
+`render_job(job, final = TRUE)`.
+
+`submit_job(job)` is the part underneath: it starts the detached render
+and returns at once, with none of the checks first. Reach for
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+unless you have a reason not to.
+
+From a terminal, the `hvti` command does the same on the R the study’s
+`renv.lock` records. Install it once with `install_hvti("~/bin")`, and
+again after updating the package. Then `hvti run`, `hvti status` and
+`hvti cancel` take the job’s file, and `hvti run <job> --final` is the
+final render.
+
+## Come back to it
+
+Close RStudio if you like. A later session starts with nothing loaded,
+so load the package and name the same file again:
+
+``` r
+
+library(hvtiRtemplates)
+job <- "analyses/nb.boostmtree.lvef.boost.qmd"
+job_status(job)
+```
+
+The first word of the line is the state:
+
+| state | what it means |
+|----|----|
+| `none` | no run is recorded for this job |
+| `submitted` | started, and the render has not reported in yet |
+| `running` | the render is going; see below for what this can and cannot promise |
+| `finished` | done, and the report is beside the job |
+| `failed` | it stopped, and where the log can say, `why` and `fix` lines follow |
+| `vanished` | the process went away without recording an end, as a killed one does |
+| `cancelled` | stopped by [`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md) |
+
+Now the question you actually have after two hours: is it still alive,
+or is it stuck? On the node that started the job, a recorded `running`
+is checked against the process itself, so `running` there means alive.
+From another node it cannot be checked, and the line says so and names
+the host. Sessions can land on different nodes, so read that line before
+you worry.
+
+Alive is not the same as moving, and one long fit can hold a job in a
+single step for hours. The render records its progress in
+`<job>.run.progress`: the chunk it is in, the step within it where the
+template reports steps, and how long each finished chunk took.
+[`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+prints that, with an estimate of the time left in the current chunk, and
+says when nothing has moved for half an hour or more. That is a reason
+to look, not proof of a hang. The full output is in `<job>.run.log`,
+which gets a line as each chunk starts and ends and, within a step, at
+most every ten minutes.
+
+## Stop it
+
+``` r
+
+cancel_job(job)
+```
+
+This stops the render and everything it started, Quarto’s own processes
+included, and records `cancelled`, so the job can be submitted again. It
+is deliberately careful, because the wrong process is easy to hit on a
+shared server. It leaves alone a process number since reused by
+something else, and it refuses when it cannot be sure of the process’s
+identity.
+
+It also refuses a job recorded on another node and names that node,
+since a process can be signaled only where it runs: open a session there
+and cancel from it. If that session is gone and you have confirmed the
+job is not running there, `cancel_job(job, other_host = "abandon")`
+records the run as ended without signaling anything. A render still
+running there would go on writing the job’s output, so do not use it on
+a guess.
+
+## When a job stops you first
+
+Two guards in the templates catch the mistake at the moment it would
+cost you.
+
+**[`guard_long_fit()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_long_fit.md)**
+sits just before an expensive fit. In the console, or running chunks one
+by one, with no cached result yet, it stops and tells you to use
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
+because the fit would die with your session. A render passes, and so
+does a cached result, which is why the chunks run interactively once the
+fit has been done. `nb-boostmtree` calls it today.
+
+**[`guard_memory()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md)**
+sits at the top of a fit chunk, with the memory the fit is expected to
+need. It reads your session’s limit and stops, in the first minutes of
+the render, when the need is over 90 percent of it. The message begins
+`memory:` and names the Workbench profile that would hold the fit, and,
+where the template can work it out, how many cores would fit in this
+one. A detached job counts against the session that submitted it, so
+choose the profile before you submit. A fit that outgrows the limit is
+killed without a message, which is the failure this guard exists to
+replace.
+
+## When it says something is already running
+
+Three things can say this, and they read alike.
+
+**One render per study.** “Another Quarto render is in progress” is the
+study’s lock. A study renders one job at a time, whichever job it is, so
+renaming your job or rendering a copy meets the same lock. Wait for the
+other render. A lock left by a crash on this node is taken over for you.
+One left on another node reads as still running, since it cannot be
+checked from here. Once you know nothing is rendering there, delete the
+directory the message names.
+
+**Another job’s run record.** “another job is … in this study”, from
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md),
+comes from that job’s record rather than the lock, so deleting the lock
+does not clear it. The message gives the way out: wait, or stop that
+job. If it is recorded on another node, check from a session there. Once
+you have confirmed it has stopped, clear its record with
+`cancel_job(other_job, other_host = "abandon")`, as the message prints
+it.
+
+**One submit per job.** `<job>.run.lock` is held while a submit or
+cancel is in progress. A submit that crashed can leave it behind, and
+then you delete it to try again.
+
+Errors about a very large file, or about a file Quarto cannot remove
+from the job’s execute directory, are a different problem that we are
+still working through with the server’s administrators. These locks do
+not explain them.
+
+## Where to go next
+
+- [Work a job, from template to final
+  report](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html),
+  for the loop this fits into.
+- [`?run_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md),
+  [`?submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
+  [`?job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md),
+  [`?cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md),
+  [`?guard_long_fit`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_long_fit.md)
+  and
+  [`?guard_memory`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md)
+  in R, for every argument.

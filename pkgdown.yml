@@ -3,13 +3,14 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   legacy-study-migration: legacy-study-migration.html
+  articles/long-running-jobs: long-running-jobs.html
   new-study: new-study.html
   sas-to-r-descriptive: sas-to-r-descriptive.html
   study-setup: study-setup.html
   template-catalog: template-catalog.html
   articles/vars-sas-to-r: vars-sas-to-r.html
   work-a-job: work-a-job.html
-last_built: 2026-11-02T18:23Z
+last_built: 2026-11-02T18:56Z
 urls:
   reference: https://ehrlinger.github.io/hvtiRtemplates/reference
   article: https://ehrlinger.github.io/hvtiRtemplates/articles
