@@ -42,7 +42,8 @@ A status that does not change between two calls is not a failure: one long
 fit can hold a job in the same step for hours. On the host that started the
 job, \code{running} means the process is alive. From another host it means only
 that the run is recorded as running, because a process cannot be checked from
-there, and the summary line says so: ask from a session on that host.
+there, and the summary line says so. A job that crashed there still reads
+\code{running}, so ask from a session on that host.
 }
 \examples{
 job <- file.path(tempdir(), "example.qmd")

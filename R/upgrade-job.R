@@ -74,14 +74,16 @@
 #' and lines but never quotes their values, since a value can identify a
 #' patient. The upgrade refuses to overwrite any existing file.
 #'
+#' A message says what happened and, after an upgrade, names both archived files.
+#' A job the upgrade would not change is left alone: the message says so, and no
+#' new pair is added to \code{_archive}. A pair an older upgrade left beside the job
+#' still moves there. A job holding code outside its choices is one the upgrade
+#' would change, even when the template has not moved: that code leaves the job,
+#' and the archived copy keeps it.
+#'
 #' @param path The one job to upgrade: its \code{.qmd} file, relative to the
 #'   working directory or absolute, such as
 #'   \code{"10_descriptive/dc.general.cohort.eda.qmd"}.
-#' A message says what happened and, after an upgrade, names both archived files.
-#' A job the upgrade would not change is left alone, its study choices included:
-#' the message says so, and no new pair is added to \code{_archive}. A pair an
-#' older upgrade left beside the job still moves there.
-#'
 #' @param dir Any directory in the study, used only to locate the study root.
 #'   Defaults to the directory of \code{path}, which is right for any job
 #'   inside its study.
