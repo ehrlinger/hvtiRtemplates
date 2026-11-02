@@ -43,11 +43,13 @@
 #' One job renders at a time in a study. A render started while another is
 #' still running in the same study stops with a message naming the running
 #' Quarto process; render again once it finishes. A lock left by a render that
-#' crashed on this node is taken over automatically. One left on another node is
-#' not, because a process on another node cannot be checked from here, so it reads
-#' as still running: the message names the node and the lock directory to delete
-#' once you know nothing is rendering there. The lock is the study's, so a renamed
-#' copy of the job meets the same one.
+#' crashed on this node is taken over automatically. A process on another node
+#' cannot be checked from here, so a running render touches a heartbeat file in
+#' the lock from its own node, and a lock whose heartbeat has stopped for ten
+#' minutes is taken over too. A lock from a render too old to keep a heartbeat
+#' reads as still running: the message names the node and the lock directory to
+#' delete once you know nothing is rendering there. The lock is the study's, so a
+#' renamed copy of the job meets the same one.
 #'
 #' @param path Character. Path to a job \code{.qmd} file.
 #' @param final Logical. \code{TRUE} for the accepted result. A final render reads registered data
