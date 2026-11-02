@@ -55,9 +55,12 @@ package. Then `hvti run`, `hvti status` and `hvti cancel` take the job's file, a
 
 ## Come back to it
 
-Close RStudio if you like. In any later session, ask with the same file:
+Close RStudio if you like. A later session starts with nothing loaded, so load the
+package and name the same file again:
 
 ```{r}
+library(hvtiRtemplates)
+job <- "analyses/nb.boostmtree.lvef.boost.qmd"
 job_status(job)
 ```
 

@@ -223,10 +223,12 @@ run_job(job)
 It checks first for what would otherwise stop the job hours in (the wrong R, a
 missing package, another render in the study), lists every problem it finds, and
 starts nothing until they are cleared. Then it starts the render detached from
-your session. Close RStudio if you like. When you come back, ask with the same
-file:
+your session. Close RStudio if you like. A later session starts with nothing loaded,
+so load the package and name the same file again:
 
 ```{r}
+library(hvtiRtemplates)
+job <- "10_descriptive/dc.gfup.reop.hz.qmd"
 job_status(job)
 ```
 
