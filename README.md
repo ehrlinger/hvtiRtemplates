@@ -14,6 +14,10 @@
 Versioned analysis job templates for the HVTI CORR group at the Cleveland
 Clinic.
 
+**New to the family, or to a study? Read [Start here](https://ehrlinger.github.io/hvtiR/articles/start-here.html)
+first.** It sets the study up with `hvtiR::setup()` and sends you on to the
+tutorials on this site.
+
 **Start at the [template gallery](https://ehrlinger.github.io/hvtiRtemplates/gallery/):**
 every template, what it is for, the `add_job()` call that adds it to your study,
 and the report it produces on a synthetic study. The full reference is at
@@ -137,7 +141,7 @@ of the first.
 ## Migrate a legacy job
 
 For a study with SAS programs already in `descriptive/` and `graphs/`, first
-adopt its directory with `hvtiRutilities::study_setup(..., adopt = TRUE)` and
+adopt its directory with `hvtiR::setup(..., adopt = TRUE)` and
 register its built datasets with `register_data()`. The tutorial
 [Set up an hvtiR study for descriptive and EDA work](articles/study-setup.html)
 walks through new-study creation, recoverable legacy cleanup and adoption,
