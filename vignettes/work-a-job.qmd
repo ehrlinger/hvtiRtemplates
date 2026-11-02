@@ -247,11 +247,11 @@ When a new release changes a template, your job does not change by itself.
 upgrade_job(job)
 ```
 
-Nothing is printed. The job opens in RStudio, and the old copy and a report of the
-upgrade go in an `_archive` folder beside it, as `<job>.<stamp>.pre-upgrade` and
-`<job>.<stamp>-upgrade.md`. The stamp is the date and time, so sort by it to find
-the pair you have just made, and read the report for the chunks to check. Upgrading
-a job that is already current changes nothing in it, but it adds another pair.
+The job opens in RStudio, and the old copy and a report of the upgrade go in an
+`_archive` folder beside it, as `<job>.<stamp>.pre-upgrade` and
+`<job>.<stamp>-upgrade.md`. The stamp is the date and time. The console names both
+files; read the report for the chunks to check. A job that is already current is
+left alone: the console says so, and nothing is added to `_archive`.
 
 ## When the job stops you
 

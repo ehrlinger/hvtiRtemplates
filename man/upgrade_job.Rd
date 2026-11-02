@@ -10,9 +10,10 @@ upgrade_job(path, dir = NULL)
 \item{path}{The one job to upgrade: its \code{.qmd} file, relative to the
   working directory or absolute, such as
   \code{"10_descriptive/dc.general.cohort.eda.qmd"}.
-\code{upgrade_job()} prints nothing and does not check first whether the job
-needs upgrading. A job already current keeps its text, and still gets a new
-pair in \code{_archive}.}
+A message says what happened and, after an upgrade, names both archived files.
+A job already current with its template, your edits included, is left alone:
+the message says so, and no new pair is added to \code{_archive}. A pair an
+older upgrade left beside the job still moves there.}
 
 \item{dir}{Any directory in the study, used only to locate the study root.
 Defaults to the directory of \code{path}, which is right for any job
@@ -87,7 +88,7 @@ folder beside it as \code{<job>.<stamp>-upgrade.md}, for the chunks to
 check. The old job is kept there too, as \code{<job>.<stamp>.pre-upgrade},
 and the stamp, the date and time of the upgrade, pairs the two. The job's
 own folder is left holding the job, and the same job can be upgraded again
-with nothing moved aside: each upgrade adds its own pair. A pair whose
+with nothing moved aside: each upgrade that changes it adds its own pair. A pair whose
 stamp is already used, from an upgrade in the same second, takes a shared
 \code{-2}, \code{-3} suffix after the stamp.
 
