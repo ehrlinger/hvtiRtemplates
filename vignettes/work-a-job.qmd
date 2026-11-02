@@ -238,7 +238,7 @@ and what to do, where the log can say. `cancel_job(job)` stops a render.
 `run_job(job, final = TRUE)` is the final render, under the same rules as
 `render_job(job, final = TRUE)`.
 
-`run_job()` is not available on Windows. [Running a job that takes hours](articles/long-running-jobs.html)
+`run_job()` is not available on Windows. [Running a job that takes hours](https://ehrlinger.github.io/hvtiRtemplates/articles/long-running-jobs.html)
 has the rest: every state `job_status()` reports, the guards that stop a job, and
 what to do about a lock.
 
@@ -291,8 +291,9 @@ has left its lock behind: delete the directory the message names, then render ag
 **"another job is ... in this study"**, from `run_job()`. This one comes from the
 other job's run record, not the lock, so renaming does not help here either. The
 message gives the way out: wait, or stop that job. If it is recorded on another node,
-check from a session there, and follow the printed route for abandoning the run only
-once you have confirmed it has stopped.
+check from a session there. Once you have confirmed it has stopped, clear its record
+with `cancel_job(other_job, other_host = "abandon")`, as the message prints it. Deleting
+a lock directory does not clear this one.
 
 **"This job is rendered in part"**, from a final render. A `skip` or
 `stop_here()` is still in the job. Remove it, or render a draft instead.

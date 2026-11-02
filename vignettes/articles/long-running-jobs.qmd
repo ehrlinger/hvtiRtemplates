@@ -138,8 +138,8 @@ there, delete the directory the message names.
 **Another job's run record.** "another job is ... in this study", from `run_job()`,
 comes from that job's record rather than the lock, so deleting the lock does not clear
 it. The message gives the way out: wait, or stop that job. If it is recorded on another
-node, check from a session there, and abandon the run only once you have confirmed
-it has stopped.
+node, check from a session there. Once you have confirmed it has stopped, clear its
+record with `cancel_job(other_job, other_host = "abandon")`, as the message prints it.
 
 **One submit per job.** `<job>.run.lock` is held while a submit or cancel is in
 progress. A submit that crashed can leave it behind, and then you delete it to try
@@ -151,7 +151,7 @@ server's administrators. These locks do not explain them.
 
 ## Where to go next
 
-- [Work a job, from template to final report](../work-a-job.html), for the loop this
+- [Work a job, from template to final report](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html), for the loop this
   fits into.
 - `?run_job`, `?submit_job`, `?job_status`, `?cancel_job`, `?guard_long_fit` and
   `?guard_memory` in R, for every argument.
