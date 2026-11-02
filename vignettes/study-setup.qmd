@@ -12,12 +12,17 @@ format:
 ---
 
 This tutorial starts with an existing study directory and an existing dataset.
-It takes the study through identity setup, data registration, descriptive
-tables and EDA plots. A later tutorial can then begin with a specific analysis
-type instead of repeating this setup.
+It sets the study up with `hvtiR::setup()`, then takes it through data
+registration, descriptive tables and EDA plots. A later tutorial can then begin
+with a specific analysis type instead of repeating this setup.
 
-Adoption is additive. It creates the hvtiR study contract without renaming the
-legacy working directories or deleting old files.
+[Start here](https://ehrlinger.github.io/hvtiR/articles/start-here.html) is the family's
+getting-started page and explains `setup()` in full. This tutorial gives the call
+for a study that already exists.
+
+Adoption keeps the study's folder names and its own work. It does not rename the
+legacy working directories. It does delete the study's template copies, as
+described below.
 
 If the study does not exist yet and you are starting from a newly delivered
 dataset, follow [Start a new study](new-study.html) instead.
@@ -27,52 +32,56 @@ temporary directory and disappear after the article renders. For translating
 existing SAS descriptive jobs, see
 [From SAS descriptive jobs to R](sas-to-r-descriptive.html).
 
-## Open the study as an RStudio Project
-
-In RStudio, choose **File > New Project > Existing Directory** and select the
-study directory. Open that `.Rproj` whenever you work on the study. RStudio
-starts the session in the project directory, so there is no working-directory
-step to remember or repeat.
-
-Confirm the location before changing the study:
-
-```r
-normalizePath(".")
-```
-
-When the Console is already at the study root, use `"."` anywhere a function
-asks for `root`. The executable example below uses an explicit temporary path
-only because it cannot open an RStudio Project while pkgdown renders the page.
+## Set up the study
 
 ### Select the R version
 
 If the study already has an `renv.lock`, its `R` `Version` entry records the R
 version to preserve. Select that version in RStudio and restart the session.
-Do not silently upgrade an already pinned study.
-
-If the study is not already pinned, select **R 4.6** instead of the older 4.4.1
-default, restart the session and confirm the active version:
+Do not silently upgrade an already pinned study. If the study is not pinned,
+select **R 4.6** instead of the older 4.4.1 default, restart the session and
+confirm the active version:
 
 ```r
 R.version.string
 ```
 
-### Load the study packages
+### Run `hvtiR::setup()`
 
-Install or update the hvtiR family, then check whether anything else is missing
-or out of date:
+Close any open project first (**File > Close Project**), so that R starts outside
+the study. `setup()` replaces packages in the study's library, and a session
+inside the project has those packages loaded. That is why the call names the
+directory with `root`:
 
 ```r
+install.packages("pak")  # once per machine
 pak::pak("ehrlinger/hvtiR")
-hvtiR::status()
+
+hvtiR::setup(
+  study = "EDIT: the Study Tracker title",
+  study_tracker_id = 0L,  # EDIT: the Study Tracker ID
+  root = "EDIT: the study directory",
+  adopt = TRUE
+)
 ```
 
-In the study session, attach the two packages used throughout this tutorial:
+An existing directory needs `adopt = TRUE`, even an empty one, or `setup()`
+stops. A study in revision needs `upgrade = FALSE` as well, so that the versions
+its lockfile pins cannot move.
 
-```r
-library(hvtiRutilities)
-library(hvtiRtemplates)
-```
+`setup()` writes `_study.yml` and a project file when one is missing, declares
+the family and the standard analysis packages in the study's `DESCRIPTION`,
+installs them into the study's own library and records them in `renv.lock`, then
+restarts RStudio inside the project. If it stops partway, fix what it names and
+run the same command again.
+
+Adopting keeps the existing directory layout and the study's own files. It
+deletes the `tp.*` template copies, `binder.summaries.doc` and files identical
+to one in the template corpus. Pass `cleanup = FALSE` to adopt without deleting
+them.
+
+Do not run `renv::init()` or `organize_templates.sh` on the study: `setup()`
+replaces both, and `renv::init()` starts the library over.
 
 ```{r}
 #| label: synthetic-setup
@@ -107,28 +116,36 @@ utils::write.csv(
 )
 ```
 
-## Adopt the existing study
+## Open the study as an RStudio Project
 
-`study_setup()` writes `_study.yml`, environment defaults and a project file
-when one is missing. With `adopt = TRUE`, it keeps the existing directory
-layout and every existing study file. Use the title and ID from Study Tracker:
+From here on, open the study's `.Rproj` whenever you work on it. RStudio starts
+the session in the project directory, so there is no working-directory step to
+remember or repeat, and `study_root()`, `open_job()` and `render_job()` find
+`_study.yml` from anywhere inside the project.
+
+Ask the study what it still needs, then attach the two packages used throughout
+this tutorial:
 
 ```r
-study_setup(
-  root = ".",
-  study = "Study title from Study Tracker",
-  study_tracker_id = 42L,
-  adopt = TRUE
-)
+library(hvtiRutilities)
+library(hvtiRtemplates)
+
+normalizePath(".")
 study_root()
 study_status()
+hvtiR::status()
 ```
 
-The current API requires `root` for this first call. Here `"."` is the project
-directory that RStudio established. Once `_study.yml` exists, `study_root()`,
-`open_job()` and `render_job()` find it from anywhere inside the project.
+Expect `study_status()` to report that no dataset is registered yet. That is the
+next step.
 
-The executable example uses its temporary directory instead:
+When the Console is already at the study root, use `"."` anywhere a function
+asks for `root`. The executable example below uses an explicit temporary path
+only because it cannot open an RStudio Project while pkgdown renders the page.
+
+The executable example needs no package environment, so it calls
+`study_setup()`, the step of `setup()` that writes the study's identity, in its
+temporary directory:
 
 ```{r}
 #| label: adopt-study
@@ -144,34 +161,15 @@ study_setup(
 root <- adopted_root
 ```
 
-## Pin the package environment
+## Add a package the study needs
 
-`study_status()` reports a missing `renv.lock` until the study initializes its
-package environment. For an unpinned study, do this after selecting R 4.6 and
-restarting RStudio.
-
-First open RStudio's Terminal tab at the study root and run:
-
-```sh
-organize_templates.sh
-```
-
-This `qhsprograms` script creates `templates/` under each first-level study
-folder, moves that folder's `tp*` files into it and replaces the root
-`.renvignore` with the centrally managed copy used for dependency discovery.
-Before running it, make sure a destination `templates/` directory does not
-already contain a same-named file. Then return to the Console:
+`setup()` has already pinned the package environment. When a study needs a
+package the family and the standard set do not bring, add it from inside the
+project. That installs it, declares it and records it in `renv.lock`:
 
 ```r
-renv::init()
-
-# Install or update the packages used by the study, then record them.
-renv::snapshot()
+hvtiRutilities::study_need("cmprsk")
 ```
-
-Snapshot again when an accepted result needs a new reproducible package state.
-The temporary example does not run `renv::init()` because it changes the active
-R project while the article renders.
 
 ## Register the existing dataset
 
@@ -333,7 +331,7 @@ that the files exist.
 If the study has older SAS jobs, continue with
 [From SAS descriptive jobs to R](sas-to-r-descriptive.html). That article owns
 the detailed source mapping and migration workflow so adoption itself remains
-short and non-destructive.
+short.
 
 ### When registered data change
 

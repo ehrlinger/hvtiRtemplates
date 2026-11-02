@@ -19,8 +19,15 @@ add_job_calls <- function(article) {
 test_that("the new-study guide starts from an empty study and a delivered dataset", {
   article <- new_study_article()
 
-  expect_false(grepl("adopt = TRUE", article, fixed = TRUE))
+  expect_true(grepl("hvtiR::setup(", article, fixed = TRUE))
+  expect_true(grepl("start-here.html", article, fixed = TRUE))
+  # The worked call creates the directory; adopt = TRUE appears only as the warning.
+  expect_true(grepl("needs `adopt = TRUE`, even an empty one", article, fixed = TRUE))
+  expect_false(any(grepl("^[[:space:]]*adopt = TRUE", strsplit(article, "\n", fixed = TRUE)[[1L]])))
   expect_true(grepl("Study Tracker", article, fixed = TRUE))
+  # qhsprograms PR 93795, 2026-10-21: the identity is typed; only --verify reads the Tracker.
+  expect_false(grepl("reads the Tracker record", article, fixed = TRUE))
+  expect_true(grepl("study-setup --verify", article, fixed = TRUE))
   expect_true(grepl("study-setup --dry-run", article, fixed = TRUE))
   expect_true(grepl("study_setup(", article, fixed = TRUE))
   expect_true(grepl("register_data(", article, fixed = TRUE))

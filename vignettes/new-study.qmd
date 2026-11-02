@@ -11,10 +11,14 @@ format:
     embed-resources: true
 ---
 
-This tutorial starts with an empty directory and an analysis dataset that has
-just been delivered. It takes the study through setup, data registration and a
-first descriptive job, then through one analysis chain, so you can see how the
-templates hand work to one another.
+This tutorial starts before the study directory exists, with an analysis dataset
+that has just been delivered. It sets the study up with `hvtiR::setup()`, then
+takes it through data registration and a first descriptive job, then through one
+analysis chain, so you can see how the templates hand work to one another.
+
+[Start here](https://ehrlinger.github.io/hvtiR/articles/start-here.html) is the family's
+getting-started page and explains `setup()` in full. This tutorial gives the call
+for a new study.
 
 If the study directory already exists and holds jobs and data, start with
 [Adopt an existing study](study-setup.html) instead. That guide keeps the
@@ -31,8 +35,8 @@ this guide begins once it exists. Keep it on the study share: patient data
 never enter a git repository.
 
 The study itself must exist in Study Tracker before its directory does. Create
-the study record there first and note its Study Tracker ID: every later step
-takes its identity from that record.
+the study record there first and note its title and ID. You type both during
+setup: nothing reads them from Study Tracker when the study is created.
 
 ```{r}
 #| label: synthetic-setup
@@ -54,19 +58,30 @@ delivered <- data.frame(
 
 ## Create the study
 
-Create the directory with the `study-setup` command from `qhsprograms`, giving
-it the Study Tracker ID and the directory name. Preview first; the dry run
-writes nothing:
+On Posit Workbench, start a new RStudio Pro session and pick the latest R version
+listed. If a project is open, close it (**File > Close Project**), so that R starts
+outside the study. Then name the new directory with `root`:
 
-```sh
-study-setup --dry-run 42 example_study
-study-setup 42 example_study
+```r
+install.packages("pak")  # once per machine
+pak::pak("ehrlinger/hvtiR")
+
+hvtiR::setup(
+  study = "Example study",
+  study_tracker_id = 42L,
+  root = "/studies/example_study"
+)
 ```
 
-`study-setup` reads the Tracker record, read-only, and turns the new directory
-into a study. It writes `_study.yml`, which carries the study's name and
-Tracker ID, a README linking the Tracker record, an RStudio project file,
-environment defaults, `renv`, and the numbered folders every job is placed in:
+Leave out `adopt` only when the directory does not exist yet. A directory that
+already exists needs `adopt = TRUE`, even an empty one, or `setup()` stops. An
+empty directory still gets the folders below.
+
+`setup()` writes `_study.yml`, which carries the study's name and Tracker ID, a
+README, an RStudio project file and environment defaults. It installs the family
+and the standard analysis packages into the study's own library, records them in
+`renv.lock`, restarts RStudio inside the project, and makes the numbered folders
+every job is placed in:
 
 | folder | holds |
 |---|---|
@@ -81,20 +96,36 @@ environment defaults, `renv`, and the numbered folders every job is placed in:
 `90_estimates` is numbered last on purpose. It holds results, not jobs, and a
 job that needs another job's result reads it from there.
 
-Now open the directory in RStudio as a Project (**File > New Project >
-Existing Directory**) and work from its `.Rproj` from then on. Select the R
-version and load the hvtiR packages as described in
-[Adopt an existing study](study-setup.html#open-the-study-as-an-rstudio-project):
+Open the study's `.Rproj` from then on, and attach the packages this tutorial
+uses:
 
 ```r
 library(hvtiRutilities)
 library(hvtiRtemplates)
 ```
 
-Underneath, `study-setup` calls `hvtiRutilities::study_setup()` with the
-Tracker record's values. This article cannot reach Study Tracker while it
-renders, so the executable example calls `study_setup()` directly, in a
-temporary directory:
+### The `study-setup` command
+
+The `study-setup` command from `qhsprograms` does the same job from a terminal,
+through `hvtiR::setup()`. Preview first; the dry run writes nothing:
+
+```sh
+study-setup --dry-run --title "Example study" 42 example_study
+study-setup --title "Example study" 42 example_study
+```
+
+It does not read Study Tracker, because that stopped on 2026-10-21. The title and
+ID are what you typed, and the study records its identity as manual and
+unverified. Only `study-setup --verify` reads Study Tracker, to check that identity
+against the record:
+
+```sh
+study-setup --verify /studies/example_study
+```
+
+This article has no server to install on while it renders, so the executable
+example calls `hvtiRutilities::study_setup()` directly, in a temporary directory,
+which makes the same study without a package environment:
 
 ```{r}
 #| label: create-study

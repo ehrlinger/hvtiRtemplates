@@ -23,8 +23,10 @@ test_that("study setup vignette declares the complete workflow", {
   expect_true(any(grepl('qualifier = "general"', txt, fixed = TRUE)))
   expect_true(any(grepl('qualifier = "tables"', txt, fixed = TRUE)))
   expect_true(any(grepl('qualifier = "eda"', txt, fixed = TRUE)))
-  expect_true(any(grepl("renv::init()", txt, fixed = TRUE)))
-  expect_true(any(grepl("renv::snapshot()", txt, fixed = TRUE)))
+  expect_true(any(grepl("hvtiR::setup(", txt, fixed = TRUE)))
+  expect_true(any(grepl("start-here.html", txt, fixed = TRUE)))
+  # setup() replaced both steps. The prose may warn against them; no line may run one.
+  expect_false(any(grepl("^(renv::init|renv::snapshot|organize_templates)", txt)))
   expect_false(any(grepl("inventory-adoption-cleanup", txt, fixed = TRUE)))
   expect_false(any(grepl("cleanup_targets", txt, fixed = TRUE)))
   expect_true(any(grepl("new-study.html", txt, fixed = TRUE)))
