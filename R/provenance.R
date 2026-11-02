@@ -807,18 +807,24 @@
 }
 
 # A process cannot be checked from another host, but a file on the study's share
-# can. While its owner lives, a small shell loop on the owner's host touches this
-# file. The loop outlives the hook that starts it and ends with the owner or the
-# lock, so when the host or the owner goes, the file stops moving. No file means
-# a lock from before the heartbeat, or a platform without it, and proves nothing.
-.provenance_heartbeat_path <- function(lock) file.path(lock, "heartbeat")
+# can. While its owner lives, a small shell loop on the owner's host touches a
+# file named for that owner, so a loop outliving its lock can never refresh the
+# next owner's. When the host or the owner goes, the file stops moving. No file
+# means a lock from before the heartbeat, or a platform without it, and proves
+# nothing. A loop that cannot touch its file removes it for the same reason: a
+# silent writer beside a live render must not read as a crash. A share too far
+# gone for either stops the render's own writes as well.
+.provenance_heartbeat_path <- function(lock, owner) {
+  file.path(lock, paste0("heartbeat-", owner$pid, "-", owner$created))
+}
 
-.start_provenance_heartbeat <- function(lock, pid, every = 60) {
+.start_provenance_heartbeat <- function(lock, owner, every = 60) {
   if (.Platform$OS.type != "unix") return(invisible(FALSE))
-  beat <- .provenance_heartbeat_path(lock)
+  beat <- .provenance_heartbeat_path(lock, owner)
   if (!file.create(beat, showWarnings = FALSE)) return(invisible(FALSE))
-  script <- sprintf("trap '' HUP; while kill -0 %d 2>/dev/null && [ -d %s ]; do touch -c %s 2>/dev/null; sleep %s; done",
-                    as.integer(pid), shQuote(lock), shQuote(beat), format(every))
+  # touch -c does nothing once the file has gone with its lock, and the loop ends with the owner.
+  script <- sprintf("trap '' HUP; while kill -0 %d 2>/dev/null; do touch -c %s 2>/dev/null || rm -f %s; sleep %s; done",
+                    as.integer(owner$pid), shQuote(beat), shQuote(beat), format(every))
   # A loop that never started would read as a dead owner, so its file goes too.
   started <- system2("sh", c("-c", shQuote(script)), stdout = FALSE, stderr = FALSE, stdin = "/dev/null", wait = FALSE)
   if (!identical(as.integer(started), 0L)) unlink(beat)
@@ -827,20 +833,20 @@
 
 # Ten beats, so a slow share or a skewed clock is not read as a crash: taking the
 # lock from a live render would recover its state as though it had crashed.
-.provenance_heartbeat_stopped <- function(lock, limit = 600) {
-  beat <- file.info(.provenance_heartbeat_path(lock))$mtime
+.provenance_heartbeat_stopped <- function(lock, owner, limit = 600) {
+  beat <- file.info(.provenance_heartbeat_path(lock, owner))$mtime
   !is.na(beat) && as.numeric(difftime(Sys.time(), beat, units = "secs")) > limit
 }
 
 # Whether the owner recorded in `lock` still holds it.
 .provenance_lock_held <- function(owner, lock) {
-  .provenance_owner_alive(owner) && !(.on_other_host(owner) && .provenance_heartbeat_stopped(lock))
+  .provenance_owner_alive(owner) && !(.on_other_host(owner) && .provenance_heartbeat_stopped(lock, owner))
 }
 
 # Only a lock with no heartbeat can need deleting by hand: one with a heartbeat
 # clears itself when it stops.
 .provenance_lock_hint <- function(owner, lock) {
-  if (.on_other_host(owner) && !file.exists(.provenance_heartbeat_path(lock))) {
+  if (.on_other_host(owner) && !file.exists(.provenance_heartbeat_path(lock, owner))) {
     paste0(" If it is no longer running, delete the directory ", lock, ".")
   }
 }
@@ -856,7 +862,7 @@
   for (attempt in 1:2) {
     if (dir.create(lock, showWarnings = FALSE)) {
       jsonlite::write_json(owner, owner_path, auto_unbox = TRUE)
-      .start_provenance_heartbeat(lock, owner$pid)
+      .start_provenance_heartbeat(lock, owner)
       return(invisible(TRUE))
     }
     current <- tryCatch(jsonlite::read_json(owner_path), error = function(e) NULL)

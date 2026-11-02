@@ -615,7 +615,7 @@ test_that("a lock on another node is held while its heartbeat moves, and not onc
   # No heartbeat: a lock from an older release proves nothing, and only a person can clear it.
   expect_true(.provenance_lock_held(owner, lock))
   expect_match(.provenance_lock_hint(owner, lock), "delete the directory", fixed = TRUE)
-  beat <- .provenance_heartbeat_path(lock)
+  beat <- .provenance_heartbeat_path(lock, owner)
   file.create(beat)
   expect_true(.provenance_lock_held(owner, lock))
   expect_null(.provenance_lock_hint(owner, lock))
@@ -624,6 +624,11 @@ test_that("a lock on another node is held while its heartbeat moves, and not onc
   # On this host the process itself answers, whatever the file says.
   mine <- owner
   mine$host <- Sys.info()[["nodename"]]
+  # Another owner's heartbeat says nothing about this one.
+  other <- owner
+  other$pid <- 202L
+  file.create(.provenance_heartbeat_path(lock, other))
+  expect_false(.provenance_lock_held(owner, lock))
   testthat::local_mocked_bindings(.provenance_owner_alive = function(owner) TRUE)
   expect_true(.provenance_lock_held(mine, lock))
 })
@@ -632,9 +637,9 @@ test_that("a stopped heartbeat on another node gives up the lock to the next ren
   root <- withr::local_tempdir()
   lock <- .provenance_lock_path(root)
   dir.create(lock, recursive = TRUE)
-  jsonlite::write_json(list(pid = 101L, created = "1.000000", host = "elsewhere.invalid"),
-                       file.path(lock, "owner.json"), auto_unbox = TRUE)
-  beat <- .provenance_heartbeat_path(lock)
+  dead <- list(pid = 101L, created = "1.000000", host = "elsewhere.invalid")
+  jsonlite::write_json(dead, file.path(lock, "owner.json"), auto_unbox = TRUE)
+  beat <- .provenance_heartbeat_path(lock, dead)
   file.create(beat)
   expect_error(.acquire_provenance_lock(root), "Another Quarto render is in progress", fixed = TRUE)
   Sys.setFileTime(beat, Sys.time() - 3600)
@@ -643,16 +648,27 @@ test_that("a stopped heartbeat on another node gives up the lock to the next ren
   .release_provenance_lock(root)
 })
 
-test_that("the heartbeat moves while its owner lives, and ends with the lock", {
+test_that("the heartbeat moves while its owner lives, and a writer that fails leaves no file", {
   skip_on_os("windows")
   lock <- file.path(withr::local_tempdir(), "lock")
   dir.create(lock)
-  expect_true(.start_provenance_heartbeat(lock, Sys.getpid(), every = 0.2))
-  beat <- .provenance_heartbeat_path(lock)
+  live <- processx::process$new("sleep", "30")
+  withr::defer(live$kill())
+  owner <- list(pid = live$get_pid(), created = "1.000000")
+  expect_true(.start_provenance_heartbeat(lock, owner, every = 0.2))
+  beat <- .provenance_heartbeat_path(lock, owner)
   Sys.setFileTime(beat, Sys.time() - 3600)
   Sys.sleep(1)
-  expect_false(.provenance_heartbeat_stopped(lock))
-  unlink(lock, recursive = TRUE)
+  expect_false(.provenance_heartbeat_stopped(lock, owner))
+  # A touch that fails: the file goes, which reads as alive rather than as a crash.
+  shim <- withr::local_tempdir()
+  writeLines(c("#!/bin/sh", "exit 1"), file.path(shim, "touch"))
+  Sys.chmod(file.path(shim, "touch"), "755")
+  withr::local_path(shim)
+  failing <- list(pid = live$get_pid(), created = "2.000000")
+  expect_true(.start_provenance_heartbeat(lock, failing, every = 0.2))
+  Sys.setFileTime(.provenance_heartbeat_path(lock, failing), Sys.time() - 3600)
   Sys.sleep(1)
-  expect_false(dir.exists(lock))
+  expect_false(file.exists(.provenance_heartbeat_path(lock, failing)))
+  expect_false(.provenance_heartbeat_stopped(lock, failing))
 })
