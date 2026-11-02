@@ -8,8 +8,11 @@ upgrade_job(path, dir = NULL)
 }
 \arguments{
 \item{path}{The one job to upgrade: its \code{.qmd} file, relative to the
-working directory or absolute, such as
-\code{"10_descriptive/dc.general.cohort.eda.qmd"}.}
+  working directory or absolute, such as
+  \code{"10_descriptive/dc.general.cohort.eda.qmd"}.
+\code{upgrade_job()} prints nothing and does not check first whether the job
+needs upgrading. A job already current keeps its text, and still gets a new
+pair in \code{_archive}.}
 
 \item{dir}{Any directory in the study, used only to locate the study root.
 Defaults to the directory of \code{path}, which is right for any job

@@ -61,7 +61,11 @@ render the job. Everything computed above it is still in the session.
 One job renders at a time in a study. A render started while another is
 still running in the same study stops with a message naming the running
 Quarto process; render again once it finishes. A lock left by a render that
-crashed is taken over automatically.
+crashed on this node is taken over automatically. One left on another node is
+not, because a process on another node cannot be checked from here, so it reads
+as still running: the message names the node and the lock directory to delete
+once you know nothing is rendering there. The lock is the study's, so a renamed
+copy of the job meets the same one.
 }
 \examples{
 \donttest{

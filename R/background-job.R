@@ -48,6 +48,10 @@
 #' A long step writes a line to the render log at most every
 #' \code{getOption("hvtiRtemplates.progress_every", 10)} minutes.
 #'
+#' A status that does not change between two calls is not a failure: one long
+#' fit can hold a job in the same step for hours. \code{running} means the process
+#' is alive. Only \code{failed} and \code{vanished} say the job has stopped short.
+#'
 #' @param path Character(1). The job's \code{.qmd} file.
 #' @param quiet Logical(1). \code{FALSE} prints a one-line summary.
 #' @return Invisibly, a list: \code{state} is one of \code{"none"},
