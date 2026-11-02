@@ -482,8 +482,10 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   bytes <- nb_file_bytes(html)
   expect_false(any(vapply(unique(data$MRN), function(v) nb_bytes_hold(bytes, v), logical(1L))))
   page <- rawToChar(bytes)
-  # Quarto sets the title's "--" as a dash, and since 1.11 the page no longer also holds the source text.
-  expect_match(page, "DRAFT [^ ]+ this job is unfinished", useBytes = TRUE)
+  # The banner itself, as a reader sees it: the callout's visible title, where Quarto sets the "--" as a dash. The same
+  # words in an attribute or a script would not warn anyone, so the bare words are not enough.
+  banner <- "callout-title-container[^>]*>\\s*(<span[^>]*>[^<]*</span>)?\\s*DRAFT (--|\u2013|&ndash;) this job is unfinished\\s*<"
+  expect_match(page, banner, useBytes = TRUE)
   # The provenance chunk runs only in a render: its payload is in the page and its sidecar beside the job.
   payload <- hvtiRtemplates:::.extract_provenance(page)
   expect_identical(payload$subject, "lvef")
