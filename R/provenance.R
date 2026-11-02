@@ -790,8 +790,9 @@
 }
 
 # A process can only be checked on its own host, so an owner recorded on another
-# host is taken as alive: reading it as dead would recover its live render state
-# as though it had crashed. A lock with no host predates the field and keeps the
+# host is taken as alive here: reading it as dead would recover its live render
+# state as though it had crashed. .provenance_lock_held() adds the heartbeat,
+# which can say otherwise. A lock with no host predates the field and keeps the
 # local check.
 .provenance_owner_alive <- function(owner) {
   if (.on_other_host(owner)) return(TRUE)
@@ -805,6 +806,45 @@
   paste0("process ", owner$pid, if (.on_other_host(owner)) paste0(" on ", owner$host))
 }
 
+# A process cannot be checked from another host, but a file on the study's share
+# can. While its owner lives, a small shell loop on the owner's host touches this
+# file. The loop outlives the hook that starts it and ends with the owner or the
+# lock, so when the host or the owner goes, the file stops moving. No file means
+# a lock from before the heartbeat, or a platform without it, and proves nothing.
+.provenance_heartbeat_path <- function(lock) file.path(lock, "heartbeat")
+
+.start_provenance_heartbeat <- function(lock, pid, every = 60) {
+  if (.Platform$OS.type != "unix") return(invisible(FALSE))
+  beat <- .provenance_heartbeat_path(lock)
+  if (!file.create(beat, showWarnings = FALSE)) return(invisible(FALSE))
+  script <- sprintf("trap '' HUP; while kill -0 %d 2>/dev/null && [ -d %s ]; do touch -c %s 2>/dev/null; sleep %s; done",
+                    as.integer(pid), shQuote(lock), shQuote(beat), format(every))
+  # A loop that never started would read as a dead owner, so its file goes too.
+  started <- system2("sh", c("-c", shQuote(script)), stdout = FALSE, stderr = FALSE, stdin = "/dev/null", wait = FALSE)
+  if (!identical(as.integer(started), 0L)) unlink(beat)
+  invisible(identical(as.integer(started), 0L))
+}
+
+# Ten beats, so a slow share or a skewed clock is not read as a crash: taking the
+# lock from a live render would recover its state as though it had crashed.
+.provenance_heartbeat_stopped <- function(lock, limit = 600) {
+  beat <- file.info(.provenance_heartbeat_path(lock))$mtime
+  !is.na(beat) && as.numeric(difftime(Sys.time(), beat, units = "secs")) > limit
+}
+
+# Whether the owner recorded in `lock` still holds it.
+.provenance_lock_held <- function(owner, lock) {
+  .provenance_owner_alive(owner) && !(.on_other_host(owner) && .provenance_heartbeat_stopped(lock))
+}
+
+# Only a lock with no heartbeat can need deleting by hand: one with a heartbeat
+# clears itself when it stops.
+.provenance_lock_hint <- function(owner, lock) {
+  if (.on_other_host(owner) && !file.exists(.provenance_heartbeat_path(lock))) {
+    paste0(" If it is no longer running, delete the directory ", lock, ".")
+  }
+}
+
 # One render at a time per study: the render state, the sidecar backups and the
 # abandoned-render recovery are all study-wide, so a second concurrent render
 # would recover the first one's live state as though it had crashed.
@@ -816,6 +856,7 @@
   for (attempt in 1:2) {
     if (dir.create(lock, showWarnings = FALSE)) {
       jsonlite::write_json(owner, owner_path, auto_unbox = TRUE)
+      .start_provenance_heartbeat(lock, owner$pid)
       return(invisible(TRUE))
     }
     current <- tryCatch(jsonlite::read_json(owner_path), error = function(e) NULL)
@@ -824,13 +865,11 @@
     # taken the lock, unless the lock has been sitting there for a while.
     unwritten_recently <- is.null(current) &&
       difftime(Sys.time(), file.info(lock)$mtime, units = "secs") < 60
-    if (unwritten_recently || (!is.null(current) && .provenance_owner_alive(current))) {
+    if (unwritten_recently || (!is.null(current) && .provenance_lock_held(current, lock))) {
       stop("Another Quarto render is in progress in this study",
            if (!is.null(current)) paste0(" (", .provenance_owner_label(current), ")"),
            ". Wait for it to finish, then render again.",
-           if (!is.null(current) && .on_other_host(current)) {
-             paste0(" If it is no longer running, delete the directory ", lock, ".")
-           }, call. = FALSE)
+           if (!is.null(current)) .provenance_lock_hint(current, lock), call. = FALSE)
     }
     # The owner is gone. Moving its lock aside is atomic, so of two renders
     # that both find it stale, only one takes it over.

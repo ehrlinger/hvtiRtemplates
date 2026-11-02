@@ -134,9 +134,11 @@ Three things can say this, and they read alike.
 **One render per study.** "Another Quarto render is in progress" is the study's lock.
 A study renders one job at a time, whichever job it is, so renaming your job or
 rendering a copy meets the same lock. Wait for the other render. A lock left by a
-crash on this node is taken over for you. One left on another node reads as still
-running, since it cannot be checked from here. Once you know nothing is rendering
-there, delete the directory the message names.
+crash on this node is taken over for you at once. A process on another node cannot be
+checked from here, so a running render keeps a heartbeat in the lock, and one that has
+stopped for ten minutes is taken over too. A lock from an older release has no
+heartbeat and reads as still running. Once you know nothing is rendering on that node,
+delete the directory the message names.
 
 **Another job's run record.** "another job is ... in this study", from `run_job()`,
 comes from that job's record rather than the lock, so deleting the lock does not clear

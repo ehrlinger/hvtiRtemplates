@@ -606,3 +606,53 @@ test_that("the installed version is read only from .libPaths(), not from a names
   expect_identical(.installed_version("no.such.package.xyz"), NA_character_)
   expect_identical(.installed_version("testthat"), as.character(utils::packageVersion("testthat")))
 })
+
+test_that("a lock on another node is held while its heartbeat moves, and not once it stops", {
+  root <- withr::local_tempdir()
+  lock <- .provenance_lock_path(root)
+  dir.create(lock, recursive = TRUE)
+  owner <- list(pid = 101L, created = "1.000000", host = "elsewhere.invalid")
+  # No heartbeat: a lock from an older release proves nothing, and only a person can clear it.
+  expect_true(.provenance_lock_held(owner, lock))
+  expect_match(.provenance_lock_hint(owner, lock), "delete the directory", fixed = TRUE)
+  beat <- .provenance_heartbeat_path(lock)
+  file.create(beat)
+  expect_true(.provenance_lock_held(owner, lock))
+  expect_null(.provenance_lock_hint(owner, lock))
+  Sys.setFileTime(beat, Sys.time() - 3600)
+  expect_false(.provenance_lock_held(owner, lock))
+  # On this host the process itself answers, whatever the file says.
+  mine <- owner
+  mine$host <- Sys.info()[["nodename"]]
+  testthat::local_mocked_bindings(.provenance_owner_alive = function(owner) TRUE)
+  expect_true(.provenance_lock_held(mine, lock))
+})
+
+test_that("a stopped heartbeat on another node gives up the lock to the next render", {
+  root <- withr::local_tempdir()
+  lock <- .provenance_lock_path(root)
+  dir.create(lock, recursive = TRUE)
+  jsonlite::write_json(list(pid = 101L, created = "1.000000", host = "elsewhere.invalid"),
+                       file.path(lock, "owner.json"), auto_unbox = TRUE)
+  beat <- .provenance_heartbeat_path(lock)
+  file.create(beat)
+  expect_error(.acquire_provenance_lock(root), "Another Quarto render is in progress", fixed = TRUE)
+  Sys.setFileTime(beat, Sys.time() - 3600)
+  expect_true(.acquire_provenance_lock(root))
+  expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), .provenance_render_owner())
+  .release_provenance_lock(root)
+})
+
+test_that("the heartbeat moves while its owner lives, and ends with the lock", {
+  skip_on_os("windows")
+  lock <- file.path(withr::local_tempdir(), "lock")
+  dir.create(lock)
+  expect_true(.start_provenance_heartbeat(lock, Sys.getpid(), every = 0.2))
+  beat <- .provenance_heartbeat_path(lock)
+  Sys.setFileTime(beat, Sys.time() - 3600)
+  Sys.sleep(1)
+  expect_false(.provenance_heartbeat_stopped(lock))
+  unlink(lock, recursive = TRUE)
+  Sys.sleep(1)
+  expect_false(dir.exists(lock))
+})
