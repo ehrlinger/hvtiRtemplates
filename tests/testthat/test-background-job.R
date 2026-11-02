@@ -65,6 +65,7 @@ test_that("a submission that never started says so, and a log-less one says that
 })
 
 test_that("a log that cannot be written stops the submission before any process or status file", {
+  skip_on_os("windows")
   job <- status_job()
   dir.create(.run_files(job)$log)
   expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "cannot write the log file")
@@ -563,6 +564,7 @@ test_that("NA memory readings are dropped, not written or fatal", {
 })
 
 test_that("submit_job exports HVTI_RUN_R to the runner", {
+  skip_on_os("windows")
   captured <- NULL
   testthat::local_mocked_bindings(.launch = function(cmd) captured <<- cmd)
   job <- status_job()
@@ -573,6 +575,7 @@ test_that("submit_job exports HVTI_RUN_R to the runner", {
 })
 
 test_that("submit_job exports the submitter's R version as HVTI_RUN_R_VERSION", {
+  skip_on_os("windows")
   captured <- NULL
   testthat::local_mocked_bindings(.launch = function(cmd) captured <<- cmd, .session_r = function() numeric_version("4.5.3"))
   job <- status_job()

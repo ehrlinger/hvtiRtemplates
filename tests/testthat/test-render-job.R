@@ -80,7 +80,8 @@ test_that("render_job runs Quarto's R on the calling R unless QUARTO_R is set", 
   Sys.setenv(QUARTO_R = "")
   render_job(job)
   expect_identical(seen[[3L]], R.home("bin"))
-  expect_identical(Sys.getenv("QUARTO_R", unset = NA), "")
+  # Windows has no empty environment variable: setting one to "" removes it.
+  if (.Platform$OS.type != "windows") expect_identical(Sys.getenv("QUARTO_R", unset = NA), "")
 })
 
 test_that("render_job unsets QUARTO_R after a failed render", {

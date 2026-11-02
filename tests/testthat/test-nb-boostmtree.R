@@ -280,11 +280,11 @@ test_that("the fit and the partial effects report their steps, and progress is n
   utils::capture.output(nb_run(labels, env))
   expect_true("iteration" %in% seen$units)
   expect_true("prediction" %in% seen$units)
-  # The fit keeps the reporter (boostmtree's formula environment holds it), and the cache saves it. That is safe
-  # while its frame holds only `unit`: no run record, and nothing else of the job, rides along in the saved fit.
+  # A fit may keep the reporter through boostmtree's formula environment, and the cache then saves it; randomForestSRC
+  # 3.10.0 strips that environment, so it may not. Either is safe while a frame holding it holds only `unit`: no run
+  # record, and nothing else of the job, rides along in the saved fit.
   envs <- nb_reachable_envs(env$fit)
   holders <- Filter(function(e) "unit" %in% ls(e, all.names = TRUE), envs)
-  expect_gte(length(holders), 1L)
   expect_true(all(vapply(holders, function(e) identical(ls(e, all.names = TRUE), "unit"), logical(1L))))
   expect_false(any(vapply(envs, function(e) any(c(".job", ".root") %in% ls(e, all.names = TRUE)), logical(1L))))
   # The reporter above is this test's own; the package's real one must hold no more than `unit` either.
@@ -482,7 +482,8 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   bytes <- nb_file_bytes(html)
   expect_false(any(vapply(unique(data$MRN), function(v) nb_bytes_hold(bytes, v), logical(1L))))
   page <- rawToChar(bytes)
-  expect_match(page, "DRAFT -- this job is unfinished", fixed = TRUE)
+  # Quarto sets the title's "--" as a dash, and since 1.11 the page no longer also holds the source text.
+  expect_match(page, "DRAFT [^ ]+ this job is unfinished", useBytes = TRUE)
   # The provenance chunk runs only in a render: its payload is in the page and its sidecar beside the job.
   payload <- hvtiRtemplates:::.extract_provenance(page)
   expect_identical(payload$subject, "lvef")
