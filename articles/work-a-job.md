@@ -173,6 +173,34 @@ and a fingerprint of the job file that read it, and writes it beside the
 report as `dc.gfup.reop.hz.provenance.json`, so the numbers can be
 traced back later.
 
+## Paths in a job
+
+A job never needs [`setwd()`](https://rdrr.io/r/base/getwd.html), which
+encodes your own directory and breaks for the next person. Open the
+study from its `.Rproj`, through **Recent Projects** rather than the
+Files pane, and let the study say where things are. Inside a job, the
+setup chunk gives you `set_path()`, which writes into the results folder
+for the job’s `SUBJECT` and `TYPE`:
+
+``` r
+
+saveRDS(fit, set_path("estimates", "fit.rds"))
+```
+
+That folder belongs to the set, not to one job, so every job in the set
+shares it. Give each job’s output its own file name, or one job will
+overwrite another’s.
+
+Anywhere else, `hvtiRutilities::study_dir("datasets")` finds the folder
+whether the study calls it `00_datasets` or `datasets`, and
+`here::here()` builds a path from the project root:
+
+``` r
+
+file.path(hvtiRutilities::study_dir("datasets"), "built.csv")
+here::here("R", "helpers.R")
+```
+
 ## Render part of a job
 
 Sometimes a job is half built. The cohort tables are right, but the
@@ -335,6 +363,16 @@ prints it. Deleting a lock directory does not clear this one.
 **“This job is rendered in part”**, from a final render. A `skip` or
 [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md)
 is still in the job. Remove it, or render a draft instead.
+
+**“object ‘…’ not found”**, in a render, for something you can see in
+your Environment pane. A render starts from nothing and cannot see your
+session. Create or read the object inside the job. If a job or a session
+of yours was what made it, that is the dependency to write down.
+
+**“there is no package called …”**, for a family package. The family
+installs through `hvtiR`, not `pacman`. If `renv.lock` records the
+package, `renv::restore()` brings it back. If it does not, run
+`hvtiR::update()` in a fresh session, then `renv::snapshot()`.
 
 **“The figure was not drawn”**, in a `dc-gfup` report. The follow-up
 figure needs a sensible operation-year column and origin. The box names

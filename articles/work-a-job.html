@@ -141,6 +141,16 @@
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/render_job.html">render_job</a></span><span class="op">(</span><span class="va">job</span>, final <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>A final render is the accepted result. It refuses to finish while any <code>EDIT:</code> marker remains, rather than producing a report that looks done and is not. It also records the job’s <em>provenance</em>, which data it read and a fingerprint of the job file that read it, and writes it beside the report as <code>dc.gfup.reop.hz.provenance.json</code>, so the numbers can be traced back later.</p>
+</section><section class="level2"><h2 id="paths-in-a-job">Paths in a job<a class="anchor" aria-label="anchor" href="#paths-in-a-job"></a>
+</h2>
+<p>A job never needs <code><a href="https://rdrr.io/r/base/getwd.html" class="external-link">setwd()</a></code>, which encodes your own directory and breaks for the next person. Open the study from its <code>.Rproj</code>, through <strong>Recent Projects</strong> rather than the Files pane, and let the study say where things are. Inside a job, the setup chunk gives you <code>set_path()</code>, which writes into the results folder for the job’s <code>SUBJECT</code> and <code>TYPE</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS</a></span><span class="op">(</span><span class="va">fit</span>, <span class="fu">set_path</span><span class="op">(</span><span class="st">"estimates"</span>, <span class="st">"fit.rds"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>That folder belongs to the set, not to one job, so every job in the set shares it. Give each job’s output its own file name, or one job will overwrite another’s.</p>
+<p>Anywhere else, <code>hvtiRutilities::study_dir("datasets")</code> finds the folder whether the study calls it <code>00_datasets</code> or <code>datasets</code>, and <code>here::here()</code> builds a path from the project root:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span></span>
+<span><span class="fu">here</span><span class="fu">::</span><span class="fu">here</span><span class="op">(</span><span class="st">"R"</span>, <span class="st">"helpers.R"</span><span class="op">)</span></span></code></pre></div>
 </section><section class="level2"><h2 id="render-part-of-a-job">Render part of a job<a class="anchor" aria-label="anchor" href="#render-part-of-a-job"></a>
 </h2>
 <p>Sometimes a job is half built. The cohort tables are right, but the model below them waits on a corrected variable, and you want a report of what works. The SAS jobs did this by commenting the unfinished part out. Here there are two ways to leave part of a job out, and both keep it visible.</p>
@@ -174,12 +184,12 @@ hvtiRtemplates::stop_here()
 </h2>
 <p>A Boostmtree or VarPro fit can outlast your session, and the Render button and RStudio’s background jobs stay tied to that session: when it ends, or the Workbench gives you a 502 and throws you out, the render goes with it. Sourcing an R script as a background job has the same weakness, and it means writing the script. Use <code><a href="../reference/run_job.html">run_job()</a></code> instead:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/run_job.html">run_job</a></span><span class="op">(</span><span class="va">job</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>It checks first for what would otherwise stop the job hours in (the wrong R, a missing package, another render in the study), lists every problem it finds, and starts nothing until they are cleared. Then it starts the render detached from your session. Close RStudio if you like. A later session starts with nothing loaded, so load the package and name the same file again:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ehrlinger/hvtiRtemplates" class="external-link">hvtiRtemplates</a></span><span class="op">)</span></span>
 <span><span class="va">job</span> <span class="op">&lt;-</span> <span class="st">"10_descriptive/dc.gfup.reop.hz.qmd"</span></span>
 <span><span class="fu"><a href="../reference/job_status.html">job_status</a></span><span class="op">(</span><span class="va">job</span><span class="op">)</span></span></code></pre></div>
@@ -190,7 +200,7 @@ hvtiRtemplates::stop_here()
 </h2>
 <p>When a new release changes a template, your job does not change by itself. <code><a href="../reference/upgrade_job.html">upgrade_job()</a></code> rewrites it from the current template and carries your study choices across, the assignments in its <em>Study choices</em> chunks. It does not carry other code you added to the job, such as a chunk of your own, even when the template has not changed. That code stays in the archived copy, and the report lists it to put back, so read the report before you render:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/upgrade_job.html">upgrade_job</a></span><span class="op">(</span><span class="va">job</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>The job opens in RStudio, and the old copy and a report of the upgrade go in an <code>_archive</code> folder beside it, as <code>&lt;job&gt;.&lt;stamp&gt;.pre-upgrade</code> and <code>&lt;job&gt;.&lt;stamp&gt;-upgrade.md</code>. The stamp is the date and time. The console names both files; read the report for the chunks to check, restoring anything of yours from the archived copy. A job the upgrade would not change is left alone: the console says so, and nothing is added to <code>_archive</code>.</p>
@@ -204,6 +214,8 @@ hvtiRtemplates::stop_here()
 <p><strong>“Another Quarto render is in progress in this study”</strong>, from <code><a href="../reference/render_job.html">render_job()</a></code>. A study renders one job at a time, whichever job it is, so renaming your job or rendering a copy meets the same lock. Wait for the other render to finish. If the message names another node and you know nothing is rendering there, a crashed render has left its lock behind: delete the directory the message names, then render again.</p>
 <p><strong>“another job is … in this study”</strong>, from <code><a href="../reference/run_job.html">run_job()</a></code>. This one comes from the other job’s run record, not the lock, so renaming does not help here either. The message gives the way out: wait, or stop that job. If it is recorded on another node, check from a session there. Once you have confirmed it has stopped, clear its record with <code>cancel_job(other_job, other_host = "abandon")</code>, as the message prints it. Deleting a lock directory does not clear this one.</p>
 <p><strong>“This job is rendered in part”</strong>, from a final render. A <code>skip</code> or <code><a href="../reference/stop_here.html">stop_here()</a></code> is still in the job. Remove it, or render a draft instead.</p>
+<p><strong>“object ‘…’ not found”</strong>, in a render, for something you can see in your Environment pane. A render starts from nothing and cannot see your session. Create or read the object inside the job. If a job or a session of yours was what made it, that is the dependency to write down.</p>
+<p><strong>“there is no package called …”</strong>, for a family package. The family installs through <code>hvtiR</code>, not <code>pacman</code>. If <code>renv.lock</code> records the package, <code>renv::restore()</code> brings it back. If it does not, run <code>hvtiR::update()</code> in a fresh session, then <code>renv::snapshot()</code>.</p>
 <p><strong>“The figure was not drawn”</strong>, in a <code>dc-gfup</code> report. The follow-up figure needs a sensible operation-year column and origin. The box names the problem, usually <code>OPYRS</code> or <code>ORIGIN_YEAR</code> under <em>Study choices</em>. The follow-up tables above it do not depend on the figure, so they are still right.</p>
 </section><section class="level2"><h2 id="where-to-go-next">Where to go next<a class="anchor" aria-label="anchor" href="#where-to-go-next"></a>
 </h2>
