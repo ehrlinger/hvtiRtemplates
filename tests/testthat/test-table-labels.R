@@ -26,6 +26,16 @@ test_that("a rule never empties a label or touches a word that only starts like 
   expect_identical(rules("Index (kg/m^2^)")$label, "Index (kg/m^2^)")
 })
 
+test_that("a power the dataset wrote with one caret becomes a superscript", {
+  expect_identical(rules("Body surface area (m^2)")$label, "Body surface area (m^2^)")
+  expect_identical(rules("Body surface area (m^2)")$rules, "units")
+  expect_identical(rules("Body mass index (kg/m^2)")$label, "Body mass index (kg/m^2^)")
+  expect_identical(rules("Valve area index (cm^2/m^2)")$label, "Valve area index (cm^2^/m^2^)")
+  expect_identical(rules("Platelets (10^9/L)")$label, "Platelets (10^9^/L)")
+  expect_identical(rules("Index (kg/m^2^)")$rules, character(0))
+  expect_identical(rules("Body surface area (m^2)", use = "case")$label, "Body surface area (m^2)")
+})
+
 test_that("sentence case keeps acronyms and the study's abbreviations", {
   expect_identical(rules("Surgical Procedure: Congenital ASD/PFO suture closure")$label,
                    "Surgical procedure: congenital ASD/PFO suture closure")
