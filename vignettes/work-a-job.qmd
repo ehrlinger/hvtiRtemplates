@@ -238,7 +238,9 @@ and what to do, where the log can say. `cancel_job(job)` stops a render.
 `run_job(job, final = TRUE)` is the final render, under the same rules as
 `render_job(job, final = TRUE)`.
 
-`run_job()` is not available on Windows.
+`run_job()` is not available on Windows. [Running a job that takes hours](articles/long-running-jobs.html)
+has the rest: every state `job_status()` reports, the guards that stop a job, and
+what to do about a lock.
 
 ## When the template moves on
 
