@@ -75,19 +75,30 @@
 
 
 
-    <p>This tutorial starts with an empty directory and an analysis dataset that has just been delivered. It takes the study through setup, data registration and a first descriptive job, then through one analysis chain, so you can see how the templates hand work to one another.</p>
-<p>If the study directory already exists and holds jobs and data, start with <a href="study-setup.html">Adopt an existing study</a> instead. That guide keeps the existing layout and files.</p>
+    <p>This tutorial starts before the study directory exists, with an analysis dataset that has just been delivered. It sets the study up with <code>hvtiR::setup()</code>, then takes it through data registration and a first descriptive job, then through one analysis chain, so you can see how the templates hand work to one another.</p>
+<p><a href="https://ehrlinger.github.io/hvtiR/articles/start-here.html" class="external-link">Start here</a> is the family’s getting-started page and explains <code>setup()</code> in full. This tutorial gives the call for a new study.</p>
+<p>If the study directory already exists and holds jobs and data, start with <a href="study-setup.html">Adopt an existing study</a> instead. That guide keeps the existing layout, and says which files adoption deletes, <code>tp.*</code> among them.</p>
 <p>The executable example uses a 40-row synthetic dataset generated below. Its files stay in a temporary directory and disappear after the article renders.</p>
 <section class="level2"><h2 id="before-you-start">Before you start<a class="anchor" aria-label="anchor" href="#before-you-start"></a>
 </h2>
 <p>A delivered dataset here means one analysis-ready file, CSV or SAS transport, already built from the source extract. Building that file is a separate step; this guide begins once it exists. Keep it on the study share: patient data never enter a git repository.</p>
-<p>The study itself must exist in Study Tracker before its directory does. Create the study record there first and note its Study Tracker ID: every later step takes its identity from that record.</p>
+<p>The study itself must exist in Study Tracker before its directory does. Create the study record there first and note its title and ID. You type both during setup: nothing reads them from Study Tracker when the study is created.</p>
 </section><section class="level2"><h2 id="create-the-study">Create the study<a class="anchor" aria-label="anchor" href="#create-the-study"></a>
 </h2>
-<p>Create the directory with the <code>study-setup</code> command from <code>qhsprograms</code>, giving it the Study Tracker ID and the directory name. Preview first; the dry run writes nothing:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">study-setup</span> <span class="at">--dry-run</span> 42 example_study</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">study-setup</span> 42 example_study</span></code></pre></div>
-<p><code>study-setup</code> reads the Tracker record, read-only, and turns the new directory into a study. It writes <code>_study.yml</code>, which carries the study’s name and Tracker ID, a README linking the Tracker record, an RStudio project file, environment defaults, <code>renv</code>, and the numbered folders every job is placed in:</p>
+<p>On Posit Workbench, start a new RStudio Pro session and pick the latest R version listed. If a project is open, close it (<strong>File &gt; Close Project</strong>), so that R starts outside the study. Then name the new directory with <code>root</code>:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span>  <span class="co"># once per machine</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu">setup</span><span class="op">(</span></span>
+<span>  study <span class="op">=</span> <span class="st">"Example study"</span>,</span>
+<span>  study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span>  root <span class="op">=</span> <span class="st">"/studies/example_study"</span>,</span>
+<span>  identity_source <span class="op">=</span> <span class="st">"manual"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><code>identity_source = "manual"</code> records that you typed the title and ID, so <code>_study.yml</code> marks the identity unverified rather than checked against Study Tracker.</p>
+<p>Leave out <code>adopt</code> only when the directory does not exist yet. A directory that already exists needs <code>adopt = TRUE</code>, even an empty one, or <code>setup()</code> stops. An empty directory still gets the folders below.</p>
+<p><code>setup()</code> writes <code>_study.yml</code>, which carries the study’s name and Tracker ID, a README, an RStudio project file and environment defaults. It installs the family and the standard analysis packages into the study’s own library, records them in <code>renv.lock</code>, restarts RStudio inside the project, and makes the numbered folders every job is placed in:</p>
 <table class="table caption-top">
 <thead><tr class="header">
 <th>folder</th>
@@ -125,17 +136,24 @@
 </tbody>
 </table>
 <p><code>90_estimates</code> is numbered last on purpose. It holds results, not jobs, and a job that needs another job’s result reads it from there.</p>
-<p>Now open the directory in RStudio as a Project (<strong>File &gt; New Project &gt; Existing Directory</strong>) and work from its <code>.Rproj</code> from then on. Select the R version and load the hvtiR packages as described in <a href="study-setup.html#open-the-study-as-an-rstudio-project">Adopt an existing study</a>:</p>
+<p>Open the study’s <code>.Rproj</code> from then on, and attach the packages this tutorial uses:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ehrlinger/hvtiRutilities" class="external-link">hvtiRutilities</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ehrlinger/hvtiRtemplates" class="external-link">hvtiRtemplates</a></span><span class="op">)</span></span></code></pre></div>
-<p>Underneath, <code>study-setup</code> calls <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">hvtiRutilities::study_setup()</a></code> with the Tracker record’s values. This article cannot reach Study Tracker while it renders, so the executable example calls <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup()</a></code> directly, in a temporary directory:</p>
+<section class="level3"><h3 id="the-study-setup-command">The <code>study-setup</code> command<a class="anchor" aria-label="anchor" href="#the-study-setup-command"></a>
+</h3>
+<p>The <code>study-setup</code> command from <code>qhsprograms</code> does the same job from a terminal, through <code>hvtiR::setup()</code>. Preview first; the dry run writes nothing:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">study-setup</span> <span class="at">--dry-run</span> <span class="at">--title</span> <span class="st">"Example study"</span> 42 example_study</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">study-setup</span> <span class="at">--title</span> <span class="st">"Example study"</span> 42 example_study</span></code></pre></div>
+<p>It does not read Study Tracker, because that stopped on 2026-10-21. The title and ID are what you typed, and the study records its identity as manual and unverified. Only <code>study-setup --verify</code> reads Study Tracker, to check that identity against the record:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">study-setup</span> <span class="at">--verify</span> /studies/example_study</span></code></pre></div>
+<p>This article has no server to install on while it renders, so the executable example calls <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">hvtiRutilities::study_setup()</a></code> directly, in a temporary directory, which makes the same study without a package environment:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># A vignette builds a throwaway study; in a real study, run hvtiR::setup().</span></span>
 <span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">new_root</span>, study <span class="op">=</span> <span class="st">"Synthetic new study"</span>, study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>            renv <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpBcbL3R/file21d7605617ff/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpM9ssGh/file1ff47ade25e3/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -149,10 +167,10 @@
 <span><span class="co">#&gt; [5] "30_analyses"      "40_graphs"        "50_documents"     "90_estimates"    </span></span>
 <span><span class="co">#&gt; [9] "new-study.Rproj"</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h2 id="register-the-dataset">Register the dataset<a class="anchor" aria-label="anchor" href="#register-the-dataset"></a>
+</section></section><section class="level2"><h2 id="register-the-dataset">Register the dataset<a class="anchor" aria-label="anchor" href="#register-the-dataset"></a>
 </h2>
 <p>Copy the delivered file into <code>00_datasets</code>, then register it. Registration records the file’s size, checksum and the population it describes in <code>manifest.yaml</code>:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  built <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
@@ -160,7 +178,7 @@
 <span><span class="op">)</span></span></code></pre></div>
 <p>Every job reads data through this registration rather than through a file path. That is what lets a rendered job record exactly which bytes it read: a job that opens a path directly cannot tell you, a year later, which version of the file it saw.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span></span>
 <span>  <span class="va">delivered</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">new_root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
@@ -170,7 +188,7 @@
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpBcbL3R/file21d7605617ff/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpM9ssGh/file1ff47ade25e3/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
 <span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
@@ -184,12 +202,12 @@
 </section><section class="level2"><h2 id="scaffold-the-first-eda-job">Scaffold the first EDA job<a class="anchor" aria-label="anchor" href="#scaffold-the-first-eda-job"></a>
 </h2>
 <p>Start with the general descriptive checks:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">general</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"general"</span><span class="op">)</span></span></code></pre></div>
 <p><code><a href="../reference/open_job.html">open_job()</a></code> creates the job and opens it in RStudio. The file is named <code>&lt;prefix&gt;.&lt;qualifier&gt;.&lt;subject&gt;.&lt;type&gt;.qmd</code>, here <code>10_descriptive/dc.general.cohort.eda.qmd</code>. The subject names what the job is about and need not be a statistical endpoint: <code>cohort</code> describes the whole registered population. The type names the stage, and the pair keeps a set of related jobs and their outputs together.</p>
 <p>The executable example scaffolds without opening an editor:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">general</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc"</span>, subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span>, dir <span class="op">=</span> <span class="va">new_root</span>, qualifier <span class="op">=</span> <span class="st">"general"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">new_root</span>, <span class="st">"/"</span><span class="op">)</span>, <span class="st">""</span>, <span class="va">general</span>, fixed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "10_descriptive/dc.general.cohort.eda.qmd"</span></span></code></pre></div>
@@ -197,7 +215,7 @@
 <p>Each job carries <code>EDIT:</code> markers where the template cannot know the study’s answer: variables, labels, groups. Work through them from the top. A job that still contains one is unfinished.</p>
 <p>The first <code><a href="../reference/add_job.html">add_job()</a></code> in a study also installs its provenance hooks. It adds pre-render and post-render entries to <code>_quarto.yml</code>, keeping any settings already there, and copies the hook scripts into <code>.hvtiR/hooks/</code>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">new_root</span>, <span class="st">"_quarto.yml"</span><span class="op">)</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; project:</span></span>
 <span><span class="co">#&gt;   pre-render:</span></span>
@@ -210,41 +228,41 @@
 </section><section class="level2"><h2 id="render-and-read-the-provenance">Render and read the provenance<a class="anchor" aria-label="anchor" href="#render-and-read-the-provenance"></a>
 </h2>
 <p>Render the job with the <strong>Render</strong> button, or from the Console:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/render_job.html">render_job</a></span><span class="op">(</span><span class="va">general</span>, final <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Both run the same hooks. While the job executes it records what it read; once Quarto has written the HTML, the post-render hook publishes a sidecar beside it, <code>dc.general.cohort.eda.provenance.json</code>. An abridged example from a synthetic study:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"job"</span><span class="fu">:</span> <span class="st">"dc.general.cohort.eda"</span><span class="fu">,</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"rendered"</span><span class="fu">:</span> <span class="st">"2026-09-23T14:42:04Z"</span><span class="fu">,</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"study"</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"Synthetic new study"</span><span class="fu">,</span> <span class="dt">"file"</span><span class="fu">:</span> <span class="st">"_study.yml"</span><span class="fu">,</span> <span class="dt">"sha256"</span><span class="fu">:</span> <span class="st">"35f29fb1..."</span> <span class="fu">},</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"r"</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">"version"</span><span class="fu">:</span> <span class="st">"4.6.1"</span><span class="fu">,</span> <span class="dt">"platform"</span><span class="fu">:</span> <span class="st">"aarch64-apple-darwin23"</span> <span class="fu">},</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"data"</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"dataset"</span><span class="fu">:</span> <span class="st">"study"</span><span class="fu">,</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"path"</span><span class="fu">:</span> <span class="st">"00_datasets/built.csv"</span><span class="fu">,</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"role"</span><span class="fu">:</span> <span class="st">"study"</span><span class="fu">,</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"bytes"</span><span class="fu">:</span> <span class="dv">1051</span><span class="fu">,</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"sha256"</span><span class="fu">:</span> <span class="st">"3d6f6b0c..."</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"artifacts"</span><span class="fu">:</span> <span class="ot">[]</span><span class="fu">,</span></span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"source"</span><span class="fu">:</span> <span class="st">"10_descriptive/dc.general.cohort.eda.qmd"</span><span class="fu">,</span></span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"subject"</span><span class="fu">:</span> <span class="st">"cohort"</span><span class="fu">,</span></span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"eda"</span><span class="fu">,</span></span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"output"</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">"file"</span><span class="fu">:</span> <span class="st">"dc.general.cohort.eda.html"</span><span class="fu">,</span> <span class="dt">"sha256"</span><span class="fu">:</span> <span class="st">"95455dd3..."</span> <span class="fu">}</span></span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"job"</span><span class="fu">:</span> <span class="st">"dc.general.cohort.eda"</span><span class="fu">,</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"rendered"</span><span class="fu">:</span> <span class="st">"2026-09-23T14:42:04Z"</span><span class="fu">,</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"study"</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">"name"</span><span class="fu">:</span> <span class="st">"Synthetic new study"</span><span class="fu">,</span> <span class="dt">"file"</span><span class="fu">:</span> <span class="st">"_study.yml"</span><span class="fu">,</span> <span class="dt">"sha256"</span><span class="fu">:</span> <span class="st">"35f29fb1..."</span> <span class="fu">},</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"r"</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">"version"</span><span class="fu">:</span> <span class="st">"4.6.1"</span><span class="fu">,</span> <span class="dt">"platform"</span><span class="fu">:</span> <span class="st">"aarch64-apple-darwin23"</span> <span class="fu">},</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"data"</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"dataset"</span><span class="fu">:</span> <span class="st">"study"</span><span class="fu">,</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"path"</span><span class="fu">:</span> <span class="st">"00_datasets/built.csv"</span><span class="fu">,</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"role"</span><span class="fu">:</span> <span class="st">"study"</span><span class="fu">,</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"bytes"</span><span class="fu">:</span> <span class="dv">1051</span><span class="fu">,</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>      <span class="dt">"sha256"</span><span class="fu">:</span> <span class="st">"3d6f6b0c..."</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"artifacts"</span><span class="fu">:</span> <span class="ot">[]</span><span class="fu">,</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"source"</span><span class="fu">:</span> <span class="st">"10_descriptive/dc.general.cohort.eda.qmd"</span><span class="fu">,</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"subject"</span><span class="fu">:</span> <span class="st">"cohort"</span><span class="fu">,</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"type"</span><span class="fu">:</span> <span class="st">"eda"</span><span class="fu">,</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  <span class="dt">"output"</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">"file"</span><span class="fu">:</span> <span class="st">"dc.general.cohort.eda.html"</span><span class="fu">,</span> <span class="dt">"sha256"</span><span class="fu">:</span> <span class="st">"95455dd3..."</span> <span class="fu">}</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p>Read it as a receipt. <code>data</code> names the registered file and the checksum of the bytes the job read. Its <code>dataset</code> says <code>"study"</code> although the job says <code>DATASET &lt;- "built"</code>: the two names mean the same dataset, and records always use <code>"study"</code>, so a sidecar written by an older job compares equal. <code>packages</code> and <code>renv_lock</code>, omitted here, record every package version and the study’s lockfile. <code>output</code> carries the checksum of the HTML it describes, so a sidecar can be matched to its report and to nothing else.</p>
 <p>If a render fails, the report and sidecar already on disk are left as they were. A new sidecar is only ever published beside the HTML it describes. One job renders at a time in a study; a second render started while one is running stops and asks you to wait.</p>
 </section><section class="level2"><h2 id="a-first-analysis-chain-death">A first analysis chain: death<a class="anchor" aria-label="anchor" href="#a-first-analysis-chain-death"></a>
 </h2>
 <p>Most analyses are chains: one job saves a result that the next reads. The hazard chain has three jobs. <code>ac</code> computes the actuarial life table, <code>hz</code> fits the parametric hazard model, and <code>hp</code> plots the two together.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"ac"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"hz"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"hp"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span><span class="op">)</span></span></code></pre></div>
 <p>All three share one subject and one type, and that is what connects them. The pair <code>("death", "hz")</code> names a set, and each job writes and reads its saved results in the set’s own folder, <code>90_estimates/death-hz/</code>. <code>hp</code> finds <code>ac.rds</code> and <code>hz.rds</code> there without a path to edit. A second analysis of the same endpoint, a random survival forest say, takes a different type and so a different folder; the two chains cannot overwrite each other’s life table.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">chain</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  ac <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"ac"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, dir <span class="op">=</span> <span class="va">new_root</span><span class="op">)</span>,</span>
 <span>  hz <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"hz"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, dir <span class="op">=</span> <span class="va">new_root</span><span class="op">)</span>,</span>
@@ -263,7 +281,7 @@
 </h2>
 <p><code><a href="../reference/template_list.html">template_list()</a></code> lists every template with its prefix, qualifier and folder:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/template_list.html">template_list</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"prefix"</span>, <span class="st">"qualifier"</span>, <span class="st">"folder"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt;          name prefix qualifier        folder</span></span>
 <span><span class="co">#&gt; 1          bd     bd      &lt;NA&gt;      datasets</span></span>
