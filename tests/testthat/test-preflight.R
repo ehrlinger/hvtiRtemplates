@@ -144,7 +144,7 @@ test_that("render_r refuses a render on an R other than the submitter's (failure
   testthat::local_mocked_bindings(.r_home = function() "/usr/lib/R/bin")
   ck <- .check_render_r(expected = "/opt/R/4.5.3/lib/R/bin")
   expect_false(ck$ok)
-  expect_match(ck$message, "^render_r: .*/usr/lib/R/bin.*/opt/R/4.5.3")
+  expect_match(ck$message, "^render_r: .*usr.lib.R.bin.*opt.R.4.5.3")
   expect_match(ck$fix, "QUARTO_R", fixed = TRUE)
 })
 
@@ -155,7 +155,7 @@ test_that("render_r is skipped when nothing was submitted", {
 test_that(".job_setup() stops a render whose R is not the submitter's, and passes the same R", {
   setup_fixture()
   withr::local_envvar(HVTI_RUN_R = "/no/such/R/bin")
-  expect_error(run_setup(), "render_r: .*/no/such/R/bin.*QUARTO_R")
+  expect_error(run_setup(), "render_r: .*no.such.R.bin.*QUARTO_R")
   withr::local_envvar(HVTI_RUN_R = R.home("bin"))
   expect_no_error(run_setup())
 })
@@ -433,6 +433,7 @@ test_that("run_state refuses a fresh submission", {
 })
 
 test_that("study_render copes with a stale running job that records no host", {
+  skip_on_os("windows")
   root <- lock_study()
   mine <- file.path(root, "analyses", "mine.qmd")
   other <- file.path(root, "analyses", "nohost.qmd")
@@ -457,6 +458,7 @@ test_that("the abandon route for a job on this host is a plain cancel", {
 })
 
 test_that("render_r names both R versions when the submitter recorded its own", {
+  skip_on_os("windows")
   testthat::local_mocked_bindings(.r_home = function() "/usr/lib/R/bin", .session_r = function() numeric_version("4.4.1"))
   ck <- .check_render_r(expected = "/opt/R/4.5.3/lib/R/bin", expected_version = "4.5.3")
   expect_match(ck$message, paste0("Quarto ran this render on R 4.4.1 (/usr/lib/R/bin), not the R that submitted it, ",

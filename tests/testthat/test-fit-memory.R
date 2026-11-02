@@ -85,6 +85,7 @@ test_that("with no progress file active, guard_memory and a passed check leave n
 })
 
 test_that("a cgroup path holding ':' is read whole", {
+  skip_on_os("windows") # no file name there can hold ':'
   d <- withr::local_tempdir()
   writeLines("7:memory:/rstudio/a:b", file.path(d, "cgroup"))
   leaf <- file.path(d, "sys", "memory", "rstudio", "a:b")

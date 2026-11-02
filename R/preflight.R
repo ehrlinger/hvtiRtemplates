@@ -197,7 +197,7 @@
 
 # A path with its directory resolved, which normalizePath() alone does not do for a file that is not there
 # (macOS /var against /private/var).
-.norm_path <- function(p) file.path(normalizePath(dirname(p), mustWork = FALSE), basename(p))
+.norm_path <- function(p) file.path(normalizePath(dirname(p), winslash = "/", mustWork = FALSE), basename(p))
 
 # THIS job already running, a stale run recorded on another host, or a crashed submit's lock directory.
 # `root` is the study root, for the path the fix gives hvti; the default names the job by its file name.

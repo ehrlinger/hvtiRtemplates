@@ -17,7 +17,7 @@ test_that(".owner_only() creates a file owner-only and returns the value", {
     "done"
   }), "done")
   if (posix) expect_identical(owner_only_mode(f), "600")
-  expect_identical(Sys.umask(), as.octmode("0022"))
+  if (posix) expect_identical(Sys.umask(), as.octmode("0022"))
 })
 
 test_that(".owner_only() protects a file it writes over, which umask alone would leave as it was", {
@@ -46,7 +46,7 @@ test_that("a write interrupted inside .owner_only() leaves an owner-only file an
     expect_identical(owner_only_mode(f), "600")
     expect_identical(owner_only_mode(g), "600")
   }
-  expect_identical(Sys.umask(), as.octmode("0022"))
+  if (posix) expect_identical(Sys.umask(), as.octmode("0022"))
 })
 
 test_that(".owner_only() names a file whose mode it cannot set", {
