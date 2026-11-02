@@ -170,13 +170,37 @@ hvtiRtemplates::stop_here()
 <li>A final render refuses both. Remove them before <code>render_job(job, final = TRUE)</code>.</li>
 <li>A skip must say why. <code>skip: true</code> with no reason is an error.</li>
 <li>When you run chunks by hand, <code><a href="../reference/stop_here.html">stop_here()</a></code> does nothing, so the chunks below it still run in your session.</li>
-</ul></section><section class="level2"><h2 id="when-the-job-stops-you">When the job stops you<a class="anchor" aria-label="anchor" href="#when-the-job-stops-you"></a>
+</ul></section><section class="level2"><h2 id="a-job-that-runs-for-hours">A job that runs for hours<a class="anchor" aria-label="anchor" href="#a-job-that-runs-for-hours"></a>
+</h2>
+<p>A Boostmtree or VarPro fit can outlast your session, and the Render button and RStudio’s background jobs stay tied to that session: when it ends, or the Workbench gives you a 502 and throws you out, the render goes with it. Sourcing an R script as a background job has the same weakness, and it means writing the script. Use <code><a href="../reference/run_job.html">run_job()</a></code> instead:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/run_job.html">run_job</a></span><span class="op">(</span><span class="va">job</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>It checks first for what would otherwise stop the job hours in (the wrong R, a missing package, another render in the study), lists every problem it finds, and starts nothing until they are cleared. Then it starts the render detached from your session. Close RStudio if you like. When you come back, ask with the same file:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/job_status.html">job_status</a></span><span class="op">(</span><span class="va">job</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>A <code>running</code> that has not moved since you last looked is usually a long fit working through one step, not a hung job. If you have landed on a different node, <code>running</code> says only what was recorded, and the line names the host, because a process can be checked only on its own node. <code>failed</code> and <code>vanished</code> come with what went wrong and what to do, where the log can say. <code>cancel_job(job)</code> stops a render. <code>run_job(job, final = TRUE)</code> is the final render, under the same rules as <code>render_job(job, final = TRUE)</code>.</p>
+<p><code><a href="../reference/run_job.html">run_job()</a></code> is not available on Windows.</p>
+</section><section class="level2"><h2 id="when-the-template-moves-on">When the template moves on<a class="anchor" aria-label="anchor" href="#when-the-template-moves-on"></a>
+</h2>
+<p>When a new release changes a template, your job does not change by itself. <code><a href="../reference/upgrade_job.html">upgrade_job()</a></code> rewrites it from the current template and carries your study choices across, the assignments in its <em>Study choices</em> chunks. It does not carry other code you added to the job, such as a chunk of your own, even when the template has not changed. That code stays in the archived copy, and the report lists it to put back, so read the report before you render:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/upgrade_job.html">upgrade_job</a></span><span class="op">(</span><span class="va">job</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>The job opens in RStudio, and the old copy and a report of the upgrade go in an <code>_archive</code> folder beside it, as <code>&lt;job&gt;.&lt;stamp&gt;.pre-upgrade</code> and <code>&lt;job&gt;.&lt;stamp&gt;-upgrade.md</code>. The stamp is the date and time. The console names both files; read the report for the chunks to check, restoring anything of yours from the archived copy. A job the upgrade would not change is left alone: the console says so, and nothing is added to <code>_archive</code>.</p>
+</section><section class="level2"><h2 id="when-the-job-stops-you">When the job stops you<a class="anchor" aria-label="anchor" href="#when-the-job-stops-you"></a>
 </h2>
 <p>Most stops are the package refusing to guess. The message says what it needs; these are the ones you meet first.</p>
 <p><strong>“prefix ‘dc’ carries 3 templates; name one with <code>qualifier</code>, or by its full name.”</strong> Several templates share the <code>dc</code> prefix. Use the template’s full name, <code>add_job("dc.gfup", ...)</code>, as the <code>call</code> column prints it.</p>
 <p><strong>“… already exists; refusing to overwrite.”</strong> The job is there already. Open it with <code><a href="../reference/open_job.html">open_job()</a></code> instead of adding it again.</p>
 <p><strong>“… is deprecated in favor of …”</strong> A warning, not an error: the job is still written. The message names the template that replaces it; use that one for new work.</p>
 <p><strong>“N unresolved EDIT: marker(s) remain in this job”</strong>, from <code>render_job(final = TRUE)</code>. The job is not finished. Find the markers as above, or render a draft to see them listed.</p>
+<p><strong>“Another Quarto render is in progress in this study”</strong>, from <code><a href="../reference/render_job.html">render_job()</a></code>. A study renders one job at a time, whichever job it is, so renaming your job or rendering a copy meets the same lock. Wait for the other render to finish. If the message names another node and you know nothing is rendering there, a crashed render has left its lock behind: delete the directory the message names, then render again.</p>
+<p><strong>“another job is … in this study”</strong>, from <code><a href="../reference/run_job.html">run_job()</a></code>. This one comes from the other job’s run record, not the lock, so renaming does not help here either. The message gives the way out: wait, or stop that job. If it is recorded on another node, check from a session there, and follow the printed route for abandoning the run only once you have confirmed it has stopped.</p>
 <p><strong>“This job is rendered in part”</strong>, from a final render. A <code>skip</code> or <code><a href="../reference/stop_here.html">stop_here()</a></code> is still in the job. Remove it, or render a draft instead.</p>
 <p><strong>“The figure was not drawn”</strong>, in a <code>dc-gfup</code> report. The follow-up figure needs a sensible operation-year column and origin. The box names the problem, usually <code>OPYRS</code> or <code>ORIGIN_YEAR</code> under <em>Study choices</em>. The follow-up tables above it do not depend on the figure, so they are still right.</p>
 </section><section class="level2"><h2 id="where-to-go-next">Where to go next<a class="anchor" aria-label="anchor" href="#where-to-go-next"></a>
@@ -188,7 +212,7 @@ hvtiRtemplates::stop_here()
 <li>
 <a href="template-catalog.html">The template catalog</a>, for every template, shipped and coming.</li>
 <li>
-<code><a href="../reference/add_job.html">?add_job</a></code>, <code><a href="../reference/render_job.html">?render_job</a></code> and <code><a href="../reference/stop_here.html">?stop_here</a></code> in R, for every argument.</li>
+<code><a href="../reference/add_job.html">?add_job</a></code>, <code><a href="../reference/render_job.html">?render_job</a></code>, <code><a href="../reference/run_job.html">?run_job</a></code>, <code><a href="../reference/job_status.html">?job_status</a></code>, <code><a href="../reference/upgrade_job.html">?upgrade_job</a></code> and <code><a href="../reference/stop_here.html">?stop_here</a></code> in R, for every argument.</li>
 </ul></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

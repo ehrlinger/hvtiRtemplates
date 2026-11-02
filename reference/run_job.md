@@ -6,7 +6,7 @@ the things that otherwise fail minutes or hours in: that this session's
 R is the one the study's `renv.lock` records, that the packages the job
 needs are installed at the versions locked, that Quarto can be found,
 that the job is not already running, and that no other job is rendering
-in the same study (Quarto allows one render per study). Every failure is
+in the same study (one render at a time per study). Every failure is
 listed with how to fix it, and nothing is started until all of them are
 cleared.
 
@@ -53,6 +53,14 @@ Invisibly, the job's status, as
 returns it. A job refused by the checks is an error and returns nothing.
 
 ## Details
+
+Use this rather than the Render button or a background job in RStudio
+for anything long. Those stay tied to your session, and when the session
+ends the render ends with it. A render started here is detached and
+carries on. Open a new session, call
+[`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+with the same file, and it tells you where the job has got to. There is
+no R script to write.
 
 A job scaffolded before the setup consolidation has no in-render checks
 to wait for. `run_job()` says so and names

@@ -223,6 +223,68 @@ Both follow the rules the `EDIT:` markers follow:
   [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md)
   does nothing, so the chunks below it still run in your session.
 
+## A job that runs for hours
+
+A Boostmtree or VarPro fit can outlast your session, and the Render
+button and RStudio’s background jobs stay tied to that session: when it
+ends, or the Workbench gives you a 502 and throws you out, the render
+goes with it. Sourcing an R script as a background job has the same
+weakness, and it means writing the script. Use
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+instead:
+
+``` r
+
+run_job(job)
+```
+
+It checks first for what would otherwise stop the job hours in (the
+wrong R, a missing package, another render in the study), lists every
+problem it finds, and starts nothing until they are cleared. Then it
+starts the render detached from your session. Close RStudio if you like.
+When you come back, ask with the same file:
+
+``` r
+
+job_status(job)
+```
+
+A `running` that has not moved since you last looked is usually a long
+fit working through one step, not a hung job. If you have landed on a
+different node, `running` says only what was recorded, and the line
+names the host, because a process can be checked only on its own node.
+`failed` and `vanished` come with what went wrong and what to do, where
+the log can say. `cancel_job(job)` stops a render.
+`run_job(job, final = TRUE)` is the final render, under the same rules
+as `render_job(job, final = TRUE)`.
+
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+is not available on Windows.
+
+## When the template moves on
+
+When a new release changes a template, your job does not change by
+itself.
+[`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+rewrites it from the current template and carries your study choices
+across, the assignments in its *Study choices* chunks. It does not carry
+other code you added to the job, such as a chunk of your own, even when
+the template has not changed. That code stays in the archived copy, and
+the report lists it to put back, so read the report before you render:
+
+``` r
+
+upgrade_job(job)
+```
+
+The job opens in RStudio, and the old copy and a report of the upgrade
+go in an `_archive` folder beside it, as `<job>.<stamp>.pre-upgrade` and
+`<job>.<stamp>-upgrade.md`. The stamp is the date and time. The console
+names both files; read the report for the chunks to check, restoring
+anything of yours from the archived copy. A job the upgrade would not
+change is left alone: the console says so, and nothing is added to
+`_archive`.
+
 ## When the job stops you
 
 Most stops are the package refusing to guess. The message says what it
@@ -245,6 +307,22 @@ one for new work.
 **“N unresolved EDIT: marker(s) remain in this job”**, from
 `render_job(final = TRUE)`. The job is not finished. Find the markers as
 above, or render a draft to see them listed.
+
+**“Another Quarto render is in progress in this study”**, from
+[`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md).
+A study renders one job at a time, whichever job it is, so renaming your
+job or rendering a copy meets the same lock. Wait for the other render
+to finish. If the message names another node and you know nothing is
+rendering there, a crashed render has left its lock behind: delete the
+directory the message names, then render again.
+
+**“another job is … in this study”**, from
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md).
+This one comes from the other job’s run record, not the lock, so
+renaming does not help here either. The message gives the way out: wait,
+or stop that job. If it is recorded on another node, check from a
+session there, and follow the printed route for abandoning the run only
+once you have confirmed it has stopped.
 
 **“This job is rendered in part”**, from a final render. A `skip` or
 [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md)
@@ -269,7 +347,10 @@ right.
   catalog](https://ehrlinger.github.io/hvtiRtemplates/articles/template-catalog.md),
   for every template, shipped and coming.
 - [`?add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
-  [`?render_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  [`?render_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md),
+  [`?run_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md),
+  [`?job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md),
+  [`?upgrade_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
   and
   [`?stop_here`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md)
   in R, for every argument.

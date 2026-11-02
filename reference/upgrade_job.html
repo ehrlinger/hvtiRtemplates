@@ -121,6 +121,12 @@ template, the package version, the old job's checksum, and the choices
 carried, not placed and new, with the chunks to review. It names choices
 and lines but never quotes their values, since a value can identify a
 patient. The upgrade refuses to overwrite any existing file.</p>
+<p>A message says what happened and, after an upgrade, names both archived files.
+A job the upgrade would not change is left alone: the message says so, and no
+new pair is added to <code>_archive</code>. A pair an older upgrade left beside the job
+still moves there. A job holding code outside its choices is one the upgrade
+would change, even when the template has not moved: that code leaves the job,
+and the archived copy keeps it.</p>
     </div>
     <div class="section level2">
     <h2 id="upgrading-a-job">Upgrading a job<a class="anchor" aria-label="anchor" href="#upgrading-a-job"></a></h2>
@@ -137,7 +143,7 @@ folder beside it as <code>&lt;job&gt;.&lt;stamp&gt;-upgrade.md</code>, for the c
 check. The old job is kept there too, as <code>&lt;job&gt;.&lt;stamp&gt;.pre-upgrade</code>,
 and the stamp, the date and time of the upgrade, pairs the two. The job's
 own folder is left holding the job, and the same job can be upgraded again
-with nothing moved aside: each upgrade adds its own pair. A pair whose
+with nothing moved aside: each upgrade that changes it adds its own pair. A pair whose
 stamp is already used, from an upgrade in the same second, takes a shared
 <code>-2</code>, <code>-3</code> suffix after the stamp.</p>
 <p>An upgrade before version 1.5.1 left its pair beside the job instead, as
@@ -162,6 +168,7 @@ by hand, such as <code>&lt;job&gt;.qmd.pre-upgrade-20261020</code>, is left wher
 <span class="r-in"><span><span class="va">lines</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">'^DATASET &lt;- "built"'</span>, <span class="st">'DATASET &lt;- "built_r"'</span>, <span class="va">lines</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="va">lines</span>, <span class="va">job</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">upgraded</span> <span class="op">&lt;-</span> <span class="fu">upgrade_job</span><span class="op">(</span><span class="va">job</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> upgrade_job(): dc.general.cohort.eda.qmd is already current with its template; nothing changed.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"^DATASET &lt;- "</span>, <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">upgraded</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "DATASET &lt;- \"built_r\""</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">root</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>

@@ -5,7 +5,7 @@ things that otherwise fail minutes or hours in: that this session's R is the
 one the study's renv.lock records, that the packages the job needs are
 installed at the versions locked, that Quarto can be found, that the job is
 not already running, and that no other job is rendering in the same study
-(Quarto allows one render per study). Every failure is listed with how to
+(one render at a time per study). Every failure is listed with how to
 fix it, and nothing is started until all of them are cleared.
 Then it submits the job with submit_job and waits for the
 render's own checks, the R it runs on and, where the job calls
@@ -17,7 +17,7 @@ things that otherwise fail minutes or hours in: that this session's R is the
 one the study's renv.lock records, that the packages the job needs are
 installed at the versions locked, that Quarto can be found, that the job is
 not already running, and that no other job is rendering in the same study
-(Quarto allows one render per study). Every failure is listed with how to
+(one render at a time per study). Every failure is listed with how to
 fix it, and nothing is started until all of them are cleared.
 Then it submits the job with submit_job and waits for the
 render's own checks, the R it runs on and, where the job calls
@@ -72,7 +72,7 @@ things that otherwise fail minutes or hours in: that this session's R is the
 one the study's <code>renv.lock</code> records, that the packages the job needs are
 installed at the versions locked, that Quarto can be found, that the job is
 not already running, and that no other job is rendering in the same study
-(Quarto allows one render per study). Every failure is listed with how to
+(one render at a time per study). Every failure is listed with how to
 fix it, and nothing is started until all of them are cleared.</p>
 <p>Then it submits the job with <code><a href="submit_job.html">submit_job</a></code> and waits for the
 render's own checks, the R it runs on and, where the job calls
@@ -116,7 +116,12 @@ error, and its message then lists the failed checks and their fixes.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A job scaffolded before the setup consolidation has no in-render checks to
+    <p>Use this rather than the Render button or a background job in RStudio for
+anything long. Those stay tied to your session, and when the session ends the
+render ends with it. A render started here is detached and carries on. Open a
+new session, call <code><a href="job_status.html">job_status</a></code> with the same file, and it tells you
+where the job has got to. There is no R script to write.</p>
+<p>A job scaffolded before the setup consolidation has no in-render checks to
 wait for. <code>run_job()</code> says so and names <code><a href="upgrade_job.html">upgrade_job()</a></code>, which adds
 them. The wait ends early when the render finishes, fails or is cancelled.
 If the checks have not all reported when <code>wait</code> runs out, the render

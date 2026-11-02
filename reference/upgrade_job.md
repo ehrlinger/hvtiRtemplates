@@ -76,6 +76,13 @@ new, with the chunks to review. It names choices and lines but never
 quotes their values, since a value can identify a patient. The upgrade
 refuses to overwrite any existing file.
 
+A message says what happened and, after an upgrade, names both archived
+files. A job the upgrade would not change is left alone: the message
+says so, and no new pair is added to `_archive`. A pair an older upgrade
+left beside the job still moves there. A job holding code outside its
+choices is one the upgrade would change, even when the template has not
+moved: that code leaves the job, and the archived copy keeps it.
+
 ## Upgrading a job
 
 Name the job's `.qmd` file. From the study root, a cohort EDA job is
@@ -98,9 +105,9 @@ beside it as `<job>.<stamp>-upgrade.md`, for the chunks to check. The
 old job is kept there too, as `<job>.<stamp>.pre-upgrade`, and the
 stamp, the date and time of the upgrade, pairs the two. The job's own
 folder is left holding the job, and the same job can be upgraded again
-with nothing moved aside: each upgrade adds its own pair. A pair whose
-stamp is already used, from an upgrade in the same second, takes a
-shared `-2`, `-3` suffix after the stamp.
+with nothing moved aside: each upgrade that changes it adds its own
+pair. A pair whose stamp is already used, from an upgrade in the same
+second, takes a shared `-2`, `-3` suffix after the stamp.
 
 An upgrade before version 1.5.1 left its pair beside the job instead, as
 `<job>.qmd.pre-upgrade` and `<job>-upgrade.md`. The next upgrade moves
@@ -126,6 +133,7 @@ lines <- readLines(job)
 lines <- sub('^DATASET <- "built"', 'DATASET <- "built_r"', lines)
 writeLines(lines, job)
 upgraded <- upgrade_job(job)
+#> upgrade_job(): dc.general.cohort.eda.qmd is already current with its template; nothing changed.
 grep("^DATASET <- ", readLines(upgraded), value = TRUE)
 #> [1] "DATASET <- \"built_r\""
 unlink(root, recursive = TRUE)
