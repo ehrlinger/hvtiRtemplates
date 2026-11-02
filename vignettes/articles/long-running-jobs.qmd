@@ -126,13 +126,20 @@ limit is killed without a message, which is the failure this guard exists to rep
 
 ## When it says something is already running
 
-There are two locks, and they read alike.
+Three things can say this, and they read alike.
 
-**One render per study.** A study renders one job at a time, whichever job it is, so
-renaming your job or rendering a copy meets the same lock. Wait for the other render.
-A lock left by a crash on this node is taken over for you. One left on another node
-reads as still running, since it cannot be checked from here. Once you know nothing is
-rendering there, delete the directory the message names.
+**One render per study.** "Another Quarto render is in progress" is the study's lock.
+A study renders one job at a time, whichever job it is, so renaming your job or
+rendering a copy meets the same lock. Wait for the other render. A lock left by a
+crash on this node is taken over for you. One left on another node reads as still
+running, since it cannot be checked from here. Once you know nothing is rendering
+there, delete the directory the message names.
+
+**Another job's run record.** "another job is ... in this study", from `run_job()`,
+comes from that job's record rather than the lock, so deleting the lock does not clear
+it. The message gives the way out: wait, or stop that job. If it is recorded on another
+node, check from a session there, and abandon the run only once you have confirmed
+it has stopped.
 
 **One submit per job.** `<job>.run.lock` is held while a submit or cancel is in
 progress. A submit that crashed can leave it behind, and then you delete it to try
