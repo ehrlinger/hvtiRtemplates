@@ -25,6 +25,15 @@ test_that("study setup vignette declares the complete workflow", {
   expect_true(any(grepl('qualifier = "eda"', txt, fixed = TRUE)))
   expect_true(any(grepl("hvtiR::setup(", txt, fixed = TRUE)))
   expect_true(any(grepl("start-here.html", txt, fixed = TRUE)))
+  # A hand-typed identity left at the default records itself as verified.
+  expect_true(any(grepl('identity_source = "manual"', txt, fixed = TRUE)))
+  # Cleanup deletes tp.* by name with no backup, so the warning precedes the call.
+  warning_line <- which(grepl("matched by name alone", txt, fixed = TRUE))
+  call_line <- which(grepl("^hvtiR::setup\\(", txt))
+  expect_length(warning_line, 1L)
+  expect_length(call_line, 1L)
+  expect_lt(warning_line, call_line)
+  expect_true(any(grepl("cleanup = FALSE", txt, fixed = TRUE)))
   # setup() replaced both steps. The prose may warn against them; no line may run one.
   expect_false(any(grepl("^(renv::init|renv::snapshot|organize_templates)", txt)))
   expect_false(any(grepl("inventory-adoption-cleanup", txt, fixed = TRUE)))

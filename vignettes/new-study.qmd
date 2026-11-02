@@ -22,7 +22,7 @@ for a new study.
 
 If the study directory already exists and holds jobs and data, start with
 [Adopt an existing study](study-setup.html) instead. That guide keeps the
-existing layout and files.
+existing layout, and says which files adoption deletes, `tp.*` among them.
 
 The executable example uses a 40-row synthetic dataset generated below. Its
 files stay in a temporary directory and disappear after the article renders.
@@ -69,9 +69,14 @@ pak::pak("ehrlinger/hvtiR")
 hvtiR::setup(
   study = "Example study",
   study_tracker_id = 42L,
-  root = "/studies/example_study"
+  root = "/studies/example_study",
+  identity_source = "manual"
 )
 ```
+
+`identity_source = "manual"` records that you typed the title and ID, so
+`_study.yml` marks the identity unverified rather than checked against Study
+Tracker.
 
 Leave out `adopt` only when the directory does not exist yet. A directory that
 already exists needs `adopt = TRUE`, even an empty one, or `setup()` stops. An

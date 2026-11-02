@@ -28,6 +28,7 @@ test_that("the new-study guide starts from an empty study and a delivered datase
   # qhsprograms PR 93795, 2026-10-21: the identity is typed; only --verify reads the Tracker.
   expect_false(grepl("reads the Tracker record", article, fixed = TRUE))
   expect_true(grepl("study-setup --verify", article, fixed = TRUE))
+  expect_true(grepl('identity_source = "manual"', article, fixed = TRUE))
   expect_true(grepl("study-setup --dry-run", article, fixed = TRUE))
   expect_true(grepl("study_setup(", article, fixed = TRUE))
   expect_true(grepl("register_data(", article, fixed = TRUE))

@@ -20,9 +20,9 @@ with a specific analysis type instead of repeating this setup.
 getting-started page and explains `setup()` in full. This tutorial gives the call
 for a study that already exists.
 
-Adoption keeps the study's folder names and its own work. It does not rename the
-legacy working directories. It does delete the study's template copies, as
-described below.
+Adoption keeps the study's folder names and does not rename the legacy working
+directories. It does delete files, including any file named `tp.*`, even one you
+edited, so read [what adoption deletes](#what-adoption-deletes) before you run it.
 
 If the study does not exist yet and you are starting from a newly delivered
 dataset, follow [Start a new study](new-study.html) instead.
@@ -51,7 +51,22 @@ R.version.string
 Close any open project first (**File > Close Project**), so that R starts outside
 the study. `setup()` replaces packages in the study's library, and a session
 inside the project has those packages loaded. That is why the call names the
-directory with `root`:
+directory with `root`.
+
+#### What adoption deletes {#what-adoption-deletes}
+
+Adopting deletes three kinds of file anywhere in the study, and makes no backup:
+
+- every file whose name starts with `tp.`, **matched by name alone**, so an edited
+  or study-specific `tp.*` file goes too;
+- every `binder.summaries.doc`;
+- every other file whose name and exact content match one in the template corpus.
+
+Before you run it, look through the study for `tp.*` files that hold work of your
+own, and rename or copy any you need. To adopt without deleting anything, add
+`cleanup = FALSE` to the call.
+
+#### The call
 
 ```r
 install.packages("pak")  # once per machine
@@ -61,7 +76,8 @@ hvtiR::setup(
   study = "EDIT: the Study Tracker title",
   study_tracker_id = 0L,  # EDIT: the Study Tracker ID
   root = "EDIT: the study directory",
-  adopt = TRUE
+  adopt = TRUE,
+  identity_source = "manual"
 )
 ```
 
@@ -69,16 +85,15 @@ An existing directory needs `adopt = TRUE`, even an empty one, or `setup()`
 stops. A study in revision needs `upgrade = FALSE` as well, so that the versions
 its lockfile pins cannot move.
 
+`identity_source = "manual"` records that you typed the title and ID, so a new
+`_study.yml` is marked unverified rather than checked against Study Tracker. A
+`_study.yml` the study already has is not rewritten, and keeps its recorded source.
+
 `setup()` writes `_study.yml` and a project file when one is missing, declares
 the family and the standard analysis packages in the study's `DESCRIPTION`,
 installs them into the study's own library and records them in `renv.lock`, then
 restarts RStudio inside the project. If it stops partway, fix what it names and
 run the same command again.
-
-Adopting keeps the existing directory layout and the study's own files. It
-deletes the `tp.*` template copies, `binder.summaries.doc` and files identical
-to one in the template corpus. Pass `cleanup = FALSE` to adopt without deleting
-them.
 
 Do not run `renv::init()` or `organize_templates.sh` on the study: `setup()`
 replaces both, and `renv::init()` starts the library over.
