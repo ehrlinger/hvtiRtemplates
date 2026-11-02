@@ -231,7 +231,9 @@ job_status(job)
 ```
 
 A `running` that has not moved since you last looked is usually a long fit working
-through one step, not a hung job. `failed` and `vanished` come with what went wrong
+through one step, not a hung job. If you have landed on a different node, `running`
+says only what was recorded, and the line names the host, because a process can be
+checked only on its own node. `failed` and `vanished` come with what went wrong
 and what to do, where the log can say. `cancel_job(job)` stops a render.
 `run_job(job, final = TRUE)` is the final render, under the same rules as
 `render_job(job, final = TRUE)`.
@@ -241,7 +243,11 @@ and what to do, where the log can say. `cancel_job(job)` stops a render.
 ## When the template moves on
 
 When a new release changes a template, your job does not change by itself.
-`upgrade_job()` brings it up to the current template and keeps your edits:
+`upgrade_job()` rewrites it from the current template and carries your study choices
+across, the assignments in its *Study choices* chunks. It does not carry other code
+you added to the job, such as a chunk of your own, even when the template has not
+changed. That code stays in the archived copy, and the report lists it to put back,
+so read the report before you render:
 
 ```{r}
 upgrade_job(job)
