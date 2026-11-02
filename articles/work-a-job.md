@@ -347,9 +347,10 @@ above, or render a draft to see them listed.
 [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md).
 A study renders one job at a time, whichever job it is, so renaming your
 job or rendering a copy meets the same lock. Wait for the other render
-to finish. If the message names another node and you know nothing is
-rendering there, a crashed render has left its lock behind: delete the
-directory the message names, then render again.
+to finish. A render that crashed gives up the lock by itself, at once on
+this node and within ten minutes on another. If the message names a
+directory to delete, the lock is from an older release: once you know
+nothing is rendering on that node, delete it and render again.
 
 **“another job is … in this study”**, from
 [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md).
