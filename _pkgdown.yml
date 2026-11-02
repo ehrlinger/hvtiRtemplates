@@ -35,6 +35,7 @@ articles:
   - title: Tutorials
     contents:
       - work-a-job
+      - articles/long-running-jobs
       - new-study
       - study-setup
       - sas-to-r-descriptive
