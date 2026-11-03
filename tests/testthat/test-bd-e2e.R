@@ -296,10 +296,14 @@ test_that("a draft that fails after the register chunk leaves no report, and reg
   writeLines(broken, job)
   # The render must fail at the injected stop, not anywhere before it: a failure earlier in the draft writes no
   # working file, and the check on that file below would then report the wrong cause.
+  # The error is kept too: a render that fails before Quarto prints anything leaves the console empty.
+  rendered <- NULL
   console <- utils::capture.output(
-    try(quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE), silent = TRUE), type = "output"
+    rendered <- try(quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE), silent = TRUE),
+    type = "output"
   )
-  expect_true(any(grepl("injected failure in the report", console, fixed = TRUE)), info = paste(console, collapse = "\n"))
+  expect_true(any(grepl("injected failure in the report", console, fixed = TRUE)),
+              info = paste(c(console, if (inherits(rendered, "try-error")) as.character(rendered)), collapse = "\n"))
   html <- sub("[.]qmd$", ".html", job)
   expect_false(file.exists(html))
   # The working file is there, written by the draft that failed, and nothing in the study approves it.
