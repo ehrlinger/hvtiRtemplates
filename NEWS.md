@@ -1,3 +1,131 @@
+# hvtiRtemplates 1.5.5
+
+* `read_job_data()` now drops `masterid` and its numbered copies (`masterid0`, `masterid1`), and an SSN
+  column whose name carries one source qualifier, such as `ssn_base`, `ssn_ssdi` or `ssn_num_base`. Under
+  1.5.3 such a column was dropped only if every value it held was shaped like an SSN, so one malformed value
+  let `ssn_base` through to the EDA report. A qualified name whose values are all an indicator's, a 0/1
+  `ssn_missing` or a Y/N `ssn_flag`, stays.
+* A WHERE condition that names one of these columns, or holds one of their values, in the study dataset or a
+  joined one, is now refused as one on MRN is, so neither its error nor the saved selection carries the value.
+
+* Compared groups in outcome curves now take `hvtiPlotR::hv_group_palette()`:
+  black for one curve; two to five groups take red, blue, teal, magenta and
+  cyan, and six or seven all switch to Paul Tol's muted colors. Until now the
+  strata of the `ac` survival figures, and the horizons of the `rfs-explain`
+  partial-dependence bands, were kept off red and blue and drew in bluish
+  green, reddish purple and olive, of which the first two nearly merge for a
+  reader with deuteranopia. Red and blue still mean the event and censored in
+  figures that color by outcome. `ac` and `rfs-explain` now check for hvtiPlotR
+  2.8.20, and so does the shared color helper, so a job copied into a study
+  before this change stops with an upgrade message on an older hvtiPlotR
+  instead of failing mid-render.
+
+* `vt-fit` and `rfs-fit` report events per candidate feature, for each arm's
+  forest in `vt-fit` and for the cohort in `rfs-fit`. Below the study choice
+  `MIN_EVENTS_PER_FEATURE` (default 20) the job warns and the report is marked
+  draft, and a final render stops. The default is a guess with no study behind
+  it; 0 reports the ratio only.
+* `vt-fit` takes `ELIGIBILITY_VARS`, a separate set of variables to judge
+  eligibility on: the Gower distance, the out-of-distribution features and the
+  propensity common-support flag use it. The arm forests, and the propensity
+  model `vt-explain` weights its betas with, keep the predictors. NULL,
+  the default, judges on the predictors as before. The saved handoff records the
+  set under `eligibility$variables`, and a sid set's own under
+  `eligibility$sid_variables`. A flag is explained by the variables of the
+  method that raised it, so a SID flag names the sid set's variables.
+* `vt-fit` shows how far the eligibility rules overlap: patients counted by the
+  exact set of rules that flag them, in each arm, and each pair's agreement with
+  Cohen's kappa. The propensity common-support rule is shown beside the
+  `ELIGIBILITY` methods for comparison, so the panel appears with one method too.
+  A patient a rule did not judge (no arm, or no propensity score) is listed as
+  not judged by it and left out of that rule's agreement.
+
+* The `ac` template's stratified survival and cumulative-hazard curves, and the `rfs-explain`
+  horizon curves, now differ by line type and point shape as well as color, in the curves and in
+  their legends, so the groups can be told apart on a grayscale printer. One curve stays solid.
+  In `rfs-explain` this covers both the default partial-dependence pages and the confidence-band
+  pages; the band pages' confidence bars stay solid. Seven groups, as many as the house group
+  colors hold, each take their own line type and shape, and past seven no two groups share both.
+  The first two group colors are of nearly equal luminance, so two strata drawn by color alone
+  printed as the same gray.
+
+* `dc-eda` draws the house descriptive variable list by default: the variables
+  the SAS ODS tables report (`descriptive/dc.tables.ods.sas`), in their section
+  order, and only the ones the dataset has. The report lists the columns it
+  leaves out. The new study choice `VARIABLE_SET <- "all"` draws every column,
+  as before; naming columns in `VARIABLES` works as it did. The list ships as
+  `inst/extdata/ods-variables.csv`, and `dc-tables`'s commented `GROUPS` example
+  is held to it by a test.
+  A job brought up to date with `upgrade_job()` or `migrate_job()` whose
+  `VARIABLES` is `NULL` also draws the list now, where it drew every column.
+
+* The `dt` template is removed, one release after it arrived as in-flight: its checks are `bd`'s Checks section.
+  A job scaffolded from it should move its choices into the study's `bd` job. The taxonomy keeps its `dt` row, so
+  `job_census()` still counts the legacy SAS `dt` jobs.
+
+* `bd` checks the dataset it built before registering it. A new Checks section, between the working file and
+  Register, reports what the rebuild changed against the registered version, cross-tabs, the follow-up columns and
+  the study's named checks (`CROSSTABS`, `EVENT`, `FOLLOWUP`, `CHECKS` and `PRINT_COLS`). The report shows field
+  values such as ranges and cross-tab levels, because it prepares an analysis; patient rows and identifier values go to the
+  console: `ID`, `KEY`, `JOIN_BY`, the new `OTHER_IDENTIFIERS` and any column named for an MRN, CCFID or SSN. `bd` no
+  longer drops an identifier a job keeps from the built, so a patient can be found to correct follow-up; `read_job_data()`
+  still drops them for analysis jobs. A finding never blocks registration. `bd` now needs hvtiRutilities 1.5.17
+  and hvtiRdatabuild 0.3.3. Design: `dev/specs/2026-10-29-bd-checks-design.md`.  A draft
+  render prints the SHA-256 of the file it wrote in its report, and a registering render registers only a file
+  whose bytes that report names, rehashed at the registration boundary. It stops when run outside a Quarto render,
+  when no draft report is found and when no report names these bytes. A draft may use a custom output name or a
+  project `output-dir`. A draft whose check chunks did
+  not all run (one set to `eval: false`, say, or deleted) reviews nothing, and a registering render stops naming
+  them. A check that cannot run stops the render; a finding never does.
+
+- **No report shows a patient identifier.** A new internal helper decides what a report may show: the job's `ID` and `KEY`, what `read_job_data()` drops, and record numbers under other names such as `pt_mrn`, `medrec` or `patid`. Named in a table or figure setting (`dc-tables` `GROUPS`, `dc-gfup` `CHECKS`, `dc-eda` `VARIABLES`, `ac` `STRATA` and others), such a column stops the job. Reached by a sweep, such as `dc-general`'s summary of every numeric column, it is left out and listed by name. Whole-number columns of four digits or more whose values nearly all differ are treated the same way, under any name; a job whose column is a measurement of that shape says so with `options(hvtiRtemplates.not_identifiers = "peak_ck")`. The data are unchanged, so a patient can still be found to correct follow-up. A `KEY` column named in `dc-eda` `VARIABLES` now stops the job rather than being drawn.
+- **`ID_COL` in `dc-general` and `IDENTIFIER` in `dc-gfup` now list their rows on the console only**, on `stderr()`, and never in the report.
+- **`vt-fit` reports out-of-distribution patients as counts** by method and arm. The patient rows stay in `vt.rds`, under `eligibility$rows`.
+
+- **`dc-tables`, `dc-gfup` and `ac` now warn before their output goes in a manuscript.** A callout names each column and count of concern: cells and `BY` groups under 5 patients, patients older than 89, exact dates, and a minimum or maximum shown. It never shows a value, never changes a number, and prints nothing when nothing is found. "About this run" keeps the same counts.
+
+* `vp-fit` now stops when more than `MAX_UNTESTED` of the real candidates went untested, 0.5 by default, so a screen
+  that tested too little cannot read as one that found no effect. Its importance figure draws the noise bar the
+  coverage table judged each variable against, in place of varPro's fixed 0.79 cutoff. The job needs
+  ggRandomForests 4.0.0-rc12 or later, and says so when it finds an older build.
+* `vp-fit` now judges a factor by its best single level everywhere: its coverage, tested flag, the noise bars, selection and the
+  refits. A factor whose levels each fell below `TRIM` no longer reads as tested because its levels together cleared it.
+
+- **The "Before this goes in a manuscript" callout now reaches `dc-stddiff`, `dc-trends`, `hz`, `hp`, `lg`, `lp-mirror`, `vt-fit`, `vt-explain`, `sid-clusters` and `vp-individual`.** Each template counts only what its report shows: `dc-stddiff` its group sizes, `dc-trends` a year of few patients, `vp-individual` the values it draws. `ac` also flags numbers at risk under 5 at its horizons and on its figure, and `dc-gfup` flags patients in a calendar year of fewer than 5, whose point on a follow-up panel can be read as their operation date and follow-up. It still never shows a value or changes a number.
+
+- **The manuscript callout now counts what a table's shares and differences give away.** `vt-explain` checks the favored and not-favored patients behind its shares, the in-distribution patients and each shown group's non-missing values and ages; `lp-mirror` the unmatched; `vt-fit` each calibration fifth's patients and events and the patients never out of bag; `sid-clusters` negative and non-negative silhouette widths. `dc-gfup` reads each panel's drawn points by calendar date. `vt-fit`, `ac` and `dc-gfup` read extremes within groups, and `vt-fit`, `hz` and `hp` read only the upper tail, because that is all they show. `vt-fit`'s callout moved below the calibration table, whose counts it needs.
+
+* A job's path from the study root now comes out right on Windows, where `run_job()` and the
+  pre-flight checks printed the full path with mixed separators in their `hvti status` and
+  `hvti cancel` advice. The test suite also passes again against randomForestSRC 3.10.0, Quarto
+  1.11 and Windows.
+
+* `dc-tables` now prints a power a dataset's label wrote with one caret as a superscript: `m^2`, `kg/m^2` and `10^9/L` came
+  through with the caret showing. The fix is in the package, so a job already in a study picks it up at its next render.
+
+* `work-a-job` gains sections on `run_job()` and `upgrade_job()` and an entry for the render-lock
+  error, which a renamed copy of a job does not get past. `?run_job`, `?job_status`, `?upgrade_job` and `dc-eda`'s
+  `VARIABLE_SET` comment say more about what each does.
+
+* `upgrade_job()` now says what it did, naming the archived job and report. A job already current with its template is left
+  alone, with a message, and no longer adds a pair to `_archive` at every call.
+
+* New article, "Running a job that takes hours": `run_job()`, `submit_job()`, `job_status()`, `cancel_job()`, `hvti`,
+  `guard_long_fit()`, `guard_memory()` and the two locks, in one place.
+
+* The "Adopt an existing study" and "Start a new study" tutorials now open with `hvtiR::setup()`, and the
+  README points to the family's Start here page. "Adopt an existing study" no longer has you run
+  `organize_templates.sh` or `renv::init()`, and warns before the call that adopting deletes every `tp.*` file by name, edited or not.
+  "Start a new study" no longer says `study-setup` reads Study Tracker: the identity is typed, and only
+  `study-setup --verify` reads it.
+
+* "Work a job" gains a section on paths in a job, and two more stops: an object
+  a render cannot see, and a missing family package.
+
+* A render that crashed on another node no longer blocks its study until someone deletes the lock. A running render keeps a
+  heartbeat in the lock from its own node, and a lock whose heartbeat has stopped for ten minutes is taken over. A lock with no
+  heartbeat, from an older release, still reads as running and names the directory to delete.
+
 # hvtiRtemplates 1.5.4
 
 * New `dt` template, `00_datasets/dt.qmd`: the data check a programmer runs after a `bd` build and
