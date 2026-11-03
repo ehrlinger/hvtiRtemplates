@@ -294,7 +294,12 @@ test_that("a draft that fails after the register chunk leaves no report, and reg
   at <- grep("^#\\| label: tbl-report-columns$", lines)
   broken <- append(lines, "stop(\"injected failure in the report\")", after = at + 1L)
   writeLines(broken, job)
-  expect_error(bd_render(job))
+  # The render must fail at the injected stop, not anywhere before it: a failure earlier in the draft writes no
+  # working file, and the check on that file below would then report the wrong cause.
+  console <- utils::capture.output(
+    try(quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE), silent = TRUE), type = "output"
+  )
+  expect_true(any(grepl("injected failure in the report", console, fixed = TRUE)))
   html <- sub("[.]qmd$", ".html", job)
   expect_false(file.exists(html))
   # The working file is there, written by the draft that failed, and nothing in the study approves it.
