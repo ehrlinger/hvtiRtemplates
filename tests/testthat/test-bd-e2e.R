@@ -299,7 +299,7 @@ test_that("a draft that fails after the register chunk leaves no report, and reg
   console <- utils::capture.output(
     try(quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE), silent = TRUE), type = "output"
   )
-  expect_true(any(grepl("injected failure in the report", console, fixed = TRUE)))
+  expect_true(any(grepl("injected failure in the report", console, fixed = TRUE)), info = paste(console, collapse = "\n"))
   html <- sub("[.]qmd$", ".html", job)
   expect_false(file.exists(html))
   # The working file is there, written by the draft that failed, and nothing in the study approves it.
