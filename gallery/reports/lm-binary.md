@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:43
+2026-11-03 08:17
 
 Fits a binary outcome model and preserves the fitted model, predictions,
 and pooled inference. For stacked imputations, coefficients and
@@ -37,8 +37,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -121,7 +121,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTOR
 
 | Data |  |
 |:---|:---|
-| Source | dataset `built` (built_20261029.parquet) |
+| Source | dataset `built` (built_20261103.parquet) |
 | Rows read | 800 |
 | ID | `patient_id` |
 | Identifiers dropped | none |
@@ -240,8 +240,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 12:43:21 EDT |
-|  | Ended | 2026-10-29 12:43:22 EDT |
+| Run | Started | 2026-11-03 08:17:33 EST |
+|  | Ended | 2026-11-03 08:17:34 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -250,9 +250,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |  | Template | lm.binary |
 |  | Subject | stroke |
 |  | Type | model |
-|  | hvtiRtemplates | 1.5.4 |
-| Dataset `built` | Version file | built_20261029.parquet |
-|  | Version date | 2026-10-29 |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
 |  | Source file | built.rds |
 |  | Rows kept | 572 rows on 572 patients |
 |  | WHERE | `as.integer(format(dt_surg, "%Y")) < 2015` |

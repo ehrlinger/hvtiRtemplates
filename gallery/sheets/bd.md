@@ -11,8 +11,11 @@ Run sheet
 
 Cuts a study's dataset from a master snapshot: cohort list, exclusions
 with attrition and derived variables, then the working file and its
-build record, registered as a dated version of the study dataset. [See
-the report it
+build record. Before registering, it checks what it built: what the
+rebuild changed against the registered version, cross-tabs, follow-up
+and named checks, with counts in the report and rows in the console
+only. Registered as a dated version of the study dataset. [See the
+report it
 produces](https://ehrlinger.github.io/hvtiRtemplates/gallery/reports/bd.md)
 on the gallery's synthetic study.
 
@@ -24,9 +27,9 @@ on the gallery's synthetic study.
   shows how.
 - **No dataset to read.** This job builds the study dataset rather than
   reading one; the choices marked `EDIT:` say what it starts from.
-- **Packages:** `hvtiRutilities` (\>= 1.5.12). The job checks each floor
-  when it starts, so an older library stops it at the top rather than
-  partway through.
+- **Packages:** `hvtiRdatabuild` (\>= 0.3.3), `hvtiRutilities` (\>=
+  1.5.17). The job checks each floor when it starts, so an older library
+  stops it at the top rather than partway through.
 
 ## Outline
 
@@ -37,10 +40,15 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 5 choices marked `EDIT:`.
+2.  **Study choices**: 11 choices marked `EDIT:`.
 3.  **Cohort**: 1 choice marked `EDIT:`.
-4.  **Register**
-5.  **Report**
+4.  **Checks**
+    - **What this rebuild changed**
+    - **Cross-tabs**
+    - **Follow-up**
+    - **Named checks**
+5.  **Register**
+6.  **Report**
     - **Who was excluded, and why**
     - **Columns**
 
@@ -58,5 +66,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.4 · built 2026-10-29.
+Generated from the template by hvtiRtemplates, 1.5.5 · built 2026-11-03.
 The template holds the details; this sheet is its outline.

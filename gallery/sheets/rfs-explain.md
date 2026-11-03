@@ -25,7 +25,7 @@ on the gallery's synthetic study.
   that job saved (`rfs.rds`). For a final render, render it final too: a
   final render refuses a hand-off saved from unregistered data.
 - **Packages:** `randomForestSRC` (\>= 3.7.0), `ggRandomForests` (\>=
-  4.0.0), `hvtiRutilities`, `hvtiPlotR` (\>= 2.8.18). The job checks
+  4.0.0), `hvtiRutilities`, `hvtiPlotR` (\>= 2.8.20). The job checks
   each floor when it starts, so an older library stops it at the top
   rather than partway through.
 - **The `hvti` command.** A long job starts from a terminal with
@@ -72,5 +72,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.4 · built 2026-10-29.
+Generated from the template by hvtiRtemplates, 1.5.5 · built 2026-11-03.
 The template holds the details; this sheet is its outline.

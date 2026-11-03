@@ -2238,7 +2238,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-29 12:40</p>
+      <p class="date">2026-11-03 08:15</p>
     </div>
   </div>
   
@@ -2250,7 +2250,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: ac 1.5.4 sha256:21191652ed3f1e2ca0e75b0e01f752d74f5120bf1aae446bfe876ec4c107b8f6 -->
+<!-- hvtiRtemplates: ac 1.5.5 sha256:4688cf1409c73af24e25284ec29c057034e9401aceadb94cda602a619494b5b0 -->
 <!-- Demo: name the SAS job this replaces, and say what its %KAPLAN calls do.
      Replace this comment with that text. -->
 <p>An <code>ac</code> job is the first look at an outcome: the Kaplan-Meier life table, survival and patients at risk at the reporting horizons, the follow-up, the strata compared, and the figures read before any hazard model. Those are the survival curve, the cumulative-hazard views that suggest the phases an <code>hz</code> job fits, and a manuscript figure with the numbers at risk beneath it. The parametric fit is <code>hz</code>, and the figures that lay that fit over these estimates are <code>hp</code>.</p>
@@ -2284,8 +2284,8 @@ vertical-align: -.125em;
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs TemporalHazard &gt;= 1.2.12 for hzr_kaplan(); &quot;</span>,</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;TemporalHazard&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.7.18&quot;</span>) {</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.7.18 for hv_atrisk_compose() and hv_role_palette(); &quot;</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.8.20&quot;</span>) {</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.8.20 for hv_atrisk_compose() and hv_group_palette(); &quot;</span>,</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;patchwork&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
@@ -2320,7 +2320,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261029.parquet</code>, dated 2026-10-29 · rendered by gallery on gallery · hvtiRtemplates 1.5.4</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261103.parquet</code>, dated 2026-11-03 · rendered by gallery on gallery · hvtiRtemplates 1.5.5</p>
 </div>
 </div>
 </div>
@@ -2476,7 +2476,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261029.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261103.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2838,26 +2838,69 @@ Table 5: Each derived category against the variable it came from
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: defines helpers only</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>.fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>.seen <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Prints `code` as a child chunk with its own label and caption, so each table</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># and figure the loops below make is numbered and can be cited.</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>.child <span class="ot">&lt;-</span> <span class="cf">function</span>(label, caption, code, <span class="at">opts =</span> <span class="fu">character</span>()) {</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  label <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;(^-+|-+$)&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">gsub</span>(<span class="st">&quot;[^a-z0-9]+&quot;</span>, <span class="st">&quot;-&quot;</span>, <span class="fu">tolower</span>(label)))</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.seen[[label]])) <span class="fu">stop</span>(<span class="st">&quot;Two outputs would share the label &quot;</span>, label, <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  .seen[[label]] <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  .opt <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;#| &quot;</span>, <span class="fu">sub</span>(<span class="st">&quot;-.*$&quot;</span>, <span class="st">&quot;&quot;</span>, label), <span class="st">&quot;-cap: &quot;</span>, <span class="fu">encodeString</span>(caption, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>))</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(<span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: &quot;</span>, label), .opt, opts, code, .fence),</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>                        <span class="at">envir =</span> <span class="fu">parent.frame</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Survival and its limits as percentages, the way the tables report them.</span></span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>as_percent <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (col <span class="cf">in</span> <span class="fu">intersect</span>(<span class="fu">c</span>(<span class="st">&quot;survival&quot;</span>, <span class="st">&quot;cl_lower&quot;</span>, <span class="st">&quot;cl_upper&quot;</span>), <span class="fu">names</span>(x))) x[[col]] <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> x[[col]], <span class="dv">1</span>)</span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  x</span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The times the manuscript figure counts patients at risk.</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>risk_times <span class="ot">&lt;-</span> <span class="cf">function</span>(plot_max) {</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  at <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(RISK_TIMES)) <span class="fu">pretty</span>(<span class="fu">c</span>(<span class="dv">0</span>, plot_max)) <span class="cf">else</span> RISK_TIMES</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  at[at <span class="sc">&lt;=</span> plot_max]</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>.fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>.seen <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Prints `code` as a child chunk with its own label and caption, so each table</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co"># and figure the loops below make is numbered and can be cited.</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>.child <span class="ot">&lt;-</span> <span class="cf">function</span>(label, caption, code, <span class="at">opts =</span> <span class="fu">character</span>()) {</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  label <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;(^-+|-+$)&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">gsub</span>(<span class="st">&quot;[^a-z0-9]+&quot;</span>, <span class="st">&quot;-&quot;</span>, <span class="fu">tolower</span>(label)))</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.seen[[label]])) <span class="fu">stop</span>(<span class="st">&quot;Two outputs would share the label &quot;</span>, label, <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  .seen[[label]] <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  .opt <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;#| &quot;</span>, <span class="fu">sub</span>(<span class="st">&quot;-.*$&quot;</span>, <span class="st">&quot;&quot;</span>, label), <span class="st">&quot;-cap: &quot;</span>, <span class="fu">encodeString</span>(caption, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>))</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(<span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: &quot;</span>, label), .opt, opts, code, .fence),</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>                        <span class="at">envir =</span> <span class="fu">parent.frame</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Survival and its limits as percentages, the way the tables report them.</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>as_percent <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (col <span class="cf">in</span> <span class="fu">intersect</span>(<span class="fu">c</span>(<span class="st">&quot;survival&quot;</span>, <span class="st">&quot;cl_lower&quot;</span>, <span class="st">&quot;cl_upper&quot;</span>), <span class="fu">names</span>(x))) x[[col]] <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> x[[col]], <span class="dv">1</span>)</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  x</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Flags what a reader could learn about one patient, by column and count. It changes no number.</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The follow-up table shows the longest follow-up, and a stratum&#39;s curve is its few patients&#39; events.</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The life tables leave out a row missing its time or its event, so the counts here do too.</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Numbers at risk are counted where the report states them as the deliverable, the horizon tables</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># and the figure&#39;s row. A life table&#39;s own rows are not: every table runs out to its last patient.</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>.fu_rows <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">is.na</span>(d[[TIME]]) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(d[[EVENT]])</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>.fu_end <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">as.numeric</span>(d[[TIME]][.fu_rows]), <span class="dv">0</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>.at_risk <span class="ot">&lt;-</span> <span class="cf">function</span>(strata, column) {</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  .times <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(<span class="fu">c</span>(grid, <span class="fu">risk_times</span>(<span class="cf">if</span> (<span class="fu">is.null</span>(PLOT_MAX)) .fu_end <span class="cf">else</span> PLOT_MAX))))</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_counts</span>(</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_at</span>(d, TIME, EVENT, <span class="at">times =</span> .times, <span class="at">strata =</span> strata, <span class="at">conf_level =</span> CLEVEL)<span class="sc">$</span>n_risk,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    column, <span class="at">check =</span> <span class="st">&quot;at_risk&quot;</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_notice</span>(<span class="fu">do.call</span>(rbind, <span class="fu">c</span>(</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_check</span>(d[.fu_rows, , <span class="at">drop =</span> <span class="cn">FALSE</span>], STRATA, <span class="at">cells =</span> STRATA, <span class="at">extremes =</span> TIME, <span class="at">within =</span> STRATA),</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>       <span class="fu">.at_risk</span>(<span class="cn">NULL</span>, <span class="st">&quot;all patients&quot;</span>)),</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(STRATA, <span class="cf">function</span>(v) <span class="fu">.at_risk</span>(v, v))</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="callout callout-style-default callout-warning callout-titled" title="Before this goes in a manuscript">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Before this goes in a manuscript
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>2 of the numbers at risk shown for <code>lvef_grp</code> are under 5 patients. End the table or figure sooner, or decide that the count can be shown.</li>
+<li>1 of the numbers at risk shown for <code>hx_chf</code> are under 5 patients. End the table or figure sooner, or decide that the count can be shown.</li>
+</ul>
+</div>
 </div>
 </section>
 <section id="overall" class="level2">
@@ -2865,22 +2908,22 @@ Table 5: Each derived category against the variable it came from
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>km <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table</span>(d, TIME, EVENT, <span class="at">conf_level =</span> CLEVEL)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>ac_art <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">overall =</span> km),</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> cc,</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hp checks that ac and hz read the same rows with the same TIME and EVENT.</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">c</span>(<span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>), <span class="fu">list</span>(<span class="at">time =</span> TIME, <span class="at">event =</span> EVENT))</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(ac_art, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;ac.rds&quot;</span>))</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved life table is always the event rows, the table hp draws over.</span></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>.km_rows <span class="ot">&lt;-</span> <span class="cf">if</span> (EVENT_ONLY) km <span class="cf">else</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table</span>(d, TIME, EVENT, <span class="at">conf_level =</span> CLEVEL, <span class="at">event_only =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as_percent</span>(.km_rows), <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>km <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table</span>(d, TIME, EVENT, <span class="at">conf_level =</span> CLEVEL)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>ac_art <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">overall =</span> km),</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> cc,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hp checks that ac and hz read the same rows with the same TIME and EVENT.</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">c</span>(<span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>), <span class="fu">list</span>(<span class="at">time =</span> TIME, <span class="at">event =</span> EVENT))</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(ac_art, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;ac.rds&quot;</span>))</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved life table is always the event rows, the table hp draws over.</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>.km_rows <span class="ot">&lt;-</span> <span class="cf">if</span> (EVENT_ONLY) km <span class="cf">else</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table</span>(d, TIME, EVENT, <span class="at">conf_level =</span> CLEVEL, <span class="at">event_only =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as_percent</span>(.km_rows), <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-km-overall" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -8462,9 +8505,9 @@ Table 6: Overall life table
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as_percent</span>(hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_at</span>(d, TIME, EVENT, <span class="at">times =</span> grid, <span class="at">labels =</span> labs,</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>                                                      <span class="at">conf_level =</span> CLEVEL)),</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as_percent</span>(hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_at</span>(d, TIME, EVENT, <span class="at">times =</span> grid, <span class="at">labels =</span> labs,</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                                                      <span class="at">conf_level =</span> CLEVEL)),</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-horizons" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -8595,38 +8638,40 @@ Table 7: Overall survival (%) and patients at risk at the reporting horizons
 <p>The tests compare the strata over all follow-up: the log-rank, the Wilcoxon, which weighs the early differences, and <code>-2Log(LR)</code>, as <code>PROC LIFETEST</code> prints them. Where the curves cross late, on few patients, censor the data at a horizon in this job before the tests, and say so in the report.</p>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: each child chunk below carries its own label and caption</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>strata_fits <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (v <span class="cf">in</span> STRATA) {</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  .lt <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table</span>(d, TIME, EVENT, <span class="at">strata =</span> v, <span class="at">conf_level =</span> CLEVEL)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  strata_fits[[v]] <span class="ot">&lt;-</span> .lt</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  .counts <span class="ot">&lt;-</span> <span class="fu">attr</span>(.lt, <span class="st">&quot;counts&quot;</span>)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl km counts&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Patients, events and end of follow-up by &quot;</span>, v),</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::kable(.counts, row.names = FALSE, digits = 2)&quot;</span>)</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  .dropped <span class="ot">&lt;-</span> <span class="fu">attr</span>(.lt, <span class="st">&quot;dropped&quot;</span>)</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.dropped)) {</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl km dropped&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Patients left out of the &quot;</span>, v, <span class="st">&quot; strata, as %KAPLAN leaves them out&quot;</span>),</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::kable(.dropped, row.names = FALSE)&quot;</span>)</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  .at <span class="ot">&lt;-</span> <span class="fu">as_percent</span>(hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_at</span>(d, TIME, EVENT, <span class="at">times =</span> grid, <span class="at">labels =</span> labs, <span class="at">strata =</span> v,</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">conf_level =</span> CLEVEL))</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl km horizons&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Survival (%) and patients at risk at the reporting horizons, by &quot;</span>, v),</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::kable(.at, row.names = FALSE, digits = 4)&quot;</span>)</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(.counts) <span class="sc">&gt;</span> <span class="dv">1</span>L) {</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    .tests <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_tests</span>(d, TIME, EVENT, <span class="at">strata =</span> v)</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl km tests&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Tests of equal survival across &quot;</span>, v),</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::kable(.tests, row.names = FALSE, digits = 4)&quot;</span>)</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  .rows <span class="ot">&lt;-</span> .lt</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span>EVENT_ONLY) .rows <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table</span>(d, TIME, EVENT, <span class="at">strata =</span> v, <span class="at">conf_level =</span> CLEVEL, <span class="at">event_only =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl km life table&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Life table by &quot;</span>, v),</span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::kable(as_percent(.rows), row.names = FALSE, digits = 4)&quot;</span>)</span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: each child chunk below carries its own label and caption</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>strata_fits <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>.selection <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">:::</span><span class="fu">.refuse_display</span>(STRATA, hvtiRtemplates<span class="sc">:::</span><span class="fu">.no_values</span>(d, .selection<span class="sc">$</span>id, .selection<span class="sc">$</span>key), <span class="st">&quot;STRATA&quot;</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (v <span class="cf">in</span> STRATA) {</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  .lt <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table</span>(d, TIME, EVENT, <span class="at">strata =</span> v, <span class="at">conf_level =</span> CLEVEL)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  strata_fits[[v]] <span class="ot">&lt;-</span> .lt</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  .counts <span class="ot">&lt;-</span> <span class="fu">attr</span>(.lt, <span class="st">&quot;counts&quot;</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl km counts&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Patients, events and end of follow-up by &quot;</span>, v),</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::kable(.counts, row.names = FALSE, digits = 2)&quot;</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  .dropped <span class="ot">&lt;-</span> <span class="fu">attr</span>(.lt, <span class="st">&quot;dropped&quot;</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.dropped)) {</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl km dropped&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Patients left out of the &quot;</span>, v, <span class="st">&quot; strata, as %KAPLAN leaves them out&quot;</span>),</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::kable(.dropped, row.names = FALSE)&quot;</span>)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  .at <span class="ot">&lt;-</span> <span class="fu">as_percent</span>(hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_at</span>(d, TIME, EVENT, <span class="at">times =</span> grid, <span class="at">labels =</span> labs, <span class="at">strata =</span> v,</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">conf_level =</span> CLEVEL))</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl km horizons&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Survival (%) and patients at risk at the reporting horizons, by &quot;</span>, v),</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::kable(.at, row.names = FALSE, digits = 4)&quot;</span>)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(.counts) <span class="sc">&gt;</span> <span class="dv">1</span>L) {</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    .tests <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_tests</span>(d, TIME, EVENT, <span class="at">strata =</span> v)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl km tests&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Tests of equal survival across &quot;</span>, v),</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::kable(.tests, row.names = FALSE, digits = 4)&quot;</span>)</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  .rows <span class="ot">&lt;-</span> .lt</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span>EVENT_ONLY) .rows <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table</span>(d, TIME, EVENT, <span class="at">strata =</span> v, <span class="at">conf_level =</span> CLEVEL, <span class="at">event_only =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;tbl km life table&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Life table by &quot;</span>, v),</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::kable(as_percent(.rows), row.names = FALSE, digits = 4)&quot;</span>)</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.counts, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.counts, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-km-counts-lvef-grp" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -8677,7 +8722,7 @@ Table 8: Patients, events and end of follow-up by lvef_grp
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.at, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.at, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-km-horizons-lvef-grp" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -9033,7 +9078,7 @@ Table 9: Survival (%) and patients at risk at the reporting horizons, by lvef_g
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.tests, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.tests, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-km-tests-lvef-grp" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -9080,7 +9125,7 @@ Table 10: Tests of equal survival across lvef_grp
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as_percent</span>(.rows), <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as_percent</span>(.rows), <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-km-life-table-lvef-grp" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -15118,7 +15163,7 @@ Table 11: Life table by lvef_grp
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.counts, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.counts, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-km-counts-hx-chf" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -15162,7 +15207,7 @@ Table 12: Patients, events and end of follow-up by hx_chf
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.at, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.at, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-km-horizons-hx-chf" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -15410,7 +15455,7 @@ Table 13: Survival (%) and patients at risk at the reporting horizons, by hx_ch
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.tests, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.tests, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-km-tests-hx-chf" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -15457,7 +15502,7 @@ Table 14: Tests of equal survival across hx_chf
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as_percent</span>(.rows), <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">as_percent</span>(.rows), <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-km-life-table-hx-chf" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -21500,153 +21545,172 @@ Table 15: Life table by hx_chf
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: defines the figures; the chunks below draw them</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>plot_max <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(PLOT_MAX)) <span class="fu">max</span>(<span class="fu">attr</span>(km, <span class="st">&quot;counts&quot;</span>)<span class="sc">$</span>max_fup) <span class="cf">else</span> PLOT_MAX</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The survival curve and the four cumulative-hazard views SAS&#39;s %KAPLAN plots</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># (PLOTS, PLOTC and their log scales), one page, colored by stratum.</span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>km_views <span class="ot">&lt;-</span> <span class="cf">function</span>(fit) {</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The strata come from the counts, not the event rows: a stratum with no event,</span></span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># or a cohort with none, has no rows, and would otherwise vanish from the page.</span></span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  counts <span class="ot">&lt;-</span> <span class="fu">attr</span>(fit, <span class="st">&quot;counts&quot;</span>)</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(fit<span class="sc">$</span>stratum)) fit<span class="sc">$</span>stratum <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="st">&quot;All&quot;</span>, <span class="fu">nrow</span>(fit))</span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> fit[fit<span class="sc">$</span>time <span class="sc">&lt;=</span> plot_max, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Each stratum runs from 100% at time 0 to the end of its own follow-up.</span></span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  last <span class="ot">&lt;-</span> <span class="fu">vapply</span>(counts<span class="sc">$</span>stratum, <span class="cf">function</span>(s) {</span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> fit<span class="sc">$</span>survival[fit<span class="sc">$</span>stratum <span class="sc">==</span> s]</span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(v)) v[<span class="fu">length</span>(v)] <span class="cf">else</span> <span class="dv">1</span></span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>  }, <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Only the event rows carry a point; time zero and the end of follow-up do not.</span></span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  surv <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">data.frame</span>(<span class="at">stratum =</span> counts<span class="sc">$</span>stratum, <span class="at">time =</span> <span class="dv">0</span>, <span class="at">survival =</span> <span class="dv">1</span>, <span class="at">event =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>                <span class="fu">data.frame</span>(fit[, <span class="fu">c</span>(<span class="st">&quot;stratum&quot;</span>, <span class="st">&quot;time&quot;</span>, <span class="st">&quot;survival&quot;</span>)], <span class="at">event =</span> <span class="fu">rep</span>(<span class="cn">TRUE</span>, <span class="fu">nrow</span>(fit))),</span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>                <span class="fu">data.frame</span>(<span class="at">stratum =</span> counts<span class="sc">$</span>stratum, <span class="at">time =</span> <span class="fu">pmin</span>(counts<span class="sc">$</span>max_fup, plot_max), <span class="at">survival =</span> last, <span class="at">event =</span> <span class="cn">FALSE</span>))</span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  surv<span class="sc">$</span>stratum <span class="ot">&lt;-</span> <span class="fu">factor</span>(surv<span class="sc">$</span>stratum, <span class="at">levels =</span> counts<span class="sc">$</span>stratum)</span>
-<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The cumulative hazard is infinite once survival reaches zero; it is left off a figure.</span></span>
-<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>  haz <span class="ot">&lt;-</span> fit[<span class="fu">is.finite</span>(fit<span class="sc">$</span>cumhaz) <span class="sc">&amp;</span> fit<span class="sc">$</span>cumhaz <span class="sc">&gt;</span> <span class="dv">0</span>, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>  haz<span class="sc">$</span>event <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">TRUE</span>, <span class="fu">nrow</span>(haz))</span>
-<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>  haz<span class="sc">$</span>stratum <span class="ot">&lt;-</span> <span class="fu">factor</span>(haz<span class="sc">$</span>stratum, <span class="at">levels =</span> counts<span class="sc">$</span>stratum)</span>
-<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># One curve is black. Strata never take red or blue, which mean the event and</span></span>
-<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># censored in every house figure, so no stratum reads as the deaths.</span></span>
-<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>  cols <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.group_colors</span>(counts<span class="sc">$</span>stratum)</span>
-<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>  view <span class="ot">&lt;-</span> <span class="cf">function</span>(data, y, ylab) {</span>
-<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(data, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>time, <span class="at">y =</span> .data[[y]], <span class="at">color =</span> .data<span class="sc">$</span>stratum)) <span class="sc">+</span></span>
-<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>      (<span class="cf">if</span> (<span class="fu">isTRUE</span>(STEPS)) ggplot2<span class="sc">::</span><span class="fu">geom_step</span>() <span class="cf">else</span> ggplot2<span class="sc">::</span><span class="fu">geom_line</span>()) <span class="sc">+</span></span>
-<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">geom_point</span>(<span class="at">data =</span> data[data<span class="sc">$</span>event, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">size =</span> <span class="fl">1.2</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
-<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>      <span class="co"># The limits keep an empty panel (no events, so no cumulative hazard) from warning.</span></span>
-<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">scale_color_manual</span>(<span class="at">values =</span> cols, <span class="at">limits =</span> <span class="fu">names</span>(cols)) <span class="sc">+</span></span>
-<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Years&quot;</span>, <span class="at">y =</span> ylab, <span class="at">color =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>      hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>  log_x <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">scale_x_log10</span>()</span>
-<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>  log_y <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">scale_y_log10</span>()</span>
-<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>  patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(</span>
-<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">view</span>(surv, <span class="st">&quot;survival&quot;</span>, <span class="st">&quot;Survival (%)&quot;</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="cf">function</span>(p) <span class="dv">100</span> <span class="sc">*</span> p),</span>
-<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>    <span class="fu">view</span>(haz, <span class="st">&quot;cumhaz&quot;</span>, <span class="st">&quot;Cumulative hazard&quot;</span>),</span>
-<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>    <span class="fu">view</span>(haz, <span class="st">&quot;cumhaz&quot;</span>, <span class="st">&quot;Cumulative hazard&quot;</span>) <span class="sc">+</span> log_x <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Years (log scale)&quot;</span>),</span>
-<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>    <span class="fu">view</span>(haz, <span class="st">&quot;cumhaz&quot;</span>, <span class="st">&quot;Cumulative hazard (log scale)&quot;</span>) <span class="sc">+</span> log_y,</span>
-<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a>    <span class="fu">view</span>(haz, <span class="st">&quot;cumhaz&quot;</span>, <span class="st">&quot;Cumulative hazard (log scale)&quot;</span>) <span class="sc">+</span> log_x <span class="sc">+</span> log_y <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Years (log scale)&quot;</span>),</span>
-<span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">guides =</span> <span class="st">&quot;collect&quot;</span></span>
-<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">&amp;</span> ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span>)</span>
-<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript figure: the curve in the house theme, with patients at risk beneath it.</span></span>
-<span id="cb22-51"><a href="#cb22-51" aria-hidden="true" tabindex="-1"></a>km_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">strata =</span> <span class="cn">NULL</span>) {</span>
-<span id="cb22-52"><a href="#cb22-52" aria-hidden="true" tabindex="-1"></a>  dd <span class="ot">&lt;-</span> d[hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_keep</span>(d, TIME, EVENT, strata), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb22-53"><a href="#cb22-53" aria-hidden="true" tabindex="-1"></a>  dd[[EVENT]] <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(dd[[EVENT]])</span>
-<span id="cb22-54"><a href="#cb22-54" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The strata in the order the tables list them.</span></span>
-<span id="cb22-55"><a href="#cb22-55" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(strata)) dd[[strata]] <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">as.character</span>(dd[[strata]]), <span class="at">levels =</span> <span class="fu">attr</span>(strata_fits[[strata]], <span class="st">&quot;counts&quot;</span>)<span class="sc">$</span>stratum)</span>
-<span id="cb22-56"><a href="#cb22-56" aria-hidden="true" tabindex="-1"></a>  at <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(RISK_TIMES)) <span class="fu">pretty</span>(<span class="fu">c</span>(<span class="dv">0</span>, plot_max)) <span class="cf">else</span> RISK_TIMES</span>
-<span id="cb22-57"><a href="#cb22-57" aria-hidden="true" tabindex="-1"></a>  at <span class="ot">&lt;-</span> at[at <span class="sc">&lt;=</span> plot_max]</span>
-<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The numbers at risk are the tables&#39; own, counted after each time, so the</span></span>
-<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a>  <span class="co"># figure and the tables agree where a patient is followed to exactly that time.</span></span>
-<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a>  risk <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_at</span>(d, TIME, EVENT, <span class="at">times =</span> at, <span class="at">strata =</span> strata, <span class="at">conf_level =</span> CLEVEL)</span>
-<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a>  risk <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">strata =</span> <span class="cf">if</span> (<span class="fu">is.null</span>(strata)) <span class="st">&quot;All&quot;</span> <span class="cf">else</span> <span class="fu">factor</span>(risk<span class="sc">$</span>stratum, <span class="at">levels =</span> <span class="fu">levels</span>(dd[[strata]])),</span>
-<span id="cb22-62"><a href="#cb22-62" aria-hidden="true" tabindex="-1"></a>                     <span class="at">report_time =</span> risk<span class="sc">$</span>time, <span class="at">n.risk =</span> risk<span class="sc">$</span>n_risk)</span>
-<span id="cb22-63"><a href="#cb22-63" aria-hidden="true" tabindex="-1"></a>  hv <span class="ot">&lt;-</span> hvtiPlotR<span class="sc">::</span><span class="fu">hv_survival</span>(dd, <span class="at">time_col =</span> TIME, <span class="at">event_col =</span> EVENT, <span class="at">group_col =</span> strata,</span>
-<span id="cb22-64"><a href="#cb22-64" aria-hidden="true" tabindex="-1"></a>                               <span class="at">conf_level =</span> CLEVEL, <span class="at">report_times =</span> at)</span>
-<span id="cb22-65"><a href="#cb22-65" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The logit limits are undefined where survival reaches zero, and the band would</span></span>
-<span id="cb22-66"><a href="#cb22-66" aria-hidden="true" tabindex="-1"></a>  <span class="co"># warn and drop that row; zero is known there, so the band closes on it.</span></span>
-<span id="cb22-67"><a href="#cb22-67" aria-hidden="true" tabindex="-1"></a>  .zero <span class="ot">&lt;-</span> hv<span class="sc">$</span>data<span class="sc">$</span>surv <span class="sc">==</span> <span class="dv">0</span></span>
-<span id="cb22-68"><a href="#cb22-68" aria-hidden="true" tabindex="-1"></a>  hv<span class="sc">$</span>data<span class="sc">$</span>lower[.zero] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb22-69"><a href="#cb22-69" aria-hidden="true" tabindex="-1"></a>  hv<span class="sc">$</span>data<span class="sc">$</span>upper[.zero] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb22-70"><a href="#cb22-70" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Straight lines join the events alone, from time zero to the end of follow-up:</span></span>
-<span id="cb22-71"><a href="#cb22-71" aria-hidden="true" tabindex="-1"></a>  <span class="co"># a censored row between two events would put a corner where survival did not change.</span></span>
-<span id="cb22-72"><a href="#cb22-72" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">isTRUE</span>(STEPS)) {</span>
-<span id="cb22-73"><a href="#cb22-73" aria-hidden="true" tabindex="-1"></a>    .last <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">duplicated</span>(hv<span class="sc">$</span>data<span class="sc">$</span>strata, <span class="at">fromLast =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb22-74"><a href="#cb22-74" aria-hidden="true" tabindex="-1"></a>    hv<span class="sc">$</span>data <span class="ot">&lt;-</span> hv<span class="sc">$</span>data[hv<span class="sc">$</span>data<span class="sc">$</span>time <span class="sc">==</span> <span class="dv">0</span> <span class="sc">|</span> hv<span class="sc">$</span>data<span class="sc">$</span>n.event <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">|</span> .last, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb22-75"><a href="#cb22-75" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb22-76"><a href="#cb22-76" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hv_survival() returns the strata as text, which the color and fill scales would</span></span>
-<span id="cb22-77"><a href="#cb22-77" aria-hidden="true" tabindex="-1"></a>  <span class="co"># sort as text (&quot;1&quot;, &quot;10&quot;, &quot;2&quot;). The curve, band, bars and at-risk rows all use the</span></span>
-<span id="cb22-78"><a href="#cb22-78" aria-hidden="true" tabindex="-1"></a>  <span class="co"># tables&#39; order instead, so each stratum keeps one color throughout.</span></span>
-<span id="cb22-79"><a href="#cb22-79" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(strata)) hv<span class="sc">$</span>data<span class="sc">$</span>strata <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">as.character</span>(hv<span class="sc">$</span>data<span class="sc">$</span>strata), <span class="at">levels =</span> <span class="fu">levels</span>(dd[[strata]]))</span>
-<span id="cb22-80"><a href="#cb22-80" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The same colors as the page above: black for one curve, and no stratum in red or blue.</span></span>
-<span id="cb22-81"><a href="#cb22-81" aria-hidden="true" tabindex="-1"></a>  cols <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.group_colors</span>(<span class="cf">if</span> (<span class="fu">is.null</span>(strata)) <span class="st">&quot;All&quot;</span> <span class="cf">else</span> <span class="fu">levels</span>(dd[[strata]]))</span>
-<span id="cb22-82"><a href="#cb22-82" aria-hidden="true" tabindex="-1"></a>  curve <span class="ot">&lt;-</span> <span class="fu">plot</span>(hv, <span class="at">conf_int =</span> <span class="fu">isTRUE</span>(CI_BAND)) <span class="sc">+</span></span>
-<span id="cb22-83"><a href="#cb22-83" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_color_manual</span>(<span class="at">values =</span> cols) <span class="sc">+</span></span>
-<span id="cb22-84"><a href="#cb22-84" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_fill_manual</span>(<span class="at">values =</span> cols) <span class="sc">+</span></span>
-<span id="cb22-85"><a href="#cb22-85" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, plot_max)) <span class="sc">+</span></span>
-<span id="cb22-86"><a href="#cb22-86" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Years&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Survival (%)&quot;</span>) <span class="sc">+</span></span>
-<span id="cb22-87"><a href="#cb22-87" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb22-88"><a href="#cb22-88" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hv_survival()&#39;s plot draws steps; its curve is redrawn as a line. A layer is</span></span>
-<span id="cb22-89"><a href="#cb22-89" aria-hidden="true" tabindex="-1"></a>  <span class="co"># changed in place, and an hvtiPlotR that draws no step layer is left as it draws.</span></span>
-<span id="cb22-90"><a href="#cb22-90" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">isTRUE</span>(STEPS)) <span class="cf">for</span> (.l <span class="cf">in</span> curve<span class="sc">$</span>layers) <span class="cf">if</span> (<span class="fu">inherits</span>(.l<span class="sc">$</span>geom, <span class="st">&quot;GeomStep&quot;</span>)) .l<span class="sc">$</span>geom <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span>GeomLine</span>
-<span id="cb22-91"><a href="#cb22-91" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A point at each event, so a reader sees where the estimate moves and how often.</span></span>
-<span id="cb22-92"><a href="#cb22-92" aria-hidden="true" tabindex="-1"></a>  curve <span class="ot">&lt;-</span> curve <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">geom_point</span>(<span class="at">data =</span> hv<span class="sc">$</span>data[hv<span class="sc">$</span>data<span class="sc">$</span>n.event <span class="sc">&gt;</span> <span class="dv">0</span>, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">size =</span> <span class="fl">1.2</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb22-93"><a href="#cb22-93" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Bars at the chosen times, from the same life table as the horizon tables, so a</span></span>
-<span id="cb22-94"><a href="#cb22-94" aria-hidden="true" tabindex="-1"></a>  <span class="co"># bar and the table row for its time give the same limits.</span></span>
-<span id="cb22-95"><a href="#cb22-95" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(CI_TIMES) <span class="sc">&amp;&amp;</span> (<span class="sc">!</span><span class="fu">is.numeric</span>(CI_TIMES) <span class="sc">||</span> <span class="fu">anyNA</span>(CI_TIMES) <span class="sc">||</span> <span class="fu">any</span>(CI_TIMES <span class="sc">&lt;</span> <span class="dv">0</span>))) {</span>
-<span id="cb22-96"><a href="#cb22-96" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;CI_TIMES must be NULL or nonnegative times, in the unit of TIME.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb22-97"><a href="#cb22-97" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb22-98"><a href="#cb22-98" aria-hidden="true" tabindex="-1"></a>  bars <span class="ot">&lt;-</span> CI_TIMES[CI_TIMES <span class="sc">&lt;=</span> plot_max]</span>
-<span id="cb22-99"><a href="#cb22-99" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(bars)) {</span>
-<span id="cb22-100"><a href="#cb22-100" aria-hidden="true" tabindex="-1"></a>    ci <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_at</span>(d, TIME, EVENT, <span class="at">times =</span> bars, <span class="at">strata =</span> strata, <span class="at">conf_level =</span> CLEVEL)</span>
-<span id="cb22-101"><a href="#cb22-101" aria-hidden="true" tabindex="-1"></a>    ci <span class="ot">&lt;-</span> ci[<span class="sc">!</span><span class="fu">is.na</span>(ci<span class="sc">$</span>cl_lower), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb22-102"><a href="#cb22-102" aria-hidden="true" tabindex="-1"></a>    ci<span class="sc">$</span>strata <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(strata)) <span class="fu">rep</span>(<span class="st">&quot;All&quot;</span>, <span class="fu">nrow</span>(ci)) <span class="cf">else</span> <span class="fu">factor</span>(ci<span class="sc">$</span>stratum, <span class="at">levels =</span> <span class="fu">levels</span>(dd[[strata]]))</span>
-<span id="cb22-103"><a href="#cb22-103" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The time asked for, which sets the bars&#39; width below.</span></span>
-<span id="cb22-104"><a href="#cb22-104" aria-hidden="true" tabindex="-1"></a>    ci<span class="sc">$</span>at <span class="ot">&lt;-</span> ci<span class="sc">$</span>time</span>
-<span id="cb22-105"><a href="#cb22-105" aria-hidden="true" tabindex="-1"></a>    <span class="co"># A straight line between two events leaves the estimate the bar brackets, so</span></span>
-<span id="cb22-106"><a href="#cb22-106" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the bar moves back to the last event at or before its time, where the line</span></span>
-<span id="cb22-107"><a href="#cb22-107" aria-hidden="true" tabindex="-1"></a>    <span class="co"># passes through that estimate. Its limits are unchanged: the table&#39;s.</span></span>
-<span id="cb22-108"><a href="#cb22-108" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">isTRUE</span>(STEPS) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(ci)) {</span>
-<span id="cb22-109"><a href="#cb22-109" aria-hidden="true" tabindex="-1"></a>      ev <span class="ot">&lt;-</span> hv<span class="sc">$</span>data[hv<span class="sc">$</span>data<span class="sc">$</span>n.event <span class="sc">&gt;</span> <span class="dv">0</span>, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb22-110"><a href="#cb22-110" aria-hidden="true" tabindex="-1"></a>      ci<span class="sc">$</span>time <span class="ot">&lt;-</span> <span class="fu">mapply</span>(<span class="cf">function</span>(t, s) {</span>
-<span id="cb22-111"><a href="#cb22-111" aria-hidden="true" tabindex="-1"></a>        v <span class="ot">&lt;-</span> ev<span class="sc">$</span>time[<span class="fu">as.character</span>(ev<span class="sc">$</span>strata) <span class="sc">==</span> s <span class="sc">&amp;</span> ev<span class="sc">$</span>time <span class="sc">&lt;=</span> t]</span>
-<span id="cb22-112"><a href="#cb22-112" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">length</span>(v)) <span class="fu">max</span>(v) <span class="cf">else</span> <span class="cn">NA_real_</span></span>
-<span id="cb22-113"><a href="#cb22-113" aria-hidden="true" tabindex="-1"></a>      }, ci<span class="sc">$</span>time, <span class="fu">as.character</span>(ci<span class="sc">$</span>strata))</span>
-<span id="cb22-114"><a href="#cb22-114" aria-hidden="true" tabindex="-1"></a>      ci <span class="ot">&lt;-</span> ci[<span class="sc">!</span><span class="fu">is.na</span>(ci<span class="sc">$</span>time) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">duplicated</span>(ci[<span class="fu">c</span>(<span class="st">&quot;strata&quot;</span>, <span class="st">&quot;time&quot;</span>)]), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb22-115"><a href="#cb22-115" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb22-116"><a href="#cb22-116" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb22-117"><a href="#cb22-117" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(bars) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(ci)) {</span>
-<span id="cb22-118"><a href="#cb22-118" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The strata&#39;s bars at one time are dodged apart, across a width that must stay</span></span>
-<span id="cb22-119"><a href="#cb22-119" aria-hidden="true" tabindex="-1"></a>    <span class="co"># inside the gap to the next chosen time and the distance to zero, or bars for</span></span>
-<span id="cb22-120"><a href="#cb22-120" aria-hidden="true" tabindex="-1"></a>    <span class="co"># neighboring times interleave and one is drawn before time zero. A fortieth of</span></span>
-<span id="cb22-121"><a href="#cb22-121" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the axis is the most it takes; close early times take less.</span></span>
-<span id="cb22-122"><a href="#cb22-122" aria-hidden="true" tabindex="-1"></a>    times <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(ci<span class="sc">$</span>at))</span>
-<span id="cb22-123"><a href="#cb22-123" aria-hidden="true" tabindex="-1"></a>    span <span class="ot">&lt;-</span> <span class="fu">min</span>(plot_max <span class="sc">/</span> <span class="dv">40</span>, <span class="fl">0.8</span> <span class="sc">*</span> <span class="fu">min</span>(<span class="fu">c</span>(<span class="fu">diff</span>(times), <span class="dv">2</span> <span class="sc">*</span> times[[<span class="dv">1</span>]])))</span>
-<span id="cb22-124"><a href="#cb22-124" aria-hidden="true" tabindex="-1"></a>    curve <span class="ot">&lt;-</span> curve <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">geom_errorbar</span>(</span>
-<span id="cb22-125"><a href="#cb22-125" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> ci, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>time, <span class="at">ymin =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>cl_lower, <span class="at">ymax =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>cl_upper, <span class="at">color =</span> .data<span class="sc">$</span>strata),</span>
-<span id="cb22-126"><a href="#cb22-126" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Under straight lines each stratum&#39;s bars stand at its own events, not at a</span></span>
-<span id="cb22-127"><a href="#cb22-127" aria-hidden="true" tabindex="-1"></a>      <span class="co"># shared time, so there is nothing to dodge apart.</span></span>
-<span id="cb22-128"><a href="#cb22-128" aria-hidden="true" tabindex="-1"></a>      <span class="at">width =</span> span, <span class="at">position =</span> <span class="cf">if</span> (<span class="fu">isTRUE</span>(STEPS)) ggplot2<span class="sc">::</span><span class="fu">position_dodge</span>(<span class="at">width =</span> span) <span class="cf">else</span> <span class="st">&quot;identity&quot;</span>,</span>
-<span id="cb22-129"><a href="#cb22-129" aria-hidden="true" tabindex="-1"></a>      <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span></span>
-<span id="cb22-130"><a href="#cb22-130" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb22-131"><a href="#cb22-131" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb22-132"><a href="#cb22-132" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The house theme drops the legend; a stratified figure needs it to tell the curves apart.</span></span>
-<span id="cb22-133"><a href="#cb22-133" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(strata)) curve <span class="ot">&lt;-</span> curve <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">color =</span> strata, <span class="at">fill =</span> strata)</span>
-<span id="cb22-134"><a href="#cb22-134" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">hv_atrisk_compose</span>(curve, hvtiPlotR<span class="sc">::</span><span class="fu">hv_atrisk</span>(risk))</span>
-<span id="cb22-135"><a href="#cb22-135" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: defines the figures; the chunks below draw them</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>plot_max <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(PLOT_MAX)) <span class="fu">max</span>(<span class="fu">attr</span>(km, <span class="st">&quot;counts&quot;</span>)<span class="sc">$</span>max_fup) <span class="cf">else</span> PLOT_MAX</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The survival curve and the four cumulative-hazard views SAS&#39;s %KAPLAN plots</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="co"># (PLOTS, PLOTC and their log scales), one page, colored by stratum.</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>km_views <span class="ot">&lt;-</span> <span class="cf">function</span>(fit) {</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The strata come from the counts, not the event rows: a stratum with no event,</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># or a cohort with none, has no rows, and would otherwise vanish from the page.</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  counts <span class="ot">&lt;-</span> <span class="fu">attr</span>(fit, <span class="st">&quot;counts&quot;</span>)</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(fit<span class="sc">$</span>stratum)) fit<span class="sc">$</span>stratum <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="st">&quot;All&quot;</span>, <span class="fu">nrow</span>(fit))</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> fit[fit<span class="sc">$</span>time <span class="sc">&lt;=</span> plot_max, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Each stratum runs from 100% at time 0 to the end of its own follow-up.</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  last <span class="ot">&lt;-</span> <span class="fu">vapply</span>(counts<span class="sc">$</span>stratum, <span class="cf">function</span>(s) {</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> fit<span class="sc">$</span>survival[fit<span class="sc">$</span>stratum <span class="sc">==</span> s]</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(v)) v[<span class="fu">length</span>(v)] <span class="cf">else</span> <span class="dv">1</span></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>  }, <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Only the event rows carry a point; time zero and the end of follow-up do not.</span></span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>  surv <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">data.frame</span>(<span class="at">stratum =</span> counts<span class="sc">$</span>stratum, <span class="at">time =</span> <span class="dv">0</span>, <span class="at">survival =</span> <span class="dv">1</span>, <span class="at">event =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>                <span class="fu">data.frame</span>(fit[, <span class="fu">c</span>(<span class="st">&quot;stratum&quot;</span>, <span class="st">&quot;time&quot;</span>, <span class="st">&quot;survival&quot;</span>)], <span class="at">event =</span> <span class="fu">rep</span>(<span class="cn">TRUE</span>, <span class="fu">nrow</span>(fit))),</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>                <span class="fu">data.frame</span>(<span class="at">stratum =</span> counts<span class="sc">$</span>stratum, <span class="at">time =</span> <span class="fu">pmin</span>(counts<span class="sc">$</span>max_fup, plot_max), <span class="at">survival =</span> last, <span class="at">event =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>  surv<span class="sc">$</span>stratum <span class="ot">&lt;-</span> <span class="fu">factor</span>(surv<span class="sc">$</span>stratum, <span class="at">levels =</span> counts<span class="sc">$</span>stratum)</span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The cumulative hazard is infinite once survival reaches zero; it is left off a figure.</span></span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>  haz <span class="ot">&lt;-</span> fit[<span class="fu">is.finite</span>(fit<span class="sc">$</span>cumhaz) <span class="sc">&amp;</span> fit<span class="sc">$</span>cumhaz <span class="sc">&gt;</span> <span class="dv">0</span>, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>  haz<span class="sc">$</span>event <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">TRUE</span>, <span class="fu">nrow</span>(haz))</span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>  haz<span class="sc">$</span>stratum <span class="ot">&lt;-</span> <span class="fu">factor</span>(haz<span class="sc">$</span>stratum, <span class="at">levels =</span> counts<span class="sc">$</span>stratum)</span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># One curve is black; two to five strata take red, blue, teal, magenta and cyan, in level</span></span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># order, and six or seven all take Paul Tol&#39;s muted colors.</span></span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Red and blue mean the event and censored only in figures that color by outcome.</span></span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>  cols <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.group_colors</span>(counts<span class="sc">$</span>stratum)</span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Color is never the only channel: each stratum also has its own line type and</span></span>
+<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>  <span class="co"># point shape, so the curves still read apart printed in grayscale.</span></span>
+<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>  ltys <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.group_linetypes</span>(counts<span class="sc">$</span>stratum)</span>
+<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>  shps <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.group_shapes</span>(counts<span class="sc">$</span>stratum)</span>
+<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>  view <span class="ot">&lt;-</span> <span class="cf">function</span>(data, y, ylab) {</span>
+<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(data, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>time, <span class="at">y =</span> .data[[y]], <span class="at">color =</span> .data<span class="sc">$</span>stratum,</span>
+<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>                                       <span class="at">linetype =</span> .data<span class="sc">$</span>stratum, <span class="at">shape =</span> .data<span class="sc">$</span>stratum)) <span class="sc">+</span></span>
+<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>      (<span class="cf">if</span> (<span class="fu">isTRUE</span>(STEPS)) ggplot2<span class="sc">::</span><span class="fu">geom_step</span>() <span class="cf">else</span> ggplot2<span class="sc">::</span><span class="fu">geom_line</span>()) <span class="sc">+</span></span>
+<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">geom_point</span>(<span class="at">data =</span> data[data<span class="sc">$</span>event, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">size =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>      <span class="co"># The limits keep an empty panel (no events, so no cumulative hazard) from warning.</span></span>
+<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">scale_color_manual</span>(<span class="at">values =</span> cols, <span class="at">limits =</span> <span class="fu">names</span>(cols)) <span class="sc">+</span></span>
+<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">scale_linetype_manual</span>(<span class="at">values =</span> ltys, <span class="at">limits =</span> <span class="fu">names</span>(ltys)) <span class="sc">+</span></span>
+<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">scale_shape_manual</span>(<span class="at">values =</span> shps, <span class="at">limits =</span> <span class="fu">names</span>(shps)) <span class="sc">+</span></span>
+<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Years&quot;</span>, <span class="at">y =</span> ylab, <span class="at">color =</span> <span class="cn">NULL</span>, <span class="at">linetype =</span> <span class="cn">NULL</span>, <span class="at">shape =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a>      hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb23-46"><a href="#cb23-46" aria-hidden="true" tabindex="-1"></a>  log_x <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">scale_x_log10</span>()</span>
+<span id="cb23-47"><a href="#cb23-47" aria-hidden="true" tabindex="-1"></a>  log_y <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">scale_y_log10</span>()</span>
+<span id="cb23-48"><a href="#cb23-48" aria-hidden="true" tabindex="-1"></a>  patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(</span>
+<span id="cb23-49"><a href="#cb23-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">view</span>(surv, <span class="st">&quot;survival&quot;</span>, <span class="st">&quot;Survival (%)&quot;</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="cf">function</span>(p) <span class="dv">100</span> <span class="sc">*</span> p),</span>
+<span id="cb23-50"><a href="#cb23-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">view</span>(haz, <span class="st">&quot;cumhaz&quot;</span>, <span class="st">&quot;Cumulative hazard&quot;</span>),</span>
+<span id="cb23-51"><a href="#cb23-51" aria-hidden="true" tabindex="-1"></a>    <span class="fu">view</span>(haz, <span class="st">&quot;cumhaz&quot;</span>, <span class="st">&quot;Cumulative hazard&quot;</span>) <span class="sc">+</span> log_x <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Years (log scale)&quot;</span>),</span>
+<span id="cb23-52"><a href="#cb23-52" aria-hidden="true" tabindex="-1"></a>    <span class="fu">view</span>(haz, <span class="st">&quot;cumhaz&quot;</span>, <span class="st">&quot;Cumulative hazard (log scale)&quot;</span>) <span class="sc">+</span> log_y,</span>
+<span id="cb23-53"><a href="#cb23-53" aria-hidden="true" tabindex="-1"></a>    <span class="fu">view</span>(haz, <span class="st">&quot;cumhaz&quot;</span>, <span class="st">&quot;Cumulative hazard (log scale)&quot;</span>) <span class="sc">+</span> log_x <span class="sc">+</span> log_y <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Years (log scale)&quot;</span>),</span>
+<span id="cb23-54"><a href="#cb23-54" aria-hidden="true" tabindex="-1"></a>    <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">guides =</span> <span class="st">&quot;collect&quot;</span></span>
+<span id="cb23-55"><a href="#cb23-55" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">&amp;</span> ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span>)</span>
+<span id="cb23-56"><a href="#cb23-56" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb23-57"><a href="#cb23-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-58"><a href="#cb23-58" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript figure: the curve in the house theme, with patients at risk beneath it.</span></span>
+<span id="cb23-59"><a href="#cb23-59" aria-hidden="true" tabindex="-1"></a>km_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">strata =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb23-60"><a href="#cb23-60" aria-hidden="true" tabindex="-1"></a>  dd <span class="ot">&lt;-</span> d[hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_keep</span>(d, TIME, EVENT, strata), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb23-61"><a href="#cb23-61" aria-hidden="true" tabindex="-1"></a>  dd[[EVENT]] <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(dd[[EVENT]])</span>
+<span id="cb23-62"><a href="#cb23-62" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The strata in the order the tables list them.</span></span>
+<span id="cb23-63"><a href="#cb23-63" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(strata)) dd[[strata]] <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">as.character</span>(dd[[strata]]), <span class="at">levels =</span> <span class="fu">attr</span>(strata_fits[[strata]], <span class="st">&quot;counts&quot;</span>)<span class="sc">$</span>stratum)</span>
+<span id="cb23-64"><a href="#cb23-64" aria-hidden="true" tabindex="-1"></a>  at <span class="ot">&lt;-</span> <span class="fu">risk_times</span>(plot_max)</span>
+<span id="cb23-65"><a href="#cb23-65" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The numbers at risk are the tables&#39; own, counted after each time, so the</span></span>
+<span id="cb23-66"><a href="#cb23-66" aria-hidden="true" tabindex="-1"></a>  <span class="co"># figure and the tables agree where a patient is followed to exactly that time.</span></span>
+<span id="cb23-67"><a href="#cb23-67" aria-hidden="true" tabindex="-1"></a>  risk <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_at</span>(d, TIME, EVENT, <span class="at">times =</span> at, <span class="at">strata =</span> strata, <span class="at">conf_level =</span> CLEVEL)</span>
+<span id="cb23-68"><a href="#cb23-68" aria-hidden="true" tabindex="-1"></a>  risk <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">strata =</span> <span class="cf">if</span> (<span class="fu">is.null</span>(strata)) <span class="st">&quot;All&quot;</span> <span class="cf">else</span> <span class="fu">factor</span>(risk<span class="sc">$</span>stratum, <span class="at">levels =</span> <span class="fu">levels</span>(dd[[strata]])),</span>
+<span id="cb23-69"><a href="#cb23-69" aria-hidden="true" tabindex="-1"></a>                     <span class="at">report_time =</span> risk<span class="sc">$</span>time, <span class="at">n.risk =</span> risk<span class="sc">$</span>n_risk)</span>
+<span id="cb23-70"><a href="#cb23-70" aria-hidden="true" tabindex="-1"></a>  hv <span class="ot">&lt;-</span> hvtiPlotR<span class="sc">::</span><span class="fu">hv_survival</span>(dd, <span class="at">time_col =</span> TIME, <span class="at">event_col =</span> EVENT, <span class="at">group_col =</span> strata,</span>
+<span id="cb23-71"><a href="#cb23-71" aria-hidden="true" tabindex="-1"></a>                               <span class="at">conf_level =</span> CLEVEL, <span class="at">report_times =</span> at)</span>
+<span id="cb23-72"><a href="#cb23-72" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The logit limits are undefined where survival reaches zero, and the band would</span></span>
+<span id="cb23-73"><a href="#cb23-73" aria-hidden="true" tabindex="-1"></a>  <span class="co"># warn and drop that row; zero is known there, so the band closes on it.</span></span>
+<span id="cb23-74"><a href="#cb23-74" aria-hidden="true" tabindex="-1"></a>  .zero <span class="ot">&lt;-</span> hv<span class="sc">$</span>data<span class="sc">$</span>surv <span class="sc">==</span> <span class="dv">0</span></span>
+<span id="cb23-75"><a href="#cb23-75" aria-hidden="true" tabindex="-1"></a>  hv<span class="sc">$</span>data<span class="sc">$</span>lower[.zero] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb23-76"><a href="#cb23-76" aria-hidden="true" tabindex="-1"></a>  hv<span class="sc">$</span>data<span class="sc">$</span>upper[.zero] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb23-77"><a href="#cb23-77" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Straight lines join the events alone, from time zero to the end of follow-up:</span></span>
+<span id="cb23-78"><a href="#cb23-78" aria-hidden="true" tabindex="-1"></a>  <span class="co"># a censored row between two events would put a corner where survival did not change.</span></span>
+<span id="cb23-79"><a href="#cb23-79" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">isTRUE</span>(STEPS)) {</span>
+<span id="cb23-80"><a href="#cb23-80" aria-hidden="true" tabindex="-1"></a>    .last <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">duplicated</span>(hv<span class="sc">$</span>data<span class="sc">$</span>strata, <span class="at">fromLast =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb23-81"><a href="#cb23-81" aria-hidden="true" tabindex="-1"></a>    hv<span class="sc">$</span>data <span class="ot">&lt;-</span> hv<span class="sc">$</span>data[hv<span class="sc">$</span>data<span class="sc">$</span>time <span class="sc">==</span> <span class="dv">0</span> <span class="sc">|</span> hv<span class="sc">$</span>data<span class="sc">$</span>n.event <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">|</span> .last, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb23-82"><a href="#cb23-82" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb23-83"><a href="#cb23-83" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hv_survival() returns the strata as text, which the color and fill scales would</span></span>
+<span id="cb23-84"><a href="#cb23-84" aria-hidden="true" tabindex="-1"></a>  <span class="co"># sort as text (&quot;1&quot;, &quot;10&quot;, &quot;2&quot;). The curve, band, bars and at-risk rows all use the</span></span>
+<span id="cb23-85"><a href="#cb23-85" aria-hidden="true" tabindex="-1"></a>  <span class="co"># tables&#39; order instead, so each stratum keeps one color throughout.</span></span>
+<span id="cb23-86"><a href="#cb23-86" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(strata)) hv<span class="sc">$</span>data<span class="sc">$</span>strata <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">as.character</span>(hv<span class="sc">$</span>data<span class="sc">$</span>strata), <span class="at">levels =</span> <span class="fu">levels</span>(dd[[strata]]))</span>
+<span id="cb23-87"><a href="#cb23-87" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The same colors as the page above: black for one curve, red and blue for the first two strata.</span></span>
+<span id="cb23-88"><a href="#cb23-88" aria-hidden="true" tabindex="-1"></a>  cols <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.group_colors</span>(<span class="cf">if</span> (<span class="fu">is.null</span>(strata)) <span class="st">&quot;All&quot;</span> <span class="cf">else</span> <span class="fu">levels</span>(dd[[strata]]))</span>
+<span id="cb23-89"><a href="#cb23-89" aria-hidden="true" tabindex="-1"></a>  ltys <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.group_linetypes</span>(<span class="fu">names</span>(cols))</span>
+<span id="cb23-90"><a href="#cb23-90" aria-hidden="true" tabindex="-1"></a>  shps <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.group_shapes</span>(<span class="fu">names</span>(cols))</span>
+<span id="cb23-91"><a href="#cb23-91" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The stratum is mapped to line type at the plot, so hv_survival()&#39;s own curve layer</span></span>
+<span id="cb23-92"><a href="#cb23-92" aria-hidden="true" tabindex="-1"></a>  <span class="co"># takes it too, and to shape on the event points below: the curves read apart in grayscale.</span></span>
+<span id="cb23-93"><a href="#cb23-93" aria-hidden="true" tabindex="-1"></a>  curve <span class="ot">&lt;-</span> <span class="fu">plot</span>(hv, <span class="at">conf_int =</span> <span class="fu">isTRUE</span>(CI_BAND)) <span class="sc">+</span></span>
+<span id="cb23-94"><a href="#cb23-94" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">linetype =</span> .data<span class="sc">$</span>strata) <span class="sc">+</span></span>
+<span id="cb23-95"><a href="#cb23-95" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_color_manual</span>(<span class="at">values =</span> cols) <span class="sc">+</span></span>
+<span id="cb23-96"><a href="#cb23-96" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_fill_manual</span>(<span class="at">values =</span> cols) <span class="sc">+</span></span>
+<span id="cb23-97"><a href="#cb23-97" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The limits keep a cohort with no event, so no event points, from warning.</span></span>
+<span id="cb23-98"><a href="#cb23-98" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_linetype_manual</span>(<span class="at">values =</span> ltys, <span class="at">limits =</span> <span class="fu">names</span>(ltys)) <span class="sc">+</span></span>
+<span id="cb23-99"><a href="#cb23-99" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_shape_manual</span>(<span class="at">values =</span> shps, <span class="at">limits =</span> <span class="fu">names</span>(shps)) <span class="sc">+</span></span>
+<span id="cb23-100"><a href="#cb23-100" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">coord_cartesian</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, plot_max)) <span class="sc">+</span></span>
+<span id="cb23-101"><a href="#cb23-101" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Years&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Survival (%)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb23-102"><a href="#cb23-102" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb23-103"><a href="#cb23-103" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hv_survival()&#39;s plot draws steps; its curve is redrawn as a line. A layer is</span></span>
+<span id="cb23-104"><a href="#cb23-104" aria-hidden="true" tabindex="-1"></a>  <span class="co"># changed in place, and an hvtiPlotR that draws no step layer is left as it draws.</span></span>
+<span id="cb23-105"><a href="#cb23-105" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">isTRUE</span>(STEPS)) <span class="cf">for</span> (.l <span class="cf">in</span> curve<span class="sc">$</span>layers) <span class="cf">if</span> (<span class="fu">inherits</span>(.l<span class="sc">$</span>geom, <span class="st">&quot;GeomStep&quot;</span>)) .l<span class="sc">$</span>geom <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span>GeomLine</span>
+<span id="cb23-106"><a href="#cb23-106" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A point at each event, so a reader sees where the estimate moves and how often.</span></span>
+<span id="cb23-107"><a href="#cb23-107" aria-hidden="true" tabindex="-1"></a>  curve <span class="ot">&lt;-</span> curve <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">geom_point</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">shape =</span> .data<span class="sc">$</span>strata), <span class="at">data =</span> hv<span class="sc">$</span>data[hv<span class="sc">$</span>data<span class="sc">$</span>n.event <span class="sc">&gt;</span> <span class="dv">0</span>, , <span class="at">drop =</span> <span class="cn">FALSE</span>],</span>
+<span id="cb23-108"><a href="#cb23-108" aria-hidden="true" tabindex="-1"></a>                                       <span class="at">size =</span> <span class="fl">1.2</span>)</span>
+<span id="cb23-109"><a href="#cb23-109" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Bars at the chosen times, from the same life table as the horizon tables, so a</span></span>
+<span id="cb23-110"><a href="#cb23-110" aria-hidden="true" tabindex="-1"></a>  <span class="co"># bar and the table row for its time give the same limits.</span></span>
+<span id="cb23-111"><a href="#cb23-111" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(CI_TIMES) <span class="sc">&amp;&amp;</span> (<span class="sc">!</span><span class="fu">is.numeric</span>(CI_TIMES) <span class="sc">||</span> <span class="fu">anyNA</span>(CI_TIMES) <span class="sc">||</span> <span class="fu">any</span>(CI_TIMES <span class="sc">&lt;</span> <span class="dv">0</span>))) {</span>
+<span id="cb23-112"><a href="#cb23-112" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;CI_TIMES must be NULL or nonnegative times, in the unit of TIME.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb23-113"><a href="#cb23-113" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb23-114"><a href="#cb23-114" aria-hidden="true" tabindex="-1"></a>  bars <span class="ot">&lt;-</span> CI_TIMES[CI_TIMES <span class="sc">&lt;=</span> plot_max]</span>
+<span id="cb23-115"><a href="#cb23-115" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(bars)) {</span>
+<span id="cb23-116"><a href="#cb23-116" aria-hidden="true" tabindex="-1"></a>    ci <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">life_table_at</span>(d, TIME, EVENT, <span class="at">times =</span> bars, <span class="at">strata =</span> strata, <span class="at">conf_level =</span> CLEVEL)</span>
+<span id="cb23-117"><a href="#cb23-117" aria-hidden="true" tabindex="-1"></a>    ci <span class="ot">&lt;-</span> ci[<span class="sc">!</span><span class="fu">is.na</span>(ci<span class="sc">$</span>cl_lower), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb23-118"><a href="#cb23-118" aria-hidden="true" tabindex="-1"></a>    ci<span class="sc">$</span>strata <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(strata)) <span class="fu">rep</span>(<span class="st">&quot;All&quot;</span>, <span class="fu">nrow</span>(ci)) <span class="cf">else</span> <span class="fu">factor</span>(ci<span class="sc">$</span>stratum, <span class="at">levels =</span> <span class="fu">levels</span>(dd[[strata]]))</span>
+<span id="cb23-119"><a href="#cb23-119" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The time asked for, which sets the bars&#39; width below.</span></span>
+<span id="cb23-120"><a href="#cb23-120" aria-hidden="true" tabindex="-1"></a>    ci<span class="sc">$</span>at <span class="ot">&lt;-</span> ci<span class="sc">$</span>time</span>
+<span id="cb23-121"><a href="#cb23-121" aria-hidden="true" tabindex="-1"></a>    <span class="co"># A straight line between two events leaves the estimate the bar brackets, so</span></span>
+<span id="cb23-122"><a href="#cb23-122" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the bar moves back to the last event at or before its time, where the line</span></span>
+<span id="cb23-123"><a href="#cb23-123" aria-hidden="true" tabindex="-1"></a>    <span class="co"># passes through that estimate. Its limits are unchanged: the table&#39;s.</span></span>
+<span id="cb23-124"><a href="#cb23-124" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">isTRUE</span>(STEPS) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(ci)) {</span>
+<span id="cb23-125"><a href="#cb23-125" aria-hidden="true" tabindex="-1"></a>      ev <span class="ot">&lt;-</span> hv<span class="sc">$</span>data[hv<span class="sc">$</span>data<span class="sc">$</span>n.event <span class="sc">&gt;</span> <span class="dv">0</span>, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb23-126"><a href="#cb23-126" aria-hidden="true" tabindex="-1"></a>      ci<span class="sc">$</span>time <span class="ot">&lt;-</span> <span class="fu">mapply</span>(<span class="cf">function</span>(t, s) {</span>
+<span id="cb23-127"><a href="#cb23-127" aria-hidden="true" tabindex="-1"></a>        v <span class="ot">&lt;-</span> ev<span class="sc">$</span>time[<span class="fu">as.character</span>(ev<span class="sc">$</span>strata) <span class="sc">==</span> s <span class="sc">&amp;</span> ev<span class="sc">$</span>time <span class="sc">&lt;=</span> t]</span>
+<span id="cb23-128"><a href="#cb23-128" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">length</span>(v)) <span class="fu">max</span>(v) <span class="cf">else</span> <span class="cn">NA_real_</span></span>
+<span id="cb23-129"><a href="#cb23-129" aria-hidden="true" tabindex="-1"></a>      }, ci<span class="sc">$</span>time, <span class="fu">as.character</span>(ci<span class="sc">$</span>strata))</span>
+<span id="cb23-130"><a href="#cb23-130" aria-hidden="true" tabindex="-1"></a>      ci <span class="ot">&lt;-</span> ci[<span class="sc">!</span><span class="fu">is.na</span>(ci<span class="sc">$</span>time) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">duplicated</span>(ci[<span class="fu">c</span>(<span class="st">&quot;strata&quot;</span>, <span class="st">&quot;time&quot;</span>)]), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb23-131"><a href="#cb23-131" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb23-132"><a href="#cb23-132" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb23-133"><a href="#cb23-133" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(bars) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(ci)) {</span>
+<span id="cb23-134"><a href="#cb23-134" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The strata&#39;s bars at one time are dodged apart, across a width that must stay</span></span>
+<span id="cb23-135"><a href="#cb23-135" aria-hidden="true" tabindex="-1"></a>    <span class="co"># inside the gap to the next chosen time and the distance to zero, or bars for</span></span>
+<span id="cb23-136"><a href="#cb23-136" aria-hidden="true" tabindex="-1"></a>    <span class="co"># neighboring times interleave and one is drawn before time zero. A fortieth of</span></span>
+<span id="cb23-137"><a href="#cb23-137" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the axis is the most it takes; close early times take less.</span></span>
+<span id="cb23-138"><a href="#cb23-138" aria-hidden="true" tabindex="-1"></a>    times <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(ci<span class="sc">$</span>at))</span>
+<span id="cb23-139"><a href="#cb23-139" aria-hidden="true" tabindex="-1"></a>    span <span class="ot">&lt;-</span> <span class="fu">min</span>(plot_max <span class="sc">/</span> <span class="dv">40</span>, <span class="fl">0.8</span> <span class="sc">*</span> <span class="fu">min</span>(<span class="fu">c</span>(<span class="fu">diff</span>(times), <span class="dv">2</span> <span class="sc">*</span> times[[<span class="dv">1</span>]])))</span>
+<span id="cb23-140"><a href="#cb23-140" aria-hidden="true" tabindex="-1"></a>    curve <span class="ot">&lt;-</span> curve <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">geom_errorbar</span>(</span>
+<span id="cb23-141"><a href="#cb23-141" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> ci, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>time, <span class="at">ymin =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>cl_lower, <span class="at">ymax =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>cl_upper, <span class="at">color =</span> .data<span class="sc">$</span>strata),</span>
+<span id="cb23-142"><a href="#cb23-142" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Under straight lines each stratum&#39;s bars stand at its own events, not at a</span></span>
+<span id="cb23-143"><a href="#cb23-143" aria-hidden="true" tabindex="-1"></a>      <span class="co"># shared time, so there is nothing to dodge apart.</span></span>
+<span id="cb23-144"><a href="#cb23-144" aria-hidden="true" tabindex="-1"></a>      <span class="at">width =</span> span, <span class="at">position =</span> <span class="cf">if</span> (<span class="fu">isTRUE</span>(STEPS)) ggplot2<span class="sc">::</span><span class="fu">position_dodge</span>(<span class="at">width =</span> span) <span class="cf">else</span> <span class="st">&quot;identity&quot;</span>,</span>
+<span id="cb23-145"><a href="#cb23-145" aria-hidden="true" tabindex="-1"></a>      <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span></span>
+<span id="cb23-146"><a href="#cb23-146" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb23-147"><a href="#cb23-147" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb23-148"><a href="#cb23-148" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The house theme drops the legend; a stratified figure needs it to tell the curves apart.</span></span>
+<span id="cb23-149"><a href="#cb23-149" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(strata)) {</span>
+<span id="cb23-150"><a href="#cb23-150" aria-hidden="true" tabindex="-1"></a>    curve <span class="ot">&lt;-</span> curve <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>) <span class="sc">+</span></span>
+<span id="cb23-151"><a href="#cb23-151" aria-hidden="true" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">color =</span> strata, <span class="at">fill =</span> strata, <span class="at">linetype =</span> strata, <span class="at">shape =</span> strata)</span>
+<span id="cb23-152"><a href="#cb23-152" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb23-153"><a href="#cb23-153" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">hv_atrisk_compose</span>(curve, hvtiPlotR<span class="sc">::</span><span class="fu">hv_atrisk</span>(risk))</span>
+<span id="cb23-154"><a href="#cb23-154" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">km_views</span>(km)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">km_views</span>(km)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-km-views" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-km-views-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/285d2eb2b2cbc41c013997aebe087deb.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/4dfb0b2a06ec8000e4c1024a9cc8288b.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-km-views-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 1: Overall: survival and the cumulative hazard on four scales
@@ -21658,15 +21722,15 @@ Figure 1: Overall: survival and the cumulative hazard on four scales
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">km_figure</span>()</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;ac-survival&quot;</span>, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">5</span>)</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">km_figure</span>()</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;ac-survival&quot;</span>, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">5</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-km-survival" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-km-survival-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/6e64d48f0d8e81a3cdaf7ce98acfa0b1.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/b52bf904db50ff9e2685746d4c3954a0.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-km-survival-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: Overall survival, with patients at risk
@@ -21677,27 +21741,27 @@ Figure 2: Overall survival, with patients at risk
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: each child chunk below carries its own label and caption</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (v <span class="cf">in</span> <span class="fu">names</span>(strata_fits)) {</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  .views <span class="ot">&lt;-</span> <span class="fu">km_views</span>(strata_fits[[v]])</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig km views&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;By &quot;</span>, v, <span class="st">&quot;: survival and the cumulative hazard on four scales&quot;</span>),</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;.views&quot;</span>, <span class="at">opts =</span> <span class="fu">c</span>(<span class="st">&quot;#| fig-width: 9.75&quot;</span>, <span class="st">&quot;#| fig-height: 12&quot;</span>))</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  .fig <span class="ot">&lt;-</span> <span class="fu">km_figure</span>(v)</span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.fig, <span class="fu">paste0</span>(<span class="st">&quot;ac-survival-&quot;</span>, v), <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">5</span>)</span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig km survival&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Survival by &quot;</span>, v, <span class="st">&quot;, with patients at risk&quot;</span>), <span class="st">&quot;.fig&quot;</span>,</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">opts =</span> <span class="st">&quot;#| fig-height: 7.5&quot;</span>)</span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: each child chunk below carries its own label and caption</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (v <span class="cf">in</span> <span class="fu">names</span>(strata_fits)) {</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  .views <span class="ot">&lt;-</span> <span class="fu">km_views</span>(strata_fits[[v]])</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig km views&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;By &quot;</span>, v, <span class="st">&quot;: survival and the cumulative hazard on four scales&quot;</span>),</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;.views&quot;</span>, <span class="at">opts =</span> <span class="fu">c</span>(<span class="st">&quot;#| fig-width: 9.75&quot;</span>, <span class="st">&quot;#| fig-height: 12&quot;</span>))</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  .fig <span class="ot">&lt;-</span> <span class="fu">km_figure</span>(v)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.fig, <span class="fu">paste0</span>(<span class="st">&quot;ac-survival-&quot;</span>, v), <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">5</span>)</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig km survival&quot;</span>, v), <span class="fu">paste0</span>(<span class="st">&quot;Survival by &quot;</span>, v, <span class="st">&quot;, with patients at risk&quot;</span>), <span class="st">&quot;.fig&quot;</span>,</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">opts =</span> <span class="st">&quot;#| fig-height: 7.5&quot;</span>)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>.views</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>.views</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-km-views-lvef-grp" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-km-views-lvef-grp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/c76166ef42543611e6418426780c94b8.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/3c61fd248eaf27d317aa695933c9e2cf.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-km-views-lvef-grp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 3: By lvef_grp: survival and the cumulative hazard on four scales
@@ -21709,13 +21773,13 @@ Figure 3: By lvef_grp: survival and the cumulative hazard on four scales
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-km-survival-lvef-grp" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-km-survival-lvef-grp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/4f4dcbdfce81bce7bff3171a34505571.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/16db12d3b380791398532fea4460fe05.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-km-survival-lvef-grp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 4: Survival by lvef_grp, with patients at risk
@@ -21727,13 +21791,13 @@ Figure 4: Survival by lvef_grp, with patients at risk
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>.views</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>.views</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-km-views-hx-chf" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-km-views-hx-chf-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/1989b83e5381ca20b4694bb6521d63d2.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/818738f5e801135ce05ad6cddf58448e.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-km-views-hx-chf-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 5: By hx_chf: survival and the cumulative hazard on four scales
@@ -21745,13 +21809,13 @@ Figure 5: By hx_chf: survival and the cumulative hazard on four scales
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-km-survival-hx-chf" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-km-survival-hx-chf-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/f611b6e1f933c5a49862b69a056a0d46.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/3c796c245a16b34f21edb4b1d653588d.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-km-survival-hx-chf-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 6: Survival by hx_chf, with patients at risk
@@ -21775,17 +21839,17 @@ Figure 6: Survival by hx_chf, with patients at risk
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-29 12:40:31 EDT</td>
+<td style="text-align: left;">2026-11-03 08:15:11 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-29 12:40:37 EDT</td>
+<td style="text-align: left;">2026-11-03 08:15:16 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">6 s</td>
+<td style="text-align: left;">5 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -21801,6 +21865,16 @@ Figure 6: Survival by hx_chf, with patients at risk
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Host</td>
 <td style="text-align: left;">gallery</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Identifiability</td>
+<td style="text-align: left;">at_risk: <code>lvef_grp</code></td>
+<td style="text-align: left;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">at_risk: <code>hx_chf</code></td>
+<td style="text-align: left;">1</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Job</td>
@@ -21825,17 +21899,17 @@ Figure 6: Survival by hx_chf, with patients at risk
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.4</td>
+<td style="text-align: left;">1.5.5</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261029.parquet</td>
+<td style="text-align: left;">built_20261103.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-29</td>
+<td style="text-align: left;">2026-11-03</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -21875,7 +21949,7 @@ Figure 6: Survival by hx_chf, with patients at risk
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"ac.dead.hz","rendered":"2026-10-29T16:40:37Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.4","source":null},{"package":"hvtiRutilities","version":"1.5.17","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.2.17","source":null},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261029.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-29T16:34:24Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-29T12:40:31-0400","end":"2026-10-29T12:40:37-0400","time_zone":"EDT","duration_seconds":5.9,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"ac.dead.hz.qmd","template":"ac","prefix":"ac","subject":"dead","type":"hz","hvtiRtemplates":"1.5.4"},"datasets":[{"name":"built","version_file":"built_20261029.parquet","registered":"2026-10-29","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"20_distributions/ac.dead.hz.qmd",".hvti_render_id":"260cdd7b44b2f2fa998430a00023f662af947d22fa38c260be6bdc95acc709a1",".hvti_source_sha256":"0a3a3c96892e48e7a6163fdc319d6df270d82f3e61fd7449a59807f28b39fa6b"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"ac.dead.hz","rendered":"2026-11-03T13:15:16Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.5","source":"github","sha":"f07705891093932be2b3d180444d64d07f187071"},{"package":"hvtiRutilities","version":"1.5.19","source":"github","sha":"5359155a4da9a3b403df9acfb9e529c4d2444489"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.2.18","source":"github","sha":"23739d794d4776b5c24d5e2e88e7a5b4bd0cd240"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261103.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-03T13:11:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-11-03T08:15:11-0500","end":"2026-11-03T08:15:16-0500","time_zone":"EST","duration_seconds":5.2,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"ac.dead.hz.qmd","template":"ac","prefix":"ac","subject":"dead","type":"hz","hvtiRtemplates":"1.5.5"},"datasets":[{"name":"built","version_file":"built_20261103.parquet","registered":"2026-11-03","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}},"identifiability":[{"check":"at_risk","column":"lvef_grp","count":2},{"check":"at_risk","column":"hx_chf","count":1}]},"source":"20_distributions/ac.dead.hz.qmd",".hvti_render_id":"9583d0f1020eec78b979b05724125c676ef5892484b74cd14a0b1691493c80dd",".hvti_source_sha256":"0f1246c1378492922b7d74a4efe869db252f12a8a0e2780adce8db4b9f20a4af"}</script>
 </section>
 
 </main>

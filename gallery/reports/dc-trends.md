@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:39
+2026-11-03 08:14
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -190,7 +190,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -329,6 +329,36 @@ trend_long <- function(d, spec) {
 }
 ```
 
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# A yearly point is the summary of that year's patients, so a year of few patients plots nearly
+# their own values. Only the point is drawn, with no count beside it, so a percent trend's
+# numerator cannot be read off and is not counted. The table above shows the first and last year.
+.year_cells <- list()
+for (sg in names(SUBGROUPS)) {
+  keep <- SUBGROUPS[[sg]](d)
+  # The figures chunk stops on a malformed filter, with the message that says how to fix it.
+  if (!is.logical(keep) || length(keep) != nrow(d)) next
+  for (.col in intersect(unlist(lapply(TRENDS, `[[`, "cols"), use.names = FALSE), names(d))) {
+    .y <- d$year[keep %in% TRUE & !is.na(d[[.col]]) & !is.na(d$year)]
+    .year_cells[[length(.year_cells) + 1L]] <- hvtiRtemplates:::.identifiability_counts(table(.y), paste0(.col, " by year, ", sg))
+  }
+}
+cat(hvtiRtemplates:::.identifiability_notice(unique(rbind(
+  hvtiRtemplates:::.identifiability_check(d, extremes = "year"),
+  do.call(rbind, .year_cells)
+))))
+```
+
+WarningBefore this goes in a manuscript
+
+- 19 cells of `hx_chf by year, diabetic` hold fewer than 5 patients.
+  Combine levels, or decide that the count can be shown.
+- 19 cells of `plvmassi by year, diabetic` hold fewer than 5 patients.
+  Combine levels, or decide that the count can be shown.
+
 ## Figures
 
 Code
@@ -370,6 +400,8 @@ for (sg in names(SUBGROUPS)) {
   cat("\n### ", sg, " (n = ", nrow(dd), ")\n\n", sep = "")
   for (nm in names(TRENDS)) {
     spec <- TRENDS[[nm]]
+    .selection <- attr(job_data$record, "selection")
+    hvtiRtemplates:::.refuse_display(spec$cols, hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "TRENDS")
     tr <- hv_trends(trend_long(dd, spec), x_col = "year", y_col = "value",
                     group_col = if (length(spec$cols) == 1L) NULL else "series",
                     summary_fn = if (is.null(spec$summary)) "mean" else spec$summary)
@@ -474,25 +506,27 @@ against an older figure by its shape and not point by point.
 
 ## About this run
 
-| Group           | Item             | Value                    |
-|:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:39:10 EDT  |
-|                 | Ended            | 2026-10-29 12:39:11 EDT  |
-|                 | Duration         | 2 s                      |
-|                 | Status           | final                    |
-|                 | Rendered by      | gallery                  |
-|                 | Host             | gallery                  |
-| Job             | File             | dc.trends.cohort.eda.qmd |
-|                 | Template         | dc.trends                |
-|                 | Subject          | cohort                   |
-|                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
-|                 | Source file      | built.rds                |
-|                 | Rows kept        | 800 rows on 800 patients |
-|                 | WHERE            | none                     |
-|                 | sha256           | b236a472f1f3             |
-|                 | Manifest         | current                  |
-| Reproducibility | renv             | not active               |
-|                 | renv.lock sha256 | d09f96b6cd21             |
+| Group | Item | Value |
+|:---|:---|:---|
+| Run | Started | 2026-11-03 08:14:19 EST |
+|  | Ended | 2026-11-03 08:14:21 EST |
+|  | Duration | 1 s |
+|  | Status | final |
+|  | Rendered by | gallery |
+|  | Host | gallery |
+| Identifiability | small: `hx_chf by year, diabetic` | 19 |
+|  | small: `plvmassi by year, diabetic` | 19 |
+| Job | File | dc.trends.cohort.eda.qmd |
+|  | Template | dc.trends |
+|  | Subject | cohort |
+|  | Type | eda |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
+|  | Source file | built.rds |
+|  | Rows kept | 800 rows on 800 patients |
+|  | WHERE | none |
+|  | sha256 | b236a472f1f3 |
+|  | Manifest | current |
+| Reproducibility | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

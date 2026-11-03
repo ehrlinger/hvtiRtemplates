@@ -2238,7 +2238,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-29 12:39</p>
+      <p class="date">2026-11-03 08:14</p>
     </div>
   </div>
   
@@ -2250,7 +2250,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: dc.trends 1.5.4 sha256:483fd4a7d88e9a3f5916ee2fe899e2509b5f7a79e94a34bced30f8c79b8732b3 -->
+<!-- hvtiRtemplates: dc.trends 1.5.5 sha256:03be7a660f340bf0c1d2955ee5471a0b9ceedbeab2179e7bdac7e5e97f5ae239 -->
 <!-- Demo: name the job this replaces (an older graphs/dp.trends job) and list
      the figures it drew. A trends job usually draws several, and each one
      becomes one entry in TRENDS below. Replace this comment with that text. -->
@@ -2319,7 +2319,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261029.parquet</code>, dated 2026-10-29 · rendered by gallery on gallery · hvtiRtemplates 1.5.4</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261103.parquet</code>, dated 2026-11-03 · rendered by gallery on gallery · hvtiRtemplates 1.5.5</p>
 </div>
 </div>
 </div>
@@ -2458,7 +2458,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261029.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261103.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2639,77 +2639,116 @@ Table 2: Operation years: patients, missing years, and the first and last year
 <span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Flags what a reader could learn about one patient, by column and count. It changes no number.</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># A yearly point is the summary of that year&#39;s patients, so a year of few patients plots nearly</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># their own values. Only the point is drawn, with no count beside it, so a percent trend&#39;s</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># numerator cannot be read off and is not counted. The table above shows the first and last year.</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>.year_cells <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (sg <span class="cf">in</span> <span class="fu">names</span>(SUBGROUPS)) {</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  keep <span class="ot">&lt;-</span> SUBGROUPS[[sg]](d)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The figures chunk stops on a malformed filter, with the message that says how to fix it.</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.logical</span>(keep) <span class="sc">||</span> <span class="fu">length</span>(keep) <span class="sc">!=</span> <span class="fu">nrow</span>(d)) <span class="cf">next</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (.col <span class="cf">in</span> <span class="fu">intersect</span>(<span class="fu">unlist</span>(<span class="fu">lapply</span>(TRENDS, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;cols&quot;</span>), <span class="at">use.names =</span> <span class="cn">FALSE</span>), <span class="fu">names</span>(d))) {</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    .y <span class="ot">&lt;-</span> d<span class="sc">$</span>year[keep <span class="sc">%in%</span> <span class="cn">TRUE</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(d[[.col]]) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(d<span class="sc">$</span>year)]</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    .year_cells[[<span class="fu">length</span>(.year_cells) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_counts</span>(<span class="fu">table</span>(.y), <span class="fu">paste0</span>(.col, <span class="st">&quot; by year, &quot;</span>, sg))</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_notice</span>(<span class="fu">unique</span>(<span class="fu">rbind</span>(</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_check</span>(d, <span class="at">extremes =</span> <span class="st">&quot;year&quot;</span>),</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(rbind, .year_cells)</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="callout callout-style-default callout-warning callout-titled" title="Before this goes in a manuscript">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Before this goes in a manuscript
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>19 cells of <code>hx_chf by year, diabetic</code> hold fewer than 5 patients. Combine levels, or decide that the count can be shown.</li>
+<li>19 cells of <code>plvmassi by year, diabetic</code> hold fewer than 5 patients. Combine levels, or decide that the count can be shown.</li>
+</ul>
+</div>
+</div>
 </section>
 <section id="figures" class="level2">
 <h2 class="anchored" data-anchor-id="figures">Figures</h2>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: each child chunk below carries its own label and caption</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># This document sits in descriptive/ and its figures are written to graphs/</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># through set_path(), so the image link is the figure&#39;s path relative to this</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># document, worked out at render time, as dc-gfup&#39;s is.</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>.fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>.seen <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>.child <span class="ot">&lt;-</span> <span class="cf">function</span>(label, caption, code) {</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  label <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;(^-+|-+$)&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">gsub</span>(<span class="st">&quot;[^a-z0-9]+&quot;</span>, <span class="st">&quot;-&quot;</span>, <span class="fu">tolower</span>(label)))</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.seen[[label]])) <span class="fu">stop</span>(<span class="st">&quot;Two outputs would share the label &quot;</span>, label, <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  .seen[[label]] <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  .opt <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;#| &quot;</span>, <span class="fu">sub</span>(<span class="st">&quot;-.*$&quot;</span>, <span class="st">&quot;&quot;</span>, label), <span class="st">&quot;-cap: &quot;</span>, <span class="fu">encodeString</span>(caption, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>))</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(<span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: &quot;</span>, label), .opt, code, .fence),</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>                        <span class="at">envir =</span> <span class="fu">parent.frame</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>figure_link <span class="ot">&lt;-</span> <span class="cf">function</span>(file) {</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.in&quot;</span>) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (sg <span class="cf">in</span> <span class="fu">names</span>(SUBGROUPS)) {</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  keep <span class="ot">&lt;-</span> SUBGROUPS[[sg]](d)</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># One logical per patient, or the filter is wrong. R would silently recycle</span></span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># a length-1 or short vector through d[keep, ] and select the wrong patients,</span></span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># and a filter on a missing column returns logical(0).</span></span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.logical</span>(keep) <span class="sc">||</span> <span class="fu">length</span>(keep) <span class="sc">!=</span> <span class="fu">nrow</span>(d)) {</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;SUBGROUPS entry `&quot;</span>, sg, <span class="st">&quot;` must return one TRUE/FALSE per patient (&quot;</span>,</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>         <span class="fu">nrow</span>(d), <span class="st">&quot;); it returned &quot;</span>, <span class="fu">length</span>(keep), <span class="st">&quot; value(s) of type &quot;</span>,</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>         <span class="fu">typeof</span>(keep), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  keep[<span class="fu">is.na</span>(keep)] <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  dd <span class="ot">&lt;-</span> d[keep, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(dd) <span class="sc">==</span> <span class="dv">0</span>L) {</span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;SUBGROUPS entry `&quot;</span>, sg, <span class="st">&quot;` selects no patients.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">### &quot;</span>, sg, <span class="st">&quot; (n = &quot;</span>, <span class="fu">nrow</span>(dd), <span class="st">&quot;)</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">names</span>(TRENDS)) {</span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    spec <span class="ot">&lt;-</span> TRENDS[[nm]]</span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>    tr <span class="ot">&lt;-</span> <span class="fu">hv_trends</span>(<span class="fu">trend_long</span>(dd, spec), <span class="at">x_col =</span> <span class="st">&quot;year&quot;</span>, <span class="at">y_col =</span> <span class="st">&quot;value&quot;</span>,</span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>                    <span class="at">group_col =</span> <span class="cf">if</span> (<span class="fu">length</span>(spec<span class="sc">$</span>cols) <span class="sc">==</span> <span class="dv">1</span>L) <span class="cn">NULL</span> <span class="cf">else</span> <span class="st">&quot;series&quot;</span>,</span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>                    <span class="at">summary_fn =</span> <span class="cf">if</span> (<span class="fu">is.null</span>(spec<span class="sc">$</span>summary)) <span class="st">&quot;mean&quot;</span> <span class="cf">else</span> spec<span class="sc">$</span>summary)</span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Older jobs dropped incomplete rows with na.omit() and said nothing.</span></span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>    <span class="co"># hv_trends() counts them, and the count is reported with every figure.</span></span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">&quot;**&quot;</span>, nm, <span class="st">&quot;**: &quot;</span>, tr<span class="sc">$</span>meta<span class="sc">$</span>n_obs <span class="sc">-</span> tr<span class="sc">$</span>meta<span class="sc">$</span>n_missing, <span class="st">&quot; of &quot;</span>,</span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>        tr<span class="sc">$</span>meta<span class="sc">$</span>n_obs, <span class="st">&quot; rows drawn; &quot;</span>, tr<span class="sc">$</span>meta<span class="sc">$</span>n_missing,</span>
-<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot; missing the year or the value.</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> <span class="fu">plot</span>(tr) <span class="sc">+</span></span>
-<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Year of operation&quot;</span>, <span class="at">y =</span> spec<span class="sc">$</span>ylab, <span class="at">color =</span> <span class="cn">NULL</span>, <span class="at">shape =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>      <span class="co"># The manuscript theme hides the legend; several series need it to be told apart.</span></span>
-<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
-<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Limits through coord_cartesian(), not scale limits. A scale limit DROPS</span></span>
-<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the patients outside it before the smooth is fitted, so the curve would</span></span>
-<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>    <span class="co"># stop passing through the yearly points hv_trends() computed from all of</span></span>
-<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>    <span class="co"># them, and any stretch of the fitted line past the limit would vanish.</span></span>
-<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Breaks and limits are applied independently: either may be set alone.</span></span>
-<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(spec<span class="sc">$</span>ybreaks)) p <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> spec<span class="sc">$</span>ybreaks)</span>
-<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(spec<span class="sc">$</span>ylim)) p <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> spec<span class="sc">$</span>ylim)</span>
-<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(XBREAKS)) p <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> XBREAKS)</span>
-<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>    fname <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;dc-trends-&quot;</span>, nm, <span class="st">&quot;-&quot;</span>, sg, <span class="st">&quot;.png&quot;</span>)</span>
-<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>    file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(p, <span class="fu">sub</span>(<span class="st">&quot;[.]png$&quot;</span>, <span class="st">&quot;&quot;</span>, fname), <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a>    .link <span class="ot">&lt;-</span> <span class="fu">figure_link</span>(file)</span>
-<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig trends&quot;</span>, nm, sg),</span>
-<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>           <span class="fu">paste0</span>(<span class="st">&quot;Trend in &quot;</span>, nm, <span class="st">&quot; by year of operation, &quot;</span>, sg, <span class="st">&quot;. Filled circles mark the yearly summary and the &quot;</span>,</span>
-<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;solid line a LOESS smooth of the patients; a single series is black circles on a blue line, &quot;</span>,</span>
-<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;several get one color and point shape each, as in the legend.&quot;</span>),</span>
-<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>)</span>
-<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: each child chunk below carries its own label and caption</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># This document sits in descriptive/ and its figures are written to graphs/</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># through set_path(), so the image link is the figure&#39;s path relative to this</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># document, worked out at render time, as dc-gfup&#39;s is.</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>.fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>.seen <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>.child <span class="ot">&lt;-</span> <span class="cf">function</span>(label, caption, code) {</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  label <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;(^-+|-+$)&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">gsub</span>(<span class="st">&quot;[^a-z0-9]+&quot;</span>, <span class="st">&quot;-&quot;</span>, <span class="fu">tolower</span>(label)))</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.seen[[label]])) <span class="fu">stop</span>(<span class="st">&quot;Two outputs would share the label &quot;</span>, label, <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  .seen[[label]] <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  .opt <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;#| &quot;</span>, <span class="fu">sub</span>(<span class="st">&quot;-.*$&quot;</span>, <span class="st">&quot;&quot;</span>, label), <span class="st">&quot;-cap: &quot;</span>, <span class="fu">encodeString</span>(caption, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>))</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(<span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: &quot;</span>, label), .opt, code, .fence),</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>                        <span class="at">envir =</span> <span class="fu">parent.frame</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>figure_link <span class="ot">&lt;-</span> <span class="cf">function</span>(file) {</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.in&quot;</span>) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (sg <span class="cf">in</span> <span class="fu">names</span>(SUBGROUPS)) {</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  keep <span class="ot">&lt;-</span> SUBGROUPS[[sg]](d)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># One logical per patient, or the filter is wrong. R would silently recycle</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># a length-1 or short vector through d[keep, ] and select the wrong patients,</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># and a filter on a missing column returns logical(0).</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.logical</span>(keep) <span class="sc">||</span> <span class="fu">length</span>(keep) <span class="sc">!=</span> <span class="fu">nrow</span>(d)) {</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;SUBGROUPS entry `&quot;</span>, sg, <span class="st">&quot;` must return one TRUE/FALSE per patient (&quot;</span>,</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>         <span class="fu">nrow</span>(d), <span class="st">&quot;); it returned &quot;</span>, <span class="fu">length</span>(keep), <span class="st">&quot; value(s) of type &quot;</span>,</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>         <span class="fu">typeof</span>(keep), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  keep[<span class="fu">is.na</span>(keep)] <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>  dd <span class="ot">&lt;-</span> d[keep, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(dd) <span class="sc">==</span> <span class="dv">0</span>L) {</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;SUBGROUPS entry `&quot;</span>, sg, <span class="st">&quot;` selects no patients.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">### &quot;</span>, sg, <span class="st">&quot; (n = &quot;</span>, <span class="fu">nrow</span>(dd), <span class="st">&quot;)</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">names</span>(TRENDS)) {</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>    spec <span class="ot">&lt;-</span> TRENDS[[nm]]</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>    .selection <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.refuse_display</span>(spec<span class="sc">$</span>cols, hvtiRtemplates<span class="sc">:::</span><span class="fu">.no_values</span>(d, .selection<span class="sc">$</span>id, .selection<span class="sc">$</span>key), <span class="st">&quot;TRENDS&quot;</span>)</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>    tr <span class="ot">&lt;-</span> <span class="fu">hv_trends</span>(<span class="fu">trend_long</span>(dd, spec), <span class="at">x_col =</span> <span class="st">&quot;year&quot;</span>, <span class="at">y_col =</span> <span class="st">&quot;value&quot;</span>,</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>                    <span class="at">group_col =</span> <span class="cf">if</span> (<span class="fu">length</span>(spec<span class="sc">$</span>cols) <span class="sc">==</span> <span class="dv">1</span>L) <span class="cn">NULL</span> <span class="cf">else</span> <span class="st">&quot;series&quot;</span>,</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>                    <span class="at">summary_fn =</span> <span class="cf">if</span> (<span class="fu">is.null</span>(spec<span class="sc">$</span>summary)) <span class="st">&quot;mean&quot;</span> <span class="cf">else</span> spec<span class="sc">$</span>summary)</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Older jobs dropped incomplete rows with na.omit() and said nothing.</span></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>    <span class="co"># hv_trends() counts them, and the count is reported with every figure.</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">&quot;**&quot;</span>, nm, <span class="st">&quot;**: &quot;</span>, tr<span class="sc">$</span>meta<span class="sc">$</span>n_obs <span class="sc">-</span> tr<span class="sc">$</span>meta<span class="sc">$</span>n_missing, <span class="st">&quot; of &quot;</span>,</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>        tr<span class="sc">$</span>meta<span class="sc">$</span>n_obs, <span class="st">&quot; rows drawn; &quot;</span>, tr<span class="sc">$</span>meta<span class="sc">$</span>n_missing,</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot; missing the year or the value.</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> <span class="fu">plot</span>(tr) <span class="sc">+</span></span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Year of operation&quot;</span>, <span class="at">y =</span> spec<span class="sc">$</span>ylab, <span class="at">color =</span> <span class="cn">NULL</span>, <span class="at">shape =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>      <span class="co"># The manuscript theme hides the legend; several series need it to be told apart.</span></span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Limits through coord_cartesian(), not scale limits. A scale limit DROPS</span></span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the patients outside it before the smooth is fitted, so the curve would</span></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>    <span class="co"># stop passing through the yearly points hv_trends() computed from all of</span></span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>    <span class="co"># them, and any stretch of the fitted line past the limit would vanish.</span></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Breaks and limits are applied independently: either may be set alone.</span></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(spec<span class="sc">$</span>ybreaks)) p <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> spec<span class="sc">$</span>ybreaks)</span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(spec<span class="sc">$</span>ylim)) p <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> spec<span class="sc">$</span>ylim)</span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(XBREAKS)) p <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> XBREAKS)</span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>    fname <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;dc-trends-&quot;</span>, nm, <span class="st">&quot;-&quot;</span>, sg, <span class="st">&quot;.png&quot;</span>)</span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>    file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(p, <span class="fu">sub</span>(<span class="st">&quot;[.]png$&quot;</span>, <span class="st">&quot;&quot;</span>, fname), <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>    .link <span class="ot">&lt;-</span> <span class="fu">figure_link</span>(file)</span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig trends&quot;</span>, nm, sg),</span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>           <span class="fu">paste0</span>(<span class="st">&quot;Trend in &quot;</span>, nm, <span class="st">&quot; by year of operation, &quot;</span>, sg, <span class="st">&quot;. Filled circles mark the yearly summary and the &quot;</span>,</span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;solid line a LOESS smooth of the patients; a single series is black circles on a blue line, &quot;</span>,</span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;several get one color and point shape each, as in the legend.&quot;</span>),</span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>)</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <section id="all-n-800" class="level3">
 <h3 class="anchored" data-anchor-id="all-n-800">all (n = 800)</h3>
@@ -2717,7 +2756,7 @@ Table 2: Operation years: patients, missing years, and the first and last year
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-trends-chf-all" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2736,7 +2775,7 @@ Figure 1: Trend in chf by year of operation, all. Filled circles mark the yearl
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-trends-lvmass-all" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2758,7 +2797,7 @@ Figure 2: Trend in lvmass by year of operation, all. Filled circles mark the ye
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-trends-chf-diabetic" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2777,7 +2816,7 @@ Figure 3: Trend in chf by year of operation, diabetic. Filled circles mark the 
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-trends-lvmass-diabetic" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2809,17 +2848,17 @@ Figure 4: Trend in lvmass by year of operation, diabetic. Filled circles mark t
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-29 12:39:10 EDT</td>
+<td style="text-align: left;">2026-11-03 08:14:19 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-29 12:39:11 EDT</td>
+<td style="text-align: left;">2026-11-03 08:14:21 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">2 s</td>
+<td style="text-align: left;">1 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2835,6 +2874,16 @@ Figure 4: Trend in lvmass by year of operation, diabetic. Filled circles mark t
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Host</td>
 <td style="text-align: left;">gallery</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Identifiability</td>
+<td style="text-align: left;">small: <code>hx_chf by year, diabetic</code></td>
+<td style="text-align: left;">19</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">small: <code>plvmassi by year, diabetic</code></td>
+<td style="text-align: left;">19</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Job</td>
@@ -2859,17 +2908,17 @@ Figure 4: Trend in lvmass by year of operation, diabetic. Filled circles mark t
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.4</td>
+<td style="text-align: left;">1.5.5</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261029.parquet</td>
+<td style="text-align: left;">built_20261103.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-29</td>
+<td style="text-align: left;">2026-11-03</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2909,7 +2958,7 @@ Figure 4: Trend in lvmass by year of operation, diabetic. Filled circles mark t
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dc.trends.cohort.eda","rendered":"2026-10-29T16:39:11Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.4","source":null},{"package":"hvtiRutilities","version":"1.5.17","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.4","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261029.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-29T16:34:24Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-10-29T12:39:10-0400","end":"2026-10-29T12:39:11-0400","time_zone":"EDT","duration_seconds":1.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.trends.cohort.eda.qmd","template":"dc.trends","prefix":"dc","qualifier":"trends","subject":"cohort","type":"eda","hvtiRtemplates":"1.5.4"},"datasets":[{"name":"built","version_file":"built_20261029.parquet","registered":"2026-10-29","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"10_descriptive/dc.trends.cohort.eda.qmd",".hvti_render_id":"afa37b8c98f034243775e096f9c8385b52979f66c830e394d11b817e337a4ede",".hvti_source_sha256":"177c5d8e57914dfcfec2ed3f16b46c85af9919a48c2ee703c7acdc9ced927fe3"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"dc.trends.cohort.eda","rendered":"2026-11-03T13:14:21Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.5","source":"github","sha":"f07705891093932be2b3d180444d64d07f187071"},{"package":"hvtiRutilities","version":"1.5.19","source":"github","sha":"5359155a4da9a3b403df9acfb9e529c4d2444489"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.4","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261103.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-03T13:11:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-11-03T08:14:19-0500","end":"2026-11-03T08:14:21-0500","time_zone":"EST","duration_seconds":1.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.trends.cohort.eda.qmd","template":"dc.trends","prefix":"dc","qualifier":"trends","subject":"cohort","type":"eda","hvtiRtemplates":"1.5.5"},"datasets":[{"name":"built","version_file":"built_20261103.parquet","registered":"2026-11-03","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}},"identifiability":[{"check":"small","column":"hx_chf by year, diabetic","count":19},{"check":"small","column":"plvmassi by year, diabetic","count":19}]},"source":"10_descriptive/dc.trends.cohort.eda.qmd",".hvti_render_id":"23fb36100ffc42876d0507913e331c223b096363ef9b9bb2d7ccb637b0005193",".hvti_source_sha256":"113cad1ed0fa831ef3ec50552b441a9cadc0f37f7627da2e8c30439a987d0e50"}</script>
 </section>
 
 </main>

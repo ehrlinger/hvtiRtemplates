@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:52
+2026-11-03 08:24
 
 Describes the `vp-fit` screen in this set patient by patient: each
 selected predictor’s local gradient.
@@ -79,7 +79,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.4
+hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -315,43 +315,63 @@ knitr::kable(icov, digits = 3, row.names = FALSE)
 Each gradient is the local slope of varPro’s ensemble mortality, in
 expected events, not a probability.
 
-noise reference (95th percentile of \|gradient\| over 16 noise columns):
-9.46
+noise reference (95th percentile of \|gradient\| over 17 noise columns):
+8.86
 
 | term | variable | share_na | median_abs | gradients | noise | tested | selected | drawn |
 |:---|:---|---:|---:|:---|:---|:---|:---|:---|
-| age | age | 0.786 | 8.860 | computed | FALSE | TRUE | TRUE | TRUE |
-| female | female | 0.561 | 3.080 | computed | FALSE | TRUE | FALSE | TRUE |
-| bmi | bmi | 0.990 | 8.067 | computed | FALSE | TRUE | FALSE | TRUE |
-| hx_chf | hx_chf | 0.032 | 20.552 | computed | FALSE | TRUE | TRUE | TRUE |
-| hx_dm | hx_dm | 0.188 | 5.793 | computed | FALSE | TRUE | TRUE | TRUE |
+| age | age | 0.714 | 3.256 | computed | FALSE | TRUE | TRUE | TRUE |
+| female | female | 0.623 | 1.684 | computed | FALSE | TRUE | FALSE | TRUE |
+| bmi | bmi | 1.000 | NA | none for any patient | FALSE | TRUE | FALSE | FALSE |
+| hx_chf | hx_chf | 0.018 | 20.320 | computed | FALSE | TRUE | TRUE | TRUE |
+| hx_dm | hx_dm | 0.156 | 4.861 | computed | FALSE | TRUE | TRUE | TRUE |
 | nyha_pr | nyha_pr | 1.000 | NA | none for any patient | FALSE | TRUE | FALSE | FALSE |
-| lvef | lvef | 0.881 | 4.128 | computed | FALSE | TRUE | TRUE | TRUE |
-| plvmassi | plvmassi | 0.926 | 7.694 | computed | FALSE | TRUE | TRUE | TRUE |
-| creat_pr | creat_pr | 0.948 | 5.065 | computed | FALSE | TRUE | FALSE | TRUE |
-| noise1_female | noise1_female | 0.625 | 3.919 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise2_female | noise2_female | 0.519 | 2.870 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise3_female | noise3_female | 0.531 | 2.977 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise4_hx_chf | noise4_hx_chf | 0.589 | 3.892 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise5_female | noise5_female | 0.852 | 4.131 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise6_hx_dm | noise6_hx_dm | 0.706 | 3.290 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise7_hx_dm | noise7_hx_dm | 0.779 | 2.001 | computed | TRUE | TRUE | FALSE | TRUE |
+| lvef | lvef | 0.858 | 10.267 | computed | FALSE | TRUE | TRUE | TRUE |
+| plvmassi | plvmassi | 0.932 | 5.039 | computed | FALSE | TRUE | TRUE | TRUE |
+| creat_pr | creat_pr | 0.836 | 4.487 | computed | FALSE | TRUE | FALSE | TRUE |
+| noise1_female | noise1_female | 0.701 | 2.462 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise2_female | noise2_female | 0.554 | 2.578 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise3_female | noise3_female | 0.608 | 3.674 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise4_hx_chf | noise4_hx_chf | 0.615 | 3.997 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise5_female | noise5_female | 0.614 | 2.481 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise6_hx_dm | noise6_hx_dm | 0.563 | 2.320 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise7_hx_dm | noise7_hx_dm | 0.684 | 2.684 | computed | TRUE | TRUE | FALSE | TRUE |
 | noise8_nyha_pr | noise8_nyha_pr | 1.000 | NA | none for any patient | TRUE | TRUE | FALSE | FALSE |
 | noise9_nyha_pr | noise9_nyha_pr | 1.000 | NA | none for any patient | TRUE | TRUE | FALSE | FALSE |
 | noise10_nyha_pr | noise10_nyha_pr | 1.000 | NA | none for any patient | TRUE | TRUE | FALSE | FALSE |
-| noise11_creat_pr | noise11_creat_pr | 0.945 | 6.149 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise12_plvmassi | noise12_plvmassi | 0.975 | 4.222 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise13_bmi | noise13_bmi | 0.978 | 7.932 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise14_bmi | noise14_bmi | 0.957 | 6.537 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise15_lvef | noise15_lvef | 1.000 | NA | none for any patient | TRUE | TRUE | FALSE | FALSE |
-| noise16_creat_pr | noise16_creat_pr | 0.897 | 3.759 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise17_age | noise17_age | 0.921 | 11.291 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise18_plvmassi | noise18_plvmassi | 0.966 | 1.392 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise19_bmi | noise19_bmi | 0.993 | 2.612 | computed | TRUE | TRUE | FALSE | TRUE |
-| noise20_bmi | noise20_bmi | 0.993 | 6.598 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise11_creat_pr | noise11_creat_pr | 0.897 | 1.194 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise12_plvmassi | noise12_plvmassi | 0.985 | 6.744 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise13_bmi | noise13_bmi | 0.934 | 1.941 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise14_bmi | noise14_bmi | 0.985 | 2.537 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise15_lvef | noise15_lvef | 0.989 | 5.247 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise16_creat_pr | noise16_creat_pr | 0.938 | 1.732 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise17_age | noise17_age | 0.963 | 6.117 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise18_plvmassi | noise18_plvmassi | 0.946 | 4.596 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise19_bmi | noise19_bmi | 0.971 | 5.226 | computed | TRUE | TRUE | FALSE | TRUE |
+| noise20_bmi | noise20_bmi | 0.971 | 0.986 | computed | TRUE | TRUE | FALSE | TRUE |
 
 Table 2: Local gradients for each predictor: patients without one, their
 typical size, and what the screen found
+
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# Each panel below draws a patient's own value of a predictor, for the patients with a gradient.
+# Noise columns are permuted, so they describe no one. A predictor of few values draws a column of
+# points per value, so its levels are its cells; any other shows its extremes at the axis's ends.
+.shown_values <- as.data.frame(.idata)[show]
+for (.t in show) .shown_values[[.t]][!is.finite(grad[[.t]])] <- NA
+.few <- vapply(.shown_values, function(x) length(unique(x[!is.na(x)])) <= 10L, logical(1L))
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(.shown_values, show, cells = show[.few], extremes = show[!.few])
+))
+```
+
+WarningBefore this goes in a manuscript
+
+- 2 patients in `age` are older than 89. Wherever age is shown, report
+  ages 90 and older as one group.
 
 Code
 
@@ -380,7 +400,7 @@ save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = bee_height)
 .fig
 ```
 
-![](assets/279ec9eeead263a908739dd17e960cd9.png)
+![](assets/6a5aa801be6e592fbba221c1f7a2c61d.png)
 
 Figure 1: Each patient’s local gradient for each drawn predictor, one
 row per predictor, colored by the patient’s standardized value of that
@@ -441,7 +461,7 @@ Code
 .fig
 ```
 
-![](assets/d61a45b0da557bfc5bfc798cb065753b.png)
+![](assets/74bb857a3552bb26608185ba7b200af8.png)
 
 Figure 2: Each patient’s local gradient against their value of the
 predictor, one panel per drawn predictor. Each point is a patient, and
@@ -454,7 +474,7 @@ Code
 .fig
 ```
 
-![](assets/bee0cc2a97b3fc49740d45886f13174d.png)
+![](assets/1947fc2dccbbedfb07d99624c9139770.png)
 
 Figure 3: Each patient’s local gradient against their value of the
 predictor, one panel per drawn predictor. Each point is a patient, and
@@ -500,23 +520,24 @@ saveRDS(vpi_handoff, set_path("estimates", "individual.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 12:52:02 EDT |
-|  | Ended | 2026-10-29 12:52:13 EDT |
-|  | Duration | 12 s |
+| Run | Started | 2026-11-03 08:24:15 EST |
+|  | Ended | 2026-11-03 08:24:20 EST |
+|  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
+| Identifiability | age: `age` | 2 |
 | Job | File | vp.individual.dead.vp.qmd |
 |  | Template | vp.individual |
 |  | Subject | dead |
 |  | Type | vp |
-|  | hvtiRtemplates | 1.5.4 |
-| Dataset `built` | Version file | built_20261029.parquet |
-|  | Version date | 2026-10-29 |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-29 12:48:47 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-03 08:21:37 -0500, data built_20261103.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

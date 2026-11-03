@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:40
+2026-11-03 08:15
 
 An `ac` job is the first look at an outcome: the Kaplan-Meier life
 table, survival and patients at risk at the reporting horizons, the
@@ -25,8 +25,8 @@ if (utils::packageVersion("TemporalHazard") < "1.2.12") {
   stop("This job needs TemporalHazard >= 1.2.12 for hzr_kaplan(); ",
        utils::packageVersion("TemporalHazard"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.7.18") {
-  stop("This job needs hvtiPlotR >= 2.7.18 for hv_atrisk_compose() and hv_role_palette(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.20") {
+  stop("This job needs hvtiPlotR >= 2.8.20 for hv_atrisk_compose() and hv_group_palette(); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 if (!requireNamespace("patchwork", quietly = TRUE)) {
@@ -56,8 +56,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -200,7 +200,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -386,6 +386,11 @@ Code
 
 ``` r
 # unnumbered: defines helpers only
+# The times the manuscript figure counts patients at risk.
+risk_times <- function(plot_max) {
+  at <- if (is.null(RISK_TIMES)) pretty(c(0, plot_max)) else RISK_TIMES
+  at[at <= plot_max]
+}
 .fence <- strrep("`", 3)
 .seen <- new.env()
 # Prints `code` as a child chunk with its own label and caption, so each table
@@ -406,6 +411,37 @@ as_percent <- function(x) {
   x
 }
 ```
+
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The follow-up table shows the longest follow-up, and a stratum's curve is its few patients' events.
+# The life tables leave out a row missing its time or its event, so the counts here do too.
+# Numbers at risk are counted where the report states them as the deliverable, the horizon tables
+# and the figure's row. A life table's own rows are not: every table runs out to its last patient.
+.fu_rows <- !is.na(d[[TIME]]) & !is.na(d[[EVENT]])
+.fu_end <- max(as.numeric(d[[TIME]][.fu_rows]), 0)
+.at_risk <- function(strata, column) {
+  .times <- sort(unique(c(grid, risk_times(if (is.null(PLOT_MAX)) .fu_end else PLOT_MAX))))
+  hvtiRtemplates:::.identifiability_counts(
+    hvtiRtemplates::life_table_at(d, TIME, EVENT, times = .times, strata = strata, conf_level = CLEVEL)$n_risk,
+    column, check = "at_risk"
+  )
+}
+cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(
+  list(hvtiRtemplates:::.identifiability_check(d[.fu_rows, , drop = FALSE], STRATA, cells = STRATA, extremes = TIME, within = STRATA),
+       .at_risk(NULL, "all patients")),
+  lapply(STRATA, function(v) .at_risk(v, v))
+))))
+```
+
+WarningBefore this goes in a manuscript
+
+- 2 of the numbers at risk shown for `lvef_grp` are under 5 patients.
+  End the table or figure sooner, or decide that the count can be shown.
+- 1 of the numbers at risk shown for `hx_chf` are under 5 patients. End
+  the table or figure sooner, or decide that the count can be shown.
 
 ## Overall
 
@@ -880,6 +916,8 @@ Code
 ``` r
 # unnumbered: each child chunk below carries its own label and caption
 strata_fits <- list()
+.selection <- attr(job_data$record, "selection")
+hvtiRtemplates:::.refuse_display(STRATA, hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "STRATA")
 for (v in STRATA) {
   .lt <- hvtiRtemplates::life_table(d, TIME, EVENT, strata = v, conf_level = CLEVEL)
   strata_fits[[v]] <- .lt
@@ -1908,16 +1946,24 @@ km_views <- function(fit) {
   haz <- fit[is.finite(fit$cumhaz) & fit$cumhaz > 0, , drop = FALSE]
   haz$event <- rep(TRUE, nrow(haz))
   haz$stratum <- factor(haz$stratum, levels = counts$stratum)
-  # One curve is black. Strata never take red or blue, which mean the event and
-  # censored in every house figure, so no stratum reads as the deaths.
+  # One curve is black; two to five strata take red, blue, teal, magenta and cyan, in level
+  # order, and six or seven all take Paul Tol's muted colors.
+  # Red and blue mean the event and censored only in figures that color by outcome.
   cols <- hvtiRtemplates:::.group_colors(counts$stratum)
+  # Color is never the only channel: each stratum also has its own line type and
+  # point shape, so the curves still read apart printed in grayscale.
+  ltys <- hvtiRtemplates:::.group_linetypes(counts$stratum)
+  shps <- hvtiRtemplates:::.group_shapes(counts$stratum)
   view <- function(data, y, ylab) {
-    ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum)) +
+    ggplot2::ggplot(data, ggplot2::aes(x = .data$time, y = .data[[y]], color = .data$stratum,
+                                       linetype = .data$stratum, shape = .data$stratum)) +
       (if (isTRUE(STEPS)) ggplot2::geom_step() else ggplot2::geom_line()) +
-      ggplot2::geom_point(data = data[data$event, , drop = FALSE], size = 1.2, show.legend = FALSE) +
+      ggplot2::geom_point(data = data[data$event, , drop = FALSE], size = 1.2) +
       # The limits keep an empty panel (no events, so no cumulative hazard) from warning.
       ggplot2::scale_color_manual(values = cols, limits = names(cols)) +
-      ggplot2::labs(x = "Years", y = ylab, color = NULL) +
+      ggplot2::scale_linetype_manual(values = ltys, limits = names(ltys)) +
+      ggplot2::scale_shape_manual(values = shps, limits = names(shps)) +
+      ggplot2::labs(x = "Years", y = ylab, color = NULL, linetype = NULL, shape = NULL) +
       hvtiPlotR::theme_hv_manuscript(base_size = 12)
   }
   log_x <- ggplot2::scale_x_log10()
@@ -1938,8 +1984,7 @@ km_figure <- function(strata = NULL) {
   dd[[EVENT]] <- as.numeric(dd[[EVENT]])
   # The strata in the order the tables list them.
   if (!is.null(strata)) dd[[strata]] <- factor(as.character(dd[[strata]]), levels = attr(strata_fits[[strata]], "counts")$stratum)
-  at <- if (is.null(RISK_TIMES)) pretty(c(0, plot_max)) else RISK_TIMES
-  at <- at[at <= plot_max]
+  at <- risk_times(plot_max)
   # The numbers at risk are the tables' own, counted after each time, so the
   # figure and the tables agree where a patient is followed to exactly that time.
   risk <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = at, strata = strata, conf_level = CLEVEL)
@@ -1962,11 +2007,19 @@ km_figure <- function(strata = NULL) {
   # sort as text ("1", "10", "2"). The curve, band, bars and at-risk rows all use the
   # tables' order instead, so each stratum keeps one color throughout.
   if (!is.null(strata)) hv$data$strata <- factor(as.character(hv$data$strata), levels = levels(dd[[strata]]))
-  # The same colors as the page above: black for one curve, and no stratum in red or blue.
+  # The same colors as the page above: black for one curve, red and blue for the first two strata.
   cols <- hvtiRtemplates:::.group_colors(if (is.null(strata)) "All" else levels(dd[[strata]]))
+  ltys <- hvtiRtemplates:::.group_linetypes(names(cols))
+  shps <- hvtiRtemplates:::.group_shapes(names(cols))
+  # The stratum is mapped to line type at the plot, so hv_survival()'s own curve layer
+  # takes it too, and to shape on the event points below: the curves read apart in grayscale.
   curve <- plot(hv, conf_int = isTRUE(CI_BAND)) +
+    ggplot2::aes(linetype = .data$strata) +
     ggplot2::scale_color_manual(values = cols) +
     ggplot2::scale_fill_manual(values = cols) +
+    # The limits keep a cohort with no event, so no event points, from warning.
+    ggplot2::scale_linetype_manual(values = ltys, limits = names(ltys)) +
+    ggplot2::scale_shape_manual(values = shps, limits = names(shps)) +
     ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
@@ -1974,7 +2027,8 @@ km_figure <- function(strata = NULL) {
   # changed in place, and an hvtiPlotR that draws no step layer is left as it draws.
   if (!isTRUE(STEPS)) for (.l in curve$layers) if (inherits(.l$geom, "GeomStep")) .l$geom <- ggplot2::GeomLine
   # A point at each event, so a reader sees where the estimate moves and how often.
-  curve <- curve + ggplot2::geom_point(data = hv$data[hv$data$n.event > 0, , drop = FALSE], size = 1.2, show.legend = FALSE)
+  curve <- curve + ggplot2::geom_point(ggplot2::aes(shape = .data$strata), data = hv$data[hv$data$n.event > 0, , drop = FALSE],
+                                       size = 1.2)
   # Bars at the chosen times, from the same life table as the horizon tables, so a
   # bar and the table row for its time give the same limits.
   if (!is.null(CI_TIMES) && (!is.numeric(CI_TIMES) || anyNA(CI_TIMES) || any(CI_TIMES < 0))) {
@@ -2015,7 +2069,10 @@ km_figure <- function(strata = NULL) {
     )
   }
   # The house theme drops the legend; a stratified figure needs it to tell the curves apart.
-  if (!is.null(strata)) curve <- curve + ggplot2::theme(legend.position = "top") + ggplot2::labs(color = strata, fill = strata)
+  if (!is.null(strata)) {
+    curve <- curve + ggplot2::theme(legend.position = "top") +
+      ggplot2::labs(color = strata, fill = strata, linetype = strata, shape = strata)
+  }
   hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(risk))
 }
 ```
@@ -2026,7 +2083,7 @@ Code
 km_views(km)
 ```
 
-![](assets/285d2eb2b2cbc41c013997aebe087deb.png)
+![](assets/4dfb0b2a06ec8000e4c1024a9cc8288b.png)
 
 Figure 1: Overall: survival and the cumulative hazard on four scales
 
@@ -2038,7 +2095,7 @@ save_figure(.fig, "ac-survival", width = 6, height = 5)
 .fig
 ```
 
-![](assets/6e64d48f0d8e81a3cdaf7ce98acfa0b1.png)
+![](assets/b52bf904db50ff9e2685746d4c3954a0.png)
 
 Figure 2: Overall survival, with patients at risk
 
@@ -2063,7 +2120,7 @@ Code
 .views
 ```
 
-![](assets/c76166ef42543611e6418426780c94b8.png)
+![](assets/3c61fd248eaf27d317aa695933c9e2cf.png)
 
 Figure 3: By lvef_grp: survival and the cumulative hazard on four scales
 
@@ -2073,7 +2130,7 @@ Code
 .fig
 ```
 
-![](assets/4f4dcbdfce81bce7bff3171a34505571.png)
+![](assets/16db12d3b380791398532fea4460fe05.png)
 
 Figure 4: Survival by lvef_grp, with patients at risk
 
@@ -2083,7 +2140,7 @@ Code
 .views
 ```
 
-![](assets/1989b83e5381ca20b4694bb6521d63d2.png)
+![](assets/818738f5e801135ce05ad6cddf58448e.png)
 
 Figure 5: By hx_chf: survival and the cumulative hazard on four scales
 
@@ -2093,31 +2150,33 @@ Code
 .fig
 ```
 
-![](assets/f611b6e1f933c5a49862b69a056a0d46.png)
+![](assets/3c796c245a16b34f21edb4b1d653588d.png)
 
 Figure 6: Survival by hx_chf, with patients at risk
 
 ## About this run
 
-| Group           | Item             | Value                    |
-|:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:40:31 EDT  |
-|                 | Ended            | 2026-10-29 12:40:37 EDT  |
-|                 | Duration         | 6 s                      |
-|                 | Status           | final                    |
-|                 | Rendered by      | gallery                  |
-|                 | Host             | gallery                  |
-| Job             | File             | ac.dead.hz.qmd           |
-|                 | Template         | ac                       |
-|                 | Subject          | dead                     |
-|                 | Type             | hz                       |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
-|                 | Source file      | built.rds                |
-|                 | Rows kept        | 725 rows on 725 patients |
-|                 | WHERE            | `!is.na(creat_pr)`       |
-|                 | sha256           | b236a472f1f3             |
-|                 | Manifest         | current                  |
-| Reproducibility | renv             | not active               |
-|                 | renv.lock sha256 | d09f96b6cd21             |
+| Group           | Item                | Value                    |
+|:----------------|:--------------------|:-------------------------|
+| Run             | Started             | 2026-11-03 08:15:11 EST  |
+|                 | Ended               | 2026-11-03 08:15:16 EST  |
+|                 | Duration            | 5 s                      |
+|                 | Status              | final                    |
+|                 | Rendered by         | gallery                  |
+|                 | Host                | gallery                  |
+| Identifiability | at_risk: `lvef_grp` | 2                        |
+|                 | at_risk: `hx_chf`   | 1                        |
+| Job             | File                | ac.dead.hz.qmd           |
+|                 | Template            | ac                       |
+|                 | Subject             | dead                     |
+|                 | Type                | hz                       |
+|                 | hvtiRtemplates      | 1.5.5                    |
+| Dataset `built` | Version file        | built_20261103.parquet   |
+|                 | Version date        | 2026-11-03               |
+|                 | Source file         | built.rds                |
+|                 | Rows kept           | 725 rows on 725 patients |
+|                 | WHERE               | `!is.na(creat_pr)`       |
+|                 | sha256              | b236a472f1f3             |
+|                 | Manifest            | current                  |
+| Reproducibility | renv                | not active               |
+|                 | renv.lock sha256    | d09f96b6cd21             |

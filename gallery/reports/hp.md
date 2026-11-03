@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:41
+2026-11-03 08:15
 
 An `hp` job **reads** its inputs and does not recompute them: the
 actuarial life table from the `ac` job and the parametric fit from the
@@ -60,7 +60,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.4
+hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -194,7 +194,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261029.parquet) |
+| Source              | dataset `study` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -255,6 +255,17 @@ for (i in which(horizons$extrapolating)) {
 | plotting (curves) |          10 |           34.604 | FALSE         |
 
 Table 2: End of follow-up against the longest horizon on each grid
+
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The table above prints the longest follow-up, over the rows fitted, and the actuarial step line
+# ends there. The nomogram and the curves are model estimates at chosen times, and no count is shown.
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(d[fitted_rows, , drop = FALSE], extremes = TIME, upper_only = TRUE)
+))
+```
 
 ## Predictions
 
@@ -503,8 +514,8 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 12:41:19 EDT |
-|  | Ended | 2026-10-29 12:41:19 EDT |
+| Run | Started | 2026-11-03 08:15:51 EST |
+|  | Ended | 2026-11-03 08:15:52 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -513,15 +524,15 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 |  | Template | hp |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.5.4 |
-| Dataset `built` | Version file | built_20261029.parquet |
-|  | Version date | 2026-10-29 |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-10-29 12:40:31 -0400, data built_20261029.parquet |
-|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-10-29 12:40:53 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-11-03 08:15:11 -0500, data built_20261103.parquet |
+|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-11-03 08:15:29 -0500, data built_20261103.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

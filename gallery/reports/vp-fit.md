@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:49
+2026-11-03 08:22
 
 Gallery job on the synthetic cohort: a VarPro screen of survival after
 operation (iv_dead, dead) on the nine preoperative predictors rfs-fit
@@ -69,6 +69,12 @@ if (!"varpro_coverage" %in% getNamespaceExports("ggRandomForests")) {
   stop("This job needs a ggRandomForests that exports varpro_coverage() (4.0.0-rc9 or later).\n",
        "Update it, then re-render.", call. = FALSE)
 }
+# The same again for the two arguments this job passes, new in 4.0.0-rc12.
+if (!"max_untested" %in% names(formals(ggRandomForests::varpro_coverage)) ||
+      !"noise" %in% names(formals(ggRandomForests::gg_varpro))) {
+  stop("This job needs a ggRandomForests whose varpro_coverage() takes max_untested and whose gg_varpro() takes noise ",
+       "(4.0.0-rc12 or later).\nUpdate it, then re-render.", call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -97,8 +103,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -168,6 +174,14 @@ NOISE_N <- 20
 # 0.1 matches varPro's own trimming: below it, z is 0 by construction.
 TRIM <- 0.1
 
+# Demo: the largest share of real candidates that may go untested. Above it the
+# render stops, because a screen that tested too little reads like one that
+# found no effect. NULL only reports. 0.5 lets the exploration setting pass
+# (about 2 of 30 untested in the simulation below) and stops a guided screen
+# that tested a minority (about 19 of 30 untested at 60 events). The refits are
+# not held to it: their share tested is reported in the stability table.
+MAX_UNTESTED <- 0.5
+
 # Demo: varPro's forest. The defaults are the exploration setting, which
 # tests as many candidates as it can: no guided split weights, so every
 # candidate gets release rules. Under varPro's own defaults a lasso screen
@@ -198,7 +212,8 @@ TRIM <- 0.1
 # selection: a guided first forest keeps NVAR columns, noise included, and cuts
 # the rest before any rule is built (104 of 154 terms in the screen behind this
 # template). A cut variable shows as not eligible below, which is not evidence
-# of no effect. Uncomment its line below the settings to run it.
+# of no effect. Uncomment its line below the settings to run it. On wide data it can
+# trip MAX_UNTESTED; set that to NULL only if you mean to report a partial screen.
 #
 # The simulation is the one in ggRandomForests' varpro-small-data vignette.
 NTREE <- 500
@@ -339,7 +354,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -497,6 +512,29 @@ vp_judge <- function(cov) {
   cov$selected <- !cov$noise & cov$tested & (cov$z > cov$bar) %in% TRUE
   cov
 }
+
+# The coverage of each variable, judged as MAX_UNTESTED judges it. varpro_coverage(by = "variable") pools a factor's
+# levels, so a factor whose levels each fell below TRIM can pass as tested with every level's z trimmed to 0. Here a
+# factor's trees, coverage and tested are those of its best single level. A second, identically seeded call gets the
+# levels, because the first returns only the pooled row. It repeats the rule extraction, for each refit too.
+vp_coverage <- function(f, seed, max_untested = NULL) {
+  set.seed(seed)
+  # vp_judge() replaces varpro_coverage()'s own selection, which reads an empty noise check as "select every tested
+  # row", so its warning about that case would mislead here: vp_judge() selects nothing then, and says so.
+  cov <- withCallingHandlers(
+    ggRandomForests::varpro_coverage(f, by = "variable", trim = TRIM, max.tree = f$rf$ntree, noise = "^noise",
+                                     max_untested = max_untested),
+    warning = function(w) {
+      if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+    }
+  )
+  set.seed(seed)
+  terms <- ggRandomForests::varpro_coverage(f, by = "term", trim = TRIM, max.tree = f$rf$ntree)
+  cov$n_trees <- as.integer(tapply(terms$n_trees, terms$variable, max)[cov$variable])
+  cov$coverage <- as.vector(tapply(terms$coverage, terms$variable, max)[cov$variable])
+  cov$tested <- cov$n_trees > 0 & cov$coverage >= TRIM
+  cov[order(-cov$coverage), ]
+}
 ```
 
 Code
@@ -536,24 +574,16 @@ fit <- cache_fit(
 Every candidate, and whether VarPro could test it. A variable is
 **eligible** when VarPro built release rules for it; one that is not was
 cut by the split weights or `NVAR` before any rule was built. It is
-**tested** when it was scored in at least `TRIM` of the trees; below
-that its z is 0 by construction, which is no evidence of no effect. It
-is **selected** when it is tested and its z beats the bar named in the
-last columns.
+**tested** when it was scored in at least `TRIM` of the trees, a factor
+by its best single level; below that its z is 0 by construction, which
+is no evidence of no effect. It is **selected** when it is tested and
+its z beats the bar named in the last columns.
 
 Code
 
 ``` r
 # varpro_coverage() samples release rules, so it is seeded too.
-set.seed(abs(SEED))
-# vp_judge() replaces varpro_coverage()'s own selection, which reads an empty noise check as "select every tested
-# row", so its warning about that case would mislead here: vp_judge() selects nothing then, and says so.
-cov <- vp_judge(withCallingHandlers(
-  ggRandomForests::varpro_coverage(fit, by = "variable", trim = TRIM, max.tree = fit$rf$ntree, noise = "^noise"),
-  warning = function(w) {
-    if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
-  }
-))
+cov <- vp_judge(vp_coverage(fit, abs(SEED), max_untested = MAX_UNTESTED))
 .real <- cov[!cov$noise, ]
 knitr::kable(data.frame(
   variable = .real$variable, kind = .real$kind, eligible = .real$eligible, trees = .real$n_trees,
@@ -564,15 +594,15 @@ knitr::kable(data.frame(
 
 | variable | kind | eligible | trees | coverage | z | tested | bar | judged_against | selected |
 |:---|:---|:---|---:|---:|---:|:---|---:|:---|:---|
-| age | continuous | TRUE | 500 | 1.000 | 2.659 | TRUE | 0.604 | continuous | TRUE |
-| hx_chf | categorical | TRUE | 485 | 0.970 | 3.251 | TRUE | 0.422 | categorical | TRUE |
-| lvef | continuous | TRUE | 472 | 0.944 | 1.354 | TRUE | 0.604 | continuous | TRUE |
-| plvmassi | continuous | TRUE | 467 | 0.934 | 0.694 | TRUE | 0.604 | continuous | TRUE |
-| creat_pr | continuous | TRUE | 447 | 0.894 | 0.594 | TRUE | 0.604 | continuous | FALSE |
-| bmi | continuous | TRUE | 436 | 0.872 | 0.515 | TRUE | 0.604 | continuous | FALSE |
-| hx_dm | categorical | TRUE | 357 | 0.714 | 0.798 | TRUE | 0.422 | categorical | TRUE |
-| nyha_pr | categorical | TRUE | 254 | 0.508 | 0.289 | TRUE | 0.422 | categorical | FALSE |
-| female | categorical | TRUE | 114 | 0.228 | 0.143 | TRUE | 0.422 | categorical | FALSE |
+| age | continuous | TRUE | 500 | 1.000 | 2.649 | TRUE | 0.624 | continuous | TRUE |
+| hx_chf | categorical | TRUE | 496 | 0.992 | 3.390 | TRUE | 0.335 | categorical | TRUE |
+| lvef | continuous | TRUE | 479 | 0.958 | 1.334 | TRUE | 0.624 | continuous | TRUE |
+| plvmassi | continuous | TRUE | 465 | 0.930 | 0.694 | TRUE | 0.624 | continuous | TRUE |
+| creat_pr | continuous | TRUE | 452 | 0.904 | 0.604 | TRUE | 0.624 | continuous | FALSE |
+| bmi | continuous | TRUE | 438 | 0.876 | 0.542 | TRUE | 0.624 | continuous | FALSE |
+| hx_dm | categorical | TRUE | 353 | 0.706 | 0.812 | TRUE | 0.335 | categorical | TRUE |
+| nyha_pr | categorical | TRUE | 276 | 0.552 | 0.308 | TRUE | 0.335 | categorical | FALSE |
+| female | categorical | TRUE | 113 | 0.226 | 0.152 | TRUE | 0.335 | categorical | FALSE |
 
 Table 3: Coverage, importance and selection of each candidate, most
 covered first
@@ -618,7 +648,7 @@ save_figure(.fig, "vp-fit-coverage", width = 6.5)
 .fig
 ```
 
-![](assets/f3a4d037d6cdd67b7f04fad535ee5de0.png)
+![](assets/83eca008cdb1e1c17b5121bf6802346c.png)
 
 Figure 1: Importance against coverage for every eligible variable, one
 panel per kind. Black points are real candidates and gray points
@@ -632,18 +662,38 @@ Code
 # Free size: one row per variable, so the height grows with the list.
 # Scored on every tree, as the coverage table is: left to its default,
 # gg_varpro() samples MAX_TREE of them, and the figure would disagree with the table.
-.fig <- plot(gg_varpro(fit, max.tree = fit$rf$ntree)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+# Its noise bar is vp_judge()'s but for one case: categorical noise that all scores
+# 0 sets its bar at 0 and selects every tested categorical variable. So the table's
+# bar replaces it, and one bar remains. Its warnings repeat what the table says.
+set.seed(abs(SEED))
+.gv <- withCallingHandlers(
+  gg_varpro(fit, max.tree = fit$rf$ntree, trim = TRIM, noise = "^noise"),
+  warning = function(w) {
+    if (grepl("noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+  }
+)
+# By kind, since the figure lists a factor's levels where the table lists the factor.
+.at <- match(.gv$imp$kind, cov$kind)
+.gv$imp$noise_cut <- cov$bar[.at]
+.gv$imp$noise_ref <- ifelse(is.na(cov$bar[.at]), NA_character_, sub(" .*", "", cov$bar_from[.at]))
+.gv$imp$selected <- !.gv$imp$noise & .gv$imp$tested & (.gv$imp$z > .gv$imp$noise_cut) %in% TRUE
+# No usable bar selects nothing, and draws at 0, as gg_varpro() draws an empty noise check.
+.gv$imp$noise_cut[is.na(.gv$imp$noise_cut)] <- 0
+.fig <- plot(.gv) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+# The plot's caption reads a missing bar as noise that was never tested. Noise that was tested and all scored 0 has
+# no bar either, so say what the table says.
+.fig$labels$caption <- gsub("(\\w+) 0, no noise tested", "\\1: no usable noise bar, nothing selected", .fig$labels$caption)
 save_figure(.fig, "vp-fit-varpro", height = 7)
 .fig
 ```
 
-![](assets/d0965d87b85c0157fbcc842ef1068c3c.png)
+![](assets/5436b38694c46235b002a46e59a4fcff.png)
 
 Figure 2: VarPro’s own importance plot, noise columns included. Each box
 spans the 15th to the 85th percentile of a variable’s per-tree
 importance, with a line at the median and whiskers to the 5th and 95th
-percentiles; the dashed red line is varPro’s default cutoff, which is
-not the selection rule in this report.
+percentiles; the dashed red ticks are the bar each variable must beat,
+the same bar as the table above. A factor’s levels are drawn separately.
 
 ## Stability
 
@@ -672,14 +722,7 @@ if (REPEATS > 0) {
              verbose = FALSE, cores = 1L, seed = -abs(SEED + r)),
       seed = SEED + r, dir = CACHE_DIR, refit = REFIT
     )
-    set.seed(abs(SEED) + r)
-    # As for the full fit: vp_judge() makes the selection, so varpro_coverage()'s empty-noise warning is muffled.
-    cr <- vp_judge(withCallingHandlers(
-      ggRandomForests::varpro_coverage(fr, by = "variable", trim = TRIM, max.tree = fr$rf$ntree, noise = "^noise"),
-      warning = function(w) {
-        if (grepl("no noise variable was tested", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
-      }
-    ))
+    cr <- vp_judge(vp_coverage(fr, abs(SEED) + r))
     cr <- cr[!cr$noise, ]
     data.frame(r = r, variable = cr$variable, selected = cr$selected, tested = cr$tested)
   }))
@@ -699,19 +742,19 @@ if (REPEATS > 0) {
 }
 ```
 
-    Selected per refit: 3 to 5 variables.
+    Selected per refit: 3 to 6 variables.
 
 | variable | share_tested | share_selected |
 |:---------|-------------:|---------------:|
-| age      |          1.0 |            1.0 |
-| hx_chf   |          1.0 |            1.0 |
-| lvef     |          1.0 |            1.0 |
-| hx_dm    |          1.0 |            0.6 |
-| plvmassi |          1.0 |            0.6 |
-| nyha_pr  |          1.0 |            0.2 |
-| bmi      |          1.0 |            0.0 |
-| creat_pr |          1.0 |            0.0 |
-| female   |          0.8 |            0.0 |
+| age      |            1 |            1.0 |
+| hx_chf   |            1 |            1.0 |
+| lvef     |            1 |            1.0 |
+| hx_dm    |            1 |            0.6 |
+| plvmassi |            1 |            0.4 |
+| creat_pr |            1 |            0.2 |
+| bmi      |            1 |            0.0 |
+| female   |            1 |            0.0 |
+| nyha_pr  |            1 |            0.0 |
 
 Table 5: How often each candidate was tested and selected across the
 refits
@@ -781,9 +824,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:48:47 EDT  |
-|                 | Ended            | 2026-10-29 12:49:51 EDT  |
-|                 | Duration         | 1 min 4 s                |
+| Run             | Started          | 2026-11-03 08:21:37 EST  |
+|                 | Ended            | 2026-11-03 08:22:32 EST  |
+|                 | Duration         | 55 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -791,9 +834,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 |                 | Template         | vp.fit                   |
 |                 | Subject          | dead                     |
 |                 | Type             | vp                       |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
+|                 | hvtiRtemplates   | 1.5.5                    |
+| Dataset `built` | Version file     | built_20261103.parquet   |
+|                 | Version date     | 2026-11-03               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

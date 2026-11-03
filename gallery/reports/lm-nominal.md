@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:43
+2026-11-03 08:17
 
 Fits a generalized-logit outcome model with a declared level set and
 reference.
@@ -33,8 +33,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 Code
 
@@ -115,7 +115,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTOR
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -245,9 +245,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item             | Value                          |
 |:----------------|:-----------------|:-------------------------------|
-| Run             | Started          | 2026-10-29 12:43:42 EDT        |
-|                 | Ended            | 2026-10-29 12:43:42 EDT        |
-|                 | Duration         | 1 s                            |
+| Run             | Started          | 2026-11-03 08:17:49 EST        |
+|                 | Ended            | 2026-11-03 08:17:50 EST        |
+|                 | Duration         | 0 s                            |
 |                 | Status           | final                          |
 |                 | Rendered by      | gallery                        |
 |                 | Host             | gallery                        |
@@ -255,9 +255,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |                 | Template         | lm.nominal                     |
 |                 | Subject          | discharge                      |
 |                 | Type             | model                          |
-|                 | hvtiRtemplates   | 1.5.4                          |
-| Dataset `built` | Version file     | built_20261029.parquet         |
-|                 | Version date     | 2026-10-29                     |
+|                 | hvtiRtemplates   | 1.5.5                          |
+| Dataset `built` | Version file     | built_20261103.parquet         |
+|                 | Version date     | 2026-11-03                     |
 |                 | Source file      | built.rds                      |
 |                 | Rows kept        | 800 rows on 800 patients       |
 |                 | WHERE            | none                           |

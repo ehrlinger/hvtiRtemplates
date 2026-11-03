@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:38
+2026-11-03 08:14
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.4
+hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -374,8 +374,8 @@ provenance
     7                                                                      725
     8                                                                        8
     9                                                                        0
-    10                                                                     0.2
-    11                                                          version:1.2.17
+    10                                                                     0.1
+    11                                                          version:1.2.18
     12 sha256:b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6
     13                                               4 distinct (listed below)
 
@@ -922,8 +922,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 12:38:49 EDT |
-|  | Ended | 2026-10-29 12:38:51 EDT |
+| Run | Started | 2026-11-03 08:14:03 EST |
+|  | Ended | 2026-11-03 08:14:05 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -932,17 +932,17 @@ saveRDS(report, report_file)
 |  | Template | bh |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.5.4 |
-| Dataset `built` | Version file | built_20261029.parquet |
-|  | Version date | 2026-10-29 |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261029.parquet |
-|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261029.parquet |
-|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261029.parquet |
-|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261029.parquet |
+| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261103.parquet |
+|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261103.parquet |
+|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261103.parquet |
+|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261103.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

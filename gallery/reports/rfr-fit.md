@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:48
+2026-11-03 08:21
 
 Gallery job on the synthetic cohort: postoperative length of stay,
 logged (log_los).
@@ -85,8 +85,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -242,7 +242,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -316,7 +316,7 @@ forest
                         Was data imputed: yes
                          Number of trees: 300
                Forest terminal node size: 5
-           Average no. of terminal nodes: 105.78
+           Average no. of terminal nodes: 105.7333
     No. of variables tried at each split: 3
                   Total no. of variables: 9
            Resampling used to grow trees: swor
@@ -325,8 +325,8 @@ forest
                                   Family: regr
                           Splitting rule: mse *random*
            Number of random split points: 10
-                         (OOB) R squared: 0.26844434
-       (OOB) Requested performance error: 0.11897896
+                         (OOB) R squared: 0.2767984
+       (OOB) Requested performance error: 0.11762027
 
 `importance = "none"` is deliberate. Importance is the explain job’s
 work, and cached there on its own, so it can be recomputed without
@@ -349,7 +349,7 @@ save_figure(.fig, "rfr-fit-diagnostics-error")
 .fig
 ```
 
-![](assets/7bc429f5317ce70d5f3e4d03f701f6f0.png)
+![](assets/2e0d908b8a8832473c5cec716effee74.png)
 
 Figure 1: Out-of-bag error by number of trees. The black solid line is
 the out-of-bag error after each additional tree.
@@ -364,7 +364,7 @@ save_figure(.fig, "rfr-fit-diagnostics-predicted")
 .fig
 ```
 
-![](assets/f7c514aa3e9096bb910aa4a7b9fda047.png)
+![](assets/75bbef9b450939e31828bdbdec27287e.png)
 
 Figure 2: Out-of-bag predicted values. Black circles, jittered sideways,
 mark the individual predictions, and the unfilled notched box plot marks
@@ -394,9 +394,9 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:48:19 EDT  |
-|                 | Ended            | 2026-10-29 12:48:24 EDT  |
-|                 | Duration         | 5 s                      |
+| Run             | Started          | 2026-11-03 08:21:18 EST  |
+|                 | Ended            | 2026-11-03 08:21:20 EST  |
+|                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -404,9 +404,9 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 |                 | Template         | rfr.fit                  |
 |                 | Subject          | los                      |
 |                 | Type             | rf                       |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
+|                 | hvtiRtemplates   | 1.5.5                    |
+| Dataset `built` | Version file     | built_20261103.parquet   |
+|                 | Version date     | 2026-11-03               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

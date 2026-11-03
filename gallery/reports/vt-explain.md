@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:56
+2026-11-03 08:29
 
 Explains the `vt-fit` job in this set: which patients the twins say
 repair suits, stratified by the echo-phenotype clusters.
@@ -72,7 +72,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.4
+hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -191,7 +191,7 @@ if (!nrow(.e)) {
 }
 ```
 
-![](assets/acf0030bbe0b6924fde4ceb848e28c23.png)
+![](assets/700b26673a12ced49544187d888c6e34.png)
 
 Figure 1: The estimated RMST difference by the arm patients received.
 Box: 15th to 85th percentile; whiskers: 5th to 95th; line: median. A
@@ -215,7 +215,7 @@ if (!nrow(.e)) {
 }
 ```
 
-![](assets/6317e832283945e9de62c236185193af.png)
+![](assets/67155d222bc7c4e1a7af23e15cad358f.png)
 
 Figure 2: Every patient in distribution, ranked by the estimated RMST
 difference and colored by the arm received.
@@ -242,7 +242,7 @@ if (!nrow(.mc)) {
 }
 ```
 
-![](assets/16b85c593c7a7ff8a4735151d6051354.png)
+![](assets/eea848a91911f7464a734e24a803130d.png)
 
 Figure 3: Mean predicted survival under each arm’s forest, for patients
 in distribution, by the arm they received. The shaded area to the
@@ -276,7 +276,7 @@ if (!nrow(.rb)) {
 }
 ```
 
-![](assets/618c746c97c356aac0690455435dfcc0.png)
+![](assets/e39440d738eb10ff9381e993d3e0f37e.png)
 
 Figure 4: In each arm, the share of patients in distribution whose own
 arm’s predicted RMST is the larger.
@@ -308,7 +308,7 @@ if (!nrow(.cp)) {
 }
 ```
 
-![](assets/d6055df4596009824f94500cfff9bcf1.png)
+![](assets/7a567e535230d8dab4b70e9340808b8f.png)
 
 Figure 5: Each treated patient in distribution: predicted RMST under the
 arm received (own) against under the other arm (twin). On the dashed
@@ -336,16 +336,16 @@ knitr::kable(.sens, digits = 2, row.names = FALSE)
 
 | rule       | arm     | kept |   p15 | median |  p85 | favor_first |
 |:-----------|:--------|-----:|------:|-------:|-----:|------------:|
-| combined   | repair  |  412 | -1.17 |  -0.01 | 0.29 |        0.48 |
-| combined   | replace |  388 | -1.15 |  -0.14 | 0.23 |        0.39 |
-| gower      | repair  |  412 | -1.17 |  -0.01 | 0.29 |        0.48 |
-| gower      | replace |  388 | -1.15 |  -0.14 | 0.23 |        0.39 |
-| sid        | repair  |  412 | -1.17 |  -0.01 | 0.29 |        0.48 |
-| sid        | replace |  388 | -1.15 |  -0.14 | 0.23 |        0.39 |
-| propensity | repair  |  411 | -1.17 |  -0.01 | 0.29 |        0.48 |
-| propensity | replace |  385 | -1.15 |  -0.14 | 0.23 |        0.38 |
-| none       | repair  |  412 | -1.17 |  -0.01 | 0.29 |        0.48 |
-| none       | replace |  388 | -1.15 |  -0.14 | 0.23 |        0.39 |
+| combined   | repair  |  412 | -1.18 |   0.00 | 0.30 |        0.50 |
+| combined   | replace |  388 | -1.21 |  -0.15 | 0.23 |        0.39 |
+| gower      | repair  |  412 | -1.18 |   0.00 | 0.30 |        0.50 |
+| gower      | replace |  388 | -1.21 |  -0.15 | 0.23 |        0.39 |
+| sid        | repair  |  412 | -1.18 |   0.00 | 0.30 |        0.50 |
+| sid        | replace |  388 | -1.21 |  -0.15 | 0.23 |        0.39 |
+| propensity | repair  |  412 | -1.18 |   0.00 | 0.30 |        0.50 |
+| propensity | replace |  385 | -1.23 |  -0.14 | 0.23 |        0.39 |
+| none       | repair  |  412 | -1.18 |   0.00 | 0.30 |        0.50 |
+| none       | replace |  388 | -1.21 |  -0.15 | 0.23 |        0.39 |
 
 Table 1: The RMST difference under each eligibility rule: patients kept,
 median with 15th and 85th percentiles, and the share favoring the first
@@ -400,7 +400,7 @@ if (!nrow(.dd)) {
 }
 ```
 
-![](assets/41b8edc911b14da9ed47eb82c5ad2893.png)
+![](assets/4dd8ac5e55e648aacdc60eacbedc3a1c.png)
 
 Figure 6: Each treated patient’s RMST difference against their distance
 to the nearest patient of the other arm. Dashed: that arm’s largest own
@@ -428,9 +428,9 @@ if (nrow(.dd)) {
 | method | received | patients | out_of_distribution | spearman |
 |:-------|:---------|---------:|--------------------:|---------:|
 | gower  | repair   |      412 |                   0 |     0.05 |
-| sid    | repair   |      412 |                   0 |    -0.02 |
+| sid    | repair   |      412 |                   0 |    -0.01 |
 | gower  | replace  |      388 |                   0 |    -0.06 |
-| sid    | replace  |      388 |                   0 |    -0.12 |
+| sid    | replace  |      388 |                   0 |    -0.16 |
 
 Table 2: Treated patients by arm received and method: how many, how many
 are out of distribution, and the rank correlation of the RMST difference
@@ -471,6 +471,8 @@ if (is.list(STRATIFY)) {
   .provenance_artifacts <- c(.provenance_artifacts, .sid_strata$lineage$artifacts, list(.sid_strata$record))
 } else if (is.character(STRATIFY)) {
   if (!STRATIFY %in% names(.d_all)) stop(STRATIFY, " is not in the data the fit read.", call. = FALSE)
+  hvtiRtemplates:::.refuse_display(STRATIFY, hvtiRtemplates:::.no_values(.d_all, .vt$settings$id, attr(.jd$record, "selection")$key),
+                                   "STRATIFY")
   .strata <- data.frame(ID = .d_all[[.vt$settings$id]], stratum = as.character(.d_all[[STRATIFY]]))
 }
 ```
@@ -503,18 +505,18 @@ Patients by stratum and arm received:
 
 |     | repair | replace |
 |:----|-------:|--------:|
-| A   |    203 |     199 |
-| B   |    119 |     126 |
-| C   |     90 |      63 |
+| A   |    202 |     198 |
+| B   |    119 |     127 |
+| C   |     91 |      63 |
 
 | stratum | arm     |   n | median | favor_first |
 |:--------|:--------|----:|-------:|------------:|
-| A       | repair  | 203 |   0.07 |        0.59 |
-| B       | repair  | 119 |  -1.19 |        0.00 |
-| C       | repair  |  90 |   0.22 |        0.88 |
-| A       | replace | 199 |  -0.01 |        0.48 |
-| B       | replace | 126 |  -1.08 |        0.01 |
-| C       | replace |  63 |   0.25 |        0.87 |
+| A       | repair  | 202 |   0.10 |        0.62 |
+| B       | repair  | 119 |  -1.23 |        0.00 |
+| C       | repair  |  91 |   0.25 |        0.89 |
+| A       | replace | 198 |  -0.02 |        0.48 |
+| B       | replace | 127 |  -1.13 |        0.02 |
+| C       | replace |  63 |   0.24 |        0.89 |
 
 Table 3: The RMST difference by stratum and arm received, patients in
 distribution. A median is shown only where a cell holds at least 5
@@ -549,7 +551,7 @@ if (!is.null(.sa) && nrow(.sa)) {
 }
 ```
 
-![](assets/f583b68ddde6e71f3587667e6c0f6472.png)
+![](assets/af9c33244896e3524213b7b733881e9b.png)
 
 Figure 7: The RMST difference by stratum, one panel per arm received.
 Box: 15th to 85th percentile of the patients in distribution, whiskers
@@ -576,7 +578,7 @@ if (!is.null(.sc) && nrow(.sc)) {
 }
 ```
 
-![](assets/438cb198bd7d42d0736d54a5401c4d0c.png)
+![](assets/ba64794f12d5eaa67258747394d14b9e.png)
 
 Figure 8: Mean predicted survival under each arm’s forest, patients in
 distribution, one panel per stratum. The shaded area to the horizon is
@@ -674,19 +676,19 @@ print(knitr::kable(.betas, digits = 2, row.names = FALSE))
 
 | variable |  beta | lower | upper | unestimable |
 |:---------|------:|------:|------:|------------:|
-| age      |  0.26 |  0.20 |  0.33 |           0 |
-| female   |  0.06 | -0.01 |  0.13 |           0 |
-| bmi      | -0.01 | -0.07 |  0.05 |           0 |
-| hx_chf   | -0.05 | -0.12 |  0.03 |           0 |
-| hx_dm    |  0.00 | -0.07 |  0.07 |           0 |
-| nyha_pr  |  0.07 | -0.02 |  0.13 |           0 |
-| lvef     | -0.07 | -0.15 |  0.00 |           0 |
-| creat_pr | -0.02 | -0.09 |  0.04 |           0 |
-| lvedd    |  0.83 |  0.80 |  0.87 |           0 |
-| lvesd    |  0.85 |  0.81 |  0.88 |           0 |
-| la_diam  |  0.17 |  0.09 |  0.24 |           0 |
-| rvsp     |  0.18 |  0.10 |  0.25 |           0 |
-| e_e      |  0.09 |  0.02 |  0.16 |           0 |
+| age      |  0.27 |  0.20 |  0.34 |           0 |
+| female   |  0.06 |  0.00 |  0.13 |           0 |
+| bmi      |  0.00 | -0.08 |  0.06 |           0 |
+| hx_chf   | -0.05 | -0.12 |  0.01 |           0 |
+| hx_dm    |  0.00 | -0.06 |  0.07 |           0 |
+| nyha_pr  |  0.04 | -0.03 |  0.11 |           0 |
+| lvef     | -0.05 | -0.12 |  0.03 |           0 |
+| creat_pr |  0.00 | -0.07 |  0.07 |           0 |
+| lvedd    |  0.84 |  0.81 |  0.88 |           0 |
+| lvesd    |  0.86 |  0.83 |  0.90 |           0 |
+| la_diam  |  0.18 |  0.10 |  0.25 |           0 |
+| rvsp     |  0.16 |  0.09 |  0.24 |           0 |
+| e_e      |  0.09 |  0.03 |  0.16 |           0 |
 
 Table 4: Standardized beta for each characteristic. A positive beta: the
 characteristic goes with a higher relative risk of the event by 8 under
@@ -711,7 +713,7 @@ if (!nrow(.bp)) {
 }
 ```
 
-![](assets/253caafa2a78ef654b91a96c362444ce.png)
+![](assets/3d67207d20df9de7450818d4a0c94313.png)
 
 Figure 9: Standardized association of each characteristic with the
 estimated effect, by overlap-weighted regression. A positive beta: the
@@ -789,39 +791,39 @@ Patients whose twin favors the other arm:
 
 | received | Freq |
 |:---------|-----:|
-| repair   |  213 |
-| replace  |  151 |
+| repair   |  206 |
+| replace  |  153 |
 
 Characteristics of those patients beside the rest of the arm:
 
 | arm     | variable | other_arm_favored      | rest                   |
 |:--------|:---------|:-----------------------|:-----------------------|
-| repair  | age      | 65.00 (55.00 to 72.00) | 56.00 (49.00 to 62.00) |
+| repair  | age      | 65.00 (55.00 to 73.00) | 56.50 (49.00 to 62.00) |
 | repair  | female   | 0.00 (0.00 to 1.00)    | 0.00 (0.00 to 1.00)    |
-| repair  | bmi      | 28.20 (24.30 to 31.40) | 27.50 (24.95 to 30.65) |
+| repair  | bmi      | 28.30 (24.63 to 31.37) | 27.50 (24.70 to 30.67) |
 | repair  | hx_chf   | 0.00 (0.00 to 0.00)    | 0.00 (0.00 to 1.00)    |
 | repair  | hx_dm    | 0.00 (0.00 to 0.00)    | 0.00 (0.00 to 0.00)    |
 | repair  | nyha_pr  | 2.00 (2.00 to 3.00)    | 2.00 (2.00 to 3.00)    |
-| repair  | lvef     | 52.00 (45.00 to 59.00) | 51.00 (43.00 to 60.00) |
-| repair  | creat_pr | 1.00 (0.82 to 1.30)    | 1.04 (0.84 to 1.33)    |
-| repair  | lvedd    | 6.10 (5.10 to 6.50)    | 4.80 (4.50 to 5.00)    |
-| repair  | lvesd    | 4.80 (3.25 to 5.20)    | 3.00 (2.70 to 3.20)    |
-| repair  | la_diam  | 4.40 (3.90 to 4.70)    | 4.10 (3.80 to 4.90)    |
-| repair  | rvsp     | 40.00 (32.00 to 47.00) | 35.00 (27.25 to 50.00) |
-| repair  | e_e      | 12.30 (9.67 to 14.70)  | 11.55 (8.50 to 16.90)  |
-| replace | age      | 60.00 (55.00 to 65.00) | 69.00 (61.00 to 75.00) |
+| repair  | lvef     | 52.00 (45.00 to 59.00) | 51.00 (43.25 to 60.00) |
+| repair  | creat_pr | 1.01 (0.85 to 1.30)    | 1.03 (0.83 to 1.33)    |
+| repair  | lvedd    | 6.10 (5.20 to 6.50)    | 4.80 (4.50 to 5.00)    |
+| repair  | lvesd    | 4.80 (3.30 to 5.20)    | 3.00 (2.70 to 3.20)    |
+| repair  | la_diam  | 4.40 (3.90 to 4.70)    | 4.10 (3.77 to 4.90)    |
+| repair  | rvsp     | 40.00 (31.00 to 47.00) | 35.00 (27.75 to 50.00) |
+| repair  | e_e      | 12.45 (9.50 to 14.70)  | 11.50 (8.57 to 16.80)  |
+| replace | age      | 61.00 (55.00 to 65.00) | 69.00 (60.00 to 75.50) |
 | replace | female   | 0.00 (0.00 to 1.00)    | 0.00 (0.00 to 1.00)    |
-| replace | bmi      | 28.20 (25.40 to 30.80) | 27.80 (24.90 to 30.30) |
+| replace | bmi      | 28.00 (25.30 to 30.90) | 27.80 (25.00 to 30.25) |
 | replace | hx_chf   | 0.00 (0.00 to 1.00)    | 0.00 (0.00 to 1.00)    |
 | replace | hx_dm    | 0.00 (0.00 to 0.00)    | 0.00 (0.00 to 1.00)    |
 | replace | nyha_pr  | 2.00 (2.00 to 3.00)    | 2.00 (2.00 to 3.00)    |
-| replace | lvef     | 52.00 (45.00 to 58.00) | 53.00 (46.00 to 59.00) |
-| replace | creat_pr | 0.99 (0.82 to 1.24)    | 1.04 (0.86 to 1.25)    |
-| replace | lvedd    | 4.90 (4.50 to 5.10)    | 5.90 (5.00 to 6.40)    |
-| replace | lvesd    | 3.10 (2.80 to 3.30)    | 4.50 (3.20 to 5.10)    |
-| replace | la_diam  | 4.10 (3.70 to 4.90)    | 4.30 (3.73 to 4.70)    |
-| replace | rvsp     | 34.50 (28.00 to 49.75) | 37.50 (31.00 to 46.00) |
-| replace | e_e      | 11.10 (8.80 to 17.30)  | 11.50 (8.43 to 14.10)  |
+| replace | lvef     | 52.00 (46.00 to 59.00) | 52.00 (45.00 to 59.00) |
+| replace | creat_pr | 0.96 (0.81 to 1.22)    | 1.07 (0.86 to 1.26)    |
+| replace | lvedd    | 4.85 (4.50 to 5.10)    | 5.90 (5.10 to 6.40)    |
+| replace | lvesd    | 3.00 (2.80 to 3.30)    | 4.55 (3.20 to 5.10)    |
+| replace | la_diam  | 4.10 (3.70 to 4.85)    | 4.30 (3.80 to 4.70)    |
+| replace | rvsp     | 35.00 (27.50 to 50.00) | 37.00 (31.00 to 46.00) |
+| replace | e_e      | 11.20 (8.78 to 17.33)  | 11.50 (8.55 to 14.10)  |
 
 Patients with no arm, by the arm their twin favors:
 
@@ -830,6 +832,52 @@ Patients with no arm, by the arm their twin favors:
 
 Table 5: Patients in distribution whose twin favors the arm they did not
 receive, by more than GAIN_MIN
+
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# Every patient-level point here is a prediction, which no reader can look up, so what is counted is
+# what the tables count, and what their counts give by subtraction or a share. The characteristics
+# beside the patients a twin favors are quartiles, which hide a patient unless few values lie behind
+# them, and percents, which are counts. tbl-stratum and tbl-distance count only when they had rows.
+.ben_groups <- unlist(lapply(ARMS, function(a) {
+  .ids <- r$ID[r$arm %in% a & .eligible]
+  if (!any(.ids %in% .benefit$ID)) return(NULL)
+  split(.d_all[match(.ids, .d_all[[.vt$settings$id]]), , drop = FALSE], .ids %in% .benefit$ID)
+}), recursive = FALSE)
+.shown_names <- intersect(.vt$predictors$names, names(.d_all))
+.value_counts <- unlist(lapply(.ben_groups, function(g) {
+  lapply(g[.shown_names], function(x) if (is.numeric(x)) sum(!is.na(x)) else table(x))
+}))
+# An age is shown only when a quartile of it passes 89; the check then counts the patients who do.
+.ben_ages <- lapply(.ben_groups, function(g) {
+  .v <- Filter(function(n) {
+    is.numeric(g[[n]]) && any(stats::quantile(g[[n]], c(0.25, 0.5, 0.75), na.rm = TRUE) > 89)
+  }, grep(hvtiRtemplates:::.identifiability_age_pattern, .shown_names, ignore.case = TRUE, value = TRUE))
+  hvtiRtemplates:::.identifiability_check(g, .v)
+})
+.kept_favored <- round(.sens$kept * .sens$favor_first)
+cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(list(
+  hvtiRtemplates:::.identifiability_counts(c(.sens$kept, .kept_favored, .sens$kept - .kept_favored), "patients kept, by rule and arm"),
+  if (nrow(.dd)) {
+    .ood <- .dist_tab$out_of_distribution
+    hvtiRtemplates:::.identifiability_counts(c(.dist_tab$patients, .ood, .dist_tab$patients - .ood), "patients by arm and method")
+  },
+  if (exists(".sr", inherits = FALSE)) {
+    .by_stratum <- c(table(.sr$stratum, .sr$arm), table(.sr$stratum, .sr$arm, .sr$diff > 0))
+    hvtiRtemplates:::.identifiability_counts(.by_stratum, "patients by stratum and arm")
+  },
+  hvtiRtemplates:::.identifiability_counts(table(.benefit$arm), "patients whose twin favors the other arm"),
+  hvtiRtemplates:::.identifiability_counts(table(.future$favors), "patients with no arm, by the arm their twin favors"),
+  hvtiRtemplates:::.identifiability_counts(.value_counts, "characteristics, beside those patients")
+), .ben_ages))))
+```
+
+WarningBefore this goes in a manuscript
+
+- 1 cell of `patients by stratum and arm` hold fewer than 5 patients.
+  Combine levels, or decide that the count can be shown.
 
 ## Reading the result
 
@@ -862,26 +910,27 @@ receive, by more than GAIN_MIN
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 12:56:03 EDT |
-|  | Ended | 2026-10-29 12:56:15 EDT |
-|  | Duration | 12 s |
+| Run | Started | 2026-11-03 08:29:31 EST |
+|  | Ended | 2026-11-03 08:29:37 EST |
+|  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
+| Identifiability | small: `patients by stratum and arm` | 1 |
 | Job | File | vt.explain.reint.vt.qmd |
 |  | Template | vt.explain |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.5.4 |
-| Dataset `built` | Version file | built_20261029.parquet |
-|  | Version date | 2026-10-29 |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
 | Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered not recorded |
-|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-10-29 12:55:31 -0400, data built_20261029.parquet |
-|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-10-29 12:55:09 -0400, data built_20261029.parquet |
+|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-03 08:29:17 -0500, data built_20261103.parquet |
+|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-03 08:29:06 -0500, data built_20261103.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

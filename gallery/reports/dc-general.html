@@ -2243,7 +2243,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-29 12:40</p>
+      <p class="date">2026-11-03 08:14</p>
     </div>
   </div>
   
@@ -2255,7 +2255,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: dc.general 1.5.4 sha256:2393adbb5b3fd3697ea996d33dd34510e10b3889a0a832fee64a706375bb11d3 -->
+<!-- hvtiRtemplates: dc.general 1.5.5 sha256:80f16ea67af6f3fea1269a30e5994091ae0d0f4ef6ebc314deaba5c8b9a3e7b2 -->
 <!-- Demo: name the job this replaces (descriptive/dc.general). -->
 <p>Replaces <code>descriptive/dc.general</code>.</p>
 <p>A <code>dc-general</code> job is the first look at a built cohort, before any table or model: what the data contain, how each categorical variable breaks down, how each continuous variable is distributed, and which variables move together. It uses base procedures only.</p>
@@ -2287,7 +2287,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261029.parquet</code>, dated 2026-10-29 · rendered by gallery on gallery · hvtiRtemplates 1.5.4</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261103.parquet</code>, dated 2026-11-03 · rendered by gallery on gallery · hvtiRtemplates 1.5.5</p>
 </div>
 </div>
 </div>
@@ -2356,9 +2356,9 @@ vertical-align: -.125em;
 <span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># rank). Defaults to every continuous variable; character() skips the section.</span></span>
 <span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>CORR_VARS <span class="ot">&lt;-</span> <span class="fu">unlist</span>(CONTINUOUS, <span class="at">use.names =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: leave NULL to keep identifiers out of reports. A column name (the SAS</span></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># job used id ccfid) labels the extreme values with it, which puts patient</span></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># identifiers in the report: a report rendered that way must not be circulated.</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: leave NULL for most jobs. A column name (the SAS job used id ccfid) lists</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># the extreme values with it on the console, on stderr(), so a value can be looked</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># up. It never reaches the report: no table shows a patient identifier.</span></span>
 <span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>ID_COL <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
@@ -2416,7 +2416,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261029.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261103.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2490,64 +2490,72 @@ Table 1: The data this job read
 <span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(key_overlap)) {</span>
 <span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;The ID column cannot be summarized: &quot;</span>, <span class="fu">paste</span>(key_overlap, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>overall_vars <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">names</span>(d)[<span class="fu">vapply</span>(d, is.numeric, <span class="fu">logical</span>(<span class="dv">1</span>))], <span class="fu">c</span>(.id, ID_COL))</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>freqs <span class="ot">&lt;-</span> <span class="fu">lapply</span>(CATEGORICAL, <span class="cf">function</span>(vars) {</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="fu">lapply</span>(vars, <span class="cf">function</span>(v) {</span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>    tab <span class="ot">&lt;-</span> <span class="fu">table</span>(d[[v]], <span class="at">useNA =</span> <span class="st">&quot;ifany&quot;</span>)</span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>    is_na_level <span class="ot">&lt;-</span> <span class="fu">is.na</span>(<span class="fu">names</span>(tab))</span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>    n_int <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(tab)</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>    total_nonmissing <span class="ot">&lt;-</span> <span class="fu">sum</span>(n_int[<span class="sc">!</span>is_na_level])</span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>    percent <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">NA_real_</span>, <span class="fu">length</span>(tab))</span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (total_nonmissing <span class="sc">&gt;</span> <span class="dv">0</span>L) {</span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>      percent[<span class="sc">!</span>is_na_level] <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> n_int[<span class="sc">!</span>is_na_level] <span class="sc">/</span> total_nonmissing, <span class="dv">1</span>)</span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(</span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>      <span class="at">level =</span> <span class="fu">ifelse</span>(is_na_level, <span class="st">&quot;(missing)&quot;</span>, <span class="fu">names</span>(tab)),</span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>      <span class="at">n =</span> n_int,</span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>      <span class="at">percent =</span> percent</span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>  }), vars)</span>
-<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>cdfs <span class="ot">&lt;-</span> <span class="fu">lapply</span>(CONTINUOUS, <span class="cf">function</span>(vars) {</span>
-<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>  stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="fu">lapply</span>(vars, <span class="cf">function</span>(v) {</span>
-<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>    x <span class="ot">&lt;-</span> d[[v]]</span>
-<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>    seen <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="sc">!</span><span class="fu">is.na</span>(x))</span>
-<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>    lowest <span class="ot">&lt;-</span> seen[<span class="fu">order</span>(x[seen])][<span class="fu">seq_len</span>(<span class="fu">min</span>(<span class="dv">5</span>L, <span class="fu">length</span>(seen)))]</span>
-<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>    highest <span class="ot">&lt;-</span> seen[<span class="fu">order</span>(<span class="sc">-</span>x[seen])][<span class="fu">seq_len</span>(<span class="fu">min</span>(<span class="dv">5</span>L, <span class="fu">length</span>(seen)))]</span>
-<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>    extremes <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>      <span class="at">end =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;lowest&quot;</span>, <span class="st">&quot;highest&quot;</span>), <span class="fu">c</span>(<span class="fu">length</span>(lowest), <span class="fu">length</span>(highest))),</span>
-<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>      <span class="at">value =</span> x[<span class="fu">c</span>(lowest, highest)]</span>
-<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(ID_COL)) extremes[[ID_COL]] <span class="ot">&lt;-</span> d[[ID_COL]][<span class="fu">c</span>(lowest, highest)]</span>
-<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(</span>
-<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>      <span class="at">summary =</span> <span class="fu">data.frame</span>(<span class="at">n =</span> <span class="fu">length</span>(seen), <span class="at">nmiss =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(x))),</span>
-<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>      <span class="at">quantiles =</span> <span class="fu">data.frame</span>(</span>
-<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>        <span class="at">percent =</span> <span class="dv">100</span> <span class="sc">*</span> PROBS,</span>
-<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>        <span class="at">value =</span> <span class="cf">if</span> (<span class="fu">length</span>(seen)) stats<span class="sc">::</span><span class="fu">quantile</span>(x[seen], PROBS, <span class="at">type =</span> <span class="dv">2</span>, <span class="at">names =</span> <span class="cn">FALSE</span>) <span class="cf">else</span> <span class="cn">NA_real_</span></span>
-<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>      ),</span>
-<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>      <span class="at">extremes =</span> extremes</span>
-<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>  }), vars)</span>
-<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>corr_vars <span class="ot">&lt;-</span> <span class="fu">unique</span>(CORR_VARS)</span>
-<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a>corrs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">var1 =</span> <span class="fu">character</span>(), <span class="at">var2 =</span> <span class="fu">character</span>(), <span class="at">r =</span> <span class="fu">numeric</span>(), <span class="at">n =</span> <span class="fu">integer</span>())</span>
-<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(corr_vars) <span class="sc">&gt;=</span> <span class="dv">2</span>L) {</span>
-<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a>  pairs <span class="ot">&lt;-</span> utils<span class="sc">::</span><span class="fu">combn</span>(corr_vars, <span class="dv">2</span>L)</span>
-<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a>  pair_stats <span class="ot">&lt;-</span> <span class="fu">apply</span>(pairs, <span class="dv">2</span>L, <span class="cf">function</span>(p) {</span>
-<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a>    ok <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">complete.cases</span>(d[[p[[<span class="dv">1</span>L]]]], d[[p[[<span class="dv">2</span>L]]]])</span>
-<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a>    r <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">sum</span>(ok) <span class="sc">&gt;=</span> <span class="dv">2</span>L) stats<span class="sc">::</span><span class="fu">cor</span>(d[[p[[<span class="dv">1</span>L]]]][ok], d[[p[[<span class="dv">2</span>L]]]][ok]) <span class="cf">else</span> <span class="cn">NA_real_</span></span>
-<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a>    <span class="fu">c</span>(<span class="at">r =</span> r, <span class="at">n =</span> <span class="fu">sum</span>(ok))</span>
-<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a>  corrs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a>    <span class="at">var1 =</span> pairs[<span class="dv">1</span>L, ], <span class="at">var2 =</span> pairs[<span class="dv">2</span>L, ],</span>
-<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a>    <span class="at">r =</span> pair_stats[<span class="st">&quot;r&quot;</span>, ], <span class="at">n =</span> <span class="fu">as.integer</span>(pair_stats[<span class="st">&quot;n&quot;</span>, ])</span>
-<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a>  corrs <span class="ot">&lt;-</span> corrs[<span class="fu">order</span>(<span class="sc">-</span><span class="fu">abs</span>(corrs<span class="sc">$</span>r)), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(corrs) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co"># The ID, every KEY column and any other identifier are kept out of the tables: the</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co"># overall minimum and maximum would each be one patient&#39;s identifier.</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>.selection <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>.no_values <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.no_values</span>(d, .id, .selection<span class="sc">$</span>key, ID_COL)</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">:::</span><span class="fu">.refuse_display</span>(<span class="fu">c</span>(cat_vars, con_vars, CORR_VARS), .no_values, <span class="st">&quot;CATEGORICAL, CONTINUOUS or CORR_VARS&quot;</span>)</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>.overall <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.displayable</span>(<span class="fu">names</span>(d)[<span class="fu">vapply</span>(d, is.numeric, <span class="fu">logical</span>(<span class="dv">1</span>))], .no_values)</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>overall_vars <span class="ot">&lt;-</span> .overall<span class="sc">$</span>keep</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>freqs <span class="ot">&lt;-</span> <span class="fu">lapply</span>(CATEGORICAL, <span class="cf">function</span>(vars) {</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>  stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="fu">lapply</span>(vars, <span class="cf">function</span>(v) {</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>    tab <span class="ot">&lt;-</span> <span class="fu">table</span>(d[[v]], <span class="at">useNA =</span> <span class="st">&quot;ifany&quot;</span>)</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>    is_na_level <span class="ot">&lt;-</span> <span class="fu">is.na</span>(<span class="fu">names</span>(tab))</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>    n_int <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(tab)</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>    total_nonmissing <span class="ot">&lt;-</span> <span class="fu">sum</span>(n_int[<span class="sc">!</span>is_na_level])</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>    percent <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">NA_real_</span>, <span class="fu">length</span>(tab))</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (total_nonmissing <span class="sc">&gt;</span> <span class="dv">0</span>L) {</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>      percent[<span class="sc">!</span>is_na_level] <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> n_int[<span class="sc">!</span>is_na_level] <span class="sc">/</span> total_nonmissing, <span class="dv">1</span>)</span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(</span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>      <span class="at">level =</span> <span class="fu">ifelse</span>(is_na_level, <span class="st">&quot;(missing)&quot;</span>, <span class="fu">names</span>(tab)),</span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>      <span class="at">n =</span> n_int,</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>      <span class="at">percent =</span> percent</span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>  }), vars)</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>cdfs <span class="ot">&lt;-</span> <span class="fu">lapply</span>(CONTINUOUS, <span class="cf">function</span>(vars) {</span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>  stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="fu">lapply</span>(vars, <span class="cf">function</span>(v) {</span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>    x <span class="ot">&lt;-</span> d[[v]]</span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>    seen <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="sc">!</span><span class="fu">is.na</span>(x))</span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>    lowest <span class="ot">&lt;-</span> seen[<span class="fu">order</span>(x[seen])][<span class="fu">seq_len</span>(<span class="fu">min</span>(<span class="dv">5</span>L, <span class="fu">length</span>(seen)))]</span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>    highest <span class="ot">&lt;-</span> seen[<span class="fu">order</span>(<span class="sc">-</span>x[seen])][<span class="fu">seq_len</span>(<span class="fu">min</span>(<span class="dv">5</span>L, <span class="fu">length</span>(seen)))]</span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>    extremes <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>      <span class="at">end =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;lowest&quot;</span>, <span class="st">&quot;highest&quot;</span>), <span class="fu">c</span>(<span class="fu">length</span>(lowest), <span class="fu">length</span>(highest))),</span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>      <span class="at">value =</span> x[<span class="fu">c</span>(lowest, highest)]</span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(ID_COL)) {</span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>      <span class="fu">cat</span>(<span class="fu">paste</span>(v, extremes<span class="sc">$</span>end, extremes<span class="sc">$</span>value, d[[ID_COL]][<span class="fu">c</span>(lowest, highest)]), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">file =</span> <span class="fu">stderr</span>())</span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>      <span class="at">summary =</span> <span class="fu">data.frame</span>(<span class="at">n =</span> <span class="fu">length</span>(seen), <span class="at">nmiss =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(x))),</span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a>      <span class="at">quantiles =</span> <span class="fu">data.frame</span>(</span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>        <span class="at">percent =</span> <span class="dv">100</span> <span class="sc">*</span> PROBS,</span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a>        <span class="at">value =</span> <span class="cf">if</span> (<span class="fu">length</span>(seen)) stats<span class="sc">::</span><span class="fu">quantile</span>(x[seen], PROBS, <span class="at">type =</span> <span class="dv">2</span>, <span class="at">names =</span> <span class="cn">FALSE</span>) <span class="cf">else</span> <span class="cn">NA_real_</span></span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a>      <span class="at">extremes =</span> extremes</span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a>  }), vars)</span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a>corr_vars <span class="ot">&lt;-</span> <span class="fu">unique</span>(CORR_VARS)</span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a>corrs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">var1 =</span> <span class="fu">character</span>(), <span class="at">var2 =</span> <span class="fu">character</span>(), <span class="at">r =</span> <span class="fu">numeric</span>(), <span class="at">n =</span> <span class="fu">integer</span>())</span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(corr_vars) <span class="sc">&gt;=</span> <span class="dv">2</span>L) {</span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a>  pairs <span class="ot">&lt;-</span> utils<span class="sc">::</span><span class="fu">combn</span>(corr_vars, <span class="dv">2</span>L)</span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a>  pair_stats <span class="ot">&lt;-</span> <span class="fu">apply</span>(pairs, <span class="dv">2</span>L, <span class="cf">function</span>(p) {</span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a>    ok <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">complete.cases</span>(d[[p[[<span class="dv">1</span>L]]]], d[[p[[<span class="dv">2</span>L]]]])</span>
+<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a>    r <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">sum</span>(ok) <span class="sc">&gt;=</span> <span class="dv">2</span>L) stats<span class="sc">::</span><span class="fu">cor</span>(d[[p[[<span class="dv">1</span>L]]]][ok], d[[p[[<span class="dv">2</span>L]]]][ok]) <span class="cf">else</span> <span class="cn">NA_real_</span></span>
+<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a>    <span class="fu">c</span>(<span class="at">r =</span> r, <span class="at">n =</span> <span class="fu">sum</span>(ok))</span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a>  corrs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a>    <span class="at">var1 =</span> pairs[<span class="dv">1</span>L, ], <span class="at">var2 =</span> pairs[<span class="dv">2</span>L, ],</span>
+<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a>    <span class="at">r =</span> pair_stats[<span class="st">&quot;r&quot;</span>, ], <span class="at">n =</span> <span class="fu">as.integer</span>(pair_stats[<span class="st">&quot;n&quot;</span>, ])</span>
+<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a>  corrs <span class="ot">&lt;-</span> corrs[<span class="fu">order</span>(<span class="sc">-</span><span class="fu">abs</span>(corrs<span class="sc">$</span>r)), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(corrs) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2706,15 +2714,18 @@ Variables:    41
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: its child chunk carries its own label and caption</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(overall_vars)) {</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-overall-means&quot;</span>,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">Summary statistics of the overall variables</span><span class="sc">\&quot;</span><span class="st">&quot;</span>,</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;proc_means(d, vars = overall_vars, stats = c(</span><span class="sc">\&quot;</span><span class="st">n</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">nmiss</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">mean</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">std</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">min</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">max</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">sum</span><span class="sc">\&quot;</span><span class="st">))&quot;</span>,</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    .fence</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.overall<span class="sc">$</span>left_out)) {</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Left out as patient identifiers:&quot;</span>, <span class="fu">toString</span>(.overall<span class="sc">$</span>left_out), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(overall_vars)) {</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-overall-means&quot;</span>,</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">Summary statistics of the overall variables</span><span class="sc">\&quot;</span><span class="st">&quot;</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;proc_means(d, vars = overall_vars, stats = c(</span><span class="sc">\&quot;</span><span class="st">n</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">nmiss</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">mean</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">std</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">min</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">max</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">sum</span><span class="sc">\&quot;</span><span class="st">))&quot;</span>,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    .fence</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <details class="code-fold">
 <summary>Code</summary>
@@ -2982,26 +2993,25 @@ Table 5: Frequencies, History
 <span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co"># One quantile table per group, a row per variable with its n and nmiss beside</span></span>
 <span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="co"># its quantiles, rather than a one-row count table and a quantile table for</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co"># every variable. The extremes stay one table per variable, since ID_COL can</span></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="co"># add a column to them.</span></span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (group <span class="cf">in</span> <span class="fu">names</span>(cdfs)) {</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">### &quot;</span>, group, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  .quant <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">names</span>(cdfs[[group]]), <span class="cf">function</span>(v) {</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    .cdf <span class="ot">&lt;-</span> cdfs[[group]][[v]]</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>    row <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">as.list</span>(stats<span class="sc">::</span><span class="fu">setNames</span>(.cdf<span class="sc">$</span>quantiles<span class="sc">$</span>value, <span class="fu">paste0</span>(.cdf<span class="sc">$</span>quantiles<span class="sc">$</span>percent, <span class="st">&quot;%&quot;</span>))),</span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>                         <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cbind</span>(<span class="at">variable =</span> v, .cdf<span class="sc">$</span>summary, row)</span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>  }))</span>
-<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="st">&quot;tbl&quot;</span>, <span class="fu">paste</span>(group, <span class="st">&quot;quantiles&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;Quantiles, &quot;</span>, group, <span class="st">&quot; (SAS QNTLDEF=5)&quot;</span>),</span>
-<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::kable(.quant, row.names = FALSE)&quot;</span>)</span>
-<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (v <span class="cf">in</span> <span class="fu">names</span>(cdfs[[group]])) {</span>
-<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>    .cdf <span class="ot">&lt;-</span> cdfs[[group]][[v]]</span>
-<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="st">&quot;tbl&quot;</span>, <span class="fu">paste</span>(group, v, <span class="st">&quot;extremes&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;Five lowest and five highest values, &quot;</span>, v),</span>
-<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::kable(.cdf$extremes)&quot;</span>)</span>
-<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co"># every variable. The extremes stay one table per variable.</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (group <span class="cf">in</span> <span class="fu">names</span>(cdfs)) {</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">### &quot;</span>, group, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  .quant <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">names</span>(cdfs[[group]]), <span class="cf">function</span>(v) {</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    .cdf <span class="ot">&lt;-</span> cdfs[[group]][[v]]</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    row <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">as.list</span>(stats<span class="sc">::</span><span class="fu">setNames</span>(.cdf<span class="sc">$</span>quantiles<span class="sc">$</span>value, <span class="fu">paste0</span>(.cdf<span class="sc">$</span>quantiles<span class="sc">$</span>percent, <span class="st">&quot;%&quot;</span>))),</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>                         <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cbind</span>(<span class="at">variable =</span> v, .cdf<span class="sc">$</span>summary, row)</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>  }))</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="st">&quot;tbl&quot;</span>, <span class="fu">paste</span>(group, <span class="st">&quot;quantiles&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;Quantiles, &quot;</span>, group, <span class="st">&quot; (SAS QNTLDEF=5)&quot;</span>),</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::kable(.quant, row.names = FALSE)&quot;</span>)</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (v <span class="cf">in</span> <span class="fu">names</span>(cdfs[[group]])) {</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>    .cdf <span class="ot">&lt;-</span> cdfs[[group]][[v]]</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="st">&quot;tbl&quot;</span>, <span class="fu">paste</span>(group, v, <span class="st">&quot;extremes&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;Five lowest and five highest values, &quot;</span>, v),</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::kable(.cdf$extremes)&quot;</span>)</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <section id="demography" class="level3">
 <h3 class="anchored" data-anchor-id="demography">Demography</h3>
@@ -3698,7 +3708,7 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 </figure>
 </div>
 </div>
-<p><code>proc_means()</code> covers every numeric column other than <code>ID</code> and <code>ID_COL</code>. Percentages in the contingency tables are over non-missing rows, as SAS <code>MISSPRINT</code> computes them; the <code>(missing)</code> row shows its count with a blank percent. Quantiles are SAS <code>QNTLDEF=5</code>, the <code>proc univariate</code> default. The highest extremes are listed largest first (SAS lists them ascending). The SAS job printed <code>ccfid</code> beside every extreme value so an author could look the patient up; this job prints the values alone unless <code>ID_COL</code> is set under Study choices.</p>
+<p><code>proc_means()</code> covers every numeric column that does not identify a patient. Percentages in the contingency tables are over non-missing rows, as SAS <code>MISSPRINT</code> computes them; the <code>(missing)</code> row shows its count with a blank percent. Quantiles are SAS <code>QNTLDEF=5</code>, the <code>proc univariate</code> default. The highest extremes are listed largest first (SAS lists them ascending). The SAS job printed <code>ccfid</code> beside every extreme value so an author could look the patient up; this job prints the values alone, and <code>ID_COL</code> lists them with the identifier on the console, never in this report.</p>
 </section>
 <section id="about-this-run" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="about-this-run">About this run</h2>
@@ -3714,12 +3724,12 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-29 12:40:08 EDT</td>
+<td style="text-align: left;">2026-11-03 08:14:51 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-29 12:40:08 EDT</td>
+<td style="text-align: left;">2026-11-03 08:14:52 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3764,17 +3774,17 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.4</td>
+<td style="text-align: left;">1.5.5</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261029.parquet</td>
+<td style="text-align: left;">built_20261103.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-29</td>
+<td style="text-align: left;">2026-11-03</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3814,7 +3824,7 @@ Table 14: Pearson correlations, pairwise complete, strongest first
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dc.general.cohort.eda","rendered":"2026-10-29T16:40:08Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.5.4","source":null},{"package":"hvtiRutilities","version":"1.5.17","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261029.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-29T16:34:24Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-10-29T12:40:08-0400","end":"2026-10-29T12:40:08-0400","time_zone":"EDT","duration_seconds":0.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.general.cohort.eda.qmd","template":"dc.general","prefix":"dc","qualifier":"general","subject":"cohort","type":"eda","hvtiRtemplates":"1.5.4"},"datasets":[{"name":"built","version_file":"built_20261029.parquet","registered":"2026-10-29","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"10_descriptive/dc.general.cohort.eda.qmd",".hvti_render_id":"4fb0da64a11e42e148825f03e0932230964d60c7093dbb5b0e4e7700aa296900",".hvti_source_sha256":"9929933e2342121fe8bd88c3914d834da8e8107d404b177a43ee4b997cfbbbc2"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"dc.general.cohort.eda","rendered":"2026-11-03T13:14:52Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.5.5","source":"github","sha":"f07705891093932be2b3d180444d64d07f187071"},{"package":"hvtiRutilities","version":"1.5.19","source":"github","sha":"5359155a4da9a3b403df9acfb9e529c4d2444489"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261103.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-03T13:11:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-11-03T08:14:51-0500","end":"2026-11-03T08:14:52-0500","time_zone":"EST","duration_seconds":0.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.general.cohort.eda.qmd","template":"dc.general","prefix":"dc","qualifier":"general","subject":"cohort","type":"eda","hvtiRtemplates":"1.5.5"},"datasets":[{"name":"built","version_file":"built_20261103.parquet","registered":"2026-11-03","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"10_descriptive/dc.general.cohort.eda.qmd",".hvti_render_id":"98b8bd4a675722d23e4d2d377241011bb786d7d8c8f7054f3b7e053d65ba2a7e",".hvti_source_sha256":"f015ae2ef18391b6e3fe2d998f227342d4adbe0ba06e033ad437770d8c008e6f"}</script>
 </section>
 
 </main>

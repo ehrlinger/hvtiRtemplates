@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:48
+2026-11-03 08:21
 
 Explains the forest the `rfr-fit` job in this set saved: which
 predictors drive it, and how.
@@ -74,7 +74,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.4
+hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -216,7 +216,7 @@ save_figure(.fig, "rfr-explain-importance", height = 7)
 .fig
 ```
 
-![](assets/adbfdb110d2212687a4096bd0ada0c7e.png)
+![](assets/05f8b6490b804817403dc044510d0b34.png)
 
 Figure 1: VIMP (anti-split importance) of each predictor. Horizontal
 bars give the importance of each predictor, in one color where the
@@ -236,15 +236,15 @@ data.frame(variable = ranked,
 ```
 
       variable   vimp min_depth
-    1      age 0.1795      0.94
-    2     lvef 0.0532      1.51
-    3      bmi 0.0264      2.14
-    4  nyha_pr 0.0208      2.00
-    5    hx_dm 0.0190      2.00
-    6 plvmassi 0.0186      2.75
-    7   hx_chf 0.0045      3.39
-    8 creat_pr 0.0021      6.60
-    9   female 0.0002      4.37
+    1      age 0.1829      0.94
+    2     lvef 0.0532      1.55
+    3      bmi 0.0287      2.07
+    4  nyha_pr 0.0225      2.20
+    5    hx_dm 0.0206      1.90
+    6 plvmassi 0.0166      2.66
+    7 creat_pr 0.0022      6.74
+    8   hx_chf 0.0020      3.50
+    9   female 0.0004      4.29
 
 Table 2: VIMP (anti-split importance) and minimal depth of each
 predictor, in order of importance
@@ -332,7 +332,7 @@ Code
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/93f04fb04c529307eadb1d15deed3ff0.png)
+![](assets/c1dad40121d2b09a84c49de5226564e4.png)
 
 Figure 2: Predicted outcome against each selected predictor, as
 observed, one panel per predictor. Black filled circles are individual
@@ -370,7 +370,7 @@ Code
 .fig
 ```
 
-![](assets/f3ff2f9e4e775aec2d40836c937cac55.png)
+![](assets/77dc9ba7936e9ab40dc32056c172a0f9.png)
 
 Figure 3: Partial dependence of the forest’s prediction on each selected
 predictor, one panel per predictor. Black solid lines trace the partial
@@ -381,9 +381,9 @@ level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 12:48:31 EDT |
-|  | Ended | 2026-10-29 12:48:40 EDT |
-|  | Duration | 9 s |
+| Run | Started | 2026-11-03 08:21:25 EST |
+|  | Ended | 2026-11-03 08:21:31 EST |
+|  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -391,13 +391,13 @@ level of a categorical one.
 |  | Template | rfr.explain |
 |  | Subject | los |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.5.4 |
-| Dataset `built` | Version file | built_20261029.parquet |
-|  | Version date | 2026-10-29 |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-10-29 12:48:19 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-11-03 08:21:18 -0500, data built_20261103.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

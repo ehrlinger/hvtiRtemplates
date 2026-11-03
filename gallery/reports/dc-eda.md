@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:39
+2026-11-03 08:14
 
 Replaces an older EDA report.
 
@@ -47,6 +47,13 @@ if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
 if (!requireNamespace("patchwork", quietly = TRUE)) {
   stop("This job needs the patchwork package. Install it, then re-render.", call. = FALSE)
 }
+# Checked by what it has, not its version: the release that adds the house ODS
+# list and the one before it can carry the same number until the next bump.
+if (!exists(".ods_groups", envir = asNamespace("hvtiRtemplates"), inherits = FALSE)) {
+  stop("This job needs an hvtiRtemplates with the house ODS variable list, newer than the ",
+       utils::packageVersion("hvtiRtemplates"), " installed. Run hvtiR::update(force = TRUE), then re-render.",
+       call. = FALSE)
+}
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
@@ -69,14 +76,17 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
 Set the values in this chunk before rendering. Left as they are, they
-draw the all-deaths follow-up panel and every column of the study
-dataset.
+draw the all-deaths follow-up panel and the study dataset’s columns on
+the house ODS list, the variables the SAS ODS tables report.
+`VARIABLE_SET <- "all"` draws every column instead. The report is a data
+check: its tables and figures may show ranges, so they are not
+manuscript figures, and they do not go in a paper as saved.
 
 Code
 
@@ -166,14 +176,15 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", dea
 # decimal calendar year: whole years for the percent and count bars, the point
 # in the year for the continuous panels. Any other column is drawn as it is.
 # Set both when time 0 is not an operation, such as an enrollment date.
-# VARIABLES is NULL to draw every column, or the columns to draw, in page
+# VARIABLES is NULL to draw the VARIABLE_SET below, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
 # column here to draw it anyway. The job's ID is never drawn, even when named
 # here. A KEY column beside it, such as a visit time, is left out of NULL but
 # drawn when named here, as that column's own distribution; a measure's course
 # over visits is a spaghetti plot, drawn by hvtiPlotR::hv_spaghetti, not a page here.
-# The follow-up columns are drawn too, like any other column.
+# The follow-up columns are drawn too, like any other column, but the ODS list
+# carries only dead and iv_dead: name an event's columns here to draw them.
 # A named column that is not in the data stops the render, and the error
 # lists every missing name at once.
 # GRID_NCOL by GRID_NROW panels make a page, and a page is drawn on the printed
@@ -186,7 +197,7 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", dea
 # panels: 0.5 lets a dense cohort read as a distribution rather than a blob.
 # MIGRATE-BEGIN: dc-eda-variables
 X_VAR <- "dt_surg"                 # Demo: the reference date or year column
-VARIABLES <- NULL                  # Demo: NULL draws every column, or name them
+VARIABLES <- NULL                  # Demo: NULL draws VARIABLE_SET, or name them
 EXCLUDE <- character(0)
 GRID_NCOL <- 2L
 GRID_NROW <- 4L
@@ -194,6 +205,16 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dc-eda-variables
+# Demo: what VARIABLES = NULL draws. "ods" draws the house descriptive list, so
+# named because it is every variable the SAS ODS tables (dc.tables.ods.sas)
+# report, in their section order: a built dataset carries far more columns than
+# anyone wants a page for. Only the listed columns this dataset has are drawn,
+# and the report counts them. It also lists this dataset's columns left out, so a
+# study's own variables are one name away in VARIABLES. "all" draws every column, as dc-eda did before this choice existed.
+# The list ships with the package as extdata/ods-variables.csv, so a study adds to
+# VARIABLES rather than editing it. To read it: hvtiRtemplates:::.ods_groups().
+# dc-tables carries the same list as its commented GROUPS example.
+VARIABLE_SET <- "ods"
 X_LABEL <- "Year of operation"     # Demo: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 
 # Demo: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
@@ -246,7 +267,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -283,6 +304,9 @@ if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
   stop("VARIABLES must be NULL or name distinct columns.", call. = FALSE)
 }
 if (!column_names(EXCLUDE)) stop("EXCLUDE must name distinct columns.", call. = FALSE)
+if (!is.character(VARIABLE_SET) || length(VARIABLE_SET) != 1L || !VARIABLE_SET %in% c("ods", "all")) {
+  stop("VARIABLE_SET must be \"ods\" or \"all\".", call. = FALSE)
+}
 positive_whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x > 0 && x == floor(x)
 for (value in list(GRID_NCOL, GRID_NROW, UNIQUE_LIMIT)) {
   if (!positive_whole(value)) stop("Grid dimensions and UNIQUE_LIMIT must be positive whole numbers.", call. = FALSE)
@@ -307,9 +331,10 @@ if (length(unknown)) {
        if (X_VAR %in% unknown) " Set X_VAR in the study choices to the study's reference date or year column.",
        call. = FALSE)
 }
-# The job's ID and KEY columns are left out by default, and the ID is never
-# drawn: they are the columns the data step used, so a ccfid, or the MRN it fell
-# back to, is caught whatever its case. A KEY column named in VARIABLES is drawn.
+# No identifier is drawn or summarized: the job's ID and KEY columns, which are the
+# columns the data step used, so a ccfid, or the MRN it fell back to, is caught
+# whatever its case, and any other column .no_values() names. Left out by default,
+# they stop the job when named in VARIABLES.
 # Direct identifiers (MRN, SSNs, names, contact details) are dropped at read, unless one is the ID. The name rules
 # catch other identifier columns and dates: an id or identifier token, such as
 # hosp_id, a date token or a _dt suffix, and the names ccfid and patientid,
@@ -318,10 +343,10 @@ if (length(unknown)) {
 # nobody listed: dates, and text in which every value differs, once there are
 # ten or more of them.
 .job_selection <- attr(job_data$record, "selection")
-is_job_id <- function(v) tolower(v) %in% tolower(.job_selection$id)
-is_job_key <- function(v) tolower(v) %in% tolower(c(.job_selection$id, .job_selection$key))
-looks_like_id <- function(v, job_key = TRUE) {
-  (job_key & is_job_key(v)) |
+.no_values <- hvtiRtemplates:::.no_values(d, .job_selection$id, .job_selection$key)
+hvtiRtemplates:::.refuse_display(X_VAR, .no_values, "X_VAR")
+looks_like_id <- function(v) {
+  !(v %in% hvtiRtemplates:::.displayable(v, .no_values)$keep) |
     grepl("(^|_)(id|identifier|date|datetime)($|_)|_dt$", v, ignore.case = TRUE) |
     grepl("^(ccf|pat|patient|study|subject|record|case)_?(id|num|no)$|^e?mrn$", v, ignore.case = TRUE) |
     vapply(d[v], function(x) {
@@ -332,29 +357,44 @@ looks_like_id <- function(v, job_key = TRUE) {
 }
 if (is.null(VARIABLES)) {
   candidates <- setdiff(names(d), c(X_VAR, EXCLUDE))
+  # The list chooses the continuous, percent and count pages; a follow-up-only
+  # report draws none of them, so it neither needs nor checks the list.
+  if (VARIABLE_SET == "ods" && any(SECTIONS != "followup")) {
+    # The list's order, which is its section order, is the page order.
+    ods <- unlist(hvtiRtemplates:::.ods_groups(), use.names = FALSE)
+    # Matched whatever the case: a joined dataset's names need not be lowercase.
+    on_list <- tolower(candidates) %in% ods
+    outside <- candidates[!on_list]
+    candidates <- candidates[on_list]
+    candidates <- candidates[order(match(tolower(candidates), ods))]
+    if (!length(candidates)) {
+      stop("None of the house ODS list's columns is in this dataset. Set VARIABLE_SET <- \"all\", or name the ",
+           "columns in VARIABLES.", call. = FALSE)
+    }
+    cat(length(candidates), "of the", length(ods), "columns on the house ODS list are in this dataset.\n")
+    if (length(outside)) {
+      cat("Not drawn, as columns outside the house ODS list (name them in VARIABLES, or set VARIABLE_SET <- \"all\"):",
+          paste(outside, collapse = ", "), "\n")
+    }
+  }
   left_out <- candidates[looks_like_id(candidates)]
   VARIABLES <- setdiff(candidates, left_out)
   if (length(left_out)) {
-    cat("Left out as identifier or date columns (name them in VARIABLES to draw them; the job's ID is never drawn):",
+    cat("Left out as identifier or date columns (name a date in VARIABLES to draw it; an identifier is never drawn):",
         paste(left_out, collapse = ", "), "\n")
   }
 } else {
   VARIABLES <- setdiff(VARIABLES, EXCLUDE)
-  if (any(is_job_id(VARIABLES))) {
-    warning("Not drawn, as the job's ID: ", paste(VARIABLES[is_job_id(VARIABLES)], collapse = ", "),
-            call. = FALSE)
-    VARIABLES <- VARIABLES[!is_job_id(VARIABLES)]
-  }
-  # A KEY column named here was chosen on purpose, so it is not flagged for being
-  # a KEY; the name, date and free-text rules still apply to it.
-  suspect <- looks_like_id(VARIABLES, job_key = FALSE)
+  hvtiRtemplates:::.refuse_display(VARIABLES, .no_values, "VARIABLES")
+  suspect <- looks_like_id(VARIABLES)
   if (any(suspect)) {
     warning("Selected likely identifier or date field(s): ", paste(VARIABLES[suspect], collapse = ", "), call. = FALSE)
   }
 }
 ```
 
-    Left out as identifier or date columns (name them in VARIABLES to draw them; the job's ID is never drawn): patient_id 
+    11 of the 239 columns on the house ODS list are in this dataset.
+    Not drawn, as columns outside the house ODS list (name them in VARIABLES, or set VARIABLE_SET <- "all"): patient_id, hx_dm, lvef, reop, iv_reop, vent, icu_hours, male, nonwhite, stroke, mr_grade, discharge, approach, valve_size, valve_type, prior_ops, match_pair, complication, los, log_los, cpb_time, lvedd, lvesd, la_diam, rvsp, e_e, mv_procedure, reint, iv_reint 
 
 Code
 
@@ -804,7 +844,7 @@ Code
 figure_files <- c(figure_files, draw_section("continuous"))
 ```
 
-## Continuous variables (18)
+## Continuous variables (6)
 
 Code
 
@@ -814,24 +854,12 @@ knitr::kable(stats, digits = 2, row.names = FALSE)
 
 | variable | label | n | nmiss | mean | std | min | p15 | median | p85 | max |
 |:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| iv_opyrs | Years from 1 January 1990 to operation | 800 | 0 | 17.43 | 9.83 | 0.07 | 5.80 | 17.38 | 29.02 | 34.94 |
 | age | Age at operation (years) | 800 | 0 | 62.38 | 12.18 | 32.00 | 49.00 | 63.00 | 75.00 | 100.00 |
 | bmi | Body mass index (kg/m2) | 800 | 0 | 27.90 | 4.46 | 15.10 | 23.20 | 27.80 | 32.35 | 44.80 |
-| lvef | LV ejection fraction (%) | 800 | 0 | 51.78 | 9.79 | 20.00 | 42.00 | 52.00 | 62.00 | 75.00 |
 | plvmassi | LV mass index (g/m2) | 800 | 0 | 121.03 | 29.41 | 28.00 | 91.00 | 121.00 | 152.00 | 207.00 |
 | creat_pr | Creatinine (mg/dL) | 725 | 75 | 1.09 | 0.36 | 0.43 | 0.75 | 1.02 | 1.43 | 2.76 |
+| iv_opyrs | Years from 1 January 1990 to operation | 800 | 0 | 17.43 | 9.83 | 0.07 | 5.80 | 17.38 | 29.02 | 34.94 |
 | iv_dead | Follow-up to death or censoring (years) | 800 | 0 | 9.48 | 8.09 | 0.00 | 1.54 | 7.14 | 18.96 | 34.60 |
-| iv_reop | Follow-up to reoperation (years) | 800 | 0 | 7.32 | 6.66 | 0.00 | 1.17 | 5.40 | 13.80 | 33.93 |
-| icu_hours | Hours in intensive care | 800 | 0 | 33.92 | 20.15 | 4.00 | 10.00 | 34.00 | 56.00 | 108.00 |
-| los | Postoperative length of stay (days) | 800 | 0 | 6.32 | 2.62 | 1.00 | 4.00 | 6.00 | 9.00 | 19.00 |
-| log_los | Postoperative length of stay (log days) | 800 | 0 | 1.76 | 0.40 | 0.00 | 1.39 | 1.79 | 2.20 | 2.94 |
-| cpb_time | Cardiopulmonary bypass time (minutes) | 800 | 0 | 104.79 | 24.62 | 35.00 | 79.00 | 105.00 | 131.00 | 185.00 |
-| lvedd | LV end-diastolic dimension (cm) | 757 | 43 | 5.34 | 0.82 | 3.70 | 4.50 | 5.10 | 6.40 | 7.20 |
-| lvesd | LV end-systolic dimension (cm) | 763 | 37 | 3.71 | 1.01 | 2.10 | 2.80 | 3.30 | 5.10 | 6.10 |
-| la_diam | Left atrial diameter (cm) | 754 | 46 | 4.27 | 0.62 | 2.80 | 3.60 | 4.20 | 5.00 | 6.00 |
-| rvsp | RV systolic pressure (mmHg) | 766 | 34 | 38.39 | 11.73 | 10.00 | 26.00 | 37.00 | 52.00 | 68.00 |
-| e_e | Mitral E/e’ ratio | 757 | 43 | 12.11 | 4.42 | 0.30 | 7.60 | 11.70 | 17.10 | 25.20 |
-| iv_reint | Follow-up to reintervention, death or censoring (years) | 800 | 0 | 8.19 | 7.47 | 0.00 | 1.24 | 6.01 | 16.49 | 34.43 |
 
 Table 5: Continuous variables
 
@@ -843,48 +871,14 @@ Code
 knitr::include_graphics(.link, error = FALSE)
 ```
 
-![](assets/b1474d2205acc2763739ed5012ba9ea8.png)
+![](assets/5bc24cd8b80812dbefe6834b713a4fff.png)
 
-Figure 3: Continuous variables, page 1: Years from 1 January 1990 to
-operation, Age at operation (years), Body mass index (kg/m2), LV
-ejection fraction (%), LV mass index (g/m2), Creatinine (mg/dL),
-Follow-up to death or censoring (years), Follow-up to reoperation
-(years). Black filled circles mark patients, the solid blue line a LOESS
-smooth where a variable has enough distinct values, and gray ticks along
-the bottom the patients missing the variable.
-
-### Continuous variables, page 2
-
-Code
-
-``` r
-knitr::include_graphics(.link, error = FALSE)
-```
-
-![](assets/a9f171964d284bdabf8faa2ad4104339.png)
-
-Figure 4: Continuous variables, page 2: Hours in intensive care,
-Postoperative length of stay (days), Postoperative length of stay (log
-days), Cardiopulmonary bypass time (minutes), LV end-diastolic dimension
-(cm), LV end-systolic dimension (cm), Left atrial diameter (cm), RV
-systolic pressure (mmHg). Black filled circles mark patients, the solid
-blue line a LOESS smooth where a variable has enough distinct values,
-and gray ticks along the bottom the patients missing the variable.
-
-### Continuous variables, page 3
-
-Code
-
-``` r
-knitr::include_graphics(.link, error = FALSE)
-```
-
-![](assets/808b1b75e2e57fba6968c3ea704acd8a.png)
-
-Figure 5: Continuous variables, page 3: Mitral E/e’ ratio, Follow-up to
-reintervention, death or…. Black filled circles mark patients, the solid
-blue line a LOESS smooth where a variable has enough distinct values,
-and gray ticks along the bottom the patients missing the variable.
+Figure 3: Continuous variables, page 1: Age at operation (years), Body
+mass index (kg/m2), LV mass index (g/m2), Creatinine (mg/dL), Years from
+1 January 1990 to operation, Follow-up to death or censoring (years).
+Black filled circles mark patients, the solid blue line a LOESS smooth
+where a variable has enough distinct values, and gray ticks along the
+bottom the patients missing the variable.
 
 Code
 
@@ -892,7 +886,7 @@ Code
 figure_files <- c(figure_files, draw_section("percent"))
 ```
 
-## Categorical variables, percent (21)
+## Categorical variables, percent (5)
 
 Code
 
@@ -900,60 +894,21 @@ Code
 knitr::kable(freq, row.names = FALSE)
 ```
 
-| variable     | level         |   n | percent |
-|:-------------|:--------------|----:|--------:|
-| female       | 0             | 501 |    62.6 |
-| female       | 1             | 299 |    37.4 |
-| race_grp     | Black         | 111 |    13.9 |
-| race_grp     | Other         |  58 |     7.2 |
-| race_grp     | White         | 631 |    78.9 |
-| hx_chf       | 0             | 557 |    69.6 |
-| hx_chf       | 1             | 243 |    30.4 |
-| hx_dm        | 0             | 625 |    78.1 |
-| hx_dm        | 1             | 175 |    21.9 |
-| nyha_pr      | 1             | 129 |    16.1 |
-| nyha_pr      | 2             | 360 |    45.0 |
-| nyha_pr      | 3             | 275 |    34.4 |
-| nyha_pr      | 4             |  36 |     4.5 |
-| dead         | 0             | 355 |    44.4 |
-| dead         | 1             | 445 |    55.6 |
-| reop         | 0             | 600 |    75.0 |
-| reop         | 1             | 200 |    25.0 |
-| vent         | 0             | 548 |    68.5 |
-| vent         | 1             | 252 |    31.5 |
-| male         | 0             | 299 |    37.4 |
-| male         | 1             | 501 |    62.6 |
-| nonwhite     | 0             | 631 |    78.9 |
-| nonwhite     | 1             | 169 |    21.1 |
-| stroke       | no            | 722 |    90.2 |
-| stroke       | yes           |  78 |     9.8 |
-| mr_grade     | mild          | 186 |    23.2 |
-| mr_grade     | moderate      | 130 |    16.2 |
-| mr_grade     | none          | 417 |    52.1 |
-| mr_grade     | severe        |  67 |     8.4 |
-| discharge    | home          | 520 |    65.0 |
-| discharge    | nursing       |  86 |    10.8 |
-| discharge    | rehab         | 194 |    24.2 |
-| approach     | surgical      | 514 |    64.2 |
-| approach     | transcatheter | 286 |    35.8 |
-| valve_size   | large         | 216 |    27.0 |
-| valve_size   | medium        | 323 |    40.4 |
-| valve_size   | small         | 261 |    32.6 |
-| valve_type   | bioprosthetic | 361 |    45.1 |
-| valve_type   | homograft     |  52 |     6.5 |
-| valve_type   | mechanical    | 387 |    48.4 |
-| prior_ops    | 0             | 557 |    69.6 |
-| prior_ops    | 1             | 183 |    22.9 |
-| prior_ops    | 2             |  49 |     6.1 |
-| prior_ops    | 3             |  11 |     1.4 |
-| match_pair   | 0             | 325 |    40.6 |
-| match_pair   | 1             | 475 |    59.4 |
-| complication | 0             | 654 |    81.8 |
-| complication | 1             | 146 |    18.2 |
-| mv_procedure | repair        | 412 |    51.5 |
-| mv_procedure | replace       | 388 |    48.5 |
-| reint        | 0             | 671 |    83.9 |
-| reint        | 1             | 129 |    16.1 |
+| variable | level |   n | percent |
+|:---------|:------|----:|--------:|
+| female   | 0     | 501 |    62.6 |
+| female   | 1     | 299 |    37.4 |
+| race_grp | Black | 111 |    13.9 |
+| race_grp | Other |  58 |     7.2 |
+| race_grp | White | 631 |    78.9 |
+| nyha_pr  | 1     | 129 |    16.1 |
+| nyha_pr  | 2     | 360 |    45.0 |
+| nyha_pr  | 3     | 275 |    34.4 |
+| nyha_pr  | 4     |  36 |     4.5 |
+| hx_chf   | 0     | 557 |    69.6 |
+| hx_chf   | 1     | 243 |    30.4 |
+| dead     | 0     | 355 |    44.4 |
+| dead     | 1     | 445 |    55.6 |
 
 Table 6: Categorical variables, missing counted
 
@@ -965,41 +920,11 @@ Code
 hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-Figure 6: Categorical variables, percent, page 1: Female, Race, History
-of heart failure, Diabetes, NYHA functional class, Death, Reoperation,
-Prolonged ventilation. Stacked bars give the share of patients at each
-reference value, one house color per category. The categories are told
-apart by color alone; the categorical frequency table above names them.
-
-### Categorical variables, percent, page 2
-
-Code
-
-``` r
-hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
-```
-
-Figure 7: Categorical variables, percent, page 2: Male, Non-white race,
-Postoperative stroke, Postoperative mitral regurgitation grade,
-Discharge destination, Surgical or transcatheter replacement, Prosthesis
-size, Prosthesis type. Stacked bars give the share of patients at each
-reference value, one house color per category. The categories are told
-apart by color alone; the categorical frequency table above names them.
-
-### Categorical variables, percent, page 3
-
-Code
-
-``` r
-hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
-```
-
-Figure 8: Categorical variables, percent, page 3: Number of prior
-cardiac operations, In a matched pair (simulated), Major postoperative
-complication, Mitral repair or replacement, Reintervention. Stacked bars
-give the share of patients at each reference value, one house color per
-category. The categories are told apart by color alone; the categorical
-frequency table above names them.
+Figure 4: Categorical variables, percent, page 1: Female, Race, NYHA
+functional class, History of heart failure, Death. Stacked bars give the
+share of patients at each reference value, one house color per category.
+The categories are told apart by color alone; the categorical frequency
+table above names them.
 
 Code
 
@@ -1007,7 +932,7 @@ Code
 figure_files <- c(figure_files, draw_section("count"))
 ```
 
-## Categorical variables, counts (21)
+## Categorical variables, counts (5)
 
 ### Categorical variables, counts, page 1
 
@@ -1017,39 +942,9 @@ Code
 hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-Figure 9: Categorical variables, counts, page 1: Female, Race, History
-of heart failure, Diabetes, NYHA functional class, Death, Reoperation,
-Prolonged ventilation. Stacked bars give the number of patients at each
-reference value, one house color per category. The categories are told
-apart by color alone; the categorical frequency table above names them.
-
-### Categorical variables, counts, page 2
-
-Code
-
-``` r
-hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
-```
-
-Figure 10: Categorical variables, counts, page 2: Male, Non-white race,
-Postoperative stroke, Postoperative mitral regurgitation grade,
-Discharge destination, Surgical or transcatheter replacement, Prosthesis
-size, Prosthesis type. Stacked bars give the number of patients at each
-reference value, one house color per category. The categories are told
-apart by color alone; the categorical frequency table above names them.
-
-### Categorical variables, counts, page 3
-
-Code
-
-``` r
-hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
-```
-
-Figure 11: Categorical variables, counts, page 3: Number of prior
-cardiac operations, In a matched pair (simulated), Major postoperative
-complication, Mitral repair or replacement, Reintervention. Stacked bars
-give the number of patients at each reference value, one house color per
+Figure 5: Categorical variables, counts, page 1: Female, Race, NYHA
+functional class, History of heart failure, Death. Stacked bars give the
+number of patients at each reference value, one house color per
 category. The categories are told apart by color alone; the categorical
 frequency table above names them.
 
@@ -1057,9 +952,9 @@ frequency table above names them.
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:39:27 EDT  |
-|                 | Ended            | 2026-10-29 12:39:58 EDT  |
-|                 | Duration         | 31 s                     |
+| Run             | Started          | 2026-11-03 08:14:34 EST  |
+|                 | Ended            | 2026-11-03 08:14:44 EST  |
+|                 | Duration         | 10 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -1067,9 +962,9 @@ frequency table above names them.
 |                 | Template         | dc.eda                   |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
+|                 | hvtiRtemplates   | 1.5.5                    |
+| Dataset `built` | Version file     | built_20261103.parquet   |
+|                 | Version date     | 2026-11-03               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

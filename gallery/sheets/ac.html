@@ -40,7 +40,7 @@
 <ul>
 <li><strong>A study.</strong> The job runs inside a study folder set up with <code>_study.yml</code>. <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html">Start a new study</a> shows how.</li>
 <li><strong>The study's data.</strong> <code>DATASET</code> names the registered dataset it reads (<code>&quot;built&quot;</code> unless you change it). A draft can read a build that is not registered yet, so you can start before the build is final, and the report then says it is a draft. A final render reads registered data only: register the build with <code>hvtiRutilities::update_manifest()</code> first.</li>
-<li><strong>Packages:</strong> <code>hvtiRutilities</code>, <code>patchwork</code>, <code>TemporalHazard</code> (&gt;= 1.2.12), <code>hvtiPlotR</code> (&gt;= 2.7.18). The job checks each floor when it starts, so an older library stops it at the top rather than partway through.</li>
+<li><strong>Packages:</strong> <code>hvtiRutilities</code>, <code>patchwork</code>, <code>TemporalHazard</code> (&gt;= 1.2.12), <code>hvtiPlotR</code> (&gt;= 2.8.20). The job checks each floor when it starts, so an older library stops it at the top rather than partway through.</li>
 </ul>
 <h2>Outline</h2>
 <p>These are the job's own sections, in order. The detail lives in the template: the comments at each <code>EDIT:</code> marker say what to set and why, and <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-what-you-have-to-change">Work a job</a> shows three ways to find them.</p>
@@ -61,7 +61,7 @@
 <ul>
 <li><strong>hp</strong> reads what this job saves (<code>ac.rds</code>). Add it to the same set, with this job's <code>subject</code> and <code>type</code>, because that shared pair is how it finds the file: <code>add_job(&quot;hp&quot;, subject = &quot;&lt;subject&gt;&quot;, type = &quot;&lt;type&gt;&quot;)</code>.</li>
 </ul>
-<footer>Generated from the template by hvtiRtemplates, 1.5.4 · built 2026-10-29. The template holds the details; this sheet is its outline.</footer>
+<footer>Generated from the template by hvtiRtemplates, 1.5.5 · built 2026-11-03. The template holds the details; this sheet is its outline.</footer>
 </main>
 </body>
 </html>

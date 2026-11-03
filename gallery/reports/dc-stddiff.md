@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:40
+2026-11-03 08:14
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -181,7 +181,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -210,6 +210,9 @@ Code
 # so a misspelled column stops here by name rather than as an error from inside
 # ps_stddiff().
 .id <- attr(job_data$record, "selection")$id
+.selection <- attr(job_data$record, "selection")
+.no_values <- hvtiRtemplates:::.no_values(d, .selection$id, .selection$key)
+hvtiRtemplates:::.refuse_display(c(GROUP, GAUSSIAN, NONG_ORD, BINARY, CATEGORICAL), .no_values, "GROUP or the variable lists")
 one_column <- function(x, setting) {
   if (!is.null(x) && !(is.character(x) && length(x) == 1L && !is.na(x))) {
     stop(setting, " must be NULL or a single column name.", call. = FALSE)
@@ -339,6 +342,19 @@ if (N_PERM > 0) {
     names(perm[[nm]]) <- c("variable", "label", "type", "observed", "2.5%", "16%", "50%", "84%", "97.5%")
   }
 }
+```
+
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The report shows each comparison's group sizes and differences, never a variable's levels or
+# values. A weighted comparison has the unadjusted patients, so only the matched set adds a count.
+cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, lapply(setdiff(names(comparisons), "Weighted"), function(nm) {
+  .g <- comparisons[[nm]]$data[GROUP]
+  if (nm != "Unadjusted") names(.g) <- paste0(GROUP, ", ", nm)
+  hvtiRtemplates:::.identifiability_check(.g, by = names(.g))
+}))))
 ```
 
 ## Groups compared
@@ -542,9 +558,9 @@ rather than balance, so it is not part of this job.
 
 | Group           | Item             | Value                           |
 |:----------------|:-----------------|:--------------------------------|
-| Run             | Started          | 2026-10-29 12:40:15 EDT         |
-|                 | Ended            | 2026-10-29 12:40:16 EDT         |
-|                 | Duration         | 2 s                             |
+| Run             | Started          | 2026-11-03 08:14:57 EST         |
+|                 | Ended            | 2026-11-03 08:14:58 EST         |
+|                 | Duration         | 1 s                             |
 |                 | Status           | final                           |
 |                 | Rendered by      | gallery                         |
 |                 | Host             | gallery                         |
@@ -552,9 +568,9 @@ rather than balance, so it is not part of this job.
 |                 | Template         | dc.stddiff                      |
 |                 | Subject          | approach                        |
 |                 | Type             | balance                         |
-|                 | hvtiRtemplates   | 1.5.4                           |
-| Dataset `built` | Version file     | built_20261029.parquet          |
-|                 | Version date     | 2026-10-29                      |
+|                 | hvtiRtemplates   | 1.5.5                           |
+| Dataset `built` | Version file     | built_20261103.parquet          |
+|                 | Version date     | 2026-11-03                      |
 |                 | Source file      | built.rds                       |
 |                 | Rows kept        | 800 rows on 800 patients        |
 |                 | WHERE            | none                            |

@@ -2235,7 +2235,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-29 12:48</p>
+      <p class="date">2026-11-03 08:21</p>
     </div>
   </div>
   
@@ -2247,7 +2247,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: rfc.explain 1.5.4 sha256:8aeb1afd6bd24b02a13b72c2eb7a2d4cfe175e42df0fc7b4885af22914e63417 -->
+<!-- hvtiRtemplates: rfc.explain 1.5.5 sha256:8aeb1afd6bd24b02a13b72c2eb7a2d4cfe175e42df0fc7b4885af22914e63417 -->
 <!-- Demo: say which rfc-fit job in this set this explains, and what question
      the importance and dependence plots are meant to answer. -->
 <p>Explains the forest the <code>rfc-fit</code> job in this set saved: which predictors drive it, and how.</p>
@@ -2332,7 +2332,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.4</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.5</p>
 </div>
 </div>
 </div>
@@ -2509,7 +2509,7 @@ Table 1: The data the fit job read
 <div id="fig-importance" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/ab1b9014a8046084b9b81a46651ef55e.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/bdea3d6885dd2dd8aad48541f9cdb9f1.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 1: VIMP (anti-split importance) of each predictor, overall and for each class. Horizontal bars give the importance of each predictor, one panel for the overall forest and one for each class, in one color where the importance is positive and another where it is not, as in the legend.
@@ -2541,15 +2541,15 @@ Table 2: VIMP (anti-split importance) and minimal depth of each predictor, in o
 <div aria-describedby="tbl-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output cell-output-stdout">
 <pre><code>  variable    vimp min_depth
-1 creat_pr  0.1417      2.11
-2     lvef  0.0675      1.57
-3   hx_chf  0.0406      1.57
-4      age  0.0313      1.49
-5 plvmassi  0.0144      2.17
-6    hx_dm  0.0057      3.91
-7      bmi  0.0050      2.69
-8   female -0.0027      4.12
-9  nyha_pr -0.0112      3.02</code></pre>
+1 creat_pr  0.1550      2.05
+2     lvef  0.0829      1.63
+3   hx_chf  0.0506      1.49
+4      age  0.0422      1.60
+5 plvmassi  0.0228      2.20
+6    hx_dm  0.0107      4.06
+7      bmi  0.0046      2.42
+8   female -0.0007      4.30
+9  nyha_pr -0.0105      3.03</code></pre>
 </div>
 </div>
 </figure>
@@ -2670,7 +2670,7 @@ Removed 75 rows containing missing values or values outside the scale range
 <div id="fig-dependence-marginal-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-dependence-marginal-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/1952906735d5b1a5fc326c2fbcdcdb32.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/41c432fe706cdd19d5f5ce374cf5f23e.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dependence-marginal-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: Predicted class probability against each selected predictor, as observed, one panel per predictor. Points are individual patients, one color and shape per observed outcome level as in the legend; the blue line is a loess smooth with its gray band, drawn for predictors with more than five distinct values, and for a categorical predictor the points are jittered over a gray box plot.
@@ -2710,7 +2710,7 @@ Figure 2: Predicted class probability against each selected predictor, as obser
 <div id="fig-dependence-partial-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-dependence-partial-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/94aa3f339d4136c38beffc3056cf5e5a.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/33d4d87e7933b0c0a825489a863f6ed6.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dependence-partial-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 3: Partial dependence of the forest’s prediction on each selected predictor, one panel per predictor. Black solid lines trace the partial effect across a continuous predictor, and dark gray bars give it at each level of a categorical one.
@@ -2739,17 +2739,17 @@ Figure 3: Partial dependence of the forest’s prediction on each selected pred
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-29 12:47:56 EDT</td>
+<td style="text-align: left;">2026-11-03 08:21:06 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-29 12:48:10 EDT</td>
+<td style="text-align: left;">2026-11-03 08:21:12 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">14 s</td>
+<td style="text-align: left;">6 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2789,17 +2789,17 @@ Figure 3: Partial dependence of the forest’s prediction on each selected pred
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.4</td>
+<td style="text-align: left;">1.5.5</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261029.parquet</td>
+<td style="text-align: left;">built_20261103.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-29</td>
+<td style="text-align: left;">2026-11-03</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2819,7 +2819,7 @@ Figure 3: Partial dependence of the forest’s prediction on each selected pred
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>complication-rf/rfc.rds</code> (forest), rendered 2026-10-29 12:47:38 -0400, data built_20261029.parquet</td>
+<td style="text-align: left;"><code>complication-rf/rfc.rds</code> (forest), rendered 2026-11-03 08:20:58 -0500, data built_20261103.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -2839,7 +2839,7 @@ Figure 3: Partial dependence of the forest’s prediction on each selected pred
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"rfc.explain.complication.rf","rendered":"2026-10-29T16:48:10Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"bccdc1ae7147d294ef45730f93bb6309375c6381"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.4","source":null},{"package":"hvtiRutilities","version":"1.5.17","source":null},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.4","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.9.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261029.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-29T16:34:24Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/complication-rf/rfc.rds","role":"forest","bytes":6432502,"mtime":"2026-10-29T16:47:42Z","sha256":"91a5a7cec046d403afb61c9abc5921b9ec68f4366aa14017edc9d54c5186771b"}],"subject":"complication","type":"rf","analysis":{"outcome":{"variable":"complication","kind":"classification","observed_levels":["0","1"]}},"cohort":{"n":800},"run":{"start":"2026-10-29T12:47:56-0400","end":"2026-10-29T12:48:10-0400","time_zone":"EDT","duration_seconds":14.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rfc.explain.complication.rf.qmd","template":"rfc.explain","prefix":"rfc","qualifier":"explain","subject":"complication","type":"rf","hvtiRtemplates":"1.5.4"},"datasets":[{"name":"built","version_file":"built_20261029.parquet","registered":"2026-10-29","source_file":"built.rds","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/complication-rf/rfc.rds","set":"complication-rf","role":"forest","rendered_at":"2026-10-29T12:47:38-0400","dataset_version":"built_20261029.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/rfc.explain.complication.rf.qmd",".hvti_render_id":"4909336cb08c48c20adfc2d9c6747307b4c4ac8f6c7cd0657f10ae3d99f3e7f4",".hvti_source_sha256":"f61d262f019041e2c4d06e53590d1895157b6c77c8d43092abb3bc06721ed5f8"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"rfc.explain.complication.rf","rendered":"2026-11-03T13:21:12Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"5770c56f62e1740e36a721af6ed7e5bc1ab89743"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.0","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.5","source":"github","sha":"f07705891093932be2b3d180444d64d07f187071"},{"package":"hvtiRutilities","version":"1.5.19","source":"github","sha":"5359155a4da9a3b403df9acfb9e529c4d2444489"},{"package":"igraph","version":"2.3.3","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.4","source":"CRAN"},{"package":"nlme","version":"3.1.171","source":"standard"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261103.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-03T13:11:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/complication-rf/rfc.rds","role":"forest","bytes":1610136,"mtime":"2026-11-03T13:21:01Z","sha256":"6a79d8aa9d7d8e3adb0fe8603bbf668f09d23c396627b05804191ddb12f7e6d4"}],"subject":"complication","type":"rf","analysis":{"outcome":{"variable":"complication","kind":"classification","observed_levels":["0","1"]}},"cohort":{"n":800},"run":{"start":"2026-11-03T08:21:06-0500","end":"2026-11-03T08:21:12-0500","time_zone":"EST","duration_seconds":6.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rfc.explain.complication.rf.qmd","template":"rfc.explain","prefix":"rfc","qualifier":"explain","subject":"complication","type":"rf","hvtiRtemplates":"1.5.5"},"datasets":[{"name":"built","version_file":"built_20261103.parquet","registered":"2026-11-03","source_file":"built.rds","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/complication-rf/rfc.rds","set":"complication-rf","role":"forest","rendered_at":"2026-11-03T08:20:58-0500","dataset_version":"built_20261103.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"30_analyses/rfc.explain.complication.rf.qmd",".hvti_render_id":"46f0ecdbf6b6d2fa088a47e824c74bae979a01af8afa632339e1eb649dea374a",".hvti_source_sha256":"ec8bca292a0bc817237001fdf98a82c94ed854a3dfbfe6d3fc08b3d4d9159df0"}</script>
 </section>
 
 </main>

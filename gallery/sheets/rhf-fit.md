@@ -87,5 +87,5 @@ and it records the job's provenance beside the report.
   pair is how it finds the file:
   `add_job("rhf.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.4 · built 2026-10-29.
+Generated from the template by hvtiRtemplates, 1.5.5 · built 2026-11-03.
 The template holds the details; this sheet is its outline.

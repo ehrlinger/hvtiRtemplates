@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:44
+2026-11-03 08:18
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -54,8 +54,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -288,7 +288,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261029.parquet) |
+| Source              | dataset `study` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -377,6 +377,23 @@ knitr::kable(.join$counts, col.names = c("", "Patients"))
 
 Table 2: The match flag joined onto the scored patients
 
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The tables count each group and the matched patients in it, which give the unmatched too. A bar is a count too, and the tails
+# of a histogram are nearly always short ones; they are left out because a bar places a patient
+# on a model's score alone, which no reader can look up.
+.groups_shown <- stats::setNames(scores["group"], .meta$treatment_col)
+.groups_matched <- stats::setNames(scores[scores$matched == 1L, "group", drop = FALSE], paste0(.meta$treatment_col, ", matched"))
+.groups_unmatched <- stats::setNames(scores[scores$matched != 1L, "group", drop = FALSE], paste0(.meta$treatment_col, ", unmatched"))
+cat(hvtiRtemplates:::.identifiability_notice(rbind(
+  hvtiRtemplates:::.identifiability_check(.groups_shown, by = names(.groups_shown)),
+  if (!is.null(MATCH)) hvtiRtemplates:::.identifiability_check(.groups_matched, by = names(.groups_matched)),
+  if (!is.null(MATCH)) hvtiRtemplates:::.identifiability_check(.groups_unmatched, by = names(.groups_unmatched))
+)))
+```
+
 ## Figures
 
 Code
@@ -384,6 +401,14 @@ Code
 ``` r
 mh_unmatched <- mirror_hist(scores, "unmatched", groups, BINWIDTH)
 file <- save_figure(mirror_figure(mh_unmatched, "unmatched"), "lp-mirror-unmatched", linked = TRUE)
+```
+
+    Scale for fill is already present.
+    Adding another scale for fill, which will replace the existing scale.
+
+Code
+
+``` r
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
                         error = FALSE)
 ```
@@ -413,6 +438,14 @@ Code
 ``` r
 mh_weighted <- mirror_hist(scores, "weighted", groups, BINWIDTH)
 file <- save_figure(mirror_figure(mh_weighted, "weighted"), "lp-mirror-weighted", linked = TRUE)
+```
+
+    Scale for fill is already present.
+    Adding another scale for fill, which will replace the existing scale.
+
+Code
+
+``` r
 knitr::include_graphics(xfun::relative_path(file, if (!is.null(.in)) dirname(.in) else getwd(), error = FALSE),
                         error = FALSE)
 ```
@@ -461,6 +494,9 @@ if (!is.null(MATCH)) {
 }
 ```
 
+    Scale for fill is already present.
+    Adding another scale for fill, which will replace the existing scale.
+
 Code
 
 ``` r
@@ -491,8 +527,8 @@ Table 5: Patients in each group, and those matched
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 12:44:11 EDT |
-|  | Ended | 2026-10-29 12:44:13 EDT |
+| Run | Started | 2026-11-03 08:18:07 EST |
+|  | Ended | 2026-11-03 08:18:09 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -501,14 +537,14 @@ Table 5: Patients in each group, and those matched
 |  | Template | lp.mirror |
 |  | Subject | approach |
 |  | Type | matched |
-|  | hvtiRtemplates | 1.5.4 |
-| Dataset `built` | Version file | built_20261029.parquet |
-|  | Version date | 2026-10-29 |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-10-29 12:43:50 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-11-03 08:17:54 -0500, data built_20261103.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

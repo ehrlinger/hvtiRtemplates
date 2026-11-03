@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:40
+2026-11-03 08:15
 
 An `lg` job decides which scale a covariate should enter a model on,
 before it goes into `PREDICTORS` in an `lm` job. A model of an event
@@ -60,8 +60,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -186,7 +186,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -242,6 +242,8 @@ d <- .interval$data
 .time <- .interval$time
 variables <- hvtiRtemplates:::.lg_variables(VARIABLES, d, exclude = .id, event = .event,
                                             time = if (identical(LINK, "hazard")) .time)
+.selection <- attr(job_data$record, "selection")
+hvtiRtemplates:::.refuse_display(VARIABLES$name, hvtiRtemplates:::.no_values(d, .id, .selection$key), "VARIABLES")
 ```
 
 Code
@@ -282,6 +284,31 @@ knitr::kable(variables, col.names = c("Covariate", "Kind", "Groups", "Constant",
 | nyha_pr   | ordinal    |      5 |        2 |     0 | nyha_pr | raw    |
 
 Table 2: The covariates calibrated, with their defaults
+
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# Each group's table shows its minimum and maximum, and its events, which with its patients give
+# those without one. A group under 5 patients already stops this job. An ordinal covariate's
+# minimum and maximum are its levels. Under "hazard" a patient with no follow-up is in no group.
+.lg_rows <- if (identical(LINK, "hazard")) !is.na(.time) else rep(TRUE, nrow(d))
+cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(
+  list(hvtiRtemplates:::.identifiability_check(d[.lg_rows, , drop = FALSE], variables$name,
+                                               extremes = variables$name[variables$kind == "continuous"])),
+  lapply(seq_len(nrow(variables)), function(i) {
+    .v <- variables[i, ]
+    .tab <- hvtiRtemplates:::.lg_table(d[[.v$name]], .event, if (identical(LINK, "hazard")) .time,
+                                       groups = .v$groups, kind = .v$kind, link = LINK)
+    hvtiRtemplates:::.identifiability_counts(c(.tab$events, .tab$n - .tab$events), paste(.v$name, "events by group"))
+  })
+))))
+```
+
+WarningBefore this goes in a manuscript
+
+- 9 patients in `age` are older than 89. Wherever age is shown, report
+  ages 90 and older as one group.
 
 ## Calibration
 
@@ -512,19 +539,20 @@ PREDICTORS <- c("age", "nyha_pr")
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:40:22 EDT  |
-|                 | Ended            | 2026-10-29 12:40:25 EDT  |
-|                 | Duration         | 4 s                      |
+| Run             | Started          | 2026-11-03 08:15:03 EST  |
+|                 | Ended            | 2026-11-03 08:15:06 EST  |
+|                 | Duration         | 3 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
+| Identifiability | age: `age`       | 9                        |
 | Job             | File             | lg.dead.calibration.qmd  |
 |                 | Template         | lg                       |
 |                 | Subject          | dead                     |
 |                 | Type             | calibration              |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
+|                 | hvtiRtemplates   | 1.5.5                    |
+| Dataset `built` | Version file     | built_20261103.parquet   |
+|                 | Version date     | 2026-11-03               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

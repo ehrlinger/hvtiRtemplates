@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:51
+2026-11-03 08:24
 
 Explains the `vp-fit` screen in this set: survival at five years along
 each selected predictor.
@@ -76,7 +76,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.4
+hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -244,11 +244,11 @@ for (.i in seq_along(.pages)) {
 }
 ```
 
-    Warning: Removed 152 rows containing non-finite outside the scale range
+    Warning: Removed 156 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 152 rows containing non-finite outside the scale range
+    Removed 156 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 152 rows containing non-finite outside the scale range
+    Removed 156 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
 Code
@@ -257,10 +257,10 @@ Code
 .fig
 ```
 
-    Warning: Removed 152 rows containing non-finite outside the scale range
+    Warning: Removed 156 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/6219edc3b91a3b638a7a8584887ac77f.png)
+![](assets/dc5ddae21eb2928e190f3b8fc33c7b03.png)
 
 Figure 1: VarPro partial dependence on each drawn predictor, one panel
 per predictor. For a continuous predictor a black solid line marks the
@@ -269,12 +269,12 @@ as in the legend; for a categorical predictor black box plots show the
 spread of the partial effect at each level. Page 1 of 2: age, hx_chf,
 lvef, plvmassi.
 
-    Warning: Removed 112 rows containing non-finite outside the scale range
+    Warning: Removed 124 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-    Warning: Removed 112 rows containing non-finite outside the scale range
+    Warning: Removed 124 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 112 rows containing non-finite outside the scale range
+    Removed 124 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
 Code
@@ -283,10 +283,10 @@ Code
 .fig
 ```
 
-    Warning: Removed 112 rows containing non-finite outside the scale range
+    Warning: Removed 124 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/81e206d902b0fa7bad0623a2ad648144.png)
+![](assets/37f504036ae3b157da0bcc8f88d88426.png)
 
 Figure 2: VarPro partial dependence on each drawn predictor, one panel
 per predictor. For a continuous predictor a black solid line marks the
@@ -298,9 +298,9 @@ spread of the partial effect at each level. Page 2 of 2: hx_dm.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 12:50:00 EDT |
-|  | Ended | 2026-10-29 12:51:53 EDT |
-|  | Duration | 1 min 53 s |
+| Run | Started | 2026-11-03 08:22:38 EST |
+|  | Ended | 2026-11-03 08:24:10 EST |
+|  | Duration | 1 min 32 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -308,13 +308,13 @@ spread of the partial effect at each level. Page 2 of 2: hx_dm.
 |  | Template | vp.explain |
 |  | Subject | dead |
 |  | Type | vp |
-|  | hvtiRtemplates | 1.5.4 |
-| Dataset `built` | Version file | built_20261029.parquet |
-|  | Version date | 2026-10-29 |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-10-29 12:48:47 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-03 08:21:37 -0500, data built_20261103.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

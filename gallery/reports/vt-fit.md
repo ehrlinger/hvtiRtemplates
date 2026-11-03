@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:55
+2026-11-03 08:29
 
 Gallery job on the synthetic cohort: mitral repair against replacement,
 and freedom from reintervention to eight years.
@@ -76,8 +76,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -128,6 +128,17 @@ EXCLUDE <- character()
 ELIGIBILITY <- c("gower", "sid")
 COMBINE <- "any"                            # Demo: "any" flags a patient any method flags; "all" only when all do.
 SID_SET <- "echo-sid"
+# Demo: the variables eligibility is judged on, or NULL to use the forests'
+# predictors. Eligibility asks whether an arm holds patients like this one in
+# what the treatment acts on, which need not be what predicts death: a repair
+# chosen by anatomy can be judged on the anatomy alone, while the forests still
+# adjust for everything else. Set here, these drive the Gower distance and the
+# propensity comparison; a sid set keeps the variables it was clustered on.
+ELIGIBILITY_VARS <- NULL
+# Demo: the fewest events per candidate feature an arm's forest may have before
+# the report is marked draft (a final render stops). 20 is a guess, the low end
+# of a 20 to 30 rule of thumb with no study behind it; 0 reports the ratio only.
+MIN_EVENTS_PER_FEATURE <- 0
 # Demo: graded predictors coded as numbers (a 0 to 3 degree, say). The Gower
 # distance ranks them, so 0 against 3 is farther than 0 against 1; unnamed, every
 # mismatched grade counts the same. Names the predictors do not include are ignored.
@@ -237,7 +248,7 @@ knitr::kable(.counts)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -279,7 +290,16 @@ if (length(.leaks)) {
 .missing <- setdiff(.predictors, names(d))
 if (length(.missing)) stop("Not in the data this job read: ", paste(.missing, collapse = ", "), call. = FALSE)
 if (!length(.predictors)) stop("No predictors are left after EXCLUDE.", call. = FALSE)
-.chr <- .predictors[vapply(d[.predictors], is.character, logical(1L))]
+.elig_vars <- if (is.null(ELIGIBILITY_VARS)) .predictors else ELIGIBILITY_VARS
+.leaks <- intersect(tolower(.elig_vars), tolower(c(ARM, TIME, STATUS, ID, EXCLUDE)))
+if (length(.leaks)) {
+  stop("ELIGIBILITY_VARS includes the arm, outcome, ID or an EXCLUDE column: ", paste(.leaks, collapse = ", "), ".",
+       call. = FALSE)
+}
+.missing <- setdiff(.elig_vars, names(d))
+if (length(.missing)) stop("ELIGIBILITY_VARS not in the data: ", paste(.missing, collapse = ", "), call. = FALSE)
+.chr <- union(.predictors, .elig_vars)
+.chr <- .chr[vapply(d[.chr], is.character, logical(1L))]
 d[.chr] <- lapply(d[.chr], factor)
 if (NA_ACTION == "na.omit") {
   .kept <- stats::complete.cases(d[.predictors])
@@ -289,11 +309,28 @@ if (NA_ACTION == "na.omit") {
   .no_arm <- .no_arm[.kept]
   .treated <- .treated[.kept]
 }
-d <- d[, c(ID, ARM, TIME, STATUS, .predictors), drop = FALSE]
+# Every column read, kept for explaining a sid set's flags: its variables are known only once the set is read.
+.d_read <- d
+d <- d[, c(ID, ARM, TIME, STATUS, union(.predictors, .elig_vars)), drop = FALSE]
 cat("Predictors:", paste(.predictors, collapse = ", "), "\n")
 ```
 
     Predictors: age, female, bmi, hx_chf, hx_dm, nyha_pr, lvef, creat_pr, lvedd, lvesd, la_diam, rvsp, e_e 
+
+Code
+
+``` r
+if (!is.null(ELIGIBILITY_VARS)) cat("Eligibility variables:", paste(.elig_vars, collapse = ", "), "\n")
+# Each arm's forest is grown on that arm alone, so each arm's events are what its splits have.
+.epf <- hvtiRtemplates:::.check_events_per_feature(
+  vapply(ARMS, function(a) sum(d[[STATUS]][d[[ARM]] %in% a & .treated] == 1), numeric(1L)),
+  length(.predictors), MIN_EVENTS_PER_FEATURE
+)
+cat("Events per candidate feature:",
+    paste0(.epf$group, " ", .epf$events_per_feature, " (", .epf$events, " events)", collapse = "; "), "\n")
+```
+
+    Events per candidate feature: repair 5.5 (72 events); replace 4.4 (57 events) 
 
 ## The observed outcome
 
@@ -423,7 +460,8 @@ vt_ood <- function(dist, ids, arm, arms) {
   do.call(base::rbind, rows)
 }
 
-# Gower over the model predictors only: mixed types, no model, bounded in [0, 1].
+# Gower over the eligibility variables only (the model predictors unless
+# ELIGIBILITY_VARS names others): mixed types, no model, bounded in [0, 1].
 # A 0/1 column is declared symmetric binary. daisy() would otherwise treat it as
 # interval scaled, which gives the same distance, and warn in every report.
 # daisy() scores any mismatch of an unordered factor as 1, so a grade of 0
@@ -479,6 +517,27 @@ vt_ood_features <- function(out_rows, d, id, arm_of, predictors, n = 3L, rare = 
   }, character(1L))
 }
 
+# Each method's flags explained by the variables that method's distance used:
+# the eligibility set for Gower, the sid set's own for SID. Explaining a SID flag
+# by variables the distance never saw would name a cause it did not have, so
+# when a method's variables are unknown or absent from the data, say so.
+vt_flag_features <- function(out_rows, d, id, arm_of, vars_by_method) {
+  out <- character(nrow(out_rows))
+  for (m in unique(out_rows$method)) {
+    at <- which(out_rows$method == m)
+    vars <- vars_by_method[[m]]
+    absent <- setdiff(vars, names(d))
+    out[at] <- if (!length(vars)) {
+      sprintf("not computed: the %s set records no variables", m)
+    } else if (length(absent)) {
+      sprintf("not computed: %s used %s, not in this job's data", m, paste(absent, collapse = ", "))
+    } else {
+      vt_ood_features(out_rows[at, , drop = FALSE], d, id, arm_of, vars)
+    }
+  }
+  out
+}
+
 # The SID distance a sid job saved. Read, never refit, and refused when it does
 # not cover every patient here.
 # Returns the distance with the whole reader result as attribute "read", so the
@@ -509,6 +568,41 @@ vt_combine <- function(rows, combine = c("any", "all")) {
   flagged <- stats::aggregate(!in_distribution ~ ID, per, if (combine == "any") any else all)
   data.frame(ID = flagged$ID, elig = !flagged[[2]])
 }
+
+# How far eligibility rules overlap. `flags` holds one column per rule, TRUE
+# where the patient is eligible and NA where the rule did not judge them;
+# `group` is each patient's arm. Returns the count of patients under each exact
+# set of flagging rules by group, with the rules that did not judge them named,
+# and, for each pair of rules, their agreement
+# over the patients both judged, with Cohen's kappa (NA when both rules give
+# everyone the same answer, so chance agreement is total).
+vt_overlap <- function(flags, group) {
+  combo <- apply(flags, 1L, function(x) {
+    hit <- names(flags)[!is.na(x) & !x]
+    unjudged <- names(flags)[is.na(x)]
+    paste0(if (length(hit)) paste(hit, collapse = " + ") else "none",
+           if (length(unjudged)) paste0("; not judged by ", paste(unjudged, collapse = ", ")))
+  })
+  tab <- table(combo, group)
+  combinations <- data.frame(flagged_by = rownames(tab), unclass(tab)[, , drop = FALSE], check.names = FALSE,
+                             row.names = NULL)
+  combinations <- combinations[order(!startsWith(combinations$flagged_by, "none"), combinations$flagged_by), , drop = FALSE]
+  pairs <- if (ncol(flags) > 1L) {
+    do.call(base::rbind, lapply(utils::combn(names(flags), 2L, simplify = FALSE), function(p) {
+      a <- flags[[p[1]]]
+      b <- flags[[p[2]]]
+      ok <- !is.na(a) & !is.na(b)
+      a <- a[ok]
+      b <- b[ok]
+      po <- mean(a == b)
+      pe <- mean(a) * mean(b) + mean(!a) * mean(!b)
+      data.frame(rules = paste(p, collapse = " vs "), judged = sum(ok), both_eligible = sum(a & b),
+                 both_flagged = sum(!a & !b), only_first = sum(!a & b), only_second = sum(a & !b),
+                 kappa = if (sum(ok) && pe < 1) round((po - pe) / (1 - pe), 2) else NA_real_)
+    }))
+  }
+  list(combinations = combinations, pairs = pairs)
+}
 ```
 
 Code
@@ -519,7 +613,7 @@ Code
 .arm <- ifelse(.no_arm, NA_character_, as.character(d[[ARM]]))
 .sid_read <- NULL
 .dist <- list(
-  gower = function() vt_elig_gower(d, .predictors, ID, ORDINAL),
+  gower = function() vt_elig_gower(d, .elig_vars, ID, ORDINAL),
   sid = function() {
     if (is.null(SID_SET)) stop("ELIGIBILITY includes \"sid\"; name the sid set in SID_SET.", call. = FALSE)
     m <- vt_elig_sid(file.path(dirname(dirname(set_path("estimates", "vt.rds"))), SID_SET, "sid.rds"), .ids, .cfg,
@@ -539,7 +633,9 @@ if (anyNA(.elig_rows$reference)) {
 }
 .elig_rows$features <- ""
 .ood_at <- which(!.elig_rows$in_distribution)
-.elig_rows$features[.ood_at] <- vt_ood_features(.elig_rows[.ood_at, ], d, ID, .arm, .predictors)
+.sid_vars <- if (!is.null(.sid_read)) .sid_read$value$vars
+.elig_rows$features[.ood_at] <- vt_flag_features(.elig_rows[.ood_at, ], .d_read, ID, .arm,
+                                                 list(gower = .elig_vars, sid = .sid_vars))
 # With no finite distance there is no comparison to explain; vt_ood()'s reason says why.
 .nofin <- .ood_at[!is.finite(.elig_rows$distance[.ood_at])]
 .elig_rows$features[.nofin] <- .elig_rows$reason[.nofin]
@@ -554,31 +650,42 @@ for (m in .methods) {
 # of the treated patients' predictors, seeded, and the arm forests keep the
 # data as read. The arm is left out of the imputation, so the treatment does not
 # shape the predictors that then predict it. Under "na.omit" nothing is missing and the copy equals d.
-.ps_data <- d[.treated, c(ID, ARM, .predictors), drop = FALSE]
-if (anyNA(.ps_data[.predictors])) {
-  .imp <- .ps_data[.predictors]
-  # impute() drops a patient who is missing every predictor, so the imputed
-  # rows are matched back by ID (its row names), never by position.
-  rownames(.imp) <- .ps_data[[ID]]
-  set.seed(SEED)
-  .imputed <- randomForestSRC::impute(data = .imp, ntree = 100L, seed = -abs(SEED), verbose = FALSE)
-  .back <- match(.ps_data[[ID]], rownames(.imputed))
-  if (anyNA(.back)) {
-    cat(sum(is.na(.back)), " treated patient(s) could not be scored for the propensity sensitivity ",
-        "(no predictor observed); they are not eligible under it.\n", sep = "")
+# Two propensity models when ELIGIBILITY_VARS is set, one otherwise. The
+# common-support flag judges on the eligibility variables, as Gower does. The
+# saved `ps` stays on the predictors, because vt-explain weights the betas with
+# it, and weights from the eligibility set alone would leave the other
+# confounders unbalanced.
+# Each model imputes and fits on its own variables, so a column only the
+# eligibility set names cannot change how the predictors are filled in, nor the
+# saved model's scores.
+vt_ps <- function(vars) {
+  x <- d[.treated, c(ID, ARM, vars), drop = FALSE]
+  if (anyNA(x[vars])) {
+    imp <- x[vars]
+    # impute() drops a patient who is missing every predictor, so the imputed
+    # rows are matched back by ID (its row names), never by position.
+    rownames(imp) <- x[[ID]]
+    set.seed(SEED)
+    imputed <- randomForestSRC::impute(data = imp, ntree = 100L, seed = -abs(SEED), verbose = FALSE)
+    back <- match(x[[ID]], rownames(imputed))
+    if (anyNA(back)) {
+      cat(sum(is.na(back)), " treated patient(s) could not be scored for the propensity sensitivity ",
+          "(no predictor observed); they are not eligible under it.\n", sep = "")
+    }
+    x <- x[!is.na(back), , drop = FALSE]
+    x[vars] <- imputed[back[!is.na(back)], vars, drop = FALSE]
   }
-  .ps_data <- .ps_data[!is.na(.back), , drop = FALSE]
-  .ps_data[.predictors] <- .imputed[.back[!is.na(.back)], .predictors, drop = FALSE]
+  set.seed(SEED)
+  # The propensity forest keeps its formula too, and reformulate() would tie it to this
+  # environment (and the raw IDs in `job_data`); point it at the global environment.
+  ps_forest(stats::reformulate(vars, ARM, env = globalenv()), data = x, treatment_col = ARM, id_col = ID,
+            treated_level = ARMS[1], ntree = NTREE, seed = -abs(SEED))
 }
-set.seed(SEED)
-# The propensity forest keeps its formula too, and reformulate() would tie it to this
-# environment (and the raw IDs in `job_data`); point it at the global environment.
-.ps_model <- stats::reformulate(.predictors, ARM, env = globalenv())
-.ps <- ps_forest(.ps_model, data = .ps_data, treatment_col = ARM, id_col = ID,
-                 treated_level = ARMS[1], ntree = NTREE, seed = -abs(SEED))
+.ps <- vt_ps(.predictors)
+.ps_elig <- if (setequal(.elig_vars, .predictors)) .ps else vt_ps(.elig_vars)
 # ps_support() adds weak_common (outside the range both arms occupy) to $data.
 # Patients with no arm have no propensity score and are not judged by it.
-.support <- ps_support(.ps)$data
+.support <- ps_support(.ps_elig)$data
 .elig$elig_propensity <- .elig$ID %in% .support[[ID]][!.support$weak_common]
 .elig$elig_none <- TRUE
 ```
@@ -588,24 +695,28 @@ set.seed(SEED)
 Code
 
 ``` r
-.out <- .elig_rows[!.elig_rows$in_distribution, c("ID", "method", "arm", "distance", "reference", "features")]
-if (nrow(.out)) {
-  .out$distance <- round(.out$distance, 3)
-  .out$reference <- round(.out$reference, 3)
-}
-cat(nrow(.out), "patient-by-arm judgments are out of distribution; every one is listed.\n")
+# Counts only. A row here would describe one patient, so the rows, with each patient's
+# distance and the features behind it, stay in vt.rds under eligibility$rows.
+.out <- .elig_rows[!.elig_rows$in_distribution, c("method", "arm")]
+cat(nrow(.out), "patient-by-arm judgments are out of distribution; each is in `vt.rds`, under `eligibility$rows`.\n")
 ```
 
-    0 patient-by-arm judgments are out of distribution; every one is listed.
+    0 patient-by-arm judgments are out of distribution; each is in `vt.rds`, under `eligibility$rows`.
 
 Code
 
 ``` r
-knitr::kable(.out, row.names = FALSE)
+# Factors, so a job with no patient out of distribution still prints its table of zeros.
+.ood_counts <- table(method = factor(.out$method, unique(.elig_rows$method)), arm = factor(.out$arm, unique(.elig_rows$arm)))
+knitr::kable(as.data.frame(.ood_counts, responseName = "patients"), row.names = FALSE)
 ```
 
-| ID  | method | arm | distance | reference | features |
-|-----|--------|-----|----------|-----------|----------|
+| method | arm     | patients |
+|:-------|:--------|---------:|
+| gower  | repair  |        0 |
+| sid    | repair  |        0 |
+| gower  | replace |        0 |
+| sid    | replace |        0 |
 
 Table 3: Patients out of distribution, by method and the arm they were
 judged against
@@ -630,37 +741,59 @@ save_figure(.fig, "vt-fit-eligibility")
 .fig
 ```
 
-![](assets/9a17487454c0a39071f9fbcbcb738114.png)
+![](assets/eaa00f76da2af7c19f90bc880e719702.png)
 
 Figure 2: Distance to the nearest patient of the arm judged against,
 patients ranked within each panel. The dashed line is that arm’s largest
 nearest-neighbor gap among its own patients: points above it are out of
 distribution.
 
+### How far the rules overlap
+
+Each rule asks the same question by a different route, and rules that
+answer it alike flag the same patients. Where they flag different
+patients, the combined rule depends on which were chosen, and so does
+the effect estimated on the patients it keeps. The propensity rule
+(common support) is shown beside the rules in `ELIGIBILITY` for
+comparison only; it judges treated patients alone.
+
 Code
 
 ``` r
-if (length(.methods) > 1L) {
-  .pairs <- utils::combn(.methods, 2L, simplify = FALSE)
-  for (.p in .pairs) {
-    cat("Eligible under", .p[1], "(rows) and", .p[2], "(columns):\n\n")
-    cat(knitr::kable(table(.elig[[paste0("elig_", .p[1])]], .elig[[paste0("elig_", .p[2])]],
-                           dnn = paste0("elig_", .p))),
-        sep = "\n")
-    cat("\n")
-  }
-} else {
-  cat("One eligibility method ran, so there is nothing to compare.\n")
-}
+.rules <- c(stats::setNames(.methods, .methods), propensity = "propensity")
+.flags <- as.data.frame(lapply(.rules, function(m) .elig[[paste0("elig_", m)]]))
+.elig_arm <- .arm[match(.elig$ID, .ids)]
+# A patient with no arm, or a treated patient the propensity model could not
+# score (every eligibility variable missing), has no propensity score: not
+# judged, rather than flagged. elig_propensity, vt-explain's sensitivity, still counts them ineligible.
+.flags$propensity[is.na(.elig_arm) | !.elig$ID %in% .support[[ID]]] <- NA
+.overlap <- vt_overlap(.flags, ifelse(is.na(.elig_arm), "No arm", .elig_arm))
+knitr::kable(.overlap$combinations, row.names = FALSE)
 ```
 
-Eligible under gower (rows) and sid (columns):
+| flagged_by | repair | replace |
+|:-----------|-------:|--------:|
+| none       |    412 |     385 |
+| propensity |      0 |       3 |
 
-|      | TRUE |
-|:-----|-----:|
-| TRUE |  800 |
+Table 4: Patients by the rules that flag them, in each arm. A patient
+appears once, under the exact set of rules that flag them.
 
-Table 4: Eligibility under each pair of methods
+Code
+
+``` r
+knitr::kable(.overlap$pairs, row.names = FALSE)
+```
+
+| rules | judged | both_eligible | both_flagged | only_first | only_second | kappa |
+|:---|---:|---:|---:|---:|---:|---:|
+| gower vs sid | 800 | 800 | 0 | 0 | 0 | NA |
+| gower vs propensity | 800 | 797 | 0 | 0 | 3 | 0 |
+| sid vs propensity | 800 | 797 | 0 | 0 | 3 | 0 |
+
+Table 5: Agreement between each pair of rules, over the patients both
+judged. Kappa is agreement beyond chance: 1 is the same patients, 0 no
+more alike than chance.
 
 ## The arm forests
 
@@ -722,10 +855,10 @@ if (length(.weak)) {
 
 | arm     | patients | events | c_index | lower | upper |
 |:--------|---------:|-------:|--------:|------:|------:|
-| repair  |      412 |     72 |   0.741 | 0.684 | 0.798 |
-| replace |      388 |     57 |   0.398 | 0.311 | 0.484 |
+| repair  |      412 |     72 |   0.734 | 0.676 | 0.792 |
+| replace |      388 |     57 |   0.401 | 0.314 | 0.489 |
 
-Table 5: **The interval for replace includes 0.5.** That arm’s half of
+Table 6: **The interval for replace includes 0.5.** That arm’s half of
 every contrast below is exploratory.
 
 The C-index says whether a forest ranks patients; it says nothing about
@@ -800,19 +933,19 @@ cat("\nMean calibration error at ", HORIZON, ", in percentage points: ",
 
 | arm     | group | patients | events | predicted | observed |
 |:--------|------:|---------:|-------:|----------:|---------:|
-| repair  |     1 |       83 |     31 |     0.510 |    0.536 |
-| repair  |     2 |       82 |     19 |     0.754 |    0.726 |
-| repair  |     3 |       82 |      8 |     0.888 |    0.904 |
-| repair  |     4 |       82 |     11 |     0.927 |    0.921 |
-| repair  |     5 |       83 |      3 |     0.961 |    0.968 |
-| replace |     1 |       78 |      7 |     0.767 |    0.915 |
-| replace |     2 |       77 |     13 |     0.824 |    0.857 |
-| replace |     3 |       78 |     10 |     0.851 |    0.918 |
-| replace |     4 |       77 |     11 |     0.876 |    0.866 |
-| replace |     5 |       78 |     16 |     0.910 |    0.722 |
+| repair  |     1 |       83 |     33 |     0.504 |    0.508 |
+| repair  |     2 |       82 |     17 |     0.750 |    0.754 |
+| repair  |     3 |       82 |      9 |     0.888 |    0.894 |
+| repair  |     4 |       82 |      8 |     0.930 |    0.951 |
+| repair  |     5 |       83 |      5 |     0.962 |    0.954 |
+| replace |     1 |       78 |     10 |     0.767 |    0.857 |
+| replace |     2 |       77 |      7 |     0.822 |    0.928 |
+| replace |     3 |       78 |     13 |     0.851 |    0.881 |
+| replace |     4 |       77 |     13 |     0.877 |    0.847 |
+| replace |     5 |       78 |     14 |     0.908 |    0.760 |
 
-Table 6: Mean calibration error at 8, in percentage points: repair 1.6,
-replace 8.9.
+Table 7: Mean calibration error at 8, in percentage points: repair 0.9,
+replace 8.1.
 
 Code
 
@@ -830,11 +963,38 @@ save_figure(.fig, "vt-fit-calibration")
 .fig
 ```
 
-![](assets/d6791edce3a2c8ec7730ff2a3d05cba7.png)
+![](assets/d825e5eb3c98d3cb9ef9b92c3423a9ce.png)
 
 Figure 3: Calibration at the horizon. Each point is a fifth of an arm’s
 patients; the dashed line is perfect agreement. Points below it: the
 forest predicts better survival than was observed.
+
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# What this report counts: patients and events by arm, the longest follow-up and the numbers at risk
+# of the observed outcome, the patients each rule flags, and each calibration fifth's patients and
+# events. The rows behind them stay in vt.rds.
+cat(hvtiRtemplates:::.identifiability_notice(rbind(
+  hvtiRtemplates:::.identifiability_check(.km_data, extremes = TIME, within = ARM, upper_only = TRUE, tables = list(c(ARM, STATUS))),
+  hvtiRtemplates:::.identifiability_counts(.counts$Patients, "patients by arm"),
+  hvtiRtemplates:::.identifiability_counts(.km$tables$risk$n.risk, "each arm's observed outcome", check = "at_risk"),
+  hvtiRtemplates:::.identifiability_counts(.ood_counts, "out of distribution, by method and arm"),
+  hvtiRtemplates:::.identifiability_counts(as.matrix(.overlap$combinations[-1L]), "patients by the rules that flag them"),
+  hvtiRtemplates:::.identifiability_counts(c(.cal$patients, .cal$events, .cal$patients - .cal$events), "calibration fifths"),
+  hvtiRtemplates:::.identifiability_counts(vapply(ARMS, function(a) .forests[[a]]$n - sum(.cal$patients[.cal$arm == a]), numeric(1L)),
+                                           "patients never out of bag")
+)))
+```
+
+WarningBefore this goes in a manuscript
+
+- 1 of the numbers at risk shown for `each arm's observed outcome` are
+  under 5 patients. End the table or figure sooner, or decide that the
+  count can be shown.
+- 1 cell of `patients by the rules that flag them` hold fewer than 5
+  patients. Combine levels, or decide that the count can be shown.
 
 ## Twin curves
 
@@ -954,7 +1114,7 @@ if (!length(.in_dist)) {
 }
 ```
 
-![](assets/16b85c593c7a7ff8a4735151d6051354.png)
+![](assets/eea848a91911f7464a734e24a803130d.png)
 
 Figure 4: Mean predicted survival under each arm’s forest, for patients
 in distribution, by the arm they received. The shaded area to the
@@ -970,7 +1130,7 @@ Code
 vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   list(rmst = .rmst, curves = .curves, forests = .forests,
        eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ordinal = ORDINAL,
-                          ps = .ps),
+                          variables = .elig_vars, sid_variables = .sid_vars, ps = .ps),
        predictors = list(names = .predictors, vp_set = VP_SET),
        settings = list(performance = .perf, calibration = .cal, arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED,
                        time = TIME, status = STATUS,
@@ -993,26 +1153,28 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 
 ## About this run
 
-| Group           | Item             | Value                    |
-|:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:55:31 EDT  |
-|                 | Ended            | 2026-10-29 12:55:50 EDT  |
-|                 | Duration         | 19 s                     |
-|                 | Status           | final                    |
-|                 | Rendered by      | gallery                  |
-|                 | Host             | gallery                  |
-| Job             | File             | vt.fit.reint.vt.qmd      |
-|                 | Template         | vt.fit                   |
-|                 | Subject          | reint                    |
-|                 | Type             | vt                       |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
-|                 | Source file      | built.rds                |
-|                 | Rows kept        | 800 rows on 800 patients |
-|                 | WHERE            | none                     |
-|                 | sha256           | b236a472f1f3             |
-|                 | Manifest         | current                  |
-| Reproducibility | Seed             | 1024                     |
-|                 | renv             | not active               |
-|                 | renv.lock sha256 | d09f96b6cd21             |
+| Group | Item | Value |
+|:---|:---|:---|
+| Run | Started | 2026-11-03 08:29:17 EST |
+|  | Ended | 2026-11-03 08:29:26 EST |
+|  | Duration | 8 s |
+|  | Status | final |
+|  | Rendered by | gallery |
+|  | Host | gallery |
+| Identifiability | at_risk: `each arm's observed outcome` | 1 |
+|  | small: `patients by the rules that flag them` | 1 |
+| Job | File | vt.fit.reint.vt.qmd |
+|  | Template | vt.fit |
+|  | Subject | reint |
+|  | Type | vt |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
+|  | Source file | built.rds |
+|  | Rows kept | 800 rows on 800 patients |
+|  | WHERE | none |
+|  | sha256 | b236a472f1f3 |
+|  | Manifest | current |
+| Reproducibility | Seed | 1024 |
+|  | renv | not active |
+|  | renv.lock sha256 | d09f96b6cd21 |

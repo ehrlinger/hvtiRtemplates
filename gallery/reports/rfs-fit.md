@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:47
+2026-11-03 08:20
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
@@ -85,8 +85,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -142,6 +142,10 @@ EVENT  <- "dead"
 # built dataset carries identifiers, dates and derived outcomes, and a forest
 # will split on a date that quietly encodes follow-up.
 PREDICTORS <- c("age", "female", "bmi", "hx_chf", "hx_dm", "nyha_pr", "lvef", "plvmassi", "creat_pr")
+# Demo: the fewest events per candidate predictor before the report is marked
+# draft (a final render stops). 20 is a guess, the low end of a 20 to 30 rule of
+# thumb with no study behind it; 0 reports the ratio only.
+MIN_EVENTS_PER_FEATURE <- 20
 
 # Demo: forest size and seed. The error-by-trees plot below says whether NTREE
 # was enough: a curve still falling at its right edge was not. SEED makes the
@@ -269,7 +273,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -336,6 +340,7 @@ environment(model) <- globalenv()
 .grown <- if (NA_ACTION == "na.omit") stats::complete.cases(d) else rep(TRUE, nrow(d))
 .events <- sum(d[[EVENT]][.grown] == 1)
 .nodesize_rule <- max(15L, as.integer(ceiling(2 * sum(.grown) / max(.events, 1L))))
+.epf <- hvtiRtemplates:::.check_events_per_feature(c(cohort = .events), length(PREDICTORS), MIN_EVENTS_PER_FEATURE)
 if (isTRUE(TUNE_NODESIZE)) {
   hvtiRtemplates::guard_long_fit("rfs-nodesize", dir = CACHE_DIR,
                                  why = "the leaf-size search grows a 100-tree forest at each grid value", refit = REFIT)
@@ -364,6 +369,14 @@ cat(sprintf("%d patients, %d events: nodesize %d (%s), about %.1f events per lea
 Code
 
 ``` r
+cat(sprintf("%.1f events per candidate predictor (%d predictors).\n", .epf$events_per_feature, length(PREDICTORS)))
+```
+
+    45.1 events per candidate predictor (9 predictors).
+
+Code
+
+``` r
 forest <- cache_fit(
   "rfs-forest",
   rfsrc(model, data = d, ntree = NTREE, nodesize = .nodesize, nsplit = NSPLIT, mtry = MTRY, splitrule = SPLITRULE,
@@ -377,7 +390,7 @@ forest
                         Number of deaths: 406
                          Number of trees: 300
                Forest terminal node size: 15
-           Average no. of terminal nodes: 35.51
+           Average no. of terminal nodes: 35.8033
     No. of variables tried at each split: 3
                   Total no. of variables: 9
            Resampling used to grow trees: swor
@@ -386,9 +399,9 @@ forest
                                   Family: surv
                           Splitting rule: logrank *random*
            Number of random split points: 10
-                              (OOB) CRPS: 4.65700775
-                 (OOB) standardized CRPS: 0.17564997
-       (OOB) Requested performance error: 0.3259022
+                              (OOB) CRPS: 4.64026879
+                 (OOB) standardized CRPS: 0.17501862
+       (OOB) Requested performance error: 0.32486021
 
 **With few events, expect noise in importance.** At 60 or 150 deaths a
 predictor carrying no signal can get a VIMP of 0 or below in
@@ -416,7 +429,7 @@ save_figure(.fig, "rfs-fit-diagnostics-error")
 .fig
 ```
 
-![](assets/a6c7f5de518bc4d487e8cb66f016f19d.png)
+![](assets/8d71d534f094b98c02a6983dd17f7dbb.png)
 
 Figure 1: Out-of-bag error by number of trees. The black solid line is
 the out-of-bag error after each additional tree.
@@ -436,7 +449,7 @@ save_figure(.fig, "rfs-fit-diagnostics-survival")
 .fig
 ```
 
-![](assets/8d72e49b7e487f8dc5b9a1728bd3be4f.png)
+![](assets/8420901f0c7f23bdc135b189e2f2ea23.png)
 
 Figure 2: Out-of-bag predicted survival, one curve per patient. Each
 step line is one patient’s predicted survival over follow-up, red for
@@ -453,7 +466,7 @@ save_figure(.fig, "rfs-fit-diagnostics-brier")
 .fig
 ```
 
-![](assets/dfae18b8c7e3c28d0feb403a6c3d7c70.png)
+![](assets/beb9bc3e81eb2a68bf24b1981f926c3a.png)
 
 Figure 3: Brier score over follow-up. The black solid line is the
 out-of-bag Brier score at each time, lower being better.
@@ -489,9 +502,9 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:47:03 EDT  |
-|                 | Ended            | 2026-10-29 12:47:11 EDT  |
-|                 | Duration         | 8 s                      |
+| Run             | Started          | 2026-11-03 08:20:34 EST  |
+|                 | Ended            | 2026-11-03 08:20:39 EST  |
+|                 | Duration         | 5 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -499,9 +512,9 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 |                 | Template         | rfs.fit                  |
 |                 | Subject          | dead                     |
 |                 | Type             | rf                       |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
+|                 | hvtiRtemplates   | 1.5.5                    |
+| Dataset `built` | Version file     | built_20261103.parquet   |
+|                 | Version date     | 2026-11-03               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

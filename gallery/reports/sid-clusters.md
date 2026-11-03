@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:55
+2026-11-03 08:29
 
 This job turns a `sid-fit` dissimilarity into clusters. It runs PAM
 (partitioning around medoids) on the SID distance for each K in a range,
@@ -64,7 +64,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.4
+hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -334,7 +334,7 @@ save_figure(.plt_metrics, "sid-clusters-metrics", height = 5)
 .plt_metrics
 ```
 
-![](assets/06501fb30f47c6eb87ba373d146f67ae.png)
+![](assets/74a372a1bc79a3943e2bd354c589bcfc.png)
 
 Figure 1: PAM objective (normalized to K = 1) and average silhouette by
 K
@@ -350,20 +350,20 @@ knitr::kable(transform(sid_metrics, objective = round(objective, 3), silhouette 
 |      |   k | objective | silhouette | note               |
 |:-----|----:|----------:|-----------:|:-------------------|
 | pm1  |   1 |     1.000 |         NA |                    |
-| pm2  |   2 |     0.651 |      0.545 |                    |
-| pm3  |   3 |     0.464 |      0.603 | silhouette maximum |
-| pm4  |   4 |     0.409 |      0.485 |                    |
-| pm5  |   5 |     0.381 |      0.383 |                    |
-| pm6  |   6 |     0.367 |      0.347 |                    |
-| pm7  |   7 |     0.357 |      0.308 |                    |
-| pm8  |   8 |     0.347 |      0.277 |                    |
-| pm9  |   9 |     0.334 |      0.280 |                    |
-| pm10 |  10 |     0.323 |      0.230 |                    |
-| pm11 |  11 |     0.315 |      0.229 |                    |
-| pm12 |  12 |     0.309 |      0.224 |                    |
-| pm13 |  13 |     0.299 |      0.227 |                    |
-| pm14 |  14 |     0.295 |      0.214 |                    |
-| pm15 |  15 |     0.290 |      0.210 |                    |
+| pm2  |   2 |     0.645 |      0.541 |                    |
+| pm3  |   3 |     0.465 |      0.603 | silhouette maximum |
+| pm4  |   4 |     0.409 |      0.483 |                    |
+| pm5  |   5 |     0.382 |      0.379 |                    |
+| pm6  |   6 |     0.371 |      0.323 |                    |
+| pm7  |   7 |     0.358 |      0.304 |                    |
+| pm8  |   8 |     0.348 |      0.276 |                    |
+| pm9  |   9 |     0.338 |      0.224 |                    |
+| pm10 |  10 |     0.324 |      0.222 |                    |
+| pm11 |  11 |     0.316 |      0.223 |                    |
+| pm12 |  12 |     0.309 |      0.223 |                    |
+| pm13 |  13 |     0.303 |      0.225 |                    |
+| pm14 |  14 |     0.297 |      0.215 |                    |
+| pm15 |  15 |     0.290 |      0.208 |                    |
 
 Table 1: K metrics; the silhouette maximum is marked
 
@@ -398,26 +398,26 @@ if (nrow(.small)) {
 
 |   K | letter | pam |   n | smallest           |
 |----:|:-------|:----|----:|:-------------------|
-|   2 | A      | 1   | 554 |                    |
-|   2 | B      | 2   | 246 | smallest at this K |
-|   3 | A      | 1   | 402 |                    |
-|   3 | B      | 2   | 245 |                    |
-|   3 | C      | 3   | 153 | smallest at this K |
-|   4 | A      | 1   | 227 |                    |
-|   4 | B      | 2   | 245 |                    |
-|   4 | C      | 3   | 153 | smallest at this K |
-|   4 | D      | 4   | 175 |                    |
-|   5 | A      | 1   | 227 |                    |
-|   5 | B      | 5   | 134 |                    |
-|   5 | C      | 3   | 153 |                    |
-|   5 | D      | 4   | 175 |                    |
-|   5 | E      | 2   | 111 | smallest at this K |
-|   6 | A      | 2   | 135 |                    |
-|   6 | B      | 6   | 134 |                    |
-|   6 | C      | 4   | 153 |                    |
-|   6 | D      | 1   | 173 |                    |
-|   6 | E      | 3   | 111 |                    |
-|   6 | F      | 5   |  94 | smallest at this K |
+|   2 | A      | 1   | 549 |                    |
+|   2 | B      | 2   | 251 | smallest at this K |
+|   3 | A      | 1   | 400 |                    |
+|   3 | B      | 2   | 246 |                    |
+|   3 | C      | 3   | 154 | smallest at this K |
+|   4 | A      | 1   | 228 |                    |
+|   4 | B      | 2   | 244 |                    |
+|   4 | C      | 3   | 154 | smallest at this K |
+|   4 | D      | 4   | 174 |                    |
+|   5 | A      | 1   | 228 |                    |
+|   5 | B      | 2   | 144 |                    |
+|   5 | C      | 3   | 154 |                    |
+|   5 | D      | 4   | 172 |                    |
+|   5 | E      | 5   | 102 | smallest at this K |
+|   6 | A      | 1   | 139 |                    |
+|   6 | B      | 3   | 144 |                    |
+|   6 | C      | 4   | 154 |                    |
+|   6 | D      | 5   | 158 |                    |
+|   6 | E      | 6   | 102 | smallest at this K |
+|   6 | F      | 2   | 103 |                    |
 
 Table 2: Patients per cluster at each K, by letter; pam is the PAM
 cluster number the letter was given to
@@ -435,6 +435,36 @@ if (nrow(.small)) {
 Code
 
 ``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The table counts each cluster at every K, and the Sankey draws the patients who move from one K
+# to the next. MIN_SIZE above asks whether a cluster can be analyzed, and this whether a count can be
+# published. A silhouette or MDS point is a distance between patients, with no value of theirs in it,
+# but the silhouette table's share of negative widths beside its n is a count, once K is set.
+.ks_shown <- paste0("C", K_RANGE)
+.moves <- if (length(.ks_shown) > 1L) Map(c, utils::head(.ks_shown, -1L), .ks_shown[-1L]) else list()
+.signs <- if (!is.null(K)) {
+  .widths <- sid_pam[[K]]$silinfo$widths
+  .negative <- .widths[match(rownames(sid$dist), rownames(.widths)), "sil_width"] < 0
+  hvtiRtemplates:::.identifiability_counts(table(sid_letters[[paste0("C", K)]], .negative), "silhouette widths by sign and cluster")
+}
+cat(hvtiRtemplates:::.identifiability_notice(rbind(
+  hvtiRtemplates:::.identifiability_check(sid_letters, cells = .ks_shown, tables = .moves),
+  .signs
+)))
+```
+
+WarningBefore this goes in a manuscript
+
+- 1 cell of `C3 by C4` hold fewer than 5 patients. Combine levels, or
+  decide that the count can be shown.
+- 1 cell of `C4 by C5` hold fewer than 5 patients. Combine levels, or
+  decide that the count can be shown.
+- 1 cell of `silhouette widths by sign and cluster` hold fewer than 5
+  patients. Combine levels, or decide that the count can be shown.
+
+Code
+
+``` r
 # A Sankey needs two or more K to follow patients between.
 if (length(K_RANGE) > 1L) {
   .sk <- hvtiPlotR::hv_sankey(sid_letters, cluster_cols = paste0("C", K_RANGE))
@@ -445,7 +475,7 @@ if (length(K_RANGE) > 1L) {
 }
 ```
 
-![](assets/64751db82ea95a262dd013d73d299bc5.png)
+![](assets/71f282d73db2a9685ab3cae5458f2fca.png)
 
 Figure 2: How patients move between clusters as K grows
 
@@ -493,7 +523,7 @@ if (!is.null(K)) {
 }
 ```
 
-![](assets/92f9ede2b847ba74054e9343c0e91e04.png)
+![](assets/866355c51bb2afd2e4c58cc22b58ff86.png)
 
 Figure 3: Silhouette width of every patient at K, by cluster
 
@@ -509,9 +539,9 @@ if (!is.null(K)) {
 
 |     |   n | average | negative |
 |:----|----:|--------:|:---------|
-| A   | 402 |   0.556 | 1%       |
-| B   | 245 |   0.648 | 0%       |
-| C   | 153 |   0.655 | 0%       |
+| A   | 400 |   0.561 | 0%       |
+| B   | 246 |   0.643 | 0%       |
+| C   | 154 |   0.648 | 0%       |
 
 Table 3: Average silhouette width and share of negative widths, by
 cluster at K
@@ -535,7 +565,7 @@ if (!is.null(K)) {
 }
 ```
 
-![](assets/97bca14d162e41874369e1f590c41e94.png)
+![](assets/2d0f83fd4fbae607974ddc0510cca46e.png)
 
 Figure 4: Patients placed in two dimensions by classical MDS of the SID
 distance, colored by cluster at K
@@ -637,19 +667,19 @@ if (!is.null(.reg)) {
 }
 ```
 
-     [1] "Study: /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/8a6ce6b2-d9bd-4e4c-8597-a11f84aa45cf/scratchpad/gallery-154"
-     [2] ""                                                                                                                                         
-     [3] "[x] _study.yml — study: Template gallery (synthetic)"                                                                                     
-     [4] "[x] renv.lock — renv.lock present"                                                                                                        
-     [5] "[x] manifest.yaml — 5 dataset entries verified by checksum"                                                                               
-     [6] "[x] dataset — built.rds, registered as built_20261029.parquet"                                                                            
-     [7] "[x] dataset:segments — segments.rds, registered as segments_20261029.parquet"                                                             
-     [8] "[x] dataset:echo — echo.rds, registered as echo_20261029.parquet"                                                                         
-     [9] "[x] dataset:intervals — intervals.rds, registered as intervals_20261029.parquet"                                                          
-    [10] "[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261029.parquet"                                
-    [11] "[!] provenance — 3 of 53 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, dt.study.check, sid.clusters.echo.sid"        
-    [12] ""                                                                                                                                         
-    [13] "4 .R  |  53 .qmd/.Rmd  |  3 .sas  |  86 provenance sidecars"                                                                              
+     [1] "Study: /private/var/folders/r2/142tmkt53tjd02y0s7qv_47m0000gr/T/RtmprpBe6S/gallery-83d556e90ab3/study"            
+     [2] ""                                                                                                                 
+     [3] "[x] _study.yml — study: Template gallery (synthetic)"                                                             
+     [4] "[x] renv.lock — renv.lock present"                                                                                
+     [5] "[x] manifest.yaml — 5 dataset entries verified by checksum"                                                       
+     [6] "[x] dataset — built.rds, registered as built_20261103.parquet"                                                    
+     [7] "[x] dataset:segments — segments.rds, registered as segments_20261103.parquet"                                     
+     [8] "[x] dataset:echo — echo.rds, registered as echo_20261103.parquet"                                                 
+     [9] "[x] dataset:intervals — intervals.rds, registered as intervals_20261103.parquet"                                  
+    [10] "[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261103.parquet"        
+    [11] "[!] provenance — 2 of 52 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, sid.clusters.echo.sid"
+    [12] ""                                                                                                                 
+    [13] "4 .R  |  52 .qmd/.Rmd  |  3 .sas  |  86 provenance sidecars"                                                      
 
 Code
 
@@ -666,24 +696,27 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 12:55:09 EDT |
-|  | Ended | 2026-10-29 12:55:20 EDT |
-|  | Duration | 12 s |
+| Run | Started | 2026-11-03 08:29:06 EST |
+|  | Ended | 2026-11-03 08:29:11 EST |
+|  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
+| Identifiability | small: `C3 by C4` | 1 |
+|  | small: `C4 by C5` | 1 |
+|  | small: `silhouette widths by sign and cluster` | 1 |
 | Job | File | sid.clusters.echo.sid.qmd |
 |  | Template | sid.clusters |
 |  | Subject | echo |
 |  | Type | sid |
-|  | hvtiRtemplates | 1.5.4 |
-| Dataset `built` | Version file | built_20261029.parquet |
-|  | Version date | 2026-10-29 |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-10-29 12:54:53 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-03 08:28:26 -0500, data built_20261103.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

@@ -2244,7 +2244,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-29 12:41</p>
+      <p class="date">2026-11-03 08:15</p>
     </div>
   </div>
   
@@ -2256,7 +2256,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: hp 1.5.4 sha256:2c85228ce655985339d837743fc05fc23dc19ccb8d78a4a27e1e347bdedeb778 -->
+<!-- hvtiRtemplates: hp 1.5.5 sha256:3199cfac9e9e99346aea326fe82dc8c272cb05edee3a3974cb963539dafcfaf6 -->
 <!-- Demo: name the SAS job this replaces, and say WHICH upstream fits it
      reads. A stratified hp job reads the per-stratum fits and never the
      overall one; getting that backwards produces a plausible figure. Then
@@ -2327,7 +2327,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.4</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.5</p>
 </div>
 </div>
 </div>
@@ -2477,7 +2477,7 @@ Table 1: The data this job read, as hz read it
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>study</code> (built_20261029.parquet)</td>
+<td style="text-align: left;">dataset <code>study</code> (built_20261103.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2605,6 +2605,15 @@ Table 2: End of follow-up against the longest horizon on each grid
 </figure>
 </div>
 </div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Flags what a reader could learn about one patient, by column and count. It changes no number.</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The table above prints the longest follow-up, over the rows fitted, and the actuarial step line</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ends there. The nomogram and the curves are model estimates at chosen times, and no count is shown.</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_notice</span>(</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_check</span>(d[fitted_rows, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">extremes =</span> TIME, <span class="at">upper_only =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </section>
 <section id="predictions" class="level2">
 <h2 class="anchored" data-anchor-id="predictions">Predictions</h2>
@@ -2619,15 +2628,15 @@ Table 2: End of follow-up against the longest horizon on each grid
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>CLEVEL <span class="ot">&lt;-</span> <span class="fl">0.68268948</span>   <span class="co"># SAS convention, not a study choice. ±1 SD, NOT 95%.</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>newd   <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">time =</span> years)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>pred_surv <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> newd, <span class="at">type =</span> <span class="st">&quot;survival&quot;</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                     <span class="at">se.fit =</span> <span class="cn">TRUE</span>, <span class="at">level =</span> CLEVEL, <span class="at">conf.type =</span> <span class="st">&quot;logit&quot;</span>)</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>pred_haz  <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> newd, <span class="at">type =</span> <span class="st">&quot;hazard&quot;</span>,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                     <span class="at">se.fit =</span> <span class="cn">TRUE</span>, <span class="at">level =</span> CLEVEL)</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nrow</span>(pred_surv) <span class="sc">==</span> <span class="fu">length</span>(years), <span class="fu">nrow</span>(pred_haz) <span class="sc">==</span> <span class="fu">length</span>(years))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>CLEVEL <span class="ot">&lt;-</span> <span class="fl">0.68268948</span>   <span class="co"># SAS convention, not a study choice. ±1 SD, NOT 95%.</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>newd   <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">time =</span> years)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>pred_surv <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> newd, <span class="at">type =</span> <span class="st">&quot;survival&quot;</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                     <span class="at">se.fit =</span> <span class="cn">TRUE</span>, <span class="at">level =</span> CLEVEL, <span class="at">conf.type =</span> <span class="st">&quot;logit&quot;</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>pred_haz  <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> newd, <span class="at">type =</span> <span class="st">&quot;hazard&quot;</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>                     <span class="at">se.fit =</span> <span class="cn">TRUE</span>, <span class="at">level =</span> CLEVEL)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nrow</span>(pred_surv) <span class="sc">==</span> <span class="fu">length</span>(years), <span class="fu">nrow</span>(pred_haz) <span class="sc">==</span> <span class="fu">length</span>(years))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2637,16 +2646,16 @@ Table 2: End of follow-up against the longest horizon on each grid
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>nomogram <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">years    =</span> years,</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">survival =</span> pred_surv<span class="sc">$</span>fit,</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">surv_lo  =</span> pred_surv<span class="sc">$</span>lower,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">surv_hi  =</span> pred_surv<span class="sc">$</span>upper,</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">hazard   =</span> pred_haz<span class="sc">$</span>fit,</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">haz_lo   =</span> pred_haz<span class="sc">$</span>lower,</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">haz_hi   =</span> pred_haz<span class="sc">$</span>upper</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(nomogram, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>nomogram <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">years    =</span> years,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">survival =</span> pred_surv<span class="sc">$</span>fit,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">surv_lo  =</span> pred_surv<span class="sc">$</span>lower,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">surv_hi  =</span> pred_surv<span class="sc">$</span>upper,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">hazard   =</span> pred_haz<span class="sc">$</span>fit,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">haz_lo   =</span> pred_haz<span class="sc">$</span>lower,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">haz_hi   =</span> pred_haz<span class="sc">$</span>upper</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(nomogram, <span class="at">digits =</span> <span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-nomogram" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2795,13 +2804,13 @@ Table 3: Survival, hazard and their confidence limits at each horizon
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>nomogram_pct <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">years        =</span> years,</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">survival_pct =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> pred_surv<span class="sc">$</span>fit, <span class="dv">1</span>),</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cl_lower_pct =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> pred_surv<span class="sc">$</span>lower, <span class="dv">1</span>),</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">cl_upper_pct =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> pred_surv<span class="sc">$</span>upper, <span class="dv">1</span>)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(nomogram_pct)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>nomogram_pct <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">years        =</span> years,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">survival_pct =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> pred_surv<span class="sc">$</span>fit, <span class="dv">1</span>),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cl_lower_pct =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> pred_surv<span class="sc">$</span>lower, <span class="dv">1</span>),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">cl_upper_pct =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> pred_surv<span class="sc">$</span>upper, <span class="dv">1</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(nomogram_pct)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-nomogram-pct" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2928,22 +2937,22 @@ Table 4: Survival (%) with 68% confidence limits (plus or minus 1 SD), not 95%
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>s_pct  <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">unname</span>(<span class="fu">predict</span>(fit, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">time =</span> t_plot),</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                               <span class="at">type =</span> <span class="st">&quot;survival&quot;</span>))</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>x_plot <span class="ot">&lt;-</span> t_plot <span class="sc">*</span> <span class="dv">12</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>draw <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim =</span> <span class="fu">range</span>(x_plot), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>),</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab =</span> <span class="st">&quot;Months after operation&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;Survival (%)&quot;</span>,</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">main =</span> <span class="st">&quot;Actuarial and parametric survival&quot;</span>)</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lines</span>(x_plot, s_pct, <span class="at">lty =</span> <span class="dv">1</span>)</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The actuarial estimate is a STEP function; type = &quot;s&quot; rather than a line</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># through the knots, which would draw an estimate nobody computed.</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lines</span>(km<span class="sc">$</span>time <span class="sc">*</span> <span class="dv">12</span>, <span class="dv">100</span> <span class="sc">*</span> km<span class="sc">$</span>survival, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">type =</span> <span class="st">&quot;s&quot;</span>)</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">legend</span>(<span class="st">&quot;bottomleft&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;parametric (hz)&quot;</span>, <span class="st">&quot;actuarial (ac)&quot;</span>),</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">bty =</span> <span class="st">&quot;n&quot;</span>)</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">save_figure</span>(draw, <span class="st">&quot;hp-survival&quot;</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>s_pct  <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">unname</span>(<span class="fu">predict</span>(fit, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">time =</span> t_plot),</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                               <span class="at">type =</span> <span class="st">&quot;survival&quot;</span>))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>x_plot <span class="ot">&lt;-</span> t_plot <span class="sc">*</span> <span class="dv">12</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>draw <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim =</span> <span class="fu">range</span>(x_plot), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>),</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab =</span> <span class="st">&quot;Months after operation&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;Survival (%)&quot;</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">main =</span> <span class="st">&quot;Actuarial and parametric survival&quot;</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lines</span>(x_plot, s_pct, <span class="at">lty =</span> <span class="dv">1</span>)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The actuarial estimate is a STEP function; type = &quot;s&quot; rather than a line</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># through the knots, which would draw an estimate nobody computed.</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lines</span>(km<span class="sc">$</span>time <span class="sc">*</span> <span class="dv">12</span>, <span class="dv">100</span> <span class="sc">*</span> km<span class="sc">$</span>survival, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">type =</span> <span class="st">&quot;s&quot;</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">legend</span>(<span class="st">&quot;bottomleft&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;parametric (hz)&quot;</span>, <span class="st">&quot;actuarial (ac)&quot;</span>),</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">bty =</span> <span class="st">&quot;n&quot;</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">save_figure</span>(draw, <span class="st">&quot;hp-survival&quot;</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-survival" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2961,15 +2970,15 @@ Figure 1: Actuarial and parametric survival after the operation. The solid blac
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>h_pcpm <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">/</span> <span class="dv">12</span> <span class="sc">*</span> <span class="fu">unname</span>(<span class="fu">predict</span>(fit, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">time =</span> t_plot),</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">type =</span> <span class="st">&quot;hazard&quot;</span>))</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>draw <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(x_plot, h_pcpm, <span class="at">type =</span> <span class="st">&quot;l&quot;</span>, <span class="at">log =</span> <span class="st">&quot;y&quot;</span>,</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab =</span> <span class="st">&quot;Months after operation&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;Hazard (% per month)&quot;</span>,</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">main =</span> <span class="st">&quot;Hazard function&quot;</span>)</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">save_figure</span>(draw, <span class="st">&quot;hp-hazard&quot;</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>h_pcpm <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">/</span> <span class="dv">12</span> <span class="sc">*</span> <span class="fu">unname</span>(<span class="fu">predict</span>(fit, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">time =</span> t_plot),</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">type =</span> <span class="st">&quot;hazard&quot;</span>))</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>draw <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(x_plot, h_pcpm, <span class="at">type =</span> <span class="st">&quot;l&quot;</span>, <span class="at">log =</span> <span class="st">&quot;y&quot;</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab =</span> <span class="st">&quot;Months after operation&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;Hazard (% per month)&quot;</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">main =</span> <span class="st">&quot;Hazard function&quot;</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">save_figure</span>(draw, <span class="st">&quot;hp-hazard&quot;</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-hazard" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2990,38 +2999,38 @@ Figure 2: Hazard of the parametric model after the operation. The solid black l
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># predict() returns the decomposition WIDE -- one column per phase plus</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># `total` -- so it is reshaped here rather than assumed to arrive long.</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>dec <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">time =</span> t_plot),</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>, <span class="at">decompose =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Every column except `time` is a component. Derived from what came back rather</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># than naming early/late, so a three-phase model needs no edit here.</span></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>comp <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">names</span>(dec), <span class="st">&quot;time&quot;</span>)</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co"># The components must sum to `total`, or it is not a decomposition.</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="st">&quot;total&quot;</span> <span class="sc">%in%</span> comp) {</span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  parts <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(comp, <span class="st">&quot;total&quot;</span>)</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  max_gap <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">rowSums</span>(dec[, parts, <span class="at">drop =</span> <span class="cn">FALSE</span>]) <span class="sc">-</span> dec<span class="sc">$</span>total))</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (max_gap <span class="sc">&gt;</span> <span class="fl">1e-8</span>) {</span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;The phase components do not sum to the total (largest gap &quot;</span>,</span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>         <span class="fu">format</span>(max_gap, <span class="at">digits =</span> <span class="dv">4</span>), <span class="st">&quot;). That is not a decomposition.&quot;</span>,</span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>draw <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim =</span> <span class="fu">range</span>(t_plot), <span class="at">ylim =</span> <span class="fu">range</span>(<span class="fu">unlist</span>(dec[comp])),</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab =</span> <span class="st">&quot;Years after operation&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;Cumulative hazard&quot;</span>,</span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>       <span class="at">main =</span> <span class="st">&quot;Phase decomposition of the cumulative hazard&quot;</span>)</span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(comp)) {</span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">lines</span>(dec<span class="sc">$</span>time, dec[[comp[i]]], <span class="at">col =</span> i,</span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>          <span class="at">lty =</span> <span class="cf">if</span> (comp[i] <span class="sc">==</span> <span class="st">&quot;total&quot;</span>) <span class="dv">1</span> <span class="cf">else</span> <span class="dv">2</span>)</span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">legend</span>(<span class="st">&quot;topleft&quot;</span>, comp, <span class="at">col =</span> <span class="fu">seq_along</span>(comp),</span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>         <span class="at">lty =</span> <span class="fu">ifelse</span>(comp <span class="sc">==</span> <span class="st">&quot;total&quot;</span>, <span class="dv">1</span>, <span class="dv">2</span>), <span class="at">bty =</span> <span class="st">&quot;n&quot;</span>)</span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">save_figure</span>(draw, <span class="st">&quot;hp-phases&quot;</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># predict() returns the decomposition WIDE -- one column per phase plus</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># `total` -- so it is reshaped here rather than assumed to arrive long.</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>dec <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">time =</span> t_plot),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>, <span class="at">decompose =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Every column except `time` is a component. Derived from what came back rather</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co"># than naming early/late, so a three-phase model needs no edit here.</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>comp <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">names</span>(dec), <span class="st">&quot;time&quot;</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co"># The components must sum to `total`, or it is not a decomposition.</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="st">&quot;total&quot;</span> <span class="sc">%in%</span> comp) {</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  parts <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(comp, <span class="st">&quot;total&quot;</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  max_gap <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">rowSums</span>(dec[, parts, <span class="at">drop =</span> <span class="cn">FALSE</span>]) <span class="sc">-</span> dec<span class="sc">$</span>total))</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (max_gap <span class="sc">&gt;</span> <span class="fl">1e-8</span>) {</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;The phase components do not sum to the total (largest gap &quot;</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>         <span class="fu">format</span>(max_gap, <span class="at">digits =</span> <span class="dv">4</span>), <span class="st">&quot;). That is not a decomposition.&quot;</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>draw <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(<span class="cn">NA</span>, <span class="at">xlim =</span> <span class="fu">range</span>(t_plot), <span class="at">ylim =</span> <span class="fu">range</span>(<span class="fu">unlist</span>(dec[comp])),</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab =</span> <span class="st">&quot;Years after operation&quot;</span>, <span class="at">ylab =</span> <span class="st">&quot;Cumulative hazard&quot;</span>,</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>       <span class="at">main =</span> <span class="st">&quot;Phase decomposition of the cumulative hazard&quot;</span>)</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(comp)) {</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">lines</span>(dec<span class="sc">$</span>time, dec[[comp[i]]], <span class="at">col =</span> i,</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>          <span class="at">lty =</span> <span class="cf">if</span> (comp[i] <span class="sc">==</span> <span class="st">&quot;total&quot;</span>) <span class="dv">1</span> <span class="cf">else</span> <span class="dv">2</span>)</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">legend</span>(<span class="st">&quot;topleft&quot;</span>, comp, <span class="at">col =</span> <span class="fu">seq_along</span>(comp),</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>         <span class="at">lty =</span> <span class="fu">ifelse</span>(comp <span class="sc">==</span> <span class="st">&quot;total&quot;</span>, <span class="dv">1</span>, <span class="dv">2</span>), <span class="at">bty =</span> <span class="st">&quot;n&quot;</span>)</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">save_figure</span>(draw, <span class="st">&quot;hp-phases&quot;</span>, <span class="at">linked =</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-phases" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -3043,9 +3052,9 @@ Figure 3: Phase decomposition of the cumulative hazard. The solid line is the t
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The nomogram is the deliverable, so it is written as CSV as well as printed:</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># a table in an HTML report cannot be joined against anything.</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(nomogram, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;hp-nomogram.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The nomogram is the deliverable, so it is written as CSV as well as printed:</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># a table in an HTML report cannot be joined against anything.</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(nomogram, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;hp-nomogram.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -3068,12 +3077,12 @@ Figure 3: Phase decomposition of the cumulative hazard. The solid line is the t
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-29 12:41:19 EDT</td>
+<td style="text-align: left;">2026-11-03 08:15:51 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-29 12:41:19 EDT</td>
+<td style="text-align: left;">2026-11-03 08:15:52 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3118,17 +3127,17 @@ Figure 3: Phase decomposition of the cumulative hazard. The solid line is the t
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.4</td>
+<td style="text-align: left;">1.5.5</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261029.parquet</td>
+<td style="text-align: left;">built_20261103.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-29</td>
+<td style="text-align: left;">2026-11-03</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3158,12 +3167,12 @@ Figure 3: Phase decomposition of the cumulative hazard. The solid line is the t
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-hz/ac.rds</code> (actuarial-estimate), rendered 2026-10-29 12:40:31 -0400, data built_20261029.parquet</td>
+<td style="text-align: left;"><code>dead-hz/ac.rds</code> (actuarial-estimate), rendered 2026-11-03 08:15:11 -0500, data built_20261103.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-hz/hz.rds</code> (hazard-model), rendered 2026-10-29 12:40:53 -0400, data built_20261029.parquet</td>
+<td style="text-align: left;"><code>dead-hz/hz.rds</code> (hazard-model), rendered 2026-11-03 08:15:29 -0500, data built_20261103.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Reproducibility</td>
@@ -3178,7 +3187,7 @@ Figure 3: Phase decomposition of the cumulative hazard. The solid line is the t
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"hp.dead.hz","rendered":"2026-10-29T16:41:19Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.5.4","source":null},{"package":"hvtiRutilities","version":"1.5.17","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"numDeriv","version":"2016.8.1.1","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.2.17","source":null},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261029.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-29T16:34:24Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261029.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-29T16:34:24Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261029.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-29T16:34:24Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/dead-hz/ac.rds","role":"actuarial-estimate","bytes":28031,"mtime":"2026-10-29T16:40:32Z","sha256":"896b81ce13ec12b570eabdbd5b1c6ac61f38c4c242c3c6a675dfc8b53c5035d3"},{"path":"90_estimates/dead-hz/hz.rds","role":"hazard-model","bytes":7280,"mtime":"2026-10-29T16:40:58Z","sha256":"2fb618db8dc0335719348e0700a91275dfe815418b8bed57cdcb4294183fc1ad"}],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-10-29T12:41:19-0400","end":"2026-10-29T12:41:19-0400","time_zone":"EDT","duration_seconds":0.6,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hp.dead.hz.qmd","template":"hp","prefix":"hp","subject":"dead","type":"hz","hvtiRtemplates":"1.5.4"},"datasets":[{"name":"built","version_file":"built_20261029.parquet","registered":"2026-10-29","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-hz/ac.rds","set":"dead-hz","role":"actuarial-estimate","rendered_at":"2026-10-29T12:40:31-0400","dataset_version":"built_20261029.parquet"},{"file":"90_estimates/dead-hz/hz.rds","set":"dead-hz","role":"hazard-model","rendered_at":"2026-10-29T12:40:53-0400","dataset_version":"built_20261029.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"40_graphs/hp.dead.hz.qmd",".hvti_render_id":"05951a12278456fbb132a410bcd9b278e16f23c9a7ed74645c97900d3735b106",".hvti_source_sha256":"c7ff4ed062ef57c20a8c9fb7e2f8d040a4d971fe055b094cedcef06cdfabe246"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"hp.dead.hz","rendered":"2026-11-03T13:15:52Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.5.5","source":"github","sha":"f07705891093932be2b3d180444d64d07f187071"},{"package":"hvtiRutilities","version":"1.5.19","source":"github","sha":"5359155a4da9a3b403df9acfb9e529c4d2444489"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"numDeriv","version":"2016.8.1.1","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.2.18","source":"github","sha":"23739d794d4776b5c24d5e2e88e7a5b4bd0cd240"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261103.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-03T13:11:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261103.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-03T13:11:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261103.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-03T13:11:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/dead-hz/ac.rds","role":"actuarial-estimate","bytes":28031,"mtime":"2026-11-03T13:15:12Z","sha256":"b5922845c70d8255bc0da889929a20e66b7f935853eca89d4227fdeb117ab930"},{"path":"90_estimates/dead-hz/hz.rds","role":"hazard-model","bytes":7296,"mtime":"2026-11-03T13:15:34Z","sha256":"d57e11a4bc2e36583f33d220a4251d104de13654d9cb9e7bb628999e22166ed1"}],"subject":"dead","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-11-03T08:15:51-0500","end":"2026-11-03T08:15:52-0500","time_zone":"EST","duration_seconds":0.8,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hp.dead.hz.qmd","template":"hp","prefix":"hp","subject":"dead","type":"hz","hvtiRtemplates":"1.5.5"},"datasets":[{"name":"built","version_file":"built_20261103.parquet","registered":"2026-11-03","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-hz/ac.rds","set":"dead-hz","role":"actuarial-estimate","rendered_at":"2026-11-03T08:15:11-0500","dataset_version":"built_20261103.parquet"},{"file":"90_estimates/dead-hz/hz.rds","set":"dead-hz","role":"hazard-model","rendered_at":"2026-11-03T08:15:29-0500","dataset_version":"built_20261103.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"40_graphs/hp.dead.hz.qmd",".hvti_render_id":"7e64340766df241ab60cfb6043d786a827876de47f816b80cb8e35a36a88907b",".hvti_source_sha256":"e0ad5ebbb3031db175f992b7c6b7496a83115cda695a4b3c4cf02314b1716f1a"}</script>
 </section>
 
 </main>

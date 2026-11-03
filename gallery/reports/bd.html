@@ -2177,6 +2177,13 @@ vertical-align: -.125em;
   <ul>
   <li><a href="#study-choices" id="toc-study-choices" class="nav-link active" data-scroll-target="#study-choices">Study choices</a></li>
   <li><a href="#cohort" id="toc-cohort" class="nav-link" data-scroll-target="#cohort">Cohort</a></li>
+  <li><a href="#checks" id="toc-checks" class="nav-link" data-scroll-target="#checks">Checks</a>
+  <ul class="collapse">
+  <li><a href="#what-this-rebuild-changed" id="toc-what-this-rebuild-changed" class="nav-link" data-scroll-target="#what-this-rebuild-changed">What this rebuild changed</a></li>
+  <li><a href="#cross-tabs" id="toc-cross-tabs" class="nav-link" data-scroll-target="#cross-tabs">Cross-tabs</a></li>
+  <li><a href="#follow-up" id="toc-follow-up" class="nav-link" data-scroll-target="#follow-up">Follow-up</a></li>
+  <li><a href="#named-checks" id="toc-named-checks" class="nav-link" data-scroll-target="#named-checks">Named checks</a></li>
+  </ul></li>
   <li><a href="#register" id="toc-register" class="nav-link" data-scroll-target="#register">Register</a></li>
   <li><a href="#report" id="toc-report" class="nav-link" data-scroll-target="#report">Report</a>
   <ul class="collapse">
@@ -2204,7 +2211,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-29 12:34</p>
+      <p class="date">2026-11-03 08:11</p>
     </div>
   </div>
   
@@ -2216,17 +2223,18 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: bd 1.5.4 sha256:1a9869b654c4eaf967d02cd55ffd63ad59d56b278b3dd58bfd3130137a1c09bf -->
+<!-- hvtiRtemplates: bd 1.5.5 sha256:5fe0eb7c7499540465c2d95972e0f3c109c1ae414f321294a9daf86886d167d4 -->
 <!-- Demo: name the SAS job this replaces (usually datasets/bd.data.sas) and the master it read. -->
 <p>This job cuts the study’s dataset from a master snapshot, records who was excluded and why, and writes the study’s working dataset with its build record beside it. When <code>REGISTER</code> is <code>TRUE</code> it registers that file as a dated version of this study’s <code>&quot;built&quot;</code> dataset (also called <code>&quot;study&quot;</code>), the one every analysis job reads.</p>
-<p>What does not belong here: corrections to a patient’s values (they belong to the master’s corrections, in hvtiRdatabuild, so every study sees them); imputation, propensity scores and variables for one model (a <code>vars</code> job); printing patient rows to check them (do that in the console, never in a report).</p>
+<p>Before it registers, the job checks what it built: what the rebuild changed against the version registered now, cross-tabs, the follow-up columns and the study’s own named checks. The report holds their counts; the rows behind them go to the console, never into the report.</p>
+<p>What does not belong here: corrections to a patient’s values (they belong to the master’s corrections, in hvtiRdatabuild, so every study sees them); imputation, propensity scores and variables for one model (a <code>vars</code> job).</p>
 <div class="callout callout-style-simple callout-note no-icon">
 <div class="callout-body d-flex">
 <div class="callout-icon-container">
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · rendered by gallery on gallery · hvtiRtemplates 1.5.4</p>
+<p><strong>final</strong> · rendered by gallery on gallery · hvtiRtemplates 1.5.5</p>
 </div>
 </div>
 </div>
@@ -2239,6 +2247,559 @@ vertical-align: -.125em;
      The marker sits here, not in the chunk, because a chunk holding one must be labeled edit-, and this chunk's
      label is the step name its failures report. -->
 </section>
+<section id="checks" class="level2">
+<h2 class="anchored" data-anchor-id="checks">Checks</h2>
+<p>These checks read the dataset this render has just written. They report counts only: the rows behind a count, the patients on one side of the rebuild only and the levels of each cross-tab are printed in the console, so run the chunks in an interactive session to read them. A finding changes nothing and blocks nothing. A check that cannot run, because a column it names is missing or a condition does not evaluate, stops the render, as a bad <code>EXCLUDE</code> rule does: a build whose checks did not run is never registered. A finding becomes a correction to the master, a rule in <code>EXCLUDE</code>, or a fix to the derive chunk; then render again, and register once the checks read right. A draft’s report prints the SHA-256 of the file it wrote, and a registering render registers only a file whose bytes that report names, so register from a render, never from chunks run by hand.</p>
+<section id="what-this-rebuild-changed" class="level3">
+<h3 class="anchored" data-anchor-id="what-this-rebuild-changed">What this rebuild changed</h3>
+<p>A comparison build: study_cohort.rds is not the study dataset. It is compared against the study dataset built.rds, registered as built_20261103.parquet, which this build leaves unchanged.</p>
+<div class="cell">
+<div id="tbl-rebuild-rows" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-rebuild-rows-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 1: Rows in the registered version and in this build, joined on the dataset’s key
+</figcaption>
+<div aria-describedby="tbl-rebuild-rows-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Item</th>
+<th style="text-align: right;">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Rows in the registered version</td>
+<td style="text-align: right;">800</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rows in this build</td>
+<td style="text-align: right;">683</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rows in both</td>
+<td style="text-align: right;">683</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">In the registered version only</td>
+<td style="text-align: right;">117</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">In this build only</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="tbl-rebuild-columns" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-rebuild-columns-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 2: Each column of the rows in both, compared by value
+</figcaption>
+<div aria-describedby="tbl-rebuild-columns-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 39%">
+<col style="width: 19%">
+<col style="width: 24%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Column</th>
+<th style="text-align: left;">Verdict</th>
+<th style="text-align: right;">Rows differing</th>
+<th style="text-align: right;">Largest difference</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">approach</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">complication</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">cpb_time</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">discharge</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">e_e</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">icu_hours</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">iv_opyrs</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">iv_reint</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">iv_reop</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">la_diam</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">log_los</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">los</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">lvedd</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">lvesd</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">male</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">match_pair</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">mr_grade</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">mv_procedure</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">nonwhite</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">plvmassi</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">prior_ops</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">reint</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">reop</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">rvsp</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">stroke</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">valve_size</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">valve_type</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">vent</td>
+<td style="text-align: left;">in the registered version only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">op_year</td>
+<td style="text-align: left;">in this build only</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">age</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">bmi</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">creat_pr</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">dead</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">dt_surg</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">female</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">hx_chf</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">hx_dm</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">iv_dead</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">lvef</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">nyha_pr</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">race_grp</td>
+<td style="text-align: left;">identical</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="cross-tabs" class="level3">
+<h3 class="anchored" data-anchor-id="cross-tabs">Cross-tabs</h3>
+<div class="cell">
+<div id="tbl-crosstab-1" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-crosstab-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 3: dead by female
+</figcaption>
+<div aria-describedby="tbl-crosstab-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">dead</th>
+<th style="text-align: left;">female</th>
+<th style="text-align: right;">Frequency</th>
+<th style="text-align: right;">Percent</th>
+<th style="text-align: left;">Small</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">0</td>
+<td style="text-align: left;">0</td>
+<td style="text-align: right;">204</td>
+<td style="text-align: right;">29.86823</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">0</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">122</td>
+<td style="text-align: right;">17.86237</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">0</td>
+<td style="text-align: right;">234</td>
+<td style="text-align: right;">34.26061</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">123</td>
+<td style="text-align: right;">18.00878</td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="tbl-crosstabs" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-crosstabs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 4: Each cross-tab’s shape, with a missing value as a level of its own
+</figcaption>
+<div aria-describedby="tbl-crosstabs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Pair</th>
+<th style="text-align: left;">Levels</th>
+<th style="text-align: right;">Cells</th>
+<th style="text-align: right;">Cells under 5</th>
+<th style="text-align: right;">Missing</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">dead by female</td>
+<td style="text-align: left;">2 x 2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="follow-up" class="level3">
+<h3 class="anchored" data-anchor-id="follow-up">Follow-up</h3>
+<div class="cell">
+<div id="tbl-followup-cohort" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-followup-cohort-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 5: Patients by event status
+</figcaption>
+<div aria-describedby="tbl-followup-cohort-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">full</th>
+<th style="text-align: right;">event</th>
+<th style="text-align: right;">censored</th>
+<th style="text-align: right;">missing_event</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">683</td>
+<td style="text-align: right;">357</td>
+<td style="text-align: right;">326</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="tbl-followup-intervals" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-followup-intervals-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 6: Each follow-up interval
+</figcaption>
+<div aria-describedby="tbl-followup-intervals-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 12%">
+<col style="width: 11%">
+<col style="width: 12%">
+<col style="width: 6%">
+<col style="width: 5%">
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">interval</th>
+<th style="text-align: right;">missing</th>
+<th style="text-align: right;">negative</th>
+<th style="text-align: right;">zero</th>
+<th style="text-align: right;">min</th>
+<th style="text-align: right;">q1</th>
+<th style="text-align: right;">median</th>
+<th style="text-align: right;">q3</th>
+<th style="text-align: right;">mean</th>
+<th style="text-align: right;">sd</th>
+<th style="text-align: right;">max</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">iv_dead</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2.72</td>
+<td style="text-align: right;">6.971</td>
+<td style="text-align: right;">13.52</td>
+<td style="text-align: right;">8.945</td>
+<td style="text-align: right;">7.448</td>
+<td style="text-align: right;">29.711</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>0 row(s) look suspicious, listed in the console.</p>
+</section>
+<section id="named-checks" class="level3">
+<h3 class="anchored" data-anchor-id="named-checks">Named checks</h3>
+<div class="cell">
+<div id="tbl-checks" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-checks-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 7: Rows matching each named check; the rows themselves are in the console
+</figcaption>
+<div aria-describedby="tbl-checks-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 20%">
+<col style="width: 28%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Check</th>
+<th style="text-align: right;">Rows matching</th>
+<th style="text-align: right;">Undecided (missing)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Event with no follow-up interval</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Follow-up interval of zero or less</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+</section>
 <section id="register" class="level2">
 <h2 class="anchored" data-anchor-id="register">Register</h2>
 </section>
@@ -2248,14 +2809,14 @@ vertical-align: -.125em;
 <div id="tbl-report-source" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-report-source-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 1: Run mode, master snapshot, row counts and dataset registration for this render
+Table 8: Run mode, master snapshot, row counts and dataset registration for this render
 </figcaption>
 <div aria-describedby="tbl-report-source-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
 <table class="cell caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 17%">
-<col style="width: 82%">
+<col style="width: 18%">
+<col style="width: 81%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2298,15 +2859,19 @@ Table 1: Run mode, master snapshot, row counts and dataset registration for thi
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Study dataset before</td>
-<td style="text-align: left;">built_20261029.parquet</td>
+<td style="text-align: left;">built_20261103.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Study dataset after</td>
-<td style="text-align: left;">built_20261029.parquet</td>
+<td style="text-align: left;">built_20261103.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Registration</td>
 <td style="text-align: left;">Working file only: the study’s dataset is still built.rds, so this build was not declared or registered</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Build reviewed (sha256)</td>
+<td style="text-align: left;">6596c1a4a83541cce8b973dd2a75fa6c5ceec316516dea1f1bbbe3ae4b21f7f8</td>
 </tr>
 </tbody>
 </table>
@@ -2321,7 +2886,7 @@ Table 1: Run mode, master snapshot, row counts and dataset registration for thi
 <div id="tbl-report-attrition" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-report-attrition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 2: Exclusions applied to the master, in order
+Table 9: Exclusions applied to the master, in order
 </figcaption>
 <div aria-describedby="tbl-report-attrition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2397,7 +2962,7 @@ Table 2: Exclusions applied to the master, in order
 <div id="tbl-report-columns" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-report-columns-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 3: Type, missing count and range of each column
+Table 10: Type, missing count and range of each column
 </figcaption>
 <div aria-describedby="tbl-report-columns-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2518,17 +3083,17 @@ Table 3: Type, missing count and range of each column
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-29 12:34:26 EDT</td>
+<td style="text-align: left;">2026-11-03 08:11:09 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-29 12:34:26 EDT</td>
+<td style="text-align: left;">2026-11-03 08:11:10 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">0 s</td>
+<td style="text-align: left;">1 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2568,7 +3133,7 @@ Table 3: Type, missing count and range of each column
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.4</td>
+<td style="text-align: left;">1.5.5</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>

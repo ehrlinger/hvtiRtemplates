@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:47
+2026-11-03 08:20
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -45,8 +45,9 @@ if (utils::packageVersion("ggRandomForests") < "4.0.0") {
   stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
-  stop("This job needs hvtiPlotR >= 2.8.18 for the red and blue its captions name; ", utils::packageVersion("hvtiPlotR"),
+if (utils::packageVersion("hvtiPlotR") < "2.8.20") {
+  stop("This job needs hvtiPlotR >= 2.8.20 for the red and blue its captions name and hv_group_palette(); ",
+       utils::packageVersion("hvtiPlotR"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -79,7 +80,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.4
+hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -227,7 +228,7 @@ save_figure(.fig, "rfs-explain-importance", height = 7)
 .fig
 ```
 
-![](assets/42cb24955bb04ef97d741b24511fa610.png)
+![](assets/82a36064a90649c84466de90b56736f5.png)
 
 Figure 1: VIMP (anti-split importance) of each predictor. Horizontal
 bars give the importance of each predictor, in one color where the
@@ -247,15 +248,15 @@ data.frame(variable = ranked,
 ```
 
       variable    vimp min_depth
-    1      age  0.1814      1.19
-    2   hx_chf  0.1176      1.50
-    3     lvef  0.0806      1.76
-    4      bmi  0.0244      3.24
-    5 plvmassi  0.0232      2.72
-    6    hx_dm  0.0206      3.35
-    7 creat_pr  0.0133      2.97
-    8  nyha_pr  0.0053      4.41
-    9   female -0.0004      6.96
+    1      age  0.1837      1.14
+    2   hx_chf  0.1158      1.52
+    3     lvef  0.0767      1.79
+    4 plvmassi  0.0256      2.65
+    5    hx_dm  0.0215      3.12
+    6      bmi  0.0205      3.59
+    7 creat_pr  0.0172      2.99
+    8  nyha_pr  0.0116      4.57
+    9   female -0.0006      7.83
 
 Table 2: VIMP (anti-split importance) and minimal depth of each
 predictor, in order of importance
@@ -356,7 +357,7 @@ Code
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/6895a3d1dc3e4839d473138c2bd1f586.png)
+![](assets/e14fc12996f805ffc89dd19ca590ec3b.png)
 
 Figure 2: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -382,7 +383,7 @@ Code
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/93d9d4ce7aa7a37278ad9b6b46aa0195.png)
+![](assets/56baf2eb33b69540d31e4611aee68b1d.png)
 
 Figure 3: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -390,7 +391,7 @@ individual patients, red for those who had the event and blue for those
 censored, each with its own shape; the black line is a loess smooth with
 its gray band, drawn for predictors with more than five distinct values,
 and for a categorical predictor the points are jittered over a gray box
-plot. Page 2 of 2: lvef, bmi.
+plot. Page 2 of 2: lvef, plvmassi.
 
 Code
 
@@ -403,14 +404,15 @@ pd <- cache_fit("rfs-partial", gg_partial_rfsrc(forest, xvar.names = sel, partia
                 packages = "randomForestSRC")
 # The manuscript theme hides the legend and its title, and the caption reads the colors from the legend.
 .cap <- paste("Partial dependence of the forest's prediction on each selected predictor, one panel per",
-              "predictor. Solid lines trace the predicted survival across a continuous predictor, one color",
-              "per follow-up time as in the legend, and dark gray bars give the partial effect at each",
+              "predictor. Lines trace the predicted survival across a continuous predictor, one color and line",
+              "type per follow-up time as in the legend, and dark gray bars give the partial effect at each",
               "level of a categorical one.")
 # Free size, paged: one facet per predictor, two by two.
 .pages <- hvtiRtemplates:::.figure_pages(length(sel), panel_width = 3.25, panel_height = 3, page_height = 6)
 for (.i in seq_along(.pages)) {
   .vars <- sel[.pages[[.i]]$index]
-  .fig <- plot(hvtiRtemplates:::.partial_subset(pd, .vars)) &
+  # A line type per horizon as well as a color, so the page reads apart in grayscale.
+  .fig <- hvtiRtemplates:::.partial_horizon_keys(plot(hvtiRtemplates:::.partial_subset(pd, .vars))) &
     hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
   save_figure(.fig, sprintf("rfs-explain-dependence-partial-page-%02d", .i),
               width = .pages[[.i]]$width, height = .pages[[.i]]$height)
@@ -424,21 +426,21 @@ Code
 .fig
 ```
 
-![](assets/d00f770e048e613b3c260c2f265124d5.png)
+![](assets/70a3de75f18b872ae24f85e443eee219.png)
 
 Figure 4: Partial dependence of the forest’s prediction on each selected
-predictor, one panel per predictor. Solid lines trace the predicted
-survival across a continuous predictor, one color per follow-up time as
-in the legend, and dark gray bars give the partial effect at each level
-of a categorical one.
+predictor, one panel per predictor. Lines trace the predicted survival
+across a continuous predictor, one color and line type per follow-up
+time as in the legend, and dark gray bars give the partial effect at
+each level of a categorical one.
 
 ## About this run
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-10-29 12:47:18 EDT |
-|  | Ended | 2026-10-29 12:47:31 EDT |
-|  | Duration | 13 s |
+| Run | Started | 2026-11-03 08:20:45 EST |
+|  | Ended | 2026-11-03 08:20:53 EST |
+|  | Duration | 8 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -446,13 +448,13 @@ of a categorical one.
 |  | Template | rfs.explain |
 |  | Subject | dead |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.5.4 |
-| Dataset `built` | Version file | built_20261029.parquet |
-|  | Version date | 2026-10-29 |
+|  | hvtiRtemplates | 1.5.5 |
+| Dataset `built` | Version file | built_20261103.parquet |
+|  | Version date | 2026-11-03 |
 |  | Source file | built.rds |
 |  | sha256 | b236a472f1f3 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-10-29 12:47:03 -0400, data built_20261029.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-11-03 08:20:34 -0500, data built_20261103.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | d09f96b6cd21 |

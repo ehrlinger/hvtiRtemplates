@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:53
+2026-11-03 08:25
 
 Gallery job on the synthetic cohort: how the nine preoperative
 predictors the rf fits grow on depend on each other, with no outcome
@@ -92,8 +92,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -245,7 +245,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -445,7 +445,7 @@ cat(if (bar$from == "noise") {
 })
 ```
 
-The noise bar is 1.8, the largest weight a permuted noise column
+The noise bar is 1.58, the largest weight a permuted noise column
 reached; varPro’s fixed cutoff is 0.25.
 
 Code
@@ -492,7 +492,7 @@ save_figure(.fig, "vp-dependence-graph", width = 6.5, height = 6)
 .fig
 ```
 
-![](assets/22b06e11f619a47c9b73665deb5b0644.png)
+![](assets/489431a8e547e4ed245f1a9926775126.png)
 
 Figure 1: Dependence between the variables, at the noise bar. An arrow
 runs from a released variable to a variable that helps separate the
@@ -521,7 +521,7 @@ save_figure(.fig, "vp-dependence-heatmap", width = 6.5, height = 6)
 .fig
 ```
 
-![](assets/ca2e1ca720cec425ca179541b23e7330.png)
+![](assets/765a5aa2458bb248ae4fc8e87486d80e.png)
 
 Figure 2: Dependence between every pair of variables at any strength,
 the larger of the two directions, clustered so related variables sit
@@ -585,7 +585,7 @@ if (REPEATS > 0) {
 }
 ```
 
-    The noise bar ranged from 1.37 to 2.53 across the refits.
+    The noise bar ranged from 1.26 to 2.46 across the refits.
 
 | from   | to   | share |
 |:-------|:-----|------:|
@@ -651,9 +651,9 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 
 | Group           | Item             | Value                      |
 |:----------------|:-----------------|:---------------------------|
-| Run             | Started          | 2026-10-29 12:52:29 EDT    |
-|                 | Ended            | 2026-10-29 12:53:56 EDT    |
-|                 | Duration         | 1 min 26 s                 |
+| Run             | Started          | 2026-11-03 08:24:26 EST    |
+|                 | Ended            | 2026-11-03 08:25:20 EST    |
+|                 | Duration         | 54 s                       |
 |                 | Status           | final                      |
 |                 | Rendered by      | gallery                    |
 |                 | Host             | gallery                    |
@@ -661,9 +661,9 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 |                 | Template         | vp.dependence              |
 |                 | Subject          | preop                      |
 |                 | Type             | vp                         |
-|                 | hvtiRtemplates   | 1.5.4                      |
-| Dataset `built` | Version file     | built_20261029.parquet     |
-|                 | Version date     | 2026-10-29                 |
+|                 | hvtiRtemplates   | 1.5.5                      |
+| Dataset `built` | Version file     | built_20261103.parquet     |
+|                 | Version date     | 2026-11-03                 |
 |                 | Source file      | built.rds                  |
 |                 | Rows kept        | 800 rows on 800 patients   |
 |                 | WHERE            | none                       |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:39
+2026-11-03 08:14
 
 Replaces `descriptive/dc.gfup`.
 
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -123,7 +123,7 @@ JOIN_KEY <- NULL
 # MIGRATE-BEGIN: dc-gfup-config
 EVENT <- "dead"       # Demo: binary event indicator, 1=event and 0=censored
 FOLLOWUP <- "iv_dead" # Demo: follow-up interval(s) this job checks, in years
-IDENTIFIER <- NULL    # Demo: opt in only for local review
+IDENTIFIER <- NULL    # Demo: a column to list suspicious rows with on the console, never in the report
 MAX_REVIEW_ROWS <- 25L
 # MIGRATE-END: dc-gfup-config
 # Demo: optional event-coding cross-tabs, each a vector of column names.
@@ -221,7 +221,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -270,6 +270,12 @@ fc <- hvtiRutilities::followup_check(d, event = EVENT, followup = FOLLOWUP, iden
                                      max_rows = MAX_REVIEW_ROWS, stats = .followup_stats)
 cohort_counts <- fc$cohort
 review_rows <- fc$review
+# The report shows no identifier. Named here, it goes with its rows to the console,
+# on stderr(), which knitr does not collect.
+if (!is.null(IDENTIFIER)) {
+  utils::write.table(review_rows, stderr(), row.names = FALSE, quote = FALSE)
+  review_rows <- review_rows[setdiff(names(review_rows), setdiff(IDENTIFIER, c(EVENT, FOLLOWUP)))]
+}
 # followup_check() returns five one-row tables: the group counts, the interval
 # checks for all patients, and one proc_means() row per group. This is them as
 # one table, a row per interval and group. The counts are each group's n, the
@@ -373,6 +379,31 @@ if (figure_drawn) {
   close_date <- NA
   close_source <- paste("not drawn:", conditionMessage(fp))
 }
+```
+
+Code
+
+``` r
+# unnumbered: a callout, with no figure or table of its own
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The tables show the longest follow-up, split by EVENT, and CHECKS prints its cross-tabs.
+# The figure draws each patient at a decimal operation year, which is a date to within a point's
+# width. That position is the figure's whole purpose, so "show the year only" cannot apply to it,
+# and warning on every patient would warn on every report. A point in a crowded year cannot be
+# told from its neighbors; one in a year of few patients can, so those are the ones counted, panel
+# by panel over the points it draws, by the date hv_followup() places each one at.
+.positions <- if (figure_drawn) lapply(names(fp$tables$panels), function(nm) {
+  .panel <- fp$tables$panels[[nm]]
+  .drawn <- if (fp$data$type[match(nm, fp$data$panel)] == "event") .panel$tables$event_data else .panel$data
+  .x <- .drawn$operation_year
+  .op <- as.Date(paste0(ORIGIN_YEAR, "-01-01")) + (.x - ORIGIN_YEAR) * 365.2425
+  .years <- stats::setNames(data.frame(as.numeric(format(.op, "%Y"))), paste0(OPYRS, ", ", nm))
+  hvtiRtemplates:::.identifiability_check(.years, sparse = names(.years))
+})
+cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(
+  list(hvtiRtemplates:::.identifiability_check(d, by = EVENT, extremes = FOLLOWUP, within = EVENT, tables = CHECKS)),
+  .positions
+))))
 ```
 
 Code
@@ -642,6 +673,9 @@ Code
 
 ``` r
 # unnumbered: each child chunk below carries its own label and caption
+.selection <- attr(job_data$record, "selection")
+.no_values <- hvtiRtemplates:::.no_values(d, .selection$id, .selection$key)
+hvtiRtemplates:::.refuse_display(CHECKS, .no_values, "CHECKS")
 unknown_checks <- setdiff(unlist(CHECKS, use.names = FALSE), names(d))
 if (length(unknown_checks)) {
   stop("Unknown event-check column(s): ", paste(unknown_checks, collapse = ", "), call. = FALSE)
@@ -682,9 +716,9 @@ Table 5: dead by reop
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:39:18 EDT  |
-|                 | Ended            | 2026-10-29 12:39:19 EDT  |
-|                 | Duration         | 2 s                      |
+| Run             | Started          | 2026-11-03 08:14:26 EST  |
+|                 | Ended            | 2026-11-03 08:14:28 EST  |
+|                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -692,9 +726,9 @@ Table 5: dead by reop
 |                 | Template         | dc.gfup                  |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
+|                 | hvtiRtemplates   | 1.5.5                    |
+| Dataset `built` | Version file     | built_20261103.parquet   |
+|                 | Version date     | 2026-11-03               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

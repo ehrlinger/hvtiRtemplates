@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:42
+2026-11-03 08:16
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `segments` `segments_20261029.parquet`, dated
-2026-10-29 · rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `segments` `segments_20261103.parquet`, dated
+2026-11-03 · rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -175,7 +175,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                                |
 |:--------------------|:-----------------------------------------------|
-| Source              | dataset `segments` (segments_20261029.parquet) |
+| Source              | dataset `segments` (segments_20261103.parquet) |
 | Rows read           | 2,014                                          |
 | ID                  | `patient_id`                                   |
 | Identifiers dropped | none                                           |
@@ -243,6 +243,24 @@ it passed on.
 `read_clinical_data()` infers binary columns as logical while `Surv()`
 requires a numeric status. The `as.numeric()` coercions below are not
 decoration.
+
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The table above counts events and censored patients, over the rows fitted, and the figure's
+# axis and its last Kaplan-Meier steps end at the longest follow-up.
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(d[!is.na(d[[TIME]]) & !is.na(d[[EVENT]]), , drop = FALSE], cells = EVENT, extremes = TIME,
+                                          upper_only = TRUE)
+))
+```
+
+WarningBefore this goes in a manuscript
+
+- `iv_dead`’s minimum or maximum is shown, and 137 patients lie far
+  beyond the rest. Check that the shown value does not point to one
+  patient.
 
 ## Model
 
@@ -814,25 +832,26 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 
 ## About this run
 
-| Group              | Item             | Value                      |
-|:-------------------|:-----------------|:---------------------------|
-| Run                | Started          | 2026-10-29 12:42:28 EDT    |
-|                    | Ended            | 2026-10-29 12:42:41 EDT    |
-|                    | Duration         | 14 s                       |
-|                    | Status           | final                      |
-|                    | Rendered by      | gallery                    |
-|                    | Host             | gallery                    |
-| Job                | File             | hz.dead_segments.hz.qmd    |
-|                    | Template         | hz                         |
-|                    | Subject          | dead_segments              |
-|                    | Type             | hz                         |
-|                    | hvtiRtemplates   | 1.5.4                      |
-| Dataset `segments` | Version file     | segments_20261029.parquet  |
-|                    | Version date     | 2026-10-29                 |
-|                    | Source file      | segments.rds               |
-|                    | Rows kept        | 1,823 rows on 725 patients |
-|                    | WHERE            | `!is.na(creat_pr)`         |
-|                    | sha256           | 9590f19806c4               |
-|                    | Manifest         | current                    |
-| Reproducibility    | renv             | not active                 |
-|                    | renv.lock sha256 | d09f96b6cd21               |
+| Group              | Item               | Value                      |
+|:-------------------|:-------------------|:---------------------------|
+| Run                | Started            | 2026-11-03 08:16:45 EST    |
+|                    | Ended              | 2026-11-03 08:16:56 EST    |
+|                    | Duration           | 12 s                       |
+|                    | Status             | final                      |
+|                    | Rendered by        | gallery                    |
+|                    | Host               | gallery                    |
+| Identifiability    | extreme: `iv_dead` | 137                        |
+| Job                | File               | hz.dead_segments.hz.qmd    |
+|                    | Template           | hz                         |
+|                    | Subject            | dead_segments              |
+|                    | Type               | hz                         |
+|                    | hvtiRtemplates     | 1.5.5                      |
+| Dataset `segments` | Version file       | segments_20261103.parquet  |
+|                    | Version date       | 2026-11-03                 |
+|                    | Source file        | segments.rds               |
+|                    | Rows kept          | 1,823 rows on 725 patients |
+|                    | WHERE              | `!is.na(creat_pr)`         |
+|                    | sha256             | 9590f19806c4               |
+|                    | Manifest           | current                    |
+| Reproducibility    | renv               | not active                 |
+|                    | renv.lock sha256   | d09f96b6cd21               |

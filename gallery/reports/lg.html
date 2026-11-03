@@ -2240,7 +2240,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-10-29 12:40</p>
+      <p class="date">2026-11-03 08:15</p>
     </div>
   </div>
   
@@ -2252,7 +2252,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: lg 1.5.4 sha256:dfe60903f732018e1ebd88e583ef04d03a54c05fa7668f649281393c125f67b4 -->
+<!-- hvtiRtemplates: lg 1.5.5 sha256:6300380ed0ac6641f77ba6aa34b98d9cbcca4f1f053fdb76078aa1440052834c -->
 <!-- Demo: name the SAS job this replaces (descriptive/lg.<outcome>, or the
      tp.lg.hdead or tp.lg.dead.constant template it was copied from) and say
      which event and which link it used.
@@ -2297,7 +2297,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261029.parquet</code>, dated 2026-10-29 · rendered by gallery on gallery · hvtiRtemplates 1.5.4</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261103.parquet</code>, dated 2026-11-03 · rendered by gallery on gallery · hvtiRtemplates 1.5.5</p>
 </div>
 </div>
 </div>
@@ -2459,7 +2459,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261029.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261103.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2529,7 +2529,9 @@ Table 1: The data this job read
 <span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>.event <span class="ot">&lt;-</span> .interval<span class="sc">$</span>event</span>
 <span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>.time <span class="ot">&lt;-</span> .interval<span class="sc">$</span>time</span>
 <span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>variables <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_variables</span>(VARIABLES, d, <span class="at">exclude =</span> .id, <span class="at">event =</span> .event,</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>                                            <span class="at">time =</span> <span class="cf">if</span> (<span class="fu">identical</span>(LINK, <span class="st">&quot;hazard&quot;</span>)) .time)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>                                            <span class="at">time =</span> <span class="cf">if</span> (<span class="fu">identical</span>(LINK, <span class="st">&quot;hazard&quot;</span>)) .time)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>.selection <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">:::</span><span class="fu">.refuse_display</span>(VARIABLES<span class="sc">$</span>name, hvtiRtemplates<span class="sc">:::</span><span class="fu">.no_values</span>(d, .id, .selection<span class="sc">$</span>key), <span class="st">&quot;VARIABLES&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <details class="code-fold">
@@ -2601,72 +2603,105 @@ Table 2: The covariates calibrated, with their defaults
 </figure>
 </div>
 </div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Flags what a reader could learn about one patient, by column and count. It changes no number.</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Each group&#39;s table shows its minimum and maximum, and its events, which with its patients give</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># those without one. A group under 5 patients already stops this job. An ordinal covariate&#39;s</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># minimum and maximum are its levels. Under &quot;hazard&quot; a patient with no follow-up is in no group.</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>.lg_rows <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">identical</span>(LINK, <span class="st">&quot;hazard&quot;</span>)) <span class="sc">!</span><span class="fu">is.na</span>(.time) <span class="cf">else</span> <span class="fu">rep</span>(<span class="cn">TRUE</span>, <span class="fu">nrow</span>(d))</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_notice</span>(<span class="fu">do.call</span>(rbind, <span class="fu">c</span>(</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_check</span>(d[.lg_rows, , <span class="at">drop =</span> <span class="cn">FALSE</span>], variables<span class="sc">$</span>name,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">extremes =</span> variables<span class="sc">$</span>name[variables<span class="sc">$</span>kind <span class="sc">==</span> <span class="st">&quot;continuous&quot;</span>])),</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(variables)), <span class="cf">function</span>(i) {</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    .v <span class="ot">&lt;-</span> variables[i, ]</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    .tab <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_table</span>(d[[.v<span class="sc">$</span>name]], .event, <span class="cf">if</span> (<span class="fu">identical</span>(LINK, <span class="st">&quot;hazard&quot;</span>)) .time,</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                                       <span class="at">groups =</span> .v<span class="sc">$</span>groups, <span class="at">kind =</span> .v<span class="sc">$</span>kind, <span class="at">link =</span> LINK)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_counts</span>(<span class="fu">c</span>(.tab<span class="sc">$</span>events, .tab<span class="sc">$</span>n <span class="sc">-</span> .tab<span class="sc">$</span>events), <span class="fu">paste</span>(.v<span class="sc">$</span>name, <span class="st">&quot;events by group&quot;</span>))</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="callout callout-style-default callout-warning callout-titled" title="Before this goes in a manuscript">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Before this goes in a manuscript
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>9 patients in <code>age</code> are older than 89. Wherever age is shown, report ages 90 and older as one group.</li>
+</ul>
+</div>
+</div>
 </section>
 <section id="calibration" class="level2">
 <h2 class="anchored" data-anchor-id="calibration">Calibration</h2>
 <p>For each covariate, a table of its groups and the figure of the groups’ link values against six scales of the covariate. Read the figure for the panel that comes out straightest. The R-squared in each corner is only a guide: it is the fit of a straight line weighted by group size, so a panel can score high and still bend. A group whose link value cannot be computed keeps its row in the table, blank, and is named under it. A scale that cannot be computed for the covariate is drawn as an empty panel, and named there too.</p>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: each covariate&#39;s child chunks carry their own labels and captions</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The figure is saved as PNG and PDF under graphs/&lt;subject&gt;-&lt;type&gt;/lg-&lt;covariate&gt;,</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># and the PNG is the one the report shows.</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>.fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>.kable_na <span class="ot">&lt;-</span> <span class="fu">options</span>(<span class="at">knitr.kable.NA =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>calibration <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(variables))) {</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  .v <span class="ot">&lt;-</span> variables[i, ]</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  .tab <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_table</span>(d[[.v<span class="sc">$</span>name]], .event, <span class="cf">if</span> (<span class="fu">identical</span>(LINK, <span class="st">&quot;hazard&quot;</span>)) .time,</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">groups =</span> .v<span class="sc">$</span>groups, <span class="at">kind =</span> .v<span class="sc">$</span>kind, <span class="at">link =</span> LINK)</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  .scales <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_scales</span>(.tab<span class="sc">$</span>mean, .v<span class="sc">$</span>constant, .v<span class="sc">$</span>shift)</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  calibration[[.v<span class="sc">$</span>name]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">table =</span> .tab, <span class="at">scales =</span> .scales)</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  .plot <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_plot</span>(.tab, .scales, LINK, <span class="at">title =</span> .v<span class="sc">$</span>label)</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Six facets, one per scale, in two rows of three: hv_panel_size() gives each a 3 by 2</span></span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># inch panel, shrunk together to fit a 6.5 inch page, so the figure is no wider than a page.</span></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  .dims <span class="ot">&lt;-</span> hvtiPlotR<span class="sc">::</span><span class="fu">hv_panel_size</span>(.plot)</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  .file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(.plot, <span class="fu">paste0</span>(<span class="st">&quot;lg-&quot;</span>, .v<span class="sc">$</span>name), <span class="at">width =</span> .dims<span class="sc">$</span>width, <span class="at">height =</span> .dims<span class="sc">$</span>height, <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This document sits in descriptive/ and the figure is written to graphs/, so</span></span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the image link is the figure&#39;s path relative to this document.</span></span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  .link <span class="ot">&lt;-</span> xfun<span class="sc">::</span><span class="fu">relative_path</span>(.file, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A label holds letters, digits and hyphens, so an underscore in a name cannot</span></span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># be read as markup in a cross-reference.</span></span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  .slug <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;[^A-Za-z0-9]+&quot;</span>, <span class="st">&quot;-&quot;</span>, .v<span class="sc">$</span>name)</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  .heads <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Group&quot;</span>, <span class="st">&quot;Mean&quot;</span>, <span class="st">&quot;Minimum&quot;</span>, <span class="st">&quot;Maximum&quot;</span>, <span class="st">&quot;Patients&quot;</span>, <span class="st">&quot;Events&quot;</span>,</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>              <span class="cf">if</span> (<span class="fu">identical</span>(LINK, <span class="st">&quot;hazard&quot;</span>)) <span class="st">&quot;Events per unit of follow-up&quot;</span> <span class="cf">else</span> <span class="st">&quot;Event rate&quot;</span>,</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>              <span class="cf">if</span> (<span class="fu">identical</span>(LINK, <span class="st">&quot;hazard&quot;</span>)) <span class="st">&quot;Log hazard rate&quot;</span> <span class="cf">else</span> <span class="st">&quot;Logit&quot;</span>)</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  .cap_tbl <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Groups of &quot;</span>, .v<span class="sc">$</span>label, <span class="st">&quot;, with the event rate and its link value&quot;</span>)</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  .cap_fig <span class="ot">&lt;-</span> <span class="fu">paste0</span>(.v<span class="sc">$</span>label, <span class="st">&quot;: the link value of each group against the covariate on six scales, &quot;</span>,</span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;with the R-squared of a weighted straight line. Black filled circles mark the groups, joined by a &quot;</span>,</span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;gray line, and the text in each panel corner gives the R-squared&quot;</span>)</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">### &quot;</span>, .v<span class="sc">$</span>label, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: tbl-lg-&quot;</span>, .slug),</span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">&quot;#| tbl-cap: &quot;</span>, <span class="fu">encodeString</span>(.cap_tbl, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>)),</span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;knitr::kable(.tab, col.names = .heads, digits = 3, row.names = FALSE)&quot;</span>, .fence, <span class="st">&quot;&quot;</span>,</span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: fig-lg-&quot;</span>, .slug),</span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">&quot;#| fig-cap: &quot;</span>, <span class="fu">encodeString</span>(.cap_fig, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>)),</span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>, .fence</span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>  .dropped <span class="ot">&lt;-</span> <span class="fu">attr</span>(.tab, <span class="st">&quot;dropped&quot;</span>)</span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>  .scale_notes <span class="ot">&lt;-</span> <span class="fu">attr</span>(.scales, <span class="st">&quot;notes&quot;</span>)</span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>  .left <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (.dropped[[<span class="st">&quot;covariate&quot;</span>]] <span class="sc">&gt;</span> <span class="dv">0</span>L) <span class="fu">paste0</span>(.dropped[[<span class="st">&quot;covariate&quot;</span>]], <span class="st">&quot; without a value of the covariate&quot;</span>),</span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>             <span class="cf">if</span> (.dropped[[<span class="st">&quot;follow_up&quot;</span>]] <span class="sc">&gt;</span> <span class="dv">0</span>L) <span class="fu">paste0</span>(.dropped[[<span class="st">&quot;follow_up&quot;</span>]], <span class="st">&quot; without follow-up&quot;</span>))</span>
-<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>  .notes <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(.left)) <span class="fu">paste0</span>(<span class="st">&quot;Left out of the groups: &quot;</span>, <span class="fu">paste</span>(.left, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>),</span>
-<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (.dropped[[<span class="st">&quot;event&quot;</span>]] <span class="sc">&gt;</span> <span class="dv">0</span>L) {</span>
-<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste0</span>(.dropped[[<span class="st">&quot;event&quot;</span>]], <span class="st">&quot; with no event value are ranked but counted in no group&#39;s patients, events or follow-up.&quot;</span>)</span>
-<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>    },</span>
-<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">attr</span>(.tab, <span class="st">&quot;notes&quot;</span>),</span>
-<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(.scale_notes)) <span class="fu">paste0</span>(hvtiRtemplates<span class="sc">:::</span>.lg_panel_labels[<span class="fu">names</span>(.scale_notes)], <span class="st">&quot;: &quot;</span>, .scale_notes)</span>
-<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(.notes)) <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;- &quot;</span>, .notes, <span class="at">collapse =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: each covariate&#39;s child chunks carry their own labels and captions</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The figure is saved as PNG and PDF under graphs/&lt;subject&gt;-&lt;type&gt;/lg-&lt;covariate&gt;,</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># and the PNG is the one the report shows.</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>.fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>.kable_na <span class="ot">&lt;-</span> <span class="fu">options</span>(<span class="at">knitr.kable.NA =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>calibration <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(variables))) {</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  .v <span class="ot">&lt;-</span> variables[i, ]</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  .tab <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_table</span>(d[[.v<span class="sc">$</span>name]], .event, <span class="cf">if</span> (<span class="fu">identical</span>(LINK, <span class="st">&quot;hazard&quot;</span>)) .time,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">groups =</span> .v<span class="sc">$</span>groups, <span class="at">kind =</span> .v<span class="sc">$</span>kind, <span class="at">link =</span> LINK)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  .scales <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_scales</span>(.tab<span class="sc">$</span>mean, .v<span class="sc">$</span>constant, .v<span class="sc">$</span>shift)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  calibration[[.v<span class="sc">$</span>name]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">table =</span> .tab, <span class="at">scales =</span> .scales)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  .plot <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_plot</span>(.tab, .scales, LINK, <span class="at">title =</span> .v<span class="sc">$</span>label)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Six facets, one per scale, in two rows of three: hv_panel_size() gives each a 3 by 2</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># inch panel, shrunk together to fit a 6.5 inch page, so the figure is no wider than a page.</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  .dims <span class="ot">&lt;-</span> hvtiPlotR<span class="sc">::</span><span class="fu">hv_panel_size</span>(.plot)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  .file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(.plot, <span class="fu">paste0</span>(<span class="st">&quot;lg-&quot;</span>, .v<span class="sc">$</span>name), <span class="at">width =</span> .dims<span class="sc">$</span>width, <span class="at">height =</span> .dims<span class="sc">$</span>height, <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This document sits in descriptive/ and the figure is written to graphs/, so</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the image link is the figure&#39;s path relative to this document.</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  .link <span class="ot">&lt;-</span> xfun<span class="sc">::</span><span class="fu">relative_path</span>(.file, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A label holds letters, digits and hyphens, so an underscore in a name cannot</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># be read as markup in a cross-reference.</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  .slug <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;[^A-Za-z0-9]+&quot;</span>, <span class="st">&quot;-&quot;</span>, .v<span class="sc">$</span>name)</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  .heads <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Group&quot;</span>, <span class="st">&quot;Mean&quot;</span>, <span class="st">&quot;Minimum&quot;</span>, <span class="st">&quot;Maximum&quot;</span>, <span class="st">&quot;Patients&quot;</span>, <span class="st">&quot;Events&quot;</span>,</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>              <span class="cf">if</span> (<span class="fu">identical</span>(LINK, <span class="st">&quot;hazard&quot;</span>)) <span class="st">&quot;Events per unit of follow-up&quot;</span> <span class="cf">else</span> <span class="st">&quot;Event rate&quot;</span>,</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>              <span class="cf">if</span> (<span class="fu">identical</span>(LINK, <span class="st">&quot;hazard&quot;</span>)) <span class="st">&quot;Log hazard rate&quot;</span> <span class="cf">else</span> <span class="st">&quot;Logit&quot;</span>)</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  .cap_tbl <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Groups of &quot;</span>, .v<span class="sc">$</span>label, <span class="st">&quot;, with the event rate and its link value&quot;</span>)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  .cap_fig <span class="ot">&lt;-</span> <span class="fu">paste0</span>(.v<span class="sc">$</span>label, <span class="st">&quot;: the link value of each group against the covariate on six scales, &quot;</span>,</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;with the R-squared of a weighted straight line. Black filled circles mark the groups, joined by a &quot;</span>,</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;gray line, and the text in each panel corner gives the R-squared&quot;</span>)</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">### &quot;</span>, .v<span class="sc">$</span>label, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: tbl-lg-&quot;</span>, .slug),</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">&quot;#| tbl-cap: &quot;</span>, <span class="fu">encodeString</span>(.cap_tbl, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>)),</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;knitr::kable(.tab, col.names = .heads, digits = 3, row.names = FALSE)&quot;</span>, .fence, <span class="st">&quot;&quot;</span>,</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: fig-lg-&quot;</span>, .slug),</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">&quot;#| fig-cap: &quot;</span>, <span class="fu">encodeString</span>(.cap_fig, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>)),</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>, .fence</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>  .dropped <span class="ot">&lt;-</span> <span class="fu">attr</span>(.tab, <span class="st">&quot;dropped&quot;</span>)</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  .scale_notes <span class="ot">&lt;-</span> <span class="fu">attr</span>(.scales, <span class="st">&quot;notes&quot;</span>)</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>  .left <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (.dropped[[<span class="st">&quot;covariate&quot;</span>]] <span class="sc">&gt;</span> <span class="dv">0</span>L) <span class="fu">paste0</span>(.dropped[[<span class="st">&quot;covariate&quot;</span>]], <span class="st">&quot; without a value of the covariate&quot;</span>),</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>             <span class="cf">if</span> (.dropped[[<span class="st">&quot;follow_up&quot;</span>]] <span class="sc">&gt;</span> <span class="dv">0</span>L) <span class="fu">paste0</span>(.dropped[[<span class="st">&quot;follow_up&quot;</span>]], <span class="st">&quot; without follow-up&quot;</span>))</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>  .notes <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(.left)) <span class="fu">paste0</span>(<span class="st">&quot;Left out of the groups: &quot;</span>, <span class="fu">paste</span>(.left, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>),</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (.dropped[[<span class="st">&quot;event&quot;</span>]] <span class="sc">&gt;</span> <span class="dv">0</span>L) {</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste0</span>(.dropped[[<span class="st">&quot;event&quot;</span>]], <span class="st">&quot; with no event value are ranked but counted in no group&#39;s patients, events or follow-up.&quot;</span>)</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">attr</span>(.tab, <span class="st">&quot;notes&quot;</span>),</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(.scale_notes)) <span class="fu">paste0</span>(hvtiRtemplates<span class="sc">:::</span>.lg_panel_labels[<span class="fu">names</span>(.scale_notes)], <span class="st">&quot;: &quot;</span>, .scale_notes)</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(.notes)) <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;- &quot;</span>, .notes, <span class="at">collapse =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <section id="age" class="level3">
 <h3 class="anchored" data-anchor-id="age">age</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.tab, <span class="at">col.names =</span> .heads, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.tab, <span class="at">col.names =</span> .heads, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-lg-age" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2759,7 +2794,7 @@ Table 3: Groups of age, with the event rate and its link value
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-lg-age" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2780,7 +2815,7 @@ Figure 1: age: the link value of each group against the covariate on six scales
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.tab, <span class="at">col.names =</span> .heads, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.tab, <span class="at">col.names =</span> .heads, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-lg-nyha-pr" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2863,7 +2898,7 @@ Table 4: Groups of nyha_pr, with the event rate and its link value
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(.link, <span class="at">error =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-lg-nyha-pr" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2880,7 +2915,7 @@ Figure 2: nyha_pr: the link value of each group against the covariate on six sc
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(.kable_na)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(.kable_na)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </section>
 </section>
@@ -2890,48 +2925,48 @@ Figure 2: nyha_pr: the link value of each group against the covariate on six sc
 <p>A covariate with no choice, or whose chosen scale cannot be computed, is not saved. In a draft the job warns and lists it here; a final render stops, as it does for an open marker, so a finished job has chosen every scale.</p>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: its child chunk carries its own label and caption</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>choices <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_choices</span>(variables, <span class="fu">lapply</span>(calibration, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;scales&quot;</span>), d)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(choices<span class="sc">$</span>problems)) {</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  .msg <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;These covariates have no usable scale chosen: &quot;</span>,</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">paste0</span>(<span class="st">&quot;`&quot;</span>, <span class="fu">names</span>(choices<span class="sc">$</span>problems), <span class="st">&quot;`: &quot;</span>, choices<span class="sc">$</span>problems, <span class="at">collapse =</span> <span class="st">&quot;; &quot;</span>),</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                 <span class="st">&quot;. Read each figure above and set chosen for it in VARIABLES.&quot;</span>)</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (hvtiRtemplates<span class="sc">:::</span><span class="fu">.strict_render</span>()) {</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(.msg, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">This render stops because HVTI_TEMPLATE_STRICT is &#39;&quot;</span>, <span class="fu">Sys.getenv</span>(<span class="st">&quot;HVTI_TEMPLATE_STRICT&quot;</span>),</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;&#39;: a final report names a scale for every covariate. Unset it, or set it to 0, false or no, &quot;</span>,</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;to render a draft instead.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(.msg, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">Rendering as a draft; the banner goes when every covariate has a choice.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The box under the title was printed before this was known; the end table says draft.</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.run_mark_draft</span>(<span class="fu">paste0</span>(<span class="st">&quot;a scale is not chosen for &quot;</span>, <span class="fu">length</span>(choices<span class="sc">$</span>problems), <span class="st">&quot; covariate(s)&quot;</span>))</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">::: {.callout-important title=</span><span class="sc">\&quot;</span><span class="st">DRAFT -- a scale is not chosen</span><span class="sc">\&quot;</span><span class="st">}</span><span class="sc">\n</span><span class="st">&quot;</span>, .msg, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">:::</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="co"># What is saved holds the covariates with a usable choice and no patient: the</span></span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co"># scale, its term, constant and shift. Its lineage says which data it came from.</span></span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    choices<span class="sc">$</span>table,</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> .provenance_data,</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">analysis =</span> <span class="fu">Filter</span>(<span class="fu">Negate</span>(is.null), <span class="fu">list</span>(<span class="at">event =</span> EVENT, <span class="at">link =</span> LINK, <span class="at">time =</span> <span class="cf">if</span> (.needs_time) TIME, <span class="at">interval =</span> INTERVAL)),</span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">cohort =</span> <span class="fu">list</span>(<span class="at">patients =</span> <span class="fu">nrow</span>(d)),</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;lg-scales.rds&quot;</span>)</span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(choices<span class="sc">$</span>table)) {</span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-lg-scales&quot;</span>,</span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">The scale chosen for each covariate, and the term to write for it in an lm job</span><span class="sc">\&quot;</span><span class="st">&quot;</span>,</span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;knitr::kable(choices$table, col.names = c(</span><span class="sc">\&quot;</span><span class="st">Covariate</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Scale</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Term</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Constant</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Shift</span><span class="sc">\&quot;</span><span class="st">), row.names = FALSE)&quot;</span>,</span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    .fence</span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: its child chunk carries its own label and caption</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>choices <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_choices</span>(variables, <span class="fu">lapply</span>(calibration, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;scales&quot;</span>), d)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(choices<span class="sc">$</span>problems)) {</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  .msg <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;These covariates have no usable scale chosen: &quot;</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">paste0</span>(<span class="st">&quot;`&quot;</span>, <span class="fu">names</span>(choices<span class="sc">$</span>problems), <span class="st">&quot;`: &quot;</span>, choices<span class="sc">$</span>problems, <span class="at">collapse =</span> <span class="st">&quot;; &quot;</span>),</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>                 <span class="st">&quot;. Read each figure above and set chosen for it in VARIABLES.&quot;</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (hvtiRtemplates<span class="sc">:::</span><span class="fu">.strict_render</span>()) {</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(.msg, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">This render stops because HVTI_TEMPLATE_STRICT is &#39;&quot;</span>, <span class="fu">Sys.getenv</span>(<span class="st">&quot;HVTI_TEMPLATE_STRICT&quot;</span>),</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;&#39;: a final report names a scale for every covariate. Unset it, or set it to 0, false or no, &quot;</span>,</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;to render a draft instead.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(.msg, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">Rendering as a draft; the banner goes when every covariate has a choice.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The box under the title was printed before this was known; the end table says draft.</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.run_mark_draft</span>(<span class="fu">paste0</span>(<span class="st">&quot;a scale is not chosen for &quot;</span>, <span class="fu">length</span>(choices<span class="sc">$</span>problems), <span class="st">&quot; covariate(s)&quot;</span>))</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">::: {.callout-important title=</span><span class="sc">\&quot;</span><span class="st">DRAFT -- a scale is not chosen</span><span class="sc">\&quot;</span><span class="st">}</span><span class="sc">\n</span><span class="st">&quot;</span>, .msg, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">:::</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="co"># What is saved holds the covariates with a usable choice and no patient: the</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="co"># scale, its term, constant and shift. Its lineage says which data it came from.</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>    choices<span class="sc">$</span>table,</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> .provenance_data,</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">analysis =</span> <span class="fu">Filter</span>(<span class="fu">Negate</span>(is.null), <span class="fu">list</span>(<span class="at">event =</span> EVENT, <span class="at">link =</span> LINK, <span class="at">time =</span> <span class="cf">if</span> (.needs_time) TIME, <span class="at">interval =</span> INTERVAL)),</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">cohort =</span> <span class="fu">list</span>(<span class="at">patients =</span> <span class="fu">nrow</span>(d)),</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;lg-scales.rds&quot;</span>)</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(choices<span class="sc">$</span>table)) {</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-lg-scales&quot;</span>,</span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">The scale chosen for each covariate, and the term to write for it in an lm job</span><span class="sc">\&quot;</span><span class="st">&quot;</span>,</span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;knitr::kable(choices$table, col.names = c(</span><span class="sc">\&quot;</span><span class="st">Covariate</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Scale</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Term</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Constant</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">Shift</span><span class="sc">\&quot;</span><span class="st">), row.names = FALSE)&quot;</span>,</span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>    .fence</span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(choices<span class="sc">$</span>table, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Covariate&quot;</span>, <span class="st">&quot;Scale&quot;</span>, <span class="st">&quot;Term&quot;</span>, <span class="st">&quot;Constant&quot;</span>, <span class="st">&quot;Shift&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(choices<span class="sc">$</span>table, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Covariate&quot;</span>, <span class="st">&quot;Scale&quot;</span>, <span class="st">&quot;Term&quot;</span>, <span class="st">&quot;Constant&quot;</span>, <span class="st">&quot;Shift&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-lg-scales" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2974,16 +3009,16 @@ Table 5: The scale chosen for each covariate, and the term to write for it in a
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>.predictors <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_predictors</span>(choices<span class="sc">$</span>table<span class="sc">$</span>term)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(choices<span class="sc">$</span>table)) {</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">The line to copy into the `PREDICTORS` of an `lm` job, beside its other predictors:</span><span class="sc">\n\n</span><span class="st">&quot;</span>,</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;```r</span><span class="sc">\n</span><span class="st">&quot;</span>, .predictors, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">```</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, .predictors, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>.predictors <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.lg_predictors</span>(choices<span class="sc">$</span>table<span class="sc">$</span>term)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(choices<span class="sc">$</span>table)) {</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">The line to copy into the `PREDICTORS` of an `lm` job, beside its other predictors:</span><span class="sc">\n\n</span><span class="st">&quot;</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;```r</span><span class="sc">\n</span><span class="st">&quot;</span>, .predictors, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">```</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, .predictors, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <p>The line to copy into the <code>PREDICTORS</code> of an <code>lm</code> job, beside its other predictors:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>PREDICTORS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>, <span class="st">&quot;nyha_pr&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>PREDICTORS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>, <span class="st">&quot;nyha_pr&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="about-this-run" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="about-this-run">About this run</h2>
@@ -2999,17 +3034,17 @@ Table 5: The scale chosen for each covariate, and the term to write for it in a
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-10-29 12:40:22 EDT</td>
+<td style="text-align: left;">2026-11-03 08:15:03 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-10-29 12:40:25 EDT</td>
+<td style="text-align: left;">2026-11-03 08:15:06 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">4 s</td>
+<td style="text-align: left;">3 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3027,71 +3062,76 @@ Table 5: The scale chosen for each covariate, and the term to write for it in a
 <td style="text-align: left;">gallery</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">Identifiability</td>
+<td style="text-align: left;">age: <code>age</code></td>
+<td style="text-align: left;">9</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">Job</td>
 <td style="text-align: left;">File</td>
 <td style="text-align: left;">lg.dead.calibration.qmd</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Template</td>
 <td style="text-align: left;">lg</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Subject</td>
 <td style="text-align: left;">dead</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Type</td>
 <td style="text-align: left;">calibration</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.4</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Dataset <code>built</code></td>
-<td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261029.parquet</td>
+<td style="text-align: left;">1.5.5</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"></td>
-<td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-10-29</td>
+<td style="text-align: left;">Dataset <code>built</code></td>
+<td style="text-align: left;">Version file</td>
+<td style="text-align: left;">built_20261103.parquet</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Version date</td>
+<td style="text-align: left;">2026-11-03</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Source file</td>
 <td style="text-align: left;">built.rds</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Rows kept</td>
 <td style="text-align: left;">800 rows on 800 patients</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">WHERE</td>
 <td style="text-align: left;">none</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
 <td style="text-align: left;">b236a472f1f3</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Manifest</td>
 <td style="text-align: left;">current</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Reproducibility</td>
 <td style="text-align: left;">renv</td>
 <td style="text-align: left;">not active</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">renv.lock sha256</td>
 <td style="text-align: left;">d09f96b6cd21</td>
@@ -3099,7 +3139,7 @@ Table 5: The scale chosen for each covariate, and the term to write for it in a
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"lg.dead.calibration","rendered":"2026-10-29T16:40:25Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.18","source":"github","sha":"fd825758ee8e2e8d31114c36f5dd198c975c517f"},{"package":"hvtiRtemplates","version":"1.5.4","source":null},{"package":"hvtiRutilities","version":"1.5.17","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261029.parquet","role":"analysis","bytes":75792,"mtime":"2026-10-29T16:34:24Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"dead","type":"calibration","lg":{"event":"dead","link":"hazard","time":"iv_dead","patients":800,"variables":[{"name":"age","kind":"continuous","groups":5,"constant":60,"shift":0,"label":"age","chosen":"raw"},{"name":"nyha_pr","kind":"ordinal","groups":5,"constant":2,"shift":0,"label":"nyha_pr","chosen":"raw"}]},"run":{"start":"2026-10-29T12:40:22-0400","end":"2026-10-29T12:40:25-0400","time_zone":"EDT","duration_seconds":3.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"lg.dead.calibration.qmd","template":"lg","prefix":"lg","subject":"dead","type":"calibration","hvtiRtemplates":"1.5.4"},"datasets":[{"name":"built","version_file":"built_20261029.parquet","registered":"2026-10-29","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}}},"source":"10_descriptive/lg.dead.calibration.qmd",".hvti_render_id":"8306357b26bdf45ca88bca6f66074b77356b45da3bbcedaf1ff71a140cba8156",".hvti_source_sha256":"508c402f756b579dd29a62ad4e261ce143893bbdcaf209a5db2f2d5d292dea25"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"lg.dead.calibration","rendered":"2026-11-03T13:15:06Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.5","source":"github","sha":"f07705891093932be2b3d180444d64d07f187071"},{"package":"hvtiRutilities","version":"1.5.19","source":"github","sha":"5359155a4da9a3b403df9acfb9e529c4d2444489"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261103.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-03T13:11:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[],"subject":"dead","type":"calibration","lg":{"event":"dead","link":"hazard","time":"iv_dead","patients":800,"variables":[{"name":"age","kind":"continuous","groups":5,"constant":60,"shift":0,"label":"age","chosen":"raw"},{"name":"nyha_pr","kind":"ordinal","groups":5,"constant":2,"shift":0,"label":"nyha_pr","chosen":"raw"}]},"run":{"start":"2026-11-03T08:15:03-0500","end":"2026-11-03T08:15:06-0500","time_zone":"EST","duration_seconds":3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"lg.dead.calibration.qmd","template":"lg","prefix":"lg","subject":"dead","type":"calibration","hvtiRtemplates":"1.5.5"},"datasets":[{"name":"built","version_file":"built_20261103.parquet","registered":"2026-11-03","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}},"identifiability":[{"check":"age","column":"age","count":9}]},"source":"10_descriptive/lg.dead.calibration.qmd",".hvti_render_id":"d76476b21aa5a9c44487c4293f54502431295b5f5c453e7039c97f789acd7aa6",".hvti_source_sha256":"2f89dace4e20d0c1f99b8631f344f23ad74f4cf16b55d6f0cf249189ff3413d3"}</script>
 </section>
 
 </main>

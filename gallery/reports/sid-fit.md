@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:55
+2026-11-03 08:28
 
 This job builds the dissimilarity that `sid-clusters` turns into
 clusters. SID clustering (Mantero and Ishwaran, 2021) is unsupervised:
@@ -59,8 +59,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -190,7 +190,7 @@ cat("Patients with every clustering variable missing, dropped:", sum(.empty), "\
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -382,9 +382,9 @@ saveRDS(sid_handoff, set_path("estimates", "sid.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:54:53 EDT  |
-|                 | Ended            | 2026-10-29 12:54:59 EDT  |
-|                 | Duration         | 6 s                      |
+| Run             | Started          | 2026-11-03 08:28:26 EST  |
+|                 | Ended            | 2026-11-03 08:28:31 EST  |
+|                 | Duration         | 5 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -392,9 +392,9 @@ saveRDS(sid_handoff, set_path("estimates", "sid.rds"))
 |                 | Template         | sid.fit                  |
 |                 | Subject          | echo                     |
 |                 | Type             | sid                      |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
+|                 | hvtiRtemplates   | 1.5.5                    |
+| Dataset `built` | Version file     | built_20261103.parquet   |
+|                 | Version date     | 2026-11-03               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

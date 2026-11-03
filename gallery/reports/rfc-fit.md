@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:47
+2026-11-03 08:21
 
 Gallery job on the synthetic cohort: major postoperative complication
 (complication, 0/1).
@@ -81,8 +81,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -246,7 +246,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -321,7 +321,7 @@ forest
                         Was data imputed: yes
                          Number of trees: 300
                Forest terminal node size: 1
-           Average no. of terminal nodes: 127.9967
+           Average no. of terminal nodes: 128.9733
     No. of variables tried at each split: 3
                   Total no. of variables: 9
            Resampling used to grow trees: swor
@@ -331,25 +331,25 @@ forest
                           Splitting rule: gini *random*
            Number of random split points: 10
                         Imbalanced ratio: 4.4795
-                       (OOB) Brier score: 0.1468128
-            (OOB) Normalized Brier score: 0.5872512
-                               (OOB) AUC: 0.65655502
-                          (OOB) Log-loss: 0.46106724
-                            (OOB) PR-AUC: 0.26419626
-                            (OOB) G-mean: 0.18335266
-       (OOB) Requested performance error: 0.19125, 0.01834862, 0.96575342
+                       (OOB) Brier score: 0.14708577
+            (OOB) Normalized Brier score: 0.58834308
+                               (OOB) AUC: 0.64831804
+                          (OOB) Log-loss: 0.45700441
+                            (OOB) PR-AUC: 0.29101012
+                            (OOB) G-mean: 0.24541798
+       (OOB) Requested performance error: 0.19, 0.02293578, 0.93835616
 
     Confusion matrix:
 
               predicted
       observed   0  1 class.error class.freq
-             0 642 12      0.0183        654
-             1 141  5      0.9658        146
+             0 640 14      0.0214        654
+             1 137  9      0.9384        146
 
-          (OOB) Misclassification rate: 0.19125
+          (OOB) Misclassification rate: 0.18875
 
     Random-classifier baselines (uniform):
-       Brier: 0.25   Normalized Brier: 1   Log-loss: 0.69314718
+       Brier: 0.25   Normalized Brier: 1   Log-loss: 0.69314718   PR-AUC: 0.1825
 
 `importance = "none"` is deliberate. Importance is the explain job’s
 work, and cached there on its own, so it can be recomputed without
@@ -374,7 +374,7 @@ save_figure(.fig, "rfc-fit-diagnostics-error")
 .fig
 ```
 
-![](assets/7d6e4c25e9dd98cc4d837c4bc8bec8cd.png)
+![](assets/5e3210b4773a136bc690fbc9d60f929c.png)
 
 Figure 1: Out-of-bag error by number of trees, overall and per class.
 Each solid line traces the error rate of one outcome after each
@@ -394,7 +394,7 @@ save_figure(.fig, "rfc-fit-diagnostics-roc")
 .fig
 ```
 
-![](assets/af8c8c1b1022d0062f9a95874a91a0c8.png)
+![](assets/01f014e2b3b218b1ae78a5ba5be3e1d4.png)
 
 Figure 2: Out-of-bag ROC curve for the chosen class against the rest.
 The black solid line is the curve, the red dashed diagonal the line of
@@ -408,7 +408,7 @@ auc <- calc_auc(roc)
 auc
 ```
 
-    [1] 0.656356
+    [1] 0.6481767
 
 `gg_brier()` is not here: it supports survival forests only.
 
@@ -441,9 +441,9 @@ saveRDS(forest, set_path("estimates", "rfc.rds"))
 
 | Group           | Item             | Value                       |
 |:----------------|:-----------------|:----------------------------|
-| Run             | Started          | 2026-10-29 12:47:38 EDT     |
-|                 | Ended            | 2026-10-29 12:47:42 EDT     |
-|                 | Duration         | 5 s                         |
+| Run             | Started          | 2026-11-03 08:20:58 EST     |
+|                 | Ended            | 2026-11-03 08:21:01 EST     |
+|                 | Duration         | 2 s                         |
 |                 | Status           | final                       |
 |                 | Rendered by      | gallery                     |
 |                 | Host             | gallery                     |
@@ -451,9 +451,9 @@ saveRDS(forest, set_path("estimates", "rfc.rds"))
 |                 | Template         | rfc.fit                     |
 |                 | Subject          | complication                |
 |                 | Type             | rf                          |
-|                 | hvtiRtemplates   | 1.5.4                       |
-| Dataset `built` | Version file     | built_20261029.parquet      |
-|                 | Version date     | 2026-10-29                  |
+|                 | hvtiRtemplates   | 1.5.5                       |
+| Dataset `built` | Version file     | built_20261103.parquet      |
+|                 | Version date     | 2026-11-03                  |
 |                 | Source file      | built.rds                   |
 |                 | Rows kept        | 800 rows on 800 patients    |
 |                 | WHERE            | none                        |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:39
+2026-11-03 08:14
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -63,8 +63,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -274,7 +274,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -456,9 +456,36 @@ if (!is.null(.by_levels) && (!is.null(GROUP_1) || setequal(names(.by_levels), c(
 Code
 
 ``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# Cells are counted only for the rows the table shows by level, and the correlation figure
+# draws from `d`, so its ages and dates count too.
+.rows <- unlist(GROUPS, use.names = FALSE)
+.by_level <- if (is.null(CONTINUOUS) && is.null(BINARY) && is.null(CATEGORICAL)) {
+  .b <- classify_buckets(d_table, .rows, OVERRIDES)
+  c(.b$binary, .b$categorical)
+} else {
+  c(BINARY, CATEGORICAL)
+}
+cat(hvtiRtemplates:::.identifiability_notice(unique(rbind(
+  hvtiRtemplates:::.identifiability_check(d_table, .rows, by = BY, cells = .by_level),
+  if (!is.null(CORR)) hvtiRtemplates:::.identifiability_check(d, c(CORR$vars, CORR$with), by = CORR$by)
+))))
+```
+
+WarningBefore this goes in a manuscript
+
+- 9 patients in `age` are older than 89. Wherever age is shown, report
+  ages 90 and older as one group.
+
+Code
+
+``` r
 if (!is.logical(DROP_CONSTANT) || length(DROP_CONSTANT) != 1L || is.na(DROP_CONSTANT)) {
   stop("DROP_CONSTANT must be TRUE or FALSE.", call. = FALSE)
 }
+.selection <- attr(job_data$record, "selection")
+.no_values <- hvtiRtemplates:::.no_values(d_table, .selection$id, .selection$key)
+hvtiRtemplates:::.refuse_display(c(GROUPS, BY), .no_values, "GROUPS or BY")
 explicit <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
 if (all(vapply(explicit, is.null, logical(1)))) {
   b <- classify_buckets(d_table, unlist(GROUPS, use.names = FALSE), OVERRIDES)
@@ -524,20 +551,20 @@ hvtiRtables::hv_man_table_display(ft, abbreviations = ABBREVIATIONS)
 |----|----|----|----|
 | Demography |  |  |  |
 | Age at operation (years) | age | 800 | 63 \[49, 75\] |
-| Female | female | 800 | 299 (37) |
+| Female | female | 800 | 299(37) |
 | Race | race_grp |  |  |
-| Black |  | 800 | 111 (14) |
-| Other |  | 800 | 58 (7.3) |
-| White |  | 800 | 631 (79) |
+| Black |  | 800 | 111(14) |
+| Other |  | 800 | 58(7.3) |
+| White |  | 800 | 631(79) |
 | Body mass index (kg/m2) | bmi | 800 | 28 \[23, 32\] |
 | History |  |  |  |
-| History of heart failure | hx_chf | 800 | 243 (30) |
-| Diabetes | hx_dm | 800 | 175 (22) |
+| History of heart failure | hx_chf | 800 | 243(30) |
+| Diabetes | hx_dm | 800 | 175(22) |
 | NYHA functional class | nyha_pr |  |  |
-| 1 |  | 800 | 129 (16) |
-| 2 |  | 800 | 360 (45) |
-| 3 |  | 800 | 275 (34) |
-| 4 |  | 800 | 36 (4.5) |
+| 1 |  | 800 | 129(16) |
+| 2 |  | 800 | 360(45) |
+| 3 |  | 800 | 275(34) |
+| 4 |  | 800 | 36(4.5) |
 | Echo |  |  |  |
 | LV ejection fraction (%) | lvef | 800 | 52 \[42, 62\] |
 | LV mass index (g/m2) | plvmassi | 800 | 121 \[91, 152\] |
@@ -627,20 +654,20 @@ hvtiRtables::hv_man_table_display(word_ft, abbreviations = ABBREVIATIONS)
 |----|----|----|
 | Demography |  |  |
 | Age at operation (years) | 800 | 63 \[49, 75\] |
-| Female | 800 | 299 (37) |
+| Female | 800 | 299(37) |
 | Race | 800 |  |
-| Black |  | 111 (14) |
-| Other |  | 58 (7.3) |
-| White |  | 631 (79) |
+| Black |  | 111(14) |
+| Other |  | 58(7.3) |
+| White |  | 631(79) |
 | Body mass index (kg/m2) | 800 | 28 \[23, 32\] |
 | History |  |  |
-| History of heart failure | 800 | 243 (30) |
-| Diabetes | 800 | 175 (22) |
+| History of heart failure | 800 | 243(30) |
+| Diabetes | 800 | 175(22) |
 | NYHA functional class | 800 |  |
-| 1 |  | 129 (16) |
-| 2 |  | 360 (45) |
-| 3 |  | 275 (34) |
-| 4 |  | 36 (4.5) |
+| 1 |  | 129(16) |
+| 2 |  | 360(45) |
+| 3 |  | 275(34) |
+| 4 |  | 36(4.5) |
 | Echo |  |  |
 | LV ejection fraction (%) | 800 | 52 \[42, 62\] |
 | LV mass index (g/m2) | 800 | 121 \[91, 152\] |
@@ -660,6 +687,9 @@ Code
 if (is.null(CORR)) {
   cat("Correlation variant not requested (`CORR <- NULL`).\n")
 } else {
+  .selection <- attr(job_data$record, "selection")
+  .no_values <- hvtiRtemplates:::.no_values(d, .selection$id, .selection$key)
+  hvtiRtemplates:::.refuse_display(CORR[c("vars", "with", "by")], .no_values, "CORR")
   ct <- hv_correlation_table(d, vars = CORR$vars, with = CORR$with)
   conf_level <- attr(ct, "conf_level")
   if (!is.null(CORR$by)) {
@@ -692,19 +722,20 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:38:59 EDT  |
-|                 | Ended            | 2026-10-29 12:39:02 EDT  |
-|                 | Duration         | 3 s                      |
+| Run             | Started          | 2026-11-03 08:14:11 EST  |
+|                 | Ended            | 2026-11-03 08:14:13 EST  |
+|                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
+| Identifiability | age: `age`       | 9                        |
 | Job             | File             | dc.tables.cohort.eda.qmd |
 |                 | Template         | dc.tables                |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
+|                 | hvtiRtemplates   | 1.5.5                    |
+| Dataset `built` | Version file     | built_20261103.parquet   |
+|                 | Version date     | 2026-11-03               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

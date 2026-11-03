@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:40
+2026-11-03 08:15
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -175,7 +175,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -243,6 +243,18 @@ it passed on.
 `read_clinical_data()` infers binary columns as logical while `Surv()`
 requires a numeric status. The `as.numeric()` coercions below are not
 decoration.
+
+Code
+
+``` r
+# Flags what a reader could learn about one patient, by column and count. It changes no number.
+# The table above counts events and censored patients, over the rows fitted, and the figure's
+# axis and its last Kaplan-Meier steps end at the longest follow-up.
+cat(hvtiRtemplates:::.identifiability_notice(
+  hvtiRtemplates:::.identifiability_check(d[!is.na(d[[TIME]]) & !is.na(d[[EVENT]]), , drop = FALSE], cells = EVENT, extremes = TIME,
+                                          upper_only = TRUE)
+))
+```
 
 ## Model
 
@@ -816,9 +828,9 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-10-29 12:40:53 EDT  |
-|                 | Ended            | 2026-10-29 12:40:58 EDT  |
-|                 | Duration         | 6 s                      |
+| Run             | Started          | 2026-11-03 08:15:29 EST  |
+|                 | Ended            | 2026-11-03 08:15:34 EST  |
+|                 | Duration         | 5 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -826,9 +838,9 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 |                 | Template         | hz                       |
 |                 | Subject          | dead                     |
 |                 | Type             | hz                       |
-|                 | hvtiRtemplates   | 1.5.4                    |
-| Dataset `built` | Version file     | built_20261029.parquet   |
-|                 | Version date     | 2026-10-29               |
+|                 | hvtiRtemplates   | 1.5.5                    |
+| Dataset `built` | Version file     | built_20261103.parquet   |
+|                 | Version date     | 2026-11-03               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 725 rows on 725 patients |
 |                 | WHERE            | `!is.na(creat_pr)`       |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-10-29 12:40
+2026-11-03 08:14
 
 Replaces `descriptive/dc.general`.
 
@@ -42,8 +42,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261029.parquet`, dated 2026-10-29 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.4
+**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.5
 
 ## Study choices
 
@@ -111,9 +111,9 @@ CONTINUOUS <- list(
 # rank). Defaults to every continuous variable; character() skips the section.
 CORR_VARS <- unlist(CONTINUOUS, use.names = FALSE)
 
-# Demo: leave NULL to keep identifiers out of reports. A column name (the SAS
-# job used id ccfid) labels the extreme values with it, which puts patient
-# identifiers in the report: a report rendered that way must not be circulated.
+# Demo: leave NULL for most jobs. A column name (the SAS job used id ccfid) lists
+# the extreme values with it on the console, on stderr(), so a value can be looked
+# up. It never reaches the report: no table shows a patient identifier.
 ID_COL <- NULL
 ```
 
@@ -135,7 +135,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261029.parquet) |
+| Source              | dataset `built` (built_20261103.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -194,7 +194,13 @@ key_overlap <- intersect(unique(c(cat_vars, con_vars, CORR_VARS)), .id)
 if (length(key_overlap)) {
   stop("The ID column cannot be summarized: ", paste(key_overlap, collapse = ", "), call. = FALSE)
 }
-overall_vars <- setdiff(names(d)[vapply(d, is.numeric, logical(1))], c(.id, ID_COL))
+# The ID, every KEY column and any other identifier are kept out of the tables: the
+# overall minimum and maximum would each be one patient's identifier.
+.selection <- attr(job_data$record, "selection")
+.no_values <- hvtiRtemplates:::.no_values(d, .id, .selection$key, ID_COL)
+hvtiRtemplates:::.refuse_display(c(cat_vars, con_vars, CORR_VARS), .no_values, "CATEGORICAL, CONTINUOUS or CORR_VARS")
+.overall <- hvtiRtemplates:::.displayable(names(d)[vapply(d, is.numeric, logical(1))], .no_values)
+overall_vars <- .overall$keep
 
 freqs <- lapply(CATEGORICAL, function(vars) {
   stats::setNames(lapply(vars, function(v) {
@@ -224,7 +230,9 @@ cdfs <- lapply(CONTINUOUS, function(vars) {
       end = rep(c("lowest", "highest"), c(length(lowest), length(highest))),
       value = x[c(lowest, highest)]
     )
-    if (!is.null(ID_COL)) extremes[[ID_COL]] <- d[[ID_COL]][c(lowest, highest)]
+    if (!is.null(ID_COL)) {
+      cat(paste(v, extremes$end, extremes$value, d[[ID_COL]][c(lowest, highest)]), sep = "\n", file = stderr())
+    }
     list(
       summary = data.frame(n = length(seen), nmiss = sum(is.na(x))),
       quantiles = data.frame(
@@ -400,6 +408,9 @@ Code
 
 ``` r
 # unnumbered: its child chunk carries its own label and caption
+if (length(.overall$left_out)) {
+  cat("Left out as patient identifiers:", toString(.overall$left_out), "\n\n")
+}
 if (length(overall_vars)) {
   .fence <- strrep("`", 3)
   cat(knitr::knit_child(text = c(
@@ -573,8 +584,7 @@ Code
 }
 # One quantile table per group, a row per variable with its n and nmiss beside
 # its quantiles, rather than a one-row count table and a quantile table for
-# every variable. The extremes stay one table per variable, since ID_COL can
-# add a column to them.
+# every variable. The extremes stay one table per variable.
 for (group in names(cdfs)) {
   cat("\n### ", group, "\n\n", sep = "")
   .quant <- do.call(rbind, lapply(names(cdfs[[group]]), function(v) {
@@ -783,21 +793,22 @@ knitr::kable(corrs, digits = 3, row.names = FALSE)
 
 Table 14: Pearson correlations, pairwise complete, strongest first
 
-`proc_means()` covers every numeric column other than `ID` and `ID_COL`.
-Percentages in the contingency tables are over non-missing rows, as SAS
-`MISSPRINT` computes them; the `(missing)` row shows its count with a
-blank percent. Quantiles are SAS `QNTLDEF=5`, the `proc univariate`
-default. The highest extremes are listed largest first (SAS lists them
-ascending). The SAS job printed `ccfid` beside every extreme value so an
-author could look the patient up; this job prints the values alone
-unless `ID_COL` is set under Study choices.
+`proc_means()` covers every numeric column that does not identify a
+patient. Percentages in the contingency tables are over non-missing
+rows, as SAS `MISSPRINT` computes them; the `(missing)` row shows its
+count with a blank percent. Quantiles are SAS `QNTLDEF=5`, the
+`proc univariate` default. The highest extremes are listed largest first
+(SAS lists them ascending). The SAS job printed `ccfid` beside every
+extreme value so an author could look the patient up; this job prints
+the values alone, and `ID_COL` lists them with the identifier on the
+console, never in this report.
 
 ## About this run
 
 | Group           | Item             | Value                     |
 |:----------------|:-----------------|:--------------------------|
-| Run             | Started          | 2026-10-29 12:40:08 EDT   |
-|                 | Ended            | 2026-10-29 12:40:08 EDT   |
+| Run             | Started          | 2026-11-03 08:14:51 EST   |
+|                 | Ended            | 2026-11-03 08:14:52 EST   |
 |                 | Duration         | 0 s                       |
 |                 | Status           | final                     |
 |                 | Rendered by      | gallery                   |
@@ -806,9 +817,9 @@ unless `ID_COL` is set under Study choices.
 |                 | Template         | dc.general                |
 |                 | Subject          | cohort                    |
 |                 | Type             | eda                       |
-|                 | hvtiRtemplates   | 1.5.4                     |
-| Dataset `built` | Version file     | built_20261029.parquet    |
-|                 | Version date     | 2026-10-29                |
+|                 | hvtiRtemplates   | 1.5.5                     |
+| Dataset `built` | Version file     | built_20261103.parquet    |
+|                 | Version date     | 2026-11-03                |
 |                 | Source file      | built.rds                 |
 |                 | Rows kept        | 800 rows on 800 patients  |
 |                 | WHERE            | none                      |
