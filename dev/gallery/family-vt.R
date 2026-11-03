@@ -54,7 +54,11 @@ gallery_family(
       "^ELIGIBILITY <- " = "ELIGIBILITY <- c(\"gower\", \"sid\")",
       "^SID_SET <- " = "SID_SET <- \"echo-sid\"",
       "^HORIZON <- " = "HORIZON <- 8",
-      "^NTREE <- " = "NTREE <- 500"
+      "^NTREE <- " = "NTREE <- 500",
+      # 800 synthetic patients give each arm about five events per predictor,
+      # well under the template's floor of 20, so a final render would stop.
+      # 0 reports the ratio without enforcing it, and the report shows it.
+      "^MIN_EVENTS_PER_FEATURE <- " = "MIN_EVENTS_PER_FEATURE <- 0"
     )),
     # 200 bootstraps, not 1000, keep the render short; the intervals are rough.
     "vt-explain" = list(subject = "reint", type = "vt", choices = list(
