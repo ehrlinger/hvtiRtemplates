@@ -1,5 +1,9 @@
 # hvtiRtemplates 1.5.6
 
+* A `bd` end-to-end test now checks that its draft fails at the error it plants, not
+  earlier. It used to accept any error, so a render that died before writing its
+  working file failed a later check and pointed at the wrong cause.
+
 * `vp-fit` draws a second importance figure, `fig-varpro-screened`, after the noise screen. It keeps the real
   variables that were tested, with the same boxes, the same dashed bar per kind and the same selection as the figure
   with the noise columns, so the two never disagree. The noise columns and the untested variables are left out: the
