@@ -12,6 +12,8 @@
   : Stop a long fit from starting in an interactive session
 - [`guard_memory()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md)
   : Refuse a fit that this session's memory cap cannot hold
+- [`import_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/import_job.md)
+  : Bring a job from another study into this one
 - [`install_hvti()`](https://ehrlinger.github.io/hvtiRtemplates/reference/install_hvti.md)
   : Install the hvti command
 - [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
