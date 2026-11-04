@@ -12,9 +12,9 @@ upgrade_report <- function(job) archived(job, "-upgrade.md")
 local_template_moved <- function(env = parent.frame()) {
   real <- hvtiRtemplates:::.upgrade_lines
   moves <- 0L
-  testthat::local_mocked_bindings(.upgrade_lines = function(old, new) {
+  testthat::local_mocked_bindings(.upgrade_lines = function(old, new, ...) {
     moves <<- moves + 1L
-    upgraded <- real(old, new)
+    upgraded <- real(old, new, ...)
     upgraded$lines <- c(upgraded$lines, paste("<!-- moved", moves, "-->"))
     upgraded
   }, .package = "hvtiRtemplates", .env = env)
@@ -550,7 +550,8 @@ test_that("a description is carried from a job scaffolded before add_job() stamp
   expect_false(any(grepl("^<!-- EDIT: name the job", upgraded)))
 })
 
-test_that("comment lines a study added above a choice are listed for review", {
+test_that("comment lines a study added above a choice are carried and listed for review", {
+  local_template_moved()
   root <- migration_study_fixture()
   job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
   lines <- readLines(job)
@@ -559,7 +560,7 @@ test_that("comment lines a study added above a choice are listed for review", {
              lines[-seq_len(i - 1L)])
   writeLines(lines, job)
   report <- readLines(upgrade_report(upgrade_job(job)))
-  expect_true(any(grepl(paste0("^- `DATASET`, old lines ", i, ", ", i + 1L, ": comment"), report)))
+  expect_true(any(grepl(paste0("^- `DATASET`, old lines ", i, ", ", i + 1L, ": comment .*, carried$"), report)))
   expect_false(any(grepl("same-day", report)))
   # Only DATASET: the template's own comments above a choice are not listed.
   expect_length(grep("^- `[A-Z_]+`, old line", report), 1L)
@@ -629,4 +630,84 @@ test_that("an older template's prompt and placeholder, untouched, are not carrie
   expect_identical(u$description$status, "open")
   expect_false("Replaces `analyses/<job>`: describe its outcome and candidate predictors here." %in% u$lines)
   expect_length(grep("^<!-- EDIT: name the job", u$lines), 1L)
+})
+
+# A study's rationale above a choice, written between the template's comment and
+# the assignment, as COMMENCE wrote its own above PREDICTORS.
+rationale <- c("# Study note: the excluded variables are the ones missing in most patients,",
+               "# and imputing them would carry more noise than signal.")
+
+with_rationale <- function(job, name = "PREDICTORS", note = rationale) {
+  lines <- readLines(job)
+  i <- grep(paste0("^", name, " <- "), lines)
+  writeLines(c(lines[seq_len(i - 1L)], note, lines[-seq_len(i - 1L)]), job)
+  i
+}
+
+test_that("a study's comment above a carried choice is carried into the upgraded job, directly above it", {
+  local_template_moved()
+  root <- migration_study_fixture()
+  job <- add_job("vp", "dead", "svd", dir = root, qualifier = "fit")
+  i <- with_rationale(job)
+  upgraded <- readLines(upgrade_job(job))
+  at <- grep("^PREDICTORS <- ", upgraded)
+  expect_identical(upgraded[at - 2:1], rationale)
+  # Written once, not doubled above the template's comment.
+  expect_length(grep("^# Study note:", upgraded), 1L)
+  report <- readLines(upgrade_report(job))
+  expect_true(any(grepl(paste0("^- `PREDICTORS`, old lines ", i, ", ", i + 1L, ": comment .*, carried$"), report)))
+  expect_false(any(grepl("Study note|imputing", report)))
+})
+
+test_that("a job whose only edit is a comment above a choice is already current", {
+  root <- migration_study_fixture()
+  job <- add_job("vp", "dead", "svd", dir = root, qualifier = "fit")
+  with_rationale(job)
+  before <- readLines(job)
+  expect_message(upgrade_job(job), "already current")
+  expect_identical(readLines(job), before)
+})
+
+test_that("an older template's wording above a choice is template prose, and is not carried", {
+  local_template_moved()
+  old_wording <- "# EDIT: the candidate predictors, as an older template worded them."
+  current <- readLines(template_path("vp", "fit"))
+  i <- grep("^PREDICTORS <- ", current)
+  archived_text <- paste(c(current[seq_len(i - 1L)], old_wording, current[-seq_len(i - 1L)]), collapse = "\n")
+  sha <- digest::digest(archived_text, algo = "sha256", serialize = FALSE)
+  history <- list(texts = stats::setNames(list(archived_text), sha),
+                  index = data.frame(template = "vp.fit", file = "inst/templates/30_analyses/vp-fit.qmd",
+                                     version = "1.5.2", sha256 = sha, first = "2026-10-30T00:00:00-04:00",
+                                     last = "2026-10-30T00:00:00-04:00"))
+  archive <- withr::local_tempfile(fileext = ".rds")
+  saveRDS(history, archive)
+  withr::local_options(hvtiRtemplates.template_history = archive)
+  root <- migration_study_fixture()
+  job <- add_job("vp", "dead", "svd", dir = root, qualifier = "fit")
+  with_rationale(job, note = c(sub("^# EDIT: ", "# ", old_wording), rationale))
+  upgraded <- readLines(upgrade_job(job))
+  expect_false(any(grepl("as an older template worded them", upgraded)))
+  at <- grep("^PREDICTORS <- ", upgraded)
+  expect_identical(upgraded[at - 2:1], rationale)
+})
+
+test_that("a study's comment set off from its choice by a blank line is carried, not dropped unseen", {
+  local_template_moved()
+  root <- migration_study_fixture()
+  job <- add_job("vp", "dead", "svd", dir = root, qualifier = "fit")
+  lines <- readLines(job)
+  i <- grep("^PREDICTORS <- ", lines)
+  top <- i - 1L
+  while (grepl("^#", lines[[top]])) top <- top - 1L
+  # Above the template's comment, a blank line between, and one between the
+  # comment and the assignment too.
+  lines <- c(lines[seq_len(top)], rationale, "", lines[(top + 1L):(i - 1L)], "", lines[-seq_len(i - 1L)])
+  writeLines(lines, job)
+  upgraded <- readLines(upgrade_job(job))
+  at <- grep("^PREDICTORS <- ", upgraded)
+  expect_identical(upgraded[at - 2:1], rationale)
+  expect_length(grep("^# Study note:", upgraded), 1L)
+  report <- readLines(upgrade_report(job))
+  expect_true(any(grepl(paste0("^- `PREDICTORS`, old lines ", top + 1L, ", ", top + 2L, ": comment .*, carried$"),
+                        report)))
 })

@@ -52,9 +52,14 @@
 #' renders as a draft until someone decides. Prose and code outside the
 #' choices come from the current template, because without the template the
 #' job was copied from an analyst's edit cannot be told from the old
-#' template's text. The report lists every chunk that may hold such an edit,
-#' and every comment line above a carried choice that the current template's
-#' comment lacks.
+#' template's text. The report lists every chunk that may hold such an edit.
+#'
+#' A study's own comment above a choice, such as the reasons for leaving
+#' variables out of \code{PREDICTORS}, is carried with the choice and written
+#' directly above it, below the current template's comment. A comment line
+#' counts as the study's when no version of the template has it in that chunk;
+#' the template's earlier wording is left behind. The report names the old
+#' lines carried, so they can be checked against the new comment above them.
 #'
 #' The one exception is the job's description. Where the template opens with
 #' an \code{EDIT:} comment asking for it, the text the old job has in that
@@ -173,7 +178,7 @@ upgrade_job <- function(path, dir = NULL) {
   staged <- suppressWarnings(add_job(row$prefix[[1L]], fields$subject, fields$type, dir = staging,
                                      qualifier = qualifier))
   old <- readLines(path, warn = FALSE)
-  upgraded <- .upgrade_lines(old, readLines(staged, warn = FALSE))
+  upgraded <- .upgrade_lines(old, readLines(staged, warn = FALSE), .template_prose(row$name[[1L]]))
   # Nothing to change means nothing to archive: a pair per call buried the pairs
   # that record a real change. A job under an old spelling still has its rename to do.
   current <- identical(upgraded$lines, old) && normalizePath(target, winslash = "/", mustWork = FALSE) == path
@@ -328,11 +333,14 @@ upgrade_job <- function(path, dir = NULL) {
 # upper case. A data frame of name, chunk, the assignment's first and last line
 # and its first and last byte on them (two statements can share a line), and
 # whether an EDIT marker sits on its lines or in the comment block above.
+# `block_start` is that block's first line; `note_start` is the first comment
+# line above it, blank lines between, back to the code before the choice.
 .job_choices <- function(lines) {
   chunks <- .qmd_chunks(lines)
   chunks <- chunks[!is.na(chunks$label) & startsWith(chunks$label, "edit-"), , drop = FALSE]
   empty <- data.frame(name = character(), chunk = character(), start = integer(), end = integer(),
-                      first_byte = integer(), last_byte = integer(), marker = logical(), block_start = integer())
+                      first_byte = integer(), last_byte = integer(), marker = logical(), block_start = integer(),
+                      note_start = integer())
   rows <- lapply(seq_len(nrow(chunks)), function(i) {
     first <- chunks$open[[i]] + 1L
     code <- lines[first:(chunks$close[[i]] - 1L)]
@@ -354,10 +362,16 @@ upgrade_job <- function(path, dir = NULL) {
       above <- start - 1L
       while (above >= first && grepl("^\\s*#", lines[[above]]) && !grepl("^#\\|", lines[[above]])) above <- above - 1L
       block <- if (above + 1L <= start - 1L) lines[(above + 1L):(start - 1L)] else character()
+      # Comments set off by a blank line belong to the choice too, up to the
+      # code before it: a study's note there is carried with the choice.
+      note <- above
+      while (note >= first && grepl("^\\s*(#.*)?$", lines[[note]]) && !grepl("^#\\|", lines[[note]])) note <- note - 1L
+      note <- note + 1L
+      while (note < start && !nzchar(trimws(lines[[note]]))) note <- note + 1L
       data.frame(name = name, chunk = chunks$label[[i]], start = start, end = end,
                  first_byte = refs[[j]][[2L]], last_byte = refs[[j]][[4L]],
                  marker = any(grepl(.edit_token(), c(block, lines[start:end]), fixed = TRUE)),
-                 block_start = above + 1L)
+                 block_start = above + 1L, note_start = note)
     })
     do.call(rbind, c(list(empty), hits))
   })
@@ -402,19 +416,51 @@ upgrade_job <- function(path, dir = NULL) {
   code[nzchar(code) & !startsWith(code, "#")]
 }
 
-# The upgraded job's lines and what happened to each choice.
-.upgrade_lines <- function(old, new) {
+# A comment line read the way a choice's comment is compared: a marker reads as
+# the line without it.
+.comment_key <- function(x) trimws(sub(paste0(.edit_token(), "\\s*"), "", x))
+
+# The comment lines in every archived text of a template's `edit-*` chunks, by
+# chunk label: the template's own prose above a choice, in any version. A
+# comment line above a choice that is in none of them is the study's.
+.template_prose <- function(template, history = .template_history()) {
+  shas <- unique(history$index$sha256[history$index$template %in% template])
+  out <- list()
+  for (sha in shas) {
+    lines <- .text_lines(history$texts[[sha]])
+    chunks <- .qmd_chunks(lines)
+    chunks <- chunks[!is.na(chunks$label) & startsWith(chunks$label, "edit-") & chunks$close > chunks$open + 1L, ,
+                     drop = FALSE]
+    for (k in seq_len(nrow(chunks))) {
+      code <- lines[(chunks$open[[k]] + 1L):(chunks$close[[k]] - 1L)]
+      code <- code[grepl("^\\s*#", code) & !grepl("^#\\|", code)]
+      out[[chunks$label[[k]]]] <- unique(c(out[[chunks$label[[k]]]], .comment_key(code)))
+    }
+  }
+  out
+}
+
+# The upgraded job's lines and what happened to each choice. `prose` is the
+# template's archived comment lines by chunk, from .template_prose(): a comment
+# line above a carried choice that is in neither it nor the current template's
+# comment there is the study's, and is carried with the choice.
+.upgrade_lines <- function(old, new, prose = list()) {
   oc <- .job_choices(old)
   nc <- .job_choices(new)
   carry <- nc[nc$name %in% oc$name[!oc$duplicated] & !nc$duplicated, , drop = FALSE]
   token <- .edit_token()
   out <- new
+  comments <- list()
   # Bottom up, so each replacement leaves the earlier line numbers valid.
   for (i in rev(seq_len(nrow(carry)))) {
     o <- oc[oc$name == carry$name[[i]], , drop = FALSE][1L, ]
     n <- carry[i, ]
     parts <- .choice_parts(out, n)
     above <- if (n$block_start < n$start) n$block_start:(n$start - 1L) else integer()
+    own <- if (o$note_start < o$start) o$note_start:(o$start - 1L) else integer()
+    own <- own[grepl("^\\s*#", old[own])]
+    own <- own[!.comment_key(old[own]) %in% c(.comment_key(out[above]), prose[[o$chunk]])]
+    comments[[carry$name[[i]]]] <- own
     if (!o$marker) {
       # Resolved in the old job, so resolved here.
       out[above] <- sub(paste0(token, "\\s*"), "", out[above])
@@ -428,7 +474,8 @@ upgrade_job <- function(path, dir = NULL) {
     if (o$marker && !any(grepl(token, c(out[above], carried), fixed = TRUE))) {
       carried <- c(paste("#", token, "still open in the old job; decide it, then delete this line."), carried)
     }
-    out <- c(out[seq_len(n$start - 1L)], carried, out[-seq_len(n$end)])
+    # The study's comment goes directly above its choice, below the template's.
+    out <- c(out[seq_len(n$start - 1L)], old[own], carried, out[-seq_len(n$end)])
   }
   unplaced <- oc[!oc$name %in% carry$name, , drop = FALSE]
   if (nrow(unplaced)) {
@@ -442,7 +489,7 @@ upgrade_job <- function(path, dir = NULL) {
     out <- append(out, note, after = at - 1L)
   }
   desc <- .carry_description(old, out)
-  list(lines = desc$lines, carried = carry$name, unplaced = unplaced, new = setdiff(nc$name, oc$name),
+  list(lines = desc$lines, carried = carry$name, comments = comments, unplaced = unplaced, new = setdiff(nc$name, oc$name),
        old_chunks = .qmd_chunks(old), new_chunks = .qmd_chunks(new), old_choices = oc, new_choices = nc,
        new_lines = new, description = desc[c("status", "from", "to")])
 }
@@ -516,25 +563,15 @@ upgrade_job <- function(path, dir = NULL) {
   status("carried", c(new[seq_len(a - 1L)], text, new[-seq_len(max(region))]), min(between), max(between))
 }
 
-# Comment lines above a carried choice in the old job that the current
-# template's comment above it lacks: a study's note, or the old template's
-# wording. Neither is carried, so each is named for review. A resolved marker
-# reads as the template's line without it, so it is not counted.
-.choice_notes <- function(u, old) {
-  token <- paste0(.edit_token(), "\\s*")
-  block <- function(lines, ch) {
-    if (ch$block_start < ch$start) ch$block_start:(ch$start - 1L) else integer()
-  }
-  norm <- function(x) trimws(sub(token, "", x))
+# The comment lines above each carried choice that were the study's and were
+# carried with it, by old line number, so the report names them for a check.
+.choice_notes <- function(u) {
   notes <- character()
   for (name in u$carried) {
-    o <- u$old_choices[u$old_choices$name == name, , drop = FALSE][1L, ]
-    n <- u$new_choices[u$new_choices$name == name, , drop = FALSE][1L, ]
-    at <- block(old, o)
-    at <- at[!norm(old[at]) %in% norm(u$new_lines[block(u$new_lines, n)])]
+    at <- u$comments[[name]]
     if (length(at)) {
       notes <- c(notes, paste0("`", name, "`, old line", if (length(at) > 1L) "s", " ", paste(at, collapse = ", "),
-                               ": comment above it that the current template does not have, not carried"))
+                               ": comment above it that no version of the template has, carried"))
     }
   }
   notes
@@ -584,7 +621,7 @@ upgrade_job <- function(path, dir = NULL) {
       review <- c(review, paste0("`", lab, "`, ", where, ": differs from the current template"))
     }
   }
-  review <- c(review, .choice_notes(u, old))
+  review <- c(review, .choice_notes(u))
   markers <- grep(.edit_token(), u$lines, fixed = TRUE)
   d <- u$description
   description <- switch(d$status,
