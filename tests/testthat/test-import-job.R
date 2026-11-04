@@ -94,6 +94,17 @@ test_that("a source without exactly one SUBJECT line is refused before anything 
   expect_length(list.files(here, pattern = "[.]qmd$", recursive = TRUE), 0L)
 })
 
+test_that("a failure after the job is written leaves neither the job nor its runner", {
+  other <- import_study("other")
+  here <- import_study("here")
+  from <- add_job("bl", subject = "death", type = "boot", dir = other)
+  src_runner <- sub("[.]qmd$", ".runner.R", from)
+  r <- readLines(src_runner, warn = FALSE)
+  writeLines(r[!grepl("^SUBJECT ", r)], src_runner)
+  expect_error(import_job(from, dir = here), "0 lines matching")
+  expect_length(list.files(here, pattern = "^bl[.]", recursive = TRUE), 0L)
+})
+
 test_that("from must be a job named for a template", {
   here <- import_study("here")
   expect_error(import_job(file.path(here, "nope.qmd"), dir = here), "job not found")
