@@ -1,3 +1,10 @@
+# hvtiRtemplates 1.5.6
+
+* `vp-fit` draws a second importance figure, `fig-varpro-screened`, after the noise screen. It keeps the real
+  variables that were tested, with the same boxes, the same dashed bar per kind and the same selection as the figure
+  with the noise columns, so the two never disagree. The noise columns and the untested variables are left out: the
+  noise has set the bars by then. It is saved as `vp-fit-varpro-screened.png`.
+
 # hvtiRtemplates 1.5.5
 
 * `read_job_data()` now drops `masterid` and its numbered copies (`masterid0`, `masterid1`), and an SSN

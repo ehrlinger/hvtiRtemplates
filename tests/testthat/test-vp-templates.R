@@ -178,6 +178,25 @@ test_that("vp-fit's figure takes its bar and selection from the table", {
   expect_s3_class(ggplot2::ggplot_build(env$.fig), "ggplot_built")
 })
 
+test_that("vp-fit's screened figure drops the noise and the untested, and keeps each row's bar and selection", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- rf_env(vp_data())
+  rf_run("vp", "fit", c(vp_data_labels, "noise", "judge", "fit", "tbl-coverage", "fig-varpro", "fig-varpro-screened"),
+         env, vp_choices)
+  full <- env$.gv$imp
+  keep <- full[!full$noise & full$tested, ]
+  imp <- env$.gvs$imp
+  expect_setequal(as.character(imp$variable), as.character(keep$variable))
+  expect_setequal(levels(imp$variable), as.character(keep$variable))
+  expect_setequal(as.character(env$.gvs$stats$variable), as.character(keep$variable))
+  expect_identical(imp$selected, keep$selected)
+  expect_identical(imp$noise_cut, keep$noise_cut)
+  expect_s3_class(ggplot2::ggplot_build(env$.fig), "ggplot_built")
+  expect_no_match(env$.fig$labels$caption, "Orange boxes", fixed = TRUE)
+  expect_no_match(env$.fig$labels$caption, "Open boxes", fixed = TRUE)
+})
+
 test_that("vp-fit's figure holds categorical variables to the table's bar when categorical noise all scores 0", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
