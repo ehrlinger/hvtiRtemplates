@@ -120,7 +120,7 @@ package environment:
 # A vignette builds a throwaway study; in a real study, run hvtiR::setup().
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L,
             renv = FALSE)
-#> Study: /tmp/RtmpUujXUF/file20c917f3122b/new-study
+#> Study: /tmp/RtmpZoYiqr/file20b439f0ad82/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -166,7 +166,7 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpUujXUF/file20c917f3122b/new-study
+#> Study: /tmp/RtmpZoYiqr/file20b439f0ad82/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project

@@ -53,8 +53,15 @@ renders as a draft until someone decides. Prose and code outside the
 choices come from the current template, because without the template the
 job was copied from an analyst's edit cannot be told from the old
 template's text. The report lists every chunk that may hold such an
-edit, and every comment line above a carried choice that the current
-template's comment lacks.
+edit.
+
+A study's own comment above a choice, such as the reasons for leaving
+variables out of `PREDICTORS`, is carried with the choice and written
+directly above it, below the current template's comment. A comment line
+counts as the study's when no version of the template has it in that
+chunk; the template's earlier wording is left behind. The report names
+the old lines carried, so they can be checked against the new comment
+above them.
 
 The one exception is the job's description. Where the template opens
 with an `EDIT:` comment asking for it, the text the old job has in that
