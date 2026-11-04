@@ -27,13 +27,13 @@
     if (st$state %in% c("finished", "failed", "vanished", "cancelled")) return(invisible(job_status(path, quiet = quiet)))
     if (all(expected %in% st$progress$checks) && identical(st$state, "running")) {
       if (!quiet) {
-        cat(sprintf("%s; running (process %s on %s). Follow it with job_status(\"%s\").\n",
+        cat(sprintf("%s; running (process %s on %s). Follow it with hvtiRtemplates::job_status(\"%s\").\n",
                     if (length(expected)) "checks passed" else "started", st$pid, st$host, rel))
       }
       return(invisible(st))
     }
     if (Sys.time() >= deadline) {
-      if (!quiet) cat(sprintf("still starting; follow it with job_status(\"%s\").\n", rel))
+      if (!quiet) cat(sprintf("still starting; follow it with hvtiRtemplates::job_status(\"%s\").\n", rel))
       return(invisible(st))
     }
     Sys.sleep(poll)

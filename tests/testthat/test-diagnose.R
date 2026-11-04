@@ -43,7 +43,7 @@ test_that("the same signature without a recorded peak is hedged", {
 test_that("a missing package reads as the wrong R or library", {
   d <- .diagnose_failure(fx("no-package"), list())
   expect_match(d$reason, "notapkg", fixed = TRUE)
-  expect_match(d$fix, "run_job(<job>)", fixed = TRUE)
+  expect_match(d$fix, 'hvtiRtemplates::run_job("<job>")', fixed = TRUE)
 })
 
 test_that("Quitting from names the chunk and quotes the error printed above it", {
@@ -98,7 +98,7 @@ test_that("job_status prints why and fix for a failed run", {
   file.copy(test_path("fixtures-diagnose", "no-package.log"), .run_files(job)$log, overwrite = TRUE)
   .write_status(.run_files(job)$status, state = "failed", exit_code = 1L, pid = 999999L)
   expect_output(job_status(job), "why: .*notapkg")
-  expect_output(job_status(job), "fix: .*run_job[(]<job>[)]")
+  expect_output(job_status(job), "fix: .*hvtiRtemplates::run_job[(]\"<job>\"[)]")
 })
 
 test_that("the diagnosis is returned even when quiet, and a failing diagnosis never breaks job_status", {

@@ -4,8 +4,8 @@ test_that("r_version refuses a session R whose major.minor differs from the lock
   ck <- .check_r_version(root)
   expect_false(ck$ok)
   expect_match(ck$message, "^r_version: .*4[.]5[.]3.*4[.]6[.]1")
-  expect_match(ck$fix, "run_job(<job>)", fixed = TRUE)
-  expect_no_match(ck$fix, "hvti", fixed = TRUE)
+  expect_match(ck$fix, 'hvtiRtemplates::run_job("<job>")', fixed = TRUE)
+  expect_no_match(ck$fix, "hvti ", fixed = TRUE)
   expect_match(ck$fix, "/opt/R/4.5.3/bin/R", fixed = TRUE)
 })
 
@@ -275,8 +275,8 @@ test_that("study_render refuses another job running in the study and names it", 
   expect_match(ck$message, "on lri-r03", fixed = TRUE)
   expect_match(ck$message, "in stage fit (3 of 7)", fixed = TRUE)
   expect_match(ck$message, "about (2h00m|1h59m) left")
-  expect_match(ck$fix, 'job_status("analyses/nb.boostmtree.x.boost.qmd")', fixed = TRUE)
-  expect_match(ck$fix, 'cancel_job("analyses/nb.boostmtree.x.boost.qmd")', fixed = TRUE)
+  expect_match(ck$fix, 'hvtiRtemplates::job_status("analyses/nb.boostmtree.x.boost.qmd")', fixed = TRUE)
+  expect_match(ck$fix, 'hvtiRtemplates::cancel_job("analyses/nb.boostmtree.x.boost.qmd")', fixed = TRUE)
   expect_true(file.exists(other))
 })
 
@@ -309,7 +309,7 @@ test_that("study_render refuses another job freshly submitted and not started ye
   ck <- .check_study_render(mine, root)
   expect_false(ck$ok)
   expect_match(ck$message, "^study_render: another job is about to render in this study: analyses/a.qmd, submitted")
-  expect_match(ck$fix, 'job_status("analyses/a.qmd")', fixed = TRUE)
+  expect_match(ck$fix, 'hvtiRtemplates::job_status("analyses/a.qmd")', fixed = TRUE)
   expect_no_match(ck$fix, "cancel_job", fixed = TRUE)   # cancel_job() refuses a submit that has not started
   # A submit older than two minutes reads vanished, so it no longer blocks.
   .write_status(.run_files(other)$status, state = "submitted", submitted = .stamp(Sys.time() - 600))
@@ -418,7 +418,7 @@ test_that("study_render sends a stale other-host job through confirm-then-abando
   .write_status(.run_files(other)$status, state = "running", pid = 1L, host = "lri-r03", started = .stamp(Sys.time() - 7200),
                 marker = "PSabc123_1")
   ck <- .check_study_render(mine, root)
-  expect_match(ck$fix, 'job_status("analyses/nb.boostmtree.x.boost.qmd")', fixed = TRUE)
+  expect_match(ck$fix, 'hvtiRtemplates::job_status("analyses/nb.boostmtree.x.boost.qmd")', fixed = TRUE)
   expect_match(ck$fix, "ps eww -u $USER | grep PSabc123_1", fixed = TRUE)
   expect_match(ck$fix, "other_host = \"abandon\"", fixed = TRUE)
   expect_lt(regexpr("grep", ck$fix, fixed = TRUE), regexpr("cancel_job(", ck$fix, fixed = TRUE))
@@ -444,18 +444,18 @@ test_that("study_render copes with a stale running job that records no host", {
                 stage = "fit", stage_index = 1L, stage_count = 2L, stages = c("fit", "b"))
   ck <- expect_no_error(.check_study_render(mine, root))
   expect_false(ck$ok)
-  expect_match(ck$fix, 'cancel_job("analyses/nohost.qmd")', fixed = TRUE)
+  expect_match(ck$fix, 'hvtiRtemplates::cancel_job("analyses/nohost.qmd")', fixed = TRUE)
   expect_no_match(ck$fix, "other_host", fixed = TRUE)
 })
 
 test_that("the abandon route for a job on this host is a plain cancel", {
   job <- status_job()
   fix <- .abandon_route(list(host = Sys.info()[["nodename"]], marker = "PSabc123_1"), job)
-  expect_no_match(fix, "hvti", fixed = TRUE)
-  expect_match(fix, sprintf('cancel_job("%s")', job), fixed = TRUE)
+  expect_no_match(fix, "hvti ", fixed = TRUE)
+  expect_match(fix, sprintf('hvtiRtemplates::cancel_job("%s")', job), fixed = TRUE)
   expect_no_match(fix, "other_host", fixed = TRUE)
   expect_no_match(fix, "confirm", fixed = TRUE)
-  expect_match(.abandon_route(list(host = NULL), job), sprintf('cancel_job("%s")', job), fixed = TRUE)
+  expect_match(.abandon_route(list(host = NULL), job), sprintf('hvtiRtemplates::cancel_job("%s")', job), fixed = TRUE)
 })
 
 test_that("render_r names both R versions when the submitter recorded its own", {
@@ -500,8 +500,8 @@ test_that("run_state names the job by its path from the study root", {
   writeLines("---\ntitle: x\n---", job)
   .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp())
   ck <- .check_run_state(job, root)
-  expect_match(ck$fix, 'job_status("analyses/x.qmd")', fixed = TRUE)
-  expect_match(ck$fix, 'cancel_job("analyses/x.qmd")', fixed = TRUE)
+  expect_match(ck$fix, 'hvtiRtemplates::job_status("analyses/x.qmd")', fixed = TRUE)
+  expect_match(ck$fix, 'hvtiRtemplates::cancel_job("analyses/x.qmd")', fixed = TRUE)
   expect_no_match(ck$fix, "<job>", fixed = TRUE)
 })
 
@@ -545,7 +545,7 @@ test_that("a stale other-host job without a marker is told to confirm once, not 
   other_running_job(root, age_min = 120)
   fix <- .check_study_render(mine, root)$fix
   expect_identical(lengths(regmatches(fix, gregexpr("job_status(", fix, fixed = TRUE))), 1L)
-  expect_match(fix, 'job_status("analyses/nb.boostmtree.x.boost.qmd")', fixed = TRUE)
+  expect_match(fix, 'hvtiRtemplates::job_status("analyses/nb.boostmtree.x.boost.qmd")', fixed = TRUE)
 })
 
 test_that("study_render notes an editor render that errored after an earlier submit_job() run finished", {
@@ -574,8 +574,8 @@ test_that("r_version refuses a session that is not using this study's renv libra
   expect_false(ck$ok)
   expect_match(ck$message, "^r_version: this session is not using this study's renv library")
   expect_match(ck$message, "the package check and the render would read different libraries", fixed = TRUE)
-  expect_match(ck$fix, "run_job(<job>)", fixed = TRUE)
-  expect_no_match(ck$fix, "hvti", fixed = TRUE)
+  expect_match(ck$fix, 'hvtiRtemplates::run_job("<job>")', fixed = TRUE)
+  expect_no_match(ck$fix, "hvti ", fixed = TRUE)
   testthat::local_mocked_bindings(.renv_project = function() "")
   expect_false(.check_r_version(root)$ok)   # renv/activate.R, but this session never activated it
   testthat::local_mocked_bindings(.renv_project = function() root)

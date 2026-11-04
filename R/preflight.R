@@ -52,7 +52,8 @@
     return(.check("r_version", FALSE,
                   sprintf("this study's renv.lock records R %s, but this session is R %s, so it would use a different library.",
                           lock, have),
-                  sprintf("Start R %s (/opt/R/%s/bin/R) in the study, then run_job(<job>) from its console.", lock, lock)))
+                  sprintf("Start R %s (/opt/R/%s/bin/R) in the study, then hvtiRtemplates::run_job(\"<job>\") from its console.",
+                          lock, lock)))
   }
   # The packages check reads this session's library, which is the study's only when this session runs renv for it.
   # hvti's route passes: Rscript starts in the root, where the study's .Rprofile activates renv and sets RENV_PROJECT.
@@ -67,7 +68,7 @@
                   sprintf(paste("this session is not using this study's renv library (%s), so the package check and",
                                 "the render would read different libraries."),
                           if (nzchar(proj)) paste("it runs renv for", proj) else "renv is not active"),
-                  "Open the study's own project so renv activates, then run_job(<job>) from its console."))
+                  "Open the study's own project so renv activates, then hvtiRtemplates::run_job(\"<job>\") from its console."))
   }
   .check("r_version", TRUE, note = if (lock != have) sprintf("renv.lock records R %s; this session is %s (same library).", lock, have))
 }
@@ -174,13 +175,14 @@
 # Stale progress is not proof: Quarto's knitr runs in a session of its own and can outlive the Workbench
 # session, so the way out confirms on that host before abandoning (spec section 6). `rel` is the path hvti takes.
 .abandon_route <- function(st, path, rel = "") {
-  if (!.on_other_host(st)) return(sprintf('Stop it with cancel_job("%s").', path))
+  if (!.on_other_host(st)) return(sprintf('Stop it with hvtiRtemplates::cancel_job("%s").', path))
   confirm <- if (is.character(st$marker)) {
     sprintf("On %s, confirm nothing is left with `ps eww -u $USER | grep %s`. ", st$host, st$marker)
   } else {
-    sprintf("From a session on %s, confirm with job_status(\"%s\") that nothing is left. ", st$host, if (nzchar(rel)) rel else path)
+    sprintf("From a session on %s, confirm with hvtiRtemplates::job_status(\"%s\") that nothing is left. ",
+            st$host, if (nzchar(rel)) rel else path)
   }
-  sprintf('%sOnly then run cancel_job("%s", other_host = "abandon") here.', confirm, path)
+  sprintf('%sOnly then run hvtiRtemplates::cancel_job("%s", other_host = "abandon") here.', confirm, path)
 }
 
 # The job's path from the study root, which is what job_status() takes from a console there; the full path when it lies outside.
@@ -220,12 +222,12 @@
                   sprintf("this job is recorded running on host %s%s.", st$host,
                           if (stale) ", but its progress has not moved for over 30 minutes, so it is probably dead" else ""),
                   paste0(if (!stale) {
-                    sprintf("Check it from a session on %s with job_status(\"%s\"). ", st$host, .study_rel(path, root))
+                    sprintf("Check it from a session on %s with hvtiRtemplates::job_status(\"%s\"). ", st$host, .study_rel(path, root))
                   }, abandon)))
   }
   if (st$state %in% c("running", "submitted")) {
     return(.check("run_state", FALSE, sprintf("this job is already %s.", st$state),
-                  sprintf("Follow it with job_status(\"%s\"), or stop it with cancel_job(\"%s\").",
+                  sprintf("Follow it with hvtiRtemplates::job_status(\"%s\"), or stop it with hvtiRtemplates::cancel_job(\"%s\").",
                           .study_rel(path, root), .study_rel(path, root))))
   }
   .check("run_state", TRUE)
@@ -315,14 +317,14 @@
     # Stale on a host other than this one is the only case the wait advice cannot resolve; a missing host gets the live wording.
     is_stale <- vapply(running, function(st) isTRUE(st$progress$stale) && .on_other_host(st), NA)
     # One console call per job: a joined list of paths is not an argument job_status() takes.
-    calls <- function(fn, jobs) paste(sprintf('%s("%s")', fn, vapply(jobs, rel_of, "")), collapse = ", ")
+    calls <- function(fn, jobs) paste(sprintf('hvtiRtemplates::%s("%s")', fn, vapply(jobs, rel_of, "")), collapse = ", ")
     live <- names(running)[!is_stale & !pending]
     queued <- names(running)[pending]
     routes <- vapply(names(running)[is_stale], function(j) {
       st <- running[[j]]
       # Without a marker the abandon route's own confirmation is job_status() on that host, so it is not said twice.
       check <- if (is.character(st$marker)) {
-        sprintf("Check %s from a session on %s with job_status(\"%s\"). ", rel_of(j), st$host, rel_of(j))
+        sprintf("Check %s from a session on %s with hvtiRtemplates::job_status(\"%s\"). ", rel_of(j), st$host, rel_of(j))
       }
       paste0(check, .abandon_route(st, j, rel_of(j)))
     }, "")

@@ -43,7 +43,7 @@
   m <- regmatches(log, regexpr("there is no package called .[A-Za-z0-9.]+.", log))
   if (length(m)) {
     return(list(reason = sprintf("the render ran on an R or library that lacks a package (%s).", m[1L]),
-                fix = paste0("Run it with run_job(<job>) from a console on the study's R, in its project; ",
+                fix = paste0("Run it with hvtiRtemplates::run_job(\"<job>\") from a console on the study's R, in its project; ",
                              "if it still fails, fix what run_job's packages check reports.")))
   }
   q <- hit("^Quitting from .*\\[[^]]+\\]")

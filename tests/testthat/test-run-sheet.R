@@ -290,7 +290,7 @@ test_that("every shipped template's sheet has its sections, markers, packages an
 
 test_that("a guarded template is run in the background, and others are rendered", {
   s <- .fixture_sheets()
-  expect_match(s[["zz-fit"]]$markdown, 'run_job("30_analyses/zz.fit.<subject>.<type>.qmd")', fixed = TRUE)
+  expect_match(s[["zz-fit"]]$markdown, 'hvtiRtemplates::run_job("30_analyses/zz.fit.<subject>.<type>.qmd")', fixed = TRUE)
   expect_no_match(s[["zz-explain"]]$markdown, "run_job(", fixed = TRUE)
 })
 
