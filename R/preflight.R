@@ -219,7 +219,9 @@
     return(.check("run_state", FALSE,
                   sprintf("this job is recorded running on host %s%s.", st$host,
                           if (stale) ", but its progress has not moved for over 30 minutes, so it is probably dead" else ""),
-                  paste0(if (!stale) sprintf("Check it from a session on %s with job_status(\"%s\"). ", st$host, .study_rel(path, root)), abandon)))
+                  paste0(if (!stale) {
+                    sprintf("Check it from a session on %s with job_status(\"%s\"). ", st$host, .study_rel(path, root))
+                  }, abandon)))
   }
   if (st$state %in% c("running", "submitted")) {
     return(.check("run_state", FALSE, sprintf("this job is already %s.", st$state),
