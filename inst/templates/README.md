@@ -415,7 +415,7 @@ as on a Mac without XQuartz.
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |
 | rhf-fit | `rhf-fit-tuning` |
 | rhf-explain | `rhf-explain-auc-cumulative`, `-auc-incident`, `-hazard`, `-chf`, `-importance`, and with `PD_VARS` set `-partial` |
-| vp-fit | `vp-fit-coverage`, `-varpro` |
+| vp-fit | `vp-fit-coverage`, `-varpro`, `-screened` |
 | vp-explain | `vp-explain-dependence-varpro-page-<NN>` |
 | vp-dependence | `vp-dependence-graph`, `-heatmap` |
 | vp-individual | `vp-individual-beeswarm`, `vp-individual-gradient-page-<NN>` |

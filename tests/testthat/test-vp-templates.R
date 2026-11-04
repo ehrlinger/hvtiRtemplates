@@ -178,6 +178,45 @@ test_that("vp-fit's figure takes its bar and selection from the table", {
   expect_s3_class(ggplot2::ggplot_build(env$.fig), "ggplot_built")
 })
 
+test_that("vp-fit's screened figure drops the noise and the untested, and keeps each row's bar and selection", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- rf_env(vp_data())
+  rf_run("vp", "fit", c(vp_data_labels, "noise", "judge", "fit", "tbl-coverage", "fig-varpro", "fig-varpro-screened"),
+         env, vp_choices)
+  full <- env$.gv$imp
+  keep <- full[!full$noise & full$tested, ]
+  imp <- env$.gvs$imp
+  expect_setequal(as.character(imp$variable), as.character(keep$variable))
+  expect_setequal(levels(imp$variable), as.character(keep$variable))
+  expect_setequal(as.character(env$.gvs$stats$variable), as.character(keep$variable))
+  expect_identical(imp$selected, keep$selected)
+  expect_identical(imp$noise_cut, keep$noise_cut)
+  expect_s3_class(ggplot2::ggplot_build(env$.fig), "ggplot_built")
+  expect_no_match(env$.fig$labels$caption, "Orange boxes", fixed = TRUE)
+  expect_no_match(env$.fig$labels$caption, "Open boxes", fixed = TRUE)
+})
+
+test_that("FIGURES can keep vp-fit's original importance figure without the screened one", {
+  # FIGURES keeps a figure whose name starts with an entry, so no vp-fit stem may start with another.
+  stems <- regmatches(readLines(template_path("vp", "fit"), warn = FALSE),
+                      regexpr("(?<=save_figure\\(\\.fig, \")vp-fit-[a-z-]+", readLines(template_path("vp", "fit"), warn = FALSE),
+                              perl = TRUE))
+  expect_true("vp-fit-screened" %in% stems)
+  for (s in stems) expect_identical(stems[startsWith(stems, s)], s)
+})
+
+test_that("vp-fit's screened figure says so, and draws nothing, when no real variable was tested", {
+  lines <- rf_chunk(readLines(template_path("vp", "fit"), warn = FALSE), "fig-varpro-screened")
+  imp <- data.frame(variable = factor(c("a", "noise1_a")), z = c(0, 0.5), selected = FALSE, tested = c(FALSE, TRUE),
+                    noise = c(FALSE, TRUE), kind = "continuous", noise_cut = 0.5, noise_ref = "continuous")
+  env <- list2env(list(.gv = list(imp = imp, stats = data.frame(variable = imp$variable)), saved = character()))
+  env$save_figure <- function(plot, name, ...) env$saved <- c(env$saved, name)
+  out <- capture.output(eval(parse(text = lines), envir = env))
+  expect_match(paste(out, collapse = "\n"), "No real variable was tested", fixed = TRUE)
+  expect_length(env$saved, 0L)
+})
+
 test_that("vp-fit's figure holds categorical variables to the table's bar when categorical noise all scores 0", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
