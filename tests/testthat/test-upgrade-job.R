@@ -690,3 +690,24 @@ test_that("an older template's wording above a choice is template prose, and is 
   at <- grep("^PREDICTORS <- ", upgraded)
   expect_identical(upgraded[at - 2:1], rationale)
 })
+
+test_that("a study's comment set off from its choice by a blank line is carried, not dropped unseen", {
+  local_template_moved()
+  root <- migration_study_fixture()
+  job <- add_job("vp", "dead", "svd", dir = root, qualifier = "fit")
+  lines <- readLines(job)
+  i <- grep("^PREDICTORS <- ", lines)
+  top <- i - 1L
+  while (grepl("^#", lines[[top]])) top <- top - 1L
+  # Above the template's comment, a blank line between, and one between the
+  # comment and the assignment too.
+  lines <- c(lines[seq_len(top)], rationale, "", lines[(top + 1L):(i - 1L)], "", lines[-seq_len(i - 1L)])
+  writeLines(lines, job)
+  upgraded <- readLines(upgrade_job(job))
+  at <- grep("^PREDICTORS <- ", upgraded)
+  expect_identical(upgraded[at - 2:1], rationale)
+  expect_length(grep("^# Study note:", upgraded), 1L)
+  report <- readLines(upgrade_report(job))
+  expect_true(any(grepl(paste0("^- `PREDICTORS`, old lines ", top + 1L, ", ", top + 2L, ": comment .*, carried$"),
+                        report)))
+})

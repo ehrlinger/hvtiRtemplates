@@ -333,11 +333,14 @@ upgrade_job <- function(path, dir = NULL) {
 # upper case. A data frame of name, chunk, the assignment's first and last line
 # and its first and last byte on them (two statements can share a line), and
 # whether an EDIT marker sits on its lines or in the comment block above.
+# `block_start` is that block's first line; `note_start` is the first comment
+# line above it, blank lines between, back to the code before the choice.
 .job_choices <- function(lines) {
   chunks <- .qmd_chunks(lines)
   chunks <- chunks[!is.na(chunks$label) & startsWith(chunks$label, "edit-"), , drop = FALSE]
   empty <- data.frame(name = character(), chunk = character(), start = integer(), end = integer(),
-                      first_byte = integer(), last_byte = integer(), marker = logical(), block_start = integer())
+                      first_byte = integer(), last_byte = integer(), marker = logical(), block_start = integer(),
+                      note_start = integer())
   rows <- lapply(seq_len(nrow(chunks)), function(i) {
     first <- chunks$open[[i]] + 1L
     code <- lines[first:(chunks$close[[i]] - 1L)]
@@ -359,10 +362,16 @@ upgrade_job <- function(path, dir = NULL) {
       above <- start - 1L
       while (above >= first && grepl("^\\s*#", lines[[above]]) && !grepl("^#\\|", lines[[above]])) above <- above - 1L
       block <- if (above + 1L <= start - 1L) lines[(above + 1L):(start - 1L)] else character()
+      # Comments set off by a blank line belong to the choice too, up to the
+      # code before it: a study's note there is carried with the choice.
+      note <- above
+      while (note >= first && grepl("^\\s*(#.*)?$", lines[[note]]) && !grepl("^#\\|", lines[[note]])) note <- note - 1L
+      note <- note + 1L
+      while (note < start && !nzchar(trimws(lines[[note]]))) note <- note + 1L
       data.frame(name = name, chunk = chunks$label[[i]], start = start, end = end,
                  first_byte = refs[[j]][[2L]], last_byte = refs[[j]][[4L]],
                  marker = any(grepl(.edit_token(), c(block, lines[start:end]), fixed = TRUE)),
-                 block_start = above + 1L)
+                 block_start = above + 1L, note_start = note)
     })
     do.call(rbind, c(list(empty), hits))
   })
@@ -448,7 +457,8 @@ upgrade_job <- function(path, dir = NULL) {
     n <- carry[i, ]
     parts <- .choice_parts(out, n)
     above <- if (n$block_start < n$start) n$block_start:(n$start - 1L) else integer()
-    own <- if (o$block_start < o$start) o$block_start:(o$start - 1L) else integer()
+    own <- if (o$note_start < o$start) o$note_start:(o$start - 1L) else integer()
+    own <- own[grepl("^\\s*#", old[own])]
     own <- own[!.comment_key(old[own]) %in% c(.comment_key(out[above]), prose[[o$chunk]])]
     comments[[carry$name[[i]]]] <- own
     if (!o$marker) {
