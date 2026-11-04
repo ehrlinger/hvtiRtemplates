@@ -680,12 +680,21 @@ save_figure(.fig, "vp-fit-varpro", height = 7)
 .gvs$imp$variable <- droplevels(.gvs$imp$variable)
 .gvs$stats <- .gvs$stats[.gvs$stats$variable %in% .gvs$imp$variable, , drop = FALSE]
 .gvs$stats$variable <- factor(.gvs$stats$variable, levels = levels(.gvs$imp$variable))
-.fig <- plot(.gvs) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
-# Its caption names the orange noise boxes, which are gone from this figure.
-.fig$labels$caption <- sub(" Orange boxes: noise.", "", .fig$labels$caption, fixed = TRUE)
-.fig$labels$caption <- gsub("(\\w+) 0, no noise tested", "\\1: no usable noise bar, nothing selected", .fig$labels$caption)
-save_figure(.fig, "vp-fit-varpro-screened", height = 6)
-.fig
+# A partial screen (MAX_UNTESTED <- NULL) can leave no real variable tested, and an
+# empty plot would still caption bars it does not draw.
+if (nrow(.gvs$imp) == 0L) {
+  cat("No real variable was tested, so the screen has nothing to show.\n")
+} else {
+  .fig <- plot(.gvs) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  # Its caption names the orange noise boxes, which are gone from this figure.
+  .fig$labels$caption <- sub(" Orange boxes: noise.", "", .fig$labels$caption, fixed = TRUE)
+  .fig$labels$caption <- gsub("(\\w+) 0, no noise tested", "\\1: no usable noise bar, nothing selected",
+                              .fig$labels$caption)
+  # Not "vp-fit-varpro-screened": FIGURES keeps a figure by prefix, and
+  # "vp-fit-varpro" would then keep both.
+  save_figure(.fig, "vp-fit-screened", height = 6)
+  .fig
+}
 ```
 
 ## Stability

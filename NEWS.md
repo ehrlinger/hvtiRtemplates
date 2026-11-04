@@ -3,7 +3,9 @@
 * `vp-fit` draws a second importance figure, `fig-varpro-screened`, after the noise screen. It keeps the real
   variables that were tested, with the same boxes, the same dashed bar per kind and the same selection as the figure
   with the noise columns, so the two never disagree. The noise columns and the untested variables are left out: the
-  noise has set the bars by then. It is saved as `vp-fit-varpro-screened.png`.
+  noise has set the bars by then. It is saved as `vp-fit-screened`, a stem that `FIGURES = "vp-fit-varpro"` does not
+  also select. When no real variable was tested, which a partial screen (`MAX_UNTESTED <- NULL`) allows, it says so
+  instead of drawing an empty plot.
 
 # hvtiRtemplates 1.5.5
 
