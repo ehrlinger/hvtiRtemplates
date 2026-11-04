@@ -30,3 +30,13 @@ test_that("hz and hm declare numDeriv in their setup chunk, so add_job() install
     expect_true("numDeriv" %in% pkgs$package, info = prefix)
   }
 })
+
+test_that("library() is read with a quoted name, package =, or further arguments", {
+  file <- withr::local_tempfile(fileext = ".qmd")
+  writeLines(c("```{r}", "#| label: setup", 'library("rpart")', "library(survival, quietly = TRUE)",
+               "suppressPackageStartupMessages(library(package = 'splines'))", "library(MASS)",
+               "library(pkg, character.only = TRUE)", "library(x, lib.loc = file.path(a, b))", "```"), file)
+  pkgs <- .template_packages(file)
+  expect_identical(pkgs$package, c("rpart", "survival", "splines", "MASS"))
+  expect_identical(attr(pkgs, "unread"), 2L)
+})

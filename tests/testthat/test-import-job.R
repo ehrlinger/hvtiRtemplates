@@ -138,6 +138,68 @@ test_that("a job's runner comes with it, or the template's when it has none", {
                    'DATASET <- "built"')
 })
 
+test_that("a source runner is carried even when the template has none", {
+  other <- import_study("other")
+  here <- import_study("here")
+  from <- add_job("ac", subject = "death", type = "hz", dir = other)
+  expect_false(file.exists(file.path(dirname(from), "ac.death.hz.runner.R")))  # ac has no runner
+  src_runner <- sub("[.]qmd$", ".runner.R", from)
+  r <- c('SUBJECT <- "death"', 'TYPE <- "hz"', 'DATASET <- "built_aorta"')
+  writeLines(r, src_runner)
+
+  out <- suppressMessages(import_job(from, subject = "reop", dir = here))
+  got <- readLines(sub("[.]qmd$", ".runner.R", out), warn = FALSE)
+  expect_identical(got[c(1L, 3L)], c('SUBJECT <- "reop"', 'DATASET <- "built_aorta"'))
+  expect_match(got[[2L]], '^TYPE\\s+<- "hz"$')
+
+  # A failure while writing it leaves neither file.
+  writeLines(r[-1L], src_runner)
+  expect_error(import_job(from, subject = "stroke", dir = here), "0 lines matching")
+  expect_length(list.files(here, pattern = "^ac[.]stroke[.]", recursive = TRUE), 0L)
+})
+
+test_that("the review reads = assignments and root paths starting with a digit or dot", {
+  lines <- c('DATASET = "source"', "WHERE = quote(age > 50)", 'PATH <- "/2024/data.csv"',
+             'OTHER <- "/.hidden/x"', "WHERE == 1", "x <- a / 2", "WHERE = NULL")
+  msg <- .import_review(lines, "job.qmd")
+  expect_identical(msg, paste0("\nReview in job.qmd:\n  DATASET: line 1\n  WHERE selection: line 2",
+                               "\n  absolute paths: lines 3, 4"))
+  expect_no_match(msg, "source|age|2024|hidden")
+})
+
+test_that("packages attached with quoted names or options are installed", {
+  other <- import_study("other")
+  here <- import_study("here")
+  from <- add_job("ac", subject = "death", type = "hz", dir = other)
+  lines <- readLines(from, warn = FALSE)
+  start <- grep("^#\\|\\s*label:\\s*setup\\s*$", lines)
+  end <- start + grep("^```\\s*$", lines[-seq_len(start)])[1L]
+  lines <- append(lines, c('library("rpart")', "library(survival, quietly = TRUE)",
+                           "library(package = 'splines')", "pkg <- \"x\"; library(pkg, character.only = TRUE)"),
+                  after = end - 1L)
+  writeLines(lines, from)
+  asked <- list()
+  local_mocked_bindings(study_need = function(pkgs, ...) {
+    asked[[length(asked) + 1L]] <<- list(pkgs = pkgs, caller = list(...)$caller)
+    invisible(NULL)
+  }, .package = "hvtiRutilities")
+  msg <- paste(capture.output(import_job(from, dir = here), type = "message"), collapse = "\n")
+  from_import <- unlist(lapply(asked, function(a) if (identical(a$caller, "import_job")) a$pkgs))
+  expect_true(all(c("rpart", "survival", "splines") %in% from_import))
+  expect_false("pkg" %in% from_import)
+  expect_match(msg, "1 library() call in the setup chunk could not be read", fixed = TRUE)
+})
+
+test_that("a job whose setup chunk cannot be read is refused, not read as needing nothing", {
+  other <- import_study("other")
+  here <- import_study("here")
+  from <- add_job("ac", subject = "death", type = "hz", dir = other)
+  lines <- readLines(from, warn = FALSE)
+  writeLines(sub("label:\\s*setup", "label: not-setup", lines), from)
+  expect_error(import_job(from, dir = here), "^import_job\\(\\): cannot read the packages.*no setup chunk")
+  expect_length(list.files(here, pattern = "[.]qmd$", recursive = TRUE), 0L)
+})
+
 test_that("an imported job renders in its new study", {
   skip_on_cran()
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
