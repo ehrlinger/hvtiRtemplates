@@ -14,7 +14,7 @@
       - **A study.** The job runs inside a study folder set up with `_study.yml`. [Start a new study](https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html) shows how.
       - **The study's data.** `DATASET` names the registered dataset it reads (`"built"` unless you change it). A draft can read a build that is not registered yet, so you can start before the build is final, and the report then says it is a draft. A final render reads registered data only: register the build with `hvtiRutilities::update_manifest()` first.
       - **Packages:** `stats` (>= 4.0.0). The job checks each floor when it starts, so an older library stops it at the top rather than partway through.
-      - **The `hvti` command.** A long job starts from a terminal with `hvti run`; `install_hvti()` puts the command on your PATH, once.
+      - **A background run.** A long job starts from the study's R console with `run_job()`, which checks it first and renders it in a process that outlives the session.
       
       ## Outline
       
@@ -27,7 +27,7 @@
       
       ## Run it
       
-      **Run it in the background.** The fit is long (it takes hours at study size), and a fit run in the console dies with the session. From a terminal in the study, `hvti run 30_analyses/zz.fit.<subject>.<type>.qmd` (`analyses/` in an older study whose folders carry no number) checks the job, then renders it in the background on the R the study's `renv.lock` records; add `--final` for the final render. From R, `run_job(job)` does the same. `hvti status` follows it and `hvti cancel` stops it. Once the fit is cached, its chunks run interactively and load it.
+      **Run it in the background.** The fit is long (it takes hours at study size), and a fit run chunk by chunk dies with the session. From the study's R console, `run_job("30_analyses/zz.fit.<subject>.<type>.qmd")` (`analyses/` in an older study whose folders carry no number) checks the job, then renders it in a background process that outlives the session; add `final = TRUE` for the final render. `job_status()` follows it and `cancel_job()` stops it. Once the fit is cached, its chunks run interactively and load it.
       
       **Render a draft as you go.** `render_job(job)` runs the whole job in a clean R session and writes the report beside it. Render early and often: while any `EDIT:` marker is left, the report opens with a DRAFT banner listing them, and its numbers are not a result. [Work a job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#render-as-you-go) explains why to render rather than run chunks by hand.
       

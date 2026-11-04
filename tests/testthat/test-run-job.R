@@ -114,7 +114,7 @@ test_that("a render that finishes between polls is reported finished, not runnin
   expect_false(any(grepl("still starting|checks passed", out)))
 })
 
-test_that("the wait times out with a pointer to hvti status", {
+test_that("the wait times out with a pointer to job_status()", {
   want <- list(state = "running", progress = list())
   testthat::local_mocked_bindings(job_status = function(path, quiet = FALSE) want)
   expect_output(st <- .wait_for_checks("x.qmd", "render_r", wait = 0, poll = 0), "still starting", fixed = TRUE)
@@ -135,10 +135,10 @@ test_that("the wait names the job by its path from the study root", {
     list(state = "running", pid = 1L, host = "h", progress = list(checks = "render_r"))
   })
   out <- capture.output(.wait_for_checks("/s/analyses/x.qmd", "render_r", wait = 1, poll = 0, rel = "analyses/x.qmd"))
-  expect_match(out, "hvti status analyses/x.qmd", fixed = TRUE, all = FALSE)
+  expect_match(out, 'job_status("analyses/x.qmd")', fixed = TRUE, all = FALSE)
   testthat::local_mocked_bindings(job_status = function(path, quiet = FALSE) list(state = "running", progress = list()))
   out <- capture.output(.wait_for_checks("/s/analyses/x.qmd", "render_r", wait = 0, poll = 0, rel = "analyses/x.qmd"))
-  expect_match(out, "still starting; follow it with `hvti status analyses/x.qmd`", fixed = TRUE, all = FALSE)
+  expect_match(out, 'still starting; follow it with job_status("analyses/x.qmd")', fixed = TRUE, all = FALSE)
 })
 
 test_that("run_job prints the study-relative path in its wait line", {
@@ -151,7 +151,7 @@ test_that("run_job prints the study-relative path in its wait line", {
                                     list(state = "running", pid = 1L, host = "h", progress = list(checks = "render_r"))
                                   })
   out <- capture.output(run_job(job, wait = 1))
-  expect_match(out, "hvti status analyses/x.qmd", fixed = TRUE, all = FALSE)
+  expect_match(out, 'job_status("analyses/x.qmd")', fixed = TRUE, all = FALSE)
 })
 
 test_that("run_job(quiet = TRUE) prints nothing, and its refusal carries the failed checks", {

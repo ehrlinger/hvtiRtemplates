@@ -361,8 +361,8 @@
                          "so an older library stops it at the top rather than partway through."))
   }
   if ("guard_long_fit" %in% fns) {
-    out <- c(out, paste("- **The `hvti` command.** A long job starts from a terminal with `hvti run`;",
-                        "`install_hvti()` puts the command on your PATH, once."))
+    out <- c(out, paste("- **A background run.** A long job starts from the study's R console with `run_job()`,",
+                        "which checks it first and renders it in a process that outlives the session."))
   }
   out
 }
@@ -425,11 +425,11 @@
   why <- .literal(.call_arg(guard[[1L]], "why"))
   job <- paste0(facts$folder, "/", .add_job_name(facts$name), ".<subject>.<type>.qmd")
   c(paste0("**Run it in the background.** The fit is long", if (!is.na(why)) paste0(" (", why, ")"),
-           ", and a fit run in the console dies with the session. From a terminal in the study, `hvti run ", job,
-           "` (`", sub("^[0-9]+_", "", facts$folder), "/` in an older study whose folders carry no number) ",
-           "checks the job, then renders it in the background on the R the study's `renv.lock` records; add ",
-           "`--final` for the final render. From R, `run_job(job)` does the same. `hvti status` follows it and ",
-           "`hvti cancel` stops it. Once the fit is cached, its chunks run interactively and load it."),
+           ", and a fit run chunk by chunk dies with the session. From the study's R console, `run_job(\"", job,
+           "\")` (`", sub("^[0-9]+_", "", facts$folder), "/` in an older study whose folders carry no number) ",
+           "checks the job, then renders it in a background process that outlives the session; add ",
+           "`final = TRUE` for the final render. `job_status()` follows it and `cancel_job()` stops it. ",
+           "Once the fit is cached, its chunks run interactively and load it."),
     "", draft, "", final)
 }
 
