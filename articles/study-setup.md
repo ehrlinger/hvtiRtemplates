@@ -147,7 +147,7 @@ study_setup(
   cleanup = FALSE,
   renv = FALSE
 )
-#> Study: /tmp/RtmplgrHmX/file21411e5f2ac3/legacy-study
+#> Study: /tmp/RtmppK5Qni/file21124ea47fa0/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
@@ -201,12 +201,12 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmplgrHmX/file21411e5f2ac3/legacy-study
+#> Study: /tmp/RtmppK5Qni/file21124ea47fa0/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
 #> [ ] renv.lock — no renv.lock; run renv::init() in the study project
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
-#> [x] dataset — built.csv, registered as built_20261103.parquet
+#> [x] dataset — built.csv, registered as built_20261104.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
@@ -328,15 +328,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/RtmplgrHmX/file21411e5f2ac3/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#> "/tmp/RtmppK5Qni/file21124ea47fa0/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
 #>                                                                                tables 
-#>  "/tmp/RtmplgrHmX/file21411e5f2ac3/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>  "/tmp/RtmppK5Qni/file21124ea47fa0/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/RtmplgrHmX/file21411e5f2ac3/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>    "/tmp/RtmppK5Qni/file21124ea47fa0/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
 #>                                                                                trends 
-#>  "/tmp/RtmplgrHmX/file21411e5f2ac3/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
+#>  "/tmp/RtmppK5Qni/file21124ea47fa0/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/RtmplgrHmX/file21411e5f2ac3/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
+#>     "/tmp/RtmppK5Qni/file21124ea47fa0/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output
