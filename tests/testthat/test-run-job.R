@@ -191,6 +191,8 @@ test_that("run_job drives the real chain: preflight, submit, the render's own ch
   skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if(!nzchar(Sys.which("quarto")))
+  # The lock below takes this process's versions, which a stale install would contradict.
+  skip_if_stale_install()
   # A lock that records this session's R and the installed versions, so the preflight passes on its own merits.
   need <- .always_needed()
   root <- lock_study(r = as.character(getRversion()),
