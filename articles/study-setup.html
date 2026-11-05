@@ -143,10 +143,10 @@
 <span>  cleanup <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  renv <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpFvRgXm/file1fbd160c42a5/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmpv2Zpp0/file213e44b326ce/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
-<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
+<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/Rtmpv2Zpp0/file213e44b326ce/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
 <span><span class="co">#&gt; [ ] manifest.yaml — no manifest.yaml; register_data() creates it</span></span>
 <span><span class="co">#&gt; [ ] dataset — no default dataset registered; run register_data()</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
@@ -164,7 +164,7 @@
 <p>Registration records the input filename, checksum and population. It does not declare a study-wide endpoint or cohort: an endpoint-free descriptive job and an event-time analysis can read the same dataset with different valid job definitions.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
-<span>  built <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
+<span>  file <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Patients meeting the study inclusion criteria"</span></span>
 <span><span class="op">)</span></span>
@@ -174,14 +174,14 @@
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  <span class="va">adopted_root</span>,</span>
-<span>  built <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
+<span>  file <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpFvRgXm/file1fbd160c42a5/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmpv2Zpp0/file213e44b326ce/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
-<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
+<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/Rtmpv2Zpp0/file213e44b326ce/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
 <span><span class="co">#&gt; [x] manifest.yaml — 1 dataset entry verified by checksum</span></span>
 <span><span class="co">#&gt; [x] dataset — built.csv, registered as built_20261105.parquet</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
@@ -204,7 +204,7 @@
 <span>  <span class="va">eda</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span><span class="op">)</span>, <span class="st">"eda.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
-<span>  built <span class="op">=</span> <span class="st">"eda.csv"</span>,</span>
+<span>  file <span class="op">=</span> <span class="st">"eda.csv"</span>,</span>
 <span>  dataset <span class="op">=</span> <span class="st">"eda"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"named"</span>,</span>
 <span>  kind <span class="op">=</span> <span class="st">"subset"</span>,</span>
@@ -250,15 +250,15 @@
 <span><span class="op">)</span></span>
 <span><span class="va">study_jobs</span></span>
 <span><span class="co">#&gt;                                                                               general </span></span>
-<span><span class="co">#&gt; "/tmp/RtmpFvRgXm/file1fbd160c42a5/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt; "/tmp/Rtmpv2Zpp0/file213e44b326ce/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                tables </span></span>
-<span><span class="co">#&gt;  "/tmp/RtmpFvRgXm/file1fbd160c42a5/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;  "/tmp/Rtmpv2Zpp0/file213e44b326ce/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                  gfup </span></span>
-<span><span class="co">#&gt;    "/tmp/RtmpFvRgXm/file1fbd160c42a5/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;    "/tmp/Rtmpv2Zpp0/file213e44b326ce/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                trends </span></span>
-<span><span class="co">#&gt;  "/tmp/RtmpFvRgXm/file1fbd160c42a5/legacy-study/descriptive/dc.trends.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;  "/tmp/Rtmpv2Zpp0/file213e44b326ce/legacy-study/descriptive/dc.trends.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                   eda </span></span>
-<span><span class="co">#&gt;     "/tmp/RtmpFvRgXm/file1fbd160c42a5/legacy-study/descriptive/dc.eda.cohort.eda.qmd"</span></span></code></pre></div>
+<span><span class="co">#&gt;     "/tmp/Rtmpv2Zpp0/file213e44b326ce/legacy-study/descriptive/dc.eda.cohort.eda.qmd"</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="work-the-jobs-and-generate-output">Work the jobs and generate output<a class="anchor" aria-label="anchor" href="#work-the-jobs-and-generate-output"></a>
 </h2>

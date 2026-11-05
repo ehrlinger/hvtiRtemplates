@@ -153,10 +153,10 @@
 <code class="sourceCode R"><span><span class="co"># A vignette builds a throwaway study; in a real study, run hvtiR::setup().</span></span>
 <span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">new_root</span>, study <span class="op">=</span> <span class="st">"Synthetic new study"</span>, study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>            renv <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpFa0xZv/file1f7a278c5bcc/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmp8vDCPi/file20fa61ddfb8c/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
-<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
+<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/Rtmp8vDCPi/file20fa61ddfb8c/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
 <span><span class="co">#&gt; [ ] manifest.yaml — no manifest.yaml; register_data() creates it</span></span>
 <span><span class="co">#&gt; [ ] dataset — no default dataset registered; run register_data()</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
@@ -172,7 +172,7 @@
 <p>Copy the delivered file into <code>00_datasets</code>, then register it. Registration records the file’s size, checksum and the population it describes in <code>manifest.yaml</code>:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
-<span>  built <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
+<span>  file <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Patients meeting the study inclusion criteria"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -184,14 +184,14 @@
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  <span class="va">new_root</span>,</span>
-<span>  built <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
+<span>  file <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpFa0xZv/file1f7a278c5bcc/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmp8vDCPi/file20fa61ddfb8c/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
-<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; run renv::init() in the study project</span></span>
+<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/Rtmp8vDCPi/file20fa61ddfb8c/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
 <span><span class="co">#&gt; [x] manifest.yaml — 1 dataset entry verified by checksum</span></span>
 <span><span class="co">#&gt; [x] dataset — built.csv, registered as built_20261105.parquet</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
