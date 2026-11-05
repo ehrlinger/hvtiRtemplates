@@ -467,8 +467,8 @@ test_that("dc-eda's overview leaves out identifiers but keeps dates", {
   suppressWarnings(capture.output(eval(chunk("spec"), env)))
   out <- paste(capture.output(eval(chunk("overview-contents"), env)), collapse = "\n")
   # Only the exact names MRN and eMRN are record numbers: bnp_mrna and mrn_num
-  # are study variables.
-  expect_identical(env$shown$variable, c("year", "age", "carotid", "mrn_num", "bnp_mrna", "dt_surg"))
+  # are study variables. The table is alphabetical, not in dataset order (#483).
+  expect_identical(env$shown$variable, c("age", "bnp_mrna", "carotid", "dt_surg", "mrn_num", "year"))
   expect_match(out, "Identifier columns, not described: ccfid, patientid, eMRN", fixed = TRUE)
 })
 
