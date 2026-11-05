@@ -104,7 +104,12 @@ import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
   # Packages the other study added to the job's setup chunk, before anything is
   # written, so a refusal leaves this study as it was. add_job() installs the
   # template's own.
-  extra <- tryCatch(.template_packages(from)$package, error = function(e) character())
+  # A job with no readable setup chunk is refused, not read as needing nothing.
+  pk <- tryCatch(.template_packages(from), error = function(e) {
+    stop("import_job(): cannot read the packages the job attaches: ", conditionMessage(e), call. = FALSE)
+  })
+  extra <- pk$package
+  unread <- attr(pk, "unread")
   if (length(extra) && dir.exists(dir)) {
     hvtiRutilities::study_need(extra, root = dir, caller = "import_job", only_in_renv = TRUE)
   }
@@ -121,10 +126,12 @@ import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
   runner <- sub("[.]qmd$", ".runner.R", out)
   has_runner <- file.exists(runner)
   ok <- FALSE
-  on.exit(if (!ok) unlink(c(out, if (has_runner) runner)), add = TRUE)
+  # The runner is removed on failure whether add_job() wrote it or the source's
+  # is written below, for a template that has none.
+  on.exit(if (!ok) unlink(c(out, if (has_runner || length(src_runner)) runner)), add = TRUE)
   writeLines(lines, out)
   review <- list(.import_review(lines, basename(out)))
-  if (has_runner && length(src_runner)) {
+  if (length(src_runner)) {
     runner_lines <- .set_marker_lines(readLines(src_runner[[1L]], warn = FALSE), subject, type, src_runner[[1L]])
     writeLines(runner_lines, runner)
     review <- c(review, list(.import_review(runner_lines, basename(runner))))
@@ -135,6 +142,11 @@ import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
           if (has_runner && !length(src_runner)) {
             paste0("\nThe source job has no runner beside it, so '", basename(runner), "' is the template's.")
           },
+          if (unread > 0L) {
+            paste0("\n", unread, " library() call", if (unread > 1L) "s", " in the setup chunk could not be read, ",
+                   "so what ", if (unread > 1L) "they attach" else "it attaches", " was not installed. Install it with ",
+                   "hvtiRutilities::study_need().")
+          },
           paste(unlist(review), collapse = ""))
   invisible(out)
 }
@@ -143,16 +155,19 @@ import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
 # `file` and line numbers, never values: a WHERE selection can name a patient.
 .import_review <- function(lines, file) {
   code <- !grepl("^\\s*#", lines)
+  # An assignment in any of R's spellings: <-, <<- or = (but not ==).
+  assign <- "\\s*(<<?-|=($|[^=]))"
   found <- list(
-    "DATASET" = which(code & grepl("^\\s*DATASET\\s*<-", lines)),
-    "WHERE selection" = which(code & grepl("^\\s*WHERE\\s*<-", lines) &
-                                !grepl("^\\s*WHERE\\s*<-\\s*NULL\\s*(#.*)?$", lines)),
+    "DATASET" = which(code & grepl(paste0("^\\s*DATASET", assign), lines)),
+    "WHERE selection" = which(code & grepl(paste0("^\\s*WHERE", assign), lines) &
+                                !grepl("^\\s*WHERE\\s*(<<?-|=)\\s*NULL\\s*(#.*)?$", lines)),
     "EDIT: markers" = grep(.edit_token(), lines, fixed = TRUE),
     # A path from the file system's root, a home directory, a drive letter or
     # a network share (//server, or \\server written in R as "\\\\server"),
-    # after a quote, a space or the start of the line. A share needs four
-    # backslashes in the source, so a regex's "\\1" is not one.
-    "absolute paths" = grep("(^|[[:space:]\"'`])(/{1,2}[A-Za-z_]|~/|[A-Za-z]:[/\\\\]|\\\\{4}[A-Za-z])", lines)
+    # after a quote, a space or the start of the line. A root path's first
+    # component may start with a letter, digit, dot or underscore ("/2024/").
+    # A share needs four backslashes in the source, so a regex's "\\1" is not one.
+    "absolute paths" = grep("(^|[[:space:]\"'`])(/{1,2}[A-Za-z0-9_.]|~/|[A-Za-z]:[/\\\\]|\\\\{4}[A-Za-z])", lines)
   )
   found <- found[lengths(found) > 0L]
   if (!length(found)) return(paste0("\nNothing in ", file, " to review."))
