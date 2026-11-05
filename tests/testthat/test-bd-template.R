@@ -139,7 +139,7 @@ test_that("a study registered under this job's file without a build record takes
   datasets <- hvtiRutilities::study_dir("datasets", root)
   # Registered as a legacy study would be: the file bd writes, with no build record beside it.
   saveRDS(data.frame(ccfid = "PT00001", age = 50), file.path(datasets, "study_cohort.rds"))
-  suppressMessages(hvtiRutilities::register_data(root, built = "study_cohort.rds"))
+  suppressMessages(hvtiRutilities::register_data(root, file = "study_cohort.rds"))
   legacy <- bd_current_version(root)
   expect_identical(bd_provenance(root, legacy)$origin, "legacy")
   bd_draft(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL))
@@ -212,7 +212,7 @@ test_that("a study registered under another file stops register before registeri
   datasets <- hvtiRutilities::study_dir("datasets", root)
   # A study registered as a file this job does not write, as a SAS-built study is.
   utils::write.csv(data.frame(ccfid = "PT00001", age = 50), file.path(datasets, "built.csv"), row.names = FALSE)
-  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, file = "built.csv")))
   before <- bd_current_version(root)
   bd_expect_stop(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE), "register")
   # A file this job could not have written: no DATASET_ID to suggest.
@@ -267,7 +267,7 @@ test_that("a study registered under a dated release file is never told to name i
   datasets <- hvtiRutilities::study_dir("datasets", root)
   # A release file's name: following a DATASET_ID suggestion would overwrite its bytes.
   saveRDS(data.frame(ccfid = "PT00001", age = 50), file.path(datasets, "study_cohort_20261002.rds"))
-  suppressMessages(hvtiRutilities::register_data(root, built = "study_cohort_20261002.rds"))
+  suppressMessages(hvtiRutilities::register_data(root, file = "study_cohort_20261002.rds"))
   err <- expect_error(bd_run(root, list(MASTER = m$parquet, KEEP = "age", EXCLUDE = NULL, REGISTER = TRUE)),
                       "^bd: register \\(")
   expect_false(grepl("DATASET_ID", conditionMessage(err), fixed = TRUE))

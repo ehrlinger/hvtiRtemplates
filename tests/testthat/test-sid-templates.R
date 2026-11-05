@@ -302,7 +302,7 @@ test_that("sid-clusters refuses a registered name that belongs to another file",
   dd <- hvtiRutilities::study_dir("datasets", env$.root)
   utils::write.csv(data.frame(ccfid = 1:150, C2 = "A"), file.path(dd, "other-clusters.csv"), row.names = FALSE)
   utils::capture.output(suppressMessages(hvtiRutilities::register_data(
-    env$.root, built = "other-clusters.csv", dataset = "clusters_10_morphology_sid", role = "named",
+    env$.root, file = "other-clusters.csv", dataset = "clusters_10_morphology_sid", role = "named",
     population = "x", kind = "ancillary", key = "ccfid"
   )))
   expect_error(sid_clusters_after(env), "already registered to other-clusters.csv")
@@ -315,7 +315,7 @@ test_that("sid-clusters names the key when the same file is registered under ano
   dd <- hvtiRutilities::study_dir("datasets", env$.root)
   utils::write.csv(data.frame(ccfid = 1:150, other = 1:150), file.path(dd, "morphology-sid-clusters.csv"), row.names = FALSE)
   utils::capture.output(suppressMessages(hvtiRutilities::register_data(
-    env$.root, built = "morphology-sid-clusters.csv", dataset = "clusters_10_morphology_sid", role = "named",
+    env$.root, file = "morphology-sid-clusters.csv", dataset = "clusters_10_morphology_sid", role = "named",
     population = "x", kind = "ancillary", key = "other"
   )))
   expect_error(sid_clusters_after(env), "registered with key other, not this set's ID ccfid")

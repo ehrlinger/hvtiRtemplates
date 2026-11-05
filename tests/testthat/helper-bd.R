@@ -3,9 +3,9 @@
 # parquet and its sidecar are the real formats. Every value is simulated.
 
 bd_skip <- function() {
-  # The job stops below 1.5.17, the first hvtiRutilities with proc_print() for its named checks, and below
+  # The job stops below 1.5.20, the first hvtiRutilities whose register_data() takes file =, and below
   # hvtiRdatabuild 0.3.3, the first with compare_built() for the rebuild comparison.
-  testthat::skip_if_not_installed("hvtiRutilities", "1.5.17")
+  testthat::skip_if_not_installed("hvtiRutilities", "1.5.20")
   testthat::skip_if_not_installed("hvtiRdatabuild", "0.3.3")
   testthat::skip_if_not_installed("arrow")
   testthat::skip_if_not_installed("haven")

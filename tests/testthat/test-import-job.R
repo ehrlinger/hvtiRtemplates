@@ -214,7 +214,7 @@ test_that("an imported job renders in its new study", {
   d <- lm_data()  # nolint: object_usage_linter.
   d$time <- seq_len(nrow(d))
   utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", here), "built.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(here, built = "built.csv"))
+  suppressMessages(hvtiRutilities::register_data(here, file = "built.csv"))
 
   out <- suppressMessages(import_job(fx$job, dir = here))
   quarto::quarto_render(out, execute_dir = dirname(out), quiet = TRUE)

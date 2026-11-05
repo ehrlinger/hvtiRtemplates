@@ -52,7 +52,7 @@ rm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = c
   suppressMessages(hvtiRutilities::study_setup(root, study = "Synthetic rm study", study_tracker_id = 42L, renv = FALSE))
   utils::write.csv(d, file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(
-    root, built = "built.csv", role = "study", population = "Synthetic cohort"
+    root, file = "built.csv", role = "study", population = "Synthetic cohort"
   ))
   subject <- if (identical(qualifier, "balancing_continuous")) "exposure" else "outcome"
   job <- add_job("rm", subject, "analysis", dir = root, qualifier = qualifier)

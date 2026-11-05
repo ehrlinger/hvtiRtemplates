@@ -74,7 +74,7 @@ sid_render_fixture <- function(.local_envir = parent.frame()) {
   d$f <- as.character(d$f)
   d <- cbind(ccfid = seq_len(nrow(d)), d[c("a", "b", "c", "e", "f")])
   utils::write.csv(d, file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv", role = "study", population = "Synthetic cohort"))
+  suppressMessages(hvtiRutilities::register_data(root, file = "built.csv", role = "study", population = "Synthetic cohort"))
   fit <- add_job("sid", "morph", "sid", dir = root, qualifier = "fit")  # nolint: object_usage_linter.
   sid_edit_job(fit, c('VARS <- c("a", "b", "c", "e", "f")', "NTREE <- 200", "SID_REDUCE <- FALSE", "MICE_MAXIT <- 5", "M <- 2"))
   quarto::quarto_render(fit, execute_dir = dirname(fit), quiet = TRUE)
