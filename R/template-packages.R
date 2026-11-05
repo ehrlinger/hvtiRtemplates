@@ -9,8 +9,17 @@
   chunk <- lines[start:end]
   # library() may sit inside suppressPackageStartupMessages(), so match it anywhere in a line.
   code <- sub("\\s#.*$", "", chunk[!grepl("^\\s*#", chunk)])
-  calls <- unlist(regmatches(code, gregexpr("\\blibrary\\([A-Za-z0-9.]+\\)", code)))
-  attached <- sub("^library\\(([A-Za-z0-9.]+)\\)$", "\\1", calls)
+  # The package is the first argument, bare or quoted, perhaps as package =,
+  # and other arguments may follow: library("rpart"), library(survival,
+  # quietly = TRUE). A call not read is counted in the "unread" attribute
+  # rather than dropped, e.g. library(pkg, character.only = TRUE).
+  calls <- unlist(regmatches(code, gregexpr("\\blibrary\\([^()]*\\)", code)))
+  args <- sub("^library\\((.*)\\)$", "\\1", calls)
+  first <- sub("^package\\s*=\\s*", "", trimws(sub(",.*$", "", args)))
+  bare <- grepl("^[A-Za-z][A-Za-z0-9.]*$", first) & !grepl("character\\.only\\s*=\\s*(TRUE|T)\\b", args)
+  quoted <- grepl("^([\"'])[A-Za-z][A-Za-z0-9.]*\\1$", first)
+  attached <- ifelse(quoted, substr(first, 2L, nchar(first) - 1L), first)[bare | quoted]
+  unread <- sum(lengths(regmatches(code, gregexpr("\\blibrary\\(", code)))) - sum(bare | quoted)
   hits <- regmatches(chunk, regexec('packageVersion\\("([A-Za-z0-9.]+)"\\)\\s*<\\s*"([0-9.-]+)"', chunk))
   hits <- hits[lengths(hits) == 3L]
   floor_pkg <- vapply(hits, `[[`, character(1), 2L)
@@ -19,6 +28,7 @@
   required <- unlist(regmatches(code, gregexpr('requireNamespace\\("[A-Za-z0-9.]+"', code)))
   required <- sub('^requireNamespace\\("([A-Za-z0-9.]+)"$', "\\1", required)
   package <- unique(c(attached, required, floor_pkg))
-  data.frame(package = package, floor = floor_val[match(package, floor_pkg)],
-             stringsAsFactors = FALSE)
+  structure(data.frame(package = package, floor = floor_val[match(package, floor_pkg)],
+                       stringsAsFactors = FALSE),
+            unread = unread)
 }

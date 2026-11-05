@@ -18,7 +18,7 @@
     if (any(grepl("guard_memory(", src, fixed = TRUE))) "memory")
 }
 
-# `rel` is the job's path from the study root, which is what `hvti status` takes there.
+# `rel` is the job's path from the study root, which is what job_status() takes from a console there.
 .wait_for_checks <- function(path, expected, wait, poll = 5, rel = basename(path), quiet = FALSE) {
   deadline <- Sys.time() + wait
   repeat {
@@ -27,13 +27,13 @@
     if (st$state %in% c("finished", "failed", "vanished", "cancelled")) return(invisible(job_status(path, quiet = quiet)))
     if (all(expected %in% st$progress$checks) && identical(st$state, "running")) {
       if (!quiet) {
-        cat(sprintf("%s; running (process %s on %s). Follow it with `hvti status %s`.\n",
+        cat(sprintf("%s; running (process %s on %s). Follow it with hvtiRtemplates::job_status(\"%s\").\n",
                     if (length(expected)) "checks passed" else "started", st$pid, st$host, rel))
       }
       return(invisible(st))
     }
     if (Sys.time() >= deadline) {
-      if (!quiet) cat(sprintf("still starting; follow it with `hvti status %s`.\n", rel))
+      if (!quiet) cat(sprintf("still starting; follow it with hvtiRtemplates::job_status(\"%s\").\n", rel))
       return(invisible(st))
     }
     Sys.sleep(poll)

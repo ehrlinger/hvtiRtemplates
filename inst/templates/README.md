@@ -553,23 +553,20 @@ the study was built with, a package is missing, another job is already rendering
 used to surface minutes or hours in, or not as a reason at all. `run_job()` looks for them
 first, lists every one it finds together, and starts nothing until they are cleared.
 
-Install the `hvti` command once. It is a shell command, so it works from a terminal whichever
-R your session happened to start:
+From the study's R console:
 
-    hvtiRtemplates::install_hvti("~/bin")
+    hvtiRtemplates::run_job("analyses/nb.boostmtree.lvef.boost.qmd")
+    hvtiRtemplates::run_job("analyses/nb.boostmtree.lvef.boost.qmd", final = TRUE)
+    hvtiRtemplates::job_status("analyses/nb.boostmtree.lvef.boost.qmd")
+    hvtiRtemplates::cancel_job("analyses/nb.boostmtree.lvef.boost.qmd")
 
-Then, from the study:
+`final = TRUE` is the same as in `render_job()`. The render runs in a process that outlives the
+session, so you can close RStudio and come back to it with `job_status()`.
 
-    hvti run analyses/nb.boostmtree.lvef.boost.qmd
-    hvti run analyses/nb.boostmtree.lvef.boost.qmd --final
-    hvti status analyses/nb.boostmtree.lvef.boost.qmd
-    hvti cancel analyses/nb.boostmtree.lvef.boost.qmd
-
-`--final` is `final = TRUE` in `render_job()`. `hvti` runs the job on the R that the study's
-`renv.lock` records, which is the one thing a terminal can do that an R console cannot. From
-an R session, `hvtiRtemplates::run_job("analyses/nb.boostmtree.lvef.boost.qmd")` does the same,
-with `job_status()` and `cancel_job()` for the other two. Run `install_hvti("~/bin")` again after
-updating the package; `run_job()` warns when the copy on your `PATH` is older.
+The `hvti` shell command (`install_hvti("~/bin")`) does the same from a terminal, on the R the
+study's `renv.lock` records. It is there for the one case the console cannot handle: a
+session started on the wrong R. Run `install_hvti("~/bin")` again after updating the
+package; `run_job()` warns when the copy on your `PATH` is older.
 
 There are seven checks. Each is named, and the name starts the refusal, so you can quote it
 in a message to the team.
