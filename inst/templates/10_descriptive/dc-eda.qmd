@@ -641,7 +641,10 @@ for (i in seq_len(nrow(fp$data))) {
       fc <- hvtiRutilities::followup_check(d, event = .ev, followup = EVENTS[[nm]]$time[[j]],
                                            stats = .followup_stats)
       .followup <- .followup_table(fc, d, .ev)
-      .child(paste("tbl gfup", nm, if (k > 1L) .ev, "followup"),
+      # By the event's place in the panel, not its column name: .child() cleans
+      # a label to lowercase letters, digits and hyphens, so ev_x and ev.x
+      # would become one label and stop the render.
+      .child(paste("tbl gfup", nm, "event", j, "followup"),
              paste0("Follow-up, ", levels[[1L + j]], ", by patient group: missing, negative and zero values, ",
                     "and the distribution (years)"),
              "knitr::kable(.followup, row.names = FALSE, digits = 3)")

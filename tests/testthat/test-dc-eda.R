@@ -684,7 +684,7 @@ test_that("dc-eda gives each event its own follow-up table, as each death panel 
     end <- start + match("```", lines[-seq_len(start)])
     chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)
   }
-  panels <- function(events) {
+  panels <- function(events, record = TRUE) {
     env <- new.env(parent = globalenv())
     env$.root <- root
     env$.provenance_data <- list()
@@ -692,6 +692,9 @@ test_that("dc-eda gives each event its own follow-up table, as each death panel 
     # A second event for the competing panel: every other repair, a year earlier.
     env$d$redo <- ifelse(seq_len(nrow(env$d)) %% 2L == 0L, env$d$repair, 0)
     env$d$iv_redo <- pmax(env$d$iv_fup - 1, 0)
+    # Two names that differ only in punctuation, as R allows.
+    env$d$ev_x <- env$d$repair
+    env$d$ev.x <- env$d$redo
     env$.cfg <- hvtiRutilities::study_config(root)
     env$job_data <- eda_job_data("ccfid")
     for (label in c("set", "edit-study-choices")) eval(chunk(label), env)
@@ -704,7 +707,7 @@ test_that("dc-eda gives each event its own follow-up table, as each death panel 
     withCallingHandlers(
       utils::capture.output({
         eval(chunk("spec"), env)
-        env$.child <- function(label, caption, code) shown[nrow(shown) + 1L, ] <<- c(label, caption)
+        if (record) env$.child <- function(label, caption, code) shown[nrow(shown) + 1L, ] <<- c(label, caption)
         for (label in c("gfup-window", "gfup-panels")) eval(chunk(label), env)
       }),
       warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning")
@@ -734,7 +737,15 @@ test_that("dc-eda gives each event its own follow-up table, as each death panel 
   levels <- two$env$fp$tables$panels$nonfatal$meta$event_levels
   expect_identical(two$captions, c("Follow-up, All deaths, by patient group",
                                    paste0("Follow-up, ", levels[2:3], ", by patient group")))
-  expect_identical(two$labels, c("tbl gfup all followup", "tbl gfup nonfatal repair followup",
-                                 "tbl gfup nonfatal redo followup"))
+  expect_identical(two$labels, c("tbl gfup all followup", "tbl gfup nonfatal event 1 followup",
+                                 "tbl gfup nonfatal event 2 followup"))
   expect_identical(unique(two$env$.followup$interval), "iv_redo")
+
+  # Names distinct in R can be one label once .child() cleans them, so each
+  # table is labeled by its event's place in the panel. The real .child() runs
+  # here, with its check that no two outputs share a label.
+  same <- list(nonfatal = list(event = c("ev_x", "ev.x"), time = c("iv_fup", "iv_redo"),
+                               death = "dead", death_time = "iv_dead"))
+  expect_no_error(punct <- panels(same, record = FALSE))
+  expect_identical(unique(punct$env$.followup$interval), "iv_redo")
 })
