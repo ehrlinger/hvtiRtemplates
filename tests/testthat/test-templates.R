@@ -298,6 +298,7 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
     "cache_would_fit",  # >= 1.5.11 (nb-boostmtree's memory guard asks whether the fit will run)
     "declare_data",  # >= 1.5.12 (bd names its working file in _study.yml on a first render)
     "proc_print"  # >= 1.5.17 (bd's named checks print rows to the console only)
+    # register_data() and declare_data() are called with file =, >= 1.5.20
   )
   skip_if_not_installed("hvtiRutilities")
   ns <- getNamespaceExports("hvtiRutilities")

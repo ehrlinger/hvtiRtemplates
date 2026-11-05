@@ -48,7 +48,7 @@ nb_register_echo <- function(root, job) {
   if (file.exists(file.path(dir, "echo.rds"))) return(invisible())
   saveRDS(nb_echo(readRDS(file.path(dir, "built.rds"))), file.path(dir, "echo.rds"))
   invisible(utils::capture.output(suppressMessages(hvtiRutilities::register_data(
-    root, built = "echo.rds", dataset = "echo", role = "named",
+    root, file = "echo.rds", dataset = "echo", role = "named",
     population = "Synthetic echocardiography series, 300 patients, one row per visit"
   ))))
 }

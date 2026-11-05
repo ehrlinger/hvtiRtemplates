@@ -613,7 +613,7 @@ if (!is.null(.reg)) {
   ))
 } else {
   utils::capture.output(suppressMessages(
-    hvtiRutilities::register_data(.root, built = .csv_name, dataset = .dataset, role = "named",
+    hvtiRutilities::register_data(.root, file = .csv_name, dataset = .dataset, role = "named",
                                   population = "SID cluster assignments", kind = "ancillary", key = .id)
   ))
 }

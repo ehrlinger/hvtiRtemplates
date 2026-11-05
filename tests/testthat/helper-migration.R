@@ -24,11 +24,11 @@ migration_study_fixture <- function(kind = NULL, .local_envir = parent.frame(), 
     irb_number = "SYNTHETIC", cvir_no = "SYNTHETIC", adopt = TRUE, cleanup = FALSE, renv = FALSE
   ))
   suppressMessages(hvtiRutilities::register_data(
-    root, built = "built.csv",
+    root, file = "built.csv",
     role = "study", population = "Synthetic full cohort"
   ))
   suppressMessages(hvtiRutilities::register_data(
-    root, built = "complete_cases.csv",
+    root, file = "complete_cases.csv",
     dataset = "complete_cases", role = "named", population = "Synthetic complete cases"
   ))
   if (!is.null(kind)) {

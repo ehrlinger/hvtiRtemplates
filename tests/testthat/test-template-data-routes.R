@@ -50,7 +50,7 @@ test_that("descriptive templates can read the whole cohort", {
   utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
   suppressWarnings(
     suppressMessages(hvtiRutilities::register_data(
-      root, built = "built.csv"
+      root, file = "built.csv"
     ))
   )
 
@@ -111,10 +111,10 @@ test_that("descriptive templates read a named additional dataset", {
   utils::write.csv(subset, file.path(data_dir, "builtr.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages({
     hvtiRutilities::register_data(
-      root, built = "built.csv"
+      root, file = "built.csv"
     )
     hvtiRutilities::register_data(
-      root, built = "builtr.csv",
+      root, file = "builtr.csv",
       dataset = "builtr", role = "named"
     )
   }))
@@ -196,7 +196,7 @@ test_that("converted templates read a whole dataset without hvtiRdatabuild insta
   suppressMessages(hvtiRutilities::study_setup(root, study = "No databuild", study_tracker_id = 1L, renv = FALSE))
   built <- data.frame(ccfid = 1:4, dead = c(0, 1, 0, 1), iv_dead = c(1, 2, 3, 4))
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, file = "built.csv")))
 
   real_version <- utils::packageVersion
   local_mocked_bindings(packageVersion = function(pkg, ...) {
@@ -284,8 +284,8 @@ test_that("descriptive templates join an ancillary dataset, long and one row per
   utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
   utils::write.csv(echo, file.path(data_dir, "echo.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages({
-    hvtiRutilities::register_data(root, built = "built.csv")
-    hvtiRutilities::register_data(root, built = "echo.csv", dataset = "echo", role = "named",
+    hvtiRutilities::register_data(root, file = "built.csv")
+    hvtiRutilities::register_data(root, file = "echo.csv", dataset = "echo", role = "named",
                                   kind = "ancillary", key = c("ccfid", "echo_day"))
   }))
   withr::local_dir(root)
@@ -342,8 +342,8 @@ test_that("templates that model one row per patient refuse a long join; long-dat
   utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
   utils::write.csv(echo, file.path(data_dir, "echo.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages({
-    hvtiRutilities::register_data(root, built = "built.csv")
-    hvtiRutilities::register_data(root, built = "echo.csv", dataset = "echo", role = "named",
+    hvtiRutilities::register_data(root, file = "built.csv")
+    hvtiRutilities::register_data(root, file = "echo.csv", dataset = "echo", role = "named",
                                   kind = "ancillary", key = c("ccfid", "echo_day"))
   }))
   withr::local_dir(root)
@@ -417,8 +417,8 @@ test_that("nb-boostmtree takes a long join whose visit time is only in the joine
   utils::write.csv(built, file.path(data_dir, "built.csv"), row.names = FALSE)
   utils::write.csv(echo, file.path(data_dir, "echo.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages({
-    hvtiRutilities::register_data(root, built = "built.csv")
-    hvtiRutilities::register_data(root, built = "echo.csv", dataset = "echo", role = "named",
+    hvtiRutilities::register_data(root, file = "built.csv")
+    hvtiRutilities::register_data(root, file = "echo.csv", dataset = "echo", role = "named",
                                   kind = "ancillary", key = c("ccfid", "iv_echo"))
   }))
   withr::local_dir(root)

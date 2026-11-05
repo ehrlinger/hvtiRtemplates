@@ -341,7 +341,7 @@ test_that("lm-checkpred reads a model in another set and validates on a register
   # Each validation cohort is registered as a dataset of its own, as the template's comment says to.
   register <- function(name, rows) {
     utils::write.csv(rows, file.path(datasets, paste0(name, ".csv")), row.names = FALSE)
-    suppressMessages(hvtiRutilities::register_data(root, built = paste0(name, ".csv"), dataset = name,
+    suppressMessages(hvtiRutilities::register_data(root, file = paste0(name, ".csv"), dataset = name,
                                                    role = "named", population = "Later patients"))
   }
   register("validation", d[d$ccfid > 60, ])

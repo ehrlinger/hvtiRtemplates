@@ -195,7 +195,7 @@ definitions.
 
 ```r
 register_data(
-  built = "built.csv",
+  file = "built.csv",
   role = "study",
   population = "Patients meeting the study inclusion criteria"
 )
@@ -210,7 +210,7 @@ descriptive jobs below depend only on a registered study dataset.
 #| label: register-data
 register_data(
   adopted_root,
-  built = "built.csv",
+  file = "built.csv",
   role = "study",
   population = "Synthetic full cohort"
 )
@@ -237,7 +237,7 @@ utils::write.csv(
   eda, file.path(study_dir("datasets"), "eda.csv"), row.names = FALSE
 )
 register_data(
-  built = "eda.csv",
+  file = "eda.csv",
   dataset = "eda",
   role = "named",
   kind = "subset",

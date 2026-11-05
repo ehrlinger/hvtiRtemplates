@@ -175,7 +175,7 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
                       ssn = 100000000 + 7919 * seq_len(n), ssdi_ref = 100000000 + 7919 * seq_len(n),
                       last_name = "x")
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, file = "built.csv")))
   lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   chunk <- function(label) {
     start <- match(paste0("#| label: ", setup_label(label)), lines)
