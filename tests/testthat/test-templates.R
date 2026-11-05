@@ -331,6 +331,37 @@ test_that("the hvtiRutilities helpers templates call are declared and exported",
                            paste(setdiff(unique(used), declared), collapse = ", ")))
 })
 
+test_that("a template calling register_data(file =) stops in setup below hvtiRutilities 1.5.20", {
+  # A job copied into a study runs against that study's locked library, not this
+  # package's DESCRIPTION floor. Below 1.5.20, register_data(file =) fails with
+  # "unused argument" only when it is reached, after the job has written its
+  # output. Run each such template's real setup chunk as 1.5.19 and require the
+  # stop there, before any output chunk.
+  tl <- template_list()
+  skip_if(nrow(tl) == 0L, "no templates installed")
+  calls_file <- vapply(tl$file, function(f) {
+    src <- readLines(f, warn = FALSE)
+    fence <- grepl("^```", src)
+    code <- sub("#.*$", "", src[cumsum(fence) %% 2 == 1 & !fence])
+    grepl("(register_data|declare_data)\\([^)]*\\bfile\\s*=", paste(code, collapse = " "))
+  }, logical(1))
+  # A known positive: bd and sid-clusters, so a broken detector cannot pass empty.
+  expect_true(all(c("bd.qmd", "sid-clusters.qmd") %in% basename(tl$file[calls_file])))
+  for (f in tl$file[calls_file]) {
+    src <- readLines(f, warn = FALSE)
+    start <- grep("^#\\|\\s*label:\\s*setup\\s*$", src)[1L]
+    expect_false(is.na(start), info = basename(f))
+    end <- start + grep("^```\\s*$", src[-seq_len(start)])[1L] - 1L
+    setup <- gsub('utils::packageVersion("hvtiRutilities")', 'package_version("1.5.19")',
+                  src[start:end], fixed = TRUE)
+    needs <- setdiff(.template_packages(f)$package, "hvtiRutilities")
+    for (p in needs) skip_if_not_installed(p)
+    withr::local_dir(withr::local_tempdir())
+    expect_error(eval(parse(text = setup), envir = new.env(parent = globalenv())),
+                 "hvtiRutilities >= 1\\.5\\.20", info = basename(f))
+  }
+})
+
 test_that("endpoint-driven templates own explicit cohort definitions", {
   # `_study.yml` registers a dataset; it cannot know which rows or endpoint a
   # later job will analyze. These templates must therefore carry the event,
