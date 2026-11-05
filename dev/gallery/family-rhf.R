@@ -39,7 +39,7 @@ rhf_register_intervals <- function(root, job) {
   if (file.exists(file.path(dir, "intervals.rds"))) return(invisible())
   saveRDS(rhf_intervals(readRDS(file.path(dir, "built.rds"))), file.path(dir, "intervals.rds"))
   invisible(utils::capture.output(suppressMessages(hvtiRutilities::register_data(
-    root, built = "intervals.rds", dataset = "intervals", role = "named",
+    root, file = "intervals.rds", dataset = "intervals", role = "named",
     population = "Synthetic counting-process intervals, 150 patients, one row per interval"
   ))))
 }

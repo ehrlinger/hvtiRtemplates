@@ -41,7 +41,7 @@ rf_study <- function(data = data.frame(ccfid = 1:2, time = c(1, 2), event = c(1,
   saveRDS(data, file.path(hvtiRutilities::study_dir("datasets", root), "cohort.rds"))
   utils::capture.output(suppressMessages(
     hvtiRutilities::register_data(
-      root, built = "cohort.rds", population = "RF smoke"
+      root, file = "cohort.rds", population = "RF smoke"
     )
   ))
   root

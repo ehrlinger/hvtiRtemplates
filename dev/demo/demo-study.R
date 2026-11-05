@@ -128,7 +128,7 @@ demo_study <- function(root) {
   ))))
   saveRDS(demo_data(), file.path(study_dir("datasets", root), "built.rds"))
   invisible(utils::capture.output(suppressMessages(register_data(
-    root, built = "built.rds", role = "study", population = "Synthetic cohort, 800 operations"
+    root, file = "built.rds", role = "study", population = "Synthetic cohort, 800 operations"
   ))))
   root
 }

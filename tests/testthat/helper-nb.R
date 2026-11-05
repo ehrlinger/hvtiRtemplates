@@ -62,7 +62,7 @@ nb_study <- function(data = nb_data(), .local_envir = parent.frame()) {
     adopt = TRUE, cleanup = FALSE, renv = FALSE
   ))
   utils::write.csv(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, file = "built.csv")))
   normalizePath(root)
 }
 
