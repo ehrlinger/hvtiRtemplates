@@ -19,6 +19,24 @@
   template's own earlier wording is still left behind. The report names the old lines carried and never quotes
   them. A job whose only edits are such comments is now current with its template, and an upgrade leaves it alone.
 
+* Every hint a job gives about running, following or stopping it now names the R console call, qualified and
+  with the job's path, such as `hvtiRtemplates::job_status("analyses/x.qmd")`, instead of the `hvti` shell
+  command: the preflight fixes `run_job()` prints, the progress lines it prints while waiting, the failure
+  diagnosis `job_status()` shows, and the "Run it" section of each template's run sheet. The templates README
+  leads with the console calls and keeps `hvti` as the route for a session started on the wrong R.
+
+* New `import_job()` brings a job from another study into the current one, keeping that study's edits, so a
+  variant such as an aorta-specific `ac` job is carried forward instead of copied by hand (#479). The job is
+  written where `add_job()` would write it, with the same setup: the packages, the Quarto provenance hooks and the
+  refusal to overwrite. `subject` and `type` can be changed on the way in, and its runner comes with it. Nothing
+  study-specific is rewritten. The message lists by line number the `DATASET`, any `WHERE` selection, every
+  `EDIT:` marker and every absolute path the job carried, without quoting their values. The job keeps its
+  template stamp, so `upgrade_job(import_job(from))` brings an older variant up to the current template.
+
+* A job's setup chunk is now read for `library("pkg")`, `library(package = pkg)` and `library(pkg, quietly =
+  TRUE)` as well as `library(pkg)`, so the pre-render package check and `import_job()` see packages attached
+  that way. Every shipped template yields the same package list as before.
+
 # hvtiRtemplates 1.5.5
 
 * `read_job_data()` now drops `masterid` and its numbered copies (`masterid0`, `masterid1`), and an SSN
