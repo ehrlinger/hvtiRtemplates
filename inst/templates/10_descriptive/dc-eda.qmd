@@ -166,7 +166,8 @@ PANELS <- list(
 # EDIT: optional event panels, one entry per panel. `event` and `time` are the
 # event's indicator and interval; `death` and `death_time` the death it
 # competes with. A flagged event counts only when it comes strictly before
-# death, so ties go to death. list() draws none. For example
+# death, so ties go to death. Each event also gets dc-gfup's follow-up table
+# over its `event` and `time`, as a death panel does. list() draws none. For example
 #   reop = list(event = "ev_reop", time = "iv_reop", death = "dead",
 #               death_time = "iv_dead", label = "Reoperation")
 # Competing non-fatal events share one panel when `event`, `time` and `label`
@@ -547,8 +548,8 @@ close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE
 #| results: asis
 #| eval: !expr '"followup" %in% SECTIONS'
 # unnumbered: each child chunk below carries its own label and caption
-# Each death panel gets dc-gfup's follow-up table over its own two columns,
-# through hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
+# Each death panel, and each event in an event panel, gets dc-gfup's follow-up
+# table over its own two columns, through hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
 # selected, so the report carries no patient-level column; run dc-gfup to review
 # the suspicious rows themselves.
 if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
@@ -631,6 +632,24 @@ for (i in seq_len(nrow(fp$data))) {
                          c("open triangles", "open squares", "open diamonds", "open inverted triangles")[seq_len(k)],
                          .with, collapse = ", "),
                    ", and red crosses patients who died")
+  }
+  # Each event gets the follow-up table a death panel gets, over its own
+  # indicator and interval and named as the figure names it. It sits outside
+  # the branch above, which test-dc-eda.R keeps equal to dc-gfup's.
+  if (row$type != "followup") {
+    for (j in seq_len(k)) {
+      .ev <- EVENTS[[nm]]$event[[j]]
+      fc <- hvtiRutilities::followup_check(d, event = .ev, followup = EVENTS[[nm]]$time[[j]],
+                                           stats = .followup_stats)
+      .followup <- .followup_table(fc, d, .ev)
+      # By the event's place in the panel, not its column name: .child() cleans
+      # a label to lowercase letters, digits and hyphens, so ev_x and ev.x
+      # would become one label and stop the render.
+      .child(paste("tbl gfup", nm, "event", j, "followup"),
+             paste0("Follow-up, ", levels[[1L + j]], ", by patient group: missing, negative and zero values, ",
+                    "and the distribution (years)"),
+             "knitr::kable(.followup, row.names = FALSE, digits = 3)")
+    }
   }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript(base_size = 12)
