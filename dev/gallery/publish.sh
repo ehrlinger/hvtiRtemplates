@@ -16,15 +16,18 @@ site="${1:-pkgdown/assets/gallery}"
 # built on: on 2026-11-03 and again on 2026-11-06 sid-clusters printed the
 # study's full path, and a build under a home-based scratch directory published
 # the builder's username. Build in a temp directory, and let this refuse what
-# slips through: the builder's home, username, and the macOS and Linux temp roots.
-leak='/Users/|/home/|/private/tmp/|/private/var/|/var/folders/'
-[ -n "${HOME:-}" ] && leak="$leak|$HOME"
-user="${USER:-$(id -un)}"
-# Between separators only: a bare match would refuse every gallery whose builder
-# shares a name with a URL in it, as ehrlinger does with ehrlinger.github.io.
-[ "${#user}" -ge 3 ] && leak="$leak|[/-]$user[/-]"
-if hits="$(grep -rlE "$leak" "$site")"; then
-  echo "Refusing to publish: these files name a local path or the user $user." >&2
+# slips through. A username leaks inside a path, so the check is on paths: home
+# and temp roots, also in the dash-mangled form a scratch folder name takes
+# (-Users-<name>-). Matching the bare username would refuse every gallery whose
+# builder shares a name with a URL in it, as github.com/ehrlinger/ does.
+leak='/Users/|/home/|-Users-|-home-|/tmp/|/var/tmp/|/private/tmp/|/private/var/|/var/folders/'
+hits="$(grep -rlE "$leak" "$site" || true)"
+# $HOME as fixed text: a directory name may hold regex syntax, such as [1].
+if [ -n "${HOME:-}" ] && [ "$HOME" != "/" ]; then
+  hits="$(printf '%s\n%s' "$hits" "$(grep -rlF "$HOME" "$site" || true)" | sed '/^$/d' | sort -u)"
+fi
+if [ -n "$hits" ]; then
+  echo "Refusing to publish: these files name a local path." >&2
   echo "$hits" | sed "s|^|  |" >&2
   echo "Rebuild in a temp directory, find what prints the path, and package again." >&2
   exit 1
