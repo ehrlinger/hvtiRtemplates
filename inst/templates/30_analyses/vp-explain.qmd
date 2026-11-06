@@ -197,11 +197,18 @@ if (is.null(PARTIAL_VARS)) {
 }
 .untested <- setdiff(sel, .tested)
 if (length(.untested)) {
-  cat("Not drawn, because the screen did not test them: ", paste(.untested, collapse = ", "), "\n", sep = "")
+  # vp-fit's selection can be its refits' vote, which may include a variable the
+  # full fit, the one saved here, did not test: its partial would rest on no rules.
+  cat("Not drawn, because the saved full fit did not test them: ", paste(.untested, collapse = ", "), "\n", sep = "")
   sel <- setdiff(sel, .untested)
 }
 if (!length(sel)) {
-  stop("No tested variable to draw. The screen selected none; name tested variables in PARTIAL_VARS.", call. = FALSE)
+  stop(if (length(.untested)) {
+    paste0("No tested variable to draw: the saved full fit tested none of ", paste(.untested, collapse = ", "),
+           ". Name tested variables in PARTIAL_VARS.")
+  } else {
+    "No tested variable to draw. The screen selected none; name tested variables in PARTIAL_VARS."
+  }, call. = FALSE)
 }
 # Each figure is drawn a page at a time, panels in a grid no larger than the
 # printed page (6.5 by 9 in), and each page is a child chunk of its own so

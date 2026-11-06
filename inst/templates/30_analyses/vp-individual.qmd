@@ -198,7 +198,7 @@ vpi_parent <- function(fit) {
 # not from the gradient table: ivarpro() returns columns only for the
 # predictors the fit kept, so one cut by split weights or NVAR has no column at
 # all, and would otherwise vanish from the table instead of being listed.
-vpi_coverage <- function(grad, parent, screen) {
+vpi_coverage <- function(grad, parent, screen, selected = screen$variable[screen$selected %in% TRUE]) {
   terms <- names(parent)
   have <- terms %in% names(grad)
   col_of <- function(t) if (t %in% names(grad)) grad[[t]] else NA_real_
@@ -215,7 +215,8 @@ vpi_coverage <- function(grad, parent, screen) {
   m <- match(out$variable, screen$variable)
   out$noise <- screen$noise[m] %in% TRUE
   out$tested <- screen$tested[m] %in% TRUE
-  out$selected <- screen$selected[m] %in% TRUE
+  # The handoff's selection, which can be vp-fit's refit vote, not the full fit's own judgement.
+  out$selected <- out$variable %in% selected
   out$drawn <- out$share_na < 1
   out
 }
@@ -282,7 +283,7 @@ setting to give every candidate rules.
 #| label: tbl-coverage
 #| tbl-cap: "Local gradients for each predictor: patients without one, their typical size, and what the screen found"
 #| results: asis
-icov <- vpi_coverage(grad, .parent, cov)
+icov <- vpi_coverage(grad, .parent, cov, selected)
 .ref <- vpi_noise_ref(icov, grad)
 .slope_of <- switch(fit$family,
   surv = "varPro's ensemble mortality, in expected events, not a probability",

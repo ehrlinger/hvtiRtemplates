@@ -434,7 +434,7 @@ test_that("SELECT_SHARE = NA, or REPEATS = 0, hands on the full fit's selection"
 test_that("SELECT_SHARE must be NA or a share in (0, 1]", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
-  for (bad in list(0, 1.5, "half", c(0.5, 0.6))) {
+  for (bad in list(0, 1.5, NaN, "half", c(0.5, 0.6))) {
     expect_error(vp_fit_first(choices = utils::modifyList(vp_choices, list(SELECT_SHARE = bad))), "SELECT_SHARE")
   }
 })
@@ -478,6 +478,22 @@ test_that("vp-explain stops when no vp-fit has run in its set", {
   rf_skip_unless_stack(rf_template_packages("vp", "explain"))
   env <- rf_env(vp_data())
   expect_error(rf_run("vp", "explain", c("setup", "edit-study-choices", "screen"), env), "Render the vp-fit job")
+})
+
+test_that("vp-explain names a selection the saved full fit did not test, and stops when nothing is left", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "explain"))
+  # A trim of 0.49 leaves a candidate untested on a cohort this small, as a refit vote can hand one on.
+  fit <- vp_fit_first(choices = utils::modifyList(vp_choices, list(TRIM = 0.49, MAX_UNTESTED = 1)))
+  untested <- as.character(fit$.real$variable[!fit$.real$tested])
+  skip_if(!length(untested), "every candidate was tested")
+  env <- new.env(parent = globalenv())
+  env$.root <- fit$.root
+  expect_error(
+    rf_run("vp", "explain", vp_explain_labels, env,
+           list(HORIZON = 1, SEED = 1, SAVE_FIGURES = FALSE, PARTIAL_VARS = untested[1])),
+    "saved full fit tested none of"
+  )
 })
 
 test_that("vp-explain draws the saved selection, tested variables only", {
@@ -722,6 +738,17 @@ test_that("vpi_coverage lists an all-NA term and draws it not", {
   ref <- env$vpi_noise_ref(cov)
   expect_true(is.na(ref$value))
   expect_match(ref$text, "no noise reference")
+})
+
+test_that("vpi_coverage marks the handoff's selection, not the full fit's", {
+  env <- vpi_helpers_env()
+  # vp-fit's refit vote can differ from the full fit's own selection both ways.
+  grad <- data.frame(age = c(1, 2), x1 = c(0.5, -1))
+  screen <- data.frame(variable = c("age", "x1"), noise = FALSE, tested = TRUE, selected = c(FALSE, TRUE))
+  cov <- env$vpi_coverage(grad, c(age = "age", x1 = "x1"), screen, selected = "age")
+  expect_identical(cov$selected, c(TRUE, FALSE))
+  # Without a handoff selection it falls back to the screen's own.
+  expect_identical(env$vpi_coverage(grad, c(age = "age", x1 = "x1"), screen)$selected, c(FALSE, TRUE))
 })
 
 test_that("vpi_coverage keeps a predictor ivarpro() returned no column for", {

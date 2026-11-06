@@ -4,3 +4,6 @@
   candidates, most of them binary variables just over a low categorical bar, while a majority of 20 refits
   selected 4. `SELECT_SHARE <- NA`, or `REPEATS <- 0`, keeps the full fit's selection. The coverage table and
   the funnel still report the full fit, and the stability chunk names the set it hands on.
+* vp-individual's coverage table now marks the handoff's selection, so its `selected` column agrees with the
+  variables it draws by default. vp-explain says when a selected variable is left out because the saved full
+  fit did not test it, and stops with that reason, not "selected none", when no variable is left to draw.

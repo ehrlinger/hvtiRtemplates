@@ -466,7 +466,8 @@ if (!(SUBSAMPLE > 0 && SUBSAMPLE < 1)) {
   stop("SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).", call. = FALSE)
 }
 if (!(length(SELECT_SHARE) == 1 &&
-      (is.na(SELECT_SHARE) || (is.numeric(SELECT_SHARE) && SELECT_SHARE > 0 && SELECT_SHARE <= 1)))) {
+      ((is.na(SELECT_SHARE) && !is.nan(SELECT_SHARE)) ||
+       (is.numeric(SELECT_SHARE) && !is.na(SELECT_SHARE) && SELECT_SHARE > 0 && SELECT_SHARE <= 1)))) {
   stop("SELECT_SHARE must be NA or a share above 0 and at most 1 (0.5 keeps what most refits select).", call. = FALSE)
 }
 if (REPEATS > 0 && floor(SUBSAMPLE * nrow(d)) < 2) {
