@@ -37,6 +37,26 @@
   TRUE)` as well as `library(pkg)`, so the pre-render package check and `import_job()` see packages attached
   that way. Every shipped template yields the same package list as before.
 
+* The `dc-eda` overview's contents table lists variables alphabetically, as `hvtiRutilities::proc_contents()`
+  does by default and as `dc-general` already did, instead of in dataset order (#483).
+
+* `dc-eda` gives each event in an `EVENTS` panel, such as `ev_reop` with `iv_reop`, the follow-up table each
+  death panel already had: missing, negative and zero intervals and their distribution, for all patients, those
+  with the event and those without (#484). A panel of competing events gets one table per event.
+
+* The templates, tests and gallery scripts call `register_data()` and `declare_data()` with `file =`, which
+  replaced `built =` in hvtiRutilities 1.5.20, so a job no longer prints its deprecation warning on every render.
+  hvtiRtemplates now requires hvtiRutilities 1.5.20, and the `bd` and `sid-clusters` jobs check for it in setup, so a job copied into a study with an older library stops before it writes anything (#488 review).
+
+* A render test now skips, naming the installed copy and how to replace it, when the
+  installed hvtiRtemplates is not the code under test. A render's R process loads the
+  installed package, not the source `devtools::load_all()` loaded, so a stale install
+  made three render tests fail with the old code's output. The check compares the
+  namespace's functions and constants and the installed files, not the version, which
+  stays the same across many pull requests. It reads the copy the render's own R
+  process would load, in the directory it starts in, and a submission test that is
+  refused before any process starts still runs (#489 review).
+
 # hvtiRtemplates 1.5.5
 
 * `read_job_data()` now drops `masterid` and its numbered copies (`masterid0`, `masterid1`), and an SSN
