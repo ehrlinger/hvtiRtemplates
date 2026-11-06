@@ -34,6 +34,8 @@ test_that("the copy is read where the render starts, so two studies can resolve 
   # activation does. .libPaths() keeps the site and system libraries.
   writeLines(sprintf(".libPaths(%s)", deparse(empty_lib)), file.path(other, ".Rprofile"))
   rscript <- file.path(R.home("bin"), "Rscript")
+  # R CMD check sets R_PROFILE_USER to "", so no R it starts reads a directory's .Rprofile.
+  withr::local_envvar(R_PROFILE_USER = NA)
   a <- .fingerprint_there(plain, rscript)
   skip_if(!length(a), "no installed hvtiRtemplates for the plain directory to find")
   b <- .fingerprint_there(other, rscript)
@@ -75,4 +77,14 @@ test_that("a submission that reaches the launch skips when the copy it would run
     expect_s3_class(cond, "skip")
     expect_match(conditionMessage(cond), "is not the code under test|is not installed where")
   })
+})
+
+test_that("the R checked for a Quarto render is the one Quarto finds", {
+  bin <- withr::local_tempdir()
+  file.create(file.path(bin, c("R", "Rscript")))
+  withr::with_envvar(c(QUARTO_R = bin), expect_identical(.quarto_rscript(), file.path(bin, "Rscript")))
+  withr::with_envvar(c(QUARTO_R = file.path(bin, "R")), expect_identical(.quarto_rscript(), file.path(bin, "Rscript")))
+  # Not PATH's Rscript, which R CMD check replaces with a stub that refuses to run.
+  withr::with_envvar(c(QUARTO_R = NA, R_HOME = R.home()),
+                     expect_identical(.quarto_rscript(), file.path(R.home(), "bin", "Rscript")))
 })

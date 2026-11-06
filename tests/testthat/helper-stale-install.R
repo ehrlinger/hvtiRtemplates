@@ -95,12 +95,15 @@ skip_if_stale_install <- function(dir = getwd(), rscript = file.path(R.home("bin
   invisible(TRUE)
 }
 
-# The R Quarto's knitr engine starts: QUARTO_R (an Rscript, or the directory holding one), else
-# the Rscript on PATH.
+# The R Quarto's knitr engine starts, found as Quarto's rBinaryPath() finds it: QUARTO_R (an R
+# binary, or the directory holding one), else R_HOME/bin, else PATH. Under R CMD check the
+# Rscript on PATH is a stub that refuses to run, and Quarto never reaches it, for R_HOME is set.
 .quarto_rscript <- function() {
   q <- Sys.getenv("QUARTO_R")
-  if (!nzchar(q)) return(unname(Sys.which("Rscript")))
-  if (dir.exists(q)) file.path(q, "Rscript") else q
+  if (nzchar(q) && file.exists(q)) return(file.path(if (dir.exists(q)) q else dirname(q), "Rscript"))
+  h <- Sys.getenv("R_HOME")
+  if (nzchar(h) && file.exists(file.path(h, "bin", "Rscript"))) return(file.path(h, "bin", "Rscript"))
+  unname(Sys.which("Rscript"))
 }
 
 # For test-stale-install.R. Runs `code` as if the installed copy were stale, whatever is installed: the recorded fingerprint
