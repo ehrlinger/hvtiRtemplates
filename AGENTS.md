@@ -761,15 +761,18 @@ feature-branch clones rebase after it bumps.
   moves this package or any package its templates draw with, right after
   this tier is tagged: `Rscript dev/gallery/gallery.R <study>`,
   `python3 dev/gallery/package.py <study> pkgdown/assets/gallery`,
-  `bash dev/gallery/publish.sh`, then rerun `pkgdown.yaml`. Install the
-  released family first (`hvtiR::install()`): the gallery renders
-  against the installed packages, and a release of `hvtiPlotR` alone
-  changes its figures. Rebuild by hand too before a prerelease or demo,
-  or after any change to template output. Nothing does this for you: the
-  2026-10-12 build still showed 7 x 5 figures two days after the 6 x 4
-  standard shipped. `pkgdown.yaml` warns when the gallery predates the
-  latest release, but it cannot see a release of a package the templates
-  only draw with.
+  `bash dev/gallery/publish.sh`, then rerun `pkgdown.yaml`. Build the
+  study in a temp directory (`mktemp -d`), never under a home-based
+  scratch folder: `publish.sh` refuses a site that names a local path or
+  the builder’s username, which a report printing a path once published.
+  Install the released family first (`hvtiR::install()`): the gallery
+  renders against the installed packages, and a release of `hvtiPlotR`
+  alone changes its figures. Rebuild by hand too before a prerelease or
+  demo, or after any change to template output. Nothing does this for
+  you: the 2026-10-12 build still showed 7 x 5 figures two days after
+  the 6 x 4 standard shipped. `pkgdown.yaml` warns when the gallery
+  predates the latest release, but it cannot see a release of a package
+  the templates only draw with.
 
 The full policy and dependency graph are in the maintainer’s Obsidian
 vault at `Projects/hvtiR release ordering.md`.
