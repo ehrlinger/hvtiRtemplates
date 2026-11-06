@@ -120,10 +120,10 @@ package environment:
 # A vignette builds a throwaway study; in a real study, run hvtiR::setup().
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L,
             renv = FALSE)
-#> Study: /tmp/RtmpJ7fihw/file1faf229402fc/new-study
+#> Study: /tmp/RtmpexvgKF/file1fd3170dafad/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmpJ7fihw/file1faf229402fc/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmpexvgKF/file1fd3170dafad/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -166,10 +166,10 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/RtmpJ7fihw/file1faf229402fc/new-study
+#> Study: /tmp/RtmpexvgKF/file1fd3170dafad/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmpJ7fihw/file1faf229402fc/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmpexvgKF/file1fd3170dafad/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv, registered as built_20261106.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
