@@ -423,6 +423,12 @@ test_that("both sid templates render with Quarto, and K = NULL says why the K se
   expect_identical(lengths(regmatches(raw, gregexpr("<img", raw))), 4L)
   expect_false(grepl(":::", prose, fixed = TRUE))
   expect_match(prose, "hold fewer than")
+  # Registering the letters prints nothing: register_data() opens with the study's
+  # full path, which put a username in the published gallery. A second render takes
+  # the update_manifest() branch, which must stay as quiet.
+  expect_false(grepl(basename(fx$root), raw, fixed = TRUE))
+  html <- sid_render_clusters(fx, "K <- 3L")
+  expect_false(grepl(basename(fx$root), paste(readLines(html, warn = FALSE), collapse = "\n"), fixed = TRUE))
   html <- sid_render_clusters(fx, "K <- NULL")
   expect_true(file.exists(html))
   prose <- sid_prose(html)

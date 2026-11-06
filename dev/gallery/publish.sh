@@ -12,6 +12,23 @@ set -euo pipefail
 site="${1:-pkgdown/assets/gallery}"
 [ -f "$site/index.html" ] && [ -f "$site/gallery-data.js" ] || {
   echo "No built gallery in $site; run gallery.R and package.py first." >&2; exit 1; }
+# Nothing local goes up. A report that prints a path names the machine it was
+# built on: on 2026-11-03 and again on 2026-11-06 sid-clusters printed the
+# study's full path, and a build under a home-based scratch directory published
+# the builder's username. Build in a temp directory, and let this refuse what
+# slips through: the builder's home, username, and the macOS and Linux temp roots.
+leak='/Users/|/home/|/private/tmp/|/private/var/|/var/folders/'
+[ -n "${HOME:-}" ] && leak="$leak|$HOME"
+user="${USER:-$(id -un)}"
+# Between separators only: a bare match would refuse every gallery whose builder
+# shares a name with a URL in it, as ehrlinger does with ehrlinger.github.io.
+[ "${#user}" -ge 3 ] && leak="$leak|[/-]$user[/-]"
+if hits="$(grep -rlE "$leak" "$site")"; then
+  echo "Refusing to publish: these files name a local path or the user $user." >&2
+  echo "$hits" | sed "s|^|  |" >&2
+  echo "Rebuild in a temp directory, find what prints the path, and package again." >&2
+  exit 1
+fi
 archive="$(mktemp -d)/gallery.tar.gz"
 tar -czf "$archive" -C "$(dirname "$site")" "$(basename "$site")"
 if ! gh release view gallery >/dev/null 2>&1; then
