@@ -101,10 +101,10 @@ SAS arrangement could not answer, because `%inc` had nothing to pin.
 | Function | Returns |
 |----|----|
 | [`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md) | all 55 template jobs, including queued work and dependencies |
-| [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html) | the analysis prefix table: prefix, name, folder, description |
+| [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html) | the analysis prefix table: prefix, name, folder, description |
 | [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md) | supported templates: name, prefix, qualifier, folder, file |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
-| [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html) | leading name fields that are utilities, not analysis prefixes |
+| [`hvti_non_prefixes()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_non_prefixes.html) | leading name fields that are utilities, not analysis prefixes |
 | `add_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | the scaffolded job’s path, invisibly |
 | `open_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | job path; creates a missing job or opens an existing one |
 | `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |

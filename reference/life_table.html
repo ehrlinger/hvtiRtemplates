@@ -151,7 +151,7 @@ row of <code>data</code>.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><strong>Rows analyzed.</strong> A row is analyzed when its time and event are both
 recorded. With <code>strata</code>, a row whose stratum value is missing, or is a
-mean-imputed level (<code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/imputed_levels.html" class="external-link">hvtiRutilities::imputed_levels()</a></code>), is dropped too,
+mean-imputed level (<code><a href="https://rdrr.io/pkg/hvtiRutilities/man/imputed_levels.html" class="external-link">hvtiRutilities::imputed_levels()</a></code>), is dropped too,
 as <code>%KAPLAN</code> drops "invalid strata values". The dropped rows are not
 silent: the result carries them in its <code>"dropped"</code> attribute, one row
 per reason, and the <code>ac</code> job prints that table.</p>

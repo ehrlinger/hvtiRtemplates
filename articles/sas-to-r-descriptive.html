@@ -91,9 +91,9 @@
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ehrlinger/hvtiRutilities" class="external-link">hvtiRutilities</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ehrlinger/hvtiRtemplates" class="external-link">hvtiRtemplates</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_root.html" class="external-link">study_root</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_status.html" class="external-link">study_status</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html" class="external-link">verify_manifest</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_root.html" class="external-link">study_root</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_status.html" class="external-link">study_status</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/verify_manifest.html" class="external-link">verify_manifest</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>The descriptive jobs can be the first jobs in a study. At this stage there may be no modeled endpoint or analysis type. In the examples below, <code>cohort</code> names the subject being described and <code>eda</code> names the stage of work.</p>
 </section><section class="level2"><h2 id="the-map">The map<a class="anchor" aria-label="anchor" href="#the-map"></a>
 </h2>
@@ -124,7 +124,7 @@
 <td style="text-align: left;"><code>descriptive/dc.gfup.sas</code></td>
 <td style="text-align: left;"><code>dc-gfup</code></td>
 <td style="text-align: left;"><code>10_descriptive/dc-gfup.qmd</code></td>
-<td style="text-align: left;"><code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html" class="external-link">proc_means()</a></code></td>
+<td style="text-align: left;"><code><a href="https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html" class="external-link">proc_means()</a></code></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><code>graphs/dp.trends.R</code></td>
@@ -150,7 +150,7 @@
 <li>Work the <code>EDIT:</code> markers, rendering <code>render_job(job)</code> as you go. Unfinished work renders as a draft, as far as the markers you have worked.</li>
 <li>Stop when every marker is gone and the draft banner with it. Render the accepted result with <code>render_job(job, final = TRUE)</code>, which stops instead of drafting if a marker remains.</li>
 <li>Compare the result with the SAS <code>.lst</code>, section by section.</li>
-<li>Keep the authored QMD and its HTML report flat in the job’s working directory: <code>descriptive/</code> for the computation and EDA jobs, or <code>graphs/</code> for trends. The tables job writes its Word file under <code>documents/cohort-eda/</code>; the plot jobs write PNG files under <code>graphs/cohort-eda/</code>. <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir()</a></code> resolves each directory in either study layout.</li>
+<li>Keep the authored QMD and its HTML report flat in the job’s working directory: <code>descriptive/</code> for the computation and EDA jobs, or <code>graphs/</code> for trends. The tables job writes its Word file under <code>documents/cohort-eda/</code>; the plot jobs write PNG files under <code>graphs/cohort-eda/</code>. <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_dir.html" class="external-link">study_dir()</a></code> resolves each directory in either study layout.</li>
 </ol>
 <p>The filename records the choices in the call. <code>cohort-eda</code> is the shared job set, <code>dc</code> is the descriptive-computation prefix, and <code>tables</code> selects the table template within that prefix. These are organizational labels. When no outcome or model has been chosen, do not invent one merely to name an EDA job.</p>
 </section><section class="level2"><h2 id="the-draft-banner-and-edit-markers">The draft banner and <code>EDIT:</code> markers<a class="anchor" aria-label="anchor" href="#the-draft-banner-and-edit-markers"></a>
@@ -232,7 +232,7 @@ Unresolved markers remain. The numbers below are not a result.
 <li>
 <strong>An analysis set is always cut from the study dataset.</strong> Pairing one with a <code>DATASET</code> other than <code>"built"</code>, or its older name <code>"study"</code>, stops rather than quietly using the study dataset instead.</li>
 </ul>
-<p>Before any of this, <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html" class="external-link">verify_manifest()</a></code> checks every file’s checksum against <code>manifest.yaml</code>. A stop on that first line means a registered file changed, not that a setting is wrong. A dataset rebuilt since it was registered does not stop the job: it reads the registered version, <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html" class="external-link">verify_manifest()</a></code> lists the rebuilt file as <code>PENDING</code>, and the report says a newer file is waiting, with the <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html" class="external-link">hvtiRutilities::update_manifest()</a></code> call that registers it.</p>
+<p>Before any of this, <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/verify_manifest.html" class="external-link">verify_manifest()</a></code> checks every file’s checksum against <code>manifest.yaml</code>. A stop on that first line means a registered file changed, not that a setting is wrong. A dataset rebuilt since it was registered does not stop the job: it reads the registered version, <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/verify_manifest.html" class="external-link">verify_manifest()</a></code> lists the rebuilt file as <code>PENDING</code>, and the report says a newer file is waiting, with the <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/update_manifest.html" class="external-link">hvtiRutilities::update_manifest()</a></code> call that registers it.</p>
 </section><section class="level2"><h2 id="descriptive-tables-and-correlations-dc-tables">Descriptive tables and correlations: <code>dc-tables</code>
 <a class="anchor" aria-label="anchor" href="#descriptive-tables-and-correlations-dc-tables"></a>
 </h2>
@@ -257,23 +257,23 @@ Unresolved markers remain. The numbers below are not a result.
 <span>  compare <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
-<div id="phdirnxohi" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#phdirnxohi table {
+<div id="ryilzkbtjt" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ryilzkbtjt table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#phdirnxohi thead, #phdirnxohi tbody, #phdirnxohi tfoot, #phdirnxohi tr, #phdirnxohi td, #phdirnxohi th {
+#ryilzkbtjt thead, #ryilzkbtjt tbody, #ryilzkbtjt tfoot, #ryilzkbtjt tr, #ryilzkbtjt td, #ryilzkbtjt th {
   border-style: none;
 }
 
-#phdirnxohi p {
+#ryilzkbtjt p {
   margin: 0;
   padding: 0;
 }
 
-#phdirnxohi .gt_table {
+#ryilzkbtjt .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -299,12 +299,12 @@ Unresolved markers remain. The numbers below are not a result.
   border-left-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_caption {
+#ryilzkbtjt .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#phdirnxohi .gt_title {
+#ryilzkbtjt .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -316,7 +316,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-width: 0;
 }
 
-#phdirnxohi .gt_subtitle {
+#ryilzkbtjt .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -328,7 +328,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-top-width: 0;
 }
 
-#phdirnxohi .gt_heading {
+#ryilzkbtjt .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -340,13 +340,13 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_bottom_border {
+#ryilzkbtjt .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_col_headings {
+#ryilzkbtjt .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -361,7 +361,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_col_heading {
+#ryilzkbtjt .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -381,7 +381,7 @@ Unresolved markers remain. The numbers below are not a result.
   overflow-x: hidden;
 }
 
-#phdirnxohi .gt_column_spanner_outer {
+#ryilzkbtjt .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -393,15 +393,15 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 4px;
 }
 
-#phdirnxohi .gt_column_spanner_outer:first-child {
+#ryilzkbtjt .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#phdirnxohi .gt_column_spanner_outer:last-child {
+#ryilzkbtjt .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#phdirnxohi .gt_column_spanner {
+#ryilzkbtjt .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -413,11 +413,11 @@ Unresolved markers remain. The numbers below are not a result.
   width: 100%;
 }
 
-#phdirnxohi .gt_spanner_row {
+#ryilzkbtjt .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#phdirnxohi .gt_group_heading {
+#ryilzkbtjt .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -443,7 +443,7 @@ Unresolved markers remain. The numbers below are not a result.
   text-align: left;
 }
 
-#phdirnxohi .gt_empty_group_heading {
+#ryilzkbtjt .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -458,15 +458,15 @@ Unresolved markers remain. The numbers below are not a result.
   vertical-align: middle;
 }
 
-#phdirnxohi .gt_from_md > :first-child {
+#ryilzkbtjt .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#phdirnxohi .gt_from_md > :last-child {
+#ryilzkbtjt .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#phdirnxohi .gt_row {
+#ryilzkbtjt .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -485,7 +485,7 @@ Unresolved markers remain. The numbers below are not a result.
   overflow-x: hidden;
 }
 
-#phdirnxohi .gt_stub {
+#ryilzkbtjt .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -498,7 +498,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#phdirnxohi .gt_stub_row_group {
+#ryilzkbtjt .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -512,15 +512,15 @@ Unresolved markers remain. The numbers below are not a result.
   vertical-align: top;
 }
 
-#phdirnxohi .gt_row_group_first td {
+#ryilzkbtjt .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#phdirnxohi .gt_row_group_first th {
+#ryilzkbtjt .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#phdirnxohi .gt_summary_row {
+#ryilzkbtjt .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -530,16 +530,16 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#phdirnxohi .gt_first_summary_row {
+#ryilzkbtjt .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_first_summary_row.thick {
+#ryilzkbtjt .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#phdirnxohi .gt_last_summary_row {
+#ryilzkbtjt .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -549,7 +549,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_grand_summary_row {
+#ryilzkbtjt .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -559,7 +559,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#phdirnxohi .gt_first_grand_summary_row {
+#ryilzkbtjt .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -569,7 +569,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-top-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_last_grand_summary_row_top {
+#ryilzkbtjt .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -579,11 +579,11 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_striped {
+#ryilzkbtjt .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#phdirnxohi .gt_table_body {
+#ryilzkbtjt .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -592,7 +592,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_footnotes {
+#ryilzkbtjt .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -606,7 +606,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_footnote {
+#ryilzkbtjt .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -615,7 +615,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#phdirnxohi .gt_sourcenotes {
+#ryilzkbtjt .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -629,7 +629,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#phdirnxohi .gt_sourcenote {
+#ryilzkbtjt .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -637,72 +637,72 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#phdirnxohi .gt_left {
+#ryilzkbtjt .gt_left {
   text-align: left;
 }
 
-#phdirnxohi .gt_center {
+#ryilzkbtjt .gt_center {
   text-align: center;
 }
 
-#phdirnxohi .gt_right {
+#ryilzkbtjt .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#phdirnxohi .gt_font_normal {
+#ryilzkbtjt .gt_font_normal {
   font-weight: normal;
 }
 
-#phdirnxohi .gt_font_bold {
+#ryilzkbtjt .gt_font_bold {
   font-weight: bold;
 }
 
-#phdirnxohi .gt_font_italic {
+#ryilzkbtjt .gt_font_italic {
   font-style: italic;
 }
 
-#phdirnxohi .gt_super {
+#ryilzkbtjt .gt_super {
   font-size: 65%;
 }
 
-#phdirnxohi .gt_footnote_marks {
+#ryilzkbtjt .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#phdirnxohi .gt_asterisk {
+#ryilzkbtjt .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#phdirnxohi .gt_indent_1 {
+#ryilzkbtjt .gt_indent_1 {
   text-indent: 5px;
 }
 
-#phdirnxohi .gt_indent_2 {
+#ryilzkbtjt .gt_indent_2 {
   text-indent: 10px;
 }
 
-#phdirnxohi .gt_indent_3 {
+#ryilzkbtjt .gt_indent_3 {
   text-indent: 15px;
 }
 
-#phdirnxohi .gt_indent_4 {
+#ryilzkbtjt .gt_indent_4 {
   text-indent: 20px;
 }
 
-#phdirnxohi .gt_indent_5 {
+#ryilzkbtjt .gt_indent_5 {
   text-indent: 25px;
 }
 
-#phdirnxohi .katex-display {
+#ryilzkbtjt .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#phdirnxohi div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#ryilzkbtjt div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -782,7 +782,7 @@ Unresolved markers remain. The numbers below are not a result.
 </section><section class="level2"><h2 id="goodness-of-follow-up-dc-gfup">Goodness of follow-up: <code>dc-gfup</code>
 <a class="anchor" aria-label="anchor" href="#goodness-of-follow-up-dc-gfup"></a>
 </h2>
-<p>The SAS <code>proc means</code> and <code>proc univariate</code> calls become <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html" class="external-link">proc_means()</a></code>. The R job reports follow-up distributions overall, by vital status, and among survivors. It deliberately omits the patient-level listing: a rendered report should answer the completeness question without exposing an identifier.</p>
+<p>The SAS <code>proc means</code> and <code>proc univariate</code> calls become <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html" class="external-link">proc_means()</a></code>. The R job reports follow-up distributions overall, by vital status, and among survivors. It deliberately omits the patient-level listing: a rendered report should answer the completeness question without exposing an identifier.</p>
 <pre class="sas"><code>proc means data=built n mean std min max;
   class dead;
   var iv_dead iv_fup;
@@ -790,9 +790,9 @@ run;</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"hvtiRutilities"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/generate_survival_data.html" class="external-link">generate_survival_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
+<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/generate_survival_data.html" class="external-link">generate_survival_data</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">80</span><span class="op">)</span></span>
 <span>  <span class="va">d</span><span class="op">$</span><span class="va">iv_fup</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">iv_dead</span>, <span class="fl">0.85</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">iv_dead</span><span class="op">)</span></span>
-<span>  <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html" class="external-link">proc_means</a></span><span class="op">(</span></span>
+<span>  <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html" class="external-link">proc_means</a></span><span class="op">(</span></span>
 <span>    <span class="va">d</span>,</span>
 <span>    vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"iv_dead"</span>, <span class="st">"iv_fup"</span><span class="op">)</span>,</span>
 <span>    class <span class="op">=</span> <span class="st">"dead"</span>,</span>
@@ -866,7 +866,7 @@ run;</code></pre>
 </div>
 </section><section class="level2"><h2 id="where-the-numbers-differ">Where the numbers differ<a class="anchor" aria-label="anchor" href="#where-the-numbers-differ"></a>
 </h2>
-<p>Percentiles use SAS <code>QNTLDEF=5</code>, equivalent to R’s <code>type = 2</code>; <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html" class="external-link">proc_means()</a></code> and the table engine already make that choice. Pin <code>type = 2</code> in any hand-written <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile()</a></code> call. <code>N</code> is the non-missing count, not always the number of rows. Continuous-variable p-values are non-parametric. Correlation intervals are 68% Fisher intervals by default. Finally, <code>%desc_tab</code> wrote separate categorical and continuous RTF files; the R job writes one DOCX table.</p>
+<p>Percentiles use SAS <code>QNTLDEF=5</code>, equivalent to R’s <code>type = 2</code>; <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html" class="external-link">proc_means()</a></code> and the table engine already make that choice. Pin <code>type = 2</code> in any hand-written <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile()</a></code> call. <code>N</code> is the non-missing count, not always the number of rows. Continuous-variable p-values are non-parametric. Correlation intervals are 68% Fisher intervals by default. Finally, <code>%desc_tab</code> wrote separate categorical and continuous RTF files; the R job writes one DOCX table.</p>
 </section><section class="level2"><h2 id="what-is-not-ported">What is not ported<a class="anchor" aria-label="anchor" href="#what-is-not-ported"></a>
 </h2>
 <p>The templates do not reproduce RTF output; they produce DOCX and self-contained HTML instead. They also do not reproduce identified patient listings. Use the distribution summaries to assess completeness, then investigate any necessary patient-level records inside the governed study environment rather than in a portable report.</p>

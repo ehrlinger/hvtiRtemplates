@@ -96,7 +96,7 @@ Wilcoxon test and is left out of its degrees of freedom.
 **Rows analyzed.** A row is analyzed when its time and event are both
 recorded. With `strata`, a row whose stratum value is missing, or is a
 mean-imputed level
-([`hvtiRutilities::imputed_levels()`](https://ehrlinger.github.io/hvtiRutilities/reference/imputed_levels.html)),
+([`hvtiRutilities::imputed_levels()`](https://rdrr.io/pkg/hvtiRutilities/man/imputed_levels.html)),
 is dropped too, as `%KAPLAN` drops "invalid strata values". The dropped
 rows are not silent: the result carries them in its `"dropped"`
 attribute, one row per reason, and the `ac` job prints that table.
