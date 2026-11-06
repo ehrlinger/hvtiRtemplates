@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:15
+2026-11-06 10:06
 
 Fits a generalized-logit outcome model with a declared level set and
 reference.
@@ -245,8 +245,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item             | Value                          |
 |:----------------|:-----------------|:-------------------------------|
-| Run             | Started          | 2026-11-06 08:15:30 EST        |
-|                 | Ended            | 2026-11-06 08:15:30 EST        |
+| Run             | Started          | 2026-11-06 10:06:22 EST        |
+|                 | Ended            | 2026-11-06 10:06:22 EST        |
 |                 | Duration         | 0 s                            |
 |                 | Status           | final                          |
 |                 | Rendered by      | gallery                        |

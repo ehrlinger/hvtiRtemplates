@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:24
+2026-11-06 10:15
 
 This job builds the dissimilarity that `sid-clusters` turns into
 clusters. SID clustering (Mantero and Ishwaran, 2021) is unsupervised:
@@ -382,8 +382,8 @@ saveRDS(sid_handoff, set_path("estimates", "sid.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 08:24:15 EST  |
-|                 | Ended            | 2026-11-06 08:24:20 EST  |
+| Run             | Started          | 2026-11-06 10:15:03 EST  |
+|                 | Ended            | 2026-11-06 10:15:07 EST  |
 |                 | Duration         | 5 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |

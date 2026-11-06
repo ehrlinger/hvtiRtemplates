@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:15
+2026-11-06 10:06
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -485,8 +485,8 @@ if (!is.null(MATCH)) {
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 08:15:44 EST |
-|  | Ended | 2026-11-06 08:15:45 EST |
+| Run | Started | 2026-11-06 10:06:34 EST |
+|  | Ended | 2026-11-06 10:06:35 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -503,6 +503,6 @@ if (!is.null(MATCH)) {
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-11-06 08:15:37 -0500, data built_20261106.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-11-06 10:06:28 -0500, data built_20261106.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

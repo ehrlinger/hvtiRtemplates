@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:22
+2026-11-06 10:13
 
 Explains the `vp-fit` screen in this set: survival at five years along
 each selected predictor.
@@ -298,9 +298,9 @@ spread of the partial effect at each level. Page 2 of 2: hx_dm.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 08:20:57 EST |
-|  | Ended | 2026-11-06 08:22:36 EST |
-|  | Duration | 1 min 40 s |
+| Run | Started | 2026-11-06 10:11:39 EST |
+|  | Ended | 2026-11-06 10:13:12 EST |
+|  | Duration | 1 min 33 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -314,7 +314,7 @@ spread of the partial effect at each level. Page 2 of 2: hx_dm.
 |  | Source file | built.rds |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-06 08:19:48 -0500, data built_20261106.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-06 10:10:35 -0500, data built_20261106.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

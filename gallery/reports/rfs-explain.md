@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:18
+2026-11-06 10:09
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -438,9 +438,9 @@ each level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 08:18:47 EST |
-|  | Ended | 2026-11-06 08:18:56 EST |
-|  | Duration | 9 s |
+| Run | Started | 2026-11-06 10:09:35 EST |
+|  | Ended | 2026-11-06 10:09:45 EST |
+|  | Duration | 10 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -454,7 +454,7 @@ each level of a categorical one.
 |  | Source file | built.rds |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-11-06 08:18:35 -0500, data built_20261106.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-11-06 10:09:22 -0500, data built_20261106.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

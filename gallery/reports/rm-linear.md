@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:24
+2026-11-06 10:14
 
 Fits an ordinary least-squares model of a continuous outcome,
 untransformed or on the log scale, on one dataset or on stacked multiple
@@ -326,8 +326,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 08:24:03 EST  |
-|                 | Ended            | 2026-11-06 08:24:05 EST  |
+| Run             | Started          | 2026-11-06 10:14:48 EST  |
+|                 | Ended            | 2026-11-06 10:14:50 EST  |
 |                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |

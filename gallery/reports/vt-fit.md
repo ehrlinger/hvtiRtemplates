@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:24
+2026-11-06 10:15
 
 Gallery job on the synthetic cohort: mitral repair against replacement,
 and freedom from reintervention to eight years.
@@ -1155,9 +1155,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 08:24:36 EST |
-|  | Ended | 2026-11-06 08:24:44 EST |
-|  | Duration | 8 s |
+| Run | Started | 2026-11-06 10:15:25 EST |
+|  | Ended | 2026-11-06 10:15:35 EST |
+|  | Duration | 10 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |

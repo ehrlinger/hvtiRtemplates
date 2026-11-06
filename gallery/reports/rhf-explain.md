@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:23
+2026-11-06 10:14
 
 Explains the forest the `rhf-fit` job in this set saved: how well it
 ranks patients over follow-up, their hazard curves, and which markers
@@ -512,9 +512,9 @@ if (length(PD_VARS)) {
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 08:23:56 EST |
-|  | Ended | 2026-11-06 08:23:58 EST |
-|  | Duration | 2 s |
+| Run | Started | 2026-11-06 10:14:39 EST |
+|  | Ended | 2026-11-06 10:14:42 EST |
+|  | Duration | 3 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -528,7 +528,7 @@ if (length(PD_VARS)) {
 |  | Source file | intervals.rds |
 |  | sha256 | beb287931ea4 |
 |  | Manifest | current |
-| Upstream | Handoff | `event-rhf/rhf.rds` (forest), rendered 2026-11-06 08:23:48 -0500, data intervals_20261106.parquet |
+| Upstream | Handoff | `event-rhf/rhf.rds` (forest), rendered 2026-11-06 10:14:30 -0500, data intervals_20261106.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

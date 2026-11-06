@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:12
+2026-11-06 10:02
 
 Replaces `descriptive/dc.general`.
 
@@ -807,9 +807,9 @@ console, never in this report.
 
 | Group           | Item             | Value                     |
 |:----------------|:-----------------|:--------------------------|
-| Run             | Started          | 2026-11-06 08:12:12 EST   |
-|                 | Ended            | 2026-11-06 08:12:13 EST   |
-|                 | Duration         | 1 s                       |
+| Run             | Started          | 2026-11-06 10:02:55 EST   |
+|                 | Ended            | 2026-11-06 10:02:56 EST   |
+|                 | Duration         | 0 s                       |
 |                 | Status           | final                     |
 |                 | Rendered by      | gallery                   |
 |                 | Host             | gallery                   |

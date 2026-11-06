@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:11
+2026-11-06 10:02
 
 Replaces `descriptive/dc.gfup`.
 
@@ -716,8 +716,8 @@ Table 5: dead by reop
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 08:11:49 EST  |
-|                 | Ended            | 2026-11-06 08:11:50 EST  |
+| Run             | Started          | 2026-11-06 10:02:33 EST  |
+|                 | Ended            | 2026-11-06 10:02:34 EST  |
 |                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |

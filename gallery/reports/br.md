@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:08
+2026-11-06 09:59
 
 This job reports a bootstrap variable selection screen over a **linear**
 model: how often each candidate survived stepwise selection across
@@ -903,9 +903,9 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 08:08:09 EST |
-|  | Ended | 2026-11-06 08:08:10 EST |
-|  | Duration | 2 s |
+| Run | Started | 2026-11-06 09:59:33 EST |
+|  | Ended | 2026-11-06 09:59:35 EST |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |

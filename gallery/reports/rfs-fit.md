@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:18
+2026-11-06 10:09
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
@@ -502,8 +502,8 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 08:18:35 EST  |
-|                 | Ended            | 2026-11-06 08:18:40 EST  |
+| Run             | Started          | 2026-11-06 10:09:22 EST  |
+|                 | Ended            | 2026-11-06 10:09:29 EST  |
 |                 | Duration         | 6 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |

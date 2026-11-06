@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:24
+2026-11-06 10:20
 
 This job turns a `sid-fit` dissimilarity into clusters. It runs PAM
 (partitioning around medoids) on the SID distance for each K in a range,
@@ -663,34 +663,15 @@ if (!isTRUE(file.rename(.csv_tmp, .csv_path))) {
 # render records the rewritten file as a new dated version instead, so later
 # jobs read the current letters and their manifest check passes.
 if (!is.null(.reg)) {
-  utils::capture.output(suppressMessages(
+  invisible(utils::capture.output(suppressMessages(
     withr::with_dir(.root, hvtiRutilities::update_manifest(dataset = .dataset))
-  ))
+  )))
 } else {
-  utils::capture.output(suppressMessages(
+  invisible(utils::capture.output(suppressMessages(
     hvtiRutilities::register_data(.root, file = .csv_name, dataset = .dataset, role = "named",
                                   population = "SID cluster assignments", kind = "ancillary", key = .id)
-  ))
+  )))
 }
-```
-
-     [1] "Study: /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/cd84b328-04da-4baf-8523-7c710afd0c6e/scratchpad/galstudy"
-     [2] ""                                                                                                                                      
-     [3] "[x] _study.yml — study: Template gallery (synthetic)"                                                                                  
-     [4] "[x] renv.lock — renv.lock present"                                                                                                     
-     [5] "[x] manifest.yaml — 5 dataset entries verified by checksum"                                                                            
-     [6] "[x] dataset — built.rds, registered as built_20261106.parquet"                                                                         
-     [7] "[x] dataset:segments — segments.rds, registered as segments_20261106.parquet"                                                          
-     [8] "[x] dataset:echo — echo.rds, registered as echo_20261106.parquet"                                                                      
-     [9] "[x] dataset:intervals — intervals.rds, registered as intervals_20261106.parquet"                                                       
-    [10] "[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261106.parquet"                             
-    [11] "[!] provenance — 2 of 52 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, sid.clusters.echo.sid"                     
-    [12] ""                                                                                                                                      
-    [13] "4 .R  |  52 .qmd/.Rmd  |  3 .sas  |  86 provenance sidecars"                                                                           
-
-Code
-
-``` r
 cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job to use these clusters.\n",
     "A job that models one row per patient also sets REDUCE <- list(rule = \"first\", by = \"", .id, "\").\n",
     sep = "")
@@ -703,9 +684,9 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 08:24:25 EST |
-|  | Ended | 2026-11-06 08:24:30 EST |
-|  | Duration | 5 s |
+| Run | Started | 2026-11-06 10:20:45 EST |
+|  | Ended | 2026-11-06 10:20:51 EST |
+|  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -724,6 +705,6 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-06 08:24:15 -0500, data built_20261106.parquet |
+| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-06 10:15:03 -0500, data built_20261106.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

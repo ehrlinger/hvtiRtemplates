@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:11
+2026-11-06 10:02
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -722,8 +722,8 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 08:11:33 EST  |
-|                 | Ended            | 2026-11-06 08:11:35 EST  |
+| Run             | Started          | 2026-11-06 10:02:19 EST  |
+|                 | Ended            | 2026-11-06 10:02:20 EST  |
 |                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |

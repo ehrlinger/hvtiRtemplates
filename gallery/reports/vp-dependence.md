@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:23
+2026-11-06 10:14
 
 Gallery job on the synthetic cohort: how the nine preoperative
 predictors the rf fits grow on depend on each other, with no outcome
@@ -651,9 +651,9 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 
 | Group           | Item             | Value                      |
 |:----------------|:-----------------|:---------------------------|
-| Run             | Started          | 2026-11-06 08:22:54 EST    |
-|                 | Ended            | 2026-11-06 08:23:42 EST    |
-|                 | Duration         | 48 s                       |
+| Run             | Started          | 2026-11-06 10:13:29 EST    |
+|                 | Ended            | 2026-11-06 10:14:22 EST    |
+|                 | Duration         | 53 s                       |
 |                 | Status           | final                      |
 |                 | Rendered by      | gallery                    |
 |                 | Host             | gallery                    |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:18
+2026-11-06 10:09
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -408,7 +408,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 191 | 0.8794133 |
+| l2 | lvef | 195 | 0.8847503 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -422,7 +422,7 @@ save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/69f6295ba2ea53000c0ba7705f4f73d4.png)
+![](assets/064894725873ab525767d7441e0b1a11.png)
 
 Figure 1: Cross-validated error by boosting iteration. The black solid
 line is the error after each iteration, and the black dashed vertical
@@ -437,7 +437,7 @@ save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/7a200b0493200ee2d63b2c84fdfd5ae5.png)
+![](assets/c72c40f1f5e714183f50ac0ee3fdf21e.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
 per parameter. Each black solid line is the parameter’s fitted value
@@ -454,7 +454,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/5ff4c774e210691551f1a47b04071261.png)
+![](assets/e0e1c52935578d047e97bfd5902f56af.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins.
 Each gray horizontal segment spans a time bin at its observed mean, with
@@ -477,7 +477,7 @@ save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
-![](assets/fd1fc068f58d9d2e8cf607f7131904c8.png)
+![](assets/eb436419f43f01ba11bc694387d38af4.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time, one panel for each. Horizontal dark gray bars
@@ -583,12 +583,12 @@ Code
 .p
 ```
 
-![](assets/aa3ac22573d674e082c4ba5d007e2fc6.png)
+![](assets/7cd75792c50680f48689524c3dceb2ee.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-1 of 2: nyha_pr, hx_chf, age, female.
+1 of 2: nyha_pr, hx_chf, age, bmi.
 
 Code
 
@@ -596,12 +596,12 @@ Code
 .p
 ```
 
-![](assets/f29f5f43ef436700ebf8cb6999bfb1b3.png)
+![](assets/d40bfbe14cc40c78cc7e17ef1b6718e4.png)
 
 Figure 6: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-2 of 2: bmi, hx_dm.
+2 of 2: hx_dm, female.
 
 Code
 
@@ -646,7 +646,7 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/e522eef9c00369e0a47ea7e75db73214.png)
+![](assets/6726c5e6319e9c6b66a9d437a4737277.png)
 
 Figure 7: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time. Thin translucent black lines trace
@@ -674,9 +674,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 | Group           | Item             | Value                        |
 |:----------------|:-----------------|:-----------------------------|
-| Run             | Started          | 2026-11-06 08:16:19 EST      |
-|                 | Ended            | 2026-11-06 08:18:29 EST      |
-|                 | Duration         | 2 min 9 s                    |
+| Run             | Started          | 2026-11-06 10:07:04 EST      |
+|                 | Ended            | 2026-11-06 10:09:14 EST      |
+|                 | Duration         | 2 min 10 s                   |
 |                 | Status           | final                        |
 |                 | Rendered by      | gallery                      |
 |                 | Host             | gallery                      |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:11
+2026-11-06 10:02
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -374,7 +374,7 @@ provenance
     7                                                                      725
     8                                                                        8
     9                                                                        0
-    10                                                                     0.2
+    10                                                                     0.1
     11                                                          version:1.2.19
     12 sha256:d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace
     13                                               4 distinct (listed below)
@@ -922,8 +922,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 08:11:25 EST |
-|  | Ended | 2026-11-06 08:11:27 EST |
+| Run | Started | 2026-11-06 10:02:10 EST |
+|  | Ended | 2026-11-06 10:02:12 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |

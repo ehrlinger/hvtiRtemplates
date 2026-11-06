@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:19
+2026-11-06 10:10
 
 Gallery job on the synthetic cohort: postoperative length of stay,
 logged (log_los).
@@ -394,8 +394,8 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 08:19:26 EST  |
-|                 | Ended            | 2026-11-06 08:19:28 EST  |
+| Run             | Started          | 2026-11-06 10:10:15 EST  |
+|                 | Ended            | 2026-11-06 10:10:17 EST  |
 |                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |

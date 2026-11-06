@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 08:16
+2026-11-06 10:06
 
 Fits a proportional-odds propensity model for an explicitly ordered
 treatment.
@@ -318,8 +318,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 08:15:59 EST |
-|  | Ended | 2026-11-06 08:15:59 EST |
+| Run | Started | 2026-11-06 10:06:41 EST |
+|  | Ended | 2026-11-06 10:06:42 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
