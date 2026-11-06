@@ -26,8 +26,14 @@ hits="$(grep -rlE "$leak" "$site" || true)"
 if [ -n "${HOME:-}" ] && [ "$HOME" != "/" ]; then
   hits="$(printf '%s\n%s' "$hits" "$(grep -rlF "$HOME" "$site" || true)" | sed '/^$/d' | sort -u)"
 fi
+# Every report's run record names who rendered it. gallery.R sets both to
+# "gallery"; a job re-rendered by hand outside it records the real user and
+# host, as two did on 2026-11-06.
+named="$(grep -rlE '"(user|host)":"' "$site" | while read -r f; do
+  grep -oE '"(user|host)":"[^"]*"' "$f" | grep -qv ':"gallery"$' && echo "$f"; done || true)"
+hits="$(printf '%s\n%s' "$hits" "$named" | sed '/^$/d' | sort -u)"
 if [ -n "$hits" ]; then
-  echo "Refusing to publish: these files name a local path." >&2
+  echo "Refusing to publish: these files name a local path, or a user or host other than gallery." >&2
   echo "$hits" | sed "s|^|  |" >&2
   echo "Rebuild in a temp directory, find what prints the path, and package again." >&2
   exit 1
