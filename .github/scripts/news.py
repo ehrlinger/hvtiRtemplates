@@ -18,7 +18,9 @@ touch the same file, so the conflict is gone.
         moves `Version:` in DESCRIPTION passes too. So does one that deletes
         fragments and edits NEWS.md and otherwise ships nothing: some packages
         collect into a version heading that already exists, without moving
-        `Version:`.
+        `Version:`. Such a collect may also change DESCRIPTION's `Date:` and
+        nothing else in it, and rebuild inst/extdata/template-history.rds;
+        any other shipped file still needs a fragment.
 
     python3 .github/scripts/news.py collect
         The bump commit, after `Version:` in DESCRIPTION has moved. Refuses,
@@ -85,19 +87,57 @@ def ships_nothing(paths: list, patterns: list) -> bool:
     return all(excluded(p) for p in paths)
 
 
+# The template-history archive the bump commit rebuilds beside the collect
+# (AGENTS.md, "Bump when you name a version"). Its content is checked by
+# tests/testthat/test-template-history.R, which holds every shipped template's
+# current text to it; this gate only lets it ride along with a collect.
+RELEASE_ARCHIVES = ("inst/extdata/template-history.rds",)
+
+
+def _dcf_fields(text: str) -> dict:
+    """DESCRIPTION's fields, each with its continuation lines."""
+    fields, name = {}, None
+    for line in text.splitlines():
+        if line[:1].isspace() and name:
+            fields[name] += "\n" + line.strip()
+        elif ":" in line:
+            name, value = line.split(":", 1)
+            fields[name] = value.strip()
+    return fields
+
+
+def date_only(base_desc: str | None, head_desc: str | None) -> bool:
+    """Whether DESCRIPTION changed in its Date: field and nowhere else.
+
+    Missing either text fails closed.
+    """
+    if base_desc is None or head_desc is None:
+        return False
+    base, head = _dcf_fields(base_desc), _dcf_fields(head_desc)
+    base.pop("Date", None)
+    head.pop("Date", None)
+    return base == head
+
+
 def check(changed: list, added: dict, patterns: list,
           base_version: str | None, head_version: str | None,
-          deleted: list = ()) -> list:
+          deleted: list = (), base_desc: str | None = None,
+          head_desc: str | None = None) -> list:
     """Problems with a pull request's NEWS fragment. Empty means it passes.
 
     `added` maps each file the pull request adds to its content; `deleted`
-    lists the files it removes.
+    lists the files it removes. `base_desc` and `head_desc` are DESCRIPTION
+    on each side, read only to let a collect re-date it.
     """
     if base_version and head_version and base_version != head_version:
         return []
     consumed = [p for p in deleted if FRAGMENT_RE.match(p)]
     if "NEWS.md" in changed and consumed:
-        rest = [p for p in changed if p != "NEWS.md" and p not in consumed]
+        # A collect may also carry its own release metadata: a new Date: in
+        # DESCRIPTION and the rebuilt template history. Nothing else rides free.
+        rest = [p for p in changed if p != "NEWS.md" and p not in consumed
+                and p not in RELEASE_ARCHIVES
+                and not (p == "DESCRIPTION" and date_only(base_desc, head_desc))]
         if not rest or ships_nothing(rest, patterns):
             return []
     if ships_nothing(changed, patterns):
@@ -242,10 +282,10 @@ def run_check(base: str) -> int:
              if FRAGMENT_RE.match(p)}
     patterns = [ln for ln in _show(base, ".Rbuildignore").splitlines() if ln.strip()]
     deleted = _git("diff", "--name-only", "--diff-filter=D", f"{base}...HEAD").split()
+    base_desc, head_desc = _show(base, "DESCRIPTION"), Path("DESCRIPTION").read_text()
     problems = check(changed, added, patterns,
-                     read_field(_show(base, "DESCRIPTION"), "Version"),
-                     read_field(Path("DESCRIPTION").read_text(), "Version"),
-                     deleted)
+                     read_field(base_desc, "Version"), read_field(head_desc, "Version"),
+                     deleted, base_desc, head_desc)
     if problems:
         print("news check failed:", file=sys.stderr)
         for p in problems:

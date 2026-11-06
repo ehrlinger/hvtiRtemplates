@@ -3,6 +3,7 @@ import unittest
 
 from news import check, collect, merge_order, ships_nothing
 
+HISTORY = "inst/extdata/template-history.rds"
 IGNORE = [r"^\.github$", r"^\.claude$", r"^AGENTS\.md$", r"^news$"]
 
 
@@ -53,6 +54,27 @@ class Check(unittest.TestCase):
         # A collect passes on what it consumes, not on what rides along.
         self.assertTrue(check(["NEWS.md", "news/a.md", "R/a.R"], {}, IGNORE,
                               "4.0.0", "4.0.0", ["news/a.md"]))
+
+    def test_collect_with_its_release_metadata_passes(self):
+        # The bump commit after a merged pull request already moved Version:
+        # still dates DESCRIPTION and rebuilds the template history archive.
+        base = "Package: p\nVersion: 1.5.6\nDate: 2026-11-02\nImports:\n    a,\n    b\n"
+        head = base.replace("Date: 2026-11-02", "Date: 2026-11-04")
+        self.assertEqual(check(["DESCRIPTION", "NEWS.md", "news/a.md", HISTORY], {}, IGNORE,
+                               "1.5.6", "1.5.6", ["news/a.md"], base, head), [])
+
+    def test_collect_that_changes_more_than_the_date_still_needs_a_fragment(self):
+        base = "Package: p\nVersion: 1.5.6\nDate: 2026-11-02\nImports:\n    a,\n    b\n"
+        head = base.replace("Date: 2026-11-02", "Date: 2026-11-04").replace("    b\n", "    c\n")
+        self.assertTrue(check(["DESCRIPTION", "NEWS.md", "news/a.md"], {}, IGNORE,
+                              "1.5.6", "1.5.6", ["news/a.md"], base, head))
+
+    def test_collect_with_description_but_no_texts_fails_closed(self):
+        self.assertTrue(check(["DESCRIPTION", "NEWS.md", "news/a.md"], {}, IGNORE,
+                              "1.5.6", "1.5.6", ["news/a.md"]))
+
+    def test_history_archive_outside_a_collect_still_needs_a_fragment(self):
+        self.assertTrue(check([HISTORY], {}, IGNORE, "1.5.6", "1.5.6"))
 
     def test_deleting_a_fragment_without_touching_news_is_not_a_collect(self):
         # A stray deletion must not let a shipping change skip its own entry.

@@ -1,11 +1,61 @@
 # hvtiRtemplates 1.5.6
 
+* A `bd` end-to-end test now checks that its draft fails at the error it plants, not
+  earlier. It used to accept any error, so a render that died before writing its
+  working file failed a later check and pointed at the wrong cause.
+
 * `vp-fit` draws a second importance figure, `fig-varpro-screened`, after the noise screen. It keeps the real
   variables that were tested, with the same boxes, the same dashed bar per kind and the same selection as the figure
   with the noise columns, so the two never disagree. The noise columns and the untested variables are left out: the
   noise has set the bars by then. It is saved as `vp-fit-screened`, a stem that `FIGURES = "vp-fit-varpro"` does not
   also select. When no real variable was tested, which a partial screen (`MAX_UNTESTED <- NULL`) allows, it says so
   instead of drawing an empty plot.
+
+* `upgrade_job()` now carries a study's own comment above a choice, such as the reasons for leaving variables out
+  of `PREDICTORS`, into the upgraded job, directly above the choice and below the current template's comment. A
+  comment set off from the choice by a blank line counts too. It used to drop those lines and only name them in
+  the report, so a study's rationale had to be restored by hand from the archived job. A comment line is the
+  study's when no version of the template in `inst/extdata/template-history.rds` has it in that chunk, so the
+  template's own earlier wording is still left behind. The report names the old lines carried and never quotes
+  them. A job whose only edits are such comments is now current with its template, and an upgrade leaves it alone.
+
+* Every hint a job gives about running, following or stopping it now names the R console call, qualified and
+  with the job's path, such as `hvtiRtemplates::job_status("analyses/x.qmd")`, instead of the `hvti` shell
+  command: the preflight fixes `run_job()` prints, the progress lines it prints while waiting, the failure
+  diagnosis `job_status()` shows, and the "Run it" section of each template's run sheet. The templates README
+  leads with the console calls and keeps `hvti` as the route for a session started on the wrong R.
+
+* New `import_job()` brings a job from another study into the current one, keeping that study's edits, so a
+  variant such as an aorta-specific `ac` job is carried forward instead of copied by hand (#479). The job is
+  written where `add_job()` would write it, with the same setup: the packages, the Quarto provenance hooks and the
+  refusal to overwrite. `subject` and `type` can be changed on the way in, and its runner comes with it. Nothing
+  study-specific is rewritten. The message lists by line number the `DATASET`, any `WHERE` selection, every
+  `EDIT:` marker and every absolute path the job carried, without quoting their values. The job keeps its
+  template stamp, so `upgrade_job(import_job(from))` brings an older variant up to the current template.
+
+* A job's setup chunk is now read for `library("pkg")`, `library(package = pkg)` and `library(pkg, quietly =
+  TRUE)` as well as `library(pkg)`, so the pre-render package check and `import_job()` see packages attached
+  that way. Every shipped template yields the same package list as before.
+
+* The `dc-eda` overview's contents table lists variables alphabetically, as `hvtiRutilities::proc_contents()`
+  does by default and as `dc-general` already did, instead of in dataset order (#483).
+
+* `dc-eda` gives each event in an `EVENTS` panel, such as `ev_reop` with `iv_reop`, the follow-up table each
+  death panel already had: missing, negative and zero intervals and their distribution, for all patients, those
+  with the event and those without (#484). A panel of competing events gets one table per event.
+
+* The templates, tests and gallery scripts call `register_data()` and `declare_data()` with `file =`, which
+  replaced `built =` in hvtiRutilities 1.5.20, so a job no longer prints its deprecation warning on every render.
+  hvtiRtemplates now requires hvtiRutilities 1.5.20, and the `bd` and `sid-clusters` jobs check for it in setup, so a job copied into a study with an older library stops before it writes anything (#488 review).
+
+* A render test now skips, naming the installed copy and how to replace it, when the
+  installed hvtiRtemplates is not the code under test. A render's R process loads the
+  installed package, not the source `devtools::load_all()` loaded, so a stale install
+  made three render tests fail with the old code's output. The check compares the
+  namespace's functions and constants and the installed files, not the version, which
+  stays the same across many pull requests. It reads the copy the render's own R
+  process would load, in the directory it starts in, and a submission test that is
+  refused before any process starts still runs (#489 review).
 
 # hvtiRtemplates 1.5.5
 
