@@ -613,16 +613,18 @@ if (!isTRUE(file.rename(.csv_tmp, .csv_path))) {
 }
 # register_data() registers a dataset once and stops on a second call. A later
 # render records the rewritten file as a new dated version instead, so later
-# jobs read the current letters and their manifest check passes.
+# jobs read the current letters and their manifest check passes. invisible(): the
+# captured lines would otherwise print as the chunk's value, and they open with the
+# study's full path, which does not belong in a report.
 if (!is.null(.reg)) {
-  utils::capture.output(suppressMessages(
+  invisible(utils::capture.output(suppressMessages(
     withr::with_dir(.root, hvtiRutilities::update_manifest(dataset = .dataset))
-  ))
+  )))
 } else {
-  utils::capture.output(suppressMessages(
+  invisible(utils::capture.output(suppressMessages(
     hvtiRutilities::register_data(.root, file = .csv_name, dataset = .dataset, role = "named",
                                   population = "SID cluster assignments", kind = "ancillary", key = .id)
-  ))
+  )))
 }
 cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job to use these clusters.\n",
     "A job that models one row per patient also sets REDUCE <- list(rule = \"first\", by = \"", .id, "\").\n",
