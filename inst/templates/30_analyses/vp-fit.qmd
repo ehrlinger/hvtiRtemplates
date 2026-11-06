@@ -262,6 +262,12 @@ NVAR <- 30
 # REPEATS times one fit.
 REPEATS <- 20
 SUBSAMPLE <- 0.632
+# EDIT: the selection handed to vp-explain. With REPEATS above 0 it is every
+# candidate selected in at least SELECT_SHARE of the refits. A single fit's bar
+# is the best of a few noise columns, so on a small cohort it moves from one
+# noise draw to the next and the full fit alone can keep or drop a variable by
+# chance. NA hands on the full fit's selection instead, as REPEATS = 0 does.
+SELECT_SHARE <- 0.5
 
 # EDIT: the seed. It is part of every cache key, seeds R's generator before
 # each random step, and is handed to varpro() as `seed =`, negated as
@@ -458,6 +464,16 @@ if (NOISE_N < 1) {
 }
 if (!(SUBSAMPLE > 0 && SUBSAMPLE < 1)) {
   stop("SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).", call. = FALSE)
+}
+.share_bad <- "SELECT_SHARE must be NA or a share above 0 and at most 1 (0.5 keeps what most refits select)."
+if (length(SELECT_SHARE) != 1) {
+  stop(.share_bad, call. = FALSE)
+}
+# NaN is NA to is.na(), so it is ruled out by name: only a deliberate NA opts out of the vote.
+.share_na <- is.na(SELECT_SHARE) && !is.nan(SELECT_SHARE)
+.share_ok <- is.numeric(SELECT_SHARE) && !is.na(SELECT_SHARE) && SELECT_SHARE > 0 && SELECT_SHARE <= 1
+if (!(.share_na || .share_ok)) {
+  stop(.share_bad, call. = FALSE)
 }
 if (REPEATS > 0 && floor(SUBSAMPLE * nrow(d)) < 2) {
   stop("SUBSAMPLE of ", nrow(d), " patients leaves fewer than 2 for a refit. Raise SUBSAMPLE or set REPEATS to 0.", call. = FALSE)
@@ -701,7 +717,9 @@ if (nrow(.gvs$imp) == 0L) {
 
 The screen refitted `REPEATS` times, each on a subsample of the patients drawn
 without replacement and with a fresh noise draw. A variable selected in most
-refits holds up; one selected once in a while is the screen's own noise.
+refits holds up; one selected once in a while is the screen's own noise. When
+`SELECT_SHARE` is set, the variables selected in at least that share of the
+refits are the set this job hands to vp-explain, in place of the full fit's.
 
 ```{r}
 #| label: tbl-stability
@@ -738,6 +756,11 @@ if (REPEATS > 0) {
     share_selected = as.vector(tapply(.stab$selected, .stab$variable, sum)[names(.n_tested)]) / REPEATS
   )
   .freq <- .freq[order(-.freq$share_selected, -.freq$share_tested), ]
+  if (!is.na(SELECT_SHARE)) {
+    .keep <- .freq$variable[.freq$share_selected >= SELECT_SHARE]
+    cat("Handed to vp-explain, selected in at least ", SELECT_SHARE * 100, "% of the refits: ",
+        if (length(.keep)) paste(.keep, collapse = ", ") else "none", ".\n", sep = "")
+  }
   knitr::kable(.freq, digits = 2, row.names = FALSE)
 } else {
   cat("Skipped: REPEATS is 0.\n")
@@ -781,7 +804,9 @@ lets guided split weights and `NVAR` decide which variables are examined at
 all. A selection would also need the two settings, the stability above, and
 ideally cross-validation to agree. Read the stability table before the
 coverage table: a variable selected in the full fit but rarely in the refits
-is a weak candidate.
+is a weak candidate, and by default it is not handed on. The refits each see
+`SUBSAMPLE` of the patients, so they have less power than the full fit; a
+share near `SELECT_SHARE` is a vote on the edge, not a failure.
 
 ```{r}
 #| label: save
@@ -789,9 +814,16 @@ is a weak candidate.
 # coverage and the selected set, in one file, so they cannot drift apart. It is
 # separate from the cache on purpose: cache_fit() stores a keyed record, so the
 # cache is this job's internals and this file is its interface. `family` is
-# informational: vp-explain reads the family from the fit itself.
+# informational: vp-explain reads the family from the fit itself. The selected
+# set is the refits' vote when there are refits and SELECT_SHARE is set, else
+# the full fit's own.
+.selected <- if (REPEATS > 0 && !is.na(SELECT_SHARE)) {
+  .freq$variable[.freq$share_selected >= SELECT_SHARE]
+} else {
+  .real$variable[.real$selected]
+}
 vp_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
-  list(fit = fit, coverage = cov, selected = .real$variable[.real$selected], family = .family),
+  list(fit = fit, coverage = cov, selected = .selected, family = .family),
   data = .provenance_data,
   analysis = .analysis,
   cohort = .cohort,
