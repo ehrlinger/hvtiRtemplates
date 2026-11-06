@@ -29,19 +29,31 @@ test_that("the copy is read where the render starts, so two studies can resolve 
   skip_on_cran()
   plain <- withr::local_tempdir()
   other <- withr::local_tempdir()
-  empty_lib <- withr::local_tempdir()
-  # A study whose startup file puts its own library first and drops the user's, as a renv
-  # activation does. .libPaths() keeps the site and system libraries.
-  writeLines(sprintf(".libPaths(%s)", deparse(empty_lib)), file.path(other, ".Rprofile"))
+  # A study whose startup file puts its own library first, as a renv activation does, holding a
+  # copy of its own. Dropping the user's library instead does not hide a copy in a site or
+  # system library, which .libPaths() always keeps: under covr that is where the copy is.
+  study_lib <- withr::local_tempdir()
+  src <- withr::local_tempdir()
+  writeLines(c("Package: hvtiRtemplates", "Version: 0.0.1", "Title: A Study's Own Copy",
+               "Description: A study's own copy.", "License: GPL-3"), file.path(src, "DESCRIPTION"))
+  writeLines("", file.path(src, "NAMESPACE"))
+  dir.create(file.path(src, "R"))
+  writeLines("only_in_the_study_copy <- TRUE", file.path(src, "R", "copy.R"))
+  r_bin <- file.path(R.home("bin"), "R")
+  installed <- system2(r_bin, c("CMD", "INSTALL", "--no-test-load", "-l", shQuote(study_lib), shQuote(src)),
+                       stdout = TRUE, stderr = TRUE)
+  expect_true(dir.exists(file.path(study_lib, "hvtiRtemplates")), label = paste(installed, collapse = "\n"))
+  writeLines(sprintf(".libPaths(c(%s, .libPaths()))", deparse(study_lib)), file.path(other, ".Rprofile"))
   rscript <- file.path(R.home("bin"), "Rscript")
   # R CMD check sets R_PROFILE_USER to "", so no R it starts reads a directory's .Rprofile.
   withr::local_envvar(R_PROFILE_USER = NA)
   a <- .fingerprint_there(plain, rscript)
   skip_if(!length(a), "no installed hvtiRtemplates for the plain directory to find")
   b <- .fingerprint_there(other, rscript)
-  # Different, whether the other study finds no copy or one in another library.
-  expect_false(identical(a, b))
-  if (length(b)) expect_false(identical(a[-(1:3)], b[-(1:3)]))
+  # The other study loads its own copy, from its own library, wherever the plain one lives.
+  expect_identical(b[[3L]], "0.0.1")
+  expect_false(identical(a[[2L]], b[[2L]]))
+  expect_identical(normalizePath(paste(b[-(1:3)], collapse = " ")), normalizePath(study_lib))
   # A startup file that fails is an error, not a missing copy: a check that could not run must not
   # skip every render as "not installed".
   broken <- withr::local_tempdir()

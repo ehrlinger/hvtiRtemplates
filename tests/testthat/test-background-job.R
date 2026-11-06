@@ -110,6 +110,9 @@ test_that("a submitted job returns at once, then runs to finished", {
   skip_on_cran()
   job <- status_job()
   out <- file.path(dirname(job), "done.txt")
+  # The stale-install check starts an R process of its own; ask it before the clock starts, so the
+  # launch reads its cached answer and the time measured is the submission's alone.
+  skip_if_stale_install(dirname(job))
   t0 <- Sys.time()
   .submit_job(job, final = FALSE, render_call = sprintf("Sys.sleep(2); writeLines('ok', %s)", deparse(out)),
               root = dirname(job))
