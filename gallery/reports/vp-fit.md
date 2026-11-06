@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:22
+2026-11-06 08:20
 
 Gallery job on the synthetic cohort: a VarPro screen of survival after
 operation (iv_dead, dead) on the nine preoperative predictors rfs-fit
@@ -103,8 +103,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.5
+**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -354,7 +354,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261103.parquet) |
+| Source              | dataset `built` (built_20261106.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -695,6 +695,41 @@ importance, with a line at the median and whiskers to the 5th and 95th
 percentiles; the dashed red ticks are the bar each variable must beat,
 the same bar as the table above. A factor’s levels are drawn separately.
 
+Code
+
+``` r
+# The noise has done its work once it has set the bars, so this figure keeps the
+# real variables that were tested and drops the rest. Each row keeps its bar and
+# its selection from the figure above, so the two never disagree.
+.gvs <- .gv
+.gvs$imp <- .gvs$imp[!.gvs$imp$noise & .gvs$imp$tested, , drop = FALSE]
+.gvs$imp$variable <- droplevels(.gvs$imp$variable)
+.gvs$stats <- .gvs$stats[.gvs$stats$variable %in% .gvs$imp$variable, , drop = FALSE]
+.gvs$stats$variable <- factor(.gvs$stats$variable, levels = levels(.gvs$imp$variable))
+# A partial screen (MAX_UNTESTED <- NULL) can leave no real variable tested, and an
+# empty plot would still caption bars it does not draw.
+if (nrow(.gvs$imp) == 0L) {
+  cat("No real variable was tested, so the screen has nothing to show.\n")
+} else {
+  .fig <- plot(.gvs) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  # Its caption names the orange noise boxes, which are gone from this figure.
+  .fig$labels$caption <- sub(" Orange boxes: noise.", "", .fig$labels$caption, fixed = TRUE)
+  .fig$labels$caption <- gsub("(\\w+) 0, no noise tested", "\\1: no usable noise bar, nothing selected",
+                              .fig$labels$caption)
+  # Not "vp-fit-varpro-screened": FIGURES keeps a figure by prefix, and
+  # "vp-fit-varpro" would then keep both.
+  save_figure(.fig, "vp-fit-screened", height = 6)
+  .fig
+}
+```
+
+![](assets/0103fad3932a85af2e878c1e4c414364.png)
+
+Figure 3: The importance plot after the noise screen: the same boxes and
+bars as the figure above, with the noise columns and the untested
+variables removed. Blue boxes beat the dashed bar of their kind and are
+selected; gray boxes did not.
+
 ## Stability
 
 The screen refitted `REPEATS` times, each on a subsample of the patients
@@ -824,9 +859,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-03 08:21:37 EST  |
-|                 | Ended            | 2026-11-03 08:22:32 EST  |
-|                 | Duration         | 55 s                     |
+| Run             | Started          | 2026-11-06 08:19:48 EST  |
+|                 | Ended            | 2026-11-06 08:20:50 EST  |
+|                 | Duration         | 1 min 2 s                |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -834,14 +869,14 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 |                 | Template         | vp.fit                   |
 |                 | Subject          | dead                     |
 |                 | Type             | vp                       |
-|                 | hvtiRtemplates   | 1.5.5                    |
-| Dataset `built` | Version file     | built_20261103.parquet   |
-|                 | Version date     | 2026-11-03               |
+|                 | hvtiRtemplates   | 1.5.6                    |
+| Dataset `built` | Version file     | built_20261106.parquet   |
+|                 | Version date     | 2026-11-06               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | b236a472f1f3             |
+|                 | sha256           | d99147a5c095             |
 |                 | Manifest         | current                  |
 | Reproducibility | Seed             | 2026                     |
 |                 | renv             | not active               |
-|                 | renv.lock sha256 | d09f96b6cd21             |
+|                 | renv.lock sha256 | ed18165d16bf             |

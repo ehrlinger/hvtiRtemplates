@@ -29,8 +29,9 @@ on the gallery's synthetic study.
   4.0.0), `hvtiRutilities`, `hvtiPlotR` (\>= 2.8.18). The job checks
   each floor when it starts, so an older library stops it at the top
   rather than partway through.
-- **The `hvti` command.** A long job starts from a terminal with
-  `hvti run`; `install_hvti()` puts the command on your PATH, once.
+- **A background run.** A long job starts from the study's R console
+  with `hvtiRtemplates::run_job()`, which checks it first and renders it
+  in a process that outlives the session.
 
 ## Outline
 
@@ -60,14 +61,15 @@ shows three ways to find them.
 ## Run it
 
 **Run it in the background.** The fit is long (the VarPro cache walks
-every rule of every tree at study size), and a fit run in the console
-dies with the session. From a terminal in the study,
-`hvti run 30_analyses/rhf.explain.<subject>.<type>.qmd` (`analyses/` in
-an older study whose folders carry no number) checks the job, then
-renders it in the background on the R the study's `renv.lock` records;
-add `--final` for the final render. From R, `run_job(job)` does the
-same. `hvti status` follows it and `hvti cancel` stops it. Once the fit
-is cached, its chunks run interactively and load it.
+every rule of every tree at study size), and a fit run chunk by chunk
+dies with the session. From the study's R console,
+`hvtiRtemplates::run_job("30_analyses/rhf.explain.<subject>.<type>.qmd")`
+(`analyses/` in an older study whose folders carry no number) checks the
+job, then renders it in a background process that outlives the session;
+add `final = TRUE` for the final render. `hvtiRtemplates::job_status()`
+and `hvtiRtemplates::cancel_job()`, given the same path, follow it and
+stop it. Once the fit is cached, its chunks run interactively and load
+it.
 
 **Render a draft as you go.** `render_job(job)` runs the whole job in a
 clean R session and writes the report beside it. Render early and often:
@@ -81,5 +83,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.5 · built 2026-11-03.
+Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
 The template holds the details; this sheet is its outline.

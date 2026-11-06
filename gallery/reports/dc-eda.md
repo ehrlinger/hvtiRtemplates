@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:14
+2026-11-06 08:12
 
 Replaces an older EDA report.
 
@@ -76,8 +76,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.5
+**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -158,7 +158,8 @@ PANELS <- list(
 # Demo: optional event panels, one entry per panel. `event` and `time` are the
 # event's indicator and interval; `death` and `death_time` the death it
 # competes with. A flagged event counts only when it comes strictly before
-# death, so ties go to death. list() draws none. For example
+# death, so ties go to death. Each event also gets dc-gfup's follow-up table
+# over its `event` and `time`, as a death panel does. list() draws none. For example
 #   reop = list(event = "ev_reop", time = "iv_reop", death = "dead",
 #               death_time = "iv_dead", label = "Reoperation")
 # Competing non-fatal events share one panel when `event`, `time` and `label`
@@ -267,7 +268,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261103.parquet) |
+| Source              | dataset `built` (built_20261106.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -469,10 +470,10 @@ figure_files <- character(0)
 
 ## Overview
 
-Every column of the data this report read, in dataset order, with its
-type, label and share missing. A column the sections below leave out is
-still listed here, unless it looks like an identifier: those are named
-below the table and not described.
+Every column of the data this report read, in alphabetical order, with
+its type, label and share missing. A column the sections below leave out
+is still listed here, unless it looks like an identifier: those are
+named below the table and not described.
 
 Code
 
@@ -483,7 +484,8 @@ Code
 is_date <- vapply(d, inherits, logical(1L), c("Date", "POSIXt")) |
   grepl("(^|_)(date|datetime)($|_)|_dt$", names(d), ignore.case = TRUE)
 id_cols <- names(d)[looks_like_id(names(d)) & !is_date]
-contents <- hvtiRutilities::proc_contents(d, order = "varnum")
+# Alphabetical, as PROC CONTENTS lists them; order = "varnum" lists them in dataset order.
+contents <- hvtiRutilities::proc_contents(d, order = "alpha")
 shown <- contents$variables[!contents$variables$variable %in% id_cols, ]
 .shown <- shown[, c("variable", "type", "label", "n_unique", "pct_missing")]
 .child("tbl overview contents", paste0("Contents: ", nrow(d), " rows, ", ncol(d), " columns"),
@@ -498,46 +500,46 @@ knitr::kable(.shown, row.names = FALSE)
 
 | variable | type | label | n_unique | pct_missing |
 |:---|:---|:---|---:|---:|
-| dt_surg | Num | Date of operation | 766 | 0.0 |
-| iv_opyrs | Num | Years from 1 January 1990 to operation | 787 | 0.0 |
 | age | Num | Age at operation (years) | 65 | 0.0 |
-| female | Num | Female | 2 | 0.0 |
-| race_grp | Char | Race | 3 | 0.0 |
+| approach | Char | Surgical or transcatheter replacement | 2 | 0.0 |
 | bmi | Num | Body mass index (kg/m2) | 190 | 0.0 |
-| hx_chf | Num | History of heart failure | 2 | 0.0 |
-| hx_dm | Num | Diabetes | 2 | 0.0 |
-| nyha_pr | Num | NYHA functional class | 4 | 0.0 |
-| lvef | Num | LV ejection fraction (%) | 53 | 0.0 |
-| plvmassi | Num | LV mass index (g/m2) | 141 | 0.0 |
+| complication | Num | Major postoperative complication | 2 | 0.0 |
+| cpb_time | Num | Cardiopulmonary bypass time (minutes) | 120 | 0.0 |
 | creat_pr | Num | Creatinine (mg/dL) | 147 | 9.4 |
 | dead | Num | Death | 2 | 0.0 |
-| iv_dead | Num | Follow-up to death or censoring (years) | 777 | 0.0 |
-| reop | Num | Reoperation | 2 | 0.0 |
-| iv_reop | Num | Follow-up to reoperation (years) | 774 | 0.0 |
-| vent | Num | Prolonged ventilation | 2 | 0.0 |
-| icu_hours | Num | Hours in intensive care | 82 | 0.0 |
-| male | Num | Male | 2 | 0.0 |
-| nonwhite | Num | Non-white race | 2 | 0.0 |
-| stroke | Char | Postoperative stroke | 2 | 0.0 |
-| mr_grade | Char | Postoperative mitral regurgitation grade | 4 | 0.0 |
 | discharge | Char | Discharge destination | 3 | 0.0 |
-| approach | Char | Surgical or transcatheter replacement | 2 | 0.0 |
+| dt_surg | Num | Date of operation | 766 | 0.0 |
+| e_e | Num | Mitral E/e’ ratio | 188 | 5.4 |
+| female | Num | Female | 2 | 0.0 |
+| hx_chf | Num | History of heart failure | 2 | 0.0 |
+| hx_dm | Num | Diabetes | 2 | 0.0 |
+| icu_hours | Num | Hours in intensive care | 82 | 0.0 |
+| iv_dead | Num | Follow-up to death or censoring (years) | 777 | 0.0 |
+| iv_opyrs | Num | Years from 1 January 1990 to operation | 787 | 0.0 |
+| iv_reint | Num | Follow-up to reintervention, death or censoring (years) | 775 | 0.0 |
+| iv_reop | Num | Follow-up to reoperation (years) | 774 | 0.0 |
+| la_diam | Num | Left atrial diameter (cm) | 32 | 5.8 |
+| log_los | Num | Postoperative length of stay (log days) | 19 | 0.0 |
+| los | Num | Postoperative length of stay (days) | 19 | 0.0 |
+| lvedd | Num | LV end-diastolic dimension (cm) | 36 | 5.4 |
+| lvef | Num | LV ejection fraction (%) | 53 | 0.0 |
+| lvesd | Num | LV end-systolic dimension (cm) | 40 | 4.6 |
+| male | Num | Male | 2 | 0.0 |
+| match_pair | Num | In a matched pair (simulated) | 2 | 0.0 |
+| mr_grade | Char | Postoperative mitral regurgitation grade | 4 | 0.0 |
+| mv_procedure | Char | Mitral repair or replacement | 2 | 0.0 |
+| nonwhite | Num | Non-white race | 2 | 0.0 |
+| nyha_pr | Num | NYHA functional class | 4 | 0.0 |
+| plvmassi | Num | LV mass index (g/m2) | 141 | 0.0 |
+| prior_ops | Num | Number of prior cardiac operations | 4 | 0.0 |
+| race_grp | Char | Race | 3 | 0.0 |
+| reint | Num | Reintervention | 2 | 0.0 |
+| reop | Num | Reoperation | 2 | 0.0 |
+| rvsp | Num | RV systolic pressure (mmHg) | 58 | 4.2 |
+| stroke | Char | Postoperative stroke | 2 | 0.0 |
 | valve_size | Char | Prosthesis size | 3 | 0.0 |
 | valve_type | Char | Prosthesis type | 3 | 0.0 |
-| prior_ops | Num | Number of prior cardiac operations | 4 | 0.0 |
-| match_pair | Num | In a matched pair (simulated) | 2 | 0.0 |
-| complication | Num | Major postoperative complication | 2 | 0.0 |
-| los | Num | Postoperative length of stay (days) | 19 | 0.0 |
-| log_los | Num | Postoperative length of stay (log days) | 19 | 0.0 |
-| cpb_time | Num | Cardiopulmonary bypass time (minutes) | 120 | 0.0 |
-| lvedd | Num | LV end-diastolic dimension (cm) | 36 | 5.4 |
-| lvesd | Num | LV end-systolic dimension (cm) | 40 | 4.6 |
-| la_diam | Num | Left atrial diameter (cm) | 32 | 5.8 |
-| rvsp | Num | RV systolic pressure (mmHg) | 58 | 4.2 |
-| e_e | Num | Mitral E/e’ ratio | 188 | 5.4 |
-| mv_procedure | Char | Mitral repair or replacement | 2 | 0.0 |
-| reint | Num | Reintervention | 2 | 0.0 |
-| iv_reint | Num | Follow-up to reintervention, death or censoring (years) | 775 | 0.0 |
+| vent | Num | Prolonged ventilation | 2 | 0.0 |
 
 Table 2: Contents: 800 rows, 41 columns
 
@@ -619,8 +621,8 @@ Code
 
 ``` r
 # unnumbered: each child chunk below carries its own label and caption
-# Each death panel gets dc-gfup's follow-up table over its own two columns,
-# through hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
+# Each death panel, and each event in an event panel, gets dc-gfup's follow-up
+# table over its own two columns, through hvtiRutilities::followup_check(), the function dc-gfup calls. No identifier is
 # selected, so the report carries no patient-level column; run dc-gfup to review
 # the suspicious rows themselves.
 if (exists("COLOURS", inherits = FALSE)) stop("COLOURS is now COLORS: rename it in edit-study-choices ",
@@ -704,6 +706,24 @@ for (i in seq_len(nrow(fp$data))) {
                          .with, collapse = ", "),
                    ", and red crosses patients who died")
   }
+  # Each event gets the follow-up table a death panel gets, over its own
+  # indicator and interval and named as the figure names it. It sits outside
+  # the branch above, which test-dc-eda.R keeps equal to dc-gfup's.
+  if (row$type != "followup") {
+    for (j in seq_len(k)) {
+      .ev <- EVENTS[[nm]]$event[[j]]
+      fc <- hvtiRutilities::followup_check(d, event = .ev, followup = EVENTS[[nm]]$time[[j]],
+                                           stats = .followup_stats)
+      .followup <- .followup_table(fc, d, .ev)
+      # By the event's place in the panel, not its column name: .child() cleans
+      # a label to lowercase letters, digits and hyphens, so ev_x and ev.x
+      # would become one label and stop the render.
+      .child(paste("tbl gfup", nm, "event", j, "followup"),
+             paste0("Follow-up, ", levels[[1L + j]], ", by patient group: missing, negative and zero values, ",
+                    "and the distribution (years)"),
+             "knitr::kable(.followup, row.names = FALSE, digits = 3)")
+    }
+  }
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
     theme_hv_manuscript(base_size = 12)
   file <- save_figure(p, paste0("dc-eda-gfup-", nm), linked = TRUE)
@@ -751,6 +771,21 @@ operation.
 ### Reoperation
 
 800 patients drawn; 0 missing a column this panel needs.
+
+Code
+
+``` r
+knitr::kable(.followup, row.names = FALSE, digits = 3)
+```
+
+| interval | patients | n | missing | negative | zero | mean | sd | min | p15 | median | p75 | p85 | p90 | max | total |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| iv_reop | All patients | 800 | 0 | 0 | 7 | 7.320 | 6.663 | 0.000 | 1.167 | 5.399 | 10.794 | 13.800 | 16.658 | 33.934 | 5855.969 |
+| iv_reop | Event | 200 | 0 | 0 | 0 | 6.983 | 5.864 | 0.111 | 1.347 | 5.548 | 9.953 | 13.126 | 15.316 | 25.828 | 1396.657 |
+| iv_reop | Censored | 600 | 0 | 0 | 7 | 7.432 | 6.909 | 0.000 | 1.114 | 5.314 | 11.261 | 14.299 | 17.688 | 33.934 | 4459.312 |
+
+Table 5: Follow-up, Reoperation, by patient group: missing, negative and
+zero values, and the distribution (years)
 
 Code
 
@@ -861,7 +896,7 @@ knitr::kable(stats, digits = 2, row.names = FALSE)
 | iv_opyrs | Years from 1 January 1990 to operation | 800 | 0 | 17.43 | 9.83 | 0.07 | 5.80 | 17.38 | 29.02 | 34.94 |
 | iv_dead | Follow-up to death or censoring (years) | 800 | 0 | 9.48 | 8.09 | 0.00 | 1.54 | 7.14 | 18.96 | 34.60 |
 
-Table 5: Continuous variables
+Table 6: Continuous variables
 
 ### Continuous variables, page 1
 
@@ -910,7 +945,7 @@ knitr::kable(freq, row.names = FALSE)
 | dead     | 0     | 355 |    44.4 |
 | dead     | 1     | 445 |    55.6 |
 
-Table 6: Categorical variables, missing counted
+Table 7: Categorical variables, missing counted
 
 ### Categorical variables, percent, page 1
 
@@ -952,9 +987,9 @@ frequency table above names them.
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-03 08:14:34 EST  |
-|                 | Ended            | 2026-11-03 08:14:44 EST  |
-|                 | Duration         | 10 s                     |
+| Run             | Started          | 2026-11-06 08:11:56 EST  |
+|                 | Ended            | 2026-11-06 08:12:04 EST  |
+|                 | Duration         | 8 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -962,13 +997,13 @@ frequency table above names them.
 |                 | Template         | dc.eda                   |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.5                    |
-| Dataset `built` | Version file     | built_20261103.parquet   |
-|                 | Version date     | 2026-11-03               |
+|                 | hvtiRtemplates   | 1.5.6                    |
+| Dataset `built` | Version file     | built_20261106.parquet   |
+|                 | Version date     | 2026-11-06               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | b236a472f1f3             |
+|                 | sha256           | d99147a5c095             |
 |                 | Manifest         | current                  |
 | Reproducibility | renv             | not active               |
-|                 | renv.lock sha256 | d09f96b6cd21             |
+|                 | renv.lock sha256 | ed18165d16bf             |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:15
+2026-11-06 08:12
 
 An `ac` job is the first look at an outcome: the Kaplan-Meier life
 table, survival and patients at risk at the reporting horizons, the
@@ -56,8 +56,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.5
+**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -200,7 +200,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261103.parquet) |
+| Source              | dataset `built` (built_20261106.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -2158,9 +2158,9 @@ Figure 6: Survival by hx_chf, with patients at risk
 
 | Group           | Item                | Value                    |
 |:----------------|:--------------------|:-------------------------|
-| Run             | Started             | 2026-11-03 08:15:11 EST  |
-|                 | Ended               | 2026-11-03 08:15:16 EST  |
-|                 | Duration            | 5 s                      |
+| Run             | Started             | 2026-11-06 08:12:37 EST  |
+|                 | Ended               | 2026-11-06 08:12:43 EST  |
+|                 | Duration            | 6 s                      |
 |                 | Status              | final                    |
 |                 | Rendered by         | gallery                  |
 |                 | Host                | gallery                  |
@@ -2170,13 +2170,13 @@ Figure 6: Survival by hx_chf, with patients at risk
 |                 | Template            | ac                       |
 |                 | Subject             | dead                     |
 |                 | Type                | hz                       |
-|                 | hvtiRtemplates      | 1.5.5                    |
-| Dataset `built` | Version file        | built_20261103.parquet   |
-|                 | Version date        | 2026-11-03               |
+|                 | hvtiRtemplates      | 1.5.6                    |
+| Dataset `built` | Version file        | built_20261106.parquet   |
+|                 | Version date        | 2026-11-06               |
 |                 | Source file         | built.rds                |
 |                 | Rows kept           | 725 rows on 725 patients |
 |                 | WHERE               | `!is.na(creat_pr)`       |
-|                 | sha256              | b236a472f1f3             |
+|                 | sha256              | d99147a5c095             |
 |                 | Manifest            | current                  |
 | Reproducibility | renv                | not active               |
-|                 | renv.lock sha256    | d09f96b6cd21             |
+|                 | renv.lock sha256    | ed18165d16bf             |

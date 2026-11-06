@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:20
+2026-11-06 08:18
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -76,8 +76,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `echo` `echo_20261103.parquet`, dated 2026-11-03 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.5
+**final** · data `echo` `echo_20261106.parquet`, dated 2026-11-06 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -277,7 +277,7 @@ if (length(.chr)) {
 
 | Data                |                                        |
 |:--------------------|:---------------------------------------|
-| Source              | dataset `echo` (echo_20261103.parquet) |
+| Source              | dataset `echo` (echo_20261106.parquet) |
 | Rows read           | 1,180                                  |
 | ID                  | `patient_id`                           |
 | Identifiers dropped | none                                   |
@@ -408,7 +408,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 192 | 0.8868893 |
+| l2 | lvef | 191 | 0.8794133 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -422,7 +422,7 @@ save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/7b1d23aa4110bbe2288b761fcb7a5595.png)
+![](assets/69f6295ba2ea53000c0ba7705f4f73d4.png)
 
 Figure 1: Cross-validated error by boosting iteration. The black solid
 line is the error after each iteration, and the black dashed vertical
@@ -437,7 +437,7 @@ save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/5f479e3e7d51fe9d04ca36fd26c75465.png)
+![](assets/7a200b0493200ee2d63b2c84fdfd5ae5.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
 per parameter. Each black solid line is the parameter’s fitted value
@@ -454,7 +454,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/e0f2b4ecc76f26f54fb23ea69abd44c6.png)
+![](assets/5ff4c774e210691551f1a47b04071261.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins.
 Each gray horizontal segment spans a time bin at its observed mean, with
@@ -477,7 +477,7 @@ save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
-![](assets/2806a123a06001a65fb93766724f409a.png)
+![](assets/fd1fc068f58d9d2e8cf607f7131904c8.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time, one panel for each. Horizontal dark gray bars
@@ -583,12 +583,12 @@ Code
 .p
 ```
 
-![](assets/b3c1e107ce3647bde5878b763e3955a8.png)
+![](assets/aa3ac22573d674e082c4ba5d007e2fc6.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-1 of 2: nyha_pr, hx_chf, age, bmi.
+1 of 2: nyha_pr, hx_chf, age, female.
 
 Code
 
@@ -596,12 +596,12 @@ Code
 .p
 ```
 
-![](assets/e943aeecdc727147c5247b5683ce047d.png)
+![](assets/f29f5f43ef436700ebf8cb6999bfb1b3.png)
 
 Figure 6: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-2 of 2: hx_dm, female.
+2 of 2: bmi, hx_dm.
 
 Code
 
@@ -646,7 +646,7 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/9c93b5a012bc8abb3bb2b22e57ea2300.png)
+![](assets/e522eef9c00369e0a47ea7e75db73214.png)
 
 Figure 7: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time. Thin translucent black lines trace
@@ -674,9 +674,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 | Group           | Item             | Value                        |
 |:----------------|:-----------------|:-----------------------------|
-| Run             | Started          | 2026-11-03 08:18:30 EST      |
-|                 | Ended            | 2026-11-03 08:20:27 EST      |
-|                 | Duration         | 1 min 57 s                   |
+| Run             | Started          | 2026-11-06 08:16:19 EST      |
+|                 | Ended            | 2026-11-06 08:18:29 EST      |
+|                 | Duration         | 2 min 9 s                    |
 |                 | Status           | final                        |
 |                 | Rendered by      | gallery                      |
 |                 | Host             | gallery                      |
@@ -684,14 +684,14 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 |                 | Template         | nb.boostmtree                |
 |                 | Subject          | lvef                         |
 |                 | Type             | boost                        |
-|                 | hvtiRtemplates   | 1.5.5                        |
-| Dataset `echo`  | Version file     | echo_20261103.parquet        |
-|                 | Version date     | 2026-11-03                   |
+|                 | hvtiRtemplates   | 1.5.6                        |
+| Dataset `echo`  | Version file     | echo_20261106.parquet        |
+|                 | Version date     | 2026-11-06                   |
 |                 | Source file      | echo.rds                     |
 |                 | Rows kept        | 1,180 rows on 300 patients   |
 |                 | WHERE            | none                         |
-|                 | sha256           | 94bd116a865f                 |
+|                 | sha256           | 96a19e865571                 |
 |                 | Manifest         | current                      |
 | Reproducibility | Seed             | 2026                         |
 |                 | renv             | not active                   |
-|                 | renv.lock sha256 | d09f96b6cd21                 |
+|                 | renv.lock sha256 | ed18165d16bf                 |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:11
+2026-11-06 08:08
 
 This job reports a bootstrap variable selection screen over a **Cox
 proportional hazards** model: how often each candidate survived stepwise
@@ -103,7 +103,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.5
+hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -394,7 +394,7 @@ provenance
     9                                                                        0
     10                                                                     0.0
     11                                                           version:0.9.7
-    12 sha256:b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6
+    12 sha256:d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace
     13                                               1 distinct (listed below)
 
 Code
@@ -921,8 +921,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-03 08:11:45 EST |
-|  | Ended | 2026-11-03 08:11:47 EST |
+| Run | Started | 2026-11-06 08:08:25 EST |
+|  | Ended | 2026-11-06 08:08:27 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -931,14 +931,14 @@ saveRDS(report, report_file)
 |  | Template | bc |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.5.5 |
-| Dataset `built` | Version file | built_20261103.parquet |
-|  | Version date | 2026-11-03 |
+|  | hvtiRtemplates | 1.5.6 |
+| Dataset `built` | Version file | built_20261106.parquet |
+|  | Version date | 2026-11-06 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | b236a472f1f3 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bc.rds` (bootstrap-bag), rendered not recorded, data built_20261103.parquet |
+| Upstream | Handoff | `dead-boot/bc.rds` (bootstrap-bag), rendered not recorded, data built_20261106.parquet |
 | Reproducibility | renv | not active |
-|  | renv.lock sha256 | d09f96b6cd21 |
+|  | renv.lock sha256 | ed18165d16bf |

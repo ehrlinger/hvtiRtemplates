@@ -5,5 +5,5 @@ to see their documentation.
 
 - hvtiRutilities:
 
-  [`hvti_non_prefixes()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_non_prefixes.html),
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+  [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html),
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)

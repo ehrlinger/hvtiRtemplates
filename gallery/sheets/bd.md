@@ -28,7 +28,7 @@ on the gallery's synthetic study.
 - **No dataset to read.** This job builds the study dataset rather than
   reading one; the choices marked `EDIT:` say what it starts from.
 - **Packages:** `hvtiRdatabuild` (\>= 0.3.3), `hvtiRutilities` (\>=
-  1.5.17). The job checks each floor when it starts, so an older library
+  1.5.20). The job checks each floor when it starts, so an older library
   stops it at the top rather than partway through.
 
 ## Outline
@@ -66,5 +66,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.5 · built 2026-11-03.
+Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
 The template holds the details; this sheet is its outline.

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:17
+2026-11-06 08:15
 
 Applies a saved `lm-binary` bundle to a declared validation cohort. This
 job never refits, updates, or overwrites the source model.
@@ -33,8 +33,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.5
+**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.6
 
 Code
 
@@ -43,7 +43,7 @@ Code
 # study dataset that the training job did not use, chosen by WHERE. To validate
 # on a file of its own, put it in the study's datasets folder and register it
 # once, from the study root, under a name of its own:
-#   hvtiRutilities::register_data(built = "validation.csv", dataset = "validation",
+#   hvtiRutilities::register_data(file = "validation.csv", dataset = "validation",
 #                                 role = "named", population = "Operated 2015 onward")
 # then set DATASET <- "validation". It must identify patients by the same column
 # as the training data: the training-overlap chunk compares the two cohorts by
@@ -122,7 +122,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME)
 
 | Data |  |
 |:---|:---|
-| Source | dataset `built` (built_20261103.parquet) |
+| Source | dataset `built` (built_20261106.parquet) |
 | Rows read | 800 |
 | ID | `patient_id` |
 | Identifiers dropped | none |
@@ -272,8 +272,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-03 08:17:39 EST |
-|  | Ended | 2026-11-03 08:17:39 EST |
+| Run | Started | 2026-11-06 08:15:19 EST |
+|  | Ended | 2026-11-06 08:15:20 EST |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -282,14 +282,14 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 |  | Template | lm.checkpred |
 |  | Subject | stroke |
 |  | Type | model |
-|  | hvtiRtemplates | 1.5.5 |
-| Dataset `built` | Version file | built_20261103.parquet |
-|  | Version date | 2026-11-03 |
+|  | hvtiRtemplates | 1.5.6 |
+| Dataset `built` | Version file | built_20261106.parquet |
+|  | Version date | 2026-11-06 |
 |  | Source file | built.rds |
 |  | Rows kept | 228 rows on 228 patients |
 |  | WHERE | `as.integer(format(dt_surg, "%Y")) >= 2015` |
-|  | sha256 | b236a472f1f3 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-11-03 08:17:33 -0500, data built_20261103.parquet |
+| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-11-06 08:15:14 -0500, data built_20261106.parquet |
 | Reproducibility | renv | not active |
-|  | renv.lock sha256 | d09f96b6cd21 |
+|  | renv.lock sha256 | ed18165d16bf |

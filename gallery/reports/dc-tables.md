@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:14
+2026-11-06 08:11
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -63,8 +63,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.5
+**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -274,7 +274,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261103.parquet) |
+| Source              | dataset `built` (built_20261106.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -722,8 +722,8 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-03 08:14:11 EST  |
-|                 | Ended            | 2026-11-03 08:14:13 EST  |
+| Run             | Started          | 2026-11-06 08:11:33 EST  |
+|                 | Ended            | 2026-11-06 08:11:35 EST  |
 |                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -733,13 +733,13 @@ Correlation variant not requested (`CORR <- NULL`).
 |                 | Template         | dc.tables                |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.5                    |
-| Dataset `built` | Version file     | built_20261103.parquet   |
-|                 | Version date     | 2026-11-03               |
+|                 | hvtiRtemplates   | 1.5.6                    |
+| Dataset `built` | Version file     | built_20261106.parquet   |
+|                 | Version date     | 2026-11-06               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |
-|                 | sha256           | b236a472f1f3             |
+|                 | sha256           | d99147a5c095             |
 |                 | Manifest         | current                  |
 | Reproducibility | renv             | not active               |
-|                 | renv.lock sha256 | d09f96b6cd21             |
+|                 | renv.lock sha256 | ed18165d16bf             |

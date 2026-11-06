@@ -26,8 +26,9 @@ on the gallery's synthetic study.
   that job saved (`sid.rds`). For a final render, render it final too: a
   final render refuses a hand-off saved from unregistered data.
 - **Packages:** `cluster` (\>= 2.1.8), `hvtiPlotR` (\>= 2.8.9),
-  `hvtiRutilities`. The job checks each floor when it starts, so an
-  older library stops it at the top rather than partway through.
+  `hvtiRutilities` (\>= 1.5.20). The job checks each floor when it
+  starts, so an older library stops it at the top rather than partway
+  through.
 
 ## Outline
 
@@ -66,5 +67,5 @@ and it records the job's provenance beside the report.
   `EDIT:` name the file and its set. Add it with
   `add_job("vt.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.5 · built 2026-11-03.
+Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
 The template holds the details; this sheet is its outline.

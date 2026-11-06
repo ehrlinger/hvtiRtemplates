@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:18
+2026-11-06 08:16
 
 Fits a Poisson or negative-binomial balancing score for a count
 exposure. The distribution is a reviewed study choice; the template
@@ -34,8 +34,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.5
+**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.6
 
 Code
 
@@ -116,7 +116,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTOR
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261103.parquet) |
+| Source              | dataset `built` (built_20261106.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -248,9 +248,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item             | Value                                     |
 |:----------------|:-----------------|:------------------------------------------|
-| Run             | Started          | 2026-11-03 08:18:25 EST                   |
-|                 | Ended            | 2026-11-03 08:18:25 EST                   |
-|                 | Duration         | 1 s                                       |
+| Run             | Started          | 2026-11-06 08:16:13 EST                   |
+|                 | Ended            | 2026-11-06 08:16:13 EST                   |
+|                 | Duration         | 0 s                                       |
 |                 | Status           | final                                     |
 |                 | Rendered by      | gallery                                   |
 |                 | Host             | gallery                                   |
@@ -258,13 +258,13 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |                 | Template         | lm.balancing_count                        |
 |                 | Subject          | priorops                                  |
 |                 | Type             | balancing                                 |
-|                 | hvtiRtemplates   | 1.5.5                                     |
-| Dataset `built` | Version file     | built_20261103.parquet                    |
-|                 | Version date     | 2026-11-03                                |
+|                 | hvtiRtemplates   | 1.5.6                                     |
+| Dataset `built` | Version file     | built_20261106.parquet                    |
+|                 | Version date     | 2026-11-06                                |
 |                 | Source file      | built.rds                                 |
 |                 | Rows kept        | 800 rows on 800 patients                  |
 |                 | WHERE            | none                                      |
-|                 | sha256           | b236a472f1f3                              |
+|                 | sha256           | d99147a5c095                              |
 |                 | Manifest         | current                                   |
 | Reproducibility | renv             | not active                                |
-|                 | renv.lock sha256 | d09f96b6cd21                              |
+|                 | renv.lock sha256 | ed18165d16bf                              |

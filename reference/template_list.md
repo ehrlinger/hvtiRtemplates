@@ -50,7 +50,7 @@ accepted as input. The directory's leading digits order the folders and
 are stripped from `folder`. The placement test requires the job catalog
 and skips when it is absent. Its internal lookup helper uses the
 catalog's `(prefix, qualifier)` row, falling back to
-[`hvti_taxonomy`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+[`hvti_taxonomy`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
 when the catalog or matching row is absent. A separate test checks that
 every template directory names a taxonomy folder, including when the
 catalog is absent.

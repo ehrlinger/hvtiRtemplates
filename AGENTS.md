@@ -3,8 +3,8 @@
 Analysis job templates for the HVTI CORR group, plus the prefix taxonomy
 that names them. Twenty-four exports across 42 source files (counted at
 1.5.0), in four groups: - the taxonomy and catalog:
-[`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html),
-[`hvti_non_prefixes()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_non_prefixes.html),
+[`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
+[`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html),
 [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
 [`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
 and
@@ -135,7 +135,7 @@ Widened to `"roadmap|taxonomy"` in
 
 **When a change adds a branch that only runs with the catalog present,
 assert it:** every template shipped today sits in the folder
-[`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+[`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
 names, so catalog and taxonomy agree and a regression to taxonomy-only
 stays green. Drive such a test from a TEMPORARY catalog, so it covers
 the divergent case and does not go stale when the real one is edited.
@@ -152,7 +152,7 @@ confirm the new tests go red.
   not carry a habit across.
 - **Lines are 135 characters here, not 80.** `.lintr` raises
   `line_length_linter` because
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   is a data table written as code — 42 column-aligned rows whose
   alignment is the only thing making them legible. Every other default
   linter is on and enforced, `commas_linter` included: it has already
@@ -179,7 +179,7 @@ confirm the new tests go red.
   as an R port does. ⚠️ **The gate is open for every prefix the taxonomy
   documents, and nothing is waiting on a second exemplar.** A corpus
   census
-  ([`hvtiRutilities::job_census()`](https://rdrr.io/pkg/hvtiRutilities/man/job_census.html),
+  ([`hvtiRutilities::job_census()`](https://ehrlinger.github.io/hvtiRutilities/reference/job_census.html),
   2026-08-27) over all of `/studies` found no prefix anywhere at one
   study; the smallest are `bq` at 2 and `cp`/`pm` at 5. An earlier
   version of this rule named `hz` and `hp` as blocked at one study each.
@@ -224,7 +224,7 @@ gaps are deliberate room: a new folder goes in at 25 and shifts nothing.
 Legacy studies keep their bare taxonomy names.
 [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 delegates placement to
-[`hvtiRutilities::study_dir()`](https://rdrr.io/pkg/hvtiRutilities/man/study_dir.html),
+[`hvtiRutilities::study_dir()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html),
 which preserves either consistent scheme and rejects a mixed study
 rather than splitting its estate across two spellings of one folder.
 [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)

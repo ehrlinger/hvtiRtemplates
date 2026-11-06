@@ -22,7 +22,7 @@ render_job(path, final = FALSE, quiet = FALSE)
   Logical. `TRUE` for the accepted result. A final render reads
   registered data only: a job whose data, or whose upstream hand-off,
   came from an unregistered build stops and names
-  [`hvtiRutilities::update_manifest()`](https://rdrr.io/pkg/hvtiRutilities/man/update_manifest.html).
+  [`hvtiRutilities::update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html).
 
 - quiet:
 

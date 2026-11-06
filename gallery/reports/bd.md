@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:11
+2026-11-06 08:07
 
 This job cuts the study’s dataset from a master snapshot, records who
 was excluded and why, and writes the study’s working dataset with its
@@ -22,7 +22,7 @@ belong to the master’s corrections, in hvtiRdatabuild, so every study
 sees them); imputation, propensity scores and variables for one model (a
 `vars` job).
 
-**final** · rendered by gallery on gallery · hvtiRtemplates 1.5.5
+**final** · rendered by gallery on gallery · hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -48,7 +48,7 @@ never from chunks run by hand.
 
 A comparison build: study_cohort.rds is not the study dataset. It is
 compared against the study dataset built.rds, registered as
-built_20261103.parquet, which this build leaves unchanged.
+built_20261106.parquet, which this build leaves unchanged.
 
 | Item                           | Value |
 |:-------------------------------|------:|
@@ -159,14 +159,14 @@ console
 |:---|:---|
 | Mode | Working file only |
 | Master snapshot | built.parquet |
-| Master SHA-256 | 387e49a8b89b038fe5a8b4afc8532fa46b5cb7f950f2dbcbd197e8f58e8f1553 |
+| Master SHA-256 | fc5f56845a0e81f22412f7c6e44f244895c85b576fb76038154a4ad276154dda |
 | Rehashed this render | no |
 | Master parent release | NA |
 | Rows in the dataset | 683 |
 | Patients | 683 |
 | Columns | 14 |
-| Study dataset before | built_20261103.parquet |
-| Study dataset after | built_20261103.parquet |
+| Study dataset before | built_20261106.parquet |
+| Study dataset after | built_20261106.parquet |
 | Registration | Working file only: the study’s dataset is still built.rds, so this build was not declared or registered |
 | Build reviewed (sha256) | 6596c1a4a83541cce8b973dd2a75fa6c5ceec316516dea1f1bbbe3ae4b21f7f8 |
 
@@ -209,8 +209,8 @@ Table 10: Type, missing count and range of each column
 
 | Group           | Item             | Value                   |
 |:----------------|:-----------------|:------------------------|
-| Run             | Started          | 2026-11-03 08:11:09 EST |
-|                 | Ended            | 2026-11-03 08:11:10 EST |
+| Run             | Started          | 2026-11-06 08:07:44 EST |
+|                 | Ended            | 2026-11-06 08:07:45 EST |
 |                 | Duration         | 1 s                     |
 |                 | Status           | final                   |
 |                 | Rendered by      | gallery                 |
@@ -219,6 +219,6 @@ Table 10: Type, missing count and range of each column
 |                 | Template         | bd                      |
 |                 | Subject          | study                   |
 |                 | Type             | build                   |
-|                 | hvtiRtemplates   | 1.5.5                   |
+|                 | hvtiRtemplates   | 1.5.6                   |
 | Reproducibility | renv             | not active              |
-|                 | renv.lock sha256 | d09f96b6cd21            |
+|                 | renv.lock sha256 | ed18165d16bf            |

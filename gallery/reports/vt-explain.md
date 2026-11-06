@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:29
+2026-11-06 08:24
 
 Explains the `vt-fit` job in this set: which patients the twins say
 repair suits, stratified by the echo-phenotype clusters.
@@ -72,7 +72,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.5
+hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -308,7 +308,7 @@ if (!nrow(.cp)) {
 }
 ```
 
-![](assets/7a567e535230d8dab4b70e9340808b8f.png)
+![](assets/537e773f1d571989b59869fc9c6cf510.png)
 
 Figure 5: Each treated patient in distribution: predicted RMST under the
 arm received (own) against under the other arm (twin). On the dashed
@@ -400,7 +400,7 @@ if (!nrow(.dd)) {
 }
 ```
 
-![](assets/4dd8ac5e55e648aacdc60eacbedc3a1c.png)
+![](assets/74871078baa46502e2684f4b191151c9.png)
 
 Figure 6: Each treated patient’s RMST difference against their distance
 to the nearest patient of the other arm. Dashed: that arm’s largest own
@@ -551,7 +551,7 @@ if (!is.null(.sa) && nrow(.sa)) {
 }
 ```
 
-![](assets/af9c33244896e3524213b7b733881e9b.png)
+![](assets/d507232a0db8d7ec1b7278f3bb8af0e9.png)
 
 Figure 7: The RMST difference by stratum, one panel per arm received.
 Box: 15th to 85th percentile of the patients in distribution, whiskers
@@ -677,18 +677,18 @@ print(knitr::kable(.betas, digits = 2, row.names = FALSE))
 | variable |  beta | lower | upper | unestimable |
 |:---------|------:|------:|------:|------------:|
 | age      |  0.27 |  0.20 |  0.34 |           0 |
-| female   |  0.06 |  0.00 |  0.13 |           0 |
-| bmi      |  0.00 | -0.08 |  0.06 |           0 |
-| hx_chf   | -0.05 | -0.12 |  0.01 |           0 |
+| female   |  0.06 | -0.01 |  0.13 |           0 |
+| bmi      |  0.00 | -0.07 |  0.06 |           0 |
+| hx_chf   | -0.05 | -0.11 |  0.02 |           0 |
 | hx_dm    |  0.00 | -0.06 |  0.07 |           0 |
-| nyha_pr  |  0.04 | -0.03 |  0.11 |           0 |
-| lvef     | -0.05 | -0.12 |  0.03 |           0 |
-| creat_pr |  0.00 | -0.07 |  0.07 |           0 |
+| nyha_pr  |  0.04 | -0.02 |  0.11 |           0 |
+| lvef     | -0.05 | -0.12 |  0.02 |           0 |
+| creat_pr |  0.00 | -0.08 |  0.07 |           0 |
 | lvedd    |  0.84 |  0.81 |  0.88 |           0 |
-| lvesd    |  0.86 |  0.83 |  0.90 |           0 |
-| la_diam  |  0.18 |  0.10 |  0.25 |           0 |
-| rvsp     |  0.16 |  0.09 |  0.24 |           0 |
-| e_e      |  0.09 |  0.03 |  0.16 |           0 |
+| lvesd    |  0.86 |  0.82 |  0.89 |           0 |
+| la_diam  |  0.18 |  0.12 |  0.25 |           0 |
+| rvsp     |  0.16 |  0.08 |  0.24 |           0 |
+| e_e      |  0.09 |  0.02 |  0.17 |           0 |
 
 Table 4: Standardized beta for each characteristic. A positive beta: the
 characteristic goes with a higher relative risk of the event by 8 under
@@ -713,7 +713,7 @@ if (!nrow(.bp)) {
 }
 ```
 
-![](assets/3d67207d20df9de7450818d4a0c94313.png)
+![](assets/853d941e23e79faaa316c9142e12c933.png)
 
 Figure 9: Standardized association of each characteristic with the
 estimated effect, by overlap-weighted regression. A positive beta: the
@@ -910,8 +910,8 @@ WarningBefore this goes in a manuscript
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-03 08:29:31 EST |
-|  | Ended | 2026-11-03 08:29:37 EST |
+| Run | Started | 2026-11-06 08:24:50 EST |
+|  | Ended | 2026-11-06 08:24:56 EST |
 |  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -921,16 +921,16 @@ WarningBefore this goes in a manuscript
 |  | Template | vt.explain |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.5.5 |
-| Dataset `built` | Version file | built_20261103.parquet |
-|  | Version date | 2026-11-03 |
+|  | hvtiRtemplates | 1.5.6 |
+| Dataset `built` | Version file | built_20261106.parquet |
+|  | Version date | 2026-11-06 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | b236a472f1f3 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered not recorded |
-|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-03 08:29:17 -0500, data built_20261103.parquet |
-|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-03 08:29:06 -0500, data built_20261103.parquet |
+|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-06 08:24:36 -0500, data built_20261106.parquet |
+|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-06 08:24:25 -0500, data built_20261106.parquet |
 | Reproducibility | renv | not active |
-|  | renv.lock sha256 | d09f96b6cd21 |
+|  | renv.lock sha256 | ed18165d16bf |

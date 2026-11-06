@@ -102,7 +102,7 @@ Do not run `renv::init()` or `organize_templates.sh` on the study:
 From here on, open the study’s `.Rproj` whenever you work on it. RStudio
 starts the session in the project directory, so there is no
 working-directory step to remember or repeat, and
-[`study_root()`](https://rdrr.io/pkg/hvtiRutilities/man/study_root.html),
+[`study_root()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_root.html),
 [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
 and
 [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
@@ -123,7 +123,7 @@ hvtiR::status()
 ```
 
 Expect
-[`study_status()`](https://rdrr.io/pkg/hvtiRutilities/man/study_status.html)
+[`study_status()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_status.html)
 to report that no dataset is registered yet. That is the next step.
 
 When the Console is already at the study root, use `"."` anywhere a
@@ -132,7 +132,7 @@ temporary path only because it cannot open an RStudio Project while
 pkgdown renders the page.
 
 The executable example needs no package environment, so it calls
-[`study_setup()`](https://rdrr.io/pkg/hvtiRutilities/man/study_setup.html),
+[`study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html),
 the step of `setup()` that writes the study’s identity, in its temporary
 directory:
 
@@ -147,10 +147,10 @@ study_setup(
   cleanup = FALSE,
   renv = FALSE
 )
-#> Study: /tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study
+#> Study: /tmp/RtmpHkNmSW/file1f21604a542/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -201,10 +201,10 @@ register_data(
   role = "study",
   population = "Synthetic full cohort"
 )
-#> Study: /tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study
+#> Study: /tmp/RtmpHkNmSW/file1f21604a542/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv, registered as built_20261106.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -327,16 +327,16 @@ study_jobs <- c(
   eda = add_job("dc", "cohort", "eda", adopted_root, "eda")
 )
 study_jobs
-#>                                                                               general 
-#> "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
-#>                                                                                tables 
-#>  "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
-#>                                                                                  gfup 
-#>    "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
-#>                                                                                trends 
-#>  "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
-#>                                                                                   eda 
-#>     "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
+#>                                                                              general 
+#> "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#>                                                                               tables 
+#>  "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>                                                                                 gfup 
+#>    "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>                                                                               trends 
+#>  "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
+#>                                                                                  eda 
+#>     "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output
@@ -375,7 +375,7 @@ Registration is endpoint-neutral: it records the dataset file, its
 population description and manifest facts, but does not declare a
 study-wide endpoint or cohort. After the study dataset is rebuilt,
 review the rebuilt file before registering it.
-[`hvtiRutilities::review_built()`](https://rdrr.io/pkg/hvtiRutilities/man/review_built.html)
+[`hvtiRutilities::review_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/review_built.html)
 compares the working file in the datasets folder with its registered
 version and describes how the data changed, without writing anything. It
 does not certify that the new file is analytically or clinically

@@ -30,7 +30,7 @@ read_job_data(
 - cfg:
 
   Study configuration, from
-  [`study_config`](https://rdrr.io/pkg/hvtiRutilities/man/study_config.html).
+  [`study_config`](https://ehrlinger.github.io/hvtiRutilities/reference/study_config.html).
 
 - dataset:
 
@@ -184,7 +184,7 @@ A list:
   one. When the dataset's source has been rebuilt since it was
   registered, the registered version is read and a final `"Note"` row
   says so, naming
-  [`hvtiRutilities::update_manifest()`](https://rdrr.io/pkg/hvtiRutilities/man/update_manifest.html),
+  [`hvtiRutilities::update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html),
   the call that registers the new file. A stale analysis set read in a
   draft gets a `"Note"` row the same way. With `join`, rows name the
   joined dataset and the rows read from it, count its records outside
@@ -246,7 +246,7 @@ notes it by name; a column named as a date or time is not read for that
 shape. A KEY column is never dropped. The record lists every column
 dropped. An explicit `id` or `key` matches its column ignoring case,
 because
-[`hvtiRutilities::read_built()`](https://rdrr.io/pkg/hvtiRutilities/man/read_built.html)
+[`hvtiRutilities::read_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html)
 lowercases column names. Identifier, key and date values are not
 printed: the record holds counts, and a `where` condition that mentions
 a `key` column, uses `.data` or calls a string lookup such as
@@ -273,10 +273,10 @@ written.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE)
-#> Study: /tmp/RtmpNrXZPA/job-data-example
+#> Study: /tmp/Rtmp0qgQbk/job-data-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpNrXZPA/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/Rtmp0qgQbk/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -286,10 +286,10 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
-#> Study: /tmp/RtmpNrXZPA/job-data-example
+#> Study: /tmp/Rtmp0qgQbk/job-data-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpNrXZPA/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/Rtmp0qgQbk/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv, registered as built_20261106.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars

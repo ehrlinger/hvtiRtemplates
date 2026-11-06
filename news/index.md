@@ -73,7 +73,7 @@
 
 - The `dc-eda` overview’s contents table lists variables alphabetically,
   as
-  [`hvtiRutilities::proc_contents()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_contents.html)
+  [`hvtiRutilities::proc_contents()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html)
   does by default and as `dc-general` already did, instead of in dataset
   order
   ([\#483](https://github.com/ehrlinger/hvtiRtemplates/issues/483)).
@@ -86,9 +86,9 @@
   panel of competing events gets one table per event.
 
 - The templates, tests and gallery scripts call
-  [`register_data()`](https://rdrr.io/pkg/hvtiRutilities/man/register_data.html)
+  [`register_data()`](https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html)
   and
-  [`declare_data()`](https://rdrr.io/pkg/hvtiRutilities/man/declare_data.html)
+  [`declare_data()`](https://ehrlinger.github.io/hvtiRutilities/reference/declare_data.html)
   with `file =`, which replaced `built =` in hvtiRutilities 1.5.20, so a
   job no longer prints its deprecation warning on every render.
   hvtiRtemplates now requires hvtiRutilities 1.5.20, and the `bd` and
@@ -195,7 +195,7 @@
   in-flight: its checks are `bd`’s Checks section. A job scaffolded from
   it should move its choices into the study’s `bd` job. The taxonomy
   keeps its `dt` row, so
-  [`job_census()`](https://rdrr.io/pkg/hvtiRutilities/man/job_census.html)
+  [`job_census()`](https://ehrlinger.github.io/hvtiRutilities/reference/job_census.html)
   still counts the legacy SAS `dt` jobs.
 
 - `bd` checks the dataset it built before registering it. A new Checks
@@ -354,14 +354,14 @@
   so a rebuild that keeps the shape and changes every event indicator is
   reported, not passed; cross-tabs with a missing value as a level of
   its own; the follow-up columns through
-  [`followup_check()`](https://rdrr.io/pkg/hvtiRutilities/man/followup_check.html);
+  [`followup_check()`](https://ehrlinger.github.io/hvtiRutilities/reference/followup_check.html);
   and the study’s named checks, written `condition ~ "Label"` as `bd`’s
   `EXCLUDE` is. A comparison build, under a `DATASET_ID` that is not the
   study’s dataset, is compared against the study’s dataset and the
   report says so. The report holds counts only: the rows behind a check
   and the patients on one side of a rebuild go to the console, never
   into the HTML. A check never writes. It needs
-  [`hvtiRutilities::proc_print()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_print.html)
+  [`hvtiRutilities::proc_print()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_print.html)
   (hvtiRutilities#262) and hvtiRdatabuild 0.3.3. Design:
   `dev/specs/2026-10-27-dt-datacheck-design.md`.
 
@@ -380,7 +380,7 @@
 
 - The `dt` template now checks for hvtiRutilities 1.5.17 or later, the
   first release with
-  [`proc_print()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_print.html),
+  [`proc_print()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_print.html),
   which its named checks call. It had checked for the function alone
   while that release was pending.
 
@@ -519,7 +519,7 @@
 
 - hvtiRtemplates now needs hvtiRutilities 1.5.15 or later. 1.5.15 adds
   the `rhf` row to
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html),
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
   which this package re-exports, so the taxonomy classifies the prefix
   of the new `rhf-fit` and `rhf-explain` templates. 1.5.13 reads a label
   file’s unquoted `No` and `Yes` as the text written, so a
@@ -824,7 +824,7 @@
   the study root, still reads registered data only. A final render reads
   registered data only, descriptive jobs included. A final render that
   reads a hand-off saved from an unregistered build stops and names
-  [`hvtiRutilities::update_manifest()`](https://rdrr.io/pkg/hvtiRutilities/man/update_manifest.html).
+  [`hvtiRutilities::update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html).
   Needs hvtiRutilities 1.5.12.
 
 - `bd` with `REGISTER = FALSE` now names its working file in
@@ -850,9 +850,9 @@
 ## hvtiRtemplates 1.5.0
 
 - Requires hvtiRutilities 1.5.11. `nb-boostmtree` asks
-  [`hvtiRutilities::cache_would_fit()`](https://rdrr.io/pkg/hvtiRutilities/man/cache_would_fit.html)
+  [`hvtiRutilities::cache_would_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_would_fit.html)
   whether its fit will run, the same decision
-  [`cache_fit()`](https://rdrr.io/pkg/hvtiRutilities/man/cache_fit.html)
+  [`cache_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_fit.html)
   makes, instead of reaching into hvtiRutilities’ internals. A job
   scaffolded from the development version that still calls
   `hvtiRtemplates:::.cache_would_fit()` keeps working: that now passes
@@ -924,7 +924,7 @@
   [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
   does, and installing boostmtree 2.0.8, which the new floor requires,
   because
-  [`cache_fit()`](https://rdrr.io/pkg/hvtiRutilities/man/cache_fit.html)
+  [`cache_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_fit.html)
   records package versions.
 
 - The `ac` template takes the biostats team’s review of 2026-10-21. It
@@ -960,7 +960,7 @@
 - The template catalog lists `vp-fit` and `vp-explain`, a VarPro
   variable screen and its partial dependence, at status `intake` until
   hvtiRutilities adds the `vp` prefix to
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html).
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html).
 
 - `hz`, `hm` and `hs-setup` now draw a figure in their own report, so
   each step can be checked before the next job reads it. `hz` draws its
@@ -1237,7 +1237,7 @@
   six most important variables the partial effects are drawn for, could
   change from one render of the same fit to the next. It now runs under
   `SEED` through
-  [`cache_fit()`](https://rdrr.io/pkg/hvtiRutilities/man/cache_fit.html),
+  [`cache_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_fit.html),
   as the fit does. The seed-hygiene test now lists `vimp.boostmtree()`
   among the calls that draw from R’s generator, which is how it had been
   missed.
@@ -1293,12 +1293,12 @@
   in a session. The fit is the same. The floor stays at 2.0.4.
 
 - Tests and examples pass `renv` and `cleanup` to
-  [`hvtiRutilities::study_setup()`](https://rdrr.io/pkg/hvtiRutilities/man/study_setup.html)
+  [`hvtiRutilities::study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html)
   explicitly, ahead of `hvtiRutilities` turning both on by default. A
   new test fails on any call that leaves them implicit.
 
 - The `hvtiRutilities` floor rises to 1.5.2, the first release whose
-  [`study_setup()`](https://rdrr.io/pkg/hvtiRutilities/man/study_setup.html)
+  [`study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html)
   takes `renv` and `cleanup`.
 
 - `nb-boostmtree`’s setup chunk, when boostmtree is missing or too old,
@@ -1312,7 +1312,7 @@
   records them in `renv.lock`, when the study is a renv project. It asks
   first, and writes nothing if the packages cannot be had. It needs
   hvtiRutilities 1.5.7 or later, the first release whose
-  [`study_need()`](https://rdrr.io/pkg/hvtiRutilities/man/study_need.html)
+  [`study_need()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_need.html)
   leaves the study unchanged when an install is declined.
 
 - `nb-boostmtree` gains a study choice, `MTRY`: the number of predictors
@@ -1534,9 +1534,9 @@
   `datasets/<DATASET_ID>.rds`, with a schema 1 build record beside it,
   `<DATASET_ID>.build.yml`, and with `REGISTER <- TRUE` registers that
   file as a dated version with
-  [`register_data()`](https://rdrr.io/pkg/hvtiRutilities/man/register_data.html)
+  [`register_data()`](https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html)
   the first time and
-  [`update_manifest()`](https://rdrr.io/pkg/hvtiRutilities/man/update_manifest.html)
+  [`update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
   after that. The version’s manifest provenance then reads `origin: bd`.
   The study choice `PUBLISH` is now `REGISTER`, and the `write-draft`
   and `publish` chunks are now `write-built` and `register`. The build
@@ -1549,7 +1549,7 @@
   `bd` needs hvtiRutilities 1.5.3 and checks for it in its setup chunk.
   Its tests no longer call `publish_dataset()`,
   `register_data(release_id =)` or
-  [`adopt_data_update()`](https://rdrr.io/pkg/hvtiRutilities/man/adopt_data_update.html),
+  [`adopt_data_update()`](https://ehrlinger.github.io/hvtiRutilities/reference/adopt_data_update.html),
   so they run with no deprecation warning.
 
 - Two regression-model templates: `rm-balancing_continuous`, a
@@ -1563,13 +1563,13 @@
 
 - The study-setup vignette’s “When registered data change” passage now
   reviews a rebuilt dataset with
-  [`hvtiRutilities::review_built()`](https://rdrr.io/pkg/hvtiRutilities/man/review_built.html)
+  [`hvtiRutilities::review_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/review_built.html)
   and registers it with
   `hvtiRutilities::update_manifest(dataset = "study")`, replacing the
   retired catalog-release pair
-  [`review_data_update()`](https://rdrr.io/pkg/hvtiRutilities/man/review_data_update.html)
+  [`review_data_update()`](https://ehrlinger.github.io/hvtiRutilities/reference/review_data_update.html)
   and
-  [`adopt_data_update()`](https://rdrr.io/pkg/hvtiRutilities/man/adopt_data_update.html).
+  [`adopt_data_update()`](https://ehrlinger.github.io/hvtiRutilities/reference/adopt_data_update.html).
 
 - The `lm` templates read stacked multiple imputations again. Since
   1.3.0 their data table stopped with “This job models one row per
@@ -1744,7 +1744,7 @@
 
 - The template catalog names the `lg` prefix “Logit calibration”, not
   “Logit trends”, matching
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   from hvtiRutilities. The description is unchanged: `lg` jobs calibrate
   a covariate against an event to choose its scale.
 
@@ -1802,7 +1802,7 @@
   The report now says that VarPro was given the imputed data. A saved
   `-varpro` result from an earlier render describes the old, smaller
   cohort, so
-  [`cache_fit()`](https://rdrr.io/pkg/hvtiRutilities/man/cache_fit.html)
+  [`cache_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_fit.html)
   stops on it and names the change: set `REFIT <- TRUE` once to
   recompute it
   ([\#166](https://github.com/ehrlinger/hvtiRtemplates/issues/166)).
@@ -1818,7 +1818,7 @@
 
 - `dc-eda` prints the abbreviation key under a section from the
   abbreviations
-  [`label_map()`](https://rdrr.io/pkg/hvtiRutilities/man/label_map.html)
+  [`label_map()`](https://ehrlinger.github.io/hvtiRutilities/reference/label_map.html)
   records for that section’s variables, instead of searching the
   shortened labels for each abbreviation. A label that says “SP” in its
   own words and is only cut no longer produces `SP = Surgical procedure`
@@ -1992,7 +1992,7 @@
 - A job reading a dataset whose source file has been rebuilt but not yet
   registered runs on the registered version and says so in its “The data
   this job read” table, with a Note row naming the
-  [`update_manifest()`](https://rdrr.io/pkg/hvtiRutilities/man/update_manifest.html)
+  [`update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
   call that registers the new file. Before, hvtiRutilities’ message
   printed bare wherever the data chunk happened to show it. The table’s
   Source row names the dated version the job read, such as
@@ -2163,7 +2163,7 @@
   they reported the quartiles: `dc-general`’s quantile table, the
   follow-up tables in `dc-gfup` and `dp-eda`, and the variable summaries
   in `dp-eda` and `dp-postage`. The follow-up tables take them from
-  [`hvtiRutilities::followup_check()`](https://rdrr.io/pkg/hvtiRutilities/man/followup_check.html),
+  [`hvtiRutilities::followup_check()`](https://ehrlinger.github.io/hvtiRutilities/reference/followup_check.html),
   whose default changed in hvtiRutilities 1.4.5, now the minimum.
 
 - [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
@@ -2292,7 +2292,7 @@
   upgrade it stayed valid and `REFIT = TRUE` kept the old result while
   the variable importance beside it was recomputed. The
   `gg_partial_rfsrc()` call now passes `packages = "randomForestSRC"` to
-  [`cache_fit()`](https://rdrr.io/pkg/hvtiRutilities/man/cache_fit.html);
+  [`cache_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_fit.html);
   the VarPro partial is unchanged, since its varpro fit already carries
   varPro’s version. Each existing `rf?-partial` cache goes stale exactly
   once, reporting `packages$randomForestSRC (absent) -> x.y.z`, and
@@ -2650,7 +2650,7 @@
   columns out, never draws the `ID`, and draws a `KEY` column such as a
   visit time only when `VARIABLES` names it. The deprecated `dp-postage`
   keeps its own data step. Every template’s setup chunk says to run
-  [`study_setup()`](https://rdrr.io/pkg/hvtiRutilities/man/study_setup.html)
+  [`study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html)
   when it is not inside a study.
 
 - The logistic templates read their data through
@@ -2725,7 +2725,7 @@
 
 - The data-route tests pass when run on their own. They evaluated
   template chunks that call
-  [`study_config()`](https://rdrr.io/pkg/hvtiRutilities/man/study_config.html)
+  [`study_config()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_config.html)
   without supplying it, so they depended on an earlier test file having
   attached hvtiRutilities, and a filtered run errored twice. No change
   to the templates.
@@ -2769,13 +2769,13 @@
 
 - New template `dp-eda` (`10_descriptive/`), the whole EDA report in one
   render: an overview of every column
-  ([`proc_contents()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_contents.html)),
+  ([`proc_contents()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html)),
   goodness of follow-up with `dc-gfup`’s tables, then continuous
   variables, categorical variables as percentages and categorical
   variables as counts, each with its table. `SECTIONS` picks any subset;
   the report keeps that order. Each section calls the function its
   standalone job calls (`hv_followup_panels()`,
-  [`followup_check()`](https://rdrr.io/pkg/hvtiRutilities/man/followup_check.html),
+  [`followup_check()`](https://ehrlinger.github.io/hvtiRutilities/reference/followup_check.html),
   `hv_eda_pages()`) with the same arguments, so a section is that job’s
   figure; `test-dp-eda.R` checks the pages byte for byte against
   `dp-postage`. Needs hvtiPlotR 2.7.18 and hvtiRutilities 1.4.2, the
@@ -2833,13 +2833,13 @@
   spelling.
 
 - **`dp-postage` and `dp-eda` keep shortened labels distinct**, through
-  [`hvtiRutilities::label_map()`](https://rdrr.io/pkg/hvtiRutilities/man/label_map.html).
+  [`hvtiRutilities::label_map()`](https://ehrlinger.github.io/hvtiRutilities/reference/label_map.html).
   Two new edit points: `LABEL_MAX` (default 40), the longest label a
   figure or table shows, and `ABBREVIATIONS` (default `NULL`), the job’s
   own abbreviations as `c("Phrase" = "Abbrev")`. The job merges them
   over the study’s `abbreviations:` in `_study.yml` and the group
   default list with
-  [`hvtiRutilities::study_abbreviations()`](https://rdrr.io/pkg/hvtiRutilities/man/study_abbreviations.html),
+  [`hvtiRutilities::study_abbreviations()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_abbreviations.html),
   so every job in a study shortens labels the same way. Labels that
   share a heading over the cap show it abbreviated
   (`Surgical procedure: ...` becomes `SP: ...`), and each section prints
@@ -2862,7 +2862,7 @@
 
 - `dc-gfup` and `dp-gfup` compute through shared functions, so the EDA
   report can call the same ones:
-  [`hvtiRutilities::followup_check()`](https://rdrr.io/pkg/hvtiRutilities/man/followup_check.html)
+  [`hvtiRutilities::followup_check()`](https://ehrlinger.github.io/hvtiRutilities/reference/followup_check.html)
   for the follow-up tables and
   [`hvtiPlotR::hv_followup_panels()`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_followup_panels.html)
   for the panels and their study window. The numbers and figures are
@@ -2887,9 +2887,9 @@
   `SHOW_PERCENT`, so one render shows the categorical variables both as
   percentages and as counts, with the same year bins. Each section opens
   with its table:
-  [`proc_means()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html)
+  [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html)
   for continuous variables, and one
-  [`proc_freq()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_freq.html)
+  [`proc_freq()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_freq.html)
   table, missing counted, for the categorical ones. `VARIABLES <- NULL`
   is the new default and draws every column except `X_VAR`, `EXCLUDE`
   and any column that looks like an identifier or a date, which the
@@ -2927,7 +2927,7 @@
   name.
 
 - `dc-gfup` now renders its cohort, interval,
-  [`proc_means()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html),
+  [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html),
   suspicious-row and cross-tab results as tables rather than printed
   console output, and points to `dp-gfup` for the figure.
 
@@ -2947,7 +2947,7 @@
 - Requires hvtiRutilities 1.4.0 or later, whose endpoint-neutral study
   registration the subject-based jobs depend on. The floor is now 1.4.1,
   for
-  [`followup_check()`](https://rdrr.io/pkg/hvtiRutilities/man/followup_check.html)
+  [`followup_check()`](https://ehrlinger.github.io/hvtiRutilities/reference/followup_check.html)
   (see the `dc-gfup` entry above).
 
 - Every scaffolded job now captures provenance while it executes, safely
@@ -3014,7 +3014,7 @@
   analysis set, and explains how the descriptive and plot job names work
   before an endpoint or analysis type has been chosen. It also warns
   that
-  [`update_manifest()`](https://rdrr.io/pkg/hvtiRutilities/man/update_manifest.html)
+  [`update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
   alone cannot safely refresh a registered dataset while `_study.yml`
   still carries cohort metadata. `fs` and `yaml` join `Suggests` because
   the executable article writes the synthetic analysis-set declarations
@@ -3023,7 +3023,7 @@
 - Six random forest templates: `rfs`, `rfc` and `rfr`, for survival,
   classification and continuous outcomes, each as a `fit` job and an
   `explain` job. The fit job grows the forest through
-  [`hvtiRutilities::cache_fit()`](https://rdrr.io/pkg/hvtiRutilities/man/cache_fit.html)
+  [`hvtiRutilities::cache_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_fit.html)
   and saves it for the explain job, which reads it back for VIMP, VarPro
   and dependence plots and never refits. Old `rfsrc.*` and `rf.*` jobs
   map onto the three by outcome; `inst/templates/README.md` has the
@@ -3065,16 +3065,16 @@
   release. (`main` briefly carried a 1.2.0 floor that never shipped;
   this entry describes the change between releases.) 1.2.0 ports SAS
   `PROC FREQ` and `PROC UNIVARIATE` as
-  [`proc_freq()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_freq.html)
+  [`proc_freq()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_freq.html)
   and
-  [`proc_univariate()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_univariate.html),
+  [`proc_univariate()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_univariate.html),
   and corrects
-  [`proc_means()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html)
+  [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html)
   weighted `nobs`, weighted `stderr` and the mode of a single
   observation. 1.2.1 adds
-  [`cache_fit()`](https://rdrr.io/pkg/hvtiRutilities/man/cache_fit.html)
+  [`cache_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_fit.html)
   and puts `rfr`, `sid` and `vt` in
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html),
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
   which the job catalog this package now reads (`hvtiR` 1.1.15) depends
   on: with 1.2.0 the catalog names three prefixes the taxonomy lacks. No
   template calls the new functions yet, so nothing renders differently.
@@ -3102,13 +3102,13 @@
 
 - **Templates find the study root through `_study.yml`.** Each template
   calls
-  [`hvtiRutilities::study_root()`](https://rdrr.io/pkg/hvtiRutilities/man/study_root.html)
+  [`hvtiRutilities::study_root()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_root.html)
   in place of looking for `_quarto.yml` in `.` or `..`, so a study needs
   no `_quarto.yml`, and a job renders the same from the Render button,
   `quarto render` or
   [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md),
   at any depth. A study must have been adopted with
-  [`hvtiRutilities::study_setup()`](https://rdrr.io/pkg/hvtiRutilities/man/study_setup.html).
+  [`hvtiRutilities::study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html).
 
 - **[`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
   finds the study root and opens or creates a job.** Called from
@@ -3124,9 +3124,9 @@
 
 - **The `dc-general` job template ships**, replacing
   `descriptive/dc.general`: overall statistics through
-  [`hvtiRutilities::proc_contents()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_contents.html)
+  [`hvtiRutilities::proc_contents()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html)
   and
-  [`proc_means()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html),
+  [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html),
   then base-R contingency tables, cumulative distributions (SAS
   `QNTLDEF=5` quantiles and the five lowest and highest values) and a
   Pearson pairwise-correlation sweep. `ID_COL` is off by default, so no
@@ -3248,7 +3248,7 @@
   row dropped now that it folds into `lm`. It moves together with
   [hvtiRutilities#113](https://github.com/ehrlinger/hvtiRutilities/pull/113),
   which drops `pm` from
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html),
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
   because `test-roadmap.R` checks catalog and taxonomy against each
   other both ways. The propensity-matching workflow reads 2 of 9, with
   `pm` no longer a member. 44 templates in scope, 10 on disk, unchanged.
@@ -3351,7 +3351,7 @@
 
 - **A template’s expected folder now comes from the job catalog, not
   from
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   alone.** The taxonomy maps a prefix to ONE folder, but a prefix may
   span several: `dp` is `graphs` for `trends`, `gfup`, `spaghetti` and
   `procs`, and `distributions` for `variable`. The old check asserted
@@ -3520,7 +3520,7 @@
 
 - The R test that parsed `FOLDER_ORDINAL` out of the guard and compared
   it to
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   is retired with its reasoning: the right answer to “this constant can
   go stale” turned out to be deleting the constant.
 
@@ -3735,7 +3735,7 @@ template, and no ordinal will ever be issued again.
   `boot_select()`, so no `bl`, `br` or `bc` bag existed to read. The
   gate screens a real built dataset instead, which exercises real
   variable names, a real correlation structure and
-  [`read_built()`](https://rdrr.io/pkg/hvtiRutilities/man/read_built.html);
+  [`read_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html);
   what it does not exercise is a candidate pool a study author chose.
   `bc` is the weakest of the three: of the 16 studies with a `bc` job,
   none has an R exemplar.
@@ -3833,7 +3833,7 @@ template, and no ordinal will ever be issued again.
 
 - Retired the two tests asserting that within-folder ordinal minors
   follow
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   row order. They enforced the derivation
   [\#56](https://github.com/ehrlinger/hvtiRtemplates/issues/56) removed:
   an ordinal is a key, assigned once and recorded in the ledger, never
@@ -3849,7 +3849,7 @@ template, and no ordinal will ever be issued again.
 - Replaced them with a **key** check rather than another position check:
   `check-roadmap-counts.py` validates every ordinal’s major against a
   **hardcoded** `FOLDER_ORDINAL` map, whose authority is
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)’s
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)’s
   folder order — a table that lives in `hvtiRutilities`, a different
   repository. `test-roadmap.R` now asserts the map still matches. That
   closes the same class of failure one level up from the one
@@ -3895,7 +3895,7 @@ template, and no ordinal will ever be issued again.
 - **The bootstrap screen template is now `analyses/04.05-bh.qmd`**,
   renamed from `04.06-bh.qmd`. The ordinal had been derived from the
   prefix’s row position in
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html),
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
   and that derivation had already failed: `bh` was 6th in `analyses`
   when the number was assigned, `hvtiRutilities` then moved `hs` out to
   `graphs`, and every prefix below it shifted up one while the filename
@@ -3928,7 +3928,7 @@ template, and no ordinal will ever be issued again.
   retaining any member of a list you declare and computes no correlation
   at all, so the section’s claim to group “by DATA” described the SAS
   macro rather than the R helper. A
-  [`pool_collinear_pairs()`](https://rdrr.io/pkg/hvtiRutilities/man/pool_collinear_pairs.html)
+  [`pool_collinear_pairs()`](https://ehrlinger.github.io/hvtiRutilities/reference/pool_collinear_pairs.html)
   chunk now makes it true. The two are kept apart deliberately: a
   declaration says a clinician treats several variables as one thing, a
   correlation says the pool cannot tell them apart, and only the second
@@ -4098,13 +4098,13 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
     the observed information goes indefinite at `beta = 0`.
 
   Covariates are **read out of the SAS job** with
-  [`sas_variable_block()`](https://rdrr.io/pkg/hvtiRutilities/man/sas_variable_block.html)
+  [`sas_variable_block()`](https://ehrlinger.github.io/hvtiRutilities/reference/sas_variable_block.html)
   rather than transcribed, taking only names — a `name=value` block
   carries the other study’s converged answers.
-  [`covariate_audit()`](https://rdrr.io/pkg/hvtiRutilities/man/covariate_audit.html)
+  [`covariate_audit()`](https://ehrlinger.github.io/hvtiRutilities/reference/covariate_audit.html)
   then stops the render rather than fitting a model whose covariates are
   not what the job specifies, and
-  [`pool_collinear_pairs()`](https://rdrr.io/pkg/hvtiRutilities/man/pool_collinear_pairs.html)
+  [`pool_collinear_pairs()`](https://ehrlinger.github.io/hvtiRutilities/reference/pool_collinear_pairs.html)
   reports exact complements like `male`/`female`.
 
   The fit is **two stages**, mirroring what the SAS job does: shapes
@@ -4166,7 +4166,7 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
   a test that fires on prose is a test that gets deleted.
 
 - The `03.01-ac` template’s local
-  [`imputed_levels()`](https://rdrr.io/pkg/hvtiRutilities/man/imputed_levels.html)
+  [`imputed_levels()`](https://ehrlinger.github.io/hvtiRutilities/reference/imputed_levels.html)
   is removed in favor of the `hvtiRutilities` export. The two were
   identical, and the duplicate arrived only because hvtiRutilities#47
   lifted the same function out of the same study. \# hvtiRtemplates
@@ -4324,9 +4324,9 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
 
 ### Internal
 
-- [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+- [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   and
-  [`hvti_non_prefixes()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_non_prefixes.html)
+  [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html)
   now live in `hvtiRutilities` and are re-exported from here. Callers
   are unaffected — both are still available unqualified from
   `hvtiRtemplates`. The table is shared vocabulary rather than template
@@ -4355,7 +4355,7 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
 - [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
   gains an `ordinal` column, and reports `folder` from the directory a
   template sits in rather than by looking its prefix up in
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html).
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html).
 
 ### Improvements
 
@@ -4382,7 +4382,7 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
   also rejects a leading `../` that would otherwise escape the taxonomy
   folder.
 - New tests cross-check every template’s ordinal against
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   — the major against the folder it sits in, and the minors against row
   order within that folder — and assert that no two templates share a
   prefix, since
@@ -4392,7 +4392,7 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
   hit silently.
 - `hs` is refiled from `distributions` to `analyses`, immediately after
   `hm`, the job it actually consumes.
-  [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+  [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   gains an `estimates` row for the artifact directory that design
   already relies on; the row carries no prefix (`NA_character_`), since
   `estimates` is an artifact kind rather than an analysis type. Its
@@ -4444,10 +4444,10 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
 
   The cohort section offers two shapes, because the choice is not
   cosmetic: a job analyzing the whole study uses
-  [`assert_cohort()`](https://rdrr.io/pkg/hvtiRutilities/man/assert_cohort.html),
+  [`assert_cohort()`](https://ehrlinger.github.io/hvtiRutilities/reference/assert_cohort.html),
   while a job analyzing a filtered subset must supply its own gate —
   `_study.yml` records the study cohort, so
-  [`assert_cohort()`](https://rdrr.io/pkg/hvtiRutilities/man/assert_cohort.html)
+  [`assert_cohort()`](https://ehrlinger.github.io/hvtiRutilities/reference/assert_cohort.html)
   would pass while the job ran on a cohort nobody checked.
 
   `hz` and `hp` are deliberately absent: each exists in only one study,
@@ -4458,7 +4458,7 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
 
 - Initial release.
 
-- [`hvti_taxonomy()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_taxonomy.html)
+- [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
   encodes the group’s analysis-prefix system as data rather than as a
   README, so the test suite checks it against the templates actually
   present instead of letting it drift.
@@ -4470,7 +4470,7 @@ _(Superseded 2026-08-31: this template is `analyses/04.05-bh.qmd` from 1.0.15 on
   versioned template rather than to a copy. Both return empty until
   stage 3 of the templates-and-provenance design adds the templates.
 
-- [`hvti_non_prefixes()`](https://rdrr.io/pkg/hvtiRutilities/man/hvti_non_prefixes.html)
+- [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html)
   records the leading name fields that are utilities rather than
   analysis prefixes, which is what lets the test suite tell “not a
   prefix” apart from “a prefix nobody documented”.

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:20
+2026-11-06 08:18
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -80,7 +80,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.5
+hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -438,9 +438,9 @@ each level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-03 08:20:45 EST |
-|  | Ended | 2026-11-03 08:20:53 EST |
-|  | Duration | 8 s |
+| Run | Started | 2026-11-06 08:18:47 EST |
+|  | Ended | 2026-11-06 08:18:56 EST |
+|  | Duration | 9 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -448,13 +448,13 @@ each level of a categorical one.
 |  | Template | rfs.explain |
 |  | Subject | dead |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.5.5 |
-| Dataset `built` | Version file | built_20261103.parquet |
-|  | Version date | 2026-11-03 |
+|  | hvtiRtemplates | 1.5.6 |
+| Dataset `built` | Version file | built_20261106.parquet |
+|  | Version date | 2026-11-06 |
 |  | Source file | built.rds |
-|  | sha256 | b236a472f1f3 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-11-03 08:20:34 -0500, data built_20261103.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-11-06 08:18:35 -0500, data built_20261106.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
-|  | renv.lock sha256 | d09f96b6cd21 |
+|  | renv.lock sha256 | ed18165d16bf |

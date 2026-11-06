@@ -2197,7 +2197,7 @@ vertical-align: -.125em;
 .bi-globe-central-south-asia-fill::before { content: "\f91d"; }
 .bi-globe-europe-africa-fill::before { content: "\f91e"; }
 </style>
-<link href="assets/b888f1ac0e8e5b994c291867923dded7.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="assets/6ebeda277a8c5d79b98b68fadbcf327b.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
@@ -2239,7 +2239,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-03 08:29</p>
+      <p class="date">2026-11-06 08:24</p>
     </div>
   </div>
   
@@ -2251,7 +2251,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: sid.clusters 1.5.5 sha256:44fc9a918fdda5926ef1e824c2a330f1f8be595682c697b73293c951edbc43f7 -->
+<!-- hvtiRtemplates: sid.clusters 1.5.6 sha256:4728494e1c19ba4d59f1e60254ac9d47cb30ec6190c6a1a301c1450d14203cdf -->
 <p>This job turns a <code>sid-fit</code> dissimilarity into clusters. It runs PAM (partitioning around medoids) on the SID distance for each K in a range, reports what the elbow and the silhouette say about K, and gives every solution letters that keep their identity as K grows, so cluster A at K = 4 is recognisably cluster A at K = 5. It never fits the forest: it reads <code>sid.rds</code>, so choosing K and pinning letters cost seconds and can be repeated freely.</p>
 <p>The assignments are written to the study’s datasets folder and registered, so a later job reads them with <code>JOIN</code>: a <code>dc-tables</code> job to describe the clusters, a <code>vp-fit</code> job with the cluster as its outcome to ask which variables separate them.</p>
 <p>This template is <strong>in flight</strong>: no study has yet run it end to end.</p>
@@ -2286,23 +2286,30 @@ vertical-align: -.125em;
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.8.9; &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>),</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># To render a job you have not finished, leave a chunk out with the chunk</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># in a chunk to leave out everything below it. A draft lists each one in a</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># callout; a final render refuses them, as it refuses an unresolved marker.</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># ?stop_here has more.</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>.job <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_setup</span>(SUBJECT, TYPE, <span class="at">envir =</span> <span class="fu">environment</span>())</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>                                SAVE_FIGURES, FIGURES, linked)</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># register_data() takes file = from 1.5.20 (built = before). Checked here, before</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># the save chunk writes sid-clusters.rds, so an older library leaves nothing behind.</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRutilities&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;1.5.20&quot;</span>) {</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRutilities &gt;= 1.5.20 for register_data(file =); &quot;</span>,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRutilities&quot;</span>), <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>,</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># To render a job you have not finished, leave a chunk out with the chunk</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># in a chunk to leave out everything below it. A draft lists each one in a</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># callout; a final render refuses them, as it refuses an unresolved marker.</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># ?stop_here has more.</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>.job <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_setup</span>(SUBJECT, TYPE, <span class="at">envir =</span> <span class="fu">environment</span>())</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>                                SAVE_FIGURES, FIGURES, linked)</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="callout callout-style-simple callout-note no-icon">
 <div class="callout-body d-flex">
@@ -2310,7 +2317,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.5</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.6</p>
 </div>
 </div>
 </div>
@@ -3198,25 +3205,25 @@ Figure 4: Patients placed in two dimensions by classical MDS of the SID distanc
 <span id="cb18-67"><a href="#cb18-67" aria-hidden="true" tabindex="-1"></a>  ))</span>
 <span id="cb18-68"><a href="#cb18-68" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
 <span id="cb18-69"><a href="#cb18-69" aria-hidden="true" tabindex="-1"></a>  utils<span class="sc">::</span><span class="fu">capture.output</span>(<span class="fu">suppressMessages</span>(</span>
-<span id="cb18-70"><a href="#cb18-70" aria-hidden="true" tabindex="-1"></a>    hvtiRutilities<span class="sc">::</span><span class="fu">register_data</span>(.root, <span class="at">built =</span> .csv_name, <span class="at">dataset =</span> .dataset, <span class="at">role =</span> <span class="st">&quot;named&quot;</span>,</span>
+<span id="cb18-70"><a href="#cb18-70" aria-hidden="true" tabindex="-1"></a>    hvtiRutilities<span class="sc">::</span><span class="fu">register_data</span>(.root, <span class="at">file =</span> .csv_name, <span class="at">dataset =</span> .dataset, <span class="at">role =</span> <span class="st">&quot;named&quot;</span>,</span>
 <span id="cb18-71"><a href="#cb18-71" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">population =</span> <span class="st">&quot;SID cluster assignments&quot;</span>, <span class="at">kind =</span> <span class="st">&quot;ancillary&quot;</span>, <span class="at">key =</span> .id)</span>
 <span id="cb18-72"><a href="#cb18-72" aria-hidden="true" tabindex="-1"></a>  ))</span>
 <span id="cb18-73"><a href="#cb18-73" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code> [1] &quot;Study: /private/var/folders/r2/142tmkt53tjd02y0s7qv_47m0000gr/T/RtmprpBe6S/gallery-83d556e90ab3/study&quot;            
- [2] &quot;&quot;                                                                                                                 
- [3] &quot;[x] _study.yml — study: Template gallery (synthetic)&quot;                                                             
- [4] &quot;[x] renv.lock — renv.lock present&quot;                                                                                
- [5] &quot;[x] manifest.yaml — 5 dataset entries verified by checksum&quot;                                                       
- [6] &quot;[x] dataset — built.rds, registered as built_20261103.parquet&quot;                                                    
- [7] &quot;[x] dataset:segments — segments.rds, registered as segments_20261103.parquet&quot;                                     
- [8] &quot;[x] dataset:echo — echo.rds, registered as echo_20261103.parquet&quot;                                                 
- [9] &quot;[x] dataset:intervals — intervals.rds, registered as intervals_20261103.parquet&quot;                                  
-[10] &quot;[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261103.parquet&quot;        
-[11] &quot;[!] provenance — 2 of 52 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, sid.clusters.echo.sid&quot;
-[12] &quot;&quot;                                                                                                                 
-[13] &quot;4 .R  |  52 .qmd/.Rmd  |  3 .sas  |  86 provenance sidecars&quot;                                                      </code></pre>
+<pre><code> [1] &quot;Study: /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/cd84b328-04da-4baf-8523-7c710afd0c6e/scratchpad/galstudy&quot;
+ [2] &quot;&quot;                                                                                                                                      
+ [3] &quot;[x] _study.yml — study: Template gallery (synthetic)&quot;                                                                                  
+ [4] &quot;[x] renv.lock — renv.lock present&quot;                                                                                                     
+ [5] &quot;[x] manifest.yaml — 5 dataset entries verified by checksum&quot;                                                                            
+ [6] &quot;[x] dataset — built.rds, registered as built_20261106.parquet&quot;                                                                         
+ [7] &quot;[x] dataset:segments — segments.rds, registered as segments_20261106.parquet&quot;                                                          
+ [8] &quot;[x] dataset:echo — echo.rds, registered as echo_20261106.parquet&quot;                                                                      
+ [9] &quot;[x] dataset:intervals — intervals.rds, registered as intervals_20261106.parquet&quot;                                                       
+[10] &quot;[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261106.parquet&quot;                             
+[11] &quot;[!] provenance — 2 of 52 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, sid.clusters.echo.sid&quot;                     
+[12] &quot;&quot;                                                                                                                                      
+[13] &quot;4 .R  |  52 .qmd/.Rmd  |  3 .sas  |  86 provenance sidecars&quot;                                                                           </code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -3249,12 +3256,12 @@ A job that models one row per patient also sets REDUCE &lt;- list(rule = &quot;f
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-03 08:29:06 EST</td>
+<td style="text-align: left;">2026-11-06 08:24:25 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-03 08:29:11 EST</td>
+<td style="text-align: left;">2026-11-06 08:24:30 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3314,17 +3321,17 @@ A job that models one row per patient also sets REDUCE &lt;- list(rule = &quot;f
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.5</td>
+<td style="text-align: left;">1.5.6</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261103.parquet</td>
+<td style="text-align: left;">built_20261106.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-03</td>
+<td style="text-align: left;">2026-11-06</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3344,7 +3351,7 @@ A job that models one row per patient also sets REDUCE &lt;- list(rule = &quot;f
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">b236a472f1f3</td>
+<td style="text-align: left;">d99147a5c095</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3354,7 +3361,7 @@ A job that models one row per patient also sets REDUCE &lt;- list(rule = &quot;f
 <tr class="even">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>echo-sid/sid.rds</code> (SID fit), rendered 2026-11-03 08:28:26 -0500, data built_20261103.parquet</td>
+<td style="text-align: left;"><code>echo-sid/sid.rds</code> (SID fit), rendered 2026-11-06 08:24:15 -0500, data built_20261106.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Reproducibility</td>
@@ -3364,12 +3371,12 @@ A job that models one row per patient also sets REDUCE &lt;- list(rule = &quot;f
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">renv.lock sha256</td>
-<td style="text-align: left;">d09f96b6cd21</td>
+<td style="text-align: left;">ed18165d16bf</td>
 </tr>
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"sid.clusters.echo.sid","rendered":"2026-11-03T13:29:11Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"22efb2006c7a5bb52ef0f5835ff411c15d3d7c302aad63ef291ede46874c447a"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"24.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"cluster","version":"2.1.8.2","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggsankey","version":"0.0.99999","source":"github","sha":"b675d0d5144b1b5758d3b2b41e86ceee66a1e071"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.5","source":"github","sha":"f07705891093932be2b3d180444d64d07f187071"},{"package":"hvtiRutilities","version":"1.5.19","source":"github","sha":"5359155a4da9a3b403df9acfb9e529c4d2444489"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.51","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.6","source":"standard"},{"package":"openssl","version":"2.4.2","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.11","source":"standard"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.60","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"d09f96b6cd215b47d5e4ff3ee35ef4457fd36aa9f818e84591cfe6712b567fff"},"data":[{"dataset":"study","path":"00_datasets/built_20261103.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-03T13:11:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"},{"dataset":"study","path":"00_datasets/built_20261103.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-03T13:11:06Z","sha256":"b236a472f1f39a65a69937aeb0c9e2e42385f5c3ef130eca82fb0bd89001eaa6"}],"artifacts":[{"path":"90_estimates/echo-sid/sid.rds","role":"SID fit","bytes":4863227,"mtime":"2026-11-03T13:28:31Z","sha256":"c6ef5878f15a45101e5d8f96ad435003bdeb331f1ee16e1b71d8d5c5fb8b1821"}],"subject":"echo","type":"sid","cohort":{"n":800},"run":{"start":"2026-11-03T08:29:06-0500","end":"2026-11-03T08:29:11-0500","time_zone":"EST","duration_seconds":5.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"sid.clusters.echo.sid.qmd","template":"sid.clusters","prefix":"sid","qualifier":"clusters","subject":"echo","type":"sid","hvtiRtemplates":"1.5.5"},"datasets":[{"name":"built","version_file":"built_20261103.parquet","registered":"2026-11-03","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"b236a472f1f3","manifest":"current"}],"upstream":[{"file":"90_estimates/echo-sid/sid.rds","set":"echo-sid","role":"SID fit","rendered_at":"2026-11-03T08:28:26-0500","dataset_version":"built_20261103.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"d09f96b6cd21"}},"identifiability":[{"check":"small","column":"C3 by C4","count":1},{"check":"small","column":"C4 by C5","count":1},{"check":"small","column":"silhouette widths by sign and cluster","count":1}]},"source":"30_analyses/sid.clusters.echo.sid.qmd",".hvti_render_id":"51b9d21fb2150214efa2cae002b10719ed5837151faf5e36c01a696486de3956",".hvti_source_sha256":"7842e299a761db6bccd01b01b04fa261dd71f1108ad2d0aa8a1afc7bbb5b95c2"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"sid.clusters.echo.sid","rendered":"2026-11-06T13:24:30Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"22efb2006c7a5bb52ef0f5835ff411c15d3d7c302aad63ef291ede46874c447a"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"cluster","version":"2.1.8.3","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggsankey","version":"0.0.99999","source":"github","sha":"b675d0d5144b1b5758d3b2b41e86ceee66a1e071"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.6","source":null},{"package":"hvtiRutilities","version":"1.5.21","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T13:07:42Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T13:07:42Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[{"path":"90_estimates/echo-sid/sid.rds","role":"SID fit","bytes":4863164,"mtime":"2026-11-06T13:24:20Z","sha256":"7b2e27cdf7f6c348493a6c6440fded90f713e4ce1dba959c6aee94218a433145"}],"subject":"echo","type":"sid","cohort":{"n":800},"run":{"start":"2026-11-06T08:24:25-0500","end":"2026-11-06T08:24:30-0500","time_zone":"EST","duration_seconds":5.2,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"sid.clusters.echo.sid.qmd","template":"sid.clusters","prefix":"sid","qualifier":"clusters","subject":"echo","type":"sid","hvtiRtemplates":"1.5.6"},"datasets":[{"name":"built","version_file":"built_20261106.parquet","registered":"2026-11-06","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[{"file":"90_estimates/echo-sid/sid.rds","set":"echo-sid","role":"SID fit","rendered_at":"2026-11-06T08:24:15-0500","dataset_version":"built_20261106.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"ed18165d16bf"}},"identifiability":[{"check":"small","column":"C3 by C4","count":1},{"check":"small","column":"C4 by C5","count":1},{"check":"small","column":"silhouette widths by sign and cluster","count":1}]},"source":"30_analyses/sid.clusters.echo.sid.qmd",".hvti_render_id":"bb19bf7f3b00bc522ae65be18c76c60b89fb59468c6af26c2288fb69a0382ecf",".hvti_source_sha256":"69f97c0384d646ac3d44afd839a4e2293072b1cf838143222bed63cf43f4b1f5"}</script>
 </section>
 
 </main>

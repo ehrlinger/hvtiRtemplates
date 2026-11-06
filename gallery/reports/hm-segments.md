@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:17
+2026-11-06 08:15
 
 An `hm` job builds the risk-factor model **on top of** the shape
 parameters the `hz` job fitted. The shapes are not re-derived here; they
@@ -69,7 +69,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.5
+hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -167,7 +167,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                                |
 |:--------------------|:-----------------------------------------------|
-| Source              | dataset `segments` (segments_20261103.parquet) |
+| Source              | dataset `segments` (segments_20261106.parquet) |
 | Rows read           | 2,014                                          |
 | ID                  | `patient_id`                                   |
 | Identifiers dropped | none                                           |
@@ -1007,8 +1007,8 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-03 08:17:02 EST |
-|  | Ended | 2026-11-03 08:17:22 EST |
+| Run | Started | 2026-11-06 08:14:43 EST |
+|  | Ended | 2026-11-06 08:15:03 EST |
 |  | Duration | 20 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -1017,14 +1017,14 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 |  | Template | hm |
 |  | Subject | dead_segments |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.5.5 |
-| Dataset `segments` | Version file | segments_20261103.parquet |
-|  | Version date | 2026-11-03 |
+|  | hvtiRtemplates | 1.5.6 |
+| Dataset `segments` | Version file | segments_20261106.parquet |
+|  | Version date | 2026-11-06 |
 |  | Source file | segments.rds |
 |  | Rows kept | 1,823 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | 9590f19806c4 |
+|  | sha256 | bdbfaba0795e |
 |  | Manifest | current |
-| Upstream | Handoff | `dead_segments-hz/hz.rds` (hazard-shape-model), rendered 2026-11-03 08:16:45 -0500, data segments_20261103.parquet |
+| Upstream | Handoff | `dead_segments-hz/hz.rds` (hazard-shape-model), rendered 2026-11-06 08:14:26 -0500, data segments_20261106.parquet |
 | Reproducibility | renv | not active |
-|  | renv.lock sha256 | d09f96b6cd21 |
+|  | renv.lock sha256 | ed18165d16bf |

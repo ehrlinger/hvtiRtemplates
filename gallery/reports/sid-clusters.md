@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:29
+2026-11-06 08:24
 
 This job turns a `sid-fit` dissimilarity into clusters. It runs PAM
 (partitioning around medoids) on the SID distance for each K in a range,
@@ -44,6 +44,13 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.9") {
   stop("This job needs hvtiPlotR >= 2.8.9; ", utils::packageVersion("hvtiPlotR"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
+# register_data() takes file = from 1.5.20 (built = before). Checked here, before
+# the save chunk writes sid-clusters.rds, so an older library leaves nothing behind.
+if (utils::packageVersion("hvtiRutilities") < "1.5.20") {
+  stop("This job needs hvtiRutilities >= 1.5.20 for register_data(file =); ",
+       utils::packageVersion("hvtiRutilities"), " is installed.\nUpdate it, then re-render.",
+       call. = FALSE)
+}
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -64,7 +71,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.5
+hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -661,25 +668,25 @@ if (!is.null(.reg)) {
   ))
 } else {
   utils::capture.output(suppressMessages(
-    hvtiRutilities::register_data(.root, built = .csv_name, dataset = .dataset, role = "named",
+    hvtiRutilities::register_data(.root, file = .csv_name, dataset = .dataset, role = "named",
                                   population = "SID cluster assignments", kind = "ancillary", key = .id)
   ))
 }
 ```
 
-     [1] "Study: /private/var/folders/r2/142tmkt53tjd02y0s7qv_47m0000gr/T/RtmprpBe6S/gallery-83d556e90ab3/study"            
-     [2] ""                                                                                                                 
-     [3] "[x] _study.yml — study: Template gallery (synthetic)"                                                             
-     [4] "[x] renv.lock — renv.lock present"                                                                                
-     [5] "[x] manifest.yaml — 5 dataset entries verified by checksum"                                                       
-     [6] "[x] dataset — built.rds, registered as built_20261103.parquet"                                                    
-     [7] "[x] dataset:segments — segments.rds, registered as segments_20261103.parquet"                                     
-     [8] "[x] dataset:echo — echo.rds, registered as echo_20261103.parquet"                                                 
-     [9] "[x] dataset:intervals — intervals.rds, registered as intervals_20261103.parquet"                                  
-    [10] "[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261103.parquet"        
-    [11] "[!] provenance — 2 of 52 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, sid.clusters.echo.sid"
-    [12] ""                                                                                                                 
-    [13] "4 .R  |  52 .qmd/.Rmd  |  3 .sas  |  86 provenance sidecars"                                                      
+     [1] "Study: /private/tmp/claude-504/-Users-ehrlinj-Documents-GitHub-hvtiRtemplates/cd84b328-04da-4baf-8523-7c710afd0c6e/scratchpad/galstudy"
+     [2] ""                                                                                                                                      
+     [3] "[x] _study.yml — study: Template gallery (synthetic)"                                                                                  
+     [4] "[x] renv.lock — renv.lock present"                                                                                                     
+     [5] "[x] manifest.yaml — 5 dataset entries verified by checksum"                                                                            
+     [6] "[x] dataset — built.rds, registered as built_20261106.parquet"                                                                         
+     [7] "[x] dataset:segments — segments.rds, registered as segments_20261106.parquet"                                                          
+     [8] "[x] dataset:echo — echo.rds, registered as echo_20261106.parquet"                                                                      
+     [9] "[x] dataset:intervals — intervals.rds, registered as intervals_20261106.parquet"                                                       
+    [10] "[x] dataset:clusters_4_echo_sid — echo-sid-clusters.csv, registered as echo-sid-clusters_20261106.parquet"                             
+    [11] "[!] provenance — 2 of 52 .qmd/.Rmd source names have no provenance sidecar: bd.study.build, sid.clusters.echo.sid"                     
+    [12] ""                                                                                                                                      
+    [13] "4 .R  |  52 .qmd/.Rmd  |  3 .sas  |  86 provenance sidecars"                                                                           
 
 Code
 
@@ -696,8 +703,8 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-03 08:29:06 EST |
-|  | Ended | 2026-11-03 08:29:11 EST |
+| Run | Started | 2026-11-06 08:24:25 EST |
+|  | Ended | 2026-11-06 08:24:30 EST |
 |  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -709,14 +716,14 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 |  | Template | sid.clusters |
 |  | Subject | echo |
 |  | Type | sid |
-|  | hvtiRtemplates | 1.5.5 |
-| Dataset `built` | Version file | built_20261103.parquet |
-|  | Version date | 2026-11-03 |
+|  | hvtiRtemplates | 1.5.6 |
+| Dataset `built` | Version file | built_20261106.parquet |
+|  | Version date | 2026-11-06 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | b236a472f1f3 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-03 08:28:26 -0500, data built_20261103.parquet |
+| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-06 08:24:15 -0500, data built_20261106.parquet |
 | Reproducibility | renv | not active |
-|  | renv.lock sha256 | d09f96b6cd21 |
+|  | renv.lock sha256 | ed18165d16bf |

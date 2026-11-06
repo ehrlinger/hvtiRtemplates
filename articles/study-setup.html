@@ -119,23 +119,23 @@
 <p>Do not run <code>renv::init()</code> or <code>organize_templates.sh</code> on the study: <code>setup()</code> replaces both, and <code>renv::init()</code> starts the library over.</p>
 </section></section></section><section class="level2"><h2 id="open-the-study-as-an-rstudio-project">Open the study as an RStudio Project<a class="anchor" aria-label="anchor" href="#open-the-study-as-an-rstudio-project"></a>
 </h2>
-<p>From here on, open the study’s <code>.Rproj</code> whenever you work on it. RStudio starts the session in the project directory, so there is no working-directory step to remember or repeat, and <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_root.html" class="external-link">study_root()</a></code>, <code><a href="../reference/open_job.html">open_job()</a></code> and <code><a href="../reference/render_job.html">render_job()</a></code> find <code>_study.yml</code> from anywhere inside the project.</p>
+<p>From here on, open the study’s <code>.Rproj</code> whenever you work on it. RStudio starts the session in the project directory, so there is no working-directory step to remember or repeat, and <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_root.html" class="external-link">study_root()</a></code>, <code><a href="../reference/open_job.html">open_job()</a></code> and <code><a href="../reference/render_job.html">render_job()</a></code> find <code>_study.yml</code> from anywhere inside the project.</p>
 <p>Ask the study what it still needs, then attach the two packages used throughout this tutorial:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ehrlinger/hvtiRutilities" class="external-link">hvtiRutilities</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ehrlinger/hvtiRtemplates" class="external-link">hvtiRtemplates</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/normalizePath.html" class="external-link">normalizePath</a></span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_root.html" class="external-link">study_root</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_status.html" class="external-link">study_status</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_root.html" class="external-link">study_root</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_status.html" class="external-link">study_status</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu">status</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>Expect <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_status.html" class="external-link">study_status()</a></code> to report that no dataset is registered yet. That is the next step.</p>
+<p>Expect <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_status.html" class="external-link">study_status()</a></code> to report that no dataset is registered yet. That is the next step.</p>
 <p>When the Console is already at the study root, use <code>"."</code> anywhere a function asks for <code>root</code>. The executable example below uses an explicit temporary path only because it cannot open an RStudio Project while pkgdown renders the page.</p>
-<p>The executable example needs no package environment, so it calls <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_setup.html" class="external-link">study_setup()</a></code>, the step of <code>setup()</code> that writes the study’s identity, in its temporary directory:</p>
+<p>The executable example needs no package environment, so it calls <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup()</a></code>, the step of <code>setup()</code> that writes the study’s identity, in its temporary directory:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># A vignette builds a throwaway study; in a real study, run hvtiR::setup().</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span></span>
 <span>  <span class="va">adopted_root</span>,</span>
 <span>  study <span class="op">=</span> <span class="st">"Synthetic legacy study"</span>,</span>
 <span>  study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
@@ -143,10 +143,10 @@
 <span>  cleanup <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  renv <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpHkNmSW/file1f21604a542/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
-<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
+<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
 <span><span class="co">#&gt; [ ] manifest.yaml — no manifest.yaml; register_data() creates it</span></span>
 <span><span class="co">#&gt; [ ] dataset — no default dataset registered; run register_data()</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
@@ -158,38 +158,38 @@
 </h2>
 <p><code>setup()</code> has already pinned the package environment. When a study needs a package the family and the standard set do not bring, add it from inside the project. That installs it, declares it and records it in <code>renv.lock</code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_need.html" class="external-link">study_need</a></span><span class="op">(</span><span class="st">"cmprsk"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_need.html" class="external-link">study_need</a></span><span class="op">(</span><span class="st">"cmprsk"</span><span class="op">)</span></span></code></pre></div>
 </section><section class="level2"><h2 id="register-the-existing-dataset">Register the existing dataset<a class="anchor" aria-label="anchor" href="#register-the-existing-dataset"></a>
 </h2>
 <p>Registration records the input filename, checksum and population. It does not declare a study-wide endpoint or cohort: an endpoint-free descriptive job and an event-time analysis can read the same dataset with different valid job definitions.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  file <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Patients meeting the study inclusion criteria"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/verify_manifest.html" class="external-link">verify_manifest</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html" class="external-link">verify_manifest</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Do not invent an outcome or follow-up field during setup. Each analysis job declares its own outcome variables, coding, filters and cohort checks. The descriptive jobs below depend only on a registered study dataset.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  <span class="va">adopted_root</span>,</span>
 <span>  file <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmpHkNmSW/file1f21604a542/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
-<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
+<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
 <span><span class="co">#&gt; [x] manifest.yaml — 1 dataset entry verified by checksum</span></span>
 <span><span class="co">#&gt; [x] dataset — built.csv, registered as built_20261106.parquet</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/verify_manifest.html" class="external-link">verify_manifest</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">adopted_root</span>, <span class="st">"manifest.yaml"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_config.html" class="external-link">study_config</a></span><span class="op">(</span><span class="va">adopted_root</span><span class="op">)</span></span>
-<span><span class="va">study_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/read_built.html" class="external-link">read_built</a></span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html" class="external-link">verify_manifest</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">adopted_root</span>, <span class="st">"manifest.yaml"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_config.html" class="external-link">study_config</a></span><span class="op">(</span><span class="va">adopted_root</span><span class="op">)</span></span>
+<span><span class="va">study_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html" class="external-link">read_built</a></span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">study_data</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 40</span></span></code></pre></div>
 </div>
@@ -198,12 +198,12 @@
 </h3>
 <p>The jobs can read the registered study dataset directly. If EDA needs a subset, create it with a stated rule, save it as a separate dataset and register that file too. For example:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">study_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/read_built.html" class="external-link">read_built</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_config.html" class="external-link">study_config</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">study_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html" class="external-link">read_built</a></span><span class="op">(</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_config.html" class="external-link">study_config</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">eda</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">study_data</span>, <span class="va">age</span> <span class="op">&gt;=</span> <span class="fl">50</span><span class="op">)</span>  <span class="co"># Replace with the study's actual rule.</span></span>
 <span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span></span>
-<span>  <span class="va">eda</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span><span class="op">)</span>, <span class="st">"eda.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="va">eda</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span><span class="op">)</span>, <span class="st">"eda.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  file <span class="op">=</span> <span class="st">"eda.csv"</span>,</span>
 <span>  dataset <span class="op">=</span> <span class="st">"eda"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"named"</span>,</span>
@@ -249,16 +249,16 @@
 <span>  eda <span class="op">=</span> <span class="fu"><a href="../reference/add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, <span class="va">adopted_root</span>, <span class="st">"eda"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">study_jobs</span></span>
-<span><span class="co">#&gt;                                                                               general </span></span>
-<span><span class="co">#&gt; "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
-<span><span class="co">#&gt;                                                                                tables </span></span>
-<span><span class="co">#&gt;  "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
-<span><span class="co">#&gt;                                                                                  gfup </span></span>
-<span><span class="co">#&gt;    "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
-<span><span class="co">#&gt;                                                                                trends </span></span>
-<span><span class="co">#&gt;  "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study/descriptive/dc.trends.cohort.eda.qmd" </span></span>
-<span><span class="co">#&gt;                                                                                   eda </span></span>
-<span><span class="co">#&gt;     "/tmp/Rtmp4eMKzV/file1f215ff950c4/legacy-study/descriptive/dc.eda.cohort.eda.qmd"</span></span></code></pre></div>
+<span><span class="co">#&gt;                                                                              general </span></span>
+<span><span class="co">#&gt; "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;                                                                               tables </span></span>
+<span><span class="co">#&gt;  "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;                                                                                 gfup </span></span>
+<span><span class="co">#&gt;    "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;                                                                               trends </span></span>
+<span><span class="co">#&gt;  "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study/descriptive/dc.trends.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;                                                                                  eda </span></span>
+<span><span class="co">#&gt;     "/tmp/RtmpHkNmSW/file1f21604a542/legacy-study/descriptive/dc.eda.cohort.eda.qmd"</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="work-the-jobs-and-generate-output">Work the jobs and generate output<a class="anchor" aria-label="anchor" href="#work-the-jobs-and-generate-output"></a>
 </h2>
@@ -268,7 +268,7 @@
 <p>If the study has older SAS jobs, continue with <a href="sas-to-r-descriptive.html">From SAS descriptive jobs to R</a>. That article owns the detailed source mapping and migration workflow so adoption itself remains short.</p>
 <section class="level3"><h3 id="when-registered-data-change">When registered data change<a class="anchor" aria-label="anchor" href="#when-registered-data-change"></a>
 </h3>
-<p>Registration is endpoint-neutral: it records the dataset file, its population description and manifest facts, but does not declare a study-wide endpoint or cohort. After the study dataset is rebuilt, review the rebuilt file before registering it. <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/review_built.html" class="external-link">hvtiRutilities::review_built()</a></code> compares the working file in the datasets folder with its registered version and describes how the data changed, without writing anything. It does not certify that the new file is analytically or clinically correct; that judgment stays with you. When the review reads as expected, <code>hvtiRutilities::update_manifest(dataset = "study")</code> registers the rebuilt file as the next dated version, keeps every earlier version and records the change in <code>manifest.yaml</code>. Jobs read the new version from then on, so review dependent analysis sets and rerender their jobs.</p>
+<p>Registration is endpoint-neutral: it records the dataset file, its population description and manifest facts, but does not declare a study-wide endpoint or cohort. After the study dataset is rebuilt, review the rebuilt file before registering it. <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/review_built.html" class="external-link">hvtiRutilities::review_built()</a></code> compares the working file in the datasets folder with its registered version and describes how the data changed, without writing anything. It does not certify that the new file is analytically or clinically correct; that judgment stays with you. When the review reads as expected, <code>hvtiRutilities::update_manifest(dataset = "study")</code> registers the rebuilt file as the next dated version, keeps every earlier version and records the change in <code>manifest.yaml</code>. Jobs read the new version from then on, so review dependent analysis sets and rerender their jobs.</p>
 </section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

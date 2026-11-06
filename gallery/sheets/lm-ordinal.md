@@ -61,5 +61,5 @@ and it records the job's provenance beside the report.
   `EDIT:` name the file and its set. Add it with
   `add_job("lm.checkpred", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.5 · built 2026-11-03.
+Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
 The template holds the details; this sheet is its outline.

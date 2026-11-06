@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-03 08:17
+2026-11-06 08:15
 
 Fits a binary outcome model and preserves the fitted model, predictions,
 and pooled inference. For stacked imputations, coefficients and
@@ -37,8 +37,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261103.parquet`, dated 2026-11-03 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.5
+**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.6
 
 ## Study choices
 
@@ -121,7 +121,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTOR
 
 | Data |  |
 |:---|:---|
-| Source | dataset `built` (built_20261103.parquet) |
+| Source | dataset `built` (built_20261106.parquet) |
 | Rows read | 800 |
 | ID | `patient_id` |
 | Identifiers dropped | none |
@@ -240,9 +240,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-03 08:17:33 EST |
-|  | Ended | 2026-11-03 08:17:34 EST |
-|  | Duration | 1 s |
+| Run | Started | 2026-11-06 08:15:14 EST |
+|  | Ended | 2026-11-06 08:15:15 EST |
+|  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -250,13 +250,13 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |  | Template | lm.binary |
 |  | Subject | stroke |
 |  | Type | model |
-|  | hvtiRtemplates | 1.5.5 |
-| Dataset `built` | Version file | built_20261103.parquet |
-|  | Version date | 2026-11-03 |
+|  | hvtiRtemplates | 1.5.6 |
+| Dataset `built` | Version file | built_20261106.parquet |
+|  | Version date | 2026-11-06 |
 |  | Source file | built.rds |
 |  | Rows kept | 572 rows on 572 patients |
 |  | WHERE | `as.integer(format(dt_surg, "%Y")) < 2015` |
-|  | sha256 | b236a472f1f3 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Reproducibility | renv | not active |
-|  | renv.lock sha256 | d09f96b6cd21 |
+|  | renv.lock sha256 | ed18165d16bf |

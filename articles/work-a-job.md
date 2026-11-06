@@ -142,7 +142,7 @@ A draft may read a build that is not registered yet, and says so in its
 data table and in ‘About this run’. A final render
 (`render_job(final = TRUE)`) reads registered data only. Register the
 build with
-[`hvtiRutilities::update_manifest()`](https://rdrr.io/pkg/hvtiRutilities/man/update_manifest.html)
+[`hvtiRutilities::update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
 first.
 
 **Render the job; do not run its chunks by hand.** Run All in RStudio

@@ -46,7 +46,7 @@ stage of work.
 | SAS job | R job | template | engine |
 |:---|:---|:---|:---|
 | `descriptive/dc.tables.ods.sas` (`%desc_tab`) | `dc-tables` | `10_descriptive/dc-tables.qmd` | `hv_tbl_summary()`; `hv_correlation_table()` and `hv_correlation_matrix()` |
-| `descriptive/dc.gfup.sas` | `dc-gfup` | `10_descriptive/dc-gfup.qmd` | [`proc_means()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html) |
+| `descriptive/dc.gfup.sas` | `dc-gfup` | `10_descriptive/dc-gfup.qmd` | [`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |
 | `graphs/dp.trends.R` | `dc-trends` | `10_descriptive/dc-trends.qmd` | `hv_trends()` |
 | `tp.dp.DescriptiveSummary.qmd`, `tp.dp.EDA_barplots_scatterplots*.R` | `dc-eda` | `10_descriptive/dc-eda.qmd` | `hv_eda()`, through `hv_eda_pages()` |
 
@@ -70,7 +70,7 @@ stage of work.
     `graphs/` for trends. The tables job writes its Word file under
     `documents/cohort-eda/`; the plot jobs write PNG files under
     `graphs/cohort-eda/`.
-    [`study_dir()`](https://rdrr.io/pkg/hvtiRutilities/man/study_dir.html)
+    [`study_dir()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html)
     resolves each directory in either study layout.
 
 The filename records the choices in the call. `cohort-eda` is the shared
@@ -178,15 +178,15 @@ Three things catch people:
   stops rather than quietly using the study dataset instead.
 
 Before any of this,
-[`verify_manifest()`](https://rdrr.io/pkg/hvtiRutilities/man/verify_manifest.html)
+[`verify_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html)
 checks every file’s checksum against `manifest.yaml`. A stop on that
 first line means a registered file changed, not that a setting is wrong.
 A dataset rebuilt since it was registered does not stop the job: it
 reads the registered version,
-[`verify_manifest()`](https://rdrr.io/pkg/hvtiRutilities/man/verify_manifest.html)
+[`verify_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/verify_manifest.html)
 lists the rebuilt file as `PENDING`, and the report says a newer file is
 waiting, with the
-[`hvtiRutilities::update_manifest()`](https://rdrr.io/pkg/hvtiRutilities/man/update_manifest.html)
+[`hvtiRutilities::update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
 call that registers it.
 
 ## Descriptive tables and correlations: `dc-tables`
@@ -261,7 +261,7 @@ hvtiRtables::hv_correlation_table(
 ## Goodness of follow-up: `dc-gfup`
 
 The SAS `proc means` and `proc univariate` calls become
-[`proc_means()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html).
+[`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html).
 The R job reports follow-up distributions overall, by vital status, and
 among survivors. It deliberately omits the patient-level listing: a
 rendered report should answer the completeness question without exposing
@@ -368,7 +368,7 @@ panels[[2]]
 ## Where the numbers differ
 
 Percentiles use SAS `QNTLDEF=5`, equivalent to R’s `type = 2`;
-[`proc_means()`](https://rdrr.io/pkg/hvtiRutilities/man/proc_means.html)
+[`proc_means()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html)
 and the table engine already make that choice. Pin `type = 2` in any
 hand-written [`quantile()`](https://rdrr.io/r/stats/quantile.html) call.
 `N` is the non-missing count, not always the number of rows.

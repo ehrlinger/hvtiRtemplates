@@ -147,16 +147,16 @@
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">study-setup</span> <span class="at">--title</span> <span class="st">"Example study"</span> 42 example_study</span></code></pre></div>
 <p>It does not read Study Tracker, because that stopped on 2026-10-21. The title and ID are what you typed, and the study records its identity as manual and unverified. Only <code>study-setup --verify</code> reads Study Tracker, to check that identity against the record:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">study-setup</span> <span class="at">--verify</span> /studies/example_study</span></code></pre></div>
-<p>This article has no server to install on while it renders, so the executable example calls <code><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_setup.html" class="external-link">hvtiRutilities::study_setup()</a></code> directly, in a temporary directory, which makes the same study without a package environment:</p>
+<p>This article has no server to install on while it renders, so the executable example calls <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">hvtiRutilities::study_setup()</a></code> directly, in a temporary directory, which makes the same study without a package environment:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># A vignette builds a throwaway study; in a real study, run hvtiR::setup().</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">new_root</span>, study <span class="op">=</span> <span class="st">"Synthetic new study"</span>, study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html" class="external-link">study_setup</a></span><span class="op">(</span><span class="va">new_root</span>, study <span class="op">=</span> <span class="st">"Synthetic new study"</span>, study_tracker_id <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>            renv <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpP8VgHi/file1ede72a31d04/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmphvSQsd/file1edd788cea1e/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
-<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmpP8VgHi/file1ede72a31d04/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
+<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmphvSQsd/file1edd788cea1e/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
 <span><span class="co">#&gt; [ ] manifest.yaml — no manifest.yaml; register_data() creates it</span></span>
 <span><span class="co">#&gt; [ ] dataset — no default dataset registered; run register_data()</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
@@ -171,7 +171,7 @@
 </h2>
 <p>Copy the delivered file into <code>00_datasets</code>, then register it. Registration records the file’s size, checksum and the population it describes in <code>manifest.yaml</code>:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  file <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Patients meeting the study inclusion criteria"</span></span>
@@ -180,18 +180,18 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span></span>
-<span>  <span class="va">delivered</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">new_root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="va">delivered</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">new_root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/hvtiRutilities/man/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span></span>
 <span>  <span class="va">new_root</span>,</span>
 <span>  file <span class="op">=</span> <span class="st">"built.csv"</span>,</span>
 <span>  role <span class="op">=</span> <span class="st">"study"</span>,</span>
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpP8VgHi/file1ede72a31d04/new-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/RtmphvSQsd/file1edd788cea1e/new-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic new study</span></span>
-<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmpP8VgHi/file1ede72a31d04/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
+<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmphvSQsd/file1edd788cea1e/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
 <span><span class="co">#&gt; [x] manifest.yaml — 1 dataset entry verified by checksum</span></span>
 <span><span class="co">#&gt; [x] dataset — built.csv, registered as built_20261106.parquet</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
