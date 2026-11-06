@@ -413,11 +413,30 @@ test_that("vp-fit saves one handoff: the fit, its judged coverage, the selection
   env <- vp_fit_first()
   h <- readRDS(env$set_path("estimates", "vp.rds"))
   expect_named(h, c("fit", "coverage", "selected", "family"))
-  expect_identical(h$selected, env$.real$variable[env$.real$selected])
+  # With refits, the selection handed on is the refits' majority vote.
+  expect_identical(h$selected, env$.freq$variable[env$.freq$share_selected >= 0.5])
   expect_identical(h$family, "survival")
   expect_s3_class(h$fit, "varpro")
   expect_false(is.null(attr(h, "hvti_provenance")))
   expect_setequal(unique(env$.stab$r), 1:2)
+})
+
+test_that("SELECT_SHARE = NA, or REPEATS = 0, hands on the full fit's selection", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  for (extra in list(list(SELECT_SHARE = NA), list(REPEATS = 0))) {
+    env <- vp_fit_first(choices = utils::modifyList(vp_choices, extra))
+    h <- readRDS(env$set_path("estimates", "vp.rds"))
+    expect_identical(h$selected, env$.real$variable[env$.real$selected])
+  }
+})
+
+test_that("SELECT_SHARE must be NA or a share in (0, 1]", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  for (bad in list(0, 1.5, "half", c(0.5, 0.6))) {
+    expect_error(vp_fit_first(choices = utils::modifyList(vp_choices, list(SELECT_SHARE = bad))), "SELECT_SHARE")
+  }
 })
 
 test_that("raising REPEATS computes only the new repeat", {
