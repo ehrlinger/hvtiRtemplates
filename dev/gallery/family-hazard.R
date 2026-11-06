@@ -111,7 +111,7 @@ hazard_register_segments <- function(root, job) {
   if (file.exists(file.path(dir, "segments.rds"))) return(invisible())
   saveRDS(hazard_segments(readRDS(file.path(dir, "built.rds"))), file.path(dir, "segments.rds"))
   invisible(utils::capture.output(suppressMessages(register_data(
-    root, built = "segments.rds", dataset = "segments", role = "named",
+    root, file = "segments.rds", dataset = "segments", role = "named",
     population = "Synthetic start/stop segments of the cohort's follow-up, cut at 1 and 5 years"
   ))))
 }

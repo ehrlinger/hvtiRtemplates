@@ -75,6 +75,13 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.9") {
   stop("This job needs hvtiPlotR >= 2.8.9; ", utils::packageVersion("hvtiPlotR"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
+# register_data() takes file = from 1.5.20 (built = before). Checked here, before
+# the save chunk writes sid-clusters.rds, so an older library leaves nothing behind.
+if (utils::packageVersion("hvtiRutilities") < "1.5.20") {
+  stop("This job needs hvtiRutilities >= 1.5.20 for register_data(file =); ",
+       utils::packageVersion("hvtiRutilities"), " is installed.\nUpdate it, then re-render.",
+       call. = FALSE)
+}
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -613,7 +620,7 @@ if (!is.null(.reg)) {
   ))
 } else {
   utils::capture.output(suppressMessages(
-    hvtiRutilities::register_data(.root, built = .csv_name, dataset = .dataset, role = "named",
+    hvtiRutilities::register_data(.root, file = .csv_name, dataset = .dataset, role = "named",
                                   population = "SID cluster assignments", kind = "ancillary", key = .id)
   ))
 }

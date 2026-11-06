@@ -55,6 +55,9 @@ test_that("dc-eda renders every section into one self-contained report", {
     expect_match(text, paste0("<h2[^>]*>[^<]*", heading), info = heading)
   }
   expect_match(text, "<h3[^>]*>[^<]*Repair")
+  # The event panel has its follow-up table, as the death panel has (#484).
+  expect_match(text, "Follow-up, Repair, by patient group", fixed = TRUE)
+  expect_match(text, "Follow-up, All deaths, by patient group", fixed = TRUE)
   # embed-resources: every saved figure is inside the report, as an image or,
   # for a categorical page with hover labels, as a widget. An image Quarto
   # could not find is left as a file link and would not be counted here.
@@ -172,7 +175,7 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
                       ssn = 100000000 + 7919 * seq_len(n), ssdi_ref = 100000000 + 7919 * seq_len(n),
                       last_name = "x")
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, built = "built.csv")))
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, file = "built.csv")))
   lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   chunk <- function(label) {
     start <- match(paste0("#| label: ", setup_label(label)), lines)
@@ -467,8 +470,8 @@ test_that("dc-eda's overview leaves out identifiers but keeps dates", {
   suppressWarnings(capture.output(eval(chunk("spec"), env)))
   out <- paste(capture.output(eval(chunk("overview-contents"), env)), collapse = "\n")
   # Only the exact names MRN and eMRN are record numbers: bnp_mrna and mrn_num
-  # are study variables.
-  expect_identical(env$shown$variable, c("year", "age", "carotid", "mrn_num", "bnp_mrna", "dt_surg"))
+  # are study variables. The table is alphabetical, not in dataset order (#483).
+  expect_identical(env$shown$variable, c("age", "bnp_mrna", "carotid", "dt_surg", "mrn_num", "year"))
   expect_match(out, "Identifier columns, not described: ccfid, patientid, eMRN", fixed = TRUE)
 })
 
@@ -666,4 +669,83 @@ test_that("dc-eda's key comes from label_map()'s abbreviations_by_key, not from 
   expect_length(sections, 2L)
   expect_false(grepl("Abbreviations:", sections[1L], fixed = TRUE))
   expect_match(sections[2L], "Abbreviations: SP = Surgical procedure.", fixed = TRUE)
+})
+
+test_that("dc-eda gives each event its own follow-up table, as each death panel has (#484)", {
+  withr::local_package("ggplot2")
+  withr::local_package("hvtiPlotR")
+  withr::local_package("hvtiRutilities")
+  local_child_chunks()
+  root <- migration_study_fixture(NULL)
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "eda")
+  chunk <- function(label) {
+    lines <- readLines(job, warn = FALSE)
+    start <- match(paste0("#| label: ", setup_label(label)), lines)
+    end <- start + match("```", lines[-seq_len(start)])
+    chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)
+  }
+  panels <- function(events, record = TRUE) {
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    env$.provenance_data <- list()
+    env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+    # A second event for the competing panel: every other repair, a year earlier.
+    env$d$redo <- ifelse(seq_len(nrow(env$d)) %% 2L == 0L, env$d$repair, 0)
+    env$d$iv_redo <- pmax(env$d$iv_fup - 1, 0)
+    # Two names that differ only in punctuation, as R allows.
+    env$d$ev_x <- env$d$repair
+    env$d$ev.x <- env$d$redo
+    env$.cfg <- hvtiRutilities::study_config(root)
+    env$job_data <- eda_job_data("ccfid")
+    for (label in c("set", "edit-study-choices")) eval(chunk(label), env)
+    env$X_VAR <- "year"
+    env$ORIGIN_YEAR <- 1980
+    env$EVENTS <- events
+    # Each table and figure goes through .child(), which the spec chunk
+    # defines; record what it is handed instead of knitting it.
+    shown <- data.frame(label = character(), caption = character())
+    withCallingHandlers(
+      utils::capture.output({
+        eval(chunk("spec"), env)
+        if (record) env$.child <- function(label, caption, code) shown[nrow(shown) + 1L, ] <<- c(label, caption)
+        for (label in c("gfup-window", "gfup-panels")) eval(chunk(label), env)
+      }),
+      warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning")
+    )
+    tbl <- shown[grepl("^tbl gfup .*followup$", shown$label), ]
+    list(env = env, labels = tbl$label, captions = sub("^(Follow-up, [^,]+, by patient group).*$", "\\1", tbl$caption))
+  }
+
+  none <- panels(list())
+  expect_identical(none$captions, "Follow-up, All deaths, by patient group")
+
+  one <- panels(list(repair = list(event = "repair", time = "iv_fup", death = "dead",
+                                   death_time = "iv_dead", label = "Repair")))
+  expect_identical(one$captions, c("Follow-up, All deaths, by patient group", "Follow-up, Repair, by patient group"))
+  # The table is the event's own: its Event row counts the repaired patients
+  # with an interval, counted here from the data rather than by the template.
+  d <- one$env$d
+  tab <- one$env$.followup
+  expect_identical(unique(tab$interval), "iv_fup")
+  expect_gt(sum(d$repair == 1, na.rm = TRUE), 0L)
+  expect_identical(as.integer(tab$n[tab$patients == "Event"]),
+                   sum(d$repair == 1 & !is.na(d$iv_fup), na.rm = TRUE))
+
+  two <- panels(list(nonfatal = list(event = c("repair", "redo"), time = c("iv_fup", "iv_redo"),
+                                     death = "dead", death_time = "iv_dead")))
+  # Without label, each event is named as the figure names it.
+  levels <- two$env$fp$tables$panels$nonfatal$meta$event_levels
+  expect_identical(two$captions, c("Follow-up, All deaths, by patient group",
+                                   paste0("Follow-up, ", levels[2:3], ", by patient group")))
+  expect_identical(two$labels, c("tbl gfup all followup", "tbl gfup nonfatal event 1 followup",
+                                 "tbl gfup nonfatal event 2 followup"))
+  expect_identical(unique(two$env$.followup$interval), "iv_redo")
+
+  # Names distinct in R can be one label once .child() cleans them, so each
+  # table is labeled by its event's place in the panel. The real .child() runs
+  # here, with its check that no two outputs share a label.
+  same <- list(nonfatal = list(event = c("ev_x", "ev.x"), time = c("iv_fup", "iv_redo"),
+                               death = "dead", death_time = "iv_dead"))
+  expect_no_error(punct <- panels(same, record = FALSE))
+  expect_identical(unique(punct$env$.followup$interval), "iv_redo")
 })

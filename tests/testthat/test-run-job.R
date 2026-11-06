@@ -196,6 +196,9 @@ test_that("run_job drives the real chain: preflight, submit, the render's own ch
   root <- lock_study(r = as.character(getRversion()),
                      pkgs = stats::setNames(lapply(need, function(p) as.character(utils::packageVersion(p))), need))
   withr::local_envvar(QUARTO_R = NA, HVTI_RUN_R = NA, HVTI_RUN_R_VERSION = NA, RENV_PROJECT = NA)
+  # The lock takes this process's versions, which a stale install would contradict, so the preflight
+  # refuses before .launch() is reached. Checked as the render will start: in the study root, this R.
+  skip_if_stale_install(root)
   testthat::local_mocked_bindings(.warn_stale_hvti = function() invisible(FALSE))
   job_file <- function(subject, guard) {
     job <- file.path(root, "analyses", sprintf("dc.%s.eda.qmd", subject))

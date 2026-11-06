@@ -148,7 +148,7 @@ records the file's size, checksum and the population it describes in
 
 ```r
 register_data(
-  built = "built.csv",
+  file = "built.csv",
   role = "study",
   population = "Patients meeting the study inclusion criteria"
 )
@@ -166,7 +166,7 @@ utils::write.csv(
 )
 register_data(
   new_root,
-  built = "built.csv",
+  file = "built.csv",
   role = "study",
   population = "Synthetic full cohort"
 )

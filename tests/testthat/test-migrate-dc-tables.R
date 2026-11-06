@@ -101,7 +101,7 @@ test_that("dc-tables only classifies from the selected registered data", {
   d$female <- rep(1:3, 8)
   utils::write.csv(d, path, row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(
-    root, built = "categorical.csv",
+    root, file = "categorical.csv",
     dataset = "categorical", role = "named", population = "Synthetic categorical fixture"
   ))
   out <- tables_migrate(root)
@@ -118,7 +118,7 @@ test_that("the study dataset is selected as \"built\", by either name or by its 
   suppressMessages(hvtiRutilities::study_setup(root, "Built name", 42L, adopt = TRUE, cleanup = FALSE, renv = FALSE))
   utils::write.csv(data.frame(ccfid = 1:3), file.path(hvtiRutilities::study_dir("datasets", root), "cohort.csv"),
                    row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, built = "cohort.csv", role = "study"))
+  suppressMessages(hvtiRutilities::register_data(root, file = "cohort.csv", role = "study"))
   for (input in c("built", "study", "cohort")) {
     expect_identical(hvtiRtemplates:::.dc_tables_dataset(root, input)$dataset, "built", info = input)
   }
@@ -126,7 +126,7 @@ test_that("the study dataset is selected as \"built\", by either name or by its 
   # SAS `set built;` names a file: an additional dataset in built.csv keeps it.
   utils::write.csv(data.frame(ccfid = 1:2), file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                    row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv", dataset = "subset", role = "named",
+  suppressMessages(hvtiRutilities::register_data(root, file = "built.csv", dataset = "subset", role = "named",
                                                  population = "Synthetic subset"))
   expect_identical(hvtiRtemplates:::.dc_tables_dataset(root, "built")$dataset, "subset")
   expect_identical(hvtiRtemplates:::.dc_tables_dataset(root, "study")$dataset, "built")

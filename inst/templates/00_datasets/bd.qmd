@@ -62,8 +62,9 @@ TYPE    <- "build"
 # Registering claims the build record only from hvtiRutilities 1.5.3, and declaring the working file
 # (declare_data()) needs 1.5.12; an older one would record a bd cut as legacy or cannot declare it. The named
 # checks need proc_print(), released in 1.5.17, and the rebuild comparison compare_built(), in hvtiRdatabuild 0.3.3.
-if (utils::packageVersion("hvtiRutilities") < "1.5.17") {
-  .bd_stop("setup", "this job needs hvtiRutilities >= 1.5.17 for proc_print(); ",
+# register_data() and declare_data() take file = from 1.5.20 (built = before).
+if (utils::packageVersion("hvtiRutilities") < "1.5.20") {
+  .bd_stop("setup", "this job needs hvtiRutilities >= 1.5.20 for register_data(file =); ",
            utils::packageVersion("hvtiRutilities"), " is installed.")
 }
 if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.3.3") {
@@ -591,7 +592,7 @@ if (!REGISTER && .partial) {
 } else if (!REGISTER && .unreviewable) {
   .register_step <- paste0("Checks did not all run (", toString(.checks_missing), "): nothing declared, reviewed or registered")
 } else if (!REGISTER && is.null(.registered$built)) {
-  hvtiRutilities::declare_data(.root, built = basename(.built), key = KEY)
+  hvtiRutilities::declare_data(.root, file = basename(.built), key = KEY)
   .register_step <- "Declared as the study dataset: nothing registered"
 } else if (!REGISTER && .other_file) {
   # A comparison build, such as an R rebuild beside a SAS-built dataset, is allowed to write its working
@@ -662,7 +663,7 @@ if (REGISTER) {
   }
   .register_step <- tryCatch({
     if (is.null(.registered$built)) {
-      hvtiRutilities::register_data(.root, built = basename(.built))
+      hvtiRutilities::register_data(.root, file = basename(.built))
       "Registered as the study dataset"
     } else {
       # update_manifest() finds the study from the working directory.

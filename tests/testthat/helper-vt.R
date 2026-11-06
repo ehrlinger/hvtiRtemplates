@@ -101,7 +101,7 @@ vt_render_fixture <- function(.local_envir = parent.frame()) {
   withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
   suppressMessages(hvtiRutilities::study_setup(root, study = "Synthetic vt study", study_tracker_id = 42L, renv = FALSE))
   utils::write.csv(vt_data(), file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv", role = "study", population = "Synthetic cohort"))
+  suppressMessages(hvtiRutilities::register_data(root, file = "built.csv", role = "study", population = "Synthetic cohort"))
   set_line <- function(lines, key, value) {
     hit <- which(grepl(paste0("^", key, " <- "), lines))
     if (!length(hit)) stop("no line for ", key)

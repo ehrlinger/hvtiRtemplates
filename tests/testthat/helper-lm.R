@@ -71,7 +71,7 @@ lm_study <- function(.local_envir = parent.frame(), data = lm_data()) {
     file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
     row.names = FALSE
   )
-  suppressMessages(hvtiRutilities::register_data(root, built = "built.csv"))
+  suppressMessages(hvtiRutilities::register_data(root, file = "built.csv"))
   root
 }
 
@@ -88,7 +88,7 @@ lm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = c
   ))
   utils::write.csv(d, file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(
-    root, built = "built.csv", role = "study", population = "Synthetic cohort"
+    root, file = "built.csv", role = "study", population = "Synthetic cohort"
   ))
   job <- add_job("lm", "outcome", "analysis", dir = root, qualifier = qualifier)
   replacements <- switch(

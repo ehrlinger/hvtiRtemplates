@@ -51,7 +51,7 @@ set_path <- .job$set_path
 # study dataset that the training job did not use, chosen by WHERE. To validate
 # on a file of its own, put it in the study's datasets folder and register it
 # once, from the study root, under a name of its own:
-#   hvtiRutilities::register_data(built = "validation.csv", dataset = "validation",
+#   hvtiRutilities::register_data(file = "validation.csv", dataset = "validation",
 #                                 role = "named", population = "Operated 2015 onward")
 # then set DATASET <- "validation". It must identify patients by the same column
 # as the training data: the training-overlap chunk compares the two cohorts by
