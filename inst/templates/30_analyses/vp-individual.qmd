@@ -215,7 +215,7 @@ vpi_coverage <- function(grad, parent, screen, selected = screen$variable[screen
   m <- match(out$variable, screen$variable)
   out$noise <- screen$noise[m] %in% TRUE
   out$tested <- screen$tested[m] %in% TRUE
-  # The handoff's selection, which can be vp-fit's refit vote, not the full fit's own judgement.
+  # The handoff's selection, which can be vp-fit's refit vote, not the full fit's own judgment.
   out$selected <- out$variable %in% selected
   out$drawn <- out$share_na < 1
   out
