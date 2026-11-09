@@ -28,6 +28,10 @@ render: an overview of every column, goodness of follow-up, then continuous
 variables, categorical variables as percentages and categorical variables as
 counts, each with its table. It is written for the biostatistician choosing
 variables for an analysis set, not for a manuscript.
+When someone asks for "the tables" on a new build, this is the job they mean:
+it is what the SAS ODS tables (dc.tables.ods.sas) were, a first look at every
+variable for outliers and errors, and by default it draws the same ODS list.
+The formatted table for an analysis report or a manuscript is `dc-tables`.
 
 Each section draws through a package function. The follow-up section is
 `dc-gfup`, a job of its own: its figure (`hvtiPlotR::hv_followup_panels()`)

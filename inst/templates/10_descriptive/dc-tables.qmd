@@ -27,6 +27,10 @@ A `dc-tables` job is the formatted descriptive table: every variable the study
 reports, grouped under the section headings the SAS `%desc_tab` lists carried as
 comments, categorical as `n (%)` and continuous in the summary form you select.
 The default is median (15th, 85th percentile).
+It is not the data check. "Run the tables" once meant the SAS ODS tables, a
+step programmer's first look at every variable of a new build; that job is now
+`dc-eda`, which draws the same ODS list. This one is the statistician's table,
+chosen and formatted for an analysis report or a manuscript.
 `%desc_tab` wrote the categorical and continuous tables as two
 RTF files; `hv_tbl_summary()` writes one table with both. It describes; with
 `BY` set it separates the groups into columns. `COMPARE` chooses whether to
