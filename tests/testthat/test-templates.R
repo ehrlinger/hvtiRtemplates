@@ -677,6 +677,8 @@ test_that("dc-tables refuses PROP_CI's intervals in a manuscript-style Word tabl
   }
   expect_error(run("wilson", "manuscript"), "Set WORD_STYLE <- \"report\"", fixed = TRUE)
   expect_error(run("none", "Report"), "WORD_STYLE must be", fixed = TRUE)
+  expect_error(run("Wilson", "manuscript"), "PROP_CI must be", fixed = TRUE)
+  expect_error(run(NA_character_, "report"), "PROP_CI must be", fixed = TRUE)
   expect_no_error(run("wilson", "report"))
   expect_no_error(run("none", "manuscript"))
 })

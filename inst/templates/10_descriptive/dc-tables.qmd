@@ -558,6 +558,11 @@ if (DROP_CONSTANT) {
 if (!is.character(WORD_STYLE) || length(WORD_STYLE) != 1L || !WORD_STYLE %in% c("manuscript", "report")) {
   stop("WORD_STYLE must be \"manuscript\" or \"report\".", call. = FALSE)
 }
+# Checked first, so a mistyped PROP_CI is named as such rather than read as a
+# request for intervals the manuscript style refuses.
+if (!is.character(PROP_CI) || length(PROP_CI) != 1L || !PROP_CI %in% c("none", "wilson", "exact")) {
+  stop("PROP_CI must be \"none\", \"wilson\" or \"exact\".", call. = FALSE)
+}
 if (!identical(PROP_CI, "none") && identical(WORD_STYLE, "manuscript")) {
   stop("PROP_CI asks for intervals, which the manuscript style does not show yet. ",
        "Set WORD_STYLE <- \"report\", or PROP_CI <- \"none\".", call. = FALSE)
@@ -623,7 +628,8 @@ if (nrow(.labeled$changes)) {
 # The same summary, drawn in WORD_STYLE. MANUSCRIPT_CAPTION is written into
 # the .docx above the table; this report numbers its own tables. The tbl-word
 # chunk below shows word_ft, so it cannot run without this chunk: if the Word
-# table stops here, fix MANUSCRIPT_LAYOUT rather than skipping the chunk.
+# table stops here, fix WORD_STYLE or MANUSCRIPT_LAYOUT rather than skipping the chunk.
+# MANUSCRIPT_CAPTION and MANUSCRIPT_FILL apply in either style.
 # The report style has one layout, so MANUSCRIPT_LAYOUT is passed only to the
 # manuscript style; hv_man_table() refuses a layout named for the report style.
 if (identical(WORD_STYLE, "manuscript")) {
