@@ -33,7 +33,9 @@ RTF files; `hv_tbl_summary()` writes one table with both. It describes; with
 test them; a p-value here is a prompt for an analysis, not a result.
 The report shows the table in the report style, with each variable's column
 name beside its label while `SHOW_VARIABLE` is `TRUE`. The Word file holds the
-same table in the manuscript style, under its caption, as a journal receives it.
+same table under its caption, in the manuscript style as a journal receives it,
+or in the report style when `WORD_STYLE` says so. `PROP_CI` adds a confidence
+interval to each percentage; the manuscript style does not show it yet.
 
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. Every
@@ -52,9 +54,9 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.11") {
-  stop("This job needs hvtiRtables >= 1.0.11 for hv_table_style(), the manuscript Word table, its page orientation and ",
-       "summaries that a study's own sd() or median() cannot break; ",
+if (utils::packageVersion("hvtiRtables") < "1.0.13") {
+  stop("This job needs hvtiRtables >= 1.0.13 for hv_table_style(), the manuscript Word table, its page orientation, ",
+       "PROP_CI's intervals and summaries that a study's own sd() or median() cannot break; ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
@@ -204,7 +206,22 @@ ABBREVIATIONS <- character(0) # EDIT: define abbreviations used in the table
 WORD_FILE <- "dc-tables.docx"  # EDIT: choose the Word filename within this set
 MANUSCRIPT_LAYOUT <- "compare" # EDIT: choose the Word table's layout
 # MIGRATE-END: dc-tables-config
-# The Word table is drawn in the manuscript style. MANUSCRIPT_LAYOUT, above,
+# EDIT: "wilson" or "exact" puts a confidence interval for the percentage
+# beside every binary and categorical cell, in a column of its own; "none"
+# leaves it out. A reviewer reads 1/27 = 3.7% very differently once it carries
+# 0.66 to 18. "wilson" is the Wilson score interval, which takes the exact
+# (Clopper-Pearson) bound at a count of 0 or n, where a Wald interval collapses
+# to a point; "exact" is Clopper-Pearson in every cell. The method and level
+# are named in the table's note.
+PROP_CI <- "none"
+# EDIT: the interval's confidence level, a number between 0 and 1.
+PROP_CI_LEVEL <- 0.95
+# EDIT: the Word table's style. "manuscript" is the journal's table;
+# "report" is the table this report shows. The manuscript style does not show
+# PROP_CI's intervals yet, because where they go in a journal table is not
+# settled, so a table with intervals must be saved in the report style.
+WORD_STYLE <- "manuscript"
+# With WORD_STYLE "manuscript", MANUSCRIPT_LAYOUT, above,
 # says what the table does: "compare" puts one n column beside the groups it
 # compares; "describe" puts a count beside each group, for cohorts or repeated
 # measures shown side by side. "describe" is also the layout that draws
@@ -536,11 +553,21 @@ if (DROP_CONSTANT) {
   MEAN_SD <- setdiff(MEAN_SD, constant_rows)
   ORDINAL <- setdiff(ORDINAL, constant_rows)
 }
+# Checked before the table is built, so a choice the Word table cannot honor
+# stops here rather than after the summary has been computed.
+if (!is.character(WORD_STYLE) || length(WORD_STYLE) != 1L || !WORD_STYLE %in% c("manuscript", "report")) {
+  stop("WORD_STYLE must be \"manuscript\" or \"report\".", call. = FALSE)
+}
+if (!identical(PROP_CI, "none") && identical(WORD_STYLE, "manuscript")) {
+  stop("PROP_CI asks for intervals, which the manuscript style does not show yet. ",
+       "Set WORD_STYLE <- \"report\", or PROP_CI <- \"none\".", call. = FALSE)
+}
 tbl <- hvtiRtables::hv_tbl_summary(
   d_table, by = BY, groups = GROUPS, continuous = CONTINUOUS,
   binary = BINARY, categorical = CATEGORICAL, compare = COMPARE,
   percentiles = PERCENTILES, continuous_stat = CONTINUOUS_STAT,
-  mean_sd = MEAN_SD, show_variable = SHOW_VARIABLE
+  mean_sd = MEAN_SD, show_variable = SHOW_VARIABLE,
+  prop_ci = PROP_CI, prop_ci_level = PROP_CI_LEVEL
 )
 if (!is.logical(STDDIFF) || length(STDDIFF) != 1L || is.na(STDDIFF)) {
   stop("STDDIFF must be TRUE or FALSE.", call. = FALSE)
@@ -593,14 +620,20 @@ if (nrow(.labeled$changes)) {
 ```{r}
 #| label: word-file
 # unnumbered: writes the Word file; the table below shows what it holds
-# The same summary, drawn for the manuscript. MANUSCRIPT_CAPTION is written into
+# The same summary, drawn in WORD_STYLE. MANUSCRIPT_CAPTION is written into
 # the .docx above the table; this report numbers its own tables. The tbl-word
 # chunk below shows word_ft, so it cannot run without this chunk: if the Word
 # table stops here, fix MANUSCRIPT_LAYOUT rather than skipping the chunk.
-word_ft <- hvtiRtables::hv_man_table(
-  tbl, style = hvtiRtables::hv_table_style("manuscript", fill = MANUSCRIPT_FILL),
-  layout = MANUSCRIPT_LAYOUT
-)
+# The report style has one layout, so MANUSCRIPT_LAYOUT is passed only to the
+# manuscript style; hv_man_table() refuses a layout named for the report style.
+if (identical(WORD_STYLE, "manuscript")) {
+  word_ft <- hvtiRtables::hv_man_table(
+    tbl, style = hvtiRtables::hv_table_style("manuscript", fill = MANUSCRIPT_FILL),
+    layout = MANUSCRIPT_LAYOUT
+  )
+} else {
+  word_ft <- hvtiRtables::hv_man_table(tbl, style = hvtiRtables::hv_table_style("report", fill = MANUSCRIPT_FILL))
+}
 if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
       !grepl("^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$", WORD_FILE)) {
   stop("WORD_FILE must be a plain .docx filename within this set.", call. = FALSE)
@@ -614,14 +647,15 @@ hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS
 # says which release built it without anyone opening this report.
 hvtiRtemplates:::.stamp_docx(word_path, hvtiRtemplates:::.run_reconcile(.job$run), data = .provenance_data,
                              caption = MANUSCRIPT_CAPTION)
-# The manuscript style merges its header and section rows, and nothing else.
-check <- hvtiRtables::hv_check_docx(word_path, style = "manuscript")
+# Checked against the style it was saved in: the manuscript style merges its
+# header and section rows, and nothing else; the report style merges nothing.
+check <- hvtiRtables::hv_check_docx(word_path, style = WORD_STYLE)
 if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)
 ```
 
 ```{r}
 #| label: tbl-word
-#| tbl-cap: "The table as saved to Word, in the manuscript style"
+#| tbl-cap: !expr 'paste0("The table as saved to Word, in the ", WORD_STYLE, " style")'
 hvtiRtables::hv_man_table_display(word_ft, abbreviations = ABBREVIATIONS)
 ```
 

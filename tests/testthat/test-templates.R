@@ -656,9 +656,29 @@ test_that("dc-tables carries the registered-data and checked Word pipeline contr
     "hvtiRtables::hv_tbl_summary(", "hvtiRtables::hv_man_table(",
     "hvtiRtables::hv_man_table_save(", "hvtiRtables::hv_check_docx(",
     'hvtiRtables::hv_table_style("manuscript", fill = MANUSCRIPT_FILL)', "layout = MANUSCRIPT_LAYOUT",
-    "caption = MANUSCRIPT_CAPTION", "orientation = TABLE_ORIENTATION", 'hv_check_docx(word_path, style = "manuscript")',
+    'hvtiRtables::hv_table_style("report", fill = MANUSCRIPT_FILL)',
+    "caption = MANUSCRIPT_CAPTION", "orientation = TABLE_ORIENTATION", "hv_check_docx(word_path, style = WORD_STYLE)",
+    "prop_ci = PROP_CI, prop_ci_level = PROP_CI_LEVEL",
     'study_dir("documents"', "dataset = DATASET"
   )) expect_true(any(grepl(required, code, fixed = TRUE)), info = required)
+})
+
+test_that("dc-tables refuses PROP_CI's intervals in a manuscript-style Word table, before building it", {
+  # hvtiRtables' manuscript style stops on a table carrying prop_ci intervals.
+  # The template checks first, so the error names the choice to change.
+  src <- readLines(template_path("dc", "tables"), warn = FALSE)
+  from <- grep("^if \\(!is.character\\(WORD_STYLE\\)", src)
+  to <- grep("^tbl <- hvtiRtables::hv_tbl_summary\\($", src)
+  expect_length(from, 1L)
+  expect_length(to, 1L)
+  guard <- parse(text = src[from:(to - 1L)])
+  run <- function(prop_ci, word_style) {
+    eval(guard, list(PROP_CI = prop_ci, WORD_STYLE = word_style), baseenv())
+  }
+  expect_error(run("wilson", "manuscript"), "Set WORD_STYLE <- \"report\"", fixed = TRUE)
+  expect_error(run("none", "Report"), "WORD_STYLE must be", fixed = TRUE)
+  expect_no_error(run("wilson", "report"))
+  expect_no_error(run("none", "manuscript"))
 })
 
 test_that("a qualified template name parses into three fields", {

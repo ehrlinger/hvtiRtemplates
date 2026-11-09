@@ -97,3 +97,42 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   expect_match(props$value[props$tag == "hvti_hvtiRtemplates"], as.character(utils::packageVersion("hvtiRtemplates")),
                fixed = TRUE)
 })
+
+test_that("dc-tables shows PROP_CI's intervals and saves them in a report-style Word table", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if(utils::packageVersion("hvtiRtables") < "1.0.13", "needs hvtiRtables >= 1.0.13")
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = NA)
+  root <- dc_tables_study()
+  job <- add_job("dc", "cohort", "tables", qualifier = "tables", dir = root)
+  lines <- readLines(job, warn = FALSE)
+  lines <- set_choice(lines, "BY", '"grp"')
+  lines <- set_choice(lines, "CONTINUOUS", '"age"')
+  lines <- set_choice(lines, "BINARY", 'c("female", "redo")')
+  lines <- set_choice(lines, "CATEGORICAL", '"race"')
+  lines <- set_choice(lines, "PROP_CI", '"wilson"')
+  lines <- set_choice(lines, "WORD_STYLE", '"report"')
+  groups <- grep("^GROUPS <- list\\($", lines)
+  lines <- c(lines[seq_len(groups)], '  Demography = c("age", "female", "race", "redo")', ")",
+             lines[-seq_len(groups + 3L)])
+  writeLines(gsub("EDIT:", "REVIEWED:", lines, fixed = TRUE), job)
+
+  rendered <- tryCatch(quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE),
+                       error = function(e) e)
+  if (inherits(rendered, "error")) quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE)
+
+  html <- paste(readLines(sub("[.]qmd$", ".html", job), warn = FALSE), collapse = "\n")
+  html <- gsub("(?s)<pre[^>]*>.*?</pre>", "", html, perl = TRUE)
+  # The note names the method, and the Word table's caption names its style.
+  expect_match(html, "Wilson score intervals", fixed = TRUE)
+  expect_match(html, "The table as saved to Word, in the report style", fixed = TRUE)
+  docx <- list.files(hvtiRutilities::study_dir("documents", root), pattern = "[.]docx$",
+                     recursive = TRUE, full.names = TRUE)
+  expect_length(docx, 1L)
+  expect_identical(nrow(hvtiRtables::hv_check_docx(docx, style = "report")), 0L)
+  doc <- officer::docx_summary(officer::read_docx(docx))
+  expect_identical(doc$text[doc$content_type == "paragraph"][[1L]], "Table 1. Patient characteristics")
+  # The interval column reached the file, with the note that says what it is.
+  expect_true(any(grepl("95% CI", doc$text[doc$content_type == "table cell"], fixed = TRUE)))
+  expect_true(any(grepl("Wilson score intervals", doc$text, fixed = TRUE)))
+})
