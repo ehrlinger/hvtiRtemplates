@@ -18,5 +18,5 @@
 ^Meta$
 ^pkgdown$
 ^news$
-^Rplots\.pdf$
+(^|/)Rplots[0-9]*\.pdf$
 ^vignettes/articles$

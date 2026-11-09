@@ -460,9 +460,16 @@ test_that("a KEY that repeats in a stale registered version says the source was 
   err <- tryCatch(read_job_data(job_study(long), key = c("ccfid", "dt_surg")), error = conditionMessage)
   expect_false(grepl("has changed since", err, fixed = TRUE))
   expect_match(err, "registered version of `study` is current", fixed = TRUE)
-  expect_match(err, 'hvtiRutilities::duplicate_keys(hvtiRutilities::read_built(dataset = "study"), c("ccfid", "dt_surg"))',
-               fixed = TRUE)
   expect_false(grepl("9001", err, fixed = TRUE))
+  # The suggested call names the job's study, so it lists the repeat when run
+  # from outside that study, or inside another one.
+  cfg <- job_study(long)
+  withr::local_dir(job_study(data.frame(ccfid = 1:2))$root)
+  err <- tryCatch(read_job_data(cfg, key = c("ccfid", "dt_surg")), error = conditionMessage)
+  call <- sub("^.*List the repeated rows with (.*) and correct them in the build\\.$", "\\1", err)
+  expect_match(call, "^hvtiRutilities::duplicate_keys\\(")
+  dk <- suppressMessages(eval(str2lang(call), baseenv()))
+  expect_identical(dk$summary$repeated_keys, 1L)
 })
 
 test_that("a selection saved before the refusal is still shown masked, and rebuilding it names the file", {

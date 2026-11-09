@@ -474,9 +474,11 @@
 
 # What a KEY repeat means when the read was not stale: the data read are the
 # latest, registered or working, so the repeat is in the build. A single
-# dataset gets the call that lists the repeated rows; a joined result, whose
-# rows no one call reads, is only told the data are current.
-.key_repeat_hint <- function(read, dataset, analysis_set, key, joined = FALSE) {
+# dataset gets the call that lists the repeated rows, naming the job's study
+# by its root, since the console it is pasted into may be in another study or
+# none; a joined result, whose rows no one call reads, is only told the data
+# are current.
+.key_repeat_hint <- function(read, dataset, analysis_set, key, cfg, joined = FALSE) {
   if (joined) return(" The registered versions read are current, so the repeat is in the data, not a stale version.")
   what <- if (!is.null(analysis_set)) {
     paste0("The analysis set `", analysis_set, "` is current")
@@ -485,10 +487,11 @@
   } else {
     paste0("The registered version of `", dataset, "` is current")
   }
+  study <- paste0("cfg = hvtiRutilities::study_config(start = ", encodeString(cfg$root, quote = "\""), ")")
   call <- if (!is.null(analysis_set)) {
-    paste0("hvtiRdatabuild::read_analysis_set(\"", analysis_set, "\")")
+    paste0("hvtiRdatabuild::read_analysis_set(", encodeString(analysis_set, quote = "\""), ", ", study, ")")
   } else {
-    paste0("hvtiRutilities::read_built(dataset = \"", dataset, "\")")
+    paste0("hvtiRutilities::read_built(", study, ", dataset = ", encodeString(dataset, quote = "\""), ")")
   }
   paste0(" ", what, ", so the repeat is in the build itself. List the repeated rows with ",
          "hvtiRutilities::duplicate_keys(", call, ", ", paste(deparse(key), collapse = ""),
@@ -858,7 +861,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     carried <- if (is.null(join_vars)) names(ids$data) else c(who$id, join_vars)
     cohort_only <- all(tolower(key) %in% tolower(intersect(names(ids$data), .match_columns(carried, names(ids$data)))))
     if (cohort_only) {
-      .check_job_key(ids$data, key, who$id, read$out_of_date, .key_repeat_hint(read, dataset, analysis_set, key))
+      .check_job_key(ids$data, key, who$id, read$out_of_date, .key_repeat_hint(read, dataset, analysis_set, key, cfg))
     }
     cohort_key <- key
     cohort_cols <- ids$data[0L, , drop = FALSE]
@@ -877,7 +880,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                        id_values = if (is.null(id_values)) list() else id_values)
   if (whole_patients && !is.null(where)) .check_whole_patients(ids$data, kept$data, who$id)
   counts <- .check_job_key(kept$data, key, who$id, c(read$out_of_date, joined$out_of_date),
-                           .key_repeat_hint(read, dataset, analysis_set, key, joined = !is.null(join)))
+                           .key_repeat_hint(read, dataset, analysis_set, key, cfg,
+                                            joined = !is.null(join)))
   imputation_col <- if (!is.null(imputation)) .match_imputation(imputation, names(kept$data), who$id, kept$data)
   if (!is.null(imputation_col)) {
     counts$imputations <- length(unique(kept$data[[imputation_col]][!is.na(kept$data[[imputation_col]])]))
