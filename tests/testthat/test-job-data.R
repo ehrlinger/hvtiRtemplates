@@ -443,6 +443,24 @@ test_that("a WHERE on a KEY column that is not the ID is still allowed, and show
   expect_identical(sel$rows, 2L)
 })
 
+test_that("a KEY that repeats in a stale registered version says the source was rebuilt", {
+  # Registered with a same-day repeat, then rebuilt unique but not registered:
+  # the job reads the registered version, and the KEY error must say so, since
+  # the out-of-date note it would otherwise carry is never shown.
+  long <- data.frame(ccfid = c(9001L, 9001L, 9002L), dt_surg = c("2020-01-02", "2020-01-02", "2021-03-04"))
+  cfg <- job_study(long)
+  utils::write.csv(long[-2, ], file.path(hvtiRutilities::study_dir("datasets", cfg$root), "built.csv"),
+                   row.names = FALSE)
+  err <- tryCatch(read_job_data(cfg, key = c("ccfid", "dt_surg")), error = conditionMessage)
+  expect_match(err, "1 value of KEY repeats", fixed = TRUE)
+  expect_match(err, "has changed since it was registered", fixed = TRUE)
+  expect_match(err, "update_manifest()", fixed = TRUE)
+  expect_false(grepl("9001", err, fixed = TRUE))
+  # A current registration carries no such note.
+  err <- tryCatch(read_job_data(job_study(long), key = c("ccfid", "dt_surg")), error = conditionMessage)
+  expect_false(grepl("has changed since", err, fixed = TRUE))
+})
+
 test_that("a selection saved before the refusal is still shown masked, and rebuilding it names the file", {
   cfg <- job_study(d_ids)
   sel <- attr(read_job_data(cfg, where = quote(age >= 18))$record, "selection")
