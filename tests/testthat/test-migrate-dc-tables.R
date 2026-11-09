@@ -202,6 +202,9 @@ test_that("migrated dc-tables writes an editable structurally clean document in 
   env$STDDIFF <- FALSE
   env$GROUP_1 <- NULL
   env$SHOW_VARIABLE <- TRUE
+  env$PROP_CI <- "none"
+  env$PROP_CI_LEVEL <- 0.95
+  env$WORD_STYLE <- "manuscript"
   env$MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"
   env$MANUSCRIPT_FILL <- "#CAEDFB"
   env$TABLE_ORIENTATION <- "auto"
@@ -245,6 +248,7 @@ test_that("dc-tables stops on actual CORR structural findings", {
   expect_length(start, 1L)
   env <- new.env()
   env$word_path <- path
+  env$WORD_STYLE <- "manuscript"
   expect_error(eval(code[seq.int(start, length(code))], env), "CORR structural check")
 })
 
@@ -575,6 +579,9 @@ test_that("the Word table is drawn in the manuscript style, under the study's ca
   env$STDDIFF <- FALSE
   env$GROUP_1 <- NULL
   env$SHOW_VARIABLE <- TRUE
+  env$PROP_CI <- "none"
+  env$PROP_CI_LEVEL <- 0.95
+  env$WORD_STYLE <- "manuscript"
   env$MANUSCRIPT_LAYOUT <- "compare"
   env$MANUSCRIPT_CAPTION <- "Table 2. Operative details"
   env$MANUSCRIPT_FILL <- "#A5C9EB"
@@ -640,6 +647,9 @@ test_that("a row with one value for every patient is left out of the table and n
   env$STDDIFF <- FALSE
   env$GROUP_1 <- NULL
   env$SHOW_VARIABLE <- TRUE
+  env$PROP_CI <- "none"
+  env$PROP_CI_LEVEL <- 0.95
+  env$WORD_STYLE <- "manuscript"
   env$DROP_CONSTANT <- TRUE
   eval(tables_chunk(template, "helpers"), env)
   invisible(eval_table(template, env))
@@ -708,6 +718,9 @@ test_that("the Word table prints the study's table labels and levels, says what 
   env$STDDIFF <- FALSE
   env$GROUP_1 <- NULL
   env$SHOW_VARIABLE <- TRUE
+  env$PROP_CI <- "none"
+  env$PROP_CI_LEVEL <- 0.95
+  env$WORD_STYLE <- "manuscript"
   env$MANUSCRIPT_LAYOUT <- "compare"
   env$MANUSCRIPT_CAPTION <- "Table 1. Patient characteristics"
   env$MANUSCRIPT_FILL <- "#CAEDFB"
