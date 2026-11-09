@@ -126,6 +126,12 @@ test_that("dc-tables shows PROP_CI's intervals and saves them in a report-style 
   # The note names the method, and the Word table's caption names its style.
   expect_match(html, "Wilson score intervals", fixed = TRUE)
   expect_match(html, "The table as saved to Word, in the report style", fixed = TRUE)
+  # The report shows SHOW_VARIABLE's column, and the Word preview, which
+  # follows its caption, does not: the .docx leaves it out.
+  word_part <- strsplit(html, "The table as saved to Word", fixed = TRUE)[[1L]]
+  expect_length(word_part, 2L)
+  expect_match(word_part[[1L]], ">Variable<", fixed = TRUE)
+  expect_false(grepl(">Variable<", word_part[[2L]], fixed = TRUE))
   docx <- list.files(hvtiRutilities::study_dir("documents", root), pattern = "[.]docx$",
                      recursive = TRUE, full.names = TRUE)
   expect_length(docx, 1L)
