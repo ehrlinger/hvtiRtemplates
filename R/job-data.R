@@ -444,7 +444,13 @@
   list(data = d, steps = steps, rows = rows)
 }
 
-.check_job_key <- function(d, key, id) {
+# `stale` holds the out-of-date notes of the read. A KEY error stops the job
+# before its data table, where those notes are shown, so the error carries
+# them: a rebuilt source that fixed the repeat is not read until registered.
+# Without them, `current` (from .key_repeat_hint()) says the data read are
+# the latest, so the repeat is in the build, and how to list it.
+.check_job_key <- function(d, key, id, stale = character(), current = "") {
+  why <- if (length(stale)) paste0(" ", paste(stale, collapse = " ")) else ""
   if (!is.character(key) || !length(key) || anyNA(key)) {
     stop("KEY must name one or more columns, such as ID or c(ID, \"iv_echo\").",
          call. = FALSE)
@@ -453,7 +459,7 @@
   if (length(absent)) {
     stop("KEY names a column this dataset does not have: ",
          paste(absent, collapse = ", "),
-         ". Change KEY in edit-study-choices.", call. = FALSE)
+         ". Change KEY in edit-study-choices.", why, call. = FALSE)
   }
   repeats <- sum(duplicated(d[key]))
   if (repeats) {
@@ -461,9 +467,35 @@
            " values of KEY repeat",
          ". Each row must be unique on KEY; for repeated measures add the ",
          "visit time or date, for example KEY <- c(ID, \"iv_echo\").",
-         call. = FALSE)
+         if (length(stale)) why else current, call. = FALSE)
   }
   list(rows = nrow(d), patients = length(unique(d[[id]])))
+}
+
+# What a KEY repeat means when the read was not stale: the data read are the
+# latest, registered or working, so the repeat is in the build. A single
+# dataset gets the call that lists the repeated rows, naming the job's study
+# by its root, since the console it is pasted into may be in another study or
+# none; a joined result, whose rows no one call reads, is only told the data
+# are current.
+.key_repeat_hint <- function(read, dataset, analysis_set, key, cfg, joined = FALSE) {
+  if (joined) return(" The registered versions read are current, so the repeat is in the data, not a stale version.")
+  what <- if (!is.null(analysis_set)) {
+    paste0("The analysis set `", analysis_set, "` is current")
+  } else if (isTRUE(read$record$working)) {
+    paste0("This job read the working build of `", dataset, "`")
+  } else {
+    paste0("The registered version of `", dataset, "` is current")
+  }
+  study <- paste0("cfg = hvtiRutilities::study_config(start = ", encodeString(cfg$root, quote = "\""), ")")
+  call <- if (!is.null(analysis_set)) {
+    paste0("hvtiRdatabuild::read_analysis_set(", encodeString(analysis_set, quote = "\""), ", ", study, ")")
+  } else {
+    paste0("hvtiRutilities::read_built(", study, ", dataset = ", encodeString(dataset, quote = "\""), ")")
+  }
+  paste0(" ", what, ", so the repeat is in the build itself. List the repeated rows with ",
+         "hvtiRutilities::duplicate_keys(", call, ", ", paste(deparse(key), collapse = ""),
+         ") and correct them in the build.")
 }
 
 # A model job's settings name the columns it models, such as OUTCOME and
@@ -828,7 +860,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     # the cohort's in KEY, even when the joined dataset has one of that name.
     carried <- if (is.null(join_vars)) names(ids$data) else c(who$id, join_vars)
     cohort_only <- all(tolower(key) %in% tolower(intersect(names(ids$data), .match_columns(carried, names(ids$data)))))
-    if (cohort_only) .check_job_key(ids$data, key, who$id)
+    if (cohort_only) {
+      .check_job_key(ids$data, key, who$id, read$out_of_date, .key_repeat_hint(read, dataset, analysis_set, key, cfg))
+    }
     cohort_key <- key
     cohort_cols <- ids$data[0L, , drop = FALSE]
     joined <- .read_join(cfg, join, join_shape, ids$data, who$id, join_vars, reduce, values = !is.null(where),
@@ -845,7 +879,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                        cols = c(who$id, key), identifiers = identifiers,
                        id_values = if (is.null(id_values)) list() else id_values)
   if (whole_patients && !is.null(where)) .check_whole_patients(ids$data, kept$data, who$id)
-  counts <- .check_job_key(kept$data, key, who$id)
+  counts <- .check_job_key(kept$data, key, who$id, c(read$out_of_date, joined$out_of_date),
+                           .key_repeat_hint(read, dataset, analysis_set, key, cfg,
+                                            joined = !is.null(join)))
   imputation_col <- if (!is.null(imputation)) .match_imputation(imputation, names(kept$data), who$id, kept$data)
   if (!is.null(imputation_col)) {
     counts$imputations <- length(unique(kept$data[[imputation_col]][!is.na(kept$data[[imputation_col]])]))
@@ -1010,15 +1046,17 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   }
   a_id <- a_id[[1L]]
   jkey <- .match_columns(replace(resolved$key, tolower(resolved$key) == tolower(cohort_id), a_id), names(a))
+  # A rebuilt, unregistered source is not what was read: either key error says so.
+  stale <- if (length(jr$out_of_date)) paste0(" ", paste(jr$out_of_date, collapse = " "))
   absent <- setdiff(jkey, names(a))
   if (length(absent)) {
     stop("The key for `", join, "` names a column it does not have: ", toString(absent),
-         ". Change JOIN_KEY in edit-study-choices.", call. = FALSE)
+         ". Change JOIN_KEY in edit-study-choices.", stale, call. = FALSE)
   }
   repeats <- sum(duplicated(a[jkey]))
   if (repeats) {
     stop(repeats, if (repeats == 1L) " row" else " rows", " of `", join, "` repeat on its key (", toString(jkey),
-         "). Set JOIN_KEY to columns that make each row unique.", call. = FALSE)
+         "). Set JOIN_KEY to columns that make each row unique.", stale, call. = FALSE)
   }
   # The job's KEY is kept as the join key is: it may name a joined column whose
   # values the SSN rule would otherwise read as identifiers.
@@ -1033,6 +1071,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                        filter = if (!is.null(filter)) function(records, cols) filter(records, cols, id_values))
   list(
     data = j$data, key = j$key, dropped = a_ids$dropped, notes = c(jr$notes, resolved$note, .ssn_notes(a_ids$by_value)),
+    out_of_date = jr$out_of_date,
     provenance = jr$record, join_key = replace(jkey, jkey == a_id, cohort_id), id_values = id_values, reduce = j$reduce,
     summary = list(source = jr$source, rows = nrow(a), outside = j$outside, without = j$without,
                    ignored = j$ignored, unvalued = j$unvalued, rule = j$rule, steps = j$steps)
@@ -1158,6 +1197,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     invokeRestart("muffleMessage")
   })
   read$notes <- unique(c(read$notes, notes))
+  read$out_of_date <- unique(c(read$out_of_date, notes))
   read
 }
 

@@ -443,6 +443,35 @@ test_that("a WHERE on a KEY column that is not the ID is still allowed, and show
   expect_identical(sel$rows, 2L)
 })
 
+test_that("a KEY that repeats in a stale registered version says the source was rebuilt", {
+  # Registered with a same-day repeat, then rebuilt unique but not registered:
+  # the job reads the registered version, and the KEY error must say so, since
+  # the out-of-date note it would otherwise carry is never shown.
+  long <- data.frame(ccfid = c(9001L, 9001L, 9002L), dt_surg = c("2020-01-02", "2020-01-02", "2021-03-04"))
+  cfg <- job_study(long)
+  utils::write.csv(long[-2, ], file.path(hvtiRutilities::study_dir("datasets", cfg$root), "built.csv"),
+                   row.names = FALSE)
+  err <- tryCatch(read_job_data(cfg, key = c("ccfid", "dt_surg")), error = conditionMessage)
+  expect_match(err, "1 value of KEY repeats", fixed = TRUE)
+  expect_match(err, "has changed since it was registered", fixed = TRUE)
+  expect_match(err, "update_manifest()", fixed = TRUE)
+  expect_false(grepl("9001", err, fixed = TRUE))
+  # A current registration says so, and how to list the repeated rows.
+  err <- tryCatch(read_job_data(job_study(long), key = c("ccfid", "dt_surg")), error = conditionMessage)
+  expect_false(grepl("has changed since", err, fixed = TRUE))
+  expect_match(err, "registered version of `study` is current", fixed = TRUE)
+  expect_false(grepl("9001", err, fixed = TRUE))
+  # The suggested call names the job's study, so it lists the repeat when run
+  # from outside that study, or inside another one.
+  cfg <- job_study(long)
+  withr::local_dir(job_study(data.frame(ccfid = 1:2))$root)
+  err <- tryCatch(read_job_data(cfg, key = c("ccfid", "dt_surg")), error = conditionMessage)
+  call <- sub("^.*List the repeated rows with (.*) and correct them in the build\\.$", "\\1", err)
+  expect_match(call, "^hvtiRutilities::duplicate_keys\\(")
+  dk <- suppressMessages(eval(str2lang(call), baseenv()))
+  expect_identical(dk$summary$repeated_keys, 1L)
+})
+
 test_that("a selection saved before the refusal is still shown masked, and rebuilding it names the file", {
   cfg <- job_study(d_ids)
   sel <- attr(read_job_data(cfg, where = quote(age >= 18))$record, "selection")
@@ -1059,6 +1088,29 @@ test_that("an unregistered key with no JOIN_KEY stops with both fixes", {
   out <- read_job_data(cfg, join = "echo", join_key = c("ccfid", "echo_date"))
   expect_identical(nrow(out$data), 3L)
   expect_false("Note" %in% out$record$step)
+})
+
+test_that("a joined dataset's key errors say when it was rebuilt since registration", {
+  testthat::skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, "Join", 42L, renv = FALSE))
+  dd <- hvtiRutilities::study_dir("datasets", root)
+  utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70)), file.path(dd, "built.csv"), row.names = FALSE)
+  echo <- data.frame(ccfid = c(1L, 1L, 2L), echo_date = c("2020-01-01", "2021-01-01", "2020-06-01"))
+  utils::write.csv(echo, file.path(dd, "echo.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key = c("ccfid", "echo_date")))
+  # Rebuilt with a visit column, not registered: the job reads the version without it.
+  echo$visit <- 1:3
+  utils::write.csv(echo, file.path(dd, "echo.csv"), row.names = FALSE)
+  cfg <- hvtiRutilities::study_config(root)
+  err <- tryCatch(read_job_data(cfg, join = "echo", join_key = c("ccfid", "visit")), error = conditionMessage)
+  expect_match(err, "names a column it does not have: visit", fixed = TRUE)
+  expect_match(err, "has changed since it was registered", fixed = TRUE)
+  err <- tryCatch(read_job_data(cfg, join = "echo", join_key = "ccfid"), error = conditionMessage)
+  expect_match(err, "repeat on its key", fixed = TRUE)
+  expect_match(err, "has changed since it was registered", fixed = TRUE)
 })
 
 test_that("a job KEY naming a joined column is kept though its values look like SSNs", {
