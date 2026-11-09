@@ -4,7 +4,7 @@
 # EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
 # EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
 # EDIT: what makes a row unique; one row per patient unless repeated measures
-# EDIT: the variables to report, grouped. Each name is a section heading and
+# EDIT: the variables to report, grouped. NULL reports the house ODS list,
 # EDIT: review SAS presentation choices in the migration report.
 # EDIT: confirm comparison, summaries, percentiles, abbreviations, Word filename and Word table layout.
 # EDIT: force a bucket where the data guess wrong, e.g. an ordinal score you

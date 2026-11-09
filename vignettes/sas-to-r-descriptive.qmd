@@ -101,7 +101,7 @@ Unresolved markers remain. The numbers below are not a result.
 
 5 unresolved EDIT: marker(s) remain in this job:
   - <!-- EDIT: name the job this replaces (descriptive/dc.tables.*) and say whether it
-  - # EDIT: the variables to report, grouped. Each name is a section heading and
+  - # EDIT: the variables to report, grouped. NULL reports the house ODS list,
   ...
 ```
 
