@@ -751,11 +751,11 @@ draw_section <- function(section) {
     # 8 pt, not 12, because panels share a row: at 12 a long title and the year labels run
     # past a 3.25 in panel. No legend and no category names, so the bars fill the panel
     # (John, 2026-10-15); the frequency table above names the categories.
-    .page <- pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8)
     # Every calendar month from the first to the last, an empty one included:
     # the bars re-factor the month, which would drop it and close the gap.
-    if (section != "continuous" && !is.null(.x_bars)) .page <- .page & scale_x_discrete(limits = levels(.x_bars))
-    .page <- hvtiRtemplates:::.eda_page_panels(.page)
+    .panels <- pages[[i]]
+    if (section != "continuous" && !is.null(.x_bars)) .panels <- .panels & scale_x_discrete(limits = levels(.x_bars))
+    .page <- hvtiRtemplates:::.eda_page_panels(.panels & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
     file <- save_figure(.page,
                         sprintf("dc-eda-%s-page-%02d", section, i), width = 6.5, height = 9, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
