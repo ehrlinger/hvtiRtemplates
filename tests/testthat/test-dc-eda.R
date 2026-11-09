@@ -338,12 +338,28 @@ test_that("a date X_VAR spanning under three years is drawn in months, and X_UNI
   # Every calendar month from the first to the last, in order, March included though empty.
   expect_identical(levels(months), format(seq(as.Date("2026-01-01"), as.Date("2026-07-01"), by = "month"), "%b %Y"))
   expect_identical(as.character(months[c(1L, 10L)]), format(as.Date(c("2026-01-01", "2026-07-01")), "%b %Y"))
-  sec <- hvtiPlotR::hv_eda_pages(env$.d_eda_bars, x_col = env$X_LABEL, section = "percent", vars = "valve")
-  bars <- plot(sec, ncol = 2L, nrow = 4L)[[1L]][[1L]]
-  expect_identical(bars$labels$x, "Month of operation")
-  expect_gt(length(ggplot2::ggplot_build(bars)$layout$panel_params[[1L]]$x$get_labels()), 1L)
+  # The plotted axis keeps the empty March: the bars re-factor the month, so the
+  # page carries the months as the axis limits, as draw_section() adds them.
+  src <- readLines(template_path("dc", "eda"), warn = FALSE)
+  expect_length(grep("& scale_x_discrete(limits = levels(.x_bars))", src, fixed = TRUE), 1L)
+  for (section in c("percent", "count")) {
+    sec <- hvtiPlotR::hv_eda_pages(env$.d_eda_bars, x_col = env$X_LABEL, section = section, vars = "valve")
+    page <- plot(sec, ncol = 2L, nrow = 4L)[[1L]] & ggplot2::scale_x_discrete(limits = levels(months))
+    bars <- page[[1L]]
+    expect_identical(bars$labels$x, "Month of operation")
+    expect_identical(ggplot2::ggplot_build(bars)$layout$panel_params[[1L]]$x$get_labels(), levels(months), info = section)
+  }
   points <- eda_first_panel(env, "continuous", "age")
   expect_no_error(ggplot2::ggplot_build(points))
+
+  # A date-time falls in the month of the day it was recorded, not its UTC day.
+  late <- data.frame(dt_surg = as.POSIXct(c("2026-01-15 09:00", "2026-03-31 23:30"), tz = "America/New_York"),
+                     age = 41:42)
+  env_late <- eda_spec_env(late, X_VAR = "dt_surg", VARIABLES = "age")
+  eval(eda_chunk("spec"), env_late)
+  expect_identical(env_late$.d_eda[["Month of operation"]][[2L]], as.Date("2026-03-31"))
+  expect_identical(as.character(env_late$.d_eda_bars[["Month of operation"]][[2L]]), format(as.Date("2026-03-01"), "%b %Y"))
+  expect_identical(tail(levels(env_late$.d_eda_bars[["Month of operation"]]), 1L), format(as.Date("2026-03-01"), "%b %Y"))
 
   # A label the study chose is kept, and X_UNIT = "year" restores the decimal year.
   env <- eda_spec_env(d, X_VAR = "dt_surg", X_LABEL = "Date of enrollment", VARIABLES = "age")

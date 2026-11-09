@@ -436,9 +436,13 @@ if (!length(VARIABLES)) stop("No EDA variables remain after exclusions.", call. 
 .x <- d[[X_VAR]]
 .x_bars <- NULL
 .is_date <- inherits(.x, c("Date", "POSIXt"))
+# A date-time is read as the day it fell on where it was recorded: as.Date()
+# on a date-time takes the UTC day, which moves a late-evening operation in
+# New York into the next day, and on the last of a month into the next month.
+.as_day <- function(x) if (inherits(x, "POSIXt")) as.Date(format(x, "%Y-%m-%d")) else as.Date(x)
 .x_unit <- if (!.is_date) "as is" else X_UNIT
 if (identical(.x_unit, "auto")) {
-  .span <- suppressWarnings(range(as.Date(.x), na.rm = TRUE))
+  .span <- suppressWarnings(range(.as_day(.x), na.rm = TRUE))
   .x_unit <- if (all(is.finite(.span)) && as.numeric(diff(.span)) < 3 * 365.25) "month" else "year"
 }
 if (identical(.x_unit, "year")) {
@@ -447,7 +451,7 @@ if (identical(.x_unit, "year")) {
   .days <- ifelse((.year %% 4 == 0 & .year %% 100 != 0) | .year %% 400 == 0, 366, 365)
   .x <- .year + .lt$yday / .days
 } else if (identical(.x_unit, "month")) {
-  .x <- as.Date(.x)
+  .x <- .as_day(.x)
   .first <- as.Date(format(.x, "%Y-%m-01"))
   .months <- as.Date(character(0))
   if (!all(is.na(.first))) .months <- seq(min(.first, na.rm = TRUE), max(.first, na.rm = TRUE), by = "month")
@@ -747,7 +751,11 @@ draw_section <- function(section) {
     # 8 pt, not 12, because panels share a row: at 12 a long title and the year labels run
     # past a 3.25 in panel. No legend and no category names, so the bars fill the panel
     # (John, 2026-10-15); the frequency table above names the categories.
-    .page <- hvtiRtemplates:::.eda_page_panels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
+    .page <- pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8)
+    # Every calendar month from the first to the last, an empty one included:
+    # the bars re-factor the month, which would drop it and close the gap.
+    if (section != "continuous" && !is.null(.x_bars)) .page <- .page & scale_x_discrete(limits = levels(.x_bars))
+    .page <- hvtiRtemplates:::.eda_page_panels(.page)
     file <- save_figure(.page,
                         sprintf("dc-eda-%s-page-%02d", section, i), width = 6.5, height = 9, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
