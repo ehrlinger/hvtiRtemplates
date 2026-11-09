@@ -132,15 +132,20 @@ JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
 
-# EDIT: the variables to report, grouped. Each name is a section heading and
-# becomes a row group in the table, in this order. These are the /* Demography */
-# style banners from the SAS varlist; carry them across unchanged so the R table
-# reads like the SAS one. Commented-out SAS blocks stay out.
-# A fuller grouping to start from, the house summary-table categories with the
-# SAS template's added where they differ. The names are CORR database columns, not
-# one study's. Uncomment it in place of the GROUPS below, then delete the groups
-# and rows your data does not have, since a name missing from the data stops the
-# table. Race is race_grp; some studies spell it race_gp.
+# EDIT: the variables to report, grouped. NULL reports the house ODS list,
+# every section the SAS ODS tables (dc.tables.ods.sas) report, keeping only the
+# columns this dataset has, so nobody sorts the list against the data by hand;
+# the report counts them and names this dataset's columns left out. Name the
+# groups yourself to choose rows: each name is a section heading and becomes a
+# row group in the table, in this order, and a name missing from the data stops
+# the table. A migrated job's groups are the /* Demography */ style banners
+# from the SAS varlist; carry them across unchanged so the R table reads like
+# the SAS one. Commented-out SAS blocks stay out.
+# The ODS list written out, to start from when choosing rows: the house
+# summary-table categories with the SAS template's added where they differ. The
+# names are CORR database columns, not one study's. Uncomment it in place of the
+# GROUPS below, then delete the groups and rows your data does not have, since a
+# name missing from the data stops the table. Race is race_grp; some studies spell it race_gp.
 # GROUPS-EXAMPLE-BEGIN
 # GROUPS <- list(
 #   Demography = c("female", "age", "bsa", "bmi", "wt", "ht", "wtht", "race_bl", "race_wh", "race_ot", "race_grp"),
@@ -186,10 +191,7 @@ JOIN_KEY <- NULL
 # )
 # GROUPS-EXAMPLE-END
 # MIGRATE-BEGIN: dc-tables-config
-GROUPS <- list(
-  Demography = c("age", "female"),
-  Symptoms   = c("nyha_pr")
-)
+GROUPS <- NULL
 # EDIT: NULL for the overall table. A column name reproduces the `%macro skip`
 # by-group sections (by=): one column per observed level. Review byvalue=
 # against the data before accepting the columns; COMPARE controls testing.
@@ -473,6 +475,26 @@ listed under the table.
 # those BINARY or OVERRIDES name, and those the data make binary unless named
 # categorical. Continuous rows named in CONTINUOUS or OVERRIDES keep theirs too:
 # they are summarized as numbers.
+# GROUPS NULL reports the house ODS list: its sections, in order, each keeping
+# the columns this dataset has, under the dataset's own spelling of each name.
+# BY is the table's columns, so it is never also a row.
+if (is.null(GROUPS)) {
+  .ods <- hvtiRtemplates:::.ods_groups()
+  .on_list <- tolower(names(d)) %in% unlist(.ods, use.names = FALSE)
+  .lower <- tolower(names(d))
+  GROUPS <- lapply(.ods, function(v) setdiff(names(d)[match(intersect(v, .lower), .lower)], BY))
+  GROUPS <- Filter(length, GROUPS)
+  if (!length(GROUPS)) {
+    stop("None of the house ODS list's columns is in this dataset. Name the rows in GROUPS.", call. = FALSE)
+  }
+  cat(length(unlist(GROUPS)), "of the", length(unlist(.ods)), "columns on the house ODS list are in this dataset.\n")
+  if (any(!.on_list)) {
+    cat("Not in the table, as columns outside the house ODS list (name them in GROUPS to report them):",
+        paste(names(d)[!.on_list], collapse = ", "), "\n")
+  }
+} else if (!is.list(GROUPS) || !length(GROUPS) || is.null(names(GROUPS)) || any(!nzchar(names(GROUPS)))) {
+  stop("GROUPS must be NULL, for the house ODS list, or a named list of column names.", call. = FALSE)
+}
 .rows <- intersect(unlist(GROUPS, use.names = FALSE), names(d))
 .binary_by_data <- .rows[vapply(d[.rows], function(x) {
   is.logical(x) || is.numeric(x) && all(x[!is.na(x)] %in% c(0, 1))

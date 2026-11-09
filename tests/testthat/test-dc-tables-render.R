@@ -47,9 +47,8 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   lines <- set_choice(lines, "ORDINAL", '"nyha"')
   lines <- set_choice(lines, "STDDIFF", "TRUE")
   lines <- set_choice(lines, "ABBREVIATIONS", 'c(NYHA = "New York Heart Association")')
-  groups <- grep("^GROUPS <- list\\($", lines)
-  lines <- c(lines[seq_len(groups)], '  Demography = c("age", "female", "race", "redo"),',
-             '  Clinical = c("creat", "nyha")', ")", lines[-seq_len(groups + 3L)])
+  lines <- set_choice(lines, "GROUPS", paste0('list(Demography = c("age", "female", "race", "redo"), ',
+                                              'Clinical = c("creat", "nyha"))'))
   # The study's table labels and level text, read only when the table is drawn.
   writeLines("creat: \"Creatinine (mg/dL)\"", file.path(root, "table_labels.yml"))
   writeLines(c("nyha:", "  1: I", "  2: II", "  3: III", "  4: IV"), file.path(root, "value_labels.yml"))
@@ -112,9 +111,7 @@ test_that("dc-tables shows PROP_CI's intervals and saves them in a report-style 
   lines <- set_choice(lines, "CATEGORICAL", '"race"')
   lines <- set_choice(lines, "PROP_CI", '"wilson"')
   lines <- set_choice(lines, "WORD_STYLE", '"report"')
-  groups <- grep("^GROUPS <- list\\($", lines)
-  lines <- c(lines[seq_len(groups)], '  Demography = c("age", "female", "race", "redo")', ")",
-             lines[-seq_len(groups + 3L)])
+  lines <- set_choice(lines, "GROUPS", 'list(Demography = c("age", "female", "race", "redo"))')
   writeLines(gsub("EDIT:", "REVIEWED:", lines, fixed = TRUE), job)
 
   rendered <- tryCatch(quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE),
@@ -141,4 +138,32 @@ test_that("dc-tables shows PROP_CI's intervals and saves them in a report-style 
   # The interval column reached the file, with the note that says what it is.
   expect_true(any(grepl("95% CI", doc$text[doc$content_type == "table cell"], fixed = TRUE)))
   expect_true(any(grepl("Wilson score intervals", doc$text, fixed = TRUE)))
+})
+
+test_that("dc-tables left at GROUPS NULL reports the ODS list's columns the data has", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = NA)
+  root <- dc_tables_study()
+  job <- add_job("dc", "cohort", "tables", qualifier = "tables", dir = root)
+  lines <- readLines(job, warn = FALSE)
+  expect_length(grep("^GROUPS <- NULL$", lines), 1L)
+  writeLines(gsub("EDIT:", "REVIEWED:", lines, fixed = TRUE), job)
+
+  rendered <- tryCatch(quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE),
+                       error = function(e) e)
+  if (inherits(rendered, "error")) quarto::quarto_render(job, execute_dir = dirname(job), quiet = FALSE)
+
+  html <- paste(readLines(sub("[.]qmd$", ".html", job), warn = FALSE), collapse = "\n")
+  html <- gsub("(?s)<pre class=\"sourceCode.*?</pre>", "", html, perl = TRUE)
+  # Of this dataset's columns only age and female are on the list; the rest are named, not drawn.
+  expect_match(html, "2 of the [0-9]+ columns on the house ODS list are in this dataset", perl = TRUE)
+  expect_match(html, "creat, redo, nyha, race", fixed = TRUE)
+  docx <- list.files(hvtiRutilities::study_dir("documents", root), pattern = "[.]docx$",
+                     recursive = TRUE, full.names = TRUE)
+  expect_length(docx, 1L)
+  doc <- officer::docx_summary(officer::read_docx(docx))
+  cells <- doc$text[doc$content_type == "table cell"]
+  expect_true(any(grepl("Demography", cells, fixed = TRUE)))
+  expect_false(any(grepl("Creatinine|creat", cells)))
 })
