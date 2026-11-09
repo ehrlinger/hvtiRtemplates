@@ -447,7 +447,9 @@
 # `stale` holds the out-of-date notes of the read. A KEY error stops the job
 # before its data table, where those notes are shown, so the error carries
 # them: a rebuilt source that fixed the repeat is not read until registered.
-.check_job_key <- function(d, key, id, stale = character()) {
+# Without them, `current` (from .key_repeat_hint()) says the data read are
+# the latest, so the repeat is in the build, and how to list it.
+.check_job_key <- function(d, key, id, stale = character(), current = "") {
   why <- if (length(stale)) paste0(" ", paste(stale, collapse = " ")) else ""
   if (!is.character(key) || !length(key) || anyNA(key)) {
     stop("KEY must name one or more columns, such as ID or c(ID, \"iv_echo\").",
@@ -464,10 +466,33 @@
     stop(repeats, if (repeats == 1L) " value of KEY repeats" else
            " values of KEY repeat",
          ". Each row must be unique on KEY; for repeated measures add the ",
-         "visit time or date, for example KEY <- c(ID, \"iv_echo\").", why,
-         call. = FALSE)
+         "visit time or date, for example KEY <- c(ID, \"iv_echo\").",
+         if (length(stale)) why else current, call. = FALSE)
   }
   list(rows = nrow(d), patients = length(unique(d[[id]])))
+}
+
+# What a KEY repeat means when the read was not stale: the data read are the
+# latest, registered or working, so the repeat is in the build. A single
+# dataset gets the call that lists the repeated rows; a joined result, whose
+# rows no one call reads, is only told the data are current.
+.key_repeat_hint <- function(read, dataset, analysis_set, key, joined = FALSE) {
+  if (joined) return(" The registered versions read are current, so the repeat is in the data, not a stale version.")
+  what <- if (!is.null(analysis_set)) {
+    paste0("The analysis set `", analysis_set, "` is current")
+  } else if (isTRUE(read$record$working)) {
+    paste0("This job read the working build of `", dataset, "`")
+  } else {
+    paste0("The registered version of `", dataset, "` is current")
+  }
+  call <- if (!is.null(analysis_set)) {
+    paste0("hvtiRdatabuild::read_analysis_set(\"", analysis_set, "\")")
+  } else {
+    paste0("hvtiRutilities::read_built(dataset = \"", dataset, "\")")
+  }
+  paste0(" ", what, ", so the repeat is in the build itself. List the repeated rows with ",
+         "hvtiRutilities::duplicate_keys(", call, ", ", paste(deparse(key), collapse = ""),
+         ") and correct them in the build.")
 }
 
 # A model job's settings name the columns it models, such as OUTCOME and
@@ -832,7 +857,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     # the cohort's in KEY, even when the joined dataset has one of that name.
     carried <- if (is.null(join_vars)) names(ids$data) else c(who$id, join_vars)
     cohort_only <- all(tolower(key) %in% tolower(intersect(names(ids$data), .match_columns(carried, names(ids$data)))))
-    if (cohort_only) .check_job_key(ids$data, key, who$id, read$out_of_date)
+    if (cohort_only) {
+      .check_job_key(ids$data, key, who$id, read$out_of_date, .key_repeat_hint(read, dataset, analysis_set, key))
+    }
     cohort_key <- key
     cohort_cols <- ids$data[0L, , drop = FALSE]
     joined <- .read_join(cfg, join, join_shape, ids$data, who$id, join_vars, reduce, values = !is.null(where),
@@ -849,7 +876,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                        cols = c(who$id, key), identifiers = identifiers,
                        id_values = if (is.null(id_values)) list() else id_values)
   if (whole_patients && !is.null(where)) .check_whole_patients(ids$data, kept$data, who$id)
-  counts <- .check_job_key(kept$data, key, who$id, c(read$out_of_date, joined$out_of_date))
+  counts <- .check_job_key(kept$data, key, who$id, c(read$out_of_date, joined$out_of_date),
+                           .key_repeat_hint(read, dataset, analysis_set, key, joined = !is.null(join)))
   imputation_col <- if (!is.null(imputation)) .match_imputation(imputation, names(kept$data), who$id, kept$data)
   if (!is.null(imputation_col)) {
     counts$imputations <- length(unique(kept$data[[imputation_col]][!is.na(kept$data[[imputation_col]])]))

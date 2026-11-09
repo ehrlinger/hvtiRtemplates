@@ -456,9 +456,13 @@ test_that("a KEY that repeats in a stale registered version says the source was 
   expect_match(err, "has changed since it was registered", fixed = TRUE)
   expect_match(err, "update_manifest()", fixed = TRUE)
   expect_false(grepl("9001", err, fixed = TRUE))
-  # A current registration carries no such note.
+  # A current registration says so, and how to list the repeated rows.
   err <- tryCatch(read_job_data(job_study(long), key = c("ccfid", "dt_surg")), error = conditionMessage)
   expect_false(grepl("has changed since", err, fixed = TRUE))
+  expect_match(err, "registered version of `study` is current", fixed = TRUE)
+  expect_match(err, 'hvtiRutilities::duplicate_keys(hvtiRutilities::read_built(dataset = "study"), c("ccfid", "dt_surg"))',
+               fixed = TRUE)
+  expect_false(grepl("9001", err, fixed = TRUE))
 })
 
 test_that("a selection saved before the refusal is still shown masked, and rebuilding it names the file", {
