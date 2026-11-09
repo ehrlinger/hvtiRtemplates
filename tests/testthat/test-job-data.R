@@ -1083,6 +1083,29 @@ test_that("an unregistered key with no JOIN_KEY stops with both fixes", {
   expect_false("Note" %in% out$record$step)
 })
 
+test_that("a joined dataset's key errors say when it was rebuilt since registration", {
+  testthat::skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, "Join", 42L, renv = FALSE))
+  dd <- hvtiRutilities::study_dir("datasets", root)
+  utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70)), file.path(dd, "built.csv"), row.names = FALSE)
+  echo <- data.frame(ccfid = c(1L, 1L, 2L), echo_date = c("2020-01-01", "2021-01-01", "2020-06-01"))
+  utils::write.csv(echo, file.path(dd, "echo.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key = c("ccfid", "echo_date")))
+  # Rebuilt with a visit column, not registered: the job reads the version without it.
+  echo$visit <- 1:3
+  utils::write.csv(echo, file.path(dd, "echo.csv"), row.names = FALSE)
+  cfg <- hvtiRutilities::study_config(root)
+  err <- tryCatch(read_job_data(cfg, join = "echo", join_key = c("ccfid", "visit")), error = conditionMessage)
+  expect_match(err, "names a column it does not have: visit", fixed = TRUE)
+  expect_match(err, "has changed since it was registered", fixed = TRUE)
+  err <- tryCatch(read_job_data(cfg, join = "echo", join_key = "ccfid"), error = conditionMessage)
+  expect_match(err, "repeat on its key", fixed = TRUE)
+  expect_match(err, "has changed since it was registered", fixed = TRUE)
+})
+
 test_that("a job KEY naming a joined column is kept though its values look like SSNs", {
   testthat::skip_if_not_installed("arrow")
   root <- file.path(withr::local_tempdir(), "study")

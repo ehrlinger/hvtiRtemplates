@@ -1042,16 +1042,17 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   }
   a_id <- a_id[[1L]]
   jkey <- .match_columns(replace(resolved$key, tolower(resolved$key) == tolower(cohort_id), a_id), names(a))
+  # A rebuilt, unregistered source is not what was read: either key error says so.
+  stale <- if (length(jr$out_of_date)) paste0(" ", paste(jr$out_of_date, collapse = " "))
   absent <- setdiff(jkey, names(a))
   if (length(absent)) {
     stop("The key for `", join, "` names a column it does not have: ", toString(absent),
-         ". Change JOIN_KEY in edit-study-choices.", call. = FALSE)
+         ". Change JOIN_KEY in edit-study-choices.", stale, call. = FALSE)
   }
   repeats <- sum(duplicated(a[jkey]))
   if (repeats) {
     stop(repeats, if (repeats == 1L) " row" else " rows", " of `", join, "` repeat on its key (", toString(jkey),
-         "). Set JOIN_KEY to columns that make each row unique.",
-         if (length(jr$out_of_date)) paste0(" ", paste(jr$out_of_date, collapse = " ")), call. = FALSE)
+         "). Set JOIN_KEY to columns that make each row unique.", stale, call. = FALSE)
   }
   # The job's KEY is kept as the join key is: it may name a joined column whose
   # values the SSN rule would otherwise read as identifiers.
