@@ -203,7 +203,7 @@ hazard_chain_run <- function(root, data, hm_env = globalenv(), hs_choices = list
     hazard_run("hs-setup", c("set", "edit-study-choices"), env,
                utils::modifyList(list(HORIZONS = c(1, 2), VINTAGE = "table2023"), hs_choices))
     hazard_run("hs-setup", c("read-upstream", "tbl-data", "cohort", "model", "horizons", "tbl-predict", "tbl-strata", "tbl-expected",
-                             "edit-obs-vs-exp", "tbl-obs-vs-exp", "save"), env)
+                             "edit-model-vs-population", "tbl-model-vs-population", "save"), env)
   }))
   hm_env
 }
@@ -266,7 +266,8 @@ concordance_fit <- function(root, data, groups = c("a", "b"), .local_envir = par
 }
 
 # The core chunks of hs-concordance, in order, without the decision.
-concordance_core <- c("tbl-data", "models", "cohort", "tbl-groups", "tbl-covariates", "horizon", "tbl-support", "tbl-predict")
+concordance_core <- c("tbl-data", "models", "cohort", "tbl-groups", "tbl-covariates", "horizon", "tbl-support", "tbl-predict",
+                      "oe", "tbl-oe")
 
 # Choices that make the job runnable against concordance_fit()'s estate.
 concordance_choices <- function(data, ...) {

@@ -383,7 +383,7 @@ test_that("hs-setup derives the life-table indicators from a female column and a
   withr::local_package("hvtiRlifetables")
   data <- hazard_data()
   hazard_chain_run(hazard_study(data), data)
-  reference <- get("expected", envir = globalenv())
+  reference <- get("population", envir = globalenv())
 
   # The same patients, coded as a study might: `female`, and a race factor.
   recoded <- data
@@ -393,7 +393,7 @@ test_that("hs-setup derives the life-table indicators from a female column and a
   hazard_chain_run(hazard_study(recoded), recoded,
                    hs_choices = list(MALE_COL = "female", MALE_LEVEL = 0, OTHER_COL = "race",
                                      OTHER_LEVELS = c("Black", "Asian")))
-  expect_identical(get("expected", envir = globalenv()), reference)
+  expect_identical(get("population", envir = globalenv()), reference)
   strata <- attr(get(".other", envir = globalenv()), "mapping")
   expect_identical(strata$value, c("Asian", "Black", "White"))
   expect_identical(strata$counted_as, c("non-white", "non-white", "white"))
