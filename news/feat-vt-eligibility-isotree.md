@@ -1,7 +1,7 @@
 * vt-fit judges eligibility by an isolation forest as well: `"isolation"` is a third `ELIGIBILITY` method,
   beside `"gower"` and `"sid"`. The forest is grown on each arm with the isotree package. The arm's own
-  patients are scored cross-fitted over five folds, and a judged patient is scored by the mean of the same
-  five forests, so neither side is scored by a forest that saw it. A patient scoring above
+  patients are scored cross-fitted over five folds, and a judged patient is dealt a fold the same way and
+  scored by that fold's forest, so both sides are scored alike, by one forest that never saw them. A patient scoring above
   `ISOLATION_CUTOFF` (default 0.99), a quantile of the arm's own scores, is flagged, and a new table counts
   the flags at the 95th and 99.5th percentiles beside it. `COMBINE` already decides how the methods join:
   `"any"` keeps a patient only when every method keeps them, the "both" rule; to decide by one method,

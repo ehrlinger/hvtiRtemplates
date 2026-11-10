@@ -68,10 +68,16 @@ test_that("an arm's own scores are cross-fitted: no forest scores a patient it w
     fit
   }, .package = "isotree")
   r <- h$vt_elig_isolation(d, c("x", "y", "g"), d$ID, iso_arm, c("A", "B"), seed = 1L)
-  # A judged patient is scored by the mean of all five forests of the arm, none of which saw them.
+  # A judged patient is scored as a member is: by ONE fold's forest, the folds dealt as evenly. A mean over
+  # all five would be a less noisy score than the arm's own, judged against a line set on the noisier one.
   judged_b <- d[iso_arm == "B", c("x", "y", "g")]
   by_fold <- vapply(fits[1:5], function(f) stats::predict(f, judged_b), numeric(nrow(judged_b)))
-  expect_equal(r$distance[r$arm == "A"], unname(rowMeans(by_fold)))
+  which_fold <- vapply(seq_len(nrow(by_fold)), function(i) {
+    hit <- which(abs(by_fold[i, ] - r$distance[r$arm == "A"][i]) < 1e-12)
+    if (length(hit) == 1L) hit else NA_integer_
+  }, integer(1L))
+  expect_false(anyNA(which_fold))
+  expect_true(all(tabulate(which_fold, 5L) %in% c(16L, 17L)))
   # Five forests per arm, each grown on that arm's patients alone, leaving out a fifth of them.
   expect_length(grown, 10L)
   for (a in c("A", "B")) {
@@ -189,4 +195,18 @@ test_that("vt-explain caps the age it re-reads, as vt-fit did", {
   env <- vt_fit_first(data = d, choices = ch, labels = vt_fit_labels_all)
   vt_explain(env, labels = c("setup", "edit-study-choices", "handoff", "explain-data"))
   expect_equal(max(env$.d_all$age), 90)
+})
+
+test_that("judged against an arm drawn from the same distribution, the isolation forest flags about the cutoff's share", {
+  skip_on_cran()
+  skip_if_not_installed("isotree")
+  h <- vt_helpers()
+  # Two arms of 300 from one distribution. Expected near 10% at the 0.9 cutoff; measured 2026-11-10. A sanity band,
+  # not a mutation guard: the single-forest scoring above is what the cross-fit test pins.
+  d <- withr::with_seed(11L, data.frame(ID = as.character(1:600), x = stats::rnorm(600), y = stats::rnorm(600),
+                                        g = factor(sample(c("u", "v"), 600, replace = TRUE))))
+  r <- h$vt_elig_isolation(d, c("x", "y", "g"), d$ID, rep(c("A", "B"), each = 300L), c("A", "B"), cutoff = 0.9,
+                           seed = 2L, ntrees = 100L)
+  share <- tapply(!r$in_distribution, r$arm, mean)
+  expect_true(all(share > 0.05 & share < 0.15), info = paste(round(share, 3), collapse = ", "))
 })

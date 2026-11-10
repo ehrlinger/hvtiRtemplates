@@ -424,8 +424,9 @@ arm rarely produces, an odd mix of values, stands alone after few cuts and
 scores high. The arm's own patients are scored cross-fitted, in five folds, each
 by the forest grown on the other four, because a forest isolates a patient it was
 grown on more easily and an in-sample reference would set the line too high. A
-judged patient is scored by the same five forests, so both sides stand on the
-same footing. The line is `ISOLATION_CUTOFF`, a quantile of the arm's own scores.
+judged patient is dealt one of the five folds too and scored by that fold's
+forest, so both sides are scored the same way: by one forest, grown on four
+fifths of the arm, that never saw them. The line is `ISOLATION_CUTOFF`, a quantile of the arm's own scores.
 
 Patients are **flagged, not dropped**. The flags are saved with the fit and the
 effect estimates carry them, so a report can show the effect with and without
@@ -583,8 +584,11 @@ vt_elig_sid <- function(path, ids, cfg, key = NULL,
 # alike: `distance` holds the score (higher is more unusual) and `reference` the
 # arm's line, the `cutoff` quantile of its own scores. Each arm's patients are
 # split into `folds` folds; a member is scored by the forest grown on the other
-# folds, and a judged patient by the mean of all `folds` forests, none of which saw
-# them. Missing values are handled inside the trees. Returns the rows with the
+# folds. A judged patient is dealt a fold the same way and scored by that fold's
+# forest alone, so both sides get one forest that never saw them, grown on the same
+# share of the arm. A mean over all the forests would be a less noisy score than
+# the one the line is a quantile of, and would be judged against the wrong line.
+# Missing values are handled inside the trees. Returns the rows with the
 # flag counts at each quantile in `sensitivity` as attribute "sensitivity".
 vt_elig_isolation <- function(d, vars, ids, arm, arms, cutoff = 0.99, sensitivity = c(0.95, 0.995),
                               folds = 5L, seed = 1L, ntrees = 500L, sample_size = 256L) {
@@ -609,16 +613,16 @@ vt_elig_isolation <- function(d, vars, ids, arm, arms, cutoff = 0.99, sensitivit
     k <- min(folds, length(members))
     set.seed(seed)
     fold <- sample(rep_len(seq_len(k), length(members)))
+    fold_judged <- sample(rep_len(seq_len(k), length(judged)))
     own <- numeric(length(members))
-    other <- matrix(NA_real_, length(judged), k)
+    score <- numeric(length(judged))
     for (f in seq_len(k)) {
       train <- members[fold != f]
       fit <- isotree::isolation.forest(x[train, , drop = FALSE], ntrees = ntrees, ndim = 1L, nthreads = 1L,
                                        sample_size = min(sample_size, length(train)), seed = seed + f)
       own[fold == f] <- stats::predict(fit, x[members[fold == f], , drop = FALSE])
-      other[, f] <- stats::predict(fit, x[judged, , drop = FALSE])
+      if (any(fold_judged == f)) score[fold_judged == f] <- stats::predict(fit, x[judged[fold_judged == f], , drop = FALSE])
     }
-    score <- rowMeans(other)
     lines <- stats::quantile(own, probs, names = FALSE)
     reference <- lines[probs == cutoff]
     sens[[a]] <<- data.frame(arm = a, quantile = probs, cutoff = lines, judged = length(judged),
