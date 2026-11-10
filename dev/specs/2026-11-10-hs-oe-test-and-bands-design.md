@@ -404,8 +404,7 @@ template's existing ones do. No version bump in the pull request.
   TemporalHazard exposes it. The one-sample log-rank treats E as fixed, which
   makes it slightly anti-conservative; with 7,200 against 689 that is small.
   `Var(E)` is the same delta method as section 5.2 and so waits on
-  [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731). Proposed: ship the fixed-E test, say so in the report, and add
-  `Var(E)` when TemporalHazard exposes it.
+  [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731).
 - **Q3. Quantity (b). Decided 2026-11-10:** wait for TemporalHazard; (b) ships when
   [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731) lands. No workaround in the template.
 - **Q4. Detecting an in-sample cell.** Proposed: a cell is in-sample when the
