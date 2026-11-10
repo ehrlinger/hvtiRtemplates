@@ -120,7 +120,7 @@ sid_stability_choices <- list(REPEATS = 3, SEED_OFFSET = 100, TRACK = NULL, DROP
 
 # Every chunk of sid-stability, in order.
 sid_stability_labels <- c("setup", "edit-study-choices", "stability-helpers", "handoff", "refit-data", "refits",
-                          "summarise", "agreement-text", "tbl-stability", "fig-agreement", "tbl-label-free",
+                          "summarize", "agreement-text", "tbl-stability", "fig-agreement", "tbl-label-free",
                           "tbl-lost", "coassoc", "tbl-coassoc", "fig-coassoc", "tbl-drop", "save")
 
 # sid-stability run in the set a sid-fit and a sid-clusters just wrote, in the same study.

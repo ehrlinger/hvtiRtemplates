@@ -385,11 +385,11 @@ cat("Refits: ", length(refits), .drop_note, "\n", sep = "")
 ```
 
 ```{r}
-#| label: summarise
+#| label: summarize
 groups <- sort(unique(ref_group))
 # The letter -> reported group map, so a refit's letters collapse as the reference did.
 .to_group <- tapply(ref_group, ref_letter, unique)
-summarise_refits <- function(lab) {
+summarize_refits <- function(lab) {
   per <- lapply(names(lab), function(s) {
     draw <- lab[[s]][, paste0("pm", K)]
     mapped <- unname(.to_group[stab_best_match(draw, ref_letter)])
@@ -409,8 +409,8 @@ summarise_refits <- function(lab) {
        by_refit = do.call(rbind, lapply(per, `[[`, "by_refit")),
        mapped = do.call(cbind, lapply(per, `[[`, "mapped")))
 }
-stab <- summarise_refits(refits)
-stab_drop <- if (!is.null(refits_drop)) summarise_refits(refits_drop)
+stab <- summarize_refits(refits)
+stab_drop <- if (!is.null(refits_drop)) summarize_refits(refits_drop)
 ```
 
 ## Agreement with the reported groups
@@ -427,7 +427,7 @@ if (.gap >= 0.15) {
   cat("The values fall in two sets with nothing between: ", sum(.a <= .cut), " refits at ",
       sprintf("%.2f to %.2f", min(.a), .cut), " and ", sum(.a > .cut), " at ",
       sprintf("%.2f to %.2f", min(.a[.a > .cut]), max(.a)),
-      ". The label-free ARIs below say whether the low set clusters differently or is relabelled.\n", sep = "")
+      ". The label-free ARIs below say whether the low set clusters differently or is relabeled.\n", sep = "")
 }
 ```
 
@@ -495,7 +495,7 @@ print(.plt_agree)
 The adjusted Rand index of each refit's raw PAM labels with sid-clusters' at
 every K, with no matching of labels. If a low-agreement refit is low here
 too, it clustered the patients differently; if it is high here, the matching
-relabelled a small change.
+relabeled a small change.
 
 ```{r}
 #| label: tbl-label-free
