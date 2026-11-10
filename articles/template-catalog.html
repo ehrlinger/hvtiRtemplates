@@ -86,7 +86,7 @@
 <p>Each template carries a light.</p>
 <ul>
 <li>🟢 <strong>Shipped</strong> (35): on disk and supported. Scaffold it and use it.</li>
-<li>🟡 <strong>In progress</strong> (29): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
+<li>🟡 <strong>In progress</strong> (30): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
 <li>🔴 <strong>Not yet on the way</strong> (10): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
 </h2>
@@ -202,12 +202,12 @@
 </tbody>
 </table></section><section class="level3"><h3 id="analyses">analyses<a class="anchor" aria-label="anchor" href="#analyses"></a>
 </h3>
-<table class="table caption-top" style="width:100%;">
+<table class="table caption-top">
 <colgroup>
-<col style="width: 5%">
-<col style="width: 9%">
-<col style="width: 62%">
-<col style="width: 23%">
+<col style="width: 3%">
+<col style="width: 6%">
+<col style="width: 74%">
+<col style="width: 15%">
 </colgroup>
 <thead><tr class="header">
 <th style="text-align: left;">Delivery</th>
@@ -374,35 +374,41 @@
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>
+<td style="text-align: left;"><code>sid-stability</code></td>
+<td style="text-align: left;">Refits the SID forest over many seeds on sid-fit’s patients and imputed values, runs PAM as sid-clusters does, and reports agreement with the reported groups, how often each is found, where an unfound group’s patients go, co-association and PAC, an optional tracked share, and an optional refit without named variables.</td>
+<td style="text-align: left;"><code>add_job("sid", subject, type, qualifier = "stability")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>vp-dependence</code></td>
 <td style="text-align: left;">Unsupervised VarPro: how the variables depend on each other, as a graph whose edges must beat permuted noise, checked across subsamples.</td>
 <td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "dependence")</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>vp-explain</code></td>
 <td style="text-align: left;">VarPro partial dependence for the variables a vp-fit screen selected. It never fits varPro.</td>
 <td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "explain")</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>vp-fit</code></td>
 <td style="text-align: left;">A VarPro variable screen that says which variables were tested, judges selection against permuted noise of the same kind, and checks the selection across subsamples.</td>
 <td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "fit")</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>vp-individual</code></td>
 <td style="text-align: left;">Individual VarPro: each patient’s local gradient for each predictor, from the fit a vp-fit screen saved. It never fits varPro.</td>
 <td style="text-align: left;"><code>add_job("vp", subject, type, qualifier = "individual")</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>vt-explain</code></td>
 <td style="text-align: left;">The twin contrast a vt-fit job saved: by arm, by eligibility rule and by stratum, with standardized betas and who might benefit. It never grows a forest.</td>
 <td style="text-align: left;"><code>add_job("vt", subject, type, qualifier = "explain")</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">🟡 In progress</td>
 <td style="text-align: left;"><code>vt-fit</code></td>
 <td style="text-align: left;">Per-arm survival forests, swapped-arm twin curves and a per-patient RMST difference, with eligibility judged by a choice of methods.</td>

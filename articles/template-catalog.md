@@ -29,7 +29,7 @@ existing file, because a job accumulates a study’s edits.
 Each template carries a light.
 
 - 🟢 **Shipped** (35): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (29): on disk but being reworked, or scheduled into
+- 🟡 **In progress** (30): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
 - 🔴 **Not yet on the way** (10): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
@@ -97,6 +97,7 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `rm-linear` | Ordinary least-squares outcome model with Rubin-pooled inference. | `add_job("rm", subject, type, qualifier = "linear")` |
 | 🟡 In progress | `sid-clusters` | PAM on a sid-fit dissimilarity over a range of K: metrics for choosing K, letters stable across K, a Sankey, and the assignments registered for later jobs to join. | `add_job("sid", subject, type, qualifier = "clusters")` |
 | 🟡 In progress | `sid-fit` | An unsupervised sidClustering forest on the clustering variables, after mice or forest imputation pooled over M, saving a digest-keyed SID dissimilarity for sid-clusters and vt. | `add_job("sid", subject, type, qualifier = "fit")` |
+| 🟡 In progress | `sid-stability` | Refits the SID forest over many seeds on sid-fit’s patients and imputed values, runs PAM as sid-clusters does, and reports agreement with the reported groups, how often each is found, where an unfound group’s patients go, co-association and PAC, an optional tracked share, and an optional refit without named variables. | `add_job("sid", subject, type, qualifier = "stability")` |
 | 🟡 In progress | `vp-dependence` | Unsupervised VarPro: how the variables depend on each other, as a graph whose edges must beat permuted noise, checked across subsamples. | `add_job("vp", subject, type, qualifier = "dependence")` |
 | 🟡 In progress | `vp-explain` | VarPro partial dependence for the variables a vp-fit screen selected. It never fits varPro. | `add_job("vp", subject, type, qualifier = "explain")` |
 | 🟡 In progress | `vp-fit` | A VarPro variable screen that says which variables were tested, judges selection against permuted noise of the same kind, and checks the selection across subsamples. | `add_job("vp", subject, type, qualifier = "fit")` |
