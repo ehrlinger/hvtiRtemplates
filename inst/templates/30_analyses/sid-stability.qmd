@@ -102,15 +102,15 @@ Edit these values for this study before rendering.
 
 ```{r}
 #| label: edit-study-choices
-# EDIT: the number of refits. Each grows the full SID forest once, so the job
-# takes REPEATS times as long as sid-fit's forest (50 refits of a 5000-tree
+# EDIT: the number of refits. Each grows sid-fit's whole set of forests again, so
+# the job takes REPEATS times as long as sid-fit's forests (50 refits of a 5000-tree
 # forest on 774 patients took about 5.5 hours). 50 is enough to see whether
 # the agreement is unimodal; 20 shows the gross picture.
 REPEATS <- 50
 
-# EDIT: where the refit seeds start. Refit r uses seed SEED_OFFSET + r, so the
-# seeds never include sid-fit's own SEED, and adding refits later reuses the
-# ones already cached.
+# EDIT: where the refit seeds start. Refit r's forests are seeded from
+# SEED_OFFSET + (r - 1) * M + 1, M seeds apiece. The render stops if any of them
+# is sid-fit's own forest seed. Adding refits later reuses the ones already cached.
 SEED_OFFSET <- 100
 
 # EDIT: optionally, a binary cohort column (0/1 or TRUE/FALSE) whose share is
