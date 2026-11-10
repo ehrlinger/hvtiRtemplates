@@ -1,7 +1,7 @@
 # `hs`: observed against expected with a test, a band for the average curve, and a check
 
 **Date:** 2026-11-10
-**Status:** design, for the maintainer's approval. Not implemented. No plan yet.
+**Status:** design; Q1 to Q3 and Q5 to Q7 decided by the maintainer on 2026-11-10, Q4 and Q8 open. Not implemented.
 **Origin:** a call on 2026-11-10 about a study whose ~689 patients were scored
 through a SAS `hs` model fitted on ~7,200 other patients. Each patient's
 predicted curve was averaged into an expected curve and set against the
@@ -28,6 +28,8 @@ anything.
 | 1 | one-sample log-rank test: O/E, its interval and a p-value | **`hs-concordance`**, a new section |
 | 2 | a band for the cohort-average curve, as a named choice, and the spaghetti plot | **`hs-concordance`**, a new figure section; the computation in one internal helper in `R/` |
 | 3 | a check that the mean of the patients' predictions equals the averaged curve | **both** `hs-setup` and `hs-concordance`, one line each |
+| 4 | mean and 15th/85th percentiles in the prediction tables | **both** `hs-setup` and `hs-concordance` (section 6) |
+| 5 | `hs-setup`'s `observed`/`expected` renamed `model`/`population` | **`hs-setup`**, and its saved `hs.rds` (section 6.1) |
 
 Built in `hs` first. The `vt` templates do the same kind of work on forest
 curves, so the test and the band are written as model-agnostic helpers they
@@ -200,7 +202,7 @@ O = 0 gives a lower limit of 0, which the formula returns as written.
   model's last time stops, as `HORIZON` does.
 - **The expected curve treated as fixed** is printed beside the result. With
   a reference cohort ten times the scored one, as on the call, the omitted
-  variance is small; with comparable cohorts it is not. **Open question Q2.**
+  variance is small; with comparable cohorts it is not. `Var(E)` is added when TemporalHazard#731 lands (Q2).
 - **Its own coverage.** The interval is labelled with its level wherever it
   appears. The level is a new study choice, `TEST_LEVEL <- 0.95`, kept apart
   from `CLEVEL` and marked `EDIT:` so an author can switch it, to `CLEVEL` for
@@ -281,8 +283,7 @@ Read from the installed package (1.3.0), not from memory:
 (2026-11-10) asks for the mean-curve standard error directly,
 `predict(..., se.fit = TRUE, average = TRUE)` returning the delta-method SE of
 the row mean at each time, or the per-row Jacobian as an attribute. (b)
-ships when it lands; (a), (c) and the spaghetti ship now. **Open question
-Q3.**
+ships when it lands; (a), (c) and the spaghetti ship now. (Q3, decided: wait.)
 
 ### 5.3 The figure
 
@@ -331,10 +332,46 @@ predictions are computed by different `predict()` calls:
 `all.equal()`'s default tolerance, because the two calls build their design
 matrices separately and need not agree to the last bit.
 
-**Also proposed, for problem 3:** `hs-setup`'s `tbl-predict` gains `mean`,
-`q25` and `q75` beside its `median`, `min` and `max`, and `hs-concordance`'s
-summary table gains `mean`. A skewed spread is then visible in the table that
-everyone reads first. One line each. **Open question Q6.**
+**For problem 3, decided 2026-11-10 (Q6):** `hs-setup`'s `tbl-predict` gains
+`mean`, `q15` and `q85` beside its `median`, `min` and `max`, and
+`hs-concordance`'s summary table, which prints the median alone today, gains
+the same `mean`, `q15` and `q85`. Percentiles are `stats::quantile(type = 7)`,
+R's default, named in a comment. A skewed spread is then visible in the table
+everyone reads first: a mean well above the median and the 85th percentile
+says a tail pulls it.
+
+### 6.1 `hs-setup`'s `observed` and `expected` are renamed
+
+**Decided 2026-11-10 (Q7):** no user has tested the `hs` jobs yet, so the
+artifact changes now rather than after studies depend on it.
+
+In `hs-setup`, `obs_vs_exp$observed` is the cohort's average **model**
+prediction and `obs_vs_exp$expected` the matched **population** life table;
+the saved `hs.rds` also holds the per-patient life table as `expected`. With
+a section in `hs-concordance` comparing *observed events* with
+*model-expected events*, both words would mean two different things across
+two sibling templates. `hs-setup`'s own figure already calls the curves
+`model` and `population`, so its table and artifact take the figure's names:
+
+| now | becomes |
+|---|---|
+| `obs_vs_exp` (object, and element of `hs.rds`) | `model_vs_population` |
+| column `observed` | `model` |
+| column `expected` | `population` |
+| `ratio` (`observed / expected`) | `ratio` (`model / population`), unchanged in value |
+| `expected` (element of `hs.rds`, `us_matched()` per patient) | `population` |
+| chunks `edit-obs-vs-exp`, `tbl-obs-vs-exp` | `edit-model-vs-population`, `tbl-model-vs-population` |
+
+Readers inside this repo, found by search: `hs-setup.qmd` itself,
+`helper-hazard.R` (the chunk labels it runs) and `test-hazard-figures.R`. No
+other template reads `hs.rds`. The `news/` fragment says the element and
+column names changed, since a study plotting job written against a pre-release
+`hs.rds` would read `NULL` from the old names. A study job already scaffolded
+from `hs-setup` keeps the old names until `upgrade_job()` brings it forward;
+nothing else breaks, because each job writes and reads its own `hs.rds`.
+
+In `hs-concordance` the words keep one meaning each: **observed** is a count
+of events, **expected** a sum of model cumulative hazards.
 
 ---
 
@@ -343,7 +380,8 @@ everyone reads first. One line each. **Open question Q6.**
 | file | change |
 |---|---|
 | `inst/templates/40_graphs/hs-concordance.qmd` | `GROUP` optional with one model; new study choices `TAU`, `TEST_LEVEL`, `BAND`, `SPAGHETTI_N`; sections "Observed against expected" (`tbl-oe`), `fig-expected-km`, `fig-spaghetti`; the `stopifnot` of section 6; `oe` in the saved artifact |
-| `inst/templates/40_graphs/hs-setup.qmd` | the `stopifnot` of section 6; `mean`, `q25`, `q75` in `tbl-predict` (if Q6 is yes) |
+| `inst/templates/40_graphs/hs-setup.qmd` | the `stopifnot` of section 6; `mean`, `q15`, `q85` in `tbl-predict`; the renames of section 6.1 |
+| `tests/testthat/helper-hazard.R`, `test-hazard-figures.R` | the renamed chunk labels and columns |
 | `R/observed-expected.R` | `.one_sample_logrank()` and `.cohort_curve_band()`, internal |
 | `inst/templates/30_analyses/vt-explain.qmd` | a cross-reference paragraph only (section 3.2) |
 | `tests/testthat/test-hs-concordance.R` | the two O/E tests of section 4.4; band labels; `GROUP = NULL` with one model, and its refusal with two |
@@ -361,32 +399,25 @@ template's existing ones do. No version bump in the pull request.
 - **Q1. The O/E interval's level. Decided 2026-11-10:** 95% by default, with
   `TEST_LEVEL` as an `EDIT:` study choice to switch it (section 4.3). The
   level is printed beside the interval whatever it is.
-- **Q2. The reference model's uncertainty in the test.** The one-sample
-  log-rank treats E as fixed, which makes it slightly anti-conservative. With
-  7,200 against 689 that is small. Including it needs `Var(E)`, which is the
-  same delta method as section 5.2 and so waits on
+- **Q2. The reference model's uncertainty in the test. Decided 2026-11-10:**
+  ship the fixed-E test, say so in the report, and add `Var(E)` when
+  TemporalHazard exposes it. The one-sample log-rank treats E as fixed, which
+  makes it slightly anti-conservative; with 7,200 against 689 that is small.
+  `Var(E)` is the same delta method as section 5.2 and so waits on
   [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731). Proposed: ship the fixed-E test, say so in the report, and add
   `Var(E)` when TemporalHazard exposes it.
-- **Q3. Quantity (b).** Proposed: (b) ships when
-  [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731) lands. The alternative, perturbing
-  `object$fit$theta` in the template, is rejected in section 5.2 but is the
-  maintainer's call if (b) is needed before TemporalHazard's next release.
+- **Q3. Quantity (b). Decided 2026-11-10:** wait for TemporalHazard; (b) ships when
+  [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731) lands. No workaround in the template.
 - **Q4. Detecting an in-sample cell.** Proposed: a cell is in-sample when the
   model's set is this study's and its recorded selection and row count match
   the cohort's. A partial overlap (some of the scored patients were in the
   fit) is reported as a count, not resolved.
 - **Q5. The test as a helper.** Settled by the `vt` decision: a second family
   will call it, so it is a helper (section 3.3).
-- **Q6. Mean and quartiles in the existing tables.** Small, and squarely the
-  call's problem 3, but it changes a table every existing `hs-setup` report
-  prints.
-- **Q7. The `hs-setup` column named `observed`.** In `obs_vs_exp`,
-  `observed` is the model's average prediction, not anything observed; the
-  life table is `expected`. Next to a section that compares *observed
-  events* with *model-expected*, the name invites exactly the confusion of
-  the call. Renaming it changes the saved artifact, which plotting jobs read.
-  Raised here, not proposed for this change.
-
+- **Q6. Mean and percentiles. Decided 2026-11-10:** mean, 15th and 85th
+  percentiles in both templates' tables (section 6).
+- **Q7. `hs-setup`'s `observed` column. Decided 2026-11-10:** renamed now,
+  before user testing (section 6.1).
 - **Q8. When `vt` gets the sections.** Proposed: a second pull request after
   the `hs` one. Its own-arm O/E is out of bag and needs the forests'
   `chf.oob` kept, which `vt-fit` may not save today; that pull request
