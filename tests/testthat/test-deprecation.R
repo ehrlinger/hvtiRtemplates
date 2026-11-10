@@ -1,8 +1,9 @@
 # Two ways a template name retires, both driven by the catalog rather than by a
 # name in the code. A template marked `deprecated_by` still ships and warns. A
-# template listed under `renamed` is gone from disk, and its old name resolves
-# to the new one with the same class of warning. dp-eda and dp-trends were
-# renamed dc-eda and dc-trends on 2026-10-10. dp-gfup, deprecated in favor of
+# template listed under `renamed` is gone from disk, and its old name is an
+# error naming the new one; jobs and legacy sources that carry the old name are
+# still recognized. dp-eda and dp-trends were renamed dc-eda and dc-trends on
+# 2026-10-10, and their old names warned until they were removed. dp-gfup, deprecated in favor of
 # dc-gfup in 1.3.0, and dp-postage, deprecated in favor of dp-eda in 1.2.3, are
 # removed.
 
@@ -16,13 +17,6 @@ caught_warnings <- function(expr) {
   list(value = value, warnings = caught)
 }
 
-# The one deprecation warning a call raised, or a failure naming how many.
-expect_one_deprecation <- function(result, pattern) {
-  deprecated <- Filter(function(w) inherits(w, "hvtiRtemplates_deprecated"), result$warnings)
-  testthat::expect_length(deprecated, 1L)
-  if (length(deprecated)) testthat::expect_match(conditionMessage(deprecated[[1L]]), pattern)
-}
-
 test_that("the catalog lists the two renames, and marks nothing deprecated", {
   renames <- hvtiRtemplates:::.template_renames()
   expect_identical(renames$from, c("dp-eda", "dp-trends"))
@@ -34,73 +28,49 @@ test_that("the catalog lists the two renames, and marks nothing deprecated", {
   expect_true(all(is.na(template_catalog()$deprecated_by)))
 })
 
-test_that("template_path() takes an old name, warns once naming the new one, and returns the new template", {
+test_that("an old name is an error naming the new one, from every entry point", {
   for (q in c("eda", "trends")) {
     for (name in list(c("dp", q), paste0("dp.", q), paste0("dp-", q))) {
-      got <- caught_warnings(do.call(template_path, as.list(name)))
-      expect_identical(basename(got$value), paste0("dc-", q, ".qmd"), info = name)
-      expect_one_deprecation(got, paste0("^template_path\\(\\): dp[.]", q, " is deprecated in favor of dc[.]", q,
-                                         "[.] Renamed on 2026-10-10.*removed in the one after[.]$"))
+      expect_error(do.call(template_path, as.list(name)),
+                   paste0("^dp[.]", q, " was renamed dc[.]", q, "[.] Renamed on 2026-10-10.*upgrade_job\\(\\)[.]$"),
+                   info = paste(name, collapse = " "))
     }
   }
-})
-
-test_that("add_job() under an old name warns once and scaffolds the dc template", {
   root <- migration_study_fixture(NULL)
-  got <- caught_warnings(add_job("dp.trends", "cohort", "eda", dir = root))
-  expect_one_deprecation(got, "^add_job\\(\\): dp[.]trends is deprecated in favor of dc[.]trends")
-  # dc-trends is written to descriptive, where dp-trends was written to graphs.
-  expect_identical(normalizePath(got$value), normalizePath(file.path(root, "descriptive", "dc.trends.cohort.eda.qmd")))
-  # The same job, line for line, that the new name scaffolds.
-  same <- add_job("dc.trends", "cohort", "eda", dir = migration_study_fixture(NULL))
-  expect_identical(readLines(got$value), readLines(same))
-  expect_false(dir.exists(file.path(root, "graphs", "cohort-eda")))
-  expect_length(list.files(file.path(root, "graphs"), "[.]qmd$"), 0L)
-
-  got <- caught_warnings(add_job("dp", "cohort", "eda", dir = root, qualifier = "eda"))
-  expect_one_deprecation(got, "^add_job\\(\\): dp[.]eda is deprecated in favor of dc[.]eda")
-  expect_identical(normalizePath(got$value), normalizePath(file.path(root, "descriptive", "dc.eda.cohort.eda.qmd")))
+  expect_error(add_job("dp.trends", "cohort", "eda", dir = root), "dp[.]trends was renamed dc[.]trends")
+  expect_error(add_job("dp", "cohort", "eda", dir = root, qualifier = "eda"), "dp[.]eda was renamed dc[.]eda")
+  expect_error(suppressMessages(open_job("dp", "other", "eda", dir = root, qualifier = "trends")),
+               "dp[.]trends was renamed dc[.]trends")
+  # Nothing was written under either name.
+  expect_length(list.files(root, "[.]qmd$", recursive = TRUE), 0L)
 })
 
-test_that("open_job() under an old name warns once, in its own name, and scaffolds the dc template", {
-  root <- migration_study_fixture(NULL)
-  got <- caught_warnings(suppressMessages(open_job("dp", "other", "eda", dir = root, qualifier = "trends")))
-  expect_one_deprecation(got, "^open_job\\(\\): dp[.]trends is deprecated in favor of dc[.]trends")
-  expect_identical(normalizePath(got$value), normalizePath(file.path(root, "descriptive", "dc.trends.other.eda.qmd")))
-})
-
-test_that("migrate_job() warns for an old name the caller passes, not for one a legacy source carries", {
+test_that("migrate_job() refuses an old name the caller passes, and maps one a legacy source carries", {
   root <- migration_study_fixture("dc-trends")
   source <- file.path(root, "graphs", "dp.trends.sas")
-  got <- caught_warnings(migrate_job(source, "cohort", "eda", "dp", "trends", dir = root))
-  expect_one_deprecation(got, "^migrate_job\\(\\): dp[.]trends is deprecated in favor of dc[.]trends")
-  expect_identical(normalizePath(got$value), normalizePath(file.path(root, "descriptive", "dc.trends.cohort.eda.qmd")))
-  # The converter that ran is dc-trends's: the source's year rule reached the job.
-  expect_true("d$year <- floor(d$iv_opyrs) + 1985" %in% readLines(got$value))
+  expect_error(migrate_job(source, "cohort", "eda", "dp", "trends", dir = root),
+               "^migrate_job\\(\\): dp[.]trends was renamed dc[.]trends")
+  expect_error(migrate_job(source, "cohort", "eda", prefix = "dp", dir = root), "dp[.]trends was renamed dc[.]trends")
+  expect_false(file.exists(file.path(root, "descriptive", "dc.trends.cohort.eda.qmd")))
 
-  # The corpus names its trends jobs dp.trends.*, and always will.
-  root <- migration_study_fixture("dc-trends")
-  source <- file.path(root, "graphs", "dp.trends.sas")
+  # The corpus names its trends jobs dp.trends.*, and always will: that name is
+  # the source's, not the caller's, so it maps to dc-trends without a word.
   got <- caught_warnings(migrate_job(source, "cohort", "eda", dir = root))
   expect_length(Filter(function(w) inherits(w, "hvtiRtemplates_deprecated"), got$warnings), 0L)
   expect_identical(normalizePath(got$value), normalizePath(file.path(root, "descriptive", "dc.trends.cohort.eda.qmd")))
+  # The converter that ran is dc-trends's: the source's year rule reached the job.
+  expect_true("d$year <- floor(d$iv_opyrs) + 1985" %in% readLines(got$value))
   # Naming only the qualifier leaves the prefix to the source's name, so it maps silently too.
   root <- migration_study_fixture("dc-trends")
   source <- file.path(root, "graphs", "dp.trends.sas")
   got <- caught_warnings(migrate_job(source, "cohort", "eda", qualifier = "trends", dir = root))
   expect_length(Filter(function(w) inherits(w, "hvtiRtemplates_deprecated"), got$warnings), 0L)
   expect_identical(normalizePath(got$value), normalizePath(file.path(root, "descriptive", "dc.trends.cohort.eda.qmd")))
-  # So does a caller who names only the prefix, as before the rename.
-  root <- migration_study_fixture("dc-trends")
-  source <- file.path(root, "graphs", "dp.trends.sas")
-  got <- caught_warnings(migrate_job(source, "cohort", "eda", prefix = "dp", dir = root))
-  expect_one_deprecation(got, "^migrate_job\\(\\): dp[.]trends is deprecated")
-  expect_identical(normalizePath(got$value), normalizePath(file.path(root, "descriptive", "dc.trends.cohort.eda.qmd")))
 })
 
 # A dp.trends job scaffolded before the rename sits in graphs/. Its name is the
 # one study authors and saved outputs know, so it is opened, not duplicated.
-test_that("an existing dp.trends job is opened under either name, and never duplicated", {
+test_that("an existing dp.trends job is opened under the new name, and never duplicated", {
   for (stem in c("dp.trends.cohort.eda", "cohort-eda-dp-trends")) {
     s <- list(root = migration_study_fixture(NULL))
     s$old <- file.path(s$root, "graphs", paste0(stem, ".qmd"))
@@ -108,13 +78,8 @@ test_that("an existing dp.trends job is opened under either name, and never dupl
     expect_message(opened <- open_job("dc", "cohort", "eda", dir = s$root, qualifier = "trends"),
                    "already exists; opening it unchanged")
     expect_identical(normalizePath(opened), normalizePath(s$old), info = stem)
-    got <- caught_warnings(suppressMessages(open_job("dp.trends", "cohort", "eda", dir = s$root)))
-    expect_identical(normalizePath(got$value), normalizePath(s$old), info = stem)
-    expect_one_deprecation(got, "^open_job\\(\\): dp[.]trends")
     expect_error(add_job("dc.trends", "cohort", "eda", dir = s$root),
                  "already exists as '[^']*graphs/[^']*dp[.-]trends[^']*', under the template's name before it was renamed")
-    expect_error(suppressWarnings(add_job("dp.trends", "cohort", "eda", dir = s$root), classes = "hvtiRtemplates_deprecated"),
-                 "under the template's name before it was renamed")
     expect_false(file.exists(file.path(s$root, "descriptive", "dc.trends.cohort.eda.qmd")), info = stem)
   }
   # A different set is a different job, and scaffolds in descriptive as usual.
@@ -201,8 +166,6 @@ test_that("a rename follows the catalog's renamed list, whichever name it retire
   renames <- data.frame(from = "zz-gfup", to = "dc-gfup", from_folder = "graphs", note = "A test note.",
                         stringsAsFactors = FALSE)
   local_mocked_bindings(.template_renames = function() renames)
-  expect_warning(path <- template_path("zz.gfup"), "zz.gfup is deprecated in favor of dc.gfup. A test note.",
-                 fixed = TRUE, class = "hvtiRtemplates_deprecated")
-  expect_identical(basename(path), "dc-gfup.qmd")
+  expect_error(template_path("zz.gfup"), "zz.gfup was renamed dc.gfup. A test note.", fixed = TRUE)
   expect_error(template_path("dp.trends"), "unknown template: dp[.]trends[.] Qualified 'trends': dc[.]trends")
 })

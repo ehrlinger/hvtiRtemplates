@@ -180,7 +180,7 @@ TABLE     <- "sexrace"
 
 SCALE     <- "years"
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hs-setup-expected").
 SAVE_FIGURES <- TRUE

@@ -203,9 +203,9 @@ CLUSTERS <- list(
 # Correlation cutoff for near-duplicate candidates.
 COLLINEAR_R <- 0.99
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("br-frequencies"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -518,12 +518,14 @@ resampling noise alone.
 - **A near-threshold variable is not a weak risk factor.** It is a variable
   whose selection is unstable, which is a different claim.
 
-⚠️ **A linear screen's frequencies move with the outcome's scale.** Stepwise
-entry and stay are p-value thresholds, and a p-value on a continuous outcome
-responds to residual variance in a way a binary outcome's does not. Two runs of
-the same pool against the same cohort, one on a raw outcome and one on a
-transformed one, are not comparable screens and their retained sets should not
-be read against each other.
+⚠️ **A linear screen's frequencies depend on the outcome's transform, not its units.**
+Stepwise entry and stay are p-value thresholds, and a p-value is unchanged when the
+outcome is rescaled linearly, so a change of unit does not move a frequency. A
+transform such as the log of the outcome rather than the raw outcome changes the
+residuals and the linearity the tests see, and so can change which variables
+enter. Two runs of the same pool against the same cohort, one on a raw outcome and
+one on a transformed one, are not comparable screens and their retained sets
+should not be read against each other.
 
 ```{r}
 #| label: criteria

@@ -153,7 +153,7 @@ MAX_STEPS <- 50L     # SAS maxsteps=
 # EDIT: calibration horizon.
 DECILE_TIME <- 10
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hm-calibration").
 SAVE_FIGURES <- TRUE
@@ -222,11 +222,12 @@ knitr::kable(data.frame(
 A rendered report is itself evidence the gate passed. Report the counts anyway —
 a gate that passes silently tells the reader nothing about what it passed on.
 
-**An event flag that is 0/1 in SAS may arrive as `logical`**, because
-`read_clinical_data()` infers binary columns as logical while `Surv()` requires
-a numeric status. The `as.numeric()` coercions below are not decoration — and
-see the covariate audit below for the same problem on the covariate side, where
-it changes the model rather than erroring.
+**A 0/1 column may arrive as `logical` or as a factor.** `Surv()` accepts a logical
+status, so the event flag is used as it is read, and this job does not coerce it.
+The covariates are where the type changes the model rather than erroring:
+`covariates_to_numeric()` below turns a factor whose levels are all numeric into a
+numeric column, so it enters linearly as it does in the SAS job. The covariate audit
+that follows records what it did to each one.
 
 ## Covariates
 

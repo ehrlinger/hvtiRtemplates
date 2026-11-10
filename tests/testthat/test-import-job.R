@@ -227,3 +227,16 @@ test_that("an imported job renders in its new study", {
   expect_true("110 rows on 110 patients" %in% text)
   expect_true("110 of 110 rows analyzed; none dropped" %in% text)
 })
+
+test_that("a job written under a template's name before a rename imports as the renamed template", {
+  other <- import_study("old")
+  here <- import_study("new")
+  job <- add_job("dc.trends", subject = "cohort", type = "eda", dir = other)
+  # As a dp.trends job was scaffolded before 2026-10-10: in graphs/, under the old name.
+  from <- file.path(hvtiRutilities::study_dir("graphs", other), "dp.trends.cohort.eda.qmd")
+  file.rename(job, from)
+  expect_no_warning(out <- suppressMessages(import_job(from, dir = here)))
+  expect_identical(normalizePath(out, winslash = "/"),
+                   normalizePath(file.path(hvtiRutilities::study_dir("descriptive", here), "dc.trends.cohort.eda.qmd"),
+                                 winslash = "/"))
+})

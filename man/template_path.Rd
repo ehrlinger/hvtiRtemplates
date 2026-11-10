@@ -19,9 +19,8 @@ omitting it there is an error naming the choices, never a silent pick.}
 \value{
 The full path, as \code{character(1)}. A template the catalog
   marks deprecated still resolves, with a warning naming its replacement.
-  So does a template's name before a rename, such as \code{dp.trends},
-  now \code{dc.trends}: it resolves to the renamed template, with a
-  warning naming the new name, until the old name is removed.
+  A template's name before a rename, such as \code{dp.trends}, now
+  \code{dc.trends}, is an error naming the new name.
 }
 \description{
 Path to a supported template

@@ -116,9 +116,9 @@ A template the catalog marks deprecated still scaffolds, with a warning
 naming its replacement; see \code{\link{template_catalog}}.
 
 \strong{Renamed templates.} \code{dp.eda} and \code{dp.trends} were renamed
-\code{dc.eda} and \code{dc.trends} on 2026-10-10. The old names still
-scaffold the renamed template, with a warning naming the new name, through
-the next release, and are removed in the one after. A \code{dc.trends} job
+\code{dc.eda} and \code{dc.trends} on 2026-10-10. The old names scaffolded
+the renamed template, with a warning, for the releases that followed, and
+are now an error naming the new name. A \code{dc.trends} job
 is written to the \code{descriptive} folder, where a \code{dp.trends} job
 was written to \code{graphs}. A job scaffolded under the old name keeps it
 and keeps rendering; \code{add_job()} refuses to write a second copy of it

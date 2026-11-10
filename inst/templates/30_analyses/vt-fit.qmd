@@ -197,7 +197,7 @@ SEED <- 1024                                # EDIT: part of every cache key.
 # that are out of date.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("vt-fit-km"). The names are the
 # file names, listed for each template in the templates README.
@@ -940,7 +940,7 @@ environment(.model) <- globalenv()
 ```
 
 The C-index below is computed from each forest's out-of-bag predictions, not from the stored error rate
-(which the study's 2026-09-23 correction showed is not the C-index).
+(which is not the C-index).
 
 ```{r}
 #| label: tbl-performance

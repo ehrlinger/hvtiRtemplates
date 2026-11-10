@@ -4,7 +4,7 @@
 #' A template calls this just before an expensive \code{cache_fit()}. In an
 #' interactive session (the console, or running chunks one by one) with no
 #' cached result yet, it stops and says to run the job with
-#' \code{\link{submit_job}} instead, because a fit that runs for hours dies
+#' \code{\link{run_job}} instead, because a fit that runs for hours dies
 #' with the session. A render, a cached result, or
 #' \code{options(hvtiRtemplates.allow_interactive_fit = TRUE)} lets it pass.
 #'
@@ -33,7 +33,7 @@ guard_long_fit <- function(name, dir, why, refit = FALSE) {
     return(invisible(FALSE))
   }
   job <- if (requireNamespace("knitr", quietly = TRUE)) knitr::current_input(dir = TRUE) else NULL
-  call <- sprintf("hvtiRtemplates::submit_job(\"%s\")", if (is.null(job)) "<this job>.qmd" else job)
+  call <- sprintf("hvtiRtemplates::run_job(\"%s\")", if (is.null(job)) "<this job>.qmd" else job)
   state <- if (isTRUE(refit)) "is being recomputed (REFIT)" else "is not cached yet"
   stop("This fit ", state, ", and ", why, ": run interactively it dies with the session. ",
        "Run the job in the background instead:\n  ", call, "\nthen check it with hvtiRtemplates::job_status(). ",

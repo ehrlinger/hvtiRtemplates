@@ -487,7 +487,7 @@ test_that("an uncached band is refused at the console and names submit_job()", {
   env <- new.env(parent = globalenv())
   env$.root <- rfs_explained_copy()
   choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
-  expect_error(rf_run_bands("rfs", "explain", c(explain_labels, band_labels), env, choices), "submit_job(", fixed = TRUE)
+  expect_error(rf_run_bands("rfs", "explain", c(explain_labels, band_labels), env, choices), "run_job(", fixed = TRUE)
 })
 
 # Classification data for rfc: two iris species, so the outcome is binary as

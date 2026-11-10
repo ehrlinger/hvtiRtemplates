@@ -84,6 +84,7 @@ import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
     stop("import_job(): '", basename(from), "' does not name a template; expected ",
          "<prefix>[.<qualifier>].<subject>.<type>.qmd.", call. = FALSE)
   }
+  fields <- .job_fields_renamed(fields)
   if (is.null(subject)) subject <- fields$subject
   if (is.null(type)) type <- fields$type
   .check_field("subject", subject, fn = "import_job")

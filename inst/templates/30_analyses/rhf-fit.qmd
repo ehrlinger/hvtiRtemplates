@@ -130,7 +130,7 @@ ANALYSIS_SET <- NULL
 # time-varying column would cut follow-up short, and stops the render.
 WHERE <- NULL
 
-# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN.
+# EDIT: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN.
 ID <- "ccfid"
 
 # EDIT: each interval's start and stop, and its event, coded 1 when the event
@@ -217,7 +217,7 @@ LOOKAHEAD <- "keep"
 # that are out of date, so it is safe to leave on while iterating.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("rhf-fit-tuning"). The names
 # are the file names, listed for each template in the templates README.
@@ -393,7 +393,7 @@ environment(model) <- globalenv()
 # there. The search's cache holds results only, and is kept owner-only beside it.
 .cache_files <- file.path(CACHE_DIR, c("rhf-treesize.rds", "rhf-forest.rds"))
 # Hours at study size. Started from the console it dies with the session, so an
-# uncached fit is refused there: run the job with hvtiRtemplates::submit_job().
+# uncached fit is refused there: run the job with hvtiRtemplates::run_job().
 hvtiRtemplates::guard_long_fit("rhf-forest", dir = CACHE_DIR,
                                why = "a hazard forest on every interval of follow-up takes hours at study size",
                                refit = REFIT)

@@ -2,7 +2,7 @@ test_that("an interactive session with no cached fit is stopped and told to subm
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
   dir <- withr::local_tempdir()
   expect_error(guard_long_fit("nb-boostmtree-fit", dir = dir, why = "a boostmtree fit takes hours"),
-               "submit_job(", fixed = TRUE)
+               "run_job(", fixed = TRUE)
   expect_error(guard_long_fit("nb-boostmtree-fit", dir = dir, why = "a boostmtree fit takes hours"),
                "a boostmtree fit takes hours", fixed = TRUE)
 })
@@ -36,7 +36,7 @@ test_that("several names pass only when every cache exists", {
   dir <- withr::local_tempdir()
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
   saveRDS(1, file.path(dir, "a.rds"))
-  expect_error(guard_long_fit(c("a", "b"), dir = dir, why = "slow"), "submit_job(", fixed = TRUE)
+  expect_error(guard_long_fit(c("a", "b"), dir = dir, why = "slow"), "run_job(", fixed = TRUE)
   saveRDS(1, file.path(dir, "b.rds"))
   expect_false(guard_long_fit(c("a", "b"), dir = dir, why = "slow"))
   expect_error(guard_long_fit(c("a", "b"), dir = dir, why = "slow", refit = TRUE), "REFIT")

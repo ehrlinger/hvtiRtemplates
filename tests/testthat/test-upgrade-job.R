@@ -245,7 +245,8 @@ test_that("a job under a renamed template moves to its folder, created if the st
   old <- file.path(root, "graphs", "dp.trends.cohort.eda.qmd")
   file.rename(job, old)
   unlink(file.path(root, "descriptive"), recursive = TRUE)
-  upgraded <- suppressWarnings(upgrade_job(old))
+  # The old name is the job's own, so it maps to dc-trends without a warning.
+  expect_no_warning(upgraded <- upgrade_job(old))
   expect_identical(basename(dirname(upgraded)), "descriptive")
   expect_identical(basename(upgraded), "dc.trends.cohort.eda.qmd")
   # The old job is archived beside the job it became, not in the folder it left.

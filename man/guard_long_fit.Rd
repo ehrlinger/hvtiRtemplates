@@ -24,7 +24,7 @@ template's \code{REFIT}); the cached file then does not make the call safe, so i
 A template calls this just before an expensive \code{cache_fit()}. In an
 interactive session (the console, or running chunks one by one) with no
 cached result yet, it stops and says to run the job with
-\code{\link{submit_job}} instead, because a fit that runs for hours dies
+\code{\link{run_job}} instead, because a fit that runs for hours dies
 with the session. A render, a cached result, or
 \code{options(hvtiRtemplates.allow_interactive_fit = TRUE)} lets it pass.
 }

@@ -52,10 +52,11 @@ refuses to overwrite an existing job.
 `dc-trends` then moved from `40_graphs/` to `10_descriptive/`, so a new
 `dc-trends` job is written to the study's descriptive folder rather than its
 graphs folder. Its figures are still saved under
-`graphs/<subject>-<type>/`. The old names, `dp.eda` and `dp.trends`, still work
-in `add_job()`, `open_job()`, `template_path()` and `migrate_job()`, with a
-warning naming the new one, through the next release, and are removed in the
-one after. The renames are listed under `renamed` in
+`graphs/<subject>-<type>/`. The old names, `dp.eda` and `dp.trends`, worked
+with a warning for the releases after the rename and are now an error in
+`add_job()`, `open_job()`, `template_path()` and `migrate_job()` that names the
+new one. A legacy SAS source named `dp.trends.sas` still migrates into
+`dc-trends`, since that name is the corpus's. The renames are listed under `renamed` in
 `inst/extdata/templates.json`. A job already scaffolded under an old name keeps
 that name and keeps rendering; `add_job()` refuses to write a second copy of it
 under the new name, and `open_job()` opens it.
@@ -160,7 +161,7 @@ first.
 
 **Confidence bands.** Set `BANDS_B` in an explain job to draw 95% intervals on the importance and pointwise
 bands on the partial plots. Each band regrows the forest on `BANDS_B` subsamples of the patients, so at study
-size the job runs for hours: start it with `hvtiRtemplates::submit_job()`, and the console refuses it until
+size the job runs for hours: start it with `hvtiRtemplates::run_job()`, and the console refuses it until
 the bands are cached. 100 is right for a report and 25 to 50 for a first look. Leave `SUBRATIO` at `NULL`
 unless the job warns that a subsample holds fewer than 100 events or of the smallest class. `BAND_STYLE` and
 `BAND_AT` change only the drawing, and redraw from the cache.
@@ -375,9 +376,10 @@ sets out the rule with examples, including the `knitr::knit_child()` pattern.
 
 ## Saved figures
 
-Every figure a job draws is saved to `graphs/<subject>-<type>/` as a PNG, to
-place in a Word draft, and a PDF and a TIFF of the same name, for the
-publisher's high-resolution submission: journals ask for one or the other.
+Every figure a job saves goes to `graphs/<subject>-<type>/` as a PNG, to
+place in a Word draft, and a PDF of the same name, with a TIFF too when the
+ragg package is installed, for the publisher's high-resolution submission:
+journals ask for one or the other.
 Word converts an inserted PDF into a large EMF, which is why the files are
 kept apart. In a job's study choices, `SAVE_FIGURES <- FALSE` saves none of
 them, and `FIGURES` keeps only the figures
@@ -527,15 +529,16 @@ which fail when a named column is not in the data.
 
 A fit that runs for hours does not survive a Workbench session that times out,
 and a chunk run in the console dies with the session. Run such a job in the
-background instead:
+background instead, with `run_job()` (see "Running a long job" below):
 
-    hvtiRtemplates::submit_job("analyses/nb.boostmtree.lvef.boost.qmd")
+    hvtiRtemplates::run_job("analyses/nb.boostmtree.lvef.boost.qmd")
     hvtiRtemplates::job_status("analyses/nb.boostmtree.lvef.boost.qmd")
 
-`submit_job()` renders the job detached from the session and returns at once;
+`run_job()` checks the job, then hands it to `submit_job()`, which renders it
+detached from the session;
 `<job>.run.log` holds the output and `<job>.run.yml` the state. A template whose
 fit is long calls `guard_long_fit()`, which refuses an uncached fit in an
-interactive session and names the `submit_job()` call to use. `nb-boostmtree`
+interactive session and names the `run_job()` call to use. `nb-boostmtree`
 does so today. Once the fit is cached, its chunks run interactively and load it.
 
 A render records how far it has got in `<job>.run.progress`, beside the job: the chunk
