@@ -75,7 +75,7 @@ test_that("dc-tables stops when GROUPS names a record number under a name nobody
     built$recordnumber <- 5500000L + seq_len(nrow(built))
     built
   })
-  edits <- list("^  Symptoms   = " = "  Symptoms   = c(\"recordnumber\")")
+  edits <- list("^GROUPS <- NULL$" = "GROUPS <- list(Symptoms = c(\"recordnumber\"))")
   s <- scaffold_job("dc", "tables", edits, root = root)  # nolint: object_usage_linter.
   # quarto_render(quiet = TRUE) hides why a render failed, and any failure would pass an expect_error().
   out <- suppressWarnings(system2(quarto::quarto_path(), c("render", shQuote(s$job), "--execute-dir", shQuote(dirname(s$job))),

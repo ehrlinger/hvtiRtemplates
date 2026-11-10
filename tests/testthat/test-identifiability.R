@@ -311,7 +311,8 @@ test_that("a rendered dc-tables report carries the callout and the run record's 
     b$rare <- as.integer(seq_len(nrow(b)) <= 2L)
     b
   })
-  s <- scaffold_job("dc", "tables", list("^  Symptoms   = c\\(\"nyha_pr\"\\)" = "  Symptoms = c(\"rare\")"), root = root)
+  groups <- "GROUPS <- list(Demography = c(\"age\", \"female\"), Symptoms = c(\"rare\"))"
+  s <- scaffold_job("dc", "tables", list("^GROUPS <- NULL$" = groups), root = root)
   quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
   html <- paste(unlist(lapply(list.files(root, "[.]html$", recursive = TRUE, full.names = TRUE), readLines, warn = FALSE)),
                 collapse = "\n")
