@@ -113,7 +113,7 @@ test_that("sid-fit imputes, fits and saves the handoff", {
   rf_skip_unless_stack(rf_template_packages("sid", "fit"))
   env <- sid_fit_first()
   h <- readRDS(env$set_path("estimates", "sid.rds"))
-  expect_identical(names(h), c("dist", "id_key", "vars", "dropped", "reduced", "settings"))
+  expect_identical(names(h), c("dist", "id_key", "vars", "dropped", "reduced", "data_fingerprint", "settings"))
   expect_identical(dim(h$dist), c(150L, 150L))
   expect_false(anyNA(h$dist))
   key <- hvtiRtemplates:::.study_id_key(env$.root)

@@ -1592,6 +1592,33 @@
       ]
     },
     {
+      "prefix": "sid",
+      "qualifier": "stability",
+      "name": "SID clustering: stability",
+      "description": "Refits the SID forest over many seeds on sid-fit's patients and imputed values, runs PAM as sid-clusters does, and reports agreement with the reported groups, how often each is found, where an unfound group's patients go, co-association and PAC, an optional tracked share, and an optional refit without named variables.",
+      "folder": "analyses",
+      "family": "machine-learning",
+      "kind": "job",
+      "status": "in-flight",
+      "batch": null,
+      "sas_breadth": null,
+      "r_exemplars": null,
+      "r_jobs": null,
+      "upstream": [],
+      "downstream": [],
+      "workflows": [],
+      "blocked_on": null,
+      "spec": "dev/specs/2026-10-22-sid-templates-design.md",
+      "note": "Released for review in a real study. Built from one study's 50-seed stability analysis of its published SID groups, including a refit without the repair-pathway variable; a second study is needed before it ships. Reads sid.rds, sid-clusters.rds and sid-fit's first imputation cache; never re-imputes.",
+      "sas_breadth_jobs": null,
+      "disposition": "scaffold",
+      "uses": [
+        "randomForestSRC::sidClustering",
+        "cluster::pam",
+        "hvtiRutilities::cache_fit"
+      ]
+    },
+    {
       "prefix": "vt",
       "qualifier": "fit",
       "name": "Virtual twins: fit",
