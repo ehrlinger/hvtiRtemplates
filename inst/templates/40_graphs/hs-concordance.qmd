@@ -107,6 +107,10 @@ set_path <- .job$set_path
 # The figures draw with hvtiPlotR. Checked here, before any model is read, so a
 # missing package stops the render at once rather than after the predictions.
 if (!requireNamespace("hvtiPlotR", quietly = TRUE)) stop("This job needs hvtiPlotR for its figures.", call. = FALSE)
+if (utils::packageVersion("hvtiPlotR") < "2.8.20") {
+  stop("This job needs hvtiPlotR >= 2.8.20 for hv_group_palette(); ", utils::packageVersion("hvtiPlotR"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
+}
 # Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder,
 # under the SAVE_FIGURES and FIGURES study choices.
 save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
@@ -802,10 +806,11 @@ curves$panel <- mapply(.panel, curves$model, curves$group)
   ggplot2::scale_fill_manual(values = .cols, name = NULL) +
   ggplot2::scale_y_continuous(limits = c(0, 100)) +
   ggplot2::labs(x = TIME, y = "Survival (%)") +
-  hvtiPlotR::theme_hv_manuscript(base_size = 11) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12) +
   ggplot2::theme(legend.position = "top")
+# Two panels a row on the page's 6.5 in, as tall as the rows need up to its 9 in.
 .npanel <- length(unique(curves$panel))
-save_figure(.fig, "hs-concordance-expected-km", width = 8, height = 1 + 3 * ceiling(.npanel / 2))
+save_figure(.fig, "hs-concordance-expected-km", width = 6.5, height = min(9, 1 + 2.75 * ceiling(.npanel / 2)))
 .fig
 ```
 
@@ -818,8 +823,8 @@ save_figure(.fig, "hs-concordance-expected-km", width = 8, height = 1 + 3 * ceil
   ggplot2::facet_wrap(~panel) +
   ggplot2::scale_y_continuous(limits = c(0, 100)) +
   ggplot2::labs(x = TIME, y = "Predicted survival (%)") +
-  hvtiPlotR::theme_hv_manuscript(base_size = 11)
-save_figure(.fig, "hs-concordance-spaghetti", width = 8, height = 1 + 3 * ceiling(.npanel / 2))
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(.fig, "hs-concordance-spaghetti", width = 6.5, height = min(9, 1 + 2.75 * ceiling(.npanel / 2)))
 .fig
 ```
 
