@@ -50,7 +50,7 @@ test_that("the one-sample log-rank refuses inputs that would understate E", {
   expect_error(f(c(0, 0), c(0, 0)), "expected count is 0")
 })
 
-test_that("the average-of-limits band is the patients' limits averaged, labeled an upper bound", {
+test_that("the average-of-limits band is the patients' limits averaged, and says it is not the mean's interval", {
   surv <- rbind(c(0.9, 0.8), c(0.7, 0.4))
   lower <- surv - 0.05
   upper <- surv + c(0.02, 0.04)
@@ -59,7 +59,8 @@ test_that("the average-of-limits band is the patients' limits averaged, labeled 
   expect_equal(b$lower, colMeans(lower))
   expect_equal(b$upper, colMeans(upper))
   expect_match(attr(b, "label"), "68% limits")
-  expect_match(attr(b, "label"), "upper bound")
+  expect_match(attr(b, "label"), "not an interval for the mean curve")
+  expect_no_match(attr(b, "label"), "bound")
   expect_error(hvtiRtemplates:::.cohort_curve_band(surv, band = "limits_mean", clevel = 0.68),
                "needs the patients' limits")
   expect_error(hvtiRtemplates:::.cohort_curve_band(surv, lower[, 1, drop = FALSE], upper, "limits_mean", clevel = 0.68),
@@ -81,20 +82,37 @@ test_that("a band must be chosen by name", {
   expect_error(hvtiRtemplates:::.cohort_curve_band(matrix(NA_real_), band = "spread"), "missing")
 })
 
-test_that("averaging the limits gives an interval no narrower than the mean curve's, by the delta method", {
-  # Two patients on one exponential model, S_i = exp(-exp(b0 + b1 x_i) t). The mean curve's
-  # standard error from the gradient of the mean is at most the mean of the patients' standard
-  # errors: the SD of a sum is at most the sum of the SDs. On the natural scale, where both are exact.
-  b <- c(-1, 0.5)
-  v <- matrix(c(0.04, 0.01, 0.01, 0.09), 2)
-  x <- c(-1, 2)
-  t <- 2
-  grad <- function(xi) {
-    s <- exp(-exp(b[1] + b[2] * xi) * t)
-    -s * exp(b[1] + b[2] * xi) * t * c(1, xi)
+test_that("averaged logit limits are no bound on the mean curve's interval (review of #509)", {
+  # Three patients, independent parameters, the delta method on the logit scale at z = 1. Averaging
+  # each patient's interval puts the upper edge INSIDE the mean curve's own upper edge, so the
+  # average of limits must not be called an upper bound. Counterexample from the review of #509.
+  s <- c(0.9430778, 0.2661929, 0.9389693)
+  g <- matrix(c(0.007527468, -0.004440389, 0.07035267, 0.05705287, 0.07481851, 0.04782574), 3, 2)
+  v <- diag(2)
+  logit_ci <- function(p, se_p) {
+    se <- se_p / (p * (1 - p))
+    stats::plogis(stats::qlogis(p) + c(-1, 1) * se)
   }
-  se_i <- vapply(x, function(xi) sqrt(drop(t(grad(xi)) %*% v %*% grad(xi))), numeric(1))
-  g_mean <- (grad(x[1]) + grad(x[2])) / 2
-  se_mean <- sqrt(drop(t(g_mean) %*% v %*% g_mean))
-  expect_lte(se_mean, mean(se_i))
+  each <- vapply(1:3, function(i) logit_ci(s[i], sqrt(drop(g[i, ] %*% v %*% g[i, ]))), numeric(2))
+  averaged <- rowMeans(each)
+  gbar <- colMeans(g)
+  of_mean <- logit_ci(mean(s), sqrt(drop(gbar %*% v %*% gbar)))
+  expect_equal(averaged, c(0.60847, 0.77089), tolerance = 1e-4)
+  expect_equal(of_mean, c(0.64722, 0.77615), tolerance = 1e-4)
+  expect_lt(averaged[2], of_mean[2])
+})
+
+test_that("the Kaplan-Meier steps leave undefined limits missing, not carried", {
+  # Two patients both dying at time 1: survival falls to 0, where survfit() has no log limits.
+  k <- hvtiRtemplates:::.km_steps(c(1, 1), c(1, 1))
+  expect_identical(k$time, c(0, 1, 1))
+  expect_identical(k$surv, c(1, 1, 0))
+  expect_true(all(is.na(k$lower[k$surv == 0])) && all(is.na(k$upper[k$surv == 0])))
+  # Wherever both limits exist they hold the estimate between them.
+  withr::local_seed(3)
+  k <- hvtiRtemplates:::.km_steps(stats::rexp(40), stats::rbinom(40, 1, 0.7))
+  ok <- !is.na(k$lower) & !is.na(k$upper)
+  expect_true(all(k$lower[ok] <= k$surv[ok] & k$surv[ok] <= k$upper[ok]))
+  # A step is held until the next time: times never decrease and each change comes in a pair.
+  expect_false(is.unsorted(k$time))
 })

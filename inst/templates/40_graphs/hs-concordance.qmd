@@ -208,6 +208,15 @@ CROSS_STUDY <- FALSE
 # model has data for; past it a model's expectation is its form running on.
 TAU <- NULL
 
+# EDIT: the models whose fitting patients you have confirmed, from the study's
+#       own records, are not the patients of the groups tested against them,
+#       e.g. INDEPENDENT <- "pci" for a model fitted on another cohort. Only
+#       these get an interval and a p-value, and only for groups with no row
+#       matching the model's fitted data. The job cannot check it: no saved
+#       model names its patients. A model fitted on any of the same deaths
+#       makes the test meaningless, so leave a model out when unsure.
+INDEPENDENT <- character()
+
 # EDIT: the level of the observed-against-expected interval. 95% because the
 #       test's p-value is read against 0.05, and a reader takes an interval
 #       beside a p-value for 95%. It is NOT CLEVEL's 68%: set CLEVEL's value
@@ -218,8 +227,8 @@ TEST_LEVEL <- 0.95
 # EDIT: the band drawn around each average expected curve, "limits_mean" or
 #       "spread". There is no default, because the old habit, averaging each
 #       patient's limits, needs saying for what it is:
-#   "limits_mean": the average of the patients' limits, at CLEVEL (68%). An
-#     upper bound on the interval of the mean curve, and labeled so.
+#   "limits_mean": the average of the patients' limits, at CLEVEL (68%). It is
+#     not an interval for the mean curve, wider or narrower, and is labeled so.
 #   "spread": the 15th to 85th percentiles of the patients' predictions. How
 #     much patients differ; not a confidence interval of anything.
 #   The confidence interval of the mean curve itself waits on TemporalHazard#731.
@@ -587,21 +596,29 @@ own follow-up, and the group's are their sum, E. The ratio O/E, its exact
 Poisson interval and the chi-squared test of O against E are the one-sample
 log-rank test (Breslow 1975; Finkelstein, Muzikansky and Schoenfeld 2003).
 
-Three things to say beside the result:
+Four things to say beside the result:
 
-- **The model's own uncertainty is not in the test.** E is treated as fixed.
-  When the model was fitted on a cohort much larger than this one, that is a
-  small omission; with cohorts of similar size the p-value is optimistic.
-  Adding it waits on TemporalHazard#731.
+- **A test needs a model fitted on other patients, and only you can confirm
+  that.** A model estimated from the same deaths it is tested against is not
+  fixed: O and E then depend on each other, and the p-value means nothing. No
+  saved model carries a patient identifier, so this job cannot prove which
+  patients fitted it. A cell therefore gets an interval and a p-value only
+  when its model is named in `INDEPENDENT`, your statement from the study's
+  own records that the patients who fitted it are not this group's, AND no row
+  of the group matches a row of the model's fitted data. Every other cell shows
+  O, E and O/E as a description, with no inference, and says why.
+- **Matching rows are a warning, not an identification.** `in_fit` counts the
+  group's rows whose covariates, follow-up and event equal a row the model was
+  fitted on. Two patients can share those values, and a re-extracted dataset
+  can differ in a decimal, so a match is a reason to withhold the test, never
+  proof of who the patients are, and no match is no proof of independence.
+- **The model's own uncertainty is not in the test.** E is treated as fixed
+  even for an independent model. When it was fitted on a cohort much larger
+  than this one that is a small omission; with cohorts of similar size the
+  p-value is optimistic. Adding it waits on TemporalHazard#731.
 - **Follow-up stops at `TAU`.** Past the last time a model has data for, its
   expectation is its parametric form running on, so deaths and expectations
-  are both counted to `TAU` and no further.
-- **A group under the model fitted on it is a check, not a test.** Where the
-  scored patients ARE the model's fitted patients, the fit forces E to match O,
-  so O/E is 1 up to the optimizer's tolerance, or near it where `TAU` cuts some
-  of their follow-up off, and it has no p-value. The table
-  marks such a cell `in-sample`, one whose patients the model never saw
-  `external`, and a mix `partial`, with the count found in the fit.
+  are both counted to `TAU` and no further, and the figures stop there too.
 
 ```{r}
 #| label: oe
@@ -617,21 +634,23 @@ if (anyNA(.time) || anyNA(.event) || !all(.event %in% c(0, 1))) {
 .t_oe <- pmin(.time, TAU)
 .ev_oe <- as.integer(.event == 1 & .time <= TAU)
 .groups <- intersect(names(models), unique(.actual))
+if (!is.character(INDEPENDENT) || anyNA(INDEPENDENT) || length(setdiff(INDEPENDENT, names(models)))) {
+  stop("INDEPENDENT must name models in MODELS; got ", paste(setdiff(INDEPENDENT, names(models)), collapse = ", "),
+       ".", call. = FALSE)
+}
 
-# Whether a group's patients are the model's fitted patients is read from the
-# data, not from a setting: no saved model carries an identifier, so each row
-# is keyed on its covariates and follow-up, as the model's frame holds them.
+# Rows of a group that equal a row of the model's fitted data, on its
+# covariates, follow-up and event. A factor is keyed by its label, never its
+# code: the fitted frame holds one group's levels and this cohort all of them.
+# Rows are matched as multisets, so two patients who share every value are
+# counted no more often than the fit holds them. This flags overlap; it does
+# not identify anyone, and finding none proves nothing.
 .row_key <- function(frame, cols) {
-  # A factor is keyed by its label, never its code: the fitted frame holds one
-  # group's levels and this cohort all of them, so codes need not agree.
   do.call(paste, c(lapply(cols, function(v) {
     x <- frame[[v]]
     if (is.numeric(x)) sprintf("%.15g", x) else as.character(x)
   }), sep = "\r"))
 }
-# Rows are matched as multisets, so two patients who share every value are
-# counted no more often than the fit holds them. Without an identifier that is
-# as far as the data can say.
 
 oe <- do.call(rbind, lapply(names(models), function(m) {
   nd <- dd[, covariates[[m]], drop = FALSE]
@@ -641,7 +660,7 @@ oe <- do.call(rbind, lapply(names(models), function(m) {
     stop(sum(!is.finite(h)), " expected cumulative hazard(s) from the model for ", m, " are not finite. ",
          "A follow-up of exactly 0 can do this for a model whose early phase has nu > 0 and m = 0.", call. = FALSE)
   }
-  .cols <- c(covariates[[m]], TIME)
+  .cols <- c(covariates[[m]], TIME, EVENT)
   .fitted <- .row_key(models[[m]]$reported$data$frame, .cols)
   .ours <- .row_key(dd, .cols)
   .tf <- table(.fitted)
@@ -650,17 +669,16 @@ oe <- do.call(rbind, lapply(names(models), function(m) {
     .tg <- table(.ours[rows])
     .k <- intersect(names(.tg), names(.tf))
     inside <- as.integer(sum(pmin(.tg[.k], .tf[.k])))
-    fit_overlap <- if (inside == 0L) {
-      "external"
-    } else if (!.is_path[[m]] && inside == sum(rows) && sum(rows) == length(.fitted)) {
-      "in-sample"
+    inference <- if (inside > 0L) {
+      "none: rows match the fit"
+    } else if (!m %in% INDEPENDENT) {
+      "none: independence not confirmed"
     } else {
-      "partial"
+      "tested"
     }
     r <- hvtiRtemplates:::.one_sample_logrank(.ev_oe[rows], h[rows], TEST_LEVEL)
-    # An in-sample O/E is 1 by construction, so it has no test and no interval.
-    if (fit_overlap == "in-sample") r[c("lower", "upper", "chisq", "p")] <- NA_real_
-    data.frame(model = m, group = g, fit_overlap = fit_overlap, in_fit = inside, r)
+    if (inference != "tested") r[c("lower", "upper", "chisq", "p")] <- NA_real_
+    data.frame(model = m, group = g, inference = inference, in_fit = inside, r)
   }))
 }))
 # Captions too long for a chunk option line, built here.
@@ -673,7 +691,7 @@ cat("Follow-up is counted to TAU = ", signif(TAU, 4), " (", TIME, "'s units); ",
 ```{r}
 #| label: tbl-oe
 #| tbl-cap: !expr .cap_oe
-knitr::kable(oe[c("model", "group", "fit_overlap", "in_fit", "n", "observed", "expected", "ratio", "lower", "upper", "chisq", "p")],
+knitr::kable(oe[c("model", "group", "inference", "in_fit", "n", "observed", "expected", "ratio", "lower", "upper", "chisq", "p")],
              row.names = FALSE, digits = 4)
 ```
 
@@ -684,17 +702,21 @@ survival, over a grid to `TAU`, set against the Kaplan-Meier estimate of the
 same patients, with the test above in each panel's title. The band around the
 average curve is the one `BAND` names, and its label says what it is: neither
 choice is the confidence interval of the mean curve, which waits on
-TemporalHazard#731. ⚠️ The patients' limits are `CLEVEL`'s **68%**; the
-Kaplan-Meier band is **95%**.
+TemporalHazard#731. The average of the patients' limits is not a bound on that
+interval either: the limits are formed on the logit scale, and averaging them
+after transforming back can fall inside the mean curve's own interval. ⚠️ The
+patients' limits are `CLEVEL`'s **68%**; the Kaplan-Meier band is **95%**.
+Both curves stop at `TAU`, where the test stops counting.
 
 ```{r}
 #| label: curves
-# The grid runs to TAU and holds HORIZON, so the average curve can be checked
-# against the predictions table at HORIZON. A grid point within rounding of
-# HORIZON is dropped for it, as hs-setup does.
-.end <- max(TAU, HORIZON)
-.grid <- seq(0, .end, length.out = 51L)[-1L]
-.grid <- sort(c(.grid[abs(.grid - HORIZON) > 1e-8 * .end], HORIZON))
+# The grid runs to TAU, where the test and the Kaplan-Meier stop, and no
+# further. It holds HORIZON when HORIZON is within it, so the average curve can
+# be checked against the predictions table there; a grid point within rounding
+# of HORIZON is dropped for it, as hs-setup does. A HORIZON past TAU is checked
+# by a prediction of its own instead, and is not drawn.
+.grid <- seq(0, TAU, length.out = 51L)[-1L]
+if (HORIZON <= TAU) .grid <- sort(c(.grid[abs(.grid - HORIZON) > 1e-8 * TAU], HORIZON))
 .at <- match(HORIZON, .grid)
 if (!is.numeric(SPAGHETTI_N) || length(SPAGHETTI_N) != 1L || !is.finite(SPAGHETTI_N) || SPAGHETTI_N < 1) {
   stop("SPAGHETTI_N must be one positive number.", call. = FALSE)
@@ -724,10 +746,19 @@ for (m in names(models)) {
     # reports, and the limits' average the mean of theirs. Separate predict()
     # calls build the two, so a change to either would part them silently.
     .ph <- pred[pred$model == m & pred$group == g, , drop = FALSE]
-    stopifnot(isTRUE(all.equal(.b$mean[.at], mean(.ph$fit))))
+    .avg <- if (is.na(.at)) {
+      .h <- dd[rows, covariates[[m]], drop = FALSE]
+      .h$time <- HORIZON
+      .hp <- predict(models[[m]]$reported, newdata = .h, type = "survival", se.fit = .limits, level = CLEVEL,
+                     conf.type = "logit")
+      if (.limits) colMeans(.hp[c("fit", "lower", "upper")]) else c(fit = mean(.hp))
+    } else {
+      c(fit = .b$mean[.at], lower = .b$lower[.at], upper = .b$upper[.at])
+    }
+    stopifnot(isTRUE(all.equal(unname(.avg[["fit"]]), mean(.ph$fit))))
     if (.limits) {
-      stopifnot(isTRUE(all.equal(.b$lower[.at], mean(.ph$lower))),
-                isTRUE(all.equal(.b$upper[.at], mean(.ph$upper))))
+      stopifnot(isTRUE(all.equal(unname(.avg[["lower"]]), mean(.ph$lower))),
+                isTRUE(all.equal(unname(.avg[["upper"]]), mean(.ph$upper))))
     }
     curves[[length(curves) + 1L]] <- data.frame(model = m, group = g, time = c(0, .grid), mean = c(1, .b$mean),
                                                 lower = c(1, .b$lower), upper = c(1, .b$upper))
@@ -753,8 +784,8 @@ curves <- do.call(rbind, curves)
 # p-value sits beside the number that does.
 .panel <- function(m, g) {
   r <- oe[oe$model == m & oe$group == g, , drop = FALSE]
-  test <- if (r$fit_overlap == "in-sample") {
-    paste0("O/E ", formatC(r$ratio, digits = 2, format = "f"), " (in-sample check)")
+  test <- if (r$inference != "tested") {
+    paste0("O/E ", formatC(r$ratio, digits = 2, format = "f"), " (no test: ", sub("^none: ", "", r$inference), ")")
   } else {
     paste0("O/E ", formatC(r$ratio, digits = 2, format = "f"), " (", 100 * TEST_LEVEL, "% ",
            formatC(r$lower, digits = 2, format = "f"), " to ", formatC(r$upper, digits = 2, format = "f"),
@@ -766,18 +797,11 @@ curves$panel <- mapply(.panel, curves$model, curves$group)
 .lines$panel <- mapply(.panel, .lines$model, .lines$group)
 
 # The Kaplan-Meier estimate of each group received, to TAU, as the test counts
-# it, with 95% limits. Drawn as steps: each value is held until the next time.
+# it, with 95% limits, as steps. A limit survfit() leaves undefined, as at a
+# survival of 0, stays NA and that stretch of the band is not drawn.
 .km <- do.call(rbind, lapply(.groups, function(g) {
   rows <- .actual == g
-  f <- survival::survfit(survival::Surv(.t_oe[rows], .ev_oe[rows]) ~ 1, conf.int = 0.95)
-  k <- data.frame(time = c(0, f$time), surv = c(1, f$surv), lower = c(1, f$lower), upper = c(1, f$upper))
-  # Where the log limits are undefined (survival 0) the last defined value carries on.
-  for (v in c("lower", "upper")) k[[v]] <- stats::approx(seq_along(k[[v]]), k[[v]], seq_along(k[[v]]),
-                                                         method = "constant", rule = 2)$y
-  n <- nrow(k)
-  idx <- c(1L, rep(seq_len(n)[-1L], each = 2L))
-  step <- k[rep(seq_len(n), each = 2L)[-2L * n], ]
-  step$time <- k$time[idx]
+  step <- hvtiRtemplates:::.km_steps(.t_oe[rows], .ev_oe[rows], 0.95)
   step$group <- g
   step
 }))
@@ -788,6 +812,8 @@ curves$panel <- mapply(.panel, curves$model, curves$group)
   k$panel <- .pan$panel[[i]]
   k
 }))
+# The band only where survfit() defines both limits.
+.km_band <- .km[!is.na(.km$lower) & !is.na(.km$upper), , drop = FALSE]
 ```
 
 ```{r}
@@ -795,7 +821,7 @@ curves$panel <- mapply(.panel, curves$model, curves$group)
 #| fig-cap: !expr .cap_km
 .cols <- hvtiRtemplates:::.group_colors(c("Kaplan-Meier", "Expected"))
 .fig <- ggplot2::ggplot(mapping = ggplot2::aes(x = .data$time)) +
-  ggplot2::geom_ribbon(data = .km, ggplot2::aes(ymin = 100 * .data$lower, ymax = 100 * .data$upper, fill = "Kaplan-Meier"),
+  ggplot2::geom_ribbon(data = .km_band, ggplot2::aes(ymin = 100 * .data$lower, ymax = 100 * .data$upper, fill = "Kaplan-Meier"),
                        alpha = 0.15) +
   ggplot2::geom_path(data = .km, ggplot2::aes(y = 100 * .data$surv, color = "Kaplan-Meier")) +
   ggplot2::geom_ribbon(data = curves, ggplot2::aes(ymin = 100 * .data$lower, ymax = 100 * .data$upper, fill = "Expected"),

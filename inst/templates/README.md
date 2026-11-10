@@ -102,8 +102,8 @@ in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.q
 existing job by its file. Use `hs-setup` for one model's predictions against the matched population, and
 `hs-concordance` when each treatment group has its own `hm` model and every patient is to be predicted through
 each of them, or when one cohort is scored through a single model fitted on another (`GROUP <- NULL`). It also
-tests the deaths each group had against the deaths each model expects for it, the one-sample log-rank, which no
-comparison of curves gives. `hs-score` is for an `hm` model fitted on start/stop segments, which `hs-setup` refuses:
+sets the deaths each group had against the deaths each model expects for it, and tests them, the one-sample
+log-rank, for a model the author confirms in `INDEPENDENT` was fitted on other patients. `hs-score` is for an `hm` model fitted on start/stop segments, which `hs-setup` refuses:
 it scores each segment at its own start, as the SAS jobs for a time-varying model do. `nb-boostmtree` is qualified from the start, because `nb` will also hold a BoostMLR job,
 `nb-boostmlr`, which is still to come.
 `lp` is qualified from its first template, `lp-mirror`, so a later `lp` shape, such as calibration, arrives as a

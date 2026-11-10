@@ -41,8 +41,11 @@
 # times matrix of predicted survival; `lower` and `upper`, the same shape, are the patients' limits
 # at coverage `clevel`. Two bands, never confused with each other or with the confidence interval
 # of the mean curve, which is a third quantity and is not available yet (TemporalHazard#731):
-#   "limits_mean": the average of the patients' limits. Exact for the mean only if every patient's
-#     error were perfectly correlated, so its width is an upper bound on the interval of the mean.
+#   "limits_mean": the average of the patients' limits. It is NOT a bound on the interval of the
+#     mean curve. On a common linear scale the standard error of a mean is at most the mean of the
+#     standard errors, but these limits are formed on the logit scale and transformed back before
+#     they are averaged, which does not keep that inequality: the average can fall inside the mean
+#     curve's own interval (a three-patient counterexample is in test-observed-expected.R).
 #   "spread": the 15th and 85th percentiles of the patients' predictions. It measures how patients
 #     differ, does not narrow as the cohort grows, and is not a confidence interval of anything.
 # Returns one row per time: the mean, the band's two edges, and the band's label as attribute "label".
@@ -67,8 +70,7 @@
     if (is.null(clevel)) stop("BAND \"limits_mean\" needs the limits' coverage, `clevel`.", call. = FALSE)
     pct <- signif(100 * clevel, 2)
     out <- data.frame(mean = mean_curve, lower = colMeans(lower), upper = colMeans(upper))
-    label <- paste0("Average of the patients' ", pct, "% limits (an upper bound on the ", pct,
-                    "% interval of the mean curve)")
+    label <- paste0("Average of the patients' ", pct, "% limits (not an interval for the mean curve)")
   } else {
     q <- apply(surv, 2L, stats::quantile, probs = c(0.15, 0.85), names = FALSE, type = 7)
     out <- data.frame(mean = mean_curve, lower = q[1L, ], upper = q[2L, ])
@@ -76,4 +78,20 @@
   }
   attr(out, "label") <- label
   out
+}
+
+# The Kaplan-Meier estimate of `time` and `event` as steps, for a ribbon and a path: each value is
+# held until the next time, so the frame repeats each time once for the value before it and once
+# for the value from it. `lower` and `upper` are survfit()'s limits at `level`, and are NA where
+# they are undefined, as at a survival of 0: the ribbon is drawn only where they exist. Carrying the
+# last defined limit across would draw a band at 100% where the estimate is 0%.
+.km_steps <- function(time, event, level = 0.95) {
+  f <- survival::survfit(survival::Surv(time, event) ~ 1, conf.int = level)
+  k <- data.frame(time = c(0, f$time), surv = c(1, f$surv), lower = c(1, f$lower), upper = c(1, f$upper))
+  n <- nrow(k)
+  if (n == 1L) return(k)
+  step <- k[rep(seq_len(n), each = 2L)[-2L * n], ]
+  step$time <- k$time[c(1L, rep(seq_len(n)[-1L], each = 2L))]
+  rownames(step) <- NULL
+  step
 }

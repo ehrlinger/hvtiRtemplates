@@ -243,7 +243,7 @@ For each grid time `t`, with `S_i(t)` patient *i*'s predicted survival and
 
 | | name in the report | what it is | what it is NOT, or why it waits |
 |---|---|---|---|
-| (a) | **average of the patients' limits** | `mean(L_i)`, `mean(U_i)`. Exact for the mean curve only if every patient's error is perfectly correlated, so its half-width is an **upper bound** on (b)'s at the same coverage, on the scale the limits are formed on (the SD of a sum is at most the sum of the SDs) | the CI of the mean |
+| (a) | **average of the patients' limits** | `mean(L_i)`, `mean(U_i)`. ⚠️ **Not a bound on (b)** (withdrawn after review, section 9.1): the SD of a sum is at most the sum of the SDs on a common linear scale, but logit-scale limits averaged after back-transformation do not keep that inequality | the CI of the mean, or a bound on it |
 | (b) | **confidence interval of the mean curve** | the uncertainty of `mean(S_i(t))` from the reference model's parameter uncertainty | available yet: TemporalHazard does not expose what it needs (section 5.2) |
 | (c) | **spread of the patients' predictions** | `mean(S_i) +/- SD(S_i)`, or the quartiles | a confidence interval of anything. It measures heterogeneity among patients, and does not narrow as the cohort grows |
 
@@ -253,8 +253,8 @@ render, as `OVERLAP` does: `"limits_mean"` for (a), `"spread"` for (c), and
 and an unlabeled default would rebuild it silently.
 
 **The legend and caption name the quantity and its coverage**, always: for
-(a), "average of the patients' 68% limits (an upper bound on the 68%
-interval of the mean)"; for (c), "mean plus or minus one SD across patients;
+(a), "average of the patients' 68% limits (not an interval for the mean
+curve)"; for (c), "mean plus or minus one SD across patients;
 not a confidence interval". The word "confidence" is never used for (c).
 
 ### 5.2 Quantity (b): what TemporalHazard 1.3.0 exposes
@@ -408,10 +408,9 @@ template's existing ones do. No version bump in the pull request.
   [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731).
 - **Q3. Quantity (b). Decided 2026-11-10:** wait for TemporalHazard; (b) ships when
   [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731) lands. No workaround in the template.
-- **Q4. Detecting an in-sample cell.** Proposed: a cell is in-sample when the
-  model's set is this study's and its recorded selection and row count match
-  the cohort's. A partial overlap (some of the scored patients were in the
-  fit) is reported as a count, not resolved.
+- **Q4. Detecting an in-sample cell.** Superseded after review (section 9.1):
+  matching rows withhold the test, and independence is the author's
+  confirmation in `INDEPENDENT`, never inferred from the data.
 - **Q5. The test as a helper.** Settled by the `vt` decision: a second family
   will call it, so it is a helper (section 3.3).
 - **Q6. Mean and percentiles. Decided 2026-11-10:** mean, 15th and 85th
@@ -453,6 +452,30 @@ Where the build departs from sections 4 to 6, and why.
   the same on every render.
 - **The helpers live in `R/observed-expected.R`** and are tested in
   `tests/testthat/test-observed-expected.R`.
+
+### 9.1 Revised after the maintainer's review of #509, 2026-11-10
+
+Four findings, all accepted:
+
+1. **No inference without confirmed independence.** A model estimated from
+   the same deaths it is tested against makes O and E dependent, and a path
+   or a study boundary does not establish otherwise. Matching rows on
+   covariates, follow-up and (now) event flags overlap but identifies no one.
+   So a cell is tested only when the author names its model in `INDEPENDENT`
+   and none of the group's rows match the model's fitted data; every other
+   cell shows O, E and O/E with the reason it is not tested. The `in-sample`,
+   `partial` and `external` labels are gone, replaced by `inference`.
+2. **The average of the patients' limits is not an upper bound** on the
+   interval of the mean curve. A three-patient delta-method counterexample on
+   the logit scale puts the averaged upper limit (0.77089) inside the mean's
+   (0.77615); it is a regression test. The label now says "not an interval
+   for the mean curve".
+3. **The Kaplan-Meier band is not carried across an undefined limit.** Two
+   patients dying at one time gave a 100% band at a 0% estimate. The steps are
+   built by `.km_steps()`, which leaves undefined limits `NA`, and the ribbon
+   is drawn only where both exist.
+4. **The drawn curves stop at `TAU`.** A `HORIZON` past `TAU` is checked
+   against the predictions table by a prediction of its own and not drawn.
 
 ---
 

@@ -194,7 +194,7 @@ test_that("limits undefined at a survival of 1 are not reported as a missing var
   expect_no_match(err, "variance matrix", fixed = TRUE)
 })
 
-test_that("observed against expected counts each patient's own follow-up, and marks in-sample cells", {
+test_that("observed against expected counts each patient's own follow-up, and tests only confirmed-independent cells", {
   skip_concordance()
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
@@ -218,16 +218,27 @@ test_that("observed against expected counts each patient's own follow-up, and ma
       cell <- oe[oe$model == m & oe$group == g, ]
       expect_equal(cell$expected, sum(h[rows]), info = paste(m, g))
       expect_identical(cell$observed, sum(d$dead[rows] == 1 & d$iv_dead[rows] <= env$TAU), info = paste(m, g))
-      expect_identical(cell$fit_overlap, if (m == g) "in-sample" else "external", info = paste(m, g))
+      expect_identical(cell$in_fit, if (m == g) sum(rows) else 0L, info = paste(m, g))
     }
   }
   # Conservation of events: under its own model, a group whose follow-up TAU does not cut
-  # has O/E = 1, and the in-sample cell carries no test.
+  # has O/E = 1.
   uncut <- names(which.min(last))
   expect_equal(oe$ratio[oe$model == uncut & oe$group == uncut], 1, tolerance = 1e-4)
-  expect_true(all(is.na(oe$p[oe$fit_overlap == "in-sample"])))
-  expect_true(all(is.finite(oe$p[oe$fit_overlap == "external"])))
+  # With nothing in INDEPENDENT, no cell is tested: O/E is a description.
+  expect_identical(unique(oe$inference[oe$model != oe$group]), "none: independence not confirmed")
+  expect_true(all(is.na(c(oe$p, oe$lower, oe$upper, oe$chisq))))
+  # Confirmed independent, a group with no row matching the fit is tested; a group whose rows
+  # match the fit is not, confirmation or no.
+  env <- concordance_run(e$root, concordance_choices(e$data, INDEPENDENT = c("a", "b")), concordance_core)
+  oe <- env$oe
+  expect_identical(oe$inference[oe$model == oe$group], rep("none: rows match the fit", 2L))
+  expect_identical(oe$inference[oe$model != oe$group], rep("tested", 2L))
+  expect_true(all(is.na(oe$p[oe$model == oe$group])))
+  expect_true(all(is.finite(oe$p[oe$model != oe$group])))
   expect_identical(unique(oe$level), 0.95)
+  expect_error(concordance_run(e$root, concordance_choices(e$data, INDEPENDENT = "c"), concordance_core),
+               "INDEPENDENT must name models in MODELS")
   # The level is a choice, and the saved file carries it with TAU.
   e2 <- concordance_copy(e)
   concordance_run(e2$root, concordance_choices(e2$data, TEST_LEVEL = 0.68268948), c(concordance_core, "save"))
@@ -237,15 +248,15 @@ test_that("observed against expected counts each patient's own follow-up, and ma
   expect_identical(art$tau, env$TAU)
   expect_error(concordance_run(e$root, concordance_choices(e$data, TAU = max(last)), concordance_core),
                "TAU \\(.*\\) is beyond the last observed time of the model for")
-  # A model read by path is never called in-sample, even on the same patients: it is
-  # another study's by declaration, so its cell keeps its test.
+  # A model read by path is another study's by declaration, but a path is no proof of
+  # independence: rows matching its fit withhold the test, even when INDEPENDENT names it.
   path_a <- file.path(hvtiRutilities::study_dir("estimates", e$root), "dead-a", "hm.rds")
-  env <- concordance_run(e$root, concordance_choices(e$data, MODELS = c(a = path_a, b = "dead-b"), CROSS_STUDY = TRUE),
-                         concordance_core)
+  env <- concordance_run(e$root, concordance_choices(e$data, MODELS = c(a = path_a, b = "dead-b"), CROSS_STUDY = TRUE,
+                                                     INDEPENDENT = "a"), concordance_core)
   cell <- env$oe[env$oe$model == "a" & env$oe$group == "a", ]
-  expect_identical(cell$fit_overlap, "partial")
+  expect_identical(cell$inference, "none: rows match the fit")
   expect_identical(cell$in_fit, cell$n)
-  expect_true(is.finite(cell$p))
+  expect_true(is.na(cell$p))
 })
 
 test_that("with one model, GROUP may be NULL and the whole cohort is scored through it", {
@@ -256,9 +267,10 @@ test_that("with one model, GROUP may be NULL and the whole cohort is scored thro
   env <- concordance_run(e$root, concordance_choices(e$data, MODELS = c(a = "dead-a"), GROUP = NULL), concordance_core)
   expect_identical(nrow(env$oe), 1L)
   expect_identical(env$oe$n, nrow(e$data))
-  # Group a's patients are in the fit and group b's are not.
-  expect_identical(env$oe$fit_overlap, "partial")
+  # Group a's patients are in the fit and group b's are not, so the cohort gets no test.
+  expect_identical(env$oe$inference, "none: rows match the fit")
   expect_identical(env$oe$in_fit, sum(e$data$group == "a"))
+  expect_true(is.na(env$oe$p))
   expect_error(concordance_run(e$root, concordance_choices(e$data, GROUP = NULL), concordance_core),
                "may be NULL only when MODELS has one entry")
 })
@@ -298,7 +310,12 @@ test_that("the average expected curve and the spaghetti draw with no warning, un
     for (name in c("hs-concordance-expected-km", "hs-concordance-spaghetti")) {
       expect_true(all(file.exists(env$set_path("graphs", paste0(name, c(".png", ".pdf", ".tiff"))))), info = name)
     }
-    expect_match(env$.cap_km, if (band == "spread") "not a confidence interval" else "upper bound", info = band)
+    expect_match(env$.cap_km, if (band == "spread") "not a confidence interval" else "not an interval for the mean curve",
+                 info = band)
+    expect_no_match(env$.cap_km, "upper bound", info = band)
+    # Every drawn curve stops at TAU, where the test stops counting.
+    expect_identical(max(env$curves$time), env$TAU)
+    expect_lte(max(env$.km$time), env$TAU)
     # At HORIZON each curve is the mean of the predictions table's patients.
     at <- env$curves$time == env$HORIZON
     expect_identical(sum(at), 4L)
@@ -319,6 +336,21 @@ test_that("the average curve must be the mean of the patients' predictions, and 
   expect_error(utils::capture.output(hazard_run("hs-concordance", "curves", env)), "BAND must be one of")
   env$BAND <- "spread"
   # A predictions table that no longer matches the curve stops the chunk.
+  env$pred$fit[1L] <- env$pred$fit[1L] / 2
+  expect_error(utils::capture.output(hazard_run("hs-concordance", "curves", env)), "all.equal")
+})
+
+test_that("a HORIZON past TAU is checked but not drawn", {
+  skip_concordance()
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  e <- estate()
+  env <- concordance_run(e$root, concordance_choices(e$data, TAU = 1, HORIZON = 2, BAND = "limits_mean"), concordance_core)
+  utils::capture.output(hazard_run("hs-concordance", "curves", env))
+  expect_identical(max(env$curves$time), 1)
+  expect_false(2 %in% env$curves$time)
+  expect_true(is.na(env$.at))
+  # The check still compares the predictions table with a prediction of its own at HORIZON.
   env$pred$fit[1L] <- env$pred$fit[1L] / 2
   expect_error(utils::capture.output(hazard_run("hs-concordance", "curves", env)), "all.equal")
 })
