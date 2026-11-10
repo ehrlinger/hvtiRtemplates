@@ -202,8 +202,10 @@ O = 0 gives a lower limit of 0, which the formula returns as written.
   a reference cohort ten times the scored one, as on the call, the omitted
   variance is small; with comparable cohorts it is not. **Open question Q2.**
 - **Its own coverage.** The interval is labelled with its level wherever it
-  appears. The level is a new constant, `TEST_LEVEL <- 0.95`, kept apart from
-  `CLEVEL`. **Open question Q1.**
+  appears. The level is a new study choice, `TEST_LEVEL <- 0.95`, kept apart
+  from `CLEVEL` and marked `EDIT:` so an author can switch it, to `CLEVEL` for
+  one coverage across the report or to any level in (0, 1). Decided by the
+  maintainer on 2026-11-10 (Q1).
 - **Time units.** `E_i` is only right when `TIME` is in the reference
   model's unit. Inside one study this holds; with `CROSS_STUDY` it rests on
   the author's word, as `hs-concordance` already says.
@@ -275,10 +277,10 @@ Read from the installed package (1.3.0), not from memory:
   cohort's data, which with `CROSS_STUDY` lives in another study, and a
   multiphase refit on 7,200 patients repeated 200 times is a server job.
 
-**Proposed:** ask TemporalHazard for the mean-curve standard error directly,
-for example `predict(..., se.fit = TRUE, average = TRUE)` returning the
-delta-method SE of the row mean at each time, or the per-row Jacobian as an
-attribute. Filed as a TemporalHazard issue once this note is approved. (b)
+**Filed:** [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731)
+(2026-11-10) asks for the mean-curve standard error directly,
+`predict(..., se.fit = TRUE, average = TRUE)` returning the delta-method SE of
+the row mean at each time, or the per-row Jacobian as an attribute. (b)
 ships when it lands; (a), (c) and the spaghetti ship now. **Open question
 Q3.**
 
@@ -356,18 +358,17 @@ template's existing ones do. No version bump in the pull request.
 
 ## 8. Open questions for the maintainer
 
-- **Q1. The O/E interval's level.** Proposed 95% (`TEST_LEVEL`), because a
-  p-value is reported against 0.05 and a sponsor reads an interval beside it
-  as 95%. The alternative is `CLEVEL`'s 68%, consistent with every other
-  interval in the `hs` templates. Either way the level is printed beside it.
+- **Q1. The O/E interval's level. Decided 2026-11-10:** 95% by default, with
+  `TEST_LEVEL` as an `EDIT:` study choice to switch it (section 4.3). The
+  level is printed beside the interval whatever it is.
 - **Q2. The reference model's uncertainty in the test.** The one-sample
   log-rank treats E as fixed, which makes it slightly anti-conservative. With
   7,200 against 689 that is small. Including it needs `Var(E)`, which is the
-  same delta method as section 5.2 and so waits on the same TemporalHazard
-  change. Proposed: ship the fixed-E test, say so in the report, and add
+  same delta method as section 5.2 and so waits on
+  [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731). Proposed: ship the fixed-E test, say so in the report, and add
   `Var(E)` when TemporalHazard exposes it.
-- **Q3. Quantity (b).** Proposed: a TemporalHazard issue for the mean-curve
-  SE, and (b) ships when that lands. The alternative, perturbing
+- **Q3. Quantity (b).** Proposed: (b) ships when
+  [TemporalHazard#731](https://github.com/ehrlinger/TemporalHazard/issues/731) lands. The alternative, perturbing
   `object$fit$theta` in the template, is rejected in section 5.2 but is the
   maintainer's call if (b) is needed before TemporalHazard's next release.
 - **Q4. Detecting an in-sample cell.** Proposed: a cell is in-sample when the
