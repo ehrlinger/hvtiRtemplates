@@ -170,9 +170,9 @@ copy of such a job under the new name, and <code><a href="open_job.html">open_jo
 <p>A template the catalog marks deprecated still scaffolds, with a warning
 naming its replacement; see <code><a href="template_catalog.html">template_catalog</a></code>.</p>
 <p><strong>Renamed templates.</strong> <code>dp.eda</code> and <code>dp.trends</code> were renamed
-<code>dc.eda</code> and <code>dc.trends</code> on 2026-10-10. The old names still
-scaffold the renamed template, with a warning naming the new name, through
-the next release, and are removed in the one after. A <code>dc.trends</code> job
+<code>dc.eda</code> and <code>dc.trends</code> on 2026-10-10. The old names scaffolded
+the renamed template, with a warning, for the releases that followed, and
+are now an error naming the new name. A <code>dc.trends</code> job
 is written to the <code>descriptive</code> folder, where a <code>dp.trends</code> job
 was written to <code>graphs</code>. A job scaffolded under the old name keeps it
 and keeps rendering; <code>add_job()</code> refuses to write a second copy of it
@@ -196,15 +196,13 @@ under the new name, and <code><a href="open_job.html">open_job</a></code> opens 
 <span class="r-in"><span><span class="co"># set's subject and type: here, the hazard analysis of reoperation.</span></span></span>
 <span class="r-in"><span><span class="fu">add_job</span><span class="op">(</span><span class="st">"dc.gfup"</span>, subject <span class="op">=</span> <span class="st">"reop"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># A template's name before a rename still works, and the warning names the</span></span></span>
-<span class="r-in"><span><span class="co"># new one.</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span><span class="fu">add_job</span><span class="op">(</span><span class="st">"dp.trends"</span>, subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>         warning <span class="op">=</span> <span class="va">conditionMessage</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "add_job(): dp.trends is deprecated in favor of dc.trends. Renamed on 2026-10-10, and a new job is now written to descriptive/ rather than graphs/. The old name keeps working, with this warning, through the next release and is removed in the one after."</span>
+<span class="r-in"><span><span class="co"># A template's name before a rename is an error that names the new one.</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">add_job</span><span class="op">(</span><span class="st">"dp.trends"</span>, subject <span class="op">=</span> <span class="st">"cohort"</span>, type <span class="op">=</span> <span class="st">"eda"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): dp.trends was renamed dc.trends. Renamed on 2026-10-10, and a new job is written to descriptive/ rather than graphs/. Use the new name; a job already written under the old one is still found by open_job() and upgrade_job().</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A job accumulates a study's edits, so an existing one is never overwritten.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">add_job</span><span class="op">(</span>prefix <span class="op">=</span> <span class="st">"ac"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/RtmpSFmaBD/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/RtmpmPxLVA/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span>, pattern <span class="op">=</span> <span class="st">"[.]qmd$"</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "10_descriptive/dc.gfup.reop.hz.qmd" "20_distributions/ac.death.hz.qmd"  </span>

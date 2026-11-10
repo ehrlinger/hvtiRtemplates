@@ -26,10 +26,9 @@ template_path(prefix, qualifier = NULL)
 ## Value
 
 The full path, as `character(1)`. A template the catalog marks
-deprecated still resolves, with a warning naming its replacement. So
-does a template's name before a rename, such as `dp.trends`, now
-`dc.trends`: it resolves to the renamed template, with a warning naming
-the new name, until the old name is removed.
+deprecated still resolves, with a warning naming its replacement. A
+template's name before a rename, such as `dp.trends`, now `dc.trends`,
+is an error naming the new name.
 
 ## Examples
 

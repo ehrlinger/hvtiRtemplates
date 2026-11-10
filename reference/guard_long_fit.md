@@ -3,7 +3,7 @@
 A template calls this just before an expensive `cache_fit()`. In an
 interactive session (the console, or running chunks one by one) with no
 cached result yet, it stops and says to run the job with
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
+[`run_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
 instead, because a fit that runs for hours dies with the session. A
 render, a cached result, or
 `options(hvtiRtemplates.allow_interactive_fit = TRUE)` lets it pass.

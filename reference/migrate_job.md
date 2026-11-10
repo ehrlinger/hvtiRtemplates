@@ -89,13 +89,13 @@ migrate into `dc-eda` with
 `SECTIONS <- c("continuous", "percent", "count")`, the pages they drew.
 Naming a deprecated template warns and writes the job from its
 replacement. Naming a template by its name before a rename, such as
-`dp-trends`, warns and writes the job from the renamed template,
-`dc-trends`; a legacy source whose own file name carries the old name,
-such as `dp.trends.sas`, migrates into the renamed template without a
-warning, since that name is not the caller's to change. A template with
-no converter yet still migrates: it is scaffolded with every `EDIT:`
-marker kept, the evidence travels with it, and the report says the
-migration adapter is not yet available.
+`dp-trends`, is an error naming the new one, `dc-trends`; a legacy
+source whose own file name carries the old name, such as
+`dp.trends.sas`, migrates into the renamed template without a warning,
+since that name is not the caller's to change. A template with no
+converter yet still migrates: it is scaffolded with every `EDIT:` marker
+kept, the evidence travels with it, and the report says the migration
+adapter is not yet available.
 
 Relative `source`, `lst`, `log` and `reference` paths resolve against
 the working directory, as in any R function; `dir` only locates the
