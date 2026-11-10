@@ -363,6 +363,8 @@ dimnames(sid_dist) <- rep(list(hvtiRtemplates:::.id_digest(d[[.id]], .key)), 2L)
 sid_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   list(dist = sid_dist, id_key = hvtiRtemplates:::.id_key_fingerprint(.key), vars = sid_vars, dropped = sid_dropped,
        reduced = unique(unlist(lapply(sid_fits, `[[`, "outcome.names"))),
+       # The completed data the first forest saw, so sid-stability can refit on exactly these values.
+       data_fingerprint = hvtiRtemplates:::.sid_data_fingerprint(d_complete[[1L]]),
        settings = list(ntree = NTREE, sid_reduce = SID_REDUCE, seed = SEED, impute = IMPUTE, m = M,
                        mice_maxit = MICE_MAXIT, max_missing = MAX_MISSING)),
   data = .provenance_data,

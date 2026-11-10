@@ -239,6 +239,14 @@ sid_cl <- .cl_read$value
 if (!identical(sid_cl$id_key, sid$id_key)) {
   stop("sid-clusters.rds and sid.rds were made with different ID keys. Render sid-clusters again.", call. = FALSE)
 }
+# The reported clusters must come from this sid.rds. A sid-fit rerun with other settings keeps
+# the patients and the key, so only the checksum sid-clusters recorded for the sid.rds it read
+# shows that its solution belongs to an older forest.
+.cl_sid_sha <- unlist(lapply(.cl_read$lineage$artifacts, function(a) a$sha256))
+if (!.sid_read$record$sha256 %in% .cl_sid_sha) {
+  stop("sid-clusters was rendered on an earlier sid.rds than the one in this set. Render sid-clusters again, ",
+       "so the refits are compared with the solution of the current forest.", call. = FALSE)
+}
 K <- sid_cl$k
 if (is.null(K) || is.null(sid_cl$clusters)) {
   stop("sid-clusters has not reported a solution (its K is NULL). Choose K there and render it again.", call. = FALSE)
@@ -282,6 +290,14 @@ if (!identical(hvtiRtemplates:::.id_key_fingerprint(.key), sid$id_key)) {
 job_data <- .up$job_data
 .provenance_data <- c(.provenance_data, list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
+# The datasets read now must be the ones sid-fit recorded. The rebuild checks the patients, not
+# their values, so a re-registered dataset with changed measurements would otherwise be refit
+# and its changes reported as seed instability.
+.sha_now <- c(job_data$provenance$sha256, job_data$provenance_join$sha256)
+.sha_fit <- unlist(lapply(.sid_read$lineage$data, function(p) p$sha256))
+if (length(setdiff(.sha_now, .sha_fit))) {
+  stop("The dataset changed since sid-fit ran. Render sid-fit and sid-clusters again.", call. = FALSE)
+}
 .rows <- match(.ids, hvtiRtemplates:::.id_digest(job_data$data[[.up$selection$id]], .key))
 if (anyNA(.rows)) stop("The rebuilt cohort lacks patients the SID fit clustered; rerun sid-fit.", call. = FALSE)
 cohort <- job_data$data[.rows, , drop = FALSE]
@@ -310,6 +326,17 @@ if (anyNA(x)) {
          "). The data or sid-fit's choices changed since it ran: render sid-fit and sid-clusters again.", call. = FALSE)
   }
   x <- filled
+}
+# The observed values can agree while the imputed ones differ: an interrupted sid-fit rerun
+# may replace the imputation cache before sid.rds. sid-fit records a fingerprint of the
+# completed data its first forest saw, so the refits are held to exactly those values.
+if (is.null(sid$data_fingerprint)) {
+  stop("sid.rds records no fingerprint of the data its forest saw (sid-fit before this release). ",
+       "Render sid-fit and sid-clusters again.", call. = FALSE)
+}
+if (!identical(hvtiRtemplates:::.sid_data_fingerprint(x), sid$data_fingerprint)) {
+  stop("The data rebuilt here differ from the completed data sid-fit's first forest saw (its imputation cache ",
+       "was replaced, or its choices changed). Render sid-fit and sid-clusters again.", call. = FALSE)
 }
 cat("Values filled from sid-fit's imputation:", sum(is.na(cohort[sid$vars])), "\n")
 if (!is.null(TRACK)) {
@@ -407,7 +434,8 @@ summarize_refits <- function(lab) {
   })
   list(by_group = do.call(rbind, lapply(per, `[[`, "by_group")),
        by_refit = do.call(rbind, lapply(per, `[[`, "by_refit")),
-       mapped = do.call(cbind, lapply(per, `[[`, "mapped")))
+       # Columns named by seed: tbl-lost picks the refits that lost a group by seed.
+       mapped = `colnames<-`(do.call(cbind, lapply(per, `[[`, "mapped")), names(lab)))
 }
 stab <- summarize_refits(refits)
 stab_drop <- if (!is.null(refits_drop)) summarize_refits(refits_drop)

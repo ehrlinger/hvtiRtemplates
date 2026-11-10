@@ -116,3 +116,46 @@ test_that("sid-stability refuses a DROP_VARS that sid-fit did not cluster on, an
   expect_error(sid_stability_after(env, utils::modifyList(sid_stability_choices, list(SEED_OFFSET = 0))),
                "include sid-fit's own seed")
 })
+
+test_that("a refit that loses a group reports where its patients went", {
+  skip_on_cran()
+  env <- sid_fit_first()
+  sid_clusters_after(env)
+  sid_stability_after(env)
+  # Every refit, at K, gives the patients of reported group C the label its group A patients carry.
+  pm <- paste0("pm", env$K)
+  lost <- lapply(env$refits, function(m) {
+    a_label <- as.integer(names(which.max(table(m[env$ref_letter == "A", pm]))))
+    m[env$ref_letter == "C", pm] <- a_label
+    m
+  })
+  env$stab <- env$summarize_refits(lost)
+  expect_false(any(env$stab$by_group$matched[env$stab$by_group$group == "C"]))
+  expect_identical(colnames(env$stab$mapped), names(lost))
+  src <- readLines(template_path("sid", "stability"), warn = FALSE)
+  eval(parse(text = rf_chunk(src, "tbl-lost")), envir = env)  # nolint: object_usage_linter.
+  expect_identical(env$.lost$Group, "C")
+  expect_identical(env$.lost[["to A"]], "100%")
+})
+
+test_that("sid-stability refuses clusters rendered on an earlier sid.rds", {
+  skip_on_cran()
+  env <- sid_fit_first()
+  sid_clusters_after(env)
+  # A sid-fit rerun leaves new bytes in sid.rds while sid-clusters still holds the old checksum.
+  path <- env$set_path("estimates", "sid.rds")
+  saveRDS(utils::modifyList(readRDS(path), list(rerun = TRUE)), path)
+  expect_error(sid_stability_after(env), "earlier sid.rds")
+})
+
+test_that("sid-stability refuses an imputation cache whose imputed values changed", {
+  skip_on_cran()
+  env <- sid_fit_first()
+  sid_clusters_after(env)
+  # Only an imputed cell moves: every observed value still agrees, so the fingerprint must catch it.
+  path <- file.path(env$set_path("estimates", "sid.rds") |> dirname(), "sid-fit-impute-1.rds")
+  rec <- readRDS(path)
+  rec$value$imp$a[1, 1] <- rec$value$imp$a[1, 1] + 50
+  saveRDS(rec, path)
+  expect_error(sid_stability_after(env), "differ from the completed data")
+})
