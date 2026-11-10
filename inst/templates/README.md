@@ -41,7 +41,7 @@ refuses to overwrite an existing job.
 | `30_analyses/vp-individual.qmd` | Each patient's VarPro gradient for each predictor, from a `vp-fit` screen (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/sid-fit.qmd` | SID clustering forest on the clustering variables, after mice or forest imputation pooled over M (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/sid-clusters.qmd` | PAM over K on a `sid-fit` distance: K metrics, letters stable across K, Sankey, registered assignments (in flight) | `30_analyses/` or `analyses/` |
-| `30_analyses/vt-fit.qmd` | virtual twins: one survival forest per arm, out-of-bag own-arm and swapped-arm curves, a per-patient RMST difference, eligibility by Gower and SID combined by a stated rule (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/vt-fit.qmd` | virtual twins: one survival forest per arm, out-of-bag own-arm and swapped-arm curves, a per-patient RMST difference, eligibility by Gower, SID and an isolation forest combined by a stated rule (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/vt-explain.qmd` | the virtual-twins contrast by arm, eligibility rule and stratum, standardized betas and who might benefit (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/rhf-fit.qmd` | random hazard forest on counting-process rows with time-varying predictors: the rows checked, tree size tuned, forest grown (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/rhf-explain.qmd` | AUC over follow-up, hazard curves and VarPro importance over time for an `rhf` forest (in flight) | `30_analyses/` or `analyses/` |
