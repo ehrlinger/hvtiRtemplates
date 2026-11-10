@@ -161,10 +161,10 @@ Unresolved markers remain. The numbers below are not a result.
 
 5 unresolved EDIT: marker(s) remain in this job:
   - &lt;!-- EDIT: name the job this replaces (descriptive/dc.tables.*) and say whether it
-  - # EDIT: the variables to report, grouped. Each name is a section heading and
+  - # EDIT: the variables to report, grouped. NULL reports the house ODS list,
   ...</code></pre>
 <p>The render log carries the same list as a warning. The banner says the numbers are not a result because some of them may still come from the template’s placeholder choices rather than your study.</p>
-<p>The banner does not mean every section will run. A section whose marker is not yet worked still reads the template’s placeholders, and most of those stop with their own error rather than draw a table from nothing. A new <code>dc-tables</code> job, for instance, stops with “Unknown table variable(s)” until <code>GROUPS</code> names your columns, and before that if the <code>eda</code> analysis set has not been written. Work the markers from the top of the file down, and each render gets further.</p>
+<p>The banner does not mean every section will run. A section whose marker is not yet worked still reads the template’s placeholders. Some stop with their own error rather than draw a table from nothing: a new <code>dc-tables</code> job stops if the <code>eda</code> analysis set has not been written. Others draw a default that is not yet your choice: with <code>GROUPS</code> left <code>NULL</code>, the same job reports every column of the house ODS list your data has, which is a long table and rarely the one you publish. Work the markers from the top of the file down, and each render gets further.</p>
 <p>Each listed line is the start of a marker. Read the comment around it, make the change it asks for, delete the marker line, and render again. To see what is left from the RStudio Console:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"EDIT:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">job</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -256,23 +256,23 @@ Unresolved markers remain. The numbers below are not a result.
 <span>  compare <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
-<div id="wfluhppmde" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#wfluhppmde table {
+<div id="acuosvtzrj" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#acuosvtzrj table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#wfluhppmde thead, #wfluhppmde tbody, #wfluhppmde tfoot, #wfluhppmde tr, #wfluhppmde td, #wfluhppmde th {
+#acuosvtzrj thead, #acuosvtzrj tbody, #acuosvtzrj tfoot, #acuosvtzrj tr, #acuosvtzrj td, #acuosvtzrj th {
   border-style: none;
 }
 
-#wfluhppmde p {
+#acuosvtzrj p {
   margin: 0;
   padding: 0;
 }
 
-#wfluhppmde .gt_table {
+#acuosvtzrj .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -298,12 +298,12 @@ Unresolved markers remain. The numbers below are not a result.
   border-left-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_caption {
+#acuosvtzrj .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#wfluhppmde .gt_title {
+#acuosvtzrj .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -315,7 +315,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-width: 0;
 }
 
-#wfluhppmde .gt_subtitle {
+#acuosvtzrj .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -327,7 +327,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-top-width: 0;
 }
 
-#wfluhppmde .gt_heading {
+#acuosvtzrj .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -339,13 +339,13 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_bottom_border {
+#acuosvtzrj .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_col_headings {
+#acuosvtzrj .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -360,7 +360,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_col_heading {
+#acuosvtzrj .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -380,7 +380,7 @@ Unresolved markers remain. The numbers below are not a result.
   overflow-x: hidden;
 }
 
-#wfluhppmde .gt_column_spanner_outer {
+#acuosvtzrj .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -392,15 +392,15 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 4px;
 }
 
-#wfluhppmde .gt_column_spanner_outer:first-child {
+#acuosvtzrj .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#wfluhppmde .gt_column_spanner_outer:last-child {
+#acuosvtzrj .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#wfluhppmde .gt_column_spanner {
+#acuosvtzrj .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -412,11 +412,11 @@ Unresolved markers remain. The numbers below are not a result.
   width: 100%;
 }
 
-#wfluhppmde .gt_spanner_row {
+#acuosvtzrj .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#wfluhppmde .gt_group_heading {
+#acuosvtzrj .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -442,7 +442,7 @@ Unresolved markers remain. The numbers below are not a result.
   text-align: left;
 }
 
-#wfluhppmde .gt_empty_group_heading {
+#acuosvtzrj .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -457,15 +457,15 @@ Unresolved markers remain. The numbers below are not a result.
   vertical-align: middle;
 }
 
-#wfluhppmde .gt_from_md > :first-child {
+#acuosvtzrj .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#wfluhppmde .gt_from_md > :last-child {
+#acuosvtzrj .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#wfluhppmde .gt_row {
+#acuosvtzrj .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -484,7 +484,7 @@ Unresolved markers remain. The numbers below are not a result.
   overflow-x: hidden;
 }
 
-#wfluhppmde .gt_stub {
+#acuosvtzrj .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -497,7 +497,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#wfluhppmde .gt_stub_row_group {
+#acuosvtzrj .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -511,15 +511,15 @@ Unresolved markers remain. The numbers below are not a result.
   vertical-align: top;
 }
 
-#wfluhppmde .gt_row_group_first td {
+#acuosvtzrj .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#wfluhppmde .gt_row_group_first th {
+#acuosvtzrj .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#wfluhppmde .gt_summary_row {
+#acuosvtzrj .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -529,16 +529,16 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#wfluhppmde .gt_first_summary_row {
+#acuosvtzrj .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_first_summary_row.thick {
+#acuosvtzrj .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#wfluhppmde .gt_last_summary_row {
+#acuosvtzrj .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -548,7 +548,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_grand_summary_row {
+#acuosvtzrj .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -558,7 +558,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#wfluhppmde .gt_first_grand_summary_row {
+#acuosvtzrj .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -568,7 +568,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-top-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_last_grand_summary_row_top {
+#acuosvtzrj .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -578,11 +578,11 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_striped {
+#acuosvtzrj .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#wfluhppmde .gt_table_body {
+#acuosvtzrj .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -591,7 +591,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-bottom-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_footnotes {
+#acuosvtzrj .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -605,7 +605,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_footnote {
+#acuosvtzrj .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -614,7 +614,7 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#wfluhppmde .gt_sourcenotes {
+#acuosvtzrj .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -628,7 +628,7 @@ Unresolved markers remain. The numbers below are not a result.
   border-right-color: #D3D3D3;
 }
 
-#wfluhppmde .gt_sourcenote {
+#acuosvtzrj .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -636,72 +636,72 @@ Unresolved markers remain. The numbers below are not a result.
   padding-right: 5px;
 }
 
-#wfluhppmde .gt_left {
+#acuosvtzrj .gt_left {
   text-align: left;
 }
 
-#wfluhppmde .gt_center {
+#acuosvtzrj .gt_center {
   text-align: center;
 }
 
-#wfluhppmde .gt_right {
+#acuosvtzrj .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#wfluhppmde .gt_font_normal {
+#acuosvtzrj .gt_font_normal {
   font-weight: normal;
 }
 
-#wfluhppmde .gt_font_bold {
+#acuosvtzrj .gt_font_bold {
   font-weight: bold;
 }
 
-#wfluhppmde .gt_font_italic {
+#acuosvtzrj .gt_font_italic {
   font-style: italic;
 }
 
-#wfluhppmde .gt_super {
+#acuosvtzrj .gt_super {
   font-size: 65%;
 }
 
-#wfluhppmde .gt_footnote_marks {
+#acuosvtzrj .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#wfluhppmde .gt_asterisk {
+#acuosvtzrj .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#wfluhppmde .gt_indent_1 {
+#acuosvtzrj .gt_indent_1 {
   text-indent: 5px;
 }
 
-#wfluhppmde .gt_indent_2 {
+#acuosvtzrj .gt_indent_2 {
   text-indent: 10px;
 }
 
-#wfluhppmde .gt_indent_3 {
+#acuosvtzrj .gt_indent_3 {
   text-indent: 15px;
 }
 
-#wfluhppmde .gt_indent_4 {
+#acuosvtzrj .gt_indent_4 {
   text-indent: 20px;
 }
 
-#wfluhppmde .gt_indent_5 {
+#acuosvtzrj .gt_indent_5 {
   text-indent: 25px;
 }
 
-#wfluhppmde .katex-display {
+#acuosvtzrj .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#wfluhppmde div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#acuosvtzrj div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>

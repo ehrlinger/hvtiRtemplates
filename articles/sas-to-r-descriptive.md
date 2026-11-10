@@ -91,7 +91,7 @@ report opens with a banner:
 
     5 unresolved EDIT: marker(s) remain in this job:
       - <!-- EDIT: name the job this replaces (descriptive/dc.tables.*) and say whether it
-      - # EDIT: the variables to report, grouped. Each name is a section heading and
+      - # EDIT: the variables to report, grouped. NULL reports the house ODS list,
       ...
 
 The render log carries the same list as a warning. The banner says the
@@ -99,12 +99,13 @@ numbers are not a result because some of them may still come from the
 template’s placeholder choices rather than your study.
 
 The banner does not mean every section will run. A section whose marker
-is not yet worked still reads the template’s placeholders, and most of
-those stop with their own error rather than draw a table from nothing. A
-new `dc-tables` job, for instance, stops with “Unknown table
-variable(s)” until `GROUPS` names your columns, and before that if the
-`eda` analysis set has not been written. Work the markers from the top
-of the file down, and each render gets further.
+is not yet worked still reads the template’s placeholders. Some stop
+with their own error rather than draw a table from nothing: a new
+`dc-tables` job stops if the `eda` analysis set has not been written.
+Others draw a default that is not yet your choice: with `GROUPS` left
+`NULL`, the same job reports every column of the house ODS list your
+data has, which is a long table and rarely the one you publish. Work the
+markers from the top of the file down, and each render gets further.
 
 Each listed line is the start of a marker. Read the comment around it,
 make the change it asks for, delete the marker line, and render again.
