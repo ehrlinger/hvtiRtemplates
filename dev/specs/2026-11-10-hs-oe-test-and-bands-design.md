@@ -29,8 +29,10 @@ anything.
 | 2 | a band for the cohort-average curve, as a named choice, and the spaghetti plot | **`hs-concordance`**, a new figure section; the computation in one internal helper in `R/` |
 | 3 | a check that the mean of the patients' predictions equals the averaged curve | **both** `hs-setup` and `hs-concordance`, one line each |
 
-Not `vt-fit` or `vt-explain` (section 3.2). No new template, so no
-two-studies gate and no ledger row.
+Built in `hs` first. The `vt` templates do the same kind of work on forest
+curves, so the test and the band are written as model-agnostic helpers they
+can call, and `vt-explain` cross-references them now (section 3.2). No new
+template, so no two-studies gate and no ledger row.
 
 ---
 
@@ -95,25 +97,57 @@ cell, which `hs-concordance` already crosses:
   row count and selection with the cohort's, as `hs-setup` does. **Open
   question Q4.**
 
-### 3.2 Not `vt-fit` or `vt-explain`
+### 3.2 `vt-fit` and `vt-explain`: the same questions on forest curves
 
-The `vt` templates are random survival forests per arm, compared by RMST
-difference (`2026-10-22-vt-virtual-twins-templates-design.md`). The test
-needs each patient's expected **cumulative hazard** at their own follow-up
-from a parametric `hm` model, which `TemporalHazard::predict(type =
-"cumulative_hazard")` gives and a forest's ensemble curve does not in the same
-sense. The call's model is a SAS `hs`/`hm` model. Nothing here belongs in
-`vt`.
+Decided by the maintainer on 2026-11-10: the `vt` templates may build these
+in, and at least cross-reference them for this kind of work. A virtual twins
+job asks the call's question in a second form: a patient's other-arm curve is
+that patient scored through a model fitted on a different cohort, the other
+arm's forest. Each piece carries over, with differences:
 
-### 3.3 The helper in `R/`
+| piece | in `hs-concordance` | in `vt` |
+|---|---|---|
+| O/E test | `predict(type = "cumulative_hazard")` at each patient's own time | the forest's cumulative hazard (`chf`, `chf.oob` in randomForestSRC) at each patient's own time, read off `time.interest` as a step function. Not `-log(survival)`, which is infinite where a forest's survival reaches 0 |
+| own-arm cell | in-sample, O/E = 1 by construction, printed as a check | **out of bag**, so not 1 by construction: an honest calibration of each arm's forest. More useful here than in `hs` |
+| other-arm cell | indirect standardization | observed events in arm B against what arm A's forest expects for them: the twins' counterfactual comparison, as a count with a test |
+| band (a) | patients' 68% limits averaged | **not available**: a forest gives no per-patient limits |
+| band (b) | waits on TemporalHazard (section 5.2) | bootstrap of the forests only; no delta method exists |
+| band (c), spaghetti | yes | yes, on the twin curves `vt-fit` already builds |
+| Kaplan-Meier beside it | 95% | `vt-fit`'s `fig-km` draws 70% today; the coverage must be named either way |
 
-The band computation (section 5) is needed in `hs-concordance` now and is a
-candidate for `hs-setup`'s `fig-expected` later. One internal function,
-`.cohort_curve_band()` in `R/hs-band.R`, tested directly, called as
-`hvtiRtemplates:::.cohort_curve_band()` the way templates already call
-`.lifetable_indicator()`. Thirty lines pasted into two templates would drift.
-The one-sample log-rank is short enough to stay in the chunk, as `hs-score`'s
-scoring does. **Open question Q5** asks whether it should also be a helper.
+**What this changes in the design.** The O/E test and the band take plain
+inputs, never a model object, so either family can call them (section 3.3):
+the test takes each patient's event, own follow-up and expected cumulative
+hazard; the band takes a patients-by-times matrix of survival and, where they
+exist, of limits.
+
+**What this pull request does in `vt`.** A cross-reference only: one
+paragraph in `vt-explain`'s "Reading the result" naming the helpers and this
+note, and the same pointer in `inst/templates/README.md`. Building the O/E
+section and the spaghetti into `vt-fit` or `vt-explain` is a **second pull
+request**, after the `hs` one, so the helpers are exercised once before a
+second family depends on them. `vt` is `in-flight` from one study; that does
+not block adding a section to it. **Open question Q8.**
+
+### 3.3 Two helpers in `R/`
+
+Both are needed in `hs-concordance` now and in `vt` next (section 3.2), and
+the band is a candidate for `hs-setup`'s `fig-expected` later. So both are
+internal functions in `R/observed-expected.R`, tested directly, and called as
+`hvtiRtemplates:::.one_sample_logrank()` and
+`hvtiRtemplates:::.cohort_curve_band()`, the way templates already call
+`.lifetable_indicator()`. Code pasted into two families of templates would
+drift. Neither takes a model object: they take the numbers a model produced,
+so neither knows whether a hazard model or a forest made them.
+
+```r
+.one_sample_logrank(event, expected, level = 0.95)
+# event: 0/1 per patient. expected: each patient's expected cumulative hazard
+# at their own follow-up. Returns O, E, O/E, its exact interval, chi-squared, p.
+.cohort_curve_band(surv, lower = NULL, upper = NULL, band)
+# surv, lower, upper: patients x times. band: "limits_mean" (needs lower and
+# upper) or "spread". Returns the average curve and the band, with a label.
+```
 
 ---
 
@@ -308,10 +342,11 @@ everyone reads first. One line each. **Open question Q6.**
 |---|---|
 | `inst/templates/40_graphs/hs-concordance.qmd` | `GROUP` optional with one model; new study choices `TAU`, `TEST_LEVEL`, `BAND`, `SPAGHETTI_N`; sections "Observed against expected" (`tbl-oe`), `fig-expected-km`, `fig-spaghetti`; the `stopifnot` of section 6; `oe` in the saved artifact |
 | `inst/templates/40_graphs/hs-setup.qmd` | the `stopifnot` of section 6; `mean`, `q25`, `q75` in `tbl-predict` (if Q6 is yes) |
-| `R/hs-band.R` | `.cohort_curve_band()`, internal |
+| `R/observed-expected.R` | `.one_sample_logrank()` and `.cohort_curve_band()`, internal |
+| `inst/templates/30_analyses/vt-explain.qmd` | a cross-reference paragraph only (section 3.2) |
 | `tests/testthat/test-hs-concordance.R` | the two O/E tests of section 4.4; band labels; `GROUP = NULL` with one model, and its refusal with two |
-| `tests/testthat/test-hs-band.R` | (a) against hand-computed means; (c) never labelled a confidence interval; (a)'s standard error at least (b)'s, computed numerically in the test, on a two-patient fixture |
-| `inst/templates/README.md` | one line each for the new sections |
+| `tests/testthat/test-observed-expected.R` | (a) against hand-computed means; (c) never labelled a confidence interval; (a)'s standard error at least (b)'s, computed numerically in the test, on a two-patient fixture |
+| `inst/templates/README.md` | one line each for the new sections, and the `vt` pointer |
 | `news/<branch>.md` | the fragment |
 
 Every new study choice carries an `EDIT:` marker with the reasoning, as the
@@ -339,8 +374,8 @@ template's existing ones do. No version bump in the pull request.
   model's set is this study's and its recorded selection and row count match
   the cohort's. A partial overlap (some of the scored patients were in the
   fit) is reported as a count, not resolved.
-- **Q5. The test as a helper.** Ten lines; kept in the chunk unless a second
-  template needs it.
+- **Q5. The test as a helper.** Settled by the `vt` decision: a second family
+  will call it, so it is a helper (section 3.3).
 - **Q6. Mean and quartiles in the existing tables.** Small, and squarely the
   call's problem 3, but it changes a table every existing `hs-setup` report
   prints.
@@ -350,6 +385,13 @@ template's existing ones do. No version bump in the pull request.
   events* with *model-expected*, the name invites exactly the confusion of
   the call. Renaming it changes the saved artifact, which plotting jobs read.
   Raised here, not proposed for this change.
+
+- **Q8. When `vt` gets the sections.** Proposed: a second pull request after
+  the `hs` one. Its own-arm O/E is out of bag and needs the forests'
+  `chf.oob` kept, which `vt-fit` may not save today; that pull request
+  measures it. Whether `vt-fit` or `vt-explain` carries the sections is
+  decided then, by where the twin curves and the cohort's events are both in
+  hand.
 
 ---
 
