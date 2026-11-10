@@ -50,7 +50,7 @@ test_that("the one-sample log-rank refuses inputs that would understate E", {
   expect_error(f(c(0, 0), c(0, 0)), "expected count is 0")
 })
 
-test_that("the average-of-limits band is the patients' limits averaged, labelled an upper bound", {
+test_that("the average-of-limits band is the patients' limits averaged, labeled an upper bound", {
   surv <- rbind(c(0.9, 0.8), c(0.7, 0.4))
   lower <- surv - 0.05
   upper <- surv + c(0.02, 0.04)

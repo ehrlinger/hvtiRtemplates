@@ -204,7 +204,7 @@ O = 0 gives a lower limit of 0, which the formula returns as written.
 - **The expected curve treated as fixed** is printed beside the result. With
   a reference cohort ten times the scored one, as on the call, the omitted
   variance is small; with comparable cohorts it is not. `Var(E)` is added when TemporalHazard#731 lands (Q2).
-- **Its own coverage.** The interval is labelled with its level wherever it
+- **Its own coverage.** The interval is labeled with its level wherever it
   appears. The level is a new study choice, `TEST_LEVEL <- 0.95`, kept apart
   from `CLEVEL` and marked `EDIT:` so an author can switch it, to `CLEVEL` for
   one coverage across the report or to any level in (0, 1). Decided by the
@@ -250,7 +250,7 @@ For each grid time `t`, with `S_i(t)` patient *i*'s predicted survival and
 The template asks the author to choose, with `BAND <- NULL` stopping the
 render, as `OVERLAP` does: `"limits_mean"` for (a), `"spread"` for (c), and
 `"mean_ci"` for (b) once it exists. `NULL` stops because the SAS habit is (a)
-and an unlabelled default would rebuild it silently.
+and an unlabeled default would rebuild it silently.
 
 **The legend and caption name the quantity and its coverage**, always: for
 (a), "average of the patients' 68% limits (an upper bound on the 68%
@@ -291,9 +291,9 @@ ships when it lands; (a), (c) and the spaghetti ship now. (Q3, decided: wait.)
 One figure section in `hs-concordance`, `fig-expected-km`, per (model, group
 received) cell:
 
-- the scored cohort's **Kaplan-Meier** with its 95% band, labelled 95%;
+- the scored cohort's **Kaplan-Meier** with its 95% band, labeled 95%;
 - the **average expected curve**, `mean_i(S_i(t))`, on a grid to `TAU`;
-- the chosen **band**, labelled by section 5.1;
+- the chosen **band**, labeled by section 5.1;
 - the **O/E and p-value** from section 4 in the caption, so the test sits
   beside the picture that cannot give one.
 
@@ -386,7 +386,7 @@ of events, **expected** a sum of model cumulative hazards.
 | `R/observed-expected.R` | `.one_sample_logrank()` and `.cohort_curve_band()`, internal |
 | `inst/templates/30_analyses/vt-explain.qmd` | a cross-reference paragraph only (section 3.2) |
 | `tests/testthat/test-hs-concordance.R` | the two O/E tests of section 4.4; band labels; `GROUP = NULL` with one model, and its refusal with two |
-| `tests/testthat/test-observed-expected.R` | (a) against hand-computed means; (c) never labelled a confidence interval; (a)'s standard error at least (b)'s, computed numerically in the test, on a two-patient fixture |
+| `tests/testthat/test-observed-expected.R` | (a) against hand-computed means; (c) never labeled a confidence interval; (a)'s standard error at least (b)'s, computed numerically in the test, on a two-patient fixture |
 | `inst/templates/README.md` | one line each for the new sections, and the `vt` pointer |
 | `news/<branch>.md` | the fragment |
 

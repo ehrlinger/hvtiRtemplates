@@ -219,7 +219,7 @@ TEST_LEVEL <- 0.95
 #       "spread". There is no default, because the old habit, averaging each
 #       patient's limits, needs saying for what it is:
 #   "limits_mean": the average of the patients' limits, at CLEVEL (68%). An
-#     upper bound on the interval of the mean curve, and labelled so.
+#     upper bound on the interval of the mean curve, and labeled so.
 #   "spread": the 15th to 85th percentiles of the patients' predictions. How
 #     much patients differ; not a confidence interval of anything.
 #   The confidence interval of the mean curve itself waits on TemporalHazard#731.
@@ -818,7 +818,7 @@ save_figure(.fig, "hs-concordance-expected-km", width = 6.5, height = min(9, 1 +
 #| label: fig-spaghetti
 #| fig-cap: !expr .cap_spaghetti
 .fig <- ggplot2::ggplot(.lines, ggplot2::aes(x = .data$time, y = 100 * .data$surv)) +
-  ggplot2::geom_line(ggplot2::aes(group = .data$patient), alpha = 0.15, color = "grey40") +
+  ggplot2::geom_line(ggplot2::aes(group = .data$patient), alpha = 0.15, color = "gray40") +
   ggplot2::geom_line(data = curves, ggplot2::aes(y = 100 * .data$mean), linewidth = 1) +
   ggplot2::facet_wrap(~panel) +
   ggplot2::scale_y_continuous(limits = c(0, 100)) +

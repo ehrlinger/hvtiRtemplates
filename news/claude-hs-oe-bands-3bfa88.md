@@ -8,8 +8,8 @@
   fitted on another cohort is an hs-concordance job.
 * hs-concordance draws each group's average expected curve against its Kaplan-Meier estimate, with the test in
   each panel's title, and a spaghetti figure of the patients' curves. The band around the average is chosen by
-  `BAND`, with no default: `"limits_mean"`, the average of the patients' 68% limits, labelled an upper bound
-  on the interval of the mean, or `"spread"`, the 15th to 85th percentiles of the predictions, labelled not a
+  `BAND`, with no default: `"limits_mean"`, the average of the patients' 68% limits, labeled an upper bound
+  on the interval of the mean, or `"spread"`, the 15th to 85th percentiles of the predictions, labeled not a
   confidence interval. The interval of the mean curve itself waits on TemporalHazard#731.
 * hs-setup and hs-concordance stop if the averaged curve they draw is not the mean of the patients'
   predictions their table reports, and their prediction tables add the mean and the 15th and 85th
