@@ -618,8 +618,16 @@ if (anyNA(.time) || anyNA(.event) || !all(.event %in% c(0, 1))) {
 # data, not from a setting: no saved model carries an identifier, so each row
 # is keyed on its covariates and follow-up, as the model's frame holds them.
 .row_key <- function(frame, cols) {
-  do.call(paste, c(lapply(cols, function(v) sprintf("%.15g", as.numeric(frame[[v]]))), sep = "\r"))
+  # A factor is keyed by its label, never its code: the fitted frame holds one
+  # group's levels and this cohort all of them, so codes need not agree.
+  do.call(paste, c(lapply(cols, function(v) {
+    x <- frame[[v]]
+    if (is.numeric(x)) sprintf("%.15g", x) else as.character(x)
+  }), sep = "\r"))
 }
+# Rows are matched as multisets, so two patients who share every value are
+# counted no more often than the fit holds them. Without an identifier that is
+# as far as the data can say.
 
 oe <- do.call(rbind, lapply(names(models), function(m) {
   nd <- dd[, covariates[[m]], drop = FALSE]
@@ -632,9 +640,12 @@ oe <- do.call(rbind, lapply(names(models), function(m) {
   .cols <- c(covariates[[m]], TIME)
   .fitted <- .row_key(models[[m]]$reported$data$frame, .cols)
   .ours <- .row_key(dd, .cols)
+  .tf <- table(.fitted)
   do.call(rbind, lapply(.groups, function(g) {
     rows <- .actual == g
-    inside <- sum(.ours[rows] %in% .fitted)
+    .tg <- table(.ours[rows])
+    .k <- intersect(names(.tg), names(.tf))
+    inside <- as.integer(sum(pmin(.tg[.k], .tf[.k])))
     fit_overlap <- if (inside == 0L) {
       "external"
     } else if (!.is_path[[m]] && inside == sum(rows) && sum(rows) == length(.fitted)) {
@@ -684,29 +695,36 @@ Kaplan-Meier band is **95%**.
 if (!is.numeric(SPAGHETTI_N) || length(SPAGHETTI_N) != 1L || !is.finite(SPAGHETTI_N) || SPAGHETTI_N < 1) {
   stop("SPAGHETTI_N must be one positive number.", call. = FALSE)
 }
+# BAND is checked before any prediction, by the helper that draws it. Only
+# "limits_mean" needs the patients' limits, and the delta method over every
+# patient and grid time is the costly part, so "spread" asks for none.
+invisible(hvtiRtemplates:::.cohort_curve_band(matrix(1), matrix(1), matrix(1), BAND, CLEVEL))
+.limits <- identical(BAND, "limits_mean")
 
 curves <- list()
 .lines <- list()
 for (m in names(models)) {
   .nd <- dd[rep(seq_len(nrow(dd)), times = length(.grid)), covariates[[m]], drop = FALSE]
   .nd$time <- rep(.grid, each = nrow(dd))
-  .p <- predict(models[[m]]$reported, newdata = .nd, type = "survival", se.fit = TRUE, level = CLEVEL,
+  .p <- predict(models[[m]]$reported, newdata = .nd, type = "survival", se.fit = .limits, level = CLEVEL,
                 conf.type = "logit")
   # Patients in rows, grid times in columns: the frame repeats the patients once per time.
-  .s <- matrix(.p$fit, nrow = nrow(dd))
-  .lo <- matrix(.p$lower, nrow = nrow(dd))
-  .hi <- matrix(.p$upper, nrow = nrow(dd))
+  .s <- matrix(if (.limits) .p$fit else .p, nrow = nrow(dd))
+  .lo <- if (.limits) matrix(.p$lower, nrow = nrow(dd))
+  .hi <- if (.limits) matrix(.p$upper, nrow = nrow(dd))
   for (g in .groups) {
     rows <- .actual == g
-    .b <- hvtiRtemplates:::.cohort_curve_band(.s[rows, , drop = FALSE], .lo[rows, , drop = FALSE],
-                                              .hi[rows, , drop = FALSE], BAND, CLEVEL)
+    .b <- hvtiRtemplates:::.cohort_curve_band(.s[rows, , drop = FALSE], if (.limits) .lo[rows, , drop = FALSE],
+                                              if (.limits) .hi[rows, , drop = FALSE], BAND, CLEVEL)
     # The curve drawn must be the mean of the patients' predictions the table
     # reports, and the limits' average the mean of theirs. Separate predict()
     # calls build the two, so a change to either would part them silently.
     .ph <- pred[pred$model == m & pred$group == g, , drop = FALSE]
-    stopifnot(isTRUE(all.equal(.b$mean[.at], mean(.ph$fit))),
-              isTRUE(all.equal(mean(.lo[rows, .at]), mean(.ph$lower))),
-              isTRUE(all.equal(mean(.hi[rows, .at]), mean(.ph$upper))))
+    stopifnot(isTRUE(all.equal(.b$mean[.at], mean(.ph$fit))))
+    if (.limits) {
+      stopifnot(isTRUE(all.equal(.b$lower[.at], mean(.ph$lower))),
+                isTRUE(all.equal(.b$upper[.at], mean(.ph$upper))))
+    }
     curves[[length(curves) + 1L]] <- data.frame(model = m, group = g, time = c(0, .grid), mean = c(1, .b$mean),
                                                 lower = c(1, .b$lower), upper = c(1, .b$upper))
     # The spaghetti's patients: all of them, or SPAGHETTI_N spaced evenly through

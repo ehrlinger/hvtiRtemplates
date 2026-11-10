@@ -237,6 +237,15 @@ test_that("observed against expected counts each patient's own follow-up, and ma
   expect_identical(art$tau, env$TAU)
   expect_error(concordance_run(e$root, concordance_choices(e$data, TAU = max(last)), concordance_core),
                "TAU \\(.*\\) is beyond the last observed time of the model for")
+  # A model read by path is never called in-sample, even on the same patients: it is
+  # another study's by declaration, so its cell keeps its test.
+  path_a <- file.path(hvtiRutilities::study_dir("estimates", e$root), "dead-a", "hm.rds")
+  env <- concordance_run(e$root, concordance_choices(e$data, MODELS = c(a = path_a, b = "dead-b"), CROSS_STUDY = TRUE),
+                         concordance_core)
+  cell <- env$oe[env$oe$model == "a" & env$oe$group == "a", ]
+  expect_identical(cell$fit_overlap, "partial")
+  expect_identical(cell$in_fit, cell$n)
+  expect_true(is.finite(cell$p))
 })
 
 test_that("with one model, GROUP may be NULL and the whole cohort is scored through it", {
