@@ -5,3 +5,5 @@
   percentile; `hs-concordance` says the 68% limits belong to `BAND <- "limits_mean"` only, and no longer calls
   its event and follow-up columns unused; `hs-setup`'s `SCALE` warning compares against model predictions,
   not observed values.
+* The template archive `upgrade_job()` reads now holds `sid-stability`, so a job copied from its earlier text drops
+  the old `REPEATS` and `SEED_OFFSET` comments on upgrade instead of keeping them as the study's own.
