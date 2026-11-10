@@ -334,8 +334,9 @@ covariate is drawn as an empty panel, and named there too.
 #| label: lg
 #| results: asis
 # unnumbered: each covariate's child chunks carry their own labels and captions
-# The figure is saved as PNG, PDF and TIFF under graphs/<subject>-<type>/lg-<covariate>,
-# and the PNG is the one the report shows.
+# The figure is saved, when SAVE_FIGURES and FIGURES select it, as PNG and PDF,
+# and as TIFF when ragg is installed, under graphs/<subject>-<type>/lg-<covariate>.
+# The PNG is the one the report shows, and is written even when not selected.
 .fence <- strrep("`", 3)
 .kable_na <- options(knitr.kable.NA = "")
 calibration <- list()
