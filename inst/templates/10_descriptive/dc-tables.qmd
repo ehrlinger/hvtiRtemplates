@@ -571,8 +571,10 @@ if (all(vapply(explicit, is.null, logical(1)))) {
   invisible(classify_buckets(d_table, rows, explicit))
 }
 # A missing value is not a second value: a row is constant when every
-# recorded value is the same. A row with nothing recorded is kept, since an
-# empty row points at the data rather than at the cohort.
+# recorded value is the same. A row with nothing recorded is not constant and
+# is not dropped here: the table stops and names it, since an empty row points
+# at the data rather than at the cohort. GROUPS NULL has already left such
+# columns out.
 constant_rows <- character(0)
 if (DROP_CONSTANT) {
   rows <- unlist(GROUPS, use.names = FALSE)
