@@ -2,7 +2,7 @@
 # EDIT: the registered dataset this job reads ("built" is the study dataset).
 # EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
 # EDIT: rows to keep, dplyr::filter() style, or NULL to keep every row:
-# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# EDIT: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # EDIT: what makes a row unique; one row per patient unless repeated measures
 # EDIT: the variables to report, grouped. NULL reports the house ODS list,
 # EDIT: review SAS presentation choices in the migration report.

@@ -84,6 +84,16 @@ import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
     stop("import_job(): '", basename(from), "' does not name a template; expected ",
          "<prefix>[.<qualifier>].<subject>.<type>.qmd.", call. = FALSE)
   }
+  # A job written under a template's name before a rename carries that
+  # template's code, which may assume the old folder: a dp.trends job links its
+  # figures as though it sat in graphs/. Copied into the renamed template's
+  # folder, its report would lose them, so it is upgraded where it is first.
+  renamed <- .template_rename(template_list(), fields$prefix, fields$qualifier)
+  if (!is.null(renamed)) {
+    stop("import_job(): '", basename(from), "' was written under ", sub("-", ".", renamed$from, fixed = TRUE),
+         ", since renamed ", sub("-", ".", renamed$to, fixed = TRUE), ", and its code may assume the old folder. ",
+         "Run upgrade_job() on it in its own study, then import the upgraded job.", call. = FALSE)
+  }
   if (is.null(subject)) subject <- fields$subject
   if (is.null(type)) type <- fields$type
   .check_field("subject", subject, fn = "import_job")

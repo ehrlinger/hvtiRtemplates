@@ -126,6 +126,7 @@ upgrade_job <- function(path, dir = NULL) {
     stop("upgrade_job(): '", basename(path), "' does not name a template; expected ",
          "<prefix>[.<qualifier>].<subject>.<type>.qmd.", call. = FALSE)
   }
+  fields <- .job_fields_renamed(fields)
   row <- tryCatch(
     .select_template(template_list(), fields$prefix, fields$qualifier),
     error = function(e) stop("upgrade_job(): ", conditionMessage(e), call. = FALSE)

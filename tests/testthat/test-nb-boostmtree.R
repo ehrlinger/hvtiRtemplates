@@ -503,13 +503,13 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   expect_false(grepl("iteration [0-9]+/[0-9]+", page))
 })
 
-test_that("the fit chunk refuses to start an uncached fit interactively, and names submit_job()", {
+test_that("the fit chunk refuses to start an uncached fit interactively, and names run_job()", {
   nb_skip_unless_stack()
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
   env <- nb_env(nb_study())
   env$guard_long_fit <- hvtiRtemplates::guard_long_fit
   expect_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices())),
-               "submit_job(", fixed = TRUE)
+               "run_job(", fixed = TRUE)
 })
 
 test_that("the fit chunk runs interactively once the fit is cached, and refuses a REFIT", {

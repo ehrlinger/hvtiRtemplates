@@ -46,8 +46,8 @@ if (utils::packageVersion("hvtiRpropensity") < "0.2.0") {
   stop("This job needs hvtiRpropensity >= 0.2.0, the package's floor (bundles record their treatment levels from 0.1.10); ",
        utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.8.9") {
-  stop("This job needs hvtiPlotR >= 2.8.9, the version hvtiRtemplates requires; ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.20") {
+  stop("This job needs hvtiPlotR >= 2.8.20, the version hvtiRtemplates requires; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -102,7 +102,7 @@ MATCH <- NULL
 DATASET <- "built"
 ID <- "ccfid"
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("lp-mirror-weighted"). The names are the
 # file names, listed for each template in the templates README.
@@ -430,7 +430,7 @@ if (!is.null(MATCH)) {
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), "#| label: fig-mirror-matched",
     "#| fig-cap: \"Propensity score of the matched patients in each group, over all patients in gray. Gray bars with a",
-    "#|   black outline mark all patients, blue bars the matched treated patients above the axis and orange",
+    "#|   black outline mark all patients, blue bars the matched treated patients above the axis and vermillion",
     "#|   bars the matched controls below it.\"",
     "knitr::include_graphics(.link, error = FALSE)", .fence, "",
     paste0(.fence, "{r}"), "#| label: tbl-mirror-matched",

@@ -132,7 +132,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# EDIT: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "ccfid"
 
@@ -220,7 +220,7 @@ N_TRACES <- 100
 # render instead of returning the old fit; TRUE recomputes it.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("nb-boostmtree-error"). The names are the
 # file names, listed for each template in the templates README.
@@ -336,7 +336,7 @@ if (!is.null(job_data$attrition)) {
 CACHE_DIR <- dirname(set_path("estimates", "nb-boostmtree.rds"))
 # The fit runs for hours at study size. Started from the console it dies with
 # the session, so an uncached fit is refused there: run the job with
-# hvtiRtemplates::submit_job() instead. Once cached, these chunks load it.
+# hvtiRtemplates::run_job() instead. Once cached, these chunks load it.
 hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
                                why = "a cross-validated boostmtree fit takes hours at study size",
                                refit = REFIT)

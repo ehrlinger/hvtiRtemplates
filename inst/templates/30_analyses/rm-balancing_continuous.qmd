@@ -62,7 +62,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# EDIT: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "ccfid"
 

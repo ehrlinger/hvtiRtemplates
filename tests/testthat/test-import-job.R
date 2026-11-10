@@ -227,3 +227,21 @@ test_that("an imported job renders in its new study", {
   expect_true("110 rows on 110 patients" %in% text)
   expect_true("110 of 110 rows analyzed; none dropped" %in% text)
 })
+
+test_that("a job written under a template's name before a rename is refused, and imports once upgraded", {
+  other <- import_study("old")
+  here <- import_study("new")
+  job <- add_job("dc.trends", subject = "cohort", type = "eda", dir = other)
+  # As a dp.trends job was scaffolded before 2026-10-10: in graphs/, under the old name. Its code may link
+  # figures as though it sat in graphs/, so it is not copied into descriptive/ as it stands.
+  from <- file.path(hvtiRutilities::study_dir("graphs", other), "dp.trends.cohort.eda.qmd")
+  file.rename(job, from)
+  expect_error(import_job(from, dir = here), "written under dp[.]trends, since renamed dc[.]trends.*upgrade_job\\(\\)")
+  expect_length(list.files(here, "[.]qmd$", recursive = TRUE), 0L)
+  # Upgraded where it is, it becomes a dc.trends job, and that one imports.
+  upgraded <- suppressMessages(upgrade_job(from))
+  out <- suppressMessages(import_job(upgraded, dir = here))
+  expect_identical(normalizePath(out, winslash = "/"),
+                   normalizePath(file.path(hvtiRutilities::study_dir("descriptive", here), "dc.trends.cohort.eda.qmd"),
+                                 winslash = "/"))
+})

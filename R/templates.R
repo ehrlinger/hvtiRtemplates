@@ -139,9 +139,8 @@ print.hvti_template_list <- function(x, ...) {
 #'   omitting it there is an error naming the choices, never a silent pick.
 #' @return The full path, as \code{character(1)}. A template the catalog
 #'   marks deprecated still resolves, with a warning naming its replacement.
-#'   So does a template's name before a rename, such as \code{dp.trends},
-#'   now \code{dc.trends}: it resolves to the renamed template, with a
-#'   warning naming the new name, until the old name is removed.
+#'   A template's name before a rename, such as \code{dp.trends}, now
+#'   \code{dc.trends}, is an error naming the new name.
 #' @export
 #' @examples
 #' template_path("ac")
@@ -190,6 +189,20 @@ template_path <- function(prefix, qualifier = NULL) {
   if (nrow(hit) == 1L) hit else NULL
 }
 
+# A job's own file name keeps the template's name from before a rename, as a
+# legacy SAS source does, and that name is the job's, not the caller's: it maps
+# to the renamed template without a word, so an old job still upgrades and
+# imports. `fields` is .job_template_fields()'s list; only prefix and qualifier
+# change.
+.job_fields_renamed <- function(fields, tl = template_list()) {
+  renamed <- .template_rename(tl, fields$prefix, fields$qualifier)
+  if (is.null(renamed)) return(fields)
+  new <- .split_template_name(renamed$to)
+  fields$prefix <- new$prefix
+  fields$qualifier <- new$qualifier
+  fields
+}
+
 # The paths a job of the selected row was written to under each name the
 # template had before a rename: the period and dash spellings, in the folder
 # the old name scaffolded into. add_job() refuses to write a second copy beside
@@ -224,15 +237,8 @@ template_path <- function(prefix, qualifier = NULL) {
        deprecated_by = sub("-", ".", hit$deprecated_by, fixed = TRUE), note = hit$deprecation_note)
 }
 
-# Warn once when a selected template row is deprecated, or was selected by
-# its name before a rename, naming the caller.
+# Warn once when a selected template row is deprecated, naming the caller.
 .warn_if_deprecated <- function(row, fn) {
-  renamed <- attr(row, "renamed")
-  if (!is.null(renamed)) {
-    return(.warn_deprecated(paste0(fn, "(): ", sub("-", ".", renamed$from, fixed = TRUE),
-                                   " is deprecated in favor of ", sub("-", ".", renamed$to, fixed = TRUE),
-                                   ". ", renamed$note)))
-  }
   deprecated <- .template_deprecation(row$prefix[[1L]], row$qualifier[[1L]])
   if (is.null(deprecated)) return(invisible(NULL))
   .warn_deprecated(paste0(fn, "(): ", deprecated$name, " is deprecated in favor of ",
@@ -258,17 +264,20 @@ template_path <- function(prefix, qualifier = NULL) {
 # `qualifier = NULL` is still accepted where the prefix has exactly one
 # template, so existing unqualified calls keep their meaning.
 #
-# A template's name before a rename selects the renamed template, and the row
-# carries the rename as its "renamed" attribute, for .warn_if_deprecated().
+# A template's name before a rename is refused, naming the new one. The old
+# name selected the new template, with a warning, for the releases after the
+# rename; the catalog's `renamed` list stays, so a job already written under
+# the old name is still found (.job_paths_renamed()) and a legacy SAS source
+# that carries it still migrates (.infer_template()).
 .select_template <- function(tl, prefix, qualifier = NULL) {
   .check_scalar_string("prefix", prefix)
   parts <- .split_template_name(prefix, qualifier)
   renamed <- .template_rename(tl, parts$prefix, parts$qualifier)
-  if (is.null(renamed)) return(.select_template_row(tl, parts$prefix, parts$qualifier))
-  new <- .split_template_name(renamed$to)
-  row <- .select_template_row(tl, new$prefix, new$qualifier)
-  attr(row, "renamed") <- renamed
-  row
+  if (!is.null(renamed)) {
+    stop(sub("-", ".", renamed$from, fixed = TRUE), " was renamed ", sub("-", ".", renamed$to, fixed = TRUE),
+         ". ", renamed$note, call. = FALSE)
+  }
+  .select_template_row(tl, parts$prefix, parts$qualifier)
 }
 
 .select_template_row <- function(tl, prefix, qualifier = NULL) {

@@ -2023,13 +2023,13 @@
       "from": "dp-eda",
       "to": "dc-eda",
       "from_folder": "descriptive",
-      "note": "Renamed on 2026-10-10. The old name keeps working, with this warning, through the next release and is removed in the one after."
+      "note": "Renamed on 2026-10-10. Use the new name; a job already written under the old one is still found by open_job() and upgrade_job()."
     },
     {
       "from": "dp-trends",
       "to": "dc-trends",
       "from_folder": "graphs",
-      "note": "Renamed on 2026-10-10, and a new job is now written to descriptive/ rather than graphs/. The old name keeps working, with this warning, through the next release and is removed in the one after."
+      "note": "Renamed on 2026-10-10, and a new job is written to descriptive/ rather than graphs/. Use the new name; a job already written under the old one is still found by open_job() and upgrade_job()."
     }
   ]
 }

@@ -116,7 +116,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# EDIT: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# EDIT: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "ccfid"
 
@@ -263,9 +263,9 @@ LABEL_MAX <- 40
 # _study.yml, over the group default shipped in hvtiRutilities.
 ABBREVIATIONS <- NULL
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("dc-eda-gfup"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -746,7 +746,7 @@ draw_section <- function(section) {
            "knitr::kable(freq, row.names = FALSE)")
   }
   # The bars carry hover labels in HTML: a page names no categories, so a reader hovers a bar
-  # for its category, year and count (John, 2026-10-15). The saved figure is the same either way.
+  # for its category, year and count. The saved figure is the same either way.
   hover <- section != "continuous" && knitr::is_html_output() && requireNamespace("ggiraph", quietly = TRUE) &&
     "hv_girafe" %in% getNamespaceExports("hvtiPlotR")
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA, interactive = hover)
@@ -754,8 +754,8 @@ draw_section <- function(section) {
   for (i in seq_along(pages)) {
     # A page of its own, the printed page, 6.5 by 9 in: a grid of GRID_NCOL by GRID_NROW panels.
     # 8 pt, not 12, because panels share a row: at 12 a long title and the year labels run
-    # past a 3.25 in panel. No legend and no category names, so the bars fill the panel
-    # (John, 2026-10-15); the frequency table above names the categories.
+    # past a 3.25 in panel. No legend and no category names, so the bars fill the panel;
+    # the frequency table above names the categories.
     # Every calendar month from the first to the last, an empty one included:
     # the bars re-factor the month, which would drop it and close the gap.
     .panels <- pages[[i]]

@@ -13,7 +13,7 @@
 #' \code{<subject>-<type>-<prefix>[-<qualifier>].qmd}, is found and opened
 #' under that name. So is a job scaffolded under a template's name before a
 #' rename, such as \code{graphs/dp.trends.<subject>.<type>.qmd} for
-#' \code{dc.trends}, whichever of the two names the call uses.
+#' \code{dc.trends}, when the call names the new one.
 #' The editor is opened only in an interactive session.
 #'
 #' @inheritParams add_job

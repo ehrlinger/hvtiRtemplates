@@ -74,9 +74,9 @@
 #' naming its replacement; see \code{\link{template_catalog}}.
 #'
 #' \strong{Renamed templates.} \code{dp.eda} and \code{dp.trends} were renamed
-#' \code{dc.eda} and \code{dc.trends} on 2026-10-10. The old names still
-#' scaffold the renamed template, with a warning naming the new name, through
-#' the next release, and are removed in the one after. A \code{dc.trends} job
+#' \code{dc.eda} and \code{dc.trends} on 2026-10-10. The old names scaffolded
+#' the renamed template, with a warning, for the releases that followed, and
+#' are now an error naming the new name. A \code{dc.trends} job
 #' is written to the \code{descriptive} folder, where a \code{dp.trends} job
 #' was written to \code{graphs}. A job scaffolded under the old name keeps it
 #' and keeps rendering; \code{add_job()} refuses to write a second copy of it
@@ -128,10 +128,8 @@
 #' # set's subject and type: here, the hazard analysis of reoperation.
 #' add_job("dc.gfup", subject = "reop", type = "hz", dir = d)
 #'
-#' # A template's name before a rename still works, and the warning names the
-#' # new one.
-#' tryCatch(add_job("dp.trends", subject = "cohort", type = "eda", dir = d),
-#'          warning = conditionMessage)
+#' # A template's name before a rename is an error that names the new one.
+#' try(add_job("dp.trends", subject = "cohort", type = "eda", dir = d))
 #'
 #' # A job accumulates a study's edits, so an existing one is never overwritten.
 #' try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))

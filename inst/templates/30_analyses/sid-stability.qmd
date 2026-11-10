@@ -130,7 +130,7 @@ DROP_VARS <- NULL
 # second (PAC, the proportion of ambiguous clustering).
 PAC_BAND <- c(0.1, 0.9)
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("sid-stability-agreement").
 SAVE_FIGURES <- TRUE

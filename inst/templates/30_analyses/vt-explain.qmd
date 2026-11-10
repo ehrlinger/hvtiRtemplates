@@ -108,7 +108,7 @@ STRATIFY <- NULL
 BOOT <- 1000                                # EDIT: bootstraps for the standardized betas; 0 skips the intervals.
 GAIN_MIN <- 0                               # EDIT: a twin must favor the other arm by more than this, in TIME's units.
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("vt-explain-contrast"). The names are the
 # file names, listed for each template in the templates README.
