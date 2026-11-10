@@ -33,8 +33,8 @@ format:
      used. Replace this comment with that text. -->
 
 An `rfr-fit` job grows a regression forest and checks that it learned
-something: out-of-bag error by number of trees, and predicted against
-observed. **Importance and dependence plots are not here.** They are
+something: out-of-bag error by number of trees, and the out-of-bag
+predictions. **Importance and dependence plots are not here.** They are
 the `rfr-explain` job in this same set, which reads the forest this job saves
 instead of growing its own, so the explanations always describe this forest.
 
@@ -114,7 +114,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
                                 SAVE_FIGURES, FIGURES, linked)
 }
 
-# `rfr-fit` writes the forest through this and `rfr-explain` reads it back,
+# `rfr-fit` writes the forest through set_path() and `rfr-explain` reads it back,
 # both by set, so an explanation can never be filed against a different set
 # than the forest it explains. The write is the `save` chunk at the foot of
 # this file.
@@ -351,7 +351,7 @@ save_figure(.fig, "rfr-fit-diagnostics-error")
 #| label: fig-diagnostics-predicted
 #| fig-cap: "Out-of-bag predicted values. Black circles, jittered sideways, mark the individual predictions, and the unfilled
 #|   notched box plot marks their median and quartiles."
-# Out-of-bag predicted against observed.
+# Out-of-bag predicted values, each patient a point over a notched box plot.
 pred <- gg_rfsrc(forest)
 .fig <- plot(pred) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rfr-fit-diagnostics-predicted")

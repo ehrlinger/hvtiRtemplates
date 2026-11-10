@@ -122,7 +122,7 @@ KEY <- ID
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
-#     breaks it. This job models one row per
+#     breaks it. This job needs one row per
 #     patient, so a JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
@@ -297,9 +297,9 @@ if (!is.null(IDENTIFIER)) {
   utils::write.table(review_rows, stderr(), row.names = FALSE, quote = FALSE)
   review_rows <- review_rows[setdiff(names(review_rows), setdiff(IDENTIFIER, c(EVENT, FOLLOWUP)))]
 }
-# followup_check() returns five one-row tables: the group counts, the interval
-# checks for all patients, and one proc_means() row per group. This is them as
-# one table, a row per interval and group. The counts are each group's n, the
+# followup_check() returns the group counts (one row), the interval checks for all
+# patients, a proc_means() table for each group, and the suspicious rows. This
+# is the means as one table, a row per interval and group. The counts are each group's n, the
 # negative and zero checks are counted within each group, and the summaries are
 # proc_means()'s alone, so there is one quantile definition, not two. dc-eda
 # carries the same function; test-dc-eda.R keeps the two from drifting.

@@ -171,7 +171,7 @@ RETAIN_PCT <- 50
 #
 # boot_frequencies() and boot_concepts() also accept PHASE_OF = NULL, for a
 # single-phase screen, and that is what lets one reporting code path serve the
-# forthcoming bl, br and bc templates. This template is not that case: it
+# bl, br and bc templates. This template is not that case: it
 # reports a multiphase hazard screen, and every table and the figure below
 # assume a phase column throughout. PHASE_OF must name a real rule here.
 PHASE_OF <- function(term) sub("[.].*$", "", term)
@@ -536,9 +536,9 @@ you whether they are REDUNDANT.
 ```{r}
 #| label: edit-concept-map
 # EDIT: the affix vocabulary, if your study's variable names do not follow
-# vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing
-# 2, the order in which they strip, and the deliberate refusal to reduce agee
-# to age. Those are facts about this institution's names, not about statistics,
+# vars.sas conventions. POOL_AFFIXES carries ln_, in2, in_ and a trailing 2, in
+# the order they strip; POOL_PLAIN_SUFFIX carries _pr; and the vocabulary
+# deliberately refuses to reduce agee to age. Those are facts about this institution's names, not about statistics,
 # which is why they are data you can replace rather than logic you cannot.
 #
 # The pool grouped here is the set of forms that reached at least one replicate.
@@ -717,9 +717,9 @@ pool, not about the concepts. The no-pruning argument above stands: the same
 measurement that found 57 prunable forms found 16 of them correlating below 0.9.
 
 `pool_collinear_pairs()` sees only NUMERIC, non-constant columns, so
-factor-coded binaries are invisible to it for the same reason they were
-invisible to the screen. Check the coercion table above before reading an empty
-result as an absence of collinearity.
+factor-coded binaries are invisible to it. This report has no coercion table of
+its own, so check how your runner coded them before reading an empty result as
+an absence of collinearity.
 
 ## Figure
 
@@ -766,6 +766,7 @@ save_figure(.fig, "bh-frequencies", height = 7)
 # study report that wrote such a file also claimed `hm` fits what `bh` retained.
 # Nothing read the file, and the claim was not true. A file whose existence
 # implies a dependency that does not exist is worse than no file.
+#
 # NOT `<BOOT_PREFIX>.rds`. An unchunked run's INPUT is exactly that name, so
 # writing the report there overwrites the screen it just read -- and this is
 # the one job where that is unrecoverable: the input is days of compute that

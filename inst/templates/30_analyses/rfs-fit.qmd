@@ -115,7 +115,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
                                 SAVE_FIGURES, FIGURES, linked)
 }
 
-# `rfs-fit` writes the forest through this and `rfs-explain` reads it back,
+# `rfs-fit` writes the forest through set_path() and `rfs-explain` reads it back,
 # both by set, so an explanation can never be filed against a different set
 # than the forest it explains. The write is the `save` chunk at the foot of
 # this file.

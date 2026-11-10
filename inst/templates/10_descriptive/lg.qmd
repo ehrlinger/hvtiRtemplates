@@ -113,7 +113,7 @@ KEY <- ID
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
-#     breaks it. This job models one row per
+#     breaks it. This job needs one row per
 #     patient, so a JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
@@ -334,7 +334,7 @@ covariate is drawn as an empty panel, and named there too.
 #| label: lg
 #| results: asis
 # unnumbered: each covariate's child chunks carry their own labels and captions
-# The figure is saved as PNG and PDF under graphs/<subject>-<type>/lg-<covariate>,
+# The figure is saved as PNG, PDF and TIFF under graphs/<subject>-<type>/lg-<covariate>,
 # and the PNG is the one the report shows.
 .fence <- strrep("`", 3)
 .kable_na <- options(knitr.kable.NA = "")

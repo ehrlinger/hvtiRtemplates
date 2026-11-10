@@ -302,8 +302,8 @@ names(.freq)[1] <- EVENT
 knitr::kable(.freq, row.names = FALSE)
 ```
 
-These are the counts the job found, the `PROC FREQ` of the event over the rows
-analyzed. With `EXPECTED` set, a rendered report is also evidence that they
+These are the counts the job found, the `PROC FREQ` of the event over every row
+read, missing included. With `EXPECTED` set, a rendered report is also evidence that they
 matched the SAS reference.
 
 ```{r}

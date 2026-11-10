@@ -35,8 +35,7 @@ format:
 An `hz` job produces a parametric fit and persists it. The life table it is read
 against is an `ac` job, the figures over it are `hp`, and the covariate model
 built on its shape parameters is `hm`; none of those belong here. **Nor does SAS
-parity** — a parity job borrows the ordinal of the job it checks and lives in
-`parity/`.
+parity**, which is a job of its own.
 
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
@@ -167,7 +166,7 @@ theta0 <- c(log(1), log(1), 1, 1,
             log(1), log(1), 1, 1, 1)
 
 # EDIT: time, event, and counts from the SAS reference for the rows this job
-# analyses. Leave these invalid defaults in place until the job is reconciled.
+# analyses. Leave the NA counts in EXPECTED until the job is reconciled: they stop an unedited job.
 TIME   <- "iv_dead"
 
 EVENT  <- "dead"
@@ -258,7 +257,7 @@ knitr::kable(data.frame(
 ))
 ```
 
-A rendered report is itself evidence the gate passed. Report the counts anyway —
+A rendered report is itself evidence the gate passed. Report the counts anyway:
 a gate that passes silently tells the reader nothing about what it passed on.
 
 **An event flag that is 0/1 in SAS may arrive as `logical`**, because
@@ -288,7 +287,7 @@ cat(hvtiRtemplates:::.identifiability_notice(
 
 ⚠️ **A SAS hazard fit is always three-phase.** An absent phase sits in the model
 at zero rather than being removed, so classify from the sums table, never from
-the parameter block — a phase that contributed nothing still prints nothing.
+the parameter block, because a phase that contributed nothing still prints nothing.
 
 ```{r}
 #| label: tbl-phases
@@ -335,11 +334,11 @@ produces a fit, not an error.
      The distinction is whether this job replaces an existing SAS job, and it
      is not cosmetic.
 
-     Shape A — a SAS job exists. Seed from ITS converged estimates, so that any
+     Shape A, a SAS job exists. Seed from ITS converged estimates, so that any
      disagreement is about the likelihood rather than about where the search
      began. This is the only seed that makes the comparison clean.
 
-     Shape B — no SAS predecessor. Shapes start neutral at 1 and only the TIME
+     Shape B, no SAS predecessor. Shapes start neutral at 1 and only the TIME
      SCALE is taken from the data. A rough neighborhood, not an estimate; its
      one job is to be the right order of magnitude. Whether the choice mattered
      is checked by the multi-start probes below, not assumed. -->
@@ -577,7 +576,7 @@ basin, and the starting values need revisiting before anything below is read.
 ### Fit 3 — `noconserve` sensitivity
 
 ⚠️ **This is a sensitivity, never a parity number.** A SAS `noconserve` fit is
-only a conservation reference if it changes conservation *and nothing else* —
+only a conservation reference if it changes conservation *and nothing else*,
 and in practice these fits often add a covariate at the same time, which
 confounds the two changes.
 
@@ -670,14 +669,14 @@ if (!se_available) {
 ```
 
 **A caveat that must travel with these standard errors.** Under a near-singular
-Hessian — check `rcond` above — the marginal standard errors on weakly
+Hessian (check `rcond` above) the marginal standard errors on weakly
 identified shape parameters are unstable while the fitted curve is not. The data
 can pin the survival function tightly and still leave individual shape
 parameters loose, because `se(S(t))² = gᵀVg` can be well determined when the
 diagonal of `V` is not.
 
 So report per-parameter standard errors with that caveat attached, and treat the
-survival curve and its band — computed in the companion `hp` job — as the
+survival curve and its band, computed in the companion `hp` job, as the
 quantity that actually reaches a clinician.
 
 ## Fit against the data

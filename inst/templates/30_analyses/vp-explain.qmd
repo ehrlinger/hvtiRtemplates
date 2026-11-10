@@ -211,7 +211,7 @@ if (!length(sel)) {
   }, call. = FALSE)
 }
 # Each figure is drawn a page at a time, panels in a grid no larger than the
-# printed page (6.5 by 9 in), and each page is a child chunk of its own so
+# printed page (6.5 by 6 in here), and each page is a child chunk of its own so
 # Quarto numbers it.
 .fence <- strrep("`", 3)
 .page_child <- function(kind, i, pages, vars, caption) {
@@ -250,7 +250,8 @@ pv <- cache_fit("vp-partial",
                 gg_partial_varpro(object = fit, xvar.names = sel,
                                   scale = if (.survival) SCALE else "auto", time = if (.survival) HORIZON else NULL),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-# The manuscript theme hides the legend and its title, and the caption reads the line types from the legend.
+# The manuscript theme hides the legend and its title. They go back on here, because the caption reads the line
+# types from the legend.
 .cap <- paste("VarPro partial dependence on each drawn predictor, one panel per predictor. For a",
               "continuous predictor a black solid line marks the nonparametric partial effect and a black",
               "dashed line the parametric one, as in the legend; for a categorical predictor black box",

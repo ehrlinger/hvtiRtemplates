@@ -182,7 +182,7 @@ REFIT <- FALSE
 
 # Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("vp-fit-coverage"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("vt-fit-km"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL

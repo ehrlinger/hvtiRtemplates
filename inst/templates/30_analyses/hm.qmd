@@ -35,8 +35,8 @@ format:
 An `hm` job builds the risk-factor model **on top of** the shape parameters the
 `hz` job fitted. The shapes are not re-derived here; they are read. Patient-level
 predictions from this model are an `hs` job and the bootstrap of this screen is
-`bh`; neither belongs here, and **nor does SAS parity** — a parity job borrows
-the ordinal of the job it checks and lives in `parity/`.
+`bh`; neither belongs here, and **nor does SAS parity**, which is a job of its
+own.
 
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
@@ -102,7 +102,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
                                 SAVE_FIGURES, FIGURES, linked)
 }
-# `hm` reads the `hz` fit through this and writes its own model back, both by
+# `hm` reads the `hz` fit through set_path() and writes its own model back, both by
 # set, so a model can never be filed against a different set than the shapes it
 # was built on. The write is in the `save` chunk at the foot of this file.
 # The draft banners, if any, and the box under the title, after all the code above.
@@ -225,7 +225,7 @@ a gate that passes silently tells the reader nothing about what it passed on.
 **An event flag that is 0/1 in SAS may arrive as `logical`**, because
 `read_clinical_data()` infers binary columns as logical while `Surv()` requires
 a numeric status. The `as.numeric()` coercions below are not decoration — and
-see the covariate audit above for the same problem on the covariate side, where
+see the covariate audit below for the same problem on the covariate side, where
 it changes the model rather than erroring.
 
 ## Covariates
