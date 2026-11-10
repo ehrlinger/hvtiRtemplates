@@ -38,6 +38,12 @@ The study itself must exist in Study Tracker before its directory does. Create
 the study record there first and note its title and ID. You type both during
 setup: nothing reads them from Study Tracker when the study is created.
 
+An exploration of a registered study that Study Tracker has not registered yet
+is the exception. Set it up with the registered study's ID as `derived_from`, in
+place of `study_tracker_id`, as
+[An exploration of a registered study](https://ehrlinger.github.io/hvtiR/articles/start-here.html#an-exploration)
+describes.
+
 ```{r}
 #| label: synthetic-setup
 #| include: false
