@@ -97,6 +97,10 @@ test_that("vt_outside_range lists an eligible patient's values the arm judged ag
   expect_setequal(key, c("b1 x below", "b3 x above", "b1 bin a level not in the arm", "b1 g a level not in the arm"))
   expect_equal(o$arm_values[o$ID == "b3"], "[1, 3]")
   expect_equal(o$value[o$ID == "b3"], "9")
+  # Binary is decided on the whole column: arm A shows only 0 and 1, but 0.5 elsewhere makes the column
+  # continuous, so a judged 0.5 sits inside A's range [0, 1] rather than being an unseen level.
+  d2 <- data.frame(ID = c("a1", "a2", "b1"), z = c(0, 1, 0.5))
+  expect_equal(nrow(h$vt_outside_range(data.frame(ID = "b1", arm = "A"), d2, "ID", c("A", "A", "B"), "z")), 0L)
   # Nobody outside: an empty table with the same columns, never NULL.
   none <- h$vt_outside_range(data.frame(ID = "b2", arm = "A"), d, "ID", arm_of, c("x", "bin", "g"))
   expect_equal(nrow(none), 0L)
@@ -136,6 +140,18 @@ test_that("vt-fit reports eligible patients outside the arm's range, and the han
   expect_equal(o$arm, "B")
   # Only eligible patients are listed.
   expect_true(all(env$.outside$ID %in% env$.elig$ID[env$.elig$elig]))
+  # The report counts by variable, arm and side; the arm's range stays in the handoff.
+  expect_named(env$.outside_counts, c("variable", "arm", "side", "patients"))
+})
+
+test_that("the outside-range table checks the forests' predictors when ELIGIBILITY_VARS leaves one out", {
+  skip_on_cran()
+  d <- vt_data()
+  d$x1[which(d$arm == "A")[10]] <- 2.8
+  env <- vt_fit_first(data = d, choices = utils::modifyList(vt_choices, list(ELIGIBILITY_VARS = "g1")))
+  id <- vt_digest(env, which(d$arm == "A")[10])
+  expect_true(env$.elig$elig[env$.elig$ID == id])
+  expect_equal(env$.outside$side[env$.outside$ID == id & env$.outside$variable == "x1"], "above")
 })
 
 test_that("AGE_CAP caps the named age in every arm, and refuses an unnamed cap", {
@@ -150,6 +166,11 @@ test_that("AGE_CAP caps the named age in every arm, and refuses an unnamed cap",
                "AGE_CAP must be one named number")
   expect_error(vt_fit_first(data = d, choices = utils::modifyList(vt_choices, list(AGE_CAP = c(years = 90)))),
                "AGE_CAP must be one named number")
+  expect_error(vt_fit_first(data = d, choices = utils::modifyList(vt_choices, list(AGE_CAP = c(age = Inf)))),
+               "AGE_CAP must be one named number")
+  # Capping the follow-up time would truncate it with the event left as recorded.
+  expect_error(vt_fit_first(data = d, choices = utils::modifyList(vt_choices, list(AGE_CAP = c(time = 2)))),
+               "AGE_CAP names time, the ID, arm or outcome")
 })
 
 test_that("the isolation forest refuses an arm too small to cross-fit, naming the arm", {

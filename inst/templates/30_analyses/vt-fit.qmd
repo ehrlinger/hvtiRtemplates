@@ -317,9 +317,13 @@ if (length(.leaks)) {
 .missing <- setdiff(.elig_vars, names(d))
 if (length(.missing)) stop("ELIGIBILITY_VARS not in the data: ", paste(.missing, collapse = ", "), call. = FALSE)
 if (!is.null(AGE_CAP)) {
-  if (!is.numeric(AGE_CAP) || length(AGE_CAP) != 1L || is.na(AGE_CAP) || is.null(names(AGE_CAP)) ||
+  if (!is.numeric(AGE_CAP) || length(AGE_CAP) != 1L || !is.finite(AGE_CAP) || is.null(names(AGE_CAP)) ||
         !names(AGE_CAP) %in% names(d) || !is.numeric(d[[names(AGE_CAP)]])) {
     stop("AGE_CAP must be one named number, a numeric age column and its cap, e.g. c(age = 90).", call. = FALSE)
+  }
+  # Capping the follow-up time would truncate it with the event left as recorded.
+  if (tolower(names(AGE_CAP)) %in% tolower(c(ID, ARM, TIME, STATUS))) {
+    stop("AGE_CAP names ", names(AGE_CAP), ", the ID, arm or outcome; name the age column.", call. = FALSE)
   }
   .age <- names(AGE_CAP)
   .capped <- !is.na(d[[.age]]) & d[[.age]] > AGE_CAP
@@ -641,7 +645,8 @@ vt_outside_range <- function(pairs, d, id, arm_of, vars) {
       x <- d[[v]][match(p, d[[id]])]
       u <- stats::na.omit(d[[v]][arm_of %in% a])
       if (!length(u)) return(NULL)
-      if (is.numeric(u) && !all(u %in% c(0, 1))) {
+      # Binary is a property of the column, as in vt_elig_gower(), not of one arm's values.
+      if (is.numeric(u) && !all(stats::na.omit(d[[v]]) %in% c(0, 1))) {
         rg <- range(u)
         side <- ifelse(x < rg[1], "below", ifelse(x > rg[2], "above", NA_character_))
         seen <- sprintf("[%s, %s]", format(signif(rg[1], 3)), format(signif(rg[2], 3)))
@@ -750,8 +755,10 @@ for (m in .methods) {
   .one <- vt_combine(.elig_rows[.elig_rows$method == m, ], "any")
   .elig[[paste0("elig_", m)]] <- .one$elig[match(.elig$ID, .one$ID)]
 }
+# The forests' predictors too, not only the eligibility set: when ELIGIBILITY_VARS
+# leaves a predictor out, the arm's forest still extrapolates on it.
 .outside <- vt_outside_range(unique(.elig_rows[.elig_rows$ID %in% .elig$ID[.elig$elig], c("ID", "arm")]), d, ID, .arm,
-                             .elig_vars)
+                             union(.predictors, .elig_vars))
 # Sensitivity only, never part of the combined rule: forest propensity common support.
 # ps_forest() refuses missing predictors, while the arm forests impute them
 # (NA_ACTION = "na.impute"). So the propensity model gets a forest-imputed copy
@@ -859,11 +866,13 @@ or a unit mix-up, worth checking against the chart.
 ```{r}
 #| label: tbl-outside-range
 #| tbl-cap: "Eligible patients with a value outside what the arm judged against shows, by variable"
-# Counts only, as above; each patient, with the value, is in vt.rds under eligibility$outside_range.
+# Counts only, as above. The arm's range or levels are not shown either: an age
+# range can carry an age over 89, and a level an identifier. Each patient, with the
+# value and the arm's range, is in vt.rds under eligibility$outside_range.
 if (!nrow(.outside)) {
   cat("No eligible patient has a value outside the arm they were judged against.\n")
 } else {
-  .outside_counts <- stats::aggregate(ID ~ variable + arm + side + arm_values, .outside, length)
+  .outside_counts <- stats::aggregate(ID ~ variable + arm + side, .outside, length)
   names(.outside_counts)[names(.outside_counts) == "ID"] <- "patients"
   knitr::kable(.outside_counts[order(.outside_counts$variable, .outside_counts$arm), ], row.names = FALSE)
 }
