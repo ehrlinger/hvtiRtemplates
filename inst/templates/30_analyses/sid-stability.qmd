@@ -271,10 +271,11 @@ cat("Patients:", length(.ids), " K:", K, " Reported groups:", toString(sort(uniq
 
 The refits must see exactly the values the reported forest saw. The rows are
 rebuilt from sid-fit's recorded selection and matched to its patients by ID
-digest, and the missing values are filled from sid-fit's first imputation,
-read from its cache, never imputed again. sid-fit with `M > 1` averaged
-forests over several imputations; the refits use the first one, so they vary
-the seed alone.
+digest, and the missing values are filled from sid-fit's imputations, read
+from its caches, never imputed again. With `M > 1`, sid-fit's distance is the
+average of M forests, one per imputation, and every refit rebuilds it the
+same way on the same M completed datasets, so the refits vary the forests'
+seeds alone.
 
 ```{r}
 #| label: refit-data
@@ -306,39 +307,43 @@ x <- cohort[sid$vars]
 .chr <- names(x)[vapply(x, is.character, logical(1))]
 x[.chr] <- lapply(x[.chr], factor)
 CACHE_DIR <- dirname(set_path("estimates", "sid.rds"))
-if (anyNA(x)) {
-  .imp_path <- file.path(CACHE_DIR, "sid-fit-impute-1.rds")
-  if (!file.exists(.imp_path)) {
-    stop("The data have missing values but sid-fit's imputation cache (sid-fit-impute-1.rds) is not in ", CACHE_DIR,
+M <- as.integer(.s$m)
+# The observed values can agree while the imputed ones differ: an interrupted sid-fit rerun
+# may replace an imputation cache before sid.rds. sid-fit records a fingerprint of each
+# completed dataset its forests saw, so the refits are held to exactly those values.
+if (length(sid$data_fingerprint) != M) {
+  stop("sid.rds does not record a fingerprint for each of its ", M, " completed datasets (sid-fit before this ",
+       "release). Render sid-fit and sid-clusters again.", call. = FALSE)
+}
+# Completed dataset m, as sid-fit's forest m saw it.
+completed <- function(m) {
+  if (!anyNA(x)) return(x)
+  path <- file.path(CACHE_DIR, paste0("sid-fit-impute-", m, ".rds"))
+  if (!file.exists(path)) {
+    stop("The data have missing values but sid-fit's imputation cache ", basename(path), " is not in ", CACHE_DIR,
          ". Render sid-fit again to restore it; this job does not impute on its own.", call. = FALSE)
   }
-  .imp <- readRDS(.imp_path)$value
-  filled <- if (inherits(.imp, "mids")) mice::complete(.imp, 1) else .imp
-  filled <- as.data.frame(filled)[sid$vars]
+  imp <- readRDS(path)$value
+  filled <- as.data.frame(if (inherits(imp, "mids")) mice::complete(imp, 1) else imp)[sid$vars]
   # The cache holds no IDs, so its rows are checked against the observed values:
   # if they line up, every observed value agrees with the cached copy.
-  .agree <- vapply(sid$vars, function(v) {
+  agree <- vapply(sid$vars, function(v) {
     o <- !is.na(x[[v]])
     nrow(filled) == nrow(x) && identical(as.character(filled[[v]][o]), as.character(x[[v]][o]))
   }, logical(1))
-  if (!all(.agree)) {
-    stop("sid-fit's cached imputation does not match the rebuilt cohort (", toString(sid$vars[!.agree]),
+  if (!all(agree)) {
+    stop("sid-fit's cached imputation ", m, " does not match the rebuilt cohort (", toString(sid$vars[!agree]),
          "). The data or sid-fit's choices changed since it ran: render sid-fit and sid-clusters again.", call. = FALSE)
   }
-  x <- filled
+  filled
 }
-# The observed values can agree while the imputed ones differ: an interrupted sid-fit rerun
-# may replace the imputation cache before sid.rds. sid-fit records a fingerprint of the
-# completed data its first forest saw, so the refits are held to exactly those values.
-if (is.null(sid$data_fingerprint)) {
-  stop("sid.rds records no fingerprint of the data its forest saw (sid-fit before this release). ",
-       "Render sid-fit and sid-clusters again.", call. = FALSE)
+x_m <- lapply(seq_len(M), completed)
+.fp_bad <- which(vapply(x_m, hvtiRtemplates:::.sid_data_fingerprint, character(1)) != sid$data_fingerprint)
+if (length(.fp_bad)) {
+  stop("The data rebuilt here differ from the completed data sid-fit's forest ", toString(.fp_bad), " saw (its ",
+       "imputation cache was replaced, or its choices changed). Render sid-fit and sid-clusters again.", call. = FALSE)
 }
-if (!identical(hvtiRtemplates:::.sid_data_fingerprint(x), sid$data_fingerprint)) {
-  stop("The data rebuilt here differ from the completed data sid-fit's first forest saw (its imputation cache ",
-       "was replaced, or its choices changed). Render sid-fit and sid-clusters again.", call. = FALSE)
-}
-cat("Values filled from sid-fit's imputation:", sum(is.na(cohort[sid$vars])), "\n")
+cat("Values filled from each of sid-fit's ", M, " imputation(s): ", sum(is.na(x)), "\n", sep = "")
 if (!is.null(TRACK)) {
   TRACK <- tolower(TRACK)
   if (!requireNamespace("patchwork", quietly = TRUE)) {
@@ -359,8 +364,9 @@ if (!is.null(DROP_VARS)) {
 
 ## The refits
 
-Each refit grows the SID forest with sid-fit's settings and a new seed, then
-runs PAM at every K that sid-clusters drew. Only the cluster labels are
+Each refit grows sid-fit's M forests again, one per completed dataset, with
+sid-fit's settings and new seeds, averages their distances as sid-fit does,
+then runs PAM at every K that sid-clusters drew. Only the cluster labels are
 cached, one file per refit, so an interrupted run resumes where it stopped
 and raising `REPEATS` later reuses the refits already made.
 
@@ -369,18 +375,30 @@ and raising `REPEATS` later reuses the refits already made.
 if (!is.numeric(REPEATS) || length(REPEATS) != 1L || REPEATS < 2 || REPEATS != trunc(REPEATS)) {
   stop("REPEATS must be a whole number, 2 or more.", call. = FALSE)
 }
-seeds <- as.integer(SEED_OFFSET) + seq_len(REPEATS)
-if (.s$seed %in% seeds) stop("The refit seeds include sid-fit's own seed ", .s$seed, ". Move SEED_OFFSET.", call. = FALSE)
+# Refit r seeds its M forests base_r, ..., base_r + M - 1, as sid-fit seeds its forests SEED + m - 1,
+# with the bases M apart so no two refits share a forest seed.
+seeds <- as.integer(SEED_OFFSET) + (seq_len(REPEATS) - 1L) * M + 1L
+.clash <- intersect(as.vector(outer(seeds, seq_len(M) - 1L, `+`)), .s$seed + seq_len(M) - 1L)
+if (length(.clash)) {
+  stop("The refit seeds include sid-fit's own forest seed(s) ", toString(.clash), ". Move SEED_OFFSET.", call. = FALSE)
+}
 # One quoted call, handed to both cache_would_fit() and cache_fit() so they key
-# the same code. Its inputs are the variables of run_refits() below: the data,
-# sid-fit's settings, the K range and the refit's seed. As in sid-fit, the seed
-# reaches the forest as `seed =` and R's generator through cache_fit(seed =).
+# the same code. Its inputs are the variables of run_refits() below: the M
+# completed datasets, sid-fit's settings, the K range and the refit's base seed.
+# Each forest is grown as sid-fit grows forest m: R's generator set to its seed,
+# and the same seed handed to the forest. With refit_seed = sid-fit's SEED this
+# rebuilds sid-fit's distance exactly.
 .refit_code <- quote({
-  o <- sidClustering(refit_x, method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(refit_seed))
-  if (is.null(o$dist)) stop("sidClustering() failed (it returned no distance).", call. = FALSE)
-  d <- stats::as.dist(o$dist)
+  dists <- lapply(seq_along(refit_x), function(m) {
+    s <- refit_seed + m - 1L
+    set.seed(s)
+    o <- sidClustering(refit_x[[m]], method = "sid", ntree = refit_ntree, reduce = refit_reduce, seed = -abs(s))
+    if (is.null(o$dist)) stop("sidClustering() failed on imputation ", m, " (it returned no distance).", call. = FALSE)
+    o$dist
+  })
+  d <- stats::as.dist(Reduce(`+`, dists) / length(dists))
   # PAM on the SID distance itself, exactly as sid-clusters runs it.
-  vapply(refit_k, function(k) cluster::pam(d, k, cluster.only = TRUE), integer(nrow(refit_x)))
+  vapply(refit_k, function(k) cluster::pam(d, k, cluster.only = TRUE), integer(nrow(refit_x[[1L]])))
 })
 run_refits <- function(refit_x, tag) {
   refit_ntree <- .s$ntree
@@ -394,7 +412,7 @@ run_refits <- function(refit_x, tag) {
   }, logical(1))
   if (any(todo)) {
     hvtiRtemplates::guard_long_fit(names[todo], dir = CACHE_DIR, refit = REFIT,
-                                   why = sprintf("%d refits each grow a %d-tree SID forest", sum(todo), refit_ntree))
+                                   why = sprintf("%d refits each grow %d %d-tree SID forest(s)", sum(todo), M, refit_ntree))
   }
   lab <- lapply(seq_along(seeds), function(i) {
     refit_seed <- seeds[i]
@@ -405,8 +423,8 @@ run_refits <- function(refit_x, tag) {
   })
   stats::setNames(lab, seeds)
 }
-refits <- run_refits(x, "all")
-refits_drop <- if (!is.null(DROP_VARS)) run_refits(x[setdiff(sid$vars, DROP_VARS)], "drop")
+refits <- run_refits(x_m, "all")
+refits_drop <- if (!is.null(DROP_VARS)) run_refits(lapply(x_m, function(d) d[setdiff(sid$vars, DROP_VARS)]), "drop")
 .drop_note <- if (!is.null(DROP_VARS)) paste0(" and ", length(refits_drop), " without ", toString(DROP_VARS))
 cat("Refits: ", length(refits), .drop_note, "\n", sep = "")
 ```

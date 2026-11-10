@@ -79,7 +79,7 @@ test_that("sid-stability fills values from sid-fit's imputation cache and refuse
   env <- sid_fit_first()
   sid_clusters_after(env)
   sid_stability_after(env)
-  expect_false(anyNA(env$x))
+  expect_false(anyNA(env$x_m[[1L]]))
   # The cached imputation, with one observed value changed, must not be used.
   path <- file.path(env$CACHE_DIR, "sid-fit-impute-1.rds")
   rec <- readRDS(path)
@@ -114,7 +114,7 @@ test_that("sid-stability refuses a DROP_VARS that sid-fit did not cluster on, an
   expect_error(sid_stability_after(env, utils::modifyList(sid_stability_choices, list(DROP_VARS = "zz"))),
                "did not cluster on")
   expect_error(sid_stability_after(env, utils::modifyList(sid_stability_choices, list(SEED_OFFSET = 0))),
-               "include sid-fit's own seed")
+               "include sid-fit's own forest seed")
 })
 
 test_that("a refit that loses a group reports where its patients went", {
@@ -158,4 +158,26 @@ test_that("sid-stability refuses an imputation cache whose imputed values change
   rec$value$imp$a[1, 1] <- rec$value$imp$a[1, 1] + 50
   saveRDS(rec, path)
   expect_error(sid_stability_after(env), "differ from the completed data")
+})
+
+test_that("with M = 2 a refit at sid-fit's seed rebuilds the reported clusters, and refits seed M forests apart", {
+  skip_on_cran()
+  env <- sid_fit_first(choices = utils::modifyList(sid_fit_choices, list(M = 2)))
+  sid_clusters_after(env)
+  sid_stability_after(env)
+  expect_length(env$x_m, 2L)
+  expect_identical(env$seeds, c(101L, 103L, 105L))
+  # The refit code, run at sid-fit's own seed, must give sid-clusters' solution at every K:
+  # the same M forests, the same averaging, the same PAM.
+  e <- new.env(parent = env)
+  e$refit_x <- env$x_m
+  e$refit_ntree <- env$.s$ntree
+  e$refit_reduce <- env$.s$sid_reduce
+  e$refit_k <- env$.k_range
+  e$refit_seed <- as.integer(env$.s$seed)
+  lab <- eval(env$.refit_code, e)
+  for (i in seq_along(env$.k_range)) {
+    expect_equal(env$stab_ari(lab[, i], env$ref_pam[[as.character(env$.k_range[i])]]), 1,
+                 info = paste("K =", env$.k_range[i]))
+  }
 })

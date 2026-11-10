@@ -1,8 +1,8 @@
 #' A fingerprint of the data a SID forest was grown on
 #'
-#' sid-fit records it for its first completed (imputed) dataset, and
-#' sid-stability checks the data it refits on against it, so a refit never runs
-#' on values the reported forest did not see. Row names and the storage of
+#' sid-fit records one for each completed (imputed) dataset a forest was grown
+#' on, and sid-stability checks the data it refits on against them, so a refit
+#' never runs on values the reported forests did not see. Row names and the storage of
 #' factors are left out: the two jobs rebuild the same rows by different routes,
 #' so only the values, in column order, are compared.
 #'
