@@ -64,6 +64,7 @@ Suggests:
     hvtiRbootstrap (>= 0.9.3),
     hvtiRlifetables (>= 0.1.2),
     hvtiRpropensity (>= 0.2.0),
+    isotree,
     knitr,
     MASS,
     mice (>= 3.19.0),
