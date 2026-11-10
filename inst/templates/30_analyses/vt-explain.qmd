@@ -180,6 +180,10 @@ if (length(setdiff(.sha_now, .sha_fit))) {
 # vt.rds holds ID digests, so the data are digested with the same study key.
 .d_all[[.s$id]] <- hvtiRtemplates:::.id_digest(.d_all[[.s$id]], .id_key)
 .d_all <- .d_all[.d_all[[.s$id]] %in% r$ID, , drop = FALSE]
+# vt-fit capped an age column when AGE_CAP was set; the forests saw the capped
+# values, so the betas and strata here must too.
+.age_cap <- .vt$eligibility$age_cap
+if (!is.null(.age_cap)) .d_all[[names(.age_cap)]] <- pmin(.d_all[[names(.age_cap)]], unname(.age_cap))
 ```
 
 ## The contrast
@@ -330,13 +334,14 @@ knitr::kable(.sens, digits = 2, row.names = FALSE)
 Eligibility is a line; this shows what lies near it. Each treated patient's difference is set against
 their distance to the nearest patient of the other arm, the arm whose forest gives their twin. A
 difference that grows as patients approach the line is borrowing from the edge of what the other arm
-covers.
+covers. For the isolation forest the distance is the patient's score under the other arm's forest, and the
+line is that arm's `ISOLATION_CUTOFF` quantile of its own scores.
 
 ```{r}
 #| label: fig-distance
 #| fig-cap: "Each treated patient's RMST difference against their distance to the nearest patient of the other
-#|   arm. Dashed: that arm's largest own gap, the eligibility line; dotted: its typical (median) gap. Ringed:
-#|   out of distribution."
+#|   arm (for the isolation forest, their score). Dashed: that arm's eligibility line, its largest own gap or
+#|   the isolation cutoff; dotted: its typical (median) gap or score. Ringed: out of distribution."
 .dd <- merge(r[!r$no_arm, c("ID", "received", "diff")],
              .vt$eligibility$rows[, c("ID", "method", "arm", "distance", "reference", "ratio", "in_distribution")],
              by = "ID")
@@ -366,7 +371,7 @@ if (!nrow(.dd)) {
     geom_point(data = .dd[!.dd$in_distribution, , drop = FALSE], shape = 1, size = 3.4, stroke = 0.9,
                color = "#B2182B") +
     facet_grid(method ~ panel, scales = "free_x") +
-    labs(x = "Distance to the nearest patient of the other arm",
+    labs(x = "Distance to the nearest patient of the other arm, or isolation score",
          y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"), color = "Favors") +
     scale_color_discrete(breaks = c("first", "second", "tie"), labels = c(ARMS, "neither")) +
     theme(legend.position = "bottom")

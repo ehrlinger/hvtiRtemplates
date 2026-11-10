@@ -451,6 +451,7 @@ test_that("vt-fit saves one handoff with every element", {
   expect_setequal(h$settings$calibration$arm, c("A", "B"))
   expect_identical(h$eligibility$ordinal, character())
   expect_true("features" %in% names(h$eligibility$rows))
+  expect_true(all(c("isolation", "age_cap", "outside_range") %in% names(h$eligibility)))
 })
 
 test_that("curves are reproducible when predictors are missing under na.impute", {

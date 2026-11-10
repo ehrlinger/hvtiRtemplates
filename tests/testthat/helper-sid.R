@@ -104,3 +104,27 @@ sid_render_clusters <- function(fixture, choices, before_csv = NULL, quiet = TRU
   quarto::quarto_render(job, execute_dir = dirname(job), quiet = quiet)
   sub("[.]qmd$", ".html", job)
 }
+
+# The helpers in sid-stability's `stability-helpers` chunk, evaluated alone.
+sid_stability_helpers_env <- function() {
+  src <- readLines(template_path("sid", "stability"), warn = FALSE)
+  env <- new.env(parent = globalenv())
+  eval(parse(text = rf_chunk(src, "stability-helpers")), envir = env)  # nolint: object_usage_linter.
+  env
+}
+
+# Three refits of the small sid_fit_choices forest: enough to exercise every
+# summary, each fit well under a second.
+sid_stability_choices <- list(REPEATS = 3, SEED_OFFSET = 100, TRACK = NULL, DROP_VARS = NULL, PAC_BAND = c(0.1, 0.9),
+                              SAVE_FIGURES = FALSE, FIGURES = NULL, REFIT = FALSE)
+
+# Every chunk of sid-stability, in order.
+sid_stability_labels <- c("setup", "edit-study-choices", "stability-helpers", "handoff", "refit-data", "refits",
+                          "summarize", "agreement-text", "tbl-stability", "fig-agreement", "tbl-label-free",
+                          "tbl-lost", "coassoc", "tbl-coassoc", "fig-coassoc", "tbl-drop", "save")
+
+# sid-stability run in the set a sid-fit and a sid-clusters just wrote, in the same study.
+sid_stability_after <- function(env, choices = sid_stability_choices) {
+  rf_skip_unless_stack(rf_template_packages("sid", "stability"))  # nolint: object_usage_linter.
+  rf_run("sid", "stability", sid_stability_labels, env, choices)  # nolint: object_usage_linter.
+}
