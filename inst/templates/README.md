@@ -95,8 +95,8 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dc-trends`,
-`dc-eda`, `hs-setup`, `hs-concordance`, `hs-score`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr`, `rhf` and `vp` fit and explain jobs, `vp-dependence`, `vp-individual`, `sid-fit`, `sid-clusters`, `sid-stability`, and the eight
-`lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
+`dc-eda`, `hs-setup`, `hs-concordance`, `hs-score`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr`, `rhf` and `vp` fit and explain jobs, `vp-dependence`, `vp-individual`, `sid-fit`, `sid-clusters`, `sid-stability`, the `vt` fit
+and explain jobs, the two `rm` jobs and the eight `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so
 in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
 existing job by its file. Use `hs-setup` for one model's predictions against the matched population, and
@@ -224,7 +224,7 @@ The layout rule is one sentence, and it holds in every folder:
 
 **A set is keyed on `(subject, analysis type)`, not on the subject alone.**
 One subject can be analyzed by several methods, and those chains share their
-upstream — a death-hazard set and a death random-forest-survival set both begin
+upstream: a death-hazard set and a death random-forest-survival set both begin
 from the same life table. Keyed on the subject alone, both would be written to
 `ac.death.qmd`. The cost of carrying the type on every job is that the shared
 upstream runs once per set rather than once per subject; the benefit is that a
@@ -239,7 +239,7 @@ The five job types
 [#8](https://github.com/ehrlinger/hvtiRtemplates/issues/8) offered as candidate
 content all ship now, `bh` last: `hz` in 1.0.6, `hp` in 1.0.7, `hm` in 1.0.8,
 `hs` in 1.0.12 and `bh` in 1.0.13. The bootstrap family joined it in 1.0.20:
-`bl`, `br` and `bc`. What is still untemplated is the rest of the taxonomy, and the roadmap ledger — not this file — is the authority on which
+`bl`, `br` and `bc`. What is still untemplated is the rest of the taxonomy, and the roadmap ledger, not this file, is the authority on which
 prefix is scheduled when:
 [`dev/specs/2026-08-29-template-conversion-roadmap.md`](../../dev/specs/2026-08-29-template-conversion-roadmap.md).
 
@@ -272,19 +272,19 @@ candidate pool and the dropped set a study author chooses, which is where
 a `bc` job none has an R exemplar. Read the first real output of any of the
 three against your own expectations, not as a checked path.
 
-`hz` and `hp` were each extracted from three R exemplars — `preserve_root`,
+`hz` and `hp` were each extracted from three R exemplars, `preserve_root`,
 `maze/atricure/gender` and `lv_function/survival`. **`hm` had only one R
 exemplar**, so its second was the SAS job at
 `cardiac/ischemic/cabg/diabetes/surg_factors/dm_nodm`, which is enough for the
 purpose: the gate exists to stop one study's choices being encoded as general,
 and a SAS job states those choices as plainly as an R one. It earned its place
-immediately — it carries a `%deciles` calibration step the R exemplar has no
+immediately: it carries a `%deciles` calibration step the R exemplar has no
 equivalent for, and without it the template would have shipped a
 model-selection job that never asks whether the model calibrates.
 
 ⚠️ **Two different questions get called "the gate", and they have different
 answers.** The corpus census below counts **SAS** jobs, which answers *will a
-template serve more than one study* — yes, everywhere. The gate's stated reason
+template serve more than one study*: yes, everywhere. The gate's stated reason
 is the other one: *are there two R implementations to generalise from*, since a
 template extracted from a single example encodes that study's choices as though
 they were general. Filtering the same census to its 1,144 `.qmd` rows answers
@@ -299,7 +299,7 @@ that one:
 | `hm` | **1** |
 | `hs` | 1 |
 
-That count is a lower bound — the census sees `.qmd` only, so a job written as
+That count is a lower bound: the census sees `.qmd` only, so a job written as
 `.R` or `.Rmd` is invisible to it, and the error direction is undercounting.
 
 `hz` was worth extracting on those three because they **disagree**, and the
@@ -310,11 +310,11 @@ made the other case silently wrong.
 
 `hm`, `hs` and `bh` are **not** blocked by the two-studies gate. An earlier
 version of this paragraph said each existed in only one study. That was read
-off a comparison of two directories — `preserve_root` and
-`maze/atricure/gender` — and stated as though it held for the corpus.
+off a comparison of two directories, `preserve_root` and
+`maze/atricure/gender`, and stated as though it held for the corpus.
 
 A corpus census (`hvtiRutilities::job_census()`, 2026-08-27) over the whole of
-`/studies` — **2,240,570 files** across all four top-level trees:
+`/studies`, **2,240,570 files**, across all four top-level trees:
 
 | prefix | claimed | measured |
 |---|---|---|
@@ -323,13 +323,13 @@ A corpus census (`hvtiRutilities::job_census()`, 2026-08-27) over the whole of
 | `hs` | 1 study | **144 studies** |
 
 **No taxonomy prefix anywhere in the corpus sits at one study.** The whole
-"BLOCKED" list is empty. The smallest are `bq` at 2 studies and `cp`/`pm` at 5
-— still past the gate. The two-studies gate is open for every prefix the
+"BLOCKED" list is empty. The smallest are `bq` at 2 studies and `cp`/`pm` at 5,
+both still past the gate. The two-studies gate is open for every prefix the
 taxonomy documents, and nothing is waiting on a second exemplar.
 
 The two-directory counts were accurate about those two directories; the
 inference from them was not. **Do not quote a per-study count as a gate
-answer** — run `job-census.R /studies` server-side, which is what the gate
+answer**: run `job-census.R /studies` server-side, which is what the gate
 question is for. `hs` was missing from this list before it was corrected, and
 its absence read as "templated".
 
@@ -398,7 +398,7 @@ as on a Mac without XQuartz.
 |---|---|
 | ac | `ac-survival`, and `ac-survival-<stratum variable>` for each variable in `STRATA` |
 | dc-gfup | `dc-gfup-<panel>` |
-| dc-stddiff | `dc-stddiff-balance` |
+| dc-stddiff | `dc-stddiff-balance-page-<NN>` |
 | dc-tables | `dc-tables-correlation-matrix` (in `descriptive/`) |
 | dc-eda | `dc-eda-gfup-<panel>`, `dc-eda-<section>-page-<NN>` |
 | dc-trends | `dc-trends-<trend>-<subgroup>` |
@@ -409,8 +409,8 @@ as on a Mac without XQuartz.
 | lg | `lg-<covariate>`, one for each covariate in `VARIABLES`, such as `lg-age` |
 | lp-mirror | `lp-mirror-unmatched`, `lp-mirror-weighted`, and `lp-mirror-matched` when `MATCH` is set |
 | bc, bh, bl, br | `<prefix>-frequencies` |
-| nb-boostmtree | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>`, `-traces` |
-| rfc-, rfr-, rfs-explain | `<template>-importance`, `-dependence-marginal`, `-dependence-partial`, and with `BANDS_B` above 0 `-importance-intervals` and `-dependence-partial-bands` |
+| nb-boostmtree | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>-page-<NN>`, `-traces` |
+| rfc-, rfr-, rfs-explain | `<template>-importance`, `-dependence-marginal-page-<NN>`, `-dependence-partial-page-<NN>`, and with `BANDS_B` above 0 `-importance-intervals` and `-dependence-partial-bands-page-<NN>` |
 | rfc-fit | `rfc-fit-diagnostics-error`, `-roc` |
 | rfr-fit | `rfr-fit-diagnostics-error`, `-predicted` |
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier` |
@@ -464,7 +464,7 @@ finished. **Every chunk holding a marker is labeled `edit-`**, so the
 editor's chunk outline lists the work to do: `edit-study-choices` first, then
 any others such as `edit-derive`. Markers in prose, outside a chunk, are found
 by searching for `EDIT:`, and the guard below lists them all. The comments around them record why a choice matters, not merely what
-to type — several exist because the alternative fails quietly rather than
+to type. Several exist because the alternative fails quietly rather than
 loudly.
 
 **That property is enforced, not merely stated.** Each template's
@@ -518,7 +518,7 @@ unchanged. If publication fails after the output changes, the hooks withhold a
 prior sidecar whose recorded hash no longer matches and report the retained
 recovery backup.
 
-The guard does not catch a marker that was worked *wrongly* — a placeholder
+The guard does not catch a marker that was worked *wrongly*: a placeholder
 replaced with a mistyped column name leaves nothing to scan for. That case is
 covered separately, by assertions in `derive_cats()` and against `DERIVED`,
 which fail when a named column is not in the data.

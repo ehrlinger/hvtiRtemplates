@@ -719,8 +719,9 @@ cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(list(
 * **Out of distribution.** A patient far from every patient on the arm a twin
   borrows its curve from gets a prediction the forest has no data to support.
   Those patients are flagged by the fit's eligibility rules and left out of
-  every summary here; the sensitivity table shows how much that choice moves
-  the answer.
+  the medians, boxes and counts here. The distance and stratum figures draw
+  them ringed, and the sensitivity table shows how much the choice moves the
+  answer.
 * **An arm whose interval includes 0.5.** Where the C-index interval of an
   arm's forest includes 0.5, that forest does not rank patients better than
   chance, so its half of every difference is exploratory. The received-best

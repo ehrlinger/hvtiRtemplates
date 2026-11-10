@@ -38,8 +38,9 @@ the per-year summary itself, so this job never aggregates by hand. The
 `group_by()`/`summarize()` blocks and the per-series `smooth.spline()` calls that
 older trends jobs carry are exactly what it replaces.
 
-Two neighbors are **not** this job. Procedure volume per year is `dp-procs`, and
-the distribution of a single variable is `dc-variable`.
+Two neighbors are **not** this job, and neither has a template yet. Procedure
+volume per year is `dp-procs`, and the distribution of a single variable is
+`dc-variable`.
 
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. Every

@@ -225,7 +225,8 @@ ALPHA <- 0.5
 # report, in their section order: a built dataset carries far more columns than
 # anyone wants a page for. Only the listed columns this dataset has are drawn,
 # and the report counts them. It also lists this dataset's columns left out, so a
-# study's own variables are one name away in VARIABLES. "all" draws every column, as dc-eda did before this choice existed.
+# study's own variables are one name away in VARIABLES. "all" draws every column,
+# as dc-eda did before this choice existed.
 # The list ships with the package as extdata/ods-variables.csv, so a study adds to
 # VARIABLES rather than editing it. To read it: hvtiRtemplates:::.ods_groups().
 # dc-tables carries the same list as its commented GROUPS example.

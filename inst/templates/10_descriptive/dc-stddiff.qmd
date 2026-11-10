@@ -119,7 +119,7 @@ KEY <- ID
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
-#     breaks it. This job models one row per
+#     breaks it. This job needs one row per
 #     patient, so a JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL

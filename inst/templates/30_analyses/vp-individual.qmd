@@ -373,7 +373,7 @@ save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = bee_height)
 #| results: asis
 # unnumbered: each page below is a child chunk with its own label and caption
 # Each figure is drawn a page at a time, panels in a grid no larger than the
-# printed page (6.5 by 9 in), and each page is a child chunk of its own so
+# printed page (6.5 by 6 in here), and each page is a child chunk of its own so
 # Quarto numbers it.
 .fence <- strrep("`", 3)
 .page_child <- function(kind, i, pages, vars, caption) {

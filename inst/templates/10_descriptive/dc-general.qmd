@@ -30,9 +30,9 @@ uses base procedures only.
 
 The tables below are checks on the data, not tables for a paper. For a
 manuscript table, run a `dc-tables` job alongside this one:
-`add_job("dc", SUBJECT, TYPE, qualifier = "tables")`. It takes the same grouped
-variable lists, renders them in the CORR house format, and saves the table to
-Word.
+`add_job("dc", SUBJECT, TYPE, qualifier = "tables")`. It takes variables grouped
+under the same section headings, renders them in the CORR house format, and saves
+the table to Word.
 
 ```{r}
 #| label: setup

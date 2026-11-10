@@ -49,8 +49,8 @@ patients' fitted trajectories.
      subject/type rather than editing this copy in place.
 
      A set is keyed on (subject, analysis type), not on the subject alone.
-     One subject may be analyzed by several methods -- parametric hazard, random
-     forest survival, competing risks -- and those chains share their upstream.
+     One subject may be analyzed by several methods, such as parametric hazard,
+     random forest survival or competing risks, and those chains share their upstream.
      Two sets keyed on `dead_pa` alone would write their life tables to the
      same file. -->
 
@@ -66,8 +66,8 @@ TYPE    <- "boost"
 # non-cross-validated result is wrong: partial and marginal effects, importance,
 # and predict(use.cv.flag = FALSE). Reported upstream as kogalur/boostmtree#2;
 # the fix is kogalur/boostmtree#3. The version floor separates the fork from
-# CRAN today. Should upstream release a 2.0.2 without the fix, this check would
-# pass it; read the installed package's NEWS if in doubt. 2.0.8 is the floor
+# CRAN today. Should upstream release a version of 2.0.8 or later without the
+# fix, this check would pass it; read the installed package's NEWS if in doubt. 2.0.8 is the floor
 # because it adds the progress = argument of boostmtree() and partial.plot(), which
 # the fit and the partial effects below use to report how far they have got; it
 # also keeps boostmtree.control(cv.cores = ), added in 2.0.4, which the fit uses.
@@ -222,7 +222,7 @@ REFIT <- FALSE
 
 # Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("nb-boostmtree-error"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -424,7 +424,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 #| label: fig-error
 #| fig-cap: "Cross-validated error by boosting iteration. The black solid line is the error after each iteration, and the
 #|   black dashed vertical line marks the iteration with the lowest error, Best M."
-# The cross-validated error by iteration, and the fitted rho, phi and lambda.
+# The cross-validated error by iteration; the next figure draws the fitted rho, phi and lambda.
 # Best M at the right edge means M was too small.
 p_error <- plot(gg_boost_error(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(p_error, "nb-boostmtree-error")

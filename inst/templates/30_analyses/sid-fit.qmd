@@ -293,7 +293,7 @@ cat("Values imputed in each of", M, "imputation(s):", .n_missing, "\n")
 # sidClustering() catches an error inside randomForestSRC and returns dist = NULL
 # instead of stopping, so the check inside the cached expression turns that into
 # a stop: a failed fit is then never cached, and the message names the imputation.
-# Only the distance and the kept variables are cached; the 5000-tree forest, which
+# Only the distance and the kept variables are cached; the forest, which
 # holds patient values, is left out of the cache as it is of sid.rds.
 sid_fits <- lapply(seq_len(M), function(m) {
   if (anyNA(d_complete[[m]])) stop("Missing values reached the SID fit after imputation ", m, ".", call. = FALSE)

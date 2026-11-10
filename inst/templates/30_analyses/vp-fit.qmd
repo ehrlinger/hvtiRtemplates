@@ -46,7 +46,7 @@ refitted on subsamples of the patients and the share of refits selecting each
 variable is reported.
 
 The selected set is saved for a later model job. `vp-explain` in this set
-draws VarPro's partial dependence for it.
+draws VarPro's partial dependence for it, and `vp-individual` its patient-level gradients.
 
 This template is **in flight**: it is built from one study's screen, and a
 second study running it through to its stability section is what moves it to
@@ -128,8 +128,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
                                 SAVE_FIGURES, FIGURES, linked)
 }
 
-# `vp-fit` writes vp.rds and `vp-explain` reads it back, both by set. The write
-# is the `save` chunk near the foot of this file.
+# `vp-fit` writes vp.rds, and `vp-explain` and `vp-individual` read it back, all by set.
+# The write is the `save` chunk near the foot of this file.
 # The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
@@ -719,7 +719,7 @@ The screen refitted `REPEATS` times, each on a subsample of the patients drawn
 without replacement and with a fresh noise draw. A variable selected in most
 refits holds up; one selected once in a while is the screen's own noise. When
 `SELECT_SHARE` is set, the variables selected in at least that share of the
-refits are the set this job hands to vp-explain, in place of the full fit's.
+refits are the set this job hands on, in place of the full fit's.
 
 ```{r}
 #| label: tbl-stability
@@ -773,7 +773,7 @@ if (REPEATS > 0) {
 its importance in each tree, and a tree with no usable rule for the variable
 counts as zero. A variable tested in fewer than `TRIM` of the trees therefore
 scores exactly 0. A variable that is not eligible was never tested at all.
-Neither is evidence of no effect; the variable simply was not examined. Read
+Neither is evidence of no effect; the variable was not examined. Read
 z beside coverage: a z of 0 with low coverage means untested.
 
 **Tested is not the same as detectable.** With few events, a real effect can
@@ -810,7 +810,7 @@ share near `SELECT_SHARE` is a vote on the edge, not a failure.
 
 ```{r}
 #| label: save
-# The product of this job, and what vp-explain reads: the fit, its judged
+# The product of this job, and what vp-explain and vp-individual read: the fit, its judged
 # coverage and the selected set, in one file, so they cannot drift apart. It is
 # separate from the cache on purpose: cache_fit() stores a keyed record, so the
 # cache is this job's internals and this file is its interface. `family` is
@@ -827,7 +827,7 @@ vp_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   data = .provenance_data,
   analysis = .analysis,
   cohort = .cohort,
-  # vp-explain takes the rows, ID and KEY of this screen from this record.
+  # vp-explain and vp-individual take the rows, ID and KEY of this screen from this record.
   selection = attr(job_data$record, "selection")
 )
 saveRDS(vp_handoff, set_path("estimates", "vp.rds"))

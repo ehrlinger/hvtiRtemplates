@@ -173,8 +173,8 @@ SEED  <- 2026
 # EDIT: the number of terminal nodes in each tree. NULL chooses it by
 # out-of-bag risk with tune.treesize.rhf(), and the figure below shows the
 # search. Tree size is the setting a hazard forest is most sensitive to, which
-# is why this template tunes it where the rfs templates tune nothing; a number
-# skips the search, which is slow on a large study.
+# is why this template tunes it by default, where `rfs-fit` tunes its leaf size
+# only on request; a number skips the search, which is slow on a large study.
 TREESIZE <- NULL
 
 # Needs no edit unless the dataset has a defect. Repairs this job makes to the
@@ -316,9 +316,10 @@ for (.v in names(CAPS)) {
 #| tbl-cap: "The counting-process rows the forest is grown on"
 # randomForestRHF refuses overlapping intervals only after the data are loaded,
 # and names no patient. These checks run first and say what to fix: an overlap,
-# an interval of zero length, an event before a patient's last interval, an
-# event not coded 0/1, or a missing predictor stops the render here. Gaps
-# between intervals are allowed, and counted.
+# an interval of zero or negative length, an event before a patient's last
+# interval, an event not coded 0/1, or a missing predictor stops the render here,
+# unless REPAIR clips the overlap or empty interval, or drops the interval missing
+# a predictor. Gaps between intervals are allowed, and counted.
 .cp <- hvtiRtemplates:::.cp_check(d, id = .selection$id, start = START, stop = STOP, event = EVENT,
                                   predictors = PREDICTORS, repair = REPAIR)
 d <- .cp$data
@@ -387,8 +388,9 @@ model <- Surv(id, start, stop, event) ~ .
 # was made in; set it, so a job run anywhere else does not write every object
 # beside the formula, `job_data` and its patient IDs included, into the forest.
 environment(model) <- globalenv()
-# Each cache holds the forest and so every interval it was grown on: written
-# owner-only from the start, and set so if an older cache is already there.
+# The forest cache holds the forest and so every interval it was grown on, so it
+# is written owner-only from the start, and set so if an older cache is already
+# there. The search's cache holds results only, and is kept owner-only beside it.
 .cache_files <- file.path(CACHE_DIR, c("rhf-treesize.rds", "rhf-forest.rds"))
 # Hours at study size. Started from the console it dies with the session, so an
 # uncached fit is refused there: run the job with hvtiRtemplates::submit_job().
