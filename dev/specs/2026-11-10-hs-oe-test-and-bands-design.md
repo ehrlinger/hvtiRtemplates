@@ -202,10 +202,10 @@ Two tests in `test-hs-concordance.R`, through the existing hazard fixtures
 For each grid time `t`, with `S_i(t)` patient *i*'s predicted survival and
 `[L_i(t), U_i(t)]` its limits at `CLEVEL`:
 
-| | name in the report | what it is | what it is NOT |
+| | name in the report | what it is | what it is NOT, or why it waits |
 |---|---|---|---|
 | (a) | **average of the patients' limits** | `mean(L_i)`, `mean(U_i)`. Exact for the mean curve only if every patient's error is perfectly correlated, so its half-width is an **upper bound** on (b)'s at the same coverage, on the scale the limits are formed on (the SD of a sum is at most the sum of the SDs) | the CI of the mean |
-| (b) | **confidence interval of the mean curve** | the uncertainty of `mean(S_i(t))` from the reference model's parameter uncertainty | yet available: TemporalHazard does not expose what it needs (section 5.2) |
+| (b) | **confidence interval of the mean curve** | the uncertainty of `mean(S_i(t))` from the reference model's parameter uncertainty | available yet: TemporalHazard does not expose what it needs (section 5.2) |
 | (c) | **spread of the patients' predictions** | `mean(S_i) +/- SD(S_i)`, or the quartiles | a confidence interval of anything. It measures heterogeneity among patients, and does not narrow as the cohort grows |
 
 The template asks the author to choose, with `BAND <- NULL` stopping the
