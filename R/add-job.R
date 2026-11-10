@@ -128,10 +128,8 @@
 #' # set's subject and type: here, the hazard analysis of reoperation.
 #' add_job("dc.gfup", subject = "reop", type = "hz", dir = d)
 #'
-#' # A template's name before a rename still works, and the warning names the
-#' # new one.
-#' tryCatch(add_job("dp.trends", subject = "cohort", type = "eda", dir = d),
-#'          warning = conditionMessage)
+#' # A template's name before a rename is an error that names the new one.
+#' try(add_job("dp.trends", subject = "cohort", type = "eda", dir = d))
 #'
 #' # A job accumulates a study's edits, so an existing one is never overwritten.
 #' try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
