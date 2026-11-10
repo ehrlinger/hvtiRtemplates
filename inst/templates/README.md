@@ -17,11 +17,11 @@ refuses to overwrite an existing job.
 | `40_graphs/hs-concordance.qmd` | every patient through every treatment group's model, with an optional best-treatment table | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-score.qmd` | each start/stop segment scored at its own start with a time-varying model | `40_graphs/` or `graphs/` |
 | `40_graphs/lp-mirror.qmd` | mirrored histogram of a saved propensity score: all patients, under the matching weights, and matched | `40_graphs/` or `graphs/` |
-| `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations: the statistician's formatted table, not the data check (that is `dc-eda`) | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-gfup.qmd` | follow-up interval checks, potential follow-up and the goodness-of-follow-up figure | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-general.qmd` | general descriptive checks (base procedures) | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-stddiff.qmd` | balance table: standardized differences between two groups, unadjusted, matched and weighted | `10_descriptive/` or `descriptive/` |
-| `10_descriptive/dc-eda.qmd` | the whole EDA report: overview, follow-up, then the continuous, percent and count sections, each with its table | `10_descriptive/` or `descriptive/` |
+| `10_descriptive/dc-eda.qmd` | the whole EDA report: overview, follow-up, then the continuous, percent and count sections, each with its table; the data check the SAS ODS tables were | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/dc-trends.qmd` | trends over operation year (EDA) | `10_descriptive/` or `descriptive/` |
 | `10_descriptive/lg.qmd` | logit calibration: an event's group rates against six scales of a covariate, and the scale chosen for an `lm` job | `10_descriptive/` or `descriptive/` |
 | `30_analyses/hm.qmd` | multivariable hazard model | `30_analyses/` or `analyses/` |
