@@ -249,7 +249,8 @@ eda_chunk <- function(label) {
 # The choices the spec chunk reads, with a stand-in label_map(); `...` replaces
 # any of them, NULL included.
 eda_spec_env <- function(d, ...) {
-  env <- list2env(list(d = d, X_VAR = "year", X_LABEL = "Year of operation", VARIABLES = NULL, VARIABLE_SET = "all",
+  env <- list2env(list(d = d, X_VAR = "year", X_LABEL = "Year of operation", X_UNIT = "auto", VARIABLES = NULL,
+                       VARIABLE_SET = "all",
                        EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
@@ -265,7 +266,8 @@ test_that("dc-eda's spec chunk checks every variable and plotting choice", {
   env <- eda_spec_env(data.frame(year = 1:10, age = 41:50, hosp_id = 11:20, visit_date = 21:30),
                       VARIABLES = "age")
   expect_no_error(eval(spec, env))
-  for (field in c("X_VAR", "X_LABEL", "VARIABLES", "VARIABLE_SET", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT", "SECTIONS",
+  for (field in c("X_VAR", "X_LABEL", "X_UNIT", "VARIABLES", "VARIABLE_SET", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT",
+                  "SECTIONS",
                   "ALPHA", "LABEL_MAX", "ABBREVIATIONS")) {
     original <- env[[field]]
     env[[field]] <- NA
@@ -318,6 +320,72 @@ test_that("a date X_VAR is drawn as a decimal year under X_LABEL: whole-year bar
   points <- eda_first_panel(env, "continuous", "age")
   expect_identical(points$labels$x, "Year of operation")
   expect_true(any(ggplot2::ggplot_build(points)$data[[1L]]$x %% 1 != 0))
+})
+
+test_that("a date X_VAR spanning under three years is drawn in months, and X_UNIT can force either", {
+  skip_if_not_installed("hvtiPlotR")
+  # Six months of operations, the shape that drew one bar and a 2026.0 to 2026.5 axis.
+  dates <- as.Date(c("2026-01-28", "2026-02-03", "2026-02-20", "2026-04-11", "2026-05-02", "2026-05-30",
+                     "2026-06-15", "2026-07-01", "2026-07-09", "2026-07-20"))
+  d <- data.frame(dt_surg = dates, age = 41:50, valve = factor(rep(c("A", "B"), 5L)))
+  env <- eda_spec_env(d, X_VAR = "dt_surg", VARIABLES = c("age", "valve"))
+  eval(eda_chunk("spec"), env)
+  # The template's default label follows the unit; the data as read are left alone.
+  expect_identical(env$X_LABEL, "Month of operation")
+  expect_false("Month of operation" %in% names(env$d))
+  expect_s3_class(env$.d_eda[["Month of operation"]], "Date")
+  months <- env$.d_eda_bars[["Month of operation"]]
+  # Every calendar month from the first to the last, in order, March included though empty.
+  expect_identical(levels(months), format(seq(as.Date("2026-01-01"), as.Date("2026-07-01"), by = "month"), "%b %Y"))
+  expect_identical(as.character(months[c(1L, 10L)]), format(as.Date(c("2026-01-01", "2026-07-01")), "%b %Y"))
+  # The plotted axis keeps the empty March: the bars re-factor the month, so the
+  # page carries the months as the axis limits, as draw_section() adds them.
+  src <- readLines(template_path("dc", "eda"), warn = FALSE)
+  expect_length(grep("& scale_x_discrete(limits = levels(.x_bars))", src, fixed = TRUE), 1L)
+  for (section in c("percent", "count")) {
+    sec <- hvtiPlotR::hv_eda_pages(env$.d_eda_bars, x_col = env$X_LABEL, section = section, vars = "valve")
+    page <- plot(sec, ncol = 2L, nrow = 4L)[[1L]] & ggplot2::scale_x_discrete(limits = levels(months))
+    bars <- page[[1L]]
+    expect_identical(bars$labels$x, "Month of operation")
+    expect_identical(ggplot2::ggplot_build(bars)$layout$panel_params[[1L]]$x$get_labels(), levels(months), info = section)
+  }
+  points <- eda_first_panel(env, "continuous", "age")
+  expect_no_error(ggplot2::ggplot_build(points))
+
+  # A date-time falls in the month of the day it was recorded, not its UTC day.
+  late <- data.frame(dt_surg = as.POSIXct(c("2026-01-15 09:00", "2026-03-31 23:30"), tz = "America/New_York"),
+                     age = 41:42)
+  env_late <- eda_spec_env(late, X_VAR = "dt_surg", VARIABLES = "age")
+  eval(eda_chunk("spec"), env_late)
+  expect_identical(env_late$.d_eda[["Month of operation"]][[2L]], as.Date("2026-03-31"))
+  expect_identical(as.character(env_late$.d_eda_bars[["Month of operation"]][[2L]]), format(as.Date("2026-03-01"), "%b %Y"))
+  expect_identical(tail(levels(env_late$.d_eda_bars[["Month of operation"]]), 1L), format(as.Date("2026-03-01"), "%b %Y"))
+
+  # A label the study chose is kept, and X_UNIT = "year" restores the decimal year.
+  env <- eda_spec_env(d, X_VAR = "dt_surg", X_LABEL = "Date of enrollment", VARIABLES = "age")
+  eval(eda_chunk("spec"), env)
+  expect_identical(env$X_LABEL, "Date of enrollment")
+  env <- eda_spec_env(d, X_VAR = "dt_surg", X_UNIT = "year", VARIABLES = "age")
+  eval(eda_chunk("spec"), env)
+  expect_identical(env$X_LABEL, "Year of operation")
+  expect_true(all(floor(env$.d_eda[["Year of operation"]]) == 2026))
+  expect_identical(env$.d_eda_bars, env$.d_eda)
+
+  # A long cohort stays in years under "auto" and can be forced into months.
+  long <- data.frame(dt_surg = as.Date("2001-01-01") + 365 * 0:9, age = 41:50)
+  env <- eda_spec_env(long, X_VAR = "dt_surg", VARIABLES = "age")
+  eval(eda_chunk("spec"), env)
+  expect_type(env$.d_eda[["Year of operation"]], "double")
+  env <- eda_spec_env(long, X_VAR = "dt_surg", X_UNIT = "month", VARIABLES = "age")
+  eval(eda_chunk("spec"), env)
+  expect_s3_class(env$.d_eda[["Month of operation"]], "Date")
+
+  # A numeric X_VAR is drawn as it is, whatever X_UNIT says.
+  env <- eda_spec_env(data.frame(year = 2001:2010, age = 41:50), X_UNIT = "month", VARIABLES = "age")
+  eval(eda_chunk("spec"), env)
+  expect_identical(env$.d_eda[["Year of operation"]], 2001:2010)
+  expect_error(eval(eda_chunk("spec"), eda_spec_env(d, X_VAR = "dt_surg", X_UNIT = "months", VARIABLES = "age")),
+               "X_UNIT must be")
 })
 
 test_that("a numeric X_VAR is drawn as it is, under X_LABEL", {
@@ -461,7 +529,7 @@ test_that("dc-eda's overview leaves out identifiers but keeps dates", {
                                       patientid = sprintf("P%03d", seq_len(n)), carotid = rep(0:1, 6), eMRN = 5000L + seq_len(n),
                                       mrn_num = rep(0:1, 6),
                                       bnp_mrna = 0.5 * seq_len(n), dt_surg = as.Date("2020-01-01") + seq_len(n)),
-                       X_VAR = "year", X_LABEL = "Year of operation", VARIABLES = "age",
+                       X_VAR = "year", X_LABEL = "Year of operation", X_UNIT = "auto", VARIABLES = "age",
                        VARIABLE_SET = "all", EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
