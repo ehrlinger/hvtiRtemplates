@@ -41,6 +41,7 @@ refuses to overwrite an existing job.
 | `30_analyses/vp-individual.qmd` | Each patient's VarPro gradient for each predictor, from a `vp-fit` screen (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/sid-fit.qmd` | SID clustering forest on the clustering variables, after mice or forest imputation pooled over M (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/sid-clusters.qmd` | PAM over K on a `sid-fit` distance: K metrics, letters stable across K, Sankey, registered assignments (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/sid-stability.qmd` | SID refits over many seeds on `sid-fit`'s imputed data: agreement with the `sid-clusters` groups, how often each is found, where a lost group goes, co-association and PAC, an optional tracked share and a refit without named variables (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/vt-fit.qmd` | virtual twins: one survival forest per arm, out-of-bag own-arm and swapped-arm curves, a per-patient RMST difference, eligibility by Gower and SID combined by a stated rule (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/vt-explain.qmd` | the virtual-twins contrast by arm, eligibility rule and stratum, standardized betas and who might benefit (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/rhf-fit.qmd` | random hazard forest on counting-process rows with time-varying predictors: the rows checked, tree size tuned, forest grown (in flight) | `30_analyses/` or `analyses/` |
@@ -94,7 +95,7 @@ decade gaps are room to insert without renumbering.
 
 The qualifier exists because one prefix can name several jobs. The current
 qualified templates are `dc-general`, `dc-tables`, `dc-gfup`, `dc-stddiff`, `dc-trends`,
-`dc-eda`, `hs-setup`, `hs-concordance`, `hs-score`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr`, `rhf` and `vp` fit and explain jobs, `vp-dependence`, `vp-individual`, `sid-fit`, `sid-clusters`, and the eight
+`dc-eda`, `hs-setup`, `hs-concordance`, `hs-score`, `lp-mirror`, the paired `rfs`/`rfc`/`rfr`, `rhf` and `vp` fit and explain jobs, `vp-dependence`, `vp-individual`, `sid-fit`, `sid-clusters`, `sid-stability`, and the eight
 `lm` jobs described below. `hs-setup` was `hs` until a second `hs` job, `hs-concordance`, was added;
 jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "setup")` looks for the new name, so
 in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
@@ -420,6 +421,7 @@ as on a Mac without XQuartz.
 | vp-dependence | `vp-dependence-graph`, `-heatmap` |
 | vp-individual | `vp-individual-beeswarm`, `vp-individual-gradient-page-<NN>` |
 | sid-clusters | `sid-clusters-metrics`, `-sankey`, `-silhouette`, `-mds` |
+| sid-stability | `sid-stability-agreement`, `-coassociation` |
 | vt-fit | `vt-fit-km`, `-eligibility`, `-calibration`, `-curves` |
 | vt-explain | `vt-explain-contrast`, `-ranking`, `-twin-curves`, `-received-best`, `-components`, `-distance`, `-stratum`, `-stratum-curves`, `-betas` |
 | rm-linear | `rm-linear-residuals`, `rm-linear-qq` |
