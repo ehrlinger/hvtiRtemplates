@@ -2,7 +2,7 @@
 # beside the p-value, mean +/- SD for named variables, the report's table in the
 # report style, and the Word table in the manuscript style shown beneath it.
 
-dc_tables_study <- function(.local_envir = parent.frame()) {
+dc_tables_study <- function(.local_envir = parent.frame(), extra = NULL) {
   root <- file.path(withr::local_tempdir(.local_envir = .local_envir), "dc-tables-study")
   suppressMessages(hvtiRutilities::study_setup(root, study = "dc-tables render", study_tracker_id = 1L, renv = FALSE))
   n <- 60L
@@ -17,6 +17,7 @@ dc_tables_study <- function(.local_envir = parent.frame()) {
     nyha = 1L + (seq_len(n) * 11L) %% 4L,
     race = c("W", "B", "W", "O", "W")[1L + seq_len(n) %% 5L]
   )
+  if (!is.null(extra)) built <- cbind(built, extra)
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, file = "built.csv")))
   root
@@ -144,7 +145,8 @@ test_that("dc-tables left at GROUPS NULL reports the ODS list's columns the data
   skip_on_cran()
   skip_if_not_installed("quarto")
   withr::local_envvar(HVTI_TEMPLATE_STRICT = NA)
-  root <- dc_tables_study()
+  # dead is on the ODS list and never recorded: it is named, and the rest still draws.
+  root <- dc_tables_study(extra = data.frame(dead = NA))
   job <- add_job("dc", "cohort", "tables", qualifier = "tables", dir = root)
   lines <- readLines(job, warn = FALSE)
   expect_length(grep("^GROUPS <- NULL$", lines), 1L)
@@ -159,6 +161,7 @@ test_that("dc-tables left at GROUPS NULL reports the ODS list's columns the data
   # Of this dataset's columns only age and female are on the list; the rest are named, not drawn.
   expect_match(html, "2 of the [0-9]+ columns on the house ODS list are in this dataset", perl = TRUE)
   expect_match(html, "creat, redo, nyha, race", fixed = TRUE)
+  expect_match(html, "ODS columns with no values recorded: dead", fixed = TRUE)
   docx <- list.files(hvtiRutilities::study_dir("documents", root), pattern = "[.]docx$",
                      recursive = TRUE, full.names = TRUE)
   expect_length(docx, 1L)

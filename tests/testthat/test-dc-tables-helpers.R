@@ -215,6 +215,14 @@ test_that("GROUPS NULL reports the ODS list's columns the data has, in the data'
   # BY is the table's columns, never a row; a section it empties is dropped.
   expect_identical(run(d, by = "dead")$groups, list(Demography = c("female", "AGE")))
   expect_error(run(data.frame(x = 1)), "None of the house ODS list's columns")
+  # An ODS column with nothing recorded is left out and named, so the table
+  # still draws; one with every column empty has nothing to draw.
+  d$AGE <- NA_real_
+  empty <- run(d)
+  expect_identical(empty$groups, list(Demography = "female", `Time-related Outcomes` = "dead"))
+  expect_match(empty$out[[1L]], "^2 of the [0-9]+ columns")
+  expect_true(any(grepl("no values recorded: AGE", empty$out, fixed = TRUE)))
+  expect_error(run(data.frame(age = NA, female = NA)), "None of the house ODS list's columns has a value")
   # A study's own groups pass through untouched, and a malformed one is named.
   mine <- list(Mine = c("not_listed", "grp"))
   expect_identical(run(d, mine)$groups, mine)

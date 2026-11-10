@@ -483,11 +483,17 @@ if (is.null(GROUPS)) {
   .on_list <- tolower(names(d)) %in% unlist(.ods, use.names = FALSE)
   .lower <- tolower(names(d))
   GROUPS <- lapply(.ods, function(v) setdiff(names(d)[match(intersect(v, .lower), .lower)], BY))
-  GROUPS <- Filter(length, GROUPS)
+  # A column the dataset carries but never fills is left out, by name: the
+  # table refuses a row with no values, and one unpopulated ODS field should
+  # not stop the rest. A column named in GROUPS by hand still stops, as asked.
+  .empty <- names(d)[vapply(d, function(x) all(is.na(x)), logical(1))]
+  .empty <- intersect(unlist(GROUPS, use.names = FALSE), .empty)
+  GROUPS <- Filter(length, lapply(GROUPS, setdiff, y = .empty))
   if (!length(GROUPS)) {
-    stop("None of the house ODS list's columns is in this dataset. Name the rows in GROUPS.", call. = FALSE)
+    stop("None of the house ODS list's columns has a value in this dataset. Name the rows in GROUPS.", call. = FALSE)
   }
   cat(length(unlist(GROUPS)), "of the", length(unlist(.ods)), "columns on the house ODS list are in this dataset.\n")
+  if (length(.empty)) cat("Not in the table, as ODS columns with no values recorded:", paste(.empty, collapse = ", "), "\n")
   if (any(!.on_list)) {
     cat("Not in the table, as columns outside the house ODS list (name them in GROUPS to report them):",
         paste(names(d)[!.on_list], collapse = ", "), "\n")
