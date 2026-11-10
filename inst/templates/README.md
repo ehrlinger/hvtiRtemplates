@@ -14,7 +14,7 @@ refuses to overwrite an existing job.
 | `20_distributions/hz.qmd` | multiphase parametric hazard fit | `20_distributions/` or `distributions/` |
 | `40_graphs/hp.qmd` | nomogram and hazard figures | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-setup.qmd` | patient-level predictions and expected survival | `40_graphs/` or `graphs/` |
-| `40_graphs/hs-concordance.qmd` | every patient through every treatment group's model, with an optional best-treatment table | `40_graphs/` or `graphs/` |
+| `40_graphs/hs-concordance.qmd` | every patient through every treatment group's model, observed against expected deaths with a test, and an optional best-treatment table | `40_graphs/` or `graphs/` |
 | `40_graphs/hs-score.qmd` | each start/stop segment scored at its own start with a time-varying model | `40_graphs/` or `graphs/` |
 | `40_graphs/lp-mirror.qmd` | mirrored histogram of a saved propensity score: all patients, under the matching weights, and matched | `40_graphs/` or `graphs/` |
 | `10_descriptive/dc-tables.qmd` | CORR Word tables and optional correlations: the statistician's formatted table, not the data check (that is `dc-eda`) | `10_descriptive/` or `descriptive/` |
@@ -101,7 +101,9 @@ jobs scaffolded under the old name keep it. `open_job("hs", ..., qualifier = "se
 in a study that already has `<subject>-<type>-hs.qmd` (or `hs.<subject>.<type>.qmd`) it scaffolds a fresh `hs-setup` job beside it: open the
 existing job by its file. Use `hs-setup` for one model's predictions against the matched population, and
 `hs-concordance` when each treatment group has its own `hm` model and every patient is to be predicted through
-each of them. `hs-score` is for an `hm` model fitted on start/stop segments, which `hs-setup` refuses:
+each of them, or when one cohort is scored through a single model fitted on another (`GROUP <- NULL`). It also
+tests the deaths each group had against the deaths each model expects for it, the one-sample log-rank, which no
+comparison of curves gives. `hs-score` is for an `hm` model fitted on start/stop segments, which `hs-setup` refuses:
 it scores each segment at its own start, as the SAS jobs for a time-varying model do. `nb-boostmtree` is qualified from the start, because `nb` will also hold a BoostMLR job,
 `nb-boostmlr`, which is still to come.
 `lp` is qualified from its first template, `lp-mirror`, so a later `lp` shape, such as calibration, arrives as a
@@ -406,6 +408,7 @@ as on a Mac without XQuartz.
 | hm | `hm-calibration` |
 | hp | `hp-survival`, `hp-hazard`, `hp-phases` |
 | hs-setup | `hs-setup-expected` |
+| hs-concordance | `hs-concordance-expected-km`, `hs-concordance-spaghetti` |
 | lg | `lg-<covariate>`, one for each covariate in `VARIABLES`, such as `lg-age` |
 | lp-mirror | `lp-mirror-unmatched`, `lp-mirror-weighted`, and `lp-mirror-matched` when `MATCH` is set |
 | bc, bh, bl, br | `<prefix>-frequencies` |

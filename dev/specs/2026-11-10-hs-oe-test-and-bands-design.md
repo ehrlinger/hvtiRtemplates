@@ -1,7 +1,8 @@
 # `hs`: observed against expected with a test, a band for the average curve, and a check
 
 **Date:** 2026-11-10
-**Status:** design; Q1 to Q3 and Q5 to Q7 decided by the maintainer on 2026-11-10, Q4 and Q8 open. Not implemented.
+**Status:** design; Q1 to Q3 and Q5 to Q7 decided by the maintainer on 2026-11-10, and building approved
+the same day. Q4 is built as proposed; Q8 is open. Section 9 records where the build departs from the text above.
 **Origin:** a call on 2026-11-10 about a study whose ~689 patients were scored
 through a SAS `hs` model fitted on ~7,200 other patients. Each patient's
 predicted curve was averaged into an expected curve and set against the
@@ -426,7 +427,36 @@ template's existing ones do. No version bump in the pull request.
 
 ---
 
-## 9. References
+## 9. As built, 2026-11-10
+
+Where the build departs from sections 4 to 6, and why.
+
+- **One `TAU` for every cell, the shortest of the models' follow-up.** Section
+  4.3 left it per model. One value keeps every cell counting deaths over the
+  same span, so cells under different models compare.
+- **The in-sample O/E is exactly 1 only where `TAU` cuts none of the group's
+  follow-up.** On the fixture the uncut cell reads 1.0000003 and the cut one
+  1.0004. The report says so; the test asserts the uncut cell.
+- **The known multiple is proved on the helper, not on a simulated study.**
+  `test-observed-expected.R` simulates events at twice an exponential
+  reference hazard (O/E near 2, interval covering 2, p < 0.001) and at the
+  reference hazard itself (interval covering 1). The template test checks
+  every cell's E against `predict(type = "cumulative_hazard")` at each row's
+  own time, computed in the test; predicting at `HORIZON` instead turns it red.
+- **`"spread"` is the 15th to 85th percentiles, not mean +/- SD.** On a skewed
+  spread of predictions, the call's case, mean +/- SD is symmetric about a
+  mean the tail has pulled and can leave [0, 1]. The percentiles match the
+  tables' new `q15` and `q85`.
+- **The spaghetti thins without a seed.** Above `SPAGHETTI_N`, it keeps
+  patients spaced evenly through the ranking of predicted survival at the
+  grid's end, so the drawn lines keep the cohort's spread and the figure is
+  the same on every render.
+- **The helpers live in `R/observed-expected.R`** and are tested in
+  `tests/testthat/test-observed-expected.R`.
+
+---
+
+## 10. References
 
 - Breslow NE (1975). Analysis of survival data under the proportional
   hazards model. *International Statistical Review* 43:45-57.

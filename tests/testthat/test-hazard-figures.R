@@ -56,13 +56,29 @@ test_that("hm and hs-setup draw calibration and expected survival, with no warni
   expect_true(all(figure_files(env, "hs-setup-expected")))
   # The grid recomputes the table's numbers: at each horizon on it, the curves
   # pass through the table's points.
-  at <- match(get("obs_vs_exp", envir = env)$horizon, get(".curves", envir = env)$time)
+  at <- match(get("model_vs_population", envir = env)$horizon, get(".curves", envir = env)$time)
   expect_false(anyNA(at))
   curves <- get(".curves", envir = env)
   points <- get(".points", envir = env)
   expect_equal(curves$survival[curves$curve == "model"][at], points$survival[points$curve == "model"])
   expect_equal(curves$survival[curves$curve == "population"][at], points$survival[points$curve == "population"])
   expect_identical(grDevices::dev.cur(), c("null device" = 1L))
+
+  # The table and the saved file name the curves as the figure does: model and population.
+  art <- readRDS(get("set_path", envir = env)("estimates", "hs.rds"))
+  expect_true(all(c("population", "model_vs_population") %in% names(art)))
+  expect_false(any(c("expected", "obs_vs_exp") %in% names(art)))
+  expect_identical(names(art$model_vs_population), c("horizon", "model", "population", "ratio"))
+  # The prediction table carries the mean beside the median and the 15th and 85th percentiles.
+  tbl <- get("summary_tbl", envir = env)
+  expect_identical(names(tbl), c("horizon", "n", "mean", "q15", "median", "q85", "min", "max"))
+  fit <- art$pred$fit[art$pred$horizon == tbl$horizon[[1L]]]
+  expect_equal(c(tbl$mean[[1L]], tbl$q15[[1L]], tbl$q85[[1L]]), c(mean(fit), unname(stats::quantile(fit, c(0.15, 0.85)))))
+  # A table that no longer matches the curve the figure draws stops the figure.
+  mvp <- get("model_vs_population", envir = env)
+  assign("model_vs_population", transform(mvp, model = model / 2), envir = env)
+  withr::defer(assign("model_vs_population", mvp, envir = env))
+  expect_error(utils::capture.output(hazard_run("hs-setup", "fig-expected", env)), "all.equal")
 })
 
 test_that("hs-setup's grid keeps a horizon that seq() lands a rounding error away from (#381 review)", {

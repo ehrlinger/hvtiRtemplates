@@ -49,9 +49,17 @@ The section headed "Decision" chooses a best treatment per patient and tables
 it against the treatment received. Delete that section if the study does not
 make that claim; the rest of the job does not depend on it.
 
+**The job also tests observed against expected.** For each model and each
+group received, it counts the deaths observed and sets them against the deaths
+the model expects for those patients over their own follow-up, the one-sample
+log-rank test. That is the p-value no pair of curves gives. With a single model
+it is the whole job: a cohort scored through a model fitted on another cohort,
+`GROUP` left `NULL`, and the decision section deleted.
+
 The design, with the three studies it was drawn from and the failures each
 guard below exists for, is in
-`hvtiRtemplates:dev/specs/2026-09-30-hs-concordance-design.md`.
+`hvtiRtemplates:dev/specs/2026-09-30-hs-concordance-design.md`; the test and
+the bands are in `dev/specs/2026-11-10-hs-oe-test-and-bands-design.md`.
 
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
@@ -96,6 +104,15 @@ suppressPackageStartupMessages({
 .root <- .job$root
 set_path <- .job$set_path
 .provenance_data <- list()
+# The figures draw with hvtiPlotR. Checked here, before any model is read, so a
+# missing package stops the render at once rather than after the predictions.
+if (!requireNamespace("hvtiPlotR", quietly = TRUE)) stop("This job needs hvtiPlotR for its figures.", call. = FALSE)
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder,
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
 # This job reads other sets' models by path, in the models chunk. It writes only
 # into its own set, the comparison set that SUBJECT and TYPE name.
 # The draft banners, if any, and the box under the title, after all the code above.
@@ -155,6 +172,8 @@ EXPECTED <- list(n = NA_integer_, n_events = NA_integer_, n_censored = NA_intege
 MODELS <- NULL
 
 # EDIT: the column recording the treatment each patient actually received.
+#       With ONE model, NULL puts every patient in that model's group: a
+#       cohort scored through a model fitted on another cohort.
 GROUP <- NULL
 
 # EDIT: the single horizon, in TIME's own units. If the hm jobs worked in
@@ -179,6 +198,39 @@ OVERLAP <- NULL
 #       unit, so this is the one check here that rests on your word. Write
 #       the unit in the text above.
 CROSS_STUDY <- FALSE
+
+# The observed-against-expected test follows each patient to TAU at most. NULL
+# takes the shortest of the models' last observed times, the furthest every
+# model has data for; past it a model's expectation is its form running on.
+TAU <- NULL
+
+# EDIT: the level of the observed-against-expected interval. 95% because the
+#       test's p-value is read against 0.05, and a reader takes an interval
+#       beside a p-value for 95%. It is NOT CLEVEL's 68%: set CLEVEL's value
+#       here instead for one coverage across the report. Either way the level
+#       is printed beside every interval.
+TEST_LEVEL <- 0.95
+
+# EDIT: the band drawn around each average expected curve, "limits_mean" or
+#       "spread". There is no default, because the old habit, averaging each
+#       patient's limits, needs saying for what it is:
+#   "limits_mean": the average of the patients' limits, at CLEVEL (68%). An
+#     upper bound on the interval of the mean curve, and labelled so.
+#   "spread": the 15th to 85th percentiles of the patients' predictions. How
+#     much patients differ; not a confidence interval of anything.
+#   The confidence interval of the mean curve itself waits on TemporalHazard#731.
+BAND <- NULL
+
+# How many patients' curves the spaghetti figure draws per panel. More than
+# that are thinned to patients spaced evenly through the ranking of predicted
+# survival, so the drawn lines keep the cohort's spread and need no seed.
+SPAGHETTI_N <- 200
+
+# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hs-concordance-expected-km").
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
 ```
 
 ## Cohort
@@ -315,12 +367,22 @@ if (is.null(OVERLAP) || length(OVERLAP) != 1L || !OVERLAP %in% .overlaps) {
 # has none cannot be compared with what they received. An author who means to
 # leave a group out filters it with WHERE, where the choice is visible.
 .selection <- attr(job_data$record, "selection")
-hvtiRtemplates:::.refuse_display(GROUP, hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "GROUP")
-if (is.null(GROUP) || !GROUP %in% names(d)) {
-  stop("GROUP must name the column recording each patient's treatment; got ",
-       if (is.null(GROUP)) "NULL" else paste0("\"", GROUP, "\""), ".", call. = FALSE)
+# With one model there is nothing to compare between groups, so GROUP may be
+# NULL and every patient is in that model's group. With two or more it may not:
+# a patient with no recorded treatment cannot be crossed with the others.
+if (is.null(GROUP) && length(models) == 1L) {
+  .actual <- rep(names(models), nrow(d))
+} else {
+  if (!is.null(GROUP)) {
+    hvtiRtemplates:::.refuse_display(GROUP, hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "GROUP")
+  }
+  if (is.null(GROUP) || !GROUP %in% names(d)) {
+    stop("GROUP must name the column recording each patient's treatment; got ",
+         if (is.null(GROUP)) "NULL" else paste0("\"", GROUP, "\""),
+         ". It may be NULL only when MODELS has one entry.", call. = FALSE)
+  }
+  .actual <- as.character(d[[GROUP]])
 }
-.actual <- as.character(d[[GROUP]])
 if (anyNA(.actual)) {
   stop(sum(is.na(.actual)), " patient(s) have no value in ", GROUP, ". Filter them with WHERE.", call. = FALSE)
 }
@@ -384,6 +446,17 @@ if (any(.short)) {
        ". A model's prediction past its own follow-up is its parametric form running on, not an estimate.",
        call. = FALSE)
 }
+# TAU, where the observed-against-expected test stops following patients, is
+# held to the same rule, against every model at once: each cell of the test
+# must count deaths over the same span.
+if (is.null(TAU)) TAU <- min(.max_obs)
+if (!is.numeric(TAU) || length(TAU) != 1L || !is.finite(TAU) || TAU <= 0) {
+  stop("TAU must be NULL or one positive number, in TIME's units.", call. = FALSE)
+}
+if (TAU > min(.max_obs)) {
+  stop("TAU (", TAU, ") is beyond the last observed time of the model for ", names(which.min(.max_obs)), " (",
+       signif(min(.max_obs), 4), "). Leave TAU NULL to stop there.", call. = FALSE)
+}
 ```
 
 Predicting a patient through another group's model is the purpose of this job,
@@ -417,7 +490,7 @@ in the saved artifact, so **state the coverage wherever they are shown.**
 
 ```{r}
 #| label: tbl-predict
-#| tbl-cap: !expr 'paste0("Median predicted survival at ", HORIZON, ", by model and treatment received")'
+#| tbl-cap: !expr 'paste0("Predicted survival at ", HORIZON, ", by model and treatment received")'
 # SAS convention, not a study choice: +/-1 SD, NOT 95%, with survival limits on
 # the logit scale. hs-setup and hp use both; changing them here alone would put
 # two coverages side by side with nothing saying so.
@@ -487,9 +560,249 @@ if (length(.carry_miss)) {
 patients <- data.frame(row = seq_len(nrow(d)), group = .actual)
 patients <- cbind(patients, d[, CARRY, drop = FALSE])
 
-summary_tbl <- stats::aggregate(fit ~ model + group, data = pred, FUN = stats::median)
-names(summary_tbl)[names(summary_tbl) == "fit"] <- "median_survival"
+# The mean beside the median and the 15th and 85th percentiles, because the
+# average curve below is a MEAN: when a few high-risk patients pull it, the mean
+# sits beyond the 85th percentile, and this table shows that before anyone has
+# to argue it. Percentiles are R's default, type 7.
+summary_tbl <- do.call(rbind, lapply(split(pred, list(pred$model, pred$group), drop = TRUE), function(g) {
+  q <- stats::quantile(g$fit, c(0.15, 0.85), names = FALSE, type = 7)
+  data.frame(model = g$model[[1L]], group = g$group[[1L]], n = nrow(g), mean = mean(g$fit), q15 = q[[1L]],
+             median = stats::median(g$fit), q85 = q[[2L]])
+}))
 knitr::kable(summary_tbl, row.names = FALSE, digits = 4)
+```
+
+## Observed against expected
+
+The figures in this job and the ones before it compare curves, and two curves
+give no p-value. This section gives one: for each model and each group
+received, the **deaths observed** against the **deaths the model expects** for
+those same patients, each followed for as long as they actually were. A
+patient's expected deaths are the model's cumulative hazard at that patient's
+own follow-up, and the group's are their sum, E. The ratio O/E, its exact
+Poisson interval and the chi-squared test of O against E are the one-sample
+log-rank test (Breslow 1975; Finkelstein, Muzikansky and Schoenfeld 2003).
+
+Three things to say beside the result:
+
+- **The model's own uncertainty is not in the test.** E is treated as fixed.
+  When the model was fitted on a cohort much larger than this one, that is a
+  small omission; with cohorts of similar size the p-value is optimistic.
+  Adding it waits on TemporalHazard#731.
+- **Follow-up stops at `TAU`.** Past the last time a model has data for, its
+  expectation is its parametric form running on, so deaths and expectations
+  are both counted to `TAU` and no further.
+- **A group under the model fitted on it is a check, not a test.** Where the
+  scored patients ARE the model's fitted patients, the fit forces E to match O,
+  so O/E is 1 up to the optimizer's tolerance, or near it where `TAU` cuts some
+  of their follow-up off, and it has no p-value. The table
+  marks such a cell `in-sample`, one whose patients the model never saw
+  `external`, and a mix `partial`, with the count found in the fit.
+
+```{r}
+#| label: oe
+#| results: asis
+# The cohort's own follow-up and event, which hs-concordance reads but does not
+# otherwise use. Both are this job's TIME and EVENT, which every model shares.
+.time <- d[[TIME]]
+.event <- d[[EVENT]]
+if (anyNA(.time) || anyNA(.event) || !all(.event %in% c(0, 1))) {
+  stop("The observed-against-expected test needs every patient's ", TIME, " and a 0/1 ", EVENT,
+       " with none missing.", call. = FALSE)
+}
+.t_oe <- pmin(.time, TAU)
+.ev_oe <- as.integer(.event == 1 & .time <= TAU)
+.groups <- intersect(names(models), unique(.actual))
+
+# Whether a group's patients are the model's fitted patients is read from the
+# data, not from a setting: no saved model carries an identifier, so each row
+# is keyed on its covariates and follow-up, as the model's frame holds them.
+.row_key <- function(frame, cols) {
+  do.call(paste, c(lapply(cols, function(v) sprintf("%.15g", as.numeric(frame[[v]]))), sep = "\r"))
+}
+
+oe <- do.call(rbind, lapply(names(models), function(m) {
+  nd <- dd[, covariates[[m]], drop = FALSE]
+  nd$time <- .t_oe
+  h <- predict(models[[m]]$reported, newdata = nd, type = "cumulative_hazard")
+  if (any(!is.finite(h))) {
+    stop(sum(!is.finite(h)), " expected cumulative hazard(s) from the model for ", m, " are not finite. ",
+         "A follow-up of exactly 0 can do this for a model whose early phase has nu > 0 and m = 0.", call. = FALSE)
+  }
+  .cols <- c(covariates[[m]], TIME)
+  .fitted <- .row_key(models[[m]]$reported$data$frame, .cols)
+  .ours <- .row_key(dd, .cols)
+  do.call(rbind, lapply(.groups, function(g) {
+    rows <- .actual == g
+    inside <- sum(.ours[rows] %in% .fitted)
+    fit_overlap <- if (inside == 0L) {
+      "external"
+    } else if (!.is_path[[m]] && inside == sum(rows) && sum(rows) == length(.fitted)) {
+      "in-sample"
+    } else {
+      "partial"
+    }
+    r <- hvtiRtemplates:::.one_sample_logrank(.ev_oe[rows], h[rows], TEST_LEVEL)
+    # An in-sample O/E is 1 by construction, so it has no test and no interval.
+    if (fit_overlap == "in-sample") r[c("lower", "upper", "chisq", "p")] <- NA_real_
+    data.frame(model = m, group = g, fit_overlap = fit_overlap, in_fit = inside, r)
+  }))
+}))
+# Captions too long for a chunk option line, built here.
+.cap_oe <- paste0("Observed against model-expected deaths to ", signif(TAU, 4), ", by model and treatment received, with ",
+                  100 * TEST_LEVEL, "% intervals")
+cat("Follow-up is counted to TAU = ", signif(TAU, 4), " (", TIME, "'s units); ", sum(.time > TAU),
+    " patient(s) followed longer are censored there. Intervals are ", 100 * TEST_LEVEL, "%.\n", sep = "")
+```
+
+```{r}
+#| label: tbl-oe
+#| tbl-cap: !expr .cap_oe
+knitr::kable(oe[c("model", "group", "fit_overlap", "in_fit", "n", "observed", "expected", "ratio", "lower", "upper", "chisq", "p")],
+             row.names = FALSE, digits = 4)
+```
+
+### The average expected curve
+
+Each model's average expected curve is the mean of its patients' predicted
+survival, over a grid to `TAU`, set against the Kaplan-Meier estimate of the
+same patients, with the test above in each panel's title. The band around the
+average curve is the one `BAND` names, and its label says what it is: neither
+choice is the confidence interval of the mean curve, which waits on
+TemporalHazard#731. ⚠️ The patients' limits are `CLEVEL`'s **68%**; the
+Kaplan-Meier band is **95%**.
+
+```{r}
+#| label: curves
+# The grid runs to TAU and holds HORIZON, so the average curve can be checked
+# against the predictions table at HORIZON. A grid point within rounding of
+# HORIZON is dropped for it, as hs-setup does.
+.end <- max(TAU, HORIZON)
+.grid <- seq(0, .end, length.out = 51L)[-1L]
+.grid <- sort(c(.grid[abs(.grid - HORIZON) > 1e-8 * .end], HORIZON))
+.at <- match(HORIZON, .grid)
+if (!is.numeric(SPAGHETTI_N) || length(SPAGHETTI_N) != 1L || !is.finite(SPAGHETTI_N) || SPAGHETTI_N < 1) {
+  stop("SPAGHETTI_N must be one positive number.", call. = FALSE)
+}
+
+curves <- list()
+.lines <- list()
+for (m in names(models)) {
+  .nd <- dd[rep(seq_len(nrow(dd)), times = length(.grid)), covariates[[m]], drop = FALSE]
+  .nd$time <- rep(.grid, each = nrow(dd))
+  .p <- predict(models[[m]]$reported, newdata = .nd, type = "survival", se.fit = TRUE, level = CLEVEL,
+                conf.type = "logit")
+  # Patients in rows, grid times in columns: the frame repeats the patients once per time.
+  .s <- matrix(.p$fit, nrow = nrow(dd))
+  .lo <- matrix(.p$lower, nrow = nrow(dd))
+  .hi <- matrix(.p$upper, nrow = nrow(dd))
+  for (g in .groups) {
+    rows <- .actual == g
+    .b <- hvtiRtemplates:::.cohort_curve_band(.s[rows, , drop = FALSE], .lo[rows, , drop = FALSE],
+                                              .hi[rows, , drop = FALSE], BAND, CLEVEL)
+    # The curve drawn must be the mean of the patients' predictions the table
+    # reports, and the limits' average the mean of theirs. Separate predict()
+    # calls build the two, so a change to either would part them silently.
+    .ph <- pred[pred$model == m & pred$group == g, , drop = FALSE]
+    stopifnot(isTRUE(all.equal(.b$mean[.at], mean(.ph$fit))),
+              isTRUE(all.equal(mean(.lo[rows, .at]), mean(.ph$lower))),
+              isTRUE(all.equal(mean(.hi[rows, .at]), mean(.ph$upper))))
+    curves[[length(curves) + 1L]] <- data.frame(model = m, group = g, time = c(0, .grid), mean = c(1, .b$mean),
+                                                lower = c(1, .b$lower), upper = c(1, .b$upper))
+    # The spaghetti's patients: all of them, or SPAGHETTI_N spaced evenly through
+    # the ranking of survival at the grid's end, so the thinned lines keep the spread.
+    .pick <- which(rows)
+    .pick <- .pick[order(.s[.pick, length(.grid)])]
+    if (length(.pick) > SPAGHETTI_N) .pick <- .pick[unique(round(seq(1, length(.pick), length.out = SPAGHETTI_N)))]
+    .lines[[length(.lines) + 1L]] <- data.frame(model = m, group = g, patient = rep(.pick, each = length(.grid) + 1L),
+                                                time = c(0, .grid), surv = as.vector(t(cbind(1, .s[.pick, , drop = FALSE]))))
+  }
+}
+curves <- do.call(rbind, curves)
+.lines <- do.call(rbind, .lines)
+.band_label <- attr(.b, "label")
+.cap_km <- paste0("Kaplan-Meier survival of each group received, with 95% limits, against the average survival each ",
+                  "model expects for the same patients. Band: ", .band_label, ".")
+.cap_spaghetti <- paste0("Each patient's predicted survival (thin lines; at most ", SPAGHETTI_N, " per panel, spaced ",
+                         "evenly through the ranking at the last time) and their average (heavy line), the average ",
+                         "expected curve above.")
+
+# Each panel's title carries its test, so the picture that cannot give a
+# p-value sits beside the number that does.
+.panel <- function(m, g) {
+  r <- oe[oe$model == m & oe$group == g, , drop = FALSE]
+  test <- if (r$fit_overlap == "in-sample") {
+    paste0("O/E ", formatC(r$ratio, digits = 2, format = "f"), " (in-sample check)")
+  } else {
+    paste0("O/E ", formatC(r$ratio, digits = 2, format = "f"), " (", 100 * TEST_LEVEL, "% ",
+           formatC(r$lower, digits = 2, format = "f"), " to ", formatC(r$upper, digits = 2, format = "f"),
+           "), p ", format.pval(r$p, digits = 2, eps = 0.001))
+  }
+  paste0("received ", g, ", ", m, " model\n", test)
+}
+curves$panel <- mapply(.panel, curves$model, curves$group)
+.lines$panel <- mapply(.panel, .lines$model, .lines$group)
+
+# The Kaplan-Meier estimate of each group received, to TAU, as the test counts
+# it, with 95% limits. Drawn as steps: each value is held until the next time.
+.km <- do.call(rbind, lapply(.groups, function(g) {
+  rows <- .actual == g
+  f <- survival::survfit(survival::Surv(.t_oe[rows], .ev_oe[rows]) ~ 1, conf.int = 0.95)
+  k <- data.frame(time = c(0, f$time), surv = c(1, f$surv), lower = c(1, f$lower), upper = c(1, f$upper))
+  # Where the log limits are undefined (survival 0) the last defined value carries on.
+  for (v in c("lower", "upper")) k[[v]] <- stats::approx(seq_along(k[[v]]), k[[v]], seq_along(k[[v]]),
+                                                         method = "constant", rule = 2)$y
+  n <- nrow(k)
+  idx <- c(1L, rep(seq_len(n)[-1L], each = 2L))
+  step <- k[rep(seq_len(n), each = 2L)[-2L * n], ]
+  step$time <- k$time[idx]
+  step$group <- g
+  step
+}))
+# One copy per panel, in step order: merge() would reorder the steps.
+.pan <- unique(curves[c("model", "group", "panel")])
+.km <- do.call(rbind, lapply(seq_len(nrow(.pan)), function(i) {
+  k <- .km[.km$group == .pan$group[[i]], , drop = FALSE]
+  k$panel <- .pan$panel[[i]]
+  k
+}))
+```
+
+```{r}
+#| label: fig-expected-km
+#| fig-cap: !expr .cap_km
+.cols <- hvtiRtemplates:::.group_colors(c("Kaplan-Meier", "Expected"))
+.fig <- ggplot2::ggplot(mapping = ggplot2::aes(x = .data$time)) +
+  ggplot2::geom_ribbon(data = .km, ggplot2::aes(ymin = 100 * .data$lower, ymax = 100 * .data$upper, fill = "Kaplan-Meier"),
+                       alpha = 0.15) +
+  ggplot2::geom_path(data = .km, ggplot2::aes(y = 100 * .data$surv, color = "Kaplan-Meier")) +
+  ggplot2::geom_ribbon(data = curves, ggplot2::aes(ymin = 100 * .data$lower, ymax = 100 * .data$upper, fill = "Expected"),
+                       alpha = 0.25) +
+  ggplot2::geom_line(data = curves, ggplot2::aes(y = 100 * .data$mean, color = "Expected"), linewidth = 0.8) +
+  ggplot2::facet_wrap(~panel) +
+  ggplot2::scale_color_manual(values = .cols, name = NULL) +
+  ggplot2::scale_fill_manual(values = .cols, name = NULL) +
+  ggplot2::scale_y_continuous(limits = c(0, 100)) +
+  ggplot2::labs(x = TIME, y = "Survival (%)") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 11) +
+  ggplot2::theme(legend.position = "top")
+.npanel <- length(unique(curves$panel))
+save_figure(.fig, "hs-concordance-expected-km", width = 8, height = 1 + 3 * ceiling(.npanel / 2))
+.fig
+```
+
+```{r}
+#| label: fig-spaghetti
+#| fig-cap: !expr .cap_spaghetti
+.fig <- ggplot2::ggplot(.lines, ggplot2::aes(x = .data$time, y = 100 * .data$surv)) +
+  ggplot2::geom_line(ggplot2::aes(group = .data$patient), alpha = 0.15, color = "grey40") +
+  ggplot2::geom_line(data = curves, ggplot2::aes(y = 100 * .data$mean), linewidth = 1) +
+  ggplot2::facet_wrap(~panel) +
+  ggplot2::scale_y_continuous(limits = c(0, 100)) +
+  ggplot2::labs(x = TIME, y = "Predicted survival (%)") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 11)
+save_figure(.fig, "hs-concordance-spaghetti", width = 8, height = 1 + 3 * ceiling(.npanel / 2))
+.fig
 ```
 
 ## Decision
@@ -585,9 +898,13 @@ knitr::kable(table(received = factor(decision$group[.sep], .levels), optimal = f
 #| label: save
 # Read by the plotting jobs in this set. `clevel`, `horizon` and `overlap`
 # travel with the estimates because each changes what the numbers mean, and a
-# reader of the file should not have to recover them from prose.
+# reader of the file should not have to recover them from prose; `tau` and
+# `test_level` travel with the observed-against-expected table `oe` for the
+# same reason. The grid curves the figures draw are not saved: they are
+# recomputed from the models in seconds.
 art <- list(pred = pred, patients = patients, horizon = HORIZON, time = TIME, clevel = CLEVEL,
             models = MODELS, covariates = covariates, support = support, overlap = OVERLAP,
+            oe = oe, tau = TAU, test_level = TEST_LEVEL, band = BAND,
             decision = if (exists("decision")) decision else NULL)
 art <- hvtiRtemplates:::.attach_handoff_lineage(
   art,

@@ -193,3 +193,123 @@ test_that("limits undefined at a survival of 1 are not reported as a missing var
   expect_match(err, "exactly 0 or 1", fixed = TRUE)
   expect_no_match(err, "variance matrix", fixed = TRUE)
 })
+
+test_that("observed against expected counts each patient's own follow-up, and marks in-sample cells", {
+  skip_concordance()
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  e <- estate()
+  env <- concordance_run(e$root, concordance_choices(e$data), concordance_core)
+  oe <- env$oe
+  # TAU defaults to the shorter of the two models' follow-up.
+  last <- vapply(env$models, function(a) max(a$reported$data$frame$iv_dead), numeric(1L))
+  expect_identical(env$TAU, min(last))
+  # Each cell's E is the model's cumulative hazard at each patient's own time, cut at TAU,
+  # computed here apart from the template. A job predicting at HORIZON or at TAU fails this.
+  # The job's own rows: the built data is read back, so its times are compared with TAU as read.
+  d <- env$d
+  t_oe <- pmin(d$iv_dead, env$TAU)
+  for (m in c("a", "b")) {
+    nd <- env$dd[, env$covariates[[m]], drop = FALSE]
+    nd$time <- t_oe
+    h <- predict(env$models[[m]]$reported, newdata = nd, type = "cumulative_hazard")
+    for (g in c("a", "b")) {
+      rows <- d$group == g
+      cell <- oe[oe$model == m & oe$group == g, ]
+      expect_equal(cell$expected, sum(h[rows]), info = paste(m, g))
+      expect_identical(cell$observed, sum(d$dead[rows] == 1 & d$iv_dead[rows] <= env$TAU), info = paste(m, g))
+      expect_identical(cell$fit_overlap, if (m == g) "in-sample" else "external", info = paste(m, g))
+    }
+  }
+  # Conservation of events: under its own model, a group whose follow-up TAU does not cut
+  # has O/E = 1, and the in-sample cell carries no test.
+  uncut <- names(which.min(last))
+  expect_equal(oe$ratio[oe$model == uncut & oe$group == uncut], 1, tolerance = 1e-4)
+  expect_true(all(is.na(oe$p[oe$fit_overlap == "in-sample"])))
+  expect_true(all(is.finite(oe$p[oe$fit_overlap == "external"])))
+  expect_identical(unique(oe$level), 0.95)
+  # The level is a choice, and the saved file carries it with TAU.
+  e2 <- concordance_copy(e)
+  concordance_run(e2$root, concordance_choices(e2$data, TEST_LEVEL = 0.68268948), c(concordance_core, "save"))
+  art <- readRDS(file.path(hvtiRutilities::study_dir("estimates", e2$root), "dead-ab", "hs-concordance.rds"))
+  expect_identical(unique(art$oe$level), 0.68268948)
+  expect_identical(art$test_level, 0.68268948)
+  expect_identical(art$tau, env$TAU)
+  expect_error(concordance_run(e$root, concordance_choices(e$data, TAU = max(last)), concordance_core),
+               "TAU \\(.*\\) is beyond the last observed time of the model for")
+})
+
+test_that("with one model, GROUP may be NULL and the whole cohort is scored through it", {
+  skip_concordance()
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  e <- estate()
+  env <- concordance_run(e$root, concordance_choices(e$data, MODELS = c(a = "dead-a"), GROUP = NULL), concordance_core)
+  expect_identical(nrow(env$oe), 1L)
+  expect_identical(env$oe$n, nrow(e$data))
+  # Group a's patients are in the fit and group b's are not.
+  expect_identical(env$oe$fit_overlap, "partial")
+  expect_identical(env$oe$in_fit, sum(e$data$group == "a"))
+  expect_error(concordance_run(e$root, concordance_choices(e$data, GROUP = NULL), concordance_core),
+               "may be NULL only when MODELS has one entry")
+})
+
+test_that("the prediction table shows the mean beside the median and the 15th and 85th percentiles", {
+  skip_concordance()
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  e <- estate()
+  env <- concordance_run(e$root, concordance_choices(e$data), concordance_core)
+  tbl <- env$summary_tbl
+  expect_identical(names(tbl), c("model", "group", "n", "mean", "q15", "median", "q85"))
+  fit <- env$pred$fit[env$pred$model == "a" & env$pred$group == "b"]
+  row <- tbl[tbl$model == "a" & tbl$group == "b", ]
+  expect_equal(row$mean, mean(fit))
+  expect_equal(c(row$q15, row$q85), unname(stats::quantile(fit, c(0.15, 0.85))))
+})
+
+test_that("the average expected curve and the spaghetti draw with no warning, under either band", {
+  skip_on_cran()
+  skip_concordance()
+  skip_if_not_installed("ragg")
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  e <- concordance_copy(estate())
+  for (band in c("limits_mean", "spread")) {
+    env <- concordance_run(e$root, concordance_choices(e$data, BAND = band), concordance_core)
+    warned <- character(0)
+    withCallingHandlers(
+      utils::capture.output(hazard_run("hs-concordance", c("curves", "fig-expected-km", "fig-spaghetti"), env)),
+      warning = function(w) {
+        warned <<- c(warned, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    )
+    expect_identical(warned, character(0), info = band)
+    for (name in c("hs-concordance-expected-km", "hs-concordance-spaghetti")) {
+      expect_true(all(file.exists(env$set_path("graphs", paste0(name, c(".png", ".pdf", ".tiff"))))), info = name)
+    }
+    expect_match(env$.cap_km, if (band == "spread") "not a confidence interval" else "upper bound", info = band)
+    # At HORIZON each curve is the mean of the predictions table's patients.
+    at <- env$curves$time == env$HORIZON
+    expect_identical(sum(at), 4L)
+    expect_identical(grDevices::dev.cur(), c("null device" = 1L))
+  }
+  # The spaghetti thins to SPAGHETTI_N patients per panel.
+  env <- concordance_run(e$root, concordance_choices(e$data, BAND = "spread", SPAGHETTI_N = 10), concordance_core)
+  utils::capture.output(hazard_run("hs-concordance", "curves", env))
+  expect_true(all(tapply(env$.lines$patient, env$.lines$panel, function(p) length(unique(p))) == 10L))
+})
+
+test_that("the average curve must be the mean of the patients' predictions, and the band must be named", {
+  skip_concordance()
+  withr::local_package("TemporalHazard")
+  withr::local_package("hvtiRutilities")
+  e <- estate()
+  env <- concordance_run(e$root, concordance_choices(e$data), concordance_core)
+  expect_error(utils::capture.output(hazard_run("hs-concordance", "curves", env)), "BAND must be one of")
+  env$BAND <- "spread"
+  # A predictions table that no longer matches the curve stops the chunk.
+  env$pred$fit[1L] <- env$pred$fit[1L] / 2
+  expect_error(utils::capture.output(hazard_run("hs-concordance", "curves", env)), "all.equal")
+})
