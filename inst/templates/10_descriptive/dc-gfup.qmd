@@ -136,6 +136,11 @@ FOLLOWUP <- "iv_dead" # EDIT: follow-up interval(s) this job checks, in years
 IDENTIFIER <- NULL    # EDIT: a column to list suspicious rows with on the console, never in the report
 MAX_REVIEW_ROWS <- 25L
 # MIGRATE-END: dc-gfup-config
+# EDIT: NULL, or a column to summarize follow-up by, such as an era, a procedure or a
+# treatment arm. The report adds a table with a row per interval and group. Patients
+# with no value for it are a group of their own, "(missing)", so the groups add up to
+# the cohort. A column that identifies patients is refused.
+GROUP <- NULL
 # EDIT: optional event-coding cross-tabs, each a vector of column names.
 # Missing values are shown. Use list() when no additional checks are needed.
 CHECKS <- list()
@@ -349,6 +354,38 @@ if (.n_suspicious == 0L) {
 #| eval: !expr 'nrow(review_rows) > 0L'
 #| include: !expr 'nrow(review_rows) > 0L'
 knitr::kable(review_rows, row.names = FALSE)
+```
+
+When `GROUP` names a column, the follow-up of every patient is also summarized
+within each of its groups, with the same statistics and percentiles as the table
+above. The event and censored split stays in that table.
+
+```{r}
+#| label: tbl-qc-group
+#| tbl-cap: "Follow-up by interval within each GROUP (years)"
+#| eval: !expr '!is.null(GROUP)'
+#| include: !expr '!is.null(GROUP)'
+.selection <- attr(job_data$record, "selection")
+hvtiRtemplates:::.refuse_display(GROUP, hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "GROUP")
+if (!is.character(GROUP) || length(GROUP) != 1L || !GROUP %in% names(d)) {
+  stop("GROUP names ", toString(GROUP), ", which the data does not have. Name one column, or set GROUP <- NULL.",
+       call. = FALSE)
+}
+# proc_means() drops rows with no group, so they become a "(missing)" group and every
+# patient is counted. A factor keeps its own level order.
+.g <- d[[GROUP]]
+if (anyNA(.g)) {
+  .g <- factor(.g, levels = c(if (is.factor(.g)) levels(.g) else sort(unique(.g[!is.na(.g)])), NA), exclude = NULL)
+  levels(.g)[is.na(levels(.g))] <- "(missing)"
+}
+.gd <- d[FOLLOWUP]
+.gd[[GROUP]] <- .g
+.gm <- hvtiRutilities::proc_means(.gd, vars = FOLLOWUP, class = GROUP, stats = .followup_stats)
+group_table <- data.frame(interval = .gm$variable, .gm[GROUP], n = .gm$n, missing = .gm$nmiss, mean = .gm$mean,
+                          sd = .gm$std, min = .gm$min, p15 = .gm$p15, median = .gm$median, p75 = .gm$p75,
+                          p85 = .gm$p85, p90 = .gm$p90, max = .gm$max, total = .gm$sum, check.names = FALSE)
+group_table <- group_table[order(match(group_table$interval, FOLLOWUP)), , drop = FALSE]
+knitr::kable(group_table, row.names = FALSE, digits = 3)
 ```
 
 The migration report preserves legacy sort orders, date arithmetic and

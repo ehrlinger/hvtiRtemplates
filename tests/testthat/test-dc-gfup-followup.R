@@ -130,3 +130,29 @@ test_that("a two-group panel draws and captions its own group names", {
   expect_no_match(html, "EVENT is repair", fixed = TRUE)
   expect_true(file.exists(file.path(s$root, "graphs", "cohort-eda", "dc-gfup-repair.png")))
 })
+
+# GROUP: follow-up summarized by a grouping column, asked for after the 2026-11-11 training.
+gfup_group <- function(d, group) {
+  selection <- list(id = "ccfid", key = "ccfid")
+  env <- list2env(list(d = d, GROUP = group, FOLLOWUP = "iv_dead",
+                       .followup_stats = c("n", "nmiss", "mean", "std", "min", "p15", "median", "p75", "p85",
+                                           "p90", "max", "sum"),
+                       job_data = list(record = structure(data.frame(), selection = selection))))
+  utils::capture.output(eval(gfup_chunk("tbl-qc-group"), env))
+  env$group_table
+}
+
+test_that("GROUP gives each interval a row per group, with patients missing the group kept", {
+  d <- data.frame(ccfid = 1:5, era = c("late", "early", NA, "early", "late"), iv_dead = c(1, 2, 3, 4, 6))
+  out <- gfup_group(d, "era")
+  expect_identical(names(out)[1:4], c("interval", "era", "n", "missing"))
+  expect_identical(as.character(out$era), c("early", "late", "(missing)"))
+  expect_equal(out$total, c(6, 7, 3))
+  expect_identical(sum(out$n), 5L)
+})
+
+test_that("GROUP refuses a column that identifies patients, and one the data lacks", {
+  d <- data.frame(ccfid = 1:3, era = "a", iv_dead = 1:3)
+  expect_error(gfup_group(d, "ccfid"), "GROUP names ccfid, which identifies patients")
+  expect_error(gfup_group(d, "erra"), "GROUP names erra, which the data does not have")
+})
