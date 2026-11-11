@@ -438,9 +438,9 @@ stopifnot(all(pred$fit >= 0 & pred$fit <= 1))
 by_horizon <- split(pred, pred$horizon)
 summary_tbl <- do.call(rbind, lapply(by_horizon, function(g) {
   # The mean beside the median and the 15th and 85th percentiles, because the
-  # cohort average below is a MEAN: when a few high-risk patients pull it, the
-  # mean sits above the 85th percentile of risk, and this table shows that
-  # before anyone has to argue it. Percentiles are R's default, type 7.
+  # cohort average below is a MEAN: when a few high-risk patients pull it down,
+  # it sits below the median, and this table shows that before anyone has
+  # to argue it. Percentiles are R's default, type 7.
   q <- stats::quantile(g$fit, c(0.15, 0.85), names = FALSE, type = 7)
   data.frame(horizon = g$horizon[[1L]], n = nrow(g),
              mean = mean(g$fit), q15 = q[[1L]],
@@ -500,7 +500,7 @@ knitr::kable(rbind(attr(.male, "mapping"), attr(.other, "mapping")), row.names =
 
      SCALE must match the units TIME and HORIZONS are in. It is NOT
      independently checkable: pass "years" for a job fitted in months and you
-     get expected survival at 6, 12 and 24 YEARS against observed values at 6,
+     get expected survival at 6, 12 and 24 YEARS against model predictions at 6,
      12 and 24 months, with a plausible-looking ratio and no error anywhere. -->
 
 ```{r}

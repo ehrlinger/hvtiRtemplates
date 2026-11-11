@@ -712,3 +712,35 @@ test_that("a study's comment set off from its choice by a blank line is carried,
   expect_true(any(grepl(paste0("^- `PREDICTORS`, old lines ", top + 1L, ", ", top + 2L, ": comment .*, carried$"),
                         report)))
 })
+
+test_that("an old template comment above a resolved choice is not carried as the study's", {
+  # #510 rewrote the comments above sid-stability's REPEATS and SEED_OFFSET. A
+  # job copied from the earlier text, its two markers resolved, must take the
+  # new comments and drop the old ones, which only the archive can tell apart
+  # from an analyst's own: neither old block carries a marker any more. A note
+  # the analyst wrote there is theirs and stays.
+  history <- hvtiRtemplates:::.template_history()
+  # A stale archive is the defect itself, so it fails here rather than skipping.
+  rows <- history$index[history$index$template == "sid.stability", , drop = FALSE]
+  expect_gt(nrow(rows), 0L)
+  old <- hvtiRtemplates:::.text_lines(history$texts[[rows$sha256[[order(rows$first)[[1L]]]]]])
+  expect_true(any(grepl("SEED_OFFSET \\+ r, so", old)))
+
+  for (pattern in c("^# EDIT: the number of refits", "^# EDIT: where the refit seeds start")) {
+    i <- grep(pattern, old)
+    old[i] <- sub("EDIT: ", "", old[i], fixed = TRUE)
+  }
+  old <- sub("^SUBJECT\\s+<- .*", 'SUBJECT <- "cohort"', old)
+  old <- sub("^TYPE\\s+<- .*", 'TYPE <- "sid"', old)
+  old <- append(old, "# Our note: 50 refits matched the earlier run.", grep("^REPEATS <- ", old))
+
+  root <- migration_study_fixture()
+  path <- file.path(root, "analyses", "sid.stability.cohort.sid.qmd")
+  writeLines(old, path)
+  lines <- readLines(upgrade_job(path))
+
+  expect_false(any(grepl("SEED_OFFSET \\+ r, so", lines)))
+  expect_false(any(grepl("full SID forest once", lines)))
+  expect_true(any(grepl("SEED_OFFSET \\+ \\(r - 1\\) \\* M \\+ 1", lines)))
+  expect_true(any(grepl("^# Our note: 50 refits matched the earlier run[.]$", lines)))
+})

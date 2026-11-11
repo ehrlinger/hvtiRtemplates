@@ -574,9 +574,9 @@ patients <- data.frame(row = seq_len(nrow(d)), group = .actual)
 patients <- cbind(patients, d[, CARRY, drop = FALSE])
 
 # The mean beside the median and the 15th and 85th percentiles, because the
-# average curve below is a MEAN: when a few high-risk patients pull it, the mean
-# sits beyond the 85th percentile, and this table shows that before anyone has
-# to argue it. Percentiles are R's default, type 7.
+# average curve below is a MEAN: when a few high-risk patients pull it down, it
+# sits below the median, and this table shows that before anyone has to
+# argue it. Percentiles are R's default, type 7.
 summary_tbl <- do.call(rbind, lapply(split(pred, list(pred$model, pred$group), drop = TRUE), function(g) {
   q <- stats::quantile(g$fit, c(0.15, 0.85), names = FALSE, type = 7)
   data.frame(model = g$model[[1L]], group = g$group[[1L]], n = nrow(g), mean = mean(g$fit), q15 = q[[1L]],
@@ -587,8 +587,7 @@ knitr::kable(summary_tbl, row.names = FALSE, digits = 4)
 
 ## Observed against expected
 
-The figures in this job and the ones before it compare curves, and two curves
-give no p-value. This section gives one: for each model and each group
+Two curves give no p-value. This section gives one: for each model and each group
 received, the **deaths observed** against the **deaths the model expects** for
 those same patients, each followed for as long as they actually were. A
 patient's expected deaths are the model's cumulative hazard at that patient's
@@ -623,8 +622,8 @@ Four things to say beside the result:
 ```{r}
 #| label: oe
 #| results: asis
-# The cohort's own follow-up and event, which hs-concordance reads but does not
-# otherwise use. Both are this job's TIME and EVENT, which every model shares.
+# The cohort's own follow-up and event, the deaths the models' expectations are
+# counted against. Both are this job's TIME and EVENT, which every model shares.
 .time <- d[[TIME]]
 .event <- d[[EVENT]]
 if (anyNA(.time) || anyNA(.event) || !all(.event %in% c(0, 1))) {
@@ -704,8 +703,9 @@ average curve is the one `BAND` names, and its label says what it is: neither
 choice is the confidence interval of the mean curve, which waits on
 TemporalHazard#731. The average of the patients' limits is not a bound on that
 interval either: the limits are formed on the logit scale, and averaging them
-after transforming back can fall inside the mean curve's own interval. ⚠️ The
-patients' limits are `CLEVEL`'s **68%**; the Kaplan-Meier band is **95%**.
+after transforming back can fall inside the mean curve's own interval. ⚠️ With
+`limits_mean` the patients' limits are `CLEVEL`'s **68%**; the Kaplan-Meier band
+is **95%**.
 Both curves stop at `TAU`, where the test stops counting.
 
 ```{r}

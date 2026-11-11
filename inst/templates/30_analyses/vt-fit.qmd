@@ -638,7 +638,7 @@ vt_elig_isolation <- function(d, vars, ids, arm, arms, cutoff = 0.99, sensitivit
 
 # Eligible patients with a value the arm they were judged against never shows: a
 # number outside the arm's observed range, or a level none of its patients has.
-# Gower and the isolation forest average over every variable, so one extreme value
+# Gower and the isolation forest each fold every variable into one number, so one extreme value
 # among many can leave a patient eligible while the arm's forest extrapolates on
 # that variable for them. They stay eligible; this lists them for review. `pairs`
 # holds the ID and arm of each eligible patient's judgments.
@@ -861,8 +861,8 @@ if (is.null(.iso_sens)) {
 
 ### Eligible, with a value the arm does not cover
 
-Gower and the isolation forest average over every eligibility variable, so one
-extreme value among many can leave a patient in distribution. The arm's forest
+Gower and the isolation forest each fold every eligibility variable into one
+number, so one extreme value among many can leave a patient in distribution. The arm's forest
 still extrapolates on that variable for them. These patients stay eligible;
 this counts them for review, and a value outside the arm is often a data error
 or a unit mix-up, worth checking against the chart.
