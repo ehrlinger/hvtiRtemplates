@@ -24,9 +24,16 @@
   named <- grep(.display_name_pattern, names(d), ignore.case = TRUE, value = TRUE)
   named <- named[!vapply(d[named], .is_indicator, logical(1L))]
   listed <- unique(c(id, key, also, .drop_identifiers(d, present)$dropped, named))
-  by_values <- names(d)[vapply(d, .looks_like_identifier_values, logical(1L))]
-  by_values <- setdiff(by_values, c(listed, getOption("hvtiRtemplates.not_identifiers")))
-  structure(c(listed, by_values), by_values = by_values)
+  shaped <- names(d)[vapply(d, .looks_like_identifier_values, logical(1L))]
+  shaped <- setdiff(shaped, getOption("hvtiRtemplates.not_identifiers"))
+  by_values <- setdiff(shaped, listed)
+  # The KEY columns refused for being in KEY and nothing else, such as the surgery date that
+  # tells one patient's operations apart. .refuse_display() names KEY as the reason for those,
+  # since "identifies patients" sent a team looking at the column rather than at KEY. A KEY
+  # column whose values look like record numbers is an identifier in its own right, so it is
+  # checked against `shaped`, which still holds the listed columns.
+  key_only <- setdiff(key, c(id, also, .drop_identifiers(d, present)$dropped, named, shaped))
+  structure(c(listed, by_values), by_values = by_values, key_only = key_only)
 }
 
 # A column of record numbers under a name nobody listed: whole numbers of four
@@ -51,9 +58,18 @@
          "or more that nearly all differ. Remove it from ", setting, ". If it is a measurement, say so above this chunk: ",
          "options(hvtiRtemplates.not_identifiers = \"", shaped[[1L]], "\").", call. = FALSE)
   }
-  if (length(hit)) {
-    stop(setting, " names ", toString(hit), ", which identifies patients: its values cannot appear in a table or ",
-         "figure. Remove it from ", setting, ".", call. = FALSE)
+  # An identifier is reported before a column refused only for being in KEY, so taking
+  # the KEY column out never reveals an identifier the first message left unnamed.
+  keyed <- hit[tolower(hit) %in% tolower(attr(no_values, "key_only"))]
+  identifying <- setdiff(hit, keyed)
+  if (length(identifying)) {
+    stop(setting, " names ", toString(identifying), ", which identifies patients: its values cannot appear in a ",
+         "table or figure. Remove it from ", setting, ".", call. = FALSE)
+  }
+  if (length(keyed)) {
+    stop(setting, " names ", toString(keyed), ", which is in KEY: no report shows a KEY column's values, because KEY ",
+         "tells one patient's rows apart. Use another column in ", setting, ", or take it out of KEY and tell the ",
+         "rows apart with a column the report does not show, such as a record number.", call. = FALSE)
   }
   invisible(TRUE)
 }

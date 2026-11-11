@@ -121,7 +121,8 @@ WHERE <- NULL
 ID <- "ccfid"
 
 # EDIT: what makes a row unique; one row per patient unless repeated measures
-# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+# add their visit time or date, for example KEY <- c(ID, "iv_echo"). No KEY
+# column is drawn, so do not key on the date X_VAR names below.
 KEY <- ID
 
 # Optional, and needs no edit: NULL reads the cohort alone. To join one
