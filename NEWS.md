@@ -101,12 +101,12 @@
 * `guard_long_fit()` names `run_job()`, which checks the job before submitting it, in place of `submit_job()`.
   The templates and `inst/templates/README.md` point at `run_job()` too.
 * `lp-mirror` checks for hvtiPlotR 2.8.20, the version this package requires, in place of 2.8.9, and its matched
-  figure's caption names the controls' colour as vermillion, as the other two captions do.
+  figure's caption names the controls' color as vermillion, as the other two captions do.
 * Template comments and narration: each template's `FIGURES` example names one of its own figures; the figure-saving
   comment says a TIFF is written only when ragg is installed; the `ID` marker says the MRN, then eMRN, fallback
   applies when the data has no `ccfid` column; `vp-fit` names `vp-individual` as a reader of its selection;
   `hm` no longer points at `as.numeric()` calls it does not make, and says what `covariates_to_numeric()` does;
-  `sid-fit` dates the `na.impute` behaviour to
+  `sid-fit` dates the `na.impute` behavior to
   randomForestSRC 3.10.0; `br` says a screen moves with the outcome's transform, not its units; and two templates
   no longer name a person or a study.
 
