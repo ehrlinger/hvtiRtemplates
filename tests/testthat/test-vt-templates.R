@@ -443,7 +443,10 @@ test_that("vt-fit saves one handoff with every element", {
   skip_on_cran()
   env <- vt_fit_first(labels = vt_fit_labels_all)
   h <- readRDS(env$set_path("estimates", "vt.rds"))
-  expect_named(h, c("rmst", "curves", "forests", "eligibility", "predictors", "settings"))
+  expect_named(h, c("rmst", "curves", "forests", "oe", "eligibility", "predictors", "settings"))
+  # The cumulative hazard the test reads stays in the job; the saved curves keep their shape.
+  expect_named(h$curves, c("ID", "arm_of_curve", "time", "surv"))
+  expect_true(all(c("tau", "test_level") %in% names(h$settings)))
   expect_true(all(c("elig", "elig_gower", "elig_propensity", "elig_none", "diff", "log_rr") %in% names(h$rmst)))
   expect_false(is.null(attr(h, "hvti_provenance")))
   expect_setequal(h$settings$performance$arm, c("A", "B"))
@@ -822,6 +825,8 @@ test_that("no eligible patient leaves the fit saved and the explain tables rende
   env <- vt_fit_first(data = d, labels = vt_fit_labels_all, choices = ch)
   h <- readRDS(env$set_path("estimates", "vt.rds"))
   expect_equal(sum(h$rmst$elig), 0L)
+  # With no one in distribution, every observed-against-expected cell is empty and untested.
+  expect_true(all(h$oe$n == 0L & h$oe$inference == "none: no patients or no expected deaths" & is.na(h$oe$ratio)))
   vt_explain(env, vt_explain_labels_all)
   expect_true("none" %in% env$.sens$rule)
   expect_false("combined" %in% env$.sens$rule)

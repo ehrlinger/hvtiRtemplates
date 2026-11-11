@@ -477,6 +477,27 @@ Four findings, all accepted:
 4. **The drawn curves stop at `TAU`.** A `HORIZON` past `TAU` is checked
    against the predictions table by a prediction of its own and not drawn.
 
+### 9.2 The `vt` sections, as built 2026-11-11 (Q8)
+
+Built in `vt-fit`, where the forests, the twin curves and the cohort's events are all in hand.
+
+- **The test reads each forest's `chf`**, `chf.oob` for the own arm and `predict()$chf` for the other,
+  at each patient's own follow-up as a step on `time.interest`. `vt_curves()` carries it as a column;
+  the handoff drops it, so `vt.rds$curves` keeps its shape. The table is saved as `oe`, with the columns
+  `hs-concordance`'s `oe` has (`model` is the arm whose forest), and `tau` and `test_level` in `settings`.
+- **Independence is proved by ID, not declared.** Each forest's training IDs are recorded, so `in_fit`
+  counts a group's patients among them exactly. A cell is tested only when it is 0, which is every
+  other-arm cell and no own-arm one. There is no `INDEPENDENT`.
+- **The own-arm cell is not tested**, against section 3.2's table. Out of bag, no patient is predicted
+  by trees grown on them, but the other patients' deaths grew those trees and are in O, so O and E
+  depend on each other: review finding 1 of section 9.1. It is shown as a calibration.
+- **Patients in distribution only**, as the twin curves are; an other-arm prediction for a patient out
+  of distribution is an extrapolation. Rows with no arm have no observed arm and are not counted.
+- **No `BAND` choice.** A forest gives no per-patient limits, so `"spread"` is the only band; the
+  Kaplan-Meier beside it is 95%, labeled, against `fig-km`'s 70%.
+- **The mean check** compares the drawn curve at `HORIZON` with one minus the mean of `vt_rmst()`'s
+  per-patient risk, which reads the same curves by its own path.
+
 ---
 
 ## 10. References
