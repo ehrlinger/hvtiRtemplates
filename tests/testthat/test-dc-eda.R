@@ -817,3 +817,43 @@ test_that("dc-eda gives each event its own follow-up table, as each death panel 
   expect_no_error(punct <- panels(same, record = FALSE))
   expect_identical(unique(punct$env$.followup$interval), "iv_redo")
 })
+
+test_that("dc-eda's page captions name each variable beside its label", {
+  # Asked at the 2026-11-11 training: a label alone does not tell a fellow which column to check.
+  withr::local_package("ggplot2")
+  withr::local_package("hvtiPlotR")
+  withr::local_package("hvtiRutilities")
+  local_child_chunks()
+  root <- migration_study_fixture(NULL)
+  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "eda")
+  chunk <- function(label) {
+    lines <- readLines(job, warn = FALSE)
+    start <- match(paste0("#| label: ", setup_label(label)), lines)
+    end <- start + match("```", lines[-seq_len(start)])
+    chunk_expression(lines[seq.int(start + 1L, end - 1L)], label)
+  }
+  env <- new.env(parent = globalenv())
+  env$.root <- root
+  env$.provenance_data <- list()
+  env$d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  env$.cfg <- hvtiRutilities::study_config(root)
+  env$job_data <- eda_job_data("ccfid")
+  for (label in c("set", "edit-study-choices")) eval(chunk(label), env)
+  env$X_VAR <- "year"
+  env$ORIGIN_YEAR <- 1980
+  env$VARIABLES <- "age"
+  shown <- character()
+  withCallingHandlers(
+    utils::capture.output({
+      eval(chunk("spec"), env)
+      eval(chunk("sections"), env)
+      env$labels[["age"]] <- "Age at operation"
+      env$.child <- function(label, caption, code) if (startsWith(label, "fig eda")) shown <<- c(shown, caption)
+      env$save_figure <- function(...) "page.png"
+      env$draw_section("continuous")
+    }),
+    warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning")
+  )
+  expect_length(shown, 1L)
+  expect_match(shown, "page 1: Age at operation (age).", fixed = TRUE)
+})
