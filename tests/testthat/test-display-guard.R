@@ -5,6 +5,18 @@ test_that(".no_values names the ID, the KEY, what read_job_data() drops, and rec
   expect_setequal(setdiff(names(d), out), c("age", "nyha"))
 })
 
+test_that(".refuse_display says when a column is refused only because it is in KEY", {
+  # The 2026-11-11 training: KEY <- c("ccfid", "dt_surg") with X_VAR <- "dt_surg" stopped the job
+  # with "which identifies patients", and nobody could tell that KEY was the reason.
+  d <- data.frame(ccfid = 1:3, dt_surg = Sys.Date() + 0:2, pt_mrn = 1:3, age = 1:3)
+  no_values <- hvtiRtemplates:::.no_values(d, "ccfid", c("ccfid", "dt_surg", "pt_mrn"))
+  expect_error(hvtiRtemplates:::.refuse_display("DT_SURG", no_values, "X_VAR"), "X_VAR names DT_SURG, which is in KEY")
+  expect_error(hvtiRtemplates:::.refuse_display("dt_surg", no_values, "X_VAR"), "or take it out of KEY")
+  # A KEY column that is an identifier in its own right keeps the identifier message.
+  expect_error(hvtiRtemplates:::.refuse_display("pt_mrn", no_values, "X_VAR"), "identifies patients")
+  expect_error(hvtiRtemplates:::.refuse_display("ccfid", no_values, "X_VAR"), "identifies patients")
+})
+
 test_that(".refuse_display stops on a named identifier, whatever its case, and names no value", {
   expect_error(hvtiRtemplates:::.refuse_display(list(a = c("age", "MRN")), "mrn", "GROUPS"), "GROUPS names MRN")
   expect_true(hvtiRtemplates:::.refuse_display(c("age", NA), "mrn", "GROUPS"))

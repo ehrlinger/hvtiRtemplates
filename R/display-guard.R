@@ -26,7 +26,11 @@
   listed <- unique(c(id, key, also, .drop_identifiers(d, present)$dropped, named))
   by_values <- names(d)[vapply(d, .looks_like_identifier_values, logical(1L))]
   by_values <- setdiff(by_values, c(listed, getOption("hvtiRtemplates.not_identifiers")))
-  structure(c(listed, by_values), by_values = by_values)
+  # The KEY columns refused for being in KEY and nothing else, such as the surgery date that
+  # tells one patient's operations apart. .refuse_display() names KEY as the reason for those,
+  # since "identifies patients" sent a team looking at the column rather than at KEY.
+  key_only <- setdiff(key, c(id, also, .drop_identifiers(d, present)$dropped, named, by_values))
+  structure(c(listed, by_values), by_values = by_values, key_only = key_only)
 }
 
 # A column of record numbers under a name nobody listed: whole numbers of four
@@ -50,6 +54,12 @@
     stop(setting, " names ", toString(shaped), ", whose values look like record numbers: whole numbers of four digits ",
          "or more that nearly all differ. Remove it from ", setting, ". If it is a measurement, say so above this chunk: ",
          "options(hvtiRtemplates.not_identifiers = \"", shaped[[1L]], "\").", call. = FALSE)
+  }
+  keyed <- hit[tolower(hit) %in% tolower(attr(no_values, "key_only"))]
+  if (length(keyed)) {
+    stop(setting, " names ", toString(keyed), ", which is in KEY: no report shows a KEY column's values, because KEY ",
+         "tells one patient's rows apart. Use another column in ", setting, ", or take it out of KEY and tell the ",
+         "rows apart with a column the report does not show, such as a record number.", call. = FALSE)
   }
   if (length(hit)) {
     stop(setting, " names ", toString(hit), ", which identifies patients: its values cannot appear in a table or ",
