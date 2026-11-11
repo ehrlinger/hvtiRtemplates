@@ -1,6 +1,7 @@
 # SID clustering family, in flight: sid-fit grows the unsupervised SID forest
 # and saves its distance, and sid-clusters cuts that distance into lettered
-# solutions. Both share the echo-phenotype set, and family-vt.R reads it: vt-fit
+# solutions, and sid-stability refits the forest to see whether those groups
+# hold. All three share the echo-phenotype set, and family-vt.R reads it: vt-fit
 # for SID eligibility, vt-explain for its strata. This file sorts before
 # family-vt.R, so the set exists when the twins are built.
 #
@@ -52,6 +53,11 @@ gallery_family(
     "sid-clusters" = list(subject = "echo", type = "sid", choices = list(
       "^K_RANGE <- " = "K_RANGE <- 2:6",
       "^K <- NULL$" = "K <- 3"
+    )),
+    # 10 refits, not the template's 50, keep the render short and still show
+    # how the agreement with sid-clusters' K = 3 spreads.
+    "sid-stability" = list(subject = "echo", type = "sid", choices = list(
+      "^REPEATS <- " = "REPEATS <- 10"
     ))
   )
 )

@@ -150,13 +150,15 @@ reop_event <- list("^EVENTS <- list\\(\\)$" = paste0(
 ))
 demo_choices <- list(
   "dc-tables" = c(whole_cohort, demo_id, list(
-    # GROUPS spans several lines; replace its two group lines, keep its brackets.
-    "^  Demography = c\\(\"age\", \"female\"\\),$" = paste(
+    # GROUPS ships NULL, which tables every column; name the groups instead.
+    "^GROUPS <- NULL$" = paste(
+      "GROUPS <- list(",
       "  Demography = c(\"age\", \"female\", \"race_grp\", \"bmi\"),",
       "  History    = c(\"hx_chf\", \"hx_dm\", \"nyha_pr\"),",
-      "  Echo       = c(\"lvef\", \"plvmassi\"),", sep = "\n"
-    ),
-    "^  Symptoms   = c\\(\"nyha_pr\"\\)$" = "  Laboratory = \"creat_pr\""
+      "  Echo       = c(\"lvef\", \"plvmassi\"),",
+      "  Laboratory = \"creat_pr\"",
+      ")", sep = "\n"
+    )
   )),
   "dc-trends" = c(demo_id, list(
     "^d\\$year <- floor\\(d\\$iv_opyrs\\) \\+ 1985$" = "d$year <- floor(d$iv_opyrs) + 1990",

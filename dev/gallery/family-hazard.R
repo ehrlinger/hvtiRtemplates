@@ -230,7 +230,9 @@ gallery_family(
         "^GROUP <- NULL$" = "GROUP <- \"approach\"",
         "^HORIZON <- 10$" = "HORIZON <- 5",
         "^CARRY <- character\\(\\)$" = "CARRY <- c(\"age\")",
-        "^OVERLAP <- NULL$" = "OVERLAP <- \"none\""
+        "^OVERLAP <- NULL$" = "OVERLAP <- \"none\"",
+        # BAND has no default since #509; limits_mean is the band at CLEVEL.
+        "^BAND <- NULL$" = "BAND <- \"limits_mean\""
       ))
     ),
     "hz-segments" = list(
