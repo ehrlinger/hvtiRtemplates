@@ -17,6 +17,24 @@ test_that(".refuse_display says when a column is refused only because it is in K
   expect_error(hvtiRtemplates:::.refuse_display("ccfid", no_values, "X_VAR"), "identifies patients")
 })
 
+test_that("a KEY column whose values look like record numbers is an identifier, not only a KEY column", {
+  # Found in review of #515: such a column was told to leave KEY, which the value check then refuses.
+  d <- data.frame(ccfid = 1:12, local_code = 10000000 + seq(1, 120, by = 10), dt_surg = Sys.Date() + 0:11)
+  no_values <- hvtiRtemplates:::.no_values(d, "ccfid", c("ccfid", "local_code"))
+  expect_error(hvtiRtemplates:::.refuse_display("local_code", no_values, "X_VAR"), "identifies patients")
+  # Said to be a measurement, it is refused for KEY alone again.
+  withr::local_options(hvtiRtemplates.not_identifiers = "local_code")
+  cleared <- hvtiRtemplates:::.no_values(d, "ccfid", c("ccfid", "local_code"))
+  expect_error(hvtiRtemplates:::.refuse_display("local_code", cleared, "X_VAR"), "which is in KEY")
+})
+
+test_that("a setting naming a KEY column and an identifier is refused for the identifier first", {
+  d <- data.frame(ccfid = 1:3, dt_surg = Sys.Date() + 0:2, pt_mrn = 1:3)
+  no_values <- hvtiRtemplates:::.no_values(d, "ccfid", c("ccfid", "dt_surg"))
+  expect_error(hvtiRtemplates:::.refuse_display(c("dt_surg", "pt_mrn"), no_values, "VARIABLES"),
+               "VARIABLES names pt_mrn, which identifies patients")
+})
+
 test_that(".refuse_display stops on a named identifier, whatever its case, and names no value", {
   expect_error(hvtiRtemplates:::.refuse_display(list(a = c("age", "MRN")), "mrn", "GROUPS"), "GROUPS names MRN")
   expect_true(hvtiRtemplates:::.refuse_display(c("age", NA), "mrn", "GROUPS"))
