@@ -67,3 +67,44 @@ test_that("the spaghetti thins to SPAGHETTI_N patients per panel", {
   per <- tapply(env$.lines$patient, env$.lines$panel, function(x) length(unique(x)))
   expect_true(all(per <= 7))
 })
+
+# vt-fit through oe-curves at a TAU of the test's choosing.
+vt_oe_at_tau <- function(tau_of) {
+  env <- vt_fit_first(labels = vt_oe_labels)  # nolint: object_usage_linter.
+  env$TAU <- tau_of(env)
+  rf_run("vt", "fit", c("oe", "oe-curves"), env)  # nolint: object_usage_linter.
+  env
+}
+
+test_that("every curve reaches TAU when TAU falls between two forest times", {
+  skip_on_cran()
+  env <- vt_oe_at_tau(function(e) {
+    ti <- e$.forests[["A"]]$time.interest
+    (ti[10] + ti[11]) / 2
+  })
+  cv <- env$oe_curves
+  for (p in unique(cv$panel)) {
+    x <- cv[cv$panel == p, ]
+    expect_identical(max(x$time), env$TAU)
+    # Held: the value at TAU is the value of the last forest time before it.
+    n <- nrow(x)
+    expect_identical(x[n, c("mean", "lower", "upper")], x[n - 1L, c("mean", "lower", "upper")], ignore_attr = TRUE)
+  }
+  expect_true(all(tapply(env$.lines$time, env$.lines$panel, max) == env$TAU))
+  expect_true(all(tapply(env$.oe_band$time, env$.oe_band$panel, max) == env$TAU))
+  # The figure draws the band and the mean on step coordinates, not on the forest's grid.
+  rf_run("vt", "fit", "fig-expected-km", env)  # nolint: object_usage_linter.
+  ribbons <- Filter(function(l) inherits(l$geom, "GeomRibbon"), env$.fig$layers)
+  expect_identical(ribbons[[2L]]$data, env$.oe_band)
+})
+
+test_that("before a forest's first time every curve is 1 to TAU", {
+  skip_on_cran()
+  env <- vt_oe_at_tau(function(e) min(vapply(e$.forests, function(f) min(f$time.interest), numeric(1L))) / 2)
+  cv <- env$oe_curves
+  expect_true(all(tapply(cv$time, cv$panel, max) == env$TAU))
+  expect_true(all(cv$mean == 1 & cv$lower == 1 & cv$upper == 1))
+  expect_true(all(env$.lines$surv == 1))
+  # No forest time before TAU means no expected deaths, so no cell is tested.
+  expect_true(all(env$oe$inference == "none: no patients or no expected deaths"))
+})
