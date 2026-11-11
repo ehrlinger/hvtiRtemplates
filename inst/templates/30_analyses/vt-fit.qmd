@@ -1212,7 +1212,7 @@ its exact Poisson interval and the chi-squared test of O against E are the one-s
 (Breslow 1975; Finkelstein, Muzikansky and Schoenfeld 2003). It is the test `hs-concordance` runs on hazard
 models, through the same helper.
 
-Seven things to say beside the result:
+Eight things to say beside the result:
 
 - **What the test assumes is a fixed reference, not that O and E are independent.** They never are: E is
   summed over each patient's own follow-up, which ends at their death when there is one, so a group's
@@ -1238,6 +1238,10 @@ Seven things to say beside the result:
 - **The band is the spread of the patients' predictions**, their 15th to 85th percentiles, and not a
   confidence interval of anything. A forest gives no per-patient limits, so there is no average of them to
   draw, and the interval of the mean curve would need the bootstrap too.
+- **A large p-value is not evidence of agreement.** The test asks whether the deaths depart from the
+  forest's expectation by more than chance allows. It does not measure agreement. An arm with few deaths
+  rarely rejects even a poorly calibrated forest, so read O/E and its interval for how close the forest is,
+  and a nonsignificant result only as no detected departure.
 
 ```{r}
 #| label: oe

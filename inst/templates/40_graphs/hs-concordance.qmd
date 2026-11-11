@@ -595,11 +595,15 @@ own follow-up, and the group's are their sum, E. The ratio O/E, its exact
 Poisson interval and the chi-squared test of O against E are the one-sample
 log-rank test (Breslow 1975; Finkelstein, Muzikansky and Schoenfeld 2003).
 
-Four things to say beside the result:
+Five things to say beside the result:
 
 - **A test needs a model fitted on other patients, and only you can confirm
-  that.** A model estimated from the same deaths it is tested against is not
-  fixed: O and E then depend on each other, and the p-value means nothing. No
+  that.** O and E are never independent: both run over each patient's own
+  follow-up, which ends at their death when there is one. The test rests
+  instead on O - E against a fixed reference, and a model estimated from the
+  same deaths it is tested against is not fixed: it has learned those deaths,
+  E is pulled toward O, the fit looks better than it is, and the p-value has
+  no valid reference distribution. No
   saved model carries a patient identifier, so this job cannot prove which
   patients fitted it. A cell therefore gets an interval and a p-value only
   when its model is named in `INDEPENDENT`, your statement from the study's
@@ -618,6 +622,12 @@ Four things to say beside the result:
 - **Follow-up stops at `TAU`.** Past the last time a model has data for, its
   expectation is its parametric form running on, so deaths and expectations
   are both counted to `TAU` and no further, and the figures stop there too.
+- **A large p-value is not evidence of agreement.** The test asks whether the
+  deaths depart from the model's expectation by more than chance allows. It
+  does not measure agreement. A small group, or one with few deaths, rarely
+  rejects even a poorly calibrated model, so read O/E and its interval for how
+  close the model is, and a nonsignificant result only as no detected
+  departure.
 
 ```{r}
 #| label: oe
