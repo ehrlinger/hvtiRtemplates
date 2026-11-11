@@ -104,6 +104,7 @@ test_that("the R checked for a Quarto render is the one Quarto finds", {
   withr::with_envvar(c(QUARTO_R = file.path(bin, "R")),
                      expect_identical(same(.quarto_rscript()), same(file.path(bin, rscript))))
   # Not PATH's Rscript, which R CMD check replaces with a stub that refuses to run.
+  # R.home("bin") is bin/x64 on Windows, where the binary lives, and bin elsewhere.
   withr::with_envvar(c(QUARTO_R = NA, R_HOME = R.home()),
-                     expect_identical(same(.quarto_rscript()), same(file.path(R.home(), "bin", rscript))))
+                     expect_identical(same(.quarto_rscript()), same(file.path(R.home("bin"), rscript))))
 })
