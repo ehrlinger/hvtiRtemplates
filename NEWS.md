@@ -1,3 +1,150 @@
+# hvtiRtemplates 1.5.7
+
+* Two tests from the stale-install guard no longer fail under covr. The test that two studies can load two
+  different copies now gives the second study a copy of its own, first on its library path, instead of
+  dropping the user library, which cannot hide a copy in a site library. The test that a submitted job returns
+  at once runs the install check before it starts the clock, so the time it measures is the submission's.
+
+* vp-fit now hands vp-explain the variables selected in at least `SELECT_SHARE` (default 0.5) of its
+  stability refits, instead of the full fit's selection. One fit's noise bar is the best of a few noise
+  columns, and on a small cohort it moves with the noise draw: on a 58-event screen the full fit selected 16
+  candidates, most of them binary variables just over a low categorical bar, while a majority of 20 refits
+  selected 4. `SELECT_SHARE <- NA`, or `REPEATS <- 0`, keeps the full fit's selection. The coverage table and
+  the funnel still report the full fit, and the stability chunk names the set it hands on.
+* vp-individual's coverage table now marks the handoff's selection, so its `selected` column agrees with the
+  variables it draws by default. vp-explain says when a selected variable is left out because the saved full
+  fit did not test it, and stops with that reason, not "selected none", when no variable is left to draw.
+
+* `sid-clusters` no longer prints the study's full path into its report. The
+  registration step's captured `register_data()` and `update_manifest()` output
+  printed as the chunk's value, and it opens with the study root; it is now
+  discarded.
+
+* `read_job_data()`'s KEY errors now say whether the data read were the latest.
+  When the source has been rebuilt since it was registered, the job reads the
+  older registered version, and a rebuild that removed a repeat is not read
+  until it is registered; the note saying so sat in the data table, which the
+  error stops the job before. It now ends the error, naming
+  `update_manifest()`, and a joined dataset's key errors carry it too. When
+  the data read are current, the error says so, and gives the
+  `hvtiRutilities::duplicate_keys()` call that lists the repeated rows to
+  correct in the build.
+
+* `dc-tables` gains three study choices. `PROP_CI` (`"none"`, `"wilson"` or `"exact"`) and `PROP_CI_LEVEL` (default `0.95`)
+  put a confidence interval for the percentage beside every binary and categorical cell, through `hvtiRtables`
+  1.0.13's `prop_ci`. `WORD_STYLE` (`"manuscript"` or `"report"`) chooses the Word table's style; the manuscript style
+  does not show the intervals yet, so a job asking for them with `WORD_STYLE <- "manuscript"` stops before the table is
+  built and says to set `"report"`. The template now needs `hvtiRtables` >= 1.0.13.
+
+* `dc-eda` draws a short cohort in months. A new study choice, `X_UNIT` (`"auto"`, `"year"` or `"month"`), says what a
+  date `X_VAR` is drawn in; `"auto"` draws months when the dates span less than three years. A six-month cohort drew
+  one bar and a 2026.0 to 2026.5 axis; in months its percent and count bars are calendar months, in order, and its
+  continuous panels a date axis. While `X_LABEL` is still `"Year of operation"`, a monthly axis reads
+  `"Month of operation"`. A longer cohort, and an `X_VAR` that is not a date, draw as before.
+
+* `dc-tables` reports the house ODS list by default. `GROUPS <- NULL`, now the template's default, draws every section
+  the SAS ODS tables report, keeping only the columns the dataset has, under the dataset's own spelling, as `dc-eda`'s
+  `VARIABLE_SET <- "ods"` does: nobody sorts the list against the data by hand. The report counts the columns and
+  names the dataset's columns left out, and `BY` is never also a row. An ODS column the dataset carries with no
+  values recorded is left out and named, so one unpopulated field does not stop the table. Named `GROUPS` work as before, a name missing
+  from the data still stops the table, and jobs that already set `GROUPS` keep it.
+
+* `dc-eda` and `dc-tables` say which is "the tables". `dc-eda` is the data check the SAS ODS tables were, the first
+  look at every variable of a new build; `dc-tables` is the statistician's formatted table for an analysis report or
+  manuscript. Both templates' opening text, their catalog descriptions and `inst/templates/README.md` say so.
+
+* `dc-tables`: the comment above `DROP_CONSTANT` no longer says a row with nothing recorded is kept. The table
+  stops and names such a row, and `GROUPS <- NULL` leaves those columns out before it gets there.
+
+* vt-fit judges eligibility by an isolation forest as well: `"isolation"` is a third `ELIGIBILITY` method,
+  beside `"gower"` and `"sid"`. The forest is grown on each arm with the isotree package. The arm's own
+  patients are scored cross-fitted over five folds, and a judged patient is dealt a fold the same way and
+  scored by that fold's forest, so both sides are scored alike, by one forest that never saw them. A patient scoring above
+  `ISOLATION_CUTOFF` (default 0.99), a quantile of the arm's own scores, is flagged, and a new table counts
+  the flags at the 95th and 99.5th percentiles beside it. `COMBINE` already decides how the methods join:
+  `"any"` keeps a patient only when every method keeps them, the "both" rule; to decide by one method,
+  name only that one. isotree joins Suggests.
+* vt-fit counts eligible patients with a value outside what the arm they were judged against shows, a number
+  outside its observed range or a level none of its patients has. Gower and the isolation forest average
+  over every variable, so one extreme value can leave a patient eligible. The patients themselves are saved
+  in `vt.rds`, under `eligibility$outside_range`.
+* vt-fit's optional `AGE_CAP`, such as `c(age = 90)`, caps an age column in every arm when one arm's ages were
+  capped for de-identification, so an uncapped 95 does not look out of range. It is `NULL` by default, and
+  vt-explain applies the same cap to the data it re-reads.
+* vt-explain's distance figure says that an isolation-forest row is a score, and its line the cutoff.
+
+* New in-flight template `sid-stability` (`add_job("sid", subject, type, qualifier = "stability")`), the third job in a
+  SID set. It rebuilds `sid-fit`'s distance over `REPEATS` new seeds: the same M forests on the same completed
+  datasets (read from `sid-fit`'s caches and checked against fingerprints `sid-fit` now records in `sid.rds`, never
+  imputed again), averaged as `sid-fit` averages them. It runs PAM as `sid-clusters` does, and compares every refit with the reported groups:
+  adjusted Rand index (with and without label matching), how often each group is found and its Jaccard overlap, where
+  a group's patients go when no refit finds it, a co-association heatmap with PAC, an optional `TRACK` share per group,
+  and, with `DROP_VARS`, a second set of refits without the named clustering variables. Each refit is cached on its own,
+  so an interrupted run resumes. Built from one study's 50-seed stability analysis; a second study ships it.
+
+* A documentation sweep of the templates corrects comments and narration that no longer matched the code, with no
+  change to what any job runs. Among them: `bc` and `br` called their screens logistic; the `bc`, `bl` and `br`
+  comments named the source runner rather than the job's own; the screens' `POOL_AFFIXES` comment had the strip
+  order wrong; `vp-fit` named only `vp-explain` as a reader of `vp.rds`, leaving out `vp-individual`; `hs-setup`
+  carried two passages copied from `hm`; `rfr-fit` described its out-of-bag figure as predicted against observed;
+  `dc-gfup` miscounted what `followup_check()` returns; and `inst/templates/README.md` gave unpaged names for
+  figures that are saved one file per page.
+
+* The "Start a new study" vignette points an exploration of a registered study, which has no Study Tracker record of its own yet, to `hvtiR::setup(derived_from = )`.
+
+* The old template names `dp.eda` and `dp.trends`, renamed `dc.eda` and `dc.trends` on 2026-10-10, are removed:
+  `add_job()`, `open_job()`, `template_path()` and `migrate_job()` now stop with an error naming the new name instead
+  of warning. A job already written under an old name is still found by `open_job()` and `add_job()`, and
+  `upgrade_job()` reads its name as the renamed template's, without a warning; a legacy SAS source named
+  `dp.trends.sas` still migrates into `dc-trends`. `import_job()` refuses such a job, whose code may assume the
+  old folder (a `dp.trends` job links its figures as though it sat in `graphs/`), and says to upgrade it first.
+* `guard_long_fit()` names `run_job()`, which checks the job before submitting it, in place of `submit_job()`.
+  The templates and `inst/templates/README.md` point at `run_job()` too.
+* `lp-mirror` checks for hvtiPlotR 2.8.20, the version this package requires, in place of 2.8.9, and its matched
+  figure's caption names the controls' color as vermillion, as the other two captions do.
+* Template comments and narration: each template's `FIGURES` example names one of its own figures; the figure-saving
+  comment says a TIFF is written only when ragg is installed; the `ID` marker says the MRN, then eMRN, fallback
+  applies when the data has no `ccfid` column; `vp-fit` names `vp-individual` as a reader of its selection;
+  `hm` no longer points at `as.numeric()` calls it does not make, and says what `covariates_to_numeric()` does;
+  `sid-fit` dates the `na.impute` behavior to
+  randomForestSRC 3.10.0; `br` says a screen moves with the outcome's transform, not its units; and two templates
+  no longer name a person or a study.
+
+* hs-concordance tests observed against expected deaths: for each model and each group received, the deaths
+  observed to `TAU` against the sum of each patient's cumulative hazard from the model at their own follow-up,
+  the one-sample log-rank, with O/E, its exact Poisson interval at `TEST_LEVEL` (95% by default, switchable)
+  and a p-value. The expected count is treated as fixed; adding the model's own uncertainty waits on
+  TemporalHazard#731. A cell gets an interval and a p-value only when the author names its model in
+  `INDEPENDENT`, confirming from the study's records that other patients fitted it, and none of the group's
+  rows match the model's fitted data; every other cell shows O, E and O/E with the reason it is not tested.
+  `TAU` defaults to the shortest of the models' follow-up, and the figures stop there too.
+* hs-concordance accepts `GROUP <- NULL` when `MODELS` has one entry, so a cohort scored through one model
+  fitted on another cohort is an hs-concordance job.
+* hs-concordance draws each group's average expected curve against its Kaplan-Meier estimate, with the test in
+  each panel's title, and a spaghetti figure of the patients' curves. The band around the average is chosen by
+  `BAND`, with no default: `"limits_mean"`, the average of the patients' 68% limits, labeled not an interval
+  for the mean curve, or `"spread"`, the 15th to 85th percentiles of the predictions, labeled not a
+  confidence interval. The interval of the mean curve itself waits on TemporalHazard#731. The Kaplan-Meier
+  band is left undrawn where its limits are undefined, as at a survival of 0.
+* hs-setup and hs-concordance stop if the averaged curve they draw is not the mean of the patients'
+  predictions their table reports, and their prediction tables add the mean and the 15th and 85th
+  percentiles beside the median.
+* hs-setup's saved `hs.rds` renames `obs_vs_exp` to `model_vs_population`, its columns `observed` and
+  `expected` to `model` and `population`, and the per-patient life table `expected` to `population`, as the
+  figure already named the two curves. Neither column was observed. A study job reading the old names from
+  `hs.rds` reads `NULL` until it is updated.
+* vt-explain points to the hs-concordance test and band for observed-against-expected work on arm forests.
+
+* Template comments and narration added since the sweep: `sid-stability` describes the refit seeds as the code
+  computes them, `SEED_OFFSET + (r - 1) * M + 1`, and says a seed clash stops the render; `vt-fit` says what
+  Gower distance and an isolation forest each fold into one number; `hs-concordance` and `hs-setup` say that a
+  few high-risk patients pull the mean predicted survival below the median, rather than above the 85th
+  percentile; `hs-concordance` says the 68% limits belong to `BAND <- "limits_mean"` only, and no longer calls
+  its event and follow-up columns unused; `hs-setup`'s `SCALE` warning compares against model predictions,
+  not observed values.
+* The template archive `upgrade_job()` reads now holds `sid-stability`, so a job copied from its earlier text drops
+  the old `REPEATS` and `SEED_OFFSET` comments on upgrade instead of keeping them as the study's own.
+
 # hvtiRtemplates 1.5.6
 
 * A `bd` end-to-end test now checks that its draft fails at the error it plants, not
