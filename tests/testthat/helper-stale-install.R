@@ -99,10 +99,12 @@ skip_if_stale_install <- function(dir = getwd(), rscript = file.path(R.home("bin
 # binary, or the directory holding one), else R_HOME/bin, else PATH. Under R CMD check the
 # Rscript on PATH is a stub that refuses to run, and Quarto never reaches it, for R_HOME is set.
 .quarto_rscript <- function() {
+  # Windows names the binary Rscript.exe, and R_HOME/bin holds a launcher by that name.
+  rscript <- if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript"
   q <- Sys.getenv("QUARTO_R")
-  if (nzchar(q) && file.exists(q)) return(file.path(if (dir.exists(q)) q else dirname(q), "Rscript"))
+  if (nzchar(q) && file.exists(q)) return(file.path(if (dir.exists(q)) q else dirname(q), rscript))
   h <- Sys.getenv("R_HOME")
-  if (nzchar(h) && file.exists(file.path(h, "bin", "Rscript"))) return(file.path(h, "bin", "Rscript"))
+  if (nzchar(h) && file.exists(file.path(h, "bin", rscript))) return(file.path(h, "bin", rscript))
   unname(Sys.which("Rscript"))
 }
 
