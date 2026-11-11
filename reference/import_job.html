@@ -130,7 +130,7 @@ afterwards: <code>upgrade_job(import_job(from))</code>.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="va">lines</span>, <span class="va">job</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">imported</span> <span class="op">&lt;-</span> <span class="fu">import_job</span><span class="op">(</span><span class="va">job</span>, subject <span class="op">=</span> <span class="st">"reop"</span>, dir <span class="op">=</span> <span class="va">here</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> import_job(): wrote '/tmp/RtmppVOLWP/import-job-here/20_distributions/ac.reop.hz.qmd' from '/tmp/RtmppVOLWP/import-job-other/20_distributions/ac.death.hz.qmd'.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> import_job(): wrote '/tmp/RtmpaYDQeQ/import-job-here/20_distributions/ac.reop.hz.qmd' from '/tmp/RtmpaYDQeQ/import-job-other/20_distributions/ac.death.hz.qmd'.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Review in ac.reop.hz.qmd:</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   DATASET: line 117</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   EDIT: markers: lines 33, 116, 119, 122, 127, 132, 157, 162</span>
@@ -139,7 +139,7 @@ afterwards: <code>upgrade_job(import_job(from))</code>.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># An existing job is never overwritten.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">import_job</span><span class="op">(</span><span class="va">job</span>, subject <span class="op">=</span> <span class="st">"reop"</span>, dir <span class="op">=</span> <span class="va">here</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : import_job(): '/tmp/RtmppVOLWP/import-job-here/20_distributions/ac.reop.hz.qmd' already exists; refusing to overwrite.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : import_job(): '/tmp/RtmpaYDQeQ/import-job-here/20_distributions/ac.reop.hz.qmd' already exists; refusing to overwrite.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">other</span>, <span class="va">here</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
