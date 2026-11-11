@@ -5,3 +5,6 @@
   only, counted to `TAU`. New figures `vt-fit-expected-km` (the average expected curve, the spread of the
   patients' predictions and the Kaplan-Meier) and `vt-fit-spaghetti` (`SPAGHETTI_N`). The test is saved in
   `vt.rds` as `oe`, with `tau` and `test_level` in `settings`; `vt.rds$curves` is unchanged.
+* `hs-concordance` no longer says a model fitted on the tested deaths makes O and E depend on each other.
+  They always do, through each patient's own follow-up; the test rests on O - E against a fixed reference,
+  and a model that learned those deaths is not one.
