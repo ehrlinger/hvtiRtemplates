@@ -274,3 +274,22 @@ test_that("dc-gfup's single-event caption is unchanged by competing events", {
   expect_match(r$out, paste0("Blue open circles mark patients without the event, green open triangles patients with ",
                              "the event, and red crosses patients who died and the dashed"), fixed = TRUE)
 })
+
+test_that("GROUP adds a faceted figure per panel, one facet per group", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  edits <- c(base_edits, list(
+    "^GROUP <- NULL$" = "GROUP <- \"race_grp\"",
+    "^EVENTS <- list\\(\\)$" = paste0(
+      "EVENTS <- list(repair = list(event = \"repair\", time = \"iv_fup\", ",
+      "death = \"dead\", death_time = \"iv_dead\", label = \"Repair\"))"
+    )
+  ))
+  s <- scaffold_gfup(edits)
+  quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
+  pngs <- file.path(s$root, "graphs", "cohort-eda", c("dc-gfup-all-by-group.png", "dc-gfup-repair-by-group.png"))
+  expect_true(all(file.exists(pngs)))
+  html <- paste(readLines(sub("[.]qmd$", ".html", s$job), warn = FALSE), collapse = "\n")
+  expect_match(html, "One panel per race_grp group", fixed = TRUE)
+})

@@ -371,19 +371,33 @@ if (!is.character(GROUP) || length(GROUP) != 1L || !GROUP %in% names(d)) {
   stop("GROUP names ", toString(GROUP), ", which the data does not have. Name one column, or set GROUP <- NULL.",
        call. = FALSE)
 }
-# proc_means() drops rows with no group, so they become a "(missing)" group and every
-# patient is counted. A factor keeps its own level order.
-.g <- d[[GROUP]]
-if (anyNA(.g)) {
-  .g <- factor(.g, levels = c(if (is.factor(.g)) levels(.g) else sort(unique(.g[!is.na(.g)])), NA), exclude = NULL)
-  levels(.g)[is.na(levels(.g))] <- "(missing)"
+# proc_means() drops rows with no group, so they become a group of their own, "(missing)",
+# and every patient is counted. A study whose column already holds that value gets the
+# next free label, so no patient joins a group that is not theirs. A factor keeps its own
+# level order. The figures facet by these.
+group_values <- d[[GROUP]]
+.group_levels <- as.character(if (is.factor(group_values)) levels(group_values) else sort(unique(group_values[!is.na(group_values)])))
+if (anyNA(group_values)) {
+  .no_group <- setdiff(c("(missing)", "(no value)", "(NA)"), .group_levels)
+  if (!length(.no_group)) {
+    stop("GROUP ", GROUP, " already holds the values (missing), (no value) and (NA), so the patients with no value ",
+         "cannot be named apart from them. Recode the column.", call. = FALSE)
+  }
+  group_values <- factor(group_values, levels = c(.group_levels, NA), exclude = NULL)
+  levels(group_values)[is.na(levels(group_values))] <- .no_group[[1L]]
+} else {
+  group_values <- factor(group_values, levels = .group_levels)
 }
+# proc_means() returns the class column under its own name, beside n, mean, variable and
+# the rest, so the group goes in under a name no study column has; the heading is
+# restored below, and marked "(group)" where it would repeat a column of this table.
 .gd <- d[FOLLOWUP]
-.gd[[GROUP]] <- .g
-.gm <- hvtiRutilities::proc_means(.gd, vars = FOLLOWUP, class = GROUP, stats = .followup_stats)
-group_table <- data.frame(interval = .gm$variable, .gm[GROUP], n = .gm$n, missing = .gm$nmiss, mean = .gm$mean,
-                          sd = .gm$std, min = .gm$min, p15 = .gm$p15, median = .gm$median, p75 = .gm$p75,
-                          p85 = .gm$p85, p90 = .gm$p90, max = .gm$max, total = .gm$sum, check.names = FALSE)
+.gd$.gfup_group <- group_values
+.gm <- hvtiRutilities::proc_means(.gd, vars = FOLLOWUP, class = ".gfup_group", stats = .followup_stats)
+group_table <- data.frame(interval = .gm$variable, group = as.character(.gm$.gfup_group), n = .gm$n, missing = .gm$nmiss,
+                          mean = .gm$mean, sd = .gm$std, min = .gm$min, p15 = .gm$p15, median = .gm$median,
+                          p75 = .gm$p75, p85 = .gm$p85, p90 = .gm$p90, max = .gm$max, total = .gm$sum)
+names(group_table)[2L] <- if (GROUP %in% names(group_table)) paste(GROUP, "(group)") else GROUP
 group_table <- group_table[order(match(group_table$interval, FOLLOWUP)), , drop = FALSE]
 knitr::kable(group_table, row.names = FALSE, digits = 3)
 ```
@@ -620,6 +634,39 @@ if (!EVENT %in% .drawn) {
       .why, "\n:::\n\n", sep = "")
 }
 plots <- if (figure_drawn) plot(fp, alpha = ALPHA) else list()
+# GROUP: every group's panels drawn on their own, against the cohort's close date so
+# each facet's diagonal is the cohort's. A group the panel function refuses is left out
+# of the facets and named under them; the cohort figure is unaffected.
+group_plots <- list()
+group_refused <- character()
+if (figure_drawn && !is.null(GROUP)) {
+  for (.lv in levels(group_values)) {
+    .gp <- tryCatch(hvtiPlotR::hv_followup_panels(d[group_values == .lv, , drop = FALSE], opyrs_col = OPYRS,
+                                                  origin_year = ORIGIN_YEAR, panels = PANELS, events = EVENTS,
+                                                  close_date = close_date, echo_time_col = ECHO),
+                    error = function(e) e)
+    if (inherits(.gp, "error")) group_refused <- c(group_refused, .lv) else group_plots[[.lv]] <- plot(.gp, alpha = ALPHA)
+  }
+}
+# The cohort figure `p` of panel `nm`, faceted by GROUP: it keeps p's scales, labels and
+# theme, and its data and every layer that carries its own, the diagonal included, become
+# the groups' own, stacked with the group they came from, so no facet shows another
+# group's points or the cohort's.
+.facet_groups <- function(p, nm) {
+  ps <- lapply(group_plots, `[[`, nm)
+  stack <- function(get) {
+    out <- do.call(rbind, Map(function(q, lv) cbind(get(q), .gfup_group = rep(lv, nrow(get(q)))), ps, names(ps)))
+    out$.gfup_group <- factor(out$.gfup_group, levels = levels(group_values))
+    out
+  }
+  p$data <- stack(function(q) q$data)
+  for (k in seq_along(p$layers)) {
+    if (is.data.frame(p$layers[[k]]$data)) p$layers[[k]]$data <- stack(function(q) q$layers[[k]]$data)
+  }
+  # The strips name the column, and the years are angled so narrow facets do not run them together.
+  p + facet_wrap(~.gfup_group, labeller = as_labeller(function(x) paste0(GROUP, ": ", x))) +
+    guides(x = guide_axis(angle = 45))
+}
 for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   row <- fp$data[i, ]
   nm <- row$panel
@@ -666,6 +713,19 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
          paste0("Follow-up against year of operation, ", row$title, ". ", .key, " and the dashed orange diagonal ",
                 "the longest follow-up possible for each year of operation."),
          "knitr::include_graphics(.link, error = FALSE)")
+  if (length(group_plots)) {
+    file <- save_figure(.facet_groups(p, nm), paste0("dc-gfup-", nm, "-by-group"), linked = TRUE)
+    .link <- figure_link(file)
+    .child(paste("fig gfup", nm, "by group"),
+           paste0("Follow-up against year of operation, ", row$title, ". One panel per ", GROUP, " group; ",
+                  "patients with no value for it have a panel of their own. The marks are those of the figure above, and ",
+                  "each diagonal is the longest follow-up the cohort's close date allows."),
+           "knitr::include_graphics(.link, error = FALSE)")
+  }
+}
+if (length(group_refused)) {
+  cat("No ", GROUP, " facet was drawn for ", toString(group_refused), ": the panel function refused ",
+      if (length(group_refused) == 1L) "that group" else "those groups", ".\n\n", sep = "")
 }
 ```
 

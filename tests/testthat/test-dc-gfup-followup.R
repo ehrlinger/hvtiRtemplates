@@ -156,3 +156,26 @@ test_that("GROUP refuses a column that identifies patients, and one the data lac
   expect_error(gfup_group(d, "ccfid"), "GROUP names ccfid, which identifies patients")
   expect_error(gfup_group(d, "erra"), "GROUP names erra, which the data does not have")
 })
+
+test_that("a real group spelled (missing) stays apart from patients with no group", {
+  # Codex review on #518.
+  d <- data.frame(ccfid = 1:4, era = c("(missing)", NA, "a", "a"), iv_dead = 1:4)
+  out <- gfup_group(d, "era")
+  expect_identical(as.character(out$era), c("(missing)", "a", "(no value)"))
+  expect_identical(out$n, c(1L, 2L, 1L))
+  expect_equal(out$total, c(1, 7, 2))
+})
+
+test_that("a GROUP named like a statistic or the interval column reports the statistics", {
+  # Codex review on #518: proc_means() returned the class column under its own name.
+  for (g in c("mean", "n", "variable", "interval")) {
+    d <- data.frame(ccfid = 1:4, iv_dead = 1:4)
+    d[[g]] <- c("A", "A", "B", "B")
+    out <- gfup_group(d, g)
+    expect_identical(out$interval, rep("iv_dead", 2L), info = g)
+    # The heading is marked only where it would repeat a column of the table; variable is not one.
+    expect_identical(out[[if (g == "variable") g else paste(g, "(group)")]], c("A", "B"), info = g)
+    expect_identical(out$n, c(2L, 2L), info = g)
+    expect_equal(out$mean, c(1.5, 3.5), info = g)
+  }
+})
