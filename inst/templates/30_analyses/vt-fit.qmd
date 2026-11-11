@@ -1212,14 +1212,17 @@ its exact Poisson interval and the chi-squared test of O against E are the one-s
 (Breslow 1975; Finkelstein, Muzikansky and Schoenfeld 2003). It is the test `hs-concordance` runs on hazard
 models, through the same helper.
 
-Five things to say beside the result:
+Six things to say beside the result:
 
-- **Only the other arm's forest is tested.** The patients of arm B are not among arm A's forest's training
-  rows, which this job checks by ID (`in_fit`), so their deaths against what arm A's forest expects for them
-  is a test: the twins' counterfactual comparison as a count. A forest against its own arm is out of bag,
-  so no patient is predicted by trees grown on them, but the other patients' deaths grew those trees and
-  are in O too. O and E then depend on each other, and that cell is shown as a calibration of the forest,
-  with no interval and no p-value.
+- **The other arm's forest gives the cleaner test.** The patients of arm B are not among arm A's forest's
+  training rows, which this job checks by ID (`in_fit`), so their deaths against what arm A's forest
+  expects for them is the twins' counterfactual comparison as a count, with O and E independent.
+- **A forest against its own arm is tested out of bag, and its p-value is approximate.** No patient is
+  predicted by trees grown on them, so the cell is an honest calibration of the forest, and O/E near 1 is
+  what a well-calibrated forest gives. But the other patients' deaths grew those trees and are in O too,
+  so O and E are not independent, and the test's null distribution assumes they are. Read its interval
+  and p-value as a calibration check, not as evidence at their face value. The table marks the cell
+  `tested, out of bag`.
 - **Patients in distribution only**, as in the twin curves above: an out-of-distribution patient's
   other-arm prediction is an extrapolation.
 - **The forest's own uncertainty is not in the test.** E is treated as fixed. A forest has no delta method,
@@ -1282,7 +1285,7 @@ oe <- do.call(base::rbind, lapply(.oe_cells, function(cell) {
   inference <- if (!length(h) || sum(h) <= 0) {
     "none: no patients or no expected deaths"
   } else if (cell$in_fit > 0L) {
-    "none: these patients grew the forest (out of bag)"
+    "tested, out of bag"
   } else {
     "tested"
   }
@@ -1292,7 +1295,6 @@ oe <- do.call(base::rbind, lapply(.oe_cells, function(cell) {
   } else {
     hvtiRtemplates:::.one_sample_logrank(cell$ev, h, TEST_LEVEL)
   }
-  if (inference != "tested") r[c("lower", "upper", "chisq", "p")] <- NA_real_
   data.frame(model = cell$model, group = cell$group, inference = inference, in_fit = cell$in_fit,
              no_prediction = cell$no_prediction, r)
 }))
@@ -1344,12 +1346,12 @@ for (cell in .oe_cells) {
   keep <- cell$times <= TAU
   panel <- local({
     r <- oe[oe$model == cell$model & oe$group == cell$group, , drop = FALSE]
-    test <- if (r$inference != "tested") {
+    test <- if (startsWith(r$inference, "none")) {
       paste0("O/E ", formatC(r$ratio, digits = 2, format = "f"), " (no test: ", sub("^none: ", "", r$inference), ")")
     } else {
       paste0("O/E ", formatC(r$ratio, digits = 2, format = "f"), " (", 100 * TEST_LEVEL, "% ",
              formatC(r$lower, digits = 2, format = "f"), " to ", formatC(r$upper, digits = 2, format = "f"),
-             "), p ", format.pval(r$p, digits = 2, eps = 0.001))
+             "), p ", format.pval(r$p, digits = 2, eps = 0.001), if (r$inference != "tested") ", out of bag")
     }
     paste0("received ", cell$group, ", ", cell$model, " forest\n", test)
   })

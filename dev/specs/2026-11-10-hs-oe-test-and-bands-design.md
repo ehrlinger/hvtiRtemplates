@@ -486,11 +486,13 @@ Built in `vt-fit`, where the forests, the twin curves and the cohort's events ar
   the handoff drops it, so `vt.rds$curves` keeps its shape. The table is saved as `oe`, with the columns
   `hs-concordance`'s `oe` has (`model` is the arm whose forest), and `tau` and `test_level` in `settings`.
 - **Independence is proved by ID, not declared.** Each forest's training IDs are recorded, so `in_fit`
-  counts a group's patients among them exactly. A cell is tested only when it is 0, which is every
-  other-arm cell and no own-arm one. There is no `INDEPENDENT`.
-- **The own-arm cell is not tested**, against section 3.2's table. Out of bag, no patient is predicted
-  by trees grown on them, but the other patients' deaths grew those trees and are in O, so O and E
-  depend on each other: review finding 1 of section 9.1. It is shown as a calibration.
+  counts a group's patients among them exactly. It is 0 in every other-arm cell, whose test is the clean
+  one. There is no `INDEPENDENT`.
+- **The own-arm cell is tested too, out of bag, and labeled so** (`tested, out of bag`), as section 3.2's
+  table has it. Decided by the maintainer on 2026-11-11, after the first build left it untested on 9.1's
+  finding 1: no patient is predicted by trees grown on them, but the other patients' deaths grew those
+  trees and are in O, so O and E are not independent. The report says the p-value is therefore
+  approximate and reads as a calibration check.
 - **Patients in distribution only**, as the twin curves are; an other-arm prediction for a patient out
   of distribution is an extrapolation. Rows with no arm have no observed arm and are not counted.
 - **No `BAND` choice.** A forest gives no per-patient limits, so `"spread"` is the only band; the

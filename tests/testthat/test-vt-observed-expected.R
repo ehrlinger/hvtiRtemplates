@@ -3,20 +3,22 @@
 
 vt_oe_labels <- c(vt_fit_labels, "fit", "curves-helper", "curves", "rmst-helper", "rmst", "oe", "oe-curves")
 
-test_that("only the other arm's forest is tested, and the own arm is out of bag", {
+test_that("the other arm's forest is tested, and the own arm is tested out of bag", {
   skip_on_cran()
   env <- vt_fit_first(labels = vt_oe_labels)
   oe <- env$oe
   expect_identical(paste(oe$model, oe$group), c("A A", "A B", "B A", "B B"))
   own <- oe$model == oe$group
-  expect_true(all(oe$inference[own] == "none: these patients grew the forest (out of bag)"))
-  expect_true(all(is.na(oe$p[own])) && all(is.na(oe$lower[own])))
+  expect_identical(oe$inference[own], rep("tested, out of bag", 2L))
   expect_equal(oe$in_fit[own], oe$n[own] + oe$no_prediction[own])
-  expect_true(all(oe$inference[!own] == "tested"))
+  expect_identical(oe$inference[!own], rep("tested", 2L))
   expect_true(all(oe$in_fit[!own] == 0L))
-  expect_true(all(is.finite(oe$p[!own]) & oe$lower[!own] < oe$ratio[!own] & oe$ratio[!own] < oe$upper[!own]))
+  expect_true(all(is.finite(oe$p) & oe$lower < oe$ratio & oe$ratio < oe$upper))
   # Out of bag, a forest is roughly calibrated on its own arm: not 1 by construction, but near it.
   expect_true(all(oe$ratio[own] > 0.7 & oe$ratio[own] < 1.4))
+  # The panel titles say which test is out of bag.
+  expect_true(all(grepl("out of bag", unique(env$oe_curves$panel[env$oe_curves$model == env$oe_curves$group]))))
+  expect_false(any(grepl("out of bag", unique(env$oe_curves$panel[env$oe_curves$model != env$oe_curves$group]))))
 })
 
 test_that("E is the other forest's cumulative hazard at each patient's own follow-up", {
