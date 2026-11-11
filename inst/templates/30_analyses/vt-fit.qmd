@@ -66,11 +66,16 @@ options(rf.cores = 1L, mc.cores = 1L)
 # The versions this template was verified against on 2026-10-22. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
-for (.floor in list(c("randomForestSRC", "3.7.0"), c("hvtiRpropensity", "0.2.0"), c("hvtiPlotR", "2.8.9"))) {
+for (.floor in list(c("randomForestSRC", "3.7.0"), c("hvtiRpropensity", "0.2.0"))) {
   if (utils::packageVersion(.floor[1]) < .floor[2]) {
     stop("This job needs ", .floor[1], " >= ", .floor[2], "; ", utils::packageVersion(.floor[1]),
          " is installed.\nUpdate it, then re-render.", call. = FALSE)
   }
+}
+# 2.8.20 for hv_group_palette(), which colors the observed-against-expected figure.
+if (utils::packageVersion("hvtiPlotR") < "2.8.20") {
+  stop("This job needs hvtiPlotR >= 2.8.20 for hv_group_palette(); ", utils::packageVersion("hvtiPlotR"),
+       " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
@@ -189,7 +194,20 @@ IMPUTATION_USE <- 1L
 # arms; past the last follow-up every curve is cut at the same place and the
 # difference means nothing. This job stops if it is not.
 HORIZON <- 4
-NTREE <- 1000                               # EDIT: trees per arm forest.
+# The observed-against-expected test follows each patient to TAU at most. NULL
+# takes the shorter of the two arms' follow-up, the furthest both forests have
+# data for; past it a forest's cumulative hazard is held at its last step.
+TAU <- NULL
+# EDIT: the level of the observed-against-expected interval. 95% because the
+#       test's p-value is read against 0.05, and a reader takes an interval
+#       beside a p-value for 95%. The Kaplan-Meier above is 70%; the level is
+#       printed beside every interval either way.
+TEST_LEVEL <- 0.95
+# How many patients' curves the spaghetti figure draws per panel. More than
+# that are thinned to patients spaced evenly through the ranking of predicted
+# survival, so the drawn lines keep the cohort's spread and need no seed.
+SPAGHETTI_N <- 200
+NTREE <- 1000                              # EDIT: trees per arm forest.
 NSPLIT <- 8
 SEED <- 1024                                # EDIT: part of every cache key.
 # Set TRUE after changing a choice above. A cache whose inputs changed stops the
@@ -1074,6 +1092,9 @@ cat(hvtiRtemplates:::.identifiability_notice(rbind(
 # predict(). Everything is keyed by ID: predict() returns rows in the order it
 # was given them, and pairing by position silently swaps patients. Under
 # na.impute predict() imputes the new rows at random, so it takes the seed too.
+# Each row also carries the forest's cumulative hazard, chf (chf.oob for the
+# own arm), which the observed-against-expected test reads; it is not -log(surv),
+# which is infinite where a forest's survival reaches 0. The handoff drops it.
 vt_curves <- function(forests, train_ids, d, id, arm, arms, no_arm, seed) {
   out <- list()
   for (a in arms) {
@@ -1086,12 +1107,14 @@ vt_curves <- function(forests, train_ids, d, id, arm, arms, no_arm, seed) {
     if (anyNA(at)) stop(sum(is.na(at)), " arm ", a, " patient(s) are not among its forest's training rows.", call. = FALSE)
     oob <- f$survival.oob[at, , drop = FALSE]
     out[[length(out) + 1L]] <- data.frame(ID = rep(own_ids, each = length(f$time.interest)), arm_of_curve = a,
-                                          time = f$time.interest, surv = as.vector(t(oob)))
+                                          time = f$time.interest, surv = as.vector(t(oob)),
+                                          chf = as.vector(t(f$chf.oob[at, , drop = FALSE])))
     other <- d[!own, , drop = FALSE]
     p <- predict(f, newdata = other[, f$xvar.names, drop = FALSE], na.action = "na.impute",
                  seed = seed)
     out[[length(out) + 1L]] <- data.frame(ID = rep(other[[id]], each = length(f$time.interest)), arm_of_curve = a,
-                                          time = f$time.interest, surv = as.vector(t(p$survival)))
+                                          time = f$time.interest, surv = as.vector(t(p$survival)),
+                                          chf = as.vector(t(p$chf)))
   }
   do.call(base::rbind, out)
 }
@@ -1179,6 +1202,254 @@ if (!length(.in_dist)) {
 }
 ```
 
+## Observed against expected
+
+Two curves give no p-value. This section gives one: for each arm forest and each arm received, the
+**deaths observed** against the **deaths the forest expects** for those same patients, each followed for as
+long as they actually were. A patient's expected deaths are the forest's cumulative hazard at that
+patient's own follow-up, read off its time grid as a step, and the group's are their sum, E. The ratio O/E,
+its exact Poisson interval and the chi-squared test of O against E are the one-sample log-rank test
+(Breslow 1975; Finkelstein, Muzikansky and Schoenfeld 2003). It is the test `hs-concordance` runs on hazard
+models, through the same helper.
+
+Seven things to say beside the result:
+
+- **What the test assumes is a fixed reference, not that O and E are independent.** They never are: E is
+  summed over each patient's own follow-up, which ends at their death when there is one, so a group's
+  deaths and its expectation share the same follow-up even against a hazard known exactly. The test is
+  justified through O - E, a counting-process statistic that has mean 0 when the group dies at the
+  reference's rate. What it needs is a reference that did not learn from the deaths it is tested against.
+- **The other arm's forest is that kind of reference.** The patients of arm B are not among arm A's
+  forest's training rows, which this job checks by ID (`in_fit`): the samples that trained the forest and
+  that test it are disjoint. Their deaths against what arm A's forest expects for them is the twins'
+  counterfactual comparison as a count.
+- **A forest against its own arm is tested out of bag, and its p-value is approximate.** No patient is
+  predicted by trees grown on them, so the cell is an honest calibration of the forest, and O/E near 1 is
+  what a well-calibrated forest gives. But the arm's other patients grew those trees, and their deaths are
+  in the same O, so the reference was partly fitted to the deaths it is tested against. Read its interval
+  and p-value as a calibration check, not as evidence at their face value. The table marks the cell
+  `tested, out of bag`.
+- **Patients in distribution only**, as in the twin curves above: an out-of-distribution patient's
+  other-arm prediction is an extrapolation.
+- **The forest's own uncertainty is not in the test.** E is treated as fixed. A forest has no delta method,
+  so adding it would mean bootstrapping the forests.
+- **Follow-up stops at `TAU`.** Deaths and expectations are both counted to `TAU` and no further, and the
+  figures stop there too.
+- **The band is the spread of the patients' predictions**, their 15th to 85th percentiles, and not a
+  confidence interval of anything. A forest gives no per-patient limits, so there is no average of them to
+  draw, and the interval of the mean curve would need the bootstrap too.
+
+```{r}
+#| label: oe
+#| results: asis
+if (is.null(TAU)) TAU <- min(.followup)
+if (!is.numeric(TAU) || length(TAU) != 1L || !is.finite(TAU) || TAU <= 0) {
+  stop("TAU must be NULL or one positive number, in TIME's units.", call. = FALSE)
+}
+if (TAU > min(.followup)) {
+  stop("TAU (", TAU, ") is beyond the follow-up of arm ", names(which.min(.followup)), " (",
+       signif(min(.followup), 4), "). Leave TAU NULL to stop there.", call. = FALSE)
+}
+if (!is.numeric(SPAGHETTI_N) || length(SPAGHETTI_N) != 1L || !is.finite(SPAGHETTI_N) || SPAGHETTI_N < 1) {
+  stop("SPAGHETTI_N must be one positive number.", call. = FALSE)
+}
+# The patients counted: treated and in distribution, by the arm they received.
+.oe_pat <- data.frame(ID = d[[ID]], arm = d[[ARM]], time = d[[TIME]], event = d[[STATUS]])[.treated, , drop = FALSE]
+.oe_pat <- .oe_pat[.oe_pat$ID %in% .rmst$ID[.rmst$elig], , drop = FALSE]
+.oe_pat$t <- pmin(.oe_pat$time, TAU)
+.oe_pat$ev <- as.integer(.oe_pat$event == 1 & .oe_pat$time <= TAU)
+
+# One forest's curves for some patients, as patients x times matrices of survival
+# and cumulative hazard, rows in the order of `ids`. .curves holds every patient
+# under every forest on that forest's own grid.
+.oe_matrix <- function(a, ids) {
+  x <- .curves[.curves$arm_of_curve == a & .curves$ID %in% ids, , drop = FALSE]
+  x <- x[order(match(x$ID, ids), x$time), , drop = FALSE]
+  times <- .forests[[a]]$time.interest
+  list(times = times, surv = matrix(x$surv, ncol = length(times), byrow = TRUE),
+       chf = matrix(x$chf, ncol = length(times), byrow = TRUE), ids = unique(x$ID))
+}
+
+# One cell per arm forest and arm received.
+.oe_cells <- list()
+for (a in ARMS) for (g in ARMS) {
+  p <- .oe_pat[.oe_pat$arm == g, , drop = FALSE]
+  m <- .oe_matrix(a, p$ID)
+  stopifnot(identical(m$ids, p$ID))
+  # A patient never out of bag has no own-arm curve; they are left out and counted.
+  ok <- stats::complete.cases(m$surv) & stats::complete.cases(m$chf)
+  .oe_cells[[length(.oe_cells) + 1L]] <- list(model = a, group = g, ids = p$ID[ok], times = m$times,
+                                              surv = m$surv[ok, , drop = FALSE], chf = m$chf[ok, , drop = FALSE],
+                                              t = p$t[ok], ev = p$ev[ok], no_prediction = sum(!ok),
+                                              in_fit = sum(p$ID %in% .train_ids[[a]]))
+}
+oe <- do.call(base::rbind, lapply(.oe_cells, function(cell) {
+  # Each patient's expected deaths: the forest's cumulative hazard at their own
+  # follow-up, the step at or before it, and 0 before the forest's first time.
+  k <- findInterval(cell$t, cell$times)
+  h <- ifelse(k == 0L, 0, cell$chf[cbind(seq_along(k), pmax(k, 1L))])
+  inference <- if (!length(h) || sum(h) <= 0) {
+    "none: no patients or no expected deaths"
+  } else if (cell$in_fit > 0L) {
+    "tested, out of bag"
+  } else {
+    "tested"
+  }
+  r <- if (startsWith(inference, "none: no patients")) {
+    data.frame(n = length(h), observed = sum(cell$ev), expected = sum(h), ratio = NA_real_, lower = NA_real_,
+               upper = NA_real_, level = TEST_LEVEL, chisq = NA_real_, p = NA_real_)
+  } else {
+    hvtiRtemplates:::.one_sample_logrank(cell$ev, h, TEST_LEVEL)
+  }
+  data.frame(model = cell$model, group = cell$group, inference = inference, in_fit = cell$in_fit,
+             no_prediction = cell$no_prediction, r)
+}))
+.cap_oe <- paste0("Observed against forest-expected deaths to ", signif(TAU, 4), ", by arm forest and arm received, ",
+                  "patients in distribution, with ", 100 * TEST_LEVEL, "% intervals")
+cat("Follow-up is counted to TAU = ", signif(TAU, 4), " (", TIME, "'s units); ", sum(.oe_pat$time > TAU),
+    " patient(s) followed longer are censored there. ", sum(!.treated) + sum(!d[[ID]][.treated] %in% .oe_pat$ID),
+    " patient(s) with no arm or out of distribution are not counted. Intervals are ", 100 * TEST_LEVEL, "%.\n",
+    sep = "")
+if (any(oe$no_prediction > 0L)) {
+  cat("\n", sum(oe$no_prediction), " patient(s) were never out of bag and have no own-arm prediction; ",
+      "raise NTREE.\n", sep = "")
+}
+# Cells of fewer than five patients or events, by count.
+cat(hvtiRtemplates:::.identifiability_notice(rbind(
+  hvtiRtemplates:::.identifiability_counts(c(oe$n, oe$observed, oe$n - oe$observed), "observed against expected")
+)))
+```
+
+```{r}
+#| label: tbl-oe
+#| tbl-cap: !expr .cap_oe
+knitr::kable(oe[c("model", "group", "inference", "in_fit", "n", "observed", "expected", "ratio", "lower", "upper",
+                  "chisq", "p")], row.names = FALSE, digits = 4)
+```
+
+### The average expected curve
+
+Each forest's average expected curve is the mean of its patients' predicted survival on the forest's own
+time grid to `TAU`, set against the Kaplan-Meier estimate of the same patients, with **95%** limits, beside
+the test in each panel's title. The band is the 15th to 85th percentiles of the patients' predictions.
+
+```{r}
+#| label: oe-curves
+oe_curves <- list()
+.lines <- list()
+# The band's label, for the caption, whichever cells have patients.
+.band_label <- attr(hvtiRtemplates:::.cohort_curve_band(matrix(1), band = "spread"), "label")
+for (cell in .oe_cells) {
+  # A cell with no one in distribution has no curve; the table says so.
+  if (!length(cell$ids)) next
+  b <- hvtiRtemplates:::.cohort_curve_band(cell$surv, band = "spread")
+  # The curve drawn must be the mean of the predictions the RMST table reads.
+  # vt_rmst() takes each patient's survival at the horizon by its own path, so
+  # a change to either would part them silently.
+  at <- findInterval(HORIZON, cell$times)
+  risk <- .rmst[[paste0("risk_", cell$model)]][match(cell$ids, .rmst$ID)]
+  stopifnot(isTRUE(all.equal(if (at == 0L) 1 else b$mean[at], mean(1 - risk))))
+  # Every curve runs from 1 at time 0 to TAU, where the test and the Kaplan-Meier
+  # stop. TAU rarely falls on a forest time, so each curve's last step is held
+  # to it; before a forest's first time every curve is still 1.
+  keep <- cell$times <= TAU
+  .t <- c(0, cell$times[keep])
+  .to_tau <- function(v) {
+    v <- c(1, v[keep])
+    if (TAU > .t[length(.t)]) c(v, v[length(v)]) else v
+  }
+  .tt <- if (TAU > .t[length(.t)]) c(.t, TAU) else .t
+  panel <- local({
+    r <- oe[oe$model == cell$model & oe$group == cell$group, , drop = FALSE]
+    test <- if (startsWith(r$inference, "none")) {
+      paste0("O/E ", formatC(r$ratio, digits = 2, format = "f"), " (no test: ", sub("^none: ", "", r$inference), ")")
+    } else {
+      paste0("O/E ", formatC(r$ratio, digits = 2, format = "f"), " (", 100 * TEST_LEVEL, "% ",
+             formatC(r$lower, digits = 2, format = "f"), " to ", formatC(r$upper, digits = 2, format = "f"),
+             "), p ", format.pval(r$p, digits = 2, eps = 0.001), if (r$inference != "tested") ", out of bag")
+    }
+    paste0("received ", cell$group, ", ", cell$model, " forest\n", test)
+  })
+  oe_curves[[length(oe_curves) + 1L]] <- data.frame(model = cell$model, group = cell$group, panel = panel,
+                                                    time = .tt, mean = .to_tau(b$mean), lower = .to_tau(b$lower),
+                                                    upper = .to_tau(b$upper))
+  # The spaghetti's patients: all of them, or SPAGHETTI_N spaced evenly through
+  # the ranking of survival at TAU, so the thinned lines keep the spread.
+  .sv <- t(apply(cell$surv, 1L, .to_tau))
+  pick <- order(.sv[, length(.tt)])
+  if (length(pick) > SPAGHETTI_N) pick <- pick[unique(round(seq(1, length(pick), length.out = SPAGHETTI_N)))]
+  .lines[[length(.lines) + 1L]] <- data.frame(panel = panel, patient = rep(pick, each = length(.tt)), time = .tt,
+                                              surv = as.vector(t(.sv[pick, , drop = FALSE])))
+}
+oe_curves <- do.call(base::rbind, oe_curves)
+# The band and the mean as step coordinates: geom_ribbon() joins successive
+# points with straight lines, which would slope across a gap in which every
+# patient's prediction, and so the band, is constant.
+# With no one in distribution there are no curves, and nothing to expand.
+.oe_band <- if (!is.null(oe_curves)) {
+  do.call(base::rbind, lapply(split(oe_curves, oe_curves$panel), hvtiRtemplates:::.step_frame))
+}
+.lines <- do.call(base::rbind, .lines)
+# The Kaplan-Meier of each arm received, to TAU as the test counts it, one copy
+# per panel. A limit survfit() leaves undefined stays NA and is not drawn.
+.oe_km <- do.call(base::rbind, lapply(Filter(function(cell) length(cell$ids) > 0L, .oe_cells), function(cell) {
+  step <- hvtiRtemplates:::.km_steps(cell$t, cell$ev, 0.95)
+  step$panel <- unique(oe_curves$panel[oe_curves$model == cell$model & oe_curves$group == cell$group])
+  step
+}))
+.oe_km_band <- .oe_km[!is.na(.oe_km$lower) & !is.na(.oe_km$upper), , drop = FALSE]
+.cap_oe_km <- paste0("Kaplan-Meier survival of each arm received, with 95% limits, against the average survival each ",
+                     "arm forest expects for the same patients. Band: ", .band_label, ".")
+.cap_spaghetti <- paste0("Each patient's predicted survival (thin lines; at most ", SPAGHETTI_N, " per panel, spaced ",
+                         "evenly through the ranking at TAU) and their average (heavy line).")
+.npanel <- length(unique(oe_curves$panel))
+.oe_none <- "No patient is in distribution under the combined rule, so there is no curve to draw.\n"
+```
+
+```{r}
+#| label: fig-expected-km
+#| fig-cap: !expr .cap_oe_km
+if (!.npanel) {
+  cat(.oe_none)
+} else {
+  .cols <- hvtiRtemplates:::.group_colors(c("Kaplan-Meier", "Expected"))
+  .fig <- ggplot2::ggplot(mapping = ggplot2::aes(x = .data$time)) +
+    ggplot2::geom_ribbon(data = .oe_km_band, ggplot2::aes(ymin = 100 * .data$lower, ymax = 100 * .data$upper,
+                                                          fill = "Kaplan-Meier"), alpha = 0.15) +
+    ggplot2::geom_path(data = .oe_km, ggplot2::aes(y = 100 * .data$surv, color = "Kaplan-Meier")) +
+    ggplot2::geom_ribbon(data = .oe_band, ggplot2::aes(ymin = 100 * .data$lower, ymax = 100 * .data$upper,
+                                                       fill = "Expected"), alpha = 0.25) +
+    ggplot2::geom_path(data = .oe_band, ggplot2::aes(y = 100 * .data$mean, color = "Expected"), linewidth = 0.8) +
+    ggplot2::facet_wrap(~panel) +
+    ggplot2::scale_color_manual(values = .cols, name = NULL) +
+    ggplot2::scale_fill_manual(values = .cols, name = NULL) +
+    ggplot2::scale_y_continuous(limits = c(0, 100)) +
+    ggplot2::labs(x = "Time", y = "Survival (%)") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12) +
+    ggplot2::theme(legend.position = "top")
+  save_figure(.fig, "vt-fit-expected-km", width = 6.5, height = min(9, 1 + 2.75 * ceiling(.npanel / 2)))
+  .fig
+}
+```
+
+```{r}
+#| label: fig-spaghetti
+#| fig-cap: !expr .cap_spaghetti
+if (!.npanel) {
+  cat(.oe_none)
+} else {
+  .fig <- ggplot2::ggplot(.lines, ggplot2::aes(x = .data$time, y = 100 * .data$surv)) +
+    ggplot2::geom_step(ggplot2::aes(group = .data$patient), alpha = 0.15, color = "gray40") +
+    ggplot2::geom_step(data = oe_curves, ggplot2::aes(y = 100 * .data$mean), linewidth = 1) +
+    ggplot2::facet_wrap(~panel) +
+    ggplot2::scale_y_continuous(limits = c(0, 100)) +
+    ggplot2::labs(x = "Time", y = "Predicted survival (%)") +
+    hvtiPlotR::theme_hv_manuscript(base_size = 12)
+  save_figure(.fig, "vt-fit-spaghetti", width = 6.5, height = min(9, 1 + 2.75 * ceiling(.npanel / 2)))
+  .fig
+}
+```
+
 ## Handoff
 
 ```{r}
@@ -1186,13 +1457,14 @@ if (!length(.in_dist)) {
 # The product of this job, and what vt-explain reads, in one file so its parts
 # cannot drift apart. The forests are kept so vt-explain grows none.
 vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
-  list(rmst = .rmst, curves = .curves, forests = .forests,
+  list(rmst = .rmst, curves = .curves[c("ID", "arm_of_curve", "time", "surv")], forests = .forests, oe = oe,
        eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ordinal = ORDINAL,
                           variables = .elig_vars, sid_variables = .sid_vars, ps = .ps,
                           isolation = list(cutoff = ISOLATION_CUTOFF, sensitivity = .iso_sens), age_cap = AGE_CAP,
                           outside_range = .outside),
        predictors = list(names = .predictors, vp_set = VP_SET),
-       settings = list(performance = .perf, calibration = .cal, arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED,
+       settings = list(performance = .perf, calibration = .cal, arms = ARMS, horizon = HORIZON, tau = TAU, test_level = TEST_LEVEL,
+                       ntree = NTREE, seed = SEED,
                        time = TIME, status = STATUS,
                        id = ID, id_key = hvtiRtemplates:::.id_key_fingerprint(.id_key),
                        arm = ARM, imputation = IMPUTATION, imputation_use = IMPUTATION_USE,

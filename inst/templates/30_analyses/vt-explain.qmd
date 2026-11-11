@@ -734,14 +734,12 @@ cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(list(
   the observed outcomes and the propensity score and does not depend on the
   forests. Compare the twins' overall difference against it before reading
   more into a subgroup.
-* **Observed against expected.** `hs-concordance` tests the deaths a group had
-  against the deaths another group's model expects for it, and draws the
-  average expected curve with a named band and each patient's curve. Its two
-  helpers take numbers, not a model, so the same test can be run here on each
-  arm forest's cumulative hazard at the patient's own follow-up:
-  `hvtiRtemplates:::.one_sample_logrank()` and
-  `hvtiRtemplates:::.cohort_curve_band()`. The design is
-  `dev/specs/2026-11-10-hs-oe-test-and-bands-design.md`.
+* **Observed against expected.** `vt-fit` sets the deaths each arm had against
+  the deaths the other arm's forest expects for the same patients, the one-sample
+  log-rank, and tests each forest against its own arm out of bag, as a
+  calibration. It draws the average expected curve with the spread of the
+  patients' predictions and each patient's curve. The test is in `vt.rds` as
+  `oe`. The design is `dev/specs/2026-11-10-hs-oe-test-and-bands-design.md`.
 * **The standardized betas** are one-at-a-time, overlap-weighted associations
   with the estimated effect. They say which characteristics the twins' effect
   tracks, not which cause it. `r .beta_sign` An interval resting on many fewer than `BOOT`

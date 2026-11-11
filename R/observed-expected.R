@@ -87,10 +87,18 @@
 # last defined limit across would draw a band at 100% where the estimate is 0%.
 .km_steps <- function(time, event, level = 0.95) {
   f <- survival::survfit(survival::Surv(time, event) ~ 1, conf.int = level)
-  k <- data.frame(time = c(0, f$time), surv = c(1, f$surv), lower = c(1, f$lower), upper = c(1, f$upper))
+  .step_frame(data.frame(time = c(0, f$time), surv = c(1, f$surv), lower = c(1, f$lower), upper = c(1, f$upper)))
+}
+
+# A frame of right-continuous steps, sorted by time, as the coordinates a path or a ribbon draws as
+# steps: each row's values are held until the next time, so every time after the first appears twice,
+# once with the values before it and once with the values from it. geom_ribbon() joins successive
+# points with straight lines, so a band drawn on the unexpanded frame slopes across a gap in which the
+# quantity it shows is constant.
+.step_frame <- function(k) {
   n <- nrow(k)
-  if (n == 1L) return(k)
-  step <- k[rep(seq_len(n), each = 2L)[-2L * n], ]
+  if (n < 2L) return(k)
+  step <- k[rep(seq_len(n), each = 2L)[-2L * n], , drop = FALSE]
   step$time <- k$time[c(1L, rep(seq_len(n)[-1L], each = 2L))]
   rownames(step) <- NULL
   step

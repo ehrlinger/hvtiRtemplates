@@ -116,3 +116,15 @@ test_that("the Kaplan-Meier steps leave undefined limits missing, not carried", 
   # A step is held until the next time: times never decrease and each change comes in a pair.
   expect_false(is.unsorted(k$time))
 })
+
+test_that(".step_frame holds each value to the next time, so a ribbon on it is flat across a gap", {
+  k <- data.frame(time = c(0, 1, 3), lower = c(1, 0.8, 0.2), upper = c(1, 0.9, 0.3))
+  s <- hvtiRtemplates:::.step_frame(k)
+  expect_identical(s$time, c(0, 1, 1, 3, 3))
+  expect_identical(s$lower, c(1, 1, 0.8, 0.8, 0.2))
+  expect_identical(s$upper, c(1, 1, 0.9, 0.9, 0.3))
+  # Across the gap from 1 to 3 the band is 0.8 at both ends: no slope toward 0.2.
+  gap <- s[s$time > 1 - 1e-12 & s$time < 3 + 1e-12 & s$lower != 0.2 & s$lower != 1, ]
+  expect_identical(unique(gap$lower), 0.8)
+  expect_identical(hvtiRtemplates:::.step_frame(k[1, ]), k[1, ])
+})

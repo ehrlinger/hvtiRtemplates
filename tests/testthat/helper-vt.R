@@ -37,7 +37,8 @@ vt_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "predictors", "tbl
                    "tbl-overlap", "tbl-agreement")
 
 vt_fit_labels_all <- c(vt_fit_labels, "fit", "tbl-performance", "calibration-helper", "tbl-calibration",
-                       "fig-calibration", "curves-helper", "curves", "rmst-helper", "rmst", "fig-curves", "save")
+                       "fig-calibration", "curves-helper", "curves", "rmst-helper", "rmst", "fig-curves",
+                       "oe", "tbl-oe", "oe-curves", "fig-expected-km", "fig-spaghetti", "save")
 
 # The digest the job keys a raw ID by, in a fixture study.
 vt_digest <- function(env, ids) hvtiRtemplates:::.id_digest(ids, hvtiRtemplates:::.study_id_key(env$.root))
