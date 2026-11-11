@@ -767,7 +767,9 @@ draw_section <- function(section) {
     cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")
     .link <- figure_link(file)
     .child(paste("fig eda", section, "page", i),
-           paste0(titles[[section]], ", page ", i, ": ", paste(labels[on_page], collapse = ", "), ". ", .eda_key[[section]]),
+           # Each label with its column name, so a reader knows which column to check.
+           paste0(titles[[section]], ", page ", i, ": ", paste0(labels[on_page], " (", on_page, ")", collapse = ", "), ". ",
+                  .eda_key[[section]]),
            if (hover) "hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)" else
              "knitr::include_graphics(.link, error = FALSE)")
     files <- c(files, file)
