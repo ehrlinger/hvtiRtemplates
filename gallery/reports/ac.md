@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:03
+2026-11-11 03:01
 
 An `ac` job is the first look at an outcome: the Kaplan-Meier life
 table, survival and patients at risk at the reporting horizons, the
@@ -56,8 +56,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -80,7 +80,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- quote(!is.na(creat_pr))
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column if the study uses one, such as "ccfidu" where a patient
 # enters the study once for each operation.
 ID <- "patient_id"
@@ -172,7 +172,7 @@ CI_TIMES <- NULL
 # TRUE draws the Kaplan-Meier steps, flat between events and dropping at each one.
 STEPS <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("ac-survival"). The names are the
 # file names, listed for each template in the templates README.
@@ -200,7 +200,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -284,8 +284,10 @@ Table 3: The event over every row read, missing included (PROC FREQ with
 MISSING)
 
 These are the counts the job found, the `PROC FREQ` of the event over
-the rows analyzed. With `EXPECTED` set, a rendered report is also
-evidence that they matched the SAS reference.
+every row read, missing included. With `EXPECTED` set, a rendered report
+is also evidence that the analysable cohort’s counts in the table above
+matched the SAS reference. A row whose event is missing is counted here
+but is not part of that check.
 
 Code
 
@@ -2158,9 +2160,9 @@ Figure 6: Survival by hx_chf, with patients at risk
 
 | Group           | Item                | Value                    |
 |:----------------|:--------------------|:-------------------------|
-| Run             | Started             | 2026-11-06 10:03:23 EST  |
-|                 | Ended               | 2026-11-06 10:03:28 EST  |
-|                 | Duration            | 6 s                      |
+| Run             | Started             | 2026-11-11 03:01:50 EST  |
+|                 | Ended               | 2026-11-11 03:01:55 EST  |
+|                 | Duration            | 5 s                      |
 |                 | Status              | final                    |
 |                 | Rendered by         | gallery                  |
 |                 | Host                | gallery                  |
@@ -2170,9 +2172,9 @@ Figure 6: Survival by hx_chf, with patients at risk
 |                 | Template            | ac                       |
 |                 | Subject             | dead                     |
 |                 | Type                | hz                       |
-|                 | hvtiRtemplates      | 1.5.6                    |
-| Dataset `built` | Version file        | built_20261106.parquet   |
-|                 | Version date        | 2026-11-06               |
+|                 | hvtiRtemplates      | 1.5.7                    |
+| Dataset `built` | Version file        | built_20261111.parquet   |
+|                 | Version date        | 2026-11-11               |
 |                 | Source file         | built.rds                |
 |                 | Rows kept           | 725 rows on 725 patients |
 |                 | WHERE               | `!is.na(creat_pr)`       |

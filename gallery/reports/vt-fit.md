@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:15
+2026-11-11 03:11
 
 Gallery job on the synthetic cohort: mitral repair against replacement,
 and freedom from reintervention to eight years.
@@ -76,8 +76,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -123,11 +123,28 @@ PREDICTORS <- c("age", "female", "bmi", "hx_chf", "hx_dm", "nyha_pr", "lvef", "c
 # when a variable was measured, and a later procedure flag predicts the outcome
 # because it is part of the path to it.
 EXCLUDE <- character()
-# Demo: eligibility methods, one or more of "gower" and "sid". "sid" reads the
-# SID distance of the sid set named in SID_SET.
+# Demo: eligibility methods, one or more of "gower", "sid" and "isolation". "sid"
+# reads the SID distance of the sid set named in SID_SET. "isolation" grows an
+# isolation forest (the isotree package) on each arm: Gower asks whether the arm
+# holds a patient like this one, the forest whether the arm rarely produces this
+# combination of values. They catch different kinds of unusual.
 ELIGIBILITY <- c("gower", "sid")
-COMBINE <- "any"                            # Demo: "any" flags a patient any method flags; "all" only when all do.
+# Demo: "any" flags a patient any method flags, so with two methods a patient is
+# eligible only when both keep them; "all" flags only when every method does. To
+# decide by one method alone, name only that one in ELIGIBILITY.
+COMBINE <- "any"
 SID_SET <- "echo-sid"
+# Demo: the isolation-forest cutoff, a quantile of the arm's own cross-fitted
+# scores. A patient the arm's forest isolates more readily than this share of
+# the arm's own patients is flagged. There is no "largest" as with Gower: the
+# arm's single most unusual score is mostly noise from the random cuts. The 95th
+# and 99.5th percentiles are reported beside it.
+ISOLATION_CUTOFF <- 0.99
+# Demo: when one arm's ages were capped for de-identification (HIPAA caps at
+# 90), the age column and the cap, as one named number: c(age = 90). Both arms
+# are capped, so an uncapped 95 does not look out of range against an arm that
+# can only say 90. NULL leaves ages as read.
+AGE_CAP <- NULL
 # Demo: the variables eligibility is judged on, or NULL to use the forests'
 # predictors. Eligibility asks whether an arm holds patients like this one in
 # what the treatment acts on, which need not be what predicts death: a repair
@@ -162,9 +179,9 @@ SEED <- 1024                                # Demo: part of every cache key.
 # that are out of date.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("vp-fit-coverage"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("vt-fit-km"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -248,7 +265,7 @@ knitr::kable(.counts)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -298,6 +315,21 @@ if (length(.leaks)) {
 }
 .missing <- setdiff(.elig_vars, names(d))
 if (length(.missing)) stop("ELIGIBILITY_VARS not in the data: ", paste(.missing, collapse = ", "), call. = FALSE)
+if (!is.null(AGE_CAP)) {
+  if (!is.numeric(AGE_CAP) || length(AGE_CAP) != 1L || !is.finite(AGE_CAP) || is.null(names(AGE_CAP)) ||
+        !names(AGE_CAP) %in% names(d) || !is.numeric(d[[names(AGE_CAP)]])) {
+    stop("AGE_CAP must be one named number, a numeric age column and its cap, e.g. c(age = 90).", call. = FALSE)
+  }
+  # Capping the follow-up time would truncate it with the event left as recorded.
+  if (tolower(names(AGE_CAP)) %in% tolower(c(ID, ARM, TIME, STATUS))) {
+    stop("AGE_CAP names ", names(AGE_CAP), ", the ID, arm or outcome; name the age column.", call. = FALSE)
+  }
+  .age <- names(AGE_CAP)
+  .capped <- !is.na(d[[.age]]) & d[[.age]] > AGE_CAP
+  cat(sum(.capped), " patient(s) with ", .age, " above ", AGE_CAP, " capped at ", AGE_CAP, " (AGE_CAP), in every arm.\n",
+      sep = "")
+  d[[.age]] <- pmin(d[[.age]], unname(AGE_CAP))
+}
 .chr <- union(.predictors, .elig_vars)
 .chr <- .chr[vapply(d[.chr], is.character, logical(1L))]
 d[.chr] <- lapply(d[.chr], factor)
@@ -406,6 +438,19 @@ gap: a patient farther from the arm than its own members are from each
 other is outside what the arm covers. A treated patient is judged
 against the other arm; a patient with no arm is judged against both and
 must pass both.
+
+The isolation forest (`"isolation"` in `ELIGIBILITY`) asks the same
+question by a different route. It grows random trees on one arm’s
+patients, each split on one variable at a random cut, until a patient
+stands alone. A patient the arm rarely produces, an odd mix of values,
+stands alone after few cuts and scores high. The arm’s own patients are
+scored cross-fitted, in five folds, each by the forest grown on the
+other four, because a forest isolates a patient it was grown on more
+easily and an in-sample reference would set the line too high. A judged
+patient is dealt one of the five folds too and scored by that fold’s
+forest, so both sides are scored the same way: by one forest, grown on
+four fifths of the arm, that never saw them. The line is
+`ISOLATION_CUTOFF`, a quantile of the arm’s own scores.
 
 Patients are **flagged, not dropped**. The flags are saved with the fit
 and the effect estimates carry them, so a report can show the effect
@@ -560,6 +605,97 @@ vt_elig_sid <- function(path, ids, cfg, key = NULL,
   structure(m[ids, ids, drop = FALSE], read = got)
 }
 
+# The isolation-forest judgment, in vt_ood()'s row shape so the methods combine
+# alike: `distance` holds the score (higher is more unusual) and `reference` the
+# arm's line, the `cutoff` quantile of its own scores. Each arm's patients are
+# split into `folds` folds; a member is scored by the forest grown on the other
+# folds. A judged patient is dealt a fold the same way and scored by that fold's
+# forest alone, so both sides get one forest that never saw them, grown on the same
+# share of the arm. A mean over all the forests would be a less noisy score than
+# the one the line is a quantile of, and would be judged against the wrong line.
+# Missing values are handled inside the trees. Returns the rows with the
+# flag counts at each quantile in `sensitivity` as attribute "sensitivity".
+vt_elig_isolation <- function(d, vars, ids, arm, arms, cutoff = 0.99, sensitivity = c(0.95, 0.995),
+                              folds = 5L, seed = 1L, ntrees = 500L, sample_size = 256L) {
+  if (!requireNamespace("isotree", quietly = TRUE)) {
+    stop("ELIGIBILITY includes \"isolation\", which needs the isotree package. Install it, then re-render.", call. = FALSE)
+  }
+  if (!is.numeric(cutoff) || length(cutoff) != 1L || is.na(cutoff) || cutoff <= 0 || cutoff >= 1) {
+    stop("ISOLATION_CUTOFF must be one number between 0 and 1, such as 0.99.", call. = FALSE)
+  }
+  x <- d[vars]
+  probs <- sort(unique(c(sensitivity, cutoff)))
+  sens <- list()
+  rows <- lapply(arms, function(a) {
+    members <- which(arm %in% a)
+    judged <- which(is.na(arm) | !arm %in% c(a, NA))
+    if (!length(judged)) return(NULL)
+    # Cross-fitting holds a fold out of each forest, and a forest needs two patients to grow on.
+    if (length(members) < 3L) {
+      stop("Arm ", a, " has ", length(members), " patient(s); the isolation forest needs at least 3. ",
+           "Leave \"isolation\" out of ELIGIBILITY.", call. = FALSE)
+    }
+    k <- min(folds, length(members))
+    set.seed(seed)
+    fold <- sample(rep_len(seq_len(k), length(members)))
+    fold_judged <- sample(rep_len(seq_len(k), length(judged)))
+    own <- numeric(length(members))
+    score <- numeric(length(judged))
+    for (f in seq_len(k)) {
+      train <- members[fold != f]
+      fit <- isotree::isolation.forest(x[train, , drop = FALSE], ntrees = ntrees, ndim = 1L, nthreads = 1L,
+                                       sample_size = min(sample_size, length(train)), seed = seed + f)
+      own[fold == f] <- stats::predict(fit, x[members[fold == f], , drop = FALSE])
+      if (any(fold_judged == f)) score[fold_judged == f] <- stats::predict(fit, x[judged[fold_judged == f], , drop = FALSE])
+    }
+    lines <- stats::quantile(own, probs, names = FALSE)
+    reference <- lines[probs == cutoff]
+    sens[[a]] <<- data.frame(arm = a, quantile = probs, cutoff = lines, judged = length(judged),
+                             flagged = vapply(lines, function(l) sum(score > l), integer(1L)))
+    out <- score > reference
+    data.frame(ID = ids[judged], method = NA_character_, arm = a, nn_id = NA_character_, distance = score,
+               reference = reference, ratio = score / stats::median(own), in_distribution = !out,
+               reason = ifelse(out, sprintf("isolation score %.3f, above %s's %s quantile %.3f", score, a,
+                                            format(cutoff), reference), ""))
+  })
+  structure(do.call(base::rbind, rows), sensitivity = do.call(base::rbind, unname(sens)))
+}
+
+# Eligible patients with a value the arm they were judged against never shows: a
+# number outside the arm's observed range, or a level none of its patients has.
+# Gower and the isolation forest each fold every variable into one number, so one extreme value
+# among many can leave a patient eligible while the arm's forest extrapolates on
+# that variable for them. They stay eligible; this lists them for review. `pairs`
+# holds the ID and arm of each eligible patient's judgments.
+vt_outside_range <- function(pairs, d, id, arm_of, vars) {
+  hits <- lapply(vars, function(v) {
+    do.call(base::rbind, lapply(unique(pairs$arm), function(a) {
+      p <- pairs$ID[pairs$arm == a]
+      x <- d[[v]][match(p, d[[id]])]
+      u <- stats::na.omit(d[[v]][arm_of %in% a])
+      if (!length(u)) return(NULL)
+      # Binary is a property of the column, as in vt_elig_gower(), not of one arm's values.
+      if (is.numeric(u) && !all(stats::na.omit(d[[v]]) %in% c(0, 1))) {
+        rg <- range(u)
+        side <- ifelse(x < rg[1], "below", ifelse(x > rg[2], "above", NA_character_))
+        seen <- sprintf("[%s, %s]", format(signif(rg[1], 3)), format(signif(rg[2], 3)))
+      } else {
+        side <- ifelse(!is.na(x) & !as.character(x) %in% as.character(u), "a level not in the arm", NA_character_)
+        seen <- paste(sort(unique(as.character(u))), collapse = ", ")
+      }
+      hit <- !is.na(side)
+      if (!any(hit)) return(NULL)
+      data.frame(ID = p[hit], arm = a, variable = v, value = as.character(x[hit]), side = side[hit], arm_values = seen)
+    }))
+  })
+  out <- do.call(base::rbind, hits)
+  if (is.null(out)) {
+    out <- data.frame(ID = character(), arm = character(), variable = character(), value = character(),
+                      side = character(), arm_values = character())
+  }
+  out
+}
+
 # A patient is eligible when every arm they were judged against passed, per
 # method; then methods combine: "any" flag excludes, or "all" must.
 vt_combine <- function(rows, combine = c("any", "all")) {
@@ -608,7 +744,7 @@ vt_overlap <- function(flags, group) {
 Code
 
 ``` r
-.methods <- match.arg(ELIGIBILITY, c("gower", "sid"), several.ok = TRUE)
+.methods <- match.arg(ELIGIBILITY, c("gower", "sid", "isolation"), several.ok = TRUE)
 .ids <- d[[ID]]
 .arm <- ifelse(.no_arm, NA_character_, as.character(d[[ARM]]))
 .sid_read <- NULL
@@ -625,7 +761,12 @@ Code
     m
   }
 )
-.elig_rows <- do.call(base::rbind, lapply(.methods, function(m) transform(vt_ood(.dist[[m]](), .ids, .arm, ARMS), method = m)))
+.judged <- lapply(stats::setNames(.methods, .methods), function(m) {
+  if (m == "isolation") return(vt_elig_isolation(d, .elig_vars, .ids, .arm, ARMS, cutoff = ISOLATION_CUTOFF, seed = SEED))
+  vt_ood(.dist[[m]](), .ids, .arm, ARMS)
+})
+.iso_sens <- attr(.judged$isolation, "sensitivity")
+.elig_rows <- do.call(base::rbind, unname(lapply(.methods, function(m) transform(.judged[[m]], method = m))))
 if (anyNA(.elig_rows$reference)) {
   .bad <- unique(.elig_rows$method[is.na(.elig_rows$reference)])
   stop("An arm has no two patients with a finite distance by ", paste(.bad, collapse = ", "),
@@ -635,7 +776,7 @@ if (anyNA(.elig_rows$reference)) {
 .ood_at <- which(!.elig_rows$in_distribution)
 .sid_vars <- if (!is.null(.sid_read)) .sid_read$value$vars
 .elig_rows$features[.ood_at] <- vt_flag_features(.elig_rows[.ood_at, ], .d_read, ID, .arm,
-                                                 list(gower = .elig_vars, sid = .sid_vars))
+                                                 list(gower = .elig_vars, sid = .sid_vars, isolation = .elig_vars))
 # With no finite distance there is no comparison to explain; vt_ood()'s reason says why.
 .nofin <- .ood_at[!is.finite(.elig_rows$distance[.ood_at])]
 .elig_rows$features[.nofin] <- .elig_rows$reason[.nofin]
@@ -644,6 +785,10 @@ for (m in .methods) {
   .one <- vt_combine(.elig_rows[.elig_rows$method == m, ], "any")
   .elig[[paste0("elig_", m)]] <- .one$elig[match(.elig$ID, .one$ID)]
 }
+# The forests' predictors too, not only the eligibility set: when ELIGIBILITY_VARS
+# leaves a predictor out, the arm's forest still extrapolates on it.
+.outside <- vt_outside_range(unique(.elig_rows[.elig_rows$ID %in% .elig$ID[.elig$elig], c("ID", "arm")]), d, ID, .arm,
+                             union(.predictors, .elig_vars))
 # Sensitivity only, never part of the combined rule: forest propensity common support.
 # ps_forest() refuses missing predictors, while the arm forests impute them
 # (NA_ACTION = "na.impute"). So the propensity model gets a forest-imputed copy
@@ -735,18 +880,85 @@ Code
   ggplot2::geom_hline(data = .ref, ggplot2::aes(yintercept = reference), linetype = "dashed") +
   ggplot2::facet_grid(method ~ arm, scales = "free") +
   ggplot2::scale_color_manual(values = c(`TRUE` = "gray60", `FALSE` = "black")) +
-  ggplot2::labs(x = "Patient rank", y = "Distance to nearest patient in the arm", color = "In distribution") +
+  ggplot2::labs(x = "Patient rank", y = "Distance to nearest patient in the arm, or isolation score",
+                color = "In distribution") +
   hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "vt-fit-eligibility")
 .fig
 ```
 
-![](assets/eaa00f76da2af7c19f90bc880e719702.png)
+![](assets/581f1c3128f2c256e6baa7e10820a65f.png)
 
-Figure 2: Distance to the nearest patient of the arm judged against,
-patients ranked within each panel. The dashed line is that arm’s largest
-nearest-neighbor gap among its own patients: points above it are out of
-distribution.
+Figure 2: Distance to the nearest patient of the arm judged against (for
+the isolation forest, the score), patients ranked within each panel. The
+dashed line is that arm’s line, its largest nearest-neighbor gap among
+its own patients (for the isolation forest, the ISOLATION_CUTOFF
+quantile of its own scores): points above it are out of distribution.
+
+Code
+
+``` r
+# Only with "isolation" in ELIGIBILITY. The cutoff in use is ISOLATION_CUTOFF; the
+# rest show how many patients sit between the lines, so a reader can see how much
+# the eligible count depends on the choice.
+if (is.null(.iso_sens)) {
+  cat("The isolation forest is not among the ELIGIBILITY methods.\n")
+} else {
+  knitr::kable(transform(.iso_sens, in_use = quantile == ISOLATION_CUTOFF), digits = 3, row.names = FALSE)
+}
+```
+
+    The isolation forest is not among the ELIGIBILITY methods.
+
+Table 4: Isolation forest: patients flagged against each arm at the
+cutoff in use and at the quantiles beside it
+
+### Eligible, with a value the arm does not cover
+
+Gower and the isolation forest each fold every eligibility variable into
+one number, so one extreme value among many can leave a patient in
+distribution. The arm’s forest still extrapolates on that variable for
+them. These patients stay eligible; this counts them for review, and a
+value outside the arm is often a data error or a unit mix-up, worth
+checking against the chart.
+
+Code
+
+``` r
+# Counts only, as above. The arm's range or levels are not shown either: an age
+# range can carry an age over 89, and a level an identifier. Each patient, with the
+# value and the arm's range, is in vt.rds under eligibility$outside_range.
+if (!nrow(.outside)) {
+  cat("No eligible patient has a value outside the arm they were judged against.\n")
+} else {
+  .outside_counts <- stats::aggregate(ID ~ variable + arm + side, .outside, length)
+  names(.outside_counts)[names(.outside_counts) == "ID"] <- "patients"
+  knitr::kable(.outside_counts[order(.outside_counts$variable, .outside_counts$arm), ], row.names = FALSE)
+}
+```
+
+| variable | arm     | side  | patients |
+|:---------|:--------|:------|---------:|
+| age      | repair  | above |        3 |
+| age      | replace | below |        3 |
+| bmi      | repair  | below |        2 |
+| bmi      | replace | above |        2 |
+| creat_pr | repair  | above |        1 |
+| creat_pr | replace | below |        1 |
+| e_e      | repair  | below |        3 |
+| e_e      | replace | above |        4 |
+| la_diam  | replace | above |        2 |
+| la_diam  | replace | below |        2 |
+| lvedd    | repair  | above |        1 |
+| lvedd    | repair  | below |        1 |
+| lvef     | repair  | below |        2 |
+| lvesd    | repair  | above |        7 |
+| lvesd    | replace | below |        6 |
+| rvsp     | repair  | above |        1 |
+| rvsp     | repair  | below |        1 |
+
+Table 5: Eligible patients with a value outside what the arm judged
+against shows, by variable
 
 ### How far the rules overlap
 
@@ -776,7 +988,7 @@ knitr::kable(.overlap$combinations, row.names = FALSE)
 | none       |    412 |     385 |
 | propensity |      0 |       3 |
 
-Table 4: Patients by the rules that flag them, in each arm. A patient
+Table 6: Patients by the rules that flag them, in each arm. A patient
 appears once, under the exact set of rules that flag them.
 
 Code
@@ -791,7 +1003,7 @@ knitr::kable(.overlap$pairs, row.names = FALSE)
 | gower vs propensity | 800 | 797 | 0 | 0 | 3 | 0 |
 | sid vs propensity | 800 | 797 | 0 | 0 | 3 | 0 |
 
-Table 5: Agreement between each pair of rules, over the patients both
+Table 7: Agreement between each pair of rules, over the patients both
 judged. Kappa is agreement beyond chance: 1 is the same patients, 0 no
 more alike than chance.
 
@@ -824,8 +1036,7 @@ environment(.model) <- globalenv()
 ```
 
 The C-index below is computed from each forest’s out-of-bag predictions,
-not from the stored error rate (which the study’s 2026-09-23 correction
-showed is not the C-index).
+not from the stored error rate (which is not the C-index).
 
 Code
 
@@ -858,7 +1069,7 @@ if (length(.weak)) {
 | repair  |      412 |     72 |   0.734 | 0.676 | 0.792 |
 | replace |      388 |     57 |   0.401 | 0.314 | 0.489 |
 
-Table 6: **The interval for replace includes 0.5.** That arm’s half of
+Table 8: **The interval for replace includes 0.5.** That arm’s half of
 every contrast below is exploratory.
 
 The C-index says whether a forest ranks patients; it says nothing about
@@ -944,7 +1155,7 @@ cat("\nMean calibration error at ", HORIZON, ", in percentage points: ",
 | replace |     4 |       77 |     13 |     0.877 |    0.847 |
 | replace |     5 |       78 |     14 |     0.908 |    0.760 |
 
-Table 7: Mean calibration error at 8, in percentage points: repair 0.9,
+Table 9: Mean calibration error at 8, in percentage points: repair 0.9,
 replace 8.1.
 
 Code
@@ -1130,7 +1341,9 @@ Code
 vt_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   list(rmst = .rmst, curves = .curves, forests = .forests,
        eligibility = list(rows = .elig_rows, methods = .methods, combine = COMBINE, sid_set = SID_SET, ordinal = ORDINAL,
-                          variables = .elig_vars, sid_variables = .sid_vars, ps = .ps),
+                          variables = .elig_vars, sid_variables = .sid_vars, ps = .ps,
+                          isolation = list(cutoff = ISOLATION_CUTOFF, sensitivity = .iso_sens), age_cap = AGE_CAP,
+                          outside_range = .outside),
        predictors = list(names = .predictors, vp_set = VP_SET),
        settings = list(performance = .perf, calibration = .cal, arms = ARMS, horizon = HORIZON, ntree = NTREE, seed = SEED,
                        time = TIME, status = STATUS,
@@ -1155,9 +1368,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:15:25 EST |
-|  | Ended | 2026-11-06 10:15:35 EST |
-|  | Duration | 10 s |
+| Run | Started | 2026-11-11 03:11:50 EST |
+|  | Ended | 2026-11-11 03:11:58 EST |
+|  | Duration | 8 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -1167,9 +1380,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 |  | Template | vt.fit |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:02
+2026-11-11 03:01
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -18,8 +18,9 @@ hand. The `group_by()`/`summarize()` blocks and the per-series
 `smooth.spline()` calls that older trends jobs carry are exactly what it
 replaces.
 
-Two neighbors are **not** this job. Procedure volume per year is
-`dp-procs`, and the distribution of a single variable is `dc-variable`.
+Two neighbors are **not** this job, and neither has a template yet.
+Procedure volume per year is `dp-procs`, and the distribution of a
+single variable is `dc-variable`.
 
 Code
 
@@ -66,8 +67,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -91,7 +92,7 @@ ANALYSIS_SET <- NULL
 # the date column rather than on `year`.
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -164,9 +165,9 @@ XBREAKS <- NULL
 SUBGROUPS <- list(all = function(d) rep(TRUE, nrow(d)), diabetic = function(d) d$hx_dm == 1)
 # MIGRATE-END: dc-trends-subgroups
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("dc-trends"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -190,7 +191,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -508,8 +509,8 @@ against an older figure by its shape and not point by point.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:02:26 EST |
-|  | Ended | 2026-11-06 10:02:28 EST |
+| Run | Started | 2026-11-11 03:01:06 EST |
+|  | Ended | 2026-11-11 03:01:08 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -520,9 +521,9 @@ against an older figure by its shape and not point by point.
 |  | Template | dc.trends |
 |  | Subject | cohort |
 |  | Type | eda |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |

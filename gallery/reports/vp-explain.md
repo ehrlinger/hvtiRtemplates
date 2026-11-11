@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:13
+2026-11-11 03:09
 
 Explains the `vp-fit` screen in this set: survival at five years along
 each selected predictor.
@@ -76,7 +76,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -113,7 +113,7 @@ SEED <- 2026
 # that are out of date.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("vp-explain-dependence"). The names are the
 # file names, listed for each template in the templates README.
@@ -182,14 +182,21 @@ if (is.null(PARTIAL_VARS)) {
 }
 .untested <- setdiff(sel, .tested)
 if (length(.untested)) {
-  cat("Not drawn, because the screen did not test them: ", paste(.untested, collapse = ", "), "\n", sep = "")
+  # vp-fit's selection can be its refits' vote, which may include a variable the
+  # full fit, the one saved here, did not test: its partial would rest on no rules.
+  cat("Not drawn, because the saved full fit did not test them: ", paste(.untested, collapse = ", "), "\n", sep = "")
   sel <- setdiff(sel, .untested)
 }
 if (!length(sel)) {
-  stop("No tested variable to draw. The screen selected none; name tested variables in PARTIAL_VARS.", call. = FALSE)
+  stop(if (length(.untested)) {
+    paste0("No tested variable to draw: the saved full fit tested none of ", paste(.untested, collapse = ", "),
+           ". Name tested variables in PARTIAL_VARS.")
+  } else {
+    "No tested variable to draw. The screen selected none; name tested variables in PARTIAL_VARS."
+  }, call. = FALSE)
 }
 # Each figure is drawn a page at a time, panels in a grid no larger than the
-# printed page (6.5 by 9 in), and each page is a child chunk of its own so
+# printed page (6.5 by 6 in here), and each page is a child chunk of its own so
 # Quarto numbers it.
 .fence <- strrep("`", 3)
 .page_child <- function(kind, i, pages, vars, caption) {
@@ -227,7 +234,8 @@ pv <- cache_fit("vp-partial",
                 gg_partial_varpro(object = fit, xvar.names = sel,
                                   scale = if (.survival) SCALE else "auto", time = if (.survival) HORIZON else NULL),
                 seed = SEED, dir = CACHE_DIR, refit = REFIT)
-# The manuscript theme hides the legend and its title, and the caption reads the line types from the legend.
+# The manuscript theme hides the legend and its title. They go back on here, because the caption reads the line
+# types from the legend.
 .cap <- paste("VarPro partial dependence on each drawn predictor, one panel per predictor. For a",
               "continuous predictor a black solid line marks the nonparametric partial effect and a black",
               "dashed line the parametric one, as in the legend; for a categorical predictor black box",
@@ -244,11 +252,11 @@ for (.i in seq_along(.pages)) {
 }
 ```
 
-    Warning: Removed 156 rows containing non-finite outside the scale range
+    Warning: Removed 276 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 156 rows containing non-finite outside the scale range
+    Removed 276 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 156 rows containing non-finite outside the scale range
+    Removed 276 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
 Code
@@ -257,50 +265,24 @@ Code
 .fig
 ```
 
-    Warning: Removed 156 rows containing non-finite outside the scale range
+    Warning: Removed 276 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/dc5ddae21eb2928e190f3b8fc33c7b03.png)
+![](assets/891126b02b80439792b9fceeb984bf3e.png)
 
 Figure 1: VarPro partial dependence on each drawn predictor, one panel
 per predictor. For a continuous predictor a black solid line marks the
 nonparametric partial effect and a black dashed line the parametric one,
 as in the legend; for a categorical predictor black box plots show the
-spread of the partial effect at each level. Page 1 of 2: age, hx_chf,
-lvef, plvmassi.
-
-    Warning: Removed 124 rows containing non-finite outside the scale range
-    (`stat_boxplot()`).
-
-    Warning: Removed 124 rows containing non-finite outside the scale range
-    (`stat_boxplot()`).
-    Removed 124 rows containing non-finite outside the scale range
-    (`stat_boxplot()`).
-
-Code
-
-``` r
-.fig
-```
-
-    Warning: Removed 124 rows containing non-finite outside the scale range
-    (`stat_boxplot()`).
-
-![](assets/37f504036ae3b157da0bcc8f88d88426.png)
-
-Figure 2: VarPro partial dependence on each drawn predictor, one panel
-per predictor. For a continuous predictor a black solid line marks the
-nonparametric partial effect and a black dashed line the parametric one,
-as in the legend; for a categorical predictor black box plots show the
-spread of the partial effect at each level. Page 2 of 2: hx_dm.
+spread of the partial effect at each level.
 
 ## About this run
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:11:39 EST |
-|  | Ended | 2026-11-06 10:13:12 EST |
-|  | Duration | 1 min 33 s |
+| Run | Started | 2026-11-11 03:08:13 EST |
+|  | Ended | 2026-11-11 03:09:13 EST |
+|  | Duration | 1 min 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -308,13 +290,13 @@ spread of the partial effect at each level. Page 2 of 2: hx_dm.
 |  | Template | vp.explain |
 |  | Subject | dead |
 |  | Type | vp |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-06 10:10:35 -0500, data built_20261106.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-11 03:07:14 -0500, data built_20261111.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

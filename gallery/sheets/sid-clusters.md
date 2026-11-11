@@ -45,7 +45,8 @@ shows three ways to find them.
 5.  **Letters across K**
 6.  **The solution at K**
 7.  **Reading the result**
-8.  **Save**: saves `sid-clusters.rds`, which **vt-explain** can read.
+8.  **Save**: saves `sid-clusters.rds`, which **sid-stability** reads
+    and **vt-explain** can read.
 
 ## Run it
 
@@ -63,9 +64,13 @@ and it records the job's provenance beside the report.
 
 ## Where to go next
 
+- **sid-stability** reads what this job saves (`sid-clusters.rds`). Add
+  it to the same set, with this job's `subject` and `type`, because that
+  shared pair is how it finds the file:
+  `add_job("sid.stability", subject = "<subject>", type = "<type>")`.
 - **vt-explain** can read what this job saves; its choices marked
   `EDIT:` name the file and its set. Add it with
   `add_job("vt.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
 The template holds the details; this sheet is its outline.

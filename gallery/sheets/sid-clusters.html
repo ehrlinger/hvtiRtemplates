@@ -52,16 +52,17 @@
 <li><strong>Letters across K</strong></li>
 <li><strong>The solution at K</strong></li>
 <li><strong>Reading the result</strong></li>
-<li><strong>Save</strong>: saves <code>sid-clusters.rds</code>, which <strong>vt-explain</strong> can read.</li>
+<li><strong>Save</strong>: saves <code>sid-clusters.rds</code>, which <strong>sid-stability</strong> reads and <strong>vt-explain</strong> can read.</li>
 </ol>
 <h2>Run it</h2>
 <p><strong>Render a draft as you go.</strong> <code>render_job(job)</code> runs the whole job in a clean R session and writes the report beside it. Render early and often: while any <code>EDIT:</code> marker is left, the report opens with a DRAFT banner listing them, and its numbers are not a result. <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#render-as-you-go">Work a job</a> explains why to render rather than run chunks by hand.</p>
 <p><strong>Then the final.</strong> Once no marker is left, <code>render_job(job, final = TRUE)</code> renders the accepted result. It refuses an open marker, a skipped chunk, <code>stop_here()</code> and unregistered data, and it records the job's provenance beside the report.</p>
 <h2>Where to go next</h2>
 <ul>
+<li><strong>sid-stability</strong> reads what this job saves (<code>sid-clusters.rds</code>). Add it to the same set, with this job's <code>subject</code> and <code>type</code>, because that shared pair is how it finds the file: <code>add_job(&quot;sid.stability&quot;, subject = &quot;&lt;subject&gt;&quot;, type = &quot;&lt;type&gt;&quot;)</code>.</li>
 <li><strong>vt-explain</strong> can read what this job saves; its choices marked <code>EDIT:</code> name the file and its set. Add it with <code>add_job(&quot;vt.explain&quot;, subject = &quot;&lt;subject&gt;&quot;, type = &quot;&lt;type&gt;&quot;)</code>.</li>
 </ul>
-<footer>Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06. The template holds the details; this sheet is its outline.</footer>
+<footer>Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11. The template holds the details; this sheet is its outline.</footer>
 </main>
 </body>
 </html>

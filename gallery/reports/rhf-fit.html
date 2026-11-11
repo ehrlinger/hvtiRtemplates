@@ -2236,7 +2236,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-06 10:14</p>
+      <p class="date">2026-11-11 03:10</p>
     </div>
   </div>
   
@@ -2248,7 +2248,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: rhf.fit 1.5.6 sha256:bb0f0d1662b2036422834c26181f2a2bbfd9367eeb2c63715e8beb1c868f9357 -->
+<!-- hvtiRtemplates: rhf.fit 1.5.7 sha256:371b4cfa476d7f79fb4f9fb1f8dcc5604860b214a3bf599b2abc14d1645f38e6 -->
 <p>Gallery job on the synthetic intervals: the hazard of the simulated event, from one time-varying marker (xtd) and three baseline markers.</p>
 <!--
      it uses, and what question it answers. Replace this comment with that
@@ -2323,7 +2323,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>intervals</code> <code>intervals_20261106.parquet</code>, dated 2026-11-06 · rendered by gallery on gallery · hvtiRtemplates 1.5.6</p>
+<p><strong>final</strong> · data <code>intervals</code> <code>intervals_20261111.parquet</code>, dated 2026-11-11 · rendered by gallery on gallery · hvtiRtemplates 1.5.7</p>
 </div>
 </div>
 </div>
@@ -2349,7 +2349,7 @@ vertical-align: -.125em;
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># time-varying column would cut follow-up short, and stops the render.</span></span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. Without &quot;ccfid&quot; the job uses MRN, then eMRN.</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN.</span></span>
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: each interval&#39;s start and stop, and its event, coded 1 when the event</span></span>
@@ -2392,8 +2392,8 @@ vertical-align: -.125em;
 <span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the number of terminal nodes in each tree. NULL chooses it by</span></span>
 <span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># out-of-bag risk with tune.treesize.rhf(), and the figure below shows the</span></span>
 <span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># search. Tree size is the setting a hazard forest is most sensitive to, which</span></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># is why this template tunes it where the rfs templates tune nothing; a number</span></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># skips the search, which is slow on a large study.</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># is why this template tunes it by default, where `rfs-fit` tunes its leaf size</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># only on request; a number skips the search, which is slow on a large study.</span></span>
 <span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>TREESIZE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># Needs no edit unless the dataset has a defect. Repairs this job makes to the</span></span>
@@ -2436,7 +2436,7 @@ vertical-align: -.125em;
 <span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date, so it is safe to leave on while iterating.</span></span>
 <span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
 <span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
 <span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
 <span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;rhf-fit-tuning&quot;). The names</span></span>
 <span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a><span class="co"># are the file names, listed for each template in the templates README.</span></span>
@@ -2514,7 +2514,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>intervals</code> (intervals_20261106.parquet)</td>
+<td style="text-align: left;">dataset <code>intervals</code> (intervals_20261111.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2577,13 +2577,14 @@ Table 1: The data this job read
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestRHF refuses overlapping intervals only after the data are loaded,</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># and names no patient. These checks run first and say what to fix: an overlap,</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># an interval of zero length, an event before a patient&#39;s last interval, an</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># event not coded 0/1, or a missing predictor stops the render here. Gaps</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># between intervals are allowed, and counted.</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>.cp <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.cp_check</span>(d, <span class="at">id =</span> .selection<span class="sc">$</span>id, <span class="at">start =</span> START, <span class="at">stop =</span> STOP, <span class="at">event =</span> EVENT,</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">predictors =</span> PREDICTORS, <span class="at">repair =</span> REPAIR)</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> .cp<span class="sc">$</span>data</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.cp<span class="sc">$</span>counts, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Rows&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># an interval of zero or negative length, an event before a patient&#39;s last</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># interval, an event not coded 0/1, or a missing predictor stops the render here,</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># unless REPAIR clips the overlap or empty interval, or drops the interval missing</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># a predictor. Gaps between intervals are allowed, and counted.</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>.cp <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.cp_check</span>(d, <span class="at">id =</span> .selection<span class="sc">$</span>id, <span class="at">start =</span> START, <span class="at">stop =</span> STOP, <span class="at">event =</span> EVENT,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">predictors =</span> PREDICTORS, <span class="at">repair =</span> REPAIR)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> .cp<span class="sc">$</span>data</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.cp<span class="sc">$</span>counts, <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;Rows&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-cohort" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2728,35 +2729,36 @@ Table 3: Final intervals whose predictors change from the interval before. Far 
 <span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co"># was made in; set it, so a job run anywhere else does not write every object</span></span>
 <span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co"># beside the formula, `job_data` and its patient IDs included, into the forest.</span></span>
 <span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="fu">environment</span>(model) <span class="ot">&lt;-</span> <span class="fu">globalenv</span>()</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Each cache holds the forest and so every interval it was grown on: written</span></span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co"># owner-only from the start, and set so if an older cache is already there.</span></span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>.cache_files <span class="ot">&lt;-</span> <span class="fu">file.path</span>(CACHE_DIR, <span class="fu">c</span>(<span class="st">&quot;rhf-treesize.rds&quot;</span>, <span class="st">&quot;rhf-forest.rds&quot;</span>))</span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Hours at study size. Started from the console it dies with the session, so an</span></span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="co"># uncached fit is refused there: run the job with hvtiRtemplates::submit_job().</span></span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rhf-forest&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>                               <span class="at">why =</span> <span class="st">&quot;a hazard forest on every interval of follow-up takes hours at study size&quot;</span>,</span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>                               <span class="at">refit =</span> REFIT)</span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(TREESIZE)) {</span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rhf-treesize&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">why =</span> <span class="st">&quot;the tree-size search grows a forest at each size it tries&quot;</span>,</span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">refit =</span> REFIT)</span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>  tuned <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(.cache_files, <span class="fu">cache_fit</span>(</span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;rhf-treesize&quot;</span>,</span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tune.treesize.rhf</span>(model, .fit_data, <span class="at">ntree =</span> NTREE, <span class="at">perf =</span> <span class="st">&quot;risk&quot;</span>, <span class="at">seed =</span> <span class="fu">abs</span>(SEED), <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>                      <span class="at">forest =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
-<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  ))</span>
-<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>  .treesize <span class="ot">&lt;-</span> tuned<span class="sc">$</span>best.size</span>
-<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>  tuned <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>  .treesize <span class="ot">&lt;-</span> TREESIZE</span>
-<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>forest <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(.cache_files, <span class="fu">cache_fit</span>(</span>
-<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;rhf-forest&quot;</span>,</span>
-<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rhf</span>(model, <span class="at">data =</span> .fit_data, <span class="at">ntree =</span> NTREE, <span class="at">treesize =</span> .treesize, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED)),</span>
-<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
-<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>forest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co"># The forest cache holds the forest and so every interval it was grown on, so it</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co"># is written owner-only from the start, and set so if an older cache is already</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="co"># there. The search&#39;s cache holds results only, and is kept owner-only beside it.</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>.cache_files <span class="ot">&lt;-</span> <span class="fu">file.path</span>(CACHE_DIR, <span class="fu">c</span>(<span class="st">&quot;rhf-treesize.rds&quot;</span>, <span class="st">&quot;rhf-forest.rds&quot;</span>))</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Hours at study size. Started from the console it dies with the session, so an</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="co"># uncached fit is refused there: run the job with hvtiRtemplates::run_job().</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rhf-forest&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>                               <span class="at">why =</span> <span class="st">&quot;a hazard forest on every interval of follow-up takes hours at study size&quot;</span>,</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>                               <span class="at">refit =</span> REFIT)</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(TREESIZE)) {</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rhf-treesize&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">why =</span> <span class="st">&quot;the tree-size search grows a forest at each size it tries&quot;</span>,</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">refit =</span> REFIT)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>  tuned <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(.cache_files, <span class="fu">cache_fit</span>(</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;rhf-treesize&quot;</span>,</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tune.treesize.rhf</span>(model, .fit_data, <span class="at">ntree =</span> NTREE, <span class="at">perf =</span> <span class="st">&quot;risk&quot;</span>, <span class="at">seed =</span> <span class="fu">abs</span>(SEED), <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>                      <span class="at">forest =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>  .treesize <span class="ot">&lt;-</span> tuned<span class="sc">$</span>best.size</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>  tuned <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>  .treesize <span class="ot">&lt;-</span> TREESIZE</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>forest <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(.cache_files, <span class="fu">cache_fit</span>(</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;rhf-forest&quot;</span>,</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rhf</span>(model, <span class="at">data =</span> .fit_data, <span class="at">ntree =</span> NTREE, <span class="at">treesize =</span> .treesize, <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED)),</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>forest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
 <pre><code>                 Number of records: 471
@@ -2857,17 +2859,17 @@ Figure 1: Out-of-bag risk at each tree size the search tried. The lowest point 
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-06 10:14:30 EST</td>
+<td style="text-align: left;">2026-11-11 03:10:21 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-06 10:14:33 EST</td>
+<td style="text-align: left;">2026-11-11 03:10:23 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">3 s</td>
+<td style="text-align: left;">2 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2907,17 +2909,17 @@ Figure 1: Out-of-bag risk at each tree size the search tried. The lowest point 
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.6</td>
+<td style="text-align: left;">1.5.7</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>intervals</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">intervals_20261106.parquet</td>
+<td style="text-align: left;">intervals_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-06</td>
+<td style="text-align: left;">2026-11-11</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2962,7 +2964,7 @@ Figure 1: Out-of-bag risk at each tree size the search tried. The lowest point 
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"rhf.fit.event.rhf","rendered":"2026-11-06T15:14:33Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"61119a9ebfdfffe0ab2f05196c237f9bcf753aed0c7b9715508bbb357851d147"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"be90b23c5d5905ea953eeb5b2f4408f1e33363b0"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.6","source":null},{"package":"hvtiRutilities","version":"1.5.21","source":null},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestRHF","version":"2.1.0","source":"CRAN"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"intervals","path":"00_datasets/intervals_20261106.parquet","role":"analysis","bytes":28287,"mtime":"2026-11-06T15:14:27Z","sha256":"beb287931ea4627b2e0e57dab4c81dba7106e059066c352c09d2b07f3073f3c5"}],"artifacts":[],"subject":"event","type":"rhf","analysis":{"start":{"variable":"start"},"stop":{"variable":"stop"},"event":{"variable":"event","event":1,"censored":0},"repair":[],"caps":[],"lookahead":{"interval":null,"action":"keep","final_intervals":146}},"cohort":{"n":150,"n_events":127,"n_censored":23},"run":{"start":"2026-11-06T10:14:30-0500","end":"2026-11-06T10:14:33-0500","time_zone":"EST","duration_seconds":2.6,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rhf.fit.event.rhf.qmd","template":"rhf.fit","prefix":"rhf","qualifier":"fit","subject":"event","type":"rhf","hvtiRtemplates":"1.5.6"},"datasets":[{"name":"intervals","version_file":"intervals_20261106.parquet","registered":"2026-11-06","source_file":"intervals.rds","rows":471,"patients":150,"where":[],"sha256":"beb287931ea4","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"30_analyses/rhf.fit.event.rhf.qmd",".hvti_render_id":"6e3873e7b460b838b643a0f68e50ca38f7a62c41bb9460bf9405ea785271f5c5",".hvti_source_sha256":"238ce0bcecd8fadaa8b0617c479c8050175b81de602a29fb81e7c6e50cc59e4c"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"rhf.fit.event.rhf","rendered":"2026-11-11T08:10:23Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"61119a9ebfdfffe0ab2f05196c237f9bcf753aed0c7b9715508bbb357851d147"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"9215655193d3a25191022290838cac8efa66bd03"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.7","source":"github","sha":"e8bfb956d8491085b6c4d2c5b2da933ad9ee74f7"},{"package":"hvtiRutilities","version":"1.5.22","source":"github","sha":"0f816207958226308ec7812c5100793a6d120d8e"},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestRHF","version":"2.1.0","source":"CRAN"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"intervals","path":"00_datasets/intervals_20261111.parquet","role":"analysis","bytes":28287,"mtime":"2026-11-11T08:10:18Z","sha256":"beb287931ea4627b2e0e57dab4c81dba7106e059066c352c09d2b07f3073f3c5"}],"artifacts":[],"subject":"event","type":"rhf","analysis":{"start":{"variable":"start"},"stop":{"variable":"stop"},"event":{"variable":"event","event":1,"censored":0},"repair":[],"caps":[],"lookahead":{"interval":null,"action":"keep","final_intervals":146}},"cohort":{"n":150,"n_events":127,"n_censored":23},"run":{"start":"2026-11-11T03:10:21-0500","end":"2026-11-11T03:10:23-0500","time_zone":"EST","duration_seconds":2.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rhf.fit.event.rhf.qmd","template":"rhf.fit","prefix":"rhf","qualifier":"fit","subject":"event","type":"rhf","hvtiRtemplates":"1.5.7"},"datasets":[{"name":"intervals","version_file":"intervals_20261111.parquet","registered":"2026-11-11","source_file":"intervals.rds","rows":471,"patients":150,"where":[],"sha256":"beb287931ea4","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"30_analyses/rhf.fit.event.rhf.qmd",".hvti_render_id":"3b11fc98dc7fc652410d987b0a97121b6d3e63b8a05cd4135f41c22e6e72bc55",".hvti_source_sha256":"ab40729050d8ac8530437c58c9b0a1123f887b204ffc9a034949e8325e98e127"}</script>
 </section>
 
 </main>

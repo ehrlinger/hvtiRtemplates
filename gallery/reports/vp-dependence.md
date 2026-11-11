@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:14
+2026-11-11 03:10
 
 Gallery job on the synthetic cohort: how the nine preoperative
 predictors the rf fits grow on depend on each other, with no outcome
@@ -92,8 +92,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -113,7 +113,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -183,7 +183,7 @@ SEED <- 2026
 # that are out of date.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("vp-dependence-graph"). The names are the
 # file names, listed for each template in the templates README.
@@ -245,7 +245,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -651,9 +651,9 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 
 | Group           | Item             | Value                      |
 |:----------------|:-----------------|:---------------------------|
-| Run             | Started          | 2026-11-06 10:13:29 EST    |
-|                 | Ended            | 2026-11-06 10:14:22 EST    |
-|                 | Duration         | 53 s                       |
+| Run             | Started          | 2026-11-11 03:09:29 EST    |
+|                 | Ended            | 2026-11-11 03:10:15 EST    |
+|                 | Duration         | 46 s                       |
 |                 | Status           | final                      |
 |                 | Rendered by      | gallery                    |
 |                 | Host             | gallery                    |
@@ -661,9 +661,9 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 |                 | Template         | vp.dependence              |
 |                 | Subject          | preop                      |
 |                 | Type             | vp                         |
-|                 | hvtiRtemplates   | 1.5.6                      |
-| Dataset `built` | Version file     | built_20261106.parquet     |
-|                 | Version date     | 2026-11-06                 |
+|                 | hvtiRtemplates   | 1.5.7                      |
+| Dataset `built` | Version file     | built_20261111.parquet     |
+|                 | Version date     | 2026-11-11                 |
 |                 | Source file      | built.rds                  |
 |                 | Rows kept        | 800 rows on 800 patients   |
 |                 | WHERE            | none                       |

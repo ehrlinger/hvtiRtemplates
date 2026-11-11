@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:15
+2026-11-11 03:12
 
 Explains the `vt-fit` job in this set: which patients the twins say
 repair suits, stratified by the echo-phenotype clusters.
@@ -72,7 +72,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -90,7 +90,7 @@ STRATIFY <- list(set = "echo-sid")
 BOOT <- 200
 GAIN_MIN <- 0                               # Demo: a twin must favor the other arm by more than this, in TIME's units.
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("vt-explain-contrast"). The names are the
 # file names, listed for each template in the templates README.
@@ -164,6 +164,10 @@ if (length(setdiff(.sha_now, .sha_fit))) {
 # vt.rds holds ID digests, so the data are digested with the same study key.
 .d_all[[.s$id]] <- hvtiRtemplates:::.id_digest(.d_all[[.s$id]], .id_key)
 .d_all <- .d_all[.d_all[[.s$id]] %in% r$ID, , drop = FALSE]
+# vt-fit capped an age column when AGE_CAP was set; the forests saw the capped
+# values, so the betas and strata here must too.
+.age_cap <- .vt$eligibility$age_cap
+if (!is.null(.age_cap)) .d_all[[names(.age_cap)]] <- pmin(.d_all[[names(.age_cap)]], unname(.age_cap))
 ```
 
 ## The contrast
@@ -308,7 +312,7 @@ if (!nrow(.cp)) {
 }
 ```
 
-![](assets/b0ec7b029b958c74ad747e468d18cf67.png)
+![](assets/7c46b8cfae99db595b5ee885e84120e2.png)
 
 Figure 5: Each treated patient in distribution: predicted RMST under the
 arm received (own) against under the other arm (twin). On the dashed
@@ -357,7 +361,9 @@ Eligibility is a line; this shows what lies near it. Each treated
 patient’s difference is set against their distance to the nearest
 patient of the other arm, the arm whose forest gives their twin. A
 difference that grows as patients approach the line is borrowing from
-the edge of what the other arm covers.
+the edge of what the other arm covers. For the isolation forest the
+distance is the patient’s score under the other arm’s forest, and the
+line is that arm’s `ISOLATION_CUTOFF` quantile of its own scores.
 
 Code
 
@@ -391,7 +397,7 @@ if (!nrow(.dd)) {
     geom_point(data = .dd[!.dd$in_distribution, , drop = FALSE], shape = 1, size = 3.4, stroke = 0.9,
                color = "#B2182B") +
     facet_grid(method ~ panel, scales = "free_x") +
-    labs(x = "Distance to the nearest patient of the other arm",
+    labs(x = "Distance to the nearest patient of the other arm, or isolation score",
          y = paste0("RMST difference (", ARMS[1], " minus ", ARMS[2], ")"), color = "Favors") +
     scale_color_discrete(breaks = c("first", "second", "tie"), labels = c(ARMS, "neither")) +
     theme(legend.position = "bottom")
@@ -400,11 +406,12 @@ if (!nrow(.dd)) {
 }
 ```
 
-![](assets/f81f6cba2ef5c0d6cace07ad8b22d978.png)
+![](assets/9d2844799460223da463675ae7f40bb5.png)
 
 Figure 6: Each treated patient’s RMST difference against their distance
-to the nearest patient of the other arm. Dashed: that arm’s largest own
-gap, the eligibility line; dotted: its typical (median) gap. Ringed: out
+to the nearest patient of the other arm (for the isolation forest, their
+score). Dashed: that arm’s eligibility line, its largest own gap or the
+isolation cutoff; dotted: its typical (median) gap or score. Ringed: out
 of distribution.
 
 Code
@@ -551,7 +558,7 @@ if (!is.null(.sa) && nrow(.sa)) {
 }
 ```
 
-![](assets/b85cd831ab253ff7cc22206702f19cb5.png)
+![](assets/2eee2bf6bd9d90db2e3a6976f65605d4.png)
 
 Figure 7: The RMST difference by stratum, one panel per arm received.
 Box: 15th to 85th percentile of the patients in distribution, whiskers
@@ -676,19 +683,19 @@ print(knitr::kable(.betas, digits = 2, row.names = FALSE))
 
 | variable |  beta | lower | upper | unestimable |
 |:---------|------:|------:|------:|------------:|
-| age      |  0.27 |  0.20 |  0.33 |           0 |
-| female   |  0.06 | -0.01 |  0.13 |           0 |
-| bmi      |  0.00 | -0.07 |  0.07 |           0 |
-| hx_chf   | -0.05 | -0.11 |  0.03 |           0 |
-| hx_dm    |  0.00 | -0.06 |  0.06 |           0 |
-| nyha_pr  |  0.04 | -0.03 |  0.11 |           0 |
-| lvef     | -0.05 | -0.13 |  0.02 |           0 |
-| creat_pr |  0.00 | -0.08 |  0.08 |           0 |
-| lvedd    |  0.84 |  0.80 |  0.88 |           0 |
-| lvesd    |  0.86 |  0.82 |  0.89 |           0 |
+| age      |  0.27 |  0.20 |  0.35 |           0 |
+| female   |  0.06 | -0.02 |  0.14 |           0 |
+| bmi      |  0.00 | -0.06 |  0.07 |           0 |
+| hx_chf   | -0.05 | -0.13 |  0.04 |           0 |
+| hx_dm    |  0.00 | -0.06 |  0.08 |           0 |
+| nyha_pr  |  0.04 | -0.02 |  0.11 |           0 |
+| lvef     | -0.05 | -0.12 |  0.01 |           0 |
+| creat_pr |  0.00 | -0.08 |  0.07 |           0 |
+| lvedd    |  0.84 |  0.81 |  0.88 |           0 |
+| lvesd    |  0.86 |  0.82 |  0.90 |           0 |
 | la_diam  |  0.18 |  0.11 |  0.26 |           0 |
-| rvsp     |  0.16 |  0.09 |  0.23 |           0 |
-| e_e      |  0.09 |  0.03 |  0.17 |           0 |
+| rvsp     |  0.16 |  0.10 |  0.24 |           0 |
+| e_e      |  0.09 |  0.03 |  0.15 |           0 |
 
 Table 4: Standardized beta for each characteristic. A positive beta: the
 characteristic goes with a higher relative risk of the event by 8 under
@@ -713,7 +720,7 @@ if (!nrow(.bp)) {
 }
 ```
 
-![](assets/c3b9414776a033a795c2fcfc386dbc64.png)
+![](assets/0bfe28fe8da019e46d7b1935a2621609.png)
 
 Figure 9: Standardized association of each characteristic with the
 estimated effect, by overlap-weighted regression. A positive beta: the
@@ -884,8 +891,9 @@ WarningBefore this goes in a manuscript
 - **Out of distribution.** A patient far from every patient on the arm a
   twin borrows its curve from gets a prediction the forest has no data
   to support. Those patients are flagged by the fit’s eligibility rules
-  and left out of every summary here; the sensitivity table shows how
-  much that choice moves the answer.
+  and left out of the medians, boxes and counts here. The distance and
+  stratum figures draw them ringed, and the sensitivity table shows how
+  much the choice moves the answer.
 - **An arm whose interval includes 0.5.** Where the C-index interval of
   an arm’s forest includes 0.5, that forest does not rank patients
   better than chance, so its half of every difference is exploratory.
@@ -898,6 +906,14 @@ WarningBefore this goes in a manuscript
   uses the observed outcomes and the propensity score and does not
   depend on the forests. Compare the twins’ overall difference against
   it before reading more into a subgroup.
+- **Observed against expected.** `hs-concordance` tests the deaths a
+  group had against the deaths another group’s model expects for it, and
+  draws the average expected curve with a named band and each patient’s
+  curve. Its two helpers take numbers, not a model, so the same test can
+  be run here on each arm forest’s cumulative hazard at the patient’s
+  own follow-up: `hvtiRtemplates:::.one_sample_logrank()` and
+  `hvtiRtemplates:::.cohort_curve_band()`. The design is
+  `dev/specs/2026-11-10-hs-oe-test-and-bands-design.md`.
 - **The standardized betas** are one-at-a-time, overlap-weighted
   associations with the estimated effect. They say which characteristics
   the twins’ effect tracks, not which cause it. A positive beta: the
@@ -910,9 +926,9 @@ WarningBefore this goes in a manuscript
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:15:43 EST |
-|  | Ended | 2026-11-06 10:15:50 EST |
-|  | Duration | 8 s |
+| Run | Started | 2026-11-11 03:12:04 EST |
+|  | Ended | 2026-11-11 03:12:10 EST |
+|  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -921,16 +937,16 @@ WarningBefore this goes in a manuscript
 |  | Template | vt.explain |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered not recorded |
-|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-06 10:15:25 -0500, data built_20261106.parquet |
-|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-06 10:15:13 -0500, data built_20261106.parquet |
+|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-11 03:11:50 -0500, data built_20261111.parquet |
+|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-11 03:10:56 -0500, data built_20261111.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

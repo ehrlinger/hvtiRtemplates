@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:14
+2026-11-11 03:10
 
 Fits an ordinary least-squares model of a continuous outcome,
 untransformed or on the log scale, on one dataset or on stacked multiple
@@ -42,8 +42,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 Code
 
@@ -59,7 +59,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -99,7 +99,7 @@ IMPUTATION <- NULL                          # Demo: imputation column, or NULL.
 # Stacked imputations repeat each patient once per imputation.
 if (!is.null(IMPUTATION)) KEY <- unique(c(KEY, IMPUTATION))
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("rm-linear-qq").
 SAVE_FIGURES <- TRUE
@@ -138,7 +138,7 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -326,8 +326,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 10:14:48 EST  |
-|                 | Ended            | 2026-11-06 10:14:50 EST  |
+| Run             | Started          | 2026-11-11 03:10:35 EST  |
+|                 | Ended            | 2026-11-11 03:10:37 EST  |
 |                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -336,9 +336,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |                 | Template         | rm.linear                |
 |                 | Subject          | los                      |
 |                 | Type             | model                    |
-|                 | hvtiRtemplates   | 1.5.6                    |
-| Dataset `built` | Version file     | built_20261106.parquet   |
-|                 | Version date     | 2026-11-06               |
+|                 | hvtiRtemplates   | 1.5.7                    |
+| Dataset `built` | Version file     | built_20261111.parquet   |
+|                 | Version date     | 2026-11-11               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:14
+2026-11-11 03:10
 
 Gallery job on the synthetic intervals: the hazard of the simulated
 event, from one time-varying marker (xtd) and three baseline markers.
@@ -77,8 +77,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `intervals` `intervals_20261106.parquet`, dated
-2026-11-06 · rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `intervals` `intervals_20261111.parquet`, dated
+2026-11-11 · rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -103,7 +103,7 @@ ANALYSIS_SET <- NULL
 # time-varying column would cut follow-up short, and stops the render.
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN.
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN.
 ID <- "patient_id"
 
 # Demo: each interval's start and stop, and its event, coded 1 when the event
@@ -146,8 +146,8 @@ SEED  <- 2026
 # Demo: the number of terminal nodes in each tree. NULL chooses it by
 # out-of-bag risk with tune.treesize.rhf(), and the figure below shows the
 # search. Tree size is the setting a hazard forest is most sensitive to, which
-# is why this template tunes it where the rfs templates tune nothing; a number
-# skips the search, which is slow on a large study.
+# is why this template tunes it by default, where `rfs-fit` tunes its leaf size
+# only on request; a number skips the search, which is slow on a large study.
 TREESIZE <- NULL
 
 # Needs no edit unless the dataset has a defect. Repairs this job makes to the
@@ -190,7 +190,7 @@ LOOKAHEAD <- "keep"
 # that are out of date, so it is safe to leave on while iterating.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("rhf-fit-tuning"). The names
 # are the file names, listed for each template in the templates README.
@@ -253,7 +253,7 @@ if (length(.chr)) {
 
 | Data                |                                                  |
 |:--------------------|:-------------------------------------------------|
-| Source              | dataset `intervals` (intervals_20261106.parquet) |
+| Source              | dataset `intervals` (intervals_20261111.parquet) |
 | Rows read           | 471                                              |
 | ID                  | `patient_id`                                     |
 | Identifiers dropped | none                                             |
@@ -301,9 +301,10 @@ Code
 ``` r
 # randomForestRHF refuses overlapping intervals only after the data are loaded,
 # and names no patient. These checks run first and say what to fix: an overlap,
-# an interval of zero length, an event before a patient's last interval, an
-# event not coded 0/1, or a missing predictor stops the render here. Gaps
-# between intervals are allowed, and counted.
+# an interval of zero or negative length, an event before a patient's last
+# interval, an event not coded 0/1, or a missing predictor stops the render here,
+# unless REPAIR clips the overlap or empty interval, or drops the interval missing
+# a predictor. Gaps between intervals are allowed, and counted.
 .cp <- hvtiRtemplates:::.cp_check(d, id = .selection$id, start = START, stop = STOP, event = EVENT,
                                   predictors = PREDICTORS, repair = REPAIR)
 d <- .cp$data
@@ -398,11 +399,12 @@ model <- Surv(id, start, stop, event) ~ .
 # was made in; set it, so a job run anywhere else does not write every object
 # beside the formula, `job_data` and its patient IDs included, into the forest.
 environment(model) <- globalenv()
-# Each cache holds the forest and so every interval it was grown on: written
-# owner-only from the start, and set so if an older cache is already there.
+# The forest cache holds the forest and so every interval it was grown on, so it
+# is written owner-only from the start, and set so if an older cache is already
+# there. The search's cache holds results only, and is kept owner-only beside it.
 .cache_files <- file.path(CACHE_DIR, c("rhf-treesize.rds", "rhf-forest.rds"))
 # Hours at study size. Started from the console it dies with the session, so an
-# uncached fit is refused there: run the job with hvtiRtemplates::submit_job().
+# uncached fit is refused there: run the job with hvtiRtemplates::run_job().
 hvtiRtemplates::guard_long_fit("rhf-forest", dir = CACHE_DIR,
                                why = "a hazard forest on every interval of follow-up takes hours at study size",
                                refit = REFIT)
@@ -513,9 +515,9 @@ hvtiRtemplates:::.owner_only(set_path("estimates", "rhf.rds"), saveRDS(forest, s
 
 | Group               | Item             | Value                      |
 |:--------------------|:-----------------|:---------------------------|
-| Run                 | Started          | 2026-11-06 10:14:30 EST    |
-|                     | Ended            | 2026-11-06 10:14:33 EST    |
-|                     | Duration         | 3 s                        |
+| Run                 | Started          | 2026-11-11 03:10:21 EST    |
+|                     | Ended            | 2026-11-11 03:10:23 EST    |
+|                     | Duration         | 2 s                        |
 |                     | Status           | final                      |
 |                     | Rendered by      | gallery                    |
 |                     | Host             | gallery                    |
@@ -523,9 +525,9 @@ hvtiRtemplates:::.owner_only(set_path("estimates", "rhf.rds"), saveRDS(forest, s
 |                     | Template         | rhf.fit                    |
 |                     | Subject          | event                      |
 |                     | Type             | rhf                        |
-|                     | hvtiRtemplates   | 1.5.6                      |
-| Dataset `intervals` | Version file     | intervals_20261106.parquet |
-|                     | Version date     | 2026-11-06                 |
+|                     | hvtiRtemplates   | 1.5.7                      |
+| Dataset `intervals` | Version file     | intervals_20261111.parquet |
+|                     | Version date     | 2026-11-11                 |
 |                     | Source file      | intervals.rds              |
 |                     | Rows kept        | 471 rows on 150 patients   |
 |                     | WHERE            | none                       |

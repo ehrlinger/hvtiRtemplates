@@ -4,15 +4,15 @@
 
 Published
 
-2026-11-06 10:10
+2026-11-11 03:06
 
 Gallery job on the synthetic cohort: postoperative length of stay,
 logged (log_los).
 
 An `rfr-fit` job grows a regression forest and checks that it learned
-something: out-of-bag error by number of trees, and predicted against
-observed. **Importance and dependence plots are not here.** They are the
-`rfr-explain` job in this same set, which reads the forest this job
+something: out-of-bag error by number of trees, and the out-of-bag
+predictions. **Importance and dependence plots are not here.** They are
+the `rfr-explain` job in this same set, which reads the forest this job
 saves instead of growing its own, so the explanations always describe
 this forest.
 
@@ -77,7 +77,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
                                 SAVE_FIGURES, FIGURES, linked)
 }
 
-# `rfr-fit` writes the forest through this and `rfr-explain` reads it back,
+# `rfr-fit` writes the forest through set_path() and `rfr-explain` reads it back,
 # both by set, so an explanation can never be filed against a different set
 # than the forest it explains. The write is the `save` chunk at the foot of
 # this file.
@@ -85,8 +85,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -106,7 +106,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -164,9 +164,9 @@ NA_ACTION <- "na.impute"
 # that are out of date, so it is safe to leave on while iterating.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("rfr-fit-diagnostics"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -242,7 +242,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -357,7 +357,7 @@ the out-of-bag error after each additional tree.
 Code
 
 ``` r
-# Out-of-bag predicted against observed.
+# Out-of-bag predicted values, each patient a point over a notched box plot.
 pred <- gg_rfsrc(forest)
 .fig <- plot(pred) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "rfr-fit-diagnostics-predicted")
@@ -394,8 +394,8 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 10:10:15 EST  |
-|                 | Ended            | 2026-11-06 10:10:17 EST  |
+| Run             | Started          | 2026-11-11 03:06:56 EST  |
+|                 | Ended            | 2026-11-11 03:06:58 EST  |
 |                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -404,9 +404,9 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 |                 | Template         | rfr.fit                  |
 |                 | Subject          | los                      |
 |                 | Type             | rf                       |
-|                 | hvtiRtemplates   | 1.5.6                    |
-| Dataset `built` | Version file     | built_20261106.parquet   |
-|                 | Version date     | 2026-11-06               |
+|                 | hvtiRtemplates   | 1.5.7                    |
+| Dataset `built` | Version file     | built_20261111.parquet   |
+|                 | Version date     | 2026-11-11               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

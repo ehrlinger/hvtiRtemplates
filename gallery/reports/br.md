@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 09:59
+2026-11-11 02:58
 
 This job reports a bootstrap variable selection screen over a **linear**
 model: how often each candidate survived stepwise selection across
@@ -18,7 +18,7 @@ and the model job were parallel in SAS and these jobs reproduce that. Do
 not describe this job’s retained set as what `rm` fits, and do not write
 a handoff file for it — an earlier study report did both for the hazard
 pair, and nothing read the file. A reader who believes the claim will
-assume the `lm` model was screened for reliability first. It was not.
+assume the `rm` model was screened for reliability first. It was not.
 
 A selection frequency is an estimate, not a count of something fixed.
 Every table below is built to keep that visible, because the decision
@@ -92,15 +92,15 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
                                 SAVE_FIGURES, FIGURES, linked)
 }
 
-# The screen this job reports on was run by a companion script, which wrote its
-# chunks into this set's `estimates` directory. Reading them through set_path()
-# is what keeps a screen filed against the set whose candidates it screened.
+# The screen this job reports on was run by a companion runner, which wrote its
+# bag into this set's `estimates` directory. Reading it through set_path() is
+# what keeps a screen filed against the set whose candidates it screened.
 # The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -120,8 +120,8 @@ EXPECT_BOOT <- 100L   # Demo: boot_select(n_rep = 100)
 
 # Demo: the file-name prefix your runner wrote its screen under. This report
 # reads <BOOT_PREFIX>.rds in this set's estimates directory, the name bh reads
-# for an unchunked run, and br-runner.R writes br.rds. It must match the runner
-# exactly.
+# for an unchunked run, and the runner, br.<subject>.<type>.runner.R, writes
+# br.rds. It must match the runner exactly.
 BOOT_PREFIX <- "br"
 
 # Demo: the bag's recorded selection is used; set any of these only to confirm
@@ -163,9 +163,9 @@ CLUSTERS <- list(
 # Correlation cutoff for near-duplicate candidates.
 COLLINEAR_R <- 0.99
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("br-frequencies"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -247,7 +247,7 @@ if (is.null(.engine_v) || .engine_v < "0.9.3") {
 }
 
 # Bound empty so the `save` chunk's overwrite guard has both names to compare
-# against. A logistic screen is not chunked by default; a chunked one is pooled
+# against. A linear screen is not chunked by default; a chunked one is pooled
 # in the RUNNER, not here.
 .chunk_files <- character(0)
 
@@ -536,12 +536,15 @@ fall on either side of it on resampling noise alone.
 - **A near-threshold variable is not a weak risk factor.** It is a
   variable whose selection is unstable, which is a different claim.
 
-⚠️ **A linear screen’s frequencies move with the outcome’s scale.**
-Stepwise entry and stay are p-value thresholds, and a p-value on a
-continuous outcome responds to residual variance in a way a binary
-outcome’s does not. Two runs of the same pool against the same cohort,
-one on a raw outcome and one on a transformed one, are not comparable
-screens and their retained sets should not be read against each other.
+⚠️ **A linear screen’s frequencies depend on the outcome’s transform,
+not its units.** Stepwise entry and stay are p-value thresholds, and a
+p-value is unchanged when the outcome is rescaled linearly, so a change
+of unit does not move a frequency. A transform such as the log of the
+outcome rather than the raw outcome changes the residuals and the
+linearity the tests see, and so can change which variables enter. Two
+runs of the same pool against the same cohort, one on a raw outcome and
+one on a transformed one, are not comparable screens and their retained
+sets should not be read against each other.
 
 Code
 
@@ -600,7 +603,7 @@ different information. That study’s published model uses `zexp` and
 `in_zexp` **together and both significant**, a two-parameter flexible
 form pruning forbids. The measurement is from a hazard study, and it is
 quoted here because the argument is about variable NAMES and
-correlation, which a logistic screen shares.
+correlation, which a linear screen shares.
 
 The naming convention tells you two variables are RELATED. Only the data
 tells you whether they are REDUNDANT.
@@ -609,9 +612,9 @@ Code
 
 ``` r
 # Demo: the affix vocabulary, if your study's variable names do not follow
-# vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing
-# 2, the order in which they strip, and the deliberate refusal to reduce agee
-# to age. Those are facts about this institution's names, not about statistics,
+# vars.sas conventions. POOL_AFFIXES carries ln_, in2, in_ and a trailing 2, in
+# the order they strip; POOL_PLAIN_SUFFIX carries _pr; and the vocabulary
+# deliberately refuses to reduce agee to age. Those are facts about this institution's names, not about statistics,
 # which is why they are data you can replace rather than logic you cannot.
 #
 # The pool grouped here is the set of forms that reached at least one replicate.
@@ -828,9 +831,9 @@ argument above stands: the same measurement that found 57 prunable forms
 found 16 of them correlating below 0.9.
 
 `pool_collinear_pairs()` sees only NUMERIC, non-constant columns, so
-factor-coded binaries are invisible to it for the same reason they were
-invisible to the screen. Check the coercion table above before reading
-an empty result as an absence of collinearity.
+factor-coded binaries are invisible to it. This report has no coercion
+table of its own, so check how your runner coded them before reading an
+empty result as an absence of collinearity.
 
 ## Figure
 
@@ -903,8 +906,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 09:59:33 EST |
-|  | Ended | 2026-11-06 09:59:35 EST |
+| Run | Started | 2026-11-11 02:58:41 EST |
+|  | Ended | 2026-11-11 02:58:42 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -913,14 +916,14 @@ saveRDS(report, report_file)
 |  | Template | br |
 |  | Subject | icu |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `icu-boot/br.rds` (bootstrap-bag), rendered not recorded, data built_20261106.parquet |
+| Upstream | Handoff | `icu-boot/br.rds` (bootstrap-bag), rendered not recorded, data built_20261111.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

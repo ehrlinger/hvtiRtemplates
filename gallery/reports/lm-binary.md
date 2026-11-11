@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:06
+2026-11-11 03:04
 
 Fits a binary outcome model and preserves the fitted model, predictions,
 and pooled inference. For stacked imputations, coefficients and
@@ -37,8 +37,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -56,7 +56,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- quote(as.integer(format(dt_surg, "%Y")) < 2015)
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -121,7 +121,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTOR
 
 | Data |  |
 |:---|:---|
-| Source | dataset `built` (built_20261106.parquet) |
+| Source | dataset `built` (built_20261111.parquet) |
 | Rows read | 800 |
 | ID | `patient_id` |
 | Identifiers dropped | none |
@@ -240,9 +240,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:06:02 EST |
-|  | Ended | 2026-11-06 10:06:03 EST |
-|  | Duration | 1 s |
+| Run | Started | 2026-11-11 03:03:59 EST |
+|  | Ended | 2026-11-11 03:04:00 EST |
+|  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -250,9 +250,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |  | Template | lm.binary |
 |  | Subject | stroke |
 |  | Type | model |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 572 rows on 572 patients |
 |  | WHERE | `as.integer(format(dt_surg, "%Y")) < 2015` |

@@ -2235,7 +2235,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-06 10:05</p>
+      <p class="date">2026-11-11 03:03</p>
     </div>
   </div>
   
@@ -2247,7 +2247,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: hs.score 1.5.6 sha256:01e597666d5c3890c6cc24c7a648500e4b80e72bef8e2b688bec8044581dab54 -->
+<!-- hvtiRtemplates: hs.score 1.5.7 sha256:01e597666d5c3890c6cc24c7a648500e4b80e72bef8e2b688bec8044581dab54 -->
 <!-- Demo: name the SAS job this replaces, and say what reads the scores it
      writes. Replace this comment with that text. -->
 <p>An <code>hs-score</code> job scores each <strong>segment</strong> of a start/stop cohort with the time-varying model an <code>hm</code> job fitted on it. A segment is a stretch of one patient’s follow-up during which the covariates hold their values. Its score is the model evaluated <strong>at the segment’s own start, with the segment’s own covariates</strong>: the risk the model assigns to the patient as they stood when that segment began. The model is not refitted here; it is read.</p>
@@ -2307,7 +2307,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.6</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.7</p>
 </div>
 </div>
 </div>
@@ -2402,7 +2402,7 @@ Table 1: The data this job read, as hz read it
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>segments</code> (segments_20261106.parquet)</td>
+<td style="text-align: left;">dataset <code>segments</code> (segments_20261111.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2615,12 +2615,12 @@ Table 2: Scores across the segments, in percent
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-06 10:05:57 EST</td>
+<td style="text-align: left;">2026-11-11 03:03:55 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-06 10:05:57 EST</td>
+<td style="text-align: left;">2026-11-11 03:03:55 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -2665,17 +2665,17 @@ Table 2: Scores across the segments, in percent
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.6</td>
+<td style="text-align: left;">1.5.7</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>segments</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">segments_20261106.parquet</td>
+<td style="text-align: left;">segments_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-06</td>
+<td style="text-align: left;">2026-11-11</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2710,7 +2710,7 @@ Table 2: Scores across the segments, in percent
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead_segments-hz/hm.rds</code> (hazard-regression-model), rendered 2026-11-06 10:05:26 -0500, data segments_20261106.parquet</td>
+<td style="text-align: left;"><code>dead_segments-hz/hm.rds</code> (hazard-regression-model), rendered 2026-11-11 03:03:34 -0500, data segments_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Reproducibility</td>
@@ -2725,7 +2725,7 @@ Table 2: Scores across the segments, in percent
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"hs.score.dead_segments.hz","rendered":"2026-11-06T15:05:57Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8618b9b9eed5be7ee977a0b82e6fb0de211b250e66b01f149ca29ee8f19ce807"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.5.6","source":null},{"package":"hvtiRutilities","version":"1.5.21","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"TemporalHazard","version":"1.2.19","source":null},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"segments","path":"00_datasets/segments_20261106.parquet","role":"analysis","bytes":25236,"mtime":"2026-11-06T15:05:07Z","sha256":"bdbfaba0795e1d4ac1c4e716ad42dc3eb58c4f4f7392846f7529f78ab86993f7"},{"dataset":"segments","path":"00_datasets/segments_20261106.parquet","role":"analysis","bytes":25236,"mtime":"2026-11-06T15:05:07Z","sha256":"bdbfaba0795e1d4ac1c4e716ad42dc3eb58c4f4f7392846f7529f78ab86993f7"},{"dataset":"segments","path":"00_datasets/segments_20261106.parquet","role":"analysis","bytes":25236,"mtime":"2026-11-06T15:05:07Z","sha256":"bdbfaba0795e1d4ac1c4e716ad42dc3eb58c4f4f7392846f7529f78ab86993f7"}],"artifacts":[{"path":"90_estimates/dead_segments-hz/hm.rds","role":"hazard-regression-model","bytes":266137,"mtime":"2026-11-06T15:05:47Z","sha256":"cd493ce13a8fcd673f576d32bb042b219cfbd3cb1cb9ada69a761fe7d5b62365"},{"path":"90_estimates/dead_segments-hz/hz.rds","role":"hazard-shape-model","bytes":21049,"mtime":"2026-11-06T15:05:20Z","sha256":"4783122314d659e22a72465166c5e1b457bc5321a3e38791a6e403f2ff5eecbe"}],"subject":"dead_segments","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":1823,"n_events":406,"n_censored":1417},"run":{"start":"2026-11-06T10:05:57-0500","end":"2026-11-06T10:05:57-0500","time_zone":"EST","duration_seconds":0.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hs.score.dead_segments.hz.qmd","template":"hs.score","prefix":"hs","qualifier":"score","subject":"dead_segments","type":"hz","hvtiRtemplates":"1.5.6"},"datasets":[{"name":"segments","version_file":"segments_20261106.parquet","registered":"2026-11-06","source_file":"segments.rds","rows":1823,"patients":725,"where":"!is.na(creat_pr)","sha256":"bdbfaba0795e","manifest":"current"}],"upstream":[{"file":"90_estimates/dead_segments-hz/hz.rds","set":"dead_segments-hz","role":"hazard-shape-model"},{"file":"90_estimates/dead_segments-hz/hm.rds","set":"dead_segments-hz","role":"hazard-regression-model","rendered_at":"2026-11-06T10:05:26-0500","dataset_version":"segments_20261106.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"40_graphs/hs.score.dead_segments.hz.qmd",".hvti_render_id":"6a566db81189d26c8686c60f5b59bdacfbfe7058000aa487143578baee96a84c",".hvti_source_sha256":"73538086be5a494da577c2080a7867b49fce5c2353cbe05572666acb6eb62480"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"hs.score.dead_segments.hz","rendered":"2026-11-11T08:03:55Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8618b9b9eed5be7ee977a0b82e6fb0de211b250e66b01f149ca29ee8f19ce807"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.5.7","source":"github","sha":"e8bfb956d8491085b6c4d2c5b2da933ad9ee74f7"},{"package":"hvtiRutilities","version":"1.5.22","source":"github","sha":"0f816207958226308ec7812c5100793a6d120d8e"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"TemporalHazard","version":"1.3.0","source":"github","sha":"f30dbe4f52899624d512b6a73d7378c08e73873b"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"segments","path":"00_datasets/segments_20261111.parquet","role":"analysis","bytes":25236,"mtime":"2026-11-11T08:03:18Z","sha256":"bdbfaba0795e1d4ac1c4e716ad42dc3eb58c4f4f7392846f7529f78ab86993f7"},{"dataset":"segments","path":"00_datasets/segments_20261111.parquet","role":"analysis","bytes":25236,"mtime":"2026-11-11T08:03:18Z","sha256":"bdbfaba0795e1d4ac1c4e716ad42dc3eb58c4f4f7392846f7529f78ab86993f7"},{"dataset":"segments","path":"00_datasets/segments_20261111.parquet","role":"analysis","bytes":25236,"mtime":"2026-11-11T08:03:18Z","sha256":"bdbfaba0795e1d4ac1c4e716ad42dc3eb58c4f4f7392846f7529f78ab86993f7"}],"artifacts":[{"path":"90_estimates/dead_segments-hz/hm.rds","role":"hazard-regression-model","bytes":266134,"mtime":"2026-11-11T08:03:49Z","sha256":"a4d584ac06bf096732738d40e9e087a434f359a3c8b582c7eea3c57781cbe4cc"},{"path":"90_estimates/dead_segments-hz/hz.rds","role":"hazard-shape-model","bytes":21045,"mtime":"2026-11-11T08:03:29Z","sha256":"8a5d52b32f9d8ba6c1a45fdff95cd301f7edf8c4db152ebd5caea9239ee0570c"}],"subject":"dead_segments","type":"hz","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":1823,"n_events":406,"n_censored":1417},"run":{"start":"2026-11-11T03:03:55-0500","end":"2026-11-11T03:03:55-0500","time_zone":"EST","duration_seconds":0.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hs.score.dead_segments.hz.qmd","template":"hs.score","prefix":"hs","qualifier":"score","subject":"dead_segments","type":"hz","hvtiRtemplates":"1.5.7"},"datasets":[{"name":"segments","version_file":"segments_20261111.parquet","registered":"2026-11-11","source_file":"segments.rds","rows":1823,"patients":725,"where":"!is.na(creat_pr)","sha256":"bdbfaba0795e","manifest":"current"}],"upstream":[{"file":"90_estimates/dead_segments-hz/hz.rds","set":"dead_segments-hz","role":"hazard-shape-model"},{"file":"90_estimates/dead_segments-hz/hm.rds","set":"dead_segments-hz","role":"hazard-regression-model","rendered_at":"2026-11-11T03:03:34-0500","dataset_version":"segments_20261111.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"40_graphs/hs.score.dead_segments.hz.qmd",".hvti_render_id":"0f1d3de8581c94f7bc07d5d360e18e64ad4d4820d3c1011873a5612820a1016a",".hvti_source_sha256":"034669b286c30e623dd3dfc658dbe808e479b464dfa93924b0d1e0f9fbcb3bbd"}</script>
 </section>
 
 </main>

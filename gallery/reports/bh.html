@@ -2244,7 +2244,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-06 10:02</p>
+      <p class="date">2026-11-11 03:00</p>
     </div>
   </div>
   
@@ -2256,7 +2256,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: bh 1.5.6 sha256:1a5bc2f6859807de99f1a931886a5aecf737bec0b21d6956cb999d5ac0362221 -->
+<!-- hvtiRtemplates: bh 1.5.7 sha256:b5a10fb70b45ce4e8d2494afbde7fd05e033ccf624acbcc8cf3bdb1812cf9d23 -->
 <!-- Demo: name the SAS job this replaces, and paste its `%hazboot` call
      verbatim. The call is the specification: it names the candidate pool, the
      phases each candidate was offered to, the entry and stay levels, and the
@@ -2347,7 +2347,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.6</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.7</p>
 </div>
 </div>
 </div>
@@ -2398,7 +2398,7 @@ vertical-align: -.125em;
 <span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
 <span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># boot_frequencies() and boot_concepts() also accept PHASE_OF = NULL, for a</span></span>
 <span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co"># single-phase screen, and that is what lets one reporting code path serve the</span></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co"># forthcoming bl, br and bc templates. This template is not that case: it</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="co"># bl, br and bc templates. This template is not that case: it</span></span>
 <span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="co"># reports a multiphase hazard screen, and every table and the figure below</span></span>
 <span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># assume a phase column throughout. PHASE_OF must name a real rule here.</span></span>
 <span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>PHASE_OF <span class="ot">&lt;-</span> <span class="cf">function</span>(term) <span class="fu">sub</span>(<span class="st">&quot;[.].*$&quot;</span>, <span class="st">&quot;&quot;</span>, term)</span>
@@ -2419,9 +2419,9 @@ vertical-align: -.125em;
 <span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Correlation cutoff for near-duplicate candidates.</span></span>
 <span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>COLLINEAR_R <span class="ot">&lt;-</span> <span class="fl">0.99</span></span>
 <span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
 <span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;bh-frequencies&quot;). The names are the</span></span>
 <span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
 <span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
 <span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -2665,7 +2665,7 @@ Table 1: The data the bootstrap runner read
 8                                                                        8
 9                                                                        0
 10                                                                     0.1
-11                                                          version:1.2.19
+11                                                           version:1.3.0
 12 sha256:d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace
 13                                               4 distinct (listed below)</code></pre>
 </div>
@@ -2873,9 +2873,9 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the affix vocabulary, if your study&#39;s variable names do not follow</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co"># vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 2, the order in which they strip, and the deliberate refusal to reduce agee</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co"># to age. Those are facts about this institution&#39;s names, not about statistics,</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co"># vars.sas conventions. POOL_AFFIXES carries ln_, in2, in_ and a trailing 2, in</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co"># the order they strip; POOL_PLAIN_SUFFIX carries _pr; and the vocabulary</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co"># deliberately refuses to reduce agee to age. Those are facts about this institution&#39;s names, not about statistics,</span></span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="co"># which is why they are data you can replace rather than logic you cannot.</span></span>
 <span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
 <span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="co"># The pool grouped here is the set of forms that reached at least one replicate.</span></span>
@@ -3090,7 +3090,7 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 </div>
 </div>
 <p>⚠️ <strong>A collinear pair is not a license to prune.</strong> It says two candidates are indistinguishable <em>in this cohort at this threshold</em> — a statement about the pool, not about the concepts. The no-pruning argument above stands: the same measurement that found 57 prunable forms found 16 of them correlating below 0.9.</p>
-<p><code>pool_collinear_pairs()</code> sees only NUMERIC, non-constant columns, so factor-coded binaries are invisible to it for the same reason they were invisible to the screen. Check the coercion table above before reading an empty result as an absence of collinearity.</p>
+<p><code>pool_collinear_pairs()</code> sees only NUMERIC, non-constant columns, so factor-coded binaries are invisible to it. This report has no coercion table of its own, so check how your runner coded them before reading an empty result as an absence of collinearity.</p>
 </section>
 <section id="figure" class="level2">
 <h2 class="anchored" data-anchor-id="figure">Figure</h2>
@@ -3148,34 +3148,35 @@ Figure 1: Bootstrap selection frequency of each candidate variable, one panel p
 <span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a><span class="co"># study report that wrote such a file also claimed `hm` fits what `bh` retained.</span></span>
 <span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Nothing read the file, and the claim was not true. A file whose existence</span></span>
 <span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a><span class="co"># implies a dependency that does not exist is worse than no file.</span></span>
-<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a><span class="co"># NOT `&lt;BOOT_PREFIX&gt;.rds`. An unchunked run&#39;s INPUT is exactly that name, so</span></span>
-<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="co"># writing the report there overwrites the screen it just read -- and this is</span></span>
-<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a><span class="co"># the one job where that is unrecoverable: the input is days of compute that</span></span>
-<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a><span class="co"># `hzr_bootstrap()` produces only on its final replicate. The second render</span></span>
-<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a><span class="co"># then reports no bootstrap output found, having destroyed it on the first.</span></span>
-<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a><span class="co"># The suffix alone is not the guard. BOOT_PREFIX is an edit point, so a study</span></span>
-<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a><span class="co"># can set it to anything, including this name. Checked rather than assumed,</span></span>
-<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a><span class="co"># because the failure destroys data instead of erroring.</span></span>
-<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>report_file <span class="ot">&lt;-</span> <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;bh-report.rds&quot;</span>)</span>
-<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>inputs <span class="ot">&lt;-</span> <span class="fu">normalizePath</span>(<span class="fu">c</span>(.single_file, .chunk_files), <span class="at">mustWork =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">normalizePath</span>(report_file, <span class="at">mustWork =</span> <span class="cn">FALSE</span>) <span class="sc">%in%</span> inputs) {</span>
-<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This report would be written to &quot;</span>, <span class="fu">basename</span>(report_file), <span class="st">&quot;, which is &quot;</span>,</span>
-<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;the bootstrap output it just read. That file is the screen -- days of &quot;</span>,</span>
-<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;compute, written only at the final replicate -- and overwriting it &quot;</span>,</span>
-<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;cannot be undone.</span><span class="sc">\n</span><span class="st">Change BOOT_PREFIX so the runner&#39;s output and this &quot;</span>,</span>
-<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;report do not collide.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a>report <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">freq =</span> freq, <span class="at">retained =</span> retained, <span class="at">concept =</span> concept,</span>
-<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a>               <span class="at">crowding =</span> crowding, <span class="at">clusters =</span> clusters,</span>
-<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a>               <span class="at">provenance =</span> provenance, <span class="at">retain_pct =</span> RETAIN_PCT,</span>
-<span id="cb37-31"><a href="#cb37-31" aria-hidden="true" tabindex="-1"></a>               <span class="at">expect_chunks =</span> EXPECT_CHUNKS, <span class="at">expect_boot =</span> EXPECT_BOOT)</span>
-<span id="cb37-32"><a href="#cb37-32" aria-hidden="true" tabindex="-1"></a>report <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb37-33"><a href="#cb37-33" aria-hidden="true" tabindex="-1"></a>  report, <span class="at">data =</span> .provenance_data, <span class="at">artifacts =</span> .provenance_artifacts,</span>
-<span id="cb37-34"><a href="#cb37-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> .bootstrap_lineage<span class="sc">$</span>analysis, <span class="at">cohort =</span> .bootstrap_lineage<span class="sc">$</span>cohort, <span class="at">selection =</span> .sel</span>
-<span id="cb37-35"><a href="#cb37-35" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb37-36"><a href="#cb37-36" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(report, report_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="co"># NOT `&lt;BOOT_PREFIX&gt;.rds`. An unchunked run&#39;s INPUT is exactly that name, so</span></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a><span class="co"># writing the report there overwrites the screen it just read -- and this is</span></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the one job where that is unrecoverable: the input is days of compute that</span></span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a><span class="co"># `hzr_bootstrap()` produces only on its final replicate. The second render</span></span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a><span class="co"># then reports no bootstrap output found, having destroyed it on the first.</span></span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a><span class="co"># The suffix alone is not the guard. BOOT_PREFIX is an edit point, so a study</span></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a><span class="co"># can set it to anything, including this name. Checked rather than assumed,</span></span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a><span class="co"># because the failure destroys data instead of erroring.</span></span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>report_file <span class="ot">&lt;-</span> <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;bh-report.rds&quot;</span>)</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>inputs <span class="ot">&lt;-</span> <span class="fu">normalizePath</span>(<span class="fu">c</span>(.single_file, .chunk_files), <span class="at">mustWork =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">normalizePath</span>(report_file, <span class="at">mustWork =</span> <span class="cn">FALSE</span>) <span class="sc">%in%</span> inputs) {</span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This report would be written to &quot;</span>, <span class="fu">basename</span>(report_file), <span class="st">&quot;, which is &quot;</span>,</span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;the bootstrap output it just read. That file is the screen -- days of &quot;</span>,</span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;compute, written only at the final replicate -- and overwriting it &quot;</span>,</span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;cannot be undone.</span><span class="sc">\n</span><span class="st">Change BOOT_PREFIX so the runner&#39;s output and this &quot;</span>,</span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;report do not collide.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a>report <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">freq =</span> freq, <span class="at">retained =</span> retained, <span class="at">concept =</span> concept,</span>
+<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a>               <span class="at">crowding =</span> crowding, <span class="at">clusters =</span> clusters,</span>
+<span id="cb37-31"><a href="#cb37-31" aria-hidden="true" tabindex="-1"></a>               <span class="at">provenance =</span> provenance, <span class="at">retain_pct =</span> RETAIN_PCT,</span>
+<span id="cb37-32"><a href="#cb37-32" aria-hidden="true" tabindex="-1"></a>               <span class="at">expect_chunks =</span> EXPECT_CHUNKS, <span class="at">expect_boot =</span> EXPECT_BOOT)</span>
+<span id="cb37-33"><a href="#cb37-33" aria-hidden="true" tabindex="-1"></a>report <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb37-34"><a href="#cb37-34" aria-hidden="true" tabindex="-1"></a>  report, <span class="at">data =</span> .provenance_data, <span class="at">artifacts =</span> .provenance_artifacts,</span>
+<span id="cb37-35"><a href="#cb37-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> .bootstrap_lineage<span class="sc">$</span>analysis, <span class="at">cohort =</span> .bootstrap_lineage<span class="sc">$</span>cohort, <span class="at">selection =</span> .sel</span>
+<span id="cb37-36"><a href="#cb37-36" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb37-37"><a href="#cb37-37" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(report, report_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -3198,17 +3199,17 @@ Figure 1: Bootstrap selection frequency of each candidate variable, one panel p
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-06 10:02:10 EST</td>
+<td style="text-align: left;">2026-11-11 03:00:53 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-06 10:02:12 EST</td>
+<td style="text-align: left;">2026-11-11 03:00:54 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">2 s</td>
+<td style="text-align: left;">1 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3248,17 +3249,17 @@ Figure 1: Bootstrap selection frequency of each candidate variable, one panel p
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.6</td>
+<td style="text-align: left;">1.5.7</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261106.parquet</td>
+<td style="text-align: left;">built_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-06</td>
+<td style="text-align: left;">2026-11-11</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3288,22 +3289,22 @@ Figure 1: Bootstrap selection frequency of each candidate variable, one panel p
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-boot/bh.chunk01.rds</code> (bootstrap-chunk), rendered not recorded, data built_20261106.parquet</td>
+<td style="text-align: left;"><code>dead-boot/bh.chunk01.rds</code> (bootstrap-chunk), rendered not recorded, data built_20261111.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-boot/bh.chunk02.rds</code> (bootstrap-chunk), rendered not recorded, data built_20261106.parquet</td>
+<td style="text-align: left;"><code>dead-boot/bh.chunk02.rds</code> (bootstrap-chunk), rendered not recorded, data built_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-boot/bh.chunk03.rds</code> (bootstrap-chunk), rendered not recorded, data built_20261106.parquet</td>
+<td style="text-align: left;"><code>dead-boot/bh.chunk03.rds</code> (bootstrap-chunk), rendered not recorded, data built_20261111.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-boot/bh.chunk04.rds</code> (bootstrap-chunk), rendered not recorded, data built_20261106.parquet</td>
+<td style="text-align: left;"><code>dead-boot/bh.chunk04.rds</code> (bootstrap-chunk), rendered not recorded, data built_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Reproducibility</td>
@@ -3318,7 +3319,7 @@ Figure 1: Bootstrap selection frequency of each candidate variable, one panel p
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"bh.dead.boot","rendered":"2026-11-06T15:02:12Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRbootstrap","version":"0.9.7","source":"github","sha":"6f90120d78e2a919feff6c4d43c5b77c33f9a82f"},{"package":"hvtiRtemplates","version":"1.5.6","source":null},{"package":"hvtiRutilities","version":"1.5.21","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.2.19","source":null},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[{"path":"90_estimates/dead-boot/bh.chunk01.rds","role":"bootstrap-chunk","bytes":1568,"mtime":"2026-11-06T15:02:08Z","sha256":"0983d57e0a6c305f41050ca9c0b2faac0826e655c6649f9f6f70298bafe0b9af"},{"path":"90_estimates/dead-boot/bh.chunk02.rds","role":"bootstrap-chunk","bytes":1458,"mtime":"2026-11-06T15:01:40Z","sha256":"464aea349e43ae02b52e7b1988679e00811004ecc21ab28667ae152d8ab67e13"},{"path":"90_estimates/dead-boot/bh.chunk03.rds","role":"bootstrap-chunk","bytes":1518,"mtime":"2026-11-06T15:01:42Z","sha256":"8f083f8515e9424a99fc91a4c068d7c6855fcc8aec4dfc8d630bc87d71232a6a"},{"path":"90_estimates/dead-boot/bh.chunk04.rds","role":"bootstrap-chunk","bytes":1602,"mtime":"2026-11-06T15:01:07Z","sha256":"d41d563a9e0fee6a50e8b0578fbbd39412c953887d368ef76b44910dd32d459b"}],"subject":"dead","type":"boot","run":{"start":"2026-11-06T10:02:10-0500","end":"2026-11-06T10:02:12-0500","time_zone":"EST","duration_seconds":2.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"bh.dead.boot.qmd","template":"bh","prefix":"bh","subject":"dead","type":"boot","hvtiRtemplates":"1.5.6"},"datasets":[{"name":"built","version_file":"built_20261106.parquet","registered":"2026-11-06","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"d99147a5c095","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-boot/bh.chunk01.rds","set":"dead-boot","role":"bootstrap-chunk","dataset_version":"built_20261106.parquet"},{"file":"90_estimates/dead-boot/bh.chunk02.rds","set":"dead-boot","role":"bootstrap-chunk","dataset_version":"built_20261106.parquet"},{"file":"90_estimates/dead-boot/bh.chunk03.rds","set":"dead-boot","role":"bootstrap-chunk","dataset_version":"built_20261106.parquet"},{"file":"90_estimates/dead-boot/bh.chunk04.rds","set":"dead-boot","role":"bootstrap-chunk","dataset_version":"built_20261106.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"30_analyses/bh.dead.boot.qmd",".hvti_render_id":"67713377adfb96bb60eac29c2bb0a11e29d74a5c5b627f402cff65733cee0805",".hvti_source_sha256":"ecf7c6911872f755b26a8c1895c8bc3a51870ec851d9bd06fb9c05fa1780c055"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"bh.dead.boot","rendered":"2026-11-11T08:00:54Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRbootstrap","version":"0.9.7","source":"github","sha":"6f90120d78e2a919feff6c4d43c5b77c33f9a82f"},{"package":"hvtiRtemplates","version":"1.5.7","source":"github","sha":"e8bfb956d8491085b6c4d2c5b2da933ad9ee74f7"},{"package":"hvtiRutilities","version":"1.5.22","source":"github","sha":"0f816207958226308ec7812c5100793a6d120d8e"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.3.0","source":"github","sha":"f30dbe4f52899624d512b6a73d7378c08e73873b"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[{"path":"90_estimates/dead-boot/bh.chunk01.rds","role":"bootstrap-chunk","bytes":1568,"mtime":"2026-11-11T08:00:50Z","sha256":"4a13120b3f5de66cca615d4c7146311289266c6fddbf007c5605148ee720a9f3"},{"path":"90_estimates/dead-boot/bh.chunk02.rds","role":"bootstrap-chunk","bytes":1455,"mtime":"2026-11-11T08:00:25Z","sha256":"444aa54ea167fec32d5814ddb43512189df7296e3f1ec2e909aa460da80a4ecd"},{"path":"90_estimates/dead-boot/bh.chunk03.rds","role":"bootstrap-chunk","bytes":1515,"mtime":"2026-11-11T08:00:27Z","sha256":"b7457cf67b22c9c52939b2ab40b73ae8275f4849601a7773ba2e499a82e6b690"},{"path":"90_estimates/dead-boot/bh.chunk04.rds","role":"bootstrap-chunk","bytes":1600,"mtime":"2026-11-11T07:59:57Z","sha256":"9a2e0fe7d9f57857a9d3dbc10186505e09f973cbeeb59e4d368d63098c2ff248"}],"subject":"dead","type":"boot","run":{"start":"2026-11-11T03:00:53-0500","end":"2026-11-11T03:00:54-0500","time_zone":"EST","duration_seconds":1.2,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"bh.dead.boot.qmd","template":"bh","prefix":"bh","subject":"dead","type":"boot","hvtiRtemplates":"1.5.7"},"datasets":[{"name":"built","version_file":"built_20261111.parquet","registered":"2026-11-11","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"d99147a5c095","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-boot/bh.chunk01.rds","set":"dead-boot","role":"bootstrap-chunk","dataset_version":"built_20261111.parquet"},{"file":"90_estimates/dead-boot/bh.chunk02.rds","set":"dead-boot","role":"bootstrap-chunk","dataset_version":"built_20261111.parquet"},{"file":"90_estimates/dead-boot/bh.chunk03.rds","set":"dead-boot","role":"bootstrap-chunk","dataset_version":"built_20261111.parquet"},{"file":"90_estimates/dead-boot/bh.chunk04.rds","set":"dead-boot","role":"bootstrap-chunk","dataset_version":"built_20261111.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"30_analyses/bh.dead.boot.qmd",".hvti_render_id":"8d57392bdaa3f845f1db256f3ed2e8b29775cdc13d505264da7b08bbfa0caf88",".hvti_source_sha256":"e31d4824d777a5b767408e935b6239cfc6db56da962211b0148e5f8d0e2cc55e"}</script>
 </section>
 
 </main>

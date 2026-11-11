@@ -9,9 +9,10 @@ Run sheet
 
 ## What it does
 
-The formatted descriptive table: every reported variable under its
-section heading, categorical as n (%) and continuous as the summary you
-choose, written to Word. [See the report it
+The formatted descriptive table for an analysis report or manuscript:
+every reported variable under its section heading, categorical as n (%)
+and continuous as the summary you choose, written to Word. Not the data
+check, which is dc-eda. [See the report it
 produces](https://ehrlinger.github.io/hvtiRtemplates/gallery/reports/dc-tables.md)
 on the gallery's synthetic study.
 
@@ -27,7 +28,7 @@ on the gallery's synthetic study.
   report then says it is a draft. A final render reads registered data
   only: register the build with `hvtiRutilities::update_manifest()`
   first.
-- **Packages:** `hvtiRutilities`, `hvtiRtables` (\>= 1.0.11),
+- **Packages:** `hvtiRutilities`, `hvtiRtables` (\>= 1.0.13),
   `hvtiPlotR` (\>= 2.7.14), `ggplot2`. The job checks each floor when it
   starts, so an older library stops it at the top rather than partway
   through.
@@ -41,7 +42,7 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 25 choices marked `EDIT:`.
+2.  **Study choices**: 28 choices marked `EDIT:`.
 3.  **Data**: reads the study data.
 4.  **Table**
 5.  **Correlations**
@@ -60,5 +61,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
 The template holds the details; this sheet is its outline.

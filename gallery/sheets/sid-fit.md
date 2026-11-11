@@ -46,8 +46,8 @@ shows three ways to find them.
     reloads them (`REFIT <- TRUE` recomputes them).
 5.  **The SID forest**: fits and caches its results, so a later render
     reloads them (`REFIT <- TRUE` recomputes them).
-6.  **Save**: saves `sid.rds`, which **sid-clusters** reads and
-    **vt-fit** can read.
+6.  **Save**: saves `sid.rds`, which **sid-clusters** and
+    **sid-stability** read and **vt-fit** can read.
 
 ## Run it
 
@@ -69,9 +69,13 @@ and it records the job's provenance beside the report.
   same set, with this job's `subject` and `type`, because that shared
   pair is how it finds the file:
   `add_job("sid.clusters", subject = "<subject>", type = "<type>")`.
+- **sid-stability** reads what this job saves (`sid.rds`). Add it to the
+  same set, with this job's `subject` and `type`, because that shared
+  pair is how it finds the file:
+  `add_job("sid.stability", subject = "<subject>", type = "<type>")`.
 - **vt-fit** can read what this job saves; its choices marked `EDIT:`
   name the file and its set. Add it with
   `add_job("vt.fit", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
 The template holds the details; this sheet is its outline.

@@ -32,7 +32,7 @@ on the gallery's synthetic study.
   choices marked `EDIT:` name the file it saved and the set it sits in.
   For a final render, render it final too: a final render refuses a
   hand-off saved from unregistered data.
-- **Packages:** `hvtiRutilities`, `hvtiPlotR` (\>= 2.8.9), `ggplot2`,
+- **Packages:** `hvtiRutilities`, `hvtiPlotR` (\>= 2.8.20), `ggplot2`,
   `hvtiRpropensity` (\>= 0.2.0). The job checks each floor when it
   starts, so an older library stops it at the top rather than partway
   through.
@@ -65,5 +65,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
 The template holds the details; this sheet is its outline.

@@ -2234,7 +2234,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-06 10:13</p>
+      <p class="date">2026-11-11 03:09</p>
     </div>
   </div>
   
@@ -2246,7 +2246,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: vp.explain 1.5.6 sha256:b75a9e4f32226f4dd18e6cf6d6eda33ed9df12de38bc79739948ba1ee139c150 -->
+<!-- hvtiRtemplates: vp.explain 1.5.7 sha256:a813bd2f21127184daab29ceab5273bea237efc55435dc6916eeb0efc2d99545 -->
 <p>Explains the <code>vp-fit</code> screen in this set: survival at five years along each selected predictor.</p>
 <!--
      partial dependence plots are meant to show. -->
@@ -2319,7 +2319,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.6</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.5.7</p>
 </div>
 </div>
 </div>
@@ -2356,7 +2356,7 @@ vertical-align: -.125em;
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
 <span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
 <span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
 <span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;vp-explain-dependence&quot;). The names are the</span></span>
 <span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
@@ -2454,29 +2454,36 @@ Table 1: The data the fit job read
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>.untested <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(sel, .tested)</span>
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.untested)) {</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Not drawn, because the screen did not test them: &quot;</span>, <span class="fu">paste</span>(.untested, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  sel <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(sel, .untested)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">length</span>(sel)) {</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;No tested variable to draw. The screen selected none; name tested variables in PARTIAL_VARS.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is drawn a page at a time, panels in a grid no larger than the</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># printed page (6.5 by 9 in), and each page is a child chunk of its own so</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Quarto numbers it.</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>.fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>.page_child <span class="ot">&lt;-</span> <span class="cf">function</span>(kind, i, pages, vars, caption) {</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>  page <span class="ot">&lt;-</span> pages[[i]]</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(pages) <span class="sc">&gt;</span> <span class="dv">1</span>L) {</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    caption <span class="ot">&lt;-</span> <span class="fu">paste0</span>(caption, <span class="st">&quot; Page &quot;</span>, i, <span class="st">&quot; of &quot;</span>, <span class="fu">length</span>(pages), <span class="st">&quot;: &quot;</span>,</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">paste</span>(vars[page<span class="sc">$</span>index], <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>)</span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  code <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: fig-&quot;</span>, kind, <span class="st">&quot;-&quot;</span>, i),</span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>            <span class="fu">paste0</span>(<span class="st">&quot;#| fig-cap: &quot;</span>, <span class="fu">encodeString</span>(caption, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>)),</span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>            <span class="fu">sprintf</span>(<span class="st">&quot;#| fig-width: %g&quot;</span>, hvtiRtemplates<span class="sc">:::</span><span class="fu">.report_size</span>(page<span class="sc">$</span>width)),</span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>            <span class="fu">sprintf</span>(<span class="st">&quot;#| fig-height: %g&quot;</span>, hvtiRtemplates<span class="sc">:::</span><span class="fu">.report_size</span>(page<span class="sc">$</span>height)), <span class="st">&quot;.fig&quot;</span>, .fence)</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> code, <span class="at">envir =</span> <span class="fu">parent.frame</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># vp-fit&#39;s selection can be its refits&#39; vote, which may include a variable the</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># full fit, the one saved here, did not test: its partial would rest on no rules.</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Not drawn, because the saved full fit did not test them: &quot;</span>, <span class="fu">paste</span>(.untested, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  sel <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(sel, .untested)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">length</span>(sel)) {</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="cf">if</span> (<span class="fu">length</span>(.untested)) {</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">&quot;No tested variable to draw: the saved full fit tested none of &quot;</span>, <span class="fu">paste</span>(.untested, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;. Name tested variables in PARTIAL_VARS.&quot;</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;No tested variable to draw. The screen selected none; name tested variables in PARTIAL_VARS.&quot;</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is drawn a page at a time, panels in a grid no larger than the</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co"># printed page (6.5 by 6 in here), and each page is a child chunk of its own so</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Quarto numbers it.</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>.fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>.page_child <span class="ot">&lt;-</span> <span class="cf">function</span>(kind, i, pages, vars, caption) {</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  page <span class="ot">&lt;-</span> pages[[i]]</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(pages) <span class="sc">&gt;</span> <span class="dv">1</span>L) {</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    caption <span class="ot">&lt;-</span> <span class="fu">paste0</span>(caption, <span class="st">&quot; Page &quot;</span>, i, <span class="st">&quot; of &quot;</span>, <span class="fu">length</span>(pages), <span class="st">&quot;: &quot;</span>,</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">paste</span>(vars[page<span class="sc">$</span>index], <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>)</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  code <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: fig-&quot;</span>, kind, <span class="st">&quot;-&quot;</span>, i),</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>            <span class="fu">paste0</span>(<span class="st">&quot;#| fig-cap: &quot;</span>, <span class="fu">encodeString</span>(caption, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>)),</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>            <span class="fu">sprintf</span>(<span class="st">&quot;#| fig-width: %g&quot;</span>, hvtiRtemplates<span class="sc">:::</span><span class="fu">.report_size</span>(page<span class="sc">$</span>width)),</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>            <span class="fu">sprintf</span>(<span class="st">&quot;#| fig-height: %g&quot;</span>, hvtiRtemplates<span class="sc">:::</span><span class="fu">.report_size</span>(page<span class="sc">$</span>height)), <span class="st">&quot;.fig&quot;</span>, .fence)</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> code, <span class="at">envir =</span> <span class="fu">parent.frame</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2499,27 +2506,28 @@ Table 1: The data the fit job read
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                <span class="fu">gg_partial_varpro</span>(<span class="at">object =</span> fit, <span class="at">xvar.names =</span> sel,</span>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">scale =</span> <span class="cf">if</span> (.survival) SCALE <span class="cf">else</span> <span class="st">&quot;auto&quot;</span>, <span class="at">time =</span> <span class="cf">if</span> (.survival) HORIZON <span class="cf">else</span> <span class="cn">NULL</span>),</span>
 <span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>                <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript theme hides the legend and its title, and the caption reads the line types from the legend.</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>.cap <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;VarPro partial dependence on each drawn predictor, one panel per predictor. For a&quot;</span>,</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>              <span class="st">&quot;continuous predictor a black solid line marks the nonparametric partial effect and a black&quot;</span>,</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>              <span class="st">&quot;dashed line the parametric one, as in the legend; for a categorical predictor black box&quot;</span>,</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>              <span class="st">&quot;plots show the spread of the partial effect at each level.&quot;</span>)</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size, paged: one facet per predictor, two by two.</span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>.pages <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.figure_pages</span>(<span class="fu">length</span>(sel), <span class="at">panel_width =</span> <span class="fl">3.25</span>, <span class="at">panel_height =</span> <span class="dv">3</span>, <span class="at">page_height =</span> <span class="dv">6</span>)</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.i <span class="cf">in</span> <span class="fu">seq_along</span>(.pages)) {</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  .vars <span class="ot">&lt;-</span> sel[.pages[[.i]]<span class="sc">$</span>index]</span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  .fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.partial_subset</span>(pv, .vars)) <span class="sc">&amp;</span></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.fig, <span class="fu">sprintf</span>(<span class="st">&quot;vp-explain-dependence-varpro-page-%02d&quot;</span>, .i),</span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>              <span class="at">width =</span> .pages[[.i]]<span class="sc">$</span>width, <span class="at">height =</span> .pages[[.i]]<span class="sc">$</span>height)</span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.page_child</span>(<span class="st">&quot;dependence-varpro&quot;</span>, .i, .pages, sel, .cap)</span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript theme hides the legend and its title. They go back on here, because the caption reads the line</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co"># types from the legend.</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>.cap <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;VarPro partial dependence on each drawn predictor, one panel per predictor. For a&quot;</span>,</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>              <span class="st">&quot;continuous predictor a black solid line marks the nonparametric partial effect and a black&quot;</span>,</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>              <span class="st">&quot;dashed line the parametric one, as in the legend; for a categorical predictor black box&quot;</span>,</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>              <span class="st">&quot;plots show the spread of the partial effect at each level.&quot;</span>)</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size, paged: one facet per predictor, two by two.</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>.pages <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.figure_pages</span>(<span class="fu">length</span>(sel), <span class="at">panel_width =</span> <span class="fl">3.25</span>, <span class="at">panel_height =</span> <span class="dv">3</span>, <span class="at">page_height =</span> <span class="dv">6</span>)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.i <span class="cf">in</span> <span class="fu">seq_along</span>(.pages)) {</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  .vars <span class="ot">&lt;-</span> sel[.pages[[.i]]<span class="sc">$</span>index]</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>  .fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.partial_subset</span>(pv, .vars)) <span class="sc">&amp;</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.fig, <span class="fu">sprintf</span>(<span class="st">&quot;vp-explain-dependence-varpro-page-%02d&quot;</span>, .i),</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>              <span class="at">width =</span> .pages[[.i]]<span class="sc">$</span>width, <span class="at">height =</span> .pages[[.i]]<span class="sc">$</span>height)</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.page_child</span>(<span class="st">&quot;dependence-varpro&quot;</span>, .i, .pages, sel, .cap)</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<pre><code>Warning: Removed 156 rows containing non-finite outside the scale range
+<pre><code>Warning: Removed 276 rows containing non-finite outside the scale range
 (`stat_boxplot()`).
-Removed 156 rows containing non-finite outside the scale range
+Removed 276 rows containing non-finite outside the scale range
 (`stat_boxplot()`).
-Removed 156 rows containing non-finite outside the scale range
+Removed 276 rows containing non-finite outside the scale range
 (`stat_boxplot()`).</code></pre>
 <div class="cell">
 <details class="code-fold">
@@ -2527,45 +2535,17 @@ Removed 156 rows containing non-finite outside the scale range
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 156 rows containing non-finite outside the scale range
+<pre><code>Warning: Removed 276 rows containing non-finite outside the scale range
 (`stat_boxplot()`).</code></pre>
 </div>
 <div class="cell-output-display">
 <div id="fig-dependence-varpro-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-dependence-varpro-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/dc5ddae21eb2928e190f3b8fc33c7b03.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/891126b02b80439792b9fceeb984bf3e.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dependence-varpro-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 1: VarPro partial dependence on each drawn predictor, one panel per predictor. For a continuous predictor a black solid line marks the nonparametric partial effect and a black dashed line the parametric one, as in the legend; for a categorical predictor black box plots show the spread of the partial effect at each level. Page 1 of 2: age, hx_chf, lvef, plvmassi.
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<pre><code>Warning: Removed 124 rows containing non-finite outside the scale range
-(`stat_boxplot()`).</code></pre>
-<pre><code>Warning: Removed 124 rows containing non-finite outside the scale range
-(`stat_boxplot()`).
-Removed 124 rows containing non-finite outside the scale range
-(`stat_boxplot()`).</code></pre>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 124 rows containing non-finite outside the scale range
-(`stat_boxplot()`).</code></pre>
-</div>
-<div class="cell-output-display">
-<div id="fig-dependence-varpro-2" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-dependence-varpro-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/37f504036ae3b157da0bcc8f88d88426.png" class="img-fluid figure-img" width="468">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-dependence-varpro-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 2: VarPro partial dependence on each drawn predictor, one panel per predictor. For a continuous predictor a black solid line marks the nonparametric partial effect and a black dashed line the parametric one, as in the legend; for a categorical predictor black box plots show the spread of the partial effect at each level. Page 2 of 2: hx_dm.
+Figure 1: VarPro partial dependence on each drawn predictor, one panel per predictor. For a continuous predictor a black solid line marks the nonparametric partial effect and a black dashed line the parametric one, as in the legend; for a categorical predictor black box plots show the spread of the partial effect at each level.
 </figcaption>
 </figure>
 </div>
@@ -2591,17 +2571,17 @@ Figure 2: VarPro partial dependence on each drawn predictor, one panel per pred
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-06 10:11:39 EST</td>
+<td style="text-align: left;">2026-11-11 03:08:13 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-06 10:13:12 EST</td>
+<td style="text-align: left;">2026-11-11 03:09:13 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">1 min 33 s</td>
+<td style="text-align: left;">1 min 0 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2641,17 +2621,17 @@ Figure 2: VarPro partial dependence on each drawn predictor, one panel per pred
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.6</td>
+<td style="text-align: left;">1.5.7</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261106.parquet</td>
+<td style="text-align: left;">built_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-06</td>
+<td style="text-align: left;">2026-11-11</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2671,7 +2651,7 @@ Figure 2: VarPro partial dependence on each drawn predictor, one panel per pred
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-vp/vp.rds</code> (screen), rendered 2026-11-06 10:10:35 -0500, data built_20261106.parquet</td>
+<td style="text-align: left;"><code>dead-vp/vp.rds</code> (screen), rendered 2026-11-11 03:07:14 -0500, data built_20261111.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -2691,7 +2671,7 @@ Figure 2: VarPro partial dependence on each drawn predictor, one panel per pred
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"vp.explain.dead.vp","rendered":"2026-11-06T15:13:12Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"be90b23c5d5905ea953eeb5b2f4408f1e33363b0"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.6","source":null},{"package":"hvtiRutilities","version":"1.5.21","source":null},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[{"path":"90_estimates/dead-vp/vp.rds","role":"screen","bytes":7308619,"mtime":"2026-11-06T15:11:33Z","sha256":"94cd8ff4236e1aa4d8898a0085d9ad0d79628a01fa81f111a1afffdbf8dd45f5"}],"subject":"dead","type":"vp","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-11-06T10:11:39-0500","end":"2026-11-06T10:13:12-0500","time_zone":"EST","duration_seconds":93.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vp.explain.dead.vp.qmd","template":"vp.explain","prefix":"vp","qualifier":"explain","subject":"dead","type":"vp","hvtiRtemplates":"1.5.6"},"datasets":[{"name":"built","version_file":"built_20261106.parquet","registered":"2026-11-06","source_file":"built.rds","sha256":"d99147a5c095","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-vp/vp.rds","set":"dead-vp","role":"screen","rendered_at":"2026-11-06T10:10:35-0500","dataset_version":"built_20261106.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"30_analyses/vp.explain.dead.vp.qmd",".hvti_render_id":"5d80558c6237c7ccd094a186256f37ebb2fb760dadf5692d184d0feda1afe879",".hvti_source_sha256":"e5823ffe02527faee96befb78a77ec6fe4d018b04691577f82c8a7819d5cf0fc"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"vp.explain.dead.vp","rendered":"2026-11-11T08:09:13Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"9215655193d3a25191022290838cac8efa66bd03"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.7","source":"github","sha":"e8bfb956d8491085b6c4d2c5b2da933ad9ee74f7"},{"package":"hvtiRutilities","version":"1.5.22","source":"github","sha":"0f816207958226308ec7812c5100793a6d120d8e"},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[{"path":"90_estimates/dead-vp/vp.rds","role":"screen","bytes":7308613,"mtime":"2026-11-11T08:08:08Z","sha256":"7b785d91a841462e4f6eab90449877fc805d91bea3a14dfe7631d6f7fb48ea51"}],"subject":"dead","type":"vp","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-11-11T03:08:13-0500","end":"2026-11-11T03:09:13-0500","time_zone":"EST","duration_seconds":59.8,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vp.explain.dead.vp.qmd","template":"vp.explain","prefix":"vp","qualifier":"explain","subject":"dead","type":"vp","hvtiRtemplates":"1.5.7"},"datasets":[{"name":"built","version_file":"built_20261111.parquet","registered":"2026-11-11","source_file":"built.rds","sha256":"d99147a5c095","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-vp/vp.rds","set":"dead-vp","role":"screen","rendered_at":"2026-11-11T03:07:14-0500","dataset_version":"built_20261111.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"30_analyses/vp.explain.dead.vp.qmd",".hvti_render_id":"5d0ff85966bb2be58724fcaaae3baa33c64757c6694b00727324a23089988e77",".hvti_source_sha256":"3732f62bcc96f2bebff379b1c7723d4f4c321d6edf25f8c5ec0fe76fd15ce0d5"}</script>
 </section>
 
 </main>

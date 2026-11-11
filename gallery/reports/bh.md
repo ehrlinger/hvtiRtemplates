@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:02
+2026-11-11 03:00
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -131,7 +131,7 @@ RETAIN_PCT <- 50
 #
 # boot_frequencies() and boot_concepts() also accept PHASE_OF = NULL, for a
 # single-phase screen, and that is what lets one reporting code path serve the
-# forthcoming bl, br and bc templates. This template is not that case: it
+# bl, br and bc templates. This template is not that case: it
 # reports a multiphase hazard screen, and every table and the figure below
 # assume a phase column throughout. PHASE_OF must name a real rule here.
 PHASE_OF <- function(term) sub("[.].*$", "", term)
@@ -152,9 +152,9 @@ CLUSTERS <- list(
 # Correlation cutoff for near-duplicate candidates.
 COLLINEAR_R <- 0.99
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("bh-frequencies"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -375,7 +375,7 @@ provenance
     8                                                                        8
     9                                                                        0
     10                                                                     0.1
-    11                                                          version:1.2.19
+    11                                                           version:1.3.0
     12 sha256:d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace
     13                                               4 distinct (listed below)
 
@@ -592,9 +592,9 @@ Code
 
 ``` r
 # Demo: the affix vocabulary, if your study's variable names do not follow
-# vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing
-# 2, the order in which they strip, and the deliberate refusal to reduce agee
-# to age. Those are facts about this institution's names, not about statistics,
+# vars.sas conventions. POOL_AFFIXES carries ln_, in2, in_ and a trailing 2, in
+# the order they strip; POOL_PLAIN_SUFFIX carries _pr; and the vocabulary
+# deliberately refuses to reduce agee to age. Those are facts about this institution's names, not about statistics,
 # which is why they are data you can replace rather than logic you cannot.
 #
 # The pool grouped here is the set of forms that reached at least one replicate.
@@ -834,9 +834,9 @@ argument above stands: the same measurement that found 57 prunable forms
 found 16 of them correlating below 0.9.
 
 `pool_collinear_pairs()` sees only NUMERIC, non-constant columns, so
-factor-coded binaries are invisible to it for the same reason they were
-invisible to the screen. Check the coercion table above before reading
-an empty result as an absence of collinearity.
+factor-coded binaries are invisible to it. This report has no coercion
+table of its own, so check how your runner coded them before reading an
+empty result as an absence of collinearity.
 
 ## Figure
 
@@ -888,6 +888,7 @@ Code
 # study report that wrote such a file also claimed `hm` fits what `bh` retained.
 # Nothing read the file, and the claim was not true. A file whose existence
 # implies a dependency that does not exist is worse than no file.
+#
 # NOT `<BOOT_PREFIX>.rds`. An unchunked run's INPUT is exactly that name, so
 # writing the report there overwrites the screen it just read -- and this is
 # the one job where that is unrecoverable: the input is days of compute that
@@ -922,9 +923,9 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:02:10 EST |
-|  | Ended | 2026-11-06 10:02:12 EST |
-|  | Duration | 2 s |
+| Run | Started | 2026-11-11 03:00:53 EST |
+|  | Ended | 2026-11-11 03:00:54 EST |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -932,17 +933,17 @@ saveRDS(report, report_file)
 |  | Template | bh |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261106.parquet |
-|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261106.parquet |
-|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261106.parquet |
-|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261106.parquet |
+| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261111.parquet |
+|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261111.parquet |
+|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261111.parquet |
+|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261111.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

@@ -2238,7 +2238,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-06 10:02</p>
+      <p class="date">2026-11-11 03:01</p>
     </div>
   </div>
   
@@ -2250,13 +2250,13 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: dc.trends 1.5.6 sha256:03be7a660f340bf0c1d2955ee5471a0b9ceedbeab2179e7bdac7e5e97f5ae239 -->
+<!-- hvtiRtemplates: dc.trends 1.5.7 sha256:3c42754fa345e6c693180ff88c2fc8d76b933da76b2dc0ebe63d3eb9d97ed7ec -->
 <!-- Demo: name the job this replaces (an older graphs/dp.trends job) and list
      the figures it drew. A trends job usually draws several, and each one
      becomes one entry in TRENDS below. Replace this comment with that text. -->
 <p>A <code>dc-trends</code> job shows how the cohort changed over the years of operation: the share of patients with a characteristic, or the level of a measurement, year by year, with a smooth through it. It <strong>describes</strong> the cohort. It fits no model and tests nothing, so a trend here is a prompt for an analysis, not a result.</p>
 <p>The engine is <code>hvtiPlotR::hv_trends()</code>. It takes one row per patient and computes the per-year summary itself, so this job never aggregates by hand. The <code>group_by()</code>/<code>summarize()</code> blocks and the per-series <code>smooth.spline()</code> calls that older trends jobs carry are exactly what it replaces.</p>
-<p>Two neighbors are <strong>not</strong> this job. Procedure volume per year is <code>dp-procs</code>, and the distribution of a single variable is <code>dc-variable</code>.</p>
+<p>Two neighbors are <strong>not</strong> this job, and neither has a template yet. Procedure volume per year is <code>dp-procs</code>, and the distribution of a single variable is <code>dc-variable</code>.</p>
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. Every
      artifact path in this document is computed from them.
@@ -2319,7 +2319,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261106.parquet</code>, dated 2026-11-06 · rendered by gallery on gallery · hvtiRtemplates 1.5.6</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261111.parquet</code>, dated 2026-11-11 · rendered by gallery on gallery · hvtiRtemplates 1.5.7</p>
 </div>
 </div>
 </div>
@@ -2344,7 +2344,7 @@ vertical-align: -.125em;
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># the date column rather than on `year`.</span></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. Without &quot;ccfid&quot; the job uses MRN, then eMRN;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN;</span></span>
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># name another column, such as &quot;randid&quot;, if the study uses one.</span></span>
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
@@ -2417,9 +2417,9 @@ vertical-align: -.125em;
 <span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>SUBGROUPS <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">all =</span> <span class="cf">function</span>(d) <span class="fu">rep</span>(<span class="cn">TRUE</span>, <span class="fu">nrow</span>(d)), <span class="at">diabetic =</span> <span class="cf">function</span>(d) d<span class="sc">$</span>hx_dm <span class="sc">==</span> <span class="dv">1</span>)</span>
 <span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="co"># MIGRATE-</span><span class="re">END</span><span class="co">: dc-trends-subgroups</span></span>
 <span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
 <span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hp-survival&quot;). The names are the</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;dc-trends&quot;). The names are the</span></span>
 <span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
 <span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
 <span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -2458,7 +2458,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261106.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261111.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2848,12 +2848,12 @@ Figure 4: Trend in lvmass by year of operation, diabetic. Filled circles mark t
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-06 10:02:26 EST</td>
+<td style="text-align: left;">2026-11-11 03:01:06 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-06 10:02:28 EST</td>
+<td style="text-align: left;">2026-11-11 03:01:08 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -2908,17 +2908,17 @@ Figure 4: Trend in lvmass by year of operation, diabetic. Filled circles mark t
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.6</td>
+<td style="text-align: left;">1.5.7</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261106.parquet</td>
+<td style="text-align: left;">built_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-06</td>
+<td style="text-align: left;">2026-11-11</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2958,7 +2958,7 @@ Figure 4: Trend in lvmass by year of operation, diabetic. Filled circles mark t
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dc.trends.cohort.eda","rendered":"2026-11-06T15:02:28Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.6","source":null},{"package":"hvtiRutilities","version":"1.5.21","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.5","source":"CRAN"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-11-06T10:02:26-0500","end":"2026-11-06T10:02:28-0500","time_zone":"EST","duration_seconds":1.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.trends.cohort.eda.qmd","template":"dc.trends","prefix":"dc","qualifier":"trends","subject":"cohort","type":"eda","hvtiRtemplates":"1.5.6"},"datasets":[{"name":"built","version_file":"built_20261106.parquet","registered":"2026-11-06","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"ed18165d16bf"}},"identifiability":[{"check":"small","column":"hx_chf by year, diabetic","count":19},{"check":"small","column":"plvmassi by year, diabetic","count":19}]},"source":"10_descriptive/dc.trends.cohort.eda.qmd",".hvti_render_id":"d1212862526b2f6e282cde5b1149839f54c119cf637e66857ee0b82ed61f631c",".hvti_source_sha256":"043e7e242617aa58f12fa08fef787cfc87dbbd4a476041cc7d464e78acbe7544"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"dc.trends.cohort.eda","rendered":"2026-11-11T08:01:08Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.7","source":"github","sha":"e8bfb956d8491085b6c4d2c5b2da933ad9ee74f7"},{"package":"hvtiRutilities","version":"1.5.22","source":"github","sha":"0f816207958226308ec7812c5100793a6d120d8e"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"mgcv","version":"1.9.5","source":"CRAN"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"cohort","type":"eda","run":{"start":"2026-11-11T03:01:06-0500","end":"2026-11-11T03:01:08-0500","time_zone":"EST","duration_seconds":1.2,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.trends.cohort.eda.qmd","template":"dc.trends","prefix":"dc","qualifier":"trends","subject":"cohort","type":"eda","hvtiRtemplates":"1.5.7"},"datasets":[{"name":"built","version_file":"built_20261111.parquet","registered":"2026-11-11","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false,"lock_sha256":"ed18165d16bf"}},"identifiability":[{"check":"small","column":"hx_chf by year, diabetic","count":19},{"check":"small","column":"plvmassi by year, diabetic","count":19}]},"source":"10_descriptive/dc.trends.cohort.eda.qmd",".hvti_render_id":"f871b597765a6306ea1cbc64a43edd972ff401848a918e4b9999824c63db4061",".hvti_source_sha256":"255154d629e19e7332ad937704b63922d5b114b456f4962a39dd70a15b8c8f86"}</script>
 </section>
 
 </main>

@@ -9,10 +9,10 @@ Run sheet
 
 ## What it does
 
-The whole data-checking report in one render: every column's contents,
-goodness of follow-up, then continuous variables and categorical
-variables as percentages and counts, each section with its table. [See
-the report it
+The whole data-checking report in one render, the first look the SAS ODS
+tables were: every column's contents, goodness of follow-up, then
+continuous variables and categorical variables as percentages and
+counts, each section with its table. [See the report it
 produces](https://ehrlinger.github.io/hvtiRtemplates/gallery/reports/dc-eda.md)
 on the gallery's synthetic study.
 
@@ -59,5 +59,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
 The template holds the details; this sheet is its outline.

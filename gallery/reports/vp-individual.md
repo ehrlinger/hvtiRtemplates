@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:13
+2026-11-11 03:09
 
 Describes the `vp-fit` screen in this set patient by patient: each
 selected predictor’s local gradient.
@@ -79,7 +79,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -116,7 +116,7 @@ SEED <- 2026
 # that are out of date.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("vp-individual-beeswarm"). The names are the
 # file names, listed for each template in the templates README.
@@ -183,7 +183,7 @@ vpi_parent <- function(fit) {
 # not from the gradient table: ivarpro() returns columns only for the
 # predictors the fit kept, so one cut by split weights or NVAR has no column at
 # all, and would otherwise vanish from the table instead of being listed.
-vpi_coverage <- function(grad, parent, screen) {
+vpi_coverage <- function(grad, parent, screen, selected = screen$variable[screen$selected %in% TRUE]) {
   terms <- names(parent)
   have <- terms %in% names(grad)
   col_of <- function(t) if (t %in% names(grad)) grad[[t]] else NA_real_
@@ -200,7 +200,8 @@ vpi_coverage <- function(grad, parent, screen) {
   m <- match(out$variable, screen$variable)
   out$noise <- screen$noise[m] %in% TRUE
   out$tested <- screen$tested[m] %in% TRUE
-  out$selected <- screen$selected[m] %in% TRUE
+  # The handoff's selection, which can be vp-fit's refit vote, not the full fit's own judgment.
+  out$selected <- out$variable %in% selected
   out$drawn <- out$share_na < 1
   out
 }
@@ -266,7 +267,7 @@ default exploration setting to give every candidate rules.
 Code
 
 ``` r
-icov <- vpi_coverage(grad, .parent, cov)
+icov <- vpi_coverage(grad, .parent, cov, selected)
 .ref <- vpi_noise_ref(icov, grad)
 .slope_of <- switch(fit$family,
   surv = "varPro's ensemble mortality, in expected events, not a probability",
@@ -327,7 +328,7 @@ noise reference (95th percentile of \|gradient\| over 17 noise columns):
 | hx_dm | hx_dm | 0.156 | 4.861 | computed | FALSE | TRUE | TRUE | TRUE |
 | nyha_pr | nyha_pr | 1.000 | NA | none for any patient | FALSE | TRUE | FALSE | FALSE |
 | lvef | lvef | 0.858 | 10.267 | computed | FALSE | TRUE | TRUE | TRUE |
-| plvmassi | plvmassi | 0.932 | 5.039 | computed | FALSE | TRUE | TRUE | TRUE |
+| plvmassi | plvmassi | 0.932 | 5.039 | computed | FALSE | TRUE | FALSE | TRUE |
 | creat_pr | creat_pr | 0.836 | 4.487 | computed | FALSE | TRUE | FALSE | TRUE |
 | noise1_female | noise1_female | 0.701 | 2.462 | computed | TRUE | TRUE | FALSE | TRUE |
 | noise2_female | noise2_female | 0.554 | 2.578 | computed | TRUE | TRUE | FALSE | TRUE |
@@ -400,7 +401,7 @@ save_figure(.fig, "vp-individual-beeswarm", width = 6.5, height = bee_height)
 .fig
 ```
 
-![](assets/6a5aa801be6e592fbba221c1f7a2c61d.png)
+![](assets/29e939a7900de4959d08d19692cec07a.png)
 
 Figure 1: Each patient’s local gradient for each drawn predictor, one
 row per predictor, colored by the patient’s standardized value of that
@@ -416,7 +417,7 @@ Code
 ``` r
 # unnumbered: each page below is a child chunk with its own label and caption
 # Each figure is drawn a page at a time, panels in a grid no larger than the
-# printed page (6.5 by 9 in), and each page is a child chunk of its own so
+# printed page (6.5 by 6 in here), and each page is a child chunk of its own so
 # Quarto numbers it.
 .fence <- strrep("`", 3)
 .page_child <- function(kind, i, pages, vars, caption) {
@@ -466,20 +467,7 @@ Code
 Figure 2: Each patient’s local gradient against their value of the
 predictor, one panel per drawn predictor. Each point is a patient, and
 its height the local slope of the prediction against the predictor; the
-dashed line is no change. Page 1 of 2: age, hx_chf, hx_dm, lvef.
-
-Code
-
-``` r
-.fig
-```
-
-![](assets/1947fc2dccbbedfb07d99624c9139770.png)
-
-Figure 3: Each patient’s local gradient against their value of the
-predictor, one panel per drawn predictor. Each point is a patient, and
-its height the local slope of the prediction against the predictor; the
-dashed line is no change. Page 2 of 2: plvmassi.
+dashed line is no change.
 
 ## Reading the result
 
@@ -520,8 +508,8 @@ saveRDS(vpi_handoff, set_path("estimates", "individual.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:13:18 EST |
-|  | Ended | 2026-11-06 10:13:23 EST |
+| Run | Started | 2026-11-11 03:09:19 EST |
+|  | Ended | 2026-11-11 03:09:23 EST |
 |  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -531,13 +519,13 @@ saveRDS(vpi_handoff, set_path("estimates", "individual.rds"))
 |  | Template | vp.individual |
 |  | Subject | dead |
 |  | Type | vp |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-06 10:10:35 -0500, data built_20261106.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-11 03:07:14 -0500, data built_20261111.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

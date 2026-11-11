@@ -4,13 +4,12 @@
 
 Published
 
-2026-11-06 10:03
+2026-11-11 03:02
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
 covariate model built on its shape parameters is `hm`; none of those
-belong here. **Nor does SAS parity** — a parity job borrows the ordinal
-of the job it checks and lives in `parity/`.
+belong here. **Nor does SAS parity**, which is a job of its own.
 
 Code
 
@@ -66,8 +65,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -87,7 +86,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- quote(!is.na(creat_pr))
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -129,7 +128,7 @@ theta0 <- c(log(0.05), log(0.04), 1, 1,
             log(0.035), log(1), 1, 1, 1)
 
 # Demo: time, event, and counts from the SAS reference for the rows this job
-# analyses. Leave these invalid defaults in place until the job is reconciled.
+# analyses. Leave the NA counts in EXPECTED until the job is reconciled: they stop an unedited job.
 TIME   <- "iv_dead"
 
 EVENT  <- "dead"
@@ -145,7 +144,7 @@ START  <- NULL
 
 EXPECTED <- list(n = 725L, n_events = 406L, n_censored = 319L)
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hz-fit").
 SAVE_FIGURES <- TRUE
@@ -175,7 +174,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -236,7 +235,7 @@ knitr::kable(data.frame(
 Table 2: Analysable patients, events and censored patients
 
 A rendered report is itself evidence the gate passed. Report the counts
-anyway — a gate that passes silently tells the reader nothing about what
+anyway: a gate that passes silently tells the reader nothing about what
 it passed on.
 
 **An event flag that is 0/1 in SAS may arrive as `logical`**, because
@@ -260,8 +259,8 @@ cat(hvtiRtemplates:::.identifiability_notice(
 
 ⚠️ **A SAS hazard fit is always three-phase.** An absent phase sits in
 the model at zero rather than being removed, so classify from the sums
-table, never from the parameter block — a phase that contributed nothing
-still prints nothing.
+table, never from the parameter block, because a phase that contributed
+nothing still prints nothing.
 
 Code
 
@@ -626,7 +625,7 @@ below is read.
 
 ⚠️ **This is a sensitivity, never a parity number.** A SAS `noconserve`
 fit is only a conservation reference if it changes conservation *and
-nothing else* — and in practice these fits often add a covariate at the
+nothing else*, and in practice these fits often add a covariate at the
 same time, which confounds the two changes.
 
 Code
@@ -740,16 +739,15 @@ if (!se_available) {
 ```
 
 **A caveat that must travel with these standard errors.** Under a
-near-singular Hessian — check `rcond` above — the marginal standard
-errors on weakly identified shape parameters are unstable while the
-fitted curve is not. The data can pin the survival function tightly and
-still leave individual shape parameters loose, because
-`se(S(t))² = gᵀVg` can be well determined when the diagonal of `V` is
-not.
+near-singular Hessian (check `rcond` above) the marginal standard errors
+on weakly identified shape parameters are unstable while the fitted
+curve is not. The data can pin the survival function tightly and still
+leave individual shape parameters loose, because `se(S(t))² = gᵀVg` can
+be well determined when the diagonal of `V` is not.
 
 So report per-parameter standard errors with that caveat attached, and
-treat the survival curve and its band — computed in the companion `hp`
-job — as the quantity that actually reaches a clinician.
+treat the survival curve and its band, computed in the companion `hp`
+job, as the quantity that actually reaches a clinician.
 
 ## Fit against the data
 
@@ -828,8 +826,8 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 10:03:42 EST  |
-|                 | Ended            | 2026-11-06 10:03:46 EST  |
+| Run             | Started          | 2026-11-11 03:02:06 EST  |
+|                 | Ended            | 2026-11-11 03:02:10 EST  |
 |                 | Duration         | 4 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -838,9 +836,9 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 |                 | Template         | hz                       |
 |                 | Subject          | dead                     |
 |                 | Type             | hz                       |
-|                 | hvtiRtemplates   | 1.5.6                    |
-| Dataset `built` | Version file     | built_20261106.parquet   |
-|                 | Version date     | 2026-11-06               |
+|                 | hvtiRtemplates   | 1.5.7                    |
+| Dataset `built` | Version file     | built_20261111.parquet   |
+|                 | Version date     | 2026-11-11               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 725 rows on 725 patients |
 |                 | WHERE            | `!is.na(creat_pr)`       |

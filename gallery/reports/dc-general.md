@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:02
+2026-11-11 03:01
 
 Replaces `descriptive/dc.general`.
 
@@ -15,9 +15,9 @@ move together. It uses base procedures only.
 
 The tables below are checks on the data, not tables for a paper. For a
 manuscript table, run a `dc-tables` job alongside this one:
-`add_job("dc", SUBJECT, TYPE, qualifier = "tables")`. It takes the same
-grouped variable lists, renders them in the CORR house format, and saves
-the table to Word.
+`add_job("dc", SUBJECT, TYPE, qualifier = "tables")`. It takes variables
+grouped under the same section headings, renders them in the CORR house
+format, and saves the table to Word.
 
 Code
 
@@ -42,8 +42,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -63,7 +63,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -135,7 +135,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -807,8 +807,8 @@ console, never in this report.
 
 | Group           | Item             | Value                     |
 |:----------------|:-----------------|:--------------------------|
-| Run             | Started          | 2026-11-06 10:02:55 EST   |
-|                 | Ended            | 2026-11-06 10:02:56 EST   |
+| Run             | Started          | 2026-11-11 03:01:31 EST   |
+|                 | Ended            | 2026-11-11 03:01:32 EST   |
 |                 | Duration         | 0 s                       |
 |                 | Status           | final                     |
 |                 | Rendered by      | gallery                   |
@@ -817,9 +817,9 @@ console, never in this report.
 |                 | Template         | dc.general                |
 |                 | Subject          | cohort                    |
 |                 | Type             | eda                       |
-|                 | hvtiRtemplates   | 1.5.6                     |
-| Dataset `built` | Version file     | built_20261106.parquet    |
-|                 | Version date     | 2026-11-06                |
+|                 | hvtiRtemplates   | 1.5.7                     |
+| Dataset `built` | Version file     | built_20261111.parquet    |
+|                 | Version date     | 2026-11-11                |
 |                 | Source file      | built.rds                 |
 |                 | Rows kept        | 800 rows on 800 patients  |
 |                 | WHERE            | none                      |

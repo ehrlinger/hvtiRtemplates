@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:09
+2026-11-11 03:12
 
 Gallery job on the synthetic cohort: major postoperative complication
 (complication, 0/1).
@@ -73,7 +73,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
                                 SAVE_FIGURES, FIGURES, linked)
 }
 
-# `rfc-fit` writes the forest through this and `rfc-explain` reads it back,
+# `rfc-fit` writes the forest through set_path() and `rfc-explain` reads it back,
 # both by set, so an explanation can never be filed against a different set
 # than the forest it explains. The write is the `save` chunk at the foot of
 # this file.
@@ -81,8 +81,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -102,7 +102,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -165,9 +165,9 @@ NA_ACTION <- "na.impute"
 # that are out of date, so it is safe to leave on while iterating.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("rfc-fit-diagnostics"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -246,7 +246,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -441,9 +441,9 @@ saveRDS(forest, set_path("estimates", "rfc.rds"))
 
 | Group           | Item             | Value                       |
 |:----------------|:-----------------|:----------------------------|
-| Run             | Started          | 2026-11-06 10:09:53 EST     |
-|                 | Ended            | 2026-11-06 10:09:55 EST     |
-|                 | Duration         | 3 s                         |
+| Run             | Started          | 2026-11-11 03:12:34 EST     |
+|                 | Ended            | 2026-11-11 03:12:36 EST     |
+|                 | Duration         | 2 s                         |
 |                 | Status           | final                       |
 |                 | Rendered by      | gallery                     |
 |                 | Host             | gallery                     |
@@ -451,9 +451,9 @@ saveRDS(forest, set_path("estimates", "rfc.rds"))
 |                 | Template         | rfc.fit                     |
 |                 | Subject          | complication                |
 |                 | Type             | rf                          |
-|                 | hvtiRtemplates   | 1.5.6                       |
-| Dataset `built` | Version file     | built_20261106.parquet      |
-|                 | Version date     | 2026-11-06                  |
+|                 | hvtiRtemplates   | 1.5.7                       |
+| Dataset `built` | Version file     | built_20261111.parquet      |
+|                 | Version date     | 2026-11-11                  |
 |                 | Source file      | built.rds                   |
 |                 | Rows kept        | 800 rows on 800 patients    |
 |                 | WHERE            | none                        |

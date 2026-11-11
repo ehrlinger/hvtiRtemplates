@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:11
+2026-11-11 03:08
 
 Gallery job on the synthetic cohort: a VarPro screen of survival after
 operation (iv_dead, dead) on the nine preoperative predictors rfs-fit
@@ -25,7 +25,8 @@ selection hold?** The screen is refitted on subsamples of the patients
 and the share of refits selecting each variable is reported.
 
 The selected set is saved for a later model job. `vp-explain` in this
-set draws VarPro’s partial dependence for it.
+set draws VarPro’s partial dependence for it, and `vp-individual` its
+patient-level gradients.
 
 This template is **in flight**: it is built from one study’s screen, and
 a second study running it through to its stability section is what moves
@@ -97,14 +98,14 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
                                 SAVE_FIGURES, FIGURES, linked)
 }
 
-# `vp-fit` writes vp.rds and `vp-explain` reads it back, both by set. The write
-# is the `save` chunk near the foot of this file.
+# `vp-fit` writes vp.rds, and `vp-explain` and `vp-individual` read it back, all by set.
+# The write is the `save` chunk near the foot of this file.
 # The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -124,7 +125,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -235,6 +236,12 @@ NVAR <- 30
 # REPEATS times one fit.
 REPEATS <- 5
 SUBSAMPLE <- 0.632
+# Demo: the selection handed to vp-explain and vp-individual. With REPEATS above 0 it is every
+# candidate selected in at least SELECT_SHARE of the refits. A single fit's bar
+# is the best of a few noise columns, so on a small cohort it moves from one
+# noise draw to the next and the full fit alone can keep or drop a variable by
+# chance. NA hands on the full fit's selection instead, as REPEATS = 0 does.
+SELECT_SHARE <- 0.5
 
 # Demo: the seed. It is part of every cache key, seeds R's generator before
 # each random step, and is handed to varpro() as `seed =`, negated as
@@ -247,7 +254,7 @@ SEED <- 2026
 # that are out of date.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("vp-fit-coverage"). The names are the
 # file names, listed for each template in the templates README.
@@ -354,7 +361,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -449,6 +456,16 @@ if (NOISE_N < 1) {
 }
 if (!(SUBSAMPLE > 0 && SUBSAMPLE < 1)) {
   stop("SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).", call. = FALSE)
+}
+.share_bad <- "SELECT_SHARE must be NA or a share above 0 and at most 1 (0.5 keeps what most refits select)."
+if (length(SELECT_SHARE) != 1) {
+  stop(.share_bad, call. = FALSE)
+}
+# NaN is NA to is.na(), so it is ruled out by name: only a deliberate NA opts out of the vote.
+.share_na <- is.na(SELECT_SHARE) && !is.nan(SELECT_SHARE)
+.share_ok <- is.numeric(SELECT_SHARE) && !is.na(SELECT_SHARE) && SELECT_SHARE > 0 && SELECT_SHARE <= 1
+if (!(.share_na || .share_ok)) {
+  stop(.share_bad, call. = FALSE)
 }
 if (REPEATS > 0 && floor(SUBSAMPLE * nrow(d)) < 2) {
   stop("SUBSAMPLE of ", nrow(d), " patients leaves fewer than 2 for a refit. Raise SUBSAMPLE or set REPEATS to 0.", call. = FALSE)
@@ -735,7 +752,9 @@ selected; gray boxes did not.
 The screen refitted `REPEATS` times, each on a subsample of the patients
 drawn without replacement and with a fresh noise draw. A variable
 selected in most refits holds up; one selected once in a while is the
-screen’s own noise.
+screen’s own noise. When `SELECT_SHARE` is set, the variables selected
+in at least that share of the refits are the set this job hands on, in
+place of the full fit’s.
 
 Code
 
@@ -771,6 +790,11 @@ if (REPEATS > 0) {
     share_selected = as.vector(tapply(.stab$selected, .stab$variable, sum)[names(.n_tested)]) / REPEATS
   )
   .freq <- .freq[order(-.freq$share_selected, -.freq$share_tested), ]
+  if (!is.na(SELECT_SHARE)) {
+    .keep <- .freq$variable[.freq$share_selected >= SELECT_SHARE]
+    cat("Handed to vp-explain, selected in at least ", SELECT_SHARE * 100, "% of the refits: ",
+        if (length(.keep)) paste(.keep, collapse = ", ") else "none", ".\n", sep = "")
+  }
   knitr::kable(.freq, digits = 2, row.names = FALSE)
 } else {
   cat("Skipped: REPEATS is 0.\n")
@@ -778,6 +802,7 @@ if (REPEATS > 0) {
 ```
 
     Selected per refit: 3 to 6 variables.
+    Handed to vp-explain, selected in at least 50% of the refits: age, hx_chf, lvef, hx_dm.
 
 | variable | share_tested | share_selected |
 |:---------|-------------:|---------------:|
@@ -801,8 +826,8 @@ mean of its importance in each tree, and a tree with no usable rule for
 the variable counts as zero. A variable tested in fewer than `TRIM` of
 the trees therefore scores exactly 0. A variable that is not eligible
 was never tested at all. Neither is evidence of no effect; the variable
-simply was not examined. Read z beside coverage: a z of 0 with low
-coverage means untested.
+was not examined. Read z beside coverage: a z of 0 with low coverage
+means untested.
 
 **Tested is not the same as detectable.** With few events, a real effect
 can be tested and still score z of about 0. In a simulation with 60
@@ -834,22 +859,32 @@ varPro’s own defaults, lets guided split weights and `NVAR` decide which
 variables are examined at all. A selection would also need the two
 settings, the stability above, and ideally cross-validation to agree.
 Read the stability table before the coverage table: a variable selected
-in the full fit but rarely in the refits is a weak candidate.
+in the full fit but rarely in the refits is a weak candidate, and by
+default it is not handed on. The refits each see `SUBSAMPLE` of the
+patients, so they have less power than the full fit; a share near
+`SELECT_SHARE` is a vote on the edge, not a failure.
 
 Code
 
 ``` r
-# The product of this job, and what vp-explain reads: the fit, its judged
+# The product of this job, and what vp-explain and vp-individual read: the fit, its judged
 # coverage and the selected set, in one file, so they cannot drift apart. It is
 # separate from the cache on purpose: cache_fit() stores a keyed record, so the
 # cache is this job's internals and this file is its interface. `family` is
-# informational: vp-explain reads the family from the fit itself.
+# informational: vp-explain reads the family from the fit itself. The selected
+# set is the refits' vote when there are refits and SELECT_SHARE is set, else
+# the full fit's own.
+.selected <- if (REPEATS > 0 && !is.na(SELECT_SHARE)) {
+  .freq$variable[.freq$share_selected >= SELECT_SHARE]
+} else {
+  .real$variable[.real$selected]
+}
 vp_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
-  list(fit = fit, coverage = cov, selected = .real$variable[.real$selected], family = .family),
+  list(fit = fit, coverage = cov, selected = .selected, family = .family),
   data = .provenance_data,
   analysis = .analysis,
   cohort = .cohort,
-  # vp-explain takes the rows, ID and KEY of this screen from this record.
+  # vp-explain and vp-individual take the rows, ID and KEY of this screen from this record.
   selection = attr(job_data$record, "selection")
 )
 saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
@@ -859,9 +894,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 10:10:35 EST  |
-|                 | Ended            | 2026-11-06 10:11:33 EST  |
-|                 | Duration         | 58 s                     |
+| Run             | Started          | 2026-11-11 03:07:14 EST  |
+|                 | Ended            | 2026-11-11 03:08:08 EST  |
+|                 | Duration         | 54 s                     |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -869,9 +904,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 |                 | Template         | vp.fit                   |
 |                 | Subject          | dead                     |
 |                 | Type             | vp                       |
-|                 | hvtiRtemplates   | 1.5.6                    |
-| Dataset `built` | Version file     | built_20261106.parquet   |
-|                 | Version date     | 2026-11-06               |
+|                 | hvtiRtemplates   | 1.5.7                    |
+| Dataset `built` | Version file     | built_20261111.parquet   |
+|                 | Version date     | 2026-11-11               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

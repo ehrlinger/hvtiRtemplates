@@ -2238,7 +2238,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-06 10:11</p>
+      <p class="date">2026-11-11 03:08</p>
     </div>
   </div>
   
@@ -2250,14 +2250,14 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: vp.fit 1.5.6 sha256:9aefe7fa59e4d27ce32aea8875d94409e34f4f7eaa215f850f59b5e1f4785933 -->
+<!-- hvtiRtemplates: vp.fit 1.5.7 sha256:4e4f0bb70a179957f1e462b951c1240d5326de835ca79f3b7026c9be52bf0b5e -->
 <p>Gallery job on the synthetic cohort: a VarPro screen of survival after operation (iv_dead, dead) on the nine preoperative predictors rfs-fit grows on.</p>
 <!--
      whether its selected set feeds a later model job or stands alone. Replace
      this comment with that text. -->
 <p>A <code>vp-fit</code> job runs VarPro, a rule-based variable screen, and reports what it could and could not tell. It needs only the data and an outcome: VarPro grows its own forests, and no other job in the set has to run first.</p>
 <p>The report answers three questions VarPro’s own importance plot cannot. <strong>Was each variable tested?</strong> VarPro’s importance z is zero for a variable tested in fewer than about one tree in ten, so z = 0 means <em>untested</em>, not unimportant. <strong>Does it beat noise?</strong> Permuted copies of real candidates are added before the fit, and a variable is selected only when it beats every tested copy of its own kind. <strong>Does the selection hold?</strong> The screen is refitted on subsamples of the patients and the share of refits selecting each variable is reported.</p>
-<p>The selected set is saved for a later model job. <code>vp-explain</code> in this set draws VarPro’s partial dependence for it.</p>
+<p>The selected set is saved for a later model job. <code>vp-explain</code> in this set draws VarPro’s partial dependence for it, and <code>vp-individual</code> its patient-level gradients.</p>
 <p>This template is <strong>in flight</strong>: it is built from one study’s screen, and a second study running it through to its stability section is what moves it to shipped.</p>
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
@@ -2333,8 +2333,8 @@ vertical-align: -.125em;
 <span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>                                SAVE_FIGURES, FIGURES, linked)</span>
 <span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="co"># `vp-fit` writes vp.rds and `vp-explain` reads it back, both by set. The write</span></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="co"># is the `save` chunk near the foot of this file.</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="co"># `vp-fit` writes vp.rds, and `vp-explain` and `vp-individual` read it back, all by set.</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a><span class="co"># The write is the `save` chunk near the foot of this file.</span></span>
 <span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
 <span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
@@ -2344,7 +2344,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261106.parquet</code>, dated 2026-11-06 · rendered by gallery on gallery · hvtiRtemplates 1.5.6</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261111.parquet</code>, dated 2026-11-11 · rendered by gallery on gallery · hvtiRtemplates 1.5.7</p>
 </div>
 </div>
 </div>
@@ -2365,7 +2365,7 @@ vertical-align: -.125em;
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   WHERE &lt;- rlang::exprs(age &gt;= 18, hx_chf == 1)</span></span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>WHERE <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. Without &quot;ccfid&quot; the job uses MRN, then eMRN;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the patient identifier. If the data has no &quot;ccfid&quot; column, the job uses MRN, then eMRN;</span></span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># name another column, such as &quot;randid&quot;, if the study uses one.</span></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">&lt;-</span> <span class="st">&quot;patient_id&quot;</span></span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
@@ -2476,24 +2476,30 @@ vertical-align: -.125em;
 <span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a><span class="co"># REPEATS times one fit.</span></span>
 <span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>REPEATS <span class="ot">&lt;-</span> <span class="dv">5</span></span>
 <span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>SUBSAMPLE <span class="ot">&lt;-</span> <span class="fl">0.632</span></span>
-<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the seed. It is part of every cache key, seeds R&#39;s generator before</span></span>
-<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a><span class="co"># each random step, and is handed to varpro() as `seed =`, negated as</span></span>
-<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC documents. Both halves matter: varpro() draws from R&#39;s</span></span>
-<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="co"># generator as well as from its own seed.</span></span>
-<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the selection handed to vp-explain and vp-individual. With REPEATS above 0 it is every</span></span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a><span class="co"># candidate selected in at least SELECT_SHARE of the refits. A single fit&#39;s bar</span></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a><span class="co"># is the best of a few noise columns, so on a small cohort it moves from one</span></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a><span class="co"># noise draw to the next and the full fit alone can keep or drop a variable by</span></span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="co"># chance. NA hands on the full fit&#39;s selection instead, as REPEATS = 0 does.</span></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>SELECT_SHARE <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
 <span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
-<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
-<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
-<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
-<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;vp-fit-coverage&quot;). The names are the</span></span>
-<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
-<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the seed. It is part of every cache key, seeds R&#39;s generator before</span></span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="co"># each random step, and is handed to varpro() as `seed =`, negated as</span></span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC documents. Both halves matter: varpro() draws from R&#39;s</span></span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a><span class="co"># generator as well as from its own seed.</span></span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;vp-fit-coverage&quot;). The names are the</span></span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2610,7 +2616,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261106.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261111.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2747,26 +2753,36 @@ Table 2: Missing values in the screen’s variables
 <span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>(SUBSAMPLE <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> SUBSAMPLE <span class="sc">&lt;</span> <span class="dv">1</span>)) {</span>
 <span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (REPEATS <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> <span class="fu">floor</span>(SUBSAMPLE <span class="sc">*</span> <span class="fu">nrow</span>(d)) <span class="sc">&lt;</span> <span class="dv">2</span>) {</span>
-<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SUBSAMPLE of &quot;</span>, <span class="fu">nrow</span>(d), <span class="st">&quot; patients leaves fewer than 2 for a refit. Raise SUBSAMPLE or set REPEATS to 0.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a><span class="co"># The coverage table finds noise by the &quot;noise&quot; prefix, so a real candidate</span></span>
-<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a><span class="co"># named that way would be judged as noise.</span></span>
-<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>.noisy <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">&quot;^noise&quot;</span>, PREDICTORS, <span class="at">value =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.noisy)) {</span>
-<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Candidate(s) whose names start with </span><span class="sc">\&quot;</span><span class="st">noise</span><span class="sc">\&quot;</span><span class="st">, which this job reserves for its noise columns: &quot;</span>,</span>
-<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>       <span class="fu">paste</span>(.noisy, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;. Rename them in the dataset build.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>.share_bad <span class="ot">&lt;-</span> <span class="st">&quot;SELECT_SHARE must be NA or a share above 0 and at most 1 (0.5 keeps what most refits select).&quot;</span></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(SELECT_SHARE) <span class="sc">!=</span> <span class="dv">1</span>) {</span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(.share_bad, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a><span class="co"># NaN is NA to is.na(), so it is ruled out by name: only a deliberate NA opts out of the vote.</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>.share_na <span class="ot">&lt;-</span> <span class="fu">is.na</span>(SELECT_SHARE) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.nan</span>(SELECT_SHARE)</span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>.share_ok <span class="ot">&lt;-</span> <span class="fu">is.numeric</span>(SELECT_SHARE) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(SELECT_SHARE) <span class="sc">&amp;&amp;</span> SELECT_SHARE <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> SELECT_SHARE <span class="sc">&lt;=</span> <span class="dv">1</span></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>(.share_na <span class="sc">||</span> .share_ok)) {</span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(.share_bad, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>d_noise <span class="ot">&lt;-</span> <span class="fu">vp_add_noise</span>(d, PREDICTORS, NOISE_N, SEED)</span>
-<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">if</span> (.survival) {</span>
-<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>  stats<span class="sc">::</span><span class="fu">as.formula</span>(<span class="fu">paste0</span>(<span class="st">&quot;Surv(&quot;</span>, TIME, <span class="st">&quot;, &quot;</span>, EVENT, <span class="st">&quot;) ~ .&quot;</span>))</span>
-<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>  stats<span class="sc">::</span><span class="fu">as.formula</span>(<span class="fu">paste0</span>(RESPONSE, <span class="st">&quot; ~ .&quot;</span>))</span>
-<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved fit keeps this formula, and a formula keeps the environment it was</span></span>
-<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a><span class="co"># made in; set it, so a job run anywhere else does not write every object</span></span>
-<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="co"># beside the formula, `job_data` and its patient IDs included, into vp.rds.</span></span>
-<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a><span class="fu">environment</span>(model) <span class="ot">&lt;-</span> <span class="fu">globalenv</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (REPEATS <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> <span class="fu">floor</span>(SUBSAMPLE <span class="sc">*</span> <span class="fu">nrow</span>(d)) <span class="sc">&lt;</span> <span class="dv">2</span>) {</span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SUBSAMPLE of &quot;</span>, <span class="fu">nrow</span>(d), <span class="st">&quot; patients leaves fewer than 2 for a refit. Raise SUBSAMPLE or set REPEATS to 0.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a><span class="co"># The coverage table finds noise by the &quot;noise&quot; prefix, so a real candidate</span></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a><span class="co"># named that way would be judged as noise.</span></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>.noisy <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">&quot;^noise&quot;</span>, PREDICTORS, <span class="at">value =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.noisy)) {</span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Candidate(s) whose names start with </span><span class="sc">\&quot;</span><span class="st">noise</span><span class="sc">\&quot;</span><span class="st">, which this job reserves for its noise columns: &quot;</span>,</span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a>       <span class="fu">paste</span>(.noisy, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;. Rename them in the dataset build.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a>d_noise <span class="ot">&lt;-</span> <span class="fu">vp_add_noise</span>(d, PREDICTORS, NOISE_N, SEED)</span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="cf">if</span> (.survival) {</span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a>  stats<span class="sc">::</span><span class="fu">as.formula</span>(<span class="fu">paste0</span>(<span class="st">&quot;Surv(&quot;</span>, TIME, <span class="st">&quot;, &quot;</span>, EVENT, <span class="st">&quot;) ~ .&quot;</span>))</span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a>  stats<span class="sc">::</span><span class="fu">as.formula</span>(<span class="fu">paste0</span>(RESPONSE, <span class="st">&quot; ~ .&quot;</span>))</span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a><span class="co"># The saved fit keeps this formula, and a formula keeps the environment it was</span></span>
+<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a><span class="co"># made in; set it, so a job run anywhere else does not write every object</span></span>
+<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a><span class="co"># beside the formula, `job_data` and its patient IDs included, into vp.rds.</span></span>
+<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a><span class="fu">environment</span>(model) <span class="ot">&lt;-</span> <span class="fu">globalenv</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -3206,7 +3222,7 @@ Figure 3: The importance plot after the noise screen: the same boxes and bars a
 </section>
 <section id="stability" class="level2">
 <h2 class="anchored" data-anchor-id="stability">Stability</h2>
-<p>The screen refitted <code>REPEATS</code> times, each on a subsample of the patients drawn without replacement and with a fresh noise draw. A variable selected in most refits holds up; one selected once in a while is the screen’s own noise.</p>
+<p>The screen refitted <code>REPEATS</code> times, each on a subsample of the patients drawn without replacement and with a fresh noise draw. A variable selected in most refits holds up; one selected once in a while is the screen’s own noise. When <code>SELECT_SHARE</code> is set, the variables selected in at least that share of the refits are the set this job hands on, in place of the full fit’s.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -3241,13 +3257,19 @@ Figure 3: The importance plot after the noise screen: the same boxes and bars a
 <span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">share_selected =</span> <span class="fu">as.vector</span>(<span class="fu">tapply</span>(.stab<span class="sc">$</span>selected, .stab<span class="sc">$</span>variable, sum)[<span class="fu">names</span>(.n_tested)]) <span class="sc">/</span> REPEATS</span>
 <span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>  .freq <span class="ot">&lt;-</span> .freq[<span class="fu">order</span>(<span class="sc">-</span>.freq<span class="sc">$</span>share_selected, <span class="sc">-</span>.freq<span class="sc">$</span>share_tested), ]</span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(.freq, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Skipped: REPEATS is 0.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(SELECT_SHARE)) {</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>    .keep <span class="ot">&lt;-</span> .freq<span class="sc">$</span>variable[.freq<span class="sc">$</span>share_selected <span class="sc">&gt;=</span> SELECT_SHARE]</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">&quot;Handed to vp-explain, selected in at least &quot;</span>, SELECT_SHARE <span class="sc">*</span> <span class="dv">100</span>, <span class="st">&quot;% of the refits: &quot;</span>,</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">length</span>(.keep)) <span class="fu">paste</span>(.keep, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>) <span class="cf">else</span> <span class="st">&quot;none&quot;</span>, <span class="st">&quot;.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(.freq, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Skipped: REPEATS is 0.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Selected per refit: 3 to 6 variables.</code></pre>
+<pre><code>Selected per refit: 3 to 6 variables.
+Handed to vp-explain, selected in at least 50% of the refits: age, hx_chf, lvef, hx_dm.</code></pre>
 </div>
 <div id="tbl-stability" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -3320,28 +3342,35 @@ Table 5: How often each candidate was tested and selected across the refits
 </section>
 <section id="reading-the-result" class="level2">
 <h2 class="anchored" data-anchor-id="reading-the-result">Reading the result</h2>
-<p><strong>Untested is not unimportant.</strong> VarPro scores a variable by a trimmed mean of its importance in each tree, and a tree with no usable rule for the variable counts as zero. A variable tested in fewer than <code>TRIM</code> of the trees therefore scores exactly 0. A variable that is not eligible was never tested at all. Neither is evidence of no effect; the variable simply was not examined. Read z beside coverage: a z of 0 with low coverage means untested.</p>
+<p><strong>Untested is not unimportant.</strong> VarPro scores a variable by a trimmed mean of its importance in each tree, and a tree with no usable rule for the variable counts as zero. A variable tested in fewer than <code>TRIM</code> of the trees therefore scores exactly 0. A variable that is not eligible was never tested at all. Neither is evidence of no effect; the variable was not examined. Read z beside coverage: a z of 0 with low coverage means untested.</p>
 <p><strong>Tested is not the same as detectable.</strong> With few events, a real effect can be tested and still score z of about 0. In a simulation with 60 events in 1,900 patients, a binary predictor present in 10% of them, with a hazard ratio of 2.7, was tested in about 8% of trees with every candidate tried at each split and in 12% to 25% with 6 tried, and scored z below 0.3 in every such fit. Before reading a z of 0 for a rare binary predictor as no effect, count the events among the patients who have it: a handful of events cannot move a forest.</p>
 <p><strong>A stand-in scores like the real thing.</strong> A variable correlated with a true signal shares its splits and earns importance it would not have on its own. In the same simulation, a noise variable correlated 0.7 with a signal scored z above 0 in 15 of 16 fits, and above the signal itself in 2. The noise columns here are permuted, so they cannot catch this; check the correlations among the selected set before naming one of them the cause.</p>
 <p><strong>Selected means it beat chance in this fit.</strong> The bar is the best score any tested noise column of the same kind reached. A categorical variable is held to the continuous bar whenever categorical noise sets no bar of its own, which makes the rule strict for categorical variables.</p>
-<p><strong>This is a screen, not a selection.</strong> It keeps everything it could not rule out, and its settings matter. The default here is the exploration setting: no guided split weights, so every candidate gets rules, and <code>MTRY</code> lowered so binary candidates are split. The parsimonious screen, varPro’s own defaults, lets guided split weights and <code>NVAR</code> decide which variables are examined at all. A selection would also need the two settings, the stability above, and ideally cross-validation to agree. Read the stability table before the coverage table: a variable selected in the full fit but rarely in the refits is a weak candidate.</p>
+<p><strong>This is a screen, not a selection.</strong> It keeps everything it could not rule out, and its settings matter. The default here is the exploration setting: no guided split weights, so every candidate gets rules, and <code>MTRY</code> lowered so binary candidates are split. The parsimonious screen, varPro’s own defaults, lets guided split weights and <code>NVAR</code> decide which variables are examined at all. A selection would also need the two settings, the stability above, and ideally cross-validation to agree. Read the stability table before the coverage table: a variable selected in the full fit but rarely in the refits is a weak candidate, and by default it is not handed on. The refits each see <code>SUBSAMPLE</code> of the patients, so they have less power than the full fit; a share near <code>SELECT_SHARE</code> is a vote on the edge, not a failure.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job, and what vp-explain reads: the fit, its judged</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job, and what vp-explain and vp-individual read: the fit, its judged</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># coverage and the selected set, in one file, so they cannot drift apart. It is</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># separate from the cache on purpose: cache_fit() stores a keyed record, so the</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># cache is this job&#39;s internals and this file is its interface. `family` is</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># informational: vp-explain reads the family from the fit itself.</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>vp_handoff <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">coverage =</span> cov, <span class="at">selected =</span> .real<span class="sc">$</span>variable[.real<span class="sc">$</span>selected], <span class="at">family =</span> .family),</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> .analysis,</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> .cohort,</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># vp-explain takes the rows, ID and KEY of this screen from this record.</span></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(vp_handoff, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;vp.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># informational: vp-explain reads the family from the fit itself. The selected</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co"># set is the refits&#39; vote when there are refits and SELECT_SHARE is set, else</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co"># the full fit&#39;s own.</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>.selected <span class="ot">&lt;-</span> <span class="cf">if</span> (REPEATS <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(SELECT_SHARE)) {</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  .freq<span class="sc">$</span>variable[.freq<span class="sc">$</span>share_selected <span class="sc">&gt;=</span> SELECT_SHARE]</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  .real<span class="sc">$</span>variable[.real<span class="sc">$</span>selected]</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>vp_handoff <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">coverage =</span> cov, <span class="at">selected =</span> .selected, <span class="at">family =</span> .family),</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> .analysis,</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> .cohort,</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># vp-explain and vp-individual take the rows, ID and KEY of this screen from this record.</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(vp_handoff, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;vp.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -3359,17 +3388,17 @@ Table 5: How often each candidate was tested and selected across the refits
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-06 10:10:35 EST</td>
+<td style="text-align: left;">2026-11-11 03:07:14 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-06 10:11:33 EST</td>
+<td style="text-align: left;">2026-11-11 03:08:08 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">58 s</td>
+<td style="text-align: left;">54 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3409,17 +3438,17 @@ Table 5: How often each candidate was tested and selected across the refits
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.6</td>
+<td style="text-align: left;">1.5.7</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261106.parquet</td>
+<td style="text-align: left;">built_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-06</td>
+<td style="text-align: left;">2026-11-11</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3464,7 +3493,7 @@ Table 5: How often each candidate was tested and selected across the refits
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"vp.fit.dead.vp","rendered":"2026-11-06T15:11:33Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"be90b23c5d5905ea953eeb5b2f4408f1e33363b0"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.6","source":null},{"package":"hvtiRutilities","version":"1.5.21","source":null},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"dead","type":"vp","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-11-06T10:10:35-0500","end":"2026-11-06T10:11:33-0500","time_zone":"EST","duration_seconds":57.8,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vp.fit.dead.vp.qmd","template":"vp.fit","prefix":"vp","qualifier":"fit","subject":"dead","type":"vp","hvtiRtemplates":"1.5.6"},"datasets":[{"name":"built","version_file":"built_20261106.parquet","registered":"2026-11-06","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"30_analyses/vp.fit.dead.vp.qmd",".hvti_render_id":"ea1282e53903242905a632c4be69df05f70e385cc33f58489d1e7000821bb236",".hvti_source_sha256":"9de0ceb3c4836544515daf421fd016a0be1a772dcb883dbba2867da71c0ea97b"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"vp.fit.dead.vp","rendered":"2026-11-11T08:08:08Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"9215655193d3a25191022290838cac8efa66bd03"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.7","source":"github","sha":"e8bfb956d8491085b6c4d2c5b2da933ad9ee74f7"},{"package":"hvtiRutilities","version":"1.5.22","source":"github","sha":"0f816207958226308ec7812c5100793a6d120d8e"},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"dead","type":"vp","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-11-11T03:07:14-0500","end":"2026-11-11T03:08:08-0500","time_zone":"EST","duration_seconds":54.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vp.fit.dead.vp.qmd","template":"vp.fit","prefix":"vp","qualifier":"fit","subject":"dead","type":"vp","hvtiRtemplates":"1.5.7"},"datasets":[{"name":"built","version_file":"built_20261111.parquet","registered":"2026-11-11","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"30_analyses/vp.fit.dead.vp.qmd",".hvti_render_id":"0f4db9109c199bf2d95f72ad41be579863c1507e3c74af6067b933cc30bdd70b",".hvti_source_sha256":"633352cdbd645d5f6aba6ca9e4b09c78e8f88d9241379bd9f7c2effd36e05103"}</script>
 </section>
 
 </main>

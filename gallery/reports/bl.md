@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 09:59
+2026-11-11 02:58
 
 This job reports a bootstrap variable selection screen over a
 **logistic** model: how often each candidate survived stepwise selection
@@ -92,15 +92,15 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
                                 SAVE_FIGURES, FIGURES, linked)
 }
 
-# The screen this job reports on was run by a companion script, which wrote its
-# chunks into this set's `estimates` directory. Reading them through set_path()
-# is what keeps a screen filed against the set whose candidates it screened.
+# The screen this job reports on was run by a companion runner, which wrote its
+# bag into this set's `estimates` directory. Reading it through set_path() is
+# what keeps a screen filed against the set whose candidates it screened.
 # The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -120,8 +120,8 @@ EXPECT_BOOT <- 100L   # Demo: boot_select(n_rep = 100)
 
 # Demo: the file-name prefix your runner wrote its screen under. This report
 # reads <BOOT_PREFIX>.rds in this set's estimates directory, the name bh reads
-# for an unchunked run, and bl-runner.R writes bl.rds. It must match the runner
-# exactly.
+# for an unchunked run, and the runner, bl.<subject>.<type>.runner.R, writes
+# bl.rds. It must match the runner exactly.
 BOOT_PREFIX <- "bl"
 
 # Demo: the bag's recorded selection is used; set any of these only to confirm
@@ -163,9 +163,9 @@ CLUSTERS <- list(
 # Correlation cutoff for near-duplicate candidates.
 COLLINEAR_R <- 0.99
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("bl-frequencies"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -603,9 +603,9 @@ Code
 
 ``` r
 # Demo: the affix vocabulary, if your study's variable names do not follow
-# vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing
-# 2, the order in which they strip, and the deliberate refusal to reduce agee
-# to age. Those are facts about this institution's names, not about statistics,
+# vars.sas conventions. POOL_AFFIXES carries ln_, in2, in_ and a trailing 2, in
+# the order they strip; POOL_PLAIN_SUFFIX carries _pr; and the vocabulary
+# deliberately refuses to reduce agee to age. Those are facts about this institution's names, not about statistics,
 # which is why they are data you can replace rather than logic you cannot.
 #
 # The pool grouped here is the set of forms that reached at least one replicate.
@@ -822,9 +822,9 @@ argument above stands: the same measurement that found 57 prunable forms
 found 16 of them correlating below 0.9.
 
 `pool_collinear_pairs()` sees only NUMERIC, non-constant columns, so
-factor-coded binaries are invisible to it for the same reason they were
-invisible to the screen. Check the coercion table above before reading
-an empty result as an absence of collinearity.
+factor-coded binaries are invisible to it. This report has no coercion
+table of its own, so check how your runner coded them before reading an
+empty result as an absence of collinearity.
 
 ## Figure
 
@@ -897,9 +897,9 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 09:59:24 EST |
-|  | Ended | 2026-11-06 09:59:26 EST |
-|  | Duration | 2 s |
+| Run | Started | 2026-11-11 02:58:32 EST |
+|  | Ended | 2026-11-11 02:58:33 EST |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -907,14 +907,14 @@ saveRDS(report, report_file)
 |  | Template | bl |
 |  | Subject | vent |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `vent-boot/bl.rds` (bootstrap-bag), rendered not recorded, data built_20261106.parquet |
+| Upstream | Handoff | `vent-boot/bl.rds` (bootstrap-bag), rendered not recorded, data built_20261111.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:02
+2026-11-11 03:01
 
 Replaces `descriptive/dc.gfup`.
 
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -92,7 +92,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -112,7 +112,7 @@ KEY <- ID
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
-#     breaks it. This job models one row per
+#     breaks it. This job needs one row per
 #     patient, so a JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
@@ -195,9 +195,9 @@ ALPHA <- 0.5
 # in the caption key too, where the figures are drawn.
 COLORS <- NULL
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("dc-gfup"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -221,7 +221,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -276,9 +276,9 @@ if (!is.null(IDENTIFIER)) {
   utils::write.table(review_rows, stderr(), row.names = FALSE, quote = FALSE)
   review_rows <- review_rows[setdiff(names(review_rows), setdiff(IDENTIFIER, c(EVENT, FOLLOWUP)))]
 }
-# followup_check() returns five one-row tables: the group counts, the interval
-# checks for all patients, and one proc_means() row per group. This is them as
-# one table, a row per interval and group. The counts are each group's n, the
+# followup_check() returns the group counts (one row), the interval checks for all
+# patients, a proc_means() table for each group, and the suspicious rows. This
+# is the means as one table, a row per interval and group. The counts are each group's n, the
 # negative and zero checks are counted within each group, and the summaries are
 # proc_means()'s alone, so there is one quantile definition, not two. dc-eda
 # carries the same function; test-dc-eda.R keeps the two from drifting.
@@ -716,8 +716,8 @@ Table 5: dead by reop
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 10:02:33 EST  |
-|                 | Ended            | 2026-11-06 10:02:34 EST  |
+| Run             | Started          | 2026-11-11 03:01:13 EST  |
+|                 | Ended            | 2026-11-11 03:01:14 EST  |
 |                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -726,9 +726,9 @@ Table 5: dead by reop
 |                 | Template         | dc.gfup                  |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.6                    |
-| Dataset `built` | Version file     | built_20261106.parquet   |
-|                 | Version date     | 2026-11-06               |
+|                 | hvtiRtemplates   | 1.5.7                    |
+| Dataset `built` | Version file     | built_20261111.parquet   |
+|                 | Version date     | 2026-11-11               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

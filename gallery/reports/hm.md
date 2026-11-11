@@ -4,14 +4,13 @@
 
 Published
 
-2026-11-06 10:04
+2026-11-11 03:02
 
 An `hm` job builds the risk-factor model **on top of** the shape
 parameters the `hz` job fitted. The shapes are not re-derived here; they
 are read. Patient-level predictions from this model are an `hs` job and
 the bootstrap of this screen is `bh`; neither belongs here, and **nor
-does SAS parity** — a parity job borrows the ordinal of the job it
-checks and lives in `parity/`.
+does SAS parity**, which is a job of its own.
 
 Code
 
@@ -61,7 +60,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
                                 SAVE_FIGURES, FIGURES, linked)
 }
-# `hm` reads the `hz` fit through this and writes its own model back, both by
+# `hm` reads the `hz` fit through set_path() and writes its own model back, both by
 # set, so a model can never be filed against a different set than the shapes it
 # was built on. The write is in the `save` chunk at the foot of this file.
 # The draft banners, if any, and the box under the title, after all the code above.
@@ -69,7 +68,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -116,7 +115,7 @@ MAX_STEPS <- 50L     # SAS maxsteps=
 # Demo: calibration horizon.
 DECILE_TIME <- 10
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hm-calibration").
 SAVE_FIGURES <- TRUE
@@ -167,7 +166,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261106.parquet) |
+| Source              | dataset `study` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -200,11 +199,13 @@ A rendered report is itself evidence the gate passed. Report the counts
 anyway — a gate that passes silently tells the reader nothing about what
 it passed on.
 
-**An event flag that is 0/1 in SAS may arrive as `logical`**, because
-`read_clinical_data()` infers binary columns as logical while `Surv()`
-requires a numeric status. The `as.numeric()` coercions below are not
-decoration — and see the covariate audit above for the same problem on
-the covariate side, where it changes the model rather than erroring.
+**A 0/1 column may arrive as `logical` or as a factor.** `Surv()`
+accepts a logical status, so the event flag is used as it is read, and
+this job does not coerce it. The covariates are where the type changes
+the model rather than erroring: `covariates_to_numeric()` below turns a
+factor whose levels are all numeric into a numeric column, so it enters
+linearly as it does in the SAS job. The covariate audit that follows
+records what it did to each one.
 
 ## Covariates
 
@@ -1007,9 +1008,9 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:03:52 EST |
-|  | Ended | 2026-11-06 10:03:59 EST |
-|  | Duration | 7 s |
+| Run | Started | 2026-11-11 03:02:15 EST |
+|  | Ended | 2026-11-11 03:02:21 EST |
+|  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -1017,14 +1018,14 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 |  | Template | hm |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-11-06 10:03:42 -0500, data built_20261106.parquet |
+| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-11-11 03:02:06 -0500, data built_20261111.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

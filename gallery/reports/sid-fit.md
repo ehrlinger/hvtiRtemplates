@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:15
+2026-11-11 03:10
 
 This job builds the dissimilarity that `sid-clusters` turns into
 clusters. SID clustering (Mantero and Ishwaran, 2021) is unsupervised:
@@ -59,8 +59,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -79,7 +79,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- quote(age >= 18)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -190,7 +190,7 @@ cat("Patients with every clustering variable missing, dropped:", sum(.empty), "\
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -292,14 +292,16 @@ cat("Values imputed in each of", M, "imputation(s):", .n_missing, "\n")
 Code
 
 ``` r
-# No na.action: the data are complete by now, and sidClustering() fails with
-# na.action = "na.impute" when a value IS missing, so a gap here is a bug.
+# No na.action: the data are complete by now, so a gap here is a bug and should stop the
+# job. Before randomForestSRC 3.10.0, sidClustering() failed on a missing value even with
+# na.action = "na.impute"; from 3.10.0 it applies na.action first, omitting incomplete rows
+# by default, which would hide the gap instead.
 # cache_fit(seed = ) runs each fit under withr::with_seed(), which sets R's
 # generator for the holdout-VIMP step; `seed =` is the forest's own.
 # sidClustering() catches an error inside randomForestSRC and returns dist = NULL
 # instead of stopping, so the check inside the cached expression turns that into
 # a stop: a failed fit is then never cached, and the message names the imputation.
-# Only the distance and the kept variables are cached; the 5000-tree forest, which
+# Only the distance and the kept variables are cached; the forest, which
 # holds patient values, is left out of the cache as it is of sid.rds.
 sid_fits <- lapply(seq_len(M), function(m) {
   if (anyNA(d_complete[[m]])) stop("Missing values reached the SID fit after imputation ", m, ".", call. = FALSE)
@@ -369,6 +371,8 @@ dimnames(sid_dist) <- rep(list(hvtiRtemplates:::.id_digest(d[[.id]], .key)), 2L)
 sid_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   list(dist = sid_dist, id_key = hvtiRtemplates:::.id_key_fingerprint(.key), vars = sid_vars, dropped = sid_dropped,
        reduced = unique(unlist(lapply(sid_fits, `[[`, "outcome.names"))),
+       # The completed data each forest saw, so sid-stability can refit on exactly these values.
+       data_fingerprint = vapply(d_complete, hvtiRtemplates:::.sid_data_fingerprint, character(1)),
        settings = list(ntree = NTREE, sid_reduce = SID_REDUCE, seed = SEED, impute = IMPUTE, m = M,
                        mice_maxit = MICE_MAXIT, max_missing = MAX_MISSING)),
   data = .provenance_data,
@@ -382,9 +386,9 @@ saveRDS(sid_handoff, set_path("estimates", "sid.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 10:15:03 EST  |
-|                 | Ended            | 2026-11-06 10:15:07 EST  |
-|                 | Duration         | 5 s                      |
+| Run             | Started          | 2026-11-11 03:10:47 EST  |
+|                 | Ended            | 2026-11-11 03:10:51 EST  |
+|                 | Duration         | 4 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -392,9 +396,9 @@ saveRDS(sid_handoff, set_path("estimates", "sid.rds"))
 |                 | Template         | sid.fit                  |
 |                 | Subject          | echo                     |
 |                 | Type             | sid                      |
-|                 | hvtiRtemplates   | 1.5.6                    |
-| Dataset `built` | Version file     | built_20261106.parquet   |
-|                 | Version date     | 2026-11-06               |
+|                 | hvtiRtemplates   | 1.5.7                    |
+| Dataset `built` | Version file     | built_20261111.parquet   |
+|                 | Version date     | 2026-11-11               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

@@ -47,7 +47,7 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 21 choices marked `EDIT:`.
+2.  **Study choices**: 23 choices marked `EDIT:`.
 3.  **Cohort**: reads the study data.
 4.  **Predictors**: reads a saved result from the job its choices name,
     when they name one.
@@ -55,6 +55,7 @@ shows three ways to find them.
 6.  **Eligibility**: reads a saved result from the job its choices name,
     when they name one.
     - **Who is out of distribution**
+    - **Eligible, with a value the arm does not cover**
     - **How far the rules overlap**
 7.  **The arm forests**: fits and caches its results, so a later render
     reloads them (`REFIT <- TRUE` recomputes them).
@@ -83,5 +84,5 @@ and it records the job's provenance beside the report.
   pair is how it finds the file:
   `add_job("vt.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
 The template holds the details; this sheet is its outline.

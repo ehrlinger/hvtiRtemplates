@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:04
+2026-11-11 03:02
 
 An `hs` job turns the risk-factor model an `hm` job fitted into
 **predictions for individual patients**, and sets those against the
@@ -15,11 +15,11 @@ refitted here; it is read.
 named “setup”.** That placement follows the corpus rather than the name:
 all ten `tp.hs.*` templates in the SAS library, and ten of the eleven R
 `hs` jobs across the study tree, sit in `graphs/`. An `hs` job computes
-what the plotting jobs beside it consume — the `setup` / `uses_setup`
+what the plotting jobs beside it consume, the `setup` / `uses_setup`
 pairing the corpus uses throughout. The reasoning is in
 `hvtiRtemplates:dev/specs/2026-08-29-hs-template-design.md`.
 
-Validation metrics — C-index, Brier score — are **not** here. The corpus
+Validation metrics (C-index, Brier score) are **not** here. The corpus
 files them under `hs`, but the only R implementation is a loose script
 on a shared drive with no package and no version, and no supported
 template depends on an unpackaged file. They arrive once it has a home.
@@ -62,11 +62,10 @@ if (utils::packageVersion("TemporalHazard") < "1.2.12") {
 # so the job renders the same from the Render button, quarto render, or
 # render_job(), at any depth, with no path in this document to edit.
 # Without the guard in .job_setup(), an unedited job renders green over a
-# meaningless analysis. In THIS file the danger is sharper than a wrong number:
-# the unedited entry and stay levels are `hzr_stepwise()`'s defaults, which are
-# LOOSER than the SAS job's, so an unedited screen admits variables the job
-# being reproduced rejected -- and reports them as risk factors, in a table that
-# looks exactly like a result.
+# meaningless analysis. In THIS file the unedited HORIZONS, column names and life
+# table settings are plausible ones, so an unedited job predicts at horizons nobody
+# chose and matches expected survival on columns the study may not mean, in a
+# table that looks exactly like a result. Only VINTAGE has no default.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -85,15 +84,15 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
   hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
                                 SAVE_FIGURES, FIGURES, linked)
 }
-# `hm` reads the `hz` fit through this and writes its own model back, both by
-# set, so a model can never be filed against a different set than the shapes it
-# was built on. The write is in the `save` chunk at the foot of this file.
+# `hs` reads the `hm` model through set_path() and writes its own predictions back, both
+# by set, so a prediction can never be filed against a different set than the model
+# it came from. The write is in the `save` chunk at the foot of this file.
 # The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -144,7 +143,7 @@ TABLE     <- "sexrace"
 
 SCALE     <- "years"
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hs-setup-expected").
 SAVE_FIGURES <- TRUE
@@ -196,7 +195,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261106.parquet) |
+| Source              | dataset `study` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -353,7 +352,7 @@ nd <- do.call(rbind, lapply(HORIZONS, function(h) {
 # Survival limits are formed on the logit scale. predict.hazard() defaults to
 # "log-log", the survfit standard, so conf.type must be passed explicitly.
 #
-# `06.01-hp.qmd` uses both, and this job's estimates are read by plotting jobs
+# The `hp` template uses both, and this job's estimates are read by plotting jobs
 # that do. Changing either here alone puts two coverages on one figure with
 # nothing saying so. Label the coverage wherever these numbers are published.
 CLEVEL <- 0.68268948   # SAS convention, not a study choice. +/-1 SD, NOT 95%.
@@ -394,19 +393,24 @@ stopifnot(all(pred$fit >= 0 & pred$fit <= 1))
 # templates on purpose.
 by_horizon <- split(pred, pred$horizon)
 summary_tbl <- do.call(rbind, lapply(by_horizon, function(g) {
+  # The mean beside the median and the 15th and 85th percentiles, because the
+  # cohort average below is a MEAN: when a few high-risk patients pull it down,
+  # it sits below the median, and this table shows that before anyone has
+  # to argue it. Percentiles are R's default, type 7.
+  q <- stats::quantile(g$fit, c(0.15, 0.85), names = FALSE, type = 7)
   data.frame(horizon = g$horizon[[1L]], n = nrow(g),
-             median = stats::median(g$fit, na.rm = TRUE),
-             min = min(g$fit, na.rm = TRUE),
-             max = max(g$fit, na.rm = TRUE))
+             mean = mean(g$fit), q15 = q[[1L]],
+             median = stats::median(g$fit), q85 = q[[2L]],
+             min = min(g$fit), max = max(g$fit))
 }))
 knitr::kable(summary_tbl, row.names = FALSE, digits = 4)
 ```
 
-| horizon |   n | median |    min |    max |
-|--------:|----:|-------:|-------:|-------:|
-|       1 | 725 | 0.9214 | 0.5012 | 0.9886 |
-|       5 | 725 | 0.7417 | 0.1574 | 0.9535 |
-|      10 | 725 | 0.5636 | 0.0269 | 0.9114 |
+| horizon |   n |   mean |    q15 | median |    q85 |    min |    max |
+|--------:|----:|-------:|-------:|-------:|-------:|-------:|-------:|
+|       1 | 725 | 0.8996 | 0.8226 | 0.9214 | 0.9645 | 0.5012 | 0.9886 |
+|       5 | 725 | 0.7035 | 0.5200 | 0.7417 | 0.8673 | 0.1574 | 0.9535 |
+|      10 | 725 | 0.5364 | 0.2945 | 0.5636 | 0.7576 | 0.0269 | 0.9114 |
 
 Table 2: Predicted survival by horizon, across the cohort
 
@@ -467,7 +471,7 @@ if (!VINTAGE %in% valid_vintages) {
 
 # Read this before choosing, and print it in the report:
 knitr::kable(us_lifetable_vintages(), row.names = FALSE)
-expected <- us_matched(
+population <- us_matched(
   age = d[[AGE_COL]], male = as.vector(.male), other = as.vector(.other),
   times = HORIZONS, id = seq_len(nrow(d)),
   vintage = VINTAGE, table = TABLE, scale = SCALE, individual = TRUE
@@ -509,44 +513,52 @@ Code
 # plausible number for a different question.
 #
 # Demo: to report expected survival within groups -- age band, treatment arm,
-#       era -- pass `by =`. It carries VALUES, not column names, and `expected`
+#       era -- pass `by =`. It carries VALUES, not column names, and `population`
 #       holds one row per patient per time, so a patient-level grouping has to
 #       be expanded to it. Grouping is not stratification: `table =` above
 #       chose which strata the life TABLE is built from; `by` chooses how the
 #       resulting curves are grouped for reporting, and a report broken down by
 #       age band is normally still matched on "sexrace".
-exp_curve <- us_cohort_curve(expected)
-exp_avg <- stats::setNames(exp_curve$smatched, exp_curve$time)
-obs_avg <- vapply(split(pred$fit, pred$horizon), mean, numeric(1), na.rm = TRUE)
+#
+# The columns are `model` and `population`, as the figure below names its two
+# curves. They were `observed` and `expected` until 2026-11-10, which read as
+# observed EVENTS against model-expected ones: hs-concordance tests exactly that,
+# and here neither column is observed. `model` is the cohort's average predicted
+# survival; `population` the matched life table's.
+pop_curve <- us_cohort_curve(population)
+pop_avg <- stats::setNames(pop_curve$smatched, pop_curve$time)
+model_avg <- vapply(split(pred$fit, pred$horizon), mean, numeric(1), na.rm = TRUE)
 
-stopifnot(identical(names(exp_avg), names(obs_avg)))
-obs_vs_exp <- data.frame(
-  horizon  = as.numeric(names(obs_avg)),
-  observed = unname(obs_avg),
-  expected = unname(exp_avg)
+stopifnot(identical(names(pop_avg), names(model_avg)))
+model_vs_population <- data.frame(
+  horizon    = as.numeric(names(model_avg)),
+  model      = unname(model_avg),
+  population = unname(pop_avg)
 )
-obs_vs_exp$ratio <- obs_vs_exp$observed / obs_vs_exp$expected
+model_vs_population$ratio <- model_vs_population$model / model_vs_population$population
 ```
 
 Code
 
 ``` r
-knitr::kable(obs_vs_exp, row.names = FALSE, digits = 4)
+knitr::kable(model_vs_population, row.names = FALSE, digits = 4)
 ```
 
-| horizon | observed | expected |  ratio |
-|--------:|---------:|---------:|-------:|
-|       1 |   0.8996 |   0.9812 | 0.9169 |
-|       5 |   0.7035 |   0.8999 | 0.7817 |
-|      10 |   0.5364 |   0.7843 | 0.6840 |
+| horizon |  model | population |  ratio |
+|--------:|-------:|-----------:|-------:|
+|       1 | 0.8996 |     0.9812 | 0.9169 |
+|       5 | 0.7035 |     0.8999 | 0.7817 |
+|      10 | 0.5364 |     0.7843 | 0.6840 |
 
 Table 5: Model-predicted against age, sex and race matched population
 survival
 
 A ratio below 1 says the cohort does worse than the matched general
-population at that horizon. It is a comparison, not a test — no interval
-is attached, because the expected curve carries no sampling error of its
-own here.
+population at that horizon. It is a comparison, not a test: no interval
+is attached, because the population curve carries no sampling error of
+its own here. A test of this cohort’s observed deaths against a model’s
+expected ones is `hs-concordance`’s, for a cohort scored through a model
+fitted on others.
 
 Code
 
@@ -566,6 +578,10 @@ Code
 # Averaged by grid position, not by time: a split on a double groups by its printed value.
 .model <- vapply(split(predict(fit, newdata = .nd, type = "survival"), rep(seq_along(.grid), each = nrow(dd))),
                  mean, numeric(1))
+# The curve drawn must be the mean of the patients' predictions that the table
+# reports. Two predict() calls build the two, so a change to either (a filter,
+# a different time column) would part them silently; this stops it instead.
+stopifnot(isTRUE(all.equal(unname(.model[match(HORIZONS, .grid)]), model_vs_population$model)))
 .population <- us_cohort_curve(us_matched(
   age = d[[AGE_COL]], male = as.vector(.male), other = as.vector(.other),
   times = .grid, id = seq_len(nrow(d)),
@@ -573,9 +589,9 @@ Code
 ))$smatched
 .curves <- data.frame(time = rep(c(0, .grid), 2L), survival = 100 * c(1, unname(.model), 1, .population),
                       curve = rep(c("model", "population"), each = length(.grid) + 1L))
-.points <- data.frame(time = rep(obs_vs_exp$horizon, 2L),
-                      survival = 100 * c(obs_vs_exp$observed, obs_vs_exp$expected),
-                      curve = rep(c("model", "population"), each = nrow(obs_vs_exp)))
+.points <- data.frame(time = rep(model_vs_population$horizon, 2L),
+                      survival = 100 * c(model_vs_population$model, model_vs_population$population),
+                      curve = rep(c("model", "population"), each = nrow(model_vs_population)))
 .fig <- ggplot2::ggplot(.curves, ggplot2::aes(x = .data$time, y = .data$survival, linetype = .data$curve)) +
   ggplot2::geom_line() +
   ggplot2::geom_point(data = .points) +
@@ -608,7 +624,7 @@ Code
 # `clevel` travels with the estimates for the same reason `vintage` does: a
 # confidence limit whose coverage has to be inferred later is a number waiting
 # to be misread, and 0.68268948 is not the coverage anyone assumes.
-hs_art <- list(pred = pred, expected = expected, obs_vs_exp = obs_vs_exp,
+hs_art <- list(pred = pred, population = population, model_vs_population = model_vs_population,
                horizons = HORIZONS, covariates = COVARIATES, vintage = VINTAGE,
                clevel = CLEVEL)
 hs_art <- hvtiRtemplates:::.attach_handoff_lineage(
@@ -628,8 +644,8 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:04:13 EST |
-|  | Ended | 2026-11-06 10:04:15 EST |
+| Run | Started | 2026-11-11 03:02:31 EST |
+|  | Ended | 2026-11-11 03:02:33 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -638,15 +654,15 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 |  | Template | hs.setup |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-11-06 10:03:52 -0500, data built_20261106.parquet |
+|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-11-11 03:02:15 -0500, data built_20261111.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

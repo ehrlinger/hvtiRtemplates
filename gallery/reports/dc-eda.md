@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:02
+2026-11-11 03:01
 
 Replaces an older EDA report.
 
@@ -13,7 +13,11 @@ one render: an overview of every column, goodness of follow-up, then
 continuous variables, categorical variables as percentages and
 categorical variables as counts, each with its table. It is written for
 the biostatistician choosing variables for an analysis set, not for a
-manuscript.
+manuscript. When someone asks for “the tables” on a new build, this is
+the job they mean: it is what the SAS ODS tables (dc.tables.ods.sas)
+were, a first look at every variable for outliers and errors, and by
+default it draws the same ODS list. The formatted table for an analysis
+report or a manuscript is `dc-tables`.
 
 Each section draws through a package function. The follow-up section is
 `dc-gfup`, a job of its own: its figure
@@ -76,8 +80,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -104,7 +108,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -173,10 +177,12 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", dea
 
 # Variables.
 # X_VAR is the reference date or year every panel is drawn against, and
-# X_LABEL titles that axis. A date column, such as dt_surg, is drawn as a
-# decimal calendar year: whole years for the percent and count bars, the point
-# in the year for the continuous panels. Any other column is drawn as it is.
-# Set both when time 0 is not an operation, such as an enrollment date.
+# X_LABEL titles that axis. A date column, such as dt_surg, is drawn in the
+# X_UNIT below. In years it is a decimal calendar year: whole years for the
+# percent and count bars, the point in the year for the continuous panels. In
+# months the bars are calendar months and the continuous panels a date axis.
+# Any other column is drawn as it is. Set both when time 0 is not an
+# operation, such as an enrollment date.
 # VARIABLES is NULL to draw the VARIABLE_SET below, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
@@ -211,12 +217,19 @@ ALPHA <- 0.5
 # report, in their section order: a built dataset carries far more columns than
 # anyone wants a page for. Only the listed columns this dataset has are drawn,
 # and the report counts them. It also lists this dataset's columns left out, so a
-# study's own variables are one name away in VARIABLES. "all" draws every column, as dc-eda did before this choice existed.
+# study's own variables are one name away in VARIABLES. "all" draws every column,
+# as dc-eda did before this choice existed.
 # The list ships with the package as extdata/ods-variables.csv, so a study adds to
 # VARIABLES rather than editing it. To read it: hvtiRtemplates:::.ods_groups().
 # dc-tables carries the same list as its commented GROUPS example.
 VARIABLE_SET <- "ods"
 X_LABEL <- "Year of operation"     # Demo: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
+# What a date X_VAR is drawn in: "year", "month", or "auto", which draws months
+# when the dates span less than three years. A six-month cohort drawn in years
+# is one bar and an axis from 2026.0 to 2026.5; in months it is six bars. While
+# X_LABEL is still "Year of operation", a monthly axis reads "Month of
+# operation". A column that is not a date is drawn as it is, whatever this says.
+X_UNIT <- "auto"
 
 # Demo: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
 # red, alive blue and non-fatal events green, then reddish purple, olive
@@ -242,9 +255,9 @@ LABEL_MAX <- 40
 # _study.yml, over the group default shipped in hvtiRutilities.
 ABBREVIATIONS <- NULL
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("dc-eda-gfup"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -268,7 +281,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -300,6 +313,9 @@ column_names <- function(x) is.character(x) && !anyNA(x) && all(nzchar(x)) && !a
 if (!column_names(X_VAR) || length(X_VAR) != 1L) stop("X_VAR must name one column.", call. = FALSE)
 if (!is.character(X_LABEL) || length(X_LABEL) != 1L || is.na(X_LABEL) || !nzchar(X_LABEL)) {
   stop("X_LABEL must be one piece of text, the x-axis label.", call. = FALSE)
+}
+if (!is.character(X_UNIT) || length(X_UNIT) != 1L || !X_UNIT %in% c("auto", "year", "month")) {
+  stop("X_UNIT must be \"auto\", \"year\" or \"month\".", call. = FALSE)
 }
 if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
   stop("VARIABLES must be NULL or name distinct columns.", call. = FALSE)
@@ -404,24 +420,45 @@ if (!length(VARIABLES)) stop("No EDA variables remain after exclusions.", call. 
 
 # The column the pages draw against, named X_LABEL so the axis reads in the
 # study's words, in a copy of the data the pages draw from (`d` is left as it
-# was read); X_VAR itself is never drawn as a variable. A date becomes a
-# decimal calendar year, the year plus the share of it gone by:
+# was read); X_VAR itself is never drawn as a variable. A date drawn in years
+# becomes a decimal calendar year, the year plus the share of it gone by:
 # hv_eda_pages() floors a number to whole years for the percent and count
-# bars, and the continuous panels keep the decimal. Any other column is drawn
-# as it is.
-if (X_LABEL %in% setdiff(names(d), X_VAR)) {
-  stop("X_LABEL, \"", X_LABEL, "\", is already a column of the data; choose another label.", call. = FALSE)
-}
+# bars, and the continuous panels keep the decimal. A date drawn in months is
+# a date for the continuous panels, and its calendar month, in order, for the
+# bars, which .d_eda_bars carries. Any other column is drawn as it is.
 .x <- d[[X_VAR]]
-if (inherits(.x, c("Date", "POSIXt"))) {
+.x_bars <- NULL
+.is_date <- inherits(.x, c("Date", "POSIXt"))
+# A date-time is read as the day it fell on where it was recorded: as.Date()
+# on a date-time takes the UTC day, which moves a late-evening operation in
+# New York into the next day, and on the last of a month into the next month.
+.as_day <- function(x) if (inherits(x, "POSIXt")) as.Date(format(x, "%Y-%m-%d")) else as.Date(x)
+.x_unit <- if (!.is_date) "as is" else X_UNIT
+if (identical(.x_unit, "auto")) {
+  .span <- suppressWarnings(range(.as_day(.x), na.rm = TRUE))
+  .x_unit <- if (all(is.finite(.span)) && as.numeric(diff(.span)) < 3 * 365.25) "month" else "year"
+}
+if (identical(.x_unit, "year")) {
   .lt <- as.POSIXlt(.x)
   .year <- .lt$year + 1900
   .days <- ifelse((.year %% 4 == 0 & .year %% 100 != 0) | .year %% 400 == 0, 366, 365)
   .x <- .year + .lt$yday / .days
+} else if (identical(.x_unit, "month")) {
+  .x <- .as_day(.x)
+  .first <- as.Date(format(.x, "%Y-%m-01"))
+  .months <- as.Date(character(0))
+  if (!all(is.na(.first))) .months <- seq(min(.first, na.rm = TRUE), max(.first, na.rm = TRUE), by = "month")
+  .x_bars <- factor(format(.first, "%b %Y"), levels = format(.months, "%b %Y"))
+  if (identical(X_LABEL, "Year of operation")) X_LABEL <- "Month of operation"
+}
+if (X_LABEL %in% setdiff(names(d), X_VAR)) {
+  stop("X_LABEL, \"", X_LABEL, "\", is already a column of the data; choose another label.", call. = FALSE)
 }
 VARIABLES <- setdiff(VARIABLES, X_VAR)
 .d_eda <- d
 .d_eda[[X_LABEL]] <- .x
+.d_eda_bars <- .d_eda
+if (!is.null(.x_bars)) .d_eda_bars[[X_LABEL]] <- .x_bars
 
 # Labels come from the dataset; a variable without one is shown by its name.
 # Shortened labels stay distinct, using the job's, the study's and the group's
@@ -822,7 +859,8 @@ titles <- c(continuous = "Continuous variables", percent = "Categorical variable
                             "table above names them."))
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
 draw_section <- function(section) {
-  sec <- hvtiPlotR::hv_eda_pages(.d_eda, x_col = X_LABEL, section = section, vars = VARIABLES,
+  sec <- hvtiPlotR::hv_eda_pages(if (section == "continuous") .d_eda else .d_eda_bars, x_col = X_LABEL,
+                                 section = section, vars = VARIABLES,
                                  labels = labels, unique_limit = UNIQUE_LIMIT)
   cat("\n## ", titles[[section]], " (", sec$meta$n_vars, ")\n\n", sep = "")
   if (!sec$meta$n_vars) {
@@ -846,7 +884,7 @@ draw_section <- function(section) {
            "knitr::kable(freq, row.names = FALSE)")
   }
   # The bars carry hover labels in HTML: a page names no categories, so a reader hovers a bar
-  # for its category, year and count (John, 2026-10-15). The saved figure is the same either way.
+  # for its category, year and count. The saved figure is the same either way.
   hover <- section != "continuous" && knitr::is_html_output() && requireNamespace("ggiraph", quietly = TRUE) &&
     "hv_girafe" %in% getNamespaceExports("hvtiPlotR")
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA, interactive = hover)
@@ -854,9 +892,13 @@ draw_section <- function(section) {
   for (i in seq_along(pages)) {
     # A page of its own, the printed page, 6.5 by 9 in: a grid of GRID_NCOL by GRID_NROW panels.
     # 8 pt, not 12, because panels share a row: at 12 a long title and the year labels run
-    # past a 3.25 in panel. No legend and no category names, so the bars fill the panel
-    # (John, 2026-10-15); the frequency table above names the categories.
-    .page <- hvtiRtemplates:::.eda_page_panels(pages[[i]] & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
+    # past a 3.25 in panel. No legend and no category names, so the bars fill the panel;
+    # the frequency table above names the categories.
+    # Every calendar month from the first to the last, an empty one included:
+    # the bars re-factor the month, which would drop it and close the gap.
+    .panels <- pages[[i]]
+    if (section != "continuous" && !is.null(.x_bars)) .panels <- .panels & scale_x_discrete(limits = levels(.x_bars))
+    .page <- hvtiRtemplates:::.eda_page_panels(.panels & scale_fill_hv() & theme_hv_manuscript(base_size = 8))
     file <- save_figure(.page,
                         sprintf("dc-eda-%s-page-%02d", section, i), width = 6.5, height = 9, linked = TRUE)
     on_page <- attr(pages[[i]], "variables")
@@ -987,9 +1029,9 @@ frequency table above names them.
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 10:02:40 EST  |
-|                 | Ended            | 2026-11-06 10:02:48 EST  |
-|                 | Duration         | 8 s                      |
+| Run             | Started          | 2026-11-11 03:01:19 EST  |
+|                 | Ended            | 2026-11-11 03:01:25 EST  |
+|                 | Duration         | 6 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -997,9 +1039,9 @@ frequency table above names them.
 |                 | Template         | dc.eda                   |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.6                    |
-| Dataset `built` | Version file     | built_20261106.parquet   |
-|                 | Version date     | 2026-11-06               |
+|                 | hvtiRtemplates   | 1.5.7                    |
+| Dataset `built` | Version file     | built_20261111.parquet   |
+|                 | Version date     | 2026-11-11               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

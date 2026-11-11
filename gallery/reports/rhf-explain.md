@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:14
+2026-11-11 03:10
 
 Explains the forest the `rhf-fit` job in this set saved: how well it
 ranks patients over follow-up, their hazard curves, and which markers
@@ -63,7 +63,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -125,7 +125,7 @@ SEED <- 2026
 # that are out of date.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("rhf-explain-importance").
 SAVE_FIGURES <- TRUE
@@ -512,9 +512,9 @@ if (length(PD_VARS)) {
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:14:39 EST |
-|  | Ended | 2026-11-06 10:14:42 EST |
-|  | Duration | 3 s |
+| Run | Started | 2026-11-11 03:10:28 EST |
+|  | Ended | 2026-11-11 03:10:31 EST |
+|  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -522,13 +522,13 @@ if (length(PD_VARS)) {
 |  | Template | rhf.explain |
 |  | Subject | event |
 |  | Type | rhf |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `intervals` | Version file | intervals_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `intervals` | Version file | intervals_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | intervals.rds |
 |  | sha256 | beb287931ea4 |
 |  | Manifest | current |
-| Upstream | Handoff | `event-rhf/rhf.rds` (forest), rendered 2026-11-06 10:14:30 -0500, data intervals_20261106.parquet |
+| Upstream | Handoff | `event-rhf/rhf.rds` (forest), rendered 2026-11-11 03:10:21 -0500, data intervals_20261111.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

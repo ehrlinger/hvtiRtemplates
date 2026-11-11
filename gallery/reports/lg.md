@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:03
+2026-11-11 03:01
 
 An `lg` job decides which scale a covariate should enter a model on,
 before it goes into `PREDICTORS` in an `lm` job. A model of an event
@@ -60,8 +60,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -81,7 +81,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -101,7 +101,7 @@ KEY <- ID
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
-#     breaks it. This job models one row per
+#     breaks it. This job needs one row per
 #     patient, so a JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
@@ -160,7 +160,7 @@ VARIABLES <- data.frame(
   chosen = c("raw", "raw")
 )
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("lg-age"). The names are the
 # file names, listed for each template in the templates README.
@@ -186,7 +186,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -325,8 +325,9 @@ Code
 
 ``` r
 # unnumbered: each covariate's child chunks carry their own labels and captions
-# The figure is saved as PNG and PDF under graphs/<subject>-<type>/lg-<covariate>,
-# and the PNG is the one the report shows.
+# The figure is saved, when SAVE_FIGURES and FIGURES select it, as PNG and PDF,
+# and as TIFF when ragg is installed, under graphs/<subject>-<type>/lg-<covariate>.
+# The PNG is the one the report shows, and is written even when not selected.
 .fence <- strrep("`", 3)
 .kable_na <- options(knitr.kable.NA = "")
 calibration <- list()
@@ -539,8 +540,8 @@ PREDICTORS <- c("age", "nyha_pr")
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 10:03:08 EST  |
-|                 | Ended            | 2026-11-06 10:03:11 EST  |
+| Run             | Started          | 2026-11-11 03:01:43 EST  |
+|                 | Ended            | 2026-11-11 03:01:45 EST  |
 |                 | Duration         | 3 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -550,9 +551,9 @@ PREDICTORS <- c("age", "nyha_pr")
 |                 | Template         | lg                       |
 |                 | Subject          | dead                     |
 |                 | Type             | calibration              |
-|                 | hvtiRtemplates   | 1.5.6                    |
-| Dataset `built` | Version file     | built_20261106.parquet   |
-|                 | Version date     | 2026-11-06               |
+|                 | hvtiRtemplates   | 1.5.7                    |
+| Dataset `built` | Version file     | built_20261111.parquet   |
+|                 | Version date     | 2026-11-11               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

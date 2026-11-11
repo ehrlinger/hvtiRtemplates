@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:06
+2026-11-11 03:04
 
 Applies a saved `lm-binary` bundle to a declared validation cohort. This
 job never refits, updates, or overwrites the source model.
@@ -33,8 +33,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 Code
 
@@ -59,7 +59,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- quote(as.integer(format(dt_surg, "%Y")) >= 2015)
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -122,7 +122,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME)
 
 | Data |  |
 |:---|:---|
-| Source | dataset `built` (built_20261106.parquet) |
+| Source | dataset `built` (built_20261111.parquet) |
 | Rows read | 800 |
 | ID | `patient_id` |
 | Identifiers dropped | none |
@@ -272,8 +272,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:06:11 EST |
-|  | Ended | 2026-11-06 10:06:12 EST |
+| Run | Started | 2026-11-11 03:04:04 EST |
+|  | Ended | 2026-11-11 03:04:05 EST |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -282,14 +282,14 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(validation, .root, .id,
 |  | Template | lm.checkpred |
 |  | Subject | stroke |
 |  | Type | model |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 228 rows on 228 patients |
 |  | WHERE | `as.integer(format(dt_surg, "%Y")) >= 2015` |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-11-06 10:06:02 -0500, data built_20261106.parquet |
+| Upstream | Handoff | `stroke-model/lm-binary.rds` (source-model), rendered 2026-11-11 03:03:59 -0500, data built_20261111.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

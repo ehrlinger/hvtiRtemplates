@@ -31,9 +31,9 @@ on the gallery's synthetic study.
   `EDIT:` name the file it saved and the set it sits in. For a final
   render, render it final too: a final render refuses a hand-off saved
   from unregistered data.
-- **Packages:** `TemporalHazard`, `hvtiRutilities`. The job checks each
-  floor when it starts, so an older library stops it at the top rather
-  than partway through.
+- **Packages:** `TemporalHazard`, `hvtiRutilities`, `hvtiPlotR` (\>=
+  2.8.20). The job checks each floor when it starts, so an older library
+  stops it at the top rather than partway through.
 
 ## Outline
 
@@ -44,13 +44,15 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 8 choices marked `EDIT:`.
+2.  **Study choices**: 11 choices marked `EDIT:`.
 3.  **Cohort**: reads the study data.
 4.  **Models**: reads a saved result from the job its choices name.
 5.  **Horizon and support**
 6.  **Predictions**
-7.  **Decision**: 2 choices marked `EDIT:`.
-8.  **Save**
+7.  **Observed against expected**
+    - **The average expected curve**
+8.  **Decision**: 2 choices marked `EDIT:`.
+9.  **Save**
 
 ## Run it
 
@@ -66,5 +68,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06.
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
 The template holds the details; this sheet is its outline.

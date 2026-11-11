@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:09
+2026-11-11 03:06
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -27,8 +27,8 @@ TYPE    <- "boost"
 # non-cross-validated result is wrong: partial and marginal effects, importance,
 # and predict(use.cv.flag = FALSE). Reported upstream as kogalur/boostmtree#2;
 # the fix is kogalur/boostmtree#3. The version floor separates the fork from
-# CRAN today. Should upstream release a 2.0.2 without the fix, this check would
-# pass it; read the installed package's NEWS if in doubt. 2.0.8 is the floor
+# CRAN today. Should upstream release a version of 2.0.8 or later without the
+# fix, this check would pass it; read the installed package's NEWS if in doubt. 2.0.8 is the floor
 # because it adds the progress = argument of boostmtree() and partial.plot(), which
 # the fit and the partial effects below use to report how far they have got; it
 # also keeps boostmtree.control(cv.cores = ), added in 2.0.4, which the fit uses.
@@ -76,8 +76,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `echo` `echo_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `echo` `echo_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -97,7 +97,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -185,9 +185,9 @@ N_TRACES <- 100
 # render instead of returning the old fit; TRUE recomputes it.
 REFIT <- FALSE
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("nb-boostmtree-error"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -277,7 +277,7 @@ if (length(.chr)) {
 
 | Data                |                                        |
 |:--------------------|:---------------------------------------|
-| Source              | dataset `echo` (echo_20261106.parquet) |
+| Source              | dataset `echo` (echo_20261111.parquet) |
 | Rows read           | 1,180                                  |
 | ID                  | `patient_id`                           |
 | Identifiers dropped | none                                   |
@@ -311,7 +311,7 @@ Code
 CACHE_DIR <- dirname(set_path("estimates", "nb-boostmtree.rds"))
 # The fit runs for hours at study size. Started from the console it dies with
 # the session, so an uncached fit is refused there: run the job with
-# hvtiRtemplates::submit_job() instead. Once cached, these chunks load it.
+# hvtiRtemplates::run_job() instead. Once cached, these chunks load it.
 hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
                                why = "a cross-validated boostmtree fit takes hours at study size",
                                refit = REFIT)
@@ -408,21 +408,21 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 195 | 0.8847503 |
+| l2 | lvef | 121 | 0.8823679 |
 
 Table 3: Cross-validated fit, by response component
 
 Code
 
 ``` r
-# The cross-validated error by iteration, and the fitted rho, phi and lambda.
+# The cross-validated error by iteration; the next figure draws the fitted rho, phi and lambda.
 # Best M at the right edge means M was too small.
 p_error <- plot(gg_boost_error(fit)) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/064894725873ab525767d7441e0b1a11.png)
+![](assets/ee807b9e34cfdad3ca3b64bcbe432cb8.png)
 
 Figure 1: Cross-validated error by boosting iteration. The black solid
 line is the error after each iteration, and the black dashed vertical
@@ -437,7 +437,7 @@ save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/c72c40f1f5e714183f50ac0ee3fdf21e.png)
+![](assets/8a66cdf23ab44ff827c09832df7b3080.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
 per parameter. Each black solid line is the parameter’s fitted value
@@ -454,7 +454,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/e0e1c52935578d047e97bfd5902f56af.png)
+![](assets/f99c7380d48bd46d812ba83802207fa9.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins.
 Each gray horizontal segment spans a time bin at its observed mean, with
@@ -477,7 +477,7 @@ save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
-![](assets/eb436419f43f01ba11bc694387d38af4.png)
+![](assets/53a37a37bf94e7637026e2dc8837400c.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time, one panel for each. Horizontal dark gray bars
@@ -583,12 +583,12 @@ Code
 .p
 ```
 
-![](assets/7cd75792c50680f48689524c3dceb2ee.png)
+![](assets/b3447bfcf559de1d47c8135879b720dd.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-1 of 2: nyha_pr, hx_chf, age, bmi.
+1 of 2: nyha_pr, hx_chf, bmi, hx_dm.
 
 Code
 
@@ -596,12 +596,12 @@ Code
 .p
 ```
 
-![](assets/d40bfbe14cc40c78cc7e17ef1b6718e4.png)
+![](assets/5631a2c2a88a23645d6a8c43b8ddc0fb.png)
 
 Figure 6: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-2 of 2: hx_dm, female.
+2 of 2: female, age.
 
 Code
 
@@ -646,7 +646,7 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/6726c5e6319e9c6b66a9d437a4737277.png)
+![](assets/6b11c9dc8601e133c3bba154ab36e706.png)
 
 Figure 7: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time. Thin translucent black lines trace
@@ -674,9 +674,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 | Group           | Item             | Value                        |
 |:----------------|:-----------------|:-----------------------------|
-| Run             | Started          | 2026-11-06 10:07:04 EST      |
-|                 | Ended            | 2026-11-06 10:09:14 EST      |
-|                 | Duration         | 2 min 10 s                   |
+| Run             | Started          | 2026-11-11 03:04:53 EST      |
+|                 | Ended            | 2026-11-11 03:06:23 EST      |
+|                 | Duration         | 1 min 30 s                   |
 |                 | Status           | final                        |
 |                 | Rendered by      | gallery                      |
 |                 | Host             | gallery                      |
@@ -684,9 +684,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 |                 | Template         | nb.boostmtree                |
 |                 | Subject          | lvef                         |
 |                 | Type             | boost                        |
-|                 | hvtiRtemplates   | 1.5.6                        |
-| Dataset `echo`  | Version file     | echo_20261106.parquet        |
-|                 | Version date     | 2026-11-06                   |
+|                 | hvtiRtemplates   | 1.5.7                        |
+| Dataset `echo`  | Version file     | echo_20261111.parquet        |
+|                 | Version date     | 2026-11-11                   |
 |                 | Source file      | echo.rds                     |
 |                 | Rows kept        | 1,180 rows on 300 patients   |
 |                 | WHERE            | none                         |

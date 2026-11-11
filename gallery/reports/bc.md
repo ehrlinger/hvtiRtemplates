@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 09:59
+2026-11-11 02:58
 
 This job reports a bootstrap variable selection screen over a **Cox
 proportional hazards** model: how often each candidate survived stepwise
@@ -95,15 +95,15 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
                                 SAVE_FIGURES, FIGURES, linked)
 }
 
-# The screen this job reports on was run by a companion script, which wrote its
-# chunks into this set's `estimates` directory. Reading them through set_path()
-# is what keeps a screen filed against the set whose candidates it screened.
+# The screen this job reports on was run by a companion runner, which wrote its
+# bag into this set's `estimates` directory. Reading it through set_path() is
+# what keeps a screen filed against the set whose candidates it screened.
 # The draft banners, if any, and the box under the title, after all the code above.
 .job$notice
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -123,8 +123,8 @@ EXPECT_BOOT <- 100L   # Demo: boot_select(n_rep = 100)
 
 # Demo: the file-name prefix your runner wrote its screen under. This report
 # reads <BOOT_PREFIX>.rds in this set's estimates directory, the name bh reads
-# for an unchunked run, and bc-runner.R writes bc.rds. It must match the runner
-# exactly.
+# for an unchunked run, and the runner, bc.<subject>.<type>.runner.R, writes
+# bc.rds. It must match the runner exactly.
 BOOT_PREFIX <- "bc"
 
 # Demo: the bag's recorded selection is used; set any of these only to confirm
@@ -168,9 +168,9 @@ CLUSTERS <- list(
 # Correlation cutoff for near-duplicate candidates.
 COLLINEAR_R <- 0.99
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("bc-frequencies"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -252,7 +252,7 @@ if (is.null(.engine_v) || .engine_v < "0.9.3") {
 }
 
 # Bound empty so the `save` chunk's overwrite guard has both names to compare
-# against. A logistic screen is not chunked by default; a chunked one is pooled
+# against. A Cox screen is not chunked by default; a chunked one is pooled
 # in the RUNNER, not here.
 .chunk_files <- character(0)
 
@@ -622,7 +622,7 @@ different information. That study’s published model uses `zexp` and
 `in_zexp` **together and both significant**, a two-parameter flexible
 form pruning forbids. The measurement is from a hazard study, and it is
 quoted here because the argument is about variable NAMES and
-correlation, which a logistic screen shares.
+correlation, which a Cox screen shares.
 
 The naming convention tells you two variables are RELATED. Only the data
 tells you whether they are REDUNDANT.
@@ -631,9 +631,9 @@ Code
 
 ``` r
 # Demo: the affix vocabulary, if your study's variable names do not follow
-# vars.sas conventions. POOL_AFFIXES carries ln_, in_, in2, _pr and a trailing
-# 2, the order in which they strip, and the deliberate refusal to reduce agee
-# to age. Those are facts about this institution's names, not about statistics,
+# vars.sas conventions. POOL_AFFIXES carries ln_, in2, in_ and a trailing 2, in
+# the order they strip; POOL_PLAIN_SUFFIX carries _pr; and the vocabulary
+# deliberately refuses to reduce agee to age. Those are facts about this institution's names, not about statistics,
 # which is why they are data you can replace rather than logic you cannot.
 #
 # The pool grouped here is the set of forms that reached at least one replicate.
@@ -847,9 +847,9 @@ argument above stands: the same measurement that found 57 prunable forms
 found 16 of them correlating below 0.9.
 
 `pool_collinear_pairs()` sees only NUMERIC, non-constant columns, so
-factor-coded binaries are invisible to it for the same reason they were
-invisible to the screen. Check the coercion table above before reading
-an empty result as an absence of collinearity.
+factor-coded binaries are invisible to it. This report has no coercion
+table of its own, so check how your runner coded them before reading an
+empty result as an absence of collinearity.
 
 ## Figure
 
@@ -921,8 +921,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 09:59:47 EST |
-|  | Ended | 2026-11-06 09:59:48 EST |
+| Run | Started | 2026-11-11 02:58:53 EST |
+|  | Ended | 2026-11-11 02:58:54 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -931,14 +931,14 @@ saveRDS(report, report_file)
 |  | Template | bc |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bc.rds` (bootstrap-bag), rendered not recorded, data built_20261106.parquet |
+| Upstream | Handoff | `dead-boot/bc.rds` (bootstrap-bag), rendered not recorded, data built_20261111.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

@@ -4,20 +4,26 @@
 
 Published
 
-2026-11-06 10:02
+2026-11-11 03:01
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
 lists carried as comments, categorical as `n (%)` and continuous in the
 summary form you select. The default is median (15th, 85th percentile).
-`%desc_tab` wrote the categorical and continuous tables as two RTF
-files; `hv_tbl_summary()` writes one table with both. It describes; with
-`BY` set it separates the groups into columns. `COMPARE` chooses whether
-to test them; a p-value here is a prompt for an analysis, not a result.
-The report shows the table in the report style, with each variable’s
-column name beside its label while `SHOW_VARIABLE` is `TRUE`. The Word
-file holds the same table in the manuscript style, under its caption, as
-a journal receives it.
+It is not the data check. “Run the tables” once meant the SAS ODS
+tables, a step programmer’s first look at every variable of a new build;
+that job is now `dc-eda`, which draws the same ODS list. This one is the
+statistician’s table, chosen and formatted for an analysis report or a
+manuscript. `%desc_tab` wrote the categorical and continuous tables as
+two RTF files; `hv_tbl_summary()` writes one table with both. It
+describes; with `BY` set it separates the groups into columns. `COMPARE`
+chooses whether to test them; a p-value here is a prompt for an
+analysis, not a result. The report shows the table in the report style,
+with each variable’s column name beside its label while `SHOW_VARIABLE`
+is `TRUE`. The Word file holds the same table under its caption, in the
+manuscript style as a journal receives it, or in the report style when
+`WORD_STYLE` says so. `PROP_CI` adds a confidence interval to each
+percentage; the manuscript style does not show it yet.
 
 Code
 
@@ -32,9 +38,9 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRtables") < "1.0.11") {
-  stop("This job needs hvtiRtables >= 1.0.11 for hv_table_style(), the manuscript Word table, its page orientation and ",
-       "summaries that a study's own sd() or median() cannot break; ",
+if (utils::packageVersion("hvtiRtables") < "1.0.13") {
+  stop("This job needs hvtiRtables >= 1.0.13 for hv_table_style(), the manuscript Word table, its page orientation, ",
+       "PROP_CI's intervals and summaries that a study's own sd() or median() cannot break; ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
@@ -63,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -86,7 +92,7 @@ ANALYSIS_SET <- NULL
 #   WHERE <- rlang::exprs(age >= 18, hx_chf == 1)
 WHERE <- NULL
 
-# Demo: the patient identifier. Without "ccfid" the job uses MRN, then eMRN;
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
 # name another column, such as "randid", if the study uses one.
 ID <- "patient_id"
 
@@ -114,15 +120,20 @@ JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
 
-# Demo: the variables to report, grouped. Each name is a section heading and
-# becomes a row group in the table, in this order. These are the /* Demography */
-# style banners from the SAS varlist; carry them across unchanged so the R table
-# reads like the SAS one. Commented-out SAS blocks stay out.
-# A fuller grouping to start from, the house summary-table categories with the
-# SAS template's added where they differ. The names are CORR database columns, not
-# one study's. Uncomment it in place of the GROUPS below, then delete the groups
-# and rows your data does not have, since a name missing from the data stops the
-# table. Race is race_grp; some studies spell it race_gp.
+# Demo: the variables to report, grouped. NULL reports the house ODS list,
+# every section the SAS ODS tables (dc.tables.ods.sas) report, keeping only the
+# columns this dataset has, so nobody sorts the list against the data by hand;
+# the report counts them and names this dataset's columns left out. Name the
+# groups yourself to choose rows: each name is a section heading and becomes a
+# row group in the table, in this order, and a name missing from the data stops
+# the table. A migrated job's groups are the /* Demography */ style banners
+# from the SAS varlist; carry them across unchanged so the R table reads like
+# the SAS one. Commented-out SAS blocks stay out.
+# The ODS list written out, to start from when choosing rows: the house
+# summary-table categories with the SAS template's added where they differ. The
+# names are CORR database columns, not one study's. Uncomment it in place of the
+# GROUPS below, then delete the groups and rows your data does not have, since a
+# name missing from the data stops the table. Race is race_grp; some studies spell it race_gp.
 # GROUPS-EXAMPLE-BEGIN
 # GROUPS <- list(
 #   Demography = c("female", "age", "bsa", "bmi", "wt", "ht", "wtht", "race_bl", "race_wh", "race_ot", "race_grp"),
@@ -190,7 +201,22 @@ ABBREVIATIONS <- character(0) # Demo: define abbreviations used in the table
 WORD_FILE <- "dc-tables.docx"  # Demo: choose the Word filename within this set
 MANUSCRIPT_LAYOUT <- "compare" # Demo: choose the Word table's layout
 # MIGRATE-END: dc-tables-config
-# The Word table is drawn in the manuscript style. MANUSCRIPT_LAYOUT, above,
+# Demo: "wilson" or "exact" puts a confidence interval for the percentage
+# beside every binary and categorical cell, in a column of its own; "none"
+# leaves it out. A reviewer reads 1/27 = 3.7% very differently once it carries
+# 0.66 to 18. "wilson" is the Wilson score interval, which takes the exact
+# (Clopper-Pearson) bound at a count of 0 or n, where a Wald interval collapses
+# to a point; "exact" is Clopper-Pearson in every cell. The method and level
+# are named in the table's note.
+PROP_CI <- "none"
+# Demo: the interval's confidence level, a number between 0 and 1.
+PROP_CI_LEVEL <- 0.95
+# Demo: the Word table's style. "manuscript" is the journal's table;
+# "report" is the table this report shows. The manuscript style does not show
+# PROP_CI's intervals yet, because where they go in a journal table is not
+# settled, so a table with intervals must be saved in the report style.
+WORD_STYLE <- "manuscript"
+# With WORD_STYLE "manuscript", MANUSCRIPT_LAYOUT, above,
 # says what the table does: "compare" puts one n column beside the groups it
 # compares; "describe" puts a count beside each group, for cohorts or repeated
 # measures shown side by side. "describe" is also the layout that draws
@@ -246,9 +272,9 @@ SHOW_VARIABLE <- TRUE
 #   list(vars = c("glu_pr", "creat_pr"), with = "a1c_pr", by = "a1c_grp")
 CORR <- NULL
 
-# Each figure is saved to descriptive/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to descriptive/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
-# start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
+# start with one of its entries, e.g. FIGURES <- c("dc-tables-correlation"). The names are the
 # file names, listed for each template in the templates README.
 SAVE_FIGURES <- TRUE
 FIGURES <- NULL
@@ -274,7 +300,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261106.parquet) |
+| Source              | dataset `built` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -433,6 +459,32 @@ Code
 # those BINARY or OVERRIDES name, and those the data make binary unless named
 # categorical. Continuous rows named in CONTINUOUS or OVERRIDES keep theirs too:
 # they are summarized as numbers.
+# GROUPS NULL reports the house ODS list: its sections, in order, each keeping
+# the columns this dataset has, under the dataset's own spelling of each name.
+# BY is the table's columns, so it is never also a row.
+if (is.null(GROUPS)) {
+  .ods <- hvtiRtemplates:::.ods_groups()
+  .on_list <- tolower(names(d)) %in% unlist(.ods, use.names = FALSE)
+  .lower <- tolower(names(d))
+  GROUPS <- lapply(.ods, function(v) setdiff(names(d)[match(intersect(v, .lower), .lower)], BY))
+  # A column the dataset carries but never fills is left out, by name: the
+  # table refuses a row with no values, and one unpopulated ODS field should
+  # not stop the rest. A column named in GROUPS by hand still stops, as asked.
+  .empty <- names(d)[vapply(d, function(x) all(is.na(x)), logical(1))]
+  .empty <- intersect(unlist(GROUPS, use.names = FALSE), .empty)
+  GROUPS <- Filter(length, lapply(GROUPS, setdiff, y = .empty))
+  if (!length(GROUPS)) {
+    stop("None of the house ODS list's columns has a value in this dataset. Name the rows in GROUPS.", call. = FALSE)
+  }
+  cat(length(unlist(GROUPS)), "of the", length(unlist(.ods)), "columns on the house ODS list are in this dataset.\n")
+  if (length(.empty)) cat("Not in the table, as ODS columns with no values recorded:", paste(.empty, collapse = ", "), "\n")
+  if (any(!.on_list)) {
+    cat("Not in the table, as columns outside the house ODS list (name them in GROUPS to report them):",
+        paste(names(d)[!.on_list], collapse = ", "), "\n")
+  }
+} else if (!is.list(GROUPS) || !length(GROUPS) || is.null(names(GROUPS)) || any(!nzchar(names(GROUPS)))) {
+  stop("GROUPS must be NULL, for the house ODS list, or a named list of column names.", call. = FALSE)
+}
 .rows <- intersect(unlist(GROUPS, use.names = FALSE), names(d))
 .binary_by_data <- .rows[vapply(d[.rows], function(x) {
   is.logical(x) || is.numeric(x) && all(x[!is.na(x)] %in% c(0, 1))
@@ -504,8 +556,10 @@ if (all(vapply(explicit, is.null, logical(1)))) {
   invisible(classify_buckets(d_table, rows, explicit))
 }
 # A missing value is not a second value: a row is constant when every
-# recorded value is the same. A row with nothing recorded is kept, since an
-# empty row points at the data rather than at the cohort.
+# recorded value is the same. A row with nothing recorded is not constant and
+# is not dropped here: the table stops and names it, since an empty row points
+# at the data rather than at the cohort. GROUPS NULL has already left such
+# columns out.
 constant_rows <- character(0)
 if (DROP_CONSTANT) {
   rows <- unlist(GROUPS, use.names = FALSE)
@@ -518,11 +572,26 @@ if (DROP_CONSTANT) {
   MEAN_SD <- setdiff(MEAN_SD, constant_rows)
   ORDINAL <- setdiff(ORDINAL, constant_rows)
 }
+# Checked before the table is built, so a choice the Word table cannot honor
+# stops here rather than after the summary has been computed.
+if (!is.character(WORD_STYLE) || length(WORD_STYLE) != 1L || !WORD_STYLE %in% c("manuscript", "report")) {
+  stop("WORD_STYLE must be \"manuscript\" or \"report\".", call. = FALSE)
+}
+# Checked first, so a mistyped PROP_CI is named as such rather than read as a
+# request for intervals the manuscript style refuses.
+if (!is.character(PROP_CI) || length(PROP_CI) != 1L || !PROP_CI %in% c("none", "wilson", "exact")) {
+  stop("PROP_CI must be \"none\", \"wilson\" or \"exact\".", call. = FALSE)
+}
+if (!identical(PROP_CI, "none") && identical(WORD_STYLE, "manuscript")) {
+  stop("PROP_CI asks for intervals, which the manuscript style does not show yet. ",
+       "Set WORD_STYLE <- \"report\", or PROP_CI <- \"none\".", call. = FALSE)
+}
 tbl <- hvtiRtables::hv_tbl_summary(
   d_table, by = BY, groups = GROUPS, continuous = CONTINUOUS,
   binary = BINARY, categorical = CATEGORICAL, compare = COMPARE,
   percentiles = PERCENTILES, continuous_stat = CONTINUOUS_STAT,
-  mean_sd = MEAN_SD, show_variable = SHOW_VARIABLE
+  mean_sd = MEAN_SD, show_variable = SHOW_VARIABLE,
+  prop_ci = PROP_CI, prop_ci_level = PROP_CI_LEVEL
 )
 if (!is.logical(STDDIFF) || length(STDDIFF) != 1L || is.na(STDDIFF)) {
   stop("STDDIFF must be TRUE or FALSE.", call. = FALSE)
@@ -618,14 +687,25 @@ Code
 
 ``` r
 # unnumbered: writes the Word file; the table below shows what it holds
-# The same summary, drawn for the manuscript. MANUSCRIPT_CAPTION is written into
+# The same summary, drawn in WORD_STYLE. MANUSCRIPT_CAPTION is written into
 # the .docx above the table; this report numbers its own tables. The tbl-word
 # chunk below shows word_ft, so it cannot run without this chunk: if the Word
-# table stops here, fix MANUSCRIPT_LAYOUT rather than skipping the chunk.
-word_ft <- hvtiRtables::hv_man_table(
-  tbl, style = hvtiRtables::hv_table_style("manuscript", fill = MANUSCRIPT_FILL),
-  layout = MANUSCRIPT_LAYOUT
-)
+# table stops here, fix WORD_STYLE or MANUSCRIPT_LAYOUT rather than skipping the chunk.
+# MANUSCRIPT_CAPTION and MANUSCRIPT_FILL apply in either style.
+# The report style has one layout, so MANUSCRIPT_LAYOUT is passed only to the
+# manuscript style; hv_man_table() refuses a layout named for the report style.
+if (identical(WORD_STYLE, "manuscript")) {
+  word_ft <- hvtiRtables::hv_man_table(
+    tbl, style = hvtiRtables::hv_table_style("manuscript", fill = MANUSCRIPT_FILL),
+    layout = MANUSCRIPT_LAYOUT
+  )
+} else {
+  word_ft <- hvtiRtables::hv_man_table(tbl, style = hvtiRtables::hv_table_style("report", fill = MANUSCRIPT_FILL))
+  # The report style carries SHOW_VARIABLE's column, which hv_man_table_save()
+  # leaves out of the .docx and hv_man_table_display() keeps. Dropped here, so
+  # the tbl-word preview below shows the table the file holds.
+  if ("hv_variable" %in% word_ft$col_keys) word_ft <- flextable::delete_columns(word_ft, j = "hv_variable")
+}
 if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
       !grepl("^[A-Za-z0-9_][A-Za-z0-9_.-]*[.]docx$", WORD_FILE)) {
   stop("WORD_FILE must be a plain .docx filename within this set.", call. = FALSE)
@@ -639,8 +719,9 @@ hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS
 # says which release built it without anyone opening this report.
 hvtiRtemplates:::.stamp_docx(word_path, hvtiRtemplates:::.run_reconcile(.job$run), data = .provenance_data,
                              caption = MANUSCRIPT_CAPTION)
-# The manuscript style merges its header and section rows, and nothing else.
-check <- hvtiRtables::hv_check_docx(word_path, style = "manuscript")
+# Checked against the style it was saved in: the manuscript style merges its
+# header and section rows, and nothing else; the report style merges nothing.
+check <- hvtiRtables::hv_check_docx(word_path, style = WORD_STYLE)
 if (nrow(check)) stop("Word output failed the CORR structural check", call. = FALSE)
 ```
 
@@ -722,8 +803,8 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-06 10:02:19 EST  |
-|                 | Ended            | 2026-11-06 10:02:20 EST  |
+| Run             | Started          | 2026-11-11 03:01:00 EST  |
+|                 | Ended            | 2026-11-11 03:01:01 EST  |
 |                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -733,9 +814,9 @@ Correlation variant not requested (`CORR <- NULL`).
 |                 | Template         | dc.tables                |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.6                    |
-| Dataset `built` | Version file     | built_20261106.parquet   |
-|                 | Version date     | 2026-11-06               |
+|                 | hvtiRtemplates   | 1.5.7                    |
+| Dataset `built` | Version file     | built_20261111.parquet   |
+|                 | Version date     | 2026-11-11               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

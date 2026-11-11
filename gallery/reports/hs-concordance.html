@@ -2215,6 +2215,10 @@ vertical-align: -.125em;
   <li><a href="#models" id="toc-models" class="nav-link" data-scroll-target="#models">Models</a></li>
   <li><a href="#horizon-and-support" id="toc-horizon-and-support" class="nav-link" data-scroll-target="#horizon-and-support">Horizon and support</a></li>
   <li><a href="#predictions" id="toc-predictions" class="nav-link" data-scroll-target="#predictions">Predictions</a></li>
+  <li><a href="#observed-against-expected" id="toc-observed-against-expected" class="nav-link" data-scroll-target="#observed-against-expected">Observed against expected</a>
+  <ul class="collapse">
+  <li><a href="#the-average-expected-curve" id="toc-the-average-expected-curve" class="nav-link" data-scroll-target="#the-average-expected-curve">The average expected curve</a></li>
+  </ul></li>
   <li><a href="#decision" id="toc-decision" class="nav-link" data-scroll-target="#decision">Decision</a></li>
   <li><a href="#save" id="toc-save" class="nav-link" data-scroll-target="#save">Save</a></li>
   <li><a href="#about-this-run" id="toc-about-this-run" class="nav-link" data-scroll-target="#about-this-run">About this run</a></li>
@@ -2238,7 +2242,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-06 10:05</p>
+      <p class="date">2026-11-11 03:03</p>
     </div>
   </div>
   
@@ -2250,13 +2254,14 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: hs.concordance 1.5.6 sha256:157d0c3388ff84de3f0307a562dbe279e3280bd589263b76f5fe21f1a22c0808 -->
+<!-- hvtiRtemplates: hs.concordance 1.5.7 sha256:e1b33fee8998fa48de6730255637d81d5122bfb6a52435e5990e553b64caeda6 -->
 <!-- Demo: name the SAS job this replaces, and say which treatments it compared
      and at what horizon. Replace this comment with that text. -->
 <p>An <code>hs-concordance</code> job predicts <strong>every patient through every treatment group’s model</strong>. Each group’s risk-factor model was fitted by its own <code>hm</code> job, on that group’s patients; this job reads them all, and asks of each patient what the model for each treatment predicts at one horizon. The corpus calls the result concordance and discordance: whether the treatment a patient received is the one the models favor.</p>
 <p><strong>This job reads models from other sets on purpose.</strong> An <code>hs-setup</code> job reads the <code>hm.rds</code> in its own set, so that a prediction can never be filed against a model it did not come from. Here the crossing is the point, so it is declared: <code>MODELS</code> below names the set each model comes from, and every model read is recorded in this job’s provenance.</p>
 <p><strong>The job has a core and an optional decision.</strong> The core predicts and saves. The section headed “Decision” chooses a best treatment per patient and tables it against the treatment received. Delete that section if the study does not make that claim; the rest of the job does not depend on it.</p>
-<p>The design, with the three studies it was drawn from and the failures each guard below exists for, is in <code>hvtiRtemplates:dev/specs/2026-09-30-hs-concordance-design.md</code>.</p>
+<p><strong>The job also tests observed against expected.</strong> For each model and each group received, it counts the deaths observed and sets them against the deaths the model expects for those patients over their own follow-up, the one-sample log-rank test. That is the p-value no pair of curves gives. With a single model it is the whole job: a cohort scored through a model fitted on another cohort, <code>GROUP</code> left <code>NULL</code>, and the decision section deleted.</p>
+<p>The design, with the three studies it was drawn from and the failures each guard below exists for, is in <code>hvtiRtemplates:dev/specs/2026-09-30-hs-concordance-design.md</code>; the test and the bands are in <code>dev/specs/2026-11-10-hs-oe-test-and-bands-design.md</code>.</p>
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
@@ -2298,10 +2303,23 @@ vertical-align: -.125em;
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># This job reads other sets&#39; models by path, in the models chunk. It writes only</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># into its own set, the comparison set that SUBJECT and TYPE name.</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># The figures draw with hvtiPlotR. Checked here, before any model is read, so a</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># missing package stops the render at once rather than after the predictions.</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;hvtiPlotR&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR for its figures.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.8.20&quot;</span>) {</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.8.20 for hv_group_palette(); &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>),</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder,</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>                                SAVE_FIGURES, FIGURES, linked)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="co"># This job reads other sets&#39; models by path, in the models chunk. It writes only</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># into its own set, the comparison set that SUBJECT and TYPE name.</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="callout callout-style-simple callout-note no-icon">
 <div class="callout-body d-flex">
@@ -2309,7 +2327,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261106.parquet</code>, dated 2026-11-06 · rendered by gallery on gallery · hvtiRtemplates 1.5.6</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261111.parquet</code>, dated 2026-11-11 · rendered by gallery on gallery · hvtiRtemplates 1.5.7</p>
 </div>
 </div>
 </div>
@@ -2366,30 +2384,74 @@ vertical-align: -.125em;
 <span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>MODELS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">surgical =</span> <span class="st">&quot;dead-surgical&quot;</span>, <span class="at">transcatheter =</span> <span class="st">&quot;dead-transcatheter&quot;</span>)</span>
 <span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the column recording the treatment each patient actually received.</span></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>GROUP <span class="ot">&lt;-</span> <span class="st">&quot;approach&quot;</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the single horizon, in TIME&#39;s own units. If the hm jobs worked in</span></span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co">#       years, 30 days is 30/365.25, not 30. A wrong unit gives a plausible</span></span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co">#       number at the wrong time, the failure with no symptom.</span></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="ot">&lt;-</span> <span class="dv">5</span></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: columns a later plotting job needs beside each prediction, such as</span></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co">#       age. They are saved once per patient, because the saved predictions</span></span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co">#       carry a row number, not a patient identifier.</span></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>CARRY <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>)</span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how the cohort was made comparable across groups: &quot;none&quot;, &quot;matched&quot;</span></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co">#       or &quot;common_support&quot;. Say which, and why, in the text above. The three</span></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co">#       studies this template was drawn from made three different choices,</span></span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co">#       so there is no default.</span></span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>OVERLAP <span class="ot">&lt;-</span> <span class="st">&quot;none&quot;</span></span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: TRUE only when a MODELS entry is a path to another study&#39;s hm.rds.</span></span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co">#       Setting it is also your statement that the other study&#39;s time is in</span></span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co">#       TIME&#39;s unit: the saved model records its time column&#39;s name and no</span></span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co">#       unit, so this is the one check here that rests on your word. Write</span></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co">#       the unit in the text above.</span></span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>CROSS_STUDY <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co">#       With ONE model, NULL puts every patient in that model&#39;s group: a</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co">#       cohort scored through a model fitted on another cohort.</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>GROUP <span class="ot">&lt;-</span> <span class="st">&quot;approach&quot;</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the single horizon, in TIME&#39;s own units. If the hm jobs worked in</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co">#       years, 30 days is 30/365.25, not 30. A wrong unit gives a plausible</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="co">#       number at the wrong time, the failure with no symptom.</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: columns a later plotting job needs beside each prediction, such as</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co">#       age. They are saved once per patient, because the saved predictions</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co">#       carry a row number, not a patient identifier.</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>CARRY <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;age&quot;</span>)</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how the cohort was made comparable across groups: &quot;none&quot;, &quot;matched&quot;</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co">#       or &quot;common_support&quot;. Say which, and why, in the text above. The three</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co">#       studies this template was drawn from made three different choices,</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co">#       so there is no default.</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>OVERLAP <span class="ot">&lt;-</span> <span class="st">&quot;none&quot;</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: TRUE only when a MODELS entry is a path to another study&#39;s hm.rds.</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co">#       Setting it is also your statement that the other study&#39;s time is in</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co">#       TIME&#39;s unit: the saved model records its time column&#39;s name and no</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co">#       unit, so this is the one check here that rests on your word. Write</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co">#       the unit in the text above.</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>CROSS_STUDY <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="co"># The observed-against-expected test follows each patient to TAU at most. NULL</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="co"># takes the shortest of the models&#39; last observed times, the furthest every</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co"># model has data for; past it a model&#39;s expectation is its form running on.</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>TAU <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the models whose fitting patients you have confirmed, from the study&#39;s</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co">#       own records, are not the patients of the groups tested against them,</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co">#       e.g. INDEPENDENT &lt;- &quot;pci&quot; for a model fitted on another cohort. Only</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co">#       these get an interval and a p-value, and only for groups with no row</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co">#       matching the model&#39;s fitted data. The job cannot check it: no saved</span></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="co">#       model names its patients. A model fitted on any of the same deaths</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co">#       makes the test meaningless, so leave a model out when unsure.</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>INDEPENDENT <span class="ot">&lt;-</span> <span class="fu">character</span>()</span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the level of the observed-against-expected interval. 95% because the</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co">#       test&#39;s p-value is read against 0.05, and a reader takes an interval</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co">#       beside a p-value for 95%. It is NOT CLEVEL&#39;s 68%: set CLEVEL&#39;s value</span></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co">#       here instead for one coverage across the report. Either way the level</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="co">#       is printed beside every interval.</span></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>TEST_LEVEL <span class="ot">&lt;-</span> <span class="fl">0.95</span></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the band drawn around each average expected curve, &quot;limits_mean&quot; or</span></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="co">#       &quot;spread&quot;. There is no default, because the old habit, averaging each</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="co">#       patient&#39;s limits, needs saying for what it is:</span></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;limits_mean&quot;: the average of the patients&#39; limits, at CLEVEL (68%). It is</span></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="co">#     not an interval for the mean curve, wider or narrower, and is labeled so.</span></span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="co">#   &quot;spread&quot;: the 15th to 85th percentiles of the patients&#39; predictions. How</span></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="co">#     much patients differ; not a confidence interval of anything.</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a><span class="co">#   The confidence interval of the mean curve itself waits on TemporalHazard#731.</span></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>BAND <span class="ot">&lt;-</span> <span class="st">&quot;limits_mean&quot;</span></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="co"># How many patients&#39; curves the spaghetti figure draws per panel. More than</span></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a><span class="co"># that are thinned to patients spaced evenly through the ranking of predicted</span></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a><span class="co"># survival, so the drawn lines keep the cohort&#39;s spread and need no seed.</span></span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>SPAGHETTI_N <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).</span></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;hs-concordance-expected-km&quot;).</span></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2427,7 +2489,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261106.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261111.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2573,23 +2635,33 @@ Table 1: The data this job read
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># has none cannot be compared with what they received. An author who means to</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># leave a group out filters it with WHERE, where the choice is visible.</span></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>.selection <span class="ot">&lt;-</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">:::</span><span class="fu">.refuse_display</span>(GROUP, hvtiRtemplates<span class="sc">:::</span><span class="fu">.no_values</span>(d, .selection<span class="sc">$</span>id, .selection<span class="sc">$</span>key), <span class="st">&quot;GROUP&quot;</span>)</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(GROUP) <span class="sc">||</span> <span class="sc">!</span>GROUP <span class="sc">%in%</span> <span class="fu">names</span>(d)) {</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;GROUP must name the column recording each patient&#39;s treatment; got &quot;</span>,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>       <span class="cf">if</span> (<span class="fu">is.null</span>(GROUP)) <span class="st">&quot;NULL&quot;</span> <span class="cf">else</span> <span class="fu">paste0</span>(<span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>, GROUP, <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>.actual <span class="ot">&lt;-</span> <span class="fu">as.character</span>(d[[GROUP]])</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">anyNA</span>(.actual)) {</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="fu">sum</span>(<span class="fu">is.na</span>(.actual)), <span class="st">&quot; patient(s) have no value in &quot;</span>, GROUP, <span class="st">&quot;. Filter them with WHERE.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>.no_model <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">unique</span>(.actual), <span class="fu">names</span>(models))</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.no_model)) {</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Group(s) &quot;</span>, <span class="fu">paste</span>(.no_model, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot; in &quot;</span>, GROUP, <span class="st">&quot; have no model in MODELS. &quot;</span>,</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;Add the model, or filter the group out with WHERE.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="co"># The reverse is allowed: a model no patient carries is a treatment nobody in</span></span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="co"># this cohort received, which is a comparison worth making. It is reported.</span></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(<span class="at">model =</span> <span class="fu">names</span>(models), <span class="at">patients =</span> <span class="fu">as.vector</span>(<span class="fu">table</span>(<span class="fu">factor</span>(.actual, <span class="fu">names</span>(models))))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># With one model there is nothing to compare between groups, so GROUP may be</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># NULL and every patient is in that model&#39;s group. With two or more it may not:</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># a patient with no recorded treatment cannot be crossed with the others.</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(GROUP) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(models) <span class="sc">==</span> <span class="dv">1</span>L) {</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  .actual <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">names</span>(models), <span class="fu">nrow</span>(d))</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(GROUP)) {</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.refuse_display</span>(GROUP, hvtiRtemplates<span class="sc">:::</span><span class="fu">.no_values</span>(d, .selection<span class="sc">$</span>id, .selection<span class="sc">$</span>key), <span class="st">&quot;GROUP&quot;</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(GROUP) <span class="sc">||</span> <span class="sc">!</span>GROUP <span class="sc">%in%</span> <span class="fu">names</span>(d)) {</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;GROUP must name the column recording each patient&#39;s treatment; got &quot;</span>,</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>         <span class="cf">if</span> (<span class="fu">is.null</span>(GROUP)) <span class="st">&quot;NULL&quot;</span> <span class="cf">else</span> <span class="fu">paste0</span>(<span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>, GROUP, <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>),</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;. It may be NULL only when MODELS has one entry.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  .actual <span class="ot">&lt;-</span> <span class="fu">as.character</span>(d[[GROUP]])</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">anyNA</span>(.actual)) {</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="fu">sum</span>(<span class="fu">is.na</span>(.actual)), <span class="st">&quot; patient(s) have no value in &quot;</span>, GROUP, <span class="st">&quot;. Filter them with WHERE.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>.no_model <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">unique</span>(.actual), <span class="fu">names</span>(models))</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.no_model)) {</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Group(s) &quot;</span>, <span class="fu">paste</span>(.no_model, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot; in &quot;</span>, GROUP, <span class="st">&quot; have no model in MODELS. &quot;</span>,</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;Add the model, or filter the group out with WHERE.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="co"># The reverse is allowed: a model no patient carries is a treatment nobody in</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co"># this cohort received, which is a comparison worth making. It is reported.</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(<span class="at">model =</span> <span class="fu">names</span>(models), <span class="at">patients =</span> <span class="fu">as.vector</span>(<span class="fu">table</span>(<span class="fu">factor</span>(.actual, <span class="fu">names</span>(models))))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-groups" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2708,7 +2780,18 @@ Table 3: Covariates in each group’s model
 <span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>       <span class="fu">paste0</span>(<span class="fu">names</span>(models)[.short], <span class="st">&quot; (&quot;</span>, <span class="fu">signif</span>(.max_obs[.short], <span class="dv">4</span>), <span class="st">&quot;)&quot;</span>, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
 <span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;. A model&#39;s prediction past its own follow-up is its parametric form running on, not an estimate.&quot;</span>,</span>
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co"># TAU, where the observed-against-expected test stops following patients, is</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="co"># held to the same rule, against every model at once: each cell of the test</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="co"># must count deaths over the same span.</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(TAU)) TAU <span class="ot">&lt;-</span> <span class="fu">min</span>(.max_obs)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.numeric</span>(TAU) <span class="sc">||</span> <span class="fu">length</span>(TAU) <span class="sc">!=</span> <span class="dv">1</span>L <span class="sc">||</span> <span class="sc">!</span><span class="fu">is.finite</span>(TAU) <span class="sc">||</span> TAU <span class="sc">&lt;=</span> <span class="dv">0</span>) {</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;TAU must be NULL or one positive number, in TIME&#39;s units.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (TAU <span class="sc">&gt;</span> <span class="fu">min</span>(.max_obs)) {</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;TAU (&quot;</span>, TAU, <span class="st">&quot;) is beyond the last observed time of the model for &quot;</span>, <span class="fu">names</span>(<span class="fu">which.min</span>(.max_obs)), <span class="st">&quot; (&quot;</span>,</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>       <span class="fu">signif</span>(<span class="fu">min</span>(.max_obs), <span class="dv">4</span>), <span class="st">&quot;). Leave TAU NULL to stop there.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p>Predicting a patient through another group’s model is the purpose of this job, so a patient outside a model’s fitted range is not refused. The table below counts them, per model and covariate, so a reader can see how far each comparison reaches beyond the data behind it. What counts as too far is a clinical judgment.</p>
@@ -2877,14 +2960,21 @@ Table 4: Patients outside each model’s fitted range, by covariate
 <span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">row =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(d)), <span class="at">group =</span> .actual)</span>
 <span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a>patients <span class="ot">&lt;-</span> <span class="fu">cbind</span>(patients, d[, CARRY, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
 <span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a>summary_tbl <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">aggregate</span>(fit <span class="sc">~</span> model <span class="sc">+</span> group, <span class="at">data =</span> pred, <span class="at">FUN =</span> stats<span class="sc">::</span>median)</span>
-<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(summary_tbl)[<span class="fu">names</span>(summary_tbl) <span class="sc">==</span> <span class="st">&quot;fit&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;median_survival&quot;</span></span>
-<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summary_tbl, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a><span class="co"># The mean beside the median and the 15th and 85th percentiles, because the</span></span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a><span class="co"># average curve below is a MEAN: when a few high-risk patients pull it down, it</span></span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a><span class="co"># sits below the median, and this table shows that before anyone has to</span></span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a><span class="co"># argue it. Percentiles are R&#39;s default, type 7.</span></span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a>summary_tbl <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">split</span>(pred, <span class="fu">list</span>(pred<span class="sc">$</span>model, pred<span class="sc">$</span>group), <span class="at">drop =</span> <span class="cn">TRUE</span>), <span class="cf">function</span>(g) {</span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a>  q <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">quantile</span>(g<span class="sc">$</span>fit, <span class="fu">c</span>(<span class="fl">0.15</span>, <span class="fl">0.85</span>), <span class="at">names =</span> <span class="cn">FALSE</span>, <span class="at">type =</span> <span class="dv">7</span>)</span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">model =</span> g<span class="sc">$</span>model[[<span class="dv">1</span>L]], <span class="at">group =</span> g<span class="sc">$</span>group[[<span class="dv">1</span>L]], <span class="at">n =</span> <span class="fu">nrow</span>(g), <span class="at">mean =</span> <span class="fu">mean</span>(g<span class="sc">$</span>fit), <span class="at">q15 =</span> q[[<span class="dv">1</span>L]],</span>
+<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a>             <span class="at">median =</span> stats<span class="sc">::</span><span class="fu">median</span>(g<span class="sc">$</span>fit), <span class="at">q85 =</span> q[[<span class="dv">2</span>L]])</span>
+<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summary_tbl, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-predict" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-predict-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 5: Median predicted survival at 5, by model and treatment received
+Table 5: Predicted survival at 5, by model and treatment received
 </figcaption>
 <div aria-describedby="tbl-predict-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -2893,29 +2983,49 @@ Table 5: Median predicted survival at 5, by model and treatment received
 <tr class="header">
 <th style="text-align: left;">model</th>
 <th style="text-align: left;">group</th>
-<th style="text-align: right;">median_survival</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">mean</th>
+<th style="text-align: right;">q15</th>
+<th style="text-align: right;">median</th>
+<th style="text-align: right;">q85</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">surgical</td>
 <td style="text-align: left;">surgical</td>
+<td style="text-align: right;">460</td>
+<td style="text-align: right;">0.7658</td>
+<td style="text-align: right;">0.6400</td>
 <td style="text-align: right;">0.7917</td>
+<td style="text-align: right;">0.8903</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">transcatheter</td>
 <td style="text-align: left;">surgical</td>
+<td style="text-align: right;">460</td>
+<td style="text-align: right;">0.7470</td>
+<td style="text-align: right;">0.6402</td>
 <td style="text-align: right;">0.7638</td>
+<td style="text-align: right;">0.8561</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">surgical</td>
 <td style="text-align: left;">transcatheter</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">0.5958</td>
+<td style="text-align: right;">0.3788</td>
 <td style="text-align: right;">0.6208</td>
+<td style="text-align: right;">0.7969</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">transcatheter</td>
 <td style="text-align: left;">transcatheter</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">0.6091</td>
+<td style="text-align: right;">0.4464</td>
 <td style="text-align: right;">0.6194</td>
+<td style="text-align: right;">0.7630</td>
 </tr>
 </tbody>
 </table>
@@ -2924,6 +3034,367 @@ Table 5: Median predicted survival at 5, by model and treatment received
 </figure>
 </div>
 </div>
+</section>
+<section id="observed-against-expected" class="level2">
+<h2 class="anchored" data-anchor-id="observed-against-expected">Observed against expected</h2>
+<p>Two curves give no p-value. This section gives one: for each model and each group received, the <strong>deaths observed</strong> against the <strong>deaths the model expects</strong> for those same patients, each followed for as long as they actually were. A patient’s expected deaths are the model’s cumulative hazard at that patient’s own follow-up, and the group’s are their sum, E. The ratio O/E, its exact Poisson interval and the chi-squared test of O against E are the one-sample log-rank test (Breslow 1975; Finkelstein, Muzikansky and Schoenfeld 2003).</p>
+<p>Four things to say beside the result:</p>
+<ul>
+<li><strong>A test needs a model fitted on other patients, and only you can confirm that.</strong> A model estimated from the same deaths it is tested against is not fixed: O and E then depend on each other, and the p-value means nothing. No saved model carries a patient identifier, so this job cannot prove which patients fitted it. A cell therefore gets an interval and a p-value only when its model is named in <code>INDEPENDENT</code>, your statement from the study’s own records that the patients who fitted it are not this group’s, AND no row of the group matches a row of the model’s fitted data. Every other cell shows O, E and O/E as a description, with no inference, and says why.</li>
+<li><strong>Matching rows are a warning, not an identification.</strong> <code>in_fit</code> counts the group’s rows whose covariates, follow-up and event equal a row the model was fitted on. Two patients can share those values, and a re-extracted dataset can differ in a decimal, so a match is a reason to withhold the test, never proof of who the patients are, and no match is no proof of independence.</li>
+<li><strong>The model’s own uncertainty is not in the test.</strong> E is treated as fixed even for an independent model. When it was fitted on a cohort much larger than this one that is a small omission; with cohorts of similar size the p-value is optimistic. Adding it waits on TemporalHazard#731.</li>
+<li><strong>Follow-up stops at <code>TAU</code>.</strong> Past the last time a model has data for, its expectation is its parametric form running on, so deaths and expectations are both counted to <code>TAU</code> and no further, and the figures stop there too.</li>
+</ul>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The cohort&#39;s own follow-up and event, the deaths the models&#39; expectations are</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># counted against. Both are this job&#39;s TIME and EVENT, which every model shares.</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>.time <span class="ot">&lt;-</span> d[[TIME]]</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>.event <span class="ot">&lt;-</span> d[[EVENT]]</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">anyNA</span>(.time) <span class="sc">||</span> <span class="fu">anyNA</span>(.event) <span class="sc">||</span> <span class="sc">!</span><span class="fu">all</span>(.event <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))) {</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;The observed-against-expected test needs every patient&#39;s &quot;</span>, TIME, <span class="st">&quot; and a 0/1 &quot;</span>, EVENT,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot; with none missing.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>.t_oe <span class="ot">&lt;-</span> <span class="fu">pmin</span>(.time, TAU)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>.ev_oe <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(.event <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> .time <span class="sc">&lt;=</span> TAU)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>.groups <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">names</span>(models), <span class="fu">unique</span>(.actual))</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.character</span>(INDEPENDENT) <span class="sc">||</span> <span class="fu">anyNA</span>(INDEPENDENT) <span class="sc">||</span> <span class="fu">length</span>(<span class="fu">setdiff</span>(INDEPENDENT, <span class="fu">names</span>(models)))) {</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;INDEPENDENT must name models in MODELS; got &quot;</span>, <span class="fu">paste</span>(<span class="fu">setdiff</span>(INDEPENDENT, <span class="fu">names</span>(models)), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Rows of a group that equal a row of the model&#39;s fitted data, on its</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="co"># covariates, follow-up and event. A factor is keyed by its label, never its</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="co"># code: the fitted frame holds one group&#39;s levels and this cohort all of them.</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Rows are matched as multisets, so two patients who share every value are</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="co"># counted no more often than the fit holds them. This flags overlap; it does</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="co"># not identify anyone, and finding none proves nothing.</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>.row_key <span class="ot">&lt;-</span> <span class="cf">function</span>(frame, cols) {</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(paste, <span class="fu">c</span>(<span class="fu">lapply</span>(cols, <span class="cf">function</span>(v) {</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    x <span class="ot">&lt;-</span> frame[[v]]</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.numeric</span>(x)) <span class="fu">sprintf</span>(<span class="st">&quot;%.15g&quot;</span>, x) <span class="cf">else</span> <span class="fu">as.character</span>(x)</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  }), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\r</span><span class="st">&quot;</span>))</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>oe <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">names</span>(models), <span class="cf">function</span>(m) {</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>  nd <span class="ot">&lt;-</span> dd[, covariates[[m]], drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>  nd<span class="sc">$</span>time <span class="ot">&lt;-</span> .t_oe</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>  h <span class="ot">&lt;-</span> <span class="fu">predict</span>(models[[m]]<span class="sc">$</span>reported, <span class="at">newdata =</span> nd, <span class="at">type =</span> <span class="st">&quot;cumulative_hazard&quot;</span>)</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(<span class="sc">!</span><span class="fu">is.finite</span>(h))) {</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.finite</span>(h)), <span class="st">&quot; expected cumulative hazard(s) from the model for &quot;</span>, m, <span class="st">&quot; are not finite. &quot;</span>,</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;A follow-up of exactly 0 can do this for a model whose early phase has nu &gt; 0 and m = 0.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>  .cols <span class="ot">&lt;-</span> <span class="fu">c</span>(covariates[[m]], TIME, EVENT)</span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>  .fitted <span class="ot">&lt;-</span> <span class="fu">.row_key</span>(models[[m]]<span class="sc">$</span>reported<span class="sc">$</span>data<span class="sc">$</span>frame, .cols)</span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a>  .ours <span class="ot">&lt;-</span> <span class="fu">.row_key</span>(dd, .cols)</span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>  .tf <span class="ot">&lt;-</span> <span class="fu">table</span>(.fitted)</span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(.groups, <span class="cf">function</span>(g) {</span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>    rows <span class="ot">&lt;-</span> .actual <span class="sc">==</span> g</span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>    .tg <span class="ot">&lt;-</span> <span class="fu">table</span>(.ours[rows])</span>
+<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>    .k <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">names</span>(.tg), <span class="fu">names</span>(.tf))</span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>    inside <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">sum</span>(<span class="fu">pmin</span>(.tg[.k], .tf[.k])))</span>
+<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>    inference <span class="ot">&lt;-</span> <span class="cf">if</span> (inside <span class="sc">&gt;</span> <span class="dv">0</span>L) {</span>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;none: rows match the fit&quot;</span></span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> <span class="cf">if</span> (<span class="sc">!</span>m <span class="sc">%in%</span> INDEPENDENT) {</span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;none: independence not confirmed&quot;</span></span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;tested&quot;</span></span>
+<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>    r <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.one_sample_logrank</span>(.ev_oe[rows], h[rows], TEST_LEVEL)</span>
+<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (inference <span class="sc">!=</span> <span class="st">&quot;tested&quot;</span>) r[<span class="fu">c</span>(<span class="st">&quot;lower&quot;</span>, <span class="st">&quot;upper&quot;</span>, <span class="st">&quot;chisq&quot;</span>, <span class="st">&quot;p&quot;</span>)] <span class="ot">&lt;-</span> <span class="cn">NA_real_</span></span>
+<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">model =</span> m, <span class="at">group =</span> g, <span class="at">inference =</span> inference, <span class="at">in_fit =</span> inside, r)</span>
+<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>  }))</span>
+<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a><span class="co"># Captions too long for a chunk option line, built here.</span></span>
+<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a>.cap_oe <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Observed against model-expected deaths to &quot;</span>, <span class="fu">signif</span>(TAU, <span class="dv">4</span>), <span class="st">&quot;, by model and treatment received, with &quot;</span>,</span>
+<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>                  <span class="dv">100</span> <span class="sc">*</span> TEST_LEVEL, <span class="st">&quot;% intervals&quot;</span>)</span>
+<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Follow-up is counted to TAU = &quot;</span>, <span class="fu">signif</span>(TAU, <span class="dv">4</span>), <span class="st">&quot; (&quot;</span>, TIME, <span class="st">&quot;&#39;s units); &quot;</span>, <span class="fu">sum</span>(.time <span class="sc">&gt;</span> TAU),</span>
+<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot; patient(s) followed longer are censored there. Intervals are &quot;</span>, <span class="dv">100</span> <span class="sc">*</span> TEST_LEVEL, <span class="st">&quot;%.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<p>Follow-up is counted to TAU = 34.43 (iv_dead’s units); 1 patient(s) followed longer are censored there. Intervals are 95%.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(oe[<span class="fu">c</span>(<span class="st">&quot;model&quot;</span>, <span class="st">&quot;group&quot;</span>, <span class="st">&quot;inference&quot;</span>, <span class="st">&quot;in_fit&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;observed&quot;</span>, <span class="st">&quot;expected&quot;</span>, <span class="st">&quot;ratio&quot;</span>, <span class="st">&quot;lower&quot;</span>, <span class="st">&quot;upper&quot;</span>, <span class="st">&quot;chisq&quot;</span>, <span class="st">&quot;p&quot;</span>)],</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>             <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div id="tbl-oe" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-oe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 6: Observed against model-expected deaths to 34.43, by model and treatment received, with 95% intervals
+</figcaption>
+<div aria-describedby="tbl-oe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 27%">
+<col style="width: 5%">
+<col style="width: 3%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 2%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">model</th>
+<th style="text-align: left;">group</th>
+<th style="text-align: left;">inference</th>
+<th style="text-align: right;">in_fit</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">observed</th>
+<th style="text-align: right;">expected</th>
+<th style="text-align: right;">ratio</th>
+<th style="text-align: right;">lower</th>
+<th style="text-align: right;">upper</th>
+<th style="text-align: right;">chisq</th>
+<th style="text-align: right;">p</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">surgical</td>
+<td style="text-align: left;">surgical</td>
+<td style="text-align: left;">none: rows match the fit</td>
+<td style="text-align: right;">460</td>
+<td style="text-align: right;">460</td>
+<td style="text-align: right;">231</td>
+<td style="text-align: right;">231.0000</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">surgical</td>
+<td style="text-align: left;">transcatheter</td>
+<td style="text-align: left;">none: independence not confirmed</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">175</td>
+<td style="text-align: right;">185.4418</td>
+<td style="text-align: right;">0.9437</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">transcatheter</td>
+<td style="text-align: left;">surgical</td>
+<td style="text-align: left;">none: independence not confirmed</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">460</td>
+<td style="text-align: right;">231</td>
+<td style="text-align: right;">259.1283</td>
+<td style="text-align: right;">0.8915</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">transcatheter</td>
+<td style="text-align: left;">transcatheter</td>
+<td style="text-align: left;">none: rows match the fit</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">175</td>
+<td style="text-align: right;">174.9950</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<section id="the-average-expected-curve" class="level3">
+<h3 class="anchored" data-anchor-id="the-average-expected-curve">The average expected curve</h3>
+<p>Each model’s average expected curve is the mean of its patients’ predicted survival, over a grid to <code>TAU</code>, set against the Kaplan-Meier estimate of the same patients, with the test above in each panel’s title. The band around the average curve is the one <code>BAND</code> names, and its label says what it is: neither choice is the confidence interval of the mean curve, which waits on TemporalHazard#731. The average of the patients’ limits is not a bound on that interval either: the limits are formed on the logit scale, and averaging them after transforming back can fall inside the mean curve’s own interval. ⚠️ With <code>limits_mean</code> the patients’ limits are <code>CLEVEL</code>’s <strong>68%</strong>; the Kaplan-Meier band is <strong>95%</strong>. Both curves stop at <code>TAU</code>, where the test stops counting.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The grid runs to TAU, where the test and the Kaplan-Meier stop, and no</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># further. It holds HORIZON when HORIZON is within it, so the average curve can</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># be checked against the predictions table there; a grid point within rounding</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># of HORIZON is dropped for it, as hs-setup does. A HORIZON past TAU is checked</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co"># by a prediction of its own instead, and is not drawn.</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>.grid <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, TAU, <span class="at">length.out =</span> <span class="dv">51</span>L)[<span class="sc">-</span><span class="dv">1</span>L]</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (HORIZON <span class="sc">&lt;=</span> TAU) .grid <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">c</span>(.grid[<span class="fu">abs</span>(.grid <span class="sc">-</span> HORIZON) <span class="sc">&gt;</span> <span class="fl">1e-8</span> <span class="sc">*</span> TAU], HORIZON))</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>.at <span class="ot">&lt;-</span> <span class="fu">match</span>(HORIZON, .grid)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.numeric</span>(SPAGHETTI_N) <span class="sc">||</span> <span class="fu">length</span>(SPAGHETTI_N) <span class="sc">!=</span> <span class="dv">1</span>L <span class="sc">||</span> <span class="sc">!</span><span class="fu">is.finite</span>(SPAGHETTI_N) <span class="sc">||</span> SPAGHETTI_N <span class="sc">&lt;</span> <span class="dv">1</span>) {</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SPAGHETTI_N must be one positive number.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co"># BAND is checked before any prediction, by the helper that draws it. Only</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;limits_mean&quot; needs the patients&#39; limits, and the delta method over every</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co"># patient and grid time is the costly part, so &quot;spread&quot; asks for none.</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.cohort_curve_band</span>(<span class="fu">matrix</span>(<span class="dv">1</span>), <span class="fu">matrix</span>(<span class="dv">1</span>), <span class="fu">matrix</span>(<span class="dv">1</span>), BAND, CLEVEL))</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>.limits <span class="ot">&lt;-</span> <span class="fu">identical</span>(BAND, <span class="st">&quot;limits_mean&quot;</span>)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>curves <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>.lines <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (m <span class="cf">in</span> <span class="fu">names</span>(models)) {</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  .nd <span class="ot">&lt;-</span> dd[<span class="fu">rep</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(dd)), <span class="at">times =</span> <span class="fu">length</span>(.grid)), covariates[[m]], drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>  .nd<span class="sc">$</span>time <span class="ot">&lt;-</span> <span class="fu">rep</span>(.grid, <span class="at">each =</span> <span class="fu">nrow</span>(dd))</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>  .p <span class="ot">&lt;-</span> <span class="fu">predict</span>(models[[m]]<span class="sc">$</span>reported, <span class="at">newdata =</span> .nd, <span class="at">type =</span> <span class="st">&quot;survival&quot;</span>, <span class="at">se.fit =</span> .limits, <span class="at">level =</span> CLEVEL,</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>                <span class="at">conf.type =</span> <span class="st">&quot;logit&quot;</span>)</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Patients in rows, grid times in columns: the frame repeats the patients once per time.</span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  .s <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cf">if</span> (.limits) .p<span class="sc">$</span>fit <span class="cf">else</span> .p, <span class="at">nrow =</span> <span class="fu">nrow</span>(dd))</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>  .lo <span class="ot">&lt;-</span> <span class="cf">if</span> (.limits) <span class="fu">matrix</span>(.p<span class="sc">$</span>lower, <span class="at">nrow =</span> <span class="fu">nrow</span>(dd))</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>  .hi <span class="ot">&lt;-</span> <span class="cf">if</span> (.limits) <span class="fu">matrix</span>(.p<span class="sc">$</span>upper, <span class="at">nrow =</span> <span class="fu">nrow</span>(dd))</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (g <span class="cf">in</span> .groups) {</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    rows <span class="ot">&lt;-</span> .actual <span class="sc">==</span> g</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>    .b <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.cohort_curve_band</span>(.s[rows, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="cf">if</span> (.limits) .lo[rows, , <span class="at">drop =</span> <span class="cn">FALSE</span>],</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>                                              <span class="cf">if</span> (.limits) .hi[rows, , <span class="at">drop =</span> <span class="cn">FALSE</span>], BAND, CLEVEL)</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The curve drawn must be the mean of the patients&#39; predictions the table</span></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># reports, and the limits&#39; average the mean of theirs. Separate predict()</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># calls build the two, so a change to either would part them silently.</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>    .ph <span class="ot">&lt;-</span> pred[pred<span class="sc">$</span>model <span class="sc">==</span> m <span class="sc">&amp;</span> pred<span class="sc">$</span>group <span class="sc">==</span> g, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    .avg <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.na</span>(.at)) {</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>      .h <span class="ot">&lt;-</span> dd[rows, covariates[[m]], drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>      .h<span class="sc">$</span>time <span class="ot">&lt;-</span> HORIZON</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>      .hp <span class="ot">&lt;-</span> <span class="fu">predict</span>(models[[m]]<span class="sc">$</span>reported, <span class="at">newdata =</span> .h, <span class="at">type =</span> <span class="st">&quot;survival&quot;</span>, <span class="at">se.fit =</span> .limits, <span class="at">level =</span> CLEVEL,</span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>                     <span class="at">conf.type =</span> <span class="st">&quot;logit&quot;</span>)</span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (.limits) <span class="fu">colMeans</span>(.hp[<span class="fu">c</span>(<span class="st">&quot;fit&quot;</span>, <span class="st">&quot;lower&quot;</span>, <span class="st">&quot;upper&quot;</span>)]) <span class="cf">else</span> <span class="fu">c</span>(<span class="at">fit =</span> <span class="fu">mean</span>(.hp))</span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>      <span class="fu">c</span>(<span class="at">fit =</span> .b<span class="sc">$</span>mean[.at], <span class="at">lower =</span> .b<span class="sc">$</span>lower[.at], <span class="at">upper =</span> .b<span class="sc">$</span>upper[.at])</span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(<span class="fu">unname</span>(.avg[[<span class="st">&quot;fit&quot;</span>]]), <span class="fu">mean</span>(.ph<span class="sc">$</span>fit))))</span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (.limits) {</span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>      <span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(<span class="fu">unname</span>(.avg[[<span class="st">&quot;lower&quot;</span>]]), <span class="fu">mean</span>(.ph<span class="sc">$</span>lower))),</span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>                <span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(<span class="fu">unname</span>(.avg[[<span class="st">&quot;upper&quot;</span>]]), <span class="fu">mean</span>(.ph<span class="sc">$</span>upper))))</span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>    curves[[<span class="fu">length</span>(curves) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">model =</span> m, <span class="at">group =</span> g, <span class="at">time =</span> <span class="fu">c</span>(<span class="dv">0</span>, .grid), <span class="at">mean =</span> <span class="fu">c</span>(<span class="dv">1</span>, .b<span class="sc">$</span>mean),</span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">lower =</span> <span class="fu">c</span>(<span class="dv">1</span>, .b<span class="sc">$</span>lower), <span class="at">upper =</span> <span class="fu">c</span>(<span class="dv">1</span>, .b<span class="sc">$</span>upper))</span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The spaghetti&#39;s patients: all of them, or SPAGHETTI_N spaced evenly through</span></span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the ranking of survival at the grid&#39;s end, so the thinned lines keep the spread.</span></span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>    .pick <span class="ot">&lt;-</span> <span class="fu">which</span>(rows)</span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>    .pick <span class="ot">&lt;-</span> .pick[<span class="fu">order</span>(.s[.pick, <span class="fu">length</span>(.grid)])]</span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(.pick) <span class="sc">&gt;</span> SPAGHETTI_N) .pick <span class="ot">&lt;-</span> .pick[<span class="fu">unique</span>(<span class="fu">round</span>(<span class="fu">seq</span>(<span class="dv">1</span>, <span class="fu">length</span>(.pick), <span class="at">length.out =</span> SPAGHETTI_N)))]</span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>    .lines[[<span class="fu">length</span>(.lines) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">model =</span> m, <span class="at">group =</span> g, <span class="at">patient =</span> <span class="fu">rep</span>(.pick, <span class="at">each =</span> <span class="fu">length</span>(.grid) <span class="sc">+</span> <span class="dv">1</span>L),</span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">time =</span> <span class="fu">c</span>(<span class="dv">0</span>, .grid), <span class="at">surv =</span> <span class="fu">as.vector</span>(<span class="fu">t</span>(<span class="fu">cbind</span>(<span class="dv">1</span>, .s[.pick, , <span class="at">drop =</span> <span class="cn">FALSE</span>]))))</span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>curves <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, curves)</span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>.lines <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, .lines)</span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>.band_label <span class="ot">&lt;-</span> <span class="fu">attr</span>(.b, <span class="st">&quot;label&quot;</span>)</span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>.cap_km <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Kaplan-Meier survival of each group received, with 95% limits, against the average survival each &quot;</span>,</span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;model expects for the same patients. Band: &quot;</span>, .band_label, <span class="st">&quot;.&quot;</span>)</span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>.cap_spaghetti <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Each patient&#39;s predicted survival (thin lines; at most &quot;</span>, SPAGHETTI_N, <span class="st">&quot; per panel, spaced &quot;</span>,</span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;evenly through the ranking at the last time) and their average (heavy line), the average &quot;</span>,</span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;expected curve above.&quot;</span>)</span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Each panel&#39;s title carries its test, so the picture that cannot give a</span></span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a><span class="co"># p-value sits beside the number that does.</span></span>
+<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a>.panel <span class="ot">&lt;-</span> <span class="cf">function</span>(m, g) {</span>
+<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a>  r <span class="ot">&lt;-</span> oe[oe<span class="sc">$</span>model <span class="sc">==</span> m <span class="sc">&amp;</span> oe<span class="sc">$</span>group <span class="sc">==</span> g, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb14-75"><a href="#cb14-75" aria-hidden="true" tabindex="-1"></a>  test <span class="ot">&lt;-</span> <span class="cf">if</span> (r<span class="sc">$</span>inference <span class="sc">!=</span> <span class="st">&quot;tested&quot;</span>) {</span>
+<span id="cb14-76"><a href="#cb14-76" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">&quot;O/E &quot;</span>, <span class="fu">formatC</span>(r<span class="sc">$</span>ratio, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format =</span> <span class="st">&quot;f&quot;</span>), <span class="st">&quot; (no test: &quot;</span>, <span class="fu">sub</span>(<span class="st">&quot;^none: &quot;</span>, <span class="st">&quot;&quot;</span>, r<span class="sc">$</span>inference), <span class="st">&quot;)&quot;</span>)</span>
+<span id="cb14-77"><a href="#cb14-77" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb14-78"><a href="#cb14-78" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">&quot;O/E &quot;</span>, <span class="fu">formatC</span>(r<span class="sc">$</span>ratio, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format =</span> <span class="st">&quot;f&quot;</span>), <span class="st">&quot; (&quot;</span>, <span class="dv">100</span> <span class="sc">*</span> TEST_LEVEL, <span class="st">&quot;% &quot;</span>,</span>
+<span id="cb14-79"><a href="#cb14-79" aria-hidden="true" tabindex="-1"></a>           <span class="fu">formatC</span>(r<span class="sc">$</span>lower, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format =</span> <span class="st">&quot;f&quot;</span>), <span class="st">&quot; to &quot;</span>, <span class="fu">formatC</span>(r<span class="sc">$</span>upper, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format =</span> <span class="st">&quot;f&quot;</span>),</span>
+<span id="cb14-80"><a href="#cb14-80" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;), p &quot;</span>, <span class="fu">format.pval</span>(r<span class="sc">$</span>p, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">eps =</span> <span class="fl">0.001</span>))</span>
+<span id="cb14-81"><a href="#cb14-81" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-82"><a href="#cb14-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(<span class="st">&quot;received &quot;</span>, g, <span class="st">&quot;, &quot;</span>, m, <span class="st">&quot; model</span><span class="sc">\n</span><span class="st">&quot;</span>, test)</span>
+<span id="cb14-83"><a href="#cb14-83" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-84"><a href="#cb14-84" aria-hidden="true" tabindex="-1"></a>curves<span class="sc">$</span>panel <span class="ot">&lt;-</span> <span class="fu">mapply</span>(.panel, curves<span class="sc">$</span>model, curves<span class="sc">$</span>group)</span>
+<span id="cb14-85"><a href="#cb14-85" aria-hidden="true" tabindex="-1"></a>.lines<span class="sc">$</span>panel <span class="ot">&lt;-</span> <span class="fu">mapply</span>(.panel, .lines<span class="sc">$</span>model, .lines<span class="sc">$</span>group)</span>
+<span id="cb14-86"><a href="#cb14-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-87"><a href="#cb14-87" aria-hidden="true" tabindex="-1"></a><span class="co"># The Kaplan-Meier estimate of each group received, to TAU, as the test counts</span></span>
+<span id="cb14-88"><a href="#cb14-88" aria-hidden="true" tabindex="-1"></a><span class="co"># it, with 95% limits, as steps. A limit survfit() leaves undefined, as at a</span></span>
+<span id="cb14-89"><a href="#cb14-89" aria-hidden="true" tabindex="-1"></a><span class="co"># survival of 0, stays NA and that stretch of the band is not drawn.</span></span>
+<span id="cb14-90"><a href="#cb14-90" aria-hidden="true" tabindex="-1"></a>.km <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(.groups, <span class="cf">function</span>(g) {</span>
+<span id="cb14-91"><a href="#cb14-91" aria-hidden="true" tabindex="-1"></a>  rows <span class="ot">&lt;-</span> .actual <span class="sc">==</span> g</span>
+<span id="cb14-92"><a href="#cb14-92" aria-hidden="true" tabindex="-1"></a>  step <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.km_steps</span>(.t_oe[rows], .ev_oe[rows], <span class="fl">0.95</span>)</span>
+<span id="cb14-93"><a href="#cb14-93" aria-hidden="true" tabindex="-1"></a>  step<span class="sc">$</span>group <span class="ot">&lt;-</span> g</span>
+<span id="cb14-94"><a href="#cb14-94" aria-hidden="true" tabindex="-1"></a>  step</span>
+<span id="cb14-95"><a href="#cb14-95" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb14-96"><a href="#cb14-96" aria-hidden="true" tabindex="-1"></a><span class="co"># One copy per panel, in step order: merge() would reorder the steps.</span></span>
+<span id="cb14-97"><a href="#cb14-97" aria-hidden="true" tabindex="-1"></a>.pan <span class="ot">&lt;-</span> <span class="fu">unique</span>(curves[<span class="fu">c</span>(<span class="st">&quot;model&quot;</span>, <span class="st">&quot;group&quot;</span>, <span class="st">&quot;panel&quot;</span>)])</span>
+<span id="cb14-98"><a href="#cb14-98" aria-hidden="true" tabindex="-1"></a>.km <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(.pan)), <span class="cf">function</span>(i) {</span>
+<span id="cb14-99"><a href="#cb14-99" aria-hidden="true" tabindex="-1"></a>  k <span class="ot">&lt;-</span> .km[.km<span class="sc">$</span>group <span class="sc">==</span> .pan<span class="sc">$</span>group[[i]], , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb14-100"><a href="#cb14-100" aria-hidden="true" tabindex="-1"></a>  k<span class="sc">$</span>panel <span class="ot">&lt;-</span> .pan<span class="sc">$</span>panel[[i]]</span>
+<span id="cb14-101"><a href="#cb14-101" aria-hidden="true" tabindex="-1"></a>  k</span>
+<span id="cb14-102"><a href="#cb14-102" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb14-103"><a href="#cb14-103" aria-hidden="true" tabindex="-1"></a><span class="co"># The band only where survfit() defines both limits.</span></span>
+<span id="cb14-104"><a href="#cb14-104" aria-hidden="true" tabindex="-1"></a>.km_band <span class="ot">&lt;-</span> .km[<span class="sc">!</span><span class="fu">is.na</span>(.km<span class="sc">$</span>lower) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(.km<span class="sc">$</span>upper), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>.cols <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.group_colors</span>(<span class="fu">c</span>(<span class="st">&quot;Kaplan-Meier&quot;</span>, <span class="st">&quot;Expected&quot;</span>))</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(<span class="at">mapping =</span> ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>time)) <span class="sc">+</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_ribbon</span>(<span class="at">data =</span> .km_band, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">ymin =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>lower, <span class="at">ymax =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>upper, <span class="at">fill =</span> <span class="st">&quot;Kaplan-Meier&quot;</span>),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>                       <span class="at">alpha =</span> <span class="fl">0.15</span>) <span class="sc">+</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_path</span>(<span class="at">data =</span> .km, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">y =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>surv, <span class="at">color =</span> <span class="st">&quot;Kaplan-Meier&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_ribbon</span>(<span class="at">data =</span> curves, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">ymin =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>lower, <span class="at">ymax =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>upper, <span class="at">fill =</span> <span class="st">&quot;Expected&quot;</span>),</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>                       <span class="at">alpha =</span> <span class="fl">0.25</span>) <span class="sc">+</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_line</span>(<span class="at">data =</span> curves, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">y =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>mean, <span class="at">color =</span> <span class="st">&quot;Expected&quot;</span>), <span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>panel) <span class="sc">+</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_color_manual</span>(<span class="at">values =</span> .cols, <span class="at">name =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_fill_manual</span>(<span class="at">values =</span> .cols, <span class="at">name =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> TIME, <span class="at">y =</span> <span class="st">&quot;Survival (%)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Two panels a row on the page&#39;s 6.5 in, as tall as the rows need up to its 9 in.</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>.npanel <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(curves<span class="sc">$</span>panel))</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;hs-concordance-expected-km&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="fu">min</span>(<span class="dv">9</span>, <span class="dv">1</span> <span class="sc">+</span> <span class="fl">2.75</span> <span class="sc">*</span> <span class="fu">ceiling</span>(.npanel <span class="sc">/</span> <span class="dv">2</span>)))</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-expected-km" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-expected-km-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img role="img" src="assets/3f57a9ed09f51ffd3a1e8ae7d1057113.png" class="img-fluid figure-img" width="864">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-expected-km-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 1: Kaplan-Meier survival of each group received, with 95% limits, against the average survival each model expects for the same patients. Band: Average of the patients’ 68% limits (not an interval for the mean curve).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(.lines, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>time, <span class="at">y =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>surv)) <span class="sc">+</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_line</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">group =</span> .data<span class="sc">$</span>patient), <span class="at">alpha =</span> <span class="fl">0.15</span>, <span class="at">color =</span> <span class="st">&quot;gray40&quot;</span>) <span class="sc">+</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_line</span>(<span class="at">data =</span> curves, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">y =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>mean), <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>panel) <span class="sc">+</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> TIME, <span class="at">y =</span> <span class="st">&quot;Predicted survival (%)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;hs-concordance-spaghetti&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="fu">min</span>(<span class="dv">9</span>, <span class="dv">1</span> <span class="sc">+</span> <span class="fl">2.75</span> <span class="sc">*</span> <span class="fu">ceiling</span>(.npanel <span class="sc">/</span> <span class="dv">2</span>)))</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-spaghetti" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-spaghetti-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img role="img" src="assets/aa7e603c24d1afab054051036dad5411.png" class="img-fluid figure-img" width="864">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-spaghetti-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 2: Each patient’s predicted survival (thin lines; at most 200 per panel, spaced evenly through the ranking at the last time) and their average (heavy line), the average expected curve above.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
 </section>
 <section id="decision" class="level2">
 <h2 class="anchored" data-anchor-id="decision">Decision</h2>
@@ -2934,64 +3405,64 @@ Table 5: Median predicted survival at 5, by model and treatment received
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: optional. A named list, model -&gt; the logical column saying which</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co">#       patients were eligible for that treatment. An ineligible prediction</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#       takes no part in the choice and is left unchanged in `pred`.</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>ELIGIBLE <span class="ot">&lt;-</span> <span class="fu">list</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: optional. A named list, model -&gt; the logical column saying which</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co">#       patients were eligible for that treatment. An ineligible prediction</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co">#       takes no part in the choice and is left unchanged in `pred`.</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>ELIGIBLE <span class="ot">&lt;-</span> <span class="fu">list</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>.wide <span class="ot">&lt;-</span> <span class="cf">function</span>(col) {</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  w <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">names</span>(models), <span class="cf">function</span>(m) pred[[col]][pred<span class="sc">$</span>model <span class="sc">==</span> m], <span class="fu">numeric</span>(<span class="fu">nrow</span>(d)))</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">matrix</span>(w, <span class="at">nrow =</span> <span class="fu">nrow</span>(d), <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>, <span class="fu">names</span>(models)))</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>.fit <span class="ot">&lt;-</span> <span class="fu">.wide</span>(<span class="st">&quot;fit&quot;</span>)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>.lo <span class="ot">&lt;-</span> <span class="fu">.wide</span>(<span class="st">&quot;lower&quot;</span>)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>.hi <span class="ot">&lt;-</span> <span class="fu">.wide</span>(<span class="st">&quot;upper&quot;</span>)</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># An unnamed entry would be skipped by the loop below, leaving every model</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co"># eligible: a malformed eligibility rule must stop, not become an unmasked choice.</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(ELIGIBLE) <span class="sc">&amp;&amp;</span> (<span class="fu">is.null</span>(<span class="fu">names</span>(ELIGIBLE)) <span class="sc">||</span> <span class="fu">any</span>(<span class="sc">!</span><span class="fu">nzchar</span>(<span class="fu">names</span>(ELIGIBLE))) <span class="sc">||</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">anyDuplicated</span>(<span class="fu">names</span>(ELIGIBLE)))) {</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Every ELIGIBLE entry needs a unique name: the model it applies to.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (m <span class="cf">in</span> <span class="fu">names</span>(ELIGIBLE)) {</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span>m <span class="sc">%in%</span> <span class="fu">names</span>(models)) <span class="fu">stop</span>(<span class="st">&quot;ELIGIBLE names &quot;</span>, m, <span class="st">&quot;, which is not in MODELS.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  .ok <span class="ot">&lt;-</span> d[[ELIGIBLE[[m]]]]</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.logical</span>(.ok) <span class="sc">||</span> <span class="fu">anyNA</span>(.ok)) {</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;ELIGIBLE column for &quot;</span>, m, <span class="st">&quot; must be logical with no missing values.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  .fit[<span class="sc">!</span>.ok, m] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>.choose <span class="ot">&lt;-</span> <span class="cf">function</span>(i) {</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> .fit[i, ]</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  ok <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="sc">!</span><span class="fu">is.na</span>(f))</span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(ok) <span class="sc">&lt;</span> <span class="dv">2</span>L) {</span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">c</span>(<span class="at">best =</span> <span class="cf">if</span> (<span class="fu">length</span>(ok)) <span class="fu">names</span>(f)[ok] <span class="cf">else</span> <span class="cn">NA_character_</span>, <span class="at">optimal =</span> <span class="cn">NA_character_</span>, <span class="at">tie =</span> <span class="st">&quot;FALSE&quot;</span>))</span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  o <span class="ot">&lt;-</span> ok[<span class="fu">order</span>(f[ok], <span class="at">decreasing =</span> <span class="cn">TRUE</span>)]</span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  tie <span class="ot">&lt;-</span> f[o[<span class="dv">1</span>L]] <span class="sc">==</span> f[o[<span class="dv">2</span>L]]</span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  separated <span class="ot">&lt;-</span> <span class="sc">!</span>tie <span class="sc">&amp;&amp;</span> .lo[i, o[<span class="dv">1</span>L]] <span class="sc">&gt;</span> .hi[i, o[<span class="dv">2</span>L]]</span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="at">best =</span> <span class="cf">if</span> (tie) <span class="cn">NA_character_</span> <span class="cf">else</span> <span class="fu">names</span>(f)[o[<span class="dv">1</span>L]],</span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">optimal =</span> <span class="cf">if</span> (separated) <span class="fu">names</span>(f)[o[<span class="dv">1</span>L]] <span class="cf">else</span> <span class="cn">NA_character_</span>,</span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">tie =</span> <span class="fu">as.character</span>(tie))</span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>.ch <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(d)), .choose, <span class="fu">character</span>(<span class="dv">3</span>L))</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>decision <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">row =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(d)), <span class="at">group =</span> .actual,</span>
-<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>                       <span class="at">best =</span> .ch[<span class="st">&quot;best&quot;</span>, ], <span class="at">optimal =</span> .ch[<span class="st">&quot;optimal&quot;</span>, ], <span class="at">tie =</span> .ch[<span class="st">&quot;tie&quot;</span>, ] <span class="sc">==</span> <span class="st">&quot;TRUE&quot;</span>)</span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>.levels <span class="ot">&lt;-</span> <span class="fu">names</span>(models)</span>
-<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a><span class="co"># A tie, or a patient with fewer than two eligible models, has no best model.</span></span>
-<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a><span class="co"># They are counted in their own columns so every patient is in the table.</span></span>
-<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>.best_lbl <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(decision<span class="sc">$</span>tie, <span class="st">&quot;(tie)&quot;</span>, <span class="fu">ifelse</span>(<span class="fu">is.na</span>(decision<span class="sc">$</span>best), <span class="st">&quot;(no choice)&quot;</span>, decision<span class="sc">$</span>best))</span>
-<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>best_tbl <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="at">received =</span> <span class="fu">factor</span>(decision<span class="sc">$</span>group, .levels),</span>
-<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>                  <span class="at">best =</span> <span class="fu">factor</span>(.best_lbl, <span class="fu">c</span>(.levels, <span class="st">&quot;(tie)&quot;</span>, <span class="st">&quot;(no choice)&quot;</span>)))</span>
-<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>.sep <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">is.na</span>(decision<span class="sc">$</span>optimal)</span>
-<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>.optimal_caption <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Treatment received against optimal treatment, the &quot;</span>, <span class="fu">sum</span>(.sep),</span>
-<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot; patients whose choice is separated at ~68%; &quot;</span>, <span class="fu">sum</span>(<span class="sc">!</span>.sep), <span class="st">&quot; are not&quot;</span>)</span>
-<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sum</span>(decision<span class="sc">$</span>tie), <span class="st">&quot;patient(s) have an exact tie between their two best models.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>.wide <span class="ot">&lt;-</span> <span class="cf">function</span>(col) {</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  w <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">names</span>(models), <span class="cf">function</span>(m) pred[[col]][pred<span class="sc">$</span>model <span class="sc">==</span> m], <span class="fu">numeric</span>(<span class="fu">nrow</span>(d)))</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">matrix</span>(w, <span class="at">nrow =</span> <span class="fu">nrow</span>(d), <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>, <span class="fu">names</span>(models)))</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>.fit <span class="ot">&lt;-</span> <span class="fu">.wide</span>(<span class="st">&quot;fit&quot;</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>.lo <span class="ot">&lt;-</span> <span class="fu">.wide</span>(<span class="st">&quot;lower&quot;</span>)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>.hi <span class="ot">&lt;-</span> <span class="fu">.wide</span>(<span class="st">&quot;upper&quot;</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co"># An unnamed entry would be skipped by the loop below, leaving every model</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co"># eligible: a malformed eligibility rule must stop, not become an unmasked choice.</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(ELIGIBLE) <span class="sc">&amp;&amp;</span> (<span class="fu">is.null</span>(<span class="fu">names</span>(ELIGIBLE)) <span class="sc">||</span> <span class="fu">any</span>(<span class="sc">!</span><span class="fu">nzchar</span>(<span class="fu">names</span>(ELIGIBLE))) <span class="sc">||</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">anyDuplicated</span>(<span class="fu">names</span>(ELIGIBLE)))) {</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Every ELIGIBLE entry needs a unique name: the model it applies to.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (m <span class="cf">in</span> <span class="fu">names</span>(ELIGIBLE)) {</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span>m <span class="sc">%in%</span> <span class="fu">names</span>(models)) <span class="fu">stop</span>(<span class="st">&quot;ELIGIBLE names &quot;</span>, m, <span class="st">&quot;, which is not in MODELS.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  .ok <span class="ot">&lt;-</span> d[[ELIGIBLE[[m]]]]</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.logical</span>(.ok) <span class="sc">||</span> <span class="fu">anyNA</span>(.ok)) {</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;ELIGIBLE column for &quot;</span>, m, <span class="st">&quot; must be logical with no missing values.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>  .fit[<span class="sc">!</span>.ok, m] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>.choose <span class="ot">&lt;-</span> <span class="cf">function</span>(i) {</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  f <span class="ot">&lt;-</span> .fit[i, ]</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>  ok <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="sc">!</span><span class="fu">is.na</span>(f))</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(ok) <span class="sc">&lt;</span> <span class="dv">2</span>L) {</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">c</span>(<span class="at">best =</span> <span class="cf">if</span> (<span class="fu">length</span>(ok)) <span class="fu">names</span>(f)[ok] <span class="cf">else</span> <span class="cn">NA_character_</span>, <span class="at">optimal =</span> <span class="cn">NA_character_</span>, <span class="at">tie =</span> <span class="st">&quot;FALSE&quot;</span>))</span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>  o <span class="ot">&lt;-</span> ok[<span class="fu">order</span>(f[ok], <span class="at">decreasing =</span> <span class="cn">TRUE</span>)]</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>  tie <span class="ot">&lt;-</span> f[o[<span class="dv">1</span>L]] <span class="sc">==</span> f[o[<span class="dv">2</span>L]]</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>  separated <span class="ot">&lt;-</span> <span class="sc">!</span>tie <span class="sc">&amp;&amp;</span> .lo[i, o[<span class="dv">1</span>L]] <span class="sc">&gt;</span> .hi[i, o[<span class="dv">2</span>L]]</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="at">best =</span> <span class="cf">if</span> (tie) <span class="cn">NA_character_</span> <span class="cf">else</span> <span class="fu">names</span>(f)[o[<span class="dv">1</span>L]],</span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">optimal =</span> <span class="cf">if</span> (separated) <span class="fu">names</span>(f)[o[<span class="dv">1</span>L]] <span class="cf">else</span> <span class="cn">NA_character_</span>,</span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">tie =</span> <span class="fu">as.character</span>(tie))</span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>.ch <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(d)), .choose, <span class="fu">character</span>(<span class="dv">3</span>L))</span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a>decision <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">row =</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(d)), <span class="at">group =</span> .actual,</span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a>                       <span class="at">best =</span> .ch[<span class="st">&quot;best&quot;</span>, ], <span class="at">optimal =</span> .ch[<span class="st">&quot;optimal&quot;</span>, ], <span class="at">tie =</span> .ch[<span class="st">&quot;tie&quot;</span>, ] <span class="sc">==</span> <span class="st">&quot;TRUE&quot;</span>)</span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>.levels <span class="ot">&lt;-</span> <span class="fu">names</span>(models)</span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a><span class="co"># A tie, or a patient with fewer than two eligible models, has no best model.</span></span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a><span class="co"># They are counted in their own columns so every patient is in the table.</span></span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a>.best_lbl <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(decision<span class="sc">$</span>tie, <span class="st">&quot;(tie)&quot;</span>, <span class="fu">ifelse</span>(<span class="fu">is.na</span>(decision<span class="sc">$</span>best), <span class="st">&quot;(no choice)&quot;</span>, decision<span class="sc">$</span>best))</span>
+<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a>best_tbl <span class="ot">&lt;-</span> <span class="fu">table</span>(<span class="at">received =</span> <span class="fu">factor</span>(decision<span class="sc">$</span>group, .levels),</span>
+<span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a>                  <span class="at">best =</span> <span class="fu">factor</span>(.best_lbl, <span class="fu">c</span>(.levels, <span class="st">&quot;(tie)&quot;</span>, <span class="st">&quot;(no choice)&quot;</span>)))</span>
+<span id="cb18-46"><a href="#cb18-46" aria-hidden="true" tabindex="-1"></a>.sep <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">is.na</span>(decision<span class="sc">$</span>optimal)</span>
+<span id="cb18-47"><a href="#cb18-47" aria-hidden="true" tabindex="-1"></a>.optimal_caption <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Treatment received against optimal treatment, the &quot;</span>, <span class="fu">sum</span>(.sep),</span>
+<span id="cb18-48"><a href="#cb18-48" aria-hidden="true" tabindex="-1"></a>                           <span class="st">&quot; patients whose choice is separated at ~68%; &quot;</span>, <span class="fu">sum</span>(<span class="sc">!</span>.sep), <span class="st">&quot; are not&quot;</span>)</span>
+<span id="cb18-49"><a href="#cb18-49" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sum</span>(decision<span class="sc">$</span>tie), <span class="st">&quot;patient(s) have an exact tie between their two best models.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>0 patient(s) have an exact tie between their two best models.</code></pre>
@@ -3000,12 +3471,12 @@ Table 5: Median predicted survival at 5, by model and treatment received
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(best_tbl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(best_tbl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-decision-best" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-decision-best-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 6: Treatment received against best-predicted treatment, every patient
+Table 7: Treatment received against best-predicted treatment, every patient
 </figcaption>
 <div aria-describedby="tbl-decision-best-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -3044,12 +3515,12 @@ Table 6: Treatment received against best-predicted treatment, every patient
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">table</span>(<span class="at">received =</span> <span class="fu">factor</span>(decision<span class="sc">$</span>group[.sep], .levels), <span class="at">optimal =</span> <span class="fu">factor</span>(decision<span class="sc">$</span>optimal[.sep], .levels)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">table</span>(<span class="at">received =</span> <span class="fu">factor</span>(decision<span class="sc">$</span>group[.sep], .levels), <span class="at">optimal =</span> <span class="fu">factor</span>(decision<span class="sc">$</span>optimal[.sep], .levels)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-decision-optimal" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-decision-optimal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table 7: Treatment received against optimal treatment, the 28 patients whose choice is separated at ~68%; 697 are not
+Table 8: Treatment received against optimal treatment, the 28 patients whose choice is separated at ~68%; 697 are not
 </figcaption>
 <div aria-describedby="tbl-decision-optimal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
@@ -3085,23 +3556,27 @@ Table 7: Treatment received against optimal treatment, the 28 patients whose ch
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read by the plotting jobs in this set. `clevel`, `horizon` and `overlap`</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># travel with the estimates because each changes what the numbers mean, and a</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co"># reader of the file should not have to recover them from prose.</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>art <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">pred =</span> pred, <span class="at">patients =</span> patients, <span class="at">horizon =</span> HORIZON, <span class="at">time =</span> TIME, <span class="at">clevel =</span> CLEVEL,</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">models =</span> MODELS, <span class="at">covariates =</span> covariates, <span class="at">support =</span> support, <span class="at">overlap =</span> OVERLAP,</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">decision =</span> <span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;decision&quot;</span>)) decision <span class="cf">else</span> <span class="cn">NULL</span>)</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>art <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  art,</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">artifacts =</span> .provenance_artifacts,</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> cc</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(art, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;hs-concordance.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read by the plotting jobs in this set. `clevel`, `horizon` and `overlap`</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co"># travel with the estimates because each changes what the numbers mean, and a</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co"># reader of the file should not have to recover them from prose; `tau` and</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># `test_level` travel with the observed-against-expected table `oe` for the</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># same reason. The grid curves the figures draw are not saved: they are</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co"># recomputed from the models in seconds.</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>art <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">pred =</span> pred, <span class="at">patients =</span> patients, <span class="at">horizon =</span> HORIZON, <span class="at">time =</span> TIME, <span class="at">clevel =</span> CLEVEL,</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">models =</span> MODELS, <span class="at">covariates =</span> covariates, <span class="at">support =</span> support, <span class="at">overlap =</span> OVERLAP,</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">oe =</span> oe, <span class="at">tau =</span> TAU, <span class="at">test_level =</span> TEST_LEVEL, <span class="at">band =</span> BAND,</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">decision =</span> <span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;decision&quot;</span>)) decision <span class="cf">else</span> <span class="cn">NULL</span>)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>art <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  art,</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">artifacts =</span> .provenance_artifacts,</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME),</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> EVENT, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> cc</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(art, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;hs-concordance.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -3124,17 +3599,17 @@ Table 7: Treatment received against optimal treatment, the 28 patients whose ch
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-06 10:05:02 EST</td>
+<td style="text-align: left;">2026-11-11 03:03:09 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-06 10:05:03 EST</td>
+<td style="text-align: left;">2026-11-11 03:03:15 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">0 s</td>
+<td style="text-align: left;">6 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3174,17 +3649,17 @@ Table 7: Treatment received against optimal treatment, the 28 patients whose ch
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.6</td>
+<td style="text-align: left;">1.5.7</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261106.parquet</td>
+<td style="text-align: left;">built_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-06</td>
+<td style="text-align: left;">2026-11-11</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3219,7 +3694,7 @@ Table 7: Treatment received against optimal treatment, the 28 patients whose ch
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-surgical/hm.rds</code> (hazard-regression-model), rendered 2026-11-06 10:04:33 -0500, data built_20261106.parquet</td>
+<td style="text-align: left;"><code>dead-surgical/hm.rds</code> (hazard-regression-model), rendered 2026-11-11 03:02:45 -0500, data built_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3229,7 +3704,7 @@ Table 7: Treatment received against optimal treatment, the 28 patients whose ch
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-transcatheter/hm.rds</code> (hazard-regression-model), rendered 2026-11-06 10:04:53 -0500, data built_20261106.parquet</td>
+<td style="text-align: left;"><code>dead-transcatheter/hm.rds</code> (hazard-regression-model), rendered 2026-11-11 03:03:01 -0500, data built_20261111.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Reproducibility</td>
@@ -3244,7 +3719,7 @@ Table 7: Treatment received against optimal treatment, the 28 patients whose ch
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"hs.concordance.dead.approach","rendered":"2026-11-06T15:05:03Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiRtemplates","version":"1.5.6","source":null},{"package":"hvtiRutilities","version":"1.5.21","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"TemporalHazard","version":"1.2.19","source":null},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261106.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-06T14:59:02Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[{"path":"90_estimates/dead-surgical/hm.rds","role":"hazard-regression-model","bytes":45545,"mtime":"2026-11-06T15:04:38Z","sha256":"7c553eca8409b8ae5ec8963ab608ad0b9eb412123f799183697bc70b67bbf46b"},{"path":"90_estimates/dead-surgical/hz.rds","role":"hazard-shape-model","bytes":5682,"mtime":"2026-11-06T15:04:26Z","sha256":"b6c82cef410b5a378b4294cb8c0d88f35f434a099226952ab31ffc52b33d3044"},{"path":"90_estimates/dead-transcatheter/hm.rds","role":"hazard-regression-model","bytes":21454,"mtime":"2026-11-06T15:04:56Z","sha256":"472fec9e466f720e4a843391d734a56cdd89b91e3bb41e0df7574eb751fa12b7"},{"path":"90_estimates/dead-transcatheter/hz.rds","role":"hazard-shape-model","bytes":4503,"mtime":"2026-11-06T15:04:46Z","sha256":"ec8107b427554319746733662ad491f69f4ea585b3baa85ff4d354bf047015e3"}],"subject":"dead","type":"approach","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-11-06T10:05:02-0500","end":"2026-11-06T10:05:03-0500","time_zone":"EST","duration_seconds":0.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hs.concordance.dead.approach.qmd","template":"hs.concordance","prefix":"hs","qualifier":"concordance","subject":"dead","type":"approach","hvtiRtemplates":"1.5.6"},"datasets":[{"name":"built","version_file":"built_20261106.parquet","registered":"2026-11-06","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"d99147a5c095","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-surgical/hz.rds","set":"dead-surgical","role":"hazard-shape-model"},{"file":"90_estimates/dead-surgical/hm.rds","set":"dead-surgical","role":"hazard-regression-model","rendered_at":"2026-11-06T10:04:33-0500","dataset_version":"built_20261106.parquet"},{"file":"90_estimates/dead-transcatheter/hz.rds","set":"dead-transcatheter","role":"hazard-shape-model"},{"file":"90_estimates/dead-transcatheter/hm.rds","set":"dead-transcatheter","role":"hazard-regression-model","rendered_at":"2026-11-06T10:04:53-0500","dataset_version":"built_20261106.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"40_graphs/hs.concordance.dead.approach.qmd",".hvti_render_id":"1522d8b21991b421cc70c8d4a1bce2fa5e2c96da9c8df16d55e3062c02604931",".hvti_source_sha256":"631a3b4200527f1c449f81ea4324df72bf7e997a7484ea08fd51f513c2c4b94b"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"hs.concordance.dead.approach","rendered":"2026-11-11T08:03:15Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRtemplates","version":"1.5.7","source":"github","sha":"e8bfb956d8491085b6c4d2c5b2da933ad9ee74f7"},{"package":"hvtiRutilities","version":"1.5.22","source":"github","sha":"0f816207958226308ec7812c5100793a6d120d8e"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"TemporalHazard","version":"1.3.0","source":"github","sha":"f30dbe4f52899624d512b6a73d7378c08e73873b"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[{"path":"90_estimates/dead-surgical/hm.rds","role":"hazard-regression-model","bytes":45540,"mtime":"2026-11-11T08:02:49Z","sha256":"889b8e8590519ed4dc9ee3f59462abc391a6ab71f29e7aabd7ea8011b62755f4"},{"path":"90_estimates/dead-surgical/hz.rds","role":"hazard-shape-model","bytes":5679,"mtime":"2026-11-11T08:02:40Z","sha256":"2039eec806ba8c410ef41a6116a1a7a5e7c7e58b6a7c60b285e374f4a9d0cd6e"},{"path":"90_estimates/dead-transcatheter/hm.rds","role":"hazard-regression-model","bytes":21452,"mtime":"2026-11-11T08:03:04Z","sha256":"8d4f9611aa01a2b60171818efdd653dfa1e73668929e14e5f0d6e9908ce71271"},{"path":"90_estimates/dead-transcatheter/hz.rds","role":"hazard-shape-model","bytes":4500,"mtime":"2026-11-11T08:02:56Z","sha256":"4a36c68465244dfd9039cf3c19c8d10a0416bbc6ee404e5d1f79def51c1dce65"}],"subject":"dead","type":"approach","analysis":{"time":{"variable":"iv_dead"},"event":{"variable":"dead","event":1,"censored":0}},"cohort":{"n":725,"n_events":406,"n_censored":319},"run":{"start":"2026-11-11T03:03:09-0500","end":"2026-11-11T03:03:15-0500","time_zone":"EST","duration_seconds":5.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"hs.concordance.dead.approach.qmd","template":"hs.concordance","prefix":"hs","qualifier":"concordance","subject":"dead","type":"approach","hvtiRtemplates":"1.5.7"},"datasets":[{"name":"built","version_file":"built_20261111.parquet","registered":"2026-11-11","source_file":"built.rds","rows":725,"patients":725,"where":"!is.na(creat_pr)","sha256":"d99147a5c095","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-surgical/hz.rds","set":"dead-surgical","role":"hazard-shape-model"},{"file":"90_estimates/dead-surgical/hm.rds","set":"dead-surgical","role":"hazard-regression-model","rendered_at":"2026-11-11T03:02:45-0500","dataset_version":"built_20261111.parquet"},{"file":"90_estimates/dead-transcatheter/hz.rds","set":"dead-transcatheter","role":"hazard-shape-model"},{"file":"90_estimates/dead-transcatheter/hm.rds","set":"dead-transcatheter","role":"hazard-regression-model","rendered_at":"2026-11-11T03:03:01-0500","dataset_version":"built_20261111.parquet"}],"reproducibility":{"renv":{"active":false,"lock_sha256":"ed18165d16bf"}}},"source":"40_graphs/hs.concordance.dead.approach.qmd",".hvti_render_id":"bc75cea3a1edc3f9803759eb643f6b79d991b4dd77b682de59104cce6fff06dd",".hvti_source_sha256":"3417327ca4f20ae0e02929ea799598bdbd76830070921a84f754599050cc85dd"}</script>
 </section>
 
 </main>

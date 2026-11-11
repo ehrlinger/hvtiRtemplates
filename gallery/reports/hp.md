@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:04
+2026-11-11 03:02
 
 An `hp` job **reads** its inputs and does not recompute them: the
 actuarial life table from the `ac` job and the parametric fit from the
@@ -12,8 +12,7 @@ actuarial life table from the `ac` job and the parametric fit from the
 disagree with it.
 
 Neither the life table nor the fit belongs here, and **nor does SAS
-parity** — a parity job borrows the ordinal of the job it checks and
-lives in `parity/`.
+parity**, which is a job of its own.
 
 Code
 
@@ -60,7 +59,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.6
+hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -91,7 +90,7 @@ KEY <- NULL
 TIME <- NULL
 EVENT <- NULL
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("hp-survival"). The names are the
 # file names, listed for each template in the templates README.
@@ -194,7 +193,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261106.parquet) |
+| Source              | dataset `study` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -282,12 +281,12 @@ guessed, and **neither errors when wrong**.
   `conf.type = "logit"` must be passed explicitly. Omitting it does not
   error; it silently shifts every confidence limit.
 
-⚠️ **`%kaplan` uses the same ±1 SE convention** — its `T_ALPHA` is `1`,
+⚠️ **`%kaplan` uses the same ±1 SE convention**: its `T_ALPHA` is `1`,
 so the `CL_LOWER`/`CL_UPPER` in the `ac` life table are also a ~68%
 band. That matters most in *this* job, because this is where both bands
 are drawn on one figure.
 
-The figure is internally consistent — both bands are ~68%. But a reader
+The figure is internally consistent: both bands are ~68%. But a reader
 who takes either for a 95% interval is reading one **roughly half as
 wide as they think**, and that is measured rather than rhetorical: on
 the same fit and the same grid, the 95% band is **1.97× the width** of
@@ -381,10 +380,10 @@ not 95%
 
 ### What these confidence limits are worth
 
-The `hz` fit runs against a **near-singular Hessian** — check its
-`rcond` in the `hz` report. That makes the *marginal* standard errors on
-weakly identified shape parameters unstable; in parity work they
-differed from SAS by 1.25× to 5.1×.
+The `hz` fit runs against a **near-singular Hessian** (check its `rcond`
+in the `hz` report). That makes the *marginal* standard errors on weakly
+identified shape parameters unstable; in parity work they differed from
+SAS by 1.25× to 5.1×.
 
 The confidence limits here nevertheless agreed with SAS to within
 0.2%–5% across every grid point, computed from that same covariance
@@ -393,7 +392,7 @@ matrix.
 Both hold at once because `se(S(t))² = gᵀVg` for the gradient `g` of
 survival with respect to the parameters. The marginal variances on the
 diagonal of `V` can differ substantially while that quadratic form
-agrees, if the two matrices carry compensating correlations — which is
+agrees, if the two matrices carry compensating correlations, which is
 exactly what a near-singular problem produces.
 
 **So the survival band is the trustworthy output of this pipeline, and
@@ -514,8 +513,8 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:04:06 EST |
-|  | Ended | 2026-11-06 10:04:07 EST |
+| Run | Started | 2026-11-11 03:02:26 EST |
+|  | Ended | 2026-11-11 03:02:26 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -524,15 +523,15 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 |  | Template | hp |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-11-06 10:03:23 -0500, data built_20261106.parquet |
-|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-11-06 10:03:42 -0500, data built_20261106.parquet |
+| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-11-11 03:01:50 -0500, data built_20261111.parquet |
+|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-11-11 03:02:06 -0500, data built_20261111.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-06 10:20
+2026-11-11 03:04
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -28,8 +28,8 @@ if (utils::packageVersion("hvtiRpropensity") < "0.2.0") {
   stop("This job needs hvtiRpropensity >= 0.2.0, the package's floor (bundles record their treatment levels from 0.1.10); ",
        utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.8.9") {
-  stop("This job needs hvtiPlotR >= 2.8.9, the version hvtiRtemplates requires; ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.20") {
+  stop("This job needs hvtiPlotR >= 2.8.20, the version hvtiRtemplates requires; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -54,8 +54,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261106.parquet`, dated 2026-11-06 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.6
+**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.7
 
 ## Study choices
 
@@ -88,7 +88,7 @@ MATCH <- "match_pair"
 DATASET <- "built"
 ID <- "patient_id"
 
-# Each figure is saved to graphs/ as a PNG (for Word), and a PDF and a TIFF (for the publisher).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("lp-mirror-weighted"). The names are the
 # file names, listed for each template in the templates README.
@@ -288,7 +288,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261106.parquet) |
+| Source              | dataset `study` (built_20261111.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -483,7 +483,7 @@ if (!is.null(MATCH)) {
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), "#| label: fig-mirror-matched",
     "#| fig-cap: \"Propensity score of the matched patients in each group, over all patients in gray. Gray bars with a",
-    "#|   black outline mark all patients, blue bars the matched treated patients above the axis and orange",
+    "#|   black outline mark all patients, blue bars the matched treated patients above the axis and vermillion",
     "#|   bars the matched controls below it.\"",
     "knitr::include_graphics(.link, error = FALSE)", .fence, "",
     paste0(.fence, "{r}"), "#| label: tbl-mirror-matched",
@@ -507,8 +507,8 @@ knitr::include_graphics(.link, error = FALSE)
 
 Figure 3: Propensity score of the matched patients in each group, over
 all patients in gray. Gray bars with a black outline mark all patients,
-blue bars the matched treated patients above the axis and orange bars
-the matched controls below it.
+blue bars the matched treated patients above the axis and vermillion
+bars the matched controls below it.
 
 Code
 
@@ -527,8 +527,8 @@ Table 5: Patients in each group, and those matched
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-06 10:20:36 EST |
-|  | Ended | 2026-11-06 10:20:38 EST |
+| Run | Started | 2026-11-11 03:04:31 EST |
+|  | Ended | 2026-11-11 03:04:32 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -537,14 +537,14 @@ Table 5: Patients in each group, and those matched
 |  | Template | lp.mirror |
 |  | Subject | approach |
 |  | Type | matched |
-|  | hvtiRtemplates | 1.5.6 |
-| Dataset `built` | Version file | built_20261106.parquet |
-|  | Version date | 2026-11-06 |
+|  | hvtiRtemplates | 1.5.7 |
+| Dataset `built` | Version file | built_20261111.parquet |
+|  | Version date | 2026-11-11 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-11-06 10:06:28 -0500, data built_20261106.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-11-11 03:04:19 -0500, data built_20261111.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

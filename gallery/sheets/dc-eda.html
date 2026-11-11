@@ -35,7 +35,7 @@
 <h1>dc-eda: Descriptive plot: EDA report</h1>
 <p class="kind">Run sheet</p>
 <h2>What it does</h2>
-<p>The whole data-checking report in one render: every column's contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table. <a href="../reports/dc-eda.html">See the report it produces</a> on the gallery's synthetic study.</p>
+<p>The whole data-checking report in one render, the first look the SAS ODS tables were: every column's contents, goodness of follow-up, then continuous variables and categorical variables as percentages and counts, each section with its table. <a href="../reports/dc-eda.html">See the report it produces</a> on the gallery's synthetic study.</p>
 <h2>Prerequisites</h2>
 <ul>
 <li><strong>A study.</strong> The job runs inside a study folder set up with <code>_study.yml</code>. <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html">Start a new study</a> shows how.</li>
@@ -53,7 +53,7 @@
 <h2>Run it</h2>
 <p><strong>Render a draft as you go.</strong> <code>render_job(job)</code> runs the whole job in a clean R session and writes the report beside it. Render early and often: while any <code>EDIT:</code> marker is left, the report opens with a DRAFT banner listing them, and its numbers are not a result. <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#render-as-you-go">Work a job</a> explains why to render rather than run chunks by hand.</p>
 <p><strong>Then the final.</strong> Once no marker is left, <code>render_job(job, final = TRUE)</code> renders the accepted result. It refuses an open marker, a skipped chunk, <code>stop_here()</code> and unregistered data, and it records the job's provenance beside the report.</p>
-<footer>Generated from the template by hvtiRtemplates, 1.5.6 · built 2026-11-06. The template holds the details; this sheet is its outline.</footer>
+<footer>Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11. The template holds the details; this sheet is its outline.</footer>
 </main>
 </body>
 </html>

@@ -1,0 +1,87 @@
+# sid-stability: SID clustering: stability
+
+[← The template
+gallery](https://ehrlinger.github.io/hvtiRtemplates/gallery/index.md)
+
+# sid-stability: SID clustering: stability
+
+Run sheet
+
+## What it does
+
+Refits the SID forest over many seeds on sid-fit's patients and imputed
+values, runs PAM as sid-clusters does, and reports agreement with the
+reported groups, how often each is found, where an unfound group's
+patients go, co-association and PAC, an optional tracked share, and an
+optional refit without named variables. [See the report it
+produces](https://ehrlinger.github.io/hvtiRtemplates/gallery/reports/sid-stability.md)
+on the gallery's synthetic study.
+
+## Prerequisites
+
+- **A study.** The job runs inside a study folder set up with
+  `_study.yml`. [Start a new
+  study](https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html)
+  shows how.
+- **The jobs it reads from.** Render **sid-fit** and **sid-clusters**
+  first, in this same set: the same `subject` and `type` as this job,
+  which is how it finds what they saved (`sid.rds`, `sid-clusters.rds`).
+  For a final render, render them final too: a final render refuses a
+  hand-off saved from unregistered data.
+- **Packages:** `cluster` (\>= 2.1.8), `randomForestSRC`, `hvtiPlotR`
+  (\>= 2.8.9), `hvtiRutilities`. The job checks each floor when it
+  starts, so an older library stops it at the top rather than partway
+  through.
+- **A background run.** A long job starts from the study's R console
+  with `hvtiRtemplates::run_job()`, which checks it first and renders it
+  in a process that outlives the session.
+
+## Outline
+
+These are the job's own sections, in order. The detail lives in the
+template: the comments at each `EDIT:` marker say what to set and why,
+and [Work a
+job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-what-you-have-to-change)
+shows three ways to find them.
+
+1.  **Study choices**: 5 choices marked `EDIT:`.
+2.  **The reported solution**: reads what **sid-fit** and
+    **sid-clusters** saved (`sid.rds`, `sid-clusters.rds`).
+3.  **The data the refits use**
+4.  **The refits**: a long fit that will not start in an interactive
+    session, so the job runs in the background; fits and caches its
+    results, so a later render reloads them (`REFIT <- TRUE` recomputes
+    them).
+5.  **Agreement with the reported groups**
+6.  **Label-free agreement**
+7.  **When a group is not found**
+8.  **Co-association**
+9.  **Without the dropped variables**
+10. **Save**
+
+## Run it
+
+**Run it in the background.** The fit is long, and a fit run chunk by
+chunk dies with the session. From the study's R console,
+`hvtiRtemplates::run_job("30_analyses/sid.stability.<subject>.<type>.qmd")`
+(`analyses/` in an older study whose folders carry no number) checks the
+job, then renders it in a background process that outlives the session;
+add `final = TRUE` for the final render. `hvtiRtemplates::job_status()`
+and `hvtiRtemplates::cancel_job()`, given the same path, follow it and
+stop it. Once the fit is cached, its chunks run interactively and load
+it.
+
+**Render a draft as you go.** `render_job(job)` runs the whole job in a
+clean R session and writes the report beside it. Render early and often:
+while any `EDIT:` marker is left, the report opens with a DRAFT banner
+listing them, and its numbers are not a result. [Work a
+job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#render-as-you-go)
+explains why to render rather than run chunks by hand.
+
+**Then the final.** Once no marker is left,
+`render_job(job, final = TRUE)` renders the accepted result. It refuses
+an open marker, a skipped chunk, `stop_here()` and unregistered data,
+and it records the job's provenance beside the report.
+
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
+The template holds the details; this sheet is its outline.
