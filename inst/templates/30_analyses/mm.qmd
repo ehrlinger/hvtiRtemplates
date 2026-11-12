@@ -1,0 +1,134 @@
+---
+title: "Mixed model for a repeated measurement"
+date: now
+date-format: "YYYY-MM-DD HH:mm"
+format:
+  html:
+    fig-width: 9
+    fig-height: 6
+    theme: cosmo
+    toc: true
+    toc-location: left
+    page-layout: full
+    grid:
+      body-width: 2000px
+      sidebar-width: 250px
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+Fits a linear mixed model to a continuous response measured repeatedly on each
+patient, as PROC MIXED did with a REPEATED or RANDOM statement, and saves the
+population-average course over time, with its confidence limits, for a plot.
+
+```{r}
+#| label: setup
+#| results: asis
+SUBJECT  <- "outcome"
+TYPE     <- "mixed"
+.in <- knitr::current_input(dir = TRUE)
+suppressPackageStartupMessages({
+  library(nlme)
+  library(hvtiRutilities)
+})
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
+```
+
+```{r}
+#| label: edit-study-choices
+# EDIT: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "built"
+# EDIT: a named analysis set, or NULL for every row WHERE keeps.
+ANALYSIS_SET <- NULL
+# EDIT: a filter on the rows, e.g. WHERE <- quote(echo_type == "TTE"), or NULL.
+WHERE <- NULL
+# EDIT: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "ccfid"
+# EDIT: the column giving each measurement's time since the reference event, in the units
+# the time terms below expect. Every row needs one; a missing or negative time stops the job.
+TIME <- "time"
+# EDIT: what makes a row unique. A repeated measurement is one row per patient and time;
+# add a sequence column if a patient can have two measurements at the same time.
+KEY <- c(ID, TIME)
+# Optional: NULL reads the cohort alone. To model measurements held in a registered
+# ancillary dataset (echoes, labs), name it in JOIN; each joined record is a row.
+# REDUCE stays NULL here: collapsing to one record per patient would remove the
+# repeated measurements this job exists to model.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
+
+# EDIT: the repeated continuous response, named as the column.
+OUTCOME <- "continuous_outcome"
+# EDIT: the scale the response is modeled on. "identity" models it as measured; "log"
+# models log(OUTCOME), what most corpus jobs did, writing ln_ in a DATA step. A
+# coefficient is then a change in the log, and the predictions are back-transformed.
+RESPONSE_SCALE <- "identity"
+# EDIT: the time terms, as R expressions in TIME. A SAS job's DATA-step transforms
+# carry over line for line: in_t = 1/(t+1) is "I(1/(time + 1))", ln_t = log(t+1) is
+# "log(time + 1)". The +1 keeps a measurement at time zero finite.
+TIME_TERMS <- c("time")
+PREDICTORS <- c("age", "female")           # EDIT: the declared fixed effects besides time; this job selects nothing.
+# EDIT: the within-patient correlation, first listed is reported; list several to compare them.
+#   "cs"         REPEATED / type=cs sub=id: one correlation between any two of a patient's
+#                measurements. What 37 of 56 corpus studies used.
+#   "ar1"        REPEATED visit / type=ar(1): correlation falls with the number of visits
+#                apart. Needs shared, ordered visits, not free times; more than 20 distinct
+#                times stops the job.
+#   "un"         REPEATED visit / type=un: a correlation and a variance per visit pair.
+#                Same visit requirement; costs many parameters.
+#   "random"     RANDOM intercept / subject=id.
+#   "random+cs", "random+ar1"  both statements, as 15 corpus studies wrote them.
+# A spatial structure (type=sp(pow)) is not offered; nlme::corExp(form = ~ time | id)
+# is its R form if a study needs one.
+STRUCTURE <- "cs"
+# EDIT: "REML", as SAS's default, unless models with different fixed effects are to be
+# compared by likelihood, which needs "ML".
+METHOD <- "REML"
+# EDIT: the covariate profiles the predicted course is drawn for, as a list of named
+# lists, e.g. list(list(age = 60, female = 0), list(age = 60, female = 1)). NULL draws
+# one profile: the median of each numeric predictor and the first level of the others.
+PREDICT_AT <- NULL
+# EDIT: the times to predict at, or NULL for 50 points over the observed range.
+PREDICT_TIMES <- NULL
+IMPUTATION <- NULL                          # EDIT: must stay NULL; this job does not pool imputations yet.
+```
+
+```{r}
+#| label: tbl-data
+#| tbl-cap: "The data this job read"
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = FALSE,
+                                          imputation = IMPUTATION)
+job_data$provenance$role <- "training"
+if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
+# The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
+.id <- attr(job_data$record, "selection")$id
+IMPUTATION <- attr(job_data$record, "selection")$imputation
+knitr::kable(job_data$record, col.names = c("Data", ""))
+# A column the study choices name that the data lack stops here, naming the setting to change.
+hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, TIME = TIME, PREDICTORS = PREDICTORS)
+RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
+.response <- hvtiRtemplates:::.response_term(d, OUTCOME, RESPONSE_SCALE)
+```
