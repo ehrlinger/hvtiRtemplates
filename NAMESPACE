@@ -2,8 +2,10 @@
 
 S3method(print,hvti_template_list)
 export(add_job)
+export(ar_item)
 export(ar_paste_methods)
 export(ar_review)
+export(ar_value)
 export(build_cohort)
 export(cancel_job)
 export(guard_long_fit)
