@@ -137,9 +137,10 @@ IDENTIFIER <- NULL    # EDIT: a column to list suspicious rows with on the conso
 MAX_REVIEW_ROWS <- 25L
 # MIGRATE-END: dc-gfup-config
 # EDIT: NULL, or a column to summarize follow-up by, such as an era, a procedure or a
-# treatment arm. The report adds a table with a row per interval and group. Patients
-# with no value for it are a group of their own, "(missing)", so the groups add up to
-# the cohort. A column that identifies patients is refused.
+# treatment arm. The report adds a table with a row per interval and group, and a
+# figure per panel with one facet per group. Patients with no value for it are a
+# group of their own, "(missing)", so the groups add up to the cohort. A column that
+# identifies patients is refused, and so is a KEY column, each with its reason.
 GROUP <- NULL
 # EDIT: optional event-coding cross-tabs, each a vector of column names.
 # Missing values are shown. Use list() when no additional checks are needed.

@@ -124,8 +124,8 @@
   if (!length(hits)) return(invisible(0L))
   # The guard reads markers, not values, so a default that is already right still
   # leaves a marker to delete; the 2026-11-11 training did not know how to clear one.
-  rule <- paste("Delete a marker once its choice is made, even when the value it marks stays as it is:",
-                "the guard counts markers, not values.")
+  rule <- paste("Delete the word EDIT: once its choice is made, even when the value stays as it is:",
+                "the guard counts the word, not the value.")
   msg <- paste0(
     length(hits), " unresolved ", token, " marker(s) remain in this job:\n",
     paste0("  - ", markers$text, collapse = "\n"),

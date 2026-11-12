@@ -63,7 +63,8 @@ suppressPackageStartupMessages({
 # randomForestSRC runs on every core its OpenMP build can see, and the forests
 # changed with the thread count with every seed held fixed.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-22. Below them a
+# The versions this template was verified against on 2026-10-22; hvtiPlotR has
+# its own check, below. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
 for (.floor in list(c("randomForestSRC", "3.7.0"), c("hvtiRpropensity", "0.2.0"))) {
@@ -195,13 +196,14 @@ IMPUTATION_USE <- 1L
 # difference means nothing. This job stops if it is not.
 HORIZON <- 4
 # The observed-against-expected test follows each patient to TAU at most. NULL
-# takes the shorter of the two arms' follow-up, the furthest both forests have
-# data for; past it a forest's cumulative hazard is held at its last step.
+# takes the lower of the two arms' longest follow-up times, the furthest both
+# forests have data for; past it a forest's cumulative hazard is held at its last step.
 TAU <- NULL
 # EDIT: the level of the observed-against-expected interval. 95% because the
 #       test's p-value is read against 0.05, and a reader takes an interval
-#       beside a p-value for 95%. The Kaplan-Meier above is 70%; the level is
-#       printed beside every interval either way.
+#       beside a p-value for 95%. The Kaplan-Meier above is 70%, and the one
+#       drawn against the expected curve is always 95%; the level is printed
+#       beside every interval either way.
 TEST_LEVEL <- 0.95
 # How many patients' curves the spaghetti figure draws per panel. More than
 # that are thinned to patients spaced evenly through the ranking of predicted

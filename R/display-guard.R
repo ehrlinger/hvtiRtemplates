@@ -68,8 +68,8 @@
   }
   if (length(keyed)) {
     stop(setting, " names ", toString(keyed), ", which is in KEY: no report shows a KEY column's values, because KEY ",
-         "tells one patient's rows apart. Use another column in ", setting, ", or take it out of KEY and tell the ",
-         "rows apart with a column the report does not show, such as a record number.", call. = FALSE)
+         "tells one patient's rows apart. Use another column in ", setting, ", or take it out of KEY and put in its ",
+         "place a column no report shows, such as a record number.", call. = FALSE)
   }
   invisible(TRUE)
 }
