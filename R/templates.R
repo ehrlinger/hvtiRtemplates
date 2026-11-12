@@ -35,8 +35,9 @@
 #'   \code{qualifier} is \code{NA} for a prefix carrying a single template.
 #'   Printed whole, it shows only \code{name}, \code{folder} and
 #'   \code{title}, the title cut to fit the console's width, since the other
-#'   columns would wrap every row; they are still in the data, and a selection
-#'   of columns prints as selected.
+#'   columns would wrap every row. In a console too narrow for the three,
+#'   \code{folder} is left out, then \code{title}. The other columns are still
+#'   in the data, and a selection of columns prints as selected.
 #' @export
 #' @examples
 #' tl <- template_list()
@@ -93,13 +94,35 @@ print.hvti_template_list <- function(x, ...) {
   class(shown) <- "data.frame"
   shown <- shown[.template_list_shown]
   shown$title[is.na(shown$title)] <- ""
-  # Row names, name and folder, each padded to its widest entry, a space before each.
-  used <- max(nchar(rownames(shown))) + max(nchar(c(shown$name, "name"))) + max(nchar(c(shown$folder, "folder"))) + 3L
-  room <- max(getOption("width") - used - 1L, 10L)
-  long <- nchar(shown$title) > room
-  shown$title[long] <- paste0(substr(shown$title[long], 1L, room - 3L), "...")
-  print(shown, right = FALSE, ...)
-  cat("# ", nrow(x), " templates. Read any column with $, such as $description or $call.\n", sep = "")
+  width <- getOption("width")
+  footer <- strwrap(paste(nrow(x), "templates. Read any column with $, such as $description or $call."),
+                    width = width - 2L, prefix = "# ")
+  if (!nrow(shown)) {
+    cat(footer, sep = "\n")
+    return(invisible(x))
+  }
+  # A data frame wider than the console prints in blocks, one under the other, so
+  # the columns are fitted to it: folder goes first when the title would have
+  # fewer than 15 characters, then the title. Each column is padded to its widest
+  # entry, a space before it, after the row names.
+  wide <- function(v, heading) max(nchar(c(v, heading)))
+  for (cols in list(c("name", "folder", "title"), c("name", "title"), "name")) {
+    fixed <- setdiff(cols, "title")
+    used <- max(nchar(rownames(shown))) + sum(vapply(fixed, function(k) wide(shown[[k]], k), numeric(1L))) +
+      length(cols)
+    room <- width - used - 1L
+    if (!"title" %in% cols || room >= 15L) break
+  }
+  shown <- shown[cols]
+  if ("title" %in% cols) {
+    long <- nchar(shown$title) > room
+    shown$title[long] <- paste0(substr(shown$title[long], 1L, room - 3L), "...")
+  }
+  # Left-aligned unless the caller says otherwise.
+  args <- list(...)
+  if (is.null(args$right)) args$right <- FALSE
+  do.call(print, c(list(shown), args))
+  cat(footer, sep = "\n")
   invisible(x)
 }
 

@@ -1068,3 +1068,31 @@ test_that("template_list() says what each template is for, within the console's 
   expect_true(all(nchar(out) <= 80L))
   expect_true(any(grepl("dc.general .*Descriptive: general", out)))
 })
+
+test_that("template_list() prints one block within any console width, narrowest first dropping folder, then title", {
+  # Codex review on #524: at width 40 the listing split into two blocks, and the footer ran past 60.
+  tl <- template_list()
+  for (width in c(30L, 40L, 50L, 60L, 80L, 120L)) {
+    withr::local_options(width = width)
+    out <- capture.output(print(tl))
+    expect_true(all(nchar(out) <= width), info = paste("width", width))
+    # One header line: a data frame too wide for the console repeats its header, block by block.
+    expect_length(grep("^ *name ", out), 1L)
+    expect_identical(sum(grepl("dc.eda ", out, fixed = TRUE)), 1L)
+  }
+  withr::local_options(width = 120)
+  expect_match(capture.output(print(tl))[[1L]], "name +folder +title")
+  # Short names leave room for a title at 30; the whole list's longest do not.
+  withr::local_options(width = 30)
+  expect_match(capture.output(print(tl[tl$name %in% c("bd", "dc.eda"), ]))[[1L]], "name +title")
+  expect_no_match(capture.output(print(tl))[[1L]], "title|folder")
+})
+
+test_that("template_list()'s print takes right = and an empty subset like any data frame", {
+  # Codex review on #524: right = TRUE was passed twice, and no rows gave max() of nothing.
+  tl <- template_list()
+  expect_no_error(out <- capture.output(print(tl, right = TRUE)))
+  expect_match(out[[1L]], "title")
+  expect_no_warning(out <- capture.output(print(tl[FALSE, ])))
+  expect_match(out[[length(out)]], "# 0 templates.", fixed = TRUE)
+})

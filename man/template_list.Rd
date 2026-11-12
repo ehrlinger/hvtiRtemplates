@@ -32,8 +32,9 @@ A data frame, of class \code{hvti_template_list}, with columns
   \code{qualifier} is \code{NA} for a prefix carrying a single template.
   Printed whole, it shows only \code{name}, \code{folder} and
   \code{title}, the title cut to fit the console's width, since the other
-  columns would wrap every row; they are still in the data, and a selection
-  of columns prints as selected.
+  columns would wrap every row. In a console too narrow for the three,
+  \code{folder} is left out, then \code{title}. The other columns are still
+  in the data, and a selection of columns prints as selected.
 }
 \description{
 These templates are supported: they render, they are tested, and they are
