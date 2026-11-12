@@ -8,7 +8,7 @@
 
 **Tech Stack:** R, `nlme` (`gls`, `lme`), Quarto, testthat edition 3, `hvtiRutilities` study fixtures.
 
-**Spec:** `dev/specs/2026-11-12-mm-template-design.md`. Work in the worktree `/Users/ehrlinj/Documents/GitHub/hvtiRtemplates-mm-census`, branch `chore/mm-census`. Never `git add -A`: a failing testthat run writes `tests/testthat/_problems/`.
+**Spec:** `dev/specs/2026-11-12-mm-template-design.md`. Work in the worktree `<repo>-mm-census`, branch `chore/mm-census`. Never `git add -A`: a failing testthat run writes `tests/testthat/_problems/`.
 
 ## Global Constraints
 
