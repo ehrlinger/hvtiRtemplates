@@ -163,7 +163,8 @@ folder, including when the catalog is absent.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 46 hs.score                graphs        Hazard segment score                  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 47 hs.setup                graphs        Hazard setup                          </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 48 lp.mirror               graphs        Logistic plot: mirrored propensity ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> # 48 templates. Read any column with $, such as $description or $call.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49 ar                      documents     Analysis report                       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # 49 templates. Read any column with $, such as $description or $call.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Every template, where its job is written, and the call that scaffolds it.</span></span></span>
 <span class="r-in"><span><span class="va">tl</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"folder"</span>, <span class="st">"call"</span><span class="op">)</span><span class="op">]</span></span></span>
@@ -216,6 +217,7 @@ folder, including when the catalog is absent.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 46                hs.score        graphs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 47                hs.setup        graphs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 48               lp.mirror        graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49                      ar     documents</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                            call</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1                              add_job("bd", subject = "study", type = "build")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2                           add_job("dc.eda", subject = "cohort", type = "eda")</span>
@@ -265,6 +267,7 @@ folder, including when the catalog is absent.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 46                        add_job("hs.score", subject = "dead_pa", type = "hz")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 47                        add_job("hs.setup", subject = "dead_pa", type = "hz")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 48             add_job("lp.mirror", subject = "treatment", type = "propensity")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49                        add_job("ar", subject = "dead_pa", type = "question")</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Find a template by its qualifier, then copy its call: the follow-up jobs.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">tl</span>, <span class="va">qualifier</span> <span class="op">==</span> <span class="st">"gfup"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">name</span>, <span class="va">folder</span>, <span class="va">call</span><span class="op">)</span><span class="op">)</span></span></span>

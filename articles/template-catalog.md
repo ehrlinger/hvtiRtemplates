@@ -115,6 +115,12 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `hs-setup` | Patient-level predictions from the hm model, set against the survival of a matched general population. | `add_job("hs", subject, type, qualifier = "setup")` |
 | 🟢 Shipped | `lp-mirror` | The mirrored histogram of the propensity score, treated above the axis and controls below, drawn from a saved lm-propensity_binary bundle without refitting: all patients, under the matching weights, and matched when the study has a match flag. | `add_job("lp", subject, type, qualifier = "mirror")` |
 
+### documents
+
+| Delivery | Template | Description | Scaffold |
+|:---|:---|:---|:---|
+| 🟡 In progress | `ar` | One research question answered from finished jobs: numbered figures, tables and values, each with Methods, Results and Interpretation for the researchers to choose from. | `add_job("ar", subject, type)` |
+
 ## Coming
 
 Job types the SAS library and the study corpus carry that have no
@@ -125,7 +131,6 @@ as zero.
 
 | Delivery | Template | Description | SAS jobs | Waiting on |
 |:---|:---|:---|:---|:---|
-| 🟡 In progress | `ar` | Analysis report | 394 |  |
 | 🟡 In progress | `nd` | Non-linear distributions | 244 |  |
 | 🟡 In progress | `np` | Non-linear plot | 241 |  |
 | 🟡 In progress | `dc-variable` | Distribution of a variable | 237 |  |

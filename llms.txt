@@ -195,6 +195,14 @@ the structural check does not establish numerical agreement.
 
 - [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
   : Scaffold a new analysis job from a template
+- [`ar_item()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_item.md)
+  : Show one item of an ar analysis report
+- [`ar_paste_methods()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_paste_methods.md)
+  : Paste each item's Methods boilerplate into an ar report
+- [`ar_review()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_review.md)
+  : Mark ar report items as reviewed against their sources' current runs
+- [`ar_value()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_value.md)
+  : Quote a saved value in an ar analysis report
 - [`build_cohort()`](https://ehrlinger.github.io/hvtiRtemplates/reference/build_cohort.md)
   : Cut a study cohort from a master, recording who was dropped and why
 - [`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md)

@@ -116,7 +116,8 @@ tl
 #> 46 hs.score                graphs        Hazard segment score                  
 #> 47 hs.setup                graphs        Hazard setup                          
 #> 48 lp.mirror               graphs        Logistic plot: mirrored propensity ...
-#> # 48 templates. Read any column with $, such as $description or $call.
+#> 49 ar                      documents     Analysis report                       
+#> # 49 templates. Read any column with $, such as $description or $call.
 
 # Every template, where its job is written, and the call that scaffolds it.
 tl[, c("name", "folder", "call")]
@@ -169,6 +170,7 @@ tl[, c("name", "folder", "call")]
 #> 46                hs.score        graphs
 #> 47                hs.setup        graphs
 #> 48               lp.mirror        graphs
+#> 49                      ar     documents
 #>                                                                            call
 #> 1                              add_job("bd", subject = "study", type = "build")
 #> 2                           add_job("dc.eda", subject = "cohort", type = "eda")
@@ -218,6 +220,7 @@ tl[, c("name", "folder", "call")]
 #> 46                        add_job("hs.score", subject = "dead_pa", type = "hz")
 #> 47                        add_job("hs.setup", subject = "dead_pa", type = "hz")
 #> 48             add_job("lp.mirror", subject = "treatment", type = "propensity")
+#> 49                        add_job("ar", subject = "dead_pa", type = "question")
 
 # Find a template by its qualifier, then copy its call: the follow-up jobs.
 subset(tl, qualifier == "gfup", c(name, folder, call))
