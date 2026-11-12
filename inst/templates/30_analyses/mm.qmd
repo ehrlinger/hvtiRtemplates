@@ -188,7 +188,7 @@ mm_fit <- function(d, formula, id, time, structure, method) {
                 weights = if (identical(structure, "un")) nlme::varIdent(form = ~ 1 | .visit))
     },
     error = function(e) {
-      stop("The ", structure, " fit did not converge: ", conditionMessage(e), ". Try another STRUCTURE.", call. = FALSE)
+      stop("The ", structure, " fit failed: ", conditionMessage(e), ". Try another STRUCTURE.", call. = FALSE)
     }
   )
   used <- stats::complete.cases(d[all.vars(formula)])
@@ -199,18 +199,21 @@ mm_fit <- function(d, formula, id, time, structure, method) {
        n_patients = length(unique(d[[id]][used])), n_measurements = sum(used))
 }
 
-# The covariance parameters, with the within-patient correlation stated once for every structure.
+# The covariance parameters: cs and random report one within-patient correlation, ar1 the lag-1 correlation,
+# un one correlation per visit pair, and the two combined structures the implied within-patient correlation.
 mm_covariance <- function(fit) {
   m <- fit$model
   structure <- fit$structure
   out <- list()
+  # nlme takes the first visit it meets as the variance reference, which is not always visit 1.
+  ref <- if (identical(structure, "un")) attr(m$modelStruct$varStruct, "groupNames")[[1L]]
   if (inherits(m, "lme")) {
     vc <- suppressWarnings(as.numeric(nlme::VarCorr(m)[, "Variance"]))
     out[["between-patient variance"]] <- vc[[1L]]
     out[["residual variance"]] <- vc[[length(vc)]]
     if (identical(structure, "random")) out[["within-patient correlation"]] <- vc[[1L]] / sum(vc)
   } else {
-    out[[if (identical(structure, "un")) "residual variance at visit 1" else "residual variance"]] <- m$sigma^2
+    out[[if (identical(structure, "un")) paste0("residual variance at visit ", ref) else "residual variance"]] <- m$sigma^2
   }
   cs <- m$modelStruct$corStruct
   if (!is.null(cs)) {
@@ -219,7 +222,7 @@ mm_covariance <- function(fit) {
       # nlme orders the correlations by row of the upper triangle: (1,2), (1,3), ..., (2,3), ...
       pairs <- t(utils::combn(seq_len(ceiling(sqrt(2 * length(rho) + 0.25) + 0.5)), 2L))
       ratio <- stats::coef(m$modelStruct$varStruct, unconstrained = FALSE)
-      for (k in seq_along(ratio)) out[[paste0("SD ratio, visit ", names(ratio)[[k]], " to visit 1")]] <- ratio[[k]]
+      for (k in seq_along(ratio)) out[[paste0("SD ratio, visit ", names(ratio)[[k]], " to visit ", ref)]] <- ratio[[k]]
       for (i in seq_along(rho)) out[[paste0("correlation, visits ", pairs[i, 1L], " and ", pairs[i, 2L])]] <- rho[[i]]
     } else if (structure %in% c("random+cs", "random+ar1")) {
       adjacent <- if (identical(structure, "random+ar1")) ", adjacent visits" else ""

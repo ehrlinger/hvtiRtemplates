@@ -145,6 +145,22 @@ test_that("UN labels each correlation by visit pair and matches corMatrix", {
   }
 })
 
+test_that("UN names the variance reference from the fit when the first patient misses visit 1", {
+  h <- mm_helpers()
+  d <- mm_visits()
+  d <- d[d$time <= 4 & !(d$ccfid == 1 & d$time == 1), ]
+  fit <- h$mm_fit(d, log(y) ~ age + female, "ccfid", "time", "un", "REML")
+  vs <- fit$model$modelStruct$varStruct
+  ref <- attr(vs, "groupNames")[[1L]]
+  expect_false(identical(ref, "1"))
+  ratio <- stats::coef(vs, unconstrained = FALSE)
+  cov <- h$mm_covariance(fit)
+  expect_equal(cov$estimate[cov$parameter == paste0("residual variance at visit ", ref)], fit$model$sigma^2)
+  for (k in names(ratio)) {
+    expect_equal(cov$estimate[cov$parameter == paste0("SD ratio, visit ", k, " to visit ", ref)], ratio[[k]], info = k)
+  }
+})
+
 test_that("random+cs reports the implied correlation and never mislabels the residual one", {
   h <- mm_helpers()
   fit <- h$mm_fit(mm_data(), mm_formula, "ccfid", "time", "random+cs", "REML")
