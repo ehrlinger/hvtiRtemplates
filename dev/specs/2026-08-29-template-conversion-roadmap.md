@@ -44,7 +44,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**75 templates in scope**, of which 49 exist on disk.
+**75 templates in scope**, of which 50 exist on disk.
 
 ## By family
 
@@ -144,7 +144,7 @@ row has no template on disk.
 | `lm-propensity_nominal` | shipped | — | 1049 | 0 | — |
 | `lm-propensity_ordinal` | shipped | — | 819 | 0 | — |
 | `ls` | queued | 34 | 32 | 0 | — |
-| `mm` | queued | 59 | 56 | 1 | — |
+| `mm` | *in flight* | 59 | 56 | 1 | — |
 | `nm` | queued | 122 | 121 | 1 | — |
 | `rm-balancing_continuous` | shipped | — | 9 | 0 | — |
 | `rm-linear` | shipped | — | 160 | 0 | — |

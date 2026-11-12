@@ -1,0 +1,100 @@
+{
+  "date": "2026-11-12",
+  "corpus_programs": 263,
+  "r_jobs": 1,
+  "sas_breadth": 56,
+  "sas_breadth_jobs": 56,
+  "manual_review_programs": 73,
+  "misfiled_programs": 2,
+  "shapes": {
+    "random_effects": {
+      "sas_programs": 47,
+      "sas_studies": 7,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 31,
+      "two_study_gate": true
+    },
+    "repeated_covariance": {
+      "sas_programs": 138,
+      "sas_studies": 38,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 2,
+      "two_study_gate": true
+    },
+    "random_and_repeated": {
+      "sas_programs": 4,
+      "sas_studies": 1,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 0,
+      "two_study_gate": false
+    }
+  },
+  "migrations": {
+    "migration_gm": 0,
+    "migration_nm": 0
+  },
+  "over_mixed_fits": {
+    "cov_types": {
+      "ar(1)": {
+        "programs": 45,
+        "studies": 12
+      },
+      "cs": {
+        "programs": 94,
+        "studies": 27
+      },
+      "sp(pow)": {
+        "programs": 1,
+        "studies": 1
+      },
+      "un": {
+        "programs": 7,
+        "studies": 4
+      }
+    },
+    "method": {
+      "ml": {
+        "programs": 2,
+        "studies": 1
+      },
+      "reml": {
+        "programs": 4,
+        "studies": 1
+      }
+    },
+    "spline": {
+      "programs": 0,
+      "studies": 0
+    },
+    "lsmeans": {
+      "programs": 11,
+      "studies": 4
+    },
+    "estimate": {
+      "programs": 1,
+      "studies": 1
+    },
+    "predictions": {
+      "programs": 13,
+      "studies": 4
+    },
+    "mi": {
+      "programs": 33,
+      "studies": 4
+    }
+  },
+  "macros_in_3_plus_studies": {
+    "final": 11,
+    "in": 7,
+    "linpred": 3,
+    "ln": 9,
+    "symm": 5,
+    "vars": 41
+  },
+  "template_copies_skipped": 1092,
+  "traversal_errors": 0,
+  "unreadable_candidates": 0
+}
