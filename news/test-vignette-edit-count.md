@@ -1,0 +1,1 @@
+* A test ties "Work a job"'s count of a new `dc-gfup` job's `EDIT:` markers, and the banner lines it quotes, to the template, read with the guard's own reader. The count went stale twice in 1.5.8 with nothing to catch it.
