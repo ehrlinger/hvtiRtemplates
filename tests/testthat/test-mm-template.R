@@ -193,6 +193,20 @@ test_that("mm_predict reuses the fitted poly() basis and ordered-factor coding",
   expect_equal(unname(pred$estimate), unname(stats::fitted(fit$model)[1:5]), tolerance = 1e-8)
 })
 
+test_that("a level held only by rows the fit dropped neither breaks prediction nor reaches the grid", {
+  h <- mm_helpers()
+  d <- mm_data()
+  # A factor, as an RDS dataset carries it: the empty level "c" survives the complete-case subset.
+  d$group <- factor(c("a", "b", "c")[(d$ccfid %% 3L) + 1L])
+  d$y[d$group == "c"] <- NA
+  fit <- h$mm_fit(d, log(y) ~ log(time + 1) + group, "ccfid", "time", "cs", "REML")
+  expect_identical(fit$xlev$group, c("a", "b"))
+  grid <- h$mm_grid(d[fit$used, , drop = FALSE], "group", "time", NULL, c(0, 5))
+  expect_true(all(is.finite(h$mm_predict(fit, grid, "log")$estimate)))
+  asked <- h$mm_grid(d, "group", "time", list(list(group = "c")), c(0, 5))
+  expect_error(h$mm_predict(fit, asked, "log"), "PREDICT_AT asks for group = c")
+})
+
 test_that("mm_fit leaves rows with a missing ID out of every count, as nlme does", {
   h <- mm_helpers()
   d <- mm_data()

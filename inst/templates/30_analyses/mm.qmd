@@ -196,13 +196,12 @@ mm_fit <- function(d, formula, id, time, structure, method) {
   used <- stats::complete.cases(d[unique(c(all.vars(formula), id))])
   # The training terms keep poly() and ns() bases (predvars) and the fitted contrasts, so predictions on a new grid
   # are coded exactly as the fit was; rebuilding them from the formula would build a new basis on the grid.
-  mf <- stats::model.frame(formula, d[used, , drop = FALSE])
+  # A level held only by rows the fit dropped has no coefficient, so the levels come from the rows used.
+  mf <- stats::model.frame(formula, d[used, , drop = FALSE], drop.unused.levels = TRUE)
   fixed <- stats::delete.response(stats::terms(mf))
-  # The levels of each categorical predictor, so a prediction grid holding one level still codes it as the fit did.
-  categorical <- Filter(function(x) is.factor(x) || is.character(x), d[intersect(all.vars(formula), names(d))])
   list(model = model, structure = structure, method = method, formula = formula, terms = fixed,
        contrasts = attr(stats::model.matrix(fixed, mf), "contrasts"),
-       xlev = lapply(categorical, function(x) levels(factor(x))),
+       xlev = stats::.getXlevels(fixed, mf), used = used,
        n_patients = length(unique(d[[id]][used])), n_measurements = sum(used),
        per_patient = table(as.character(d[[id]][used])))
 }
@@ -268,6 +267,13 @@ mm_grid <- function(d, predictors, time, predict_at, predict_times) {
 # Population-average predictions: the fixed effects alone, with 95% limits from their
 # covariance on the linear predictor, back-transformed when the response is logged.
 mm_predict <- function(fit, newdata, scale) {
+  for (v in intersect(names(fit$xlev), names(newdata))) {
+    unseen <- setdiff(unique(as.character(newdata[[v]])), fit$xlev[[v]])
+    if (length(unseen) > 0L) {
+      stop("PREDICT_AT asks for ", v, " = ", paste(unseen, collapse = ", "), ", a level no fitted row holds. ",
+           "Change PREDICT_AT in edit-study-choices.", call. = FALSE)
+    }
+  }
   x <- stats::model.matrix(fit$terms, stats::model.frame(fit$terms, newdata, xlev = fit$xlev),
                            contrasts.arg = fit$contrasts)
   # nlme::fixef() has no gls method; coef() of a gls is its fixed effects.
@@ -338,7 +344,9 @@ knitr::kable(comparison, digits = 1)
 ```{r}
 #| label: tbl-predictions
 #| tbl-cap: "Population-average course of the response, first and last times of each profile"
-predictions <- mm_predict(fit, mm_grid(d, PREDICTORS, TIME, PREDICT_AT, PREDICT_TIMES), RESPONSE_SCALE)
+# The default profile is drawn from the rows the fit used, so it never names a level the fit dropped.
+predictions <- mm_predict(fit, mm_grid(d[fit$used, , drop = FALSE], PREDICTORS, TIME, PREDICT_AT, PREDICT_TIMES),
+                          RESPONSE_SCALE)
 .ends <- predictions[!duplicated(predictions$profile) | !duplicated(predictions$profile, fromLast = TRUE), ]
 knitr::kable(.ends, digits = 3, row.names = FALSE)
 ```
