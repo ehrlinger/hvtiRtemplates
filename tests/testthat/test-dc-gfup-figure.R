@@ -199,7 +199,7 @@ gfup_drawn <- function(events, echo = NULL, colors = NULL) {
   env <- new.env(parent = globalenv())
   list2env(list(d = d, EVENT = "dead", OPYRS = "iv_opyrs", ORIGIN_YEAR = 1990, CLOSE_DATE = NULL, ECHO = echo, EVENTS = events,
                 PANELS = list(all = list(status = "dead", time = "iv_dead", title = "All deaths")),
-                ALPHA = 0.5, COLORS = colors, .in = NULL,
+                ALPHA = 0.5, COLORS = colors, GROUP = NULL, .in = NULL,
                 save_figure = function(plot, name, ...) {
                   saved[[name]] <<- plot
                   file.path(tempdir(), paste0(name, ".png"))
