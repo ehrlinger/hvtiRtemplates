@@ -10,6 +10,7 @@
 .ar_parse <- function(lines) {
   calls <- grep(.ar_call_pattern, lines)
   ids <- sub(paste0(.ar_call_pattern, ".*$"), "\\2", lines[calls])
+  for (id in ids) .ar_parse_id(id)
   dup <- anyDuplicated(ids)
   if (dup) stop("Item '", ids[[dup]], "' is cited twice in this report; cite each exhibit once.", call. = FALSE)
   ends <- c(calls[-1L] - 1L, length(lines))
@@ -24,7 +25,7 @@
     }
     prose <- lines[setdiff(body, stamp_line)]
     list(id = ids[[i]], index = i, call_line = calls[[i]], open = open, close = close, stamp_line = stamp_line,
-         stamp = stamp, empty = all(grepl("^\\s*$", prose) | grepl("^\\s*<!--.*-->\\s*$", prose)))
+         stamp = stamp, empty = is.na(stamp_line) && all(grepl("^\\s*$", prose) | grepl("^\\s*<!--.*-->\\s*$", prose)))
   })
 }
 
@@ -40,9 +41,16 @@
 .ar_write <- function(lines, path) {
   tmp <- tempfile(tmpdir = dirname(path), fileext = ".qmd")
   writeLines(lines, tmp)
+  Sys.chmod(tmp, file.mode(path), use_umask = FALSE)
   if (!file.rename(tmp, path)) {
     unlink(tmp)
     stop("Could not write '", path, "'.", call. = FALSE)
+  }
+}
+
+.ar_console_only <- function(fn) {
+  if (isTRUE(getOption("knitr.in.progress"))) {
+    stop(fn, "() edits the report's source, so run it from the console; it must not be called inside a render.", call. = FALSE)
   }
 }
 
@@ -74,6 +82,7 @@
 #' }
 #' @export
 ar_paste_methods <- function(path, root = NULL) {
+  .ar_console_only("ar_paste_methods")
   lines <- readLines(path, warn = FALSE)
   if (is.null(root)) root <- .ar_root(path)
   items <- .ar_parse(lines)
@@ -111,6 +120,7 @@ ar_paste_methods <- function(path, root = NULL) {
 #' }
 #' @export
 ar_review <- function(path, item = NULL, root = NULL) {
+  .ar_console_only("ar_review")
   lines <- readLines(path, warn = FALSE)
   if (is.null(root)) root <- .ar_root(path)
   items <- .ar_parse(lines)
