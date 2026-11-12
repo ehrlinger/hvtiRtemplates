@@ -106,13 +106,16 @@ gallery_study <- function(root) {
 
 # ---- Jobs --------------------------------------------------------------------
 # Scaffold one job by its "<prefix>[-<qualifier>]" name into its set, apply
-# its choices, and return the job file.
+# its choices, run its finish hook (after the choices, for a job that reads
+# what they wrote), and return the job file.
 gallery_job <- function(root, name, spec) {
   parts <- strsplit(spec$template %||% name, "-", fixed = TRUE)[[1L]]
   qualifier <- if (length(parts) > 1L) paste(parts[-1L], collapse = "-") else NULL
   job <- add_job(parts[[1L]], spec$subject, spec$type, dir = root, qualifier = qualifier)
   if (!is.null(spec$prepare)) spec$prepare(root, job)
-  set_choices(job, spec$choices %||% list())
+  job <- set_choices(job, spec$choices %||% list())
+  if (!is.null(spec$finish)) spec$finish(root, job)
+  job
 }
 
 # Scaffold and render every job, in family order and each family's own order,

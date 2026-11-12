@@ -474,9 +474,11 @@ defined and is left blank.
 ```{r}
 #| label: tbl-horizons
 #| tbl-cap: "Overall survival (%) and patients at risk at the reporting horizons"
-knitr::kable(as_percent(hvtiRtemplates::life_table_at(d, TIME, EVENT, times = grid, labels = labs,
-                                                      conf_level = CLEVEL)),
-             row.names = FALSE, digits = 4)
+.horizons <- as_percent(hvtiRtemplates::life_table_at(d, TIME, EVENT, times = grid, labels = labs,
+                                                      conf_level = CLEVEL))
+# Saved as a data frame for an ar analysis report; the report formats it.
+hvtiRtemplates:::.save_exhibit(as.data.frame(.horizons), "table", set_path("documents", "tbl-horizons.rds"))
+knitr::kable(.horizons, row.names = FALSE, digits = 4)
 ```
 
 ## Stratified
@@ -709,6 +711,7 @@ km_views(km)
 #| fig-height: 7.5
 .fig <- km_figure()
 save_figure(.fig, "ac-survival", width = 6, height = 5)
+hvtiRtemplates:::.record_exhibit(set_path("graphs", "ac-survival.png"), "figure")
 .fig
 ```
 
@@ -725,6 +728,22 @@ for (v in names(strata_fits)) {
   .child(paste("fig km survival", v), paste0("Survival by ", v, ", with patients at risk"), ".fig",
          opts = "#| fig-height: 7.5")
 }
+```
+
+```{r}
+#| label: methods
+# The paragraph an ar analysis report pastes into its Methods slot, filled from
+# this job's own choices. A report whose pasted copy no longer matches it says so.
+# Reword it here when the template's method changes, not in each study.
+# Counted over the rows analyzed: a row missing its time or event is not.
+.analyzed <- !is.na(d[[TIME]]) & !is.na(d[[EVENT]])
+.n <- sum(.analyzed)
+.events <- sum(as.numeric(d[[EVENT]][.analyzed]) == 1)
+hvtiRtemplates:::.save_exhibit(list(n = .n, events = .events), "value", set_path("estimates", "ac-methods.rds"))
+hvtiRtemplates:::.methods_text(sprintf(
+  "Survival was estimated by the Kaplan-Meier method, with %s%% confidence limits, from %d patients with %d events.",
+  format(round(100 * CLEVEL, 1)), .n, .events
+))
 ```
 
 ```{r}

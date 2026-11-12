@@ -1005,6 +1005,13 @@
   if (any(c("source", ".hvti_render_id", ".hvti_source_sha256") %in% names(extra))) {
     stop("Template provenance extras may not replace the source or render identity.", call. = FALSE)
   }
+  if (any(c("source_sha256", "exhibits", "methods") %in% names(extra))) {
+    stop("Template provenance extras may not set source_sha256, exhibits or methods; .embed_provenance() records them.",
+         call. = FALSE)
+  }
+  # Public, unlike .hvti_source_sha256, which post-render strips: an ar report
+  # compares it with the job file to tell that the job was edited since.
+  extra <- c(extra, .ar_extra(state$source_sha256[[source]]))
   # A job rendered in part says so in its provenance: the skipped chunks and
   # the stop, as .guard_partial() recorded them for this render.
   partial <- .partial_state$points
