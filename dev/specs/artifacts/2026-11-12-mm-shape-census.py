@@ -69,7 +69,8 @@ def strip_comments(text, suffix):
     return text
 
 
-STEP_END = r"(?:\brun\s*;|\bquit\s*;|\bproc\s|\bdata(?!\s*=)\s|\Z)"
+# A lookahead, so the next PROC or DATA step stays in the text for the next match.
+STEP_END = r"(?=\brun\s*;|\bquit\s*;|\bproc\s|\bdata(?!\s*=)\s|\Z)"
 
 
 def proc_steps(lower, name):
@@ -106,6 +107,8 @@ def sas_signals(lower):
         "nm": bool(proc_steps(lower, "nlmixed")),
         "random": bool(statements(joined, "random")),
         "repeated": bool(statements(joined, "repeated")),
+        # Both statements in ONE step, not a RANDOM fit beside a separate REPEATED fit.
+        "combined": any(statements(step, "random") and statements(step, "repeated") for step in steps),
         "cov_types": sorted(types),
         "method": sorted(method),
         "spline": bool(re.search(r"\beffect\s+\w+\s*=\s*spl|%spline|\brcs\b|\bspline\b", joined)),
@@ -127,6 +130,7 @@ def r_signals(lower):
         "nm": bool(re.search(r"(?<![._a-z])nlmer?\s*\(|\bnlme::nlme\s*\(", lower)),
         "random": lme4 or nlme_lme,
         "repeated": correlation,
+        "combined": nlme_lme and correlation,
         "cov_types": types,
         "method": sorted(set(re.findall(r"\bmethod\s*=\s*[\"'](\w+)", lower)) | (
             {"reml_false"} if re.search(r"\breml\s*=\s*(?:false|f)\b", lower) else set())),
@@ -153,7 +157,9 @@ def classify(found):
         return "manual_review"
     if found["mixed_fit"]:
         if found["random"] and found["repeated"]:
-            return "random_and_repeated"
+            # Separate RANDOM-only and REPEATED-only fits are two shapes in one
+            # program; a person decides which the job is.
+            return "random_and_repeated" if found["combined"] else "manual_review"
         if found["repeated"]:
             return "repeated_covariance"
         # A MIXED step with neither statement is a fixed-effects fit; a person

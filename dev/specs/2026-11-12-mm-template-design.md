@@ -23,7 +23,10 @@ form clears the gate at 7 studies, but 30 of its 47 programs come from one study
 ### 2.1 The census
 
 `dev/specs/artifacts/2026-11-12-mm-shape-census.py`, run on lri over `/studies`
-on 2026-11-12. The public result is
+on 2026-11-12. ⚠️ The review of PR #534 found two classifier defects: a PROC step with no
+`RUN` hid the step after it, and a `RANDOM`-only fit beside a separate `REPEATED`-only fit
+counted as `random_and_repeated`. Both are fixed, and the counts below are from the first run;
+they are replaced when the rerun (`rerun-copilot/` beside the first output) comes back. The public result is
 `dev/specs/artifacts/2026-11-12-mm-shape-census.json`; the private CSV, which
 holds paths, stays in `general/_development/mm-shape-census-20261112/out/`.
 
@@ -131,8 +134,10 @@ Names follow `rm-linear` wherever the meaning is the same.
 `visit_index` is the rank of a measurement's `TIME` among the distinct `TIME` values, built by
 the job, so a patient who misses visit 2 keeps visit 3 in place 3, as SAS places it. AR(1)
 and UN assume shared, ordered visits; the comment beside `STRUCTURE` says so.
-`"random+cs"` and `"random+ar1"` report the implied within-patient correlation, because the
-split between the random intercept and the residual correlation is not identified.
+`"random+cs"` and `"random+ar1"` report the implied within-patient correlation. Under
+`"random+cs"` the split between the random intercept and the residual correlation is not
+identified. Under `"random+ar1"` it is identified only by how the correlation falls with the
+lag, which few visits per patient estimate weakly.
 Spatial-power structures (5 studies) are not offered in the first cut. The
 comment points to `corExp(form = ~ time | id)` as the R form for a study that
 needs one.

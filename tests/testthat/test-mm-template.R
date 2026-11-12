@@ -181,7 +181,8 @@ test_that("random+cs reports the implied correlation and never mislabels the res
   }
   expect_match(h$mm_note(fit), "not identified")
   ar <- h$mm_fit(mm_visits(), log(y) ~ time + age + female, "ccfid", "time", "random+ar1", "REML")
-  expect_match(h$mm_note(ar), "not identified")
+  expect_match(h$mm_note(ar), "told apart only by how the correlation falls")
+  expect_no_match(h$mm_note(ar), "not identified")
 })
 
 test_that("mm_predict back-transforms the log scale and keeps the limits around the estimate", {
@@ -197,6 +198,35 @@ test_that("mm_predict back-transforms the log scale and keeps the limits around 
   expect_true(all(natural$lower < natural$estimate & natural$estimate < natural$upper))
   truth <- exp(3 + 0.01 * (grid$age[[1L]] - 60) - 0.1 * grid$female[[1L]])
   expect_equal(natural$estimate[[1L]], truth, tolerance = 0.05)
+})
+
+test_that("mm_predict reuses the fitted poly() basis and ordered-factor coding", {
+  h <- mm_helpers()
+  d <- mm_data()
+  d$grade <- ordered(rep_len(c("low", "mid", "high"), nrow(d)), levels = c("low", "mid", "high"))
+  fit <- h$mm_fit(d, log(y) ~ poly(time, 2) + grade + age, "ccfid", "time", "cs", "REML")
+  # Five training rows, with the ordered factor passed as text as PREDICT_AT would give it: a basis or coding
+  # rebuilt from these rows would not reproduce the fitted values.
+  rows <- d[1:5, ]
+  rows$grade <- as.character(rows$grade)
+  pred <- h$mm_predict(fit, rows, "identity")
+  expect_equal(unname(pred$estimate), unname(stats::fitted(fit$model)[1:5]), tolerance = 1e-8)
+})
+
+test_that("mm_fit leaves rows with a missing ID out of every count, as nlme does", {
+  h <- mm_helpers()
+  d <- mm_data()
+  d$ccfid[1:3] <- NA
+  fit <- h$mm_fit(d, log(y) ~ log(time + 1) + age + female, "ccfid", "time", "cs", "REML")
+  expect_identical(fit$n_measurements, as.integer(stats::nobs(fit$model)))
+  expect_identical(sum(fit$per_patient), fit$n_measurements)
+})
+
+test_that("mm_grid takes default values from the variables under a term", {
+  h <- mm_helpers()
+  grid <- h$mm_grid(mm_data(), c("I(age^2)", "age:female"), "time", NULL, c(0, 5))
+  expect_setequal(setdiff(names(grid), c("time", "profile")), c("age", "female"))
+  expect_false(anyNA(grid$age))
 })
 
 test_that("mm_grid uses the profiles and times it is given", {

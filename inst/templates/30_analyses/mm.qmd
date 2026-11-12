@@ -192,10 +192,16 @@ mm_fit <- function(d, formula, id, time, structure, method) {
       stop("The ", structure, " fit failed: ", conditionMessage(e), ". Try another STRUCTURE.", call. = FALSE)
     }
   )
-  used <- stats::complete.cases(d[all.vars(formula)])
+  # nlme drops a row with a missing ID as well as one with a missing model variable, so the counts must too.
+  used <- stats::complete.cases(d[unique(c(all.vars(formula), id))])
+  # The training terms keep poly() and ns() bases (predvars) and the fitted contrasts, so predictions on a new grid
+  # are coded exactly as the fit was; rebuilding them from the formula would build a new basis on the grid.
+  mf <- stats::model.frame(formula, d[used, , drop = FALSE])
+  fixed <- stats::delete.response(stats::terms(mf))
   # The levels of each categorical predictor, so a prediction grid holding one level still codes it as the fit did.
   categorical <- Filter(function(x) is.factor(x) || is.character(x), d[intersect(all.vars(formula), names(d))])
-  list(model = model, structure = structure, method = method, formula = formula,
+  list(model = model, structure = structure, method = method, formula = formula, terms = fixed,
+       contrasts = attr(stats::model.matrix(fixed, mf), "contrasts"),
        xlev = lapply(categorical, function(x) levels(factor(x))),
        n_patients = length(unique(d[[id]][used])), n_measurements = sum(used),
        per_patient = table(as.character(d[[id]][used])))
@@ -241,10 +247,15 @@ mm_covariance <- function(fit) {
 
 # A caution for the two structures whose random intercept and residual correlation share one job.
 mm_note <- function(fit) {
-  if (!fit$structure %in% c("random+cs", "random+ar1")) return(NULL)
-  paste0("The random intercept and the residual correlation both describe the same within-patient correlation, ",
-         "so their split is not identified; read the implied within-patient correlation",
-         if (identical(fit$structure, "random+ar1")) " (adjacent visits)" else "", ", not either part.")
+  if (identical(fit$structure, "random+cs")) {
+    return(paste0("The random intercept and the residual compound symmetry describe the same constant within-patient ",
+                  "correlation, so their split is not identified; read the implied within-patient correlation, ",
+                  "not either part."))
+  }
+  if (!identical(fit$structure, "random+ar1")) return(NULL)
+  paste0("The random intercept and the AR(1) residual are told apart only by how the correlation falls with the lag ",
+         "between visits, which few visits per patient estimate weakly; read the implied within-patient correlation ",
+         "(adjacent visits) before either part.")
 }
 
 # The covariate profiles crossed with the prediction times.
@@ -255,7 +266,9 @@ mm_grid <- function(d, predictors, time, predict_at, predict_times) {
     predict_times
   }
   if (is.null(predict_at)) {
-    predict_at <- list(lapply(stats::setNames(predictors, predictors), function(v) {
+    # The variables under the terms, so I(age^2) or age:female take their values from age and female.
+    vars <- setdiff(all.vars(stats::reformulate(predictors)), time)
+    predict_at <- list(lapply(stats::setNames(vars, vars), function(v) {
       x <- d[[v]]
       if (is.numeric(x)) stats::median(x, na.rm = TRUE) else sort(unique(x))[[1L]]
     }))
@@ -274,8 +287,8 @@ mm_grid <- function(d, predictors, time, predict_at, predict_times) {
 # Population-average predictions: the fixed effects alone, with 95% limits from their
 # covariance on the linear predictor, back-transformed when the response is logged.
 mm_predict <- function(fit, newdata, scale) {
-  fixed <- stats::delete.response(stats::terms(fit$formula))
-  x <- stats::model.matrix(fixed, stats::model.frame(fixed, newdata, xlev = fit$xlev))
+  x <- stats::model.matrix(fit$terms, stats::model.frame(fit$terms, newdata, xlev = fit$xlev),
+                           contrasts.arg = fit$contrasts)
   # nlme::fixef() has no gls method; coef() of a gls is its fixed effects.
   beta <- if (inherits(fit$model, "lme")) nlme::fixef(fit$model) else stats::coef(fit$model)
   v <- stats::vcov(fit$model)

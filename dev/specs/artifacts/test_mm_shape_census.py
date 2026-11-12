@@ -35,6 +35,16 @@ class Classify(unittest.TestCase):
                 " repeated / subject=id type=sp(pow)(time); run;")
         self.assertEqual(shape("mm.ef.sas", text), "random_and_repeated")
 
+    def test_separate_random_and_repeated_fits_need_a_person(self):
+        text = ("proc mixed data=x; model y = t; random intercept / subject=id; run;"
+                " proc mixed data=x; model y = t; repeated / subject=id type=cs; run;")
+        self.assertEqual(shape("mm.y.sas", text), "manual_review")
+
+    def test_adjacent_proc_steps_without_run_both_count(self):
+        text = ("proc mixed data=x; model y = t; repeated / subject=id type=cs;"
+                " proc mixed data=x; model y = t; repeated / subject=id type=ar(1); run;")
+        self.assertEqual(found("mm.y.sas", text)["cov_types"], ["ar(1)", "cs"])
+
     def test_mixed_with_neither_statement_needs_a_person(self):
         self.assertEqual(shape("mm.ef.sas", "proc mixed data=x; model ef = time; run;"), "manual_review")
 
