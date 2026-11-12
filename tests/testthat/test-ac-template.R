@@ -49,6 +49,16 @@ built_layers <- function(curve) {
   b <- ggplot2::ggplot_build(curve)
   stats::setNames(b$data, vapply(curve$layers, function(l) class(l$geom)[[1]], ""))
 }
+
+test_that("ac records its horizons table, its survival figure and its Methods paragraph", {
+  skip_ac()
+  env <- ac_run(ac_data(), labels = c(ac_chunks, "methods"))
+  ex <- hvtiRtemplates:::.run_state$exhibits
+  expect_true(all(c("tbl-horizons", "fig-km-survival", "methods") %in% names(ex)))
+  expect_s3_class(readRDS(file.path(env$.root, ex[["tbl-horizons"]]$file)), "data.frame")
+  expect_match(hvtiRtemplates:::.run_state$methods$text, "Kaplan-Meier")
+})
+
 # nolint end
 
 test_that("an ac job runs unedited but for its strata, with no warning, and saves its figures", {

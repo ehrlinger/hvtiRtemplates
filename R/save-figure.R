@@ -67,7 +67,10 @@
   selected <- isTRUE(save) && (is.null(keep) || any(startsWith(name, keep)))
   pdf <- sub("[.]png$", ".pdf", png)
   tiff <- sub("[.]png$", ".tiff", png)
-  if (selected || linked) .write_figure(plot, png, width, height, "png")
+  if (selected || linked) {
+    .write_figure(plot, png, width, height, "png")
+    .mark_written(png)
+  }
   if (selected) .write_figure(plot, pdf, width, height, "pdf")
   if (selected && .ragg_available()) .write_figure(plot, tiff, width, height, "tiff")
   invisible(png)

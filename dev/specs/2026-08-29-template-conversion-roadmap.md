@@ -171,7 +171,7 @@ row has no template on disk.
 
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `ar` | queued | 706 | 394 | 89 | — |
+| `ar` | *in flight* | 706 | 394 | 89 | — |
 
 ## By workflow
 

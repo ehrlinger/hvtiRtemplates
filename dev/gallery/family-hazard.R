@@ -218,6 +218,16 @@ gallery_family(
     hp = list(subject = "dead", type = "hz", choices = list(
       "^t_max <- 3 " = "t_max <- 10"
     )),
+    ar = list(
+      subject = "dead", type = "question",
+      choices = list(
+        "^QUESTION <- " = "QUESTION <- \"Does the early hazard of death differ from the late hazard?\"",
+        "^hvtiRtemplates::ar_item\\(\"hz.dead_pa.hz#fig-fit\"\\)$" = "hvtiRtemplates::ar_item(\"hz.dead.hz#fig-fit\")",
+        "^hvtiRtemplates::ar_item\\(\"hz.dead_pa.hz#tbl-estimates\"\\)$" =
+          "hvtiRtemplates::ar_item(\"hz.dead.hz#tbl-estimates\")"
+      ),
+      finish = function(root, job) hvtiRtemplates::ar_paste_methods(job)
+    ),
     "hs-setup" = list(subject = "dead", type = "hz", choices = list(
       "^OTHER_COL +<- \"other\"$" = "OTHER_COL <- \"nonwhite\"",
       "^VINTAGE +<- NULL$" = "VINTAGE   <- \"table2023\""

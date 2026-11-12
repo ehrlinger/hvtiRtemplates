@@ -48,6 +48,7 @@ refuses to overwrite an existing job.
 | `30_analyses/rhf-fit.qmd` | random hazard forest on counting-process rows with time-varying predictors: the rows checked, tree size tuned, forest grown (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/rhf-explain.qmd` | AUC over follow-up, hazard curves and VarPro importance over time for an `rhf` forest (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/nb-boostmtree.qmd` | boosted multivariate trees for a response measured at each visit | `30_analyses/` or `analyses/` |
+| `50_documents/ar.qmd` | analysis report: one research question answered from finished jobs, as numbered items with Methods, Results and Interpretation for researchers to choose from (in flight) | `50_documents/` or `documents/` |
 
 `dc-eda` and `dc-trends` were `dp-eda` and `dp-trends` until 2026-10-10, and
 `dc-trends` then moved from `40_graphs/` to `10_descriptive/`, so a new

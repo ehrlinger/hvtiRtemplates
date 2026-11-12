@@ -241,3 +241,19 @@ test_that("hm refuses start/stop rows on a TemporalHazard whose calibration igno
   expect_true(check("iv_start", package_version("1.2.13")))
   expect_true(check(NULL, package_version("1.2.12")))
 })
+
+test_that("hz's Methods counts patients, not start/stop segments", {
+  skip_start_stop()
+  data <- start_stop_data()
+  ids <- length(unique(data$ccfid))
+  # Repeated IDs with unequal segment counts, or the test cannot tell the two apart.
+  expect_gt(nrow(data), ids)
+  expect_gt(length(unique(table(data$ccfid))), 1L)
+  env <- hz_fit_run("fit-deterministic", data = data, choices = start_stop_choices)
+  utils::capture.output(hazard_run("hz", "methods", env))
+  expect_identical(env$.n, ids)
+  expect_identical(env$.segments, nrow(data))
+  # The paragraph ar_paste_methods() carries into the report.
+  expect_match(hvtiRtemplates:::.run_state$methods$text,
+               sprintf("%d patients \\(%d follow-up segments\\) with", ids, nrow(data)))
+})

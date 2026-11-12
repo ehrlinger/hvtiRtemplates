@@ -47,6 +47,12 @@
   .run_state$handoffs <- list()
   .run_state$draft_reasons <- character()
   .run_state$identifiability <- NULL
+  # What this run offers an ar report, recorded as its chunks save it.
+  .run_state$exhibits <- list()
+  .run_state$methods <- NULL
+  .run_state$root <- root
+  # The files this run writes; an exhibit file not among them was left by an earlier render.
+  .run_state$written <- character()
   # Any handoff bundle this job saves records when this render began.
   .run_state$rendered_at <- .iso_time(started)
   run <- .run_begin(started, input, subject, type, markers)
