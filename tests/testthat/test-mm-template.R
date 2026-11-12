@@ -64,6 +64,8 @@ test_that("mm_check refuses an unknown structure and any imputation column", {
   h <- mm_helpers()
   d <- mm_data()
   expect_error(h$mm_check(d, "ccfid", "time", "sp(pow)", NULL), "STRUCTURE")
+  # RANDOM with REPEATED in one fit is not offered: one corpus study wrote it.
+  expect_error(h$mm_check(d, "ccfid", "time", "random+cs", NULL), "STRUCTURE")
   expect_error(h$mm_check(d, "ccfid", "time", "cs", "imp"), "IMPUTATION")
 })
 
@@ -102,12 +104,7 @@ test_that("every STRUCTURE fits and reports its own parameters", {
     ar1 = c("residual variance", "correlation, adjacent visits"),
     un = c("residual variance at visit 1", paste0("SD ratio, visit ", 2:6, " to visit 1"),
            paste0("correlation, visits ", combn(6, 2)[1, ], " and ", combn(6, 2)[2, ])),
-    random = c("between-patient variance", "residual variance", "within-patient correlation"),
-    `random+cs` = c("between-patient variance", "residual variance", "residual correlation beyond the random intercept",
-                    "implied within-patient correlation"),
-    `random+ar1` = c("between-patient variance", "residual variance",
-                     "residual correlation beyond the random intercept, adjacent visits",
-                     "implied within-patient correlation, adjacent visits")
+    random = c("between-patient variance", "residual variance", "within-patient correlation")
   )
   for (s in names(expected)) {
     fit <- h$mm_fit(d, f, "ccfid", "time", s, "REML")
@@ -166,23 +163,6 @@ test_that("UN names the variance reference from the fit when the first patient m
   for (k in names(ratio)) {
     expect_equal(cov$estimate[cov$parameter == paste0("SD ratio, visit ", k, " to visit ", ref)], ratio[[k]], info = k)
   }
-})
-
-test_that("random+cs reports the implied correlation and never mislabels the residual one", {
-  h <- mm_helpers()
-  fit <- h$mm_fit(mm_data(), mm_formula, "ccfid", "time", "random+cs", "REML")
-  cov <- h$mm_covariance(fit)
-  expect_equal(cov$estimate[cov$parameter == "implied within-patient correlation"], 0.5, tolerance = 0.1)
-  expect_false("within-patient correlation" %in% cov$parameter)
-  expect_true("residual correlation beyond the random intercept" %in% cov$parameter)
-  for (s in c("cs", "ar1", "un", "random")) {
-    other <- h$mm_fit(mm_visits(), log(y) ~ time + age + female, "ccfid", "time", s, "REML")
-    expect_null(h$mm_note(other), info = s)
-  }
-  expect_match(h$mm_note(fit), "not identified")
-  ar <- h$mm_fit(mm_visits(), log(y) ~ time + age + female, "ccfid", "time", "random+ar1", "REML")
-  expect_match(h$mm_note(ar), "told apart only by how the correlation falls")
-  expect_no_match(h$mm_note(ar), "not identified")
 })
 
 test_that("mm_predict back-transforms the log scale and keeps the limits around the estimate", {

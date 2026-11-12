@@ -85,14 +85,14 @@ TIME_TERMS <- c("time")
 PREDICTORS <- c("age", "female")           # EDIT: the declared fixed effects besides time; this job selects nothing.
 # EDIT: the within-patient correlation, first listed is reported; list several to compare them.
 #   "cs"         REPEATED / type=cs sub=id: one correlation between any two of a patient's
-#                measurements. What 37 of 56 corpus studies used.
+#                measurements. The corpus's main form, in 27 studies or more.
 #   "ar1"        REPEATED visit / type=ar(1): correlation falls with the number of visits
 #                apart. Needs shared, ordered visits, not free times; more than 20 distinct
 #                times stops the job.
 #   "un"         REPEATED visit / type=un: a correlation and a variance per visit pair.
 #                Same visit requirement; costs many parameters.
 #   "random"     RANDOM intercept / subject=id.
-#   "random+cs", "random+ar1"  both statements in one fit, as SAS writes RANDOM with REPEATED.
+# RANDOM and REPEATED in one fit are not offered: one corpus study wrote them so.
 # A spatial structure (type=sp(pow)) is not offered; nlme::corExp(form = ~ time | id)
 # is its R form if a study needs one.
 STRUCTURE <- "cs"
@@ -138,7 +138,7 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 #| label: mm-helpers
 # The fit lives here rather than in a package until a second longitudinal template
 # (mp or gm) shows what a package function should be; see the design note.
-.mm_structures <- c("cs", "ar1", "un", "random", "random+cs", "random+ar1")
+.mm_structures <- c("cs", "ar1", "un", "random")
 
 # Each check stops on data the fit would accept and then get wrong without saying so.
 mm_check <- function(d, id, time, structure, imputation) {
@@ -160,7 +160,7 @@ mm_check <- function(d, id, time, structure, imputation) {
     stop("TIME (", time, ") has ", sum(is.na(t) | (!is.na(t) & t < 0)),
          " missing or negative values. Every measurement needs its time since the reference event.", call. = FALSE)
   }
-  if (any(c("ar1", "un", "random+ar1") %in% structure) && length(unique(t)) > 20L) {
+  if (any(c("ar1", "un") %in% structure) && length(unique(t)) > 20L) {
     stop("STRUCTURE asks for AR(1) or UN, which assume shared, ordered visits, but TIME has ",
          length(unique(t)), " distinct values, more than 20 distinct visits. Use \"cs\" or \"random\" for free ",
          "times, or set TIME to a visit number.", call. = FALSE)
@@ -175,8 +175,8 @@ mm_fit <- function(d, formula, id, time, structure, method) {
   d$.visit <- factor(d$.visit_index)
   by_id <- function(lhs) stats::as.formula(paste(lhs, "|", id))
   corr <- switch(structure,
-    cs = , `random+cs` = nlme::corCompSymm(form = by_id("~ 1")),
-    ar1 = , `random+ar1` = nlme::corAR1(form = by_id("~ .visit_index")),
+    cs = nlme::corCompSymm(form = by_id("~ 1")),
+    ar1 = nlme::corAR1(form = by_id("~ .visit_index")),
     un = nlme::corSymm(form = by_id("~ .visit_index")),
     random = NULL
   )
@@ -208,7 +208,7 @@ mm_fit <- function(d, formula, id, time, structure, method) {
 }
 
 # The covariance parameters: cs and random report one within-patient correlation, ar1 the lag-1 correlation,
-# un one correlation per visit pair, and the two combined structures the implied within-patient correlation.
+# and un one correlation per visit pair.
 mm_covariance <- function(fit) {
   m <- fit$model
   structure <- fit$structure
@@ -219,7 +219,7 @@ mm_covariance <- function(fit) {
     vc <- suppressWarnings(as.numeric(nlme::VarCorr(m)[, "Variance"]))
     out[["between-patient variance"]] <- vc[[1L]]
     out[["residual variance"]] <- vc[[length(vc)]]
-    if (identical(structure, "random")) out[["within-patient correlation"]] <- vc[[1L]] / sum(vc)
+    out[["within-patient correlation"]] <- vc[[1L]] / sum(vc)
   } else {
     out[[if (identical(structure, "un")) paste0("residual variance at visit ", ref) else "residual variance"]] <- m$sigma^2
   }
@@ -232,30 +232,11 @@ mm_covariance <- function(fit) {
       ratio <- stats::coef(m$modelStruct$varStruct, unconstrained = FALSE)
       for (k in seq_along(ratio)) out[[paste0("SD ratio, visit ", names(ratio)[[k]], " to visit ", ref)]] <- ratio[[k]]
       for (i in seq_along(rho)) out[[paste0("correlation, visits ", pairs[i, 1L], " and ", pairs[i, 2L])]] <- rho[[i]]
-    } else if (structure %in% c("random+cs", "random+ar1")) {
-      adjacent <- if (identical(structure, "random+ar1")) ", adjacent visits" else ""
-      out[[paste0("residual correlation beyond the random intercept", adjacent)]] <- rho[[1L]]
-      sb2 <- out[["between-patient variance"]]
-      se2 <- out[["residual variance"]]
-      out[[paste0("implied within-patient correlation", adjacent)]] <- (sb2 + rho[[1L]] * se2) / (sb2 + se2)
     } else {
       out[[if (identical(structure, "cs")) "within-patient correlation" else "correlation, adjacent visits"]] <- rho[[1L]]
     }
   }
   data.frame(parameter = names(out), estimate = unname(unlist(out)), row.names = NULL)
-}
-
-# A caution for the two structures whose random intercept and residual correlation share one job.
-mm_note <- function(fit) {
-  if (identical(fit$structure, "random+cs")) {
-    return(paste0("The random intercept and the residual compound symmetry describe the same constant within-patient ",
-                  "correlation, so their split is not identified; read the implied within-patient correlation, ",
-                  "not either part."))
-  }
-  if (!identical(fit$structure, "random+ar1")) return(NULL)
-  paste0("The random intercept and the AR(1) residual are told apart only by how the correlation falls with the lag ",
-         "between visits, which few visits per patient estimate weakly; read the implied within-patient correlation ",
-         "(adjacent visits) before either part.")
 }
 
 # The covariate profiles crossed with the prediction times.
@@ -339,12 +320,6 @@ knitr::kable(estimates, digits = 4)
 #| tbl-cap: "Covariance parameters of the reported model"
 covariance <- mm_covariance(fit)
 knitr::kable(covariance, digits = 4)
-```
-
-```{r}
-#| label: covariance-note
-#| results: asis
-if (!is.null(mm_note(fit))) cat("\n", mm_note(fit), "\n", sep = "")
 ```
 
 ```{r}

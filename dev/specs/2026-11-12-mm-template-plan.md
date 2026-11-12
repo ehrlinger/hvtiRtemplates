@@ -10,6 +10,8 @@
 
 **Spec:** `dev/specs/2026-11-12-mm-template-design.md`. Work in the worktree `<repo>-mm-census`, branch `chore/mm-census`. Never `git add -A`: a failing testthat run writes `tests/testthat/_problems/`.
 
+> **Superseded in part, 2026-11-12:** `"random+cs"` and `"random+ar1"` were dropped from `STRUCTURE` after the census rerun found one study using them. The code below is the plan as executed; the template and spec §4.1 are current.
+
 ## Global Constraints
 
 - Lines at most 135 characters (`.lintr`); every other default linter is on.

@@ -133,7 +133,7 @@ Names follow `rm-linear` wherever the meaning is the same.
 | `RESPONSE_SCALE` | `"identity"` | `"identity"` or `"log"`, through `.response_scale()` and `.response_term()` as in `rm` |
 | `TIME_TERMS` | `c("time")` | the time terms as R expressions, e.g. `c("I(1/(time + 1))", "log(time + 1)")`, so a SAS DATA-step transform carries over line for line |
 | `PREDICTORS` | `c("age", "female")` | the declared fixed effects other than time; the job selects nothing |
-| `STRUCTURE` | `"cs"` | one or more of `"cs"`, `"ar1"`, `"un"`, `"random"`, `"random+cs"`, `"random+ar1"`; the first is the reported model |
+| `STRUCTURE` | `"cs"` | one or more of `"cs"`, `"ar1"`, `"un"`, `"random"`; the first is the reported model |
 | `METHOD` | `"REML"` | `"ML"` when models with different fixed effects are compared by likelihood |
 | `PREDICT_AT` | `NULL` | a list of covariate profiles for the prediction grid; `NULL` uses the cohort's medians and reference levels |
 | `PREDICT_TIMES` | `NULL` | the time grid; `NULL` takes 50 points over the observed range |
@@ -146,15 +146,15 @@ Names follow `rm-linear` wherever the meaning is the same.
 | `"ar1"` | `REPEATED visit / type=ar(1) sub=id` | `gls(correlation = corAR1(form = ~ visit_index \| id))` |
 | `"un"` | `REPEATED visit / type=un sub=id` | `gls(correlation = corSymm(form = ~ visit_index \| id), weights = varIdent(form = ~ 1 \| visit))` |
 | `"random"` | `RANDOM intercept / subject=id` | `lme(random = ~ 1 \| id)` |
-| `"random+cs"`, `"random+ar1"` | both statements | `lme(random = ~ 1 \| id, correlation = ...)` |
 
 `visit_index` is the rank of a measurement's `TIME` among the distinct `TIME` values, built by
 the job, so a patient who misses visit 2 keeps visit 3 in place 3, as SAS places it. AR(1)
 and UN assume shared, ordered visits; the comment beside `STRUCTURE` says so.
-`"random+cs"` and `"random+ar1"` report the implied within-patient correlation. Under
-`"random+cs"` the split between the random intercept and the residual correlation is not
-identified. Under `"random+ar1"` it is identified only by how the correlation falls with the
-lag, which few visits per patient estimate weakly.
+`RANDOM` and `REPEATED` in one fit (`lme(random = ~ 1 | id, correlation = ...)`) are not
+offered. The rerun found them in 4 programs from 1 study (§2.2), short of the two-study gate;
+decided by John Ehrlinger on 2026-11-12. The 33 programs in §2.5 fit the two separately, and a
+comparison of `"random"` and `"cs"` through `STRUCTURE` covers what they do, except for the
+random slope.
 Spatial-power structures (5 studies) are not offered in the first cut. The
 comment points to `corExp(form = ~ time | id)` as the R form for a study that
 needs one.
