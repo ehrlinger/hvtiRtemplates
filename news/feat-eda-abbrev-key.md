@@ -1,1 +1,0 @@
-* `dc-eda` puts the abbreviation key in the caption of each figure page whose labels were shortened, naming only the abbreviations that page shows. It used to print once, after a section's last page, where readers at the 2026-11-11 Biostats training did not find it.
