@@ -1,0 +1,108 @@
+{
+  "date": "2026-11-12",
+  "corpus_programs": 263,
+  "r_jobs": 1,
+  "sas_breadth": 56,
+  "sas_breadth_jobs": 56,
+  "manual_review_programs": 18,
+  "misfiled_programs": 2,
+  "shapes": {
+    "random_effects": {
+      "sas_programs": 47,
+      "sas_studies": 7,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 31,
+      "two_study_gate": true
+    },
+    "repeated_covariance": {
+      "sas_programs": 138,
+      "sas_studies": 38,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 2,
+      "two_study_gate": true
+    },
+    "random_and_repeated": {
+      "sas_programs": 59,
+      "sas_studies": 15,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 0,
+      "two_study_gate": true
+    }
+  },
+  "migrations": {
+    "migration_gm": 0,
+    "migration_nm": 0
+  },
+  "over_mixed_fits": {
+    "cov_types": {
+      "ar(1)": {
+        "programs": 54,
+        "studies": 13
+      },
+      "cs": {
+        "programs": 140,
+        "studies": 37
+      },
+      "sp(exp)": {
+        "programs": 1,
+        "studies": 1
+      },
+      "sp(gau)": {
+        "programs": 1,
+        "studies": 1
+      },
+      "sp(pow)": {
+        "programs": 4,
+        "studies": 3
+      },
+      "un": {
+        "programs": 7,
+        "studies": 4
+      }
+    },
+    "method": {
+      "ml": {
+        "programs": 3,
+        "studies": 2
+      },
+      "reml": {
+        "programs": 5,
+        "studies": 2
+      }
+    },
+    "spline": {
+      "programs": 0,
+      "studies": 0
+    },
+    "lsmeans": {
+      "programs": 12,
+      "studies": 5
+    },
+    "estimate": {
+      "programs": 1,
+      "studies": 1
+    },
+    "predictions": {
+      "programs": 19,
+      "studies": 5
+    },
+    "mi": {
+      "programs": 33,
+      "studies": 4
+    }
+  },
+  "macros_in_3_plus_studies": {
+    "final": 11,
+    "in": 7,
+    "linpred": 3,
+    "ln": 9,
+    "symm": 5,
+    "vars": 41
+  },
+  "template_copies_skipped": 1091,
+  "traversal_errors": 0,
+  "unreadable_candidates": 0
+}
