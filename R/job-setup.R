@@ -122,21 +122,25 @@
   markers <- .edit_marker_lines(readLines(input, warn = FALSE))
   hits <- markers$line
   if (!length(hits)) return(invisible(0L))
+  # The guard reads markers, not values, so a default that is already right still
+  # leaves a marker to delete; the 2026-11-11 training did not know how to clear one.
+  rule <- paste("Delete a marker once its choice is made, even when the value it marks stays as it is:",
+                "the guard counts markers, not values.")
   msg <- paste0(
     length(hits), " unresolved ", token, " marker(s) remain in this job:\n",
     paste0("  - ", markers$text, collapse = "\n"),
-    if (show_source) "\nA job that still contains one has not been finished. Work each marker and delete it."
+    "\n", if (show_source) "A job that still contains one has not been finished. ", rule
   )
   if (!.strict_render()) {
     if (!show_source) cat(msg, "\n", sep = "", file = stderr())
-    warning(if (show_source) msg else paste0(length(hits), " unresolved ", token, " marker(s) remain in this job."),
+    warning(if (show_source) msg else paste0(length(hits), " unresolved ", token, " marker(s) remain in this job. ", rule),
             "\nRendering as a draft; the banner goes when the last marker does. ",
             "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
     cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
     if (show_source) {
       cat("Unresolved markers remain. **The numbers below are not a result.**\n\n```\n", msg, "\n```\n", sep = "")
     } else {
-      cat(length(hits), "unresolved markers remain. **This dataset is not finished.**\n")
+      cat(length(hits), "unresolved markers remain. **This dataset is not finished.**", rule, "\n")
     }
     cat(":::\n\n")
   } else {
