@@ -754,16 +754,22 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 # The paragraph an ar analysis report pastes into its Methods slot, filled from
 # this job's own choices. A report whose pasted copy no longer matches it says so.
 # Reword it here when the template's method changes, not in each study.
-.n <- nrow(resp)
+# Patients are distinct IDs, not rows: with START a patient has a row per
+# segment, and nrow() would report segments as patients. resp is built row for
+# row from d and fitted whole, so d's IDs are the fitted patients.
+stopifnot(nrow(resp) == nrow(d))
+.n <- length(unique(d[[ID]]))
+.segments <- nrow(resp)
 # n_fitted, from the event-count check above, also counts interval-censored events.
 .events <- n_fitted
-hvtiRtemplates:::.save_exhibit(list(n = .n, events = .events, phases = length(phases)), "value",
+hvtiRtemplates:::.save_exhibit(list(n = .n, segments = .segments, events = .events, phases = length(phases)), "value",
                                set_path("estimates", "hz-methods.rds"))
 hvtiRtemplates:::.methods_text(sprintf(
   paste("The hazard of the event recorded in %s was modeled as a parametric multiphase hazard with %d phase%s",
-        "(TemporalHazard %s), fitted by maximum likelihood to %d patients%s."),
+        "(TemporalHazard %s), fitted by maximum likelihood to %d patients%s%s."),
   EVENT, length(phases), if (length(phases) == 1L) "" else "s",
   as.character(utils::packageVersion("TemporalHazard")), .n,
+  if (is.null(START)) "" else sprintf(" (%d follow-up segments)", .segments),
   sprintf(" with %d events", .events)
 ))
 ```
