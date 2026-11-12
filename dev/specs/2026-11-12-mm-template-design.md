@@ -151,7 +151,7 @@ Names follow `rm-linear` wherever the meaning is the same.
 With `VISIT <- NULL`, `visit_index` is the rank of a measurement's `TIME` among the distinct
 `TIME` values, built by the job, so a patient who misses visit 2 keeps visit 3 in place 3, as SAS
 places it. That is also how SAS numbers the levels of a `CLASS` visit, so a visit no patient
-attended closes up: AR(1) then reads visits 1 and 3 as neighbours and fits rho where the schedule
+attended closes up: AR(1) then reads visits 1 and 3 as neighbors and fits rho where the schedule
 implies rho squared. Codex found this on PR #534. Naming a column of scheduled visit numbers in
 `VISIT` keeps the gap: AR(1) takes the numbers as they are, so visits 1 and 3 are two steps
 apart. UN keeps the rank, because a visit nobody attended has no data to place, and labels each

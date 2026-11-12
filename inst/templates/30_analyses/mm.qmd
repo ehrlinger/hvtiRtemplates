@@ -98,7 +98,7 @@ PREDICTORS <- c("age", "female")           # EDIT: the declared fixed effects be
 STRUCTURE <- "cs"
 # EDIT: for "ar1" or "un", the column holding each measurement's scheduled visit number (1, 2, 3, ...), or NULL.
 # NULL ranks the observed TIME values, as SAS numbers the levels of a CLASS visit, so a visit no patient attended
-# closes up and AR(1) reads visits 1 and 3 as neighbours. Name the column when the schedule has such a gap or TIME
+# closes up and AR(1) reads visits 1 and 3 as neighbors. Name the column when the schedule has such a gap or TIME
 # is not the visit itself. Irregular times suit neither; nlme::corCAR1(form = ~ time | id) is the R form of sp(pow).
 VISIT <- NULL
 # EDIT: "REML", as SAS's default, unless models with different fixed effects are to be
