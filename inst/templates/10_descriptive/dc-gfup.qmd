@@ -200,6 +200,17 @@ ECHO <- NULL
 # rather than a blob; raise it for a small one.
 ALPHA <- 0.5
 
+# EDIT: the years between ticks, on the year-of-operation axis (X_TICK_BY) and the
+# follow-up axis (Y_TICK_BY), such as 2 for a ten-year study or 5 or 10 for a long
+# one. NULL leaves ggplot's own choice. Each tick falls on a multiple of the step.
+X_TICK_BY <- NULL
+Y_TICK_BY <- NULL
+
+# EDIT: TRUE draws a legend naming the marks, in the corner above the diagonal
+# where no patient can be. FALSE leaves the key to the caption, which names the
+# marks either way.
+LEGEND <- FALSE
+
 # EDIT: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
 # red, alive blue and non-fatal events green, then reddish purple, olive
 # and black, all colorblind safe. Name alive, dead and event to choose your own;
@@ -635,6 +646,31 @@ if (!EVENT %in% .drawn) {
       .why, "\n:::\n\n", sep = "")
 }
 plots <- if (figure_drawn) plot(fp, alpha = ALPHA) else list()
+# X_TICK_BY, Y_TICK_BY and LEGEND, added to every figure after the house theme. A
+# breaks function chooses where the ticks fall and leaves the axis limits to ggplot.
+for (.nm in c("X_TICK_BY", "Y_TICK_BY")) {
+  .by <- get(.nm)
+  if (!is.null(.by) && !(is.numeric(.by) && length(.by) == 1L && is.finite(.by) && .by > 0)) {
+    stop(.nm, " must be NULL or one positive number of years, such as 5.", call. = FALSE)
+  }
+}
+if (!isTRUE(LEGEND) && !isFALSE(LEGEND)) stop("LEGEND must be TRUE or FALSE.", call. = FALSE)
+# Follow-up ticks start at 0: a negative interval is a data error, drawn but not labeled.
+# A step longer than the axis leaves it with no ticks rather than stopping the report.
+.ticks <- function(by, from = -Inf) {
+  function(limits) {
+    first <- ceiling(max(limits[[1L]], from) / by) * by
+    if (first > limits[[2L]]) numeric(0) else seq(first, limits[[2L]], by = by)
+  }
+}
+# A step too small for the axis would print its labels over one another; those that
+# would overlap are left out instead, and every tick mark is still drawn.
+.axes_and_legend <- c(
+  if (!is.null(X_TICK_BY)) list(scale_x_continuous(breaks = .ticks(X_TICK_BY), guide = guide_axis(check.overlap = TRUE))),
+  if (!is.null(Y_TICK_BY)) list(scale_y_continuous(breaks = .ticks(Y_TICK_BY, from = 0), guide = guide_axis(check.overlap = TRUE))),
+  if (LEGEND) list(theme(legend.position = "inside", legend.position.inside = c(0.98, 0.98),
+                         legend.justification = c(1, 1)))
+)
 # GROUP: every group's panels drawn on their own, against the cohort's close date so
 # each facet's diagonal is the cohort's. A group the panel function refuses is left out
 # of the facets and named under them; the cohort figure is unaffected.
@@ -665,8 +701,9 @@ if (figure_drawn && !is.null(GROUP)) {
     if (is.data.frame(p$layers[[k]]$data)) p$layers[[k]]$data <- stack(function(q) q$layers[[k]]$data)
   }
   # The strips name the column, and the years are angled so narrow facets do not run them together.
+  # This guide replaces the scale's, so it keeps the scale's overlap check.
   p + facet_wrap(~.gfup_group, labeller = as_labeller(function(x) paste0(GROUP, ": ", x))) +
-    guides(x = guide_axis(angle = 45))
+    guides(x = guide_axis(angle = 45, check.overlap = TRUE))
 }
 for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   row <- fp$data[i, ]
@@ -707,7 +744,7 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   }
   if (!is.null(ECHO)) .key <- paste0(.key, ", gray ticks the follow-up at each patient's echo,")
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
-    theme_hv_manuscript(base_size = 12)
+    theme_hv_manuscript(base_size = 12) + .axes_and_legend
   file <- save_figure(p, paste0("dc-gfup-", nm), linked = TRUE)
   .link <- figure_link(file)
   .child(paste("fig gfup", nm),

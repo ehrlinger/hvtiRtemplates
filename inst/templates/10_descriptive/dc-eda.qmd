@@ -66,8 +66,8 @@ if (!requireNamespace("patchwork", quietly = TRUE)) {
 }
 # Checked by what it has, not its version: the release that adds the house ODS
 # list and the one before it can carry the same number until the next bump.
-if (!exists(".ods_groups", envir = asNamespace("hvtiRtemplates"), inherits = FALSE)) {
-  stop("This job needs an hvtiRtemplates with the house ODS variable list, newer than the ",
+if (!exists(".variable_sets", envir = asNamespace("hvtiRtemplates"), inherits = FALSE)) {
+  stop("This job needs an hvtiRtemplates with the house variable sets, newer than the ",
        utils::packageVersion("hvtiRtemplates"), " installed. Run hvtiR::update(force = TRUE), then re-render.",
        call. = FALSE)
 }
@@ -97,7 +97,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 
 Set the values in this chunk before rendering. Left as they are, they draw the
 all-deaths follow-up panel and the study dataset's columns on the house ODS
-list, the variables the SAS ODS tables report. `VARIABLE_SET <- "all"` draws
+list, the variables the SAS ODS tables report. `VARIABLE_SET` stacks other sets
+after it, the house modules or the study's own, and `VARIABLE_SET <- "all"` draws
 every column instead. The report is a data check: its tables and figures may show
 ranges, so they are not manuscript figures, and they do not go in a paper as saved.
 
@@ -222,17 +223,41 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dc-eda-variables
-# EDIT: what VARIABLES = NULL draws. "ods" draws the house descriptive list, so
-# named because it is every variable the SAS ODS tables (dc.tables.ods.sas)
-# report, in their section order: a built dataset carries far more columns than
-# anyone wants a page for. Only the listed columns this dataset has are drawn,
-# and the report counts them. It also lists this dataset's columns left out, so a
-# study's own variables are one name away in VARIABLES. "all" draws every column,
-# as dc-eda did before this choice existed.
-# The list ships with the package as extdata/ods-variables.csv, so a study adds to
-# VARIABLES rather than editing it. To read it: hvtiRtemplates:::.ods_groups().
-# dc-tables carries the same list as its commented GROUPS example.
+# EDIT: what VARIABLES = NULL draws: one variable set, or several stacked, in the
+# order named, such as c("ods", "mitral", "redcap"). Each column is drawn once, at
+# its first set's place. "ods" is the house descriptive list, every variable the
+# SAS ODS tables (dc.tables.ods.sas) report, in their section order: a built
+# dataset carries far more columns than anyone wants a page for. The house modules
+# are the blocks that template carries commented out: "ie" (the infectious
+# endocarditis REDCap fields and organisms), "pericardiectomy", "cabg" and "valve".
+# A study adds its own under variable_sets: in _study.yml, a list of columns or
+# sections each listing columns:
+#   variable_sets:
+#     mitral:
+#       Mitral repair: [mv_ring, mv_lflt]
+#       Mitral echo: [mr_grade]
+#     redcap: [rc_status, rc_score]
+# A REDCap project's fields come from its data dictionary export; this prints
+# the line to paste:
+#   dict <- read.csv("<project>_DataDictionary.csv", check.names = FALSE)
+#   cat("  redcap: [", toString(tolower(dict[["Variable / Field Name"]])), "]\n", sep = "")
+# Only the listed columns this dataset has are drawn, and the report counts them
+# set by set. It also lists this dataset's columns left out, so a study's own
+# variables are one name away in VARIABLES. "all", on its own, draws every column,
+# as dc-eda did before this choice existed. The house sets ship with the package,
+# in extdata/ods-variables.csv and extdata/variable-sets.csv, so a study declares
+# a set rather than editing them. To read them all: hvtiRtemplates:::.variable_sets(.cfg).
+# dc-tables carries the ODS list as its commented GROUPS example.
 VARIABLE_SET <- "ods"
+# EDIT: FALSE draws one form of each variable the set reaches, the plain one, and
+# leaves out the transforms a data build adds beside it, such as ln_age, in_age
+# and age2: a first EDA checks the values as measured, each transform is a page of
+# its own, and on "all" they made the 2026-11-11 training's report take six minutes.
+# A column is left out only when its values are a log, inverse, square, root or exp
+# of the plain form, never for its name alone, and the report lists each with the
+# transform it matched. TRUE draws every form. A column named in VARIABLES is drawn
+# either way.
+TRANSFORMS <- FALSE
 X_LABEL <- "Year of operation"     # EDIT: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 # What a date X_VAR is drawn in: "year", "month", or "auto", which draws months
 # when the dates span less than three years. A six-month cohort drawn in years
@@ -343,8 +368,12 @@ if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
   stop("VARIABLES must be NULL or name distinct columns.", call. = FALSE)
 }
 if (!column_names(EXCLUDE)) stop("EXCLUDE must name distinct columns.", call. = FALSE)
-if (!is.character(VARIABLE_SET) || length(VARIABLE_SET) != 1L || !VARIABLE_SET %in% c("ods", "all")) {
-  stop("VARIABLE_SET must be \"ods\" or \"all\".", call. = FALSE)
+if (!isTRUE(TRANSFORMS) && !isFALSE(TRANSFORMS)) stop("TRANSFORMS must be TRUE or FALSE.", call. = FALSE)
+.variable_sets <- hvtiRtemplates:::.variable_sets(.cfg)
+if (!is.character(VARIABLE_SET) || !length(VARIABLE_SET) || anyNA(VARIABLE_SET) || anyDuplicated(VARIABLE_SET) ||
+      !(identical(VARIABLE_SET, "all") || all(VARIABLE_SET %in% names(.variable_sets)))) {
+  stop("VARIABLE_SET must be \"all\", or one or more of: ", paste(names(.variable_sets), collapse = ", "),
+       ". A study declares its own under variable_sets: in _study.yml.", call. = FALSE)
 }
 positive_whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x > 0 && x == floor(x)
 for (value in list(GRID_NCOL, GRID_NROW, UNIQUE_LIMIT)) {
@@ -396,23 +425,29 @@ looks_like_id <- function(v) {
 }
 if (is.null(VARIABLES)) {
   candidates <- setdiff(names(d), c(X_VAR, EXCLUDE))
-  # The list chooses the continuous, percent and count pages; a follow-up-only
-  # report draws none of them, so it neither needs nor checks the list.
-  if (VARIABLE_SET == "ods" && any(SECTIONS != "followup")) {
-    # The list's order, which is its section order, is the page order.
-    ods <- unlist(hvtiRtemplates:::.ods_groups(), use.names = FALSE)
+  # The sets choose the continuous, percent and count pages; a follow-up-only
+  # report draws none of them, so it neither needs nor checks them.
+  if (!identical(VARIABLE_SET, "all") && any(SECTIONS != "followup")) {
+    # The sets in the order named, each in its section order, are the page order;
+    # a column on two sets keeps its place on the first.
+    .chosen <- lapply(.variable_sets[VARIABLE_SET], unlist, use.names = FALSE)
+    listed <- unique(unlist(.chosen, use.names = FALSE))
     # Matched whatever the case: a joined dataset's names need not be lowercase.
-    on_list <- tolower(candidates) %in% ods
+    on_list <- tolower(candidates) %in% listed
     outside <- candidates[!on_list]
     candidates <- candidates[on_list]
-    candidates <- candidates[order(match(tolower(candidates), ods))]
+    candidates <- candidates[order(match(tolower(candidates), listed))]
     if (!length(candidates)) {
-      stop("None of the house ODS list's columns is in this dataset. Set VARIABLE_SET <- \"all\", or name the ",
+      stop("None of the columns in the variable set", if (length(VARIABLE_SET) > 1L) "s", " ",
+           paste(VARIABLE_SET, collapse = ", "), " is in this dataset. Set VARIABLE_SET <- \"all\", or name the ",
            "columns in VARIABLES.", call. = FALSE)
     }
-    cat(length(candidates), "of the", length(ods), "columns on the house ODS list are in this dataset.\n")
+    for (.set in VARIABLE_SET) {
+      cat(sum(tolower(candidates) %in% .chosen[[.set]]), "of the", length(.chosen[[.set]]), "columns in the", .set,
+          "variable set are in this dataset.\n")
+    }
     if (length(outside)) {
-      cat("Not drawn, as columns outside the house ODS list (name them in VARIABLES, or set VARIABLE_SET <- \"all\"):",
+      cat("Not drawn, as columns outside the variable sets (name them in VARIABLES, or set VARIABLE_SET <- \"all\"):",
           paste(outside, collapse = ", "), "\n")
     }
   }
@@ -421,6 +456,41 @@ if (is.null(VARIABLES)) {
   if (length(left_out)) {
     cat("Left out as identifier or date columns (name a date in VARIABLES to draw it; an identifier is never drawn):",
         paste(left_out, collapse = ", "), "\n")
+  }
+  # One form per variable. hvtiRutilities::concept_map(), the rule the bootstrap screens
+  # use, groups ln_age, in_age and age2 with age by name, but a name proves nothing here:
+  # bmi2 can be a second measurement as easily as a square. So a form is left out only
+  # when its values are an exact transform of the form drawn, and the grouping runs on
+  # the displayable columns, so a plain form that is a KEY does not take its transforms
+  # with it. A transform not listed here is drawn, a page too many rather than one lost.
+  if (!TRANSFORMS && length(VARIABLES)) {
+    .transforms <- list("log(%s)" = log, "log10(%s)" = log10, "log2(%s)" = log2, "1/%s" = function(v) 1 / v,
+                        "%s^2" = function(v) v^2, "sqrt(%s)" = sqrt, "exp(%s)" = exp)
+    .transform_of <- function(x, base) {
+      if (!is.numeric(x) || !is.numeric(base)) return(NA_character_)
+      for (form in names(.transforms)) {
+        y <- suppressWarnings(.transforms[[form]](base))
+        ok <- is.finite(x) & is.finite(y)
+        if (sum(ok) >= 2L && identical(is.finite(x), is.finite(y)) &&
+              isTRUE(all.equal(x[ok], y[ok], tolerance = 1e-6, check.attributes = FALSE))) return(form)
+      }
+      NA_character_
+    }
+    .forms <- hvtiRutilities::concept_map(VARIABLES)
+    .plain <- stats::setNames(.forms$variable[.forms$representative], .forms$concept[.forms$representative])
+    # In the dataset's order, which concept_map() does not keep.
+    .forms <- .forms[!.forms$representative, , drop = FALSE]
+    .forms <- .forms[order(match(.forms$variable, VARIABLES)), , drop = FALSE]
+    .as <- vapply(seq_len(nrow(.forms)), function(i) {
+      .transform_of(d[[.forms$variable[[i]]]], d[[.plain[[.forms$concept[[i]]]]]])
+    }, character(1L))
+    .dropped <- !is.na(.as)
+    if (any(.dropped)) {
+      .base <- .plain[.forms$concept[.dropped]]
+      VARIABLES <- setdiff(VARIABLES, .forms$variable[.dropped])
+      cat("Not drawn, as transforms of a variable drawn here, checked by their values (set TRANSFORMS <- TRUE to draw them):",
+          paste(paste(.forms$variable[.dropped], "=", sprintf(.as[.dropped], .base)), collapse = ", "), "\n")
+    }
   }
 } else {
   VARIABLES <- setdiff(VARIABLES, EXCLUDE)

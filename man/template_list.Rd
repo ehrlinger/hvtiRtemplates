@@ -17,7 +17,11 @@ template_list()
 \value{
 A data frame, of class \code{hvti_template_list}, with columns
   \code{name}, \code{prefix},
-  \code{qualifier}, \code{folder}, \code{call} and \code{file}.
+  \code{qualifier}, \code{folder}, \code{title}, \code{description},
+  \code{call} and \code{file}. \code{title} and \code{description} say
+  what the template is for, from the template catalog
+  (\code{\link{template_catalog}}), and are \code{NA} for a template it
+  does not list.
   \code{call} is the \code{\link{add_job}} call that scaffolds the
   template, with only the arguments it requires and runnable as printed,
   e.g. \code{add_job("dc.gfup", subject = "cohort", type = "eda")}. The
@@ -26,10 +30,11 @@ A data frame, of class \code{hvti_template_list}, with columns
   taxonomy name with the directory's ordering digits stripped, so
   \code{20_distributions} reports as \code{distributions}.
   \code{qualifier} is \code{NA} for a prefix carrying a single template.
-  Printed whole, it shows only \code{name}, \code{prefix},
-  \code{qualifier} and \code{folder}, since \code{call} and \code{file}
-  would wrap every row; both are still in the data, and a selection of
-  columns prints as selected.
+  Printed whole, it shows only \code{name}, \code{folder} and
+  \code{title}, the title cut to fit the console's width, since the other
+  columns would wrap every row. In a console too narrow for the three,
+  \code{folder} is left out, then \code{title}. The other columns are still
+  in the data, and a selection of columns prints as selected.
 }
 \description{
 These templates are supported: they render, they are tested, and they are
@@ -53,7 +58,7 @@ folder, including when the catalog is absent.
 }
 \examples{
 tl <- template_list()
-# Printed whole: name, prefix, qualifier and folder.
+# Printed whole: name, folder and title.
 tl
 
 # Every template, where its job is written, and the call that scaffolds it.

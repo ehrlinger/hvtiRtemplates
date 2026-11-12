@@ -58,7 +58,8 @@ test_that("an event recorded after the close date is capped there and counted pa
 # The figures chunk with no figure drawn: enough to run its checks and print
 # its callouts without drawing a panel.
 gfup_checks <- function(event, panels, events = list()) {
-  env <- list2env(list(EVENT = event, PANELS = panels, EVENTS = events, COLORS = NULL, ALPHA = 0.5,
+  env <- list2env(list(EVENT = event, PANELS = panels, EVENTS = events, COLORS = NULL, ALPHA = 0.5, GROUP = NULL,
+                       X_TICK_BY = NULL, Y_TICK_BY = NULL, LEGEND = FALSE,
                        figure_drawn = FALSE, fp = simpleError("not drawn"), panel_counts = list()))
   out <- utils::capture.output(eval(gfup_chunk("figures"), env))
   paste(out, collapse = "\n")
