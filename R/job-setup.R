@@ -122,10 +122,14 @@
   markers <- .edit_marker_lines(readLines(input, warn = FALSE))
   hits <- markers$line
   if (!length(hits)) return(invisible(0L))
+  # The guard reads markers, not values, so a default that is already right still
+  # leaves a marker to delete; the 2026-11-11 training did not know how to clear one.
+  rule <- paste("Delete a marker once its choice is made, even when the value it marks stays as it is:",
+                "the guard counts markers, not values.")
   msg <- paste0(
     length(hits), " unresolved ", token, " marker(s) remain in this job:\n",
     paste0("  - ", markers$text, collapse = "\n"),
-    if (show_source) "\nA job that still contains one has not been finished. Work each marker and delete it."
+    if (show_source) paste0("\nA job that still contains one has not been finished. ", rule)
   )
   if (!.strict_render()) {
     if (!show_source) cat(msg, "\n", sep = "", file = stderr())
@@ -136,7 +140,7 @@
     if (show_source) {
       cat("Unresolved markers remain. **The numbers below are not a result.**\n\n```\n", msg, "\n```\n", sep = "")
     } else {
-      cat(length(hits), "unresolved markers remain. **This dataset is not finished.**\n")
+      cat(length(hits), "unresolved markers remain. **This dataset is not finished.**", rule, "\n")
     }
     cat(":::\n\n")
   } else {
