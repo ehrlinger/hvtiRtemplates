@@ -29,6 +29,7 @@ refuses to overwrite an existing job.
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
 | `30_analyses/bc.qmd` | bootstrap variable selection, Cox | `30_analyses/` or `analyses/` |
 | `30_analyses/bh.qmd` | bootstrap variable selection | `30_analyses/` or `analyses/` |
+| `30_analyses/mm.qmd` | linear mixed model of a repeated continuous response, with its population-average course over time (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/rfs-fit.qmd` | random survival forest, grown and checked | `30_analyses/` or `analyses/` |
 | `30_analyses/rfs-explain.qmd` | importance and dependence for an `rfs` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/rfc-fit.qmd` | classification forest, grown and checked | `30_analyses/` or `analyses/` |
@@ -146,8 +147,8 @@ Both keep their fitted models and pool stacked imputations with Rubin's rules.
 the report states the formula it fitted and how to read the coefficients on that
 scale.
 `rm-linear` withholds R-squared for imputed data, where the pooling rules define
-none. Its figures are `rm-linear-residuals` and `rm-linear-qq`. Mixed,
-generalized and non-linear models belong to `mm`, `gm` and `nm`. Scaffold one
+none. Its figures are `rm-linear-residuals` and `rm-linear-qq`. Mixed models
+are `mm`; generalized and non-linear models belong to `gm` and `nm`. Scaffold one
 with its qualifier, for example
 `add_job("rm", "los", "analysis", qualifier = "linear")`.
 

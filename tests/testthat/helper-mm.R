@@ -48,6 +48,13 @@ mm_run <- function(labels, env, choices = list()) {
   invisible(env)
 }
 
+# The data with visit numbers for TIME.
+mm_visits <- function() {
+  d <- mm_data()
+  d$time <- stats::ave(d$time, d$ccfid, FUN = seq_along)
+  d
+}
+
 # Scaffold an mm job in a fresh study holding mm_data(), work its EDIT: markers and render it.
 mm_render_fixture <- function(choices = character(), .local_envir = parent.frame()) {
   root <- tempfile("mm-study-")

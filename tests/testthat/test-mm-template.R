@@ -79,13 +79,6 @@ test_that("mm_fit with cs recovers the correlation and the time effect", {
   expect_identical(fit$n_patients, 200L)
 })
 
-# The data with visit numbers for TIME.
-mm_visits <- function() {
-  d <- mm_data()
-  d$time <- stats::ave(d$time, d$ccfid, FUN = seq_along)
-  d
-}
-
 test_that("every STRUCTURE fits and reports its own parameters", {
   h <- mm_helpers()
   d <- mm_visits()
