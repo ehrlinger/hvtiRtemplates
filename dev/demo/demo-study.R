@@ -124,7 +124,7 @@ demo_study <- function(root) {
   # study_setup() and register_data() print a study checklist; keep it quiet.
   invisible(utils::capture.output(suppressMessages(study_setup(
     root, study = "Descriptives demo (synthetic)", study_tracker_id = 1L,
-    umbrella = "Demo", owner = "CORR", irb_number = "DEMO", cvir_no = "DEMO"
+    umbrella = "Demo", owner = "CORR", irb_number = "DEMO", cvir_no = "DEMO", renv = FALSE
   ))))
   saveRDS(demo_data(), file.path(study_dir("datasets", root), "built.rds"))
   invisible(utils::capture.output(suppressMessages(register_data(
