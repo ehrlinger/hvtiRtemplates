@@ -90,12 +90,14 @@ gallery_data <- function() {
 }
 
 gallery_study <- function(root) {
+  # renv = FALSE: the gallery renders against the installed packages. A study renv
+  # would reset .libPaths() in every Quarto child R and hide a private R_LIBS.
   root <- path.expand(root)
   if (dir.exists(root)) stop("Gallery folder already exists: ", root, ". Remove it or name another.", call. = FALSE)
   dir.create(dirname(root), recursive = TRUE, showWarnings = FALSE)
   invisible(utils::capture.output(suppressMessages(study_setup(
     root, study = "Template gallery (synthetic)", study_tracker_id = 1L,
-    umbrella = "Demo", owner = "CORR", irb_number = "DEMO", cvir_no = "DEMO"
+    umbrella = "Demo", owner = "CORR", irb_number = "DEMO", cvir_no = "DEMO", renv = FALSE
   ))))
   saveRDS(gallery_data(), file.path(study_dir("datasets", root), "built.rds"))
   invisible(utils::capture.output(suppressMessages(register_data(
