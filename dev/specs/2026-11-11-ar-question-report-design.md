@@ -1,8 +1,10 @@
 # The `ar` analysis report: one research question, answered from finished jobs
 
 **Date:** 2026-11-11
-**Status:** design. Sections 3 to 7 decided by John Ehrlinger on 2026-11-11.
-Section 9 is open. Nothing is built.
+**Status:** design. Sections 3 to 7 decided by John Ehrlinger on 2026-11-11;
+the final-run stop, the exhibit digest and the review stamp (sections 4, 5.5
+and 6.2) added the same day from review on #522. Section 9 is open. Nothing is
+built.
 **Reads with:** `2026-08-21-template-set-layout-design.md`, which defines the
 `(subject, type)` set and the folders an item is resolved in, and
 `2026-09-25-eda-composite-design.md`, which set the rule that a combined report
@@ -81,7 +83,7 @@ Rejected:
 ## 4. Decided: jobs save each labeled exhibit, and the sidecar maps label to file
 
 Option A of three. A job saves each figure and table it wants citable, and its
-sidecar records `label -> file`:
+sidecar records `label -> {file, sha256}`:
 
 - a figure: the PNG the job already writes to `graphs/<subject>-<type>/`;
 - a table: the table object as `.rds` in `documents/<subject>-<type>/`, beside
@@ -90,6 +92,19 @@ sidecar records `label -> file`:
 A small saving helper in the templates does both the save and the sidecar
 entry, so a template cannot record a label without the file or the reverse.
 `ar` renders by reading those files. **It re-runs nothing.**
+
+**`ar` verifies each file's digest against the sidecar and stops on a
+mismatch.** Figures are saved to fixed paths (`.save_figure()`,
+`R/save-figure.R`), so a later render can overwrite one and then fail before
+it publishes a new HTML and sidecar. The old sidecar and the source checksum
+would still look valid while the file on disk came from the failed run. A hand
+edit, or two jobs writing one path, does the same. The digest is the only check
+that ties the bytes `ar` shows to the run the sidecar describes.
+
+Rejected for now: an immutable per-run bundle published atomically with the
+sidecar. It is the stronger guarantee, but it changes where every template
+saves. The digest fails closed with no change to the save paths, and the
+bundle can follow if a mismatch proves common.
 
 Rejected:
 
@@ -150,6 +165,24 @@ re-rendered with different choices since this text was pasted, compare and
 update. It warns and does not stop, because the analyst may have rewritten the
 paragraph deliberately.
 
+### 5.5 Every item's text is stamped with the run it was written against
+
+The Methods sha alone misses the commoner change. A dataset is updated and the
+job re-rendered with the same method and the same n: the exhibit and its
+estimates move, the Methods text does not, and the Results and Interpretation
+written for the old run sit beside the new exhibit with nothing said.
+`ar_value()` protects only the numbers written as inline calls, not the prose
+around them.
+
+So each item section carries a **review stamp**, an HTML comment holding the
+source sidecar's render id (`.hvti_render_id`) and the digests of the item's
+exhibits. `ar_paste_methods()` writes the first stamp. `ar_review(item)`,
+exported and run from the console after the analyst rereads an item, rewrites
+it. At render, a stamp that no longer matches the current sidecar prints a
+callout on that item, "the source job has been re-rendered since this text was
+reviewed", until the analyst reviews it again. It warns and does not stop: the
+new run is final evidence, and only the prose is in question.
+
 ## 6. Decided: what the report shows, and when it stops
 
 ### 6.1 Each item is a candidate exhibit
@@ -176,10 +209,13 @@ Code stays folded, as in every job report. The audience reads results.
 |---|---|---|
 | a label no sidecar lists | **stop**, name the item | evidence must not drop out silently |
 | a listed file that is missing | **stop**, name the item and the file | the same |
-| the source job rendered in part (`partial` in its sidecar) | **stop** | a `stop_here()` result is a draft, not evidence |
+| a file whose digest differs from the sidecar's | **stop**, name the item and the file | the bytes are not the ones that run produced (section 4) |
+| the source run is not `final` (`run$status` in its sidecar) | **stop**, quote the draft reasons | a draft is not evidence. `run$status` is reconciled by `.run_reconcile()` in `R/run-info.R` and covers open `EDIT:` markers, skipped chunks, `stop_here()` and reasons a template raises at run time with `.run_mark_draft()`, such as `bh`'s incomplete bootstrap pool. Checking `partial` alone would miss all but the middle two |
+| a sidecar with no `run$status`, from a job rendered before the run record | **stop**: re-render the job with the current package | its status cannot be read, so it is not presumed final |
 | `ar_value()` names a field the object lacks | **stop**, list the fields it has | a misspelled field must not render as empty text |
 | the source `.qmd` edited since its last render (file sha differs from the sidecar's) | callout: re-render the job | the exhibit may no longer match the code |
 | boilerplate drift (5.4) | callout | the analyst may have meant it |
+| a review stamp older than the source's current run (5.5) | callout: reread and run `ar_review()` | the exhibit changed under the prose |
 | a template with no boilerplate yet (5.3) | callout | shows the rollout gap instead of hiding it |
 | an empty `::: methods` div | callout: run `ar_paste_methods()` | |
 
@@ -193,7 +229,15 @@ marker guard reports any left behind.
 resolve by label; that each stop in 6.2 stops and each callout prints; that
 `ar_paste_methods()` fills only empty divs and leaves an edited one byte for
 byte; and that drift fires after a source job is re-rendered with a changed
-choice. Each new branch is proved by mutation, per `AGENTS.md`: revert the code
+choice. Three regressions each get their own test:
+
+- a source run left draft **without** a partial render, once by an open
+  `EDIT:` marker and once by a `.run_mark_draft()` reason, stops `ar`; so does
+  a sidecar with no `run$status`;
+- an exhibit overwritten after its sidecar was written, standing in for a
+  re-render that failed before publishing, stops `ar` on the digest;
+- a source re-rendered on changed data with unchanged Methods text raises the
+  review-stamp callout, and `ar_review()` clears it. Each new branch is proved by mutation, per `AGENTS.md`: revert the code
 and confirm the test goes red.
 
 **The gate.** `ar` ships **in flight**, as `vt-fit` did, until two real study
@@ -203,9 +247,10 @@ row so `check-roadmap-counts.py` agrees.
 
 **Order of work:**
 
-1. The saving helper and the sidecar's `label -> file` map (section 4).
+1. The saving helper and the sidecar's `label -> {file, sha256}` map (section 4).
 2. The `methods` chunk and boilerplate on the first two templates (section 5).
-3. The `ar` template, `ar_items()`, `ar_value()` and `ar_paste_methods()`.
+3. The `ar` template, `ar_items()`, `ar_value()`, `ar_paste_methods()` and
+   `ar_review()`.
 4. A gallery entry, so the group can read a rendered `ar` without running one.
 
 ## 8. Deferred: the publication phase
