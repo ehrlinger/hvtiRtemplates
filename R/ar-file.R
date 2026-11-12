@@ -20,7 +20,9 @@
     close <- if (is.na(open)) NA_integer_ else region[region > open & grepl("^:::+\\s*$", lines[region])][1L]
     body <- if (is.na(open) || is.na(close)) integer() else seq_len(close - open - 1L) + open
     stamp_line <- body[grepl(.ar_stamp_pattern, lines[body])][1L]
-    stamp <- if (is.na(stamp_line)) NULL else {
+    stamp <- if (is.na(stamp_line)) {
+      NULL
+    } else {
       jsonlite::fromJSON(sub(.ar_stamp_pattern, "\\1", lines[[stamp_line]]), simplifyVector = FALSE)
     }
     prose <- lines[setdiff(body, stamp_line)]
