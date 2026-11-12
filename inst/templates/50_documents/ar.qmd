@@ -19,6 +19,14 @@ format:
     code-fold: true
     df-print: default
     embed-resources: true
+    include-in-header:
+      text: |
+        <style>
+        .methods::before, .results::before, .interpretation::before { font-weight: 600; display: block; }
+        .methods::before { content: "Methods"; }
+        .results::before { content: "Results"; }
+        .interpretation::before { content: "Interpretation"; }
+        </style>
 ---
 
 <!-- An `ar` job answers ONE research question from jobs that have already run.

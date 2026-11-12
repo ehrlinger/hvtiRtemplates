@@ -77,3 +77,42 @@ test_that("Methods come from the sidecar, or from the floor when the template wr
   expect_match(m$text, "TemporalHazard 1.2.8")
   expect_false(grepl("base 4.6.1", m$text, fixed = TRUE))
 })
+
+# Rewrite the first exhibit record of a fake job's sidecar.
+ar_corrupt_record <- function(qmd, ...) {
+  sc <- hvtiRutilities::provenance_path(sub("[.]qmd$", ".html", qmd))
+  x <- jsonlite::read_json(sc)
+  edits <- list(...)
+  for (n in names(edits)) x$exhibits[[1L]][[n]] <- edits[[n]]
+  jsonlite::write_json(x, sc, auto_unbox = TRUE, null = "null")
+}
+
+test_that("a malformed sidecar record stops cleanly, naming the job and the label", {
+  root <- ar_fake_study()
+  qmd <- ar_fake_job(root)
+  id <- "hz.dead.hz#fig-fit"
+  ar_corrupt_record(qmd, file = "../../etc/passwd.png")
+  expect_error(hvtiRtemplates:::.ar_resolve(id, root), "hz.dead.hz.*fig-fit.*inside the study")
+  ar_fake_job(root)
+  ar_corrupt_record(qmd, file = "/etc/hosts")
+  expect_error(hvtiRtemplates:::.ar_resolve(id, root), "inside the study")
+  ar_fake_job(root)
+  ar_corrupt_record(qmd, kind = "bogus")
+  expect_error(hvtiRtemplates:::.ar_resolve(id, root), "unknown kind 'bogus'")
+  ar_fake_job(root)
+  ar_corrupt_record(qmd, file = "graphs/dead-hz/a b;.png")
+  expect_error(hvtiRtemplates:::.ar_resolve(id, root), "unexpected characters")
+  ar_fake_job(root)
+  ar_corrupt_record(qmd, label = NULL)
+  expect_error(hvtiRtemplates:::.ar_resolve(id, root), "`label` is not a single string")
+})
+
+test_that("a record that resolves outside the study through a link stops", {
+  root <- ar_fake_study()
+  qmd <- ar_fake_job(root)
+  outside <- withr::local_tempdir()
+  file.copy(file.path(root, "graphs", "dead-hz", "hz-fit.png"), file.path(outside, "x.png"))
+  file.symlink(outside, file.path(root, "graphs", "lnk"))
+  ar_corrupt_record(qmd, file = "graphs/lnk/x.png")
+  expect_error(hvtiRtemplates:::.ar_resolve("hz.dead.hz#fig-fit", root), "resolves outside the study")
+})

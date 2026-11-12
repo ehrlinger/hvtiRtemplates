@@ -51,6 +51,8 @@
   .run_state$exhibits <- list()
   .run_state$methods <- NULL
   .run_state$root <- root
+  # A figure older than this run was left by an earlier render, not saved by this one.
+  .run_state$started <- started
   # Any handoff bundle this job saves records when this render began.
   .run_state$rendered_at <- .iso_time(started)
   run <- .run_begin(started, input, subject, type, markers)

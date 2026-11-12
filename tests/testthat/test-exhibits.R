@@ -64,3 +64,17 @@ test_that("the sidecar extra carries an unnamed exhibit array and drops what is 
   expect_null(names(x$exhibits))
   expect_identical(x$exhibits[[1]]$label, "fig-a")
 })
+
+test_that("a file older than the run is not recorded, and one written in it is", {
+  root <- local_exhibit_state()
+  assign("started", Sys.time(), envir = hvtiRtemplates:::.run_state)
+  withr::defer(rm("started", envir = hvtiRtemplates:::.run_state))
+  old <- file.path(root, "old.png")
+  writeBin(as.raw(1), old)
+  Sys.setFileTime(old, Sys.time() - 3600)
+  expect_null(hvtiRtemplates:::.record_exhibit(old, "figure", label = "fig-old"))
+  expect_length(hvtiRtemplates:::.run_state$exhibits, 0L)
+  fresh <- file.path(root, "fresh.png")
+  writeBin(as.raw(1), fresh)
+  expect_identical(hvtiRtemplates:::.record_exhibit(fresh, "figure", label = "fig-new")$label, "fig-new")
+})

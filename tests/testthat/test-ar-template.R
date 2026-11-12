@@ -37,3 +37,13 @@ test_that("an ar job renders against a finished hz job", {
   expect_true(any(grepl("Item 1", html, fixed = TRUE)))
   expect_false(any(grepl("callout-warning", html, fixed = TRUE)))
 })
+
+test_that("ar labels its three slots in CSS, never in text the parser would read as filled", {
+  src <- readLines(system.file("templates", "50_documents", "ar.qmd", package = "hvtiRtemplates"))
+  if (!length(src)) src <- readLines(test_path("..", "..", "inst", "templates", "50_documents", "ar.qmd"))
+  txt <- paste(src, collapse = "\n")
+  expect_match(txt, "include-in-header:", fixed = TRUE)
+  for (s in c("Methods", "Results", "Interpretation")) {
+    expect_match(txt, sprintf('.%s::before { content: "%s"; }', tolower(s), s), fixed = TRUE)
+  }
+})

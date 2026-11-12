@@ -36,6 +36,26 @@
     unlist(run$draft_reasons, use.names = FALSE))
 }
 
+# A sidecar is a file on a share; its records are checked before one names a path.
+.ar_check_record <- function(rec, root, job) {
+  one <- function(x) is.character(x) && length(x) == 1L && !is.na(x)
+  label <- if (one(rec$label)) rec$label else "<no label>"
+  bad <- function(why) {
+    stop("Job '", job, "' has a malformed exhibit record (label '", label, "'): ", why, ".", call. = FALSE)
+  }
+  for (f in c("label", "kind", "file", "sha256")) if (!one(rec[[f]])) bad(paste0("`", f, "` is not a single string"))
+  if (!rec$kind %in% c("figure", "table", "value")) bad(paste0("unknown kind '", rec$kind, "'"))
+  parts <- strsplit(rec$file, "[/\\\\]")[[1L]]
+  if (grepl("^([/\\\\]|[A-Za-z]:)", rec$file) || ".." %in% parts) bad("the file is not a path inside the study")
+  if (!grepl("^[A-Za-z0-9_.-]+$", basename(rec$file))) bad("the file name has unexpected characters")
+  path <- file.path(root, rec$file)
+  if (file.exists(path)) {
+    prefix <- paste0(normalizePath(root, winslash = "/"), "/")
+    if (!startsWith(normalizePath(path, winslash = "/"), prefix)) bad("the file resolves outside the study")
+  }
+  invisible(TRUE)
+}
+
 .ar_resolve <- function(id, root) {
   item <- .ar_parse_id(id)
   qmd <- .ar_find_job(item$job, root)
@@ -51,6 +71,7 @@
          "). A draft is not evidence: finish the job and render it again.", call. = FALSE)
   }
   recs <- if (is.null(side$exhibits)) list() else side$exhibits
+  for (r in recs) .ar_check_record(r, root, item$job)
   labels <- vapply(recs, function(r) r$label, "")
   hit <- which(labels == item$label)
   if (length(hit) != 1L) {

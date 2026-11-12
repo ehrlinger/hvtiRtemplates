@@ -82,3 +82,38 @@ test_that("ar_value() returns a field, and names the fields it has when one is m
   expect_error(ar_value("hz.dead.hz#methods", "N"), "it has: n, events")
   expect_error(ar_value("hz.dead.hz#fig-fit", "n"), "not a saved value")
 })
+
+test_that("an exhibit of unknown kind stops, naming the item", {
+  r <- list(id = "hz.dead.hz#x", exhibit = list(kind = "bogus"))
+  expect_error(hvtiRtemplates:::.ar_exhibit_body(r, tempdir()), "hz.dead.hz#x.*unknown kind 'bogus'")
+})
+
+test_that("table cells and value names are escaped", {
+  root <- ar_fake_study()
+  ar_fake_job(root)
+  saveRDS(data.frame(term = "<b>x</b> & y", n = 1), file.path(root, "documents", "dead-hz", "tbl-estimates.rds"))
+  saveRDS(list(`<i>n</i>` = 1L), file.path(root, "estimates", "dead-hz", "hz-methods.rds"))
+  sc <- hvtiRutilities::provenance_path(file.path(root, "20_distributions", "hz.dead.hz.html"))
+  x <- jsonlite::read_json(sc)
+  for (i in seq_along(x$exhibits)) {
+    x$exhibits[[i]]$sha256 <- digest::digest(file.path(root, x$exhibits[[i]]$file), algo = "sha256", file = TRUE)
+  }
+  jsonlite::write_json(x, sc, auto_unbox = TRUE, null = "null")
+  body <- function(lab) {
+    r <- hvtiRtemplates:::.ar_resolve(paste0("hz.dead.hz#", lab), root)
+    paste(hvtiRtemplates:::.ar_exhibit_body(r, root), collapse = "\n")
+  }
+  expect_match(body("tbl-estimates"), "&lt;b&gt;x&lt;/b&gt; &amp; y", fixed = TRUE)
+  expect_false(grepl("<b>", body("tbl-estimates"), fixed = TRUE))
+  expect_match(body("methods"), "&lt;i&gt;n&lt;/i&gt;", fixed = TRUE)
+})
+
+test_that("ar_value() warns when its source job has been edited since the render", {
+  root <- ar_fake_study()
+  qmd <- ar_fake_job(root)
+  withr::local_dir(root)
+  expect_no_warning(ar_value("hz.dead.hz#methods", "n"))
+  cat("# edited\n", file = qmd, append = TRUE)
+  expect_warning(v <- ar_value("hz.dead.hz#methods", "n"), "hz.dead.hz.*edited since its last render")
+  expect_identical(v, 160L)
+})

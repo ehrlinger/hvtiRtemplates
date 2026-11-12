@@ -36,6 +36,19 @@
   vapply(notes, .ar_callout, "", USE.NAMES = FALSE)
 }
 
+# Cells reach the report as Markdown, and Quarto passes raw HTML through.
+.ar_escape <- function(x) {
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;", x, fixed = TRUE)
+  gsub(">", "&gt;", x, fixed = TRUE)
+}
+
+.ar_escape_table <- function(x) {
+  for (col in names(x)) if (is.character(x[[col]]) || is.factor(x[[col]])) x[[col]] <- .ar_escape(as.character(x[[col]]))
+  names(x) <- .ar_escape(names(x))
+  x
+}
+
 # A figure is embedded by Quarto's embed-resources; the download link carries
 # the PNG itself, so it still works in the one HTML file researchers receive.
 .ar_exhibit_body <- function(r, from) {
@@ -46,8 +59,9 @@
       c(sprintf("![](%s)", rel), "",
         sprintf('<a href="data:image/png;base64,%s" download="%s">Download the figure (PNG)</a>', png, basename(rel)))
     },
-    table = knitr::kable(readRDS(r$path), format = "pipe", row.names = FALSE),
-    value = sprintf("Values saved for the text: %s.", paste0("`", names(readRDS(r$path)), "`", collapse = ", "))
+    table = knitr::kable(.ar_escape_table(readRDS(r$path)), format = "pipe", row.names = FALSE),
+    value = sprintf("Values saved for the text: %s.", paste0("`", .ar_escape(names(readRDS(r$path))), "`", collapse = ", ")),
+    stop("Item '", r$id, "' has an exhibit of unknown kind '", r$exhibit$kind, "'.", call. = FALSE)
   )
 }
 
@@ -107,11 +121,16 @@ ar_item <- function(id) {
 #' }
 #' @export
 ar_value <- function(id, field) {
+  if (!requireNamespace("knitr", quietly = TRUE)) stop("ar_value() needs the knitr package.", call. = FALSE)
   input <- knitr::current_input(dir = TRUE)
   root <- if (is.null(input)) normalizePath(.find_study_root(getwd()), winslash = "/") else .ar_root(input)
   r <- .ar_resolve(id, root)
   if (!identical(r$exhibit$kind, "value")) {
     stop("Item '", id, "' is a ", r$exhibit$kind, ", not a saved value; ar_value() reads values only.", call. = FALSE)
+  }
+  if (isTRUE(r$source_changed)) {
+    warning("The source job '", r$job, "' has been edited since its last render, so '", id,
+            "' may be out of date. Render the job again before relying on this value.", call. = FALSE)
   }
   x <- readRDS(r$path)
   if (!is.character(field) || length(field) != 1L || !field %in% names(x)) {

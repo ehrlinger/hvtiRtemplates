@@ -15,8 +15,10 @@
   substring(file, nchar(prefix) + 1L)
 }
 
-# A file the job did not write, a figure with SAVE_FIGURES off say, records
-# nothing: the ar report then stops on the missing label and names it.
+# A file this run did not write records nothing: a figure with SAVE_FIGURES off
+# leaves the file an earlier render wrote, and its mtime is older than the run's
+# start, less 2 seconds for the timestamp granularity of an SMB share. The ar
+# report then stops on the missing label and names it, as for an absent file.
 .record_exhibit <- function(file, kind = c("figure", "table", "value"), label = knitr::opts_current$get("label"),
                             root = .run_state$root) {
   kind <- match.arg(kind)
@@ -26,6 +28,8 @@
   }
   if (is.null(root)) stop("An exhibit can be recorded only after the job's setup chunk has run.", call. = FALSE)
   if (!file.exists(file)) return(invisible(NULL))
+  started <- .run_state$started
+  if (!is.null(started) && file.mtime(file) < started - 2) return(invisible(NULL))
   if (label %in% names(.run_state$exhibits)) {
     stop("Exhibit label '", label, "' is recorded twice in this run; give each exhibit its own label.", call. = FALSE)
   }
