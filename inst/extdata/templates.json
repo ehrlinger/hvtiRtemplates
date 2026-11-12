@@ -1739,7 +1739,7 @@
       "prefix": "dc",
       "qualifier": "gfup",
       "name": "Descriptive: follow-up",
-      "description": "Checks follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals, then the goodness-of-follow-up figure, each patient's follow-up against operation year under the diagonal the close date allows. A GROUP column adds the interval summary by group and a figure with a panel per group.",
+      "description": "Checks follow-up before any time-related analysis: counts for the cohort, the event and censored subsets, and the missing, negative and zero intervals, then the goodness-of-follow-up figure, each patient's follow-up against operation year under the diagonal the close date allows. A GROUP column adds the interval summary by group and a figure faceted by group.",
       "folder": "descriptive",
       "family": "descriptive",
       "kind": "job",

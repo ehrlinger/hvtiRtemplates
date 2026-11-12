@@ -64,8 +64,8 @@ if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
 if (!requireNamespace("patchwork", quietly = TRUE)) {
   stop("This job needs the patchwork package. Install it, then re-render.", call. = FALSE)
 }
-# Checked by what it has, not its version: the release that adds the house ODS
-# list and the one before it can carry the same number until the next bump.
+# Checked by what it has, not its version: the release that adds the house
+# variable sets and the one before it can carry the same number until the next bump.
 if (!exists(".variable_sets", envir = asNamespace("hvtiRtemplates"), inherits = FALSE)) {
   stop("This job needs an hvtiRtemplates with the house variable sets, newer than the ",
        utils::packageVersion("hvtiRtemplates"), " installed. Run hvtiR::update(force = TRUE), then re-render.",
@@ -99,7 +99,8 @@ Set the values in this chunk before rendering. Left as they are, they draw the
 all-deaths follow-up panel and the study dataset's columns on the house ODS
 list, the variables the SAS ODS tables report. `VARIABLE_SET` stacks other sets
 after it, the house modules or the study's own, and `VARIABLE_SET <- "all"` draws
-every column instead. The report is a data check: its tables and figures may show
+every column instead. Either way only the plain form of each variable is drawn,
+not the log or square a data build adds beside it, unless `TRANSFORMS <- TRUE`. The report is a data check: its tables and figures may show
 ranges, so they are not manuscript figures, and they do not go in a paper as saved.
 
 ```{r}
@@ -228,25 +229,29 @@ ALPHA <- 0.5
 # its first set's place. "ods" is the house descriptive list, every variable the
 # SAS ODS tables (dc.tables.ods.sas) report, in their section order: a built
 # dataset carries far more columns than anyone wants a page for. The house modules
-# are the blocks that template carries commented out: "ie" (the infectious
+# are the blocks the SAS ODS template carries commented out: "ie" (the infectious
 # endocarditis REDCap fields and organisms), "pericardiectomy", "cabg" and "valve".
 # A study adds its own under variable_sets: in _study.yml, a list of columns or
-# sections each listing columns:
+# sections each listing columns, named with letters, digits and _, and not after a
+# house set or "all":
 #   variable_sets:
 #     mitral:
 #       Mitral repair: [mv_ring, mv_lflt]
 #       Mitral echo: [mr_grade]
 #     redcap: [rc_status, rc_score]
 # A REDCap project's fields come from its data dictionary export; this prints
-# the line to paste:
-#   dict <- read.csv("<project>_DataDictionary.csv", check.names = FALSE)
+# the line to paste. The export can open with a byte-order mark, which hides the
+# header unless the encoding is named, and a checkbox field exports as name___1,
+# name___2, so list those names rather than the dictionary's:
+#   dict <- read.csv("<project>_DataDictionary.csv", check.names = FALSE, fileEncoding = "UTF-8-BOM")
 #   cat("  redcap: [", toString(tolower(dict[["Variable / Field Name"]])), "]\n", sep = "")
 # Only the listed columns this dataset has are drawn, and the report counts them
 # set by set. It also lists this dataset's columns left out, so a study's own
 # variables are one name away in VARIABLES. "all", on its own, draws every column,
 # as dc-eda did before this choice existed. The house sets ship with the package,
 # in extdata/ods-variables.csv and extdata/variable-sets.csv, so a study declares
-# a set rather than editing them. To read them all: hvtiRtemplates:::.variable_sets(.cfg).
+# a set rather than editing them. To read them all, inside the job once its data
+# are read: hvtiRtemplates:::.variable_sets(.cfg).
 # dc-tables carries the ODS list as its commented GROUPS example.
 VARIABLE_SET <- "ods"
 # EDIT: FALSE draws one form of each variable the set reaches, the plain one, and
@@ -373,7 +378,7 @@ if (!isTRUE(TRANSFORMS) && !isFALSE(TRANSFORMS)) stop("TRANSFORMS must be TRUE o
 if (!is.character(VARIABLE_SET) || !length(VARIABLE_SET) || anyNA(VARIABLE_SET) || anyDuplicated(VARIABLE_SET) ||
       !(identical(VARIABLE_SET, "all") || all(VARIABLE_SET %in% names(.variable_sets)))) {
   stop("VARIABLE_SET must be \"all\", or one or more of: ", paste(names(.variable_sets), collapse = ", "),
-       ". A study declares its own under variable_sets: in _study.yml.", call. = FALSE)
+       ". Use \"all\" on its own. A study declares its own under variable_sets: in _study.yml.", call. = FALSE)
 }
 positive_whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x > 0 && x == floor(x)
 for (value in list(GRID_NCOL, GRID_NROW, UNIQUE_LIMIT)) {
