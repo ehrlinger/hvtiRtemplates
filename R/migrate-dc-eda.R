@@ -83,7 +83,9 @@
   data <- declare("DATASET")
   variables <- declare(setdiff(names(config), "DATASET"))
   # VARIABLES may stay NULL: the template then draws its VARIABLE_SET, the house
-  # ODS list by default, where the legacy job drew every column.
+  # ODS list by default, where the legacy job drew every column, and with
+  # TRANSFORMS FALSE leaves out the transforms the legacy job drew; the report
+  # lists both.
   incomplete <- is.na(config$DATASET) || is.na(config$X_VAR)
   if (nrow(decisions$unresolved) || incomplete) {
     variables <- c(variables, "# EDIT: review unresolved EDA source choices in the migration report.")

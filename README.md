@@ -99,7 +99,7 @@ answer, because `%inc` had nothing to pin.
 |---|---|
 | `template_catalog()` | all 55 template jobs, including queued work and dependencies |
 | `hvti_taxonomy()` | the analysis prefix table: prefix, name, folder, description |
-| `template_list()` | supported templates: name, prefix, qualifier, folder, file |
+| `template_list()` | supported templates: name, folder and title printed; prefix, qualifier, description, call and file in the data |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
 | `hvti_non_prefixes()` | leading name fields that are utilities, not analysis prefixes |
 | `add_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | the scaffolded job's path, invisibly |

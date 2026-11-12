@@ -237,8 +237,10 @@ choice. Three regressions each get their own test:
 - an exhibit overwritten after its sidecar was written, standing in for a
   re-render that failed before publishing, stops `ar` on the digest;
 - a source re-rendered on changed data with unchanged Methods text raises the
-  review-stamp callout, and `ar_review()` clears it. Each new branch is proved by mutation, per `AGENTS.md`: revert the code
-and confirm the test goes red.
+  review-stamp callout, and `ar_review()` clears it.
+
+Each new branch is proved by mutation, per `AGENTS.md`: revert the code and
+confirm the test goes red.
 
 **The gate.** `ar` ships **in flight**, as `vt-fit` did, until two real study
 questions have used it. Its boilerplate rollout starts with the templates those

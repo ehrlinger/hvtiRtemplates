@@ -248,7 +248,7 @@ test_that("a job with the old four-chunk header still renders", {
 
 test_that("the draft banner says a marker is cleared by deleting it, even when its value stays", {
   # The 2026-11-11 training: people did not know how to clear a marker whose default was already right.
-  rule <- "Delete a marker once its choice is made, even when the value it marks stays as it is"
+  rule <- "Delete the word EDIT: once its choice is made, even when the value stays as it is"
   for (show in c(TRUE, FALSE)) {
     info <- paste("show_source =", show)
     setup_fixture(c("prose", edit_marker("EXCLUDE a patient")))
