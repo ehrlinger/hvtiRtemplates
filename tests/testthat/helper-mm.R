@@ -24,30 +24,6 @@ mm_helpers <- function() {
   env
 }
 
-# Evaluate the template's chunks by label into env, setting `choices` after the study choices,
-# as rm_run() does for the rm templates.
-mm_run <- function(labels, env, choices = list()) {
-  src <- readLines(template_path("mm"), warn = FALSE)
-  for (label in unique(vapply(labels, setup_label, ""))) {  # nolint: object_usage_linter.
-    code <- lm_chunk(src, label)  # nolint: object_usage_linter.
-    if (identical(label, "setup")) {
-      eval_setup_chunk(code, env)  # nolint: object_usage_linter.
-    } else {
-      suppressMessages(eval(parse(text = code), envir = env))
-    }
-    if (identical(label, "edit-study-choices")) {
-      list2env(choices, envir = env)
-      if (!"tbl-data" %in% labels) {
-        if (!exists(".id", envir = env, inherits = FALSE)) env$.id <- env$ID
-        env$RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(env$RESPONSE_SCALE)
-        env$.response <- hvtiRtemplates:::.response_term(env$d, env$OUTCOME, env$RESPONSE_SCALE)
-        if (!exists("job_data", envir = env, inherits = FALSE)) env$job_data <- list()
-      }
-    }
-  }
-  invisible(env)
-}
-
 # The data with visit numbers for TIME.
 mm_visits <- function() {
   d <- mm_data()
@@ -68,7 +44,9 @@ mm_render_fixture <- function(choices = character(), .local_envir = parent.frame
   defaults <- c('OUTCOME <- "y"', 'RESPONSE_SCALE <- "log"', 'TIME_TERMS <- c("log(time + 1)")')
   for (replacement in c(defaults, choices)) {
     key <- sub(" .*", "", replacement)
-    lines[which(grepl(paste0("^", key, " <- "), lines))[1L]] <- replacement
+    hit <- which(grepl(paste0("^", key, " <- "), lines))
+    stopifnot(length(hit) >= 1L)
+    lines[hit[1L]] <- replacement
   }
   writeLines(lines, job)
   quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)

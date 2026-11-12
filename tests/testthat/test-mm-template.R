@@ -79,13 +79,22 @@ test_that("mm_fit with cs recovers the correlation and the time effect", {
   expect_identical(fit$n_patients, 200L)
 })
 
+test_that("mm_fit counts the patients and rows it used, not every row read", {
+  h <- mm_helpers()
+  d <- mm_data()
+  d$y[d$ccfid %in% 1:20] <- NA
+  fit <- h$mm_fit(d, log(y) ~ log(time + 1) + age + female, "ccfid", "time", "cs", "REML")
+  expect_identical(length(fit$per_patient), fit$n_patients)
+  expect_identical(sum(fit$per_patient), fit$n_measurements)
+})
+
 test_that("every STRUCTURE fits and reports its own parameters", {
   h <- mm_helpers()
   d <- mm_visits()
   f <- log(y) ~ time + age + female
   expected <- list(
     cs = c("residual variance", "within-patient correlation"),
-    ar1 = c("residual variance", "correlation"),
+    ar1 = c("residual variance", "correlation, adjacent visits"),
     un = c("residual variance at visit 1", paste0("SD ratio, visit ", 2:6, " to visit 1"),
            paste0("correlation, visits ", combn(6, 2)[1, ], " and ", combn(6, 2)[2, ])),
     random = c("between-patient variance", "residual variance", "within-patient correlation"),
@@ -209,11 +218,20 @@ test_that("mm renders end to end and saves a bundle with no nlme object and no r
   expect_false(any(vapply(bundle, function(x) inherits(x, c("gls", "lme")), logical(1L))))
   expect_true(bundle$meta$id_digest)
   expect_identical(bundle$meta$structure, "cs")
+  expect_identical(bundle$meta$prediction_scale, "geometric mean")
+  no_ids <- function(x) {
+    if (is.data.frame(x)) expect_false(any(c("ccfid", "id") %in% names(x)))
+    if (is.list(x)) lapply(x, no_ids)
+    invisible(NULL)
+  }
+  no_ids(bundle)
   pred <- utils::read.csv(file.path(set, "mm-predictions.csv"))
   expect_identical(nrow(pred), 50L)
+  expect_false(any(c("ccfid", "id") %in% names(pred)))
   expect_true(all(pred$lower < pred$estimate & pred$estimate < pred$upper))
   html <- paste(readLines(out$output, warn = FALSE), collapse = "\n")
   expect_match(html, "within-patient correlation", fixed = TRUE)
+  expect_match(gsub("(?s)<pre[^>]*>.*?</pre>", "", html, perl = TRUE), "geometric mean", fixed = TRUE)
   # include = FALSE draws no caption and no code fold; the chunk source sits in <pre>, so strip it.
   expect_no_match(gsub("(?s)<pre[^>]*>.*?</pre>", "", html, perl = TRUE), "Comparison of covariance structures")
 })

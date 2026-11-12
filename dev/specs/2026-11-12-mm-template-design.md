@@ -16,7 +16,7 @@ and saves population-average predictions over time for a later `mp` plot.
 `mm` stays unqualified. The census in §2 found one model family written three
 ways, and the three differ by a covariance choice, not by job. A qualifier per
 SAS statement would split one decision across files, and the random-effects-only
-form would barely clear the two-study gate on its own (§2.2).
+form clears the gate at 7 studies, but 30 of its 47 programs come from one study (§2.2).
 
 ## 2. Evidence
 
@@ -184,7 +184,7 @@ The job saves two files:
 
 ## 8. Catalog and documentation
 
-- `templates.json`: `mm` moves from `queued` to `shipped`. Set `spec` to this
+- `templates.json`: `mm` moves from `queued` to `in-flight` now, and to `shipped` after the lri port in §10 step 4. Set `spec` to this
   file, `uses` to `["nlme::gls", "nlme::lme"]`, `downstream` to `["mp"]`, and
   the census counts in `note`.
 - The roadmap regenerates, and `check-roadmap-counts.py` passes.

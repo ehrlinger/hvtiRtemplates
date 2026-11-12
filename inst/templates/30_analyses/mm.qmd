@@ -68,7 +68,8 @@ ID <- "ccfid"
 # the time terms below expect. Every row needs one; a missing or negative time stops the job.
 TIME <- "time"
 # EDIT: what makes a row unique. A repeated measurement is one row per patient and time;
-# add a sequence column if a patient can have two measurements at the same time.
+# add a sequence column if a patient can have two measurements at the same time. AR(1) and UN
+# need one measurement per visit, so a sequence column suits "cs" or "random" only.
 KEY <- c(ID, TIME)
 
 # EDIT: the repeated continuous response, named as the column.
@@ -196,7 +197,8 @@ mm_fit <- function(d, formula, id, time, structure, method) {
   categorical <- Filter(function(x) is.factor(x) || is.character(x), d[intersect(all.vars(formula), names(d))])
   list(model = model, structure = structure, method = method, formula = formula,
        xlev = lapply(categorical, function(x) levels(factor(x))),
-       n_patients = length(unique(d[[id]][used])), n_measurements = sum(used))
+       n_patients = length(unique(d[[id]][used])), n_measurements = sum(used),
+       per_patient = table(d[[id]][used]))
 }
 
 # The covariance parameters: cs and random report one within-patient correlation, ar1 the lag-1 correlation,
@@ -231,7 +233,7 @@ mm_covariance <- function(fit) {
       se2 <- out[["residual variance"]]
       out[[paste0("implied within-patient correlation", adjacent)]] <- (sb2 + rho[[1L]] * se2) / (sb2 + se2)
     } else {
-      out[[if (identical(structure, "cs")) "within-patient correlation" else "correlation"]] <- rho[[1L]]
+      out[[if (identical(structure, "cs")) "within-patient correlation" else "correlation, adjacent visits"]] <- rho[[1L]]
     }
   }
   data.frame(parameter = names(out), estimate = unname(unlist(out)), row.names = NULL)
@@ -304,10 +306,9 @@ cat("\n\nThe reported model is the ", dQuote(STRUCTURE[[1L]], FALSE), " structur
 ```{r}
 #| label: tbl-counts
 #| tbl-cap: "Patients and measurements in the fit"
-.per <- table(d[[.id]])
 knitr::kable(data.frame(
   quantity = c("patients", "measurements", "measurements per patient, median", "measurements per patient, range"),
-  value = c(fit$n_patients, fit$n_measurements, stats::median(.per), paste(range(.per), collapse = " to "))
+  value = c(fit$n_patients, fit$n_measurements, stats::median(fit$per_patient), paste(range(fit$per_patient), collapse = " to "))
 ))
 ```
 
@@ -355,13 +356,24 @@ knitr::kable(.ends, digits = 3, row.names = FALSE)
 ```
 
 ```{r}
+#| label: prediction-scale
+#| results: asis
+if (identical(RESPONSE_SCALE, "log")) {
+  cat("\nOn the log scale the course is the geometric mean of the response on its measured scale, which is its median ",
+      "when the log is normally distributed; the limits are for that median, not for a mean.\n", sep = "")
+}
+```
+
+```{r}
 #| label: save
 MODEL_PATH <- set_path("estimates", "mm.rds")
 PREDICTIONS_PATH <- set_path("estimates", "mm-predictions.csv")
 utils::write.csv(predictions, PREDICTIONS_PATH, row.names = FALSE)
 # No nlme object is saved: it carries the patient ID as its grouping factor.
 bundle <- list(
-  meta = list(id_col = .id, outcome = OUTCOME, response_scale = RESPONSE_SCALE, time = TIME, time_terms = TIME_TERMS,
+  meta = list(id_col = .id, outcome = OUTCOME, response_scale = RESPONSE_SCALE,
+              prediction_scale = if (identical(RESPONSE_SCALE, "log")) "geometric mean" else "mean",
+              time = TIME, time_terms = TIME_TERMS,
               predictors = PREDICTORS, structure = fit$structure, method = METHOD,
               formula = paste(deparse(model_formula), collapse = " "), n_patients = fit$n_patients,
               n_measurements = fit$n_measurements, nlme_version = as.character(utils::packageVersion("nlme"))),
