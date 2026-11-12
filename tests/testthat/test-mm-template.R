@@ -214,8 +214,8 @@ test_that("mm renders end to end and saves a bundle with no nlme object and no r
   expect_true(all(pred$lower < pred$estimate & pred$estimate < pred$upper))
   html <- paste(readLines(out$output, warn = FALSE), collapse = "\n")
   expect_match(html, "within-patient correlation", fixed = TRUE)
-  # A skipped tbl- chunk still draws its caption and code fold, so look for the table output after the caption.
-  expect_no_match(html, compare_table)
+  # include = FALSE draws no caption and no code fold; the chunk source sits in <pre>, so strip it.
+  expect_no_match(gsub("(?s)<pre[^>]*>.*?</pre>", "", html, perl = TRUE), "Comparison of covariance structures")
 })
 
 test_that("mm compares structures only when STRUCTURE lists several", {

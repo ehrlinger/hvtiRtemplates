@@ -337,6 +337,7 @@ if (!is.null(mm_note(fit))) cat("\n", mm_note(fit), "\n", sep = "")
 #| label: tbl-compare
 #| tbl-cap: "Comparison of covariance structures, same fixed effects"
 #| eval: !expr 'length(STRUCTURE) > 1'
+#| include: !expr 'length(STRUCTURE) > 1'
 # AIC and BIC compare covariance structures fairly under REML only because every
 # fit here has the same fixed effects; a table of different fixed effects needs ML.
 comparison <- data.frame(structure = names(fits),
