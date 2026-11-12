@@ -1,3 +1,48 @@
+# hvtiRtemplates 1.5.8
+
+* The tests of the stale-install guard pass on Windows: the guard finds Quarto's R as `Rscript.exe` there, and
+  the test that gives each study its own `.Rprofile` is skipped on Windows, where the check's R reads none.
+
+* `vt-fit` sets the deaths each arm had against the deaths the other arm's forest expects for the same
+  patients, each followed to their own follow-up: the one-sample log-rank, with O/E, its exact interval
+  (`TEST_LEVEL`, 95%) and a p-value, as `hs-concordance` has. A forest against its own arm is tested out of
+  bag too, marked so, with its p-value read as a calibration check: the arm's other deaths grew it. Patients in distribution
+  only, counted to `TAU`. New figures `vt-fit-expected-km` (the average expected curve, the spread of the
+  patients' predictions and the Kaplan-Meier) and `vt-fit-spaghetti` (`SPAGHETTI_N`). The test is saved in
+  `vt.rds` as `oe`, with `tau` and `test_level` in `settings`; `vt.rds$curves` is unchanged.
+
+* A setting that names a `KEY` column, such as `X_VAR` set to the surgery date a study keys on, now stops with
+  a message naming `KEY` as the reason and saying how to fix it, rather than calling the column one that
+  identifies patients. `dc-eda`'s `KEY` comment says the same.
+
+* `dc-eda`'s figure-page captions name each variable's column beside its label, as in "Age at operation (age)",
+  so a reader can tell which column to check. A shortened label still shows its column name whole.
+
+* `hs-concordance` no longer says a model fitted on the tested deaths makes O and E depend on each other.
+  They always do, through each patient's own follow-up; the test rests on O - E against a fixed reference,
+  and a model that learned those deaths is not one: its fit looks better than it is and the p-value has no
+  valid reference distribution.
+* `hs-concordance` and `vt-fit` now say beside the O/E result that a large p-value is not evidence of
+  agreement: a small group rarely rejects even a poorly calibrated model.
+
+* `dc-gfup` takes an optional `GROUP`, a column such as an era, a procedure or a treatment arm. When it is set, the report adds a table summarizing each follow-up interval within each group, with the statistics of the main follow-up table, and a figure per panel faceted by group, each facet drawn against the cohort's close date. Patients with no value for the column form a group of their own, `"(missing)"`, or the next free label when the column already holds that value, so the groups add up to the cohort. A column that identifies patients is refused. Asked for at the 2026-11-11 Biostats training.
+
+* `dc-eda` puts the abbreviation key in the caption of each figure page whose labels were shortened, naming only the abbreviations that page shows. It used to print once, after a section's last page, where readers at the 2026-11-11 Biostats training did not find it.
+
+* The DRAFT banner, the console warning and the final-render stop now say that a marker is cleared by deleting the word `EDIT:`, even when the value stays as it is, because the guard counts the word, not the value. Asked at the 2026-11-11 Biostats training, where people did not know how to clear a marker whose default was already right. The rule is said once, in the guard every job runs, rather than in each template.
+
+* `dc-gfup` takes `X_TICK_BY` and `Y_TICK_BY`, the years between ticks on the year-of-operation and follow-up axes (2, 5 or 10, say), and `LEGEND`, which draws a key to the marks in the empty corner above the diagonal. `NULL` and `FALSE`, the defaults, draw the figures as before. Follow-up ticks start at 0, and labels a too-small step would print over one another are left out. The faceted `GROUP` figures take the same settings. Asked for at the 2026-11-11 Biostats training.
+
+* `dc-eda` takes `TRANSFORMS`. `FALSE`, the default, draws one form of each variable a variable set reaches, the plain one, and leaves out the transforms a data build adds beside it (`ln_age`, `in_age`, `age2`), listing each with the transform it matched. A column is left out only when its values are a log, inverse, square, root or exp of the plain form, never for its name alone, so a `bmi2` that is a second measurement is drawn. `TRUE` draws every form, and a column named in `VARIABLES` is drawn either way. At the 2026-11-11 Biostats training `VARIABLE_SET <- "all"` drew a page per transform and took six minutes.
+
+* `template_list()` gains `title` and `description` columns from the template catalog, and prints `name`, `folder` and `title`, the title cut to the console's width, so the list says what each template is for. At the 2026-11-11 Biostats training the printed list named the templates without saying which was which, and widening the window did not help. `prefix`, `qualifier`, `call` and `file` are still in the data.
+
+* `dc-eda`'s `VARIABLE_SET` stacks variable sets, in the order named: `c("ods", "mitral", "redcap")` draws the house ODS list, then the study's mitral set, then its REDCap fields, each column once, at its first set's place, and the report counts each set's columns found. The house modules are the blocks the SAS ODS template carries commented out: `"ie"`, `"pericardiectomy"`, `"cabg"` and `"valve"`. Its Surgeon block is not one, its columns being named for people. A study declares its own sets under `variable_sets:` in `_study.yml`, as a list of columns or as sections each listing columns, and the template shows how to list a REDCap project's fields from its data dictionary. `"all"`, on its own, still takes every column, and then leaves out what any set does: `X_VAR`, `EXCLUDE`, identifiers and dates, and the transforms `TRANSFORMS <- TRUE` would draw. Asked for at the 2026-11-11 Biostats training.
+  A study's sets are read and checked only by a job that draws from a set, so one that names its `VARIABLES`, or draws only follow-up, does not stop over a study set it never uses. The REDCap recipe quotes each field name, because YAML reads a bare `no`, `on` or `yes` as true or false.
+
+* Documentation brought up to date with this release. `dc-gfup`'s listing, figure names and catalog entry name the `GROUP` summary and its by-group figures; its comment says a group the panel function refuses gets no facet and is named under the figure, and that a KEY column is refused too. `dc-eda` no longer says a KEY column named in `VARIABLES` is drawn: it stops the job. In `vt-fit`, `TAU`'s default is the lower of the two arms' longest follow-up, and the Kaplan-Meier beside the expected curve is always 95%. The EDIT-marker rule says to delete the word `EDIT:`, as "Work a job" does, and the KEY refusal says to put a column no report shows in KEY in its place. "Work a job" counts twenty markers in a new `dc-gfup` job.
+* The README's function table lists what `template_list()` prints and what it carries. `dc-eda` says what `TRANSFORMS` leaves out above its study choices, how to name a study's variable set, that `"all"` stands alone, and two REDCap traps: a byte-order mark that hides the dictionary's header, and checkbox fields exported as `name___1`.
+
 # hvtiRtemplates 1.5.7
 
 * Two tests from the stale-install guard no longer fail under covr. The test that two studies can load two

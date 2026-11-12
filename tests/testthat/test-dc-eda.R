@@ -488,6 +488,33 @@ test_that("dc-eda refuses a VARIABLE_SET it cannot read, and names the sets it k
   expect_error(eval(eda_chunk("spec"), env), "None of the columns in the variable sets cabg, redcap is in this dataset")
 })
 
+test_that("dc-eda does not stop over a study variable set a job never draws from", {
+  # Raised in review of #525: an unusable study set stopped jobs that name their
+  # VARIABLES or draw only follow-up, neither of which reads a set.
+  cfg <- list(variable_sets = list(redcap = character()))
+  d <- data.frame(year = 1:10, age = 41:50 + 0.5, hospital = rep(1:2, 5))
+  env <- eda_spec_env(d, VARIABLES = "age", VARIABLE_SET = "all", .cfg = cfg)
+  expect_no_error(capture.output(eval(eda_chunk("spec"), env)))
+  expect_identical(env$VARIABLES, "age")
+  env <- eda_spec_env(d, VARIABLE_SET = "ods", SECTIONS = "followup", .cfg = cfg)
+  expect_no_error(capture.output(eval(eda_chunk("spec"), env)))
+  # A job that does draw from a set still has the study's checked, and stops.
+  env <- eda_spec_env(d, VARIABLE_SET = "ods", .cfg = cfg)
+  expect_error(eval(eda_chunk("spec"), env), "redcap")
+})
+
+test_that("dc-eda's REDCap recipe writes YAML that reads back as column names, reserved words included", {
+  # Raised in review of #525: unquoted, a field named no or on read back as a logical.
+  lines <- readLines(template_path("dc", "eda"), warn = FALSE)
+  recipe <- sub("^#\\s+", "", grep('^#\\s+cat\\("  redcap: \\[', lines, value = TRUE))
+  expect_length(recipe, 1L)
+  dict <- data.frame(`Variable / Field Name` = c("no", "Status", "on", "yes", "rc_score"), check.names = FALSE)
+  out <- capture.output(eval(parse(text = recipe), list(dict = dict)))
+  cfg <- yaml::yaml.load(paste(c("variable_sets:", out), collapse = "\n"))
+  expect_identical(cfg$variable_sets$redcap, c("no", "status", "on", "yes", "rc_score"))
+  expect_identical(unname(hvtiRtemplates:::.variable_sets(cfg)$redcap[[1L]]), c("no", "status", "on", "yes", "rc_score"))
+})
+
 test_that("a follow-up-only dc-eda neither needs nor checks the house ODS list", {
   # Raised in review of #455: a job drawing only follow-up stopped because an
   # unused descriptive list had no column in the data.
