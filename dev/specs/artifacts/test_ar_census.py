@@ -77,18 +77,36 @@ class Counts(unittest.TestCase):
         self.assertEqual(s["exports_not_counted"]["by_folder"], {"documents": 1})
 
     def test_excluded_rows_feed_the_audit_sample(self):
-        _, kept, audit = census.count([row("report"), row("cover_letter")], COLS)
+        _, kept, audit, _ = census.count([row("report"), row("cover_letter")], COLS)
         self.assertEqual([s for s, _ in kept.items], ["kept"])
         self.assertEqual([s for s, _ in audit.items], ["correspondence"])
 
     def test_no_path_column_says_samples_skipped(self):
         cols = {k: v for k, v in COLS.items() if k != "path"}
-        s, kept, audit = census.count([row("report")], cols)
+        s, kept, audit, studies = census.count([row("report")], cols)
         self.assertIn("SKIPPED", s["_provenance"]["samples"])
-        self.assertEqual(kept.items + audit.items, [])
+        self.assertEqual(kept.items + audit.items + studies, [])
+
+    def test_study_sample_lists_every_kept_file_of_a_drawn_study(self):
+        rows = [row(f"doc{i}", study="big") for i in range(9)] + [row("report", study="small")]
+        rows.append(row("cover_letter", study="small"))
+        _, _, _, studies = census.count(rows, COLS, studies=2)
+        got = dict(studies)
+        self.assertEqual(sorted(got), ["big", "small"])
+        self.assertEqual(len(got["big"]), 9)
+        self.assertEqual(len(got["small"]), 1)   # excluded files are not candidates
 
 
 class Sampling(unittest.TestCase):
+    def test_study_sample_is_uniform_over_studies_not_files(self):
+        # One study holds 90 of 100 kept files. A file-weighted draw of one
+        # study would pick it ~90% of the time; a uniform one ~10%.
+        rows = [row(f"d{i}", study="big") for i in range(90)]
+        rows += [row("r", study=f"s{i}") for i in range(9)]
+        picks = sum(dict(census.count(rows, COLS, studies=1, seed=s)[3]).get("big") is not None
+                    for s in range(1000))
+        self.assertTrue(50 < picks < 150, picks)
+
     def test_reservoir_is_uniform_enough(self):
         import random
         hits = [0] * 10

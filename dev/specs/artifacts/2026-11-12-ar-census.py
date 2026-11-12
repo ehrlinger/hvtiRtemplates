@@ -37,6 +37,15 @@ THE THREE STAGES, AND WHY IT IS NOT ONE NUMBER
    smaller sample is drawn from the EXCLUDED rows, because a wrong exclusion
    is otherwise invisible: the main sample only ever sees what survived.
 
+   The FILE sample estimates VOLUME and nothing else. It cannot estimate
+   breadth: it draws a study with many documents more often than one with
+   few, and a study counts toward breadth when ANY of its files is a report,
+   which is not the fraction of its files that are. 100 studies each holding
+   one report and nine other documents give a file proportion of 10% and a
+   breadth of 100%. Breadth therefore gets its own sample: studies drawn
+   uniformly from those with a kept file, each listed with ALL its kept
+   files, labelled once per study for "holds at least one report".
+
 TWO FIGURES, NOT ONE
 --------------------
 BREADTH is distinct studies holding at least one, and is what the catalog's
@@ -241,13 +250,18 @@ class Reservoir:
 
 # ---------------------------------------------------------------- the pass
 
-def count(rows, cols, sample=120, audit=40, seed=20261112):
+def count(rows, cols, sample=120, audit=40, studies=40, seed=20261112):
     """Every count, from an iterable of catalogue rows. Returns the summary
-    dict (counts only) and the two samples (paths)."""
+    dict (counts only), the file sample, the audit sample (paths), and the
+    study sample: a list of (study, [paths]) drawn uniformly over studies."""
     rng = random.Random(seed)
     has_path = "path" in cols
     kept_sample = Reservoir(sample, rng)
     audit_sample = Reservoir(audit, rng)
+    # Every kept path, by study, for the study sample. Held in memory: kept
+    # document rows are a small fraction of the 2.24M, and a study can only be
+    # labelled "holds a report" by seeing all of its candidates.
+    study_files = collections.defaultdict(list)
 
     studies_any = set()                                   # breadth, upper bound
     studies_kept = set()                                  # breadth, after exclusions
@@ -308,6 +322,13 @@ def count(rows, cols, sample=120, audit=40, seed=20261112):
         kept_total += 1
         if has_path:
             kept_sample.offer(("kept", row[cols["path"]]))
+            study_files[study].append(row[cols["path"]])
+
+    # Uniform over studies, not files: this is what makes the labelled
+    # proportion an estimate of breadth. Sorted first so the draw depends on
+    # the seed and not on the catalogue's row order.
+    drawn = rng.sample(sorted(study_files), min(studies, len(study_files)))
+    study_sample = [(s, study_files[s]) for s in drawn]
 
     # The ratio this whole exercise is about: reports per study, measured.
     counts = sorted(per_study_kept.values())
@@ -393,17 +414,33 @@ def count(rows, cols, sample=120, audit=40, seed=20261112):
             "different numbers again.",
         ],
     }
-    return summary, kept_sample, audit_sample
+    return summary, kept_sample, audit_sample, study_sample
 
 
-def write_sample(path, kept, audit, kept_total, n_studies, seed):
+def write_study_sample(path, study_sample, n_studies, seed):
+    # PATHS and study names. Local only. One label per STUDY, on its first
+    # row; the rows under it are what the label is judged from.
+    lines = ["study_label\tstudy\tpath",
+             "# label each STUDY once, on its first row: yes | no | unreadable",
+             "#   yes = at least one of its files is an analysis report",
+             f"# {len(study_sample)} studies drawn uniformly from {n_studies} with a "
+             f"kept file, seed {seed}; the 'yes' proportion scales to {n_studies} "
+             "studies (BREADTH). Do not scale the file sample to studies.",
+             "# DO NOT COMMIT THIS FILE: it carries study paths."]
+    for study, paths in study_sample:
+        lines += [f"\t{study}\t{p}" for p in paths]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_sample(path, kept, audit, kept_total, seed):
     # PATHS. Local only. Written as a labelling worksheet rather than a list,
     # because the labelling is the expensive step and it should be possible to
     # stop halfway and still have a usable denominator.
     lines = ["label\tdrawn_from\tpath",
              "# label each row: report | manuscript | other | unreadable",
              f"# 'kept' rows: drawn from {kept_total} kept files, seed {seed}; the "
-             f"labelled proportion scales to {kept_total} files and {n_studies} studies",
+             f"labelled proportion scales to {kept_total} FILES (volume) only. It does "
+             "not estimate breadth: use ar-studies-LOCAL.tsv for that",
              f"# other rows: drawn from {audit.seen} EXCLUDED files; a 'report' label "
              "there is a wrong exclusion, and names the bucket that made it",
              "# DO NOT COMMIT THIS FILE: it carries study paths."]
@@ -420,6 +457,8 @@ def main():
                     help="kept rows to draw for hand-labelling (default 120)")
     ap.add_argument("--audit", type=int, default=40,
                     help="excluded rows to draw for checking the exclusions (default 40)")
+    ap.add_argument("--studies", type=int, default=40,
+                    help="studies to draw for estimating breadth (default 40)")
     ap.add_argument("--seed", type=int, default=20261112,
                     help="sampling seed, recorded in the output so the draw is repeatable")
     args = ap.parse_args()
@@ -436,7 +475,8 @@ def main():
         if "path" not in cols:
             print("WARNING: the census has no path column, so no sample can be drawn "
                   "and stage 3 is skipped", file=sys.stderr)
-        summary, kept, audit = count(rdr, cols, args.sample, args.audit, args.seed)
+        summary, kept, audit, study_sample = count(
+            rdr, cols, args.sample, args.audit, args.studies, args.seed)
 
     summary["_provenance"]["source"] = Path(args.census).name
     (out / "ar-census-summary.json").write_text(
@@ -458,8 +498,12 @@ def main():
     print(f"wrote {out / 'ar-census-summary.json'}")
     if kept.items or audit.items:
         p = out / "ar-sample-LOCAL.tsv"
-        write_sample(p, kept, audit, s2["volume_files"], s2["breadth_studies"], args.seed)
+        write_sample(p, kept, audit, s2["volume_files"], args.seed)
         print(f"wrote {p} ({len(kept.items)} kept + {len(audit.items)} excluded rows to label)")
+    if study_sample:
+        p = out / "ar-studies-LOCAL.tsv"
+        write_study_sample(p, study_sample, s2["breadth_studies"], args.seed)
+        print(f"wrote {p} ({len(study_sample)} studies to label, for breadth)")
 
 
 if __name__ == "__main__":
