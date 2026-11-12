@@ -155,8 +155,12 @@ The report shows:
   and the table says so.
 
 The job saves two files:
-- `estimates/mm.rds`, the fitted model plus the study choices that produced it,
-  in the bundle shape `rm-linear` uses;
+- `estimates/mm.rds`: the coefficients, their covariance, the report's tables, the
+  predictions and the study choices, in a bundle whose `meta$id_col` names the ID
+  column. It holds no `nlme` object, because an `nlme` fit carries the patient ID
+  as its grouping factor (`$groups`, and inside its correlation structure), where
+  `.digest_bundle_ids()` cannot reach it. A study needing the model refits it from
+  the job.
 - `estimates/mm-predictions.csv`, population-average predictions over
   `PREDICT_TIMES` for each `PREDICT_AT` profile, with 95% limits from the
   fixed-effects covariance (the delta method on the linear predictor). They are
