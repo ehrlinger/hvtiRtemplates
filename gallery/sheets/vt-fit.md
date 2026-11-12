@@ -34,9 +34,9 @@ on the gallery's synthetic study.
   render them final too: a final render refuses a hand-off saved from
   unregistered data.
 - **Packages:** `randomForestSRC`, `cluster`, `hvtiRpropensity`,
-  `hvtiPlotR`, `hvtiRutilities`. The job checks each floor when it
-  starts, so an older library stops it at the top rather than partway
-  through.
+  `hvtiPlotR` (\>= 2.8.20), `hvtiRutilities`. The job checks each floor
+  when it starts, so an older library stops it at the top rather than
+  partway through.
 
 ## Outline
 
@@ -47,7 +47,7 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 23 choices marked `EDIT:`.
+2.  **Study choices**: 24 choices marked `EDIT:`.
 3.  **Cohort**: reads the study data.
 4.  **Predictors**: reads a saved result from the job its choices name,
     when they name one.
@@ -61,7 +61,9 @@ shows three ways to find them.
     reloads them (`REFIT <- TRUE` recomputes them).
 8.  **Twin curves**
 9.  **The difference in restricted mean survival time**
-10. **Handoff**: saves `vt.rds`, which **vt-explain** reads.
+10. **Observed against expected**
+    - **The average expected curve**
+11. **Handoff**: saves `vt.rds`, which **vt-explain** reads.
 
 ## Run it
 
@@ -84,5 +86,5 @@ and it records the job's provenance beside the report.
   pair is how it finds the file:
   `add_job("vt.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-12.
 The template holds the details; this sheet is its outline.

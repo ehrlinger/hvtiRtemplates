@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:12
+2026-11-12 09:43
 
 Explains the `vt-fit` job in this set: which patients the twins say
 repair suits, stratified by the echo-phenotype clusters.
@@ -72,7 +72,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.7
+hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -312,7 +312,7 @@ if (!nrow(.cp)) {
 }
 ```
 
-![](assets/7c46b8cfae99db595b5ee885e84120e2.png)
+![](assets/1b8230130b07a7f62832141e34482c1e.png)
 
 Figure 5: Each treated patient in distribution: predicted RMST under the
 arm received (own) against under the other arm (twin). On the dashed
@@ -406,7 +406,7 @@ if (!nrow(.dd)) {
 }
 ```
 
-![](assets/9d2844799460223da463675ae7f40bb5.png)
+![](assets/a9a99b5d8ae40264cab5aae1850142ba.png)
 
 Figure 6: Each treated patient’s RMST difference against their distance
 to the nearest patient of the other arm (for the isolation forest, their
@@ -558,7 +558,7 @@ if (!is.null(.sa) && nrow(.sa)) {
 }
 ```
 
-![](assets/2eee2bf6bd9d90db2e3a6976f65605d4.png)
+![](assets/d6902bd2e7ba0ae745bf736d781b0b2a.png)
 
 Figure 7: The RMST difference by stratum, one panel per arm received.
 Box: 15th to 85th percentile of the patients in distribution, whiskers
@@ -683,19 +683,19 @@ print(knitr::kable(.betas, digits = 2, row.names = FALSE))
 
 | variable |  beta | lower | upper | unestimable |
 |:---------|------:|------:|------:|------------:|
-| age      |  0.27 |  0.20 |  0.35 |           0 |
-| female   |  0.06 | -0.02 |  0.14 |           0 |
-| bmi      |  0.00 | -0.06 |  0.07 |           0 |
-| hx_chf   | -0.05 | -0.13 |  0.04 |           0 |
-| hx_dm    |  0.00 | -0.06 |  0.08 |           0 |
+| age      |  0.27 |  0.20 |  0.33 |           0 |
+| female   |  0.06 | -0.01 |  0.14 |           0 |
+| bmi      |  0.00 | -0.07 |  0.06 |           0 |
+| hx_chf   | -0.05 | -0.12 |  0.02 |           0 |
+| hx_dm    |  0.00 | -0.07 |  0.07 |           0 |
 | nyha_pr  |  0.04 | -0.02 |  0.11 |           0 |
-| lvef     | -0.05 | -0.12 |  0.01 |           0 |
-| creat_pr |  0.00 | -0.08 |  0.07 |           0 |
+| lvef     | -0.05 | -0.13 |  0.01 |           0 |
+| creat_pr |  0.00 | -0.07 |  0.07 |           0 |
 | lvedd    |  0.84 |  0.81 |  0.88 |           0 |
-| lvesd    |  0.86 |  0.82 |  0.90 |           0 |
-| la_diam  |  0.18 |  0.11 |  0.26 |           0 |
-| rvsp     |  0.16 |  0.10 |  0.24 |           0 |
-| e_e      |  0.09 |  0.03 |  0.15 |           0 |
+| lvesd    |  0.86 |  0.82 |  0.89 |           0 |
+| la_diam  |  0.18 |  0.10 |  0.25 |           0 |
+| rvsp     |  0.16 |  0.08 |  0.25 |           0 |
+| e_e      |  0.09 |  0.03 |  0.14 |           0 |
 
 Table 4: Standardized beta for each characteristic. A positive beta: the
 characteristic goes with a higher relative risk of the event by 8 under
@@ -720,7 +720,7 @@ if (!nrow(.bp)) {
 }
 ```
 
-![](assets/0bfe28fe8da019e46d7b1935a2621609.png)
+![](assets/9123978a4a254e345a3787a45014d54b.png)
 
 Figure 9: Standardized association of each characteristic with the
 estimated effect, by overlap-weighted regression. A positive beta: the
@@ -906,13 +906,12 @@ WarningBefore this goes in a manuscript
   uses the observed outcomes and the propensity score and does not
   depend on the forests. Compare the twins’ overall difference against
   it before reading more into a subgroup.
-- **Observed against expected.** `hs-concordance` tests the deaths a
-  group had against the deaths another group’s model expects for it, and
-  draws the average expected curve with a named band and each patient’s
-  curve. Its two helpers take numbers, not a model, so the same test can
-  be run here on each arm forest’s cumulative hazard at the patient’s
-  own follow-up: `hvtiRtemplates:::.one_sample_logrank()` and
-  `hvtiRtemplates:::.cohort_curve_band()`. The design is
+- **Observed against expected.** `vt-fit` sets the deaths each arm had
+  against the deaths the other arm’s forest expects for the same
+  patients, the one-sample log-rank, and tests each forest against its
+  own arm out of bag, as a calibration. It draws the average expected
+  curve with the spread of the patients’ predictions and each patient’s
+  curve. The test is in `vt.rds` as `oe`. The design is
   `dev/specs/2026-11-10-hs-oe-test-and-bands-design.md`.
 - **The standardized betas** are one-at-a-time, overlap-weighted
   associations with the estimated effect. They say which characteristics
@@ -926,9 +925,9 @@ WarningBefore this goes in a manuscript
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-11 03:12:04 EST |
-|  | Ended | 2026-11-11 03:12:10 EST |
-|  | Duration | 6 s |
+| Run | Started | 2026-11-12 09:42:59 EST |
+|  | Ended | 2026-11-12 09:43:06 EST |
+|  | Duration | 7 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -937,16 +936,16 @@ WarningBefore this goes in a manuscript
 |  | Template | vt.explain |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.5.7 |
-| Dataset `built` | Version file | built_20261111.parquet |
-|  | Version date | 2026-11-11 |
+|  | hvtiRtemplates | 1.5.8 |
+| Dataset `built` | Version file | built_20261112.parquet |
+|  | Version date | 2026-11-12 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered not recorded |
-|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-11 03:11:50 -0500, data built_20261111.parquet |
-|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-11 03:10:56 -0500, data built_20261111.parquet |
+|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-12 09:42:40 -0500, data built_20261112.parquet |
+|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-12 09:41:34 -0500, data built_20261112.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

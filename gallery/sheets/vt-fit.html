@@ -41,13 +41,13 @@
 <li><strong>A study.</strong> The job runs inside a study folder set up with <code>_study.yml</code>. <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html">Start a new study</a> shows how.</li>
 <li><strong>The study's data.</strong> <code>DATASET</code> names the registered dataset it reads (<code>&quot;study&quot;</code> unless you change it). A draft can read a build that is not registered yet, so you can start before the build is final, and the report then says it is a draft. A final render reads registered data only: register the build with <code>hvtiRutilities::update_manifest()</code> first.</li>
 <li><strong>Optional: the jobs it can read from.</strong> Some of its choices read a saved result from <strong>sid-fit</strong> or <strong>vp-fit</strong>. Left as the template sets them, the job runs without one. A choice that names one needs that job rendered first, in the set the choice names. For a final render, render them final too: a final render refuses a hand-off saved from unregistered data.</li>
-<li><strong>Packages:</strong> <code>randomForestSRC</code>, <code>cluster</code>, <code>hvtiRpropensity</code>, <code>hvtiPlotR</code>, <code>hvtiRutilities</code>. The job checks each floor when it starts, so an older library stops it at the top rather than partway through.</li>
+<li><strong>Packages:</strong> <code>randomForestSRC</code>, <code>cluster</code>, <code>hvtiRpropensity</code>, <code>hvtiPlotR</code> (&gt;= 2.8.20), <code>hvtiRutilities</code>. The job checks each floor when it starts, so an older library stops it at the top rather than partway through.</li>
 </ul>
 <h2>Outline</h2>
 <p>These are the job's own sections, in order. The detail lives in the template: the comments at each <code>EDIT:</code> marker say what to set and why, and <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-what-you-have-to-change">Work a job</a> shows three ways to find them.</p>
 <ol>
 <li><strong>Above the first section</strong>: 1 choice marked <code>EDIT:</code>.</li>
-<li><strong>Study choices</strong>: 23 choices marked <code>EDIT:</code>.</li>
+<li><strong>Study choices</strong>: 24 choices marked <code>EDIT:</code>.</li>
 <li><strong>Cohort</strong>: reads the study data.</li>
 <li><strong>Predictors</strong>: reads a saved result from the job its choices name, when they name one.</li>
 <li><strong>The observed outcome</strong></li>
@@ -55,6 +55,7 @@
 <li><strong>The arm forests</strong>: fits and caches its results, so a later render reloads them (<code>REFIT &lt;- TRUE</code> recomputes them).</li>
 <li><strong>Twin curves</strong></li>
 <li><strong>The difference in restricted mean survival time</strong></li>
+<li><strong>Observed against expected</strong><ul><li><strong>The average expected curve</strong></li></ul></li>
 <li><strong>Handoff</strong>: saves <code>vt.rds</code>, which <strong>vt-explain</strong> reads.</li>
 </ol>
 <h2>Run it</h2>
@@ -64,7 +65,7 @@
 <ul>
 <li><strong>vt-explain</strong> reads what this job saves (<code>vt.rds</code>). Add it to the same set, with this job's <code>subject</code> and <code>type</code>, because that shared pair is how it finds the file: <code>add_job(&quot;vt.explain&quot;, subject = &quot;&lt;subject&gt;&quot;, type = &quot;&lt;type&gt;&quot;)</code>.</li>
 </ul>
-<footer>Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11. The template holds the details; this sheet is its outline.</footer>
+<footer>Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-12. The template holds the details; this sheet is its outline.</footer>
 </main>
 </body>
 </html>

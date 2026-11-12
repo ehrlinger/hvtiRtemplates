@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:01
+2026-11-12 09:28
 
 Replaces an older EDA report.
 
@@ -51,10 +51,10 @@ if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
 if (!requireNamespace("patchwork", quietly = TRUE)) {
   stop("This job needs the patchwork package. Install it, then re-render.", call. = FALSE)
 }
-# Checked by what it has, not its version: the release that adds the house ODS
-# list and the one before it can carry the same number until the next bump.
-if (!exists(".ods_groups", envir = asNamespace("hvtiRtemplates"), inherits = FALSE)) {
-  stop("This job needs an hvtiRtemplates with the house ODS variable list, newer than the ",
+# Checked by what it has, not its version: the release that adds the house
+# variable sets and the one before it can carry the same number until the next bump.
+if (!exists(".variable_sets", envir = asNamespace("hvtiRtemplates"), inherits = FALSE)) {
+  stop("This job needs an hvtiRtemplates with the house variable sets, newer than the ",
        utils::packageVersion("hvtiRtemplates"), " installed. Run hvtiR::update(force = TRUE), then re-render.",
        call. = FALSE)
 }
@@ -80,17 +80,20 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.7
+**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.8
 
 ## Study choices
 
 Set the values in this chunk before rendering. Left as they are, they
 draw the all-deaths follow-up panel and the study dataset’s columns on
 the house ODS list, the variables the SAS ODS tables report.
-`VARIABLE_SET <- "all"` draws every column instead. The report is a data
-check: its tables and figures may show ranges, so they are not
-manuscript figures, and they do not go in a paper as saved.
+`VARIABLE_SET` stacks other sets after it, the house modules or the
+study’s own, and `VARIABLE_SET <- "all"` draws every column instead.
+Either way only the plain form of each variable is drawn, not the log or
+square a data build adds beside it, unless `TRANSFORMS <- TRUE`. The
+report is a data check: its tables and figures may show ranges, so they
+are not manuscript figures, and they do not go in a paper as saved.
 
 Code
 
@@ -113,7 +116,8 @@ WHERE <- NULL
 ID <- "patient_id"
 
 # Demo: what makes a row unique; one row per patient unless repeated measures
-# add their visit time or date, for example KEY <- c(ID, "iv_echo").
+# add their visit time or date, for example KEY <- c(ID, "iv_echo"). No KEY
+# column is drawn, so do not key on the date X_VAR names below.
 KEY <- ID
 
 # Optional, and needs no edit: NULL reads the cohort alone. To join one
@@ -187,9 +191,10 @@ EVENTS <- list(reop = list(event = "reop", time = "iv_reop", death = "dead", dea
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
 # column here to draw it anyway. The job's ID is never drawn, even when named
-# here. A KEY column beside it, such as a visit time, is left out of NULL but
-# drawn when named here, as that column's own distribution; a measure's course
-# over visits is a spaghetti plot, drawn by hvtiPlotR::hv_spaghetti, not a page here.
+# here. Nor is a KEY column, such as a visit time: it is left out of NULL and
+# stops the job if named here, since no report shows a KEY column's values. A
+# measure's course over visits is a spaghetti plot, drawn by hvtiPlotR::hv_spaghetti,
+# not a page here.
 # The follow-up columns are drawn too, like any other column, but the ODS list
 # carries only dead and iv_dead: name an event's columns here to draw them.
 # A named column that is not in the data stops the render, and the error
@@ -212,17 +217,48 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dc-eda-variables
-# Demo: what VARIABLES = NULL draws. "ods" draws the house descriptive list, so
-# named because it is every variable the SAS ODS tables (dc.tables.ods.sas)
-# report, in their section order: a built dataset carries far more columns than
-# anyone wants a page for. Only the listed columns this dataset has are drawn,
-# and the report counts them. It also lists this dataset's columns left out, so a
-# study's own variables are one name away in VARIABLES. "all" draws every column,
-# as dc-eda did before this choice existed.
-# The list ships with the package as extdata/ods-variables.csv, so a study adds to
-# VARIABLES rather than editing it. To read it: hvtiRtemplates:::.ods_groups().
-# dc-tables carries the same list as its commented GROUPS example.
+# Demo: what VARIABLES = NULL draws: one variable set, or several stacked, in the
+# order named, such as c("ods", "mitral", "redcap"). Each column is drawn once, at
+# its first set's place. "ods" is the house descriptive list, every variable the
+# SAS ODS tables (dc.tables.ods.sas) report, in their section order: a built
+# dataset carries far more columns than anyone wants a page for. The house modules
+# are the blocks the SAS ODS template carries commented out: "ie" (the infectious
+# endocarditis REDCap fields and organisms), "pericardiectomy", "cabg" and "valve".
+# A study adds its own under variable_sets: in _study.yml, a list of columns or
+# sections each listing columns, named with letters, digits and _, and not after a
+# house set or "all":
+#   variable_sets:
+#     mitral:
+#       Mitral repair: [mv_ring, mv_lflt]
+#       Mitral echo: [mr_grade]
+#     redcap: [rc_status, rc_score]
+# A REDCap project's fields come from its data dictionary export; this prints
+# the line to paste. The export can open with a byte-order mark, which hides the
+# header unless the encoding is named, and a checkbox field exports as name___1,
+# name___2, so list those names rather than the dictionary's. Each name is
+# quoted because YAML reads a bare no, on or yes as true or false, not a column:
+#   dict <- read.csv("<project>_DataDictionary.csv", check.names = FALSE, fileEncoding = "UTF-8-BOM")
+#   cat("  redcap: [", toString(dQuote(tolower(dict[["Variable / Field Name"]]), FALSE)), "]\n", sep = "")
+# Only the listed columns this dataset has are drawn, and the report counts them
+# set by set. It also lists this dataset's columns left out, so a study's own
+# variables are one name away in VARIABLES. "all", on its own, takes every column,
+# as dc-eda did before this choice existed, and then leaves out what any set does:
+# X_VAR, EXCLUDE, identifiers and dates, and transforms unless TRANSFORMS is TRUE.
+# The house sets ship with the package,
+# in extdata/ods-variables.csv and extdata/variable-sets.csv, so a study declares
+# a set rather than editing them. To read them all, inside the job once its data
+# are read: hvtiRtemplates:::.variable_sets(.cfg).
+# dc-tables carries the ODS list as its commented GROUPS example.
 VARIABLE_SET <- "ods"
+# Demo: FALSE draws one form of each variable the set reaches, the plain one, and
+# leaves out the transforms a data build adds beside it, such as ln_age, in_age
+# and age2: a first EDA checks the values as measured, each transform is a page of
+# its own, and on "all" they made the 2026-11-11 training's report take six minutes.
+# A column is left out only when its values are a log, inverse, square, root or exp
+# of the plain form, never for its name alone, and the report lists each with the
+# transform it matched. TRUE draws every form. A column named in VARIABLES is drawn
+# either way.
+TRANSFORMS <- FALSE
 X_LABEL <- "Year of operation"     # Demo: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 # What a date X_VAR is drawn in: "year", "month", or "auto", which draws months
 # when the dates span less than three years. A six-month cohort drawn in years
@@ -281,7 +317,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261111.parquet) |
+| Source              | dataset `built` (built_20261112.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -321,8 +357,17 @@ if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
   stop("VARIABLES must be NULL or name distinct columns.", call. = FALSE)
 }
 if (!column_names(EXCLUDE)) stop("EXCLUDE must name distinct columns.", call. = FALSE)
-if (!is.character(VARIABLE_SET) || length(VARIABLE_SET) != 1L || !VARIABLE_SET %in% c("ods", "all")) {
-  stop("VARIABLE_SET must be \"ods\" or \"all\".", call. = FALSE)
+if (!isTRUE(TRANSFORMS) && !isFALSE(TRANSFORMS)) stop("TRANSFORMS must be TRUE or FALSE.", call. = FALSE)
+# The sets are read, and the study's checked, only where a page draws from them
+# (below): a job that names its VARIABLES, or draws only follow-up, does not stop
+# over a study set it never uses.
+variable_set_error <- function(sets) {
+  stop("VARIABLE_SET must be \"all\", or one or more of: ", paste(sets, collapse = ", "),
+       ". Use \"all\" on its own. A study declares its own under variable_sets: in _study.yml.", call. = FALSE)
+}
+if (!is.character(VARIABLE_SET) || !length(VARIABLE_SET) || anyNA(VARIABLE_SET) || anyDuplicated(VARIABLE_SET) ||
+      ("all" %in% VARIABLE_SET && length(VARIABLE_SET) > 1L)) {
+  variable_set_error(names(hvtiRtemplates:::.variable_sets(.cfg)))
 }
 positive_whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x > 0 && x == floor(x)
 for (value in list(GRID_NCOL, GRID_NROW, UNIQUE_LIMIT)) {
@@ -374,23 +419,31 @@ looks_like_id <- function(v) {
 }
 if (is.null(VARIABLES)) {
   candidates <- setdiff(names(d), c(X_VAR, EXCLUDE))
-  # The list chooses the continuous, percent and count pages; a follow-up-only
-  # report draws none of them, so it neither needs nor checks the list.
-  if (VARIABLE_SET == "ods" && any(SECTIONS != "followup")) {
-    # The list's order, which is its section order, is the page order.
-    ods <- unlist(hvtiRtemplates:::.ods_groups(), use.names = FALSE)
+  # The sets choose the continuous, percent and count pages; a follow-up-only
+  # report draws none of them, so it neither needs nor checks them.
+  if (!identical(VARIABLE_SET, "all") && any(SECTIONS != "followup")) {
+    .variable_sets <- hvtiRtemplates:::.variable_sets(.cfg)
+    if (!all(VARIABLE_SET %in% names(.variable_sets))) variable_set_error(names(.variable_sets))
+    # The sets in the order named, each in its section order, are the page order;
+    # a column on two sets keeps its place on the first.
+    .chosen <- lapply(.variable_sets[VARIABLE_SET], unlist, use.names = FALSE)
+    listed <- unique(unlist(.chosen, use.names = FALSE))
     # Matched whatever the case: a joined dataset's names need not be lowercase.
-    on_list <- tolower(candidates) %in% ods
+    on_list <- tolower(candidates) %in% listed
     outside <- candidates[!on_list]
     candidates <- candidates[on_list]
-    candidates <- candidates[order(match(tolower(candidates), ods))]
+    candidates <- candidates[order(match(tolower(candidates), listed))]
     if (!length(candidates)) {
-      stop("None of the house ODS list's columns is in this dataset. Set VARIABLE_SET <- \"all\", or name the ",
+      stop("None of the columns in the variable set", if (length(VARIABLE_SET) > 1L) "s", " ",
+           paste(VARIABLE_SET, collapse = ", "), " is in this dataset. Set VARIABLE_SET <- \"all\", or name the ",
            "columns in VARIABLES.", call. = FALSE)
     }
-    cat(length(candidates), "of the", length(ods), "columns on the house ODS list are in this dataset.\n")
+    for (.set in VARIABLE_SET) {
+      cat(sum(tolower(candidates) %in% .chosen[[.set]]), "of the", length(.chosen[[.set]]), "columns in the", .set,
+          "variable set are in this dataset.\n")
+    }
     if (length(outside)) {
-      cat("Not drawn, as columns outside the house ODS list (name them in VARIABLES, or set VARIABLE_SET <- \"all\"):",
+      cat("Not drawn, as columns outside the variable sets (name them in VARIABLES, or set VARIABLE_SET <- \"all\"):",
           paste(outside, collapse = ", "), "\n")
     }
   }
@@ -399,6 +452,41 @@ if (is.null(VARIABLES)) {
   if (length(left_out)) {
     cat("Left out as identifier or date columns (name a date in VARIABLES to draw it; an identifier is never drawn):",
         paste(left_out, collapse = ", "), "\n")
+  }
+  # One form per variable. hvtiRutilities::concept_map(), the rule the bootstrap screens
+  # use, groups ln_age, in_age and age2 with age by name, but a name proves nothing here:
+  # bmi2 can be a second measurement as easily as a square. So a form is left out only
+  # when its values are an exact transform of the form drawn, and the grouping runs on
+  # the displayable columns, so a plain form that is a KEY does not take its transforms
+  # with it. A transform not listed here is drawn, a page too many rather than one lost.
+  if (!TRANSFORMS && length(VARIABLES)) {
+    .transforms <- list("log(%s)" = log, "log10(%s)" = log10, "log2(%s)" = log2, "1/%s" = function(v) 1 / v,
+                        "%s^2" = function(v) v^2, "sqrt(%s)" = sqrt, "exp(%s)" = exp)
+    .transform_of <- function(x, base) {
+      if (!is.numeric(x) || !is.numeric(base)) return(NA_character_)
+      for (form in names(.transforms)) {
+        y <- suppressWarnings(.transforms[[form]](base))
+        ok <- is.finite(x) & is.finite(y)
+        if (sum(ok) >= 2L && identical(is.finite(x), is.finite(y)) &&
+              isTRUE(all.equal(x[ok], y[ok], tolerance = 1e-6, check.attributes = FALSE))) return(form)
+      }
+      NA_character_
+    }
+    .forms <- hvtiRutilities::concept_map(VARIABLES)
+    .plain <- stats::setNames(.forms$variable[.forms$representative], .forms$concept[.forms$representative])
+    # In the dataset's order, which concept_map() does not keep.
+    .forms <- .forms[!.forms$representative, , drop = FALSE]
+    .forms <- .forms[order(match(.forms$variable, VARIABLES)), , drop = FALSE]
+    .as <- vapply(seq_len(nrow(.forms)), function(i) {
+      .transform_of(d[[.forms$variable[[i]]]], d[[.plain[[.forms$concept[[i]]]]]])
+    }, character(1L))
+    .dropped <- !is.na(.as)
+    if (any(.dropped)) {
+      .base <- .plain[.forms$concept[.dropped]]
+      VARIABLES <- setdiff(VARIABLES, .forms$variable[.dropped])
+      cat("Not drawn, as transforms of a variable drawn here, checked by their values (set TRANSFORMS <- TRUE to draw them):",
+          paste(paste(.forms$variable[.dropped], "=", sprintf(.as[.dropped], .base)), collapse = ", "), "\n")
+    }
   }
 } else {
   VARIABLES <- setdiff(VARIABLES, EXCLUDE)
@@ -410,8 +498,8 @@ if (is.null(VARIABLES)) {
 }
 ```
 
-    11 of the 239 columns on the house ODS list are in this dataset.
-    Not drawn, as columns outside the house ODS list (name them in VARIABLES, or set VARIABLE_SET <- "all"): patient_id, hx_dm, lvef, reop, iv_reop, vent, icu_hours, male, nonwhite, stroke, mr_grade, discharge, approach, valve_size, valve_type, prior_ops, match_pair, complication, los, log_los, cpb_time, lvedd, lvesd, la_diam, rvsp, e_e, mv_procedure, reint, iv_reint 
+    11 of the 239 columns in the ods variable set are in this dataset.
+    Not drawn, as columns outside the variable sets (name them in VARIABLES, or set VARIABLE_SET <- "all"): patient_id, hx_dm, lvef, reop, iv_reop, vent, icu_hours, male, nonwhite, stroke, mr_grade, discharge, approach, valve_size, valve_type, prior_ops, match_pair, complication, los, log_los, cpb_time, lvedd, lvesd, la_diam, rvsp, e_e, mv_procedure, reint, iv_reint 
 
 Code
 
@@ -466,7 +554,9 @@ if (!is.null(.x_bars)) .d_eda_bars[[X_LABEL]] <- .x_bars
 .abbreviations <- hvtiRutilities::study_abbreviations(.cfg, extra = ABBREVIATIONS)
 .labels <- label_map(d, label_max = LABEL_MAX, abbreviations = .abbreviations)
 labels <- stats::setNames(.labels$label, .labels$key)
-# The abbreviations these variables' labels show, as a key under the section.
+# The abbreviations these variables' labels show, as a key in the caption of the
+# page that shows them; a key printed once after a section's last page was not
+# found (2026-11-11 training). "" when the page shortened nothing.
 # label_map() records which abbreviation each variable's final label shows, so
 # a label that says "SP" in its own words and is only cut is not counted as
 # using the key's SP; searching the label text could not tell the two apart.
@@ -474,10 +564,8 @@ abbreviation_key <- function(vars) {
   used <- attr(.labels, "abbreviations")
   by_key <- attr(.labels, "abbreviations_by_key")
   hit <- used$abbreviation %in% by_key$abbreviation[by_key$key %in% vars]
-  if (any(hit)) {
-    cat("\nAbbreviations: ", paste(used$abbreviation[hit], used$expansion[hit], sep = " = ", collapse = "; "), ".\n\n",
-        sep = "")
-  }
+  if (!any(hit)) return("")
+  paste0(" Abbreviations: ", paste(used$abbreviation[hit], used$expansion[hit], sep = " = ", collapse = "; "), ".")
 }
 
 # Every table and figure below is a chunk of its own, emitted with knit_child(),
@@ -905,12 +993,13 @@ draw_section <- function(section) {
     cat("\n### ", titles[[section]], ", page ", i, "\n\n", sep = "")
     .link <- figure_link(file)
     .child(paste("fig eda", section, "page", i),
-           paste0(titles[[section]], ", page ", i, ": ", paste(labels[on_page], collapse = ", "), ". ", .eda_key[[section]]),
+           # Each label with its column name, so a reader knows which column to check.
+           paste0(titles[[section]], ", page ", i, ": ", paste0(labels[on_page], " (", on_page, ")", collapse = ", "), ". ",
+                  .eda_key[[section]], abbreviation_key(on_page)),
            if (hover) "hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)" else
              "knitr::include_graphics(.link, error = FALSE)")
     files <- c(files, file)
   }
-  abbreviation_key(vars)
   invisible(files)
 }
 ```
@@ -950,12 +1039,13 @@ knitr::include_graphics(.link, error = FALSE)
 
 ![](assets/5bc24cd8b80812dbefe6834b713a4fff.png)
 
-Figure 3: Continuous variables, page 1: Age at operation (years), Body
-mass index (kg/m2), LV mass index (g/m2), Creatinine (mg/dL), Years from
-1 January 1990 to operation, Follow-up to death or censoring (years).
-Black filled circles mark patients, the solid blue line a LOESS smooth
-where a variable has enough distinct values, and gray ticks along the
-bottom the patients missing the variable.
+Figure 3: Continuous variables, page 1: Age at operation (years) (age),
+Body mass index (kg/m2) (bmi), LV mass index (g/m2) (plvmassi),
+Creatinine (mg/dL) (creat_pr), Years from 1 January 1990 to operation
+(iv_opyrs), Follow-up to death or censoring (years) (iv_dead). Black
+filled circles mark patients, the solid blue line a LOESS smooth where a
+variable has enough distinct values, and gray ticks along the bottom the
+patients missing the variable.
 
 Code
 
@@ -997,11 +1087,11 @@ Code
 hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-Figure 4: Categorical variables, percent, page 1: Female, Race, NYHA
-functional class, History of heart failure, Death. Stacked bars give the
-share of patients at each reference value, one house color per category.
-The categories are told apart by color alone; the categorical frequency
-table above names them.
+Figure 4: Categorical variables, percent, page 1: Female (female), Race
+(race_grp), NYHA functional class (nyha_pr), History of heart failure
+(hx_chf), Death (dead). Stacked bars give the share of patients at each
+reference value, one house color per category. The categories are told
+apart by color alone; the categorical frequency table above names them.
 
 Code
 
@@ -1019,19 +1109,19 @@ Code
 hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)
 ```
 
-Figure 5: Categorical variables, counts, page 1: Female, Race, NYHA
-functional class, History of heart failure, Death. Stacked bars give the
-number of patients at each reference value, one house color per
-category. The categories are told apart by color alone; the categorical
-frequency table above names them.
+Figure 5: Categorical variables, counts, page 1: Female (female), Race
+(race_grp), NYHA functional class (nyha_pr), History of heart failure
+(hx_chf), Death (dead). Stacked bars give the number of patients at each
+reference value, one house color per category. The categories are told
+apart by color alone; the categorical frequency table above names them.
 
 ## About this run
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-11 03:01:19 EST  |
-|                 | Ended            | 2026-11-11 03:01:25 EST  |
-|                 | Duration         | 6 s                      |
+| Run             | Started          | 2026-11-12 09:28:13 EST  |
+|                 | Ended            | 2026-11-12 09:28:21 EST  |
+|                 | Duration         | 8 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -1039,9 +1129,9 @@ frequency table above names them.
 |                 | Template         | dc.eda                   |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.7                    |
-| Dataset `built` | Version file     | built_20261111.parquet   |
-|                 | Version date     | 2026-11-11               |
+|                 | hvtiRtemplates   | 1.5.8                    |
+| Dataset `built` | Version file     | built_20261112.parquet   |
+|                 | Version date     | 2026-11-12               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

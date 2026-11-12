@@ -41,7 +41,7 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 16 choices marked `EDIT:`.
+2.  **Study choices**: 17 choices marked `EDIT:`.
 3.  **Data**: reads the study data.
 4.  **Overview**
 
@@ -59,5 +59,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-12.
 The template holds the details; this sheet is its outline.

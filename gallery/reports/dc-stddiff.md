@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:01
+2026-11-12 09:28
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.7
+**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -181,7 +181,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261111.parquet) |
+| Source              | dataset `built` (built_20261112.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -558,9 +558,9 @@ rather than balance, so it is not part of this job.
 
 | Group           | Item             | Value                           |
 |:----------------|:-----------------|:--------------------------------|
-| Run             | Started          | 2026-11-11 03:01:37 EST         |
-|                 | Ended            | 2026-11-11 03:01:38 EST         |
-|                 | Duration         | 1 s                             |
+| Run             | Started          | 2026-11-12 09:28:37 EST         |
+|                 | Ended            | 2026-11-12 09:28:39 EST         |
+|                 | Duration         | 2 s                             |
 |                 | Status           | final                           |
 |                 | Rendered by      | gallery                         |
 |                 | Host             | gallery                         |
@@ -568,9 +568,9 @@ rather than balance, so it is not part of this job.
 |                 | Template         | dc.stddiff                      |
 |                 | Subject          | approach                        |
 |                 | Type             | balance                         |
-|                 | hvtiRtemplates   | 1.5.7                           |
-| Dataset `built` | Version file     | built_20261111.parquet          |
-|                 | Version date     | 2026-11-11                      |
+|                 | hvtiRtemplates   | 1.5.8                           |
+| Dataset `built` | Version file     | built_20261112.parquet          |
+|                 | Version date     | 2026-11-12                      |
 |                 | Source file      | built.rds                       |
 |                 | Rows kept        | 800 rows on 800 patients        |
 |                 | WHERE            | none                            |

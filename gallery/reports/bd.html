@@ -2211,7 +2211,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-11 02:58</p>
+      <p class="date">2026-11-12 09:23</p>
     </div>
   </div>
   
@@ -2223,7 +2223,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: bd 1.5.7 sha256:fac67dc61bb14833dfef75e810d82c9011c41d676623d14f39635db23740b3b0 -->
+<!-- hvtiRtemplates: bd 1.5.8 sha256:fac67dc61bb14833dfef75e810d82c9011c41d676623d14f39635db23740b3b0 -->
 <!-- Demo: name the SAS job this replaces (usually datasets/bd.data.sas) and the master it read. -->
 <p>This job cuts the study’s dataset from a master snapshot, records who was excluded and why, and writes the study’s working dataset with its build record beside it. When <code>REGISTER</code> is <code>TRUE</code> it registers that file as a dated version of this study’s <code>&quot;built&quot;</code> dataset (also called <code>&quot;study&quot;</code>), the one every analysis job reads.</p>
 <p>Before it registers, the job checks what it built: what the rebuild changed against the version registered now, cross-tabs, the follow-up columns and the study’s own named checks. The report holds their counts; the rows behind them go to the console, never into the report.</p>
@@ -2234,7 +2234,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · rendered by gallery on gallery · hvtiRtemplates 1.5.7</p>
+<p><strong>final</strong> · rendered by gallery on gallery · hvtiRtemplates 1.5.8</p>
 </div>
 </div>
 </div>
@@ -2252,7 +2252,7 @@ vertical-align: -.125em;
 <p>These checks read the dataset this render has just written. They report counts only: the rows behind a count, the patients on one side of the rebuild only and the levels of each cross-tab are printed in the console, so run the chunks in an interactive session to read them. A finding changes nothing and blocks nothing. A check that cannot run, because a column it names is missing or a condition does not evaluate, stops the render, as a bad <code>EXCLUDE</code> rule does: a build whose checks did not run is never registered. A finding becomes a correction to the master, a rule in <code>EXCLUDE</code>, or a fix to the derive chunk; then render again, and register once the checks read right. A draft’s report prints the SHA-256 of the file it wrote, and a registering render registers only a file whose bytes that report names, so register from a render, never from chunks run by hand.</p>
 <section id="what-this-rebuild-changed" class="level3">
 <h3 class="anchored" data-anchor-id="what-this-rebuild-changed">What this rebuild changed</h3>
-<p>A comparison build: study_cohort.rds is not the study dataset. It is compared against the study dataset built.rds, registered as built_20261111.parquet, which this build leaves unchanged.</p>
+<p>A comparison build: study_cohort.rds is not the study dataset. It is compared against the study dataset built.rds, registered as built_20261112.parquet, which this build leaves unchanged.</p>
 <div class="cell">
 <div id="tbl-rebuild-rows" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2859,11 +2859,11 @@ Table 8: Run mode, master snapshot, row counts and dataset registration for thi
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Study dataset before</td>
-<td style="text-align: left;">built_20261111.parquet</td>
+<td style="text-align: left;">built_20261112.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Study dataset after</td>
-<td style="text-align: left;">built_20261111.parquet</td>
+<td style="text-align: left;">built_20261112.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Registration</td>
@@ -3083,17 +3083,17 @@ Table 10: Type, missing count and range of each column
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-11 02:58:21 EST</td>
+<td style="text-align: left;">2026-11-12 09:23:51 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-11 02:58:22 EST</td>
+<td style="text-align: left;">2026-11-12 09:23:52 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">0 s</td>
+<td style="text-align: left;">1 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3133,7 +3133,7 @@ Table 10: Type, missing count and range of each column
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.7</td>
+<td style="text-align: left;">1.5.8</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>

@@ -13,7 +13,8 @@ Checks follow-up before any time-related analysis: counts for the
 cohort, the event and censored subsets, and the missing, negative and
 zero intervals, then the goodness-of-follow-up figure, each patient's
 follow-up against operation year under the diagonal the close date
-allows. [See the report it
+allows. A GROUP column adds the interval summary by group and a figure
+faceted by group. [See the report it
 produces](https://ehrlinger.github.io/hvtiRtemplates/gallery/reports/dc-gfup.md)
 on the gallery's synthetic study.
 
@@ -42,7 +43,7 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 16 choices marked `EDIT:`.
+2.  **Study choices**: 19 choices marked `EDIT:`.
 3.  **Data**: reads the study data.
 4.  **Follow-up checks**
 5.  **Operation years and the close date**
@@ -64,5 +65,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-11.
+Generated from the template by hvtiRtemplates, 1.5.7 · built 2026-11-12.
 The template holds the details; this sheet is its outline.

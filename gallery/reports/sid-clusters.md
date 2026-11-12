@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:11
+2026-11-12 09:41
 
 This job turns a `sid-fit` dissimilarity into clusters. It runs PAM
 (partitioning around medoids) on the SID distance for each K in a range,
@@ -71,7 +71,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.7
+hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -686,9 +686,9 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-11 03:10:56 EST |
-|  | Ended | 2026-11-11 03:11:01 EST |
-|  | Duration | 5 s |
+| Run | Started | 2026-11-12 09:41:34 EST |
+|  | Ended | 2026-11-12 09:41:41 EST |
+|  | Duration | 7 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -699,14 +699,14 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 |  | Template | sid.clusters |
 |  | Subject | echo |
 |  | Type | sid |
-|  | hvtiRtemplates | 1.5.7 |
-| Dataset `built` | Version file | built_20261111.parquet |
-|  | Version date | 2026-11-11 |
+|  | hvtiRtemplates | 1.5.8 |
+| Dataset `built` | Version file | built_20261112.parquet |
+|  | Version date | 2026-11-12 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-11 03:10:47 -0500, data built_20261111.parquet |
+| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-12 09:41:16 -0500, data built_20261112.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

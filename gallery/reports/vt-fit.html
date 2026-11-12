@@ -2223,6 +2223,10 @@ vertical-align: -.125em;
   <li><a href="#the-arm-forests" id="toc-the-arm-forests" class="nav-link" data-scroll-target="#the-arm-forests">The arm forests</a></li>
   <li><a href="#twin-curves" id="toc-twin-curves" class="nav-link" data-scroll-target="#twin-curves">Twin curves</a></li>
   <li><a href="#the-difference-in-restricted-mean-survival-time" id="toc-the-difference-in-restricted-mean-survival-time" class="nav-link" data-scroll-target="#the-difference-in-restricted-mean-survival-time">The difference in restricted mean survival time</a></li>
+  <li><a href="#observed-against-expected" id="toc-observed-against-expected" class="nav-link" data-scroll-target="#observed-against-expected">Observed against expected</a>
+  <ul class="collapse">
+  <li><a href="#the-average-expected-curve" id="toc-the-average-expected-curve" class="nav-link" data-scroll-target="#the-average-expected-curve">The average expected curve</a></li>
+  </ul></li>
   <li><a href="#handoff" id="toc-handoff" class="nav-link" data-scroll-target="#handoff">Handoff</a></li>
   <li><a href="#about-this-run" id="toc-about-this-run" class="nav-link" data-scroll-target="#about-this-run">About this run</a></li>
   </ul>
@@ -2245,7 +2249,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-11 03:11</p>
+      <p class="date">2026-11-12 09:42</p>
     </div>
   </div>
   
@@ -2257,7 +2261,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: vt.fit 1.5.7 sha256:3d4731b196e432e2299f28d8c15ad1a7ce5a843a6878dc58bf75494ab7784842 -->
+<!-- hvtiRtemplates: vt.fit 1.5.8 sha256:605177661b8db1a255600680d4fc6211368d5f0636b96eb378b42e6b75028bee -->
 <p>Gallery job on the synthetic cohort: mitral repair against replacement, and freedom from reintervention to eight years.</p>
 <!--
      arms, and which outcome. Replace this comment with that text. -->
@@ -2280,39 +2284,45 @@ vertical-align: -.125em;
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># randomForestSRC runs on every core its OpenMP build can see, and the forests</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># changed with the thread count with every seed held fixed.</span></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">rf.cores =</span> <span class="dv">1</span>L, <span class="at">mc.cores =</span> <span class="dv">1</span>L)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># The versions this template was verified against on 2026-10-22. Below them a</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># call here can fail or change meaning, and the message would arrive mid-render</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># rather than here.</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.floor <span class="cf">in</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">&quot;randomForestSRC&quot;</span>, <span class="st">&quot;3.7.0&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>, <span class="st">&quot;0.2.0&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;hvtiPlotR&quot;</span>, <span class="st">&quot;2.8.9&quot;</span>))) {</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(.floor[<span class="dv">1</span>]) <span class="sc">&lt;</span> .floor[<span class="dv">2</span>]) {</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;This job needs &quot;</span>, .floor[<span class="dv">1</span>], <span class="st">&quot; &gt;= &quot;</span>, .floor[<span class="dv">2</span>], <span class="st">&quot;; &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(.floor[<span class="dv">1</span>]),</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># The study root is the nearest directory above this file holding _study.yml,</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># so the job renders the same from the Render button, quarto render, or</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># render_job(), at any depth, with no path in this document to edit.</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Without the guard in .job_setup(), an unedited job renders green over a</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># meaningless analysis. Here that is a fit of the template&#39;s placeholder</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># arms and outcome, whose tables look exactly like a result.</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># To render a job you have not finished, leave a chunk out with the chunk</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># in a chunk to leave out everything below it. A draft lists each one in a</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># callout; a final render refuses them, as it refuses an unresolved marker.</span></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># ?stop_here has more.</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>.job <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_setup</span>(SUBJECT, TYPE, <span class="at">envir =</span> <span class="fu">environment</span>())</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>                                SAVE_FIGURES, FIGURES, linked)</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># The versions this template was verified against on 2026-10-22; hvtiPlotR has</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># its own check, below. Below them a</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># call here can fail or change meaning, and the message would arrive mid-render</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># rather than here.</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.floor <span class="cf">in</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">&quot;randomForestSRC&quot;</span>, <span class="st">&quot;3.7.0&quot;</span>), <span class="fu">c</span>(<span class="st">&quot;hvtiRpropensity&quot;</span>, <span class="st">&quot;0.2.0&quot;</span>))) {</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(.floor[<span class="dv">1</span>]) <span class="sc">&lt;</span> .floor[<span class="dv">2</span>]) {</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;This job needs &quot;</span>, .floor[<span class="dv">1</span>], <span class="st">&quot; &gt;= &quot;</span>, .floor[<span class="dv">2</span>], <span class="st">&quot;; &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(.floor[<span class="dv">1</span>]),</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># 2.8.20 for hv_group_palette(), which colors the observed-against-expected figure.</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.8.20&quot;</span>) {</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.8.20 for hv_group_palette(); &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>),</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># The study root is the nearest directory above this file holding _study.yml,</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># so the job renders the same from the Render button, quarto render, or</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># render_job(), at any depth, with no path in this document to edit.</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Without the guard in .job_setup(), an unedited job renders green over a</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># meaningless analysis. Here that is a fit of the template&#39;s placeholder</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="co"># arms and outcome, whose tables look exactly like a result.</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># To render a job you have not finished, leave a chunk out with the chunk</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="co"># option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="co"># in a chunk to leave out everything below it. A draft lists each one in a</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># callout; a final render refuses them, as it refuses an unresolved marker.</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="co"># ?stop_here has more.</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>.job <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.job_setup</span>(SUBJECT, TYPE, <span class="at">envir =</span> <span class="fu">environment</span>())</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>.root <span class="ot">&lt;-</span> .job<span class="sc">$</span>root</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>set_path <span class="ot">&lt;-</span> .job<span class="sc">$</span>set_path</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Saves a figure as &lt;name&gt;.png, .pdf and .tiff in this set&#39;s graphs/ folder (or `kind`&#39;s),</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="co"># under the SAVE_FIGURES and FIGURES study choices.</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>save_figure <span class="ot">&lt;-</span> <span class="cf">function</span>(plot, name, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span>, <span class="at">kind =</span> <span class="st">&quot;graphs&quot;</span>, <span class="at">linked =</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.save_figure</span>(plot, <span class="fu">set_path</span>(kind, <span class="fu">paste0</span>(name, <span class="st">&quot;.png&quot;</span>)), width, height,</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>                                SAVE_FIGURES, FIGURES, linked)</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="co"># The draft banners, if any, and the box under the title, after all the code above.</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>.job<span class="sc">$</span>notice</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="callout callout-style-simple callout-note no-icon">
 <div class="callout-body d-flex">
@@ -2320,7 +2330,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261111.parquet</code>, dated 2026-11-11 · rendered by gallery on gallery · hvtiRtemplates 1.5.7</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261112.parquet</code>, dated 2026-11-12 · rendered by gallery on gallery · hvtiRtemplates 1.5.8</p>
 </div>
 </div>
 </div>
@@ -2415,20 +2425,34 @@ vertical-align: -.125em;
 <span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># arms; past the last follow-up every curve is cut at the same place and the</span></span>
 <span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># difference means nothing. This job stops if it is not.</span></span>
 <span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="ot">&lt;-</span> <span class="dv">8</span></span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>NTREE <span class="ot">&lt;-</span> <span class="dv">500</span></span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>NSPLIT <span class="ot">&lt;-</span> <span class="dv">8</span></span>
-<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">1024</span>                                <span class="co"># Demo: part of every cache key.</span></span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
-<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
-<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
-<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;vt-fit-km&quot;). The names are the</span></span>
-<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
-<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># The observed-against-expected test follows each patient to TAU at most. NULL</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="co"># takes the lower of the two arms&#39; longest follow-up times, the furthest both</span></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="co"># forests have data for; past it a forest&#39;s cumulative hazard is held at its last step.</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>TAU <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the level of the observed-against-expected interval. 95% because the</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co">#       test&#39;s p-value is read against 0.05, and a reader takes an interval</span></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co">#       beside a p-value for 95%. The Kaplan-Meier above is 70%, and the one</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="co">#       drawn against the expected curve is always 95%; the level is printed</span></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="co">#       beside every interval either way.</span></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>TEST_LEVEL <span class="ot">&lt;-</span> <span class="fl">0.95</span></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="co"># How many patients&#39; curves the spaghetti figure draws per panel. More than</span></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="co"># that are thinned to patients spaced evenly through the ranking of predicted</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="co"># survival, so the drawn lines keep the cohort&#39;s spread and need no seed.</span></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>SPAGHETTI_N <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>NTREE <span class="ot">&lt;-</span> <span class="dv">500</span></span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>NSPLIT <span class="ot">&lt;-</span> <span class="dv">8</span></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">1024</span>                                <span class="co"># Demo: part of every cache key.</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;vt-fit-km&quot;). The names are the</span></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2524,7 +2548,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261111.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261112.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -3864,27 +3888,32 @@ Figure 3: Calibration at the horizon. Each point is a fifth of an arm’s patie
 <span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="co"># predict(). Everything is keyed by ID: predict() returns rows in the order it</span></span>
 <span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="co"># was given them, and pairing by position silently swaps patients. Under</span></span>
 <span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="co"># na.impute predict() imputes the new rows at random, so it takes the seed too.</span></span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>vt_curves <span class="ot">&lt;-</span> <span class="cf">function</span>(forests, train_ids, d, id, arm, arms, no_arm, seed) {</span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (a <span class="cf">in</span> arms) {</span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    f <span class="ot">&lt;-</span> forests[[a]]</span>
-<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    own <span class="ot">&lt;-</span> d[[arm]] <span class="sc">%in%</span> a <span class="sc">&amp;</span> <span class="sc">!</span>no_arm</span>
-<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    own_ids <span class="ot">&lt;-</span> d[[id]][own]</span>
-<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># survival.oob rows are in TRAINING order, which train_ids records; d may</span></span>
-<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># be in any order, so each own-arm patient is matched to their row by ID.</span></span>
-<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>    at <span class="ot">&lt;-</span> <span class="fu">match</span>(own_ids, train_ids[[a]])</span>
-<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">anyNA</span>(at)) <span class="fu">stop</span>(<span class="fu">sum</span>(<span class="fu">is.na</span>(at)), <span class="st">&quot; arm &quot;</span>, a, <span class="st">&quot; patient(s) are not among its forest&#39;s training rows.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>    oob <span class="ot">&lt;-</span> f<span class="sc">$</span>survival.oob[at, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>    out[[<span class="fu">length</span>(out) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">ID =</span> <span class="fu">rep</span>(own_ids, <span class="at">each =</span> <span class="fu">length</span>(f<span class="sc">$</span>time.interest)), <span class="at">arm_of_curve =</span> a,</span>
-<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">time =</span> f<span class="sc">$</span>time.interest, <span class="at">surv =</span> <span class="fu">as.vector</span>(<span class="fu">t</span>(oob)))</span>
-<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>    other <span class="ot">&lt;-</span> d[<span class="sc">!</span>own, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> <span class="fu">predict</span>(f, <span class="at">newdata =</span> other[, f<span class="sc">$</span>xvar.names, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">na.action =</span> <span class="st">&quot;na.impute&quot;</span>,</span>
-<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>                 <span class="at">seed =</span> seed)</span>
-<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>    out[[<span class="fu">length</span>(out) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">ID =</span> <span class="fu">rep</span>(other[[id]], <span class="at">each =</span> <span class="fu">length</span>(f<span class="sc">$</span>time.interest)), <span class="at">arm_of_curve =</span> a,</span>
-<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">time =</span> f<span class="sc">$</span>time.interest, <span class="at">surv =</span> <span class="fu">as.vector</span>(<span class="fu">t</span>(p<span class="sc">$</span>survival)))</span>
-<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(base<span class="sc">::</span>rbind, out)</span>
-<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Each row also carries the forest&#39;s cumulative hazard, chf (chf.oob for the</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="co"># own arm), which the observed-against-expected test reads; it is not -log(surv),</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="co"># which is infinite where a forest&#39;s survival reaches 0. The handoff drops it.</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>vt_curves <span class="ot">&lt;-</span> <span class="cf">function</span>(forests, train_ids, d, id, arm, arms, no_arm, seed) {</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (a <span class="cf">in</span> arms) {</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    f <span class="ot">&lt;-</span> forests[[a]]</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    own <span class="ot">&lt;-</span> d[[arm]] <span class="sc">%in%</span> a <span class="sc">&amp;</span> <span class="sc">!</span>no_arm</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>    own_ids <span class="ot">&lt;-</span> d[[id]][own]</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># survival.oob rows are in TRAINING order, which train_ids records; d may</span></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># be in any order, so each own-arm patient is matched to their row by ID.</span></span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>    at <span class="ot">&lt;-</span> <span class="fu">match</span>(own_ids, train_ids[[a]])</span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">anyNA</span>(at)) <span class="fu">stop</span>(<span class="fu">sum</span>(<span class="fu">is.na</span>(at)), <span class="st">&quot; arm &quot;</span>, a, <span class="st">&quot; patient(s) are not among its forest&#39;s training rows.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>    oob <span class="ot">&lt;-</span> f<span class="sc">$</span>survival.oob[at, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>    out[[<span class="fu">length</span>(out) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">ID =</span> <span class="fu">rep</span>(own_ids, <span class="at">each =</span> <span class="fu">length</span>(f<span class="sc">$</span>time.interest)), <span class="at">arm_of_curve =</span> a,</span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">time =</span> f<span class="sc">$</span>time.interest, <span class="at">surv =</span> <span class="fu">as.vector</span>(<span class="fu">t</span>(oob)),</span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">chf =</span> <span class="fu">as.vector</span>(<span class="fu">t</span>(f<span class="sc">$</span>chf.oob[at, , <span class="at">drop =</span> <span class="cn">FALSE</span>])))</span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>    other <span class="ot">&lt;-</span> d[<span class="sc">!</span>own, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> <span class="fu">predict</span>(f, <span class="at">newdata =</span> other[, f<span class="sc">$</span>xvar.names, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">na.action =</span> <span class="st">&quot;na.impute&quot;</span>,</span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>                 <span class="at">seed =</span> seed)</span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>    out[[<span class="fu">length</span>(out) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">ID =</span> <span class="fu">rep</span>(other[[id]], <span class="at">each =</span> <span class="fu">length</span>(f<span class="sc">$</span>time.interest)), <span class="at">arm_of_curve =</span> a,</span>
+<span id="cb29-28"><a href="#cb29-28" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">time =</span> f<span class="sc">$</span>time.interest, <span class="at">surv =</span> <span class="fu">as.vector</span>(<span class="fu">t</span>(p<span class="sc">$</span>survival)),</span>
+<span id="cb29-29"><a href="#cb29-29" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">chf =</span> <span class="fu">as.vector</span>(<span class="fu">t</span>(p<span class="sc">$</span>chf)))</span>
+<span id="cb29-30"><a href="#cb29-30" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb29-31"><a href="#cb29-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(base<span class="sc">::</span>rbind, out)</span>
+<span id="cb29-32"><a href="#cb29-32" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
@@ -3985,37 +4014,390 @@ Figure 4: Mean predicted survival under each arm’s forest, for patients in di
 </div>
 </div>
 </section>
+<section id="observed-against-expected" class="level2">
+<h2 class="anchored" data-anchor-id="observed-against-expected">Observed against expected</h2>
+<p>Two curves give no p-value. This section gives one: for each arm forest and each arm received, the <strong>deaths observed</strong> against the <strong>deaths the forest expects</strong> for those same patients, each followed for as long as they actually were. A patient’s expected deaths are the forest’s cumulative hazard at that patient’s own follow-up, read off its time grid as a step, and the group’s are their sum, E. The ratio O/E, its exact Poisson interval and the chi-squared test of O against E are the one-sample log-rank test (Breslow 1975; Finkelstein, Muzikansky and Schoenfeld 2003). It is the test <code>hs-concordance</code> runs on hazard models, through the same helper.</p>
+<p>Eight things to say beside the result:</p>
+<ul>
+<li><strong>What the test assumes is a fixed reference, not that O and E are independent.</strong> They never are: E is summed over each patient’s own follow-up, which ends at their death when there is one, so a group’s deaths and its expectation share the same follow-up even against a hazard known exactly. The test is justified through O - E, a counting-process statistic that has mean 0 when the group dies at the reference’s rate. What it needs is a reference that did not learn from the deaths it is tested against.</li>
+<li><strong>The other arm’s forest is that kind of reference.</strong> The patients of arm B are not among arm A’s forest’s training rows, which this job checks by ID (<code>in_fit</code>): the samples that trained the forest and that test it are disjoint. Their deaths against what arm A’s forest expects for them is the twins’ counterfactual comparison as a count.</li>
+<li><strong>A forest against its own arm is tested out of bag, and its p-value is approximate.</strong> No patient is predicted by trees grown on them, so the cell is an honest calibration of the forest, and O/E near 1 is what a well-calibrated forest gives. But the arm’s other patients grew those trees, and their deaths are in the same O, so the reference was partly fitted to the deaths it is tested against. Read its interval and p-value as a calibration check, not as evidence at their face value. The table marks the cell <code>tested, out of bag</code>.</li>
+<li><strong>Patients in distribution only</strong>, as in the twin curves above: an out-of-distribution patient’s other-arm prediction is an extrapolation.</li>
+<li><strong>The forest’s own uncertainty is not in the test.</strong> E is treated as fixed. A forest has no delta method, so adding it would mean bootstrapping the forests.</li>
+<li><strong>Follow-up stops at <code>TAU</code>.</strong> Deaths and expectations are both counted to <code>TAU</code> and no further, and the figures stop there too.</li>
+<li><strong>The band is the spread of the patients’ predictions</strong>, their 15th to 85th percentiles, and not a confidence interval of anything. A forest gives no per-patient limits, so there is no average of them to draw, and the interval of the mean curve would need the bootstrap too.</li>
+<li><strong>A large p-value is not evidence of agreement.</strong> The test asks whether the deaths depart from the forest’s expectation by more than chance allows. It does not measure agreement. An arm with few deaths rarely rejects even a poorly calibrated forest, so read O/E and its interval for how close the forest is, and a nonsignificant result only as no detected departure.</li>
+</ul>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(TAU)) TAU <span class="ot">&lt;-</span> <span class="fu">min</span>(.followup)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.numeric</span>(TAU) <span class="sc">||</span> <span class="fu">length</span>(TAU) <span class="sc">!=</span> <span class="dv">1</span>L <span class="sc">||</span> <span class="sc">!</span><span class="fu">is.finite</span>(TAU) <span class="sc">||</span> TAU <span class="sc">&lt;=</span> <span class="dv">0</span>) {</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;TAU must be NULL or one positive number, in TIME&#39;s units.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (TAU <span class="sc">&gt;</span> <span class="fu">min</span>(.followup)) {</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;TAU (&quot;</span>, TAU, <span class="st">&quot;) is beyond the follow-up of arm &quot;</span>, <span class="fu">names</span>(<span class="fu">which.min</span>(.followup)), <span class="st">&quot; (&quot;</span>,</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>       <span class="fu">signif</span>(<span class="fu">min</span>(.followup), <span class="dv">4</span>), <span class="st">&quot;). Leave TAU NULL to stop there.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.numeric</span>(SPAGHETTI_N) <span class="sc">||</span> <span class="fu">length</span>(SPAGHETTI_N) <span class="sc">!=</span> <span class="dv">1</span>L <span class="sc">||</span> <span class="sc">!</span><span class="fu">is.finite</span>(SPAGHETTI_N) <span class="sc">||</span> SPAGHETTI_N <span class="sc">&lt;</span> <span class="dv">1</span>) {</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SPAGHETTI_N must be one positive number.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="co"># The patients counted: treated and in distribution, by the arm they received.</span></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>.oe_pat <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">ID =</span> d[[ID]], <span class="at">arm =</span> d[[ARM]], <span class="at">time =</span> d[[TIME]], <span class="at">event =</span> d[[STATUS]])[.treated, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>.oe_pat <span class="ot">&lt;-</span> .oe_pat[.oe_pat<span class="sc">$</span>ID <span class="sc">%in%</span> .rmst<span class="sc">$</span>ID[.rmst<span class="sc">$</span>elig], , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>.oe_pat<span class="sc">$</span>t <span class="ot">&lt;-</span> <span class="fu">pmin</span>(.oe_pat<span class="sc">$</span>time, TAU)</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>.oe_pat<span class="sc">$</span>ev <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(.oe_pat<span class="sc">$</span>event <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> .oe_pat<span class="sc">$</span>time <span class="sc">&lt;=</span> TAU)</span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a><span class="co"># One forest&#39;s curves for some patients, as patients x times matrices of survival</span></span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a><span class="co"># and cumulative hazard, rows in the order of `ids`. .curves holds every patient</span></span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a><span class="co"># under every forest on that forest&#39;s own grid.</span></span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>.oe_matrix <span class="ot">&lt;-</span> <span class="cf">function</span>(a, ids) {</span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> .curves[.curves<span class="sc">$</span>arm_of_curve <span class="sc">==</span> a <span class="sc">&amp;</span> .curves<span class="sc">$</span>ID <span class="sc">%in%</span> ids, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> x[<span class="fu">order</span>(<span class="fu">match</span>(x<span class="sc">$</span>ID, ids), x<span class="sc">$</span>time), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>  times <span class="ot">&lt;-</span> .forests[[a]]<span class="sc">$</span>time.interest</span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">times =</span> times, <span class="at">surv =</span> <span class="fu">matrix</span>(x<span class="sc">$</span>surv, <span class="at">ncol =</span> <span class="fu">length</span>(times), <span class="at">byrow =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a>       <span class="at">chf =</span> <span class="fu">matrix</span>(x<span class="sc">$</span>chf, <span class="at">ncol =</span> <span class="fu">length</span>(times), <span class="at">byrow =</span> <span class="cn">TRUE</span>), <span class="at">ids =</span> <span class="fu">unique</span>(x<span class="sc">$</span>ID))</span>
+<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a><span class="co"># One cell per arm forest and arm received.</span></span>
+<span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a>.oe_cells <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (a <span class="cf">in</span> ARMS) <span class="cf">for</span> (g <span class="cf">in</span> ARMS) {</span>
+<span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> .oe_pat[.oe_pat<span class="sc">$</span>arm <span class="sc">==</span> g, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb34-33"><a href="#cb34-33" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">.oe_matrix</span>(a, p<span class="sc">$</span>ID)</span>
+<span id="cb34-34"><a href="#cb34-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">identical</span>(m<span class="sc">$</span>ids, p<span class="sc">$</span>ID))</span>
+<span id="cb34-35"><a href="#cb34-35" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A patient never out of bag has no own-arm curve; they are left out and counted.</span></span>
+<span id="cb34-36"><a href="#cb34-36" aria-hidden="true" tabindex="-1"></a>  ok <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">complete.cases</span>(m<span class="sc">$</span>surv) <span class="sc">&amp;</span> stats<span class="sc">::</span><span class="fu">complete.cases</span>(m<span class="sc">$</span>chf)</span>
+<span id="cb34-37"><a href="#cb34-37" aria-hidden="true" tabindex="-1"></a>  .oe_cells[[<span class="fu">length</span>(.oe_cells) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">model =</span> a, <span class="at">group =</span> g, <span class="at">ids =</span> p<span class="sc">$</span>ID[ok], <span class="at">times =</span> m<span class="sc">$</span>times,</span>
+<span id="cb34-38"><a href="#cb34-38" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">surv =</span> m<span class="sc">$</span>surv[ok, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">chf =</span> m<span class="sc">$</span>chf[ok, , <span class="at">drop =</span> <span class="cn">FALSE</span>],</span>
+<span id="cb34-39"><a href="#cb34-39" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">t =</span> p<span class="sc">$</span>t[ok], <span class="at">ev =</span> p<span class="sc">$</span>ev[ok], <span class="at">no_prediction =</span> <span class="fu">sum</span>(<span class="sc">!</span>ok),</span>
+<span id="cb34-40"><a href="#cb34-40" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">in_fit =</span> <span class="fu">sum</span>(p<span class="sc">$</span>ID <span class="sc">%in%</span> .train_ids[[a]]))</span>
+<span id="cb34-41"><a href="#cb34-41" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-42"><a href="#cb34-42" aria-hidden="true" tabindex="-1"></a>oe <span class="ot">&lt;-</span> <span class="fu">do.call</span>(base<span class="sc">::</span>rbind, <span class="fu">lapply</span>(.oe_cells, <span class="cf">function</span>(cell) {</span>
+<span id="cb34-43"><a href="#cb34-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Each patient&#39;s expected deaths: the forest&#39;s cumulative hazard at their own</span></span>
+<span id="cb34-44"><a href="#cb34-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># follow-up, the step at or before it, and 0 before the forest&#39;s first time.</span></span>
+<span id="cb34-45"><a href="#cb34-45" aria-hidden="true" tabindex="-1"></a>  k <span class="ot">&lt;-</span> <span class="fu">findInterval</span>(cell<span class="sc">$</span>t, cell<span class="sc">$</span>times)</span>
+<span id="cb34-46"><a href="#cb34-46" aria-hidden="true" tabindex="-1"></a>  h <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(k <span class="sc">==</span> <span class="dv">0</span>L, <span class="dv">0</span>, cell<span class="sc">$</span>chf[<span class="fu">cbind</span>(<span class="fu">seq_along</span>(k), <span class="fu">pmax</span>(k, <span class="dv">1</span>L))])</span>
+<span id="cb34-47"><a href="#cb34-47" aria-hidden="true" tabindex="-1"></a>  inference <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">length</span>(h) <span class="sc">||</span> <span class="fu">sum</span>(h) <span class="sc">&lt;=</span> <span class="dv">0</span>) {</span>
+<span id="cb34-48"><a href="#cb34-48" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;none: no patients or no expected deaths&quot;</span></span>
+<span id="cb34-49"><a href="#cb34-49" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (cell<span class="sc">$</span>in_fit <span class="sc">&gt;</span> <span class="dv">0</span>L) {</span>
+<span id="cb34-50"><a href="#cb34-50" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;tested, out of bag&quot;</span></span>
+<span id="cb34-51"><a href="#cb34-51" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb34-52"><a href="#cb34-52" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;tested&quot;</span></span>
+<span id="cb34-53"><a href="#cb34-53" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb34-54"><a href="#cb34-54" aria-hidden="true" tabindex="-1"></a>  r <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">startsWith</span>(inference, <span class="st">&quot;none: no patients&quot;</span>)) {</span>
+<span id="cb34-55"><a href="#cb34-55" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">n =</span> <span class="fu">length</span>(h), <span class="at">observed =</span> <span class="fu">sum</span>(cell<span class="sc">$</span>ev), <span class="at">expected =</span> <span class="fu">sum</span>(h), <span class="at">ratio =</span> <span class="cn">NA_real_</span>, <span class="at">lower =</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb34-56"><a href="#cb34-56" aria-hidden="true" tabindex="-1"></a>               <span class="at">upper =</span> <span class="cn">NA_real_</span>, <span class="at">level =</span> TEST_LEVEL, <span class="at">chisq =</span> <span class="cn">NA_real_</span>, <span class="at">p =</span> <span class="cn">NA_real_</span>)</span>
+<span id="cb34-57"><a href="#cb34-57" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb34-58"><a href="#cb34-58" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.one_sample_logrank</span>(cell<span class="sc">$</span>ev, h, TEST_LEVEL)</span>
+<span id="cb34-59"><a href="#cb34-59" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb34-60"><a href="#cb34-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">model =</span> cell<span class="sc">$</span>model, <span class="at">group =</span> cell<span class="sc">$</span>group, <span class="at">inference =</span> inference, <span class="at">in_fit =</span> cell<span class="sc">$</span>in_fit,</span>
+<span id="cb34-61"><a href="#cb34-61" aria-hidden="true" tabindex="-1"></a>             <span class="at">no_prediction =</span> cell<span class="sc">$</span>no_prediction, r)</span>
+<span id="cb34-62"><a href="#cb34-62" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb34-63"><a href="#cb34-63" aria-hidden="true" tabindex="-1"></a>.cap_oe <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Observed against forest-expected deaths to &quot;</span>, <span class="fu">signif</span>(TAU, <span class="dv">4</span>), <span class="st">&quot;, by arm forest and arm received, &quot;</span>,</span>
+<span id="cb34-64"><a href="#cb34-64" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;patients in distribution, with &quot;</span>, <span class="dv">100</span> <span class="sc">*</span> TEST_LEVEL, <span class="st">&quot;% intervals&quot;</span>)</span>
+<span id="cb34-65"><a href="#cb34-65" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Follow-up is counted to TAU = &quot;</span>, <span class="fu">signif</span>(TAU, <span class="dv">4</span>), <span class="st">&quot; (&quot;</span>, TIME, <span class="st">&quot;&#39;s units); &quot;</span>, <span class="fu">sum</span>(.oe_pat<span class="sc">$</span>time <span class="sc">&gt;</span> TAU),</span>
+<span id="cb34-66"><a href="#cb34-66" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot; patient(s) followed longer are censored there. &quot;</span>, <span class="fu">sum</span>(<span class="sc">!</span>.treated) <span class="sc">+</span> <span class="fu">sum</span>(<span class="sc">!</span>d[[ID]][.treated] <span class="sc">%in%</span> .oe_pat<span class="sc">$</span>ID),</span>
+<span id="cb34-67"><a href="#cb34-67" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot; patient(s) with no arm or out of distribution are not counted. Intervals are &quot;</span>, <span class="dv">100</span> <span class="sc">*</span> TEST_LEVEL, <span class="st">&quot;%.</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
+<span id="cb34-68"><a href="#cb34-68" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<p>Follow-up is counted to TAU = 30.88 (iv_reint’s units); 5 patient(s) followed longer are censored there. 0 patient(s) with no arm or out of distribution are not counted. Intervals are 95%.</p>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(oe<span class="sc">$</span>no_prediction <span class="sc">&gt;</span> <span class="dv">0</span>L)) {</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">sum</span>(oe<span class="sc">$</span>no_prediction), <span class="st">&quot; patient(s) were never out of bag and have no own-arm prediction; &quot;</span>,</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;raise NTREE.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Cells of fewer than five patients or events, by count.</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_notice</span>(<span class="fu">rbind</span>(</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_counts</span>(<span class="fu">c</span>(oe<span class="sc">$</span>n, oe<span class="sc">$</span>observed, oe<span class="sc">$</span>n <span class="sc">-</span> oe<span class="sc">$</span>observed), <span class="st">&quot;observed against expected&quot;</span>)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(oe[<span class="fu">c</span>(<span class="st">&quot;model&quot;</span>, <span class="st">&quot;group&quot;</span>, <span class="st">&quot;inference&quot;</span>, <span class="st">&quot;in_fit&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;observed&quot;</span>, <span class="st">&quot;expected&quot;</span>, <span class="st">&quot;ratio&quot;</span>, <span class="st">&quot;lower&quot;</span>, <span class="st">&quot;upper&quot;</span>,</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;chisq&quot;</span>, <span class="st">&quot;p&quot;</span>)], <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">digits =</span> <span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div id="tbl-oe" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-oe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table 10: Observed against forest-expected deaths to 30.88, by arm forest and arm received, patients in distribution, with 95% intervals
+</figcaption>
+<div aria-describedby="tbl-oe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 19%">
+<col style="width: 7%">
+<col style="width: 4%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">model</th>
+<th style="text-align: left;">group</th>
+<th style="text-align: left;">inference</th>
+<th style="text-align: right;">in_fit</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">observed</th>
+<th style="text-align: right;">expected</th>
+<th style="text-align: right;">ratio</th>
+<th style="text-align: right;">lower</th>
+<th style="text-align: right;">upper</th>
+<th style="text-align: right;">chisq</th>
+<th style="text-align: right;">p</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">repair</td>
+<td style="text-align: left;">repair</td>
+<td style="text-align: left;">tested, out of bag</td>
+<td style="text-align: right;">412</td>
+<td style="text-align: right;">412</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: right;">77.4830</td>
+<td style="text-align: right;">0.9292</td>
+<td style="text-align: right;">0.7271</td>
+<td style="text-align: right;">1.1702</td>
+<td style="text-align: right;">0.3880</td>
+<td style="text-align: right;">0.5334</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">repair</td>
+<td style="text-align: left;">replace</td>
+<td style="text-align: left;">tested</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">388</td>
+<td style="text-align: right;">57</td>
+<td style="text-align: right;">82.1181</td>
+<td style="text-align: right;">0.6941</td>
+<td style="text-align: right;">0.5257</td>
+<td style="text-align: right;">0.8993</td>
+<td style="text-align: right;">7.6831</td>
+<td style="text-align: right;">0.0056</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">replace</td>
+<td style="text-align: left;">repair</td>
+<td style="text-align: left;">tested</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">412</td>
+<td style="text-align: right;">72</td>
+<td style="text-align: right;">71.6399</td>
+<td style="text-align: right;">1.0050</td>
+<td style="text-align: right;">0.7864</td>
+<td style="text-align: right;">1.2657</td>
+<td style="text-align: right;">0.0018</td>
+<td style="text-align: right;">0.9661</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">replace</td>
+<td style="text-align: left;">replace</td>
+<td style="text-align: left;">tested, out of bag</td>
+<td style="text-align: right;">388</td>
+<td style="text-align: right;">388</td>
+<td style="text-align: right;">57</td>
+<td style="text-align: right;">61.8371</td>
+<td style="text-align: right;">0.9218</td>
+<td style="text-align: right;">0.6981</td>
+<td style="text-align: right;">1.1943</td>
+<td style="text-align: right;">0.3784</td>
+<td style="text-align: right;">0.5385</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<section id="the-average-expected-curve" class="level3">
+<h3 class="anchored" data-anchor-id="the-average-expected-curve">The average expected curve</h3>
+<p>Each forest’s average expected curve is the mean of its patients’ predicted survival on the forest’s own time grid to <code>TAU</code>, set against the Kaplan-Meier estimate of the same patients, with <strong>95%</strong> limits, beside the test in each panel’s title. The band is the 15th to 85th percentiles of the patients’ predictions.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>oe_curves <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>.lines <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The band&#39;s label, for the caption, whichever cells have patients.</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>.band_label <span class="ot">&lt;-</span> <span class="fu">attr</span>(hvtiRtemplates<span class="sc">:::</span><span class="fu">.cohort_curve_band</span>(<span class="fu">matrix</span>(<span class="dv">1</span>), <span class="at">band =</span> <span class="st">&quot;spread&quot;</span>), <span class="st">&quot;label&quot;</span>)</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (cell <span class="cf">in</span> .oe_cells) {</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A cell with no one in distribution has no curve; the table says so.</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">length</span>(cell<span class="sc">$</span>ids)) <span class="cf">next</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.cohort_curve_band</span>(cell<span class="sc">$</span>surv, <span class="at">band =</span> <span class="st">&quot;spread&quot;</span>)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The curve drawn must be the mean of the predictions the RMST table reads.</span></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># vt_rmst() takes each patient&#39;s survival at the horizon by its own path, so</span></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># a change to either would part them silently.</span></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  at <span class="ot">&lt;-</span> <span class="fu">findInterval</span>(HORIZON, cell<span class="sc">$</span>times)</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>  risk <span class="ot">&lt;-</span> .rmst[[<span class="fu">paste0</span>(<span class="st">&quot;risk_&quot;</span>, cell<span class="sc">$</span>model)]][<span class="fu">match</span>(cell<span class="sc">$</span>ids, .rmst<span class="sc">$</span>ID)]</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(<span class="cf">if</span> (at <span class="sc">==</span> <span class="dv">0</span>L) <span class="dv">1</span> <span class="cf">else</span> b<span class="sc">$</span>mean[at], <span class="fu">mean</span>(<span class="dv">1</span> <span class="sc">-</span> risk))))</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Every curve runs from 1 at time 0 to TAU, where the test and the Kaplan-Meier</span></span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># stop. TAU rarely falls on a forest time, so each curve&#39;s last step is held</span></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># to it; before a forest&#39;s first time every curve is still 1.</span></span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>  keep <span class="ot">&lt;-</span> cell<span class="sc">$</span>times <span class="sc">&lt;=</span> TAU</span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>  .t <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, cell<span class="sc">$</span>times[keep])</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>  .to_tau <span class="ot">&lt;-</span> <span class="cf">function</span>(v) {</span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>    v <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, v[keep])</span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (TAU <span class="sc">&gt;</span> .t[<span class="fu">length</span>(.t)]) <span class="fu">c</span>(v, v[<span class="fu">length</span>(v)]) <span class="cf">else</span> v</span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>  .tt <span class="ot">&lt;-</span> <span class="cf">if</span> (TAU <span class="sc">&gt;</span> .t[<span class="fu">length</span>(.t)]) <span class="fu">c</span>(.t, TAU) <span class="cf">else</span> .t</span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>  panel <span class="ot">&lt;-</span> <span class="fu">local</span>({</span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>    r <span class="ot">&lt;-</span> oe[oe<span class="sc">$</span>model <span class="sc">==</span> cell<span class="sc">$</span>model <span class="sc">&amp;</span> oe<span class="sc">$</span>group <span class="sc">==</span> cell<span class="sc">$</span>group, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a>    test <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">startsWith</span>(r<span class="sc">$</span>inference, <span class="st">&quot;none&quot;</span>)) {</span>
+<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste0</span>(<span class="st">&quot;O/E &quot;</span>, <span class="fu">formatC</span>(r<span class="sc">$</span>ratio, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format =</span> <span class="st">&quot;f&quot;</span>), <span class="st">&quot; (no test: &quot;</span>, <span class="fu">sub</span>(<span class="st">&quot;^none: &quot;</span>, <span class="st">&quot;&quot;</span>, r<span class="sc">$</span>inference), <span class="st">&quot;)&quot;</span>)</span>
+<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste0</span>(<span class="st">&quot;O/E &quot;</span>, <span class="fu">formatC</span>(r<span class="sc">$</span>ratio, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format =</span> <span class="st">&quot;f&quot;</span>), <span class="st">&quot; (&quot;</span>, <span class="dv">100</span> <span class="sc">*</span> TEST_LEVEL, <span class="st">&quot;% &quot;</span>,</span>
+<span id="cb37-31"><a href="#cb37-31" aria-hidden="true" tabindex="-1"></a>             <span class="fu">formatC</span>(r<span class="sc">$</span>lower, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format =</span> <span class="st">&quot;f&quot;</span>), <span class="st">&quot; to &quot;</span>, <span class="fu">formatC</span>(r<span class="sc">$</span>upper, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">format =</span> <span class="st">&quot;f&quot;</span>),</span>
+<span id="cb37-32"><a href="#cb37-32" aria-hidden="true" tabindex="-1"></a>             <span class="st">&quot;), p &quot;</span>, <span class="fu">format.pval</span>(r<span class="sc">$</span>p, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">eps =</span> <span class="fl">0.001</span>), <span class="cf">if</span> (r<span class="sc">$</span>inference <span class="sc">!=</span> <span class="st">&quot;tested&quot;</span>) <span class="st">&quot;, out of bag&quot;</span>)</span>
+<span id="cb37-33"><a href="#cb37-33" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb37-34"><a href="#cb37-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">&quot;received &quot;</span>, cell<span class="sc">$</span>group, <span class="st">&quot;, &quot;</span>, cell<span class="sc">$</span>model, <span class="st">&quot; forest</span><span class="sc">\n</span><span class="st">&quot;</span>, test)</span>
+<span id="cb37-35"><a href="#cb37-35" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb37-36"><a href="#cb37-36" aria-hidden="true" tabindex="-1"></a>  oe_curves[[<span class="fu">length</span>(oe_curves) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">model =</span> cell<span class="sc">$</span>model, <span class="at">group =</span> cell<span class="sc">$</span>group, <span class="at">panel =</span> panel,</span>
+<span id="cb37-37"><a href="#cb37-37" aria-hidden="true" tabindex="-1"></a>                                                    <span class="at">time =</span> .tt, <span class="at">mean =</span> <span class="fu">.to_tau</span>(b<span class="sc">$</span>mean), <span class="at">lower =</span> <span class="fu">.to_tau</span>(b<span class="sc">$</span>lower),</span>
+<span id="cb37-38"><a href="#cb37-38" aria-hidden="true" tabindex="-1"></a>                                                    <span class="at">upper =</span> <span class="fu">.to_tau</span>(b<span class="sc">$</span>upper))</span>
+<span id="cb37-39"><a href="#cb37-39" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The spaghetti&#39;s patients: all of them, or SPAGHETTI_N spaced evenly through</span></span>
+<span id="cb37-40"><a href="#cb37-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the ranking of survival at TAU, so the thinned lines keep the spread.</span></span>
+<span id="cb37-41"><a href="#cb37-41" aria-hidden="true" tabindex="-1"></a>  .sv <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">apply</span>(cell<span class="sc">$</span>surv, <span class="dv">1</span>L, .to_tau))</span>
+<span id="cb37-42"><a href="#cb37-42" aria-hidden="true" tabindex="-1"></a>  pick <span class="ot">&lt;-</span> <span class="fu">order</span>(.sv[, <span class="fu">length</span>(.tt)])</span>
+<span id="cb37-43"><a href="#cb37-43" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(pick) <span class="sc">&gt;</span> SPAGHETTI_N) pick <span class="ot">&lt;-</span> pick[<span class="fu">unique</span>(<span class="fu">round</span>(<span class="fu">seq</span>(<span class="dv">1</span>, <span class="fu">length</span>(pick), <span class="at">length.out =</span> SPAGHETTI_N)))]</span>
+<span id="cb37-44"><a href="#cb37-44" aria-hidden="true" tabindex="-1"></a>  .lines[[<span class="fu">length</span>(.lines) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">panel =</span> panel, <span class="at">patient =</span> <span class="fu">rep</span>(pick, <span class="at">each =</span> <span class="fu">length</span>(.tt)), <span class="at">time =</span> .tt,</span>
+<span id="cb37-45"><a href="#cb37-45" aria-hidden="true" tabindex="-1"></a>                                              <span class="at">surv =</span> <span class="fu">as.vector</span>(<span class="fu">t</span>(.sv[pick, , <span class="at">drop =</span> <span class="cn">FALSE</span>])))</span>
+<span id="cb37-46"><a href="#cb37-46" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb37-47"><a href="#cb37-47" aria-hidden="true" tabindex="-1"></a>oe_curves <span class="ot">&lt;-</span> <span class="fu">do.call</span>(base<span class="sc">::</span>rbind, oe_curves)</span>
+<span id="cb37-48"><a href="#cb37-48" aria-hidden="true" tabindex="-1"></a><span class="co"># The band and the mean as step coordinates: geom_ribbon() joins successive</span></span>
+<span id="cb37-49"><a href="#cb37-49" aria-hidden="true" tabindex="-1"></a><span class="co"># points with straight lines, which would slope across a gap in which every</span></span>
+<span id="cb37-50"><a href="#cb37-50" aria-hidden="true" tabindex="-1"></a><span class="co"># patient&#39;s prediction, and so the band, is constant.</span></span>
+<span id="cb37-51"><a href="#cb37-51" aria-hidden="true" tabindex="-1"></a><span class="co"># With no one in distribution there are no curves, and nothing to expand.</span></span>
+<span id="cb37-52"><a href="#cb37-52" aria-hidden="true" tabindex="-1"></a>.oe_band <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(oe_curves)) {</span>
+<span id="cb37-53"><a href="#cb37-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(base<span class="sc">::</span>rbind, <span class="fu">lapply</span>(<span class="fu">split</span>(oe_curves, oe_curves<span class="sc">$</span>panel), hvtiRtemplates<span class="sc">:::</span>.step_frame))</span>
+<span id="cb37-54"><a href="#cb37-54" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb37-55"><a href="#cb37-55" aria-hidden="true" tabindex="-1"></a>.lines <span class="ot">&lt;-</span> <span class="fu">do.call</span>(base<span class="sc">::</span>rbind, .lines)</span>
+<span id="cb37-56"><a href="#cb37-56" aria-hidden="true" tabindex="-1"></a><span class="co"># The Kaplan-Meier of each arm received, to TAU as the test counts it, one copy</span></span>
+<span id="cb37-57"><a href="#cb37-57" aria-hidden="true" tabindex="-1"></a><span class="co"># per panel. A limit survfit() leaves undefined stays NA and is not drawn.</span></span>
+<span id="cb37-58"><a href="#cb37-58" aria-hidden="true" tabindex="-1"></a>.oe_km <span class="ot">&lt;-</span> <span class="fu">do.call</span>(base<span class="sc">::</span>rbind, <span class="fu">lapply</span>(<span class="fu">Filter</span>(<span class="cf">function</span>(cell) <span class="fu">length</span>(cell<span class="sc">$</span>ids) <span class="sc">&gt;</span> <span class="dv">0</span>L, .oe_cells), <span class="cf">function</span>(cell) {</span>
+<span id="cb37-59"><a href="#cb37-59" aria-hidden="true" tabindex="-1"></a>  step <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.km_steps</span>(cell<span class="sc">$</span>t, cell<span class="sc">$</span>ev, <span class="fl">0.95</span>)</span>
+<span id="cb37-60"><a href="#cb37-60" aria-hidden="true" tabindex="-1"></a>  step<span class="sc">$</span>panel <span class="ot">&lt;-</span> <span class="fu">unique</span>(oe_curves<span class="sc">$</span>panel[oe_curves<span class="sc">$</span>model <span class="sc">==</span> cell<span class="sc">$</span>model <span class="sc">&amp;</span> oe_curves<span class="sc">$</span>group <span class="sc">==</span> cell<span class="sc">$</span>group])</span>
+<span id="cb37-61"><a href="#cb37-61" aria-hidden="true" tabindex="-1"></a>  step</span>
+<span id="cb37-62"><a href="#cb37-62" aria-hidden="true" tabindex="-1"></a>}))</span>
+<span id="cb37-63"><a href="#cb37-63" aria-hidden="true" tabindex="-1"></a>.oe_km_band <span class="ot">&lt;-</span> .oe_km[<span class="sc">!</span><span class="fu">is.na</span>(.oe_km<span class="sc">$</span>lower) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(.oe_km<span class="sc">$</span>upper), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb37-64"><a href="#cb37-64" aria-hidden="true" tabindex="-1"></a>.cap_oe_km <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Kaplan-Meier survival of each arm received, with 95% limits, against the average survival each &quot;</span>,</span>
+<span id="cb37-65"><a href="#cb37-65" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;arm forest expects for the same patients. Band: &quot;</span>, .band_label, <span class="st">&quot;.&quot;</span>)</span>
+<span id="cb37-66"><a href="#cb37-66" aria-hidden="true" tabindex="-1"></a>.cap_spaghetti <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Each patient&#39;s predicted survival (thin lines; at most &quot;</span>, SPAGHETTI_N, <span class="st">&quot; per panel, spaced &quot;</span>,</span>
+<span id="cb37-67"><a href="#cb37-67" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&quot;evenly through the ranking at TAU) and their average (heavy line).&quot;</span>)</span>
+<span id="cb37-68"><a href="#cb37-68" aria-hidden="true" tabindex="-1"></a>.npanel <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(oe_curves<span class="sc">$</span>panel))</span>
+<span id="cb37-69"><a href="#cb37-69" aria-hidden="true" tabindex="-1"></a>.oe_none <span class="ot">&lt;-</span> <span class="st">&quot;No patient is in distribution under the combined rule, so there is no curve to draw.</span><span class="sc">\n</span><span class="st">&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>.npanel) {</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(.oe_none)</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  .cols <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.group_colors</span>(<span class="fu">c</span>(<span class="st">&quot;Kaplan-Meier&quot;</span>, <span class="st">&quot;Expected&quot;</span>))</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  .fig <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(<span class="at">mapping =</span> ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>time)) <span class="sc">+</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_ribbon</span>(<span class="at">data =</span> .oe_km_band, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">ymin =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>lower, <span class="at">ymax =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>upper,</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>                                                          <span class="at">fill =</span> <span class="st">&quot;Kaplan-Meier&quot;</span>), <span class="at">alpha =</span> <span class="fl">0.15</span>) <span class="sc">+</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_path</span>(<span class="at">data =</span> .oe_km, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">y =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>surv, <span class="at">color =</span> <span class="st">&quot;Kaplan-Meier&quot;</span>)) <span class="sc">+</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_ribbon</span>(<span class="at">data =</span> .oe_band, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">ymin =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>lower, <span class="at">ymax =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>upper,</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>                                                       <span class="at">fill =</span> <span class="st">&quot;Expected&quot;</span>), <span class="at">alpha =</span> <span class="fl">0.25</span>) <span class="sc">+</span></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_path</span>(<span class="at">data =</span> .oe_band, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">y =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>mean, <span class="at">color =</span> <span class="st">&quot;Expected&quot;</span>), <span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>panel) <span class="sc">+</span></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_color_manual</span>(<span class="at">values =</span> .cols, <span class="at">name =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_fill_manual</span>(<span class="at">values =</span> .cols, <span class="at">name =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Time&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Survival (%)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>)</span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.fig, <span class="st">&quot;vt-fit-expected-km&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="fu">min</span>(<span class="dv">9</span>, <span class="dv">1</span> <span class="sc">+</span> <span class="fl">2.75</span> <span class="sc">*</span> <span class="fu">ceiling</span>(.npanel <span class="sc">/</span> <span class="dv">2</span>)))</span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a>  .fig</span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-expected-km" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-expected-km-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img role="img" src="assets/6265a22b30ae66357d4d652108beb549.png" class="img-fluid figure-img" width="864">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-expected-km-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 5: Kaplan-Meier survival of each arm received, with 95% limits, against the average survival each arm forest expects for the same patients. Band: 15th to 85th percentiles of the patients’ predictions (their spread, not a confidence interval).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>.npanel) {</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(.oe_none)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  .fig <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(.lines, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>time, <span class="at">y =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>surv)) <span class="sc">+</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_step</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">group =</span> .data<span class="sc">$</span>patient), <span class="at">alpha =</span> <span class="fl">0.15</span>, <span class="at">color =</span> <span class="st">&quot;gray40&quot;</span>) <span class="sc">+</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_step</span>(<span class="at">data =</span> oe_curves, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">y =</span> <span class="dv">100</span> <span class="sc">*</span> .data<span class="sc">$</span>mean), <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>panel) <span class="sc">+</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Time&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Predicted survival (%)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.fig, <span class="st">&quot;vt-fit-spaghetti&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="fu">min</span>(<span class="dv">9</span>, <span class="dv">1</span> <span class="sc">+</span> <span class="fl">2.75</span> <span class="sc">*</span> <span class="fu">ceiling</span>(.npanel <span class="sc">/</span> <span class="dv">2</span>)))</span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>  .fig</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-spaghetti" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-spaghetti-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img role="img" src="assets/d10545418d82377c0c05e398df640a28.png" class="img-fluid figure-img" width="864">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-spaghetti-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 6: Each patient’s predicted survival (thin lines; at most 200 per panel, spaced evenly through the ranking at TAU) and their average (heavy line).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
 <section id="handoff" class="level2">
 <h2 class="anchored" data-anchor-id="handoff">Handoff</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job, and what vt-explain reads, in one file so its parts</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="co"># cannot drift apart. The forests are kept so vt-explain grows none.</span></span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>vt_handoff <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">rmst =</span> .rmst, <span class="at">curves =</span> .curves, <span class="at">forests =</span> .forests,</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">eligibility =</span> <span class="fu">list</span>(<span class="at">rows =</span> .elig_rows, <span class="at">methods =</span> .methods, <span class="at">combine =</span> COMBINE, <span class="at">sid_set =</span> SID_SET, <span class="at">ordinal =</span> ORDINAL,</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">variables =</span> .elig_vars, <span class="at">sid_variables =</span> .sid_vars, <span class="at">ps =</span> .ps,</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>                          <span class="at">isolation =</span> <span class="fu">list</span>(<span class="at">cutoff =</span> ISOLATION_CUTOFF, <span class="at">sensitivity =</span> .iso_sens), <span class="at">age_cap =</span> AGE_CAP,</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>                          <span class="at">outside_range =</span> .outside),</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">predictors =</span> <span class="fu">list</span>(<span class="at">names =</span> .predictors, <span class="at">vp_set =</span> VP_SET),</span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">settings =</span> <span class="fu">list</span>(<span class="at">performance =</span> .perf, <span class="at">calibration =</span> .cal, <span class="at">arms =</span> ARMS, <span class="at">horizon =</span> HORIZON, <span class="at">ntree =</span> NTREE, <span class="at">seed =</span> SEED,</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>                       <span class="at">time =</span> TIME, <span class="at">status =</span> STATUS,</span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>                       <span class="at">id =</span> ID, <span class="at">id_key =</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.id_key_fingerprint</span>(.id_key),</span>
-<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>                       <span class="at">arm =</span> ARM, <span class="at">imputation =</span> IMPUTATION, <span class="at">imputation_use =</span> IMPUTATION_USE,</span>
-<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>                       <span class="at">imputation_m =</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(IMPUTATION)) .m,</span>
-<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>                       <span class="co"># Everything read_job_data() was given, so vt-explain reads the same patients and values.</span></span>
-<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>                       <span class="at">read =</span> <span class="fu">list</span>(<span class="at">dataset =</span> DATASET, <span class="at">analysis_set =</span> ANALYSIS_SET, <span class="at">where =</span> WHERE, <span class="at">key =</span> KEY,</span>
-<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">join =</span> JOIN, <span class="at">join_vars =</span> JOIN_VARS, <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY))),</span>
-<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># .provenance_data already holds the vp and sid sets&#39; data lineage (appended</span></span>
-<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># where each was read); their handoff records go in as artifacts.</span></span>
-<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">artifacts =</span> <span class="fu">c</span>(<span class="fu">list</span>(), <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.vp_read)) <span class="fu">c</span>(.vp_read<span class="sc">$</span>lineage<span class="sc">$</span>artifacts, <span class="fu">list</span>(.vp_read<span class="sc">$</span>record)),</span>
-<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.sid_read)) <span class="fu">c</span>(.sid_read<span class="sc">$</span>lineage<span class="sc">$</span>artifacts, <span class="fu">list</span>(.sid_read<span class="sc">$</span>record))),</span>
-<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(<span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME), <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> STATUS, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)),</span>
-<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(vt_handoff, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;vt.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job, and what vt-explain reads, in one file so its parts</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="co"># cannot drift apart. The forests are kept so vt-explain grows none.</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>vt_handoff <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">rmst =</span> .rmst, <span class="at">curves =</span> .curves[<span class="fu">c</span>(<span class="st">&quot;ID&quot;</span>, <span class="st">&quot;arm_of_curve&quot;</span>, <span class="st">&quot;time&quot;</span>, <span class="st">&quot;surv&quot;</span>)], <span class="at">forests =</span> .forests, <span class="at">oe =</span> oe,</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">eligibility =</span> <span class="fu">list</span>(<span class="at">rows =</span> .elig_rows, <span class="at">methods =</span> .methods, <span class="at">combine =</span> COMBINE, <span class="at">sid_set =</span> SID_SET, <span class="at">ordinal =</span> ORDINAL,</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">variables =</span> .elig_vars, <span class="at">sid_variables =</span> .sid_vars, <span class="at">ps =</span> .ps,</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>                          <span class="at">isolation =</span> <span class="fu">list</span>(<span class="at">cutoff =</span> ISOLATION_CUTOFF, <span class="at">sensitivity =</span> .iso_sens), <span class="at">age_cap =</span> AGE_CAP,</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>                          <span class="at">outside_range =</span> .outside),</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">predictors =</span> <span class="fu">list</span>(<span class="at">names =</span> .predictors, <span class="at">vp_set =</span> VP_SET),</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">settings =</span> <span class="fu">list</span>(<span class="at">performance =</span> .perf, <span class="at">calibration =</span> .cal, <span class="at">arms =</span> ARMS, <span class="at">horizon =</span> HORIZON, <span class="at">tau =</span> TAU, <span class="at">test_level =</span> TEST_LEVEL,</span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>                       <span class="at">ntree =</span> NTREE, <span class="at">seed =</span> SEED,</span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>                       <span class="at">time =</span> TIME, <span class="at">status =</span> STATUS,</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>                       <span class="at">id =</span> ID, <span class="at">id_key =</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.id_key_fingerprint</span>(.id_key),</span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>                       <span class="at">arm =</span> ARM, <span class="at">imputation =</span> IMPUTATION, <span class="at">imputation_use =</span> IMPUTATION_USE,</span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>                       <span class="at">imputation_m =</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(IMPUTATION)) .m,</span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>                       <span class="co"># Everything read_job_data() was given, so vt-explain reads the same patients and values.</span></span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>                       <span class="at">read =</span> <span class="fu">list</span>(<span class="at">dataset =</span> DATASET, <span class="at">analysis_set =</span> ANALYSIS_SET, <span class="at">where =</span> WHERE, <span class="at">key =</span> KEY,</span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">join =</span> JOIN, <span class="at">join_vars =</span> JOIN_VARS, <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY))),</span>
+<span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># .provenance_data already holds the vp and sid sets&#39; data lineage (appended</span></span>
+<span id="cb40-20"><a href="#cb40-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># where each was read); their handoff records go in as artifacts.</span></span>
+<span id="cb40-21"><a href="#cb40-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb40-22"><a href="#cb40-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">artifacts =</span> <span class="fu">c</span>(<span class="fu">list</span>(), <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.vp_read)) <span class="fu">c</span>(.vp_read<span class="sc">$</span>lineage<span class="sc">$</span>artifacts, <span class="fu">list</span>(.vp_read<span class="sc">$</span>record)),</span>
+<span id="cb40-23"><a href="#cb40-23" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.sid_read)) <span class="fu">c</span>(.sid_read<span class="sc">$</span>lineage<span class="sc">$</span>artifacts, <span class="fu">list</span>(.sid_read<span class="sc">$</span>record))),</span>
+<span id="cb40-24"><a href="#cb40-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(<span class="at">time =</span> <span class="fu">list</span>(<span class="at">variable =</span> TIME), <span class="at">event =</span> <span class="fu">list</span>(<span class="at">variable =</span> STATUS, <span class="at">event =</span> <span class="dv">1</span>L, <span class="at">censored =</span> <span class="dv">0</span>L)),</span>
+<span id="cb40-25"><a href="#cb40-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb40-26"><a href="#cb40-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb40-27"><a href="#cb40-27" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(vt_handoff, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;vt.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -4033,17 +4415,17 @@ Figure 4: Mean predicted survival under each arm’s forest, for patients in di
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-11 03:11:50 EST</td>
+<td style="text-align: left;">2026-11-12 09:42:40 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-11 03:11:58 EST</td>
+<td style="text-align: left;">2026-11-12 09:42:52 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">8 s</td>
+<td style="text-align: left;">11 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -4093,17 +4475,17 @@ Figure 4: Mean predicted survival under each arm’s forest, for patients in di
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.5.7</td>
+<td style="text-align: left;">1.5.8</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261111.parquet</td>
+<td style="text-align: left;">built_20261112.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-11</td>
+<td style="text-align: left;">2026-11-12</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -4148,7 +4530,7 @@ Figure 4: Mean predicted survival under each arm’s forest, for patients in di
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"vt.fit.reint.vt","rendered":"2026-11-11T08:11:58Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"22efb2006c7a5bb52ef0f5835ff411c15d3d7c302aad63ef291ede46874c447a"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"cluster","version":"2.1.8.3","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRpropensity","version":"0.2.2","source":"github","sha":"6a26b71c06cde5e8c8dfbf28e64fa3cdf98d2662"},{"package":"hvtiRtemplates","version":"1.5.7","source":"github","sha":"e8bfb956d8491085b6c4d2c5b2da933ad9ee74f7"},{"package":"hvtiRutilities","version":"1.5.22","source":"github","sha":"0f816207958226308ec7812c5100793a6d120d8e"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261111.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-11T07:58:19Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"reint","type":"vt","run":{"start":"2026-11-11T03:11:50-0500","end":"2026-11-11T03:11:58-0500","time_zone":"EST","duration_seconds":7.6,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vt.fit.reint.vt.qmd","template":"vt.fit","prefix":"vt","qualifier":"fit","subject":"reint","type":"vt","hvtiRtemplates":"1.5.7"},"datasets":[{"name":"built","version_file":"built_20261111.parquet","registered":"2026-11-11","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"1024","renv":{"active":false,"lock_sha256":"ed18165d16bf"}},"identifiability":[{"check":"at_risk","column":"each arm's observed outcome","count":1},{"check":"small","column":"patients by the rules that flag them","count":1}]},"source":"30_analyses/vt.fit.reint.vt.qmd",".hvti_render_id":"89cc1ebbe6d65000c8c42e22ec10e39a3c855d2c85403b45085d3efdcb3780f7",".hvti_source_sha256":"6e98b7db8e0719b1d2bf2db6be7453c4e60120f852ec07a2619012d165055ab8"}</script>
+<script type="application/json" id="hvti-provenance">{"job":"vt.fit.reint.vt","rendered":"2026-11-12T14:42:52Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"22efb2006c7a5bb52ef0f5835ff411c15d3d7c302aad63ef291ede46874c447a"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"cluster","version":"2.1.8.3","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.21","source":"github","sha":"43fc575040652b32bd39308edebafdb0060ae2f7"},{"package":"hvtiRpropensity","version":"0.2.2","source":"github","sha":"6a26b71c06cde5e8c8dfbf28e64fa3cdf98d2662"},{"package":"hvtiRtemplates","version":"1.5.8","source":"github","sha":"d493101e38533fd4f4febc1c7e039535a5d800da"},{"package":"hvtiRutilities","version":"1.5.22","source":"github","sha":"05495fe2d92f6af3f87d601dc8884e976706d580"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":{"path":"renv.lock","sha256":"ed18165d16bf7e6102c12552e29a32c2eca27890f970370da2e5da693afa9224"},"data":[{"dataset":"study","path":"00_datasets/built_20261112.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-12T14:23:48Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261112.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-12T14:23:48Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"reint","type":"vt","run":{"start":"2026-11-12T09:42:40-0500","end":"2026-11-12T09:42:52-0500","time_zone":"EST","duration_seconds":11.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vt.fit.reint.vt.qmd","template":"vt.fit","prefix":"vt","qualifier":"fit","subject":"reint","type":"vt","hvtiRtemplates":"1.5.8"},"datasets":[{"name":"built","version_file":"built_20261112.parquet","registered":"2026-11-12","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"1024","renv":{"active":false,"lock_sha256":"ed18165d16bf"}},"identifiability":[{"check":"at_risk","column":"each arm's observed outcome","count":1},{"check":"small","column":"patients by the rules that flag them","count":1}]},"source":"30_analyses/vt.fit.reint.vt.qmd",".hvti_render_id":"86a7d2f654e1a0cd2bc0aeda66d012d30c569865d9c5ad5997f33d5d3f2cdff7",".hvti_source_sha256":"86b3ae9c6087d3d2fbca8d2d7ae44fdcb7f33549d3fb25436e4251988f617064"}</script>
 </section>
 
 </main>

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:01
+2026-11-12 09:27
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.7
+**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -300,7 +300,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261111.parquet) |
+| Source              | dataset `built` (built_20261112.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -803,8 +803,8 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-11 03:01:00 EST  |
-|                 | Ended            | 2026-11-11 03:01:01 EST  |
+| Run             | Started          | 2026-11-12 09:27:46 EST  |
+|                 | Ended            | 2026-11-12 09:27:47 EST  |
 |                 | Duration         | 2 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -814,9 +814,9 @@ Correlation variant not requested (`CORR <- NULL`).
 |                 | Template         | dc.tables                |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.7                    |
-| Dataset `built` | Version file     | built_20261111.parquet   |
-|                 | Version date     | 2026-11-11               |
+|                 | hvtiRtemplates   | 1.5.8                    |
+| Dataset `built` | Version file     | built_20261112.parquet   |
+|                 | Version date     | 2026-11-12               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

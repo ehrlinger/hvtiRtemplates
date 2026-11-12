@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 02:58
+2026-11-12 09:24
 
 This job reports a bootstrap variable selection screen over a **linear**
 model: how often each candidate survived stepwise selection across
@@ -100,7 +100,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.7
+hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -906,9 +906,9 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-11 02:58:41 EST |
-|  | Ended | 2026-11-11 02:58:42 EST |
-|  | Duration | 1 s |
+| Run | Started | 2026-11-12 09:24:17 EST |
+|  | Ended | 2026-11-12 09:24:19 EST |
+|  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -916,14 +916,14 @@ saveRDS(report, report_file)
 |  | Template | br |
 |  | Subject | icu |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.5.7 |
-| Dataset `built` | Version file | built_20261111.parquet |
-|  | Version date | 2026-11-11 |
+|  | hvtiRtemplates | 1.5.8 |
+| Dataset `built` | Version file | built_20261112.parquet |
+|  | Version date | 2026-11-12 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `icu-boot/br.rds` (bootstrap-bag), rendered not recorded, data built_20261111.parquet |
+| Upstream | Handoff | `icu-boot/br.rds` (bootstrap-bag), rendered not recorded, data built_20261112.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:02
+2026-11-12 09:29
 
 An `hs` job turns the risk-factor model an `hm` job fitted into
 **predictions for individual patients**, and sets those against the
@@ -92,7 +92,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.7
+hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -195,7 +195,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261111.parquet) |
+| Source              | dataset `study` (built_20261112.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -644,8 +644,8 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-11 03:02:31 EST |
-|  | Ended | 2026-11-11 03:02:33 EST |
+| Run | Started | 2026-11-12 09:29:56 EST |
+|  | Ended | 2026-11-12 09:29:58 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -654,15 +654,15 @@ saveRDS(hs_art, set_path("estimates", "hs.rds"))
 |  | Template | hs.setup |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.5.7 |
-| Dataset `built` | Version file | built_20261111.parquet |
-|  | Version date | 2026-11-11 |
+|  | hvtiRtemplates | 1.5.8 |
+| Dataset `built` | Version file | built_20261112.parquet |
+|  | Version date | 2026-11-12 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-11-11 03:02:15 -0500, data built_20261111.parquet |
+|  | Handoff | `dead-hz/hm.rds` (hazard-regression-model), rendered 2026-11-12 09:29:31 -0500, data built_20261112.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

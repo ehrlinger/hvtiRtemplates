@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:08
+2026-11-12 09:37
 
 Gallery job on the synthetic cohort: a VarPro screen of survival after
 operation (iv_dead, dead) on the nine preoperative predictors rfs-fit
@@ -104,8 +104,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.7
+**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -361,7 +361,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261111.parquet) |
+| Source              | dataset `built` (built_20261112.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -894,9 +894,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-11 03:07:14 EST  |
-|                 | Ended            | 2026-11-11 03:08:08 EST  |
-|                 | Duration         | 54 s                     |
+| Run             | Started          | 2026-11-12 09:36:42 EST  |
+|                 | Ended            | 2026-11-12 09:37:51 EST  |
+|                 | Duration         | 1 min 9 s                |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -904,9 +904,9 @@ saveRDS(vp_handoff, set_path("estimates", "vp.rds"))
 |                 | Template         | vp.fit                   |
 |                 | Subject          | dead                     |
 |                 | Type             | vp                       |
-|                 | hvtiRtemplates   | 1.5.7                    |
-| Dataset `built` | Version file     | built_20261111.parquet   |
-|                 | Version date     | 2026-11-11               |
+|                 | hvtiRtemplates   | 1.5.8                    |
+| Dataset `built` | Version file     | built_20261112.parquet   |
+|                 | Version date     | 2026-11-12               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

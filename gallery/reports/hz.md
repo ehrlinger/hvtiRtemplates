@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:02
+2026-11-12 09:29
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -65,8 +65,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.7
+**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -174,7 +174,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261111.parquet) |
+| Source              | dataset `built` (built_20261112.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -478,6 +478,7 @@ summary(fit_det)
       converged:    TRUE 
       gradient:     relative 3.33e-06 (SAS/C requires <= 6.06e-06; met)
       log-lik:      -1503.29 
+      Limit check: none
       Not done in this run: none
       evaluations: fn=6, gr=1
 
@@ -826,9 +827,9 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-11 03:02:06 EST  |
-|                 | Ended            | 2026-11-11 03:02:10 EST  |
-|                 | Duration         | 4 s                      |
+| Run             | Started          | 2026-11-12 09:29:19 EST  |
+|                 | Ended            | 2026-11-12 09:29:24 EST  |
+|                 | Duration         | 6 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
 |                 | Host             | gallery                  |
@@ -836,9 +837,9 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 |                 | Template         | hz                       |
 |                 | Subject          | dead                     |
 |                 | Type             | hz                       |
-|                 | hvtiRtemplates   | 1.5.7                    |
-| Dataset `built` | Version file     | built_20261111.parquet   |
-|                 | Version date     | 2026-11-11               |
+|                 | hvtiRtemplates   | 1.5.8                    |
+| Dataset `built` | Version file     | built_20261112.parquet   |
+|                 | Version date     | 2026-11-12               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 725 rows on 725 patients |
 |                 | WHERE            | `!is.na(creat_pr)`       |

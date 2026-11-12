@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:01
+2026-11-12 09:28
 
 Replaces `descriptive/dc.gfup`.
 
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.7
+**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -126,6 +126,14 @@ FOLLOWUP <- "iv_dead" # Demo: follow-up interval(s) this job checks, in years
 IDENTIFIER <- NULL    # Demo: a column to list suspicious rows with on the console, never in the report
 MAX_REVIEW_ROWS <- 25L
 # MIGRATE-END: dc-gfup-config
+# Demo: NULL, or a column to summarize follow-up by, such as an era, a procedure or a
+# treatment arm. The report adds a table with a row per interval and group, and a
+# figure per panel with a facet for each group the panel function can draw; one it
+# refuses, such as a group with no operation years, is named under the figure.
+# Patients with no value for it are a
+# group of their own, "(missing)", so the groups add up to the cohort. A column that
+# identifies patients is refused, and so is a KEY column, each with its reason.
+GROUP <- NULL
 # Demo: optional event-coding cross-tabs, each a vector of column names.
 # Missing values are shown. Use list() when no additional checks are needed.
 CHECKS <- list(c("dead", "reop"))
@@ -184,6 +192,17 @@ ECHO <- NULL
 # rather than a blob; raise it for a small one.
 ALPHA <- 0.5
 
+# Demo: the years between ticks, on the year-of-operation axis (X_TICK_BY) and the
+# follow-up axis (Y_TICK_BY), such as 2 for a ten-year study or 5 or 10 for a long
+# one. NULL leaves ggplot's own choice. Each tick falls on a multiple of the step.
+X_TICK_BY <- NULL
+Y_TICK_BY <- NULL
+
+# Demo: TRUE draws a legend naming the marks, in the corner above the diagonal
+# where no patient can be. FALSE leaves the key to the caption, which names the
+# marks either way.
+LEGEND <- FALSE
+
 # Demo: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead
 # red, alive blue and non-fatal events green, then reddish purple, olive
 # and black, all colorblind safe. Name alive, dead and event to choose your own;
@@ -221,7 +240,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261111.parquet) |
+| Source              | dataset `built` (built_20261112.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -333,6 +352,11 @@ if (.n_suspicious == 0L) {
 
 No suspicious rows: every patient has an event status, and every
 interval is present and positive.
+
+When `GROUP` names a column, the follow-up of every patient is also
+summarized within each of its groups, with the same statistics and
+percentiles as the table above. The event and censored split stays in
+that table.
 
 The migration report preserves legacy sort orders, date arithmetic and
 includes for review; none establishes an equivalent follow-up definition
@@ -584,6 +608,65 @@ if (!EVENT %in% .drawn) {
       .why, "\n:::\n\n", sep = "")
 }
 plots <- if (figure_drawn) plot(fp, alpha = ALPHA) else list()
+# X_TICK_BY, Y_TICK_BY and LEGEND, added to every figure after the house theme. A
+# breaks function chooses where the ticks fall and leaves the axis limits to ggplot.
+for (.nm in c("X_TICK_BY", "Y_TICK_BY")) {
+  .by <- get(.nm)
+  if (!is.null(.by) && !(is.numeric(.by) && length(.by) == 1L && is.finite(.by) && .by > 0)) {
+    stop(.nm, " must be NULL or one positive number of years, such as 5.", call. = FALSE)
+  }
+}
+if (!isTRUE(LEGEND) && !isFALSE(LEGEND)) stop("LEGEND must be TRUE or FALSE.", call. = FALSE)
+# Follow-up ticks start at 0: a negative interval is a data error, drawn but not labeled.
+# A step longer than the axis leaves it with no ticks rather than stopping the report.
+.ticks <- function(by, from = -Inf) {
+  function(limits) {
+    first <- ceiling(max(limits[[1L]], from) / by) * by
+    if (first > limits[[2L]]) numeric(0) else seq(first, limits[[2L]], by = by)
+  }
+}
+# A step too small for the axis would print its labels over one another; those that
+# would overlap are left out instead, and every tick mark is still drawn.
+.axes_and_legend <- c(
+  if (!is.null(X_TICK_BY)) list(scale_x_continuous(breaks = .ticks(X_TICK_BY), guide = guide_axis(check.overlap = TRUE))),
+  if (!is.null(Y_TICK_BY)) list(scale_y_continuous(breaks = .ticks(Y_TICK_BY, from = 0), guide = guide_axis(check.overlap = TRUE))),
+  if (LEGEND) list(theme(legend.position = "inside", legend.position.inside = c(0.98, 0.98),
+                         legend.justification = c(1, 1)))
+)
+# GROUP: every group's panels drawn on their own, against the cohort's close date so
+# each facet's diagonal is the cohort's. A group the panel function refuses is left out
+# of the facets and named under them; the cohort figure is unaffected.
+group_plots <- list()
+group_refused <- character()
+if (figure_drawn && !is.null(GROUP)) {
+  for (.lv in levels(group_values)) {
+    .gp <- tryCatch(hvtiPlotR::hv_followup_panels(d[group_values == .lv, , drop = FALSE], opyrs_col = OPYRS,
+                                                  origin_year = ORIGIN_YEAR, panels = PANELS, events = EVENTS,
+                                                  close_date = close_date, echo_time_col = ECHO),
+                    error = function(e) e)
+    if (inherits(.gp, "error")) group_refused <- c(group_refused, .lv) else group_plots[[.lv]] <- plot(.gp, alpha = ALPHA)
+  }
+}
+# The cohort figure `p` of panel `nm`, faceted by GROUP: it keeps p's scales, labels and
+# theme, and its data and every layer that carries its own, the diagonal included, become
+# the groups' own, stacked with the group they came from, so no facet shows another
+# group's points or the cohort's.
+.facet_groups <- function(p, nm) {
+  ps <- lapply(group_plots, `[[`, nm)
+  stack <- function(get) {
+    out <- do.call(rbind, Map(function(q, lv) cbind(get(q), .gfup_group = rep(lv, nrow(get(q)))), ps, names(ps)))
+    out$.gfup_group <- factor(out$.gfup_group, levels = levels(group_values))
+    out
+  }
+  p$data <- stack(function(q) q$data)
+  for (k in seq_along(p$layers)) {
+    if (is.data.frame(p$layers[[k]]$data)) p$layers[[k]]$data <- stack(function(q) q$layers[[k]]$data)
+  }
+  # The strips name the column, and the years are angled so narrow facets do not run them together.
+  # This guide replaces the scale's, so it keeps the scale's overlap check.
+  p + facet_wrap(~.gfup_group, labeller = as_labeller(function(x) paste0(GROUP, ": ", x))) +
+    guides(x = guide_axis(angle = 45, check.overlap = TRUE))
+}
 for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   row <- fp$data[i, ]
   nm <- row$panel
@@ -623,13 +706,22 @@ for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   }
   if (!is.null(ECHO)) .key <- paste0(.key, ", gray ticks the follow-up at each patient's echo,")
   p <- p + labs(x = "Year of operation", y = "Follow-up (years)", color = NULL, shape = NULL) +
-    theme_hv_manuscript(base_size = 12)
+    theme_hv_manuscript(base_size = 12) + .axes_and_legend
   file <- save_figure(p, paste0("dc-gfup-", nm), linked = TRUE)
   .link <- figure_link(file)
   .child(paste("fig gfup", nm),
          paste0("Follow-up against year of operation, ", row$title, ". ", .key, " and the dashed orange diagonal ",
                 "the longest follow-up possible for each year of operation."),
          "knitr::include_graphics(.link, error = FALSE)")
+  if (length(group_plots)) {
+    file <- save_figure(.facet_groups(p, nm), paste0("dc-gfup-", nm, "-by-group"), linked = TRUE)
+    .link <- figure_link(file)
+    .child(paste("fig gfup", nm, "by group"),
+           paste0("Follow-up against year of operation, ", row$title, ". One panel per ", GROUP, " group; ",
+                  "patients with no value for it have a panel of their own. The marks are those of the figure above, and ",
+                  "each diagonal is the longest follow-up the cohort's close date allows."),
+           "knitr::include_graphics(.link, error = FALSE)")
+  }
 }
 ```
 
@@ -666,6 +758,15 @@ Figure 2: Follow-up against year of operation, Reoperation. Blue open
 circles mark patients without the event, green open triangles patients
 with the event, and red crosses patients who died and the dashed orange
 diagonal the longest follow-up possible for each year of operation.
+
+Code
+
+``` r
+if (length(group_refused)) {
+  cat("No ", GROUP, " facet was drawn for ", toString(group_refused), ": the panel function refused ",
+      if (length(group_refused) == 1L) "that group" else "those groups", ".\n\n", sep = "")
+}
+```
 
 ## Event-coding consistency
 
@@ -716,8 +817,8 @@ Table 5: dead by reop
 
 | Group           | Item             | Value                    |
 |:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-11 03:01:13 EST  |
-|                 | Ended            | 2026-11-11 03:01:14 EST  |
+| Run             | Started          | 2026-11-12 09:28:04 EST  |
+|                 | Ended            | 2026-11-12 09:28:06 EST  |
 |                 | Duration         | 1 s                      |
 |                 | Status           | final                    |
 |                 | Rendered by      | gallery                  |
@@ -726,9 +827,9 @@ Table 5: dead by reop
 |                 | Template         | dc.gfup                  |
 |                 | Subject          | cohort                   |
 |                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.7                    |
-| Dataset `built` | Version file     | built_20261111.parquet   |
-|                 | Version date     | 2026-11-11               |
+|                 | hvtiRtemplates   | 1.5.8                    |
+| Dataset `built` | Version file     | built_20261112.parquet   |
+|                 | Version date     | 2026-11-12               |
 |                 | Source file      | built.rds                |
 |                 | Rows kept        | 800 rows on 800 patients |
 |                 | WHERE            | none                     |

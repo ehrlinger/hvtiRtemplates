@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:03
+2026-11-12 09:31
 
 An `hs-concordance` job predicts **every patient through every treatment
 group’s model**. Each group’s risk-factor model was fitted by its own
@@ -85,8 +85,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261111.parquet`, dated 2026-11-11 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.7
+**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
+rendered by gallery on gallery · hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -232,7 +232,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261111.parquet) |
+| Source              | dataset `built` (built_20261112.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -611,18 +611,22 @@ their sum, E. The ratio O/E, its exact Poisson interval and the
 chi-squared test of O against E are the one-sample log-rank test
 (Breslow 1975; Finkelstein, Muzikansky and Schoenfeld 2003).
 
-Four things to say beside the result:
+Five things to say beside the result:
 
 - **A test needs a model fitted on other patients, and only you can
-  confirm that.** A model estimated from the same deaths it is tested
-  against is not fixed: O and E then depend on each other, and the
-  p-value means nothing. No saved model carries a patient identifier, so
-  this job cannot prove which patients fitted it. A cell therefore gets
-  an interval and a p-value only when its model is named in
-  `INDEPENDENT`, your statement from the study’s own records that the
-  patients who fitted it are not this group’s, AND no row of the group
-  matches a row of the model’s fitted data. Every other cell shows O, E
-  and O/E as a description, with no inference, and says why.
+  confirm that.** O and E are never independent: both run over each
+  patient’s own follow-up, which ends at their death when there is one.
+  The test rests instead on O - E against a fixed reference, and a model
+  estimated from the same deaths it is tested against is not fixed: it
+  has learned those deaths, E is pulled toward O, the fit looks better
+  than it is, and the p-value has no valid reference distribution. No
+  saved model carries a patient identifier, so this job cannot prove
+  which patients fitted it. A cell therefore gets an interval and a
+  p-value only when its model is named in `INDEPENDENT`, your statement
+  from the study’s own records that the patients who fitted it are not
+  this group’s, AND no row of the group matches a row of the model’s
+  fitted data. Every other cell shows O, E and O/E as a description,
+  with no inference, and says why.
 - **Matching rows are a warning, not an identification.** `in_fit`
   counts the group’s rows whose covariates, follow-up and event equal a
   row the model was fitted on. Two patients can share those values, and
@@ -638,6 +642,12 @@ Four things to say beside the result:
   its expectation is its parametric form running on, so deaths and
   expectations are both counted to `TAU` and no further, and the figures
   stop there too.
+- **A large p-value is not evidence of agreement.** The test asks
+  whether the deaths depart from the model’s expectation by more than
+  chance allows. It does not measure agreement. A small group, or one
+  with few deaths, rarely rejects even a poorly calibrated model, so
+  read O/E and its interval for how close the model is, and a
+  nonsignificant result only as no detected departure.
 
 Code
 
@@ -1037,9 +1047,9 @@ saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-11 03:03:09 EST |
-|  | Ended | 2026-11-11 03:03:15 EST |
-|  | Duration | 6 s |
+| Run | Started | 2026-11-12 09:30:59 EST |
+|  | Ended | 2026-11-12 09:31:07 EST |
+|  | Duration | 7 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -1047,17 +1057,17 @@ saveRDS(art, set_path("estimates", "hs-concordance.rds"))
 |  | Template | hs.concordance |
 |  | Subject | dead |
 |  | Type | approach |
-|  | hvtiRtemplates | 1.5.7 |
-| Dataset `built` | Version file | built_20261111.parquet |
-|  | Version date | 2026-11-11 |
+|  | hvtiRtemplates | 1.5.8 |
+| Dataset `built` | Version file | built_20261112.parquet |
+|  | Version date | 2026-11-12 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Upstream | Handoff | `dead-surgical/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-11-11 03:02:45 -0500, data built_20261111.parquet |
+|  | Handoff | `dead-surgical/hm.rds` (hazard-regression-model), rendered 2026-11-12 09:30:17 -0500, data built_20261112.parquet |
 |  | Handoff | `dead-transcatheter/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-11-11 03:03:01 -0500, data built_20261111.parquet |
+|  | Handoff | `dead-transcatheter/hm.rds` (hazard-regression-model), rendered 2026-11-12 09:30:47 -0500, data built_20261112.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |

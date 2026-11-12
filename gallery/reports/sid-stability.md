@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-11 03:11
+2026-11-12 09:42
 
 This job asks which of the reported clusters the data fix and which they
 leave open. The forest behind SID clustering makes random choices, so
@@ -73,7 +73,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.7
+hvtiRtemplates 1.5.8
 
 ## Study choices
 
@@ -697,9 +697,9 @@ saveRDS(sid_stability_handoff, set_path("estimates", "sid-stability.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-11 03:11:07 EST |
-|  | Ended | 2026-11-11 03:11:44 EST |
-|  | Duration | 38 s |
+| Run | Started | 2026-11-12 09:41:49 EST |
+|  | Ended | 2026-11-12 09:42:32 EST |
+|  | Duration | 43 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -707,15 +707,15 @@ saveRDS(sid_stability_handoff, set_path("estimates", "sid-stability.rds"))
 |  | Template | sid.stability |
 |  | Subject | echo |
 |  | Type | sid |
-|  | hvtiRtemplates | 1.5.7 |
-| Dataset `built` | Version file | built_20261111.parquet |
-|  | Version date | 2026-11-11 |
+|  | hvtiRtemplates | 1.5.8 |
+| Dataset `built` | Version file | built_20261112.parquet |
+|  | Version date | 2026-11-12 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-11 03:10:47 -0500, data built_20261111.parquet |
-|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-11 03:10:56 -0500, data built_20261111.parquet |
+| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-12 09:41:16 -0500, data built_20261112.parquet |
+|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-12 09:41:34 -0500, data built_20261112.parquet |
 | Reproducibility | renv | not active |
 |  | renv.lock sha256 | ed18165d16bf |
