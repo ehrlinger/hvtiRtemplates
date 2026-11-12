@@ -69,6 +69,23 @@ test_that("mm_check refuses an unknown structure and any imputation column", {
   expect_error(h$mm_check(d, "ccfid", "time", "cs", "imp"), "IMPUTATION")
 })
 
+test_that("mm_check refuses a VISIT that cannot place each measurement once", {
+  h <- mm_helpers()
+  d <- mm_visits()
+  d$visit <- d$time
+  expect_true(h$mm_check(d, "ccfid", "time", "ar1", NULL, "visit"))
+  expect_error(h$mm_check(d, "ccfid", "time", "ar1", NULL, "visits"), "is not a column")
+  half <- d
+  half$visit <- half$visit + 0.5
+  expect_error(h$mm_check(half, "ccfid", "time", "ar1", NULL, "visit"), "whole visit number")
+  twice <- d
+  twice$visit[2] <- twice$visit[1]
+  expect_error(h$mm_check(twice, "ccfid", "time", "ar1", NULL, "visit"), "repeats a visit")
+  many <- d
+  many$visit <- seq_len(nrow(many))
+  expect_error(h$mm_check(many, "ccfid", "time", "ar1", NULL, "visit"), "VISIT has .* 20 distinct")
+})
+
 test_that("mm_fit with cs recovers the correlation and the time effect", {
   h <- mm_helpers()
   fit <- h$mm_fit(mm_data(), mm_formula, "ccfid", "time", "cs", "REML")
@@ -163,6 +180,36 @@ test_that("UN names the variance reference from the fit when the first patient m
   for (k in names(ratio)) {
     expect_equal(cov$estimate[cov$parameter == paste0("SD ratio, visit ", k, " to visit ", ref)], ratio[[k]], info = k)
   }
+})
+
+test_that("with VISIT, AR(1) counts a visit nobody attended and recovers the correlation", {
+  h <- mm_helpers()
+  set.seed(20261112)
+  n <- 300L
+  rho <- 0.6
+  e <- as.vector(replicate(n, as.numeric(stats::arima.sim(list(ar = rho), 6L, sd = sqrt(1 - rho^2)))))  # one column per patient
+  d <- data.frame(ccfid = rep(seq_len(n), each = 6L), visit = rep(1:6, n))
+  d$time <- d$visit
+  d$y <- exp(1 + 0.1 * d$time + e)
+  d <- d[d$visit != 2L, ]  # visit 2 is on the schedule, and no patient attended it
+  f <- log(y) ~ time
+  fit <- h$mm_fit(d, f, "ccfid", "time", "ar1", "REML", visit = "visit")
+  steps <- unlist(lapply(nlme::getCovariate(fit$model$modelStruct$corStruct), diff))
+  expect_true(2L %in% steps)
+  est <- h$mm_covariance(fit)$estimate
+  expect_lt(abs(est[[2L]] - rho), 0.08)
+  ranked <- h$mm_fit(d, f, "ccfid", "time", "ar1", "REML")
+  expect_false(2L %in% unlist(lapply(nlme::getCovariate(ranked$model$modelStruct$corStruct), diff)))
+})
+
+test_that("with VISIT, UN labels each visit by its number", {
+  h <- mm_helpers()
+  d <- mm_visits()
+  d$visit <- d$time
+  d <- d[d$visit != 2L, ]
+  cov <- h$mm_covariance(h$mm_fit(d, log(y) ~ time + age + female, "ccfid", "time", "un", "REML", visit = "visit"))
+  expect_true(all(c("correlation, visits 1 and 3", "SD ratio, visit 3 to visit 1") %in% cov$parameter))
+  expect_false(any(grepl("visit 2\\b", cov$parameter)))
 })
 
 test_that("mm_predict back-transforms the log scale and keeps the limits around the estimate", {

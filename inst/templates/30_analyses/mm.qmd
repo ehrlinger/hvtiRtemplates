@@ -88,7 +88,7 @@ PREDICTORS <- c("age", "female")           # EDIT: the declared fixed effects be
 #                measurements. The corpus's main form, in 27 studies or more.
 #   "ar1"        REPEATED visit / type=ar(1): correlation falls with the number of visits
 #                apart. Needs shared, ordered visits, not free times; more than 20 distinct
-#                times stops the job.
+#                visits stops the job.
 #   "un"         REPEATED visit / type=un: a correlation and a variance per visit pair.
 #                Same visit requirement; costs many parameters.
 #   "random"     RANDOM intercept / subject=id.
@@ -96,6 +96,11 @@ PREDICTORS <- c("age", "female")           # EDIT: the declared fixed effects be
 # A spatial structure (type=sp(pow)) is not offered; nlme::corExp(form = ~ time | id)
 # is its R form if a study needs one.
 STRUCTURE <- "cs"
+# EDIT: for "ar1" or "un", the column holding each measurement's scheduled visit number (1, 2, 3, ...), or NULL.
+# NULL ranks the observed TIME values, as SAS numbers the levels of a CLASS visit, so a visit no patient attended
+# closes up and AR(1) reads visits 1 and 3 as neighbours. Name the column when the schedule has such a gap or TIME
+# is not the visit itself. Irregular times suit neither; nlme::corCAR1(form = ~ time | id) is the R form of sp(pow).
+VISIT <- NULL
 # EDIT: "REML", as SAS's default, unless models with different fixed effects are to be
 # compared by likelihood, which needs "ML".
 METHOD <- "REML"
@@ -141,7 +146,7 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 .mm_structures <- c("cs", "ar1", "un", "random")
 
 # Each check stops on data the fit would accept and then get wrong without saying so.
-mm_check <- function(d, id, time, structure, imputation) {
+mm_check <- function(d, id, time, structure, imputation, visit = NULL) {
   bad <- setdiff(structure, .mm_structures)
   if (length(bad)) {
     stop("STRUCTURE ", paste(dQuote(bad, FALSE), collapse = ", "), " is not one of ",
@@ -160,24 +165,45 @@ mm_check <- function(d, id, time, structure, imputation) {
     stop("TIME (", time, ") has ", sum(is.na(t) | (!is.na(t) & t < 0)),
          " missing or negative values. Every measurement needs its time since the reference event.", call. = FALSE)
   }
-  if (any(c("ar1", "un") %in% structure) && length(unique(t)) > 20L) {
-    stop("STRUCTURE asks for AR(1) or UN, which assume shared, ordered visits, but TIME has ",
-         length(unique(t)), " distinct values, more than 20 distinct visits. Use \"cs\" or \"random\" for free ",
-         "times, or set TIME to a visit number.", call. = FALSE)
+  if (!is.null(visit)) {
+    if (!visit %in% names(d)) stop("VISIT (", visit, ") is not a column of the data. Change it in edit-study-choices.",
+                                   call. = FALSE)
+    v <- d[[visit]]
+    if (!is.numeric(v) || anyNA(v) || any(v < 1) || any(v != round(v))) {
+      stop("VISIT (", visit, ") must hold a whole visit number, 1 or more, on every row.", call. = FALSE)
+    }
+    # AR(1) and UN give each visit one place per patient; a second row at the same visit has none.
+    if (anyDuplicated(data.frame(d[[id]], v))) {
+      stop("VISIT (", visit, ") repeats a visit within a patient. Keep one measurement per patient and visit.",
+           call. = FALSE)
+    }
+  }
+  k <- if (is.null(visit)) t else d[[visit]]
+  if (any(c("ar1", "un") %in% structure) && length(unique(k)) > 20L) {
+    stop("STRUCTURE asks for AR(1) or UN, which assume shared, ordered visits, but ", if (is.null(visit)) "TIME" else "VISIT",
+         " has ", length(unique(k)), " distinct values, more than 20 distinct visits. Use \"cs\" or \"random\" for ",
+         "free times, or set VISIT to a visit number.", call. = FALSE)
   }
   invisible(TRUE)
 }
 
-mm_fit <- function(d, formula, id, time, structure, method) {
+mm_fit <- function(d, formula, id, time, structure, method, visit = NULL) {
   d <- d[order(d[[id]], d[[time]]), , drop = FALSE]
   # SAS places a measurement by its visit, not by its row: a patient who misses visit 2 keeps visit 3 in place 3.
-  d$.visit_index <- match(d[[time]], sort(unique(d[[time]])))
-  d$.visit <- factor(d$.visit_index)
+  # Without VISIT the visits are the ranks of the observed times. With VISIT, AR(1) counts the scheduled gap, so
+  # visits 1 and 3 are two steps apart even when nobody attended visit 2; UN has no data to place a visit nobody
+  # attended, so it keeps the rank and labels each visit by its number.
+  key <- if (is.null(visit)) d[[time]] else d[[visit]]
+  seen <- sort(unique(key))
+  labels <- if (is.null(visit)) seq_along(seen) else seen
+  d$.visit_rank <- match(key, seen)
+  d$.visit_index <- if (is.null(visit)) d$.visit_rank else as.integer(key)
+  d$.visit <- factor(labels[d$.visit_rank], levels = labels)
   by_id <- function(lhs) stats::as.formula(paste(lhs, "|", id))
   corr <- switch(structure,
     cs = nlme::corCompSymm(form = by_id("~ 1")),
     ar1 = nlme::corAR1(form = by_id("~ .visit_index")),
-    un = nlme::corSymm(form = by_id("~ .visit_index")),
+    un = nlme::corSymm(form = by_id("~ .visit_rank")),
     random = NULL
   )
   model <- tryCatch(
@@ -199,7 +225,7 @@ mm_fit <- function(d, formula, id, time, structure, method) {
   # A level held only by rows the fit dropped has no coefficient, so the levels come from the rows used.
   mf <- stats::model.frame(formula, d[used, , drop = FALSE], drop.unused.levels = TRUE)
   fixed <- stats::delete.response(stats::terms(mf))
-  list(model = model, structure = structure, method = method, formula = formula, terms = fixed,
+  list(model = model, structure = structure, method = method, formula = formula, terms = fixed, visit_labels = labels,
        contrasts = attr(stats::model.matrix(fixed, mf), "contrasts"),
        xlev = stats::.getXlevels(fixed, mf), used = used,
        n_patients = length(unique(d[[id]][used])), n_measurements = sum(used),
@@ -230,7 +256,8 @@ mm_covariance <- function(fit) {
       pairs <- t(utils::combn(seq_len(ceiling(sqrt(2 * length(rho) + 0.25) + 0.5)), 2L))
       ratio <- stats::coef(m$modelStruct$varStruct, unconstrained = FALSE)
       for (k in seq_along(ratio)) out[[paste0("SD ratio, visit ", names(ratio)[[k]], " to visit ", ref)]] <- ratio[[k]]
-      for (i in seq_along(rho)) out[[paste0("correlation, visits ", pairs[i, 1L], " and ", pairs[i, 2L])]] <- rho[[i]]
+      lab <- fit$visit_labels
+      for (i in seq_along(rho)) out[[paste0("correlation, visits ", lab[pairs[i, 1L]], " and ", lab[pairs[i, 2L]])]] <- rho[[i]]
     } else {
       out[[if (identical(structure, "cs")) "within-patient correlation" else "correlation, adjacent visits"]] <- rho[[1L]]
     }
@@ -289,9 +316,9 @@ mm_predict <- function(fit, newdata, scale) {
 
 ```{r}
 #| label: fit
-mm_check(d, .id, TIME, STRUCTURE, IMPUTATION)
+mm_check(d, .id, TIME, STRUCTURE, IMPUTATION, VISIT)
 model_formula <- stats::reformulate(c(TIME_TERMS, PREDICTORS), response = .response)
-fits <- lapply(stats::setNames(STRUCTURE, STRUCTURE), function(s) mm_fit(d, model_formula, .id, TIME, s, METHOD))
+fits <- lapply(stats::setNames(STRUCTURE, STRUCTURE), function(s) mm_fit(d, model_formula, .id, TIME, s, METHOD, VISIT))
 fit <- fits[[1L]]
 comparison <- NULL  # replaced by the tbl-compare chunk when STRUCTURE lists several
 ```
@@ -369,7 +396,7 @@ utils::write.csv(predictions, PREDICTIONS_PATH, row.names = FALSE)
 bundle <- list(
   meta = list(id_col = .id, outcome = OUTCOME, response_scale = RESPONSE_SCALE,
               prediction_scale = if (identical(RESPONSE_SCALE, "log")) "geometric mean" else "mean",
-              time = TIME, time_terms = TIME_TERMS,
+              time = TIME, visit = VISIT, time_terms = TIME_TERMS,
               predictors = PREDICTORS, structure = fit$structure, method = METHOD,
               formula = paste(deparse(model_formula), collapse = " "), n_patients = fit$n_patients,
               n_measurements = fit$n_measurements, nlme_version = as.character(utils::packageVersion("nlme"))),

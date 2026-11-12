@@ -134,6 +134,7 @@ Names follow `rm-linear` wherever the meaning is the same.
 | `TIME_TERMS` | `c("time")` | the time terms as R expressions, e.g. `c("I(1/(time + 1))", "log(time + 1)")`, so a SAS DATA-step transform carries over line for line |
 | `PREDICTORS` | `c("age", "female")` | the declared fixed effects other than time; the job selects nothing |
 | `STRUCTURE` | `"cs"` | one or more of `"cs"`, `"ar1"`, `"un"`, `"random"`; the first is the reported model |
+| `VISIT` | `NULL` | for `"ar1"` and `"un"`, the column of scheduled visit numbers; `NULL` ranks the observed `TIME` values (§4.1) |
 | `METHOD` | `"REML"` | `"ML"` when models with different fixed effects are compared by likelihood |
 | `PREDICT_AT` | `NULL` | a list of covariate profiles for the prediction grid; `NULL` uses the cohort's medians and reference levels |
 | `PREDICT_TIMES` | `NULL` | the time grid; `NULL` takes 50 points over the observed range |
@@ -147,9 +148,15 @@ Names follow `rm-linear` wherever the meaning is the same.
 | `"un"` | `REPEATED visit / type=un sub=id` | `gls(correlation = corSymm(form = ~ visit_index \| id), weights = varIdent(form = ~ 1 \| visit))` |
 | `"random"` | `RANDOM intercept / subject=id` | `lme(random = ~ 1 \| id)` |
 
-`visit_index` is the rank of a measurement's `TIME` among the distinct `TIME` values, built by
-the job, so a patient who misses visit 2 keeps visit 3 in place 3, as SAS places it. AR(1)
-and UN assume shared, ordered visits; the comment beside `STRUCTURE` says so.
+With `VISIT <- NULL`, `visit_index` is the rank of a measurement's `TIME` among the distinct
+`TIME` values, built by the job, so a patient who misses visit 2 keeps visit 3 in place 3, as SAS
+places it. That is also how SAS numbers the levels of a `CLASS` visit, so a visit no patient
+attended closes up: AR(1) then reads visits 1 and 3 as neighbours and fits rho where the schedule
+implies rho squared. Codex found this on PR #534. Naming a column of scheduled visit numbers in
+`VISIT` keeps the gap: AR(1) takes the numbers as they are, so visits 1 and 3 are two steps
+apart. UN keeps the rank, because a visit nobody attended has no data to place, and labels each
+visit by its number. Decided by John Ehrlinger on 2026-11-12. Irregular times suit neither
+structure; `corCAR1(form = ~ time | id)` is the R form of `sp(pow)`.
 `RANDOM` and `REPEATED` in one fit (`lme(random = ~ 1 | id, correlation = ...)`) are not
 offered. The rerun found them in 4 programs from 1 study (§2.2), short of the two-study gate;
 decided by John Ehrlinger on 2026-11-12. The 33 programs in §2.5 fit the two separately, and a
@@ -166,7 +173,10 @@ Each stops with a message naming the field to change:
 - `KEY` is unique, but no patient has more than one row: the data is not longitudinal.
 - `TIME` has missing or negative values.
 - A `"log"` response has a value at or below zero (`.response_term()` already stops on this).
-- `"ar1"` or `"un"` with times that do not fall on a shared visit set (more than 20 distinct times).
+- `"ar1"` or `"un"` with times that do not fall on a shared visit set (more than 20 distinct times, or
+  visits when `VISIT` is set).
+- `VISIT` names no column, holds a value that is not a whole number of 1 or more, or repeats a
+  visit within a patient.
 - `IMPUTATION` is set: MI is out of scope (§7), and a stacked fit would be silently wrong.
 
 ## 6. Report and saved output
