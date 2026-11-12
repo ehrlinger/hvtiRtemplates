@@ -123,13 +123,16 @@ Names follow `rm-linear` wherever the meaning is the same.
 | value | SAS | R |
 |---|---|---|
 | `"cs"` | `REPEATED / type=cs sub=id` | `gls(correlation = corCompSymm(form = ~ 1 \| id))` |
-| `"ar1"` | `REPEATED visit / type=ar(1) sub=id` | `gls(correlation = corAR1(form = ~ order \| id))` |
-| `"un"` | `REPEATED visit / type=un sub=id` | `gls(correlation = corSymm(form = ~ order \| id), weights = varIdent(form = ~ 1 \| visit))` |
+| `"ar1"` | `REPEATED visit / type=ar(1) sub=id` | `gls(correlation = corAR1(form = ~ visit_index \| id))` |
+| `"un"` | `REPEATED visit / type=un sub=id` | `gls(correlation = corSymm(form = ~ visit_index \| id), weights = varIdent(form = ~ 1 \| visit))` |
 | `"random"` | `RANDOM intercept / subject=id` | `lme(random = ~ 1 \| id)` |
 | `"random+cs"`, `"random+ar1"` | both statements | `lme(random = ~ 1 \| id, correlation = ...)` |
 
-`order` is each patient's measurement index, built by the job from `TIME`. AR(1)
+`visit_index` is the rank of a measurement's `TIME` among the distinct `TIME` values, built by
+the job, so a patient who misses visit 2 keeps visit 3 in place 3, as SAS places it. AR(1)
 and UN assume shared, ordered visits; the comment beside `STRUCTURE` says so.
+`"random+cs"` and `"random+ar1"` report the implied within-patient correlation, because the
+split between the random intercept and the residual correlation is not identified.
 Spatial-power structures (5 studies) are not offered in the first cut. The
 comment points to `corExp(form = ~ time | id)` as the R form for a study that
 needs one.

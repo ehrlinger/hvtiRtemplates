@@ -151,7 +151,7 @@ mm_check <- function(d, id, time, structure, imputation) {
          "would count every patient once per imputation. Set IMPUTATION <- NULL.", call. = FALSE)
   }
   if (max(table(d[[id]])) < 2L) {
-    stop("Every patient has one row per patient, so there is nothing repeated to model. ",
+    stop("Every patient has a single row, so there is nothing repeated to model. ",
          "KEY should include TIME, and the data should hold every measurement.", call. = FALSE)
   }
   t <- d[[time]]
@@ -169,22 +169,28 @@ mm_check <- function(d, id, time, structure, imputation) {
 
 mm_fit <- function(d, formula, id, time, structure, method) {
   d <- d[order(d[[id]], d[[time]]), , drop = FALSE]
-  d$.order <- stats::ave(seq_len(nrow(d)), d[[id]], FUN = seq_along)
-  d$.visit <- factor(d$.order)
+  # SAS places a measurement by its visit, not by its row: a patient who misses visit 2 keeps visit 3 in place 3.
+  d$.visit_index <- match(d[[time]], sort(unique(d[[time]])))
+  d$.visit <- factor(d$.visit_index)
   by_id <- function(lhs) stats::as.formula(paste(lhs, "|", id))
   corr <- switch(structure,
     cs = , `random+cs` = nlme::corCompSymm(form = by_id("~ 1")),
-    ar1 = , `random+ar1` = nlme::corAR1(form = by_id("~ .order")),
-    un = nlme::corSymm(form = by_id("~ .order")),
+    ar1 = , `random+ar1` = nlme::corAR1(form = by_id("~ .visit_index")),
+    un = nlme::corSymm(form = by_id("~ .visit_index")),
     random = NULL
   )
-  model <- if (startsWith(structure, "random")) {
-    nlme::lme(formula, data = d, random = by_id("~ 1"), correlation = corr, method = method,
-              na.action = stats::na.omit)
-  } else {
-    nlme::gls(formula, data = d, correlation = corr, method = method, na.action = stats::na.omit,
-              weights = if (identical(structure, "un")) nlme::varIdent(form = ~ 1 | .visit))
-  }
+  model <- tryCatch(
+    if (startsWith(structure, "random")) {
+      nlme::lme(formula, data = d, random = by_id("~ 1"), correlation = corr, method = method,
+                na.action = stats::na.omit)
+    } else {
+      nlme::gls(formula, data = d, correlation = corr, method = method, na.action = stats::na.omit,
+                weights = if (identical(structure, "un")) nlme::varIdent(form = ~ 1 | .visit))
+    },
+    error = function(e) {
+      stop("The ", structure, " fit did not converge: ", conditionMessage(e), ". Try another STRUCTURE.", call. = FALSE)
+    }
+  )
   used <- stats::complete.cases(d[all.vars(formula)])
   # The levels of each categorical predictor, so a prediction grid holding one level still codes it as the fit did.
   categorical <- Filter(function(x) is.factor(x) || is.character(x), d[intersect(all.vars(formula), names(d))])
@@ -196,22 +202,44 @@ mm_fit <- function(d, formula, id, time, structure, method) {
 # The covariance parameters, with the within-patient correlation stated once for every structure.
 mm_covariance <- function(fit) {
   m <- fit$model
+  structure <- fit$structure
   out <- list()
   if (inherits(m, "lme")) {
     vc <- suppressWarnings(as.numeric(nlme::VarCorr(m)[, "Variance"]))
     out[["between-patient variance"]] <- vc[[1L]]
     out[["residual variance"]] <- vc[[length(vc)]]
-    if (identical(fit$structure, "random")) out[["within-patient correlation"]] <- vc[[1L]] / sum(vc)
+    if (identical(structure, "random")) out[["within-patient correlation"]] <- vc[[1L]] / sum(vc)
   } else {
-    out[["residual variance"]] <- m$sigma^2
+    out[[if (identical(structure, "un")) "residual variance at visit 1" else "residual variance"]] <- m$sigma^2
   }
   cs <- m$modelStruct$corStruct
   if (!is.null(cs)) {
-    rho <- stats::coef(cs, unconstrained = FALSE)
-    label <- if (fit$structure %in% c("cs", "random+cs")) "within-patient correlation" else "correlation"
-    for (i in seq_along(rho)) out[[if (length(rho) == 1L) label else paste(label, names(rho)[[i]])]] <- rho[[i]]
+    rho <- unname(stats::coef(cs, unconstrained = FALSE))
+    if (identical(structure, "un")) {
+      # nlme orders the correlations by row of the upper triangle: (1,2), (1,3), ..., (2,3), ...
+      pairs <- t(utils::combn(seq_len(ceiling(sqrt(2 * length(rho) + 0.25) + 0.5)), 2L))
+      ratio <- stats::coef(m$modelStruct$varStruct, unconstrained = FALSE)
+      for (k in seq_along(ratio)) out[[paste0("SD ratio, visit ", names(ratio)[[k]], " to visit 1")]] <- ratio[[k]]
+      for (i in seq_along(rho)) out[[paste0("correlation, visits ", pairs[i, 1L], " and ", pairs[i, 2L])]] <- rho[[i]]
+    } else if (structure %in% c("random+cs", "random+ar1")) {
+      adjacent <- if (identical(structure, "random+ar1")) ", adjacent visits" else ""
+      out[[paste0("residual correlation beyond the random intercept", adjacent)]] <- rho[[1L]]
+      sb2 <- out[["between-patient variance"]]
+      se2 <- out[["residual variance"]]
+      out[[paste0("implied within-patient correlation", adjacent)]] <- (sb2 + rho[[1L]] * se2) / (sb2 + se2)
+    } else {
+      out[[if (identical(structure, "cs")) "within-patient correlation" else "correlation"]] <- rho[[1L]]
+    }
   }
   data.frame(parameter = names(out), estimate = unname(unlist(out)), row.names = NULL)
+}
+
+# A caution for the two structures whose random intercept and residual correlation share one job.
+mm_note <- function(fit) {
+  if (!fit$structure %in% c("random+cs", "random+ar1")) return(NULL)
+  paste0("The random intercept and the residual correlation both describe the same within-patient correlation, ",
+         "so their split is not identified; read the implied within-patient correlation",
+         if (identical(fit$structure, "random+ar1")) " (adjacent visits)" else "", ", not either part.")
 }
 
 # The covariate profiles crossed with the prediction times.
