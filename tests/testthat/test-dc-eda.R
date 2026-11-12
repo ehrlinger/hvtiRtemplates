@@ -879,10 +879,14 @@ test_that("dc-eda puts each page's abbreviations in that page's caption, not onc
                       VARIABLES = c("age", "female", "hx_chf"), SECTIONS = c("continuous", "percent"),
                       theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
                       SAVE_FIGURES = TRUE, FIGURES = NULL)
-  for (label in c("set", "spec", "sections")) eval(eda_chunk(label), env)
   captions <- character()
-  env$.child <- function(label, caption, code) if (startsWith(label, "fig eda")) captions[[label]] <<- caption
-  out <- paste(suppressWarnings(utils::capture.output(for (s in env$SECTIONS) env$draw_section(s))), collapse = "\n")
+  # The fixture's columns have no labels, which the spec chunk warns about; that one
+  # warning is expected here, and only it is muffled.
+  out <- withCallingHandlers({
+    for (label in c("set", "spec", "sections")) eval(eda_chunk(label), env)
+    env$.child <- function(label, caption, code) if (startsWith(label, "fig eda")) captions[[label]] <<- caption
+    paste(utils::capture.output(for (s in env$SECTIONS) env$draw_section(s)), collapse = "\n")
+  }, warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning"))
   # One variable a page: the two shortened labels' pages carry the key, the age page does not.
   expect_match(captions[["fig eda percent page 1"]], "Abbreviations: SP = Surgical procedure.", fixed = TRUE)
   expect_match(captions[["fig eda percent page 2"]], "Abbreviations: SP = Surgical procedure.", fixed = TRUE)
