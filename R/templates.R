@@ -20,7 +20,11 @@
 #'
 #' @return A data frame, of class \code{hvti_template_list}, with columns
 #'   \code{name}, \code{prefix},
-#'   \code{qualifier}, \code{folder}, \code{call} and \code{file}.
+#'   \code{qualifier}, \code{folder}, \code{title}, \code{description},
+#'   \code{call} and \code{file}. \code{title} and \code{description} say
+#'   what the template is for, from the template catalog
+#'   (\code{\link{template_catalog}}), and are \code{NA} for a template it
+#'   does not list.
 #'   \code{call} is the \code{\link{add_job}} call that scaffolds the
 #'   template, with only the arguments it requires and runnable as printed,
 #'   e.g. \code{add_job("dc.gfup", subject = "cohort", type = "eda")}. The
@@ -29,14 +33,15 @@
 #'   taxonomy name with the directory's ordering digits stripped, so
 #'   \code{20_distributions} reports as \code{distributions}.
 #'   \code{qualifier} is \code{NA} for a prefix carrying a single template.
-#'   Printed whole, it shows only \code{name}, \code{prefix},
-#'   \code{qualifier} and \code{folder}, since \code{call} and \code{file}
-#'   would wrap every row; both are still in the data, and a selection of
-#'   columns prints as selected.
+#'   Printed whole, it shows only \code{name}, \code{folder} and
+#'   \code{title}, the title cut to fit the console's width, since the other
+#'   columns would wrap every row. In a console too narrow for the three,
+#'   \code{folder} is left out, then \code{title}. The other columns are still
+#'   in the data, and a selection of columns prints as selected.
 #' @export
 #' @examples
 #' tl <- template_list()
-#' # Printed whole: name, prefix, qualifier and folder.
+#' # Printed whole: name, folder and title.
 #' tl
 #'
 #' # Every template, where its job is written, and the call that scaffolds it.
@@ -62,6 +67,8 @@ template_list <- function() {
     prefix    = fields$prefix,
     qualifier = fields$qualifier,
     folder    = .folder_name(basename(dirname(files))),
+    title     = .template_catalog_field(fields$prefix, fields$qualifier, "name"),
+    description = .template_catalog_field(fields$prefix, fields$qualifier, "description"),
     call      = vapply(files, .template_call, character(1), USE.NAMES = FALSE),
     file      = files,
     stringsAsFactors = FALSE
@@ -75,22 +82,64 @@ template_list <- function() {
 #' @param ... Passed to the data frame print method.
 #' @export
 print.hvti_template_list <- function(x, ...) {
-  # The full listing prints the four columns a reader scans to find a template.
-  # `call` and `file` are long enough to wrap every row, so they stay in the
-  # data and out of the default view. Any other selection of columns, such as
+  # The full listing prints what a reader scans to choose a template: its name,
+  # its folder and what it is for. The title is cut to the console's width, since
+  # widening the window does not rewrap a printed data frame (2026-11-11 training).
+  # The other columns stay in the data. Any other selection of columns, such as
   # tl[, c("name", "call")], is one the caller asked for, and prints as is.
   if (!identical(names(x), .template_list_columns)) return(NextMethod())
   # Drop the class rather than rebuilding from a list, which would lose the
   # row names a row subset carries and renumber it 1..k.
   shown <- x
   class(shown) <- "data.frame"
-  print(shown[.template_list_shown], ...)
-  cat("# ", nrow(x), " templates; `call` and `file` not shown. Read them with $call and $file.\n", sep = "")
+  shown <- shown[.template_list_shown]
+  shown$title[is.na(shown$title)] <- ""
+  width <- getOption("width")
+  footer <- strwrap(paste(nrow(x), "templates. Read any column with $, such as $description or $call."),
+                    width = width - 2L, prefix = "# ")
+  if (!nrow(shown)) {
+    cat(footer, sep = "\n")
+    return(invisible(x))
+  }
+  # A data frame wider than the console prints in blocks, one under the other, so
+  # the columns are fitted to it: folder goes first when the title would have
+  # fewer than 15 characters, then the title. Each column is padded to its widest
+  # entry, a space before it, after the row names.
+  wide <- function(v, heading) max(nchar(c(v, heading)))
+  for (cols in list(c("name", "folder", "title"), c("name", "title"), "name")) {
+    fixed <- setdiff(cols, "title")
+    used <- max(nchar(rownames(shown))) + sum(vapply(fixed, function(k) wide(shown[[k]], k), numeric(1L))) +
+      length(cols)
+    room <- width - used - 1L
+    if (!"title" %in% cols || room >= 15L) break
+  }
+  shown <- shown[cols]
+  if ("title" %in% cols) {
+    long <- nchar(shown$title) > room
+    shown$title[long] <- paste0(substr(shown$title[long], 1L, room - 3L), "...")
+  }
+  # Left-aligned unless the caller says otherwise.
+  args <- list(...)
+  if (is.null(args$right)) args$right <- FALSE
+  do.call(print, c(list(shown), args))
+  cat(footer, sep = "\n")
   invisible(x)
 }
 
-.template_list_columns <- c("name", "prefix", "qualifier", "folder", "call", "file")
-.template_list_shown <- c("name", "prefix", "qualifier", "folder")
+.template_list_columns <- c("name", "prefix", "qualifier", "folder", "title", "description", "call", "file")
+.template_list_shown <- c("name", "folder", "title")
+
+# One catalog field for each (prefix, qualifier), NA where the catalog is absent
+# or has no row for the template.
+.template_catalog_field <- function(prefix, qualifier, field) {
+  path <- system.file("extdata", "templates.json", package = "hvtiRtemplates")
+  if (!length(prefix) || !nzchar(path)) return(rep(NA_character_, length(prefix)))
+  rows <- .read_template_catalog(path)
+  key <- function(p, q) paste(p, ifelse(is.na(q), "", q))
+  have <- vapply(rows, function(r) key(r$prefix, if (is.null(r$qualifier)) NA else r$qualifier), character(1))
+  value <- vapply(rows, function(r) if (is.null(r[[field]])) NA_character_ else as.character(r[[field]]), character(1))
+  unname(value[match(key(prefix, qualifier), have)])
+}
 
 # The add_job() call that scaffolds `file`, runnable as printed. The full name
 # selects the template on its own, qualified or not, so subject and type are

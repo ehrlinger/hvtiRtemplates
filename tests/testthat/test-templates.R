@@ -2,7 +2,7 @@ test_that("template_list() has the expected shape", {
   tl <- template_list()
   expect_s3_class(tl, "data.frame")
   expect_s3_class(tl, "hvti_template_list")
-  expect_named(tl, c("name", "prefix", "qualifier", "folder", "call", "file"))
+  expect_named(tl, c("name", "prefix", "qualifier", "folder", "title", "description", "call", "file"))
 })
 
 test_that("template_list() finds templates in taxonomy subfolders", {
@@ -1019,7 +1019,7 @@ test_that("template_list() prints its summary columns, and a selection as select
   expect_match(header, "name")
   expect_match(header, "folder")
   expect_no_match(header, "call|file")
-  expect_match(full[[length(full)]], paste0("# ", nrow(tl), " templates; `call` and `file` not shown"))
+  expect_match(full[[length(full)]], paste0("# ", nrow(tl), " templates. Read any column with $"), fixed = TRUE)
   capture.output(vis <- withVisible(print(tl)))
   expect_false(vis$visible)
   # The columns are still there to read.
@@ -1053,4 +1053,46 @@ test_that("template_list shows qualified templates with a period, and the call u
                                 hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
     expect_identical(path, tl$file[[i]], info = dash)
   }
+})
+
+test_that("template_list() says what each template is for, within the console's width", {
+  # The 2026-11-11 training: the printed list named templates but did not say what
+  # dc.eda, dc.tables and dc.general were, and widening the window did not help.
+  tl <- template_list()
+  expect_identical(tl$title[tl$name == "dc.eda"], "Descriptive plot: EDA report")
+  expect_match(tl$description[tl$name == "dc.tables"], "formatted descriptive table")
+  withr::local_options(width = 80)
+  out <- capture.output(print(tl))
+  expect_match(out[[1L]], "title")
+  expect_no_match(out[[1L]], "prefix|qualifier|description")
+  expect_true(all(nchar(out) <= 80L))
+  expect_true(any(grepl("dc.general .*Descriptive: general", out)))
+})
+
+test_that("template_list() prints one block within any console width, narrowest first dropping folder, then title", {
+  # Codex review on #524: at width 40 the listing split into two blocks, and the footer ran past 60.
+  tl <- template_list()
+  for (width in c(30L, 40L, 50L, 60L, 80L, 120L)) {
+    withr::local_options(width = width)
+    out <- capture.output(print(tl))
+    expect_true(all(nchar(out) <= width), info = paste("width", width))
+    # One header line: a data frame too wide for the console repeats its header, block by block.
+    expect_length(grep("^ *name ", out), 1L)
+    expect_identical(sum(grepl("dc.eda ", out, fixed = TRUE)), 1L)
+  }
+  withr::local_options(width = 120)
+  expect_match(capture.output(print(tl))[[1L]], "name +folder +title")
+  # Short names leave room for a title at 30; the whole list's longest do not.
+  withr::local_options(width = 30)
+  expect_match(capture.output(print(tl[tl$name %in% c("bd", "dc.eda"), ]))[[1L]], "name +title")
+  expect_no_match(capture.output(print(tl))[[1L]], "title|folder")
+})
+
+test_that("template_list()'s print takes right = and an empty subset like any data frame", {
+  # Codex review on #524: right = TRUE was passed twice, and no rows gave max() of nothing.
+  tl <- template_list()
+  expect_no_error(out <- capture.output(print(tl, right = TRUE)))
+  expect_match(out[[1L]], "title")
+  expect_no_warning(out <- capture.output(print(tl[FALSE, ])))
+  expect_match(out[[length(out)]], "# 0 templates.", fixed = TRUE)
 })
