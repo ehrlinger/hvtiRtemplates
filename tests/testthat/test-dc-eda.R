@@ -868,7 +868,8 @@ test_that("a variable set draws one form of each variable unless TRANSFORMS is T
   env <- eda_spec_env(d, SECTIONS = "continuous")
   out <- capture.output(eval(eda_chunk("spec"), env))
   expect_identical(env$VARIABLES, c("age", "bmi"))
-  said <- "Not drawn, as other forms of a variable drawn here (set TRANSFORMS <- TRUE to draw them): ln_age, in_age, age2, ln_bmi"
+  said <- paste0("Not drawn, as transforms of a variable drawn here, checked by their values (set TRANSFORMS <- TRUE to ",
+                 "draw them): ln_age = log(age), in_age = 1/age, age2 = age^2, ln_bmi = log(bmi)")
   expect_true(any(grepl(said, out, fixed = TRUE)))
   every <- eda_spec_env(d, SECTIONS = "continuous", TRANSFORMS = TRUE)
   capture.output(eval(eda_chunk("spec"), every))
@@ -877,4 +878,22 @@ test_that("a variable set draws one form of each variable unless TRANSFORMS is T
   named <- eda_spec_env(d, SECTIONS = "continuous", VARIABLES = c("age", "ln_age"))
   capture.output(eval(eda_chunk("spec"), named))
   expect_identical(named$VARIABLES, c("age", "ln_age"))
+})
+
+test_that("a name that looks like a transform is drawn unless its values are one", {
+  # Codex review on #523: bmi2 can be a second measurement, and the ODS list's numcomp2 is not numcomp squared.
+  d <- data.frame(year = 1:12, bmi = 20 + 1:12, bmi2 = 31 - 1:12 + 0.5, numcomp = rep(0:2, 4), numcomp2 = rep(c(1, 0, 3), 4))
+  env <- eda_spec_env(d, SECTIONS = "continuous")
+  out <- capture.output(eval(eda_chunk("spec"), env))
+  expect_identical(env$VARIABLES, c("bmi", "bmi2", "numcomp", "numcomp2"))
+  expect_false(any(grepl("transforms of a variable", out, fixed = TRUE)))
+})
+
+test_that("a transform is drawn when the plain form is a key, and so cannot be", {
+  # Codex review on #523: pruning before the identifier filter dropped ln_bmi for bmi, then bmi as a KEY.
+  d <- data.frame(year = 1:12, bmi = 20 + 1:12, ln_bmi = log(20 + 1:12), weight = 60 + 1:12 + 0.5)
+  env <- eda_spec_env(d, SECTIONS = "continuous", job_data = eda_job_data("ccfid", key = c("ccfid", "bmi")))
+  out <- capture.output(eval(eda_chunk("spec"), env))
+  expect_identical(env$VARIABLES, c("ln_bmi", "weight"))
+  expect_false(any(grepl("transforms of a variable", out, fixed = TRUE)))
 })
