@@ -598,6 +598,13 @@ eda_draw <- function(root, d, ...) {
   args <- list(...)
   for (name in names(args)) assign(name, args[[name]], envir = env)
   for (label in c("set", "spec", "sections")) eval(eda_chunk(label), env)
+  # Each caption is printed into the text too, since a figure's caption is where its key is.
+  # eval.parent() keeps .child()'s parent.frame() the section's frame, where .link lives.
+  real_child <- env$.child
+  env$.child <- function(label, caption, code) {
+    cat("\nCaption: ", caption, "\n", sep = "")
+    eval.parent(as.call(list(real_child, label, caption, code)))
+  }
   files <- character(0)
   out <- utils::capture.output(for (section in env$SECTIONS) files <- c(files, env$draw_section(section)))
   list(env = env, files = files, text = paste(out, collapse = "\n"))
@@ -896,4 +903,33 @@ test_that("a transform is drawn when the plain form is a key, and so cannot be",
   out <- capture.output(eval(eda_chunk("spec"), env))
   expect_identical(env$VARIABLES, c("ln_bmi", "weight"))
   expect_false(any(grepl("transforms of a variable", out, fixed = TRUE)))
+})
+
+test_that("dc-eda puts each page's abbreviations in that page's caption, not once after the section", {
+  # The 2026-11-11 training: nobody found the key printed after a section's last page.
+  root <- migration_study_fixture("dp-postage")
+  local_child_chunks()
+  local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  without_group_list()
+  d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"
+  attr(d$hx_chf, "label") <- "Surgical procedure: mitral valve repair with annuloplasty ring"
+  env <- eda_spec_env(d, .root = root, X_VAR = "iv_dead", GRID_NCOL = 1L, GRID_NROW = 1L,
+                      label_map = hvtiRutilities::label_map, .cfg = list(), ABBREVIATIONS = NULL,
+                      VARIABLES = c("age", "female", "hx_chf"), SECTIONS = c("continuous", "percent"),
+                      theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript, scale_fill_hv = hvtiPlotR::scale_fill_hv,
+                      SAVE_FIGURES = TRUE, FIGURES = NULL)
+  captions <- character()
+  # The fixture's columns have no labels, which the spec chunk warns about; that one
+  # warning is expected here, and only it is muffled.
+  out <- withCallingHandlers({
+    for (label in c("set", "spec", "sections")) eval(eda_chunk(label), env)
+    env$.child <- function(label, caption, code) if (startsWith(label, "fig eda")) captions[[label]] <<- caption
+    paste(utils::capture.output(for (s in env$SECTIONS) env$draw_section(s)), collapse = "\n")
+  }, warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning"))
+  # One variable a page: the two shortened labels' pages carry the key, the age page does not.
+  expect_match(captions[["fig eda percent page 1"]], "Abbreviations: SP = Surgical procedure.", fixed = TRUE)
+  expect_match(captions[["fig eda percent page 2"]], "Abbreviations: SP = Surgical procedure.", fixed = TRUE)
+  expect_false(grepl("Abbreviations:", captions[["fig eda continuous page 1"]], fixed = TRUE))
+  expect_false(grepl("Abbreviations:", out, fixed = TRUE))
 })
