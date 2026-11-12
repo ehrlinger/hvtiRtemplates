@@ -20,7 +20,11 @@
 #'
 #' @return A data frame, of class \code{hvti_template_list}, with columns
 #'   \code{name}, \code{prefix},
-#'   \code{qualifier}, \code{folder}, \code{call} and \code{file}.
+#'   \code{qualifier}, \code{folder}, \code{title}, \code{description},
+#'   \code{call} and \code{file}. \code{title} and \code{description} say
+#'   what the template is for, from the template catalog
+#'   (\code{\link{template_catalog}}), and are \code{NA} for a template it
+#'   does not list.
 #'   \code{call} is the \code{\link{add_job}} call that scaffolds the
 #'   template, with only the arguments it requires and runnable as printed,
 #'   e.g. \code{add_job("dc.gfup", subject = "cohort", type = "eda")}. The
@@ -29,14 +33,14 @@
 #'   taxonomy name with the directory's ordering digits stripped, so
 #'   \code{20_distributions} reports as \code{distributions}.
 #'   \code{qualifier} is \code{NA} for a prefix carrying a single template.
-#'   Printed whole, it shows only \code{name}, \code{prefix},
-#'   \code{qualifier} and \code{folder}, since \code{call} and \code{file}
-#'   would wrap every row; both are still in the data, and a selection of
-#'   columns prints as selected.
+#'   Printed whole, it shows only \code{name}, \code{folder} and
+#'   \code{title}, the title cut to fit the console's width, since the other
+#'   columns would wrap every row; they are still in the data, and a selection
+#'   of columns prints as selected.
 #' @export
 #' @examples
 #' tl <- template_list()
-#' # Printed whole: name, prefix, qualifier and folder.
+#' # Printed whole: name, folder and title.
 #' tl
 #'
 #' # Every template, where its job is written, and the call that scaffolds it.
@@ -62,6 +66,8 @@ template_list <- function() {
     prefix    = fields$prefix,
     qualifier = fields$qualifier,
     folder    = .folder_name(basename(dirname(files))),
+    title     = .template_catalog_field(fields$prefix, fields$qualifier, "name"),
+    description = .template_catalog_field(fields$prefix, fields$qualifier, "description"),
     call      = vapply(files, .template_call, character(1), USE.NAMES = FALSE),
     file      = files,
     stringsAsFactors = FALSE
@@ -75,22 +81,42 @@ template_list <- function() {
 #' @param ... Passed to the data frame print method.
 #' @export
 print.hvti_template_list <- function(x, ...) {
-  # The full listing prints the four columns a reader scans to find a template.
-  # `call` and `file` are long enough to wrap every row, so they stay in the
-  # data and out of the default view. Any other selection of columns, such as
+  # The full listing prints what a reader scans to choose a template: its name,
+  # its folder and what it is for. The title is cut to the console's width, since
+  # widening the window does not rewrap a printed data frame (2026-11-11 training).
+  # The other columns stay in the data. Any other selection of columns, such as
   # tl[, c("name", "call")], is one the caller asked for, and prints as is.
   if (!identical(names(x), .template_list_columns)) return(NextMethod())
   # Drop the class rather than rebuilding from a list, which would lose the
   # row names a row subset carries and renumber it 1..k.
   shown <- x
   class(shown) <- "data.frame"
-  print(shown[.template_list_shown], ...)
-  cat("# ", nrow(x), " templates; `call` and `file` not shown. Read them with $call and $file.\n", sep = "")
+  shown <- shown[.template_list_shown]
+  shown$title[is.na(shown$title)] <- ""
+  # Row names, name and folder, each padded to its widest entry, a space before each.
+  used <- max(nchar(rownames(shown))) + max(nchar(c(shown$name, "name"))) + max(nchar(c(shown$folder, "folder"))) + 3L
+  room <- max(getOption("width") - used - 1L, 10L)
+  long <- nchar(shown$title) > room
+  shown$title[long] <- paste0(substr(shown$title[long], 1L, room - 3L), "...")
+  print(shown, right = FALSE, ...)
+  cat("# ", nrow(x), " templates. Read any column with $, such as $description or $call.\n", sep = "")
   invisible(x)
 }
 
-.template_list_columns <- c("name", "prefix", "qualifier", "folder", "call", "file")
-.template_list_shown <- c("name", "prefix", "qualifier", "folder")
+.template_list_columns <- c("name", "prefix", "qualifier", "folder", "title", "description", "call", "file")
+.template_list_shown <- c("name", "folder", "title")
+
+# One catalog field for each (prefix, qualifier), NA where the catalog is absent
+# or has no row for the template.
+.template_catalog_field <- function(prefix, qualifier, field) {
+  path <- system.file("extdata", "templates.json", package = "hvtiRtemplates")
+  if (!length(prefix) || !nzchar(path)) return(rep(NA_character_, length(prefix)))
+  rows <- .read_template_catalog(path)
+  key <- function(p, q) paste(p, ifelse(is.na(q), "", q))
+  have <- vapply(rows, function(r) key(r$prefix, if (is.null(r$qualifier)) NA else r$qualifier), character(1))
+  value <- vapply(rows, function(r) if (is.null(r[[field]])) NA_character_ else as.character(r[[field]]), character(1))
+  unname(value[match(key(prefix, qualifier), have)])
+}
 
 # The add_job() call that scaffolds `file`, runnable as printed. The full name
 # selects the template on its own, qualified or not, so subject and type are

@@ -2,7 +2,7 @@ test_that("template_list() has the expected shape", {
   tl <- template_list()
   expect_s3_class(tl, "data.frame")
   expect_s3_class(tl, "hvti_template_list")
-  expect_named(tl, c("name", "prefix", "qualifier", "folder", "call", "file"))
+  expect_named(tl, c("name", "prefix", "qualifier", "folder", "title", "description", "call", "file"))
 })
 
 test_that("template_list() finds templates in taxonomy subfolders", {
@@ -1019,7 +1019,7 @@ test_that("template_list() prints its summary columns, and a selection as select
   expect_match(header, "name")
   expect_match(header, "folder")
   expect_no_match(header, "call|file")
-  expect_match(full[[length(full)]], paste0("# ", nrow(tl), " templates; `call` and `file` not shown"))
+  expect_match(full[[length(full)]], paste0("# ", nrow(tl), " templates. Read any column with $"), fixed = TRUE)
   capture.output(vis <- withVisible(print(tl)))
   expect_false(vis$visible)
   # The columns are still there to read.
@@ -1053,4 +1053,18 @@ test_that("template_list shows qualified templates with a period, and the call u
                                 hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
     expect_identical(path, tl$file[[i]], info = dash)
   }
+})
+
+test_that("template_list() says what each template is for, within the console's width", {
+  # The 2026-11-11 training: the printed list named templates but did not say what
+  # dc.eda, dc.tables and dc.general were, and widening the window did not help.
+  tl <- template_list()
+  expect_identical(tl$title[tl$name == "dc.eda"], "Descriptive plot: EDA report")
+  expect_match(tl$description[tl$name == "dc.tables"], "formatted descriptive table")
+  withr::local_options(width = 80)
+  out <- capture.output(print(tl))
+  expect_match(out[[1L]], "title")
+  expect_no_match(out[[1L]], "prefix|qualifier|description")
+  expect_true(all(nchar(out) <= 80L))
+  expect_true(any(grepl("dc.general .*Descriptive: general", out)))
 })
