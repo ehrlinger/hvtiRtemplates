@@ -25,7 +25,11 @@ print(x, ...)
 ## Value
 
 A data frame, of class `hvti_template_list`, with columns `name`,
-`prefix`, `qualifier`, `folder`, `call` and `file`. `call` is the
+`prefix`, `qualifier`, `folder`, `title`, `description`, `call` and
+`file`. `title` and `description` say what the template is for, from the
+template catalog
+([`template_catalog`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md)),
+and are `NA` for a template it does not list. `call` is the
 [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 call that scaffolds the template, with only the arguments it requires
 and runnable as printed, e.g.
@@ -34,9 +38,11 @@ and `type` shown are the template's own defaults; change them to name
 the job. `folder` is the taxonomy name with the directory's ordering
 digits stripped, so `20_distributions` reports as `distributions`.
 `qualifier` is `NA` for a prefix carrying a single template. Printed
-whole, it shows only `name`, `prefix`, `qualifier` and `folder`, since
-`call` and `file` would wrap every row; both are still in the data, and
-a selection of columns prints as selected.
+whole, it shows only `name`, `folder` and `title`, the title cut to fit
+the console's width, since the other columns would wrap every row. In a
+console too narrow for the three, `folder` is left out, then `title`.
+The other columns are still in the data, and a selection of columns
+prints as selected.
 
 ## Details
 
@@ -59,58 +65,58 @@ catalog is absent.
 
 ``` r
 tl <- template_list()
-# Printed whole: name, prefix, qualifier and folder.
+# Printed whole: name, folder and title.
 tl
-#>                       name prefix            qualifier        folder
-#> 1                       bd     bd                 <NA>      datasets
-#> 2                   dc.eda     dc                  eda   descriptive
-#> 3               dc.general     dc              general   descriptive
-#> 4                  dc.gfup     dc                 gfup   descriptive
-#> 5               dc.stddiff     dc              stddiff   descriptive
-#> 6                dc.tables     dc               tables   descriptive
-#> 7                dc.trends     dc               trends   descriptive
-#> 8                       lg     lg                 <NA>   descriptive
-#> 9                       ac     ac                 <NA> distributions
-#> 10                      hz     hz                 <NA> distributions
-#> 11                      bc     bc                 <NA>      analyses
-#> 12                      bh     bh                 <NA>      analyses
-#> 13                      bl     bl                 <NA>      analyses
-#> 14                      br     br                 <NA>      analyses
-#> 15                      hm     hm                 <NA>      analyses
-#> 16      lm.balancing_count     lm      balancing_count      analyses
-#> 17               lm.binary     lm               binary      analyses
-#> 18            lm.checkpred     lm            checkpred      analyses
-#> 19              lm.nominal     lm              nominal      analyses
-#> 20              lm.ordinal     lm              ordinal      analyses
-#> 21    lm.propensity_binary     lm    propensity_binary      analyses
-#> 22   lm.propensity_nominal     lm   propensity_nominal      analyses
-#> 23   lm.propensity_ordinal     lm   propensity_ordinal      analyses
-#> 24           nb.boostmtree     nb           boostmtree      analyses
-#> 25             rfc.explain    rfc              explain      analyses
-#> 26                 rfc.fit    rfc                  fit      analyses
-#> 27             rfr.explain    rfr              explain      analyses
-#> 28                 rfr.fit    rfr                  fit      analyses
-#> 29             rfs.explain    rfs              explain      analyses
-#> 30                 rfs.fit    rfs                  fit      analyses
-#> 31             rhf.explain    rhf              explain      analyses
-#> 32                 rhf.fit    rhf                  fit      analyses
-#> 33 rm.balancing_continuous     rm balancing_continuous      analyses
-#> 34               rm.linear     rm               linear      analyses
-#> 35            sid.clusters    sid             clusters      analyses
-#> 36                 sid.fit    sid                  fit      analyses
-#> 37           sid.stability    sid            stability      analyses
-#> 38           vp.dependence     vp           dependence      analyses
-#> 39              vp.explain     vp              explain      analyses
-#> 40                  vp.fit     vp                  fit      analyses
-#> 41           vp.individual     vp           individual      analyses
-#> 42              vt.explain     vt              explain      analyses
-#> 43                  vt.fit     vt                  fit      analyses
-#> 44                      hp     hp                 <NA>        graphs
-#> 45          hs.concordance     hs          concordance        graphs
-#> 46                hs.score     hs                score        graphs
-#> 47                hs.setup     hs                setup        graphs
-#> 48               lp.mirror     lp               mirror        graphs
-#> # 48 templates; `call` and `file` not shown. Read them with $call and $file.
+#>    name                    folder        title                                 
+#> 1  bd                      datasets      Build                                 
+#> 2  dc.eda                  descriptive   Descriptive plot: EDA report          
+#> 3  dc.general              descriptive   Descriptive: general                  
+#> 4  dc.gfup                 descriptive   Descriptive: follow-up                
+#> 5  dc.stddiff              descriptive   Descriptive: standardized differences 
+#> 6  dc.tables               descriptive   Descriptive: formatted tables         
+#> 7  dc.trends               descriptive   Descriptive plot: trends              
+#> 8  lg                      descriptive   Logit calibration                     
+#> 9  ac                      distributions Actuarial                             
+#> 10 hz                      distributions Hazard fit                            
+#> 11 bc                      analyses      Bootstrap Cox                         
+#> 12 bh                      analyses      Bootstrap hazard                      
+#> 13 bl                      analyses      Bootstrap logistic                    
+#> 14 br                      analyses      Bootstrap regression                  
+#> 15 hm                      analyses      Hazard model                          
+#> 16 lm.balancing_count      analyses      Logistic model: count balancing score 
+#> 17 lm.binary               analyses      Logistic model: binary outcome        
+#> 18 lm.checkpred            analyses      Logistic model: validate saved pred...
+#> 19 lm.nominal              analyses      Logistic model: nominal outcome       
+#> 20 lm.ordinal              analyses      Logistic model: ordinal outcome       
+#> 21 lm.propensity_binary    analyses      Logistic model: binary propensity s...
+#> 22 lm.propensity_nominal   analyses      Logistic model: nominal propensity ...
+#> 23 lm.propensity_ordinal   analyses      Logistic model: ordinal propensity ...
+#> 24 nb.boostmtree           analyses      Boosting: boostmtree                  
+#> 25 rfc.explain             analyses      Random forest classifier: explain     
+#> 26 rfc.fit                 analyses      Random forest classifier: fit         
+#> 27 rfr.explain             analyses      Random forest regression: explain     
+#> 28 rfr.fit                 analyses      Random forest regression: fit         
+#> 29 rfs.explain             analyses      Random forest survival: explain       
+#> 30 rfs.fit                 analyses      Random forest survival: fit           
+#> 31 rhf.explain             analyses      Random hazard forest: explain         
+#> 32 rhf.fit                 analyses      Random hazard forest: fit             
+#> 33 rm.balancing_continuous analyses      Regression model: continuous balanc...
+#> 34 rm.linear               analyses      Regression model: continuous outcome  
+#> 35 sid.clusters            analyses      SID clustering: clusters              
+#> 36 sid.fit                 analyses      SID clustering: fit                   
+#> 37 sid.stability           analyses      SID clustering: stability             
+#> 38 vp.dependence           analyses      VarPro: dependence                    
+#> 39 vp.explain              analyses      VarPro: explain                       
+#> 40 vp.fit                  analyses      VarPro: fit                           
+#> 41 vp.individual           analyses      VarPro: individual                    
+#> 42 vt.explain              analyses      Virtual twins: explain                
+#> 43 vt.fit                  analyses      Virtual twins: fit                    
+#> 44 hp                      graphs        Hazard plot                           
+#> 45 hs.concordance          graphs        Hazard concordance                    
+#> 46 hs.score                graphs        Hazard segment score                  
+#> 47 hs.setup                graphs        Hazard setup                          
+#> 48 lp.mirror               graphs        Logistic plot: mirrored propensity ...
+#> # 48 templates. Read any column with $, such as $description or $call.
 
 # Every template, where its job is written, and the call that scaffolds it.
 tl[, c("name", "folder", "call")]

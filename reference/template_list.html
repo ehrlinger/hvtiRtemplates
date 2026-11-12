@@ -72,7 +72,11 @@ the intended starting point for a new analysis job.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame, of class <code>hvti_template_list</code>, with columns
   <code>name</code>, <code>prefix</code>,
-  <code>qualifier</code>, <code>folder</code>, <code>call</code> and <code>file</code>.
+  <code>qualifier</code>, <code>folder</code>, <code>title</code>, <code>description</code>,
+  <code>call</code> and <code>file</code>. <code>title</code> and <code>description</code> say
+  what the template is for, from the template catalog
+  (<code><a href="template_catalog.html">template_catalog</a></code>), and are <code>NA</code> for a template it
+  does not list.
   <code>call</code> is the <code><a href="add_job.html">add_job</a></code> call that scaffolds the
   template, with only the arguments it requires and runnable as printed,
   e.g. <code>add_job("dc.gfup", subject = "cohort", type = "eda")</code>. The
@@ -81,10 +85,11 @@ the intended starting point for a new analysis job.</p>
   taxonomy name with the directory's ordering digits stripped, so
   <code>20_distributions</code> reports as <code>distributions</code>.
   <code>qualifier</code> is <code>NA</code> for a prefix carrying a single template.
-  Printed whole, it shows only <code>name</code>, <code>prefix</code>,
-  <code>qualifier</code> and <code>folder</code>, since <code>call</code> and <code>file</code>
-  would wrap every row; both are still in the data, and a selection of
-  columns prints as selected.</p>
+  Printed whole, it shows only <code>name</code>, <code>folder</code> and
+  <code>title</code>, the title cut to fit the console's width, since the other
+  columns would wrap every row. In a console too narrow for the three,
+  <code>folder</code> is left out, then <code>title</code>. The other columns are still
+  in the data, and a selection of columns prints as selected.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -107,58 +112,58 @@ folder, including when the catalog is absent.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">tl</span> <span class="op">&lt;-</span> <span class="fu">template_list</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># Printed whole: name, prefix, qualifier and folder.</span></span></span>
+<span class="r-in"><span><span class="co"># Printed whole: name, folder and title.</span></span></span>
 <span class="r-in"><span><span class="va">tl</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                       name prefix            qualifier        folder</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1                       bd     bd                 &lt;NA&gt;      datasets</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2                   dc.eda     dc                  eda   descriptive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3               dc.general     dc              general   descriptive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4                  dc.gfup     dc                 gfup   descriptive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5               dc.stddiff     dc              stddiff   descriptive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6                dc.tables     dc               tables   descriptive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7                dc.trends     dc               trends   descriptive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8                       lg     lg                 &lt;NA&gt;   descriptive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9                       ac     ac                 &lt;NA&gt; distributions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10                      hz     hz                 &lt;NA&gt; distributions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11                      bc     bc                 &lt;NA&gt;      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12                      bh     bh                 &lt;NA&gt;      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13                      bl     bl                 &lt;NA&gt;      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 14                      br     br                 &lt;NA&gt;      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 15                      hm     hm                 &lt;NA&gt;      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 16      lm.balancing_count     lm      balancing_count      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 17               lm.binary     lm               binary      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 18            lm.checkpred     lm            checkpred      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 19              lm.nominal     lm              nominal      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 20              lm.ordinal     lm              ordinal      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 21    lm.propensity_binary     lm    propensity_binary      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 22   lm.propensity_nominal     lm   propensity_nominal      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 23   lm.propensity_ordinal     lm   propensity_ordinal      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 24           nb.boostmtree     nb           boostmtree      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 25             rfc.explain    rfc              explain      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 26                 rfc.fit    rfc                  fit      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 27             rfr.explain    rfr              explain      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 28                 rfr.fit    rfr                  fit      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 29             rfs.explain    rfs              explain      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 30                 rfs.fit    rfs                  fit      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 31             rhf.explain    rhf              explain      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 32                 rhf.fit    rhf                  fit      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 33 rm.balancing_continuous     rm balancing_continuous      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 34               rm.linear     rm               linear      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 35            sid.clusters    sid             clusters      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 36                 sid.fit    sid                  fit      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 37           sid.stability    sid            stability      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 38           vp.dependence     vp           dependence      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 39              vp.explain     vp              explain      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 40                  vp.fit     vp                  fit      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 41           vp.individual     vp           individual      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 42              vt.explain     vt              explain      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 43                  vt.fit     vt                  fit      analyses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 44                      hp     hp                 &lt;NA&gt;        graphs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 45          hs.concordance     hs          concordance        graphs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 46                hs.score     hs                score        graphs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 47                hs.setup     hs                setup        graphs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 48               lp.mirror     lp               mirror        graphs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> # 48 templates; `call` and `file` not shown. Read them with $call and $file.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    name                    folder        title                                 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  bd                      datasets      Build                                 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  dc.eda                  descriptive   Descriptive plot: EDA report          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  dc.general              descriptive   Descriptive: general                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  dc.gfup                 descriptive   Descriptive: follow-up                </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  dc.stddiff              descriptive   Descriptive: standardized differences </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  dc.tables               descriptive   Descriptive: formatted tables         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  dc.trends               descriptive   Descriptive plot: trends              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  lg                      descriptive   Logit calibration                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  ac                      distributions Actuarial                             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 hz                      distributions Hazard fit                            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 bc                      analyses      Bootstrap Cox                         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 bh                      analyses      Bootstrap hazard                      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 bl                      analyses      Bootstrap logistic                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 br                      analyses      Bootstrap regression                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 hm                      analyses      Hazard model                          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 lm.balancing_count      analyses      Logistic model: count balancing score </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 lm.binary               analyses      Logistic model: binary outcome        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 lm.checkpred            analyses      Logistic model: validate saved pred...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 lm.nominal              analyses      Logistic model: nominal outcome       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 lm.ordinal              analyses      Logistic model: ordinal outcome       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 lm.propensity_binary    analyses      Logistic model: binary propensity s...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 lm.propensity_nominal   analyses      Logistic model: nominal propensity ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 lm.propensity_ordinal   analyses      Logistic model: ordinal propensity ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 nb.boostmtree           analyses      Boosting: boostmtree                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 rfc.explain             analyses      Random forest classifier: explain     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 rfc.fit                 analyses      Random forest classifier: fit         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 rfr.explain             analyses      Random forest regression: explain     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28 rfr.fit                 analyses      Random forest regression: fit         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 rfs.explain             analyses      Random forest survival: explain       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 rfs.fit                 analyses      Random forest survival: fit           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 rhf.explain             analyses      Random hazard forest: explain         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 rhf.fit                 analyses      Random hazard forest: fit             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 rm.balancing_continuous analyses      Regression model: continuous balanc...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 rm.linear               analyses      Regression model: continuous outcome  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 sid.clusters            analyses      SID clustering: clusters              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 sid.fit                 analyses      SID clustering: fit                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 sid.stability           analyses      SID clustering: stability             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 vp.dependence           analyses      VarPro: dependence                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 vp.explain              analyses      VarPro: explain                       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 vp.fit                  analyses      VarPro: fit                           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41 vp.individual           analyses      VarPro: individual                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42 vt.explain              analyses      Virtual twins: explain                </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43 vt.fit                  analyses      Virtual twins: fit                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44 hp                      graphs        Hazard plot                           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45 hs.concordance          graphs        Hazard concordance                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 46 hs.score                graphs        Hazard segment score                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47 hs.setup                graphs        Hazard setup                          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48 lp.mirror               graphs        Logistic plot: mirrored propensity ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> # 48 templates. Read any column with $, such as $description or $call.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Every template, where its job is written, and the call that scaffolds it.</span></span></span>
 <span class="r-in"><span><span class="va">tl</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"name"</span>, <span class="st">"folder"</span>, <span class="st">"call"</span><span class="op">)</span><span class="op">]</span></span></span>
