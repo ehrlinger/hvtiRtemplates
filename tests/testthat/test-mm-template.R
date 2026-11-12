@@ -86,6 +86,11 @@ test_that("mm_fit counts the patients and rows it used, not every row read", {
   fit <- h$mm_fit(d, log(y) ~ log(time + 1) + age + female, "ccfid", "time", "cs", "REML")
   expect_identical(length(fit$per_patient), fit$n_patients)
   expect_identical(sum(fit$per_patient), fit$n_measurements)
+  # A factor ID read from RDS keeps the dropped patients as levels; they must not count as zero rows.
+  d$ccfid <- factor(d$ccfid)
+  fit <- h$mm_fit(d, log(y) ~ log(time + 1) + age + female, "ccfid", "time", "cs", "REML")
+  expect_identical(length(fit$per_patient), fit$n_patients)
+  expect_gt(min(fit$per_patient), 0L)
 })
 
 test_that("every STRUCTURE fits and reports its own parameters", {
@@ -231,7 +236,7 @@ test_that("mm renders end to end and saves a bundle with no nlme object and no r
   expect_true(all(pred$lower < pred$estimate & pred$estimate < pred$upper))
   html <- paste(readLines(out$output, warn = FALSE), collapse = "\n")
   expect_match(html, "within-patient correlation", fixed = TRUE)
-  expect_match(gsub("(?s)<pre[^>]*>.*?</pre>", "", html, perl = TRUE), "geometric mean", fixed = TRUE)
+  expect_match(gsub("(?s)<pre[^>]*>.*?</pre>", "", html, perl = TRUE), "the limits are for that median", fixed = TRUE)
   # include = FALSE draws no caption and no code fold; the chunk source sits in <pre>, so strip it.
   expect_no_match(gsub("(?s)<pre[^>]*>.*?</pre>", "", html, perl = TRUE), "Comparison of covariance structures")
 })

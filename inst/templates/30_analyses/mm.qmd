@@ -198,7 +198,7 @@ mm_fit <- function(d, formula, id, time, structure, method) {
   list(model = model, structure = structure, method = method, formula = formula,
        xlev = lapply(categorical, function(x) levels(factor(x))),
        n_patients = length(unique(d[[id]][used])), n_measurements = sum(used),
-       per_patient = table(d[[id]][used]))
+       per_patient = table(as.character(d[[id]][used])))
 }
 
 # The covariance parameters: cs and random report one within-patient correlation, ar1 the lag-1 correlation,
@@ -359,7 +359,7 @@ knitr::kable(.ends, digits = 3, row.names = FALSE)
 #| label: prediction-scale
 #| results: asis
 if (identical(RESPONSE_SCALE, "log")) {
-  cat("\nOn the log scale the course is the geometric mean of the response on its measured scale, which is its median ",
+  cat("\nWith the response modeled on the log scale, the course is its geometric mean on the measured scale, which is its median ",
       "when the log is normally distributed; the limits are for that median, not for a mean.\n", sep = "")
 }
 ```
