@@ -22,7 +22,7 @@
 # stops on the missing label and names it, as for an absent file. Outside a job
 # run, written is NULL and every existing file is taken.
 .mark_written <- function(file) {
-  if (!is.null(.run_state$written)) .run_state$written <- c(.run_state$written, normalizePath(file, winslash = "/"))
+  if (!is.null(.run_state$written)) .run_state$written <- c(.run_state$written, normalizePath(file, winslash = "/", mustWork = FALSE))
   invisible(file)
 }
 

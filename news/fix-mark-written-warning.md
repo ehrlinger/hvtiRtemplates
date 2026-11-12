@@ -1,0 +1,1 @@
+- Saving a figure page that draws nothing no longer warns. The PNG device writes no file for an empty page, and the record of files a run wrote now accepts a path that does not exist instead of warning; such a file is still never recorded as an exhibit.

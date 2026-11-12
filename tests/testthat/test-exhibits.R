@@ -89,3 +89,15 @@ test_that("a file an earlier render left is not recorded, and one this run wrote
   hvtiRtemplates:::.save_figure(fig, old, width = 2, height = 2, save = FALSE)
   expect_null(hvtiRtemplates:::.record_exhibit(old, "figure", label = "fig-old"))
 })
+
+test_that("marking a file the device never wrote is silent", {
+  # png() writes nothing for a page with nothing drawn on it, so .save_figure() can mark a
+  # file that does not exist. That must not warn; the file is simply never recorded.
+  root <- local_exhibit_state()
+  state <- hvtiRtemplates:::.run_state
+  assign("written", character(), envir = state)
+  withr::defer(rm("written", envir = state))
+  absent <- file.path(root, "blank.png")
+  expect_no_warning(hvtiRtemplates:::.mark_written(absent))
+  expect_null(hvtiRtemplates:::.record_exhibit(absent, "figure", label = "fig-blank"))
+})
