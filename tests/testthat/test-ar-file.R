@@ -111,7 +111,7 @@ test_that("two empty items are both filled, placeholders are replaced, and nothi
   expect_identical(outside(after), outside(before))
 })
 
-test_that("a filled item is byte-identical after its empty neighbour is filled", {
+test_that("a filled item is byte-identical after its empty neighbor is filled", {
   root <- ar_fake_study()
   ar_fake_job(root)
   ids <- c("hz.dead.hz#fig-fit", "hz.dead.hz#tbl-estimates")
