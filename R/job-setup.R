@@ -129,11 +129,11 @@
   msg <- paste0(
     length(hits), " unresolved ", token, " marker(s) remain in this job:\n",
     paste0("  - ", markers$text, collapse = "\n"),
-    if (show_source) paste0("\nA job that still contains one has not been finished. ", rule)
+    "\n", if (show_source) "A job that still contains one has not been finished. ", rule
   )
   if (!.strict_render()) {
     if (!show_source) cat(msg, "\n", sep = "", file = stderr())
-    warning(if (show_source) msg else paste0(length(hits), " unresolved ", token, " marker(s) remain in this job."),
+    warning(if (show_source) msg else paste0(length(hits), " unresolved ", token, " marker(s) remain in this job. ", rule),
             "\nRendering as a draft; the banner goes when the last marker does. ",
             "Set HVTI_TEMPLATE_STRICT to 1, true or yes to make this stop.", call. = FALSE)
     cat("\n::: {.callout-important title=\"DRAFT -- this job is unfinished\"}\n")
