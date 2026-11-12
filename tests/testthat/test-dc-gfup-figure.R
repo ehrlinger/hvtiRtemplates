@@ -179,7 +179,8 @@ test_that("dc-gfup reports the close date's source by the job's own edit point",
 # non-fatal event and an echo column derived from it, as a render would run them
 # after its data step. save_figure() keeps each panel instead of writing it.
 # Returns the environment and everything the chunks printed.
-gfup_drawn <- function(events, echo = NULL, colors = NULL) {
+gfup_drawn <- function(events, echo = NULL, colors = NULL, x_tick_by = NULL, y_tick_by = NULL, legend = FALSE,
+                       group = NULL) {
   withr::local_package("ggplot2")
   withr::local_package("hvtiPlotR")
   # Each child chunk is printed as written, so its caption can be read: knitr
@@ -195,11 +196,15 @@ gfup_drawn <- function(events, echo = NULL, colors = NULL) {
   d$ev_stroke <- !d$ev_event & seq_len(nrow(d)) %% 4L == 0L
   # Every fifth patient has no echo: NA draws no tick and raises nothing.
   d$iv_echo <- ifelse(seq_len(nrow(d)) %% 5L == 0L, NA, d$iv_dead * 0.6)
+  d$arm <- rep(c("A", "B"), length.out = nrow(d))
   saved <- list()
   env <- new.env(parent = globalenv())
+  # The factor tbl-qc-group builds, which needs the job's record to run.
+  if (!is.null(group)) env$group_values <- factor(d[[group]])
   list2env(list(d = d, EVENT = "dead", OPYRS = "iv_opyrs", ORIGIN_YEAR = 1990, CLOSE_DATE = NULL, ECHO = echo, EVENTS = events,
                 PANELS = list(all = list(status = "dead", time = "iv_dead", title = "All deaths")),
-                ALPHA = 0.5, COLORS = colors, GROUP = NULL, .in = NULL,
+                ALPHA = 0.5, COLORS = colors, GROUP = group, .in = NULL,
+                X_TICK_BY = x_tick_by, Y_TICK_BY = y_tick_by, LEGEND = legend,
                 save_figure = function(plot, name, ...) {
                   saved[[name]] <<- plot
                   file.path(tempdir(), paste0(name, ".png"))
@@ -292,4 +297,39 @@ test_that("GROUP adds a faceted figure per panel, one facet per group", {
   expect_true(all(file.exists(pngs)))
   html <- paste(readLines(sub("[.]qmd$", ".html", s$job), warn = FALSE), collapse = "\n")
   expect_match(html, "One panel per race_grp group", fixed = TRUE)
+})
+
+test_that("X_TICK_BY and Y_TICK_BY set the tick spacing, and LEGEND draws a key", {
+  # The 2026-11-11 training: ticks every 2, 5 or 10 years in the study choices, and a legend to switch on.
+  breaks <- function(p, axis) {
+    b <- ggplot2::ggplot_build(p)$layout$panel_params[[1L]][[axis]]$breaks
+    b[!is.na(b)]
+  }
+  plain <- gfup_drawn(list())$env$saved[["dc-gfup-all"]]
+  expect_identical(plain$theme$legend.position, "none")
+  set <- gfup_drawn(list(), x_tick_by = 5, y_tick_by = 2, legend = TRUE)$env$saved[["dc-gfup-all"]]
+  expect_true(all(breaks(set, "x") %% 5 == 0))
+  expect_true(all(breaks(set, "y") %% 2 == 0))
+  expect_true(all(breaks(set, "y") >= 0))
+  expect_gt(length(breaks(set, "x")), 2L)
+  expect_identical(set$theme$legend.position, "inside")
+  expect_error(gfup_drawn(list(), x_tick_by = 0), "X_TICK_BY must be NULL or one positive number")
+  expect_error(gfup_drawn(list(), legend = "yes"), "LEGEND must be TRUE or FALSE")
+})
+
+test_that("a tick step longer than the axis draws no ticks rather than stopping", {
+  # Codex review on #521: operations over four years and X_TICK_BY of 5 put the first multiple past the axis.
+  # The y ticks start at 0, so only the year axis can be left with none.
+  wide <- gfup_drawn(list(), x_tick_by = 10000)$env$saved[["dc-gfup-all"]]
+  built <- ggplot2::ggplot_build(wide)$layout$panel_params[[1L]]
+  expect_length(stats::na.omit(built$x$breaks), 0L)
+  expect_error(gfup_drawn(list(), x_tick_by = Inf), "X_TICK_BY must be NULL or one positive number")
+})
+
+test_that("the group facets keep the overlap check on their angled years", {
+  # Codex review on #521: guides(x = guide_axis(angle = 45)) replaced the guide that drops overlapping labels.
+  faceted <- gfup_drawn(list(), x_tick_by = 1, group = "arm")$env$saved[["dc-gfup-all-by-group"]]
+  guide <- faceted$guides$guides$x
+  expect_true(guide$params$check.overlap)
+  expect_identical(guide$params$angle, 45)
 })
