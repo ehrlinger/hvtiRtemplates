@@ -242,13 +242,16 @@ ALPHA <- 0.5
 # A REDCap project's fields come from its data dictionary export; this prints
 # the line to paste. The export can open with a byte-order mark, which hides the
 # header unless the encoding is named, and a checkbox field exports as name___1,
-# name___2, so list those names rather than the dictionary's:
+# name___2, so list those names rather than the dictionary's. Each name is
+# quoted because YAML reads a bare no, on or yes as true or false, not a column:
 #   dict <- read.csv("<project>_DataDictionary.csv", check.names = FALSE, fileEncoding = "UTF-8-BOM")
-#   cat("  redcap: [", toString(tolower(dict[["Variable / Field Name"]])), "]\n", sep = "")
+#   cat("  redcap: [", toString(dQuote(tolower(dict[["Variable / Field Name"]]), FALSE)), "]\n", sep = "")
 # Only the listed columns this dataset has are drawn, and the report counts them
 # set by set. It also lists this dataset's columns left out, so a study's own
-# variables are one name away in VARIABLES. "all", on its own, draws every column,
-# as dc-eda did before this choice existed. The house sets ship with the package,
+# variables are one name away in VARIABLES. "all", on its own, takes every column,
+# as dc-eda did before this choice existed, and then leaves out what any set does:
+# X_VAR, EXCLUDE, identifiers and dates, and transforms unless TRANSFORMS is TRUE.
+# The house sets ship with the package,
 # in extdata/ods-variables.csv and extdata/variable-sets.csv, so a study declares
 # a set rather than editing them. To read them all, inside the job once its data
 # are read: hvtiRtemplates:::.variable_sets(.cfg).
@@ -374,11 +377,16 @@ if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
 }
 if (!column_names(EXCLUDE)) stop("EXCLUDE must name distinct columns.", call. = FALSE)
 if (!isTRUE(TRANSFORMS) && !isFALSE(TRANSFORMS)) stop("TRANSFORMS must be TRUE or FALSE.", call. = FALSE)
-.variable_sets <- hvtiRtemplates:::.variable_sets(.cfg)
-if (!is.character(VARIABLE_SET) || !length(VARIABLE_SET) || anyNA(VARIABLE_SET) || anyDuplicated(VARIABLE_SET) ||
-      !(identical(VARIABLE_SET, "all") || all(VARIABLE_SET %in% names(.variable_sets)))) {
-  stop("VARIABLE_SET must be \"all\", or one or more of: ", paste(names(.variable_sets), collapse = ", "),
+# The sets are read, and the study's checked, only where a page draws from them
+# (below): a job that names its VARIABLES, or draws only follow-up, does not stop
+# over a study set it never uses.
+variable_set_error <- function(sets) {
+  stop("VARIABLE_SET must be \"all\", or one or more of: ", paste(sets, collapse = ", "),
        ". Use \"all\" on its own. A study declares its own under variable_sets: in _study.yml.", call. = FALSE)
+}
+if (!is.character(VARIABLE_SET) || !length(VARIABLE_SET) || anyNA(VARIABLE_SET) || anyDuplicated(VARIABLE_SET) ||
+      ("all" %in% VARIABLE_SET && length(VARIABLE_SET) > 1L)) {
+  variable_set_error(names(hvtiRtemplates:::.variable_sets(.cfg)))
 }
 positive_whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x > 0 && x == floor(x)
 for (value in list(GRID_NCOL, GRID_NROW, UNIQUE_LIMIT)) {
@@ -433,6 +441,8 @@ if (is.null(VARIABLES)) {
   # The sets choose the continuous, percent and count pages; a follow-up-only
   # report draws none of them, so it neither needs nor checks them.
   if (!identical(VARIABLE_SET, "all") && any(SECTIONS != "followup")) {
+    .variable_sets <- hvtiRtemplates:::.variable_sets(.cfg)
+    if (!all(VARIABLE_SET %in% names(.variable_sets))) variable_set_error(names(.variable_sets))
     # The sets in the order named, each in its section order, are the page order;
     # a column on two sets keeps its place on the first.
     .chosen <- lapply(.variable_sets[VARIABLE_SET], unlist, use.names = FALSE)
