@@ -18,6 +18,13 @@ also build the match themselves:
     manual_review   both pair and weight handling: a person decides
     misfiled        no Cox fit at all
 
+"Matches" means a RECOGNIZED match invocation: PROC PSMATCH, a SAS macro whose
+name says match, pair, greedy or caliper, MatchIt, Matching or ps_match. A
+study macro or %include with another name could still build a matched set, so
+every program that calls a macro or include outside AUDITED_NOT_MATCHING is
+counted as opaque, and a zero for match_and_fit is only as strong as the
+opaque count beside it.
+
 Rows go to a private CSV that never leaves the server. The public JSON holds
 counts only, plus the %macro names called in at least MACRO_MIN_STUDIES
 studies, with their study counts.
@@ -46,6 +53,10 @@ FOLDER_RE = re.compile(r"^(?:\d\d_)?(" + "|".join(FOLDERS) + r")$", re.IGNORECAS
 PREFIX_RE = re.compile(r"^cm[._-]|-cm(?:-\w+)?\.qmd$", re.IGNORECASE)
 SKIP_DIRS = {".git", ".rproj.user", "node_modules", "packrat", "renv"}
 MACRO_MIN_STUDIES = 3
+# Macros and %include stems read on 2026-11-12 and known not to build a
+# matched set: variable lists, the hazard package, plotting, Greenwood
+# variance, decile groups and format catalogs. Anything else is opaque.
+AUDITED_NOT_MATCHING = {"vars", "hazard", "hazpred", "hazplot", "plot", "plt", "greenwod", "deciles"}
 SAS_MACRO_WORDS = {
     "abort", "bquote", "by", "copy", "display", "do", "else", "end", "eval",
     "global", "goto", "if", "inc", "include", "index", "input", "label",
@@ -100,6 +111,22 @@ def strip_comments(text, suffix):
     return text
 
 
+def executable_r(text, suffix):
+    """The code a .R, .Rmd, .qmd or .Rnw file runs; prose and eval-off chunks dropped."""
+    suffix = suffix.lower()
+    if suffix == ".r":
+        return text
+    if suffix == ".rnw":
+        chunks = re.findall(r"^<<([^>]*)>>=[ \t]*\n(.*?)^@", text, re.MULTILINE | re.DOTALL)
+    else:
+        chunks = re.findall(r"^[ \t]*```+[ \t]*\{r\b([^}]*)\}[ \t]*\n(.*?)^[ \t]*```", text,
+                            re.MULTILINE | re.DOTALL | re.IGNORECASE)
+    off = re.compile(r"\beval\s*=\s*(?:false|f)\b", re.IGNORECASE)
+    yaml_off = re.compile(r"^\s*#\|\s*eval:\s*false\b", re.IGNORECASE | re.MULTILINE)
+    return "\n".join(body for header, body in chunks
+                     if not off.search(header) and not yaml_off.search(body))
+
+
 def phreg_steps(lower):
     """The body of every PROC PHREG step."""
     return [m.group(1) for m in re.finditer(
@@ -126,6 +153,8 @@ WEIGHT_NAME = r"\b(?:iptw\w*|\w*mtwt\w*|\w*match_?wt\w*|\w*matchwt\w*|\w*mw_?wt\
 
 
 def signals(path, text):
+    if path.suffix.lower() in R_SUFFIXES:
+        text = executable_r(text, path.suffix)
     lower = strip_comments(text.lower(), path.suffix)
     steps = phreg_steps(lower)
     calls = coxph_calls(lower)
@@ -152,7 +181,8 @@ def signals(path, text):
             r"\bproc\s+psmatch\b"
             r"|\bmatchit\s*\(|\bmatching::match\s*\(|\bmatch\s*\(\s*(?:y|tr)\s*=|\bps_match\s*\(",
             lower)) or (sas and bool(re.search(
-                r"%(?:gmatch|match|vmatch|nnmatch|greedy\w*|onetomany\w*|\w*caliper\w*)\b", lower))),
+                r"%\w*(?:match|mtch|pair|psm|greedy|caliper|onetomany)\w*", lower))),
+        "opaque": sas and bool(external_names(lower) - AUDITED_NOT_MATCHING),
         "weight": sas_weight or r_weight
         or bool(re.search(WEIGHT_NAME + r"|\bps_weight\s*\(", lower)),
         "pair": sas_pair or r_pair,
@@ -191,6 +221,20 @@ def called_macros(text, suffix):
     defined = set(re.findall(r"%macro\s+([a-z_]\w*)", lower))
     called = set(re.findall(r"%([a-z_]\w*)", lower))
     return called - defined - SAS_MACRO_WORDS
+
+
+def external_names(lower):
+    """Called macros and %include stems, the code this program does not show.
+
+    Format catalogs (*fmts) are left out: they define formats, not data steps.
+    """
+    defined = set(re.findall(r"%macro\s+([a-z_]\w*)", lower))
+    names = set(re.findall(r"%([a-z_]\w*)", lower)) - defined - SAS_MACRO_WORDS
+    for target in re.findall(r"%inc(?:lude)?\s+['\"]?([^'\";\s]+)", lower):
+        stem = Path(target).stem
+        if not stem.endswith("fmts"):
+            names.add(stem)
+    return names
 
 
 def candidate_files(root):
@@ -242,7 +286,8 @@ def main():
             "study": study,
             "folder": folder_name(path, args.corpus_root),
             "shape": classify(found),
-            **{key: found[key] for key in ("match", "weight", "pair", "robust", "match_subset", "ps_fit", "mi")},
+            **{key: found[key] for key in ("match", "opaque", "weight", "pair", "robust", "match_subset",
+                                            "ps_fit", "mi")},
         })
     if not rows:
         if candidates:
@@ -258,7 +303,7 @@ def main():
 
     aggregate = defaultdict(lambda: {
         "sas_programs": 0, "sas_studies": set(), "r_jobs": 0, "r_studies": set(),
-        "mi_programs": 0, "ps_fit_programs": 0,
+        "mi_programs": 0, "ps_fit_programs": 0, "opaque_programs": 0,
     })
     for row in rows:
         values = aggregate[row["shape"]]
@@ -267,6 +312,7 @@ def main():
             values["sas_studies"].add(row["study"])
             values["mi_programs"] += int(row["mi"])
             values["ps_fit_programs"] += int(row["ps_fit"])
+            values["opaque_programs"] += int(row["opaque"])
         else:
             values["r_jobs"] += 1
             values["r_studies"].add(row["study"])
@@ -281,7 +327,11 @@ def main():
             "r_studies": r_studies,
             "mi_programs": values["mi_programs"],
             "ps_fit_programs": values["ps_fit_programs"],
-            "two_study_gate": max(sas_studies, r_studies) >= 2,
+            "opaque_programs": values["opaque_programs"],
+            "studies": len(values["sas_studies"] | values["r_studies"]),
+            # Union, not max or sum: a second exemplar may be SAS or R, and a
+            # study with both counts once.
+            "two_study_gate": len(values["sas_studies"] | values["r_studies"]) >= 2,
         }
 
     by_folder = defaultdict(lambda: {"programs": 0, "studies": set()})
@@ -296,8 +346,10 @@ def main():
         "r_jobs": len(rows) - len(sas_rows),
         "studies": len({row["study"] for row in rows}),
         "sas_studies": len({row["study"] for row in sas_rows}),
-        "match_step_programs": sum(row["match"] for row in rows),
-        "match_step_studies": len({row["study"] for row in rows if row["match"]}),
+        "recognized_match_programs": sum(row["match"] for row in rows),
+        "recognized_match_studies": len({row["study"] for row in rows if row["match"]}),
+        "opaque_programs": sum(row["opaque"] for row in rows),
+        "opaque_studies": len({row["study"] for row in rows if row["opaque"]}),
         "template_copies_skipped": template_copies,
         "traversal_errors": traversal_errors,
         "unreadable_candidates": unreadable_candidates,

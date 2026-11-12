@@ -130,6 +130,38 @@ class Classify(unittest.TestCase):
         text = "Note;\n* a bullet\n```{r}\nfit <- coxph(Surv(t, dead) ~ trt, data = d); x <- 1\n```"
         self.assertEqual(shape("cm.dead.qmd", text), "fit_unadjusted")
 
+    def test_custom_pair_macro_counts_as_a_match(self):
+        text = "%make_pairs(data=ps, id=id); proc phreg data=m; model t*dead(0) = trt; run;"
+        self.assertEqual(shape("cm.dead.sas", text), "match_and_fit")
+
+    def test_unaudited_macro_or_include_is_opaque(self):
+        found = census.signals(Path("/s/study/analyses/cm.dead.sas"),
+                               "%build_cohort(x); proc phreg data=m; model t*d(0)=trt; run;")
+        self.assertTrue(found["opaque"])
+        self.assertEqual(census.classify(found), "fit_unadjusted")
+        found = census.signals(Path("/s/study/analyses/cm.dead.sas"),
+                               "%inc '/x/mk_set.sas'; proc phreg data=m; model t*d(0)=trt; run;")
+        self.assertTrue(found["opaque"])
+
+    def test_audited_macros_and_formats_are_not_opaque(self):
+        text = "%inc '/x/vars.sas'; %inc '/x/cvirfmts.sas'; %vars; %hazard(data=x); " \
+               "proc phreg data=m; model t*d(0)=trt; run;"
+        self.assertFalse(census.signals(Path("/s/study/analyses/cm.dead.sas"), text)["opaque"])
+
+    def test_qmd_prose_is_not_code(self):
+        text = "Example: use matchit(trt ~ age) before coxph(Surv(t, e) ~ trt).\n\n```{r}\nx <- 1\n```\n"
+        self.assertEqual(shape("cm.dead.qmd", text), "misfiled")
+
+    def test_eval_false_chunks_are_not_code(self):
+        text = "```{r, eval=FALSE}\nm <- matchit(trt ~ age, data = d)\n```\n" \
+               "```{r}\n#| eval: false\nm <- matchit(trt ~ age, data = d)\n```\n" \
+               "```{r fit}\nfit <- coxph(Surv(t, e) ~ trt, data = d)\n```\n"
+        self.assertEqual(shape("cm.dead.Rmd", text), "fit_unadjusted")
+
+    def test_rnw_chunks_are_code(self):
+        text = "Prose matchit(x).\n<<fit>>=\nfit <- coxph(Surv(t, e) ~ trt, data = d)\n@\n"
+        self.assertEqual(shape("cm.dead.Rnw", text), "fit_unadjusted")
+
 
 class Names(unittest.TestCase):
     def test_prefix_is_anchored(self):
@@ -183,9 +215,39 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(result["template_copies_skipped"], 1)
             self.assertEqual(result["shapes"]["match_and_fit"]["sas_studies"], 3)
             self.assertEqual(result["shapes"]["fit_weighted"]["r_jobs"], 1)
-            self.assertEqual(result["match_step_studies"], 3)
+            self.assertEqual(result["recognized_match_studies"], 3)
             self.assertEqual(result["folders"]["graphs"], {"programs": 1, "studies": 1})
             self.assertEqual(result["macros"], {"gmatch": 3})
+
+
+class Gate(unittest.TestCase):
+    def run_census(self, files):
+        import sys
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "studies"
+            for rel, text in files.items():
+                (root / rel).parent.mkdir(parents=True, exist_ok=True)
+                (root / rel).write_text(text)
+            public = Path(tmp) / "out" / "summary.json"
+            argv, sys.argv = sys.argv, ["census", str(root), str(Path(tmp) / "out" / "rows.csv"), str(public)]
+            try:
+                census.main()
+            finally:
+                sys.argv = argv
+            return json.loads(public.read_text())["shapes"]["fit_unadjusted"]
+
+    SAS = "proc phreg data=x; model t*d(0) = trt; run;"
+    R = "fit <- coxph(Surv(t, d) ~ trt, data = x)"
+
+    def test_sas_in_one_study_and_r_in_another_pass(self):
+        shape = self.run_census({"s1/analyses/cm.a.sas": self.SAS, "s2/analyses/cm.a.R": self.R})
+        self.assertEqual(shape["studies"], 2)
+        self.assertTrue(shape["two_study_gate"])
+
+    def test_sas_and_r_in_one_study_count_once(self):
+        shape = self.run_census({"s1/analyses/cm.a.sas": self.SAS, "s1/analyses/cm.b.R": self.R})
+        self.assertEqual(shape["studies"], 1)
+        self.assertFalse(shape["two_study_gate"])
 
 
 if __name__ == "__main__":
