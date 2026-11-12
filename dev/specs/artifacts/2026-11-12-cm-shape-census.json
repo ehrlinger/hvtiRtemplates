@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-12",
+  "corpus_programs": 107,
+  "r_jobs": 2,
+  "studies": 36,
+  "sas_studies": 35,
+  "match_step_programs": 0,
+  "match_step_studies": 0,
+  "template_copies_skipped": 161,
+  "traversal_errors": 0,
+  "unreadable_candidates": 0,
+  "shapes": {
+    "match_and_fit": {
+      "sas_programs": 0,
+      "sas_studies": 0,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 0,
+      "ps_fit_programs": 0,
+      "two_study_gate": false
+    },
+    "fit_matched": {
+      "sas_programs": 1,
+      "sas_studies": 1,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 0,
+      "ps_fit_programs": 0,
+      "two_study_gate": false
+    },
+    "fit_weighted": {
+      "sas_programs": 3,
+      "sas_studies": 2,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 0,
+      "ps_fit_programs": 0,
+      "two_study_gate": true
+    },
+    "fit_unadjusted": {
+      "sas_programs": 93,
+      "sas_studies": 30,
+      "r_jobs": 1,
+      "r_studies": 1,
+      "mi_programs": 23,
+      "ps_fit_programs": 0,
+      "two_study_gate": true
+    },
+    "manual_review": {
+      "sas_programs": 2,
+      "sas_studies": 2,
+      "r_jobs": 0,
+      "r_studies": 0,
+      "mi_programs": 0,
+      "ps_fit_programs": 0,
+      "two_study_gate": true
+    },
+    "misfiled": {
+      "sas_programs": 8,
+      "sas_studies": 4,
+      "r_jobs": 1,
+      "r_studies": 1,
+      "mi_programs": 0,
+      "ps_fit_programs": 0,
+      "two_study_gate": true
+    }
+  },
+  "folders": {
+    "analyses": {
+      "programs": 107,
+      "studies": 35
+    },
+    "graphs": {
+      "programs": 2,
+      "studies": 1
+    }
+  },
+  "macros": {
+    "vars": 31,
+    "hazard": 3,
+    "hazpred": 3
+  }
+}
