@@ -250,7 +250,7 @@ eda_chunk <- function(label) {
 # any of them, NULL included.
 eda_spec_env <- function(d, ...) {
   env <- list2env(list(d = d, X_VAR = "year", X_LABEL = "Year of operation", X_UNIT = "auto", VARIABLES = NULL,
-                       VARIABLE_SET = "all",
+                       VARIABLE_SET = "all", TRANSFORMS = FALSE,
                        EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
@@ -266,7 +266,8 @@ test_that("dc-eda's spec chunk checks every variable and plotting choice", {
   env <- eda_spec_env(data.frame(year = 1:10, age = 41:50, hosp_id = 11:20, visit_date = 21:30),
                       VARIABLES = "age")
   expect_no_error(eval(spec, env))
-  for (field in c("X_VAR", "X_LABEL", "X_UNIT", "VARIABLES", "VARIABLE_SET", "EXCLUDE", "GRID_NCOL", "GRID_NROW", "UNIQUE_LIMIT",
+  for (field in c("X_VAR", "X_LABEL", "X_UNIT", "VARIABLES", "VARIABLE_SET", "TRANSFORMS", "EXCLUDE", "GRID_NCOL", "GRID_NROW",
+                  "UNIQUE_LIMIT",
                   "SECTIONS",
                   "ALPHA", "LABEL_MAX", "ABBREVIATIONS")) {
     original <- env[[field]]
@@ -530,7 +531,7 @@ test_that("dc-eda's overview leaves out identifiers but keeps dates", {
                                       mrn_num = rep(0:1, 6),
                                       bnp_mrna = 0.5 * seq_len(n), dt_surg = as.Date("2020-01-01") + seq_len(n)),
                        X_VAR = "year", X_LABEL = "Year of operation", X_UNIT = "auto", VARIABLES = "age",
-                       VARIABLE_SET = "all", EXCLUDE = character(),
+                       VARIABLE_SET = "all", TRANSFORMS = FALSE, EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
                        SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
                        .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL, job_data = eda_job_data("ccfid"),
@@ -863,6 +864,45 @@ test_that("dc-eda's page captions name each variable beside its label", {
   )
   expect_length(shown, 1L)
   expect_match(shown, "page 1: Age at operation (age).", fixed = TRUE)
+})
+
+test_that("a variable set draws one form of each variable unless TRANSFORMS is TRUE", {
+  # The 2026-11-11 training: "all" drew ln_age beside age, a page per transform, and took six minutes.
+  # Ages with a fraction: whole squares of four digits, all different, would read as record numbers.
+  age <- 41:52 + 0.5
+  d <- data.frame(year = 1:12, age = age, ln_age = log(age), in_age = 1 / age, age2 = age^2,
+                  bmi = 20 + 1:12, ln_bmi = log(20 + 1:12))
+  env <- eda_spec_env(d, SECTIONS = "continuous")
+  out <- capture.output(eval(eda_chunk("spec"), env))
+  expect_identical(env$VARIABLES, c("age", "bmi"))
+  said <- paste0("Not drawn, as transforms of a variable drawn here, checked by their values (set TRANSFORMS <- TRUE to ",
+                 "draw them): ln_age = log(age), in_age = 1/age, age2 = age^2, ln_bmi = log(bmi)")
+  expect_true(any(grepl(said, out, fixed = TRUE)))
+  every <- eda_spec_env(d, SECTIONS = "continuous", TRANSFORMS = TRUE)
+  capture.output(eval(eda_chunk("spec"), every))
+  expect_identical(every$VARIABLES, setdiff(names(d), "year"))
+  # A column named in VARIABLES is drawn whatever TRANSFORMS says.
+  named <- eda_spec_env(d, SECTIONS = "continuous", VARIABLES = c("age", "ln_age"))
+  capture.output(eval(eda_chunk("spec"), named))
+  expect_identical(named$VARIABLES, c("age", "ln_age"))
+})
+
+test_that("a name that looks like a transform is drawn unless its values are one", {
+  # Codex review on #523: bmi2 can be a second measurement, and the ODS list's numcomp2 is not numcomp squared.
+  d <- data.frame(year = 1:12, bmi = 20 + 1:12, bmi2 = 31 - 1:12 + 0.5, numcomp = rep(0:2, 4), numcomp2 = rep(c(1, 0, 3), 4))
+  env <- eda_spec_env(d, SECTIONS = "continuous")
+  out <- capture.output(eval(eda_chunk("spec"), env))
+  expect_identical(env$VARIABLES, c("bmi", "bmi2", "numcomp", "numcomp2"))
+  expect_false(any(grepl("transforms of a variable", out, fixed = TRUE)))
+})
+
+test_that("a transform is drawn when the plain form is a key, and so cannot be", {
+  # Codex review on #523: pruning before the identifier filter dropped ln_bmi for bmi, then bmi as a KEY.
+  d <- data.frame(year = 1:12, bmi = 20 + 1:12, ln_bmi = log(20 + 1:12), weight = 60 + 1:12 + 0.5)
+  env <- eda_spec_env(d, SECTIONS = "continuous", job_data = eda_job_data("ccfid", key = c("ccfid", "bmi")))
+  out <- capture.output(eval(eda_chunk("spec"), env))
+  expect_identical(env$VARIABLES, c("ln_bmi", "weight"))
+  expect_false(any(grepl("transforms of a variable", out, fixed = TRUE)))
 })
 
 test_that("dc-eda puts each page's abbreviations in that page's caption, not once after the section", {

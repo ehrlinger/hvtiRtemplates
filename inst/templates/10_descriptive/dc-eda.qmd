@@ -232,6 +232,15 @@ ALPHA <- 0.5
 # VARIABLES rather than editing it. To read it: hvtiRtemplates:::.ods_groups().
 # dc-tables carries the same list as its commented GROUPS example.
 VARIABLE_SET <- "ods"
+# EDIT: FALSE draws one form of each variable the set reaches, the plain one, and
+# leaves out the transforms a data build adds beside it, such as ln_age, in_age
+# and age2: a first EDA checks the values as measured, each transform is a page of
+# its own, and on "all" they made the 2026-11-11 training's report take six minutes.
+# A column is left out only when its values are a log, inverse, square, root or exp
+# of the plain form, never for its name alone, and the report lists each with the
+# transform it matched. TRUE draws every form. A column named in VARIABLES is drawn
+# either way.
+TRANSFORMS <- FALSE
 X_LABEL <- "Year of operation"     # EDIT: the x-axis label, e.g. "Year of enrollment" when time 0 is not an operation
 # What a date X_VAR is drawn in: "year", "month", or "auto", which draws months
 # when the dates span less than three years. A six-month cohort drawn in years
@@ -342,6 +351,7 @@ if (!is.null(VARIABLES) && (!column_names(VARIABLES) || !length(VARIABLES))) {
   stop("VARIABLES must be NULL or name distinct columns.", call. = FALSE)
 }
 if (!column_names(EXCLUDE)) stop("EXCLUDE must name distinct columns.", call. = FALSE)
+if (!isTRUE(TRANSFORMS) && !isFALSE(TRANSFORMS)) stop("TRANSFORMS must be TRUE or FALSE.", call. = FALSE)
 if (!is.character(VARIABLE_SET) || length(VARIABLE_SET) != 1L || !VARIABLE_SET %in% c("ods", "all")) {
   stop("VARIABLE_SET must be \"ods\" or \"all\".", call. = FALSE)
 }
@@ -420,6 +430,41 @@ if (is.null(VARIABLES)) {
   if (length(left_out)) {
     cat("Left out as identifier or date columns (name a date in VARIABLES to draw it; an identifier is never drawn):",
         paste(left_out, collapse = ", "), "\n")
+  }
+  # One form per variable. hvtiRutilities::concept_map(), the rule the bootstrap screens
+  # use, groups ln_age, in_age and age2 with age by name, but a name proves nothing here:
+  # bmi2 can be a second measurement as easily as a square. So a form is left out only
+  # when its values are an exact transform of the form drawn, and the grouping runs on
+  # the displayable columns, so a plain form that is a KEY does not take its transforms
+  # with it. A transform not listed here is drawn, a page too many rather than one lost.
+  if (!TRANSFORMS && length(VARIABLES)) {
+    .transforms <- list("log(%s)" = log, "log10(%s)" = log10, "log2(%s)" = log2, "1/%s" = function(v) 1 / v,
+                        "%s^2" = function(v) v^2, "sqrt(%s)" = sqrt, "exp(%s)" = exp)
+    .transform_of <- function(x, base) {
+      if (!is.numeric(x) || !is.numeric(base)) return(NA_character_)
+      for (form in names(.transforms)) {
+        y <- suppressWarnings(.transforms[[form]](base))
+        ok <- is.finite(x) & is.finite(y)
+        if (sum(ok) >= 2L && identical(is.finite(x), is.finite(y)) &&
+              isTRUE(all.equal(x[ok], y[ok], tolerance = 1e-6, check.attributes = FALSE))) return(form)
+      }
+      NA_character_
+    }
+    .forms <- hvtiRutilities::concept_map(VARIABLES)
+    .plain <- stats::setNames(.forms$variable[.forms$representative], .forms$concept[.forms$representative])
+    # In the dataset's order, which concept_map() does not keep.
+    .forms <- .forms[!.forms$representative, , drop = FALSE]
+    .forms <- .forms[order(match(.forms$variable, VARIABLES)), , drop = FALSE]
+    .as <- vapply(seq_len(nrow(.forms)), function(i) {
+      .transform_of(d[[.forms$variable[[i]]]], d[[.plain[[.forms$concept[[i]]]]]])
+    }, character(1L))
+    .dropped <- !is.na(.as)
+    if (any(.dropped)) {
+      .base <- .plain[.forms$concept[.dropped]]
+      VARIABLES <- setdiff(VARIABLES, .forms$variable[.dropped])
+      cat("Not drawn, as transforms of a variable drawn here, checked by their values (set TRANSFORMS <- TRUE to draw them):",
+          paste(paste(.forms$variable[.dropped], "=", sprintf(.as[.dropped], .base)), collapse = ", "), "\n")
+    }
   }
 } else {
   VARIABLES <- setdiff(VARIABLES, EXCLUDE)
