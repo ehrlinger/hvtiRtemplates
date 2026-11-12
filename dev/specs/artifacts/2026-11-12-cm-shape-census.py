@@ -9,10 +9,11 @@ also build the match themselves:
 
     match_and_fit   the job matches (PSMATCH, a greedy/caliper macro, MatchIt,
                     ps_match) and fits a Cox model
-    fit_matched     Cox on a matched set: pair strata, a robust/clustered
-                    variance, or a WHERE/filter on a match flag
+    fit_matched     Cox on a matched set: strata or cluster on a pair id, a
+                    WHERE/filter on a match flag, or a robust variance with
+                    no weight
     fit_weighted    Cox under a weight (WEIGHT statement, coxph weights=,
-                    an IPTW or matching-weight variable)
+                    an IPTW or matching-weight variable), robust variance or not
     fit_unadjusted  Cox with none of the above
     manual_review   both pair and weight handling: a person decides
     misfiled        no Cox fit at all
@@ -57,22 +58,37 @@ SAS_MACRO_WORDS = {
 
 
 def folder_index(parts):
-    """Index of the deepest taxonomy folder in a path, or None."""
-    hits = [i for i, part in enumerate(parts) if FOLDER_RE.match(part)]
-    return hits[-1] if hits else None
+    """Index of the first taxonomy folder in parts, or None.
+
+    The first, not the deepest: a study can nest graphs/ inside analyses/, and
+    taking the deepest would split one study into several keys, which inflates
+    the study counts the public macro list is gated on.
+    """
+    return next((i for i, part in enumerate(parts) if FOLDER_RE.match(part)), None)
 
 
-def study_key(path):
-    parts = path.parts
-    return str(Path(*parts[:folder_index(parts)]))
+def relative_parts(path, root):
+    return path.relative_to(root).parts
 
 
-def folder_name(path):
-    return FOLDER_RE.match(path.parts[folder_index(path.parts)]).group(1).lower()
+def study_key(path, root=Path("/")):
+    parts = relative_parts(path, root)
+    return str(Path(root, *parts[:folder_index(parts)]))
+
+
+def folder_name(path, root=Path("/")):
+    parts = relative_parts(path, root)
+    return FOLDER_RE.match(parts[folder_index(parts)]).group(1).lower()
 
 
 def strip_comments(text, suffix):
-    """Drop comments so commented-out fits do not count as fits."""
+    """Drop comments so commented-out fits do not count as fits.
+
+    SAS comment forms only in .sas files: in Rmd and qmd prose a "* item"
+    bullet after a ";" would swallow text up to the next ";".
+    """
+    if suffix.lower() in R_SUFFIXES:
+        return re.sub(r"#[^\n]*", "", text)
     text = re.sub(r"/\*.*?\*/", " ", text, flags=re.DOTALL)
     # A statement comment starts at text start or after a ";". Consecutive
     # comments share a ";", so repeat until the text stops changing.
@@ -81,8 +97,6 @@ def strip_comments(text, suffix):
         if stripped == text:
             break
         text = stripped
-    if suffix.lower() in R_SUFFIXES:
-        text = re.sub(r"#[^\n]*", "", text)
     return text
 
 
@@ -105,7 +119,9 @@ def coxph_calls(lower):
     return calls
 
 
-PAIR_NAME = r"\w*(?:pair|match|mtch|set_?id)\w*"
+# A pair-id stem at the start of a name or after "_", so dataset_id, repair
+# and mismatch do not count. subclass is MatchIt's matched-set column.
+PAIR_NAME = r"\b(?:\w*_)?(?:pair|match|mtch|set_?id|subclass)\w*"
 WEIGHT_NAME = r"\b(?:iptw\w*|\w*mtwt\w*|\w*match_?wt\w*|\w*matchwt\w*|\w*mw_?wt\w*|ps_?wt\w*)\b"
 
 
@@ -113,31 +129,38 @@ def signals(path, text):
     lower = strip_comments(text.lower(), path.suffix)
     steps = phreg_steps(lower)
     calls = coxph_calls(lower)
+    sas = path.suffix.lower() == ".sas"
     sas_weight = any(re.search(r"(?:^|;)\s*weight\s+\w+", step) for step in steps)
-    sas_pair = any(
-        re.search(r"(?:^|;)\s*strata\s+" + PAIR_NAME, step)
-        or re.search(r"covsandwich\s*\(\s*aggr", step)
-        or re.search(r"(?:^|;)\s*id\s+\w+\s*;", step)
-        for step in steps)
+    # STRATA on a pair id, any position in the list, is a matched-set analysis.
+    # COVS(AGGREGATE) needs an ID statement: on a pair id it is matched sets,
+    # on anything else it is the robust variance that goes with a weight. A
+    # bare ID without COVS only labels output and counts as neither.
+    sas_aggregate = [step for step in steps if re.search(r"\bcovs(?:andwich)?\s*\(\s*aggr", step)]
+    sas_pair = any(re.search(r"(?:^|;)\s*strata\s+[^;/]*" + PAIR_NAME, step) for step in steps) \
+        or any(re.search(r"(?:^|;)\s*id\s+[^;]*" + PAIR_NAME, step) for step in sas_aggregate)
+    sas_robust = bool(sas_aggregate) and not sas_pair
     r_weight = any(re.search(r"\bweights\s*=", call) for call in calls)
     r_pair = any(
-        re.search(r"\bcluster\s*\(|\bcluster\s*=|\brobust\s*=\s*t", call)
-        or re.search(r"\bstrata\s*\(\s*" + PAIR_NAME, call)
+        re.search(r"\b(?:cluster|strata)\s*\([^)]*" + PAIR_NAME, call)
+        or re.search(r"\bcluster\s*=\s*" + PAIR_NAME, call)
         for call in calls)
+    r_robust = not r_pair and any(
+        re.search(r"\bcluster\s*[(=]|\brobust\s*=\s*t", call) for call in calls)
     return {
         "cox": bool(steps or calls),
         "match": bool(re.search(
             r"\bproc\s+psmatch\b"
-            r"|%\s*(?:gmatch|match|vmatch|nnmatch|greedy\w*|onetomany\w*|\w*caliper\w*)\b"
             r"|\bmatchit\s*\(|\bmatching::match\s*\(|\bmatch\s*\(\s*(?:y|tr)\s*=|\bps_match\s*\(",
-            lower)),
+            lower)) or (sas and bool(re.search(
+                r"%(?:gmatch|match|vmatch|nnmatch|greedy\w*|onetomany\w*|\w*caliper\w*)\b", lower))),
         "weight": sas_weight or r_weight
         or bool(re.search(WEIGHT_NAME + r"|\bps_weight\s*\(", lower)),
         "pair": sas_pair or r_pair,
-        "match_subset": bool(re.search(
-            r"\bwhere\b[^;]*\b" + PAIR_NAME + r"\s*(?:=|eq|ne|in\b|>|\^=)"
-            r"|\bfilter\s*\([^)]*\b" + PAIR_NAME + r"\s*(?:==|%in%|>|!=)",
-            lower)),
+        "robust": sas_robust or r_robust,
+        # WHERE only in SAS: R has no ";" to end it, so prose would run on.
+        "match_subset": bool(
+            (sas and re.search(r"\bwhere\b[^;]*" + PAIR_NAME + r"\s*(?:=|eq|ne|in\b|>|\^=)", lower))
+            or re.search(r"\bfilter\s*\([^)]*" + PAIR_NAME + r"\s*(?:==|%in%|>|!=)", lower)),
         "ps_fit": bool(re.search(
             r"\bproc\s+logistic\b|\bps_logistic\s*\(|\bglm\s*\([^)]*binomial", lower, re.DOTALL)),
         "mi": bool(re.search(r"_imputation_|\bimputation(?:_col)?\b|\bproc\s+mianalyze\b", lower)),
@@ -154,7 +177,8 @@ def classify(found):
         return "manual_review"
     if found["weight"]:
         return "fit_weighted"
-    if matched:
+    # A robust variance with no weight is the usual analysis of matched sets.
+    if matched or found["robust"]:
         return "fit_matched"
     return "fit_unadjusted"
 
@@ -176,7 +200,7 @@ def candidate_files(root):
     for directory, subdirs, files in os.walk(str(root), onerror=traversal_errors.append):
         subdirs[:] = [name for name in subdirs if name.lower() not in SKIP_DIRS]
         base = Path(directory)
-        if folder_index(base.parts) is None:
+        if folder_index(relative_parts(base, root)) is None:
             continue
         for name in files:
             if Path(name).suffix.lower() not in PROGRAM_SUFFIXES:
@@ -208,7 +232,7 @@ def main():
             continue
         text = raw.decode("utf-8", errors="ignore")
         found = signals(path, text)
-        study = study_key(path)
+        study = study_key(path, args.corpus_root)
         for name in called_macros(text, path.suffix):
             macro_studies[name].add(study)
         rows.append({
@@ -216,9 +240,9 @@ def main():
             "extension": path.suffix.lower(),
             "path": str(path),
             "study": study,
-            "folder": folder_name(path),
+            "folder": folder_name(path, args.corpus_root),
             "shape": classify(found),
-            **{key: found[key] for key in ("match", "weight", "pair", "match_subset", "ps_fit", "mi")},
+            **{key: found[key] for key in ("match", "weight", "pair", "robust", "match_subset", "ps_fit", "mi")},
         })
     if not rows:
         if candidates:
@@ -226,7 +250,8 @@ def main():
         raise SystemExit("No cm candidates found: check the corpus root and the mount name.")
 
     args.private_csv.parent.mkdir(parents=True, exist_ok=True)
-    with args.private_csv.open("w", newline="", encoding="utf-8") as handle:
+    # backslashreplace: a non-UTF-8 file name on the server must not lose the scan.
+    with args.private_csv.open("w", newline="", encoding="utf-8", errors="backslashreplace") as handle:
         writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
         writer.writeheader()
         writer.writerows(rows)

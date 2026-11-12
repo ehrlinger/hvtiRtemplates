@@ -90,6 +90,46 @@ class Classify(unittest.TestCase):
                                "proc logistic data=x; model trt = age; run; proc phreg data=x; model t*d(0)=trt; run;")
         self.assertTrue(found["ps_fit"])
 
+    def test_iptw_with_robust_variance_is_fit_weighted(self):
+        text = "proc phreg data=x covs(aggregate); model t*dead(0) = trt; weight iptw; id patid; run;"
+        self.assertEqual(shape("cm.dead.sas", text), "fit_weighted")
+        text = "fit <- coxph(Surv(t, dead) ~ trt, data = d, weights = w, robust = TRUE)"
+        self.assertEqual(shape("cm.dead.R", text), "fit_weighted")
+
+    def test_covs_abbreviation_on_a_pair_id_is_fit_matched(self):
+        text = "proc phreg data=m covs(aggregate); model t*dead(0) = trt; id pairid; run;"
+        self.assertEqual(shape("cm.dead.sas", text), "fit_matched")
+
+    def test_pair_id_later_in_the_strata_list_counts(self):
+        text = "proc phreg data=m; model t*dead(0) = trt; strata age_grp pairid; run;"
+        self.assertEqual(shape("cm.dead.sas", text), "fit_matched")
+
+    def test_bare_id_statement_is_not_a_pair(self):
+        text = "proc phreg data=x; model t*dead(0) = trt; id patid; run;"
+        self.assertEqual(shape("cm.dead.sas", text), "fit_unadjusted")
+
+    def test_names_that_merely_contain_a_stem_are_not_pairs(self):
+        for name in ("dataset_id", "subset_id", "repair", "mismatch"):
+            text = f"proc phreg data=x; where {name} = 1; model t*dead(0) = trt; strata {name}; run;"
+            self.assertEqual(shape("cm.dead.sas", text), "fit_unadjusted", name)
+
+    def test_matchit_subclass_strata_is_fit_matched(self):
+        text = "fit <- coxph(Surv(t, dead) ~ trt + strata(subclass), data = md)"
+        self.assertEqual(shape("cm.dead.R", text), "fit_matched")
+
+    def test_prose_where_in_a_qmd_is_not_a_match_subset(self):
+        text = "Patients where the repair failed are excluded.\n\n```{r}\nmatched = 1\n" \
+               "fit <- coxph(Surv(t, dead) ~ trt, data = d)\n```"
+        self.assertEqual(shape("cm.dead.qmd", text), "fit_unadjusted")
+
+    def test_pipe_before_match_is_not_a_macro(self):
+        text = "x <- d %>% match(1)\nfit <- coxph(Surv(t, dead) ~ trt, data = d)"
+        self.assertEqual(shape("cm.dead.R", text), "fit_unadjusted")
+
+    def test_markdown_bullet_does_not_eat_code(self):
+        text = "Note;\n* a bullet\n```{r}\nfit <- coxph(Surv(t, dead) ~ trt, data = d); x <- 1\n```"
+        self.assertEqual(shape("cm.dead.qmd", text), "fit_unadjusted")
+
 
 class Names(unittest.TestCase):
     def test_prefix_is_anchored(self):
@@ -102,6 +142,13 @@ class Names(unittest.TestCase):
         self.assertEqual(census.folder_name(Path("/s/a/30_analyses/cm.x.sas")), "analyses")
         self.assertEqual(census.folder_name(Path("/s/a/graphs/cm.x.sas")), "graphs")
         self.assertEqual(census.study_key(Path("/s/a/30_analyses/cm.x.sas")), "/s/a")
+
+    def test_nested_folder_keeps_one_study_key(self):
+        root = Path("/data/documents/studies")
+        a = census.study_key(root / "s1/analyses/cm.a.sas", root)
+        b = census.study_key(root / "s1/analyses/graphs/cm.b.sas", root)
+        self.assertEqual(a, b)
+        self.assertEqual(a, "/data/documents/studies/s1")
 
     def test_macros_drop_language_words_and_local_definitions(self):
         text = "%let x = 1; %macro local_one; %mend; %local_one; %gmatch(data=x); %hazard(data=y);"
