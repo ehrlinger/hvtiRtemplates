@@ -112,7 +112,20 @@ test_that("a record that resolves outside the study through a link stops", {
   qmd <- ar_fake_job(root)
   outside <- withr::local_tempdir()
   file.copy(file.path(root, "graphs", "dead-hz", "hz-fit.png"), file.path(outside, "x.png"))
-  file.symlink(outside, file.path(root, "graphs", "lnk"))
+  link <- file.path(root, "graphs", "lnk")
+  linked <- suppressWarnings(file.symlink(outside, link))
+  skip_if_not(linked, "This platform does not permit creating symbolic links.")
+  # Windows: withr's recursive unlink() of root warns on the directory reparse point, so
+  # remove the link itself first, as test-migrate-job.R does. Deferred after root's and
+  # outside's cleanups, it runs before them (LIFO). Built from `link`, never
+  # normalizePath(), which would follow the link and have rmdir remove `outside`.
+  if (.Platform$OS.type == "windows") {
+    windows_link <- chartr("/", "\\", link)
+    withr::defer({
+      status <- system2("cmd", c("/c", "rmdir", shQuote(windows_link)))
+      if (!identical(as.integer(status), 0L)) warning("rmdir on the test link returned ", status, call. = FALSE)
+    })
+  }
   ar_corrupt_record(qmd, file = "graphs/lnk/x.png")
   expect_error(hvtiRtemplates:::.ar_resolve("hz.dead.hz#fig-fit", root), "resolves outside the study")
 })
