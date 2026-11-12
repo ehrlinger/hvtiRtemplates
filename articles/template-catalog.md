@@ -84,6 +84,7 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `lm-propensity_binary` | Propensity model for a binary treatment, scoring the columns that matching and weighting jobs use. | `add_job("lm", subject, type, qualifier = "propensity_binary")` |
 | 🟢 Shipped | `lm-propensity_nominal` | Generalized-logit propensity model for a nominal treatment with an explicit reference level. | `add_job("lm", subject, type, qualifier = "propensity_nominal")` |
 | 🟢 Shipped | `lm-propensity_ordinal` | Proportional-odds propensity model for an ordered treatment. | `add_job("lm", subject, type, qualifier = "propensity_ordinal")` |
+| 🟡 In progress | `mm` | Linear mixed model of a repeated continuous response, with the population-average course over time. | `add_job("mm", subject, type)` |
 | 🟢 Shipped | `nb-boostmtree` | Fits boosted multivariate trees to a response measured repeatedly over follow-up, and reports its error path, fit over time, importance, partial effects and patient trajectories. | `add_job("nb", subject, type, qualifier = "boostmtree")` |
 | 🟢 Shipped | `rfc-explain` | Explains a saved classification forest: variable importance and dependence plots. | `add_job("rfc", subject, type, qualifier = "explain")` |
 | 🟢 Shipped | `rfc-fit` | Grows a classification forest and checks it: out-of-bag error and the ROC curve with its AUC. | `add_job("rfc", subject, type, qualifier = "fit")` |
@@ -139,7 +140,6 @@ as zero.
 | 🟡 In progress | `nm` | Non-linear model | 121 |  |
 | 🟡 In progress | `gm` | Generalized model | 73 |  |
 | 🟡 In progress | `rp` | Regression plot | 68 |  |
-| 🟡 In progress | `mm` | Mixed model | 56 |  |
 | 🟡 In progress | `rg` | Regression trends | 45 |  |
 | 🟡 In progress | `mp` | Mixed model plot | 41 |  |
 | 🟡 In progress | `dp-spaghetti` | Descriptive plot: spaghetti | 40 |  |
