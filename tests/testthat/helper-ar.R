@@ -2,12 +2,15 @@
 # a temporary study root. Restores the package's run state afterwards.
 local_exhibit_state <- function(root = withr::local_tempdir(.local_envir = env), env = parent.frame()) {
   state <- hvtiRtemplates:::.run_state
-  saved <- mget(intersect(c("root", "exhibits", "methods"), ls(state, all.names = TRUE)), envir = state)
+  keys <- c("root", "exhibits", "methods", "written")
+  saved <- mget(intersect(keys, ls(state, all.names = TRUE)), envir = state)
+  # No written list: outside a job run every existing file is taken, whatever an earlier test's setup left.
+  rm(list = intersect("written", ls(state, all.names = TRUE)), envir = state)
   assign("root", normalizePath(root, winslash = "/"), envir = state)
   assign("exhibits", list(), envir = state)
   assign("methods", NULL, envir = state)
   withr::defer({
-    rm(list = intersect(c("root", "exhibits", "methods"), ls(state, all.names = TRUE)), envir = state)
+    rm(list = intersect(keys, ls(state, all.names = TRUE)), envir = state)
     list2env(saved, envir = state)
   }, envir = env)
   invisible(get("root", envir = state))

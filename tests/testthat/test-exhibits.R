@@ -65,16 +65,27 @@ test_that("the sidecar extra carries an unnamed exhibit array and drops what is 
   expect_identical(x$exhibits[[1]]$label, "fig-a")
 })
 
-test_that("a file older than the run is not recorded, and one written in it is", {
+test_that("a file an earlier render left is not recorded, and one this run wrote is", {
   root <- local_exhibit_state()
-  assign("started", Sys.time(), envir = hvtiRtemplates:::.run_state)
-  withr::defer(rm("started", envir = hvtiRtemplates:::.run_state))
+  state <- hvtiRtemplates:::.run_state
+  had <- exists("written", envir = state, inherits = FALSE)
+  saved <- if (had) get("written", envir = state)
+  assign("written", character(), envir = state)
+  withr::defer(if (had) assign("written", saved, envir = state) else rm("written", envir = state))
+  # Left on disk by an earlier render: present, with a current timestamp, but not written by this run.
   old <- file.path(root, "old.png")
   writeBin(as.raw(1), old)
-  Sys.setFileTime(old, Sys.time() - 3600)
   expect_null(hvtiRtemplates:::.record_exhibit(old, "figure", label = "fig-old"))
-  expect_length(hvtiRtemplates:::.run_state$exhibits, 0L)
+  expect_length(state$exhibits, 0L)
+  # Written by this run through .save_figure(), the route save_figure() takes in a template.
+  fig <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x, y)) + ggplot2::geom_point()
   fresh <- file.path(root, "fresh.png")
-  writeBin(as.raw(1), fresh)
+  hvtiRtemplates:::.save_figure(fig, fresh, width = 2, height = 2, keep = "fresh")
   expect_identical(hvtiRtemplates:::.record_exhibit(fresh, "figure", label = "fig-new")$label, "fig-new")
+  # A table saved by .save_exhibit() marks itself.
+  expect_identical(hvtiRtemplates:::.save_exhibit(data.frame(a = 1), "table", file.path(root, "t.rds"),
+                                                  label = "tbl-t")$label, "tbl-t")
+  # With SAVE_FIGURES off, .save_figure() writes nothing and the leftover file stays unrecorded.
+  hvtiRtemplates:::.save_figure(fig, old, width = 2, height = 2, save = FALSE)
+  expect_null(hvtiRtemplates:::.record_exhibit(old, "figure", label = "fig-old"))
 })

@@ -16,9 +16,16 @@
 }
 
 # A file this run did not write records nothing: a figure with SAVE_FIGURES off
-# leaves the file an earlier render wrote, and its mtime is older than the run's
-# start, less 2 seconds for the timestamp granularity of an SMB share. The ar
-# report then stops on the missing label and names it, as for an absent file.
+# leaves the file an earlier render wrote. .save_figure() and .save_exhibit()
+# list what they write in .run_state$written, which .job_setup() empties; a
+# timestamp would compare the share's clock with this host's. The ar report then
+# stops on the missing label and names it, as for an absent file. Outside a job
+# run, written is NULL and every existing file is taken.
+.mark_written <- function(file) {
+  if (!is.null(.run_state$written)) .run_state$written <- c(.run_state$written, normalizePath(file, winslash = "/"))
+  invisible(file)
+}
+
 .record_exhibit <- function(file, kind = c("figure", "table", "value"), label = knitr::opts_current$get("label"),
                             root = .run_state$root) {
   kind <- match.arg(kind)
@@ -28,8 +35,8 @@
   }
   if (is.null(root)) stop("An exhibit can be recorded only after the job's setup chunk has run.", call. = FALSE)
   if (!file.exists(file)) return(invisible(NULL))
-  started <- .run_state$started
-  if (!is.null(started) && file.mtime(file) < started - 2) return(invisible(NULL))
+  written <- .run_state$written
+  if (!is.null(written) && !normalizePath(file, winslash = "/") %in% written) return(invisible(NULL))
   if (label %in% names(.run_state$exhibits)) {
     stop("Exhibit label '", label, "' is recorded twice in this run; give each exhibit its own label.", call. = FALSE)
   }
@@ -50,6 +57,7 @@
     stop("A value exhibit must be a named list, so ar_value() can name a field.", call. = FALSE)
   }
   saveRDS(x, file)
+  .mark_written(file)
   .record_exhibit(file, kind, label)
 }
 

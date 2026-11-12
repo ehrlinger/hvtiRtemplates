@@ -755,7 +755,8 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 # this job's own choices. A report whose pasted copy no longer matches it says so.
 # Reword it here when the template's method changes, not in each study.
 .n <- nrow(resp)
-.events <- if ("status" %in% names(resp)) sum(resp$status == 1L, na.rm = TRUE) else NA_integer_
+# n_fitted, from the event-count check above, also counts interval-censored events.
+.events <- n_fitted
 hvtiRtemplates:::.save_exhibit(list(n = .n, events = .events, phases = length(phases)), "value",
                                set_path("estimates", "hz-methods.rds"))
 hvtiRtemplates:::.methods_text(sprintf(
@@ -763,7 +764,7 @@ hvtiRtemplates:::.methods_text(sprintf(
         "(TemporalHazard %s), fitted by maximum likelihood to %d patients%s."),
   EVENT, length(phases), if (length(phases) == 1L) "" else "s",
   as.character(utils::packageVersion("TemporalHazard")), .n,
-  if (is.na(.events)) "" else sprintf(" with %d events", .events)
+  sprintf(" with %d events", .events)
 ))
 ```
 
