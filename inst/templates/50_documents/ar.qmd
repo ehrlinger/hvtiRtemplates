@@ -1,0 +1,116 @@
+---
+title: "Analysis report"
+date: now
+date-format: "YYYY-MM-DD HH:mm"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-location: left
+    toc-depth: 3
+    code-fold: true
+    embed-resources: true
+---
+
+<!-- An `ar` job answers ONE research question from jobs that have already run.
+     It re-runs nothing: each item shows a figure, table or value a finished job
+     saved, checked against the bytes that job recorded. The report goes to the
+     researchers, who choose which items are published; the publication
+     formatting comes after their choice.
+
+     Workflow:
+       1. Render the source jobs until each is final.
+       2. Name each item below as "<job>#<label>": the job's file name without
+          .qmd, and the chunk label it saved under. The job's report shows the
+          labels.
+       3. From the console: hvtiRtemplates::ar_paste_methods("<this file>").
+       4. Write each item's results and interpretation, then render.
+       5. When a source job is rendered again, reread the items it feeds and
+          run hvtiRtemplates::ar_review("<this file>"). -->
+
+```{r}
+#| label: setup
+#| results: asis
+SUBJECT <- "dead_pa"
+TYPE    <- "question"
+.in <- knitr::current_input(dir = TRUE)
+suppressPackageStartupMessages(library(hvtiRutilities))
+# The study root is the nearest directory above this file holding _study.yml, so
+# the report renders the same from the Render button, quarto render, or
+# render_job(). The guards in .job_setup() refuse an unfinished render: an item
+# that still reads a draft job, or a file still holding an EDIT: marker, is
+# listed in a callout rather than passed off as a result.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
+```
+
+## Question
+
+```{r}
+#| label: edit-question
+#| results: asis
+# EDIT: paste the research question from the protocol, word for word. The
+# report is judged against this sentence, so do not paraphrase it.
+QUESTION <- "Does the early hazard of death differ from the late hazard?"
+cat("> ", QUESTION, "\n", sep = "")
+```
+
+## Item 1: Survival from the parametric fit
+
+```{r}
+#| label: item-1
+# EDIT: name the exhibit as "<job>#<label>".
+hvtiRtemplates::ar_item("hz.dead_pa.hz#fig-fit")
+```
+
+::: methods
+<!-- ar_paste_methods() writes the source job's paragraph here. Edit it freely. -->
+:::
+
+::: results
+<!-- EDIT: what the exhibit shows, with its numbers. Quote a saved value with an
+inline r expression calling hvtiRtemplates::ar_value(), giving the item and the
+field, so the number follows the fit instead of being typed. -->
+:::
+
+::: interpretation
+<!-- EDIT: how this bears on the question above. -->
+:::
+
+## Item 2: Parameter estimates
+
+```{r}
+#| label: item-2
+# EDIT: name the exhibit as "<job>#<label>".
+hvtiRtemplates::ar_item("hz.dead_pa.hz#tbl-estimates")
+```
+
+::: methods
+<!-- ar_paste_methods() writes the source job's paragraph here. Edit it freely. -->
+:::
+
+::: results
+<!-- EDIT: what the exhibit shows, with its numbers. -->
+:::
+
+::: interpretation
+<!-- EDIT: how this bears on the question above. -->
+:::
+
+## About this run
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  run = .job$run,
+  extra = list(subject = SUBJECT, type = TYPE, question = QUESTION)
+))
+```

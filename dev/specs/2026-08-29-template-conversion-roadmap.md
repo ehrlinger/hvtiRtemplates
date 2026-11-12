@@ -44,7 +44,7 @@ row has no template on disk.
 > `artifacts/roadmap_render.py`. Do not hand-edit these tables —
 > edit the catalog and re-render. CI checks the agreement.
 
-**75 templates in scope**, of which 48 exist on disk.
+**75 templates in scope**, of which 49 exist on disk.
 
 ## By family
 
@@ -171,7 +171,7 @@ row has no template on disk.
 
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
-| `ar` | queued | 706 | 394 | 89 | — |
+| `ar` | *in flight* | 706 | 394 | 89 | — |
 
 ## By workflow
 
