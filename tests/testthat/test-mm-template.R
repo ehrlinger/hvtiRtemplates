@@ -195,6 +195,9 @@ test_that("mm_grid uses the profiles and times it is given", {
   expect_equal(range(grid$time), range(d$time))
 })
 
+compare_table <- paste0("Comparison of covariance structures, same fixed effects\\s*</figcaption>\\s*<div[^>]*>\\s*",
+                        "<div class=\"cell-output-display\">\\s*<table")
+
 test_that("mm renders end to end and saves a bundle with no nlme object and no raw IDs", {
   skip_on_cran()
   skip_if_not_installed("quarto")
@@ -211,8 +214,8 @@ test_that("mm renders end to end and saves a bundle with no nlme object and no r
   expect_true(all(pred$lower < pred$estimate & pred$estimate < pred$upper))
   html <- paste(readLines(out$output, warn = FALSE), collapse = "\n")
   expect_match(html, "within-patient correlation", fixed = TRUE)
-  # The caption also sits in the code fold, so match the rendered table caption.
-  expect_no_match(html, "Table[^:<]{1,8}: Comparison of covariance structures")
+  # A skipped tbl- chunk still draws its caption and code fold, so look for the table output after the caption.
+  expect_no_match(html, compare_table)
 })
 
 test_that("mm compares structures only when STRUCTURE lists several", {
@@ -221,5 +224,5 @@ test_that("mm compares structures only when STRUCTURE lists several", {
   skip_if_not(quarto::quarto_available())
   out <- mm_render_fixture(choices = 'STRUCTURE <- c("cs", "random")')
   html <- paste(readLines(out$output, warn = FALSE), collapse = "\n")
-  expect_match(html, "Table[^:<]{1,8}: Comparison of covariance structures")
+  expect_match(html, compare_table)
 })

@@ -47,6 +47,14 @@ set_path <- .job$set_path
 
 ```{r}
 #| label: edit-study-choices
+# Optional: NULL reads the cohort alone. To model measurements held in a registered
+# ancillary dataset (echoes, labs), name it in JOIN; each joined record is a row.
+# REDUCE stays NULL here: collapsing to one record per patient would remove the
+# repeated measurements this job exists to model.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
 # EDIT: the registered dataset this job reads ("built" is the study dataset).
 DATASET <- "built"
 # EDIT: a named analysis set, or NULL for every row WHERE keeps.
@@ -62,14 +70,6 @@ TIME <- "time"
 # EDIT: what makes a row unique. A repeated measurement is one row per patient and time;
 # add a sequence column if a patient can have two measurements at the same time.
 KEY <- c(ID, TIME)
-# Optional: NULL reads the cohort alone. To model measurements held in a registered
-# ancillary dataset (echoes, labs), name it in JOIN; each joined record is a row.
-# REDUCE stays NULL here: collapsing to one record per patient would remove the
-# repeated measurements this job exists to model.
-JOIN <- NULL
-JOIN_VARS <- NULL
-REDUCE <- NULL
-JOIN_KEY <- NULL
 
 # EDIT: the repeated continuous response, named as the column.
 OUTCOME <- "continuous_outcome"
@@ -291,6 +291,7 @@ mm_check(d, .id, TIME, STRUCTURE, IMPUTATION)
 model_formula <- stats::reformulate(c(TIME_TERMS, PREDICTORS), response = .response)
 fits <- lapply(stats::setNames(STRUCTURE, STRUCTURE), function(s) mm_fit(d, model_formula, .id, TIME, s, METHOD))
 fit <- fits[[1L]]
+comparison <- NULL  # replaced by the tbl-compare chunk when STRUCTURE lists several
 ```
 
 ```{r}
@@ -334,17 +335,14 @@ if (!is.null(mm_note(fit))) cat("\n", mm_note(fit), "\n", sep = "")
 
 ```{r}
 #| label: tbl-compare
-#| results: asis
+#| tbl-cap: "Comparison of covariance structures, same fixed effects"
+#| eval: !expr 'length(STRUCTURE) > 1'
 # AIC and BIC compare covariance structures fairly under REML only because every
 # fit here has the same fixed effects; a table of different fixed effects needs ML.
-comparison <- NULL
-if (length(fits) > 1L) {
-  comparison <- data.frame(structure = names(fits),
-                           AIC = vapply(fits, function(f) stats::AIC(f$model), numeric(1L)),
-                           BIC = vapply(fits, function(f) stats::BIC(f$model), numeric(1L)), row.names = NULL)
-  cat(knitr::knit_print(knitr::kable(comparison, digits = 1,
-                                     caption = "Comparison of covariance structures, same fixed effects")), sep = "\n")
-}
+comparison <- data.frame(structure = names(fits),
+                         AIC = vapply(fits, function(f) stats::AIC(f$model), numeric(1L)),
+                         BIC = vapply(fits, function(f) stats::BIC(f$model), numeric(1L)), row.names = NULL)
+knitr::kable(comparison, digits = 1)
 ```
 
 ```{r}
