@@ -649,6 +649,8 @@ est <- data.frame(
 ```{r}
 #| label: tbl-estimates
 #| tbl-cap: "Parameter estimates on the natural scale, with standard errors on the fitting scale"
+# Saved as a data frame for an ar analysis report; the report formats it.
+hvtiRtemplates:::.save_exhibit(as.data.frame(est), "table", set_path("documents", "tbl-estimates.rds"))
 knitr::kable(est, digits = 6)
 ```
 
@@ -718,6 +720,7 @@ if (!all(c("lo", "hi") %in% names(resp))) {
   ggplot2::labs(x = "Years", y = "Survival (%)") +
   hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "hz-fit")
+hvtiRtemplates:::.record_exhibit(set_path("graphs", "hz-fit.png"), "figure")
 .fig
 ```
 
@@ -744,6 +747,24 @@ hz_art <- hvtiRtemplates:::.attach_handoff_lineage(
                 if (!is.null(START)) list(start = START))
 )
 saveRDS(hz_art, set_path("estimates", "hz.rds"))
+```
+
+```{r}
+#| label: methods
+# The paragraph an ar analysis report pastes into its Methods slot, filled from
+# this job's own choices. A report whose pasted copy no longer matches it says so.
+# Reword it here when the template's method changes, not in each study.
+.n <- nrow(resp)
+.events <- if ("status" %in% names(resp)) sum(resp$status == 1L, na.rm = TRUE) else NA_integer_
+hvtiRtemplates:::.save_exhibit(list(n = .n, events = .events, phases = length(phases)), "value",
+                               set_path("estimates", "hz-methods.rds"))
+hvtiRtemplates:::.methods_text(sprintf(
+  paste("The hazard of the event recorded in %s was modeled as a parametric multiphase hazard with %d phase%s",
+        "(TemporalHazard %s), fitted by maximum likelihood to %d patients%s."),
+  EVENT, length(phases), if (length(phases) == 1L) "" else "s",
+  as.character(utils::packageVersion("TemporalHazard")), .n,
+  if (is.na(.events)) "" else sprintf(" with %d events", .events)
+))
 ```
 
 ```{r}

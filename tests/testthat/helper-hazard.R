@@ -26,7 +26,12 @@ hazard_run <- function(prefix, labels, env, choices = list(), src = readLines(ha
     if (identical(label, "setup")) {
       eval_setup_chunk(code, env)  # nolint: object_usage_linter.
     } else {
-      suppressMessages(eval(parse(text = code), envir = env))
+      # knitr sets the chunk label during a render; here it is set, and restored, so
+      # an exhibit call that reads knitr::opts_current$get("label") sees its chunk's.
+      was <- knitr::opts_current$get("label")
+      knitr::opts_current$set(label = label)
+      tryCatch(suppressMessages(eval(parse(text = code), envir = env)),
+               finally = knitr::opts_current$set(label = was))
     }
     if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   }
