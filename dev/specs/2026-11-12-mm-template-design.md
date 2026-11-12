@@ -23,19 +23,19 @@ form clears the gate at 7 studies, but 30 of its 47 programs come from one study
 ### 2.1 The census
 
 `dev/specs/artifacts/2026-11-12-mm-shape-census.py`, run on lri over `/studies`
-on 2026-11-12. ⚠️ The review of PR #534 found two classifier defects: a PROC step with no
-`RUN` hid the step after it, and a `RANDOM`-only fit beside a separate `REPEATED`-only fit
-counted as `random_and_repeated`. Both are fixed, and the counts below are from the first run;
-they are replaced when the rerun (`rerun-copilot/` beside the first output) comes back. The public result is
-`dev/specs/artifacts/2026-11-12-mm-shape-census.json`; the private CSV, which
-holds paths, stays in `general/_development/mm-shape-census-20261112/out/`.
+on 2026-11-12, and rerun the same day after the review of PR #534 found two classifier
+defects: a PROC step with no `RUN` hid the step after it, and a `RANDOM`-only fit beside a
+separate `REPEATED`-only fit counted as both statements in one fit. The counts below are the
+rerun's. The public result is `dev/specs/artifacts/2026-11-12-mm-shape-census.json`; the
+private CSV, which holds paths, stays in
+`general/_development/mm-shape-census-20261112/rerun-copilot/out/`.
 
 | | |
 |---|---|
 | SAS programs | 263 in 56 studies |
 | R jobs | 1 |
-| `tp.mm` template copies skipped | 1,091 |
-| manual review | 18 programs |
+| `tp.mm` template copies skipped | 1,092 |
+| manual review | 73 programs, 55 of them the separate fits in §2.5 |
 | misfiled (no mixed fit) | 2 programs |
 | migrations to `gm` / `nm` | 0 / 0 |
 
@@ -44,7 +44,7 @@ holds paths, stays in `general/_development/mm-shape-census-20261112/out/`.
 | shape | SAS form | programs | studies | MI programs |
 |---|---|---|---|---|
 | `repeated_covariance` | `REPEATED / type= sub=` | 138 | 38 | 2 |
-| `random_and_repeated` | both statements | 59 | 15 | 0 |
+| `random_and_repeated` | both statements in one fit | 4 | 1 | 0 |
 | `random_effects` | `RANDOM ... / subject=` | 47 | 7 | 31 |
 
 30 of the 47 `random_effects` programs come from one study, which also carries
@@ -52,23 +52,40 @@ holds paths, stays in `general/_development/mm-shape-census-20261112/out/`.
 
 ### 2.3 Choices inside the fits
 
-Over the 244 programs that fit a mixed model:
+Over the 189 programs in the three shapes (the §2.5 programs are in manual review and not
+counted here):
 
 | choice | programs | studies |
 |---|---|---|
-| `type=cs` | 140 | 37 |
-| `type=ar(1)` | 54 | 13 |
+| `type=cs` | 94 | 27 |
+| `type=ar(1)` | 45 | 12 |
 | `type=un` | 7 | 4 |
-| `type=sp(pow)`, `sp(exp)`, `sp(gau)` | 6 | 5 |
-| `method=` stated (`ml` 3, `reml` 5) | 8 | 4 |
+| `type=sp(pow)` | 1 | 1 |
+| `method=` stated (`ml` 2, `reml` 4) | 6 | 1 |
 | splines in time | 0 | 0 |
-| `LSMEANS` | 12 | 5 |
+| `LSMEANS` | 11 | 4 |
 | `ESTIMATE` / `CONTRAST` | 1 | 1 |
-| saved predictions | 19 | 5 |
+| saved predictions | 13 | 4 |
 | multiple imputation | 33 | 4 |
 
-The 1,091 template copies show that a SAS template was in wide use, which is
+The 1,092 template copies show that a SAS template was in wide use, which is
 why the corpus is this uniform.
+
+### 2.5 Separate RANDOM and REPEATED fits
+
+55 programs in 14 studies fit a `RANDOM`-only step and a `REPEATED`-only step side by side.
+Read from the files on 2026-11-12:
+
+| what the two steps are | programs | studies |
+|---|---|---|
+| the same response fitted twice, a random intercept and slope in time (`random int iv_echo`) and then `type=cs` | 33 | 10 |
+| the `tp.mm` example step (`model mn_grad = iv_echo size`) left beside the real `REPEATED` fit | 13 | 6 |
+| different responses in the two steps | 9 | 2 |
+
+44 of the 55 use `type=cs`. So the marginal CS fit is still the corpus's main form, and the
+33 programs are a comparison of a random-slope model against it. The template's `"random"`
+is an intercept only, which matches 42 of the 47 `random_effects` programs; a random slope
+in time is not offered.
 
 ### 2.4 What a typical job does
 
@@ -185,7 +202,7 @@ The job saves two files:
 | splines in time | 0 | none |
 | figures | | `mp` |
 | non-normal outcomes | | `gm` |
-| the 18 manual-review programs | 13 are fixed-effects repeated-measures fits with LSMEANS | read before the catalog note is written |
+| the 18 other manual-review programs | 13 are fixed-effects repeated-measures fits with LSMEANS | read before the catalog note is written |
 
 ## 8. Catalog and documentation
 

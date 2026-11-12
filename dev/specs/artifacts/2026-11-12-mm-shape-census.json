@@ -4,7 +4,7 @@
   "r_jobs": 1,
   "sas_breadth": 56,
   "sas_breadth_jobs": 56,
-  "manual_review_programs": 18,
+  "manual_review_programs": 73,
   "misfiled_programs": 2,
   "shapes": {
     "random_effects": {
@@ -24,12 +24,12 @@
       "two_study_gate": true
     },
     "random_and_repeated": {
-      "sas_programs": 59,
-      "sas_studies": 15,
+      "sas_programs": 4,
+      "sas_studies": 1,
       "r_jobs": 0,
       "r_studies": 0,
       "mi_programs": 0,
-      "two_study_gate": true
+      "two_study_gate": false
     }
   },
   "migrations": {
@@ -39,24 +39,16 @@
   "over_mixed_fits": {
     "cov_types": {
       "ar(1)": {
-        "programs": 54,
-        "studies": 13
+        "programs": 45,
+        "studies": 12
       },
       "cs": {
-        "programs": 140,
-        "studies": 37
-      },
-      "sp(exp)": {
-        "programs": 1,
-        "studies": 1
-      },
-      "sp(gau)": {
-        "programs": 1,
-        "studies": 1
+        "programs": 94,
+        "studies": 27
       },
       "sp(pow)": {
-        "programs": 4,
-        "studies": 3
+        "programs": 1,
+        "studies": 1
       },
       "un": {
         "programs": 7,
@@ -65,12 +57,12 @@
     },
     "method": {
       "ml": {
-        "programs": 3,
-        "studies": 2
+        "programs": 2,
+        "studies": 1
       },
       "reml": {
-        "programs": 5,
-        "studies": 2
+        "programs": 4,
+        "studies": 1
       }
     },
     "spline": {
@@ -78,16 +70,16 @@
       "studies": 0
     },
     "lsmeans": {
-      "programs": 12,
-      "studies": 5
+      "programs": 11,
+      "studies": 4
     },
     "estimate": {
       "programs": 1,
       "studies": 1
     },
     "predictions": {
-      "programs": 19,
-      "studies": 5
+      "programs": 13,
+      "studies": 4
     },
     "mi": {
       "programs": 33,
@@ -102,7 +94,7 @@
     "symm": 5,
     "vars": 41
   },
-  "template_copies_skipped": 1091,
+  "template_copies_skipped": 1092,
   "traversal_errors": 0,
   "unreadable_candidates": 0
 }

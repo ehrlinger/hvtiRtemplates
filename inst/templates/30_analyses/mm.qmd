@@ -92,7 +92,7 @@ PREDICTORS <- c("age", "female")           # EDIT: the declared fixed effects be
 #   "un"         REPEATED visit / type=un: a correlation and a variance per visit pair.
 #                Same visit requirement; costs many parameters.
 #   "random"     RANDOM intercept / subject=id.
-#   "random+cs", "random+ar1"  both statements, as 15 corpus studies wrote them.
+#   "random+cs", "random+ar1"  both statements in one fit, as SAS writes RANDOM with REPEATED.
 # A spatial structure (type=sp(pow)) is not offered; nlme::corExp(form = ~ time | id)
 # is its R form if a study needs one.
 STRUCTURE <- "cs"
