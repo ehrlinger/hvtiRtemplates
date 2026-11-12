@@ -479,7 +479,9 @@ if (!is.null(.x_bars)) .d_eda_bars[[X_LABEL]] <- .x_bars
 .abbreviations <- hvtiRutilities::study_abbreviations(.cfg, extra = ABBREVIATIONS)
 .labels <- label_map(d, label_max = LABEL_MAX, abbreviations = .abbreviations)
 labels <- stats::setNames(.labels$label, .labels$key)
-# The abbreviations these variables' labels show, as a key under the section.
+# The abbreviations these variables' labels show, as a key in the caption of the
+# page that shows them; a key printed once after a section's last page was not
+# found (2026-11-11 training). "" when the page shortened nothing.
 # label_map() records which abbreviation each variable's final label shows, so
 # a label that says "SP" in its own words and is only cut is not counted as
 # using the key's SP; searching the label text could not tell the two apart.
@@ -487,10 +489,8 @@ abbreviation_key <- function(vars) {
   used <- attr(.labels, "abbreviations")
   by_key <- attr(.labels, "abbreviations_by_key")
   hit <- used$abbreviation %in% by_key$abbreviation[by_key$key %in% vars]
-  if (any(hit)) {
-    cat("\nAbbreviations: ", paste(used$abbreviation[hit], used$expansion[hit], sep = " = ", collapse = "; "), ".\n\n",
-        sep = "")
-  }
+  if (!any(hit)) return("")
+  paste0(" Abbreviations: ", paste(used$abbreviation[hit], used$expansion[hit], sep = " = ", collapse = "; "), ".")
 }
 
 # Every table and figure below is a chunk of its own, emitted with knit_child(),
@@ -770,12 +770,11 @@ draw_section <- function(section) {
     .child(paste("fig eda", section, "page", i),
            # Each label with its column name, so a reader knows which column to check.
            paste0(titles[[section]], ", page ", i, ": ", paste0(labels[on_page], " (", on_page, ")", collapse = ", "), ". ",
-                  .eda_key[[section]]),
+                  .eda_key[[section]], abbreviation_key(on_page)),
            if (hover) "hvtiPlotR::hv_girafe(.page, width = 6.5, height = 9)" else
              "knitr::include_graphics(.link, error = FALSE)")
     files <- c(files, file)
   }
-  abbreviation_key(vars)
   invisible(files)
 }
 ```
