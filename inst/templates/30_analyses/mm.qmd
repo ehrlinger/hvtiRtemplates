@@ -284,3 +284,111 @@ mm_predict <- function(fit, newdata, scale) {
   cbind(newdata, estimate = back(eta), lower = back(eta - z * se), upper = back(eta + z * se))
 }
 ```
+
+```{r}
+#| label: fit
+mm_check(d, .id, TIME, STRUCTURE, IMPUTATION)
+model_formula <- stats::reformulate(c(TIME_TERMS, PREDICTORS), response = .response)
+fits <- lapply(stats::setNames(STRUCTURE, STRUCTURE), function(s) mm_fit(d, model_formula, .id, TIME, s, METHOD))
+fit <- fits[[1L]]
+```
+
+```{r}
+#| label: model-scale
+#| results: asis
+cat(hvtiRtemplates:::.response_note(model_formula, RESPONSE_SCALE, "outcome"))
+cat("\n\nThe reported model is the ", dQuote(STRUCTURE[[1L]], FALSE), " structure, fitted by ", METHOD, ".\n", sep = "")
+```
+
+```{r}
+#| label: tbl-counts
+#| tbl-cap: "Patients and measurements in the fit"
+.per <- table(d[[.id]])
+knitr::kable(data.frame(
+  quantity = c("patients", "measurements", "measurements per patient, median", "measurements per patient, range"),
+  value = c(fit$n_patients, fit$n_measurements, stats::median(.per), paste(range(.per), collapse = " to "))
+))
+```
+
+```{r}
+#| label: tbl-estimates
+#| tbl-cap: "Fixed-effect estimates of the reported model"
+.tt <- summary(fit$model)$tTable
+estimates <- data.frame(term = rownames(.tt), estimate = .tt[, "Value"], std_error = .tt[, "Std.Error"],
+                        p_value = .tt[, "p-value"], row.names = NULL)
+knitr::kable(estimates, digits = 4)
+```
+
+```{r}
+#| label: tbl-covariance
+#| tbl-cap: "Covariance parameters of the reported model"
+covariance <- mm_covariance(fit)
+knitr::kable(covariance, digits = 4)
+```
+
+```{r}
+#| label: covariance-note
+#| results: asis
+if (!is.null(mm_note(fit))) cat("\n", mm_note(fit), "\n", sep = "")
+```
+
+```{r}
+#| label: tbl-compare
+#| results: asis
+# AIC and BIC compare covariance structures fairly under REML only because every
+# fit here has the same fixed effects; a table of different fixed effects needs ML.
+comparison <- NULL
+if (length(fits) > 1L) {
+  comparison <- data.frame(structure = names(fits),
+                           AIC = vapply(fits, function(f) stats::AIC(f$model), numeric(1L)),
+                           BIC = vapply(fits, function(f) stats::BIC(f$model), numeric(1L)), row.names = NULL)
+  cat(knitr::knit_print(knitr::kable(comparison, digits = 1,
+                                     caption = "Comparison of covariance structures, same fixed effects")), sep = "\n")
+}
+```
+
+```{r}
+#| label: tbl-predictions
+#| tbl-cap: "Population-average course of the response, first and last times of each profile"
+predictions <- mm_predict(fit, mm_grid(d, PREDICTORS, TIME, PREDICT_AT, PREDICT_TIMES), RESPONSE_SCALE)
+.ends <- predictions[!duplicated(predictions$profile) | !duplicated(predictions$profile, fromLast = TRUE), ]
+knitr::kable(.ends, digits = 3, row.names = FALSE)
+```
+
+```{r}
+#| label: save
+MODEL_PATH <- set_path("estimates", "mm.rds")
+PREDICTIONS_PATH <- set_path("estimates", "mm-predictions.csv")
+utils::write.csv(predictions, PREDICTIONS_PATH, row.names = FALSE)
+# No nlme object is saved: it carries the patient ID as its grouping factor.
+bundle <- list(
+  meta = list(id_col = .id, outcome = OUTCOME, response_scale = RESPONSE_SCALE, time = TIME, time_terms = TIME_TERMS,
+              predictors = PREDICTORS, structure = fit$structure, method = METHOD,
+              formula = paste(deparse(model_formula), collapse = " "), n_patients = fit$n_patients,
+              n_measurements = fit$n_measurements, nlme_version = as.character(utils::packageVersion("nlme"))),
+  coefficients = if (inherits(fit$model, "lme")) nlme::fixef(fit$model) else stats::coef(fit$model),
+  vcov = stats::vcov(fit$model),
+  tables = list(estimates = estimates, covariance = covariance, comparison = comparison),
+  predictions = predictions
+)
+.analysis <- list(outcome = list(variable = OUTCOME, scale = RESPONSE_SCALE),
+                  model = list(engine = "nlme", structure = fit$structure, method = METHOD, formula = bundle$meta$formula))
+.cohort <- list(patients = fit$n_patients, measurements = fit$n_measurements)
+bundle <- hvtiRtemplates:::.attach_handoff_lineage(
+  bundle, data = if (exists(".provenance_data")) .provenance_data else list(),
+  analysis = .analysis, cohort = .cohort, selection = attr(job_data$record, "selection")
+)
+saveRDS(hvtiRtemplates:::.digest_bundle_ids(bundle, .root), MODEL_PATH)
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  run = .job$run,
+  extra = list(subject = SUBJECT, type = TYPE, analysis = .analysis, cohort = .cohort)
+))
+```

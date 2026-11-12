@@ -47,3 +47,23 @@ mm_run <- function(labels, env, choices = list()) {
   }
   invisible(env)
 }
+
+# Scaffold an mm job in a fresh study holding mm_data(), work its EDIT: markers and render it.
+mm_render_fixture <- function(choices = character(), .local_envir = parent.frame()) {
+  root <- tempfile("mm-study-")
+  withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Synthetic mm study", study_tracker_id = 42L, renv = FALSE))
+  utils::write.csv(mm_data(), file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root, file = "built.csv", role = "study",
+                                                 population = "Synthetic cohort", key = c("ccfid", "time")))
+  job <- add_job("mm", "outcome", "mixed", dir = root)
+  lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
+  defaults <- c('OUTCOME <- "y"', 'RESPONSE_SCALE <- "log"', 'TIME_TERMS <- c("log(time + 1)")')
+  for (replacement in c(defaults, choices)) {
+    key <- sub(" .*", "", replacement)
+    lines[which(grepl(paste0("^", key, " <- "), lines))[1L]] <- replacement
+  }
+  writeLines(lines, job)
+  quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)
+  list(root = root, job = job, output = sub("[.]qmd$", ".html", job))
+}

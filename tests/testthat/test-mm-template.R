@@ -201,3 +201,32 @@ test_that("mm_grid uses the profiles and times it is given", {
   expect_identical(sort(unique(grid$age)), c(50, 70))
   expect_equal(range(grid$time), range(d$time))
 })
+
+test_that("mm renders end to end and saves a bundle with no nlme object and no raw IDs", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  out <- mm_render_fixture()
+  expect_true(file.exists(out$output))
+  set <- file.path(hvtiRutilities::study_dir("estimates", out$root), "outcome-mixed")
+  bundle <- readRDS(file.path(set, "mm.rds"))
+  expect_false(any(vapply(bundle, function(x) inherits(x, c("gls", "lme")), logical(1L))))
+  expect_true(bundle$meta$id_digest)
+  expect_identical(bundle$meta$structure, "cs")
+  pred <- utils::read.csv(file.path(set, "mm-predictions.csv"))
+  expect_identical(nrow(pred), 50L)
+  expect_true(all(pred$lower < pred$estimate & pred$estimate < pred$upper))
+  html <- paste(readLines(out$output, warn = FALSE), collapse = "\n")
+  expect_match(html, "within-patient correlation", fixed = TRUE)
+  # The caption also sits in the code fold, so match the rendered table caption.
+  expect_no_match(html, "Table[^:<]{1,8}: Comparison of covariance structures")
+})
+
+test_that("mm compares structures only when STRUCTURE lists several", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  out <- mm_render_fixture(choices = 'STRUCTURE <- c("cs", "random")')
+  html <- paste(readLines(out$output, warn = FALSE), collapse = "\n")
+  expect_match(html, "Table[^:<]{1,8}: Comparison of covariance structures")
+})
