@@ -4,8 +4,10 @@
   "r_jobs": 2,
   "studies": 36,
   "sas_studies": 35,
-  "match_step_programs": 0,
-  "match_step_studies": 0,
+  "recognized_match_programs": 0,
+  "recognized_match_studies": 0,
+  "opaque_programs": 8,
+  "opaque_studies": 3,
   "template_copies_skipped": 161,
   "traversal_errors": 0,
   "unreadable_candidates": 0,
@@ -17,6 +19,8 @@
       "r_studies": 0,
       "mi_programs": 0,
       "ps_fit_programs": 0,
+      "opaque_programs": 0,
+      "studies": 0,
       "two_study_gate": false
     },
     "fit_matched": {
@@ -26,6 +30,8 @@
       "r_studies": 0,
       "mi_programs": 0,
       "ps_fit_programs": 0,
+      "opaque_programs": 0,
+      "studies": 1,
       "two_study_gate": false
     },
     "fit_weighted": {
@@ -35,6 +41,8 @@
       "r_studies": 0,
       "mi_programs": 0,
       "ps_fit_programs": 0,
+      "opaque_programs": 2,
+      "studies": 2,
       "two_study_gate": true
     },
     "fit_unadjusted": {
@@ -44,6 +52,8 @@
       "r_studies": 1,
       "mi_programs": 23,
       "ps_fit_programs": 0,
+      "opaque_programs": 6,
+      "studies": 31,
       "two_study_gate": true
     },
     "manual_review": {
@@ -53,6 +63,8 @@
       "r_studies": 0,
       "mi_programs": 0,
       "ps_fit_programs": 0,
+      "opaque_programs": 0,
+      "studies": 2,
       "two_study_gate": true
     },
     "misfiled": {
@@ -62,6 +74,8 @@
       "r_studies": 1,
       "mi_programs": 0,
       "ps_fit_programs": 0,
+      "opaque_programs": 0,
+      "studies": 5,
       "two_study_gate": true
     }
   },
