@@ -649,13 +649,19 @@ plots <- if (figure_drawn) plot(fp, alpha = ALPHA) else list()
 # breaks function chooses where the ticks fall and leaves the axis limits to ggplot.
 for (.nm in c("X_TICK_BY", "Y_TICK_BY")) {
   .by <- get(.nm)
-  if (!is.null(.by) && !(is.numeric(.by) && length(.by) == 1L && !is.na(.by) && .by > 0)) {
+  if (!is.null(.by) && !(is.numeric(.by) && length(.by) == 1L && is.finite(.by) && .by > 0)) {
     stop(.nm, " must be NULL or one positive number of years, such as 5.", call. = FALSE)
   }
 }
 if (!isTRUE(LEGEND) && !isFALSE(LEGEND)) stop("LEGEND must be TRUE or FALSE.", call. = FALSE)
 # Follow-up ticks start at 0: a negative interval is a data error, drawn but not labeled.
-.ticks <- function(by, from = -Inf) function(limits) seq(ceiling(max(limits[[1L]], from) / by) * by, limits[[2L]], by = by)
+# A step longer than the axis leaves it with no ticks rather than stopping the report.
+.ticks <- function(by, from = -Inf) {
+  function(limits) {
+    first <- ceiling(max(limits[[1L]], from) / by) * by
+    if (first > limits[[2L]]) numeric(0) else seq(first, limits[[2L]], by = by)
+  }
+}
 # A step too small for the axis would print its labels over one another; those that
 # would overlap are left out instead, and every tick mark is still drawn.
 .axes_and_legend <- c(
@@ -694,8 +700,9 @@ if (figure_drawn && !is.null(GROUP)) {
     if (is.data.frame(p$layers[[k]]$data)) p$layers[[k]]$data <- stack(function(q) q$layers[[k]]$data)
   }
   # The strips name the column, and the years are angled so narrow facets do not run them together.
+  # This guide replaces the scale's, so it keeps the scale's overlap check.
   p + facet_wrap(~.gfup_group, labeller = as_labeller(function(x) paste0(GROUP, ": ", x))) +
-    guides(x = guide_axis(angle = 45))
+    guides(x = guide_axis(angle = 45, check.overlap = TRUE))
 }
 for (i in seq_len(if (figure_drawn) nrow(fp$data) else 0L)) {
   row <- fp$data[i, ]
