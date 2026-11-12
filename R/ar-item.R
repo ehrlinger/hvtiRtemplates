@@ -52,7 +52,7 @@
 }
 
 .ar_item_markdown <- function(r, it, from) {
-  c(.ar_callouts(r, it), sprintf("**Item %d** · `%s`", it$index, r$id), "", .ar_exhibit_body(r, from), "",
+  c(.ar_callouts(r, it), sprintf("**Item %d** \u00b7 `%s`", it$index, r$id), "", .ar_exhibit_body(r, from), "",
     sprintf("[The full report of `%s`, in the study folder](%s)", r$job, .ar_relative(r$html, from)), "")
 }
 

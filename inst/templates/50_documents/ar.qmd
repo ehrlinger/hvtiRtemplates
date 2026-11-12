@@ -2,13 +2,22 @@
 title: "Analysis report"
 date: now
 date-format: "YYYY-MM-DD HH:mm"
+# Carried in the file rather than inherited from _quarto.yml, so a copy renders
+# the same standalone: one self-contained .html, with the contents on the left.
 format:
   html:
+    fig-width: 9
+    fig-height: 6
     theme: cosmo
     toc: true
     toc-location: left
+    page-layout: full
+    grid:
+      body-width: 2000px
+      sidebar-width: 250px
     toc-depth: 3
     code-fold: true
+    df-print: default
     embed-resources: true
 ---
 
@@ -37,9 +46,9 @@ TYPE    <- "question"
 suppressPackageStartupMessages(library(hvtiRutilities))
 # The study root is the nearest directory above this file holding _study.yml, so
 # the report renders the same from the Render button, quarto render, or
-# render_job(). The guards in .job_setup() refuse an unfinished render: an item
-# that still reads a draft job, or a file still holding an EDIT: marker, is
-# listed in a callout rather than passed off as a result.
+# render_job(). The guards in .job_setup() put an unfinished render in a callout,
+# so a draft report cannot pass for a final one, and an item whose source job is
+# itself a draft carries its own callout.
 .job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
 .root <- .job$root
 set_path <- .job$set_path
@@ -51,7 +60,7 @@ set_path <- .job$set_path
 ## Question
 
 ```{r}
-#| label: edit-question
+#| label: edit-study-choices
 #| results: asis
 # EDIT: paste the research question from the protocol, word for word. The
 # report is judged against this sentence, so do not paraphrase it.
@@ -62,7 +71,7 @@ cat("> ", QUESTION, "\n", sep = "")
 ## Item 1: Survival from the parametric fit
 
 ```{r}
-#| label: item-1
+#| label: edit-item-1
 # EDIT: name the exhibit as "<job>#<label>".
 hvtiRtemplates::ar_item("hz.dead_pa.hz#fig-fit")
 ```
@@ -84,7 +93,7 @@ field, so the number follows the fit instead of being typed. -->
 ## Item 2: Parameter estimates
 
 ```{r}
-#| label: item-2
+#| label: edit-item-2
 # EDIT: name the exhibit as "<job>#<label>".
 hvtiRtemplates::ar_item("hz.dead_pa.hz#tbl-estimates")
 ```
