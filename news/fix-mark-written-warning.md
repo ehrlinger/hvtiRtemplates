@@ -1,1 +1,1 @@
-- Saving a figure page that draws nothing no longer warns. The PNG device writes no file for an empty page, and the record of files a run wrote now accepts a path that does not exist instead of warning; such a file is still never recorded as an exhibit.
+- A figure page that draws nothing no longer leaves an earlier render's PNG, PDF or TIFF in place. The old file is removed before each figure is written, so a blank page leaves no file, the `ar` report never takes a stale PNG as the current figure, and saving the page no longer warns.

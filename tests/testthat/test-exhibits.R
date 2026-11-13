@@ -101,3 +101,18 @@ test_that("marking a file the device never wrote is silent", {
   expect_no_warning(hvtiRtemplates:::.mark_written(absent))
   expect_null(hvtiRtemplates:::.record_exhibit(absent, "figure", label = "fig-blank"))
 })
+
+test_that("a blank draw over an older PNG records nothing and leaves no stale file", {
+  # png() writes nothing for a page with nothing drawn, so an earlier render's PNG at the
+  # same path would survive. It must not be recorded as this run's figure, and it must not
+  # stay on disk for the ar report or a reader to take as current.
+  root <- local_exhibit_state()
+  state <- hvtiRtemplates:::.run_state
+  assign("written", character(), envir = state)
+  withr::defer(rm("written", envir = state))
+  png <- file.path(root, "fig.png")
+  writeBin(as.raw(1:8), png)
+  hvtiRtemplates:::.save_figure(function() invisible(NULL), png, width = 2, height = 2, keep = "fig")
+  expect_null(hvtiRtemplates:::.record_exhibit(png, "figure", label = "fig-blank"))
+  expect_false(file.exists(png))
+})

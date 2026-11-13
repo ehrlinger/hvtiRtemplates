@@ -69,7 +69,8 @@
   tiff <- sub("[.]png$", ".tiff", png)
   if (selected || linked) {
     .write_figure(plot, png, width, height, "png")
-    .mark_written(png)
+    # A blank page writes no file; mark only what this run produced.
+    if (file.exists(png)) .mark_written(png)
   }
   if (selected) .write_figure(plot, pdf, width, height, "pdf")
   if (selected && .ragg_available()) .write_figure(plot, tiff, width, height, "tiff")
@@ -77,6 +78,9 @@
 }
 
 .write_figure <- function(plot, file, width, height, format) {
+  # Remove the earlier render's file first: a device that draws nothing writes nothing, and
+  # the old figure would otherwise survive as if this run had made it.
+  if (file.exists(file)) unlink(file)
   # ggsave() fills the background from the plot's theme, so a transparent plot
   # stays transparent, and it leaves the active device as it found it.
   if (inherits(plot, "ggplot")) {
