@@ -106,7 +106,7 @@
 # hidden name, and renamed over it. file.copy() empties its target before it writes, so
 # copying straight over the figure would lose the earlier one to a full disk or a dropped
 # share; a rename within one folder replaces it whole. A draw or copy that fails leaves
-# the earlier figure where it was. A device that drew nothing writes no file; the earlier
+# the earlier figure where it was. A page that drew nothing leaves no file; the earlier
 # figure is then removed, so it cannot survive as this run's. A figure that is a link is
 # written through to its target, and the target keeps its permissions.
 .write_figure <- function(plot, file, width, height, format) {
@@ -138,10 +138,13 @@
 }
 
 # A rename replaces a link itself, so a figure linked elsewhere, such as into a manuscript
-# folder, is followed to the file it names. A relative link is read against its own folder.
+# folder, is followed to the file it names. normalizePath() resolves a link to an existing
+# file on every platform; Sys.readlink() reads "" on Windows, so it serves only a link
+# whose target is missing. A relative link is read against its own folder.
 .link_target <- function(file) {
+  if (file.exists(file)) return(normalizePath(file, winslash = "/", mustWork = TRUE))
   for (i in seq_len(20L)) {
-    link <- Sys.readlink(file)
+    link <- .read_link(file)
     if (is.na(link) || !nzchar(link)) return(file)
     file <- if (grepl("^(/|[A-Za-z]:)", link)) link else file.path(dirname(file), link)
   }
@@ -171,11 +174,12 @@
 }
 
 # unlink(), file.copy(), file.rename() and dir.create() report failure only through their return values;
-# these seams let a test make them fail.
+# these seams let a test make them fail. .read_link() lets a test read links as Windows does.
 .unlink <- function(x) unlink(x)
 .copy_file <- function(from, to) suppressWarnings(file.copy(from, to, overwrite = TRUE))
 .rename_file <- function(from, to) suppressWarnings(file.rename(from, to))
 .make_dir <- function(x) suppressWarnings(dir.create(x))
+.read_link <- function(x) Sys.readlink(x)
 
 # The report links this PNG, so a blank page would show as a broken image. Say so in the
 # image; .save_figure() warns the analyst at render time.
@@ -206,12 +210,22 @@
   } else {
     grDevices::png(file, width = width, height = height, units = "in", res = 300)
   }
+  device <- grDevices::dev.cur()
+  # Whether anything was drawn is read from the device's display list, not from the file:
+  # png() writes nothing for an empty page on macOS and Linux and a blank image on Windows,
+  # and pdf() writes a blank page everywhere. Base and grid both record there, grid even
+  # without grid.newpage(). A page that drew nothing leaves no file on every platform.
+  grDevices::dev.control("enable")
+  drew <- TRUE
   # dev.off() makes the next open device current, not the one that was; put
   # back the caller's, so later plotting does not land in another file.
   on.exit({
-    grDevices::dev.off()
+    grDevices::dev.off(device)
     if (before > 1L) grDevices::dev.set(before)
+    if (!drew) unlink(file)
   }, add = TRUE)
   plot()
+  grDevices::dev.set(device)
+  drew <- length(grDevices::recordPlot()[[1L]]) > 0L
   invisible(file)
 }

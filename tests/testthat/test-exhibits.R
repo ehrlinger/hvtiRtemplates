@@ -249,8 +249,9 @@ test_that("a figure that is a link is written through to its target, and the lin
   linked <- suppressWarnings(file.symlink(target, png))
   skip_if_not(linked, "This platform does not permit creating symbolic links.")
   hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE)
-  expect_true(nzchar(Sys.readlink(png)))
+  # Sys.readlink() reads "" on Windows, so the link is shown to stand by reading through it.
   expect_gt(file.size(target), 8)
+  expect_identical(readBin(png, "raw", 1e6), readBin(target, "raw", 1e6))
 })
 
 test_that("a replaced figure keeps its permissions", {
@@ -295,4 +296,27 @@ test_that("a figure removed between saves cannot vouch for a later placeholder",
                  "placeholder")
   expect_true(file.exists(png))
   expect_null(hvtiRtemplates:::.record_exhibit(png, "figure", label = "fig-removed"))
+})
+
+test_that("a page that drew nothing leaves no file, even from a device that writes a blank one", {
+  # png() on Windows writes a blank image for an empty page, as pdf() does everywhere, so
+  # whether a page was drawn cannot be read from the file.
+  f <- file.path(withr::local_tempdir(), "fig.pdf")
+  hvtiRtemplates:::.draw_figure(function() invisible(NULL), f, 2, 2, "pdf")
+  expect_false(file.exists(f))
+  # grid draws without grid.newpage(), as grid.draw() of a grob does; that is a page.
+  hvtiRtemplates:::.draw_figure(function() grid::grid.rect(), f, 2, 2, "pdf")
+  expect_true(file.exists(f))
+})
+
+test_that("a linked figure is followed where links read as empty, as on Windows", {
+  root <- withr::local_tempdir()
+  elsewhere <- withr::local_tempdir()
+  target <- file.path(elsewhere, "fig.png")
+  writeBin(as.raw(1:8), target)
+  png <- file.path(root, "fig.png")
+  skip_if_not(suppressWarnings(file.symlink(target, png)), "This platform does not permit creating symbolic links.")
+  testthat::local_mocked_bindings(.read_link = function(x) "")
+  hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE)
+  expect_gt(file.size(target), 8)
 })
