@@ -695,7 +695,7 @@ test_that("dc-eda draws its categorical pages in the role colors", {
   saved <- list()
   local_mocked_bindings(ggsave = function(filename, plot, ...) {
     saved[[basename(filename)]] <<- plot
-    invisible(filename)
+    stub_ggsave(filename)
   }, .package = "ggplot2")
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   suppressWarnings(eda_draw(root, d, VARIABLES = c("female", "hx_chf"), SECTIONS = "percent"))
@@ -724,7 +724,7 @@ test_that("dc-eda shortens labels that share a heading and prints their key", {
   # the section says what it stands for. A job's own entry beats the initials.
   root <- migration_study_fixture("dp-postage")
   local_child_chunks()
-  local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  local_mocked_bindings(ggsave = stub_ggsave, .package = "ggplot2")
   without_group_list()
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"
@@ -748,7 +748,7 @@ test_that("dc-eda prints a key only under sections whose labels were shortened, 
   # The study's list applies unless the job overrides it.
   root <- migration_study_fixture("dp-postage")
   local_child_chunks()
-  local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  local_mocked_bindings(ggsave = stub_ggsave, .package = "ggplot2")
   without_group_list()
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   attr(d$age, "label") <- "SP at admission (mmHg)"
@@ -775,7 +775,7 @@ test_that("dc-eda's group abbreviation list shortens further, when it is install
   skip_if(!length(hvtiRutilities::study_abbreviations(list())), "hvtiRutilities has no group abbreviation list")
   root <- migration_study_fixture("dp-postage")
   local_child_chunks()
-  local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  local_mocked_bindings(ggsave = stub_ggsave, .package = "ggplot2")
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"
   attr(d$hx_chf, "label") <- "Surgical procedure: mitral valve repair with annuloplasty ring"
@@ -791,7 +791,7 @@ test_that("dc-eda's key comes from label_map()'s abbreviations_by_key, not from 
   # text would print SP = Surgical procedure under its section.
   root <- migration_study_fixture("dp-postage")
   local_child_chunks()
-  local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  local_mocked_bindings(ggsave = stub_ggsave, .package = "ggplot2")
   without_group_list()
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   attr(d$age, "label") <- "SP indicates systolic pressure measured at admission to hospital"
@@ -969,7 +969,7 @@ test_that("dc-eda puts each page's abbreviations in that page's caption, not onc
   # The 2026-11-11 training: nobody found the key printed after a section's last page.
   root <- migration_study_fixture("dp-postage")
   local_child_chunks()
-  local_mocked_bindings(ggsave = function(filename, plot, ...) invisible(filename), .package = "ggplot2")
+  local_mocked_bindings(ggsave = stub_ggsave, .package = "ggplot2")
   without_group_list()
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
   attr(d$female, "label") <- "Surgical procedure: aortic valve replacement with root enlargement"

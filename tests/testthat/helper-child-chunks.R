@@ -9,3 +9,15 @@ local_child_chunks <- function(env = parent.frame()) {
   withr::local_dir(withr::local_tempdir(.local_envir = env), .local_envir = env)
   withr::local_options(knitr.duplicate.label = "allow", .local_envir = env)
 }
+
+# A ggsave() stand-in for tests that skip the drawing: it writes a 1 x 1 PNG, as the real
+# one writes a file, so a saved figure is not taken for a page that drew nothing and a
+# report chunk can still embed it. The caller's device is put back.
+stub_ggsave <- function(filename, plot, ...) {
+  before <- grDevices::dev.cur()
+  grDevices::png(filename, width = 1, height = 1)
+  grid::grid.newpage()
+  grDevices::dev.off()
+  if (before > 1L) grDevices::dev.set(before)
+  invisible(filename)
+}

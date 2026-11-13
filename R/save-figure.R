@@ -9,7 +9,8 @@
 # rfs-fit-diagnostics-brier. SAVE_FIGURES turns the publication copies off, and
 # FIGURES keeps only the figures whose names start with one of its entries. A
 # PNG the report embeds (`linked`) is written whatever they say, because the
-# report would otherwise show a broken image.
+# report would otherwise show a broken image; a linked page that draws nothing is
+# written as a placeholder that says so.
 
 # capabilities("cairo") is not enough: macOS R reports TRUE without XQuartz,
 # and cairo_pdf() then only warns "failed to load cairo DLL" and opens no
@@ -69,35 +70,39 @@
   tiff <- sub("[.]png$", ".tiff", png)
   if (selected || linked) {
     .write_figure(plot, png, width, height, "png")
-    # A blank page writes no file; mark only what this run produced.
-    if (file.exists(png)) .mark_written(png)
+    # A blank page writes no file, and its earlier PNG is gone. Mark only what this run
+    # drew; a PNG the report embeds gets a placeholder, which is never recorded.
+    if (file.exists(png)) .mark_written(png) else if (linked) .blank_placeholder(png)
   }
   if (selected) .write_figure(plot, pdf, width, height, "pdf")
   # Without ragg no TIFF is written, so an earlier render's TIFF would sit beside this
-  # run's PNG and PDF as though it matched them.
+  # run's PNG and PDF as though it matched them. Nothing in the run reads the TIFF, so
+  # one that cannot be removed is reported, not fatal.
   if (selected && .ragg_available()) {
     .write_figure(plot, tiff, width, height, "tiff")
   } else if (selected) {
-    .remove_figure_file(tiff)
+    tryCatch(.remove_figure_file(tiff), error = function(e) warning(conditionMessage(e), call. = FALSE))
   }
   invisible(png)
 }
 
-# The figure is drawn into a scratch file beside the target and moved into place only
-# once drawing has finished. A draw that fails leaves the earlier figure where it was. A
-# device that drew nothing writes no file, and then the earlier figure is removed, so it
-# cannot survive as this run's.
+# The figure is drawn in R's own temporary folder and copied over the target once
+# drawing has finished. A draw that fails leaves the earlier figure where it was, and a
+# render killed mid-draw leaves nothing in the study. A device that drew nothing writes
+# no file; the earlier figure is then removed, so it cannot survive as this run's.
 .write_figure <- function(plot, file, width, height, format) {
-  # The scratch folder keeps the file's own name, which devices and ggsave() see, and sits
-  # beside the target so the move is a rename on the same file system.
-  drawing <- tempfile(".drawing-", tmpdir = dirname(file))
-  dir.create(drawing, showWarnings = FALSE)
+  if (!dir.exists(dirname(file))) {
+    stop("Cannot save ", basename(file), ": the folder ", dirname(file), " does not exist.", call. = FALSE)
+  }
+  # The scratch copy keeps the file's own name, which devices and ggsave() see.
+  drawing <- tempfile("drawing-")
+  dir.create(drawing)
   on.exit(unlink(drawing, recursive = TRUE), add = TRUE)
   scratch <- file.path(drawing, basename(file))
   .draw_figure(plot, scratch, width, height, format)
-  .remove_figure_file(file)
-  if (file.exists(scratch) && !file.rename(scratch, file)) {
-    stop("Could not move the new figure into place at ", file, ".", call. = FALSE)
+  if (!file.exists(scratch)) return(.remove_figure_file(file))
+  if (!.copy_file(scratch, file)) {
+    stop("Could not write ", file, ": close whatever holds it open, and render again.", call. = FALSE)
   }
   invisible(file)
 }
@@ -112,8 +117,22 @@
   invisible(file)
 }
 
-# unlink() reports failure only through its return value; this seam lets a test make it fail.
+# unlink() and file.copy() report failure only through their return values; these seams
+# let a test make them fail.
 .unlink <- function(x) unlink(x)
+.copy_file <- function(from, to) suppressWarnings(file.copy(from, to, overwrite = TRUE))
+
+# The report links this PNG, so a blank page would show as a broken image. Say so in the
+# image, and in a warning the analyst sees at render time.
+.blank_placeholder <- function(png) {
+  .draw_figure(function() {
+    graphics::par(mar = c(0, 0, 0, 0))
+    graphics::plot.new()
+    graphics::text(0.5, 0.5, "This figure drew nothing in this run.")
+  }, png, 4, 1, "png")
+  warning("Figure '", sub("[.]png$", "", basename(png)), "' drew nothing; the report shows a placeholder.", call. = FALSE)
+  invisible(png)
+}
 
 .draw_figure <- function(plot, file, width, height, format) {
   # ggsave() fills the background from the plot's theme, so a transparent plot
