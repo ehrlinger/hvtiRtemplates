@@ -16,8 +16,10 @@ fix that changed no count. Runs 3 and 4 carry the script's own output. Run 3 pre
 addition to the boilerplate tail (the `StudyXXX` placeholder), so a few unfilled
 project-plan forms are still in its frame; run 4 has it.
 
-All four runs use seed 20261112. Their frames differ, so they draw different studies and
-files, and the labels are independent. The labelled worksheets carry study paths, so they
+All four runs use seed 20261112. Their frames differ, so the draws mostly differ, but they
+are not independent samples: the frames overlap heavily and share one random stream.
+Measured overlap across the six pairs of runs is 7 repeated studies (of 40 per run) and 2
+repeated files (of 120 per run). The labelled worksheets carry study paths, so they
 stay on the server in scratch folders under `_development` and are not committed.
 
 ⚠️ **All eight samples were labelled from file names only, and no file was opened.** That was
@@ -27,13 +29,13 @@ opening files could tighten.
 
 ## The figures
 
-| measure | run 1 | run 2 | run 3 | run 4 | pooled |
-|---|---|---|---|---|---|
-| candidate frame, studies | 1,484 | 1,344 | 1,366 | 1,319 | not pooled |
-| candidate frame, files | 42,277 | 36,076 | 32,746 | 31,695 | not pooled |
-| **breadth, best estimate** | about 670 (455 to 895) | about 705 (505 to 900) | about 545 (360 to 755) | about 660 (465 to 855) | **about 645 (540 to 750)** |
-| breadth, lenient | about 815 | about 940 | about 820 | about 890 | not pooled |
-| **volume, report files** | about 4,200 (2,450 to 7,050) | about 2,100 (1,040 to 4,170) | about 3,300 (1,900 to 5,450) | about 3,700 (2,250 to 5,900) | **about 3,100 (2,200 to 4,000)** |
+| measure | run 1 | run 2 | run 3 | run 4 |
+|---|---|---|---|---|
+| candidate frame, studies | 1,484 | 1,344 | 1,366 | **1,319** |
+| candidate frame, files | 42,277 | 36,076 | 32,746 | **31,695** |
+| **breadth, strict** | about 670 (455 to 895) | about 705 (505 to 900) | about 545 (360 to 755) | **about 660 (465 to 855)** |
+| breadth, lenient | about 815 | about 940 | about 820 | about 890 |
+| **volume, report files** | about 4,200 (2,450 to 7,050) | about 2,100 (1,040 to 4,170) | about 3,300 (1,900 to 5,450) | **about 3,700 (2,250 to 5,900)** |
 
 Plus one figure that needs no sample: **570 catalogue studies**, the filename-based
 candidates. That is the number of distinct catalogue `study` values holding at least one
@@ -44,6 +46,15 @@ regurgitation (`ar_cont.rtf` turned up in run 2's file sample) may parse as pref
 inflate it. It is neither a confirmed count nor a strict lower bound on independent
 studies.
 
+**Read run 4.** It is the script as it stands, and each earlier run is a different frame
+with a different estimand. The runs are **not pooled**: an earlier draft of this note gave
+inverse-variance pooled intervals, and they did not hold, for two reasons. The samples are
+not independent (above), so an independent-samples variance understates the uncertainty.
+And the frames do not contain the same reports: an audit of 40 rows cannot show that no
+report was excluded (it bounds that rate below about 9%), so a report excluded in one frame
+and kept in another gives the runs different totals, and their average has no defined target.
+The earlier columns show how the estimate moved as the exclusions changed, nothing more.
+
 **How to read the table.**
 
 - **Breadth** is studies holding at least one report, scaled from 40 studies drawn
@@ -51,12 +62,11 @@ studies.
   an analysis or results. Lenient also counts studies whose only evidence is SAS table
   output or request write-ups.
 - **Volume** is report files, scaled from 120 kept files drawn uniformly from the frame.
-  Every audit row in every run was a correct exclusion, and the frames of runs 3 and 4 keep `ar`-named
-  files even inside a manuscript folder, so the four runs estimate the same quantity.
-- **The intervals** are Wilson 95% intervals on each run's sampled proportion. The pooled
-  figures are inverse-variance averages of the four runs on a normal approximation, which
-  is rough: the frames differ, and a few studies were drawn in more than one run. All of
-  them measure **sampling uncertainty inside the candidate frame and nothing else**. They do
+  Every audit row in every run was a correct exclusion, and the frames of runs 3 and 4 keep
+  `ar`-named files even inside a manuscript folder. Neither fact shows that the frames hold
+  the same reports, so each run's figure belongs to its own frame.
+- **The intervals** are Wilson 95% intervals on each run's sampled proportion, scaled to
+  that run's frame. They measure **sampling uncertainty inside the candidate frame and nothing else**. They do
   not cover errors in the filename-only labels, or the populations the frame leaves out
   (see the last section).
 - **The frame is not an upper bound.** A study whose only report was excluded by name, is
@@ -67,8 +77,8 @@ studies.
 
 **Draft-collapsed volume is not estimated.** Each run reports a collapse ratio (0.76, 0.74,
 0.75 and 0.75), but it is measured over ALL kept documents, not reports, and `report_key()` drops
-every numeric token, not only draft numbers. Applying it to the pooled 3,100 gives about
-2,300 distinct reports, which holds only if reports duplicate at the same rate as everything
+every numeric token, not only draft numbers. Applying run 4's 0.75 to its 3,700 gives about
+2,750 distinct reports, which holds only if reports duplicate at the same rate as everything
 else. That is a conditional heuristic, not an estimate.
 
 **The catalogue's own `ar` figures measure something else.** `templates.json` carries
@@ -76,7 +86,7 @@ else. That is a conditional heuristic, not an estimate.
 2026-09-02 per-folder parse. Both count studies with a file whose name parses to `ar`. 706
 counts files of any extension. 394 counts program extensions only, which an analysis report
 never has. This note does not change either value. Whether `sas_breadth` should become 570
-or about 645 is the maintainer's call.
+or about 660 (run 4) is the maintainer's call.
 
 The 570 command:
 

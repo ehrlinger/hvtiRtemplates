@@ -16,7 +16,7 @@
     "template_test": "is_template column",
     "seed": 20261112,
     "samples": "written",
-    "coverage": "placed files only. A file with no taxonomy folder above it has no study and cannot be counted, so breadth and volume are LOWER bounds on the corpus; see skipped.unplaced.",
+    "coverage": "placed files only. A file with no taxonomy folder above it has no study and is not counted. breadth_studies and volume_files count the candidate frame: kept documents, which include manuscripts, SAS output, other non-reports and nested study keys. They are not report counts and not bounds on the corpus in either direction; see skipped.unplaced for what the frame leaves out.",
     "source": "census-ALL.csv",
     "script": "2026-11-12-ar-census.py with the boilerplate bucket (#537). exclusion_match is the text the script now writes; the lri run predates that wording change, which altered no count."
   },
