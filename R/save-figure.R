@@ -106,7 +106,7 @@
 # hidden name, and renamed over it. file.copy() empties its target before it writes, so
 # copying straight over the figure would lose the earlier one to a full disk or a dropped
 # share; a rename within one folder replaces it whole. A draw or copy that fails leaves
-# the earlier figure where it was. A device that drew nothing writes no file; the earlier
+# the earlier figure where it was. A page that drew nothing leaves no file; the earlier
 # figure is then removed, so it cannot survive as this run's. A figure that is a link is
 # written through to its target, and the target keeps its permissions.
 .write_figure <- function(plot, file, width, height, format) {
@@ -138,14 +138,37 @@
 }
 
 # A rename replaces a link itself, so a figure linked elsewhere, such as into a manuscript
-# folder, is followed to the file it names. A relative link is read against its own folder.
+# folder, is followed to the file it names. normalizePath() resolves a link to an existing
+# file on every platform; Sys.readlink() is not implemented on Windows, so it serves only a
+# link whose target is missing, read against the link's own folder. Only the file itself is
+# resolved: a path through a linked folder keeps the spelling the analyst knows.
 .link_target <- function(file) {
-  for (i in seq_len(20L)) {
-    link <- Sys.readlink(file)
-    if (is.na(link) || !nzchar(link)) return(file)
-    file <- if (grepl("^(/|[A-Za-z]:)", link)) link else file.path(dirname(file), link)
+  if (file.exists(file)) {
+    real <- normalizePath(file, winslash = "/", mustWork = TRUE)
+    same <- identical(real, file.path(normalizePath(dirname(file), winslash = "/", mustWork = TRUE), basename(file)))
+    if (!same) return(real)
+    # On a mapped Windows drive normalizePath() can fall back to a lookup that does not
+    # follow links, and return the link's own path; renaming over it would cut the link.
+    if (.is_link(file)) {
+      stop("Cannot save ", file, ": it is a link this system could not follow. Save to the file it links to, ",
+           "or replace the link with a copy, and render again.", call. = FALSE)
+    }
+    return(file)
   }
-  stop("Cannot save ", file, ": it is a chain of more than 20 links.", call. = FALSE)
+  for (i in seq_len(20L)) {
+    link <- .read_link(file)
+    if (is.na(link) || !nzchar(link)) break
+    file <- if (grepl("^(/|[A-Za-z]:)", link)) link else file.path(dirname(file), link)
+    if (i == 20L) stop("Cannot save ", file, ": it is a chain of more than 20 links.", call. = FALSE)
+  }
+  # An entry the folder lists but file.exists() cannot reach is a link whose target is
+  # missing that could not be read, as on Windows; replacing it would cut the link.
+  if (!file.exists(file) && dir.exists(dirname(file)) &&
+        basename(file) %in% list.files(dirname(file), all.files = TRUE, no.. = TRUE)) {
+    stop("Cannot save ", file, ": it is a link to a file that does not exist. Restore the file it links to, ",
+         "or remove the link, and render again.", call. = FALSE)
+  }
+  file
 }
 
 # A render killed between the copy and the rename leaves its staged copy, which on.exit()
@@ -171,11 +194,22 @@
 }
 
 # unlink(), file.copy(), file.rename() and dir.create() report failure only through their return values;
-# these seams let a test make them fail.
+# these seams let a test make them fail. .read_link() lets a test read links as Windows does, and
+# .png_device() lets one write a blank image for an empty page, as Windows does.
 .unlink <- function(x) unlink(x)
 .copy_file <- function(from, to) suppressWarnings(file.copy(from, to, overwrite = TRUE))
 .rename_file <- function(from, to) suppressWarnings(file.rename(from, to))
 .make_dir <- function(x) suppressWarnings(dir.create(x))
+.read_link <- function(x) Sys.readlink(x)
+# Windows lists links and junctions as reparse points under dir /AL, which needs no
+# administrator rights; Sys.readlink() serves everywhere else.
+.is_link <- function(file) {
+  if (.Platform$OS.type != "windows") return(nzchar(.read_link(file)))
+  listed <- suppressWarnings(system2("cmd", c("/c", "dir", "/AL", "/B", shQuote(chartr("/", "\\", dirname(file)))),
+                                     stdout = TRUE, stderr = FALSE))
+  basename(file) %in% listed
+}
+.png_device <- function(...) grDevices::png(...)
 
 # The report links this PNG, so a blank page would show as a broken image. Say so in the
 # image; .save_figure() warns the analyst at render time.
@@ -204,14 +238,46 @@
   } else if (identical(format, "tiff")) {
     ragg::agg_tiff(file, width = width, height = height, units = "in", res = 300, compression = "lzw")
   } else {
-    grDevices::png(file, width = width, height = height, units = "in", res = 300)
+    .png_device(file, width = width, height = height, units = "in", res = 300)
   }
+  device <- grDevices::dev.cur()
+  # Whether anything was drawn is read from the device's display list, not from the file:
+  # png() writes nothing for an empty page on macOS and Linux and a blank image on Windows,
+  # and pdf() writes a blank page everywhere. Base and grid both record there, grid even
+  # without grid.newpage(), and the list holds the plot's data by reference, not as a copy.
+  # Setting up a page records too, so only operations that mark it count. A page that drew
+  # nothing leaves no file on every platform.
+  grDevices::dev.control("enable")
+  drew <- TRUE
   # dev.off() makes the next open device current, not the one that was; put
-  # back the caller's, so later plotting does not land in another file.
+  # back the caller's, so later plotting does not land in another file. A drawing that
+  # closed the device itself has written its file, which is kept.
   on.exit({
-    grDevices::dev.off()
-    if (before > 1L) grDevices::dev.set(before)
+    if (device %in% grDevices::dev.list()) grDevices::dev.off(device)
+    if (before > 1L && before %in% grDevices::dev.list()) grDevices::dev.set(before)
+    if (!drew) unlink(file)
   }, add = TRUE)
   plot()
+  if (device %in% grDevices::dev.list()) {
+    grDevices::dev.set(device)
+    drew <- .marks_page(grDevices::recordPlot()[[1L]])
+  }
   invisible(file)
+}
+
+# Display-list operations that set up a page without marking it: the palette, base
+# plot.new(), plot.window(), par(), layout() and clipping, grid's viewports and graphical
+# parameters, and the namespace load ggplot2 records. An operation not named here counts
+# as drawing, so one this list misses keeps the figure rather than discarding it.
+.page_setup_ops <- c("palette2", "C_plot_new", "C_plot_window", "C_par", "C_layout", "C_clip",
+                     "gridDirty", "setGPar", "setviewport", "upviewport", "downviewport", "newpage")
+
+.marks_page <- function(display_list) {
+  op <- function(entry) {
+    what <- entry[[2L]][[1L]]
+    if (inherits(what, "NativeSymbolInfo")) return(what$name)
+    if (is.call(what) && identical(what[[1L]], as.name("requireNamespace"))) return("requireNamespace")
+    "drawing"
+  }
+  any(!vapply(display_list, op, character(1)) %in% c(.page_setup_ops, "requireNamespace"))
 }

@@ -249,8 +249,9 @@ test_that("a figure that is a link is written through to its target, and the lin
   linked <- suppressWarnings(file.symlink(target, png))
   skip_if_not(linked, "This platform does not permit creating symbolic links.")
   hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE)
-  expect_true(nzchar(Sys.readlink(png)))
+  # Sys.readlink() reads "" on Windows, so the link is shown to stand by reading through it.
   expect_gt(file.size(target), 8)
+  expect_identical(readBin(png, "raw", 1e6), readBin(target, "raw", 1e6))
 })
 
 test_that("a replaced figure keeps its permissions", {
@@ -295,4 +296,105 @@ test_that("a figure removed between saves cannot vouch for a later placeholder",
                  "placeholder")
   expect_true(file.exists(png))
   expect_null(hvtiRtemplates:::.record_exhibit(png, "figure", label = "fig-removed"))
+})
+
+test_that("a page that drew nothing leaves no file, even from a device that writes a blank one", {
+  # png() on Windows writes a blank image for an empty page, as pdf() does everywhere, so
+  # whether a page was drawn cannot be read from the file.
+  f <- file.path(withr::local_tempdir(), "fig.pdf")
+  hvtiRtemplates:::.draw_figure(function() invisible(NULL), f, 2, 2, "pdf")
+  expect_false(file.exists(f))
+  # grid draws without grid.newpage(), as grid.draw() of a grob does; that is a page.
+  hvtiRtemplates:::.draw_figure(function() grid::grid.rect(), f, 2, 2, "pdf")
+  expect_true(file.exists(f))
+})
+
+test_that("a linked figure is followed where links read as empty, as on Windows", {
+  root <- withr::local_tempdir()
+  elsewhere <- withr::local_tempdir()
+  target <- file.path(elsewhere, "fig.png")
+  writeBin(as.raw(1:8), target)
+  png <- file.path(root, "fig.png")
+  skip_if_not(suppressWarnings(file.symlink(target, png)), "This platform does not permit creating symbolic links.")
+  testthat::local_mocked_bindings(.read_link = function(x) "")
+  hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE)
+  expect_gt(file.size(target), 8)
+})
+
+test_that("a drawing that closes its own device keeps its figure and opens no other", {
+  root <- withr::local_tempdir()
+  withr::local_dir(root)
+  png <- file.path(root, "fig.png")
+  # grid drawing with no grid.newpage() fires no page hook, so the check after drawing runs.
+  draw <- function() {
+    grid::grid.rect(gp = grid::gpar(fill = "gray"))
+    grDevices::dev.off()
+  }
+  expect_no_warning(hvtiRtemplates:::.save_figure(draw, png, 2, 2, save = FALSE, linked = TRUE))
+  expect_gt(file.size(png), 1000)
+  expect_false(file.exists(file.path(root, "Rplots.pdf")))
+})
+
+test_that("a blank figure is caught end to end where png() writes a blank image, as on Windows", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.png_device = function(file, ...) grDevices::pdf(file))
+  expect_warning(hvtiRtemplates:::.save_figure(function() invisible(NULL), files[[1]], 2, 2),
+                 "'fig' drew nothing; no figure files")
+  expect_false(any(file.exists(files)))
+})
+
+test_that("a link to a missing file that cannot be read is refused, not replaced", {
+  root <- withr::local_tempdir()
+  png <- file.path(root, "fig.png")
+  skip_if_not(suppressWarnings(file.symlink(file.path(root, "gone", "fig.png"), png)),
+              "This platform does not permit creating symbolic links.")
+  testthat::local_mocked_bindings(.read_link = function(x) "")
+  expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE),
+               "link to a file that does not exist")
+  expect_true(basename(png) %in% list.files(root, all.files = TRUE))
+})
+
+test_that("a study reached through a linked folder keeps its own path in messages", {
+  real <- withr::local_tempdir()
+  parent <- withr::local_tempdir()
+  study <- file.path(parent, "study")
+  local_dir_link(real, study)
+  writeBin(as.raw(1:8), file.path(real, "fig.png"))
+  testthat::local_mocked_bindings(.copy_file = function(from, to) FALSE)
+  err <- tryCatch(hvtiRtemplates:::.save_figure(function() graphics::plot(1), file.path(study, "fig.png"), 2, 2,
+                                                save = FALSE, linked = TRUE), error = conditionMessage)
+  expect_match(err, file.path(parent, "study"), fixed = TRUE)
+})
+
+test_that("a page that is only set up, by base or grid, counts as drawing nothing", {
+  # plot.new() and grid.newpage() record on the display list without marking the page.
+  root <- local_exhibit_state()
+  state <- hvtiRtemplates:::.run_state
+  assign("written", character(), envir = state)
+  withr::defer(rm("written", envir = state))
+  setups <- list(base = function() {
+    graphics::plot.new()
+    graphics::plot.window(c(0, 1), c(0, 1))
+  }, grid = function() {
+    grid::grid.newpage()
+    grid::pushViewport(grid::viewport())
+  })
+  for (nm in names(setups)) {
+    files <- plant_stale_figure(root, nm)
+    expect_warning(hvtiRtemplates:::.save_figure(setups[[nm]], files[[1]], 2, 2, linked = TRUE),
+                   "placeholder, and no PDF or TIFF was saved")
+    expect_null(hvtiRtemplates:::.record_exhibit(files[[1]], "figure", label = paste0("fig-", nm)))
+    expect_false(any(file.exists(files[2:3])))
+  }
+})
+
+test_that("a figure that is a link the system could not follow is refused, not replaced", {
+  # On a mapped Windows drive normalizePath() can return the link's own path.
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.is_link = function(file) TRUE)
+  expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), files[[1]], 2, 2, save = FALSE, linked = TRUE),
+               "link this system could not follow")
+  expect_identical(readBin(files[[1]], "raw", 100L), as.raw(1:8))
 })
