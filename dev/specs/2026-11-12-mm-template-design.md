@@ -84,8 +84,8 @@ Read from the files on 2026-11-12:
 
 44 of the 55 use `type=cs`. So the marginal CS fit is still the corpus's main form, and the
 33 programs are a comparison of a random-slope model against it. The template's `"random"`
-is an intercept only, which matches 42 of the 47 `random_effects` programs; a random slope
-in time is not offered.
+is an intercept only, which matches 42 of the 47 `random_effects` programs. The random slope in
+time those 33 programs fit is `"slope"`, added on 2026-11-13 (§11).
 
 ### 2.4 What a typical job does
 
@@ -133,7 +133,8 @@ Names follow `rm-linear` wherever the meaning is the same.
 | `RESPONSE_SCALE` | `"identity"` | `"identity"` or `"log"`, through `.response_scale()` and `.response_term()` as in `rm` |
 | `TIME_TERMS` | `c("time")` | the time terms as R expressions, e.g. `c("I(1/(time + 1))", "log(time + 1)")`, so a SAS DATA-step transform carries over line for line |
 | `PREDICTORS` | `c("age", "female")` | the declared fixed effects other than time; the job selects nothing |
-| `STRUCTURE` | `"cs"` | one or more of `"cs"`, `"ar1"`, `"un"`, `"random"`; the first is the reported model |
+| `STRUCTURE` | `"cs"` | one or more of `"cs"`, `"ar1"`, `"un"`, `"random"`, `"slope"`; the first is the reported model |
+| `SLOPE` | `NULL` | for `"slope"`, the time term the random slope is on, one of `TIME_TERMS`; `NULL` takes the first (§11) |
 | `VISIT` | `NULL` | for `"ar1"` and `"un"`, the column of scheduled visit numbers; `NULL` ranks the observed `TIME` values (§4.1) |
 | `METHOD` | `"REML"` | `"ML"` when models with different fixed effects are compared by likelihood |
 | `PREDICT_AT` | `NULL` | a list of covariate profiles for the prediction grid; `NULL` uses the cohort's medians and reference levels |
@@ -147,6 +148,7 @@ Names follow `rm-linear` wherever the meaning is the same.
 | `"ar1"` | `REPEATED visit / type=ar(1) sub=id` | `gls(correlation = corAR1(form = ~ visit_index \| id))` |
 | `"un"` | `REPEATED visit / type=un sub=id` | `gls(correlation = corSymm(form = ~ visit_index \| id), weights = varIdent(form = ~ 1 \| visit))` |
 | `"random"` | `RANDOM intercept / subject=id` | `lme(random = ~ 1 \| id)` |
+| `"slope"` | `RANDOM int <slope> / subject=id` | `lme(random = list(id = pdDiag(~ <SLOPE>)))` |
 
 With `VISIT <- NULL`, `visit_index` is the rank of a measurement's `TIME` among the distinct
 `TIME` values, built by the job, so a patient who misses visit 2 keeps visit 3 in place 3, as SAS
@@ -160,8 +162,7 @@ structure; `corCAR1(form = ~ time | id)` is the R form of `sp(pow)`.
 `RANDOM` and `REPEATED` in one fit (`lme(random = ~ 1 | id, correlation = ...)`) are not
 offered. The rerun found them in 4 programs from 1 study (§2.2), short of the two-study gate;
 decided by John Ehrlinger on 2026-11-12. The 33 programs in §2.5 fit the two separately, and a
-comparison of `"random"` and `"cs"` through `STRUCTURE` covers what they do, except for the
-random slope.
+comparison of `"slope"` and `"cs"` through `STRUCTURE` covers what they do (§11).
 Spatial-power structures (5 studies) are not offered in the first cut. The
 comment points to `corExp(form = ~ time | id)` as the R form for a study that
 needs one.
@@ -178,6 +179,8 @@ Each stops with a message naming the field to change:
 - `VISIT` names no column, holds a value that is not a whole number of 1 or more, or repeats a
   visit within a patient.
 - `IMPUTATION` is set: MI is out of scope (§7), and a stacked fit would be silently wrong.
+- `"slope"` with a `SLOPE` that is not one of `TIME_TERMS`, or with no patient measured at two or
+  more distinct times (§11).
 
 ## 6. Report and saved output
 
@@ -261,3 +264,40 @@ The job saves two files:
    `-2 * logLik()` under REML is on SAS's scale, with no log|X'X| correction. The study
    carried 9 repeated patient/time/device keys, which SAS's CS fit kept; the port kept
    them with a sequence column in `KEY`, as the template's `KEY` note allows for `cs`.
+
+## 11. Revision: a random slope in time (2026-11-13)
+
+**Evidence.** §2.5: 33 programs in 10 studies fit `RANDOM int <time term> / subject=id`, a
+random intercept and a random slope on a time transform such as `iv_echo`, beside the
+`type=cs` fit of the same response. It is the only random-effects form in the corpus the
+first cut did not cover, and it clears the two-study gate.
+
+**Interface.** A fifth `STRUCTURE` value, `"slope"`, and one study choice, `SLOPE`: the time
+term the slope is on, written as it appears in `TIME_TERMS` (`"I(1/(time + 1))"` for
+`iv_echo`). `NULL` takes the first entry of `TIME_TERMS`. `STRUCTURE <- c("cs", "slope")`
+fits both and compares them in the existing table, which is what the 33 programs do by hand.
+A free-form random-effects formula was considered and refused: it admits models the template
+cannot report or test.
+
+**Covariance of the random effects.** Independent, SAS's `RANDOM` default `type=vc`, so
+`pdDiag` in nlme: `lme(fixed, random = list(<id> = pdDiag(~ <SLOPE>)), method = METHOD)`.
+The corpus statement names no `type=`, and a ported job must reproduce its SAS estimates.
+nlme's own default, `pdSymm` (SAS `type=un`), would add an intercept-slope correlation the
+SAS fits did not estimate. Decided by John Ehrlinger on 2026-11-13.
+
+**Report.** The covariance table gives the intercept variance, the slope variance and the
+residual variance, labeled with their SAS names (`Intercept`, the slope term, `Residual`), so
+a port reads directly against a `.lst`. The predicted course is population-average, the fixed
+effects only, as for every structure, so the prediction table and saved output are unchanged.
+
+**Guards.** `SLOPE` must be one of `TIME_TERMS`. The slope needs patients measured at two or
+more distinct times: the report counts the patients with one, and the job stops when no
+patient has two.
+
+**Tests.** A simulation with known intercept, slope and residual standard deviations, which
+the fit recovers; `c("cs", "slope")` in the comparison table; each guard; the end-to-end
+render with `"slope"`.
+
+**Ship status.** `mm` stays `shipped`. The slope is verified by simulation; an lri port of one
+of the 33 programs against its `.lst`, as §10 did for `cs`, follows as a separate step and is
+not a gate (John Ehrlinger, 2026-11-13).
