@@ -330,8 +330,7 @@ test_that("a drawing that closes its own device keeps its figure and opens no ot
     grid::grid.rect(gp = grid::gpar(fill = "gray"))
     grDevices::dev.off()
   }
-  expect_warning(hvtiRtemplates:::.save_figure(draw, png, 2, 2, save = FALSE, linked = TRUE),
-                 "'fig' closed its own graphics device")
+  expect_no_warning(hvtiRtemplates:::.save_figure(draw, png, 2, 2, save = FALSE, linked = TRUE))
   expect_gt(file.size(png), 1000)
   expect_false(file.exists(file.path(root, "Rplots.pdf")))
 })
@@ -408,21 +407,59 @@ test_that("a display-list entry of an unexpected shape counts as drawing, not as
   for (entry in odd) expect_true(hvtiRtemplates:::.marks_page(list(entry)))
 })
 
-test_that("Windows links are listed once a session for each folder, compared in UTF-8", {
+test_that("a drawing that closes its own device on an empty page saves nothing", {
+  # The real devices: png() writes no file for it on macOS and Linux and a blank image on Windows.
   root <- withr::local_tempdir()
-  name <- enc2utf8("hz-s\u00fc\u00df.png")
-  calls <- 0L
-  testthat::local_mocked_bindings(.on_windows = function() TRUE, .windows_links = function(dir) {
-    calls <<- calls + 1L
-    name
-  })
-  expect_true(hvtiRtemplates:::.is_link(file.path(root, name)))
-  expect_false(hvtiRtemplates:::.is_link(file.path(root, "other.png")))
-  expect_identical(calls, 1L)
+  withr::local_dir(root)
+  png <- file.path(root, "fig.png")
+  expect_warning(hvtiRtemplates:::.save_figure(function() grDevices::dev.off(), png, 2, 2, save = TRUE, linked = FALSE),
+                 "'fig' drew nothing; no figure files were saved")
+  expect_false(file.exists(png))
 })
 
-test_that("a link with a non-ASCII name is found by the platform's own link lookup", {
-  # The real lookup, not a stand-in: dir /AL on Windows, Sys.readlink() elsewhere.
+test_that("a device-closed PNG that matches the device's empty page is taken as blank", {
+  # A device that writes the same bytes whether or not anything is drawn, as Windows png()
+  # writes the same blank image for every empty page of one size.
+  root <- withr::local_tempdir()
+  png <- file.path(root, "fig.png")
+  testthat::local_mocked_bindings(.png_device = function(filename, ...) {
+    writeBin(as.raw(1:4), filename)
+    grDevices::pdf(NULL)
+  })
+  expect_warning(hvtiRtemplates:::.save_figure(function() grDevices::dev.off(), png, 2, 2, save = TRUE, linked = FALSE),
+                 "'fig' drew nothing")
+  expect_false(file.exists(png))
+})
+
+test_that("a figure made a link after an earlier save is checked again, not replaced", {
+  # The mapped-drive case, where normalizePath() returns the link's own path: each save asks afresh.
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  answers <- c(FALSE, TRUE)
+  testthat::local_mocked_bindings(.on_windows = function() TRUE, .windows_link = function(file) {
+    answer <- answers[[1L]]
+    answers <<- answers[-1L]
+    answer
+  })
+  hvtiRtemplates:::.save_figure(function() graphics::plot(1), files[[1]], 2, 2, save = FALSE, linked = TRUE)
+  saved <- readBin(files[[1]], "raw", file.size(files[[1]]))
+  expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(2), files[[1]], 2, 2, save = FALSE, linked = TRUE),
+               "link this system could not follow")
+  expect_identical(readBin(files[[1]], "raw", file.size(files[[1]])), saved)
+})
+
+test_that("a link lookup that fails refuses the save rather than taking the file as plain", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.on_windows = function() TRUE, .windows_link = function(file) NA)
+  expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), files[[1]], 2, 2, save = FALSE, linked = TRUE),
+               "whether it is a link could not be checked")
+  expect_identical(readBin(files[[1]], "raw", 100L), as.raw(1:8))
+})
+
+test_that("the platform's own link lookup tells a link, a file and a failed lookup apart", {
+  # The real lookup, not a stand-in: dir on Windows, Sys.readlink() elsewhere. The link's
+  # name is not ASCII, which a codepage could mangle.
   root <- withr::local_tempdir()
   target <- file.path(root, "target.png")
   writeBin(as.raw(1:8), target)
@@ -430,29 +467,7 @@ test_that("a link with a non-ASCII name is found by the platform's own link look
   plain <- file.path(root, "plain.png")
   writeBin(as.raw(1:8), plain)
   skip_if_not(suppressWarnings(file.symlink(target, link)), "This platform does not permit creating symbolic links.")
-  if (.Platform$OS.type == "windows") {
-    listed <- hvtiRtemplates:::.windows_links(root)
-    expect_true(basename(link) %in% listed)
-    expect_false("plain.png" %in% listed)
-  }
   expect_true(hvtiRtemplates:::.is_link(link))
   expect_false(hvtiRtemplates:::.is_link(plain))
-})
-
-test_that("each render lists a folder's Windows links afresh", {
-  root <- withr::local_tempdir()
-  calls <- 0L
-  testthat::local_mocked_bindings(.on_windows = function() TRUE, .windows_links = function(dir) {
-    calls <<- calls + 1L
-    character()
-  })
-  state <- hvtiRtemplates:::.figure_state
-  withr::defer(state$links <- NULL)
-  hvtiRtemplates:::.is_link(file.path(root, "a.png"))
-  hvtiRtemplates:::.is_link(file.path(root, "b.png"))
-  expect_identical(calls, 1L)
-  setup_fixture()
-  run_setup()
-  hvtiRtemplates:::.is_link(file.path(root, "a.png"))
-  expect_identical(calls, 2L)
+  if (.Platform$OS.type == "windows") expect_true(is.na(hvtiRtemplates:::.windows_link(file.path(root, "absent.png"))))
 })

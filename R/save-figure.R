@@ -149,7 +149,12 @@
     if (!same) return(real)
     # On a mapped Windows drive normalizePath() can fall back to a lookup that does not
     # follow links, and return the link's own path; renaming over it would cut the link.
-    if (.is_link(file)) {
+    link <- .is_link(file)
+    if (is.na(link)) {
+      stop("Cannot save ", file, ": whether it is a link could not be checked, and replacing a link would cut it. ",
+           "Check that the folder can be listed, and render again.", call. = FALSE)
+    }
+    if (link) {
       stop("Cannot save ", file, ": it is a link this system could not follow. Save to the file it links to, ",
            "or replace the link with a copy, and render again.", call. = FALSE)
     }
@@ -201,25 +206,25 @@
 .rename_file <- function(from, to) suppressWarnings(file.rename(from, to))
 .make_dir <- function(x) suppressWarnings(dir.create(x))
 .read_link <- function(x) Sys.readlink(x)
-# Windows lists links and junctions as reparse points under dir /AL, which needs no
-# administrator rights; Sys.readlink() serves everywhere else. The listing is taken once a
-# render for each folder, since a render saves many figures into one; .job_setup() clears
-# it, so a link made between renders is seen by the next. dir writes in the console's
-# codepage unless switched to UTF-8 first, and a name it mangled would not match.
+# Windows marks links and junctions as reparse points, which dir /AL selects without
+# administrator rights; Sys.readlink() serves everywhere else. Each file is checked afresh,
+# since a link made during a render must be seen before the rename that would cut it.
+# TRUE is a link, FALSE a file that is not, and NA a lookup that failed.
 .is_link <- function(file) {
   if (!.on_windows()) return(nzchar(.read_link(file)))
-  dir <- dirname(file)
-  if (is.null(.figure_state$links[[dir]])) .figure_state$links[[dir]] <- .windows_links(dir)
-  enc2utf8(basename(file)) %in% .figure_state$links[[dir]]
+  .windows_link(file)
 }
 
 .on_windows <- function() .Platform$OS.type == "windows"
 
-.windows_links <- function(dir) {
-  listed <- suppressWarnings(system2("cmd", c("/c", "chcp 65001 >nul & dir /AL /B", shQuote(chartr("/", "\\", dir))),
-                                     stdout = TRUE, stderr = FALSE))
-  Encoding(listed) <- "UTF-8"
-  enc2utf8(listed)
+# The answer is a token of cmd's own, so no file name crosses the console's codepage. A
+# lookup that cannot list the file at all, under either filter, answers neither.
+.windows_link <- function(file) {
+  path <- shQuote(chartr("/", "\\", file), type = "cmd")
+  test <- sprintf("(dir /AL /B %s >nul 2>nul && echo LINK) || (dir /A-L /B %s >nul 2>nul && echo FILE)", path, path)
+  said <- suppressWarnings(system2("cmd", c("/c", test), stdout = TRUE, stderr = FALSE))
+  said <- trimws(said)
+  if ("LINK" %in% said) TRUE else if ("FILE" %in% said) FALSE else NA
 }
 .png_device <- function(...) grDevices::png(...)
 
@@ -262,8 +267,7 @@
   grDevices::dev.control("enable")
   drew <- TRUE
   # dev.off() makes the next open device current, not the one that was; put
-  # back the caller's, so later plotting does not land in another file. A drawing that
-  # closed the device itself has written its file, which is kept.
+  # back the caller's, so later plotting does not land in another file.
   on.exit({
     if (device %in% grDevices::dev.list()) grDevices::dev.off(device)
     if (before > 1L && before %in% grDevices::dev.list()) grDevices::dev.set(before)
@@ -273,12 +277,23 @@
   if (device %in% grDevices::dev.list()) {
     grDevices::dev.set(device)
     drew <- .marks_page(grDevices::recordPlot()[[1L]])
-  } else if (identical(format, "png")) {
-    # Said once, for the PNG; its PDF and TIFF are drawn by the same function.
-    warning("Figure '", sub("[.][a-z]+$", "", basename(file)), "' closed its own graphics device, so whether it ",
-            "drew anything could not be checked; it is saved as drawn.", call. = FALSE)
+  } else if (identical(format, "png") && file.exists(file)) {
+    # A drawing that closed the device took its display list with it. Its PNG is then
+    # compared with an empty page from the same device: where an empty page writes no file
+    # the PNG it left is drawn, and where it writes a blank image the same bytes are blank.
+    # The PDF and TIFF are drawn only after a PNG that is not blank.
+    drew <- !.same_as_empty_png(file, width, height)
   }
   invisible(file)
+}
+
+.same_as_empty_png <- function(file, width, height) {
+  empty <- tempfile("empty-", fileext = ".png")
+  on.exit(unlink(empty), add = TRUE)
+  .png_device(empty, width = width, height = height, units = "in", res = 300)
+  grDevices::dev.off()
+  file.exists(empty) && identical(file.size(empty), file.size(file)) &&
+    identical(readBin(empty, "raw", file.size(empty)), readBin(file, "raw", file.size(file)))
 }
 
 # Display-list operations that set up a page without marking it: the palette, base
