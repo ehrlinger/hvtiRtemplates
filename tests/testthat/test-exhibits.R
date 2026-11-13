@@ -351,8 +351,10 @@ test_that("a link to a missing file that cannot be read is refused, not replaced
   skip_if_not(suppressWarnings(file.symlink(file.path(root, "gone", "fig.png"), png)),
               "This platform does not permit creating symbolic links.")
   testthat::local_mocked_bindings(.read_link = function(x) "")
+  # Windows file.exists() reports the link itself, so there the mapped-drive guard refuses it;
+  # either refusal leaves the link in place.
   expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE),
-               "link to a file that does not exist")
+               "link (to a file that does not exist|this system could not follow)")
   expect_true(basename(png) %in% list.files(root, all.files = TRUE))
 })
 
@@ -365,7 +367,8 @@ test_that("a study reached through a linked folder keeps its own path in message
   testthat::local_mocked_bindings(.copy_file = function(from, to) FALSE)
   err <- tryCatch(hvtiRtemplates:::.save_figure(function() graphics::plot(1), file.path(study, "fig.png"), 2, 2,
                                                 save = FALSE, linked = TRUE), error = conditionMessage)
-  expect_match(err, file.path(parent, "study"), fixed = TRUE)
+  # dirname() writes / on Windows, so the comparison is made in that form.
+  expect_match(err, chartr("\\", "/", file.path(parent, "study")), fixed = TRUE)
 })
 
 test_that("a page that is only set up, by base or grid, counts as drawing nothing", {
