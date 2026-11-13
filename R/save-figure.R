@@ -232,8 +232,9 @@
   # hooks; grid drawing with no grid.newpage(), such as grid.draw() of a grob, lands on
   # grid's own display list, which grid keeps whatever the device's. Neither copies the
   # plot's data. A page that drew nothing leaves no file on every platform.
-  paged <- FALSE
-  started <- function(...) paged <<- TRUE
+  page <- new.env(parent = emptyenv())
+  page$started <- FALSE
+  started <- function(...) page$started <- TRUE
   for (hook in .page_hooks) setHook(hook, started)
   drew <- TRUE
   # dev.off() makes the next open device current, not the one that was; put
@@ -246,7 +247,7 @@
     if (!drew) unlink(file)
   }, add = TRUE)
   plot()
-  if (!paged && device %in% grDevices::dev.list()) {
+  if (!page$started && device %in% grDevices::dev.list()) {
     grDevices::dev.set(device)
     drew <- length(grid::grid.ls(print = FALSE)$name) > 0L
   }
