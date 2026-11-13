@@ -366,3 +366,35 @@ test_that("a study reached through a linked folder keeps its own path in message
                                                 save = FALSE, linked = TRUE), error = conditionMessage)
   expect_match(err, file.path(parent, "study"), fixed = TRUE)
 })
+
+test_that("a page that is only set up, by base or grid, counts as drawing nothing", {
+  # plot.new() and grid.newpage() record on the display list without marking the page.
+  root <- local_exhibit_state()
+  state <- hvtiRtemplates:::.run_state
+  assign("written", character(), envir = state)
+  withr::defer(rm("written", envir = state))
+  setups <- list(base = function() {
+    graphics::plot.new()
+    graphics::plot.window(c(0, 1), c(0, 1))
+  }, grid = function() {
+    grid::grid.newpage()
+    grid::pushViewport(grid::viewport())
+  })
+  for (nm in names(setups)) {
+    files <- plant_stale_figure(root, nm)
+    expect_warning(hvtiRtemplates:::.save_figure(setups[[nm]], files[[1]], 2, 2, linked = TRUE),
+                   "placeholder, and no PDF or TIFF was saved")
+    expect_null(hvtiRtemplates:::.record_exhibit(files[[1]], "figure", label = paste0("fig-", nm)))
+    expect_false(any(file.exists(files[2:3])))
+  }
+})
+
+test_that("a figure that is a link the system could not follow is refused, not replaced", {
+  # On a mapped Windows drive normalizePath() can return the link's own path.
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.is_link = function(file) TRUE)
+  expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), files[[1]], 2, 2, save = FALSE, linked = TRUE),
+               "link this system could not follow")
+  expect_identical(readBin(files[[1]], "raw", 100L), as.raw(1:8))
+})

@@ -146,7 +146,14 @@
   if (file.exists(file)) {
     real <- normalizePath(file, winslash = "/", mustWork = TRUE)
     same <- identical(real, file.path(normalizePath(dirname(file), winslash = "/", mustWork = TRUE), basename(file)))
-    return(if (same) file else real)
+    if (!same) return(real)
+    # On a mapped Windows drive normalizePath() can fall back to a lookup that does not
+    # follow links, and return the link's own path; renaming over it would cut the link.
+    if (.is_link(file)) {
+      stop("Cannot save ", file, ": it is a link this system could not follow. Save to the file it links to, ",
+           "or replace the link with a copy, and render again.", call. = FALSE)
+    }
+    return(file)
   }
   for (i in seq_len(20L)) {
     link <- .read_link(file)
@@ -194,6 +201,14 @@
 .rename_file <- function(from, to) suppressWarnings(file.rename(from, to))
 .make_dir <- function(x) suppressWarnings(dir.create(x))
 .read_link <- function(x) Sys.readlink(x)
+# Windows lists links and junctions as reparse points under dir /AL, which needs no
+# administrator rights; Sys.readlink() serves everywhere else.
+.is_link <- function(file) {
+  if (.Platform$OS.type != "windows") return(nzchar(.read_link(file)))
+  listed <- suppressWarnings(system2("cmd", c("/c", "dir", "/AL", "/B", shQuote(chartr("/", "\\", dirname(file)))),
+                                     stdout = TRUE, stderr = FALSE))
+  basename(file) %in% listed
+}
 .png_device <- function(...) grDevices::png(...)
 
 # The report links this PNG, so a blank page would show as a broken image. Say so in the
@@ -226,32 +241,43 @@
     .png_device(file, width = width, height = height, units = "in", res = 300)
   }
   device <- grDevices::dev.cur()
-  # Whether anything was drawn is read from the drawing, not from the file: png() writes
-  # nothing for an empty page on macOS and Linux and a blank image on Windows, and pdf()
-  # writes a blank page everywhere. Base and grid start a page through their new-page
-  # hooks; grid drawing with no grid.newpage(), such as grid.draw() of a grob, lands on
-  # grid's own display list, which grid keeps whatever the device's. Neither copies the
-  # plot's data. A page that drew nothing leaves no file on every platform.
-  page <- new.env(parent = emptyenv())
-  page$started <- FALSE
-  started <- function(...) page$started <- TRUE
-  for (hook in .page_hooks) setHook(hook, started)
+  # Whether anything was drawn is read from the device's display list, not from the file:
+  # png() writes nothing for an empty page on macOS and Linux and a blank image on Windows,
+  # and pdf() writes a blank page everywhere. Base and grid both record there, grid even
+  # without grid.newpage(), and the list holds the plot's data by reference, not as a copy.
+  # Setting up a page records too, so only operations that mark it count. A page that drew
+  # nothing leaves no file on every platform.
+  grDevices::dev.control("enable")
   drew <- TRUE
   # dev.off() makes the next open device current, not the one that was; put
   # back the caller's, so later plotting does not land in another file. A drawing that
   # closed the device itself has written its file, which is kept.
   on.exit({
-    for (hook in .page_hooks) setHook(hook, Filter(function(h) !identical(h, started), getHook(hook)), "replace")
     if (device %in% grDevices::dev.list()) grDevices::dev.off(device)
     if (before > 1L && before %in% grDevices::dev.list()) grDevices::dev.set(before)
     if (!drew) unlink(file)
   }, add = TRUE)
   plot()
-  if (!page$started && device %in% grDevices::dev.list()) {
+  if (device %in% grDevices::dev.list()) {
     grDevices::dev.set(device)
-    drew <- length(grid::grid.ls(print = FALSE)$name) > 0L
+    drew <- .marks_page(grDevices::recordPlot()[[1L]])
   }
   invisible(file)
 }
 
-.page_hooks <- c("before.plot.new", "before.grid.newpage")
+# Display-list operations that set up a page without marking it: the palette, base
+# plot.new(), plot.window(), par(), layout() and clipping, grid's viewports and graphical
+# parameters, and the namespace load ggplot2 records. An operation not named here counts
+# as drawing, so one this list misses keeps the figure rather than discarding it.
+.page_setup_ops <- c("palette2", "C_plot_new", "C_plot_window", "C_par", "C_layout", "C_clip",
+                     "gridDirty", "setGPar", "setviewport", "upviewport", "downviewport", "newpage")
+
+.marks_page <- function(display_list) {
+  op <- function(entry) {
+    what <- entry[[2L]][[1L]]
+    if (inherits(what, "NativeSymbolInfo")) return(what$name)
+    if (is.call(what) && identical(what[[1L]], as.name("requireNamespace"))) return("requireNamespace")
+    "drawing"
+  }
+  any(!vapply(display_list, op, character(1)) %in% c(.page_setup_ops, "requireNamespace"))
+}
