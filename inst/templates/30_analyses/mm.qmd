@@ -143,10 +143,10 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 #| label: mm-helpers
 # The fit lives here rather than in a package until a second longitudinal template
 # (mp or gm) shows what a package function should be; see the design note.
-.mm_structures <- c("cs", "ar1", "un", "random")
+.mm_structures <- c("cs", "ar1", "un", "random", "slope")
 
 # Each check stops on data the fit would accept and then get wrong without saying so.
-mm_check <- function(d, id, time, structure, imputation, visit = NULL) {
+mm_check <- function(d, id, time, structure, imputation, visit = NULL, slope = NULL, time_terms = NULL) {
   bad <- setdiff(structure, .mm_structures)
   if (length(bad)) {
     stop("STRUCTURE ", paste(dQuote(bad, FALSE), collapse = ", "), " is not one of ",
@@ -184,10 +184,21 @@ mm_check <- function(d, id, time, structure, imputation, visit = NULL) {
          " has ", length(unique(k)), " distinct values, more than 20 distinct visits. Use \"cs\" or \"random\" for ",
          "free times, or set VISIT to a visit number.", call. = FALSE)
   }
+  if ("slope" %in% structure) {
+    if (!slope %in% time_terms) {
+      stop("SLOPE (", slope, ") is not one of TIME_TERMS (", paste(time_terms, collapse = ", "), "). ",
+           "Write it as it appears there, or set SLOPE <- NULL for the first.", call. = FALSE)
+    }
+    # A patient measured at one time has no slope of their own; with none measured twice there is no slope at all.
+    if (!any(tapply(t, as.character(d[[id]]), function(x) length(unique(x)) >= 2L))) {
+      stop("STRUCTURE asks for \"slope\", but no patient is measured at two or more distinct times. ",
+           "Use \"cs\" or \"random\".", call. = FALSE)
+    }
+  }
   invisible(TRUE)
 }
 
-mm_fit <- function(d, formula, id, time, structure, method, visit = NULL) {
+mm_fit <- function(d, formula, id, time, structure, method, visit = NULL, slope = NULL) {
   ord <- order(d[[id]], d[[time]])
   d <- d[ord, , drop = FALSE]
   # SAS places a measurement by its visit, not by its row: a patient who misses visit 2 keeps visit 3 in place 3.
@@ -205,11 +216,19 @@ mm_fit <- function(d, formula, id, time, structure, method, visit = NULL) {
     cs = nlme::corCompSymm(form = by_id("~ 1")),
     ar1 = nlme::corAR1(form = by_id("~ .visit_index")),
     un = nlme::corSymm(form = by_id("~ .visit_rank")),
-    random = NULL
+    random = NULL,
+    slope = NULL
+  )
+  # SAS's RANDOM int <slope> / subject=id is type=vc by default: intercept and slope independent, so pdDiag,
+  # not nlme's own default pdSymm, which would estimate a correlation the SAS fit did not.
+  random <- switch(structure,
+    random = by_id("~ 1"),
+    slope = stats::setNames(list(nlme::pdDiag(stats::as.formula(paste("~", slope)))), id),
+    NULL
   )
   model <- tryCatch(
-    if (startsWith(structure, "random")) {
-      nlme::lme(formula, data = d, random = by_id("~ 1"), correlation = corr, method = method,
+    if (!is.null(random)) {
+      nlme::lme(formula, data = d, random = random, correlation = corr, method = method,
                 na.action = stats::na.omit)
     } else {
       nlme::gls(formula, data = d, correlation = corr, method = method, na.action = stats::na.omit,
@@ -231,11 +250,12 @@ mm_fit <- function(d, formula, id, time, structure, method, visit = NULL) {
        # `used` is returned in the caller's row order: the caller indexes its own, unsorted data with it.
        xlev = stats::.getXlevels(fixed, mf), used = used[order(ord)],
        n_patients = length(unique(d[[id]][used])), n_measurements = sum(used),
-       per_patient = table(as.character(d[[id]][used])))
+       per_patient = table(as.character(d[[id]][used])), slope = slope,
+       n_single_time = sum(tapply(d[[time]][used], as.character(d[[id]][used]), function(x) length(unique(x))) < 2L))
 }
 
 # The covariance parameters: cs and random report one within-patient correlation, ar1 the lag-1 correlation,
-# and un one correlation per visit pair.
+# and un one correlation per visit pair; slope the intercept, slope and residual variances.
 mm_covariance <- function(fit) {
   m <- fit$model
   structure <- fit$structure
@@ -244,9 +264,16 @@ mm_covariance <- function(fit) {
   ref <- if (identical(structure, "un")) attr(m$modelStruct$varStruct, "groupNames")[[1L]]
   if (inherits(m, "lme")) {
     vc <- suppressWarnings(as.numeric(nlme::VarCorr(m)[, "Variance"]))
-    out[["between-patient variance"]] <- vc[[1L]]
-    out[["residual variance"]] <- vc[[length(vc)]]
-    out[["within-patient correlation"]] <- vc[[1L]] / sum(vc)
+    if (identical(structure, "slope")) {
+      # Labeled as SAS's Covariance Parameter Estimates name them, so a port reads against its .lst.
+      out[["Intercept variance"]] <- vc[[1L]]
+      out[[paste(fit$slope, "variance")]] <- vc[[2L]]
+      out[["residual variance"]] <- vc[[length(vc)]]
+    } else {
+      out[["between-patient variance"]] <- vc[[1L]]
+      out[["residual variance"]] <- vc[[length(vc)]]
+      out[["within-patient correlation"]] <- vc[[1L]] / sum(vc)
+    }
   } else {
     out[[if (identical(structure, "un")) paste0("residual variance at visit ", ref) else "residual variance"]] <- m$sigma^2
   }

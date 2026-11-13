@@ -166,6 +166,40 @@ test_that("UN labels each correlation by visit pair and matches corMatrix", {
   }
 })
 
+test_that("slope fits an independent random intercept and slope and recovers their variances", {
+  h <- mm_helpers()
+  fit <- h$mm_fit(mm_slopes(), ly ~ log(time + 1) + age, "ccfid", "time", "slope", "REML", slope = "log(time + 1)")
+  expect_s3_class(fit$model, "lme")
+  expect_s3_class(fit$model$modelStruct$reStruct[[1L]], "pdDiag")
+  expect_identical(fit$slope, "log(time + 1)")
+  expect_identical(fit$n_single_time, 0L)
+  cov <- h$mm_covariance(fit)
+  expect_identical(cov$parameter, c("Intercept variance", "log(time + 1) variance", "residual variance"))
+  expect_equal(cov$estimate, c(0.04, 0.01, 0.01), tolerance = 0.25)
+})
+
+test_that("slope counts the patients measured at one time", {
+  h <- mm_helpers()
+  d <- mm_slopes()
+  d$time[d$ccfid %in% 1:5] <- 2
+  fit <- h$mm_fit(d, ly ~ log(time + 1) + age, "ccfid", "time", "slope", "REML", slope = "log(time + 1)")
+  expect_identical(fit$n_single_time, 5L)
+})
+
+test_that("mm_check refuses a SLOPE outside TIME_TERMS and data with no slope to fit", {
+  h <- mm_helpers()
+  d <- mm_slopes()
+  expect_true(h$mm_check(d, "ccfid", "time", c("cs", "slope"), NULL, slope = "log(time + 1)",
+                         time_terms = "log(time + 1)"))
+  expect_error(h$mm_check(d, "ccfid", "time", "slope", NULL, slope = "time", time_terms = "log(time + 1)"),
+               "SLOPE \\(time\\) is not one of TIME_TERMS")
+  # A SLOPE is ignored when no structure asks for one.
+  expect_true(h$mm_check(d, "ccfid", "time", "cs", NULL, slope = "time", time_terms = "log(time + 1)"))
+  d$time <- 1
+  expect_error(h$mm_check(d, "ccfid", "time", "slope", NULL, slope = "log(time + 1)", time_terms = "log(time + 1)"),
+               "no patient is measured at two or more distinct times")
+})
+
 test_that("UN names the variance reference from the fit when the first patient misses visit 1", {
   h <- mm_helpers()
   d <- mm_visits()

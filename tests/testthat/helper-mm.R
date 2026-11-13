@@ -31,6 +31,21 @@ mm_visits <- function() {
   d
 }
 
+# A cohort whose log response has an independent random intercept (SD 0.2) and random slope on
+# log(time + 1) (SD 0.1), residual SD 0.1: what SAS's RANDOM int <slope> / subject=id fits.
+mm_slopes <- function(n = 300L) {
+  withr::local_seed(7)
+  per <- sample(4:6, n, replace = TRUE)
+  id <- rep(seq_len(n), per)
+  time <- unlist(lapply(per, function(k) sort(stats::runif(k, 0, 10))))
+  age <- rep(stats::rnorm(n, 60, 10), per)
+  b0 <- rep(stats::rnorm(n, 0, 0.2), per)
+  b1 <- rep(stats::rnorm(n, 0, 0.1), per)
+  lt <- log(time + 1)
+  ly <- 3 + 0.2 * lt + 0.01 * (age - 60) + b0 + b1 * lt + stats::rnorm(length(id), 0, 0.1)
+  data.frame(ccfid = id, time = time, age = age, ly = ly)
+}
+
 # Scaffold an mm job in a fresh study holding mm_data(), work its EDIT: markers and render it.
 mm_render_fixture <- function(choices = character(), .local_envir = parent.frame()) {
   root <- tempfile("mm-study-")
