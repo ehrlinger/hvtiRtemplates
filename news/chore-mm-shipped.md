@@ -1,0 +1,1 @@
+- `mm` is shipped. A corpus `type=cs` job ported on lri matched its SAS listing: every fixed effect and standard error to the printed precision, the residual variance exactly, and the REML likelihood to 1e-6.

@@ -863,7 +863,7 @@
       "folder": "analyses",
       "family": "models",
       "kind": "job",
-      "status": "in-flight",
+      "status": "shipped",
       "batch": 6,
       "sas_breadth": 59,
       "r_exemplars": 1,
@@ -873,7 +873,7 @@
       "workflows": [],
       "blocked_on": null,
       "spec": "dev/specs/2026-11-12-mm-template-design.md",
-      "note": "Measured by the 2026-11-12 shape census over mm jobs, excluding 1,092 legacy tp.* template copies: 263 SAS programs in 56 studies. REPEATED alone 38 studies, RANDOM alone 7, both in one fit 1; 55 programs in 14 studies fit the two in separate steps. type=cs in 27 studies over the three shapes. In flight until a corpus job ported on lri matches its SAS estimates.",
+      "note": "Measured by the 2026-11-12 shape census over mm jobs, excluding 1,092 legacy tp.* template copies: 263 SAS programs in 56 studies. REPEATED alone 38 studies, RANDOM alone 7, both in one fit 1; 55 programs in 14 studies fit the two in separate steps. type=cs in 27 studies over the three shapes.",
       "sas_breadth_jobs": 56,
       "disposition": "scaffold",
       "uses": ["nlme::gls", "nlme::lme"]

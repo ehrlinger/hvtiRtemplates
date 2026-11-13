@@ -928,7 +928,7 @@ The PR body states that the local `/code-review` stood in for Copilot, lists the
 
 Not code. It turns `in-flight` into `shipped`.
 
-- [ ] **Step 1:** Choose one `repeated_covariance` job with `type=cs` from the private CSV, `general/_development/mm-shape-census-20261112/out/mm-shapes-private.csv`, whose `.lst` is beside it.
-- [ ] **Step 2:** On lri, in a scratch folder under `/studies/general/_development/mm-port-20261112/`, scaffold `add_job("mm", ...)`, set its study choices to the SAS job's model, and render it.
-- [ ] **Step 3:** Compare the fixed effects and the CS covariance parameter with the SAS `.lst`. They agree to the printed precision, since both fit by REML.
-- [ ] **Step 4:** If they agree, set the `mm` row's `status` to `"shipped"`, drop the last sentence of its `note`, regenerate the roadmap, and commit on the PR branch. If they do not, the difference goes in the PR before anything ships.
+- [x] **Step 1:** Choose one `repeated_covariance` job with `type=cs` from the private CSV, `general/_development/mm-shape-census-20261112/out/mm-shapes-private.csv`, whose `.lst` is beside it.
+- [x] **Step 2:** On lri, in a scratch folder under `/studies/general/_development/mm-port-20261112/`, scaffold `add_job("mm", ...)`, set its study choices to the SAS job's model, and render it.
+- [x] **Step 3:** Compare the fixed effects and the CS covariance parameter with the SAS `.lst`. They agree to the printed precision, since both fit by REML.
+- [x] **Step 4:** If they agree, set the `mm` row's `status` to `"shipped"`, drop the last sentence of its `note`, regenerate the roadmap, and commit on the PR branch. If they do not, the difference goes in the PR before anything ships.
