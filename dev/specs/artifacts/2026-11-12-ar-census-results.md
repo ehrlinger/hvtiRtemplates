@@ -15,12 +15,12 @@ person opening files could tighten.
 
 | measure | value | basis |
 |---|---|---|
-| **breadth, firm lower bound** | **570 studies** | studies holding at least one `ar`-named Word or RTF file. Templates and system files excluded. One command over the catalogue, with no judgement calls |
+| **breadth, filename-based candidates** | **570 catalogue studies** | distinct catalogue `study` values holding at least one `ar`-named Word or RTF file, with templates and system files excluded. One command over the catalogue, with no judgement calls. It is not validated: no file was opened, and nested fragments (see below) are not consolidated, so it is neither a confirmed count nor a strict lower bound on independent studies |
 | breadth, best estimate | about 670 (about 455 to 895) | 18 of 40 sampled studies hold a report, scaled to 1,484 |
 | breadth, lenient | about 815 | also counts studies whose only evidence is SAS table output |
 | breadth, upper bound | 1,484 | studies with any Word or RTF file left after the name exclusions |
 | **volume, reports** | **about 4,200 files** (about 2,450 to 7,050) | 12 of 120 sampled kept files are reports, scaled to 42,277 |
-| volume, drafts collapsed | about 3,200 | the census's ratio of collapsed to raw files, 0.76, applied to the line above |
+| volume, drafts collapsed | about 3,200, conditional | a heuristic, not an estimate. The 0.76 collapse ratio was measured over ALL kept documents, not reports, and `report_key()` drops every numeric token, not only draft numbers. 3,200 holds only if reports duplicate at the same rate as everything else |
 
 The intervals are Wilson 95% intervals on the sampled proportion. They are wide enough to
 rank the figures against each other, but not to quote to two significant figures.
@@ -91,4 +91,12 @@ Two changes would turn 42,277 into a much closer upper bound. Neither is made he
 
 The census counts placed files only. 2,178 Word and RTF files, and 2,857 PDFs, sit with no
 taxonomy folder above them and belong to no study. That is about 4% of the Word and RTF
-total, so the placed-only figures are lower bounds, but only slightly low.
+files, but the share of documents says nothing about how many reports or studies are
+missing: unplaced files may hold reports at a different rate, and may belong to studies
+the catalogue never names.
+
+So every estimate here has a narrower scope than "the corpus". The sample proportions,
+and the 1,484-study upper bound, apply only to **kept, placed Word and RTF documents**.
+Outside that frame, with nothing estimated for it, are unplaced files, reports kept only
+as PDF, and any report that a name exclusion removed (the audit bounds that last group at
+about 9% of exclusions; it does not measure it).
