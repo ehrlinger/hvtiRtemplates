@@ -122,17 +122,34 @@ SYSTEM_PREFIXES = ("~$", "._", ".~lock")
 # standard methods write-ups, and the filled-in proposal and project-plan
 # forms. None is an analysis report. Read in the 2026-11-12 study sample, where
 # seven of the twenty studies labelled `no` held nothing else, which is why
-# nearly every study had a kept file. Matched as a PREFIX of the stem with
-# everything but letters and digits removed, because the copies carry suffixes
-# a whole-token rule cannot anticipate: " (2)", "_v1", "[approved]", a study
-# number, a date. A prefix here must be specific enough that no report starts
-# with it; `binder` alone or `methods` alone would not be.
-BOILERPLATE_PREFIXES = (
-    "bindersummaries", "statrefs", "gfrckdepiformula", "dates4survival",
-    "varssasscriptdoc", "methodsrfandboosting", "methodsrfboosting",
-    "methodsboosting", "rfstatmethoddesc", "boostmtreemethoddescription",
-    "projectplan", "proposal", "guidelinesfollowupcohort", "requestforfup",
+# nearly every study had a kept file. Matched on the stem's TOKENS (see
+# `tokens()`): it must START with one of these sequences, and every token after
+# it must be a number or a word in BOILERPLATE_TAIL. The copies carry suffixes
+# such as " (2)", "_v1", "[approved]", a study number or a date, and the tail
+# list admits those. Anything else after the name, a title word such as
+# `outcomes` or `report`, keeps the file: `Proposal valve outcomes analysis
+# report` may be a report, and only a person can say. A bare prefix match
+# excluded it, and with it any study whose only report was named that way
+# (raised by Codex on #537).
+BOILERPLATE = (
+    ("binder", "summaries"), ("stat", "refs"), ("gfr", "ckd", "epi", "formula"),
+    ("dates", "4", "survival"), ("vars", "sas", "script", "doc"),
+    ("methods", "rf", "and", "boosting"), ("methods", "rf", "boosting"),
+    ("methods", "boosting"), ("rf", "stat", "method", "desc"),
+    ("boostmtree", "method", "description"), ("projectplan",),
+    ("projectplandatasources",), ("proposal",),
+    ("guidelines", "follow", "up", "cohort"), ("request", "for", "fup"),
 )
+BOILERPLATE_TAIL = {"v", "ver", "version", "final", "draft", "rev", "revised",
+                    "copy", "old", "new", "updated", "study", "st", "stxxxx",
+                    "approved", "data", "only", "from", "and", "proposal"}
+
+
+def is_boilerplate(stem):
+    t = tokens(stem)
+    return any(tuple(t[:len(seq)]) == seq
+               and all(x.isdigit() or x in BOILERPLATE_TAIL for x in t[len(seq):])
+               for seq in BOILERPLATE)
 
 # Stage 2. Each entry gets its own named bucket and its own count. Matched as
 # WHOLE TOKENS of the lowercased stem (see `tokens()`), with an optional plural
@@ -182,7 +199,7 @@ def classify_exclusion(stem):
     a partition."""
     if stem.startswith(SYSTEM_PREFIXES):
         return "system_artifact"
-    if re.sub(r"[^a-z0-9]", "", stem.lower()).startswith(BOILERPLATE_PREFIXES):
+    if is_boilerplate(stem):
         return "boilerplate"
     joined = "_".join(tokens(stem))
     for bucket, rx in _EXCLUDE_RE.items():
@@ -367,8 +384,8 @@ def count(rows, cols, sample=120, audit=40, studies=40, seed=20261112):
             "export_ext_counted_separately": sorted(EXPORT_EXT),
             "exclusion_match": "first match wins, in this order: system files by raw "
                                "prefix " + ", ".join(SYSTEM_PREFIXES) + "; then "
-                               "boilerplate by prefix of the stem lowercased and "
-                               "stripped to [a-z0-9]; then the named buckets by "
+                               "boilerplate by a known leading token sequence followed "
+                               "only by numbers or version, study and approval words; then the named buckets by "
                                "whole tokens of the lowercased stem, optional plural s",
             "template_test": "is_template column" if "is_template" in cols
                              else "stem starts with 'tp.'",

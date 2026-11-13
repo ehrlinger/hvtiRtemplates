@@ -55,6 +55,7 @@ class Exclusions(unittest.TestCase):
                      "methods-rf_boosting", "RF-STAT-Method-Desc",
                      "Boostmtree method description from 1064 and 1130",
                      "ProjectPlan_Study1135_v1", "ProjectPlanDataSources_2016",
+                     "ProjectPlan_proposal2140",
                      "Proposal_1941[approved]", "Guidelines Follow-up Cohort 4.19.22",
                      "Request for FUP_STXXXX"):
             with self.subTest(stem=stem):
@@ -62,7 +63,12 @@ class Exclusions(unittest.TestCase):
 
     def test_reports_that_mention_methods_or_summaries_are_kept(self):
         for stem in ("ar.analysis_BAR", "summary_analysis", "methods_and_results",
-                     "statistical_report", "binder"):
+                     "statistical_report", "binder",
+                     # A boilerplate name followed by real title words is a
+                     # report until a person says otherwise (Codex, #537).
+                     "Proposal valve outcomes analysis report",
+                     "ProjectPlan outcomes analysis report",
+                     "MethodsBoosting survival report", "stat_refs_and_results"):
             with self.subTest(stem=stem):
                 self.assertIsNone(census.classify_exclusion(stem))
 
