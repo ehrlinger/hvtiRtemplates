@@ -87,10 +87,13 @@
     .drop_stale(tiff)
   }
   # A PNG the report embeds gets a placeholder, which is never recorded.
-  if (blank && linked) {
-    .blank_placeholder(png)
-  } else if (blank) {
-    warning("Figure '", name, "' drew nothing; no figure files were saved for it.", call. = FALSE)
+  if (blank) {
+    # The mark is dropped once the placeholder exists: one taken before a save cannot see a
+    # figure removed between saves, whose earlier mark would otherwise vouch for the placeholder.
+    if (linked) .unmark_written(.blank_placeholder(png))
+    warning("Figure '", name, "' drew nothing; ",
+            if (linked) "the report shows a placeholder" else "no figure files were saved for it",
+            if (linked && selected) ", and no PDF or TIFF was saved" else "", ".", call. = FALSE)
   }
   invisible(png)
 }
@@ -104,8 +107,10 @@
 # copying straight over the figure would lose the earlier one to a full disk or a dropped
 # share; a rename within one folder replaces it whole. A draw or copy that fails leaves
 # the earlier figure where it was. A device that drew nothing writes no file; the earlier
-# figure is then removed, so it cannot survive as this run's.
+# figure is then removed, so it cannot survive as this run's. A figure that is a link is
+# written through to its target, and the target keeps its permissions.
 .write_figure <- function(plot, file, width, height, format) {
+  file <- .link_target(file)
   if (!dir.exists(dirname(file))) {
     stop("Cannot save ", basename(file), ": the folder ", dirname(file), " does not exist.", call. = FALSE)
   }
@@ -118,16 +123,41 @@
   scratch <- file.path(drawing, basename(file))
   .draw_figure(plot, scratch, width, height, format)
   if (!file.exists(scratch)) return(.remove_figure_file(file))
+  .sweep_staged(dirname(file))
   staged <- file.path(dirname(file), paste0(".", basename(drawing), "-", basename(file)))
   on.exit(if (file.exists(staged)) unlink(staged), add = TRUE)
   if (!.copy_file(scratch, staged)) {
     stop("Could not write ", basename(file), " into ", dirname(file), ": check the folder's space and permissions, ",
          "and render again.", call. = FALSE)
   }
+  if (file.exists(file)) Sys.chmod(staged, file.mode(file), use_umask = FALSE)
   if (!.rename_file(staged, file)) {
     stop("Could not replace ", file, ": close whatever holds it open, or remove it, and render again.", call. = FALSE)
   }
   invisible(file)
+}
+
+# A rename replaces a link itself, so a figure linked elsewhere, such as into a manuscript
+# folder, is followed to the file it names. A relative link is read against its own folder.
+.link_target <- function(file) {
+  for (i in seq_len(20L)) {
+    link <- Sys.readlink(file)
+    if (is.na(link) || !nzchar(link)) return(file)
+    file <- if (grepl("^(/|[A-Za-z]:)", link)) link else file.path(dirname(file), link)
+  }
+  stop("Cannot save ", file, ": it is a chain of more than 20 links.", call. = FALSE)
+}
+
+# A render killed between the copy and the rename leaves its staged copy, which on.exit()
+# never removes. Any older than a day is cleared, once a session for each folder; a younger
+# one may belong to a render still running.
+.sweep_staged <- function(dir) {
+  if (dir %in% .figure_state$swept) return(invisible())
+  .figure_state$swept <- c(.figure_state$swept, dir)
+  staged <- list.files(dir, pattern = "^[.]drawing-[0-9a-f]+-", all.files = TRUE, full.names = TRUE)
+  old <- staged[difftime(Sys.time(), file.mtime(staged), units = "hours") > 24]
+  if (length(old)) unlink(old)
+  invisible()
 }
 
 # A file that cannot be removed, such as one a viewer holds open on the share, stops the
@@ -148,14 +178,13 @@
 .make_dir <- function(x) suppressWarnings(dir.create(x))
 
 # The report links this PNG, so a blank page would show as a broken image. Say so in the
-# image, and in a warning the analyst sees at render time.
+# image; .save_figure() warns the analyst at render time.
 .blank_placeholder <- function(png) {
   .write_figure(function() {
     graphics::par(mar = c(0, 0, 0, 0))
     graphics::plot.new()
     graphics::text(0.5, 0.5, "This figure drew nothing in this run.")
   }, png, 4, 1, "png")
-  warning("Figure '", sub("[.]png$", "", basename(png)), "' drew nothing; the report shows a placeholder.", call. = FALSE)
   invisible(png)
 }
 
