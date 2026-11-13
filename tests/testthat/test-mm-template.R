@@ -199,9 +199,29 @@ test_that("mm_check refuses a SLOPE outside TIME_TERMS and data with no slope to
   expect_error(h$mm_check(d, "ccfid", "time", "slope", NULL, slope = "splines::ns(time, 2)",
                           time_terms = "splines::ns(time, 2)"),
                "single numeric column")
-  d$time <- 1
-  expect_error(h$mm_check(d, "ccfid", "time", "slope", NULL, slope = "log(time + 1)", time_terms = "log(time + 1)"),
-               "no patient is measured at two or more distinct times")
+  # With no time term there is no slope to ask for.
+  expect_error(h$mm_check(d, "ccfid", "time", "slope", NULL, slope = NULL, time_terms = character(0)),
+               "SLOPE names no time term")
+  expect_true(h$mm_check(d, "ccfid", "time", "cs", NULL, slope = NULL, time_terms = character(0)))
+})
+
+test_that("slope refuses data whose fitted rows hold no patient at two or more times", {
+  h <- mm_helpers()
+  d <- mm_slopes()
+  # Every patient has several times, but a missing response leaves each with one fitted row.
+  d$ly[duplicated(d$ccfid)] <- NA
+  expect_error(h$mm_fit(d, ly ~ log(time + 1) + age, "ccfid", "time", "slope", "REML", slope = "log(time + 1)"),
+               "no patient has two or more fitted measurements at distinct times")
+  d <- mm_slopes()
+  d$age[duplicated(d$ccfid)] <- NA
+  expect_error(h$mm_fit(d, ly ~ log(time + 1) + age, "ccfid", "time", "slope", "REML", slope = "log(time + 1)"),
+               "no patient has two or more fitted measurements at distinct times")
+})
+
+test_that("a model with no time term still fits a structure other than slope", {
+  h <- mm_helpers()
+  fit <- h$mm_fit(mm_slopes(), ly ~ age, "ccfid", "time", "cs", "REML")
+  expect_s3_class(fit$model, "gls")
 })
 
 test_that("UN names the variance reference from the fit when the first patient misses visit 1", {
@@ -380,7 +400,7 @@ test_that("mm renders a reported slope model with its variances and the one-time
   expect_match(html, "log(time + 1) variance", fixed = TRUE)
   expect_match(html, "Intercept variance", fixed = TRUE)
   expect_match(html, "residual variance", fixed = TRUE)
-  expect_match(html, "patients measured at one time", fixed = TRUE)
+  expect_match(html, "patients measured at a single time", fixed = TRUE)
   expect_match(html, compare_table)
   set <- file.path(hvtiRutilities::study_dir("estimates", out$root), "outcome-mixed")
   bundle <- readRDS(file.path(set, "mm.rds"))

@@ -105,7 +105,8 @@ STRUCTURE <- "cs"
 VISIT <- NULL
 # EDIT: for "slope", the time term the random slope is on, written as it appears in TIME_TERMS, or NULL for the first.
 # A SAS job's RANDOM int iv_echo, with iv_echo = 1/(t+1) in its DATA step, is "I(1/(time + 1))". A patient measured
-# at one time adds nothing to the slope; the report counts them.
+# at a single time has no trajectory of their own, though their measurement still informs the variances; the report
+# counts them.
 # Where SAS reports a slope variance of zero (G matrix not positive definite), nlme gives a tiny positive value or
 # fails to converge; a port read against a .lst should expect that.
 SLOPE <- NULL
@@ -193,6 +194,10 @@ mm_check <- function(d, id, time, structure, imputation, visit = NULL, slope = N
          "free times, or set VISIT to a visit number.", call. = FALSE)
   }
   if ("slope" %in% structure) {
+    if (is.null(slope) || is.na(slope)) {
+      stop("STRUCTURE asks for \"slope\", but SLOPE names no time term: TIME_TERMS is empty. ",
+           "Add the time term the slope is on to TIME_TERMS.", call. = FALSE)
+    }
     if (!slope %in% time_terms) {
       stop("SLOPE (", slope, ") is not one of TIME_TERMS (", paste(time_terms, collapse = ", "), "). ",
            "Write it as it appears there, or set SLOPE <- NULL for the first.", call. = FALSE)
@@ -202,13 +207,6 @@ mm_check <- function(d, id, time, structure, imputation, visit = NULL, slope = N
     if (ncol(stats::model.matrix(stats::as.formula(paste("~", slope)), d)) != 2L) {
       stop("SLOPE (", slope, ") must be a single numeric column, as SAS's RANDOM int <var> takes one variable. ",
            "Use a single transform such as \"log(time + 1)\".", call. = FALSE)
-    }
-    # A patient measured at one time has no slope of their own; with none measured twice there is no slope at all.
-    # Count only rows the fit can use: the response is not known here, so a time and a patient ID are the test.
-    ok <- !is.na(t) & !is.na(d[[id]])
-    if (!any(tapply(t[ok], as.character(d[[id]][ok]), function(x) length(unique(x)) >= 2L))) {
-      stop("STRUCTURE asks for \"slope\", but no patient is measured at two or more distinct times. ",
-           "Use \"cs\" or \"random\".", call. = FALSE)
     }
   }
   invisible(TRUE)
@@ -242,6 +240,16 @@ mm_fit <- function(d, formula, id, time, structure, method, visit = NULL, slope 
     slope = stats::setNames(list(nlme::pdDiag(stats::as.formula(paste("~", slope)))), id),
     NULL
   )
+  # nlme drops a row with a missing ID as well as one with a missing model variable, so the counts must too.
+  used <- stats::complete.cases(d[unique(c(all.vars(formula), id))])
+  # A slope needs some patient with two fitted measurements at distinct times. The rows the fit uses decide it:
+  # a patient measured twice whose second response is missing has one. Without this nlme stops on
+  # "fewer observations than random effects", which names no study choice.
+  if (identical(structure, "slope") &&
+        !any(tapply(d[[time]][used], as.character(d[[id]][used]), function(x) length(unique(x)) >= 2L))) {
+    stop("STRUCTURE asks for \"slope\", but no patient has two or more fitted measurements at distinct times. ",
+         "Use \"cs\" or \"random\".", call. = FALSE)
+  }
   model <- tryCatch(
     if (!is.null(random)) {
       nlme::lme(formula, data = d, random = random, correlation = corr, method = method,
@@ -254,8 +262,6 @@ mm_fit <- function(d, formula, id, time, structure, method, visit = NULL, slope 
       stop("The ", structure, " fit failed: ", conditionMessage(e), ". Try another STRUCTURE.", call. = FALSE)
     }
   )
-  # nlme drops a row with a missing ID as well as one with a missing model variable, so the counts must too.
-  used <- stats::complete.cases(d[unique(c(all.vars(formula), id))])
   # The training terms keep poly() and ns() bases (predvars) and the fitted contrasts, so predictions on a new grid
   # are coded exactly as the fit was; rebuilding them from the formula would build a new basis on the grid.
   # A level held only by rows the fit dropped has no coefficient, so the levels come from the rows used.
@@ -361,7 +367,7 @@ mm_predict <- function(fit, newdata, scale) {
 
 ```{r}
 #| label: fit
-.slope <- if (is.null(SLOPE)) TIME_TERMS[[1L]] else SLOPE
+.slope <- if (is.null(SLOPE)) TIME_TERMS[1L] else SLOPE  # NA when TIME_TERMS is empty; mm_check stops if "slope" asks
 mm_check(d, .id, TIME, STRUCTURE, IMPUTATION, VISIT, .slope, TIME_TERMS)
 model_formula <- stats::reformulate(c(TIME_TERMS, PREDICTORS), response = .response)
 fits <- lapply(stats::setNames(STRUCTURE, STRUCTURE),
@@ -385,7 +391,7 @@ cat("\n\nThe reported model is the ", dQuote(STRUCTURE[[1L]], FALSE), " structur
   value = c(fit$n_patients, fit$n_measurements, stats::median(fit$per_patient), paste(range(fit$per_patient), collapse = " to "))
 )
 if (identical(fit$structure, "slope")) {
-  .counts <- rbind(.counts, data.frame(quantity = "patients measured at one time, adding nothing to the slope",
+  .counts <- rbind(.counts, data.frame(quantity = "patients measured at a single time",
                                        value = fit$n_single_time))
 }
 knitr::kable(.counts)
