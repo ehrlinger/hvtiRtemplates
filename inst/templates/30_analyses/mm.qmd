@@ -106,6 +106,8 @@ VISIT <- NULL
 # EDIT: for "slope", the time term the random slope is on, written as it appears in TIME_TERMS, or NULL for the first.
 # A SAS job's RANDOM int iv_echo, with iv_echo = 1/(t+1) in its DATA step, is "I(1/(time + 1))". A patient measured
 # at one time adds nothing to the slope; the report counts them.
+# Where SAS reports a slope variance of zero (G matrix not positive definite), nlme gives a tiny positive value or
+# fails to converge; a port read against a .lst should expect that.
 SLOPE <- NULL
 # EDIT: "REML", as SAS's default, unless models with different fixed effects are to be
 # compared by likelihood, which needs "ML".
@@ -195,8 +197,16 @@ mm_check <- function(d, id, time, structure, imputation, visit = NULL, slope = N
       stop("SLOPE (", slope, ") is not one of TIME_TERMS (", paste(time_terms, collapse = ", "), "). ",
            "Write it as it appears there, or set SLOPE <- NULL for the first.", call. = FALSE)
     }
+    # An intercept column plus one slope column. A term that expands to more (splines::ns) fits several slope
+    # variances that the covariance table would report under one label.
+    if (ncol(stats::model.matrix(stats::as.formula(paste("~", slope)), d)) != 2L) {
+      stop("SLOPE (", slope, ") must be a single numeric column, as SAS's RANDOM int <var> takes one variable. ",
+           "Use a single transform such as \"log(time + 1)\".", call. = FALSE)
+    }
     # A patient measured at one time has no slope of their own; with none measured twice there is no slope at all.
-    if (!any(tapply(t, as.character(d[[id]]), function(x) length(unique(x)) >= 2L))) {
+    # Count only rows the fit can use: the response is not known here, so a time and a patient ID are the test.
+    ok <- !is.na(t) & !is.na(d[[id]])
+    if (!any(tapply(t[ok], as.character(d[[id]][ok]), function(x) length(unique(x)) >= 2L))) {
       stop("STRUCTURE asks for \"slope\", but no patient is measured at two or more distinct times. ",
            "Use \"cs\" or \"random\".", call. = FALSE)
     }

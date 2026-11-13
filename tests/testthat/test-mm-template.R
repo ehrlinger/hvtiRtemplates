@@ -195,6 +195,10 @@ test_that("mm_check refuses a SLOPE outside TIME_TERMS and data with no slope to
                "SLOPE \\(time\\) is not one of TIME_TERMS")
   # A SLOPE is ignored when no structure asks for one.
   expect_true(h$mm_check(d, "ccfid", "time", "cs", NULL, slope = "time", time_terms = "log(time + 1)"))
+  # A term that expands to several columns would fit several slope variances under one label.
+  expect_error(h$mm_check(d, "ccfid", "time", "slope", NULL, slope = "splines::ns(time, 2)",
+                          time_terms = "splines::ns(time, 2)"),
+               "single numeric column")
   d$time <- 1
   expect_error(h$mm_check(d, "ccfid", "time", "slope", NULL, slope = "log(time + 1)", time_terms = "log(time + 1)"),
                "no patient is measured at two or more distinct times")
@@ -374,6 +378,8 @@ test_that("mm renders a reported slope model with its variances and the one-time
   out <- mm_render_fixture(choices = 'STRUCTURE <- c("slope", "cs")')
   html <- gsub("(?s)<pre[^>]*>.*?</pre>", "", paste(readLines(out$output, warn = FALSE), collapse = "\n"), perl = TRUE)
   expect_match(html, "log(time + 1) variance", fixed = TRUE)
+  expect_match(html, "Intercept variance", fixed = TRUE)
+  expect_match(html, "residual variance", fixed = TRUE)
   expect_match(html, "patients measured at one time", fixed = TRUE)
   expect_match(html, compare_table)
   set <- file.path(hvtiRutilities::study_dir("estimates", out$root), "outcome-mixed")

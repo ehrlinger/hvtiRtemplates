@@ -286,8 +286,8 @@ nlme's own default, `pdSymm` (SAS `type=un`), would add an intercept-slope corre
 SAS fits did not estimate. Decided by John Ehrlinger on 2026-11-13.
 
 **Report.** The covariance table gives the intercept variance, the slope variance and the
-residual variance, labeled with their SAS names (`Intercept`, the slope term, `Residual`), so
-a port reads directly against a `.lst`. The predicted course is population-average, the fixed
+residual variance, labeled with their SAS names (`Intercept variance`, `<slope term> variance`, `residual variance`,
+read against SAS's `Intercept`, the slope variable and `Residual`), so a port reads directly against a `.lst`. The predicted course is population-average, the fixed
 effects only, as for every structure, so the prediction table and saved output are unchanged.
 
 **Guards.** `SLOPE` must be one of `TIME_TERMS`. The slope needs patients measured at two or
