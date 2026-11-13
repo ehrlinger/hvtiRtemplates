@@ -26,6 +26,15 @@
   invisible(file)
 }
 
+# A path saved again in the same run is taken off the list first, so a second save that
+# draws nothing cannot inherit the first one's standing.
+.unmark_written <- function(file) {
+  if (!is.null(.run_state$written) && file.exists(file)) {
+    .run_state$written <- setdiff(.run_state$written, normalizePath(file, winslash = "/"))
+  }
+  invisible(file)
+}
+
 .record_exhibit <- function(file, kind = c("figure", "table", "value"), label = knitr::opts_current$get("label"),
                             root = .run_state$root) {
   kind <- match.arg(kind)

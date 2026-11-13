@@ -105,12 +105,68 @@ test_that("a blank draw records nothing and leaves no earlier figure file", {
   assign("written", character(), envir = state)
   withr::defer(rm("written", envir = state))
   files <- plant_stale_figure(root)
-  hvtiRtemplates:::.save_figure(function() invisible(NULL), files[[1]], width = 2, height = 2, keep = "fig")
+  expect_warning(hvtiRtemplates:::.save_figure(function() invisible(NULL), files[[1]], width = 2, height = 2, keep = "fig"),
+                 "'fig' drew nothing; no figure files")
   expect_null(hvtiRtemplates:::.record_exhibit(files[[1]], "figure", label = "fig-blank"))
-  # png() writes nothing for an empty page; the PDF and TIFF devices write a blank one, which
-  # is this run's. What matters is that no file still holds the earlier render's bytes.
-  expect_false(file.exists(files[[1]]))
-  expect_false(any(vapply(files[file.exists(files)], function(f) identical(readBin(f, "raw", 100L), as.raw(1:8)), logical(1))))
+  # The PDF and TIFF devices would write blank pages for the publisher; none is written, and
+  # the earlier render's copies go too.
+  expect_false(any(file.exists(files)))
+})
+
+test_that("a figure saved again in the same run that draws nothing is not recorded", {
+  root <- local_exhibit_state()
+  state <- hvtiRtemplates:::.run_state
+  assign("written", character(), envir = state)
+  withr::defer(rm("written", envir = state))
+  png <- file.path(root, "fig.png")
+  hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE)
+  expect_warning(hvtiRtemplates:::.save_figure(function() invisible(NULL), png, 2, 2, save = FALSE, linked = TRUE),
+                 "placeholder")
+  expect_true(file.exists(png))
+  expect_null(hvtiRtemplates:::.record_exhibit(png, "figure", label = "fig-again"))
+})
+
+test_that("a copy that fails partway leaves the earlier figure whole and no staged file", {
+  # file.copy() empties its target before writing, so the copy goes beside the figure, never over it.
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.copy_file = function(from, to) {
+    writeBin(as.raw(0), to)
+    FALSE
+  })
+  expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), files[[1]], 2, 2), "Could not write fig[.]png")
+  expect_identical(readBin(files[[1]], "raw", 100L), as.raw(1:8))
+  expect_setequal(list.files(root, all.files = TRUE, no.. = TRUE), basename(files))
+})
+
+test_that("a figure that cannot be renamed into place keeps the earlier one and no staged file", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.rename_file = function(from, to) FALSE)
+  expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), files[[1]], 2, 2), "Could not replace")
+  expect_identical(readBin(files[[1]], "raw", 100L), as.raw(1:8))
+  expect_setequal(list.files(root, all.files = TRUE, no.. = TRUE), basename(files))
+})
+
+test_that("a temporary folder that cannot be made names it", {
+  root <- withr::local_tempdir()
+  testthat::local_mocked_bindings(.make_dir = function(x) FALSE)
+  expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), file.path(root, "fig.png"), 2, 2),
+               "temporary folder .* cannot be written")
+})
+
+test_that("a linked placeholder is staged like any figure", {
+  # A placeholder that cannot be put in place says why, rather than failing in the device.
+  root <- withr::local_tempdir()
+  png <- file.path(root, "fig.png")
+  calls <- 0L
+  testthat::local_mocked_bindings(.rename_file = function(from, to) {
+    calls <<- calls + 1L
+    FALSE
+  })
+  expect_error(hvtiRtemplates:::.save_figure(function() invisible(NULL), png, 2, 2, save = FALSE, linked = TRUE),
+               "Could not replace")
+  expect_identical(calls, 1L)
 })
 
 test_that("without ragg an earlier render's TIFF is removed, not left beside the new figure", {
@@ -180,4 +236,63 @@ test_that("without ragg a stale TIFF that cannot be removed warns and the figure
   expect_warning(hvtiRtemplates:::.save_figure(fig, files[[1]], 2, 2), "Could not replace .*fig[.]tiff")
   expect_gt(file.size(files[[1]]), 8)
   expect_gt(file.size(files[[2]]), 8)
+})
+
+test_that("a figure that is a link is written through to its target, and the link stays", {
+  # A rename replaces the link itself, so a figure linked into a manuscript folder would
+  # silently stop updating there.
+  root <- withr::local_tempdir()
+  elsewhere <- withr::local_tempdir()
+  target <- file.path(elsewhere, "fig.png")
+  writeBin(as.raw(1:8), target)
+  png <- file.path(root, "fig.png")
+  linked <- suppressWarnings(file.symlink(target, png))
+  skip_if_not(linked, "This platform does not permit creating symbolic links.")
+  hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE)
+  expect_true(nzchar(Sys.readlink(png)))
+  expect_gt(file.size(target), 8)
+})
+
+test_that("a replaced figure keeps its permissions", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  Sys.chmod(files[[1]], "664", use_umask = FALSE)
+  before <- file.mode(files[[1]])
+  hvtiRtemplates:::.save_figure(function() graphics::plot(1), files[[1]], 2, 2, save = FALSE, linked = TRUE)
+  expect_gt(file.size(files[[1]]), 8)
+  expect_identical(file.mode(files[[1]]), before)
+})
+
+test_that("a staged copy a killed render left is cleared once it is a day old", {
+  root <- withr::local_tempdir()
+  old <- file.path(root, ".drawing-1a2b-fig.png")
+  young <- file.path(root, ".drawing-3c4d-fig.png")
+  writeBin(as.raw(1:8), old)
+  writeBin(as.raw(1:8), young)
+  Sys.setFileTime(old, Sys.time() - 2 * 86400)
+  hvtiRtemplates:::.save_figure(function() graphics::plot(1), file.path(root, "fig.png"), 2, 2, save = FALSE, linked = TRUE)
+  expect_false(file.exists(old))
+  expect_true(file.exists(young))
+})
+
+test_that("a blank linked figure's warning says its PDF and TIFF were not saved", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  expect_warning(hvtiRtemplates:::.save_figure(function() invisible(NULL), files[[1]], 2, 2, linked = TRUE),
+                 "placeholder, and no PDF or TIFF was saved")
+  expect_false(file.exists(files[[2]]))
+})
+
+test_that("a figure removed between saves cannot vouch for a later placeholder", {
+  root <- local_exhibit_state()
+  state <- hvtiRtemplates:::.run_state
+  assign("written", character(), envir = state)
+  withr::defer(rm("written", envir = state))
+  png <- file.path(root, "fig.png")
+  hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE)
+  unlink(png)
+  expect_warning(hvtiRtemplates:::.save_figure(function() invisible(NULL), png, 2, 2, save = FALSE, linked = TRUE),
+                 "placeholder")
+  expect_true(file.exists(png))
+  expect_null(hvtiRtemplates:::.record_exhibit(png, "figure", label = "fig-removed"))
 })
