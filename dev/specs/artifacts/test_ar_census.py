@@ -56,7 +56,7 @@ class Exclusions(unittest.TestCase):
                      "methods-rf_boosting", "RF-STAT-Method-Desc",
                      "Boostmtree method description from 1064 and 1130",
                      "ProjectPlan_Study1135_v1", "ProjectPlanDataSources_2016",
-                     "ProjectPlan_proposal2140",
+                     "ProjectPlan_proposal2140", "ProjectPlan_StudyXXX",
                      "Proposal_1941[approved]", "Guidelines Follow-up Cohort 4.19.22",
                      "Request for FUP_STXXXX"):
             with self.subTest(stem=stem):

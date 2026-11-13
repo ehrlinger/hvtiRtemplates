@@ -142,7 +142,8 @@ BOILERPLATE = (
 )
 BOILERPLATE_TAIL = {"v", "ver", "version", "final", "draft", "rev", "revised",
                     "copy", "old", "new", "updated", "study", "st", "stxxxx",
-                    "approved", "data", "only", "from", "and", "proposal"}
+                    "approved", "data", "only", "from", "and", "proposal",
+                    "xxx", "studyxxx"}
 
 
 def is_boilerplate(stem):
