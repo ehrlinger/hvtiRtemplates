@@ -53,6 +53,8 @@
   .run_state$root <- root
   # The files this run writes; an exhibit file not among them was left by an earlier render.
   .run_state$written <- character()
+  # Windows link listings are taken afresh each render, so a link made since the last is seen.
+  .figure_state$links <- NULL
   # Any handoff bundle this job saves records when this render began.
   .run_state$rendered_at <- .iso_time(started)
   run <- .run_begin(started, input, subject, type, markers)

@@ -417,3 +417,39 @@ test_that("Windows links are listed once a session for each folder, compared in 
   expect_false(hvtiRtemplates:::.is_link(file.path(root, "other.png")))
   expect_identical(calls, 1L)
 })
+
+test_that("a link with a non-ASCII name is found by the platform's own link lookup", {
+  # The real lookup, not a stand-in: dir /AL on Windows, Sys.readlink() elsewhere.
+  root <- withr::local_tempdir()
+  target <- file.path(root, "target.png")
+  writeBin(as.raw(1:8), target)
+  link <- file.path(root, enc2utf8("hz-s\u00fc\u00df.png"))
+  plain <- file.path(root, "plain.png")
+  writeBin(as.raw(1:8), plain)
+  skip_if_not(suppressWarnings(file.symlink(target, link)), "This platform does not permit creating symbolic links.")
+  if (.Platform$OS.type == "windows") {
+    listed <- hvtiRtemplates:::.windows_links(root)
+    expect_true(basename(link) %in% listed)
+    expect_false("plain.png" %in% listed)
+  }
+  expect_true(hvtiRtemplates:::.is_link(link))
+  expect_false(hvtiRtemplates:::.is_link(plain))
+})
+
+test_that("each render lists a folder's Windows links afresh", {
+  root <- withr::local_tempdir()
+  calls <- 0L
+  testthat::local_mocked_bindings(.on_windows = function() TRUE, .windows_links = function(dir) {
+    calls <<- calls + 1L
+    character()
+  })
+  state <- hvtiRtemplates:::.figure_state
+  withr::defer(state$links <- NULL)
+  hvtiRtemplates:::.is_link(file.path(root, "a.png"))
+  hvtiRtemplates:::.is_link(file.path(root, "b.png"))
+  expect_identical(calls, 1L)
+  setup_fixture()
+  run_setup()
+  hvtiRtemplates:::.is_link(file.path(root, "a.png"))
+  expect_identical(calls, 2L)
+})

@@ -203,8 +203,8 @@
 .read_link <- function(x) Sys.readlink(x)
 # Windows lists links and junctions as reparse points under dir /AL, which needs no
 # administrator rights; Sys.readlink() serves everywhere else. The listing is taken once a
-# session for each folder, since a render saves many figures into one: a link made in a
-# folder after its first save is seen from the next session. dir writes in the console's
+# render for each folder, since a render saves many figures into one; .job_setup() clears
+# it, so a link made between renders is seen by the next. dir writes in the console's
 # codepage unless switched to UTF-8 first, and a name it mangled would not match.
 .is_link <- function(file) {
   if (!.on_windows()) return(nzchar(.read_link(file)))
