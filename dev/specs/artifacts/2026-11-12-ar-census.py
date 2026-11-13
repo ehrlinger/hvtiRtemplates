@@ -62,8 +62,8 @@ WHAT THE CATALOGUE CANNOT SEE
 A file with no taxonomy folder above it has no study: in the catalogue
 `study`, `folder` and `status` read NA, NA and `unplaced` together. 40% of the
 R-side rows are like that. A report kept in a study with no taxonomy folders
-is therefore uncountable here, and both breadth and volume are LOWER bounds on
-the corpus over placed files. The unplaced count is reported by extension so
+is therefore uncountable here. The candidate frame leaves such reports out and
+keeps many non-reports in, so its counts bound the corpus in neither direction. The unplaced count is reported by extension so
 the size of that gap is visible.
 
 PRIVACY
@@ -440,8 +440,12 @@ def count(rows, cols, sample=120, audit=40, studies=40, seed=20261112):
             "seed": seed,
             "samples": "written" if has_path else "SKIPPED: the census has no path column",
             "coverage": "placed files only. A file with no taxonomy folder above it "
-                        "has no study and cannot be counted, so breadth and volume "
-                        "are LOWER bounds on the corpus; see skipped.unplaced.",
+                        "has no study and is not counted. breadth_studies and "
+                        "volume_files count the candidate frame: kept documents, which "
+                        "include manuscripts, SAS output, other non-reports and nested "
+                        "study keys. They are not report counts and not bounds on the "
+                        "corpus in either direction; see skipped.unplaced for what the "
+                        "frame leaves out.",
         },
         "stage1_upper_bound": {
             "volume_files": sum(by_folder.values()),

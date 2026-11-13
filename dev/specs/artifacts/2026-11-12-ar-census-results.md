@@ -1,6 +1,6 @@
 # `ar` census: results, 2026-11-12
 
-The results of running `2026-11-12-ar-census.py` three times against the 2026-08-27 corpus
+The results of running `2026-11-12-ar-census.py` four times against the 2026-08-27 corpus
 catalogue (`census-ALL.csv`, 2,240,554 rows), and of labelling the two samples from each
 run. Each run tightened the name exclusions:
 
@@ -9,30 +9,33 @@ run. Each run tightened the name exclusions:
 | 1 | as merged in #530 | `2026-11-12-ar-census-summary.json` |
 | 2 | adds a `boilerplate` bucket, matched by bare prefix (#537, first version) | `2026-11-12-ar-census-summary-boilerplate.json` |
 | 3 | boilerplate matched by whole name, plus a `manuscript_folder` bucket (#537) | `2026-11-12-ar-census-summary-folder.json` |
+| 4 | adds the `StudyXXX` placeholder to the boilerplate tail, and sends the house `ab.` prefix to `abstract_or_talk` (#537) | `2026-11-12-ar-census-summary-abstract.json` |
 
 Run 2's JSON carries the `exclusion_match` wording the script wrote after a later wording
-fix that changed no count. Run 3's JSON is the script's own output. Run 3 predates one
+fix that changed no count. Runs 3 and 4 carry the script's own output. Run 3 predates one
 addition to the boilerplate tail (the `StudyXXX` placeholder), so a few unfilled
-project-plan forms are still in its frame.
+project-plan forms are still in its frame; run 4 has it.
 
-All three runs use seed 20261112. Their frames differ, so they draw different studies and
-files, and the labels are independent. The labelled worksheets carry study paths, so they
+All four runs use seed 20261112. Their frames differ, so the draws mostly differ, but they
+are not independent samples: the frames overlap heavily and share one random stream.
+Measured overlap across the six pairs of runs is 7 repeated studies (of 40 per run) and 2
+repeated files (of 120 per run). The labelled worksheets carry study paths, so they
 stay on the server in scratch folders under `_development` and are not committed.
 
-⚠️ **All six samples were labelled from file names only, and no file was opened.** That was
+⚠️ **All eight samples were labelled from file names only, and no file was opened.** That was
 enough to decide most rows. It cannot tell a finished report from an abandoned draft, and
 it leaves a few names undecided. Treat the estimates below as a first reading that a person
 opening files could tighten.
 
 ## The figures
 
-| measure | run 1 | run 2 | run 3 | pooled |
+| measure | run 1 | run 2 | run 3 | run 4 |
 |---|---|---|---|---|
-| candidate frame, studies | 1,484 | 1,344 | 1,366 | not pooled |
-| candidate frame, files | 42,277 | 36,076 | 32,746 | not pooled |
-| **breadth, best estimate** | about 670 (455 to 895) | about 705 (505 to 900) | about 545 (360 to 755) | **about 640 (515 to 760)** |
-| breadth, lenient | about 815 | about 940 | about 820 | not pooled |
-| **volume, report files** | about 4,200 (2,450 to 7,050) | about 2,100 (1,040 to 4,170) | about 3,300 (1,900 to 5,450) | **about 2,900 (1,900 to 3,950)** |
+| candidate frame, studies | 1,484 | 1,344 | 1,366 | **1,319** |
+| candidate frame, files | 42,277 | 36,076 | 32,746 | **31,695** |
+| **breadth, strict** | about 670 (455 to 895) | about 705 (505 to 900) | about 545 (360 to 755) | **about 660 (465 to 855)** |
+| breadth, lenient | about 815 | about 940 | about 820 | about 890 |
+| **volume, report files** | about 4,200 (2,450 to 7,050) | about 2,100 (1,040 to 4,170) | about 3,300 (1,900 to 5,450) | **about 3,700 (2,250 to 5,900)** |
 
 Plus one figure that needs no sample: **570 catalogue studies**, the filename-based
 candidates. That is the number of distinct catalogue `study` values holding at least one
@@ -43,6 +46,15 @@ regurgitation (`ar_cont.rtf` turned up in run 2's file sample) may parse as pref
 inflate it. It is neither a confirmed count nor a strict lower bound on independent
 studies.
 
+**Read run 4.** It is the script as it stands, and each earlier run is a different frame
+with a different estimand. The runs are **not pooled**: an earlier draft of this note gave
+inverse-variance pooled intervals, and they did not hold, for two reasons. The samples are
+not independent (above), so an independent-samples variance understates the uncertainty.
+And the frames do not contain the same reports: an audit of 40 rows cannot show that no
+report was excluded (it bounds that rate below about 9%), so a report excluded in one frame
+and kept in another gives the runs different totals, and their average has no defined target.
+The earlier columns show how the estimate moved as the exclusions changed, nothing more.
+
 **How to read the table.**
 
 - **Breadth** is studies holding at least one report, scaled from 40 studies drawn
@@ -50,12 +62,11 @@ studies.
   an analysis or results. Lenient also counts studies whose only evidence is SAS table
   output or request write-ups.
 - **Volume** is report files, scaled from 120 kept files drawn uniformly from the frame.
-  Every audit row in every run was a correct exclusion, and run 3's frame keeps `ar`-named
-  files even inside a manuscript folder, so the three runs estimate the same quantity.
-- **The intervals** are Wilson 95% intervals on each run's sampled proportion. The pooled
-  figures are inverse-variance averages of the three runs on a normal approximation, which
-  is rough: the frames differ, and a few studies were drawn in more than one run. All of
-  them measure **sampling uncertainty inside the candidate frame and nothing else**. They do
+  Every audit row in every run was a correct exclusion, and the frames of runs 3 and 4 keep
+  `ar`-named files even inside a manuscript folder. Neither fact shows that the frames hold
+  the same reports, so each run's figure belongs to its own frame.
+- **The intervals** are Wilson 95% intervals on each run's sampled proportion, scaled to
+  that run's frame. They measure **sampling uncertainty inside the candidate frame and nothing else**. They do
   not cover errors in the filename-only labels, or the populations the frame leaves out
   (see the last section).
 - **The frame is not an upper bound.** A study whose only report was excluded by name, is
@@ -64,10 +75,10 @@ studies.
   more. Run 2's bare-prefix boilerplate rule had removed 22 studies outright, which is the
   bias Codex raised on #537 and the whole-name rule removed.
 
-**Draft-collapsed volume is not estimated.** Each run reports a collapse ratio (0.76, 0.74
-and 0.75), but it is measured over ALL kept documents, not reports, and `report_key()` drops
-every numeric token, not only draft numbers. Applying it to the pooled 2,900 gives about
-2,200 distinct reports, which holds only if reports duplicate at the same rate as everything
+**Draft-collapsed volume is not estimated.** Each run reports a collapse ratio (0.76, 0.74,
+0.75 and 0.75), but it is measured over ALL kept documents, not reports, and `report_key()` drops
+every numeric token, not only draft numbers. Applying run 4's 0.75 to its 3,700 gives about
+2,750 distinct reports, which holds only if reports duplicate at the same rate as everything
 else. That is a conditional heuristic, not an estimate.
 
 **The catalogue's own `ar` figures measure something else.** `templates.json` carries
@@ -75,7 +86,7 @@ else. That is a conditional heuristic, not an estimate.
 2026-09-02 per-folder parse. Both count studies with a file whose name parses to `ar`. 706
 counts files of any extension. 394 counts program extensions only, which an analysis report
 never has. This note does not change either value. Whether `sas_breadth` should become 570
-or about 640 is the maintainer's call.
+or about 660 (run 4) is the maintainer's call.
 
 The 570 command:
 
@@ -91,16 +102,16 @@ gave this away: 15 of its 40 studies hold an `ar`-named file, which predicts abo
 
 ## How the studies were labelled
 
-| | run 1 | run 2 | run 3 |
-|---|---|---|---|
-| `yes` (strict) | 18 | 21 | 16 |
-| `no` under strict, `yes` under lenient | 4 | 7 | 8 |
-| `no` under both | 16 | 12 | 14 |
-| `nested`, not an independent study | 2 | 0 | 2 |
+| | run 1 | run 2 | run 3 | run 4 |
+|---|---|---|---|---|
+| `yes` (strict) | 18 | 21 | 16 | 20 |
+| `no` under strict, `yes` under lenient | 4 | 7 | 8 | 7 |
+| `no` under both | 16 | 12 | 14 | 12 |
+| `nested`, not an independent study | 2 | 0 | 2 | 1 |
 
-- `ar.*` decided 15 of run 1's 18 strict yeses, 17 of run 2's 21, and 15 of run 3's 16.
+- `ar.*` decided 15 of run 1's 18 strict yeses, 17 of run 2's 21, 15 of run 3's 16, and 19 of run 4's 20.
 - The `nested` rows are catalogue study keys that sit inside another study: a taxonomy
-  folder found in another study's `documents/` (run 1) or `documents/Manuscript` (run 3),
+  folder found in another study's `documents/` (run 1) or `documents/Manuscript` (run 3) or a revision folder in another study's `documents/` (run 4),
   and data folders under another study's `datasets/` (one in each of runs 1 and 3). Some
   catalogue study keys are fragments of other studies.
 - In run 1, seven of the twenty `no` studies held nothing but files copied into every
@@ -109,32 +120,38 @@ gave this away: 15 of its 40 studies hold an `ar`-named file, which predicts abo
 
 ## How the files were labelled
 
-| class | run 1 (of 42,277) | run 2 (of 36,076) | run 3 (of 32,746) |
-|---|---|---|---|
-| report | 12 (10%) | 7 (6%) | 12 (10%) |
-| SAS table output (`general_cont.rtf` and the like) | 44 (37%) | 59 (49%) | 67 (56%) |
-| manuscript that the rules missed | 24 (20%) | 24 (20%) | 10 (8%) |
-| other | 40 (33%) | 30 (25%) | 31 (26%) |
+| class | run 1 (of 42,277) | run 2 (of 36,076) | run 3 (of 32,746) | run 4 (of 31,695) |
+|---|---|---|---|---|
+| report | 12 (10%) | 7 (6%) | 12 (10%) | 14 (12%) |
+| SAS table output (`general_cont.rtf` and the like) | 44 (37%) | 59 (49%) | 67 (56%) | 65 (54%) |
+| manuscript that the rules missed | 24 (20%) | 24 (20%) | 10 (8%) | 14 (12%) |
+| other | 40 (33%) | 30 (25%) | 31 (26%) | 27 (22%) |
 
-All 120 audit rows were correct exclusions under the strict reading, 40 from each run,
-drawn from 8,086, 14,287 and 17,617 named exclusions. Each run bounds the wrong-exclusion
-rate below about 9% at 95%. Run 3's 11 `manuscript_folder` audit rows were all manuscripts,
+All 160 audit rows were correct exclusions under the strict reading, 40 from each run,
+drawn from 8,086, 14,287, 17,617 and 18,668 named exclusions. Each run bounds the
+wrong-exclusion rate below about 9% at 95%; the rules changed between runs, so the four
+are not pooled into one bound. Run 3's 11 `manuscript_folder` audit rows were all manuscripts,
 revisions or supplements. Run 1's one borderline row was SAS table output written for a
 manuscript. System files never enter the audit by design, so their absence there tells you
 nothing.
 
+Three of run 4's 14 report files are borderline by name: one named as a final report, and
+two STS-style `report_all` files, one of them in a folder marked not to use. They are
+counted, as in earlier runs, because the strict reading goes by the name.
+
 ## What would tighten stage 2
 
 The boilerplate bucket cut "other" from a third to a quarter of kept files, and the
-manuscript-folder bucket cut missed manuscripts from a fifth to a twelfth. What leaks
-through now, in order of size:
+manuscript-folder bucket cut missed manuscripts from a fifth to a twelfth. The `ab.` rule
+in run 4 nearly doubled the abstract bucket (1,153 to 2,165), and one abstract named
+otherwise was left among run 4's 27 "other" files. What leaks through now, in order of size:
 
-1. **Abstracts named with the house `ab.` prefix** (`ab.Name_RD24_[0]`): 8 of run 3's 31
-   "other" files, and two more abstracts named otherwise. A rule on the `ab.` prefix would catch most of them, and abstracts
-   whose name runs the word into another (`…ACHDabstractgp2`) too.
-2. **Manuscripts outside a manuscript folder** with names the token rule cannot read:
-   journal-named drafts (`Ms to ATS`), compressed spellings (`mnscrpt`), supplement tables.
-3. **Boilerplate the whole-name rule cannot see**: a leading qualifier
+1. **Manuscripts outside a manuscript folder** with names the token rule cannot read: 14 of
+   run 4's 120 kept files. Journal-named drafts (`Annals of Surgery (3)`, `Revised ms to
+   ATS`), author-named drafts (`… et al …`), compressed spellings (`mnscrpt`), appendices
+   and supplements. Run 3's 10 looked like the floor; run 4's 14 says sampling noise is as
+   large as the gain still available.
+2. **Boilerplate the whole-name rule cannot see**: a leading qualifier
    (`QMR_ProjectPlan…`), or a proposal that runs a person's name into the word. Keeping
    these is the safe way to fail.
 
