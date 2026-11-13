@@ -381,25 +381,7 @@ test_that("log errors add a blocking review marker to the generated job", {
 test_that("output folder links cannot redirect migration outside the study", {
   root <- withr::local_tempdir()
   outside <- withr::local_tempdir()
-  link <- file.path(root, "descriptive")
-  linked <- suppressWarnings(file.symlink(outside, link))
-  skip_if_not(linked, "This platform does not permit creating symbolic links.")
-  # R's recursive unlink() on Windows deletes a directory reparse point as a
-  # junction and warns on a true symbolic link, so remove the link itself
-  # first; rmdir removes a directory link without touching its target. withr
-  # runs deferred expressions LIFO, so registering this defer after `root`'s
-  # and `outside`'s local_tempdir() cleanups guarantees it runs before either
-  # of them, and in particular before withr's recursive unlink() of `root`.
-  # The path is built from `link` itself, never normalizePath(), which follows
-  # an existing link to its target and would have rmdir remove `outside`
-  # instead (#124). A non-zero status is reported rather than discarded.
-  if (.Platform$OS.type == "windows") {
-    windows_link <- chartr("/", "\\", link)
-    withr::defer({
-      status <- system2("cmd", c("/c", "rmdir", shQuote(windows_link)))
-      if (!identical(as.integer(status), 0L)) warning("rmdir on the test link returned ", status, call. = FALSE)
-    })
-  }
+  local_dir_link(outside, file.path(root, "descriptive"))
   row <- .select_template(template_list(), "dc", "tables")
   expect_error(.migration_template(row, subject = "cohort", type = "eda", root = root), "beneath the study root")
   expect_length(list.files(outside, all.files = TRUE, no.. = TRUE), 0L)

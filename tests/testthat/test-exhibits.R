@@ -90,29 +90,56 @@ test_that("a file an earlier render left is not recorded, and one this run wrote
   expect_null(hvtiRtemplates:::.record_exhibit(old, "figure", label = "fig-old"))
 })
 
-test_that("marking a file the device never wrote is silent", {
-  # png() writes nothing for a page with nothing drawn on it, so .save_figure() can mark a
-  # file that does not exist. That must not warn; the file is simply never recorded.
+# Earlier-render copies of a figure's three files, each a few bytes no device writes.
+plant_stale_figure <- function(root, stem = "fig") {
+  files <- file.path(root, paste0(stem, c(".png", ".pdf", ".tiff")))
+  for (f in files) writeBin(as.raw(1:8), f)
+  files
+}
+
+test_that("a blank draw records nothing and leaves no earlier figure file", {
+  # png() writes nothing for a page with nothing drawn, so an earlier render's files at the
+  # same paths would survive. None may be recorded as this run's, or stay to be read as current.
   root <- local_exhibit_state()
   state <- hvtiRtemplates:::.run_state
   assign("written", character(), envir = state)
   withr::defer(rm("written", envir = state))
-  absent <- file.path(root, "blank.png")
-  expect_no_warning(hvtiRtemplates:::.mark_written(absent))
-  expect_null(hvtiRtemplates:::.record_exhibit(absent, "figure", label = "fig-blank"))
+  files <- plant_stale_figure(root)
+  hvtiRtemplates:::.save_figure(function() invisible(NULL), files[[1]], width = 2, height = 2, keep = "fig")
+  expect_null(hvtiRtemplates:::.record_exhibit(files[[1]], "figure", label = "fig-blank"))
+  # png() writes nothing for an empty page; the PDF and TIFF devices write a blank one, which
+  # is this run's. What matters is that no file still holds the earlier render's bytes.
+  expect_false(file.exists(files[[1]]))
+  expect_false(any(vapply(files[file.exists(files)], function(f) identical(readBin(f, "raw", 100L), as.raw(1:8)), logical(1))))
 })
 
-test_that("a blank draw over an older PNG records nothing and leaves no stale file", {
-  # png() writes nothing for a page with nothing drawn, so an earlier render's PNG at the
-  # same path would survive. It must not be recorded as this run's figure, and it must not
-  # stay on disk for the ar report or a reader to take as current.
-  root <- local_exhibit_state()
-  state <- hvtiRtemplates:::.run_state
-  assign("written", character(), envir = state)
-  withr::defer(rm("written", envir = state))
-  png <- file.path(root, "fig.png")
-  writeBin(as.raw(1:8), png)
-  hvtiRtemplates:::.save_figure(function() invisible(NULL), png, width = 2, height = 2, keep = "fig")
-  expect_null(hvtiRtemplates:::.record_exhibit(png, "figure", label = "fig-blank"))
-  expect_false(file.exists(png))
+test_that("without ragg an earlier render's TIFF is removed, not left beside the new figure", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.ragg_available = function(...) FALSE)
+  fig <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x, y)) + ggplot2::geom_point()
+  hvtiRtemplates:::.save_figure(fig, files[[1]], width = 2, height = 2)
+  expect_false(file.exists(files[[3]]))
+  expect_gt(file.size(files[[1]]), 8)
+})
+
+test_that("a draw that fails leaves the earlier figure in place and no scratch file", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  draw <- function() {
+    graphics::plot(1)
+    stop("no data to draw")
+  }
+  expect_error(hvtiRtemplates:::.save_figure(draw, files[[1]], width = 2, height = 2), "no data to draw")
+  expect_identical(readBin(files[[1]], "raw", 100L), as.raw(1:8))
+  expect_length(list.files(root, pattern = "^[.]drawing-", all.files = TRUE), 0L)
+})
+
+test_that("an earlier figure that cannot be removed stops the render", {
+  # On the share a viewer can hold the old PNG open; left in place it would be taken as current.
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.unlink = function(x) 1L)
+  expect_error(hvtiRtemplates:::.save_figure(function() invisible(NULL), files[[1]], width = 2, height = 2),
+               "Could not replace")
 })
