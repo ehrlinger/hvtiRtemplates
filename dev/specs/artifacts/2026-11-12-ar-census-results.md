@@ -18,12 +18,15 @@ person opening files could tighten.
 | **breadth, filename-based candidates** | **570 catalogue studies** | distinct catalogue `study` values holding at least one `ar`-named Word or RTF file, with templates and system files excluded. One command over the catalogue, with no judgement calls. It is not validated: no file was opened, and nested fragments (see below) are not consolidated, so it is neither a confirmed count nor a strict lower bound on independent studies |
 | breadth, best estimate | about 670 (about 455 to 895) | 18 of 40 sampled studies hold a report, scaled to 1,484 |
 | breadth, lenient | about 815 | also counts studies whose only evidence is SAS table output |
-| breadth, upper bound | 1,484 | studies with any Word or RTF file left after the name exclusions |
+| breadth, candidate frame | 1,484 | catalogue study keys with any Word or RTF file left after the name exclusions. The frame the samples were drawn from, not an upper bound: a study whose only report was excluded by name, is unplaced or exists only as PDF is outside it |
 | **volume, reports** | **about 4,200 files** (about 2,450 to 7,050) | 12 of 120 sampled kept files are reports, scaled to 42,277 |
 | volume, drafts collapsed | about 3,200, conditional | a heuristic, not an estimate. The 0.76 collapse ratio was measured over ALL kept documents, not reports, and `report_key()` drops every numeric token, not only draft numbers. 3,200 holds only if reports duplicate at the same rate as everything else |
 
 The intervals are Wilson 95% intervals on the sampled proportion. They are wide enough to
-rank the figures against each other, but not to quote to two significant figures.
+rank the figures against each other, but not to quote to two significant figures. They
+measure **sampling uncertainty inside the candidate frame and nothing else**. They do not
+cover errors in the filename-only labels, or the populations the frame leaves out (see
+the last section).
 
 **The catalogue's own `ar` figures measure something else.** `templates.json` carries
 `sas_breadth` 706, from the 2026-08-29 job census, and `sas_breadth_jobs` 394, from the
@@ -75,7 +78,7 @@ absence there tells you nothing.
 
 ## What would tighten stage 2
 
-Two changes would turn 42,277 into a much closer upper bound. Neither is made here.
+Two changes would make the 42,277-file frame much tighter. Neither is made here.
 
 1. **An exact-name boilerplate bucket.** `binder.summaries.doc`, `stat_refs.doc`,
    `GFR-CKD-EPI-formula*.docx`, `dates4survival.docx`, `vars.sas.script.doc.docx`,
@@ -96,7 +99,7 @@ missing: unplaced files may hold reports at a different rate, and may belong to 
 the catalogue never names.
 
 So every estimate here has a narrower scope than "the corpus". The sample proportions,
-and the 1,484-study upper bound, apply only to **kept, placed Word and RTF documents**.
+and the 1,484-study candidate frame, apply only to **kept, placed Word and RTF documents**.
 Outside that frame, with nothing estimated for it, are unplaced files, reports kept only
 as PDF, and any report that a name exclusion removed (the audit bounds that last group at
 about 9% of exclusions; it does not measure it).
