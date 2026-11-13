@@ -28,8 +28,8 @@ existing file, because a job accumulates a study’s edits.
 
 Each template carries a light.
 
-- 🟢 **Shipped** (35): on disk and supported. Scaffold it and use it.
-- 🟡 **In progress** (30): on disk but being reworked, or scheduled into
+- 🟢 **Shipped** (36): on disk and supported. Scaffold it and use it.
+- 🟡 **In progress** (29): on disk but being reworked, or scheduled into
   a delivery batch with nothing blocking it.
 - 🔴 **Not yet on the way** (10): waiting on a function in another
   package, or not yet scheduled. The job type is known and counted; for
@@ -84,7 +84,7 @@ places each one; you do not choose the folder.
 | 🟢 Shipped | `lm-propensity_binary` | Propensity model for a binary treatment, scoring the columns that matching and weighting jobs use. | `add_job("lm", subject, type, qualifier = "propensity_binary")` |
 | 🟢 Shipped | `lm-propensity_nominal` | Generalized-logit propensity model for a nominal treatment with an explicit reference level. | `add_job("lm", subject, type, qualifier = "propensity_nominal")` |
 | 🟢 Shipped | `lm-propensity_ordinal` | Proportional-odds propensity model for an ordered treatment. | `add_job("lm", subject, type, qualifier = "propensity_ordinal")` |
-| 🟡 In progress | `mm` | Linear mixed model of a repeated continuous response, with the population-average course over time. | `add_job("mm", subject, type)` |
+| 🟢 Shipped | `mm` | Linear mixed model of a repeated continuous response, with the population-average course over time. | `add_job("mm", subject, type)` |
 | 🟢 Shipped | `nb-boostmtree` | Fits boosted multivariate trees to a response measured repeatedly over follow-up, and reports its error path, fit over time, importance, partial effects and patient trajectories. | `add_job("nb", subject, type, qualifier = "boostmtree")` |
 | 🟢 Shipped | `rfc-explain` | Explains a saved classification forest: variable importance and dependence plots. | `add_job("rfc", subject, type, qualifier = "explain")` |
 | 🟢 Shipped | `rfc-fit` | Grows a classification forest and checks it: out-of-bag error and the ROC curve with its AUC. | `add_job("rfc", subject, type, qualifier = "fit")` |
