@@ -139,16 +139,29 @@
 
 # A rename replaces a link itself, so a figure linked elsewhere, such as into a manuscript
 # folder, is followed to the file it names. normalizePath() resolves a link to an existing
-# file on every platform; Sys.readlink() reads "" on Windows, so it serves only a link
-# whose target is missing. A relative link is read against its own folder.
+# file on every platform; Sys.readlink() is not implemented on Windows, so it serves only a
+# link whose target is missing, read against the link's own folder. Only the file itself is
+# resolved: a path through a linked folder keeps the spelling the analyst knows.
 .link_target <- function(file) {
-  if (file.exists(file)) return(normalizePath(file, winslash = "/", mustWork = TRUE))
+  if (file.exists(file)) {
+    real <- normalizePath(file, winslash = "/", mustWork = TRUE)
+    same <- identical(real, file.path(normalizePath(dirname(file), winslash = "/", mustWork = TRUE), basename(file)))
+    return(if (same) file else real)
+  }
   for (i in seq_len(20L)) {
     link <- .read_link(file)
-    if (is.na(link) || !nzchar(link)) return(file)
+    if (is.na(link) || !nzchar(link)) break
     file <- if (grepl("^(/|[A-Za-z]:)", link)) link else file.path(dirname(file), link)
+    if (i == 20L) stop("Cannot save ", file, ": it is a chain of more than 20 links.", call. = FALSE)
   }
-  stop("Cannot save ", file, ": it is a chain of more than 20 links.", call. = FALSE)
+  # An entry the folder lists but file.exists() cannot reach is a link whose target is
+  # missing that could not be read, as on Windows; replacing it would cut the link.
+  if (!file.exists(file) && dir.exists(dirname(file)) &&
+        basename(file) %in% list.files(dirname(file), all.files = TRUE, no.. = TRUE)) {
+    stop("Cannot save ", file, ": it is a link to a file that does not exist. Restore the file it links to, ",
+         "or remove the link, and render again.", call. = FALSE)
+  }
+  file
 }
 
 # A render killed between the copy and the rename leaves its staged copy, which on.exit()
@@ -174,12 +187,14 @@
 }
 
 # unlink(), file.copy(), file.rename() and dir.create() report failure only through their return values;
-# these seams let a test make them fail. .read_link() lets a test read links as Windows does.
+# these seams let a test make them fail. .read_link() lets a test read links as Windows does, and
+# .png_device() lets one write a blank image for an empty page, as Windows does.
 .unlink <- function(x) unlink(x)
 .copy_file <- function(from, to) suppressWarnings(file.copy(from, to, overwrite = TRUE))
 .rename_file <- function(from, to) suppressWarnings(file.rename(from, to))
 .make_dir <- function(x) suppressWarnings(dir.create(x))
 .read_link <- function(x) Sys.readlink(x)
+.png_device <- function(...) grDevices::png(...)
 
 # The report links this PNG, so a blank page would show as a broken image. Say so in the
 # image; .save_figure() warns the analyst at render time.
@@ -208,24 +223,34 @@
   } else if (identical(format, "tiff")) {
     ragg::agg_tiff(file, width = width, height = height, units = "in", res = 300, compression = "lzw")
   } else {
-    grDevices::png(file, width = width, height = height, units = "in", res = 300)
+    .png_device(file, width = width, height = height, units = "in", res = 300)
   }
   device <- grDevices::dev.cur()
-  # Whether anything was drawn is read from the device's display list, not from the file:
-  # png() writes nothing for an empty page on macOS and Linux and a blank image on Windows,
-  # and pdf() writes a blank page everywhere. Base and grid both record there, grid even
-  # without grid.newpage(). A page that drew nothing leaves no file on every platform.
-  grDevices::dev.control("enable")
+  # Whether anything was drawn is read from the drawing, not from the file: png() writes
+  # nothing for an empty page on macOS and Linux and a blank image on Windows, and pdf()
+  # writes a blank page everywhere. Base and grid start a page through their new-page
+  # hooks; grid drawing with no grid.newpage(), such as grid.draw() of a grob, lands on
+  # grid's own display list, which grid keeps whatever the device's. Neither copies the
+  # plot's data. A page that drew nothing leaves no file on every platform.
+  paged <- FALSE
+  started <- function(...) paged <<- TRUE
+  for (hook in .page_hooks) setHook(hook, started)
   drew <- TRUE
   # dev.off() makes the next open device current, not the one that was; put
-  # back the caller's, so later plotting does not land in another file.
+  # back the caller's, so later plotting does not land in another file. A drawing that
+  # closed the device itself has written its file, which is kept.
   on.exit({
-    grDevices::dev.off(device)
-    if (before > 1L) grDevices::dev.set(before)
+    for (hook in .page_hooks) setHook(hook, Filter(function(h) !identical(h, started), getHook(hook)), "replace")
+    if (device %in% grDevices::dev.list()) grDevices::dev.off(device)
+    if (before > 1L && before %in% grDevices::dev.list()) grDevices::dev.set(before)
     if (!drew) unlink(file)
   }, add = TRUE)
   plot()
-  grDevices::dev.set(device)
-  drew <- length(grDevices::recordPlot()[[1L]]) > 0L
+  if (!paged && device %in% grDevices::dev.list()) {
+    grDevices::dev.set(device)
+    drew <- length(grid::grid.ls(print = FALSE)$name) > 0L
+  }
   invisible(file)
 }
+
+.page_hooks <- c("before.plot.new", "before.grid.newpage")

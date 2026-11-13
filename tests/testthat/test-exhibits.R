@@ -320,3 +320,49 @@ test_that("a linked figure is followed where links read as empty, as on Windows"
   hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE)
   expect_gt(file.size(target), 8)
 })
+
+test_that("a drawing that closes its own device keeps its figure and opens no other", {
+  root <- withr::local_tempdir()
+  withr::local_dir(root)
+  png <- file.path(root, "fig.png")
+  # grid drawing with no grid.newpage() fires no page hook, so the check after drawing runs.
+  draw <- function() {
+    grid::grid.rect(gp = grid::gpar(fill = "grey"))
+    grDevices::dev.off()
+  }
+  expect_no_warning(hvtiRtemplates:::.save_figure(draw, png, 2, 2, save = FALSE, linked = TRUE))
+  expect_gt(file.size(png), 1000)
+  expect_false(file.exists(file.path(root, "Rplots.pdf")))
+})
+
+test_that("a blank figure is caught end to end where png() writes a blank image, as on Windows", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.png_device = function(file, ...) grDevices::pdf(file))
+  expect_warning(hvtiRtemplates:::.save_figure(function() invisible(NULL), files[[1]], 2, 2),
+                 "'fig' drew nothing; no figure files")
+  expect_false(any(file.exists(files)))
+})
+
+test_that("a link to a missing file that cannot be read is refused, not replaced", {
+  root <- withr::local_tempdir()
+  png <- file.path(root, "fig.png")
+  skip_if_not(suppressWarnings(file.symlink(file.path(root, "gone", "fig.png"), png)),
+              "This platform does not permit creating symbolic links.")
+  testthat::local_mocked_bindings(.read_link = function(x) "")
+  expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), png, 2, 2, save = FALSE, linked = TRUE),
+               "link to a file that does not exist")
+  expect_true(basename(png) %in% list.files(root, all.files = TRUE))
+})
+
+test_that("a study reached through a linked folder keeps its own path in messages", {
+  real <- withr::local_tempdir()
+  parent <- withr::local_tempdir()
+  study <- file.path(parent, "study")
+  local_dir_link(real, study)
+  writeBin(as.raw(1:8), file.path(real, "fig.png"))
+  testthat::local_mocked_bindings(.copy_file = function(from, to) FALSE)
+  err <- tryCatch(hvtiRtemplates:::.save_figure(function() graphics::plot(1), file.path(study, "fig.png"), 2, 2,
+                                                save = FALSE, linked = TRUE), error = conditionMessage)
+  expect_match(err, file.path(parent, "study"), fixed = TRUE)
+})
