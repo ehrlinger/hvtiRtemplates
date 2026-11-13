@@ -330,7 +330,8 @@ test_that("a drawing that closes its own device keeps its figure and opens no ot
     grid::grid.rect(gp = grid::gpar(fill = "gray"))
     grDevices::dev.off()
   }
-  expect_no_warning(hvtiRtemplates:::.save_figure(draw, png, 2, 2, save = FALSE, linked = TRUE))
+  expect_warning(hvtiRtemplates:::.save_figure(draw, png, 2, 2, save = FALSE, linked = TRUE),
+                 "'fig' closed its own graphics device")
   expect_gt(file.size(png), 1000)
   expect_false(file.exists(file.path(root, "Rplots.pdf")))
 })
@@ -397,4 +398,22 @@ test_that("a figure that is a link the system could not follow is refused, not r
   expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), files[[1]], 2, 2, save = FALSE, linked = TRUE),
                "link this system could not follow")
   expect_identical(readBin(files[[1]], "raw", 100L), as.raw(1:8))
+})
+
+test_that("a display-list entry of an unexpected shape counts as drawing, not as an error", {
+  odd <- list(list(quote(f), list()), list(quote(f)), list(quote(f), "x"))
+  for (entry in odd) expect_true(hvtiRtemplates:::.marks_page(list(entry)))
+})
+
+test_that("Windows links are listed once a session for each folder, compared in UTF-8", {
+  root <- withr::local_tempdir()
+  name <- enc2utf8("hz-s\u00fc\u00df.png")
+  calls <- 0L
+  testthat::local_mocked_bindings(.on_windows = function() TRUE, .windows_links = function(dir) {
+    calls <<- calls + 1L
+    name
+  })
+  expect_true(hvtiRtemplates:::.is_link(file.path(root, name)))
+  expect_false(hvtiRtemplates:::.is_link(file.path(root, "other.png")))
+  expect_identical(calls, 1L)
 })

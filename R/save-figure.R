@@ -202,12 +202,24 @@
 .make_dir <- function(x) suppressWarnings(dir.create(x))
 .read_link <- function(x) Sys.readlink(x)
 # Windows lists links and junctions as reparse points under dir /AL, which needs no
-# administrator rights; Sys.readlink() serves everywhere else.
+# administrator rights; Sys.readlink() serves everywhere else. The listing is taken once a
+# session for each folder, since a render saves many figures into one: a link made in a
+# folder after its first save is seen from the next session. dir writes in the console's
+# codepage unless switched to UTF-8 first, and a name it mangled would not match.
 .is_link <- function(file) {
-  if (.Platform$OS.type != "windows") return(nzchar(.read_link(file)))
-  listed <- suppressWarnings(system2("cmd", c("/c", "dir", "/AL", "/B", shQuote(chartr("/", "\\", dirname(file)))),
+  if (!.on_windows()) return(nzchar(.read_link(file)))
+  dir <- dirname(file)
+  if (is.null(.figure_state$links[[dir]])) .figure_state$links[[dir]] <- .windows_links(dir)
+  enc2utf8(basename(file)) %in% .figure_state$links[[dir]]
+}
+
+.on_windows <- function() .Platform$OS.type == "windows"
+
+.windows_links <- function(dir) {
+  listed <- suppressWarnings(system2("cmd", c("/c", "chcp 65001 >nul & dir /AL /B", shQuote(chartr("/", "\\", dir))),
                                      stdout = TRUE, stderr = FALSE))
-  basename(file) %in% listed
+  Encoding(listed) <- "UTF-8"
+  enc2utf8(listed)
 }
 .png_device <- function(...) grDevices::png(...)
 
@@ -261,23 +273,30 @@
   if (device %in% grDevices::dev.list()) {
     grDevices::dev.set(device)
     drew <- .marks_page(grDevices::recordPlot()[[1L]])
+  } else if (identical(format, "png")) {
+    # Said once, for the PNG; its PDF and TIFF are drawn by the same function.
+    warning("Figure '", sub("[.][a-z]+$", "", basename(file)), "' closed its own graphics device, so whether it ",
+            "drew anything could not be checked; it is saved as drawn.", call. = FALSE)
   }
   invisible(file)
 }
 
 # Display-list operations that set up a page without marking it: the palette, base
 # plot.new(), plot.window(), par(), layout() and clipping, grid's viewports and graphical
-# parameters, and the namespace load ggplot2 records. An operation not named here counts
-# as drawing, so one this list misses keeps the figure rather than discarding it.
+# parameters, and the namespace load ggplot2 records through recordGraphics(). An
+# operation not named here counts as drawing, so one this list misses keeps the figure
+# rather than discarding it.
 .page_setup_ops <- c("palette2", "C_plot_new", "C_plot_window", "C_par", "C_layout", "C_clip",
-                     "gridDirty", "setGPar", "setviewport", "upviewport", "downviewport", "newpage")
+                     "gridDirty", "setGPar", "setviewport", "upviewport", "downviewport", "requireNamespace")
 
+# Each entry is an operation and its arguments: a native routine for base and grid, or a
+# recorded call for recordGraphics(). An entry of any other shape counts as drawing.
 .marks_page <- function(display_list) {
   op <- function(entry) {
-    what <- entry[[2L]][[1L]]
-    if (inherits(what, "NativeSymbolInfo")) return(what$name)
-    if (is.call(what) && identical(what[[1L]], as.name("requireNamespace"))) return("requireNamespace")
-    "drawing"
+    tryCatch({
+      what <- entry[[2L]][[1L]]
+      if (inherits(what, "NativeSymbolInfo")) what$name else if (is.call(what)) deparse(what[[1L]])[[1L]] else "drawing"
+    }, error = function(e) "drawing")
   }
-  any(!vapply(display_list, op, character(1)) %in% c(.page_setup_ops, "requireNamespace"))
+  any(!vapply(display_list, op, character(1)) %in% .page_setup_ops)
 }
