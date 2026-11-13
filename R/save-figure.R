@@ -68,41 +68,64 @@
   selected <- isTRUE(save) && (is.null(keep) || any(startsWith(name, keep)))
   pdf <- sub("[.]png$", ".pdf", png)
   tiff <- sub("[.]png$", ".tiff", png)
+  blank <- FALSE
   if (selected || linked) {
+    .unmark_written(png)
     .write_figure(plot, png, width, height, "png")
-    # A blank page writes no file, and its earlier PNG is gone. Mark only what this run
-    # drew; a PNG the report embeds gets a placeholder, which is never recorded.
-    if (file.exists(png)) .mark_written(png) else if (linked) .blank_placeholder(png)
+    # A blank page writes no file, and its earlier PNG is gone. Mark only what this run drew.
+    blank <- !file.exists(png)
+    if (!blank) .mark_written(png)
   }
-  if (selected) .write_figure(plot, pdf, width, height, "pdf")
-  # Without ragg no TIFF is written, so an earlier render's TIFF would sit beside this
-  # run's PNG and PDF as though it matched them. Nothing in the run reads the TIFF, so
-  # one that cannot be removed is reported, not fatal.
-  if (selected && .ragg_available()) {
+  # A page that drew nothing has no publication copies either: the PDF and TIFF devices
+  # would write blank pages. Without ragg no TIFF is written, so an earlier render's TIFF
+  # would sit beside this run's PNG and PDF as though it matched them. Nothing in the run
+  # reads either copy, so one that cannot be removed is reported, not fatal.
+  if (selected && !blank) .write_figure(plot, pdf, width, height, "pdf") else if (selected) .drop_stale(pdf)
+  if (selected && !blank && .ragg_available()) {
     .write_figure(plot, tiff, width, height, "tiff")
   } else if (selected) {
-    tryCatch(.remove_figure_file(tiff), error = function(e) warning(conditionMessage(e), call. = FALSE))
+    .drop_stale(tiff)
+  }
+  # A PNG the report embeds gets a placeholder, which is never recorded.
+  if (blank && linked) {
+    .blank_placeholder(png)
+  } else if (blank) {
+    warning("Figure '", name, "' drew nothing; no figure files were saved for it.", call. = FALSE)
   }
   invisible(png)
 }
 
-# The figure is drawn in R's own temporary folder and copied over the target once
-# drawing has finished. A draw that fails leaves the earlier figure where it was, and a
-# render killed mid-draw leaves nothing in the study. A device that drew nothing writes
-# no file; the earlier figure is then removed, so it cannot survive as this run's.
+.drop_stale <- function(file) {
+  tryCatch(.remove_figure_file(file), error = function(e) warning(conditionMessage(e), call. = FALSE))
+}
+
+# The figure is drawn in R's own temporary folder, copied beside the target under a
+# hidden name, and renamed over it. file.copy() empties its target before it writes, so
+# copying straight over the figure would lose the earlier one to a full disk or a dropped
+# share; a rename within one folder replaces it whole. A draw or copy that fails leaves
+# the earlier figure where it was. A device that drew nothing writes no file; the earlier
+# figure is then removed, so it cannot survive as this run's.
 .write_figure <- function(plot, file, width, height, format) {
   if (!dir.exists(dirname(file))) {
     stop("Cannot save ", basename(file), ": the folder ", dirname(file), " does not exist.", call. = FALSE)
   }
   # The scratch copy keeps the file's own name, which devices and ggsave() see.
   drawing <- tempfile("drawing-")
-  dir.create(drawing)
+  if (!.make_dir(drawing)) {
+    stop("Cannot draw ", basename(file), ": R's temporary folder ", dirname(drawing), " cannot be written.", call. = FALSE)
+  }
   on.exit(unlink(drawing, recursive = TRUE), add = TRUE)
   scratch <- file.path(drawing, basename(file))
   .draw_figure(plot, scratch, width, height, format)
   if (!file.exists(scratch)) return(.remove_figure_file(file))
-  if (!.copy_file(scratch, file)) {
-    stop("Could not write ", file, ": close whatever holds it open, and render again.", call. = FALSE)
+  staged <- file.path(dirname(file), paste0(".", basename(drawing), "-", basename(file)))
+  on.exit(if (file.exists(staged)) unlink(staged), add = TRUE)
+  if (!.copy_file(scratch, staged)) {
+    stop("Could not write ", basename(file), " into ", dirname(file), ": check the folder's space and permissions, ",
+         "and render again.", call. = FALSE)
+  }
+  if (!.rename_file(staged, file)) {
+    stop("Could not replace ", file, ": close whatever holds it open, or remove it, and render again.", call. = FALSE)
   }
   invisible(file)
 }
@@ -117,15 +140,17 @@
   invisible(file)
 }
 
-# unlink() and file.copy() report failure only through their return values; these seams
-# let a test make them fail.
+# unlink(), file.copy(), file.rename() and dir.create() report failure only through their return values;
+# these seams let a test make them fail.
 .unlink <- function(x) unlink(x)
 .copy_file <- function(from, to) suppressWarnings(file.copy(from, to, overwrite = TRUE))
+.rename_file <- function(from, to) suppressWarnings(file.rename(from, to))
+.make_dir <- function(x) suppressWarnings(dir.create(x))
 
 # The report links this PNG, so a blank page would show as a broken image. Say so in the
 # image, and in a warning the analyst sees at render time.
 .blank_placeholder <- function(png) {
-  .draw_figure(function() {
+  .write_figure(function() {
     graphics::par(mar = c(0, 0, 0, 0))
     graphics::plot.new()
     graphics::text(0.5, 0.5, "This figure drew nothing in this run.")
