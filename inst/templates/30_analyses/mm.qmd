@@ -92,6 +92,8 @@ PREDICTORS <- c("age", "female")           # EDIT: the declared fixed effects be
 #   "un"         REPEATED visit / type=un: a correlation and a variance per visit pair.
 #                Same visit requirement; costs many parameters.
 #   "random"     RANDOM intercept / subject=id.
+#   "slope"      RANDOM int <time term> / subject=id: a random intercept and a random slope in
+#                time, independent as SAS's RANDOM default type=vc. SLOPE names the term.
 # RANDOM and REPEATED in one fit are not offered: one corpus study wrote them so.
 # A spatial structure (type=sp(pow)) is not offered; nlme::corExp(form = ~ time | id)
 # is its R form if a study needs one.
@@ -101,6 +103,10 @@ STRUCTURE <- "cs"
 # closes up and AR(1) reads visits 1 and 3 as neighbors. Name the column when the schedule has such a gap or TIME
 # is not the visit itself. Irregular times suit neither; nlme::corCAR1(form = ~ time | id) is the R form of sp(pow).
 VISIT <- NULL
+# EDIT: for "slope", the time term the random slope is on, written as it appears in TIME_TERMS, or NULL for the first.
+# A SAS job's RANDOM int iv_echo, with iv_echo = 1/(t+1) in its DATA step, is "I(1/(time + 1))". A patient measured
+# at one time adds nothing to the slope; the report counts them.
+SLOPE <- NULL
 # EDIT: "REML", as SAS's default, unless models with different fixed effects are to be
 # compared by likelihood, which needs "ML".
 METHOD <- "REML"
@@ -345,9 +351,11 @@ mm_predict <- function(fit, newdata, scale) {
 
 ```{r}
 #| label: fit
-mm_check(d, .id, TIME, STRUCTURE, IMPUTATION, VISIT)
+.slope <- if (is.null(SLOPE)) TIME_TERMS[[1L]] else SLOPE
+mm_check(d, .id, TIME, STRUCTURE, IMPUTATION, VISIT, .slope, TIME_TERMS)
 model_formula <- stats::reformulate(c(TIME_TERMS, PREDICTORS), response = .response)
-fits <- lapply(stats::setNames(STRUCTURE, STRUCTURE), function(s) mm_fit(d, model_formula, .id, TIME, s, METHOD, VISIT))
+fits <- lapply(stats::setNames(STRUCTURE, STRUCTURE),
+               function(s) mm_fit(d, model_formula, .id, TIME, s, METHOD, VISIT, if (identical(s, "slope")) .slope))
 fit <- fits[[1L]]
 comparison <- NULL  # replaced by the tbl-compare chunk when STRUCTURE lists several
 ```
@@ -362,10 +370,15 @@ cat("\n\nThe reported model is the ", dQuote(STRUCTURE[[1L]], FALSE), " structur
 ```{r}
 #| label: tbl-counts
 #| tbl-cap: "Patients and measurements in the fit"
-knitr::kable(data.frame(
+.counts <- data.frame(
   quantity = c("patients", "measurements", "measurements per patient, median", "measurements per patient, range"),
   value = c(fit$n_patients, fit$n_measurements, stats::median(fit$per_patient), paste(range(fit$per_patient), collapse = " to "))
-))
+)
+if (identical(fit$structure, "slope")) {
+  .counts <- rbind(.counts, data.frame(quantity = "patients measured at one time, adding nothing to the slope",
+                                       value = fit$n_single_time))
+}
+knitr::kable(.counts)
 ```
 
 ```{r}
@@ -425,7 +438,7 @@ utils::write.csv(predictions, PREDICTIONS_PATH, row.names = FALSE)
 bundle <- list(
   meta = list(id_col = .id, outcome = OUTCOME, response_scale = RESPONSE_SCALE,
               prediction_scale = if (identical(RESPONSE_SCALE, "log")) "geometric mean" else "mean",
-              time = TIME, visit = VISIT, time_terms = TIME_TERMS,
+              time = TIME, visit = VISIT, slope = if ("slope" %in% STRUCTURE) .slope, time_terms = TIME_TERMS,
               predictors = PREDICTORS, structure = fit$structure, method = METHOD,
               formula = paste(deparse(model_formula), collapse = " "), n_patients = fit$n_patients,
               n_measurements = fit$n_measurements, nlme_version = as.character(utils::packageVersion("nlme"))),

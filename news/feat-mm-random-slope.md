@@ -1,0 +1,1 @@
+- `mm` fits a random slope in time: `STRUCTURE = "slope"` is SAS's `RANDOM int <slope> / subject=id`, a random intercept and an independent random slope on the time term named in the new study choice `SLOPE`. `STRUCTURE <- c("cs", "slope")` fits both and compares them, as 33 corpus programs in 10 studies did by hand.

@@ -18,7 +18,7 @@ test_that("mm scaffolds with its study choices and EDIT: markers", {
   src <- readLines(job, warn = FALSE)
   # tbl-data resolves RESPONSE_SCALE and IMPUTATION again; the study choices are the lines before it.
   src <- src[seq_len(grep("label: tbl-data", src, fixed = TRUE) - 1L)]
-  for (field in c("TIME", "KEY", "OUTCOME", "RESPONSE_SCALE", "TIME_TERMS", "PREDICTORS", "STRUCTURE", "METHOD",
+  for (field in c("TIME", "KEY", "OUTCOME", "RESPONSE_SCALE", "TIME_TERMS", "PREDICTORS", "STRUCTURE", "SLOPE", "METHOD",
                   "PREDICT_AT", "PREDICT_TIMES", "IMPUTATION")) {
     expect_length(grep(paste0("^", field, " <- "), src), 1L)
   }
@@ -365,4 +365,19 @@ test_that("mm compares structures only when STRUCTURE lists several", {
   out <- mm_render_fixture(choices = 'STRUCTURE <- c("cs", "random")')
   html <- paste(readLines(out$output, warn = FALSE), collapse = "\n")
   expect_match(html, compare_table)
+})
+
+test_that("mm renders a reported slope model with its variances and the one-time count", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  out <- mm_render_fixture(choices = 'STRUCTURE <- c("slope", "cs")')
+  html <- gsub("(?s)<pre[^>]*>.*?</pre>", "", paste(readLines(out$output, warn = FALSE), collapse = "\n"), perl = TRUE)
+  expect_match(html, "log(time + 1) variance", fixed = TRUE)
+  expect_match(html, "patients measured at one time", fixed = TRUE)
+  expect_match(html, compare_table)
+  set <- file.path(hvtiRutilities::study_dir("estimates", out$root), "outcome-mixed")
+  bundle <- readRDS(file.path(set, "mm.rds"))
+  expect_identical(bundle$meta$structure, "slope")
+  expect_identical(bundle$meta$slope, "log(time + 1)")
 })
