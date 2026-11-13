@@ -327,7 +327,7 @@ test_that("a drawing that closes its own device keeps its figure and opens no ot
   png <- file.path(root, "fig.png")
   # grid drawing with no grid.newpage() fires no page hook, so the check after drawing runs.
   draw <- function() {
-    grid::grid.rect(gp = grid::gpar(fill = "grey"))
+    grid::grid.rect(gp = grid::gpar(fill = "gray"))
     grDevices::dev.off()
   }
   expect_no_warning(hvtiRtemplates:::.save_figure(draw, png, 2, 2, save = FALSE, linked = TRUE))
