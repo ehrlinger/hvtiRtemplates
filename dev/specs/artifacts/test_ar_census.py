@@ -98,6 +98,27 @@ class Exclusions(unittest.TestCase):
             "results", census.subfolders(p, "cardiac/ms_outcomes/manuscript_era")))
 
 
+    # `ab.` names an abstract by the same house convention that makes `ar.` a
+    # report: every `ab.` file in the six 2026-11-12 samples was one. Only the
+    # dotted prefix counts; a leading `ab` token is often a group label.
+    def test_ab_dot_prefix_is_an_abstract(self):
+        for stem in ("ab.Robich RD15 [0]", "ab.rd26conner.1373.foregut_dysfunction.final",
+                     "ab._original_Vargo_RD14", "AB.ISHLT_2012_BAR", "ab.Krishnamohan_RD13 [0]"):
+            with self.subTest(stem=stem):
+                self.assertEqual(census.classify_exclusion(stem), "abstract_or_talk")
+
+    def test_ab_without_the_dot_is_not_an_abstract(self):
+        for stem in ("abvscd_first_inhosp_mtwt_bin", "ab_group_report", "AB group outcomes",
+                     "abdominal_aorta_report", "match_AB_noafib_cate", "lab.values_report"):
+            with self.subTest(stem=stem):
+                self.assertIsNone(census.classify_exclusion(stem))
+
+    def test_ab_dot_wins_over_the_folder_rule(self):
+        self.assertEqual(census.classify_exclusion(
+            "ab.Bakir_RD24_[0]", census.subfolders(row("x", sub="Manuscript")["path"], "s1")),
+            "abstract_or_talk")
+
+
 class Counts(unittest.TestCase):
     def test_system_artifacts_are_not_in_stage1(self):
         s = run([row("report"), row("~$report"), row("._report")])

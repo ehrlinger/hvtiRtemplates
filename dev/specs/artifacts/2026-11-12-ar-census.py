@@ -194,6 +194,14 @@ _EXCLUDE_RE = {
 }
 
 
+# `ab.` names an abstract by the same house convention that makes `ar.` a
+# report: the corpus holds 1,060 `ab.*` files in 414 studies (the 2026-08-29
+# job census), and every one drawn into the six 2026-11-12 samples was an
+# abstract, mostly `ab.<author>_RD<yy>`. Only the DOTTED prefix counts: a
+# leading `ab` token is often a group label (`abvscd_...`, `AB group`), and
+# those files are analysis output.
+ABSTRACT_PREFIX = "ab."
+
 # Manuscripts the name rule misses sit under a manuscript folder: names run
 # together (`...Manuscript`), misspelt (`Mansucript`), abbreviated (`Revised ms`)
 # or named for the journal. They were a fifth of kept files in both 2026-11-12
@@ -232,6 +240,8 @@ def classify_exclusion(stem, subdirs=()):
         return "system_artifact"
     if is_boilerplate(stem):
         return "boilerplate"
+    if stem.lower().startswith(ABSTRACT_PREFIX):
+        return "abstract_or_talk"
     t = tokens(stem)
     joined = "_".join(t)
     for bucket, rx in _EXCLUDE_RE.items():
@@ -420,7 +430,8 @@ def count(rows, cols, sample=120, audit=40, studies=40, seed=20261112):
             "exclusion_match": "first match wins, in this order: system files by raw "
                                "prefix " + ", ".join(SYSTEM_PREFIXES) + "; then "
                                "boilerplate by a known leading token sequence followed "
-                               "only by numbers or version, study and approval words; then the named buckets by "
+                               "only by numbers or version, study and approval words; then "
+                               "an abstract by the prefix ab.; then the named buckets by "
                                "whole tokens of the lowercased stem, optional plural s; "
                                "last, a file not named ar under a folder below the taxonomy "
                                "folder whose name reads as a manuscript",
