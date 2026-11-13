@@ -46,12 +46,41 @@ class Exclusions(unittest.TestCase):
                 self.assertEqual(census.classify_exclusion(stem), "system_artifact")
 
 
+    # Copied into most studies by the scaffold or the analyst. Each name below
+    # was read in the 2026-11-12 study sample; suffixes such as " (2)", "_v1",
+    # "[approved]" and a study number must not let one escape.
+    def test_copied_in_files_are_boilerplate(self):
+        for stem in ("binder.summaries", "stat_refs", "GFR-CKD-EPI-formula (2)",
+                     "dates4survival", "vars.sas.script.doc", "Methods-RF and Boosting",
+                     "methods-rf_boosting", "RF-STAT-Method-Desc",
+                     "Boostmtree method description from 1064 and 1130",
+                     "ProjectPlan_Study1135_v1", "ProjectPlanDataSources_2016",
+                     "Proposal_1941[approved]", "Guidelines Follow-up Cohort 4.19.22",
+                     "Request for FUP_STXXXX"):
+            with self.subTest(stem=stem):
+                self.assertEqual(census.classify_exclusion(stem), "boilerplate")
+
+    def test_reports_that_mention_methods_or_summaries_are_kept(self):
+        for stem in ("ar.analysis_BAR", "summary_analysis", "methods_and_results",
+                     "statistical_report", "binder"):
+            with self.subTest(stem=stem):
+                self.assertIsNone(census.classify_exclusion(stem))
+
+
 class Counts(unittest.TestCase):
     def test_system_artifacts_are_not_in_stage1(self):
         s = run([row("report"), row("~$report"), row("._report")])
         self.assertEqual(s["stage1_upper_bound"]["volume_files"], 1)
         self.assertEqual(s["stage2_after_named_exclusions"]["excluded_by_bucket"],
                          {"system_artifact": 2})
+
+    def test_boilerplate_only_study_is_in_stage1_not_stage2(self):
+        s = run([row("ar.outcomes"), row("stat_refs", study="s2"),
+                 row("binder.summaries", study="s2")])
+        self.assertEqual(s["stage1_upper_bound"]["breadth_studies"], 2)
+        self.assertEqual(s["stage2_after_named_exclusions"]["breadth_studies"], 1)
+        self.assertEqual(s["stage2_after_named_exclusions"]["excluded_by_bucket"],
+                         {"boilerplate": 2})
 
     def test_artifact_only_study_adds_no_breadth(self):
         s = run([row("report"), row("._report", study="s2")])

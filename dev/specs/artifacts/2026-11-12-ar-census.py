@@ -117,6 +117,23 @@ REPORT_FOLDER = "documents"
 # FIRST, to a bucket of their own.
 SYSTEM_PREFIXES = ("~$", "._", ".~lock")
 
+# Files copied into most studies by the scaffold or by habit: the binder
+# summary, the reference list, the GFR formula, the survival-dates note, the
+# standard methods write-ups, and the filled-in proposal and project-plan
+# forms. None is an analysis report. Read in the 2026-11-12 study sample, where
+# seven of the twenty studies labelled `no` held nothing else, which is why
+# nearly every study had a kept file. Matched as a PREFIX of the stem with
+# everything but letters and digits removed, because the copies carry suffixes
+# a whole-token rule cannot anticipate: " (2)", "_v1", "[approved]", a study
+# number, a date. A prefix here must be specific enough that no report starts
+# with it; `binder` alone or `methods` alone would not be.
+BOILERPLATE_PREFIXES = (
+    "bindersummaries", "statrefs", "gfrckdepiformula", "dates4survival",
+    "varssasscriptdoc", "methodsrfandboosting", "methodsrfboosting",
+    "methodsboosting", "rfstatmethoddesc", "boostmtreemethoddescription",
+    "projectplan", "proposal", "guidelinesfollowupcohort", "requestforfup",
+)
+
 # Stage 2. Each entry gets its own named bucket and its own count. Matched as
 # WHOLE TOKENS of the lowercased stem (see `tokens()`), with an optional plural
 # `s`, never as substrings. Substring matching removed real reports in this
@@ -165,6 +182,8 @@ def classify_exclusion(stem):
     a partition."""
     if stem.startswith(SYSTEM_PREFIXES):
         return "system_artifact"
+    if re.sub(r"[^a-z0-9]", "", stem.lower()).startswith(BOILERPLATE_PREFIXES):
+        return "boilerplate"
     joined = "_".join(tokens(stem))
     for bucket, rx in _EXCLUDE_RE.items():
         if rx.search(joined):
