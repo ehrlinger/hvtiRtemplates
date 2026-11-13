@@ -11,8 +11,9 @@ COLS = census.resolve_columns(["path", "study", "folder", "status", "naming",
                                "is_template", "stem", "ext"])
 
 
-def row(stem, ext="docx", study="s1", folder="documents", template="FALSE"):
-    return {"path": f"/x/{study}/{folder}/{stem}.{ext}", "study": study,
+def row(stem, ext="docx", study="s1", folder="documents", template="FALSE", sub=""):
+    sub = f"{sub}/" if sub else ""
+    return {"path": f"/x/{study}/{folder}/{sub}{stem}.{ext}", "study": study,
             "folder": folder, "status": "placed", "naming": "NA",
             "is_template": template, "stem": stem, "ext": ext}
 
@@ -46,12 +47,99 @@ class Exclusions(unittest.TestCase):
                 self.assertEqual(census.classify_exclusion(stem), "system_artifact")
 
 
+    # Copied into most studies by the scaffold or the analyst. Each name below
+    # was read in the 2026-11-12 study sample; suffixes such as " (2)", "_v1",
+    # "[approved]" and a study number must not let one escape.
+    def test_copied_in_files_are_boilerplate(self):
+        for stem in ("binder.summaries", "stat_refs", "GFR-CKD-EPI-formula (2)",
+                     "dates4survival", "vars.sas.script.doc", "Methods-RF and Boosting",
+                     "methods-rf_boosting", "RF-STAT-Method-Desc",
+                     "Boostmtree method description from 1064 and 1130",
+                     "ProjectPlan_Study1135_v1", "ProjectPlanDataSources_2016",
+                     "ProjectPlan_proposal2140", "ProjectPlan_StudyXXX",
+                     "Proposal_1941[approved]", "Guidelines Follow-up Cohort 4.19.22",
+                     "Request for FUP_STXXXX"):
+            with self.subTest(stem=stem):
+                self.assertEqual(census.classify_exclusion(stem), "boilerplate")
+
+    def test_reports_that_mention_methods_or_summaries_are_kept(self):
+        for stem in ("ar.analysis_BAR", "summary_analysis", "methods_and_results",
+                     "statistical_report", "binder",
+                     # A boilerplate name followed by real title words is a
+                     # report until a person says otherwise (Codex, #537).
+                     "Proposal valve outcomes analysis report",
+                     "ProjectPlan outcomes analysis report",
+                     "MethodsBoosting survival report", "stat_refs_and_results"):
+            with self.subTest(stem=stem):
+                self.assertIsNone(census.classify_exclusion(stem))
+
+
+    # Manuscripts the name rule misses sit under a manuscript folder: a fifth of
+    # kept files in both 2026-11-12 runs. Only folders BELOW the taxonomy folder
+    # count, and a name bucket still wins when the name says what the file is.
+    def test_files_under_a_manuscript_folder(self):
+        cases = {("Impella_acuity_maintext", "manuscript"): "manuscript_folder",
+                 ("Table 1", "Revised ms pieces to JTCVS"): "manuscript_folder",
+                 ("x 2019.11.18", "Manuscript to JACC/Old"): "manuscript_folder",
+                 ("aats table 2", "Manuscript Tables"): "manuscript_folder",
+                 ("Cover Letter", "Manuscripts/JACC"): "correspondence",
+                 ("ar.outcomes", "manuscript"): None,
+                 ("Impella_acuity_maintext", ""): None,
+                 ("Impella_acuity_maintext", "archive/2019"): None}
+        for (stem, sub), bucket in cases.items():
+            with self.subTest(stem=stem, sub=sub):
+                self.assertEqual(census.classify_exclusion(stem, census.subfolders(
+                    row(stem, sub=sub)["path"], "s1")), bucket)
+
+    def test_study_path_words_do_not_trigger_the_folder_rule(self):
+        p = "/x/cardiac/ms_outcomes/manuscript_era/documents/results.docx"
+        self.assertEqual(census.subfolders(p, "cardiac/ms_outcomes/manuscript_era"), ())
+        self.assertIsNone(census.classify_exclusion(
+            "results", census.subfolders(p, "cardiac/ms_outcomes/manuscript_era")))
+
+
+    # `ab.` names an abstract by the same house convention that makes `ar.` a
+    # report: every `ab.` file in the six 2026-11-12 samples was one. Only the
+    # dotted prefix counts; a leading `ab` token is often a group label.
+    def test_ab_dot_prefix_is_an_abstract(self):
+        for stem in ("ab.Robich RD15 [0]", "ab.rd26conner.1373.foregut_dysfunction.final",
+                     "ab._original_Vargo_RD14", "AB.ISHLT_2012_BAR", "ab.Krishnamohan_RD13 [0]"):
+            with self.subTest(stem=stem):
+                self.assertEqual(census.classify_exclusion(stem), "abstract_or_talk")
+
+    def test_ab_without_the_dot_is_not_an_abstract(self):
+        for stem in ("abvscd_first_inhosp_mtwt_bin", "ab_group_report", "AB group outcomes",
+                     "abdominal_aorta_report", "match_AB_noafib_cate", "lab.values_report"):
+            with self.subTest(stem=stem):
+                self.assertIsNone(census.classify_exclusion(stem))
+
+    def test_ab_dot_wins_over_the_folder_rule(self):
+        self.assertEqual(census.classify_exclusion(
+            "ab.Bakir_RD24_[0]", census.subfolders(row("x", sub="Manuscript")["path"], "s1")),
+            "abstract_or_talk")
+
+
 class Counts(unittest.TestCase):
     def test_system_artifacts_are_not_in_stage1(self):
         s = run([row("report"), row("~$report"), row("._report")])
         self.assertEqual(s["stage1_upper_bound"]["volume_files"], 1)
         self.assertEqual(s["stage2_after_named_exclusions"]["excluded_by_bucket"],
                          {"system_artifact": 2})
+
+    def test_boilerplate_only_study_is_in_stage1_not_stage2(self):
+        s = run([row("ar.outcomes"), row("stat_refs", study="s2"),
+                 row("binder.summaries", study="s2")])
+        self.assertEqual(s["stage1_upper_bound"]["breadth_studies"], 2)
+        self.assertEqual(s["stage2_after_named_exclusions"]["breadth_studies"], 1)
+        self.assertEqual(s["stage2_after_named_exclusions"]["excluded_by_bucket"],
+                         {"boilerplate": 2})
+
+    def test_manuscript_folder_is_counted_from_the_path(self):
+        s = run([row("ar.outcomes", sub="manuscript"), row("maintext", sub="manuscript"),
+                 row("maintext")])
+        self.assertEqual(s["stage2_after_named_exclusions"]["volume_files"], 2)
+        self.assertEqual(s["stage2_after_named_exclusions"]["excluded_by_bucket"],
+                         {"manuscript_folder": 1})
 
     def test_artifact_only_study_adds_no_breadth(self):
         s = run([row("report"), row("._report", study="s2")])
