@@ -112,7 +112,7 @@ test_that("a record that resolves outside the study through a link stops", {
   qmd <- ar_fake_job(root)
   outside <- withr::local_tempdir()
   file.copy(file.path(root, "graphs", "dead-hz", "hz-fit.png"), file.path(outside, "x.png"))
-  file.symlink(outside, file.path(root, "graphs", "lnk"))
+  local_dir_link(outside, file.path(root, "graphs", "lnk"))
   ar_corrupt_record(qmd, file = "graphs/lnk/x.png")
   expect_error(hvtiRtemplates:::.ar_resolve("hz.dead.hz#fig-fit", root), "resolves outside the study")
 })

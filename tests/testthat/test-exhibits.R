@@ -89,3 +89,95 @@ test_that("a file an earlier render left is not recorded, and one this run wrote
   hvtiRtemplates:::.save_figure(fig, old, width = 2, height = 2, save = FALSE)
   expect_null(hvtiRtemplates:::.record_exhibit(old, "figure", label = "fig-old"))
 })
+
+# Earlier-render copies of a figure's three files, each a few bytes no device writes.
+plant_stale_figure <- function(root, stem = "fig") {
+  files <- file.path(root, paste0(stem, c(".png", ".pdf", ".tiff")))
+  for (f in files) writeBin(as.raw(1:8), f)
+  files
+}
+
+test_that("a blank draw records nothing and leaves no earlier figure file", {
+  # png() writes nothing for a page with nothing drawn, so an earlier render's files at the
+  # same paths would survive. None may be recorded as this run's, or stay to be read as current.
+  root <- local_exhibit_state()
+  state <- hvtiRtemplates:::.run_state
+  assign("written", character(), envir = state)
+  withr::defer(rm("written", envir = state))
+  files <- plant_stale_figure(root)
+  hvtiRtemplates:::.save_figure(function() invisible(NULL), files[[1]], width = 2, height = 2, keep = "fig")
+  expect_null(hvtiRtemplates:::.record_exhibit(files[[1]], "figure", label = "fig-blank"))
+  # png() writes nothing for an empty page; the PDF and TIFF devices write a blank one, which
+  # is this run's. What matters is that no file still holds the earlier render's bytes.
+  expect_false(file.exists(files[[1]]))
+  expect_false(any(vapply(files[file.exists(files)], function(f) identical(readBin(f, "raw", 100L), as.raw(1:8)), logical(1))))
+})
+
+test_that("without ragg an earlier render's TIFF is removed, not left beside the new figure", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.ragg_available = function(...) FALSE)
+  fig <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x, y)) + ggplot2::geom_point()
+  hvtiRtemplates:::.save_figure(fig, files[[1]], width = 2, height = 2)
+  expect_false(file.exists(files[[3]]))
+  expect_gt(file.size(files[[1]]), 8)
+})
+
+test_that("a draw that fails leaves the earlier figure in place and nothing else in the study", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  draw <- function() {
+    graphics::plot(1)
+    stop("no data to draw")
+  }
+  expect_error(hvtiRtemplates:::.save_figure(draw, files[[1]], width = 2, height = 2), "no data to draw")
+  expect_identical(readBin(files[[1]], "raw", 100L), as.raw(1:8))
+  # Drawing happens in R's temporary folder, so nothing is left in the study either.
+  expect_setequal(list.files(root, all.files = TRUE, no.. = TRUE), basename(files))
+})
+
+test_that("an earlier figure that cannot be removed stops the render", {
+  # On the share a viewer can hold the old PNG open; left in place it would be taken as current.
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.unlink = function(x) 1L)
+  expect_error(hvtiRtemplates:::.save_figure(function() invisible(NULL), files[[1]], width = 2, height = 2),
+               "Could not replace")
+})
+
+test_that("a linked page that draws nothing gets a placeholder, which is not recorded", {
+  # The report embeds a linked PNG; without one it would show a broken image.
+  root <- local_exhibit_state()
+  state <- hvtiRtemplates:::.run_state
+  assign("written", character(), envir = state)
+  withr::defer(rm("written", envir = state))
+  files <- plant_stale_figure(root)
+  expect_warning(hvtiRtemplates:::.save_figure(function() invisible(NULL), files[[1]], 2, 2, save = FALSE, linked = TRUE),
+                 "'fig' drew nothing")
+  expect_gt(file.size(files[[1]]), 8)
+  expect_null(hvtiRtemplates:::.record_exhibit(files[[1]], "figure", label = "fig-blank"))
+})
+
+test_that("a new figure that cannot be written stops the render and keeps the earlier one", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.copy_file = function(from, to) FALSE)
+  fig <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x, y)) + ggplot2::geom_point()
+  expect_error(hvtiRtemplates:::.save_figure(fig, files[[1]], 2, 2), "Could not write")
+  expect_identical(readBin(files[[1]], "raw", 100L), as.raw(1:8))
+})
+
+test_that("a figure for a folder that does not exist names the folder", {
+  missing <- file.path(withr::local_tempdir(), "no-such-folder", "fig.png")
+  expect_error(hvtiRtemplates:::.save_figure(function() graphics::plot(1), missing, 2, 2), "no-such-folder does not exist")
+})
+
+test_that("without ragg a stale TIFF that cannot be removed warns and the figure is still saved", {
+  root <- withr::local_tempdir()
+  files <- plant_stale_figure(root)
+  testthat::local_mocked_bindings(.ragg_available = function(...) FALSE, .unlink = function(x) 1L)
+  fig <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x, y)) + ggplot2::geom_point()
+  expect_warning(hvtiRtemplates:::.save_figure(fig, files[[1]], 2, 2), "Could not replace .*fig[.]tiff")
+  expect_gt(file.size(files[[1]]), 8)
+  expect_gt(file.size(files[[2]]), 8)
+})
