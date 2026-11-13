@@ -365,8 +365,11 @@ def count(rows, cols, sample=120, audit=40, studies=40, seed=20261112):
                            "this file. The sample file carries paths and is local.",
             "doc_ext": sorted(DOC_EXT),
             "export_ext_counted_separately": sorted(EXPORT_EXT),
-            "exclusion_match": "whole tokens of the lowercased stem, optional plural "
-                               "s; system files by prefix " + ", ".join(SYSTEM_PREFIXES),
+            "exclusion_match": "first match wins, in this order: system files by raw "
+                               "prefix " + ", ".join(SYSTEM_PREFIXES) + "; then "
+                               "boilerplate by prefix of the stem lowercased and "
+                               "stripped to [a-z0-9]; then the named buckets by "
+                               "whole tokens of the lowercased stem, optional plural s",
             "template_test": "is_template column" if "is_template" in cols
                              else "stem starts with 'tp.'",
             "seed": seed,
