@@ -1,0 +1,100 @@
+{
+  "_provenance": {
+    "rows_read": 2240554,
+    "method": "document-class extensions attributable to a study, from the existing corpus catalogue. No re-walk of the share.",
+    "identifiers": "counts only. No path, study name or filename stem is in this file. The sample file carries paths and is local.",
+    "doc_ext": [
+      "doc",
+      "docx",
+      "odt",
+      "rtf"
+    ],
+    "export_ext_counted_separately": [
+      "pdf"
+    ],
+    "exclusion_match": "first match wins, in this order: system files by raw prefix ~$, ._, .~lock; then boilerplate by a known leading token sequence followed only by numbers or version, study and approval words; then the named buckets by whole tokens of the lowercased stem, optional plural s; last, a file not named ar under a folder below the taxonomy folder whose name reads as a manuscript",
+    "template_test": "is_template column",
+    "seed": 20261112,
+    "samples": "written",
+    "coverage": "placed files only. A file with no taxonomy folder above it has no study and cannot be counted, so breadth and volume are LOWER bounds on the corpus; see skipped.unplaced.",
+    "source": "census-ALL.csv"
+  },
+  "stage1_upper_bound": {
+    "volume_files": 50363,
+    "breadth_studies": 1494,
+    "by_folder": {
+      "documents": 45788,
+      "datasets": 2870,
+      "analyses": 590,
+      "descriptive": 521,
+      "distributions": 308,
+      "graphs": 272,
+      "estimates": 14
+    },
+    "by_extension": {
+      "docx": 17898,
+      "rtf": 16540,
+      "doc": 15914,
+      "odt": 11
+    },
+    "in_report_folder": 45788,
+    "outside_report_folder": 4575,
+    "_note": "the folder split is REPORTED, not filtered on. Anything outside the documents folder is the part a folder-based rule would miss. System files (lock, AppleDouble) are not in this stage."
+  },
+  "stage2_after_named_exclusions": {
+    "volume_files": 32746,
+    "volume_reports_drafts_collapsed": 24491,
+    "breadth_studies": 1366,
+    "excluded_by_bucket": {
+      "boilerplate": 5918,
+      "manuscript": 5797,
+      "manuscript_folder": 3613,
+      "abstract_or_talk": 1153,
+      "system_artifact": 1070,
+      "correspondence": 621,
+      "data_dictionary": 248,
+      "consent_or_irb": 102,
+      "protocol": 94,
+      "admin": 71
+    },
+    "excluded_total": 18687,
+    "_note": "a partition: each stem lands in its FIRST matching bucket, so the buckets sum to excluded_total. system_artifact rows were never in stage 1, so stage1 - stage2 = excluded_total - system_artifact."
+  },
+  "reports_per_study": {
+    "_note": "the figure that decides whether breadth or volume is the right column. Measured, not assumed. Counts files, so drafts inflate it; compare volume_reports_drafts_collapsed.",
+    "mean": 23.97,
+    "mean_drafts_collapsed": 17.93,
+    "median": 11,
+    "p90": 59,
+    "max": 664
+  },
+  "skipped": {
+    "templates": 3368,
+    "unplaced": {
+      "by_extension": {
+        "pdf": 2857,
+        "doc": 1072,
+        "docx": 996,
+        "rtf": 110
+      },
+      "total": 5035,
+      "_note": "no taxonomy folder above the file, so no study. Reports kept this way are invisible to every other figure here."
+    }
+  },
+  "exports_not_counted": {
+    "by_folder": {
+      "graphs": 62868,
+      "documents": 12193,
+      "datasets": 1006,
+      "analyses": 874,
+      "descriptive": 176,
+      "distributions": 101,
+      "estimates": 2
+    },
+    "_note": "a PDF is usually an export of a report that also exists as Word, so counting it here would double-count. Carried so the decision is visible rather than silent."
+  },
+  "what_this_still_does_not_know": [
+    "Which of the kept files is an analysis report rather than a manuscript, a summary of one table, or a document nobody finished. Stage 3 answers this and nothing else can.",
+    "Whether a report covers one research question or several. The 2026-11-11 design scaffolds one job per question; the corpus may not have worked that way, and if it did not, the template count and the report count are different numbers again."
+  ]
+}
