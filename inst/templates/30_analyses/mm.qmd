@@ -92,6 +92,8 @@ PREDICTORS <- c("age", "female")           # EDIT: the declared fixed effects be
 #   "un"         REPEATED visit / type=un: a correlation and a variance per visit pair.
 #                Same visit requirement; costs many parameters.
 #   "random"     RANDOM intercept / subject=id.
+#   "slope"      RANDOM int <time term> / subject=id: a random intercept and a random slope in
+#                time, independent as SAS's RANDOM default type=vc. SLOPE names the term.
 # RANDOM and REPEATED in one fit are not offered: one corpus study wrote them so.
 # A spatial structure (type=sp(pow)) is not offered; nlme::corExp(form = ~ time | id)
 # is its R form if a study needs one.
@@ -101,6 +103,13 @@ STRUCTURE <- "cs"
 # closes up and AR(1) reads visits 1 and 3 as neighbors. Name the column when the schedule has such a gap or TIME
 # is not the visit itself. Irregular times suit neither; nlme::corCAR1(form = ~ time | id) is the R form of sp(pow).
 VISIT <- NULL
+# EDIT: for "slope", the time term the random slope is on, written as it appears in TIME_TERMS, or NULL for the first.
+# A SAS job's RANDOM int iv_echo, with iv_echo = 1/(t+1) in its DATA step, is "I(1/(time + 1))". A patient measured
+# at a single time has no trajectory of their own, though their measurement still informs the variances; the report
+# counts them.
+# Where SAS reports a slope variance of zero (G matrix not positive definite), nlme gives a tiny positive value or
+# fails to converge; a port read against a .lst should expect that.
+SLOPE <- NULL
 # EDIT: "REML", as SAS's default, unless models with different fixed effects are to be
 # compared by likelihood, which needs "ML".
 METHOD <- "REML"
@@ -143,10 +152,10 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 #| label: mm-helpers
 # The fit lives here rather than in a package until a second longitudinal template
 # (mp or gm) shows what a package function should be; see the design note.
-.mm_structures <- c("cs", "ar1", "un", "random")
+.mm_structures <- c("cs", "ar1", "un", "random", "slope")
 
 # Each check stops on data the fit would accept and then get wrong without saying so.
-mm_check <- function(d, id, time, structure, imputation, visit = NULL) {
+mm_check <- function(d, id, time, structure, imputation, visit = NULL, slope = NULL, time_terms = NULL) {
   bad <- setdiff(structure, .mm_structures)
   if (length(bad)) {
     stop("STRUCTURE ", paste(dQuote(bad, FALSE), collapse = ", "), " is not one of ",
@@ -184,10 +193,26 @@ mm_check <- function(d, id, time, structure, imputation, visit = NULL) {
          " has ", length(unique(k)), " distinct values, more than 20 distinct visits. Use \"cs\" or \"random\" for ",
          "free times, or set VISIT to a visit number.", call. = FALSE)
   }
+  if ("slope" %in% structure) {
+    if (is.null(slope) || is.na(slope)) {
+      stop("STRUCTURE asks for \"slope\", but SLOPE names no time term: TIME_TERMS is empty. ",
+           "Add the time term the slope is on to TIME_TERMS.", call. = FALSE)
+    }
+    if (!slope %in% time_terms) {
+      stop("SLOPE (", slope, ") is not one of TIME_TERMS (", paste(time_terms, collapse = ", "), "). ",
+           "Write it as it appears there, or set SLOPE <- NULL for the first.", call. = FALSE)
+    }
+    # An intercept column plus one slope column. A term that expands to more (splines::ns) fits several slope
+    # variances that the covariance table would report under one label.
+    if (ncol(stats::model.matrix(stats::as.formula(paste("~", slope)), d)) != 2L) {
+      stop("SLOPE (", slope, ") must be a single numeric column, as SAS's RANDOM int <var> takes one variable. ",
+           "Use a single transform such as \"log(time + 1)\".", call. = FALSE)
+    }
+  }
   invisible(TRUE)
 }
 
-mm_fit <- function(d, formula, id, time, structure, method, visit = NULL) {
+mm_fit <- function(d, formula, id, time, structure, method, visit = NULL, slope = NULL) {
   ord <- order(d[[id]], d[[time]])
   d <- d[ord, , drop = FALSE]
   # SAS places a measurement by its visit, not by its row: a patient who misses visit 2 keeps visit 3 in place 3.
@@ -205,11 +230,29 @@ mm_fit <- function(d, formula, id, time, structure, method, visit = NULL) {
     cs = nlme::corCompSymm(form = by_id("~ 1")),
     ar1 = nlme::corAR1(form = by_id("~ .visit_index")),
     un = nlme::corSymm(form = by_id("~ .visit_rank")),
-    random = NULL
+    random = NULL,
+    slope = NULL
   )
+  # SAS's RANDOM int <slope> / subject=id is type=vc by default: intercept and slope independent, so pdDiag,
+  # not nlme's own default pdSymm, which would estimate a correlation the SAS fit did not.
+  random <- switch(structure,
+    random = by_id("~ 1"),
+    slope = stats::setNames(list(nlme::pdDiag(stats::as.formula(paste("~", slope)))), id),
+    NULL
+  )
+  # nlme drops a row with a missing ID as well as one with a missing model variable, so the counts must too.
+  used <- stats::complete.cases(d[unique(c(all.vars(formula), id))])
+  # A slope needs some patient with two fitted measurements at distinct times. The rows the fit uses decide it:
+  # a patient measured twice whose second response is missing has one. Without this nlme stops on
+  # "fewer observations than random effects", which names no study choice.
+  if (identical(structure, "slope") &&
+        !any(tapply(d[[time]][used], as.character(d[[id]][used]), function(x) length(unique(x)) >= 2L))) {
+    stop("STRUCTURE asks for \"slope\", but no patient has two or more fitted measurements at distinct times. ",
+         "Use \"cs\" or \"random\".", call. = FALSE)
+  }
   model <- tryCatch(
-    if (startsWith(structure, "random")) {
-      nlme::lme(formula, data = d, random = by_id("~ 1"), correlation = corr, method = method,
+    if (!is.null(random)) {
+      nlme::lme(formula, data = d, random = random, correlation = corr, method = method,
                 na.action = stats::na.omit)
     } else {
       nlme::gls(formula, data = d, correlation = corr, method = method, na.action = stats::na.omit,
@@ -219,8 +262,6 @@ mm_fit <- function(d, formula, id, time, structure, method, visit = NULL) {
       stop("The ", structure, " fit failed: ", conditionMessage(e), ". Try another STRUCTURE.", call. = FALSE)
     }
   )
-  # nlme drops a row with a missing ID as well as one with a missing model variable, so the counts must too.
-  used <- stats::complete.cases(d[unique(c(all.vars(formula), id))])
   # The training terms keep poly() and ns() bases (predvars) and the fitted contrasts, so predictions on a new grid
   # are coded exactly as the fit was; rebuilding them from the formula would build a new basis on the grid.
   # A level held only by rows the fit dropped has no coefficient, so the levels come from the rows used.
@@ -231,11 +272,12 @@ mm_fit <- function(d, formula, id, time, structure, method, visit = NULL) {
        # `used` is returned in the caller's row order: the caller indexes its own, unsorted data with it.
        xlev = stats::.getXlevels(fixed, mf), used = used[order(ord)],
        n_patients = length(unique(d[[id]][used])), n_measurements = sum(used),
-       per_patient = table(as.character(d[[id]][used])))
+       per_patient = table(as.character(d[[id]][used])), slope = slope,
+       n_single_time = sum(tapply(d[[time]][used], as.character(d[[id]][used]), function(x) length(unique(x))) < 2L))
 }
 
 # The covariance parameters: cs and random report one within-patient correlation, ar1 the lag-1 correlation,
-# and un one correlation per visit pair.
+# and un one correlation per visit pair; slope the intercept, slope and residual variances.
 mm_covariance <- function(fit) {
   m <- fit$model
   structure <- fit$structure
@@ -244,9 +286,16 @@ mm_covariance <- function(fit) {
   ref <- if (identical(structure, "un")) attr(m$modelStruct$varStruct, "groupNames")[[1L]]
   if (inherits(m, "lme")) {
     vc <- suppressWarnings(as.numeric(nlme::VarCorr(m)[, "Variance"]))
-    out[["between-patient variance"]] <- vc[[1L]]
-    out[["residual variance"]] <- vc[[length(vc)]]
-    out[["within-patient correlation"]] <- vc[[1L]] / sum(vc)
+    if (identical(structure, "slope")) {
+      # Labeled as SAS's Covariance Parameter Estimates name them, so a port reads against its .lst.
+      out[["Intercept variance"]] <- vc[[1L]]
+      out[[paste(fit$slope, "variance")]] <- vc[[2L]]
+      out[["residual variance"]] <- vc[[length(vc)]]
+    } else {
+      out[["between-patient variance"]] <- vc[[1L]]
+      out[["residual variance"]] <- vc[[length(vc)]]
+      out[["within-patient correlation"]] <- vc[[1L]] / sum(vc)
+    }
   } else {
     out[[if (identical(structure, "un")) paste0("residual variance at visit ", ref) else "residual variance"]] <- m$sigma^2
   }
@@ -318,9 +367,11 @@ mm_predict <- function(fit, newdata, scale) {
 
 ```{r}
 #| label: fit
-mm_check(d, .id, TIME, STRUCTURE, IMPUTATION, VISIT)
+.slope <- if (is.null(SLOPE)) TIME_TERMS[1L] else SLOPE  # NA when TIME_TERMS is empty; mm_check stops if "slope" asks
+mm_check(d, .id, TIME, STRUCTURE, IMPUTATION, VISIT, .slope, TIME_TERMS)
 model_formula <- stats::reformulate(c(TIME_TERMS, PREDICTORS), response = .response)
-fits <- lapply(stats::setNames(STRUCTURE, STRUCTURE), function(s) mm_fit(d, model_formula, .id, TIME, s, METHOD, VISIT))
+fits <- lapply(stats::setNames(STRUCTURE, STRUCTURE),
+               function(s) mm_fit(d, model_formula, .id, TIME, s, METHOD, VISIT, if (identical(s, "slope")) .slope))
 fit <- fits[[1L]]
 comparison <- NULL  # replaced by the tbl-compare chunk when STRUCTURE lists several
 ```
@@ -335,10 +386,15 @@ cat("\n\nThe reported model is the ", dQuote(STRUCTURE[[1L]], FALSE), " structur
 ```{r}
 #| label: tbl-counts
 #| tbl-cap: "Patients and measurements in the fit"
-knitr::kable(data.frame(
+.counts <- data.frame(
   quantity = c("patients", "measurements", "measurements per patient, median", "measurements per patient, range"),
   value = c(fit$n_patients, fit$n_measurements, stats::median(fit$per_patient), paste(range(fit$per_patient), collapse = " to "))
-))
+)
+if (identical(fit$structure, "slope")) {
+  .counts <- rbind(.counts, data.frame(quantity = "patients measured at a single time",
+                                       value = fit$n_single_time))
+}
+knitr::kable(.counts)
 ```
 
 ```{r}
@@ -398,7 +454,7 @@ utils::write.csv(predictions, PREDICTIONS_PATH, row.names = FALSE)
 bundle <- list(
   meta = list(id_col = .id, outcome = OUTCOME, response_scale = RESPONSE_SCALE,
               prediction_scale = if (identical(RESPONSE_SCALE, "log")) "geometric mean" else "mean",
-              time = TIME, visit = VISIT, time_terms = TIME_TERMS,
+              time = TIME, visit = VISIT, slope = if ("slope" %in% STRUCTURE) .slope, time_terms = TIME_TERMS,
               predictors = PREDICTORS, structure = fit$structure, method = METHOD,
               formula = paste(deparse(model_formula), collapse = " "), n_patients = fit$n_patients,
               n_measurements = fit$n_measurements, nlme_version = as.character(utils::packageVersion("nlme"))),

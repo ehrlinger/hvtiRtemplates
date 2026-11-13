@@ -18,7 +18,7 @@ test_that("mm scaffolds with its study choices and EDIT: markers", {
   src <- readLines(job, warn = FALSE)
   # tbl-data resolves RESPONSE_SCALE and IMPUTATION again; the study choices are the lines before it.
   src <- src[seq_len(grep("label: tbl-data", src, fixed = TRUE) - 1L)]
-  for (field in c("TIME", "KEY", "OUTCOME", "RESPONSE_SCALE", "TIME_TERMS", "PREDICTORS", "STRUCTURE", "METHOD",
+  for (field in c("TIME", "KEY", "OUTCOME", "RESPONSE_SCALE", "TIME_TERMS", "PREDICTORS", "STRUCTURE", "SLOPE", "METHOD",
                   "PREDICT_AT", "PREDICT_TIMES", "IMPUTATION")) {
     expect_length(grep(paste0("^", field, " <- "), src), 1L)
   }
@@ -164,6 +164,64 @@ test_that("UN labels each correlation by visit pair and matches corMatrix", {
     v <- as.integer(regmatches(corr$parameter[[i]], gregexpr("[0-9]+", corr$parameter[[i]]))[[1L]])
     expect_equal(corr$estimate[[i]], mat[v[[1L]], v[[2L]]], info = corr$parameter[[i]])
   }
+})
+
+test_that("slope fits an independent random intercept and slope and recovers their variances", {
+  h <- mm_helpers()
+  fit <- h$mm_fit(mm_slopes(), ly ~ log(time + 1) + age, "ccfid", "time", "slope", "REML", slope = "log(time + 1)")
+  expect_s3_class(fit$model, "lme")
+  expect_s3_class(fit$model$modelStruct$reStruct[[1L]], "pdDiag")
+  expect_identical(fit$slope, "log(time + 1)")
+  expect_identical(fit$n_single_time, 0L)
+  cov <- h$mm_covariance(fit)
+  expect_identical(cov$parameter, c("Intercept variance", "log(time + 1) variance", "residual variance"))
+  expect_equal(cov$estimate, c(0.04, 0.01, 0.01), tolerance = 0.25)
+})
+
+test_that("slope counts the patients measured at one time", {
+  h <- mm_helpers()
+  d <- mm_slopes()
+  d$time[d$ccfid %in% 1:5] <- 2
+  fit <- h$mm_fit(d, ly ~ log(time + 1) + age, "ccfid", "time", "slope", "REML", slope = "log(time + 1)")
+  expect_identical(fit$n_single_time, 5L)
+})
+
+test_that("mm_check refuses a SLOPE outside TIME_TERMS and data with no slope to fit", {
+  h <- mm_helpers()
+  d <- mm_slopes()
+  expect_true(h$mm_check(d, "ccfid", "time", c("cs", "slope"), NULL, slope = "log(time + 1)",
+                         time_terms = "log(time + 1)"))
+  expect_error(h$mm_check(d, "ccfid", "time", "slope", NULL, slope = "time", time_terms = "log(time + 1)"),
+               "SLOPE \\(time\\) is not one of TIME_TERMS")
+  # A SLOPE is ignored when no structure asks for one.
+  expect_true(h$mm_check(d, "ccfid", "time", "cs", NULL, slope = "time", time_terms = "log(time + 1)"))
+  # A term that expands to several columns would fit several slope variances under one label.
+  expect_error(h$mm_check(d, "ccfid", "time", "slope", NULL, slope = "splines::ns(time, 2)",
+                          time_terms = "splines::ns(time, 2)"),
+               "single numeric column")
+  # With no time term there is no slope to ask for.
+  expect_error(h$mm_check(d, "ccfid", "time", "slope", NULL, slope = NULL, time_terms = character(0)),
+               "SLOPE names no time term")
+  expect_true(h$mm_check(d, "ccfid", "time", "cs", NULL, slope = NULL, time_terms = character(0)))
+})
+
+test_that("slope refuses data whose fitted rows hold no patient at two or more times", {
+  h <- mm_helpers()
+  d <- mm_slopes()
+  # Every patient has several times, but a missing response leaves each with one fitted row.
+  d$ly[duplicated(d$ccfid)] <- NA
+  expect_error(h$mm_fit(d, ly ~ log(time + 1) + age, "ccfid", "time", "slope", "REML", slope = "log(time + 1)"),
+               "no patient has two or more fitted measurements at distinct times")
+  d <- mm_slopes()
+  d$age[duplicated(d$ccfid)] <- NA
+  expect_error(h$mm_fit(d, ly ~ log(time + 1) + age, "ccfid", "time", "slope", "REML", slope = "log(time + 1)"),
+               "no patient has two or more fitted measurements at distinct times")
+})
+
+test_that("a model with no time term still fits a structure other than slope", {
+  h <- mm_helpers()
+  fit <- h$mm_fit(mm_slopes(), ly ~ age, "ccfid", "time", "cs", "REML")
+  expect_s3_class(fit$model, "gls")
 })
 
 test_that("UN names the variance reference from the fit when the first patient misses visit 1", {
@@ -331,4 +389,21 @@ test_that("mm compares structures only when STRUCTURE lists several", {
   out <- mm_render_fixture(choices = 'STRUCTURE <- c("cs", "random")')
   html <- paste(readLines(out$output, warn = FALSE), collapse = "\n")
   expect_match(html, compare_table)
+})
+
+test_that("mm renders a reported slope model with its variances and the one-time count", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  out <- mm_render_fixture(choices = 'STRUCTURE <- c("slope", "cs")')
+  html <- gsub("(?s)<pre[^>]*>.*?</pre>", "", paste(readLines(out$output, warn = FALSE), collapse = "\n"), perl = TRUE)
+  expect_match(html, "log(time + 1) variance", fixed = TRUE)
+  expect_match(html, "Intercept variance", fixed = TRUE)
+  expect_match(html, "residual variance", fixed = TRUE)
+  expect_match(html, "patients measured at a single time", fixed = TRUE)
+  expect_match(html, compare_table)
+  set <- file.path(hvtiRutilities::study_dir("estimates", out$root), "outcome-mixed")
+  bundle <- readRDS(file.path(set, "mm.rds"))
+  expect_identical(bundle$meta$structure, "slope")
+  expect_identical(bundle$meta$slope, "log(time + 1)")
 })
