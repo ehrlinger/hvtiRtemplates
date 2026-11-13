@@ -193,18 +193,51 @@ _EXCLUDE_RE = {
 }
 
 
-def classify_exclusion(stem):
-    """The FIRST bucket a stem matches, or None. First-match rather than
+# Manuscripts the name rule misses sit under a manuscript folder: names run
+# together (`...Manuscript`), misspelt (`Mansucript`), abbreviated (`Revised ms`)
+# or named for the journal. They were a fifth of kept files in both 2026-11-12
+# runs. Only folders BELOW the taxonomy folder are read (see `subfolders()`): a
+# study path such as `ms_outcomes` says nothing about one file. The rule runs
+# AFTER the name buckets, so a name that says what the file is still decides,
+# and an `ar`-named file is kept even inside a manuscript folder, because an
+# analyst who files the final report beside the paper has not made it a paper.
+_MS_DIR_STEMS = ("manuscrip", "manuscrpt", "mansucrip")
+
+
+def subfolders(path, study):
+    """The folders between the taxonomy folder and the file, or () when the
+    study key cannot be found in the path."""
+    p = (path or "").replace("\\", "/")
+    i = p.find("/" + study + "/")
+    if not study or i < 0:
+        return ()
+    parts = p[i + len(study) + 2:].split("/")
+    return tuple(parts[1:-1])
+
+
+def is_manuscript_folder(name):
+    t = tokens(name)
+    return (any(x in "".join(t) for x in _MS_DIR_STEMS)
+            or "ms" in t
+            or bool(_EXCLUDE_RE["manuscript"].search("_".join(t))))
+
+
+def classify_exclusion(stem, subdirs=()):
+    """The FIRST bucket a file matches, or None. First-match rather than
     all-match so the buckets sum to the excluded total and can be reported as
-    a partition."""
+    a partition. `subdirs` is `subfolders()` of the file's path; without it
+    the folder rule is skipped."""
     if stem.startswith(SYSTEM_PREFIXES):
         return "system_artifact"
     if is_boilerplate(stem):
         return "boilerplate"
-    joined = "_".join(tokens(stem))
+    t = tokens(stem)
+    joined = "_".join(t)
     for bucket, rx in _EXCLUDE_RE.items():
         if rx.search(joined):
             return bucket
+    if t[:1] != ["ar"] and any(is_manuscript_folder(d) for d in subdirs):
+        return "manuscript_folder"
     return None
 
 
@@ -336,7 +369,8 @@ def count(rows, cols, sample=120, audit=40, studies=40, seed=20261112):
             continue
 
         stem = row[cols["stem"]] or ""
-        bucket = classify_exclusion(stem)
+        bucket = classify_exclusion(
+            stem, subfolders(row[cols["path"]], study) if has_path else ())
         if bucket == "system_artifact":
             # Not a document at all, so it is kept out of stage 1 too.
             excluded[bucket] += 1
@@ -386,7 +420,9 @@ def count(rows, cols, sample=120, audit=40, studies=40, seed=20261112):
                                "prefix " + ", ".join(SYSTEM_PREFIXES) + "; then "
                                "boilerplate by a known leading token sequence followed "
                                "only by numbers or version, study and approval words; then the named buckets by "
-                               "whole tokens of the lowercased stem, optional plural s",
+                               "whole tokens of the lowercased stem, optional plural s; "
+                               "last, a file not named ar under a folder below the taxonomy "
+                               "folder whose name reads as a manuscript",
             "template_test": "is_template column" if "is_template" in cols
                              else "stem starts with 'tp.'",
             "seed": seed,

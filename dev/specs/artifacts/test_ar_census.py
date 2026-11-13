@@ -11,8 +11,9 @@ COLS = census.resolve_columns(["path", "study", "folder", "status", "naming",
                                "is_template", "stem", "ext"])
 
 
-def row(stem, ext="docx", study="s1", folder="documents", template="FALSE"):
-    return {"path": f"/x/{study}/{folder}/{stem}.{ext}", "study": study,
+def row(stem, ext="docx", study="s1", folder="documents", template="FALSE", sub=""):
+    sub = f"{sub}/" if sub else ""
+    return {"path": f"/x/{study}/{folder}/{sub}{stem}.{ext}", "study": study,
             "folder": folder, "status": "placed", "naming": "NA",
             "is_template": template, "stem": stem, "ext": ext}
 
@@ -73,6 +74,30 @@ class Exclusions(unittest.TestCase):
                 self.assertIsNone(census.classify_exclusion(stem))
 
 
+    # Manuscripts the name rule misses sit under a manuscript folder: a fifth of
+    # kept files in both 2026-11-12 runs. Only folders BELOW the taxonomy folder
+    # count, and a name bucket still wins when the name says what the file is.
+    def test_files_under_a_manuscript_folder(self):
+        cases = {("Impella_acuity_maintext", "manuscript"): "manuscript_folder",
+                 ("Table 1", "Revised ms pieces to JTCVS"): "manuscript_folder",
+                 ("x 2019.11.18", "Manuscript to JACC/Old"): "manuscript_folder",
+                 ("aats table 2", "Manuscript Tables"): "manuscript_folder",
+                 ("Cover Letter", "Manuscripts/JACC"): "correspondence",
+                 ("ar.outcomes", "manuscript"): None,
+                 ("Impella_acuity_maintext", ""): None,
+                 ("Impella_acuity_maintext", "archive/2019"): None}
+        for (stem, sub), bucket in cases.items():
+            with self.subTest(stem=stem, sub=sub):
+                self.assertEqual(census.classify_exclusion(stem, census.subfolders(
+                    row(stem, sub=sub)["path"], "s1")), bucket)
+
+    def test_study_path_words_do_not_trigger_the_folder_rule(self):
+        p = "/x/cardiac/ms_outcomes/manuscript_era/documents/results.docx"
+        self.assertEqual(census.subfolders(p, "cardiac/ms_outcomes/manuscript_era"), ())
+        self.assertIsNone(census.classify_exclusion(
+            "results", census.subfolders(p, "cardiac/ms_outcomes/manuscript_era")))
+
+
 class Counts(unittest.TestCase):
     def test_system_artifacts_are_not_in_stage1(self):
         s = run([row("report"), row("~$report"), row("._report")])
@@ -87,6 +112,13 @@ class Counts(unittest.TestCase):
         self.assertEqual(s["stage2_after_named_exclusions"]["breadth_studies"], 1)
         self.assertEqual(s["stage2_after_named_exclusions"]["excluded_by_bucket"],
                          {"boilerplate": 2})
+
+    def test_manuscript_folder_is_counted_from_the_path(self):
+        s = run([row("ar.outcomes", sub="manuscript"), row("maintext", sub="manuscript"),
+                 row("maintext")])
+        self.assertEqual(s["stage2_after_named_exclusions"]["volume_files"], 2)
+        self.assertEqual(s["stage2_after_named_exclusions"]["excluded_by_bucket"],
+                         {"manuscript_folder": 1})
 
     def test_artifact_only_study_adds_no_breadth(self):
         s = run([row("report"), row("._report", study="s2")])
