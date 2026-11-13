@@ -29,7 +29,7 @@ refuses to overwrite an existing job.
 | `30_analyses/br.qmd` | bootstrap variable selection, linear | `30_analyses/` or `analyses/` |
 | `30_analyses/bc.qmd` | bootstrap variable selection, Cox | `30_analyses/` or `analyses/` |
 | `30_analyses/bh.qmd` | bootstrap variable selection | `30_analyses/` or `analyses/` |
-| `30_analyses/mm.qmd` | linear mixed model of a repeated continuous response, with its population-average course over time (in flight) | `30_analyses/` or `analyses/` |
+| `30_analyses/mm.qmd` | linear mixed model of a repeated continuous response, with its population-average course over time | `30_analyses/` or `analyses/` |
 | `30_analyses/rfs-fit.qmd` | random survival forest, grown and checked | `30_analyses/` or `analyses/` |
 | `30_analyses/rfs-explain.qmd` | importance and dependence for an `rfs` forest | `30_analyses/` or `analyses/` |
 | `30_analyses/rfc-fit.qmd` | classification forest, grown and checked | `30_analyses/` or `analyses/` |

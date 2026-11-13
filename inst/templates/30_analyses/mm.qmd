@@ -188,7 +188,8 @@ mm_check <- function(d, id, time, structure, imputation, visit = NULL) {
 }
 
 mm_fit <- function(d, formula, id, time, structure, method, visit = NULL) {
-  d <- d[order(d[[id]], d[[time]]), , drop = FALSE]
+  ord <- order(d[[id]], d[[time]])
+  d <- d[ord, , drop = FALSE]
   # SAS places a measurement by its visit, not by its row: a patient who misses visit 2 keeps visit 3 in place 3.
   # Without VISIT the visits are the ranks of the observed times. With VISIT, AR(1) counts the scheduled gap, so
   # visits 1 and 3 are two steps apart even when nobody attended visit 2; UN has no data to place a visit nobody
@@ -227,7 +228,8 @@ mm_fit <- function(d, formula, id, time, structure, method, visit = NULL) {
   fixed <- stats::delete.response(stats::terms(mf))
   list(model = model, structure = structure, method = method, formula = formula, terms = fixed, visit_labels = labels,
        contrasts = attr(stats::model.matrix(fixed, mf), "contrasts"),
-       xlev = stats::.getXlevels(fixed, mf), used = used,
+       # `used` is returned in the caller's row order: the caller indexes its own, unsorted data with it.
+       xlev = stats::.getXlevels(fixed, mf), used = used[order(ord)],
        n_patients = length(unique(d[[id]][used])), n_measurements = sum(used),
        per_patient = table(as.character(d[[id]][used])))
 }

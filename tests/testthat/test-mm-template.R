@@ -254,6 +254,18 @@ test_that("a level held only by rows the fit dropped neither breaks prediction n
   expect_error(h$mm_predict(fit, asked, "log"), "PREDICT_AT asks for group = c")
 })
 
+test_that("mm_fit returns the used rows in the order of the data it was given", {
+  h <- mm_helpers()
+  d <- mm_data()
+  # Interleaved patients, as a dataset sorted by time or date arrives; mm_fit sorts its own copy.
+  d <- d[order(d$time, -d$ccfid), , drop = FALSE]
+  d$y[d$ccfid %in% 1:30] <- NA
+  fit <- h$mm_fit(d, log(y) ~ log(time + 1) + age + female, "ccfid", "time", "cs", "REML")
+  expect_identical(fit$used, !is.na(d$y))
+  grid <- h$mm_grid(d[fit$used, , drop = FALSE], c("age", "female"), "time", NULL, c(0, 5))
+  expect_identical(unique(grid$age), stats::median(d$age[!is.na(d$y)]))
+})
+
 test_that("mm_fit leaves rows with a missing ID out of every count, as nlme does", {
   h <- mm_helpers()
   d <- mm_data()

@@ -1,0 +1,2 @@
+- `mm` is shipped. A corpus `type=cs` job ported on lri matched its SAS listing: every fixed effect and standard error to the printed precision, the residual variance exactly, and the REML likelihood to 1e-6.
+- `mm` draws its default prediction profile from the rows the fit used when the data is not sorted by patient and time. `mm_fit()` returned its row mask in its own sorted order, so on unsorted data with dropped rows the profile could take its medians and levels from the wrong rows.

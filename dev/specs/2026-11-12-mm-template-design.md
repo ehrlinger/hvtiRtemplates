@@ -251,3 +251,13 @@ The job saves two files:
 3. The catalog, roadmap, README, `.lintr` and news changes in §8.
 4. Port one corpus job by hand against the template and compare its estimates
    with the SAS `.lst`, on lri. This is the gate before the catalog says `shipped`.
+
+   **Passed 2026-11-12.** The job was a corpus `type=cs` fit of a 50-patient study,
+   1,800 measurements, two CLASS predictors and five patient-level covariates, by REML.
+   All 19 fixed effects and their standard errors agreed with the `.lst` to its printed
+   precision. Residual agreed exactly and CS within 0.05% (116.11 against 116.05), with
+   −2 Res Log Likelihood equal to 1e-6 (14260.69838 against 14260.69838604), so the two
+   optimizers stopped at slightly different points of a nearly flat surface. nlme's
+   `-2 * logLik()` under REML is on SAS's scale, with no log|X'X| correction. The study
+   carried 9 repeated patient/time/device keys, which SAS's CS fit kept; the port kept
+   them with a sequence column in `KEY`, as the template's `KEY` note allows for `cs`.
