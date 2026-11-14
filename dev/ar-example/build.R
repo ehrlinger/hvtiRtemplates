@@ -56,8 +56,11 @@ json <- jsonlite::toJSON(sidecar, auto_unbox = TRUE, pretty = TRUE)
 lf(json, hvtiRutilities::provenance_path(sub("[.]qmd$", ".html", qmd)))
 
 # The ar report: two items, each with an empty methods slot for ar_paste_methods().
+# error: false because the ar_item() example knits this with knitr::knit(),
+# whose default writes a chunk's error into the output and carries on; Quarto
+# stops instead, and so must the example.
 item <- function(id) {
-  c("```{r}", paste0('hvtiRtemplates::ar_item("', id, '")'), "```", "",
+  c("```{r}", "#| error: false", paste0('hvtiRtemplates::ar_item("', id, '")'), "```", "",
     "::: methods", "", ":::", "")
 }
 lf(c("---", "title: Does early hazard explain the deaths?", "---", "",

@@ -37,7 +37,7 @@ study <- file.path(dir, "ar-study")
 report <- file.path(study, "50_documents", "ar.dead.question.qmd")
 ar_paste_methods(report)
 # Each methods slot now opens with its review stamp, then the job's paragraph.
-writeLines(readLines(report)[9:13])
+writeLines(readLines(report)[10:14])
 unlink(dir, recursive = TRUE)
 }
 \seealso{
