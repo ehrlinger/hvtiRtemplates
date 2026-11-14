@@ -23,7 +23,9 @@ vp_data <- function(n = 200L, seed = 20261021L) {
 vp_choices <- list(
   TIME = "time", EVENT = "event", RESPONSE = NULL,
   PREDICTORS = c("xs", "fs", "x1", "x2", "g1"),
-  NTREE = 50, REPEATS = 2, SEED = 1, SAVE_FIGURES = FALSE
+  NTREE = 50, REPEATS = 2, SEED = 1, SAVE_FIGURES = FALSE,
+  # The fixture is far smaller than the exploration setting MAX_UNTESTED's 0.1 is set for.
+  MAX_UNTESTED = 0.5
 )
 
 # vp_choices with the three outcome choices replaced. utils::modifyList() would

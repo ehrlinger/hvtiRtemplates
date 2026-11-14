@@ -112,7 +112,7 @@ vp_judge_fn <- function() {
   env <- new.env(parent = globalenv())
   src <- readLines(template_path("vp", "fit"), warn = FALSE)
   eval(parse(text = rf_chunk(src, "judge")), envir = env)  # nolint: object_usage_linter.
-  env$vp_judge
+  env
 }
 vp_cov <- function(variable, kind, noise, tested, z) {
   data.frame(variable = variable, kind = kind, noise = noise, tested = tested, z = z)
@@ -126,7 +126,7 @@ test_that("vp_judge falls back to the continuous bar when tested categorical noi
     tested = c(TRUE, TRUE, TRUE, TRUE, FALSE),
     z = c(0.9, 0.2, 0.3, 0, NA)
   )
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_identical(out$selected, c(TRUE, FALSE, FALSE, FALSE, FALSE))
   expect_identical(out$bar[out$variable == "f_null"], 0.3)
   expect_identical(out$bar_from[out$variable == "f_null"], "continuous (fallback)")
@@ -140,7 +140,7 @@ test_that("vp_judge keeps a categorical bar that tested noise set above zero", {
     tested = c(TRUE, TRUE, TRUE, TRUE),
     z = c(0.5, 0.2, 0.9, 0.25)
   )
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_identical(out$selected, c(TRUE, FALSE, FALSE, FALSE))
   expect_identical(unique(out$bar[out$kind == "categorical"]), 0.25)
   expect_identical(unique(out$bar_from[out$kind == "categorical"]), "categorical")
@@ -151,7 +151,7 @@ test_that("vp_judge selects nothing when no noise was tested, and says so", {
     variable = c("x_real", "noise1_x"), kind = c("continuous", "continuous"),
     noise = c(FALSE, TRUE), tested = c(TRUE, FALSE), z = c(2, NA)
   )
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_identical(out$selected, c(FALSE, FALSE))
   expect_identical(out$bar_from, c("no usable noise bar", "no usable noise bar"))
 })
@@ -167,7 +167,7 @@ test_that("vp_judge borrows no bar from noise that scored zero", {
     tested = c(TRUE, TRUE, FALSE, TRUE),
     z = c(2, 0.05, NA, 0)
   )
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_identical(out$selected, c(FALSE, FALSE, FALSE, FALSE))
   expect_identical(out$bar_from[1:2], c("no usable noise bar", "no usable noise bar"))
 })
@@ -179,7 +179,7 @@ test_that("vp_judge drops varpro_coverage()'s own bar, so one bar remains", {
   )
   cov$noise_cut <- 0
   cov$selected <- TRUE
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_false("noise_cut" %in% names(out))
   expect_identical(out$selected, c(TRUE, FALSE))
 })
@@ -189,7 +189,7 @@ test_that("vp_judge ignores a tested noise row whose z is NA", {
     variable = c("x_real", "noise1_x", "noise2_x"), kind = rep("continuous", 3),
     noise = c(FALSE, TRUE, TRUE), tested = c(TRUE, TRUE, TRUE), z = c(2, NA, 0.4)
   )
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_identical(unique(out$bar), 0.4)
 })
 
@@ -203,12 +203,41 @@ test_that("vp-fit's coverage call muffles the empty-noise warning, and both fits
   expect_length(grep("vp_judge\\(vp_coverage\\((fit|fr),", lines), 2L)
 })
 
+test_that("vp_vote counts a selection over the refits that tested the variable, not over REPEATS", {
+  vote <- vp_judge_fn()$vp_vote
+  stab <- rbind(
+    data.frame(r = 1:20, variable = "a", tested = 1:20 <= 3, selected = 1:20 <= 3),
+    data.frame(r = 1:20, variable = "b", tested = TRUE, selected = 1:20 <= 3)
+  )
+  v <- vote(stab, repeats = 20, min_tested_share = 0.5)
+  a <- v[v$variable == "a", ]
+  b <- v[v$variable == "b", ]
+  expect_equal(a$share_selected, 1)
+  expect_false(a$examined)
+  expect_equal(b$share_selected, 0.15)
+  expect_true(b$examined)
+})
+
+test_that("vp_vote gives NA, not 0, to a variable no refit tested", {
+  vote <- vp_judge_fn()$vp_vote
+  stab <- data.frame(r = 1:4, variable = "z", tested = FALSE, selected = FALSE)
+  expect_true(is.na(vote(stab, repeats = 4, min_tested_share = 0.5)$share_selected))
+})
+
+test_that("vp-fit hands on only variables the refits examined, and names the rest", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- vp_fit_first()
+  h <- readRDS(env$set_path("estimates", "vp.rds"))
+  expect_identical(h$selected, env$.freq$variable[env$.freq$examined & (env$.freq$share_selected >= 0.5) %in% TRUE])
+})
+
 test_that("vp-fit holds the full fit to MAX_UNTESTED and leaves the refits to the stability table", {
   lines <- readLines(template_path("vp", "fit"), warn = FALSE)
   calls <- grep("vp_judge\\(vp_coverage\\((fit|fr),", lines, value = TRUE)
   expect_match(calls[1], "max_untested = MAX_UNTESTED", fixed = TRUE)
   expect_no_match(calls[2], "max_untested", fixed = TRUE)
-  expect_true("MAX_UNTESTED <- 0.5" %in% rf_chunk(lines, "edit-study-choices"))
+  expect_true("MAX_UNTESTED <- 0.1" %in% rf_chunk(lines, "edit-study-choices"))
 })
 
 test_that("vp-fit's figure takes its bar and selection from the table", {
@@ -460,8 +489,8 @@ test_that("vp-fit saves one handoff: the fit, its judged coverage, the selection
   env <- vp_fit_first()
   h <- readRDS(env$set_path("estimates", "vp.rds"))
   expect_named(h, c("fit", "coverage", "selected", "family"))
-  # With refits, the selection handed on is the refits' majority vote.
-  expect_identical(h$selected, env$.freq$variable[env$.freq$share_selected >= 0.5])
+  # With refits, the selection handed on is the refits' majority vote, among the variables they examined.
+  expect_identical(h$selected, env$.freq$variable[env$.freq$examined & (env$.freq$share_selected >= 0.5) %in% TRUE])
   expect_identical(h$family, "survival")
   expect_s3_class(h$fit, "varpro")
   expect_false(is.null(attr(h, "hvti_provenance")))
@@ -501,8 +530,9 @@ test_that("raising REPEATS computes only the new repeat", {
   expect_identical(file.mtime(first), stamp)
   expect_true(file.exists(file.path(env$CACHE_DIR, "vp-repeat-03.rds")))
   expect_setequal(unique(again$.stab$r), 1:3)
-  expect_true(all(again$.freq$share_tested >= 0 & again$.freq$share_selected <= 1))
-  expect_equal(again$.freq$share_selected * 3, round(again$.freq$share_selected * 3))
+  expect_true(all(again$.freq$share_tested >= 0 & again$.freq$share_tested <= 1))
+  expect_true(all(again$.freq$share_selected >= 0 & again$.freq$share_selected <= 1, na.rm = TRUE))
+  expect_equal(again$.freq$share_tested * 3, round(again$.freq$share_tested * 3))
 })
 
 test_that("REPEATS = 0 skips the stability check", {
@@ -571,7 +601,8 @@ test_that("vp-fit and vp-explain keyed on MRN save no MRN in any file", {
   rf_skip_unless_stack(rf_template_packages("vp", "explain"))
   data <- rf_mrn_data(n = 60L)
   choices <- list(TIME = "iv_dead", EVENT = "dead", RESPONSE = NULL, PREDICTORS = c("age", "x1", "grp"),
-                  NTREE = 25, REPEATS = 1, SEED = 1, SAVE_FIGURES = FALSE)
+                  NTREE = 25, REPEATS = 1, SEED = 1, SAVE_FIGURES = FALSE,
+                  MAX_UNTESTED = 0.5)  # 60 patients is far smaller than the 0.1 default is set for.
   fit <- vp_fit_first(data, choices)
   # The ID fell back to MRN, and the job read it.
   expect_identical(attr(fit$job_data$record, "selection")$id, "mrn")

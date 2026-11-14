@@ -217,11 +217,12 @@ MAX_MISSING <- 0.4
 
 # EDIT: the largest share of real candidates that may go untested. Above it the
 # render stops, because a screen that tested too little reads like one that
-# found no effect. NULL only reports. 0.5 lets the exploration setting pass
-# (about 2 of 30 untested in the simulation below) and stops a guided screen
-# that tested a minority (about 19 of 30 untested at 60 events). The refits are
-# not held to it: their share tested is reported in the stability table.
-MAX_UNTESTED <- 0.5
+# found no effect. NULL only reports. 0.1 lets the exploration setting pass
+# (about 2 of 30 untested in the simulation below) and stops a screen that left
+# more than one candidate in ten unexamined, which would otherwise read as having
+# found nothing in them. The refits are not held to it: their share tested is
+# reported in the stability table.
+MAX_UNTESTED <- 0.1
 
 # EDIT: varPro's forest. The defaults are the exploration setting, which
 # tests as many candidates as it can: no guided split weights, so every
@@ -282,6 +283,11 @@ SUBSAMPLE <- 0.632
 # noise draw to the next and the full fit alone can keep or drop a variable by
 # chance. NA hands on the full fit's selection instead, as REPEATS = 0 does.
 SELECT_SHARE <- 0.5
+# EDIT: the share of the refits that must have tested a variable before their
+# vote counts. A refit that did not test a variable says nothing about it, so
+# it is left out of that variable's vote; a variable tested in fewer refits than
+# this is listed as not examined, and neither handed on nor counted as rejected.
+MIN_TESTED_SHARE <- 0.5
 
 # EDIT: the seed. It is part of every cache key, seeds R's generator before
 # each random step, and is handed to varpro() as `seed =`, negated as
@@ -492,6 +498,9 @@ if (NOISE_N < 1) {
 if (!(SUBSAMPLE > 0 && SUBSAMPLE < 1)) {
   stop("SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).", call. = FALSE)
 }
+if (!(MIN_TESTED_SHARE > 0 && MIN_TESTED_SHARE <= 1)) {
+  stop("MIN_TESTED_SHARE must be a share in (0, 1].", call. = FALSE)
+}
 .share_bad <- "SELECT_SHARE must be NA or a share above 0 and at most 1 (0.5 keeps what most refits select)."
 if (length(SELECT_SHARE) != 1) {
   stop(.share_bad, call. = FALSE)
@@ -585,6 +594,22 @@ vp_coverage <- function(f, seed, max_untested = NULL) {
   cov$coverage <- as.vector(tapply(terms$coverage, terms$variable, max)[cov$variable])
   cov$tested <- cov$n_trees > 0 & cov$coverage >= TRIM
   cov[order(-cov$coverage), ]
+}
+
+# The refits' vote. A refit that did not test a variable is no evidence about it,
+# so its share selected is over the refits that tested it, and a variable tested
+# in fewer than min_tested_share of them is not examined: no vote either way.
+vp_vote <- function(stab, repeats, min_tested_share) {
+  n_tested <- tapply(stab$tested, stab$variable, sum)
+  n_selected <- tapply(stab$selected, stab$variable, sum)[names(n_tested)]
+  out <- data.frame(
+    variable = names(n_tested),
+    share_tested = as.vector(n_tested) / repeats,
+    share_selected = ifelse(as.vector(n_tested) > 0, as.vector(n_selected) / pmax(1, as.vector(n_tested)), NA_real_),
+    row.names = NULL
+  )
+  out$examined <- out$share_tested >= min_tested_share
+  out[order(-out$share_selected, -out$share_tested, na.last = TRUE), ]
 }
 ```
 
@@ -750,7 +775,7 @@ refits are the set this job hands on, in place of the full fit's.
 
 ```{r}
 #| label: tbl-stability
-#| tbl-cap: "How often each candidate was tested and selected across the refits"
+#| tbl-cap: "How often each candidate was tested, and selected when tested, across the refits"
 #| message: true
 # Each refit is cached on its own, so raising REPEATS computes only the new
 # ones. Redrawing the noise alone would hold the patients fixed and understate
@@ -775,16 +800,14 @@ if (REPEATS > 0) {
   }))
   .per <- tapply(.stab$selected, .stab$r, sum)
   cat("Selected per refit: ", min(.per), " to ", max(.per), " variables.\n", sep = "")
-  # Over REPEATS, not over the refits a variable appears in: a refit that drops a variable counts against it.
-  .n_tested <- tapply(.stab$tested, .stab$variable, sum)
-  .freq <- data.frame(
-    variable = names(.n_tested),
-    share_tested = as.vector(.n_tested) / REPEATS,
-    share_selected = as.vector(tapply(.stab$selected, .stab$variable, sum)[names(.n_tested)]) / REPEATS
-  )
-  .freq <- .freq[order(-.freq$share_selected, -.freq$share_tested), ]
+  .freq <- vp_vote(.stab, REPEATS, MIN_TESTED_SHARE)
+  .unexamined <- .freq$variable[!.freq$examined]
+  if (length(.unexamined)) {
+    cat("Not examined in the refits (tested in fewer than ", MIN_TESTED_SHARE * 100, "% of them), so neither ",
+        "handed on nor rejected: ", paste(.unexamined, collapse = ", "), ".\n", sep = "")
+  }
   if (!is.na(SELECT_SHARE)) {
-    .keep <- .freq$variable[.freq$share_selected >= SELECT_SHARE]
+    .keep <- .freq$variable[.freq$examined & (.freq$share_selected >= SELECT_SHARE) %in% TRUE]
     cat("Handed to vp-explain, selected in at least ", SELECT_SHARE * 100, "% of the refits: ",
         if (length(.keep)) paste(.keep, collapse = ", ") else "none", ".\n", sep = "")
   }
@@ -854,7 +877,7 @@ share near `SELECT_SHARE` is a vote on the edge, not a failure.
 # set is the refits' vote when there are refits and SELECT_SHARE is set, else
 # the full fit's own.
 .selected <- if (REPEATS > 0 && !is.na(SELECT_SHARE)) {
-  .freq$variable[.freq$share_selected >= SELECT_SHARE]
+  .freq$variable[.freq$examined & (.freq$share_selected >= SELECT_SHARE) %in% TRUE]
 } else {
   .real$variable[.real$selected]
 }
