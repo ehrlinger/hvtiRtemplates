@@ -182,39 +182,38 @@ OUTCOME <- NULL
 # removes. Unordered categories stay factors.
 ORDINAL <- NULL
 
-# EDIT: how many permuted noise columns to add, split evenly between
-# categorical and continuous variables. The largest dependence a noise column
-# reaches is the bar an edge must clear.
+# EDIT: how many permuted noise columns to add, split between categorical and
+# continuous variables in proportion to the variables. The largest dependence a
+# noise column reaches is the bar an edge must clear.
 NOISE_N <- 20
 
 # EDIT: the unsupervised forest. Below about 100 trees the noise reaches
-# almost as high as a real link, so the bar loses its meaning.
-NTREE <- 500
+# almost as high as a real link, so the bar loses its meaning. 1,000 is set by
+# the rules below, not by the bar: see MAX_TREE.
+NTREE <- 1000
 
 # EDIT: the rules uvarpro() builds. It samples MAX_TREE of the trees (all of
 # NTREE at most) and up to MAX_RULES_TREE branches in each, and a variable is
 # examined only through the rules that release it: too few and a variable that
-# rarely splits gets no rule and is never looked at. In simulations of 200 to
-# 1,900 patients and 5 to 30 variables, varPro's own 200 trees and 20 rules left
-# real variables without a rule in most; all 500 trees did better, and covered
-# every one without noise columns, but not with them: binary noise columns take
-# many of the rules, and with 20 beside 31 variables half the variables still
-# had none. From 20 up, MAX_RULES_TREE barely moved the count, about 10 rules a
-# tree, so MAX_TREE is the lever. The cost is the lasso, fitted once per rule:
-# at 200 patients and 25 columns it took 51 s at 500 trees against 20 s at 200,
-# for the full fit and again for each refit.
-MAX_TREE <- 500
+# rarely splits gets no rule and is never looked at. The forest builds about 10
+# rules a tree whatever MAX_RULES_TREE is from 20 up, so MAX_TREE is the lever.
+# In simulations with the noise columns below (5 variables and 200 patients, 31
+# and 400; dev/vp/uvarpro-coverage.R, 2026-11-14), 1,000 trees gave every
+# variable a rule at every seed. On 31 variables 500 trees left one or two
+# without a rule at half the seeds, and 750 one at a quarter. The cost is the
+# lasso, fitted once per rule: at 200 patients and 25 columns it took 56 s at
+# 500 trees, 83 s at 750 and 110 s at 1,000, for the full fit and again for each
+# refit. Lower both to 500 to halve that where the coverage table stays full.
+MAX_TREE <- 1000
 MAX_RULES_TREE <- 20
 # EDIT: the largest share of the variables (VARIABLES and OUTCOME) that may go
-# unexamined, with no release rule in the full fit, before the render stops.
-# NULL, the default, only reports. It is NULL because of the noise draw below:
-# whenever any candidate is categorical, half the NOISE_N columns are permuted
-# copies of the categorical ones, and on 30 variables those copies take enough
-# of the rules that many real variables go unexamined at any affordable NTREE
-# (15 to 19 of 31 at 500 trees, 7 to 10 at 2,000). Until the noise draw is
-# redesigned, the coverage table reports them; a number here, such as 0.1,
-# turns the stop on.
-MAX_UNTESTED <- NULL
+# unexamined, with no release rule in the full fit, before the render stops. A
+# variable with no rule has no edge leaving it, and that absence must not be
+# read as independence. At the defaults above none went unexamined in the
+# simulations, so a share past 0.1 says the forest is too small for these data
+# and the fix is more trees (MAX_TREE with NTREE). NULL reports the unexamined in
+# the coverage table and does not stop.
+MAX_UNTESTED <- 0.1
 
 # EDIT: the fixed edge cutoff the noise bar is reported beside, and falls back
 # to when no noise column earned any weight. 0.25 is varPro's default.
@@ -373,9 +372,12 @@ largest weight any noise column reaches is the bar a real edge must clear.
 
 ```{r}
 #| label: noise
-# Half the copies come from categorical variables and half from continuous
-# ones, as far as each kind allows, so both kinds of column contribute to the
-# null. An outcome column entered in OUTCOME is a source like any other: a
+# The copies are drawn by kind in proportion to the variables, with at least
+# one of each kind present, so both kinds of column contribute to the null and
+# neither crowds out the real variables. Half and half, the rule this replaced,
+# made 10 of 20 columns binary copies of the one factor among 31 variables, and
+# those copies took nearly half the forest's release rules (2026-11-14).
+# An outcome column entered in OUTCOME is a source like any other: a
 # permuted outcome is as much a null as any other permuted column.
 #
 # The kind rule is varpro_coverage()'s: a factor, text or logical column, or a
@@ -390,13 +392,8 @@ vp_kind <- function(x) {
 vp_add_noise <- function(d, predictors, n, seed) {
   kinds <- vapply(d[predictors], vp_kind, "")
   pools <- split(predictors, kinds)
-  n_cat <- if (length(pools$categorical) && length(pools$continuous)) {
-    n %/% 2L
-  } else if (length(pools$categorical)) {
-    n
-  } else {
-    0L
-  }
+  n_cat <- as.integer(round(n * length(pools$categorical) / length(predictors)))
+  if (length(pools$categorical) && length(pools$continuous) && n >= 2L) n_cat <- min(n - 1L, max(1L, n_cat))
   set.seed(abs(seed))
   draw <- function(pool, k) if (k == 0L) character() else pool[sample.int(length(pool), k, replace = k > length(pool))]
   src <- c(draw(pools$categorical, n_cat), draw(pools$continuous, n - n_cat))
@@ -752,8 +749,8 @@ which variable acts on which.
 no rule of its own, so no edge leaves it in the graph: an edge it lacks is
 missing because it was not looked at, not because the variable is independent.
 Edges into it can still appear, because it is a predictor in every other
-variable's lasso. The coverage table says which variables those are; set
-`MAX_UNTESTED` to a share to stop the render when there are too many.
+variable's lasso. The coverage table says which variables those are, and the
+render stops when their share passes `MAX_UNTESTED`.
 
 **A missing variable is not an independent one.** A variable with no edge at
 the bar has no link strong enough to beat the noise in this forest. It may
