@@ -66,7 +66,8 @@ read -> drop rows missing the outcome (counted) -> refuse sparse predictors (> M
   re-impute. Re-imputing per refit would mix imputation noise into the stability vote. Imputing after noise is
   added would let the noise columns into the imputation model. State this in the template comment so a later edit
   does not reinvent it.
-- `vp-dependence` follows the same order. It has no outcome, so D3 and D5 do not apply.
+- `vp-dependence` follows the same order. Its optional `OUTCOME` is treated as the outcome under D3 and D5: rows
+  missing it are dropped, and it stays out of the imputation model, because the graph measures edges into it.
 - `"na.omit"` keeps today's path exactly: `.missing_cases(action = "drop")` and then `complete.cases()`. A test
   asserts identical output.
 
