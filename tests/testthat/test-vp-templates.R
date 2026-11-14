@@ -40,15 +40,51 @@ test_that("vp-fit screens a 0/1 RESPONSE as classification", {
   expect_identical(env$.analysis$outcome$kind, "classification")
 })
 
-test_that("vp-fit drops incomplete patients before the fit, and counts them", {
+test_that("vp-fit imputes a missing predictor by default and keeps the patient", {
+  skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
   data <- vp_data()
   data$x1[1:7] <- NA
   env <- rf_env(data)
   rf_run("vp", "fit", vp_data_labels, env, vp_choices)
+  expect_identical(nrow(env$d), 200L)
+  expect_false(anyNA(env$d[vp_choices$PREDICTORS]))
+  expect_identical(env$.cohort$n, 200L)
+  expect_identical(env$.cohort$n_imputed[["x1"]], 7L)
+  expect_identical(env$.cohort$na_action, "na.impute")
+})
+
+test_that("vp-fit with NA_ACTION = na.omit drops incomplete patients as before, and counts them", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$x1[1:7] <- NA
+  env <- rf_env(data)
+  rf_run("vp", "fit", vp_data_labels, env, utils::modifyList(vp_choices, list(NA_ACTION = "na.omit")))
   expect_identical(nrow(env$d), 193L)
   expect_identical(env$.cohort$n, 193L)
-  expect_match(utils::tail(env$.missing_values$Missing, 1L), "7 dropped")
+  expect_identical(env$.cohort$n_dropped, 7L)
+})
+
+test_that("vp-fit drops a patient missing the outcome, and imputes without it", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$time[1:3] <- NA
+  data$x1[4:9] <- NA
+  env <- rf_env(data)
+  rf_run("vp", "fit", vp_data_labels, env, vp_choices)
+  expect_identical(env$.cohort$n_outcome_missing, 3L)
+  expect_identical(nrow(env$d), 197L)
+  # The imputation call names the predictors and nothing else.
+  chunk <- rf_chunk(readLines(template_path("vp", "fit"), warn = FALSE), "tbl-missing")
+  expect_true(any(grepl("impute(data = d[PREDICTORS]", chunk, fixed = TRUE)))
+})
+
+test_that("vp-fit refuses to impute a predictor missing in most patients", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$x2[1:150] <- NA
+  expect_error(rf_run("vp", "fit", vp_data_labels, rf_env(data), vp_choices), "x2 \\(75%\\)")
 })
 
 test_that("vp-fit refuses a candidate whose name could be taken for noise", {

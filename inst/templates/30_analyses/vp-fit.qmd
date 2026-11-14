@@ -201,6 +201,20 @@ NOISE_N <- 20
 # 0.1 matches varPro's own trimming: below it, z is 0 by construction.
 TRIM <- 0.1
 
+# EDIT: missing predictor values. varPro removes every patient with a missing
+# value and ignores na.action, so the choice is made here, before it runs.
+# "na.impute" fills them once by random forest, from the other predictors and
+# never from the outcome: imputed values that carried the outcome would let the
+# screen rank a predictor on signal the imputation put there. "na.omit" keeps
+# complete cases, which is right when missingness itself tracks something the
+# model should not see, such as labs collected only in a later surgical era.
+# A patient missing the outcome is dropped either way.
+NA_ACTION <- "na.impute"
+# EDIT: the largest share of patients a predictor may be missing in and still
+# be imputed. Above it the render stops and names the predictor: an imputation
+# that invents most of a column decides the screen's answer for it.
+MAX_MISSING <- 0.4
+
 # EDIT: the largest share of real candidates that may go untested. Above it the
 # render stops, because a screen that tested too little reads like one that
 # found no effect. NULL only reports. 0.5 lets the exploration setting pass
@@ -338,24 +352,21 @@ if (length(.missing)) {
 }
 d <- d[, c(.outcome, PREDICTORS), drop = FALSE]
 
-# A screen cannot learn from a patient with no outcome.
-.no_outcome <- Reduce(`|`, lapply(d[.outcome], is.na))
-if (any(.no_outcome)) {
-  stop(sum(.no_outcome), " patient(s) have no outcome. Resolve them in the dataset build; the screen will not.",
-       call. = FALSE)
-}
+# A screen cannot learn from a patient with no outcome. Such a patient is dropped and counted in the
+# missing-values table below, not refused here, so the checks that follow read the observed values only.
 if (.survival) {
   # randomForestSRC reads a status above 1 as a competing event, so a 1/2
   # coding, which survival::Surv() accepts, would screen a competing-risks
   # outcome without a word. Refuse it here instead.
-  if (!all(d[[EVENT]] %in% c(0, 1))) {
+  if (!all(stats::na.omit(d[[EVENT]]) %in% c(0, 1))) {
     stop(EVENT, " must be coded 0 and 1 (1 = event); found ",
          paste(sort(unique(d[[EVENT]])), collapse = ", "), ".", call. = FALSE)
   }
   .family <- "survival"
 } else {
   .y <- d[[RESPONSE]]
-  if (is.character(.y) || is.logical(.y) || is.factor(.y) || (is.numeric(.y) && all(.y %in% c(0, 1)))) {
+  .y_seen <- .y[!is.na(.y)]
+  if (is.character(.y) || is.logical(.y) || is.factor(.y) || (is.numeric(.y) && all(.y_seen %in% c(0, 1)))) {
     # varPro screens a factor outcome as classification and a number as
     # regression, so a 0/1 outcome left numeric would be screened as a
     # continuous one. It is converted here, and the report says so.
@@ -401,23 +412,39 @@ if (!is.null(job_data$attrition)) {
 
 ```{r}
 #| label: tbl-missing
-#| tbl-cap: "Missing values in the screen's variables"
-# varpro() drops every patient with a missing value, so the screen would
-# describe fewer patients than this report claims. They are dropped here
-# instead, and counted, before the fit sees the data.
+#| tbl-cap: "Patients supplied, missing values, and patients used"
+# varPro removes every patient with a missing value, so the screen would
+# describe fewer patients than this report claims. NA_ACTION settles them here.
+# The imputation runs once, before the noise columns are added and before the
+# refits draw their patients, so the refits subsample the same completed data
+# and the stability vote holds no imputation noise.
+NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
 .empty <- PREDICTORS[vapply(d[PREDICTORS], function(x) all(is.na(x)), logical(1L))]
 if (length(.empty)) {
   stop("PREDICTORS names a column with no values: ", paste(.empty, collapse = ", "),
        ". Remove it from PREDICTORS.", call. = FALSE)
 }
-.missing_values <- hvtiRtemplates:::.missing_cases(d, TIME = TIME, EVENT = EVENT, RESPONSE = RESPONSE,
-                                                   PREDICTORS = PREDICTORS, action = "drop")
-d <- d[stats::complete.cases(d), , drop = FALSE]
-.cohort <- list(n = as.integer(nrow(d)))
+.miss <- hvtiRtemplates:::.vp_missing(d, PREDICTORS, outcome = c(TIME, EVENT, RESPONSE), na_action = NA_ACTION,
+                                      max_missing = MAX_MISSING)
+d <- .miss$d
+if (anyNA(d[PREDICTORS])) {
+  .imputed <- cache_fit("vp-fit-impute", randomForestSRC::impute(data = d[PREDICTORS], ntree = 250, verbose = FALSE),
+                        seed = SEED, dir = dirname(set_path("estimates", "vp.rds")), refit = REFIT)
+  # impute() removes a row with no observed predictor; a silent loss is what this chunk exists to stop.
+  if (nrow(.imputed) != nrow(d)) {
+    stop(nrow(d) - nrow(.imputed), " patient(s) have no observed predictor and cannot be imputed. ",
+         "Remove them in the dataset build.", call. = FALSE)
+  }
+  d[PREDICTORS] <- .imputed[PREDICTORS]
+}
+if (anyNA(d[PREDICTORS])) stop("Predictors still hold missing values after NA_ACTION; varPro would drop them.", call. = FALSE)
+.missing_values <- .miss$table
+.cohort <- c(list(n = as.integer(nrow(d))), .miss$cohort)
 if (.survival) {
   .cohort$n_events <- as.integer(sum(d[[EVENT]] == 1))
   .cohort$n_censored <- as.integer(sum(d[[EVENT]] == 0))
 }
+cat(attr(.missing_values, "rule"), "\n\n")
 knitr::kable(.missing_values)
 ```
 
@@ -768,6 +795,15 @@ if (REPEATS > 0) {
 ```
 
 ## Reading the result
+
+**Missing values.** With `NA_ACTION <- "na.impute"`, missing predictor values
+were imputed once by random forest (`randomForestSRC::impute()`, 250 trees)
+from the other predictors, never from the outcome, before the noise columns
+were added and before the stability refits drew their patients. A predictor
+missing in more than `MAX_MISSING` of the patients is refused, not filled.
+Patients missing the outcome were excluded. With `"na.omit"`, every patient
+missing a predictor was excluded instead. The table of missing values above
+gives the counts either way.
 
 **Untested is not unimportant.** VarPro scores a variable by a trimmed mean of
 its importance in each tree, and a tree with no usable rule for the variable
