@@ -872,3 +872,28 @@ test_that("vp-dependence and vp-individual keyed on MRN save no MRN in any file"
   # The search finds what is there: every MRN in the data as the job read it.
   expect_true(rf_bytes_hold_any(serialize(fit$job_data$data, NULL), data$MRN))
 })
+
+test_that("vp-dependence imputes a missing variable by default, and leaves OUTCOME out of the imputation", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  data <- vpd_data()
+  data$b[1:9] <- NA
+  env <- rf_env(data)
+  rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"), env, vpd_choices)
+  expect_identical(nrow(env$d), 200L)
+  expect_false(anyNA(env$d[vpd_choices$VARIABLES]))
+  expect_identical(env$.cohort$n_imputed[["b"]], 9L)
+  chunk <- rf_chunk(readLines(template_path("vp", "dependence"), warn = FALSE), "tbl-missing")
+  expect_true(any(grepl("impute(data = d[VARIABLES]", chunk, fixed = TRUE)))
+})
+
+test_that("vp-dependence with NA_ACTION = na.omit drops incomplete patients as before", {
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  data <- vpd_data()
+  data$b[1:9] <- NA
+  env <- rf_env(data)
+  rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"), env,
+         utils::modifyList(vpd_choices, list(NA_ACTION = "na.omit")))
+  expect_identical(nrow(env$d), 191L)
+  expect_identical(env$.cohort$n_dropped, 9L)
+})

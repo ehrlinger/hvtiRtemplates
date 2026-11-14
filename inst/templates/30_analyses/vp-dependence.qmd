@@ -201,6 +201,16 @@ THRESHOLD_FIXED <- 0.25
 REPEATS <- 10
 SUBSAMPLE <- 0.632
 
+# EDIT: missing values. uvarpro() removes every patient with a missing value
+# and ignores na.action, so the choice is made here. "na.impute" fills the
+# VARIABLES once by random forest, from each other and never from OUTCOME: the
+# graph measures edges into OUTCOME, and an imputation that used it would draw
+# some of them itself. "na.omit" keeps complete cases. A patient missing
+# OUTCOME, when it is set, is dropped either way.
+NA_ACTION <- "na.impute"
+# EDIT: the largest share of patients a variable may be missing in and still be imputed.
+MAX_MISSING <- 0.4
+
 # EDIT: the seed. It is part of every cache key, seeds R's generator before
 # the forest and again before the lasso, and is handed to uvarpro() as `seed =`.
 SEED <- 2026
@@ -286,18 +296,32 @@ if (!is.null(job_data$attrition)) {
 
 ```{r}
 #| label: tbl-missing
-#| tbl-cap: "Missing values in the variables studied"
-# uvarpro() drops every patient with a missing value, so the graph would
-# describe fewer patients than this report claims. They are dropped here
-# instead, and counted, before the fit sees the data.
+#| tbl-cap: "Patients supplied, missing values, and patients used"
+# uvarpro() removes every patient with a missing value. NA_ACTION settles them
+# here, once, before the noise columns and the refits.
+NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
 .empty <- .cols[vapply(d[.cols], function(x) all(is.na(x)), logical(1L))]
 if (length(.empty)) {
   stop("VARIABLES or OUTCOME names a column with no values: ", paste(.empty, collapse = ", "),
        ". Remove it.", call. = FALSE)
 }
-.missing_values <- hvtiRtemplates:::.missing_cases(d, VARIABLES = VARIABLES, OUTCOME = OUTCOME, action = "drop")
-d <- d[stats::complete.cases(d), , drop = FALSE]
-.cohort <- list(n = as.integer(nrow(d)))
+.miss <- hvtiRtemplates:::.vp_missing(d, VARIABLES, outcome = OUTCOME, na_action = NA_ACTION, max_missing = MAX_MISSING)
+d <- .miss$d
+if (anyNA(d[VARIABLES])) {
+  .imputed <- cache_fit("vp-dependence-impute",
+                        randomForestSRC::impute(data = d[VARIABLES], ntree = 250, verbose = FALSE),
+                        seed = SEED, dir = dirname(set_path("estimates", "dependence.rds")), refit = REFIT)
+  # impute() removes a row with no observed value; a silent loss is what this chunk exists to stop.
+  if (nrow(.imputed) != nrow(d)) {
+    stop(nrow(d) - nrow(.imputed), " patient(s) have no observed value in VARIABLES and cannot be imputed. ",
+         "Remove them in the dataset build.", call. = FALSE)
+  }
+  d[VARIABLES] <- .imputed[VARIABLES]
+}
+if (anyNA(d[.cols])) stop("Variables still hold missing values after NA_ACTION; uvarpro() would drop them.", call. = FALSE)
+.missing_values <- .miss$table
+.cohort <- c(list(n = as.integer(nrow(d))), .miss$cohort)
+cat(attr(.missing_values, "rule"), "\n\n")
 knitr::kable(.missing_values)
 ```
 
@@ -584,6 +608,15 @@ if (!is.null(.vpd_stab)) {
 ```
 
 ## Reading the result
+
+**Missing values.** With `NA_ACTION <- "na.impute"`, missing values in the variables
+were imputed once by random forest (`randomForestSRC::impute()`, 250 trees)
+from the other variables, never from `OUTCOME`, before the noise columns
+were added and before the stability refits drew their patients. A variable
+missing in more than `MAX_MISSING` of the patients is refused, not filled.
+Patients missing `OUTCOME` were excluded. With `"na.omit"`, every patient
+missing a variable was excluded instead. The table of missing values above
+gives the counts either way.
 
 **An edge is dependence in the data, not a cause.** It says that one variable
 helps tell apart the patients another variable's rules pick out. Its arrow
