@@ -6,7 +6,42 @@
 # Settings are the template's own, read from it: ntree = NTREE (500) and seed = -abs(SEED), with the
 # noise columns vp_add_noise() builds from NOISE_N (20). The noise function is parsed out of the template
 # so this script cannot drift from it.
+#
+# It sweeps uvarpro()'s rule limits: max.tree in c(200, NTREE) and max.rules.tree in c(20, 50, 100, 150),
+# varPro's defaults being 200 and 20. For each pair and configuration it prints the real variables and the
+# noise columns with no release rule, and the seconds the fit took. The template's defaults are the
+# smallest pair that leaves no REAL variable without rules in any configuration.
+#
+# Measured 2026-11-14, varPro 3.3.0, randomForestSRC 3.10.0, one thread (configurations 1-4 are in `cfgs`):
+#
+#   config  max.tree  max.rules.tree  rules  real variables with no rule  noise with none  seconds
+#   1       200       20 / 50 / 100 / 150   ~1950  none                    0                0.2
+#   1       500       20 / 50 / 100 / 150   ~4850  none                    0                0.5-0.6
+#   2       200       20                    1903   x23                     0                1.0
+#   2       200       50 / 100              ~1950  none                    0                1.0
+#   2       200       150                   1957   x26                     0                1.0
+#   2       500       20 / 50 / 100 / 150   ~4870  none                    0                2.0-2.2
+#   3       200       20                    1748   x12, x28                0                2.7
+#   3       200       50 / 150              ~1690  none                    0                2.8
+#   3       200       100                   1673   x03                     0                2.7
+#   3       500       20 / 50 / 100 / 150   ~4330  none                    0                4.3-4.4
+#   4       200       20                    1983   b, x2                   6                0.7
+#   4       200       50 / 150              ~1970  b                       4-5              0.7
+#   4       200       100                   1973   x2                      5                0.7
+#   4       500       20 / 50 / 100 / 150   ~4930  none                    2-5              1.5-1.6
+#
+# No pair at max.tree = 200 covers every real variable; every pair at max.tree = 500 (all the trees)
+# does. The rule count follows max.tree, about 10 rules a tree, and barely moves with max.rules.tree,
+# which at these sizes is not the binding limit: which variable misses at 200 trees moves with it as
+# chance does. The smallest covering pair, and the template's default, is 500 trees (all of NTREE)
+# and 20 rules a tree.
+#
+# The forest is not the cost. get.beta.entropy() fits a lasso for every rule, so it scales with the rule
+# count: on configuration 4 it took 20 s at 200 trees and 51 s at 500, against 0.7 s and 1.5 s for
+# uvarpro(). A render pays that once for the full fit and once for each of REPEATS refits.
 suppressPackageStartupMessages(library(varPro))
+# One thread, as the template runs, so the elapsed seconds are the ones a render pays.
+options(rf.cores = 1L, mc.cores = 1L)
 cat("varPro", as.character(utils::packageVersion("varPro")),
     "| randomForestSRC", as.character(utils::packageVersion("randomForestSRC")), "\n")
 
@@ -51,29 +86,44 @@ cfgs <- list(
   list(label = "fixture n = 200, a b x2 fs c, + noise", d = sim_fixture(200, 20261022L), noise = TRUE)
 )
 seed <- 2026
-any_missing <- FALSE
-for (cfg in cfgs) {
+grid <- expand.grid(max.rules.tree = c(20, 50, 100, 150), max.tree = c(200, ntree_tpl))
+grid <- grid[order(grid$max.tree, grid$max.rules.tree), c("max.tree", "max.rules.tree")]
+rows <- list()
+for (k in seq_along(cfgs)) {
+  cfg <- cfgs[[k]]
   d <- cfg$d
   src_vars <- names(d)
   if (cfg$noise) d <- env$vp_add_noise(d, src_vars, noise_n_tpl, seed)
-  fit <- uvarpro(d, ntree = ntree_tpl, seed = -abs(seed))
-  # fit$results$variable indexes the encoded columns (a factor is several 0/1 columns); xvar.map maps
-  # each encoded column to its source variable, as the template's vpd_parent() reads it.
-  map <- attr(fit$x, "xvar.map")
-  stopifnot(identical(unname(names(map)), colnames(fit$x)))
-  res <- fit$results
-  enc <- names(map)[res$variable]
-  src_of <- unname(map[enc])
-  ruled <- unique(src_of)                      # at least one rule released the variable
-  tested <- unique(src_of[!is.na(res$imp)])    # ... and at least one rule had oob patients to test
   all_vars <- names(d)
-  cat(sprintf("\n%s: %d rules, %d variables\n", cfg$label, nrow(res), length(all_vars)))
-  cat(sprintf("  with release rules: %d of %d; none for: %s\n", sum(all_vars %in% ruled), length(all_vars),
-              none_of(all_vars, ruled)))
-  cat(sprintf("  with a tested rule (imp not NA): %d of %d; untested: %s\n", sum(all_vars %in% tested), length(all_vars),
-              none_of(all_vars, tested)))
-  rc <- table(factor(src_of, levels = all_vars))
-  cat("  rules per variable: min", min(rc), "median", stats::median(rc), "max", max(rc), "\n")
-  if (length(setdiff(all_vars, ruled))) any_missing <- TRUE
+  noise <- grepl("^noise", all_vars)
+  for (g in seq_len(nrow(grid))) {
+    mt <- grid$max.tree[g]
+    mrt <- grid$max.rules.tree[g]
+    secs <- system.time(
+      fit <- uvarpro(d, ntree = ntree_tpl, max.tree = min(mt, ntree_tpl), max.rules.tree = mrt, seed = -abs(seed))
+    )[["elapsed"]]
+    # fit$results$variable indexes the encoded columns (a factor is several 0/1 columns); xvar.map maps
+    # each encoded column to its source variable, as the template's vpd_parent() reads it.
+    map <- attr(fit$x, "xvar.map")
+    stopifnot(identical(unname(names(map)), colnames(fit$x)))
+    res <- fit$results
+    ruled <- unique(unname(map[names(map)[res$variable]]))  # at least one rule released the variable
+    rows[[length(rows) + 1L]] <- data.frame(
+      config = k, max.tree = mt, max.rules.tree = mrt, rules = nrow(res),
+      real_none = none_of(all_vars[!noise], ruled), noise_none = sum(!all_vars[noise] %in% ruled),
+      seconds = round(secs, 1)
+    )
+  }
 }
-cat("\nEvery variable has release rules in every configuration:", !any_missing, "\n")
+tab <- do.call(rbind, rows)
+cat("\nConfigurations:\n")
+for (k in seq_along(cfgs)) cat(sprintf("  %d: %s\n", k, cfgs[[k]]$label))
+cat("\nreal_none: real variables with no release rule; noise_none: noise columns with none.\n\n")
+print(tab, row.names = FALSE)
+covers <- aggregate(real_none ~ max.tree + max.rules.tree, tab, function(x) all(x == "(none)"))
+covers <- covers[order(covers$max.tree, covers$max.rules.tree), ]
+cat("\nEvery real variable has rules in all four configurations:\n")
+print(covers, row.names = FALSE)
+ok <- covers[covers$real_none, ]
+best <- if (nrow(ok)) sprintf("max.tree = %d, max.rules.tree = %d", ok$max.tree[1L], ok$max.rules.tree[1L]) else "none"
+cat("\nSmallest covering pair:", best, "\n")
