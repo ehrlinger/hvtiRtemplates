@@ -498,6 +498,22 @@ test_that("vp-fit saves one handoff: the fit, its judged coverage, the selection
   expect_setequal(unique(env$.stab$r), 1:2)
 })
 
+test_that("vp-fit never hands on a variable the refits did not examine", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  # A trim of 0.3 tests some candidates in only some refits, and a share of 1 asks every refit to have tested one before its
+  # vote counts. A low SELECT_SHARE would then keep a variable tested once and selected there, were the gate not in place.
+  choices <- utils::modifyList(vp_choices, list(TRIM = 0.3, MAX_UNTESTED = 1, REPEATS = 3, MIN_TESTED_SHARE = 1, SELECT_SHARE = 0.1))
+  env <- vp_fit_first(choices = choices)
+  h <- readRDS(env$set_path("estimates", "vp.rds"))
+  freq <- env$.freq
+  would_pass <- freq$variable[!freq$examined & (freq$share_selected >= 0.1) %in% TRUE]
+  skip_if(!length(would_pass), "no unexamined variable was selected in the refits that tested it, so there is nothing to gate")
+  expect_identical(h$not_examined_refits, as.character(freq$variable[!freq$examined]))
+  expect_true(all(would_pass %in% h$not_examined_refits))
+  expect_false(any(h$not_examined_refits %in% h$selected))
+})
+
 test_that("SELECT_SHARE = NA, or REPEATS = 0, hands on the full fit's selection", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))

@@ -278,7 +278,9 @@ NVAR <- 30
 REPEATS <- 20
 SUBSAMPLE <- 0.632
 # EDIT: the selection handed to vp-explain and vp-individual. With REPEATS above 0 it is every
-# candidate selected in at least SELECT_SHARE of the refits. A single fit's bar
+# candidate selected in at least SELECT_SHARE of the refits that tested it. A
+# variable tested in fewer than MIN_TESTED_SHARE of the refits is not examined,
+# so it is neither handed on nor rejected. A single fit's bar
 # is the best of a few noise columns, so on a small cohort it moves from one
 # noise draw to the next and the full fit alone can keep or drop a variable by
 # chance. NA hands on the full fit's selection instead, as REPEATS = 0 does.
@@ -769,9 +771,13 @@ if (nrow(.gvs$imp) == 0L) {
 
 The screen refitted `REPEATS` times, each on a subsample of the patients drawn
 without replacement and with a fresh noise draw. A variable selected in most
-refits holds up; one selected once in a while is the screen's own noise. When
-`SELECT_SHARE` is set, the variables selected in at least that share of the
-refits are the set this job hands on, in place of the full fit's.
+refits holds up; one selected once in a while is the screen's own noise. A
+refit that did not test a variable says nothing about it, so the share is taken
+over the refits that did test it. When `SELECT_SHARE` is set, the variables
+selected in at least that share of those refits are the set this job hands on,
+in place of the full fit's. A variable tested in fewer than `MIN_TESTED_SHARE`
+of the refits has too few votes to count either way, so it is listed apart as
+not examined.
 
 ```{r}
 #| label: tbl-stability
@@ -863,9 +869,11 @@ lets guided split weights and `NVAR` decide which variables are examined at
 all. A selection would also need the two settings, the stability above, and
 ideally cross-validation to agree. Read the stability table before the
 coverage table: a variable selected in the full fit but rarely in the refits
-is a weak candidate, and by default it is not handed on. The refits each see
-`SUBSAMPLE` of the patients, so they have less power than the full fit; a
-share near `SELECT_SHARE` is a vote on the edge, not a failure.
+is a weak candidate, and by default it is not handed on. A variable the refits
+did not examine is listed separately: that is no evidence either way, not a
+rejection. The refits each see `SUBSAMPLE` of the patients, so they have less
+power than the full fit; a share near `SELECT_SHARE` is a vote on the edge, not
+a failure.
 
 ```{r}
 #| label: save
