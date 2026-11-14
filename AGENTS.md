@@ -1,13 +1,14 @@
 # hvtiRtemplates
 
 Analysis job templates for the HVTI CORR group, plus the prefix taxonomy that names them.
-Twenty-four exports across 42 source files (counted at 1.5.0), in four groups:
+Twenty-nine exports across 60 source files (counted at 1.6.0 prep), in five groups:
 - the taxonomy and catalog: `hvti_taxonomy()`, `hvti_non_prefixes()`, `template_list()`, `template_path()`
   and `template_catalog()`;
 - scaffolding and upgrading jobs: `add_job()`, `open_job()`, `migrate_job()`, `upgrade_job()`,
-  `read_job_data()`, `build_cohort()` and `stop_here()`;
+  `read_job_data()`, `build_cohort()`, `import_job()` and `stop_here()`;
 - running jobs: `render_job()`, `submit_job()`, `job_status()`, `cancel_job()`, `run_job()`, `install_hvti()`,
   `guard_long_fit()` and `guard_memory()`;
+- the `ar` analysis report's items: `ar_item()`, `ar_value()`, `ar_paste_methods()` and `ar_review()`;
 - the `ac` template's life tables: `life_table()`, `life_table_at()`, `life_table_keep()` and `life_table_tests()`.
 
 The package is small; the **templates are the product**. `inst/templates/README.md` promises
