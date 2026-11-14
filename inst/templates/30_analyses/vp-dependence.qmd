@@ -339,8 +339,10 @@ if (!nrow(d)) {
   stop("No patient is left: every one is missing OUTCOME or, under na.omit, a variable.", call. = FALSE)
 }
 if (anyNA(d[VARIABLES])) {
+  # Bound first so the cache keys VARIABLES alone: a change to OUTCOME must not stale it.
+  .to_impute <- d[VARIABLES]
   .imputed <- cache_fit("vp-dependence-impute",
-                        randomForestSRC::impute(data = d[VARIABLES], ntree = 250, verbose = FALSE),
+                        randomForestSRC::impute(data = .to_impute, ntree = 250, verbose = FALSE),
                         seed = SEED, dir = dirname(set_path("estimates", "dependence.rds")), refit = REFIT,
                         packages = "randomForestSRC")
   # impute() removes a row with no observed value; a silent loss is what this chunk exists to stop.
@@ -514,6 +516,14 @@ vpd_signal_share <- function(runs) {
 # cache_fit() writes <dir>/<name>.rds and its default dir is the study's
 # estimates folder, not this set's, so every call here names the set's.
 CACHE_DIR <- dirname(set_path("estimates", "dependence.rds"))
+.count_ok <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && x >= 1
+if (!.count_ok(MAX_TREE) || !.count_ok(MAX_RULES_TREE)) {
+  stop("MAX_TREE and MAX_RULES_TREE must each be a single whole number of at least 1.", call. = FALSE)
+}
+if (!is.null(MAX_UNTESTED) && !(is.numeric(MAX_UNTESTED) && length(MAX_UNTESTED) == 1L && !is.na(MAX_UNTESTED) &&
+                                  MAX_UNTESTED >= 0 && MAX_UNTESTED <= 1)) {
+  stop("MAX_UNTESTED must be NULL or a single share in [0, 1].", call. = FALSE)
+}
 set.seed(abs(SEED))
 # packages = keys each cache on the engine doing the work as well as on
 # varPro, which only calls it: randomForestSRC grows the forest and glmnet

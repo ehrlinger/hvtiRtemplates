@@ -36,6 +36,15 @@ test_that(".vp_missing refuses to impute a predictor above the ceiling, and name
   expect_no_error(.vp_missing(d, c("a", "b", "c"), outcome = "y", na_action = "na.omit", max_missing = 0.4))
 })
 
+test_that(".vp_missing refuses a predictor left with no observed value even at a ceiling of 1", {
+  # Observed only in a patient missing the outcome: once that patient goes, impute() would drop the column.
+  d <- vpm_data()
+  d$y[1] <- NA
+  d$b <- NA_real_
+  d$b[1] <- 1
+  expect_error(.vp_missing(d, c("a", "b", "c"), outcome = "y", max_missing = 1), "b \\(100%\\)")
+})
+
 test_that(".vp_missing's table states n supplied, n used and the rule", {
   m <- .vp_missing(vpm_data(), c("a", "b", "c"), outcome = "y")
   expect_identical(m$table$Row[1], "Supplied")

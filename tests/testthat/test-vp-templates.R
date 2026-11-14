@@ -1139,6 +1139,17 @@ test_that("vp-dependence and vp-individual keyed on MRN save no MRN in any file"
   expect_true(rf_bytes_hold_any(serialize(fit$job_data$data, NULL), data$MRN))
 })
 
+test_that("vp-dependence refuses a malformed rule limit or MAX_UNTESTED before fitting", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  upto <- vpd_labels[seq_len(which(vpd_labels == "fit"))]
+  # A string would compare lexically in the coverage gate; NA would reach uvarpro() as max.tree.
+  expect_error(rf_run("vp", "dependence", upto, rf_env(vpd_data()),
+                      utils::modifyList(vpd_choices, list(MAX_UNTESTED = "0.1"))), "MAX_UNTESTED must be")
+  expect_error(rf_run("vp", "dependence", upto, rf_env(vpd_data()),
+                      utils::modifyList(vpd_choices, list(MAX_TREE = NA))), "MAX_TREE and MAX_RULES_TREE")
+})
+
 test_that("vp-dependence imputes a missing variable by default, and leaves OUTCOME out of the imputation", {
   skip_on_cran()
   vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))

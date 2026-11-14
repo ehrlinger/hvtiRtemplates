@@ -18,7 +18,8 @@
   share <- if (nrow(d)) n_missing / nrow(d) else n_missing * 0
   n_dropped <- 0L
   if (na_action == "na.impute") {
-    sparse <- names(share)[share > max_missing]
+    # A predictor with no observed value left cannot be imputed at any ceiling; impute() would drop the column.
+    sparse <- names(share)[share > max_missing | (nrow(d) > 0L & n_missing == nrow(d))]
     if (length(sparse)) {
       stop("Missing in more than ", format(100 * max_missing), "% of the rows, too many to impute: ",
            paste0(sparse, " (", round(100 * share[sparse]), "%)", collapse = ", "),
