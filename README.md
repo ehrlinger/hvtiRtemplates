@@ -87,11 +87,12 @@ The design rule is **bind late, to something versioned**. Late binding is right;
 SAS could not make it safe because there was no version to pin. `renv.lock`
 supplies that, so a study can use the latest while working and pin it on filing.
 
-In practice a study declares `hvtiRtemplates` in its `renv.lock`, resolves a
-template through `template_path("ac")` instead of copying one into the study
-folder, and pins the version when results are filed. The lock file is then the
-answer to "what produced this?" — the question the SAS arrangement could not
-answer, because `%inc` had nothing to pin.
+In practice a study declares `hvtiRtemplates` in its `renv.lock`, and `add_job()`
+copies a template into the study as an editable job; the job's setup, guards and
+provenance run from the installed package rather than from the copy. The study
+pins the version when results are filed. The lock file is then the answer to
+"what produced this?", the question the SAS arrangement could not answer,
+because `%inc` had nothing to pin.
 
 ## API
 
@@ -105,9 +106,10 @@ answer, because `%inc` had nothing to pin.
 | `add_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | the scaffolded job's path, invisibly |
 | `open_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | job path; creates a missing job or opens an existing one |
 | `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
+| `import_job(from, subject = NULL, type = NULL, dir = NULL)` | the imported job's path, invisibly; copies a job from another study, keeping its edits |
 | `migrate_job(source, subject, type, prefix, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
 | `ar_item(id)`, `ar_value(id, field)` | inside an `ar` analysis report: one saved figure, table or value from a finished job, checked against the bytes that job recorded |
-| `ar_paste_methods(path)`, `ar_review(path)` | for an `ar` report: write each item's Methods paragraph from its source job; mark items as reviewed after their source job was rendered again |
+| `ar_paste_methods(path)`, `ar_review(path)` | for an `ar` report: fill each empty Methods slot from its source job, leaving existing text for the analyst to compare and update; mark items as reviewed after their source job was rendered again |
 
 `add_job()` also installs idempotent Quarto pre-render and post-render hooks in
 the study without replacing existing project settings or user hooks. Every
@@ -133,7 +135,8 @@ and any cohort definition. Dataset registration records the data, not a
 study-wide endpoint or cohort.
 
 `qualifier` names a job type within a prefix. The current qualified families
-are `dc`, `dp`, `rfs`, `rfc`, `rfr`, and `lm`. The `lm` choices are `binary`,
+are `dc`, `hs`, `lm`, `lp`, `nb`, `rfc`, `rfr`, `rfs`, `rhf`, `rm`, `sid`, `vp`,
+and `vt`. The `lm` choices are `binary`,
 `ordinal`, `nominal`, `propensity_binary`, `propensity_ordinal`,
 `propensity_nominal`, `checkpred`, and `balancing_count`. It is `NULL` and the
 column is `NA` for a prefix with a single template. Naming no qualifier where
