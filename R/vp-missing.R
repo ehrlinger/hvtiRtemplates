@@ -20,7 +20,7 @@
   if (na_action == "na.impute") {
     sparse <- names(share)[share > max_missing]
     if (length(sparse)) {
-      stop("Missing in more than ", 100 * max_missing, "% of the rows, too many to impute: ",
+      stop("Missing in more than ", format(100 * max_missing), "% of the rows, too many to impute: ",
            paste0(sparse, " (", round(100 * share[sparse]), "%)", collapse = ", "),
            ". Remove them from the predictors, raise MAX_MISSING, or set NA_ACTION <- \"na.omit\".", call. = FALSE)
     }
@@ -33,12 +33,17 @@
   }
   pct <- function(k) paste0(k, " (", round(100 * k / max(1L, n_supplied - sum(no_outcome))), "%)")
   hit <- names(n_missing)[n_missing > 0L]
+  per <- function() vapply(n_missing[hit], pct, "", USE.NAMES = FALSE)
+  imputing <- na_action == "na.impute"
   table <- data.frame(
-    Row = c("Supplied", "Outcome missing, dropped", paste0("Missing: ", hit),
-            if (na_action == "na.impute") paste0("Imputed: ", hit) else "Missing a predictor, dropped", "Used"),
-    Count = c(as.character(n_supplied), as.character(sum(no_outcome)), vapply(n_missing[hit], pct, ""),
-              if (na_action == "na.impute") vapply(n_missing[hit], pct, "") else as.character(n_dropped),
-              as.character(nrow(d))),
+    Row = c("Supplied", "Outcome missing, dropped",
+            if (length(hit)) paste0("Missing: ", hit),
+            if (length(hit) && imputing) paste0("Imputed: ", hit),
+            if (!imputing) "Missing a predictor, dropped", "Used"),
+    Count = c(as.character(n_supplied), as.character(sum(no_outcome)),
+              if (length(hit)) per(),
+              if (length(hit) && imputing) per(),
+              if (!imputing) pct(n_dropped), as.character(nrow(d))),
     stringsAsFactors = FALSE
   )
   attr(table, "rule") <- if (na_action == "na.impute") {

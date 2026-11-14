@@ -49,3 +49,26 @@ test_that(".vp_missing works with no outcome, as vp-dependence calls it", {
   expect_identical(nrow(m$d), 10L)
   expect_identical(m$cohort$n_outcome_missing, 0L)
 })
+
+test_that(".vp_missing builds a valid table when no predictor is missing, in both modes", {
+  d <- data.frame(y = 1:5, a = 1:5, b = 5:1)
+  for (na in c("na.impute", "na.omit")) {
+    m <- .vp_missing(d, c("a", "b"), outcome = "y", na_action = na)
+    expect_identical(m$table$Count[m$table$Row == "Used"], "5")
+    expect_false(is.character(names(m$table$Count)))
+  }
+})
+
+test_that(".vp_missing returns a valid table when every row is missing the outcome", {
+  d <- data.frame(y = c(NA_real_, NA_real_), a = c(1, NA))
+  for (na in c("na.impute", "na.omit")) {
+    m <- .vp_missing(d, "a", outcome = "y", na_action = na)
+    expect_identical(nrow(m$d), 0L)
+    expect_identical(m$table$Count[m$table$Row == "Used"], "0")
+  }
+})
+
+test_that(".vp_missing gives the na.omit drop count a percentage", {
+  m <- .vp_missing(vpm_data(), c("a", "b", "c"), outcome = "y", na_action = "na.omit")
+  expect_identical(m$table$Count[m$table$Row == "Missing a predictor, dropped"], "3 (33%)")
+})
