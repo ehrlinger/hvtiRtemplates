@@ -10,13 +10,13 @@ local_child_chunks <- function(env = parent.frame()) {
   withr::local_options(knitr.duplicate.label = "allow", .local_envir = env)
 }
 
-# A ggsave() stand-in for tests that skip the drawing: it writes a 16 x 16 PNG, as the
+# A ggsave() stand-in for tests that skip the drawing: it writes a 100 x 100 PNG, as the
 # real one writes a file, so a saved figure is not taken for a page that drew nothing and
-# a report chunk can still embed it. Windows warns on a 1 x 1 PNG. The caller's device is
-# put back.
+# a report chunk can still embed it. Windows warns that very small pixel sizes are unlikely;
+# it did at 1 x 1 and at 16 x 16. The caller's device is put back.
 stub_ggsave <- function(filename, plot, ...) {
   before <- grDevices::dev.cur()
-  grDevices::png(filename, width = 16, height = 16)
+  grDevices::png(filename, width = 100, height = 100)
   grid::grid.newpage()
   grDevices::dev.off()
   if (before > 1L) grDevices::dev.set(before)

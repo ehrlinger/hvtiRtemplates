@@ -149,7 +149,12 @@
     if (!same) return(real)
     # On a mapped Windows drive normalizePath() can fall back to a lookup that does not
     # follow links, and return the link's own path; renaming over it would cut the link.
-    if (.is_link(file)) {
+    link <- .is_link(file)
+    if (is.na(link)) {
+      stop("Cannot save ", file, ": whether it is a link could not be checked, and replacing a link would cut it. ",
+           "Check that the folder can be listed, and render again.", call. = FALSE)
+    }
+    if (link) {
       stop("Cannot save ", file, ": it is a link this system could not follow. Save to the file it links to, ",
            "or replace the link with a copy, and render again.", call. = FALSE)
     }
@@ -201,13 +206,25 @@
 .rename_file <- function(from, to) suppressWarnings(file.rename(from, to))
 .make_dir <- function(x) suppressWarnings(dir.create(x))
 .read_link <- function(x) Sys.readlink(x)
-# Windows lists links and junctions as reparse points under dir /AL, which needs no
-# administrator rights; Sys.readlink() serves everywhere else.
+# Windows marks links and junctions as reparse points, which dir /AL selects without
+# administrator rights; Sys.readlink() serves everywhere else. Each file is checked afresh,
+# since a link made during a render must be seen before the rename that would cut it.
+# TRUE is a link, FALSE a file that is not, and NA a lookup that failed.
 .is_link <- function(file) {
-  if (.Platform$OS.type != "windows") return(nzchar(.read_link(file)))
-  listed <- suppressWarnings(system2("cmd", c("/c", "dir", "/AL", "/B", shQuote(chartr("/", "\\", dirname(file)))),
-                                     stdout = TRUE, stderr = FALSE))
-  basename(file) %in% listed
+  if (!.on_windows()) return(nzchar(.read_link(file)))
+  .windows_link(file)
+}
+
+.on_windows <- function() .Platform$OS.type == "windows"
+
+# The answer is a token of cmd's own, so no file name crosses the console's codepage. A
+# lookup that cannot list the file at all, under either filter, answers neither.
+.windows_link <- function(file) {
+  path <- shQuote(chartr("/", "\\", file), type = "cmd")
+  test <- sprintf("(dir /AL /B %s >nul 2>nul && echo LINK) || (dir /A-L /B %s >nul 2>nul && echo FILE)", path, path)
+  said <- suppressWarnings(system2("cmd", c("/c", test), stdout = TRUE, stderr = FALSE))
+  said <- trimws(said)
+  if ("LINK" %in% said) TRUE else if ("FILE" %in% said) FALSE else NA
 }
 .png_device <- function(...) grDevices::png(...)
 
@@ -250,8 +267,7 @@
   grDevices::dev.control("enable")
   drew <- TRUE
   # dev.off() makes the next open device current, not the one that was; put
-  # back the caller's, so later plotting does not land in another file. A drawing that
-  # closed the device itself has written its file, which is kept.
+  # back the caller's, so later plotting does not land in another file.
   on.exit({
     if (device %in% grDevices::dev.list()) grDevices::dev.off(device)
     if (before > 1L && before %in% grDevices::dev.list()) grDevices::dev.set(before)
@@ -261,23 +277,41 @@
   if (device %in% grDevices::dev.list()) {
     grDevices::dev.set(device)
     drew <- .marks_page(grDevices::recordPlot()[[1L]])
+  } else if (identical(format, "png") && file.exists(file)) {
+    # A drawing that closed the device took its display list with it. Its PNG is then
+    # compared with an empty page from the same device: where an empty page writes no file
+    # the PNG it left is drawn, and where it writes a blank image the same bytes are blank.
+    # The PDF and TIFF are drawn only after a PNG that is not blank.
+    drew <- !.same_as_empty_png(file, width, height)
   }
   invisible(file)
 }
 
+.same_as_empty_png <- function(file, width, height) {
+  empty <- tempfile("empty-", fileext = ".png")
+  on.exit(unlink(empty), add = TRUE)
+  .png_device(empty, width = width, height = height, units = "in", res = 300)
+  grDevices::dev.off()
+  file.exists(empty) && identical(file.size(empty), file.size(file)) &&
+    identical(readBin(empty, "raw", file.size(empty)), readBin(file, "raw", file.size(file)))
+}
+
 # Display-list operations that set up a page without marking it: the palette, base
 # plot.new(), plot.window(), par(), layout() and clipping, grid's viewports and graphical
-# parameters, and the namespace load ggplot2 records. An operation not named here counts
-# as drawing, so one this list misses keeps the figure rather than discarding it.
+# parameters, and the namespace load ggplot2 records through recordGraphics(). An
+# operation not named here counts as drawing, so one this list misses keeps the figure
+# rather than discarding it.
 .page_setup_ops <- c("palette2", "C_plot_new", "C_plot_window", "C_par", "C_layout", "C_clip",
-                     "gridDirty", "setGPar", "setviewport", "upviewport", "downviewport", "newpage")
+                     "gridDirty", "setGPar", "setviewport", "upviewport", "downviewport", "requireNamespace")
 
+# Each entry is an operation and its arguments: a native routine for base and grid, or a
+# recorded call for recordGraphics(). An entry of any other shape counts as drawing.
 .marks_page <- function(display_list) {
   op <- function(entry) {
-    what <- entry[[2L]][[1L]]
-    if (inherits(what, "NativeSymbolInfo")) return(what$name)
-    if (is.call(what) && identical(what[[1L]], as.name("requireNamespace"))) return("requireNamespace")
-    "drawing"
+    tryCatch({
+      what <- entry[[2L]][[1L]]
+      if (inherits(what, "NativeSymbolInfo")) what$name else if (is.call(what)) deparse(what[[1L]])[[1L]] else "drawing"
+    }, error = function(e) "drawing")
   }
-  any(!vapply(display_list, op, character(1)) %in% c(.page_setup_ops, "requireNamespace"))
+  any(!vapply(display_list, op, character(1)) %in% .page_setup_ops)
 }
