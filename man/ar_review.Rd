@@ -24,9 +24,18 @@ After rereading an item's methods, results and interpretation
   report's callout. The analyst's text is not changed.
 }
 \examples{
-\donttest{
-# ar_review("documents/ar.dead.question.qmd", "hz.dead.hz#fig-fit")
-}
+# A copy of a small study shipped with the package: one finished hz job and
+# an ar report citing two of its exhibits.
+dir <- tempfile("ar-")
+dir.create(dir)
+src <- system.file("extdata", "ar-study", package = "hvtiRtemplates")
+file.copy(src, dir, recursive = TRUE)
+study <- file.path(dir, "ar-study")
+report <- file.path(study, "50_documents", "ar.dead.question.qmd")
+ar_paste_methods(report)
+# After rereading the figure's text against the job's latest run:
+ar_review(report, "hz.dead.hz#fig-fit")
+unlink(dir, recursive = TRUE)
 }
 \seealso{
 \code{\link{ar_paste_methods}}
