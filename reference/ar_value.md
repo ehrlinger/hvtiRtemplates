@@ -29,7 +29,20 @@ The field's value.
 ## Examples
 
 ``` r
-# \donttest{
-# Inline in an ar job: `r hvtiRtemplates::ar_value("hz.dead.hz#methods", "n")` patients
-# }
+if (requireNamespace("knitr", quietly = TRUE)) {
+  # A copy of a small study shipped with the package: one finished hz job and
+  # an ar report citing two of its exhibits.
+  dir <- tempfile("ar-")
+  dir.create(dir)
+  src <- system.file("extdata", "ar-study", package = "hvtiRtemplates")
+  file.copy(src, dir, recursive = TRUE)
+  study <- file.path(dir, "ar-study")
+  # In a report this is inline R: `r hvtiRtemplates::ar_value("hz.dead.hz#methods", "n")`.
+  # From the console it finds the study above the working directory.
+  old <- setwd(study)
+  print(ar_value("hz.dead.hz#methods", "n"))
+  setwd(old)
+  unlink(dir, recursive = TRUE)
+}
+#> [1] 160
 ```

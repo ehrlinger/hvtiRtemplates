@@ -37,7 +37,17 @@ The ids of the items stamped, invisibly.
 ## Examples
 
 ``` r
-# \donttest{
-# ar_review("documents/ar.dead.question.qmd", "hz.dead.hz#fig-fit")
-# }
+# A copy of a small study shipped with the package: one finished hz job and
+# an ar report citing two of its exhibits.
+dir <- tempfile("ar-")
+dir.create(dir)
+src <- system.file("extdata", "ar-study", package = "hvtiRtemplates")
+file.copy(src, dir, recursive = TRUE)
+#> [1] TRUE
+study <- file.path(dir, "ar-study")
+report <- file.path(study, "50_documents", "ar.dead.question.qmd")
+ar_paste_methods(report)
+# After rereading the figure's text against the job's latest run:
+ar_review(report, "hz.dead.hz#fig-fit")
+unlink(dir, recursive = TRUE)
 ```

@@ -33,8 +33,22 @@ A `knit_asis` object holding the item's Markdown.
 ## Examples
 
 ``` r
-# \donttest{
-# In an ar job's chunk:
-# hvtiRtemplates::ar_item("hz.dead.hz#fig-fit")
-# }
+if (requireNamespace("knitr", quietly = TRUE)) {
+  # A copy of a small study shipped with the package: one finished hz job and
+  # an ar report citing two of its exhibits.
+  dir <- tempfile("ar-")
+  dir.create(dir)
+  src <- system.file("extdata", "ar-study", package = "hvtiRtemplates")
+  file.copy(src, dir, recursive = TRUE)
+  study <- file.path(dir, "ar-study")
+  report <- file.path(study, "50_documents", "ar.dead.question.qmd")
+  # ar_item() runs inside the report's chunks, so knit the report.
+  md <- knitr::knit(report, output = tempfile(fileext = ".md"), quiet = TRUE)
+  writeLines(grep("^[*][*]Item|^[[]The full", readLines(md), value = TRUE))
+  unlink(dir, recursive = TRUE)
+}
+#> **Item 1** · `hz.dead.hz#fig-fit`
+#> [The full report of `hz.dead.hz`, in the study folder](../20_distributions/hz.dead.hz.html)
+#> **Item 2** · `hz.dead.hz#tbl-estimates`
+#> [The full report of `hz.dead.hz`, in the study folder](../20_distributions/hz.dead.hz.html)
 ```
