@@ -1,3 +1,39 @@
+# hvtiRtemplates 1.6.0
+
+* New in-flight template `ar`, an analysis report for one research question.
+  Each item shows a figure, table or value a finished job saved, checked
+  against the bytes that job recorded, with Methods, Results and Interpretation
+  for the researchers to choose from. `ar_item()`, `ar_value()`,
+  `ar_paste_methods()` and `ar_review()` are new exports.
+* `hz` and `ac` now record their exhibits and a Methods paragraph for `ar`
+  reports. Jobs rendered before this record none; render them again to cite
+  them.
+
+* A test ties "Work a job"'s count of a new `dc-gfup` job's `EDIT:` markers, and the banner lines it quotes, to the template, read with the guard's own reader. The count went stale twice in 1.5.8 with nothing to catch it.
+
+* New template `mm`: a linear mixed model of a repeated continuous response, fitted
+  with `nlme`. `STRUCTURE` chooses the within-patient correlation, as PROC MIXED's
+  REPEATED and RANDOM statements did (`"cs"`, the corpus default, `"ar1"`, `"un"`,
+  and `"random"`; `VISIT` names scheduled visit numbers, so AR(1) keeps a visit no patient
+  attended), and the job saves the population-average
+  course over time with 95% limits, back-transformed from the log scale as geometric means, for a plot.
+  It does not yet pool multiple imputations, and stops if `IMPUTATION` is set.
+
+- A figure is now drawn in R's temporary folder and copied over the earlier one only once drawing finishes, so a draw that fails leaves the earlier figure in place and a render stopped mid-draw leaves nothing in the study. A page that draws nothing leaves no earlier PNG behind, so the `ar` report never takes a stale PNG as the current figure; a page the report embeds is drawn as a placeholder that says it drew nothing, with a warning, and is not recorded as an exhibit. Without ragg an earlier TIFF is removed rather than left beside the new PNG and PDF. A figure that cannot be written or an earlier PNG that cannot be removed stops the render with its path, and saving into a folder that does not exist names the folder.
+
+- `mm` is shipped. A corpus `type=cs` job ported on lri matched its SAS listing: every fixed effect and standard error to the printed precision, the residual variance exactly, and the REML likelihood to 1e-6.
+- `mm` draws its default prediction profile from the rows the fit used when the data is not sorted by patient and time. `mm_fit()` returned its row mask in its own sorted order, so on unsorted data with dropped rows the profile could take its medians and levels from the wrong rows.
+
+- A saved figure now replaces the earlier one by a rename within its folder, after a copy beside it under a hidden name, so a copy that fails on a full disk or a dropped share leaves the earlier figure whole rather than empty. A figure that draws nothing writes no blank PDF or TIFF for the publisher and removes the earlier render's copies, with a warning whether or not the report embeds it. A figure saved twice in one run that draws nothing the second time is not recorded as an exhibit, even when the first was removed in between, the placeholder for an embedded blank page is staged like any figure, and a temporary folder that cannot be made is named. A figure that is a link is written through to the file it names, so a figure linked into a manuscript folder keeps updating there; a replaced figure keeps its permissions; a staged copy left by a render killed mid-save is cleared once it is a day old; and the warning for an embedded blank figure says when its PDF and TIFF were not saved.
+
+- `mm` fits a random slope in time: `STRUCTURE = "slope"` is SAS's `RANDOM int <slope> / subject=id`, a random intercept and an independent random slope on the time term named in the new study choice `SLOPE`. `STRUCTURE <- c("cs", "slope")` fits both and compares them, as 33 corpus programs in 10 studies did by hand.
+
+- A figure that draws nothing is now recognized on Windows, where the PNG device writes a blank image for an empty page: whether anything was drawn is read from the device's display list rather than from the file, counting only operations that mark the page, so a page that is only set up, by `plot.new()` or `grid.newpage()`, is blank too. The blank figure is not recorded as an exhibit and its earlier PDF and TIFF are removed on every platform. A drawing that closes its own device keeps its figure. A figure that is a link is followed on Windows too, where `Sys.readlink()` is not implemented; a link there whose target is missing, or one a mapped drive keeps `normalizePath()` from following, is refused rather than replaced. A study reached through a linked folder keeps its own path in error messages.
+
+- A figure whose drawing function closes its own graphics device is compared with the device's empty page, so a blank one is caught as on any other page. A display-list entry of an unexpected shape counts as drawing rather than stopping the save. On Windows each figure is checked for being a link just before it is replaced, so a link made during a render is seen, and a check that fails refuses the save rather than taking the figure for a plain file.
+
+- The README API table now lists `import_job()` and the four `ar_*` functions, says `ar_paste_methods()` fills only empty Methods slots, and counts 75 catalog jobs. Its list of qualified template families now names all thirteen, and "Why this package exists" says `add_job()` copies a template into an editable job, rather than that studies resolve templates in place, and that the lock file is one part of a result's provenance, beside the job's source checksum and the data it read. A qualified prefix keeps its qualifier with one template shipped. The `work-a-job` vignette's ambiguous-prefix example reads "carries 6 templates", as `template_path("dc")` reports.
+
 # hvtiRtemplates 1.5.8
 
 * The tests of the stale-install guard pass on Windows: the guard finds Quarto's R as `Rscript.exe` there, and
