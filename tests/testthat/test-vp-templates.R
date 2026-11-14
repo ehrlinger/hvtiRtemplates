@@ -72,12 +72,23 @@ test_that("vp-fit drops a patient missing the outcome, and imputes without it", 
   data$time[1:3] <- NA
   data$x1[4:9] <- NA
   env <- rf_env(data)
+  rec <- new.env()
+  testthat::local_mocked_bindings(impute = vp_mock_impute(rec), .package = "randomForestSRC")
   rf_run("vp", "fit", vp_data_labels, env, vp_choices)
   expect_identical(env$.cohort$n_outcome_missing, 3L)
   expect_identical(nrow(env$d), 197L)
-  # The imputation call names the predictors and nothing else.
-  chunk <- rf_chunk(readLines(template_path("vp", "fit"), warn = FALSE), "tbl-missing")
-  expect_true(any(grepl("impute(data = d[PREDICTORS]", chunk, fixed = TRUE)))
+  # The imputation was handed the predictors and nothing else: no outcome column.
+  expect_identical(rec$seen, vp_choices$PREDICTORS)
+  expect_false(any(c("time", "event") %in% rec$seen))
+})
+
+test_that("vp-fit stops on a patient with no observed predictor", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data[5, vp_choices$PREDICTORS] <- NA
+  data$x1[10:12] <- NA  # something to impute, so the imputation runs
+  expect_error(rf_run("vp", "fit", vp_data_labels, rf_env(data), vp_choices), "cannot be imputed")
 })
 
 test_that("vp-fit refuses to impute a predictor missing in most patients", {
@@ -883,8 +894,34 @@ test_that("vp-dependence imputes a missing variable by default, and leaves OUTCO
   expect_identical(nrow(env$d), 200L)
   expect_false(anyNA(env$d[vpd_choices$VARIABLES]))
   expect_identical(env$.cohort$n_imputed[["b"]], 9L)
-  chunk <- rf_chunk(readLines(template_path("vp", "dependence"), warn = FALSE), "tbl-missing")
-  expect_true(any(grepl("impute(data = d[VARIABLES]", chunk, fixed = TRUE)))
+})
+
+test_that("vp-dependence hands the imputation the variables only, and drops a patient missing OUTCOME", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  data <- vpd_data()
+  data$x2[1:3] <- NA
+  data$b[4:9] <- NA
+  choices <- utils::modifyList(vpd_choices, list(VARIABLES = c("a", "b", "fs", "c")))
+  choices <- c(choices[setdiff(names(choices), "OUTCOME")], list(OUTCOME = "x2"))
+  env <- rf_env(data)
+  rec <- new.env()
+  testthat::local_mocked_bindings(impute = vp_mock_impute(rec), .package = "randomForestSRC")
+  rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"), env, choices)
+  expect_identical(env$.cohort$n_outcome_missing, 3L)
+  expect_identical(nrow(env$d), 197L)
+  expect_identical(rec$seen, c("a", "b", "fs", "c"))
+  expect_false("x2" %in% rec$seen)
+})
+
+test_that("vp-dependence stops on a patient with no observed variable", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  data <- vpd_data()
+  data[5, vpd_choices$VARIABLES] <- NA
+  data$b[10:12] <- NA  # something to impute, so the imputation runs
+  expect_error(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"),
+                      rf_env(data), vpd_choices), "cannot be imputed")
 })
 
 test_that("vp-dependence with NA_ACTION = na.omit drops incomplete patients as before", {

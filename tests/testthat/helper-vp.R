@@ -107,3 +107,16 @@ vp33_skip_unless_stack <- function(pkgs) {
   testthat::skip_if_not_installed("varPro", minimum_version = "3.3.0")
   rf_skip_unless_stack(pkgs)  # nolint: object_usage_linter.
 }
+
+# Stands in for randomForestSRC::impute(): records the columns it was handed in `seen` (an environment
+# slot, so the mock can write it) and fills each missing value with that column's first observed one.
+vp_mock_impute <- function(rec) {
+  function(data, ...) {
+    rec$seen <- names(data)
+    data[] <- lapply(data, function(x) {
+      x[is.na(x)] <- x[!is.na(x)][1L]
+      x
+    })
+    data
+  }
+}
