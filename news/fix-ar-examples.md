@@ -1,1 +1,0 @@
-* The help for `ar_item()`, `ar_value()`, `ar_paste_methods()` and `ar_review()` has examples that run. Each copies a small example study shipped in `inst/extdata/ar-study` to a temporary folder: one finished `hz` job and an `ar` report that cites two of its exhibits. Until now, every example line was commented out.

@@ -34,6 +34,8 @@
 
 - The README API table now lists `import_job()` and the four `ar_*` functions, says `ar_paste_methods()` fills only empty Methods slots, and counts 75 catalog jobs. Its list of qualified template families now names all thirteen, and "Why this package exists" says `add_job()` copies a template into an editable job, rather than that studies resolve templates in place, and that the lock file is one part of a result's provenance, beside the job's source checksum and the data it read. A qualified prefix keeps its qualifier with one template shipped. The `work-a-job` vignette's ambiguous-prefix example reads "carries 6 templates", as `template_path("dc")` reports.
 
+* The help for `ar_item()`, `ar_value()`, `ar_paste_methods()` and `ar_review()` has examples that run. Each copies a small example study shipped in `inst/extdata/ar-study` to a temporary folder: one finished `hz` job and an `ar` report that cites two of its exhibits. Until now, every example line was commented out.
+
 # hvtiRtemplates 1.5.8
 
 * The tests of the stale-install guard pass on Windows: the guard finds Quarto's R as `Rscript.exe` there, and
