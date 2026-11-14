@@ -735,9 +735,11 @@ test_that("vp-dependence saves one handoff with its lineage", {
   env <- vpd_first()
   path <- env$set_path("estimates", "dependence.rds")
   h <- readRDS(path)
-  expect_named(h, c("fit", "beta", "bar", "bar_from", "edges", "signal", "stability"))
+  expect_named(h, c("fit", "beta", "bar", "bar_from", "edges", "signal", "stability", "not_examined"))
   expect_s3_class(h$fit, "uvarpro")
   expect_null(h$stability)
+  # The fixture's every variable has a release rule, so nothing is handed on as unexamined.
+  expect_identical(h$not_examined, character())
   # The package's handoff reader accepts it: the lineage is complete.
   expect_no_error(hvtiRtemplates:::.read_handoff(path, "dependence", env$.cfg, "the vp-dependence job"))
 })
@@ -748,7 +750,9 @@ test_that("vp-dependence traces a colliding encoded column to its factor", {
   d <- vpd_data()
   d$f <- factor(withr::with_seed(3, sample(c("s", "t", "u"), nrow(d), replace = TRUE)))
   d$fs <- withr::with_seed(4, stats::rnorm(nrow(d)))
-  env <- vpd_first(d, utils::modifyList(vpd_choices, list(VARIABLES = c("a", "c", "f", "fs"))))
+  # At 30 trees the three-level f takes the rules and fs gets none, which MAX_UNTESTED would stop on. This test is
+  # about the term map, which covers every column whether or not it was released, so the gate only reports.
+  env <- vpd_first(d, c(utils::modifyList(vpd_choices, list(VARIABLES = c("a", "c", "f", "fs"))), list(MAX_UNTESTED = NULL)))
   # Asserted on varPro's own record, so it holds whatever spelling a later
   # varPro chooses: every encoded column of f maps to f, and fs stays fs.
   f_terms <- names(env$.parent)[env$.parent == "f"]
@@ -806,6 +810,132 @@ test_that("REPEATS = 0 skips the dependence stability check", {
   env <- vpd_first()
   expect_length(list.files(env$CACHE_DIR, "^vp-dependence-repeat-"), 0L)
   expect_null(readRDS(env$set_path("estimates", "dependence.rds"))$stability)
+})
+
+test_that("vpd_coverage counts each variable's release rules through varPro's term map", {
+  vp33_skip_unless_stack("varPro")
+  env <- vpd_helpers_env()
+  d <- vpd_data()
+  d$noise1_a <- withr::with_seed(7, sample(d$a))
+  withr::local_options(rf.cores = 1L)
+  fit <- varPro::uvarpro(d, ntree = 10, seed = -1)
+  cols <- names(vpd_data())
+  cov <- env$vpd_coverage(fit, cols)
+  expect_identical(cov$variable, cols)
+  # Every rule except those releasing the noise column, counted without the map: a numeric column keeps its name.
+  expect_identical(sum(cov$rules), nrow(fit$results) - sum(colnames(fit$x)[fit$results$variable] == "noise1_a"))
+  expect_identical(cov$state, ifelse(cov$rules > 0L, "examined", "not examined"))
+  # fs is a factor, split into 0/1 columns, and its rules are counted to fs.
+  expect_gt(cov$rules[cov$variable == "fs"], 0L)
+})
+
+test_that("vpd_edge_share counts an edge over the refits that examined both its ends", {
+  env <- vpd_helpers_env()
+  runs <- list(
+    list(edges = "a -> c", examined = c("a", "c")),
+    list(edges = "a -> c", examined = c("a", "b", "c")),
+    list(edges = character(), examined = c("a", "b")),
+    list(edges = character(), examined = c("b", "c"))
+  )
+  s <- env$vpd_edge_share(runs)
+  expect_identical(s$from, "a")
+  expect_identical(s$to, "c")
+  expect_equal(s$share, 1)
+  expect_identical(s$refits, 2L)
+  # A refit that examined both ends and drew no edge counts against it.
+  s <- env$vpd_edge_share(c(runs, list(list(edges = character(), examined = c("a", "c")))))
+  expect_equal(s$share, 2 / 3)
+  expect_identical(nrow(env$vpd_edge_share(list(list(edges = character(), examined = "a")))), 0L)
+})
+
+test_that("both uvarpro() calls in vp-dependence carry the rule limits, and the defaults are the measured ones", {
+  lines <- readLines(template_path("vp", "dependence"), warn = FALSE)
+  # Code only: the narration names uvarpro() in prose.
+  open <- grep("^```\\{r", lines)
+  code <- unlist(lapply(open, function(at) {
+    end <- at + which(lines[(at + 1L):length(lines)] == "```")[1L]
+    lines[(at + 1L):(end - 1L)]
+  }))
+  src <- paste(code[!grepl("^\\s*#", code)], collapse = "\n")
+  calls <- regmatches(src, gregexpr("(?s)(?<![_[:alnum:]])uvarpro\\(.*?seed = ", src, perl = TRUE))[[1L]]
+  # The full fit and the stability refit.
+  expect_length(calls, 2L)
+  for (arg in c("max.tree = min(MAX_TREE, NTREE)", "max.rules.tree = MAX_RULES_TREE")) {
+    expect_true(all(grepl(arg, calls, fixed = TRUE)), info = arg)
+  }
+  choices <- rf_chunk(lines, "edit-study-choices")
+  for (default in c("MAX_TREE <- 500", "MAX_RULES_TREE <- 20", "MAX_UNTESTED <- 0.1")) {
+    expect_true(default %in% choices, info = default)
+  }
+})
+
+test_that("changing MAX_RULES_TREE makes both vp-dependence caches stale, and REFIT refits them", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  # Run in the global environment, as a render runs its chunks, as vp-fit's
+  # NODESIZE_EXTERNAL test does.
+  g <- globalenv()
+  before <- ls(g, all.names = TRUE)
+  withr::defer(rm(list = setdiff(ls(g, all.names = TRUE), before), envir = g))
+  data <- vpd_data()
+  data$ccfid <- seq_len(nrow(data))
+  g$.root <- rf_study(data, environment())
+  choices <- utils::modifyList(vpd_choices, list(REPEATS = 1))
+  run <- function(extra = list()) {
+    g$.provenance_data <- list()
+    rf_run("vp", "dependence", vpd_labels, g, utils::modifyList(choices, extra))
+  }
+  run()
+  files <- file.path(g$CACHE_DIR, c("vp-dependence.rds", "vp-dependence-repeat-01.rds"))
+  stamps <- file.mtime(files)
+  Sys.sleep(1.1)  # so a rewrite would show in the modification time
+  expect_error(run(list(MAX_RULES_TREE = 10)), "stale")
+  run(list(MAX_RULES_TREE = 10, REFIT = TRUE))
+  expect_true(all(file.mtime(files) > stamps))
+})
+
+test_that("vp-dependence stops on a variable it did not examine, and with MAX_UNTESTED = NULL hands it on", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  # Five trees and two rules a tree leave b and x2 without a release rule on this cohort.
+  few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2))
+  env <- rf_env(vpd_data())
+  err <- expect_error(rf_run("vp", "dependence", c(vpd_labels[seq_len(which(vpd_labels == "coverage-gate"))]), env,
+                             utils::modifyList(few, list(MAX_UNTESTED = 0))), "MAX_UNTESTED")
+  expect_match(conditionMessage(err), "x2", fixed = TRUE)
+  expect_match(conditionMessage(err), "MAX_TREE", fixed = TRUE)
+  # utils::modifyList() would drop a NULL element, so it is added with c().
+  env <- vpd_first(choices = c(few, list(MAX_UNTESTED = NULL)))
+  h <- readRDS(env$set_path("estimates", "dependence.rds"))
+  expect_true("x2" %in% h$not_examined)
+  expect_identical(h$not_examined, env$.coverage$variable[env$.coverage$rules == 0L])
+})
+
+test_that("vp-dependence's default rule limits examine every variable where varPro's left two unexamined", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  # The template's own NTREE, NOISE_N and rule limits on the fixture shape. Which
+  # variable misses is chance: over SEED = 1 to 30, varPro's 200 trees left a
+  # real variable without a rule at 23 seeds and the default 500 at 7. SEED = 3
+  # is one where 200 trees leave b and x2 out and 500 cover them, so this test
+  # fails if the default falls back to 200 (dev/vp/uvarpro-coverage.R).
+  env <- rf_env(vpd_data())
+  rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise", "dependence-helpers"),
+         env, list(VARIABLES = c("a", "b", "x2", "fs", "c"), OUTCOME = NULL, ORDINAL = NULL, SAVE_FIGURES = FALSE, SEED = 3))
+  expect_identical(c(env$NTREE, env$NOISE_N), c(500, 20))
+  # The fit chunk's own uvarpro() call, without the lasso that follows it.
+  find <- function(e) {
+    if (!is.call(e)) return(list())
+    if (identical(e[[1L]], as.name("uvarpro"))) return(list(e))
+    unlist(lapply(as.list(e)[-1L], find), recursive = FALSE)
+  }
+  fit_chunk <- rf_chunk(readLines(template_path("vp", "dependence"), warn = FALSE), "fit")
+  call <- unlist(lapply(parse(text = fit_chunk), find), recursive = FALSE)
+  expect_length(call, 1L)
+  set.seed(abs(env$SEED))
+  fit <- eval(call[[1L]], env)
+  cov <- env$vpd_coverage(fit, env$.cols)
+  expect_identical(cov$variable[cov$state != "examined"], character())
 })
 
 # vp-individual ---------------------------------------------------------------

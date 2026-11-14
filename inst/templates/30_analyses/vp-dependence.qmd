@@ -191,6 +191,25 @@ NOISE_N <- 20
 # almost as high as a real link, so the bar loses its meaning.
 NTREE <- 500
 
+# EDIT: the rules uvarpro() builds. It samples MAX_TREE of the trees (all of
+# NTREE at most) and up to MAX_RULES_TREE branches in each, and a variable is
+# examined only through the rules that release it: too few and a variable that
+# rarely splits gets no rule and is never looked at. In simulations of 200 to
+# 1,900 patients and 5 to 30 variables, varPro's own 200 trees and 20 rules left
+# real variables without a rule in most; all 500 trees did better, and covered
+# every one without noise columns, but not with them: binary noise columns take
+# many of the rules, and with 20 beside 31 variables half the variables still
+# had none. From 20 up, MAX_RULES_TREE barely moved the count, about 10 rules a
+# tree, so MAX_TREE is the lever. The cost is the lasso, fitted once per rule:
+# at 200 patients and 25 columns it took 51 s at 500 trees against 20 s at 200,
+# for the full fit and again for each refit.
+MAX_TREE <- 500
+MAX_RULES_TREE <- 20
+# EDIT: the largest share of the variables (VARIABLES and OUTCOME) that may go
+# unexamined, with no release rule in the full fit, before the render stops: a
+# variable never examined would read as having no dependence. NULL only reports.
+MAX_UNTESTED <- 0.1
+
 # EDIT: the fixed edge cutoff the noise bar is reported beside, and falls back
 # to when no noise column earned any weight. 0.25 is varPro's default.
 THRESHOLD_FIXED <- 0.25
@@ -427,6 +446,34 @@ vpd_bar <- function(I, noise, fixed) {
   w <- w[is.finite(w)]
   if (length(w) && max(w) > 0) list(bar = max(w), from = "noise") else list(bar = fixed, from = "fixed (fallback)")
 }
+# Whether the forest examined each variable: how many release rules it built
+# for it. fit$results has a row per rule, its `variable` an index into the
+# encoded columns, which vpd_parent() traces to variables. A variable with no
+# rule was never released, so no contrast of its own was ever tested.
+vpd_coverage <- function(fit, cols) {
+  parent <- vpd_parent(fit)
+  released <- unname(parent[colnames(fit$x)[fit$results$variable]])
+  rules <- vapply(cols, function(v) sum(released %in% v), integer(1L), USE.NAMES = FALSE)
+  data.frame(variable = cols, rules = rules, state = ifelse(rules > 0L, "examined", "not examined"))
+}
+# How often each edge was drawn across the refits, over the refits that
+# examined both its ends, as vp-fit's vote counts a selection over the refits
+# that tested the variable. A refit that built no rule for one end never
+# looked at the pair, so it counts neither for the edge nor against it. Each
+# run is list(edges = "from -> to" keys, examined = variable names). A share
+# with no such refit is NA, not 0.
+vpd_edge_share <- function(runs) {
+  keys <- sort(unique(unlist(lapply(runs, `[[`, "edges"))))
+  ends <- strsplit(keys, " -> ", fixed = TRUE)
+  refits <- drawn <- integer(length(keys))
+  for (run in runs) {
+    both <- vapply(ends, function(e) all(e %in% run$examined), logical(1L))
+    refits <- refits + both
+    drawn <- drawn + (both & keys %in% run$edges)
+  }
+  data.frame(from = vapply(ends, `[`, "", 1L), to = vapply(ends, `[`, "", 2L),
+             share = ifelse(refits > 0L, drawn / pmax(1L, refits), NA_real_), refits = refits)
+}
 ```
 
 ## Fit
@@ -444,7 +491,12 @@ set.seed(abs(SEED))
 # packages = keys each cache on the engine doing the work as well as on
 # varPro, which only calls it: randomForestSRC grows the forest and glmnet
 # fits the lasso, and an update to either must not reuse an old result.
-fit <- cache_fit("vp-dependence", uvarpro(d_noise, ntree = NTREE, seed = -abs(SEED)),
+# The rule limits are written into the call itself: cache_fit() keys the
+# variables its expression names, so a changed MAX_TREE or MAX_RULES_TREE
+# makes the cache stale rather than reloading a fit built under the old ones.
+fit <- cache_fit("vp-dependence",
+                 uvarpro(d_noise, ntree = NTREE, max.tree = min(MAX_TREE, NTREE), max.rules.tree = MAX_RULES_TREE,
+                         seed = -abs(SEED)),
                  seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
 # The lasso step draws its cross-validation folds from R's generator, so it is
 # seeded again. pre.filter = FALSE keeps every column: the pre-filter would
@@ -452,6 +504,37 @@ fit <- cache_fit("vp-dependence", uvarpro(d_noise, ntree = NTREE, seed = -abs(SE
 set.seed(abs(SEED))
 beta_raw <- cache_fit("vp-dependence-beta", get.beta.entropy(fit, pre.filter = FALSE, papply = lapply),
                       seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "glmnet")
+```
+
+## Coverage
+
+A variable is **examined** when the forest built at least one release rule
+for it. One that was not examined has no contrast of its own in the matrix
+below, so no edge leaves it, and that is because it was not looked at, not
+because it is independent.
+
+```{r}
+#| label: tbl-coverage
+#| tbl-cap: "Whether the forest examined each variable"
+.coverage <- vpd_coverage(fit, .cols)
+.not_examined <- .coverage$variable[.coverage$state == "not examined"]
+knitr::kable(.coverage, row.names = FALSE)
+```
+
+```{r}
+#| label: coverage-gate
+#| results: asis
+# Below the table, so the reader sees the counts before the verdict.
+if (length(.not_examined)) {
+  cat("Not examined: ", paste(.not_examined, collapse = ", "), ". The forest built no rule for them, so this report ",
+      "has no evidence about their dependence either way.\n", sep = "")
+}
+if (!is.null(MAX_UNTESTED) && length(.not_examined) / length(.cols) > MAX_UNTESTED) {
+  stop(length(.not_examined), " of ", length(.cols), " variables were not examined, more than MAX_UNTESTED (",
+       MAX_UNTESTED, ") allows: ", paste(.not_examined, collapse = ", "), ". The forest built no release rule for ",
+       "them. Raise MAX_TREE (up to NTREE), MAX_RULES_TREE or NTREE, set REFIT <- TRUE and re-render; ",
+       "MAX_UNTESTED <- NULL reports them without stopping.", call. = FALSE)
+}
 ```
 
 ## The dependence matrix
@@ -543,9 +626,10 @@ save_figure(.fig, "vp-dependence-heatmap", width = 6.5, height = 6)
 
 The graph refitted `REPEATS` times, each on a subsample of the patients drawn
 without replacement and with a fresh noise draw, and each judged against its
-own noise bar. A share is over `REPEATS`, so a refit that drops an edge counts
-against it. An edge drawn in most refits holds up; one drawn once in a while
-is the forest's own noise.
+own noise bar. An edge's share is over the refits that examined both its
+ends, the count beside it, so a refit that examined the pair and drew no edge
+counts against it and one that never looked does not. An edge drawn in most
+refits holds up; one drawn once in a while is the forest's own noise.
 
 ```{r}
 #| label: tbl-stability
@@ -560,7 +644,9 @@ if (REPEATS > 0) {
     rows <- sort(sample.int(nrow(d), floor(SUBSAMPLE * nrow(d))))
     dr <- vp_add_noise(d[rows, , drop = FALSE], .cols, NOISE_N, SEED + r)
     set.seed(abs(SEED) + r)
-    fr <- cache_fit(sprintf("vp-dependence-repeat-%02d", r), uvarpro(dr, ntree = NTREE, seed = -abs(SEED + r)),
+    fr <- cache_fit(sprintf("vp-dependence-repeat-%02d", r),
+                    uvarpro(dr, ntree = NTREE, max.tree = min(MAX_TREE, NTREE), max.rules.tree = MAX_RULES_TREE,
+                            seed = -abs(SEED + r)),
                     seed = SEED + r, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
     set.seed(abs(SEED) + r)
     br <- cache_fit(sprintf("vp-dependence-repeat-%02d-beta", r),
@@ -572,24 +658,23 @@ if (REPEATS > 0) {
     b <- vpd_bar(sq, nz, THRESHOLD_FIXED)
     real <- sq[!nz, !nz, drop = FALSE]
     g <- vpd_graph(fr, real, b$bar)
+    cr <- vpd_coverage(fr, .cols)
     list(bar = b$bar, edges = paste(g$edges$variable_from, g$edges$variable_to, sep = " -> "),
-         signal = as.character(g$nodes$variable[g$nodes$selected]))
+         signal = as.character(g$nodes$variable[g$nodes$selected]), examined = cr$variable[cr$rules > 0L])
   })
   # Counted by hand rather than with table(), which names nothing when no refit
-  # drew an edge, so an empty result stays a table with no rows.
+  # put a variable in the signal set, so an empty result stays a table with no rows.
   .share <- function(x) {
     keys <- sort(unique(as.character(x)))
     list(keys = keys, share = vapply(keys, function(k) sum(x == k), numeric(1L), USE.NAMES = FALSE) / REPEATS)
   }
-  .edges <- .share(unlist(lapply(.runs, `[[`, "edges")))
   .sig <- .share(unlist(lapply(.runs, `[[`, "signal")))
-  .split <- strsplit(.edges$keys, " -> ", fixed = TRUE)
   .vpd_stab <- list(
-    edges = data.frame(from = vapply(.split, `[`, "", 1L), to = vapply(.split, `[`, "", 2L), share = .edges$share),
+    edges = vpd_edge_share(.runs),
     signal = data.frame(variable = .sig$keys, share = .sig$share),
     bars = vapply(.runs, `[[`, numeric(1L), "bar")
   )
-  .vpd_stab$edges <- .vpd_stab$edges[order(-.vpd_stab$edges$share), ]
+  .vpd_stab$edges <- .vpd_stab$edges[order(-.vpd_stab$edges$share, na.last = TRUE), ]
   cat(sprintf("The noise bar ranged from %.3g to %.3g across the refits.\n", min(.vpd_stab$bars), max(.vpd_stab$bars)))
   if (!nrow(.vpd_stab$edges)) cat("No edge cleared its refit's bar in any refit.\n")
   knitr::kable(.vpd_stab$edges, digits = 2, row.names = FALSE)
@@ -601,7 +686,8 @@ if (REPEATS > 0) {
 ```{r}
 #| label: tbl-stability-signal
 #| tbl-cap: "How often each variable was in the signal set across the refits, most often first"
-# Over REPEATS, as the edge table is. Empty when REPEATS is 0.
+# Over REPEATS, not over the refits that examined the variable as the edge
+# table's share is. Empty when REPEATS is 0.
 if (!is.null(.vpd_stab)) {
   knitr::kable(.vpd_stab$signal[order(-.vpd_stab$signal$share), ], digits = 2, row.names = FALSE)
 }
@@ -624,6 +710,12 @@ reads "the variable at the head helps separate the contrast of the variable at
 the tail", which is a statement about how the data are arranged, not about
 which variable acts on which.
 
+**A variable the forest did not examine is not an independent one.** It has
+no rule of its own, so no edge leaves it in the graph: it is absent because it
+was not looked at, not because nothing depends on it. The coverage table says
+which variables those are, and `MAX_UNTESTED` stops the render when there are
+too many.
+
 **A missing variable is not an independent one.** A variable with no edge at
 the bar has no link strong enough to beat the noise in this forest. It may
 still depend on others more weakly, and the heatmap shows every pair at any
@@ -645,7 +737,7 @@ predict the outcome.
 # one file so they cannot drift apart.
 vpd_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   list(fit = fit, beta = beta, bar = bar$bar, bar_from = bar$from, edges = gg$edges, signal = signal,
-       stability = .vpd_stab),
+       stability = .vpd_stab, not_examined = .not_examined),
   data = .provenance_data, analysis = .analysis, cohort = .cohort,
   selection = attr(job_data$record, "selection")
 )
