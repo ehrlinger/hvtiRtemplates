@@ -206,9 +206,15 @@ NTREE <- 500
 MAX_TREE <- 500
 MAX_RULES_TREE <- 20
 # EDIT: the largest share of the variables (VARIABLES and OUTCOME) that may go
-# unexamined, with no release rule in the full fit, before the render stops: a
-# variable never examined would read as having no dependence. NULL only reports.
-MAX_UNTESTED <- 0.1
+# unexamined, with no release rule in the full fit, before the render stops.
+# NULL, the default, only reports. It is NULL because of the noise draw below:
+# whenever any candidate is categorical, half the NOISE_N columns are permuted
+# copies of the categorical ones, and on 30 variables those copies take enough
+# of the rules that many real variables go unexamined at any affordable NTREE
+# (15 to 19 of 31 at 500 trees, 7 to 10 at 2,000). Until the noise draw is
+# redesigned, the coverage table reports them; a number here, such as 0.1,
+# turns the stop on.
+MAX_UNTESTED <- NULL
 
 # EDIT: the fixed edge cutoff the noise bar is reported beside, and falls back
 # to when no noise column earned any weight. 0.25 is varPro's default.
@@ -511,7 +517,8 @@ beta_raw <- cache_fit("vp-dependence-beta", get.beta.entropy(fit, pre.filter = F
 A variable is **examined** when the forest built at least one release rule
 for it. One that was not examined has no contrast of its own in the matrix
 below, so no edge leaves it, and that is because it was not looked at, not
-because it is independent.
+because it is independent. It is still a predictor in every other variable's
+lasso, so edges into it can still appear.
 
 ```{r}
 #| label: tbl-coverage
@@ -526,8 +533,8 @@ knitr::kable(.coverage, row.names = FALSE)
 #| results: asis
 # Below the table, so the reader sees the counts before the verdict.
 if (length(.not_examined)) {
-  cat("Not examined: ", paste(.not_examined, collapse = ", "), ". The forest built no rule for them, so this report ",
-      "has no evidence about their dependence either way.\n", sep = "")
+  cat("Not examined: ", paste(.not_examined, collapse = ", "), ". The forest built no rule for them, so no edge ",
+      "leaves them; edges into them can still appear.\n", sep = "")
 }
 if (!is.null(MAX_UNTESTED) && length(.not_examined) / length(.cols) > MAX_UNTESTED) {
   stop(length(.not_examined), " of ", length(.cols), " variables were not examined, more than MAX_UNTESTED (",
@@ -711,10 +718,11 @@ the tail", which is a statement about how the data are arranged, not about
 which variable acts on which.
 
 **A variable the forest did not examine is not an independent one.** It has
-no rule of its own, so no edge leaves it in the graph: it is absent because it
-was not looked at, not because nothing depends on it. The coverage table says
-which variables those are, and `MAX_UNTESTED` stops the render when there are
-too many.
+no rule of its own, so no edge leaves it in the graph: an edge it lacks is
+missing because it was not looked at, not because the variable is independent.
+Edges into it can still appear, because it is a predictor in every other
+variable's lasso. The coverage table says which variables those are; set
+`MAX_UNTESTED` to a share to stop the render when there are too many.
 
 **A missing variable is not an independent one.** A variable with no edge at
 the bar has no link strong enough to beat the noise in this forest. It may

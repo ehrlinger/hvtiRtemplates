@@ -750,8 +750,8 @@ test_that("vp-dependence traces a colliding encoded column to its factor", {
   d <- vpd_data()
   d$f <- factor(withr::with_seed(3, sample(c("s", "t", "u"), nrow(d), replace = TRUE)))
   d$fs <- withr::with_seed(4, stats::rnorm(nrow(d)))
-  # At 30 trees the three-level f takes the rules and fs gets none, which MAX_UNTESTED would stop on. This test is
-  # about the term map, which covers every column whether or not it was released, so the gate only reports.
+  # At 30 trees the three-level f takes the rules and fs gets none, which a MAX_UNTESTED share would stop on. This test
+  # is about the term map, which covers every column whether or not it was released, so the gate is set to report.
   env <- vpd_first(d, c(utils::modifyList(vpd_choices, list(VARIABLES = c("a", "c", "f", "fs"))), list(MAX_UNTESTED = NULL)))
   # Asserted on varPro's own record, so it holds whatever spelling a later
   # varPro chooses: every encoded column of f maps to f, and fs stays fs.
@@ -864,7 +864,7 @@ test_that("both uvarpro() calls in vp-dependence carry the rule limits, and the 
     expect_true(all(grepl(arg, calls, fixed = TRUE)), info = arg)
   }
   choices <- rf_chunk(lines, "edit-study-choices")
-  for (default in c("MAX_TREE <- 500", "MAX_RULES_TREE <- 20", "MAX_UNTESTED <- 0.1")) {
+  for (default in c("MAX_TREE <- 500", "MAX_RULES_TREE <- 20", "MAX_UNTESTED <- NULL")) {
     expect_true(default %in% choices, info = default)
   }
 })
@@ -894,7 +894,7 @@ test_that("changing MAX_RULES_TREE makes both vp-dependence caches stale, and RE
   expect_true(all(file.mtime(files) > stamps))
 })
 
-test_that("vp-dependence stops on a variable it did not examine, and with MAX_UNTESTED = NULL hands it on", {
+test_that("vp-dependence stops on an unexamined variable when MAX_UNTESTED is set, and by default hands it on", {
   skip_on_cran()
   vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   # Five trees and two rules a tree leave b and x2 without a release rule on this cohort.
@@ -904,8 +904,9 @@ test_that("vp-dependence stops on a variable it did not examine, and with MAX_UN
                              utils::modifyList(few, list(MAX_UNTESTED = 0))), "MAX_UNTESTED")
   expect_match(conditionMessage(err), "x2", fixed = TRUE)
   expect_match(conditionMessage(err), "MAX_TREE", fixed = TRUE)
-  # utils::modifyList() would drop a NULL element, so it is added with c().
-  env <- vpd_first(choices = c(few, list(MAX_UNTESTED = NULL)))
+  # The shipped default, NULL, reports and renders: `few` leaves MAX_UNTESTED to the template.
+  env <- vpd_first(choices = few)
+  expect_null(env$MAX_UNTESTED)
   h <- readRDS(env$set_path("estimates", "dependence.rds"))
   expect_true("x2" %in% h$not_examined)
   expect_identical(h$not_examined, env$.coverage$variable[env$.coverage$rules == 0L])

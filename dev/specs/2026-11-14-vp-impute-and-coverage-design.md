@@ -167,17 +167,22 @@ apart:
   of 31 real variables without a rule at 500 trees: its one factor is the only categorical source, so half the noise
   columns are binary copies of it, and they took nearly half the rules. 2,000 trees still left 7 to 10. On the
   fixture shape, 500 trees left a real variable without a rule at 7 of SEED = 1 to 30 (200 trees at 23).
-  **Open for the maintainer (NEEDS_CONTEXT, 2026-11-14):** the rule limits are not the lever for this; the noise
-  draw, `NOISE_N`, `NTREE` or `MAX_UNTESTED` may be.
-- **Provisional defaults:** `MAX_TREE <- 500` (passed as `min(MAX_TREE, NTREE)`, so every tree) and
-  `MAX_RULES_TREE <- 20`, the smallest pair covering the four original configurations, `EDIT:`-marked beside `NTREE`,
-  with `MAX_UNTESTED <- 0.1` holding the full fit to the share of variables left without a rule. At these defaults a
-  30-variable study with 20 noise columns would stop at that gate. **The cost is the lasso, not the forest:**
-  `get.beta.entropy()` fits one per rule, and on the fixture shape took 51 s at 500 trees against 20 s at 200, paid
-  for the full fit and for each refit.
+  The rule limits are not the lever for this; the noise draw is (next bullets).
+- **Decided (John Ehrlinger, 2026-11-14): report now, fix the noise next.** `MAX_TREE <- 500` (passed as
+  `min(MAX_TREE, NTREE)`, so every tree) and `MAX_RULES_TREE <- 20`, `EDIT:`-marked beside `NTREE`, and
+  **`MAX_UNTESTED <- NULL`**: the coverage table reports every unexamined variable and the handoff carries them,
+  but the render does not stop unless a study sets a share. The measured reason: `vp_add_noise()` draws half the
+  `NOISE_N` columns from the categorical candidates whenever any exist, and on 30 variables those permuted copies
+  take enough of the rules (about 2,100 of 4,800 with one binary factor) that 15 to 19 of 31 real variables went
+  unexamined at 500 trees and 7 to 10 at 2,000, past any affordable `NTREE`. A numeric default would stop most such
+  renders. **The cost is the lasso, not the forest:** `get.beta.entropy()` fits one per rule, and on the fixture
+  shape took 51 s at 500 trees against 20 s at 200, paid for the full fit and for each refit.
+- **Follow-up:** redesign `vp_add_noise()` in `vp-dependence` so the noise kinds are drawn in proportion to the
+  candidates, not half and half. That is what lets the gate default on (a share such as 0.1).
 - **Report:** a `tbl-coverage` table after the fit names each variable's rule count and whether it was examined;
-  the handoff carries `not_examined`. In the stability table an edge's share is over the refits that examined both
-  of its ends, with that count beside it, as `vp-fit`'s vote is (§4.2).
+  the handoff carries `not_examined`. An unexamined variable has no rule, so no edge leaves it; it is still a
+  predictor in every other variable's lasso, so edges into it can still appear. In the stability table an edge's
+  share is over the refits that examined both of its ends, with that count beside it, as `vp-fit`'s vote is (§4.2).
 
 ## 5. Tests (testthat edition 3)
 
