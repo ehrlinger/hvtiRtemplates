@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:36
+2026-11-14 18:17
 
 Explains the forest the `rfr-fit` job in this set saved: which
 predictors drive it, and how.
@@ -74,7 +74,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.5.8
+hvtiRtemplates 1.6.0
 
 ## Study choices
 
@@ -381,9 +381,9 @@ level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-12 09:36:29 EST |
-|  | Ended | 2026-11-12 09:36:36 EST |
-|  | Duration | 8 s |
+| Run | Started | 2026-11-14 18:17:05 EST |
+|  | Ended | 2026-11-14 18:17:10 EST |
+|  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -391,13 +391,12 @@ level of a categorical one.
 |  | Template | rfr.explain |
 |  | Subject | los |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.5.8 |
-| Dataset `built` | Version file | built_20261112.parquet |
-|  | Version date | 2026-11-12 |
+|  | hvtiRtemplates | 1.6.0 |
+| Dataset `built` | Version file | built_20261114.parquet |
+|  | Version date | 2026-11-14 |
 |  | Source file | built.rds |
 |  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-11-12 09:36:21 -0500, data built_20261112.parquet |
+| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-11-14 18:16:58 -0500, data built_20261114.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
-|  | renv.lock sha256 | ed18165d16bf |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:28
+2026-11-14 18:10
 
 Replaces an older EDA report.
 
@@ -80,8 +80,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.8
+**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.0
 
 ## Study choices
 
@@ -317,7 +317,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261112.parquet) |
+| Source              | dataset `built` (built_20261114.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -1117,25 +1117,24 @@ apart by color alone; the categorical frequency table above names them.
 
 ## About this run
 
-| Group           | Item             | Value                    |
-|:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-12 09:28:13 EST  |
-|                 | Ended            | 2026-11-12 09:28:21 EST  |
-|                 | Duration         | 8 s                      |
-|                 | Status           | final                    |
-|                 | Rendered by      | gallery                  |
-|                 | Host             | gallery                  |
-| Job             | File             | dc.eda.cohort.eda.qmd    |
-|                 | Template         | dc.eda                   |
-|                 | Subject          | cohort                   |
-|                 | Type             | eda                      |
-|                 | hvtiRtemplates   | 1.5.8                    |
-| Dataset `built` | Version file     | built_20261112.parquet   |
-|                 | Version date     | 2026-11-12               |
-|                 | Source file      | built.rds                |
-|                 | Rows kept        | 800 rows on 800 patients |
-|                 | WHERE            | none                     |
-|                 | sha256           | d99147a5c095             |
-|                 | Manifest         | current                  |
-| Reproducibility | renv             | not active               |
-|                 | renv.lock sha256 | ed18165d16bf             |
+| Group           | Item           | Value                    |
+|:----------------|:---------------|:-------------------------|
+| Run             | Started        | 2026-11-14 18:10:51 EST  |
+|                 | Ended          | 2026-11-14 18:10:58 EST  |
+|                 | Duration       | 7 s                      |
+|                 | Status         | final                    |
+|                 | Rendered by    | gallery                  |
+|                 | Host           | gallery                  |
+| Job             | File           | dc.eda.cohort.eda.qmd    |
+|                 | Template       | dc.eda                   |
+|                 | Subject        | cohort                   |
+|                 | Type           | eda                      |
+|                 | hvtiRtemplates | 1.6.0                    |
+| Dataset `built` | Version file   | built_20261114.parquet   |
+|                 | Version date   | 2026-11-14               |
+|                 | Source file    | built.rds                |
+|                 | Rows kept      | 800 rows on 800 patients |
+|                 | WHERE          | none                     |
+|                 | sha256         | d99147a5c095             |
+|                 | Manifest       | current                  |
+| Reproducibility | renv           | not active               |

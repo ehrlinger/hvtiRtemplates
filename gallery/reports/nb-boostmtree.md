@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:35
+2026-11-14 18:16
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -76,8 +76,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `echo` `echo_20261112.parquet`, dated 2026-11-12 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.8
+**final** · data `echo` `echo_20261114.parquet`, dated 2026-11-14 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.0
 
 ## Study choices
 
@@ -277,7 +277,7 @@ if (length(.chr)) {
 
 | Data                |                                        |
 |:--------------------|:---------------------------------------|
-| Source              | dataset `echo` (echo_20261112.parquet) |
+| Source              | dataset `echo` (echo_20261114.parquet) |
 | Rows read           | 1,180                                  |
 | ID                  | `patient_id`                           |
 | Identifiers dropped | none                                   |
@@ -408,7 +408,7 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 197 | 0.8869211 |
+| l2 | lvef | 200 | 0.8804792 |
 
 Table 3: Cross-validated fit, by response component
 
@@ -422,7 +422,7 @@ save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/a7d082ff432d77288d7e71865ad65d79.png)
+![](assets/bef60a27e2f150cbc2646b859478048d.png)
 
 Figure 1: Cross-validated error by boosting iteration. The black solid
 line is the error after each iteration, and the black dashed vertical
@@ -437,7 +437,7 @@ save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/0e221452fcdf239e9004750d1d9a6592.png)
+![](assets/b391e2c3342185631e10562bc54265cc.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
 per parameter. Each black solid line is the parameter’s fitted value
@@ -454,7 +454,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/8d1432022d074d3372756228260e06de.png)
+![](assets/8d28c3e5c25ea5c119cc1704e74e2dcc.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins.
 Each gray horizontal segment spans a time bin at its observed mean, with
@@ -477,7 +477,7 @@ save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
-![](assets/3e5562d60e2ab21d5e071c1f9fd1af0c.png)
+![](assets/8dac4a6e1c61bcff75d569d7186938a2.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time, one panel for each. Horizontal dark gray bars
@@ -583,12 +583,12 @@ Code
 .p
 ```
 
-![](assets/827dcc545f1202173d6e22d7857800d8.png)
+![](assets/88be9d5f72df66d573d2187e112c450f.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-1 of 2: nyha_pr, hx_chf, age, bmi.
+1 of 2: nyha_pr, hx_chf, bmi, age.
 
 Code
 
@@ -596,7 +596,7 @@ Code
 .p
 ```
 
-![](assets/abd4ea11aef981400a0806ccb021021b.png)
+![](assets/ecff16f30f9b3967282e7f74cbc93cf6.png)
 
 Figure 6: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
@@ -646,7 +646,7 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/905ad6e58fa49797a454433e7b01c71a.png)
+![](assets/75de85bac4acd6e258192226c39da951.png)
 
 Figure 7: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time. Thin translucent black lines trace
@@ -672,26 +672,25 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 ## About this run
 
-| Group           | Item             | Value                        |
-|:----------------|:-----------------|:-----------------------------|
-| Run             | Started          | 2026-11-12 09:33:17 EST      |
-|                 | Ended            | 2026-11-12 09:35:26 EST      |
-|                 | Duration         | 2 min 10 s                   |
-|                 | Status           | final                        |
-|                 | Rendered by      | gallery                      |
-|                 | Host             | gallery                      |
-| Job             | File             | nb.boostmtree.lvef.boost.qmd |
-|                 | Template         | nb.boostmtree                |
-|                 | Subject          | lvef                         |
-|                 | Type             | boost                        |
-|                 | hvtiRtemplates   | 1.5.8                        |
-| Dataset `echo`  | Version file     | echo_20261112.parquet        |
-|                 | Version date     | 2026-11-12                   |
-|                 | Source file      | echo.rds                     |
-|                 | Rows kept        | 1,180 rows on 300 patients   |
-|                 | WHERE            | none                         |
-|                 | sha256           | 96a19e865571                 |
-|                 | Manifest         | current                      |
-| Reproducibility | Seed             | 2026                         |
-|                 | renv             | not active                   |
-|                 | renv.lock sha256 | ed18165d16bf                 |
+| Group           | Item           | Value                        |
+|:----------------|:---------------|:-----------------------------|
+| Run             | Started        | 2026-11-14 18:14:24 EST      |
+|                 | Ended          | 2026-11-14 18:16:10 EST      |
+|                 | Duration       | 1 min 46 s                   |
+|                 | Status         | final                        |
+|                 | Rendered by    | gallery                      |
+|                 | Host           | gallery                      |
+| Job             | File           | nb.boostmtree.lvef.boost.qmd |
+|                 | Template       | nb.boostmtree                |
+|                 | Subject        | lvef                         |
+|                 | Type           | boost                        |
+|                 | hvtiRtemplates | 1.6.0                        |
+| Dataset `echo`  | Version file   | echo_20261114.parquet        |
+|                 | Version date   | 2026-11-14                   |
+|                 | Source file    | echo.rds                     |
+|                 | Rows kept      | 1,180 rows on 300 patients   |
+|                 | WHERE          | none                         |
+|                 | sha256         | 96a19e865571                 |
+|                 | Manifest       | current                      |
+| Reproducibility | Seed           | 2026                         |
+|                 | renv           | not active                   |

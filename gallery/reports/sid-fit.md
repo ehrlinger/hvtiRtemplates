@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:41
+2026-11-14 18:20
 
 This job builds the dissimilarity that `sid-clusters` turns into
 clusters. SID clustering (Mantero and Ishwaran, 2021) is unsupervised:
@@ -59,8 +59,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.8
+**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.0
 
 ## Study choices
 
@@ -190,7 +190,7 @@ cat("Patients with every clustering variable missing, dropped:", sum(.empty), "\
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261112.parquet) |
+| Source              | dataset `built` (built_20261114.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -384,26 +384,25 @@ saveRDS(sid_handoff, set_path("estimates", "sid.rds"))
 
 ## About this run
 
-| Group           | Item             | Value                    |
-|:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-12 09:41:16 EST  |
-|                 | Ended            | 2026-11-12 09:41:22 EST  |
-|                 | Duration         | 6 s                      |
-|                 | Status           | final                    |
-|                 | Rendered by      | gallery                  |
-|                 | Host             | gallery                  |
-| Job             | File             | sid.fit.echo.sid.qmd     |
-|                 | Template         | sid.fit                  |
-|                 | Subject          | echo                     |
-|                 | Type             | sid                      |
-|                 | hvtiRtemplates   | 1.5.8                    |
-| Dataset `built` | Version file     | built_20261112.parquet   |
-|                 | Version date     | 2026-11-12               |
-|                 | Source file      | built.rds                |
-|                 | Rows kept        | 800 rows on 800 patients |
-|                 | WHERE            | none                     |
-|                 | sha256           | d99147a5c095             |
-|                 | Manifest         | current                  |
-| Reproducibility | Seed             | 1024                     |
-|                 | renv             | not active               |
-|                 | renv.lock sha256 | ed18165d16bf             |
+| Group           | Item           | Value                    |
+|:----------------|:---------------|:-------------------------|
+| Run             | Started        | 2026-11-14 18:20:47 EST  |
+|                 | Ended          | 2026-11-14 18:20:52 EST  |
+|                 | Duration       | 5 s                      |
+|                 | Status         | final                    |
+|                 | Rendered by    | gallery                  |
+|                 | Host           | gallery                  |
+| Job             | File           | sid.fit.echo.sid.qmd     |
+|                 | Template       | sid.fit                  |
+|                 | Subject        | echo                     |
+|                 | Type           | sid                      |
+|                 | hvtiRtemplates | 1.6.0                    |
+| Dataset `built` | Version file   | built_20261114.parquet   |
+|                 | Version date   | 2026-11-14               |
+|                 | Source file    | built.rds                |
+|                 | Rows kept      | 800 rows on 800 patients |
+|                 | WHERE          | none                     |
+|                 | sha256         | d99147a5c095             |
+|                 | Manifest       | current                  |
+| Reproducibility | Seed           | 1024                     |
+|                 | renv           | not active               |

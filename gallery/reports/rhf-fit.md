@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:40
+2026-11-14 18:20
 
 Gallery job on the synthetic intervals: the hazard of the simulated
 event, from one time-varying marker (xtd) and three baseline markers.
@@ -77,8 +77,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `intervals` `intervals_20261112.parquet`, dated
-2026-11-12 · rendered by gallery on gallery · hvtiRtemplates 1.5.8
+**final** · data `intervals` `intervals_20261114.parquet`, dated
+2026-11-14 · rendered by gallery on gallery · hvtiRtemplates 1.6.0
 
 ## Study choices
 
@@ -253,7 +253,7 @@ if (length(.chr)) {
 
 | Data                |                                                  |
 |:--------------------|:-------------------------------------------------|
-| Source              | dataset `intervals` (intervals_20261112.parquet) |
+| Source              | dataset `intervals` (intervals_20261114.parquet) |
 | Rows read           | 471                                              |
 | ID                  | `patient_id`                                     |
 | Identifiers dropped | none                                             |
@@ -513,26 +513,25 @@ hvtiRtemplates:::.owner_only(set_path("estimates", "rhf.rds"), saveRDS(forest, s
 
 ## About this run
 
-| Group               | Item             | Value                      |
-|:--------------------|:-----------------|:---------------------------|
-| Run                 | Started          | 2026-11-12 09:40:41 EST    |
-|                     | Ended            | 2026-11-12 09:40:44 EST    |
-|                     | Duration         | 3 s                        |
-|                     | Status           | final                      |
-|                     | Rendered by      | gallery                    |
-|                     | Host             | gallery                    |
-| Job                 | File             | rhf.fit.event.rhf.qmd      |
-|                     | Template         | rhf.fit                    |
-|                     | Subject          | event                      |
-|                     | Type             | rhf                        |
-|                     | hvtiRtemplates   | 1.5.8                      |
-| Dataset `intervals` | Version file     | intervals_20261112.parquet |
-|                     | Version date     | 2026-11-12                 |
-|                     | Source file      | intervals.rds              |
-|                     | Rows kept        | 471 rows on 150 patients   |
-|                     | WHERE            | none                       |
-|                     | sha256           | beb287931ea4               |
-|                     | Manifest         | current                    |
-| Reproducibility     | Seed             | 2026                       |
-|                     | renv             | not active                 |
-|                     | renv.lock sha256 | ed18165d16bf               |
+| Group               | Item           | Value                      |
+|:--------------------|:---------------|:---------------------------|
+| Run                 | Started        | 2026-11-14 18:20:21 EST    |
+|                     | Ended          | 2026-11-14 18:20:23 EST    |
+|                     | Duration       | 2 s                        |
+|                     | Status         | final                      |
+|                     | Rendered by    | gallery                    |
+|                     | Host           | gallery                    |
+| Job                 | File           | rhf.fit.event.rhf.qmd      |
+|                     | Template       | rhf.fit                    |
+|                     | Subject        | event                      |
+|                     | Type           | rhf                        |
+|                     | hvtiRtemplates | 1.6.0                      |
+| Dataset `intervals` | Version file   | intervals_20261114.parquet |
+|                     | Version date   | 2026-11-14                 |
+|                     | Source file    | intervals.rds              |
+|                     | Rows kept      | 471 rows on 150 patients   |
+|                     | WHERE          | none                       |
+|                     | sha256         | beb287931ea4               |
+|                     | Manifest       | current                    |
+| Reproducibility     | Seed           | 2026                       |
+|                     | renv           | not active                 |

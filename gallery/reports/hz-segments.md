@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:31
+2026-11-14 18:12
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -65,8 +65,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `segments` `segments_20261112.parquet`, dated
-2026-11-12 · rendered by gallery on gallery · hvtiRtemplates 1.5.8
+**final** · data `segments` `segments_20261114.parquet`, dated
+2026-11-14 · rendered by gallery on gallery · hvtiRtemplates 1.6.0
 
 ## Study choices
 
@@ -174,7 +174,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                                |
 |:--------------------|:-----------------------------------------------|
-| Source              | dataset `segments` (segments_20261112.parquet) |
+| Source              | dataset `segments` (segments_20261114.parquet) |
 | Rows read           | 2,014                                          |
 | ID                  | `patient_id`                                   |
 | Identifiers dropped | none                                           |
@@ -714,6 +714,8 @@ est <- data.frame(
 Code
 
 ``` r
+# Saved as a data frame for an ar analysis report; the report formats it.
+hvtiRtemplates:::.save_exhibit(as.data.frame(est), "table", set_path("documents", "tbl-estimates.rds"))
 knitr::kable(est, digits = 6)
 ```
 
@@ -795,6 +797,7 @@ if (!all(c("lo", "hi") %in% names(resp))) {
   ggplot2::labs(x = "Years", y = "Survival (%)") +
   hvtiPlotR::theme_hv_manuscript(base_size = 12)
 save_figure(.fig, "hz-fit")
+hvtiRtemplates:::.record_exhibit(set_path("graphs", "hz-fit.png"), "figure")
 .fig
 ```
 
@@ -829,13 +832,39 @@ hz_art <- hvtiRtemplates:::.attach_handoff_lineage(
 saveRDS(hz_art, set_path("estimates", "hz.rds"))
 ```
 
+Code
+
+``` r
+# The paragraph an ar analysis report pastes into its Methods slot, filled from
+# this job's own choices. A report whose pasted copy no longer matches it says so.
+# Reword it here when the template's method changes, not in each study.
+# Patients are distinct IDs, not rows: with START a patient has a row per
+# segment, and nrow() would report segments as patients. resp is built row for
+# row from d and fitted whole, so d's IDs are the fitted patients.
+stopifnot(nrow(resp) == nrow(d))
+.n <- length(unique(d[[ID]]))
+.segments <- nrow(resp)
+# n_fitted, from the event-count check above, also counts interval-censored events.
+.events <- n_fitted
+hvtiRtemplates:::.save_exhibit(list(n = .n, segments = .segments, events = .events, phases = length(phases)), "value",
+                               set_path("estimates", "hz-methods.rds"))
+hvtiRtemplates:::.methods_text(sprintf(
+  paste("The hazard of the event recorded in %s was modeled as a parametric multiphase hazard with %d phase%s",
+        "(TemporalHazard %s), fitted by maximum likelihood to %d patients%s%s."),
+  EVENT, length(phases), if (length(phases) == 1L) "" else "s",
+  as.character(utils::packageVersion("TemporalHazard")), .n,
+  if (is.null(START)) "" else sprintf(" (%d follow-up segments)", .segments),
+  sprintf(" with %d events", .events)
+))
+```
+
 ## About this run
 
 | Group              | Item               | Value                      |
 |:-------------------|:-------------------|:---------------------------|
-| Run                | Started            | 2026-11-12 09:31:14 EST    |
-|                    | Ended              | 2026-11-12 09:31:26 EST    |
-|                    | Duration           | 12 s                       |
+| Run                | Started            | 2026-11-14 18:12:42 EST    |
+|                    | Ended              | 2026-11-14 18:12:52 EST    |
+|                    | Duration           | 9 s                        |
 |                    | Status             | final                      |
 |                    | Rendered by        | gallery                    |
 |                    | Host               | gallery                    |
@@ -844,13 +873,12 @@ saveRDS(hz_art, set_path("estimates", "hz.rds"))
 |                    | Template           | hz                         |
 |                    | Subject            | dead_segments              |
 |                    | Type               | hz                         |
-|                    | hvtiRtemplates     | 1.5.8                      |
-| Dataset `segments` | Version file       | segments_20261112.parquet  |
-|                    | Version date       | 2026-11-12                 |
+|                    | hvtiRtemplates     | 1.6.0                      |
+| Dataset `segments` | Version file       | segments_20261114.parquet  |
+|                    | Version date       | 2026-11-14                 |
 |                    | Source file        | segments.rds               |
 |                    | Rows kept          | 1,823 rows on 725 patients |
 |                    | WHERE              | `!is.na(creat_pr)`         |
 |                    | sha256             | bdbfaba0795e               |
 |                    | Manifest           | current                    |
 | Reproducibility    | renv               | not active                 |
-|                    | renv.lock sha256   | ed18165d16bf               |

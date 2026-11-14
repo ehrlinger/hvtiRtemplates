@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:42
+2026-11-14 18:22
 
 Gallery job on the synthetic cohort: mitral repair against replacement,
 and freedom from reintervention to eight years.
@@ -82,8 +82,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.8
+**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.0
 
 ## Study choices
 
@@ -285,7 +285,7 @@ knitr::kable(.counts)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261112.parquet) |
+| Source              | dataset `built` (built_20261114.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -1695,9 +1695,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-12 09:42:40 EST |
-|  | Ended | 2026-11-12 09:42:52 EST |
-|  | Duration | 11 s |
+| Run | Started | 2026-11-14 18:21:51 EST |
+|  | Ended | 2026-11-14 18:22:01 EST |
+|  | Duration | 10 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -1707,9 +1707,9 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 |  | Template | vt.fit |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.5.8 |
-| Dataset `built` | Version file | built_20261112.parquet |
-|  | Version date | 2026-11-12 |
+|  | hvtiRtemplates | 1.6.0 |
+| Dataset `built` | Version file | built_20261114.parquet |
+|  | Version date | 2026-11-14 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
@@ -1717,4 +1717,3 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 |  | Manifest | current |
 | Reproducibility | Seed | 1024 |
 |  | renv | not active |
-|  | renv.lock sha256 | ed18165d16bf |

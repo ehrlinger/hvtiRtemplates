@@ -1,0 +1,558 @@
+# Mixed model for a repeated measurement
+
+# Mixed model for a repeated measurement
+
+Published
+
+2026-11-14 18:14
+
+Fits a linear mixed model to a continuous response measured repeatedly
+on each patient, as PROC MIXED did with a REPEATED or RANDOM statement,
+and saves the population-average course over time, with its confidence
+limits, for a plot.
+
+Code
+
+``` r
+SUBJECT <- "lvef"
+TYPE    <- "mixed"
+.in <- knitr::current_input(dir = TRUE)
+suppressPackageStartupMessages({
+  library(nlme)
+  library(hvtiRutilities)
+})
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
+```
+
+**final** · data `echo` `echo_20261114.parquet`, dated 2026-11-14 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.0
+
+Code
+
+``` r
+# Optional: NULL reads the cohort alone. To model measurements held in a registered
+# ancillary dataset (echoes, labs), name it in JOIN; each joined record is a row.
+# REDUCE stays NULL here: collapsing to one record per patient would remove the
+# repeated measurements this job exists to model.
+JOIN <- NULL
+JOIN_VARS <- NULL
+REDUCE <- NULL
+JOIN_KEY <- NULL
+# Demo: the registered dataset this job reads ("built" is the study dataset).
+DATASET <- "echo"
+# Demo: a named analysis set, or NULL for every row WHERE keeps.
+ANALYSIS_SET <- NULL
+# Demo: a filter on the rows, e.g. WHERE <- quote(echo_type == "TTE"), or NULL.
+WHERE <- NULL
+# Demo: the patient identifier. If the data has no "ccfid" column, the job uses MRN, then eMRN;
+# name another column, such as "randid", if the study uses one.
+ID <- "patient_id"
+# Demo: the column giving each measurement's time since the reference event, in the units
+# the time terms below expect. Every row needs one; a missing or negative time stops the job.
+TIME <- "iv_echo"
+# Demo: what makes a row unique. A repeated measurement is one row per patient and time;
+# add a sequence column if a patient can have two measurements at the same time. AR(1) and UN
+# need one measurement per visit, so a sequence column suits "cs" or "random" only.
+KEY <- c(ID, TIME)
+
+# Demo: the repeated continuous response, named as the column.
+OUTCOME <- "lvef"
+# Demo: the scale the response is modeled on. "identity" models it as measured; "log"
+# models log(OUTCOME), what most corpus jobs did, writing ln_ in a DATA step. A
+# coefficient is then a change in the log, and the predictions are back-transformed.
+RESPONSE_SCALE <- "identity"
+# Demo: the time terms, as R expressions in TIME. A SAS job's DATA-step transforms
+# carry over line for line: in_t = 1/(t+1) is "I(1/(time + 1))", ln_t = log(t+1) is
+# "log(time + 1)". The +1 keeps a measurement at time zero finite.
+TIME_TERMS <- c("iv_echo")
+PREDICTORS <- c("age", "female", "hx_chf")
+# Demo: the within-patient correlation, first listed is reported; list several to compare them.
+#   "cs"         REPEATED / type=cs sub=id: one correlation between any two of a patient's
+#                measurements. The corpus's main form, in 27 studies or more.
+#   "ar1"        REPEATED visit / type=ar(1): correlation falls with the number of visits
+#                apart. Needs shared, ordered visits, not free times; more than 20 distinct
+#                visits stops the job.
+#   "un"         REPEATED visit / type=un: a correlation and a variance per visit pair.
+#                Same visit requirement; costs many parameters.
+#   "random"     RANDOM intercept / subject=id.
+#   "slope"      RANDOM int <time term> / subject=id: a random intercept and a random slope in
+#                time, independent as SAS's RANDOM default type=vc. SLOPE names the term.
+# RANDOM and REPEATED in one fit are not offered: one corpus study wrote them so.
+# A spatial structure (type=sp(pow)) is not offered; nlme::corExp(form = ~ time | id)
+# is its R form if a study needs one.
+STRUCTURE <- c("cs", "slope")
+# Demo: for "ar1" or "un", the column holding each measurement's scheduled visit number (1, 2, 3, ...), or NULL.
+# NULL ranks the observed TIME values, as SAS numbers the levels of a CLASS visit, so a visit no patient attended
+# closes up and AR(1) reads visits 1 and 3 as neighbors. Name the column when the schedule has such a gap or TIME
+# is not the visit itself. Irregular times suit neither; nlme::corCAR1(form = ~ time | id) is the R form of sp(pow).
+VISIT <- NULL
+# Demo: for "slope", the time term the random slope is on, written as it appears in TIME_TERMS, or NULL for the first.
+# A SAS job's RANDOM int iv_echo, with iv_echo = 1/(t+1) in its DATA step, is "I(1/(time + 1))". A patient measured
+# at a single time has no trajectory of their own, though their measurement still informs the variances; the report
+# counts them.
+# Where SAS reports a slope variance of zero (G matrix not positive definite), nlme gives a tiny positive value or
+# fails to converge; a port read against a .lst should expect that.
+SLOPE <- NULL
+# Demo: "REML", as SAS's default, unless models with different fixed effects are to be
+# compared by likelihood, which needs "ML".
+METHOD <- "REML"
+# Demo: the covariate profiles the predicted course is drawn for, as a list of named
+# lists, e.g. list(list(age = 60, female = 0), list(age = 60, female = 1)). NULL draws
+# one profile: the median of each numeric predictor and the first level of the others.
+PREDICT_AT <- list(list(age = 60, female = 0, hx_chf = 0), list(age = 60, female = 0, hx_chf = 1))
+# Demo: the times to predict at, or NULL for 50 points over the observed range.
+PREDICT_TIMES <- NULL
+IMPUTATION <- NULL                          # Demo: must stay NULL; this job does not pool imputations yet.
+```
+
+Code
+
+``` r
+# The checksum of every dataset in manifest.yaml is checked before anything is
+# read, so a result can name the data that produced it. It stops on a mismatch.
+hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
+.cfg <- study_config(start = .root)
+job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
+                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
+                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = FALSE,
+                                          imputation = IMPUTATION)
+job_data$provenance$role <- "training"
+if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"
+d <- job_data$data
+.provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
+                      if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
+# The identifier column read_job_data() used: MRN or eMRN when there is no ccfid.
+.id <- attr(job_data$record, "selection")$id
+IMPUTATION <- attr(job_data$record, "selection")$imputation
+knitr::kable(job_data$record, col.names = c("Data", ""))
+# A column the study choices name that the data lack stops here, naming the setting to change.
+hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, TIME = TIME, PREDICTORS = PREDICTORS)
+RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
+.response <- hvtiRtemplates:::.response_term(d, OUTCOME, RESPONSE_SCALE)
+```
+
+| Data                |                                        |
+|:--------------------|:---------------------------------------|
+| Source              | dataset `echo` (echo_20261114.parquet) |
+| Rows read           | 1,180                                  |
+| ID                  | `patient_id`                           |
+| Identifiers dropped | none                                   |
+| Rows kept           | 1,180 rows on 300 patients             |
+
+Table 1: The data this job read
+
+Code
+
+``` r
+# The fit lives here rather than in a package until a second longitudinal template
+# (mp or gm) shows what a package function should be; see the design note.
+.mm_structures <- c("cs", "ar1", "un", "random", "slope")
+
+# Each check stops on data the fit would accept and then get wrong without saying so.
+mm_check <- function(d, id, time, structure, imputation, visit = NULL, slope = NULL, time_terms = NULL) {
+  bad <- setdiff(structure, .mm_structures)
+  if (length(bad)) {
+    stop("STRUCTURE ", paste(dQuote(bad, FALSE), collapse = ", "), " is not one of ",
+         paste(dQuote(.mm_structures, FALSE), collapse = ", "), ". Change it in edit-study-choices.", call. = FALSE)
+  }
+  if (!is.null(imputation)) {
+    stop("IMPUTATION is set, and this job does not pool imputations: a fit to stacked imputations ",
+         "would count every patient once per imputation. Set IMPUTATION <- NULL.", call. = FALSE)
+  }
+  if (max(table(d[[id]])) < 2L) {
+    stop("Every patient has a single row, so there is nothing repeated to model. ",
+         "KEY should include TIME, and the data should hold every measurement.", call. = FALSE)
+  }
+  t <- d[[time]]
+  if (anyNA(t) || any(t < 0)) {
+    stop("TIME (", time, ") has ", sum(is.na(t) | (!is.na(t) & t < 0)),
+         " missing or negative values. Every measurement needs its time since the reference event.", call. = FALSE)
+  }
+  if (!is.null(visit)) {
+    if (!visit %in% names(d)) stop("VISIT (", visit, ") is not a column of the data. Change it in edit-study-choices.",
+                                   call. = FALSE)
+    v <- d[[visit]]
+    if (!is.numeric(v) || anyNA(v) || any(v < 1) || any(v != round(v))) {
+      stop("VISIT (", visit, ") must hold a whole visit number, 1 or more, on every row.", call. = FALSE)
+    }
+    # AR(1) and UN give each visit one place per patient; a second row at the same visit has none.
+    if (anyDuplicated(data.frame(d[[id]], v))) {
+      stop("VISIT (", visit, ") repeats a visit within a patient. Keep one measurement per patient and visit.",
+           call. = FALSE)
+    }
+  }
+  k <- if (is.null(visit)) t else d[[visit]]
+  if (any(c("ar1", "un") %in% structure) && length(unique(k)) > 20L) {
+    stop("STRUCTURE asks for AR(1) or UN, which assume shared, ordered visits, but ", if (is.null(visit)) "TIME" else "VISIT",
+         " has ", length(unique(k)), " distinct values, more than 20 distinct visits. Use \"cs\" or \"random\" for ",
+         "free times, or set VISIT to a visit number.", call. = FALSE)
+  }
+  if ("slope" %in% structure) {
+    if (is.null(slope) || is.na(slope)) {
+      stop("STRUCTURE asks for \"slope\", but SLOPE names no time term: TIME_TERMS is empty. ",
+           "Add the time term the slope is on to TIME_TERMS.", call. = FALSE)
+    }
+    if (!slope %in% time_terms) {
+      stop("SLOPE (", slope, ") is not one of TIME_TERMS (", paste(time_terms, collapse = ", "), "). ",
+           "Write it as it appears there, or set SLOPE <- NULL for the first.", call. = FALSE)
+    }
+    # An intercept column plus one slope column. A term that expands to more (splines::ns) fits several slope
+    # variances that the covariance table would report under one label.
+    if (ncol(stats::model.matrix(stats::as.formula(paste("~", slope)), d)) != 2L) {
+      stop("SLOPE (", slope, ") must be a single numeric column, as SAS's RANDOM int <var> takes one variable. ",
+           "Use a single transform such as \"log(time + 1)\".", call. = FALSE)
+    }
+  }
+  invisible(TRUE)
+}
+
+mm_fit <- function(d, formula, id, time, structure, method, visit = NULL, slope = NULL) {
+  ord <- order(d[[id]], d[[time]])
+  d <- d[ord, , drop = FALSE]
+  # SAS places a measurement by its visit, not by its row: a patient who misses visit 2 keeps visit 3 in place 3.
+  # Without VISIT the visits are the ranks of the observed times. With VISIT, AR(1) counts the scheduled gap, so
+  # visits 1 and 3 are two steps apart even when nobody attended visit 2; UN has no data to place a visit nobody
+  # attended, so it keeps the rank and labels each visit by its number.
+  key <- if (is.null(visit)) d[[time]] else d[[visit]]
+  seen <- sort(unique(key))
+  labels <- if (is.null(visit)) seq_along(seen) else seen
+  d$.visit_rank <- match(key, seen)
+  d$.visit_index <- if (is.null(visit)) d$.visit_rank else as.integer(key)
+  d$.visit <- factor(labels[d$.visit_rank], levels = labels)
+  by_id <- function(lhs) stats::as.formula(paste(lhs, "|", id))
+  corr <- switch(structure,
+    cs = nlme::corCompSymm(form = by_id("~ 1")),
+    ar1 = nlme::corAR1(form = by_id("~ .visit_index")),
+    un = nlme::corSymm(form = by_id("~ .visit_rank")),
+    random = NULL,
+    slope = NULL
+  )
+  # SAS's RANDOM int <slope> / subject=id is type=vc by default: intercept and slope independent, so pdDiag,
+  # not nlme's own default pdSymm, which would estimate a correlation the SAS fit did not.
+  random <- switch(structure,
+    random = by_id("~ 1"),
+    slope = stats::setNames(list(nlme::pdDiag(stats::as.formula(paste("~", slope)))), id),
+    NULL
+  )
+  # nlme drops a row with a missing ID as well as one with a missing model variable, so the counts must too.
+  used <- stats::complete.cases(d[unique(c(all.vars(formula), id))])
+  # A slope needs some patient with two fitted measurements at distinct times. The rows the fit uses decide it:
+  # a patient measured twice whose second response is missing has one. Without this nlme stops on
+  # "fewer observations than random effects", which names no study choice.
+  if (identical(structure, "slope") &&
+        !any(tapply(d[[time]][used], as.character(d[[id]][used]), function(x) length(unique(x)) >= 2L))) {
+    stop("STRUCTURE asks for \"slope\", but no patient has two or more fitted measurements at distinct times. ",
+         "Use \"cs\" or \"random\".", call. = FALSE)
+  }
+  model <- tryCatch(
+    if (!is.null(random)) {
+      nlme::lme(formula, data = d, random = random, correlation = corr, method = method,
+                na.action = stats::na.omit)
+    } else {
+      nlme::gls(formula, data = d, correlation = corr, method = method, na.action = stats::na.omit,
+                weights = if (identical(structure, "un")) nlme::varIdent(form = ~ 1 | .visit))
+    },
+    error = function(e) {
+      stop("The ", structure, " fit failed: ", conditionMessage(e), ". Try another STRUCTURE.", call. = FALSE)
+    }
+  )
+  # The training terms keep poly() and ns() bases (predvars) and the fitted contrasts, so predictions on a new grid
+  # are coded exactly as the fit was; rebuilding them from the formula would build a new basis on the grid.
+  # A level held only by rows the fit dropped has no coefficient, so the levels come from the rows used.
+  mf <- stats::model.frame(formula, d[used, , drop = FALSE], drop.unused.levels = TRUE)
+  fixed <- stats::delete.response(stats::terms(mf))
+  list(model = model, structure = structure, method = method, formula = formula, terms = fixed, visit_labels = labels,
+       contrasts = attr(stats::model.matrix(fixed, mf), "contrasts"),
+       # `used` is returned in the caller's row order: the caller indexes its own, unsorted data with it.
+       xlev = stats::.getXlevels(fixed, mf), used = used[order(ord)],
+       n_patients = length(unique(d[[id]][used])), n_measurements = sum(used),
+       per_patient = table(as.character(d[[id]][used])), slope = slope,
+       n_single_time = sum(tapply(d[[time]][used], as.character(d[[id]][used]), function(x) length(unique(x))) < 2L))
+}
+
+# The covariance parameters: cs and random report one within-patient correlation, ar1 the lag-1 correlation,
+# and un one correlation per visit pair; slope the intercept, slope and residual variances.
+mm_covariance <- function(fit) {
+  m <- fit$model
+  structure <- fit$structure
+  out <- list()
+  # nlme takes the first visit it meets as the variance reference, which is not always visit 1.
+  ref <- if (identical(structure, "un")) attr(m$modelStruct$varStruct, "groupNames")[[1L]]
+  if (inherits(m, "lme")) {
+    vc <- suppressWarnings(as.numeric(nlme::VarCorr(m)[, "Variance"]))
+    if (identical(structure, "slope")) {
+      # Labeled as SAS's Covariance Parameter Estimates name them, so a port reads against its .lst.
+      out[["Intercept variance"]] <- vc[[1L]]
+      out[[paste(fit$slope, "variance")]] <- vc[[2L]]
+      out[["residual variance"]] <- vc[[length(vc)]]
+    } else {
+      out[["between-patient variance"]] <- vc[[1L]]
+      out[["residual variance"]] <- vc[[length(vc)]]
+      out[["within-patient correlation"]] <- vc[[1L]] / sum(vc)
+    }
+  } else {
+    out[[if (identical(structure, "un")) paste0("residual variance at visit ", ref) else "residual variance"]] <- m$sigma^2
+  }
+  cs <- m$modelStruct$corStruct
+  if (!is.null(cs)) {
+    rho <- unname(stats::coef(cs, unconstrained = FALSE))
+    if (identical(structure, "un")) {
+      # nlme orders the correlations by row of the upper triangle: (1,2), (1,3), ..., (2,3), ...
+      pairs <- t(utils::combn(seq_len(ceiling(sqrt(2 * length(rho) + 0.25) + 0.5)), 2L))
+      ratio <- stats::coef(m$modelStruct$varStruct, unconstrained = FALSE)
+      for (k in seq_along(ratio)) out[[paste0("SD ratio, visit ", names(ratio)[[k]], " to visit ", ref)]] <- ratio[[k]]
+      lab <- fit$visit_labels
+      for (i in seq_along(rho)) out[[paste0("correlation, visits ", lab[pairs[i, 1L]], " and ", lab[pairs[i, 2L]])]] <- rho[[i]]
+    } else {
+      out[[if (identical(structure, "cs")) "within-patient correlation" else "correlation, adjacent visits"]] <- rho[[1L]]
+    }
+  }
+  data.frame(parameter = names(out), estimate = unname(unlist(out)), row.names = NULL)
+}
+
+# The covariate profiles crossed with the prediction times.
+mm_grid <- function(d, predictors, time, predict_at, predict_times) {
+  times <- if (is.null(predict_times)) {
+    seq(min(d[[time]]), max(d[[time]]), length.out = 50L)
+  } else {
+    predict_times
+  }
+  if (is.null(predict_at)) {
+    # The variables under the terms, so I(age^2) or age:female take their values from age and female.
+    vars <- setdiff(all.vars(stats::reformulate(predictors)), time)
+    predict_at <- list(lapply(stats::setNames(vars, vars), function(v) {
+      x <- d[[v]]
+      if (is.numeric(x)) stats::median(x, na.rm = TRUE) else sort(unique(x))[[1L]]
+    }))
+  }
+  grid <- do.call(rbind, lapply(seq_along(predict_at), function(i) {
+    row <- as.data.frame(predict_at[[i]], stringsAsFactors = FALSE)
+    out <- row[rep(1L, length(times)), , drop = FALSE]
+    out[[time]] <- times
+    out$profile <- i
+    out
+  }))
+  rownames(grid) <- NULL
+  grid
+}
+
+# Population-average predictions: the fixed effects alone, with 95% limits from their
+# covariance on the linear predictor, back-transformed when the response is logged.
+mm_predict <- function(fit, newdata, scale) {
+  for (v in intersect(names(fit$xlev), names(newdata))) {
+    unseen <- setdiff(unique(as.character(newdata[[v]])), fit$xlev[[v]])
+    if (length(unseen) > 0L) {
+      stop("PREDICT_AT asks for ", v, " = ", paste(unseen, collapse = ", "), ", a level no fitted row holds. ",
+           "Change PREDICT_AT in edit-study-choices.", call. = FALSE)
+    }
+  }
+  x <- stats::model.matrix(fit$terms, stats::model.frame(fit$terms, newdata, xlev = fit$xlev),
+                           contrasts.arg = fit$contrasts)
+  # nlme::fixef() has no gls method; coef() of a gls is its fixed effects.
+  beta <- if (inherits(fit$model, "lme")) nlme::fixef(fit$model) else stats::coef(fit$model)
+  v <- stats::vcov(fit$model)
+  eta <- drop(x %*% beta)
+  se <- sqrt(rowSums((x %*% v) * x))
+  z <- stats::qnorm(0.975)
+  back <- if (identical(scale, "log")) exp else identity
+  cbind(newdata, estimate = back(eta), lower = back(eta - z * se), upper = back(eta + z * se))
+}
+```
+
+Code
+
+``` r
+.slope <- if (is.null(SLOPE)) TIME_TERMS[1L] else SLOPE  # NA when TIME_TERMS is empty; mm_check stops if "slope" asks
+mm_check(d, .id, TIME, STRUCTURE, IMPUTATION, VISIT, .slope, TIME_TERMS)
+model_formula <- stats::reformulate(c(TIME_TERMS, PREDICTORS), response = .response)
+fits <- lapply(stats::setNames(STRUCTURE, STRUCTURE),
+               function(s) mm_fit(d, model_formula, .id, TIME, s, METHOD, VISIT, if (identical(s, "slope")) .slope))
+fit <- fits[[1L]]
+comparison <- NULL  # replaced by the tbl-compare chunk when STRUCTURE lists several
+```
+
+Code
+
+``` r
+cat(hvtiRtemplates:::.response_note(model_formula, RESPONSE_SCALE, "outcome"))
+```
+
+The model fitted is `lvef ~ iv_echo + age + female + hx_chf`. The
+outcome is modeled as measured: a coefficient is the expected change in
+the outcome, in its own units, for a unit change in a numeric predictor,
+or against the reference level of a categorical one, the others held
+fixed.
+
+Code
+
+``` r
+cat("\n\nThe reported model is the ", dQuote(STRUCTURE[[1L]], FALSE), " structure, fitted by ", METHOD, ".\n", sep = "")
+```
+
+The reported model is the “cs” structure, fitted by REML.
+
+Code
+
+``` r
+.counts <- data.frame(
+  quantity = c("patients", "measurements", "measurements per patient, median", "measurements per patient, range"),
+  value = c(fit$n_patients, fit$n_measurements, stats::median(fit$per_patient), paste(range(fit$per_patient), collapse = " to "))
+)
+if (identical(fit$structure, "slope")) {
+  .counts <- rbind(.counts, data.frame(quantity = "patients measured at a single time",
+                                       value = fit$n_single_time))
+}
+knitr::kable(.counts)
+```
+
+| quantity                         | value  |
+|:---------------------------------|:-------|
+| patients                         | 300    |
+| measurements                     | 1180   |
+| measurements per patient, median | 4      |
+| measurements per patient, range  | 2 to 6 |
+
+Table 2: Patients and measurements in the fit
+
+Code
+
+``` r
+.tt <- summary(fit$model)$tTable
+estimates <- data.frame(term = rownames(.tt), estimate = .tt[, "Value"], std_error = .tt[, "Std.Error"],
+                        p_value = .tt[, "p-value"], row.names = NULL)
+knitr::kable(estimates, digits = 4)
+```
+
+| term        | estimate | std_error | p_value |
+|:------------|---------:|----------:|--------:|
+| (Intercept) |  63.6700 |    2.7506 |  0.0000 |
+| iv_echo     |   0.3575 |    0.0415 |  0.0000 |
+| age         |  -0.1532 |    0.0426 |  0.0003 |
+| female      |   2.5631 |    1.1289 |  0.0234 |
+| hx_chf      | -11.7124 |    1.1716 |  0.0000 |
+
+Table 3: Fixed-effect estimates of the reported model
+
+Code
+
+``` r
+covariance <- mm_covariance(fit)
+knitr::kable(covariance, digits = 4)
+```
+
+| parameter                  | estimate |
+|:---------------------------|---------:|
+| residual variance          |   98.647 |
+| within-patient correlation |    0.866 |
+
+Table 4: Covariance parameters of the reported model
+
+Code
+
+``` r
+# AIC and BIC compare covariance structures fairly under REML only because every
+# fit here has the same fixed effects; a table of different fixed effects needs ML.
+comparison <- data.frame(structure = names(fits),
+                         AIC = vapply(fits, function(f) stats::AIC(f$model), numeric(1L)),
+                         BIC = vapply(fits, function(f) stats::BIC(f$model), numeric(1L)), row.names = NULL)
+knitr::kable(comparison, digits = 1)
+```
+
+| structure |    AIC |    BIC |
+|:----------|-------:|-------:|
+| cs        | 7369.8 | 7405.3 |
+| slope     | 7231.8 | 7272.3 |
+
+Table 5: Comparison of covariance structures, same fixed effects
+
+Code
+
+``` r
+# The default profile is drawn from the rows the fit used, so it never names a level the fit dropped.
+predictions <- mm_predict(fit, mm_grid(d[fit$used, , drop = FALSE], PREDICTORS, TIME, PREDICT_AT, PREDICT_TIMES),
+                          RESPONSE_SCALE)
+.ends <- predictions[!duplicated(predictions$profile) | !duplicated(predictions$profile, fromLast = TRUE), ]
+knitr::kable(.ends, digits = 3, row.names = FALSE)
+```
+
+| age | female | hx_chf | iv_echo | profile | estimate |  lower |  upper |
+|----:|-------:|-------:|--------:|--------:|---------:|-------:|-------:|
+|  60 |      0 |      0 |   0.002 |       1 |   54.476 | 52.904 | 56.049 |
+|  60 |      0 |      0 |  14.995 |       1 |   59.837 | 58.089 | 61.584 |
+|  60 |      0 |      1 |   0.002 |       2 |   42.764 | 40.649 | 44.878 |
+|  60 |      0 |      1 |  14.995 |       2 |   48.124 | 45.852 | 50.397 |
+
+Table 6: Population-average course of the response, first and last times
+of each profile
+
+Code
+
+``` r
+if (identical(RESPONSE_SCALE, "log")) {
+  cat("\nWith the response modeled on the log scale, the course is its geometric mean on the measured scale, which is its median ",
+      "when the log is normally distributed; the limits are for that median, not for a mean.\n", sep = "")
+}
+```
+
+Code
+
+``` r
+MODEL_PATH <- set_path("estimates", "mm.rds")
+PREDICTIONS_PATH <- set_path("estimates", "mm-predictions.csv")
+utils::write.csv(predictions, PREDICTIONS_PATH, row.names = FALSE)
+# No nlme object is saved: it carries the patient ID as its grouping factor.
+bundle <- list(
+  meta = list(id_col = .id, outcome = OUTCOME, response_scale = RESPONSE_SCALE,
+              prediction_scale = if (identical(RESPONSE_SCALE, "log")) "geometric mean" else "mean",
+              time = TIME, visit = VISIT, slope = if ("slope" %in% STRUCTURE) .slope, time_terms = TIME_TERMS,
+              predictors = PREDICTORS, structure = fit$structure, method = METHOD,
+              formula = paste(deparse(model_formula), collapse = " "), n_patients = fit$n_patients,
+              n_measurements = fit$n_measurements, nlme_version = as.character(utils::packageVersion("nlme"))),
+  coefficients = if (inherits(fit$model, "lme")) nlme::fixef(fit$model) else stats::coef(fit$model),
+  vcov = stats::vcov(fit$model),
+  tables = list(estimates = estimates, covariance = covariance, comparison = comparison),
+  predictions = predictions
+)
+.analysis <- list(outcome = list(variable = OUTCOME, scale = RESPONSE_SCALE),
+                  model = list(engine = "nlme", structure = fit$structure, method = METHOD, formula = bundle$meta$formula))
+.cohort <- list(patients = fit$n_patients, measurements = fit$n_measurements)
+bundle <- hvtiRtemplates:::.attach_handoff_lineage(
+  bundle, data = if (exists(".provenance_data")) .provenance_data else list(),
+  analysis = .analysis, cohort = .cohort, selection = attr(job_data$record, "selection")
+)
+saveRDS(hvtiRtemplates:::.digest_bundle_ids(bundle, .root), MODEL_PATH)
+```
+
+## About this run
+
+| Group           | Item           | Value                      |
+|:----------------|:---------------|:---------------------------|
+| Run             | Started        | 2026-11-14 18:14:18 EST    |
+|                 | Ended          | 2026-11-14 18:14:19 EST    |
+|                 | Duration       | 0 s                        |
+|                 | Status         | final                      |
+|                 | Rendered by    | gallery                    |
+|                 | Host           | gallery                    |
+| Job             | File           | mm.lvef.mixed.qmd          |
+|                 | Template       | mm                         |
+|                 | Subject        | lvef                       |
+|                 | Type           | mixed                      |
+|                 | hvtiRtemplates | 1.6.0                      |
+| Dataset `echo`  | Version file   | echo_20261114.parquet      |
+|                 | Version date   | 2026-11-14                 |
+|                 | Source file    | echo.rds                   |
+|                 | Rows kept      | 1,180 rows on 300 patients |
+|                 | WHERE          | none                       |
+|                 | sha256         | 96a19e865571               |
+|                 | Manifest       | current                    |
+| Reproducibility | renv           | not active                 |

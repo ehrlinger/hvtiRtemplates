@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:32
+2026-11-14 18:13
 
 Fits a proportional-odds cumulative-logit model. The complete outcome
 order is declared rather than inferred, and thresholds remain distinct
@@ -34,8 +34,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.8
+**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.0
 
 Code
 
@@ -115,7 +115,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTOR
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261112.parquet) |
+| Source              | dataset `built` (built_20261114.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -241,25 +241,24 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 ## About this run
 
-| Group           | Item             | Value                    |
-|:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-12 09:32:22 EST  |
-|                 | Ended            | 2026-11-12 09:32:23 EST  |
-|                 | Duration         | 0 s                      |
-|                 | Status           | final                    |
-|                 | Rendered by      | gallery                  |
-|                 | Host             | gallery                  |
-| Job             | File             | lm.ordinal.mr.model.qmd  |
-|                 | Template         | lm.ordinal               |
-|                 | Subject          | mr                       |
-|                 | Type             | model                    |
-|                 | hvtiRtemplates   | 1.5.8                    |
-| Dataset `built` | Version file     | built_20261112.parquet   |
-|                 | Version date     | 2026-11-12               |
-|                 | Source file      | built.rds                |
-|                 | Rows kept        | 800 rows on 800 patients |
-|                 | WHERE            | none                     |
-|                 | sha256           | d99147a5c095             |
-|                 | Manifest         | current                  |
-| Reproducibility | renv             | not active               |
-|                 | renv.lock sha256 | ed18165d16bf             |
+| Group           | Item           | Value                    |
+|:----------------|:---------------|:-------------------------|
+| Run             | Started        | 2026-11-14 18:13:36 EST  |
+|                 | Ended          | 2026-11-14 18:13:36 EST  |
+|                 | Duration       | 0 s                      |
+|                 | Status         | final                    |
+|                 | Rendered by    | gallery                  |
+|                 | Host           | gallery                  |
+| Job             | File           | lm.ordinal.mr.model.qmd  |
+|                 | Template       | lm.ordinal               |
+|                 | Subject        | mr                       |
+|                 | Type           | model                    |
+|                 | hvtiRtemplates | 1.6.0                    |
+| Dataset `built` | Version file   | built_20261114.parquet   |
+|                 | Version date   | 2026-11-14               |
+|                 | Source file    | built.rds                |
+|                 | Rows kept      | 800 rows on 800 patients |
+|                 | WHERE          | none                     |
+|                 | sha256         | d99147a5c095             |
+|                 | Manifest       | current                  |
+| Reproducibility | renv           | not active               |

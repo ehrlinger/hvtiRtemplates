@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:35
+2026-11-14 18:16
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
@@ -85,8 +85,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.8
+**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.0
 
 ## Study choices
 
@@ -273,7 +273,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261112.parquet) |
+| Source              | dataset `built` (built_20261114.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -500,26 +500,25 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 ## About this run
 
-| Group           | Item             | Value                    |
-|:----------------|:-----------------|:-------------------------|
-| Run             | Started          | 2026-11-12 09:35:33 EST  |
-|                 | Ended            | 2026-11-12 09:35:39 EST  |
-|                 | Duration         | 6 s                      |
-|                 | Status           | final                    |
-|                 | Rendered by      | gallery                  |
-|                 | Host             | gallery                  |
-| Job             | File             | rfs.fit.dead.rf.qmd      |
-|                 | Template         | rfs.fit                  |
-|                 | Subject          | dead                     |
-|                 | Type             | rf                       |
-|                 | hvtiRtemplates   | 1.5.8                    |
-| Dataset `built` | Version file     | built_20261112.parquet   |
-|                 | Version date     | 2026-11-12               |
-|                 | Source file      | built.rds                |
-|                 | Rows kept        | 800 rows on 800 patients |
-|                 | WHERE            | none                     |
-|                 | sha256           | d99147a5c095             |
-|                 | Manifest         | current                  |
-| Reproducibility | Seed             | 2026                     |
-|                 | renv             | not active               |
-|                 | renv.lock sha256 | ed18165d16bf             |
+| Group           | Item           | Value                    |
+|:----------------|:---------------|:-------------------------|
+| Run             | Started        | 2026-11-14 18:16:16 EST  |
+|                 | Ended          | 2026-11-14 18:16:21 EST  |
+|                 | Duration       | 5 s                      |
+|                 | Status         | final                    |
+|                 | Rendered by    | gallery                  |
+|                 | Host           | gallery                  |
+| Job             | File           | rfs.fit.dead.rf.qmd      |
+|                 | Template       | rfs.fit                  |
+|                 | Subject        | dead                     |
+|                 | Type           | rf                       |
+|                 | hvtiRtemplates | 1.6.0                    |
+| Dataset `built` | Version file   | built_20261114.parquet   |
+|                 | Version date   | 2026-11-14               |
+|                 | Source file    | built.rds                |
+|                 | Rows kept      | 800 rows on 800 patients |
+|                 | WHERE          | none                     |
+|                 | sha256         | d99147a5c095             |
+|                 | Manifest       | current                  |
+| Reproducibility | Seed           | 2026                     |
+|                 | renv           | not active               |

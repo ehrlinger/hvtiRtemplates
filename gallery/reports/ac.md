@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:29
+2026-11-14 18:23
 
 An `ac` job is the first look at an outcome: the Kaplan-Meier life
 table, survival and patients at risk at the reporting horizons, the
@@ -56,8 +56,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261112.parquet`, dated 2026-11-12 ·
-rendered by gallery on gallery · hvtiRtemplates 1.5.8
+**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.0
 
 ## Study choices
 
@@ -200,7 +200,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261112.parquet) |
+| Source              | dataset `built` (built_20261114.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -877,9 +877,11 @@ the end of follow-up survival is not defined and is left blank.
 Code
 
 ``` r
-knitr::kable(as_percent(hvtiRtemplates::life_table_at(d, TIME, EVENT, times = grid, labels = labs,
-                                                      conf_level = CLEVEL)),
-             row.names = FALSE, digits = 4)
+.horizons <- as_percent(hvtiRtemplates::life_table_at(d, TIME, EVENT, times = grid, labels = labs,
+                                                      conf_level = CLEVEL))
+# Saved as a data frame for an ar analysis report; the report formats it.
+hvtiRtemplates:::.save_exhibit(as.data.frame(.horizons), "table", set_path("documents", "tbl-horizons.rds"))
+knitr::kable(.horizons, row.names = FALSE, digits = 4)
 ```
 
 | horizon |    time | survival | cl_lower | cl_upper | n_risk |
@@ -2094,6 +2096,7 @@ Code
 ``` r
 .fig <- km_figure()
 save_figure(.fig, "ac-survival", width = 6, height = 5)
+hvtiRtemplates:::.record_exhibit(set_path("graphs", "ac-survival.png"), "figure")
 .fig
 ```
 
@@ -2156,13 +2159,30 @@ Code
 
 Figure 6: Survival by hx_chf, with patients at risk
 
+Code
+
+``` r
+# The paragraph an ar analysis report pastes into its Methods slot, filled from
+# this job's own choices. A report whose pasted copy no longer matches it says so.
+# Reword it here when the template's method changes, not in each study.
+# Counted over the rows analyzed: a row missing its time or event is not.
+.analyzed <- !is.na(d[[TIME]]) & !is.na(d[[EVENT]])
+.n <- sum(.analyzed)
+.events <- sum(as.numeric(d[[EVENT]][.analyzed]) == 1)
+hvtiRtemplates:::.save_exhibit(list(n = .n, events = .events), "value", set_path("estimates", "ac-methods.rds"))
+hvtiRtemplates:::.methods_text(sprintf(
+  "Survival was estimated by the Kaplan-Meier method, with %s%% confidence limits, from %d patients with %d events.",
+  format(round(100 * CLEVEL, 1)), .n, .events
+))
+```
+
 ## About this run
 
 | Group           | Item                | Value                    |
 |:----------------|:--------------------|:-------------------------|
-| Run             | Started             | 2026-11-12 09:28:56 EST  |
-|                 | Ended               | 2026-11-12 09:29:02 EST  |
-|                 | Duration            | 6 s                      |
+| Run             | Started             | 2026-11-14 18:23:06 EST  |
+|                 | Ended               | 2026-11-14 18:23:11 EST  |
+|                 | Duration            | 5 s                      |
 |                 | Status              | final                    |
 |                 | Rendered by         | gallery                  |
 |                 | Host                | gallery                  |
@@ -2172,13 +2192,12 @@ Figure 6: Survival by hx_chf, with patients at risk
 |                 | Template            | ac                       |
 |                 | Subject             | dead                     |
 |                 | Type                | hz                       |
-|                 | hvtiRtemplates      | 1.5.8                    |
-| Dataset `built` | Version file        | built_20261112.parquet   |
-|                 | Version date        | 2026-11-12               |
+|                 | hvtiRtemplates      | 1.6.0                    |
+| Dataset `built` | Version file        | built_20261114.parquet   |
+|                 | Version date        | 2026-11-14               |
 |                 | Source file         | built.rds                |
 |                 | Rows kept           | 725 rows on 725 patients |
 |                 | WHERE               | `!is.na(creat_pr)`       |
 |                 | sha256              | d99147a5c095             |
 |                 | Manifest            | current                  |
 | Reproducibility | renv                | not active               |
-|                 | renv.lock sha256    | ed18165d16bf             |

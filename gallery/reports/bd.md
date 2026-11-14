@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-12 09:23
+2026-11-14 18:07
 
 This job cuts the study’s dataset from a master snapshot, records who
 was excluded and why, and writes the study’s working dataset with its
@@ -22,7 +22,7 @@ belong to the master’s corrections, in hvtiRdatabuild, so every study
 sees them); imputation, propensity scores and variables for one model (a
 `vars` job).
 
-**final** · rendered by gallery on gallery · hvtiRtemplates 1.5.8
+**final** · rendered by gallery on gallery · hvtiRtemplates 1.6.0
 
 ## Study choices
 
@@ -48,7 +48,7 @@ never from chunks run by hand.
 
 A comparison build: study_cohort.rds is not the study dataset. It is
 compared against the study dataset built.rds, registered as
-built_20261112.parquet, which this build leaves unchanged.
+built_20261114.parquet, which this build leaves unchanged.
 
 | Item                           | Value |
 |:-------------------------------|------:|
@@ -165,8 +165,8 @@ console
 | Rows in the dataset | 683 |
 | Patients | 683 |
 | Columns | 14 |
-| Study dataset before | built_20261112.parquet |
-| Study dataset after | built_20261112.parquet |
+| Study dataset before | built_20261114.parquet |
+| Study dataset after | built_20261114.parquet |
 | Registration | Working file only: the study’s dataset is still built.rds, so this build was not declared or registered |
 | Build reviewed (sha256) | 6596c1a4a83541cce8b973dd2a75fa6c5ceec316516dea1f1bbbe3ae4b21f7f8 |
 
@@ -207,18 +207,17 @@ Table 10: Type, missing count and range of each column
 
 ## About this run
 
-| Group           | Item             | Value                   |
-|:----------------|:-----------------|:------------------------|
-| Run             | Started          | 2026-11-12 09:23:51 EST |
-|                 | Ended            | 2026-11-12 09:23:52 EST |
-|                 | Duration         | 1 s                     |
-|                 | Status           | final                   |
-|                 | Rendered by      | gallery                 |
-|                 | Host             | gallery                 |
-| Job             | File             | bd.study.build.qmd      |
-|                 | Template         | bd                      |
-|                 | Subject          | study                   |
-|                 | Type             | build                   |
-|                 | hvtiRtemplates   | 1.5.8                   |
-| Reproducibility | renv             | not active              |
-|                 | renv.lock sha256 | ed18165d16bf            |
+| Group           | Item           | Value                   |
+|:----------------|:---------------|:------------------------|
+| Run             | Started        | 2026-11-14 18:07:51 EST |
+|                 | Ended          | 2026-11-14 18:07:52 EST |
+|                 | Duration       | 0 s                     |
+|                 | Status         | final                   |
+|                 | Rendered by    | gallery                 |
+|                 | Host           | gallery                 |
+| Job             | File           | bd.study.build.qmd      |
+|                 | Template       | bd                      |
+|                 | Subject        | study                   |
+|                 | Type           | build                   |
+|                 | hvtiRtemplates | 1.6.0                   |
+| Reproducibility | renv           | not active              |
