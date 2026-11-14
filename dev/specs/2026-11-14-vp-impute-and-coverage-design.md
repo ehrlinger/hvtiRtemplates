@@ -1,6 +1,6 @@
 # vp family: impute before varPro, and never read "not examined" as "screened out"
 
-Status: draft, 2026-11-14. Decisions in §2 are John Ehrlinger's of 2026-11-14; items marked **OPEN** are not decided.
+Status: decided, 2026-11-14. Every decision in §2, D1 to D9, is John Ehrlinger's of 2026-11-14.
 Branch `feat/vp-impute`, cut from `origin/main` `5ee1663`. Lands after 1.6.0.
 Source: vault task "vp templates - impute before varPro instead of dropping".
 
@@ -47,6 +47,10 @@ The two defects interact. Dropping rows lowers events, and lower events lower co
 | D3 | the outcome (`TIME`/`EVENT`/`RESPONSE`) is **excluded** from the imputation model | imputed predictors must carry no endpoint signal, or the screen can rank a predictor on information the imputation put there |
 | D4 | spelling `"na.impute"` / `"na.omit"`, validated with `match.arg()` as `vt-fit` does | one setting reads the same across the forest family |
 | D5 | a missing outcome is always dropped, never imputed, and counted on its own row | only predictors are imputed |
+| D6 | forest imputation only, no `"mice"` option (was O1) | the family is forest-native; `sid-fit` carries MICE for its SAS validation |
+| D7 | `MAX_UNTESTED` defaults to `0.1` (was O2) | the exploration setting leaves about 7% untested |
+| D8 | the refit vote counts only refits that tested the variable; below `MIN_TESTED_SHARE <- 0.5` it gets no vote and is "not examined in the refits" (was O3) | an unexamined refit is no evidence |
+| D9 | measure `uvarpro()` coverage before changing `vp-dependence` (was O4) | change only what a measurement shows |
 
 ## 3. Design A: impute before varPro
 
@@ -70,8 +74,7 @@ read -> drop rows missing the outcome (counted) -> refuse sparse predictors (> M
 
 - `randomForestSRC::impute(data = d[PREDICTORS], ntree = 250)` under `cache_fit("vp-fit-impute", ..., seed = SEED)`.
   This follows `sid-fit`'s `impute` chunk with `IMPUTE = "forest"`. Only the predictor columns are passed (D3).
-  **OPEN O1:** offer `"mice"` as in `sid-fit`, or forest only. Recommendation: forest only. The varPro family is
-  forest-native, and `sid-fit` carries MICE because its clustering was validated against SAS.
+  Forest only, no `"mice"` option (D6).
 - `MAX_MISSING <- 0.4`, `EDIT:`-marked, same meaning as `sid-fit`'s: a predictor missing in a larger share is
   listed and refused, not filled. The render stops and asks the author to remove it from `PREDICTORS` or raise the
   ceiling. The comment carries the counter-case: in one study, preop labs were missing for most of the events and
@@ -123,7 +126,7 @@ apart:
 
 ### 4.1 Full fit
 
-- **OPEN O2: `MAX_UNTESTED` default.** Recommendation: `0.1`. The exploration setting leaves about 2 of 30
+- **`MAX_UNTESTED` defaults to `0.1` (D7).** The exploration setting leaves about 2 of 30
   untested (7%), so 0.1 passes it and stops anything materially worse. The stop message names the untested
   variables and the levers (`MTRY`, `MAX_TREE`/`MAX_RULES_TREE`, `TRIM`). `NULL` still means report only.
 - The parsimonious-screen comment keeps its warning that it will trip the ceiling on wide data.
@@ -132,9 +135,9 @@ apart:
 
 - `share_selected` is computed over the refits **that tested the variable**, not over `REPEATS`. `share_tested` stays
   beside it.
-- **OPEN O3: minimum examination.** A variable tested in fewer than `MIN_TESTED_SHARE` of refits (recommend `0.5`)
+- **Minimum examination (D8).** A variable tested in fewer than `MIN_TESTED_SHARE` of refits (`0.5`, `EDIT:`-marked)
   gets no vote. Its state is "not examined in the refits", and it is neither handed on nor counted as rejected.
-  Recommendation: make this the rule, and list such variables under the stability table.
+  Such variables are listed under the stability table.
 - This reverses the current comment ("a refit that drops a variable counts against it"). That rule was deliberate. It
   penalized variables whose testing depended on the subsample. Under this design that dependence is shown in
   `share_tested` and the third state, not folded into a "no" vote.
@@ -148,7 +151,7 @@ apart:
 
 ### 4.4 `vp-dependence`
 
-- **OPEN O4:** measure coverage for `uvarpro()` before changing it. Count the variables with no release rule at
+- **Measure first (D9):** measure coverage for `uvarpro()` before changing it. Count the variables with no release rule at
   `ntree = NTREE`, `max.tree = 200`, `max.rules.tree = 20` on the template's fixture and on a 30-variable
   simulation. If any go unexamined, expose `MAX_TREE`/`MAX_RULES_TREE` as `vp-fit` does and report the same
   three states. If none do, record the measurement in a comment and change nothing.
