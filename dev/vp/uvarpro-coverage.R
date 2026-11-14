@@ -12,29 +12,37 @@
 # noise columns with no release rule, and the seconds the fit took. The template's defaults are the
 # smallest pair that leaves no REAL variable without rules in any configuration.
 #
-# Measured 2026-11-14, varPro 3.3.0, randomForestSRC 3.10.0, one thread (configurations 1-4 are in `cfgs`):
+# Measured 2026-11-14, varPro 3.3.0, randomForestSRC 3.10.0, one thread (configurations 1-5 are in `cfgs`):
 #
-#   config  max.tree  max.rules.tree  rules  real variables with no rule  noise with none  seconds
-#   1       200       20 / 50 / 100 / 150   ~1950  none                    0                0.2
-#   1       500       20 / 50 / 100 / 150   ~4850  none                    0                0.5-0.6
-#   2       200       20                    1903   x23                     0                1.0
-#   2       200       50 / 100              ~1950  none                    0                1.0
-#   2       200       150                   1957   x26                     0                1.0
-#   2       500       20 / 50 / 100 / 150   ~4870  none                    0                2.0-2.2
-#   3       200       20                    1748   x12, x28                0                2.7
-#   3       200       50 / 150              ~1690  none                    0                2.8
-#   3       200       100                   1673   x03                     0                2.7
-#   3       500       20 / 50 / 100 / 150   ~4330  none                    0                4.3-4.4
-#   4       200       20                    1983   b, x2                   6                0.7
-#   4       200       50 / 150              ~1970  b                       4-5              0.7
-#   4       200       100                   1973   x2                      5                0.7
-#   4       500       20 / 50 / 100 / 150   ~4930  none                    2-5              1.5-1.6
+#   config  max.tree  max.rules.tree  rules   real variables with no rule   noise with none  seconds
+#   1       200       20 / 50 / 100 / 150  ~1940  none                          0                0.2
+#   1       500       20 / 50 / 100 / 150  ~4860  none                          0                0.5
+#   2       200       20                   1915   x07, x25                      0                0.9
+#   2       200       50 / 100 / 150       ~1960  none                          0                1.0
+#   2       500       20 / 50 / 100 / 150  ~4890  none                          0                2.0
+#   3       200       20                   1708   none                          0                2.6
+#   3       200       50 / 100 / 150       ~1710  x14; x05, x28; x08, x10, x12, x28  0           2.6
+#   3       500       20 / 50 / 100 / 150  ~4320  none                          0                4.1
+#   4       200       20                   1983   b, x2                         6                0.6
+#   4       200       50 / 100 / 150       ~1970  b; x2; b                      4-5              0.6
+#   4       500       20 / 50 / 100 / 150  ~4930  none                          2-5              1.5
+#   5       200       20 / 50 / 100 / 150  ~1920  23-26 of 31                   7-9              1.6
+#   5       500       20 / 50 / 100 / 150  ~4820  15-19 of 31                   4-6              3.2
 #
-# No pair at max.tree = 200 covers every real variable; every pair at max.tree = 500 (all the trees)
-# does. The rule count follows max.tree, about 10 rules a tree, and barely moves with max.rules.tree,
-# which at these sizes is not the binding limit: which variable misses at 200 trees moves with it as
-# chance does. The smallest covering pair, and the template's default, is 500 trees (all of NTREE)
-# and 20 rules a tree.
+# No pair covers every real variable in every configuration. Configurations 1-3 carry no noise
+# columns, which the template always adds; there every pair at 500 trees (all of NTREE) covers, and
+# the defaults MAX_TREE = 500, MAX_RULES_TREE = 20 were chosen from them before configuration 5 was
+# added. Configuration 5 is configuration 2 as the template runs it, with 20 noise columns, and at
+# 500 trees about half its real variables still had no rule. Its one factor is the only categorical
+# source, so 10 noise columns are binary copies of it. In a separate check over SEED = 1 to 3 those
+# copies took 2,089 to 2,132 of about 4,800 rules, and with NTREE = MAX_TREE = 1,000 the configuration
+# left 12 to 17 of 31 real variables without a rule, with 2,000 trees 7 to 10.
+#
+# The rule count follows max.tree, about 10 rules a tree, and barely moves with max.rules.tree from 20
+# up, which at these sizes is not the binding limit. Which variable misses moves with R's random state
+# (between two runs of this script configurations 2 and 3 changed which, and whether, a variable
+# missed), so one run is one draw: on the fixture shape (configuration 4) with the template's own
+# seeding, 200 trees left a real variable without a rule at 23 of SEED = 1 to 30, and 500 trees at 7.
 #
 # The forest is not the cost. get.beta.entropy() fits a lasso for every rule, so it scales with the rule
 # count: on configuration 4 it took 20 s at 200 trees and 51 s at 500, against 0.7 s and 1.5 s for
@@ -77,13 +85,19 @@ sim_fixture <- function(n, seed) {
   d
 }
 
-none_of <- function(all, have) if (all(all %in% have)) "(none)" else paste(setdiff(all, have), collapse = ", ")
+# Names up to four, then a count, so a wide configuration keeps the table on one line.
+short <- function(missing, of) {
+  if (!length(missing)) return("(none)")
+  if (length(missing) <= 4L) paste(missing, collapse = ", ") else sprintf("%d of %d", length(missing), of)
+}
 
 cfgs <- list(
   list(label = "n = 200, p = 5 (+f1)", d = sim(200, 5, 2026), noise = FALSE),
   list(label = "n = 400, p = 30 (+f1)", d = sim(400, 30, 2026), noise = FALSE),
   list(label = "n = 1900, p = 30 (+f1)", d = sim(1900, 30, 2026), noise = FALSE),
-  list(label = "fixture n = 200, a b x2 fs c, + noise", d = sim_fixture(200, 20261022L), noise = TRUE)
+  list(label = "fixture n = 200, a b x2 fs c, + noise", d = sim_fixture(200, 20261022L), noise = TRUE),
+  # Configuration 2 as the template runs it: with its noise columns. Added after the defaults were chosen.
+  list(label = "n = 400, p = 30 (+f1), + noise", d = sim(400, 30, 2026), noise = TRUE)
 )
 seed <- 2026
 grid <- expand.grid(max.rules.tree = c(20, 50, 100, 150), max.tree = c(200, ntree_tpl))
@@ -110,7 +124,7 @@ for (k in seq_along(cfgs)) {
     ruled <- unique(unname(map[names(map)[res$variable]]))  # at least one rule released the variable
     rows[[length(rows) + 1L]] <- data.frame(
       config = k, max.tree = mt, max.rules.tree = mrt, rules = nrow(res),
-      real_none = none_of(all_vars[!noise], ruled), noise_none = sum(!all_vars[noise] %in% ruled),
+      real_none = short(setdiff(all_vars[!noise], ruled), sum(!noise)), noise_none = sum(!all_vars[noise] %in% ruled),
       seconds = round(secs, 1)
     )
   }
@@ -122,7 +136,7 @@ cat("\nreal_none: real variables with no release rule; noise_none: noise columns
 print(tab, row.names = FALSE)
 covers <- aggregate(real_none ~ max.tree + max.rules.tree, tab, function(x) all(x == "(none)"))
 covers <- covers[order(covers$max.tree, covers$max.rules.tree), ]
-cat("\nEvery real variable has rules in all four configurations:\n")
+cat("\nEvery real variable has rules in every configuration:\n")
 print(covers, row.names = FALSE)
 ok <- covers[covers$real_none, ]
 best <- if (nrow(ok)) sprintf("max.tree = %d, max.rules.tree = %d", ok$max.tree[1L], ok$max.rules.tree[1L]) else "none"

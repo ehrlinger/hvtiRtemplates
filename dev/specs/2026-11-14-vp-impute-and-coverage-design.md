@@ -156,6 +156,28 @@ apart:
   `ntree = NTREE`, `max.tree = 200`, `max.rules.tree = 20` on the template's fixture and on a 30-variable
   simulation. If any go unexamined, expose `MAX_TREE`/`MAX_RULES_TREE` as `vp-fit` does and report the same
   three states. If none do, record the measurement in a comment and change nothing.
+- **Measured (2026-11-14, `dev/vp/uvarpro-coverage.R`, varPro 3.3.0, one thread):** at varPro's defaults
+  (`max.tree = 200`, `max.rules.tree = 20`) real variables went unexamined in most configurations. Sweeping
+  `max.tree` in (200, `NTREE` = 500) and `max.rules.tree` in (20, 50, 100, 150): in the four configurations Task 6
+  measured, every pair at 500 trees covers every real variable and none at 200 does. The rule count follows
+  `max.tree` (about 10 a tree) and barely moves with `max.rules.tree` from 20 up. `uvarpro()` took 0.2 to 4.4 s; the
+  table is in the script's header.
+- **But no pair covers the template's own shape.** Three of those four configurations carry no noise columns, which
+  the template always adds. A fifth, the 30-variable configuration with the template's 20 noise columns, left 15 to 19
+  of 31 real variables without a rule at 500 trees: its one factor is the only categorical source, so half the noise
+  columns are binary copies of it, and they took nearly half the rules. 2,000 trees still left 7 to 10. On the
+  fixture shape, 500 trees left a real variable without a rule at 7 of SEED = 1 to 30 (200 trees at 23).
+  **Open for the maintainer (NEEDS_CONTEXT, 2026-11-14):** the rule limits are not the lever for this; the noise
+  draw, `NOISE_N`, `NTREE` or `MAX_UNTESTED` may be.
+- **Provisional defaults:** `MAX_TREE <- 500` (passed as `min(MAX_TREE, NTREE)`, so every tree) and
+  `MAX_RULES_TREE <- 20`, the smallest pair covering the four original configurations, `EDIT:`-marked beside `NTREE`,
+  with `MAX_UNTESTED <- 0.1` holding the full fit to the share of variables left without a rule. At these defaults a
+  30-variable study with 20 noise columns would stop at that gate. **The cost is the lasso, not the forest:**
+  `get.beta.entropy()` fits one per rule, and on the fixture shape took 51 s at 500 trees against 20 s at 200, paid
+  for the full fit and for each refit.
+- **Report:** a `tbl-coverage` table after the fit names each variable's rule count and whether it was examined;
+  the handoff carries `not_examined`. In the stability table an edge's share is over the refits that examined both
+  of its ends, with that count beside it, as `vp-fit`'s vote is (§4.2).
 
 ## 5. Tests (testthat edition 3)
 
