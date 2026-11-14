@@ -1,0 +1,52 @@
+{
+  "job": "hz.dead.hz",
+  "rendered": "2026-11-12T10:00:00Z",
+  "r": {
+    "version": "4.6.1"
+  },
+  "packages": [
+    {
+      "package": "TemporalHazard",
+      "version": "1.3.0",
+      "source": "standard"
+    }
+  ],
+  "data": [
+    {
+      "path": "00_datasets/built.parquet",
+      "role": "study",
+      "dataset": "built"
+    }
+  ],
+  "run": {
+    "status": "final",
+    "open_markers": 0,
+    "skipped_chunks": 0,
+    "stopped_early": false
+  },
+  "source_sha256": "1016cee3b4de96433e5f4455edef939b20db501fa2762de378fc50240e03989b",
+  "exhibits": [
+    {
+      "label": "fig-fit",
+      "kind": "figure",
+      "file": "40_graphs/dead-hz/hz-fit.png",
+      "sha256": "81329e0b8e6852fd718097a4614914961b87dc5fef18f7be487204a77622589e"
+    },
+    {
+      "label": "tbl-estimates",
+      "kind": "table",
+      "file": "50_documents/dead-hz/tbl-estimates.rds",
+      "sha256": "c725bec0c62cf25bbb2e27caccd2bfcf5665dbc1b9f2ddacee6bcd1679779b37"
+    },
+    {
+      "label": "methods",
+      "kind": "value",
+      "file": "90_estimates/dead-hz/hz-methods.rds",
+      "sha256": "02348e04a9bc732f6a87e591b15d27b0be4f1456def50d127fb80c77532040bc"
+    }
+  ],
+  "methods": {
+    "text": "The hazard of death was modeled in two phases, early and constant, with TemporalHazard, in 160 patients with 40 deaths.",
+    "sha256": "4a4773c1ea7eb6185c3e2dd54f6dc6ca62ac502cc153d69def7dc8f89f173e91"
+  }
+}

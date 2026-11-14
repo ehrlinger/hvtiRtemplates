@@ -1,0 +1,5 @@
+---
+title: Hazard of death
+---
+
+A stand-in for a rendered hz job. Only its provenance record is read.
