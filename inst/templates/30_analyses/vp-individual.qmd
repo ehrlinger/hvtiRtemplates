@@ -172,7 +172,7 @@ CACHE_DIR <- dirname(.handoff)
 if (!is.null(.vp_cohort$na_action)) {
   cat("The screen used ", .vp_cohort$n, " of ", .vp_cohort$n_supplied, " patients supplied (NA_ACTION = \"",
       .vp_cohort$na_action, "\"; ", sum(.vp_cohort$n_imputed), " value(s) imputed, ", .vp_cohort$n_outcome_missing,
-      " missing the outcome dropped).\n", sep = "")
+      " missing the outcome dropped, ", .vp_cohort$n_dropped, " dropped for a missing predictor).\n", sep = "")
 }
 ```
 

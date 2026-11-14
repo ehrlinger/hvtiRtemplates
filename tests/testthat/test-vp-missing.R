@@ -55,7 +55,8 @@ test_that(".vp_missing builds a valid table when no predictor is missing, in bot
   for (na in c("na.impute", "na.omit")) {
     m <- .vp_missing(d, c("a", "b"), outcome = "y", na_action = na)
     expect_identical(m$table$Count[m$table$Row == "Used"], "5")
-    expect_false(is.character(names(m$table$Count)))
+    expect_null(names(m$table$Count))
+    expect_type(m$table$Count, "character")
   }
 })
 

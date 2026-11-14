@@ -108,6 +108,12 @@ As a cross-check, varPro 3.3.0 records `model.info$observations` (`input`, `reta
 mode a test asserts `omitted == 0`. In `"na.omit"` mode `omitted == 0` holds too, because rows are dropped before
 the call.
 
+**Deviations as built (2026-11-14).** The downstream cohort sentence ("The screen used n of N patients supplied ...")
+is printed from the screen-reading chunk of `vp-explain` and `vp-individual`, not from an "About this run" block. The
+`model.info` cross-check is the test "varPro's own record agrees that vp-fit dropped no patient for a missing
+predictor", run on the `vp-fit` full fit under the default `NA_ACTION`; the `"na.omit"` mode is checked by the
+counts of `.cohort` rather than by `model.info`.
+
 ### 3.4 Methods text
 
 Each template's narration gains a paragraph a study's Methods can copy. It names the rule, the ceiling, that the

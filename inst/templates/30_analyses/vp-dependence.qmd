@@ -325,6 +325,9 @@ if (!is.null(job_data$attrition)) {
 # uvarpro() removes every patient with a missing value. NA_ACTION settles them
 # here, once, before the noise columns and the refits.
 NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
+if (!(is.numeric(MAX_MISSING) && length(MAX_MISSING) == 1L && !is.na(MAX_MISSING) && MAX_MISSING > 0 && MAX_MISSING <= 1)) {
+  stop("MAX_MISSING must be a single share in (0, 1].", call. = FALSE)
+}
 .empty <- .cols[vapply(d[.cols], function(x) all(is.na(x)), logical(1L))]
 if (length(.empty)) {
   stop("VARIABLES or OUTCOME names a column with no values: ", paste(.empty, collapse = ", "),
@@ -332,10 +335,14 @@ if (length(.empty)) {
 }
 .miss <- hvtiRtemplates:::.vp_missing(d, VARIABLES, outcome = OUTCOME, na_action = NA_ACTION, max_missing = MAX_MISSING)
 d <- .miss$d
+if (!nrow(d)) {
+  stop("No patient is left: every one is missing OUTCOME or, under na.omit, a variable.", call. = FALSE)
+}
 if (anyNA(d[VARIABLES])) {
   .imputed <- cache_fit("vp-dependence-impute",
                         randomForestSRC::impute(data = d[VARIABLES], ntree = 250, verbose = FALSE),
-                        seed = SEED, dir = dirname(set_path("estimates", "dependence.rds")), refit = REFIT)
+                        seed = SEED, dir = dirname(set_path("estimates", "dependence.rds")), refit = REFIT,
+                        packages = "randomForestSRC")
   # impute() removes a row with no observed value; a silent loss is what this chunk exists to stop.
   if (nrow(.imputed) != nrow(d)) {
     stop(nrow(d) - nrow(.imputed), " patient(s) have no observed value in VARIABLES and cannot be imputed. ",
@@ -716,7 +723,7 @@ were imputed once by random forest (`randomForestSRC::impute()`, 250 trees)
 from the other variables, never from `OUTCOME`, before the noise columns
 were added and before the stability refits drew their patients. A variable
 missing in more than `MAX_MISSING` of the patients is refused, not filled.
-Patients missing `OUTCOME` were excluded. With `"na.omit"`, every patient
+Patients missing `OUTCOME`, when it is set, were excluded. With `"na.omit"`, every patient
 missing a variable was excluded instead. The table of missing values above
 gives the counts either way.
 

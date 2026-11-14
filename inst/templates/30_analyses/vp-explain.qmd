@@ -169,7 +169,7 @@ CACHE_DIR <- dirname(.handoff)
 if (!is.null(.vp_cohort$na_action)) {
   cat("The screen used ", .vp_cohort$n, " of ", .vp_cohort$n_supplied, " patients supplied (NA_ACTION = \"",
       .vp_cohort$na_action, "\"; ", sum(.vp_cohort$n_imputed), " value(s) imputed, ", .vp_cohort$n_outcome_missing,
-      " missing the outcome dropped).\n", sep = "")
+      " missing the outcome dropped, ", .vp_cohort$n_dropped, " dropped for a missing predictor).\n", sep = "")
 }
 ```
 
@@ -206,14 +206,14 @@ if (is.null(PARTIAL_VARS)) {
 if (length(.untested)) {
   # vp-fit's selection can be its refits' vote, which may include a variable the
   # full fit, the one saved here, did not test: its partial would rest on no rules.
-  cat("Not drawn: the screen did not examine them, so it has no evidence about them either way: ",
+  cat("Not drawn: the saved full fit did not examine them, so it has no rules to draw a partial from: ",
       paste(.untested, collapse = ", "), "\n", sep = "")
   sel <- setdiff(sel, .untested)
 }
 if (!length(sel)) {
   stop(if (length(.untested)) {
-    paste0("No variable to draw: the screen did not examine ", paste(.untested, collapse = ", "),
-           ", so it has no evidence about them either way. Name examined variables in PARTIAL_VARS.")
+    paste0("No variable to draw: the saved full fit did not examine ", paste(.untested, collapse = ", "),
+           ", so it has no rules to draw a partial from. Name variables the full fit examined in PARTIAL_VARS.")
   } else {
     "No tested variable to draw. The screen selected none; name tested variables in PARTIAL_VARS."
   }, call. = FALSE)

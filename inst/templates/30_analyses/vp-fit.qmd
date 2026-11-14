@@ -277,13 +277,13 @@ NVAR <- 30
 # REPEATS times one fit.
 REPEATS <- 20
 SUBSAMPLE <- 0.632
-# EDIT: the selection handed to vp-explain and vp-individual. With REPEATS above 0 it is every
-# candidate selected in at least SELECT_SHARE of the refits that tested it. A
-# variable tested in fewer than MIN_TESTED_SHARE of the refits is not examined,
-# so it is neither handed on nor rejected. A single fit's bar
-# is the best of a few noise columns, so on a small cohort it moves from one
-# noise draw to the next and the full fit alone can keep or drop a variable by
-# chance. NA hands on the full fit's selection instead, as REPEATS = 0 does.
+# EDIT: the selection handed to vp-explain and vp-individual. With REPEATS above 0
+# it is every candidate selected in at least SELECT_SHARE of the refits that
+# tested it. A variable tested in fewer than MIN_TESTED_SHARE of the refits is
+# not examined, so it is neither handed on nor rejected. A single fit's bar is
+# the best of a few noise columns, so on a small cohort it moves from one noise
+# draw to the next and the full fit alone can keep or drop a variable by chance.
+# NA hands on the full fit's selection instead, as REPEATS = 0 does.
 SELECT_SHARE <- 0.5
 # EDIT: the share of the refits that must have tested a variable before their
 # vote counts. A refit that did not test a variable says nothing about it, so
@@ -427,6 +427,9 @@ if (!is.null(job_data$attrition)) {
 # refits draw their patients, so the refits subsample the same completed data
 # and the stability vote holds no imputation noise.
 NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
+if (!(is.numeric(MAX_MISSING) && length(MAX_MISSING) == 1L && !is.na(MAX_MISSING) && MAX_MISSING > 0 && MAX_MISSING <= 1)) {
+  stop("MAX_MISSING must be a single share in (0, 1].", call. = FALSE)
+}
 .empty <- PREDICTORS[vapply(d[PREDICTORS], function(x) all(is.na(x)), logical(1L))]
 if (length(.empty)) {
   stop("PREDICTORS names a column with no values: ", paste(.empty, collapse = ", "),
@@ -435,9 +438,14 @@ if (length(.empty)) {
 .miss <- hvtiRtemplates:::.vp_missing(d, PREDICTORS, outcome = c(TIME, EVENT, RESPONSE), na_action = NA_ACTION,
                                       max_missing = MAX_MISSING)
 d <- .miss$d
+if (!nrow(d)) {
+  stop("No patient is left: every one is missing the outcome (TIME, EVENT or RESPONSE) or, under na.omit, a predictor.",
+       call. = FALSE)
+}
 if (anyNA(d[PREDICTORS])) {
   .imputed <- cache_fit("vp-fit-impute", randomForestSRC::impute(data = d[PREDICTORS], ntree = 250, verbose = FALSE),
-                        seed = SEED, dir = dirname(set_path("estimates", "vp.rds")), refit = REFIT)
+                        seed = SEED, dir = dirname(set_path("estimates", "vp.rds")), refit = REFIT,
+                        packages = "randomForestSRC")
   # impute() removes a row with no observed predictor; a silent loss is what this chunk exists to stop.
   if (nrow(.imputed) != nrow(d)) {
     stop(nrow(d) - nrow(.imputed), " patient(s) have no observed predictor and cannot be imputed. ",
@@ -500,8 +508,9 @@ if (NOISE_N < 1) {
 if (!(SUBSAMPLE > 0 && SUBSAMPLE < 1)) {
   stop("SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).", call. = FALSE)
 }
-if (!(MIN_TESTED_SHARE > 0 && MIN_TESTED_SHARE <= 1)) {
-  stop("MIN_TESTED_SHARE must be a share in (0, 1].", call. = FALSE)
+.tested_ok <- is.numeric(MIN_TESTED_SHARE) && length(MIN_TESTED_SHARE) == 1L && !is.na(MIN_TESTED_SHARE)
+if (!(.tested_ok && MIN_TESTED_SHARE > 0 && MIN_TESTED_SHARE <= 1)) {
+  stop("MIN_TESTED_SHARE must be a single share in (0, 1].", call. = FALSE)
 }
 .share_bad <- "SELECT_SHARE must be NA or a share above 0 and at most 1 (0.5 keeps what most refits select)."
 if (length(SELECT_SHARE) != 1) {

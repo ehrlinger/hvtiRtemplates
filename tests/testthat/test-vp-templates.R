@@ -54,6 +54,40 @@ test_that("vp-fit imputes a missing predictor by default and keeps the patient",
   expect_identical(env$.cohort$na_action, "na.impute")
 })
 
+test_that("varPro's own record agrees that vp-fit dropped no patient for a missing predictor", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$x1[1:7] <- NA
+  env <- vp_fit_first(data = data)
+  obs <- env$fit$model.info$observations
+  skip_if(is.null(obs), "varPro's model.info has no observations record")
+  expect_identical(obs$omitted, 0L)
+  expect_identical(obs$input, 200L)
+})
+
+test_that("vp-fit and vp-dependence refuse a MAX_MISSING that is not one share", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  for (bad in list(NA, 0, 1.5, "half", c(0.2, 0.4))) {
+    expect_error(rf_run("vp", "fit", vp_data_labels, rf_env(vp_data()),
+                        utils::modifyList(vp_choices, list(MAX_MISSING = bad))), "MAX_MISSING")
+    expect_error(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"), rf_env(vpd_data()),
+                        utils::modifyList(vpd_choices, list(MAX_MISSING = bad))), "MAX_MISSING")
+  }
+})
+
+test_that("vp-fit and vp-dependence stop when no patient is left", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$time <- NA_real_
+  expect_error(rf_run("vp", "fit", vp_data_labels, rf_env(data), vp_choices), "No patient is left")
+  # Every patient missing a different variable leaves none under na.omit.
+  data <- vpd_data()
+  for (i in seq_len(nrow(data))) data[i, vpd_choices$VARIABLES[i %% 5L + 1L]] <- NA
+  expect_error(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"), rf_env(data),
+                      utils::modifyList(vpd_choices, list(NA_ACTION = "na.omit"))), "No patient is left")
+})
+
 test_that("vp-fit with NA_ACTION = na.omit drops incomplete patients as before, and counts them", {
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
   data <- vp_data()
@@ -532,6 +566,14 @@ test_that("SELECT_SHARE must be NA or a share in (0, 1]", {
   }
 })
 
+test_that("MIN_TESTED_SHARE must be one share in (0, 1]", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  for (bad in list(NA, 0, 1.5, "half", c(0.5, 0.6))) {
+    expect_error(vp_fit_first(choices = utils::modifyList(vp_choices, list(MIN_TESTED_SHARE = bad))), "MIN_TESTED_SHARE")
+  }
+})
+
 test_that("raising REPEATS computes only the new repeat", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
@@ -550,6 +592,9 @@ test_that("raising REPEATS computes only the new repeat", {
   expect_true(all(again$.freq$share_tested >= 0 & again$.freq$share_tested <= 1))
   expect_true(all(again$.freq$share_selected >= 0 & again$.freq$share_selected <= 1, na.rm = TRUE))
   expect_equal(again$.freq$share_tested * 3, round(again$.freq$share_tested * 3))
+  # A selection is counted over the refits that tested the variable, so its count is whole.
+  .picked <- again$.freq$share_selected * again$.freq$share_tested * 3
+  expect_equal(.picked[!is.na(.picked)], round(.picked[!is.na(.picked)]))
 })
 
 test_that("REPEATS = 0 skips the stability check", {
@@ -586,7 +631,7 @@ test_that("vp-explain names a selection the saved full fit did not test, and sto
   expect_error(
     rf_run("vp", "explain", vp_explain_labels, env,
            list(HORIZON = 1, SEED = 1, SAVE_FIGURES = FALSE, PARTIAL_VARS = untested[1])),
-    "the screen did not examine"
+    "the saved full fit did not examine"
   )
 })
 
