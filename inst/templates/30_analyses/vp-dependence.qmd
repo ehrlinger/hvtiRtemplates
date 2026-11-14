@@ -462,23 +462,37 @@ vpd_coverage <- function(fit, cols) {
   rules <- vapply(cols, function(v) sum(released %in% v), integer(1L), USE.NAMES = FALSE)
   data.frame(variable = cols, rules = rules, state = ifelse(rules > 0L, "examined", "not examined"))
 }
-# How often each edge was drawn across the refits, over the refits that
-# examined both its ends, as vp-fit's vote counts a selection over the refits
-# that tested the variable. A refit that built no rule for one end never
-# looked at the pair, so it counts neither for the edge nor against it. Each
-# run is list(edges = "from -> to" keys, examined = variable names). A share
-# with no such refit is NA, not 0.
-vpd_edge_share <- function(runs) {
-  keys <- sort(unique(unlist(lapply(runs, `[[`, "edges"))))
-  ends <- strsplit(keys, " -> ", fixed = TRUE)
+# How often each key, an edge or a signal-set variable, was drawn across the
+# refits, over the refits that examined the variable it depends on, as vp-fit's
+# vote counts a selection over the refits that tested the variable. A refit
+# that built no rule for that variable never looked, so it counts neither for
+# the key nor against it. Each run is list(edges = "from -> to" keys, signal =
+# variable names, examined = variable names). A share with no such refit is NA,
+# not 0.
+vpd_share <- function(runs, what, owner = function(k) k) {
+  keys <- sort(unique(unlist(lapply(runs, `[[`, what))))
+  own <- owner(keys)
   refits <- drawn <- integer(length(keys))
   for (run in runs) {
-    both <- vapply(ends, function(e) all(e %in% run$examined), logical(1L))
-    refits <- refits + both
-    drawn <- drawn + (both & keys %in% run$edges)
+    seen <- own %in% run$examined
+    refits <- refits + seen
+    drawn <- drawn + (seen & keys %in% run[[what]])
   }
-  data.frame(from = vapply(ends, `[`, "", 1L), to = vapply(ends, `[`, "", 2L),
-             share = ifelse(refits > 0L, drawn / pmax(1L, refits), NA_real_), refits = refits)
+  data.frame(key = keys, share = ifelse(refits > 0L, drawn / pmax(1L, refits), NA_real_), refits = refits)
+}
+# An edge runs from a variable's row of the matrix, its contrast, to a column,
+# and every variable is a column in every row's lasso. So an edge needs only
+# its tail examined: one into a variable with no rule can still be drawn. The
+# graph is directed (gg_udependent()'s default, which vpd_graph() keeps), so no
+# edge is read both ways.
+vpd_edge_share <- function(runs) {
+  s <- vpd_share(runs, "edges", owner = function(k) sub(" -> .*$", "", k))
+  ends <- strsplit(s$key, " -> ", fixed = TRUE)
+  data.frame(from = vapply(ends, `[`, "", 1L), to = vapply(ends, `[`, "", 2L), share = s$share, refits = s$refits)
+}
+vpd_signal_share <- function(runs) {
+  s <- vpd_share(runs, "signal")
+  data.frame(variable = s$key, share = s$share, refits = s$refits)
 }
 ```
 
@@ -633,10 +647,13 @@ save_figure(.fig, "vp-dependence-heatmap", width = 6.5, height = 6)
 
 The graph refitted `REPEATS` times, each on a subsample of the patients drawn
 without replacement and with a fresh noise draw, and each judged against its
-own noise bar. An edge's share is over the refits that examined both its
-ends, the count beside it, so a refit that examined the pair and drew no edge
-counts against it and one that never looked does not. An edge drawn in most
-refits holds up; one drawn once in a while is the forest's own noise.
+own noise bar. An edge's share is over the refits that examined the variable
+the edge leaves, the count beside it: a refit that examined it and drew no edge
+counts against the edge, and one that built no rule for it never looked, so it
+does not count. The share is NA when no refit examined that variable. A
+variable's share in the signal set is counted the same way, over the refits
+that examined it. An edge drawn in most refits holds up; one drawn once in a
+while is the forest's own noise.
 
 ```{r}
 #| label: tbl-stability
@@ -669,16 +686,9 @@ if (REPEATS > 0) {
     list(bar = b$bar, edges = paste(g$edges$variable_from, g$edges$variable_to, sep = " -> "),
          signal = as.character(g$nodes$variable[g$nodes$selected]), examined = cr$variable[cr$rules > 0L])
   })
-  # Counted by hand rather than with table(), which names nothing when no refit
-  # put a variable in the signal set, so an empty result stays a table with no rows.
-  .share <- function(x) {
-    keys <- sort(unique(as.character(x)))
-    list(keys = keys, share = vapply(keys, function(k) sum(x == k), numeric(1L), USE.NAMES = FALSE) / REPEATS)
-  }
-  .sig <- .share(unlist(lapply(.runs, `[[`, "signal")))
   .vpd_stab <- list(
     edges = vpd_edge_share(.runs),
-    signal = data.frame(variable = .sig$keys, share = .sig$share),
+    signal = vpd_signal_share(.runs),
     bars = vapply(.runs, `[[`, numeric(1L), "bar")
   )
   .vpd_stab$edges <- .vpd_stab$edges[order(-.vpd_stab$edges$share, na.last = TRUE), ]
@@ -693,10 +703,9 @@ if (REPEATS > 0) {
 ```{r}
 #| label: tbl-stability-signal
 #| tbl-cap: "How often each variable was in the signal set across the refits, most often first"
-# Over REPEATS, not over the refits that examined the variable as the edge
-# table's share is. Empty when REPEATS is 0.
+# Over the refits that examined each variable, as the edge table is. Empty when REPEATS is 0.
 if (!is.null(.vpd_stab)) {
-  knitr::kable(.vpd_stab$signal[order(-.vpd_stab$signal$share), ], digits = 2, row.names = FALSE)
+  knitr::kable(.vpd_stab$signal[order(-.vpd_stab$signal$share, na.last = TRUE), ], digits = 2, row.names = FALSE)
 }
 ```
 

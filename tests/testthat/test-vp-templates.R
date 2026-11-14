@@ -829,23 +829,44 @@ test_that("vpd_coverage counts each variable's release rules through varPro's te
   expect_gt(cov$rules[cov$variable == "fs"], 0L)
 })
 
-test_that("vpd_edge_share counts an edge over the refits that examined both its ends", {
+test_that("vpd_edge_share counts an edge over the refits that examined the variable it leaves", {
   env <- vpd_helpers_env()
   runs <- list(
     list(edges = "a -> c", examined = c("a", "c")),
-    list(edges = "a -> c", examined = c("a", "b", "c")),
-    list(edges = character(), examined = c("a", "b")),
-    list(edges = character(), examined = c("b", "c"))
+    list(edges = "a -> c", examined = "a"),             # c unexamined: an edge into it is still drawn, and counts
+    list(edges = character(), examined = c("b", "c")),  # a unexamined: never looked, so not counted
+    list(edges = character(), examined = "b")
   )
   s <- env$vpd_edge_share(runs)
   expect_identical(s$from, "a")
   expect_identical(s$to, "c")
   expect_equal(s$share, 1)
   expect_identical(s$refits, 2L)
-  # A refit that examined both ends and drew no edge counts against it.
-  s <- env$vpd_edge_share(c(runs, list(list(edges = character(), examined = c("a", "c")))))
+  # A refit that examined the tail and drew no edge counts against it.
+  s <- env$vpd_edge_share(c(runs, list(list(edges = character(), examined = "a"))))
   expect_equal(s$share, 2 / 3)
+  expect_identical(s$refits, 3L)
+  # No refit examined the tail: NA, not 0.
+  expect_true(is.na(env$vpd_edge_share(list(list(edges = "b -> a", examined = character())))$share))
   expect_identical(nrow(env$vpd_edge_share(list(list(edges = character(), examined = "a")))), 0L)
+})
+
+test_that("vpd_signal_share counts a variable over the refits that examined it, not over REPEATS", {
+  env <- vpd_helpers_env()
+  runs <- list(
+    list(signal = "a", examined = "a"),
+    list(signal = "a", examined = c("a", "b")),
+    list(signal = character(), examined = "b"),   # a unexamined: not counted against it
+    list(signal = character(), examined = "b"),
+    list(signal = "a", examined = "b")            # a unexamined: not counted for it either
+  )
+  s <- env$vpd_signal_share(runs)
+  expect_identical(s$variable, "a")
+  expect_equal(s$share, 1)
+  expect_identical(s$refits, 2L)
+  s <- env$vpd_signal_share(c(runs, list(list(signal = character(), examined = "a"))))
+  expect_equal(s$share, 2 / 3)
+  expect_identical(nrow(env$vpd_signal_share(list(list(signal = character(), examined = "a")))), 0L)
 })
 
 test_that("both uvarpro() calls in vp-dependence carry the rule limits, and the defaults are the measured ones", {
@@ -919,7 +940,9 @@ test_that("vp-dependence's default rule limits examine every variable where varP
   # variable misses is chance: over SEED = 1 to 30, varPro's 200 trees left a
   # real variable without a rule at 23 seeds and the default 500 at 7. SEED = 3
   # is one where 200 trees leave b and x2 out and 500 cover them, so this test
-  # fails if the default falls back to 200 (dev/vp/uvarpro-coverage.R).
+  # fails if the default falls back to 200 (dev/vp/uvarpro-coverage.R). If this
+  # seed stops telling 200 from 500 trees after a varPro or randomForestSRC
+  # update, re-pick it with dev/vp/uvarpro-coverage.R.
   env <- rf_env(vpd_data())
   rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise", "dependence-helpers"),
          env, list(VARIABLES = c("a", "b", "x2", "fs", "c"), OUTCOME = NULL, ORDINAL = NULL, SAVE_FIGURES = FALSE, SEED = 3))

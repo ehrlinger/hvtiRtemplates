@@ -182,7 +182,9 @@ apart:
 - **Report:** a `tbl-coverage` table after the fit names each variable's rule count and whether it was examined;
   the handoff carries `not_examined`. An unexamined variable has no rule, so no edge leaves it; it is still a
   predictor in every other variable's lasso, so edges into it can still appear. In the stability table an edge's
-  share is over the refits that examined both of its ends, with that count beside it, as `vp-fit`'s vote is (§4.2).
+  share is over the refits that examined the variable it leaves (its tail: the graph is directed, and a variable
+  with no rule is still a column in every lasso), with that count beside it, and NA when none did; a variable's
+  signal-set share is over the refits that examined it. Both follow `vp-fit`'s vote (§4.2).
 
 ## 5. Tests (testthat edition 3)
 
