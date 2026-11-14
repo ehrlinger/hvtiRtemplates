@@ -1,0 +1,1 @@
+- The README API table now lists the four `ar_*` functions and counts 75 catalog jobs, and the `work-a-job` vignette's ambiguous-prefix example reads "carries 6 templates", as `template_path("dc")` reports.

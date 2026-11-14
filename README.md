@@ -97,7 +97,7 @@ answer, because `%inc` had nothing to pin.
 
 | Function | Returns |
 |---|---|
-| `template_catalog()` | all 55 template jobs, including queued work and dependencies |
+| `template_catalog()` | all 75 template jobs, including queued work and dependencies |
 | `hvti_taxonomy()` | the analysis prefix table: prefix, name, folder, description |
 | `template_list()` | supported templates: name, folder and title printed; prefix, qualifier, description, call and file in the data |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
@@ -106,6 +106,8 @@ answer, because `%inc` had nothing to pin.
 | `open_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | job path; creates a missing job or opens an existing one |
 | `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
 | `migrate_job(source, subject, type, prefix, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
+| `ar_item(id)`, `ar_value(id, field)` | inside an `ar` analysis report: one saved figure, table or value from a finished job, checked against the bytes that job recorded |
+| `ar_paste_methods(path)`, `ar_review(path)` | for an `ar` report: write each item's Methods paragraph from its source job; mark items as reviewed after their source job was rendered again |
 
 `add_job()` also installs idempotent Quarto pre-render and post-render hooks in
 the study without replacing existing project settings or user hooks. Every
