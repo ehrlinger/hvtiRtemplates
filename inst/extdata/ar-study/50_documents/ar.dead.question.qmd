@@ -1,0 +1,22 @@
+---
+title: Does early hazard explain the deaths?
+---
+
+```{r}
+#| error: false
+hvtiRtemplates::ar_item("hz.dead.hz#fig-fit")
+```
+
+::: methods
+
+:::
+
+```{r}
+#| error: false
+hvtiRtemplates::ar_item("hz.dead.hz#tbl-estimates")
+```
+
+::: methods
+
+:::
+

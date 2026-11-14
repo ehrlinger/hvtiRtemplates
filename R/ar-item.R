@@ -90,9 +90,19 @@
 #' @return A \code{knit_asis} object holding the item's Markdown.
 #' @seealso \code{\link{ar_value}}, \code{\link{ar_paste_methods}}, \code{\link{ar_review}}
 #' @examples
-#' \donttest{
-#' # In an ar job's chunk:
-#' # hvtiRtemplates::ar_item("hz.dead.hz#fig-fit")
+#' if (requireNamespace("knitr", quietly = TRUE)) {
+#'   # A copy of a small study shipped with the package: one finished hz job and
+#'   # an ar report citing two of its exhibits.
+#'   dir <- tempfile("ar-")
+#'   dir.create(dir)
+#'   src <- system.file("extdata", "ar-study", package = "hvtiRtemplates")
+#'   file.copy(src, dir, recursive = TRUE)
+#'   study <- file.path(dir, "ar-study")
+#'   report <- file.path(study, "50_documents", "ar.dead.question.qmd")
+#'   # ar_item() runs inside the report's chunks, so knit the report.
+#'   md <- knitr::knit(report, output = tempfile(fileext = ".md"), quiet = TRUE)
+#'   writeLines(grep("^[*][*]Item|^[[]The full", readLines(md), value = TRUE))
+#'   unlink(dir, recursive = TRUE)
 #' }
 #' @export
 ar_item <- function(id) {
@@ -116,8 +126,20 @@ ar_item <- function(id) {
 #' @param field The field to return.
 #' @return The field's value.
 #' @examples
-#' \donttest{
-#' # Inline in an ar job: `r hvtiRtemplates::ar_value("hz.dead.hz#methods", "n")` patients
+#' if (requireNamespace("knitr", quietly = TRUE)) {
+#'   # A copy of a small study shipped with the package: one finished hz job and
+#'   # an ar report citing two of its exhibits.
+#'   dir <- tempfile("ar-")
+#'   dir.create(dir)
+#'   src <- system.file("extdata", "ar-study", package = "hvtiRtemplates")
+#'   file.copy(src, dir, recursive = TRUE)
+#'   study <- file.path(dir, "ar-study")
+#'   # In a report this is inline R: `r hvtiRtemplates::ar_value("hz.dead.hz#methods", "n")`.
+#'   # From the console it finds the study above the working directory.
+#'   old <- setwd(study)
+#'   print(ar_value("hz.dead.hz#methods", "n"))
+#'   setwd(old)
+#'   unlink(dir, recursive = TRUE)
 #' }
 #' @export
 ar_value <- function(id, field) {

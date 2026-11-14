@@ -20,3 +20,4 @@
 ^news$
 (^|/)Rplots[0-9]*\.pdf$
 ^vignettes/articles$
+^\.gitattributes$

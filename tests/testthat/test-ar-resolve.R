@@ -116,3 +116,18 @@ test_that("a record that resolves outside the study through a link stops", {
   ar_corrupt_record(qmd, file = "graphs/lnk/x.png")
   expect_error(hvtiRtemplates:::.ar_resolve("hz.dead.hz#fig-fit", root), "resolves outside the study")
 })
+
+test_that("the example study shipped for the ar_* examples resolves unchanged", {
+  # Its sidecar holds the digests dev/ar-example/build.R took. A hand edit, or a
+  # CRLF checkout of the job's .qmd (.gitattributes marks the fixture -text),
+  # would make every example stop or warn.
+  root <- normalizePath(system.file("extdata", "ar-study", package = "hvtiRtemplates"), winslash = "/")
+  expect_true(nzchar(root))
+  for (label in c("fig-fit", "tbl-estimates", "methods")) {
+    r <- hvtiRtemplates:::.ar_resolve(paste0("hz.dead.hz#", label), root)
+    expect_false(r$source_changed)
+  }
+  items <- hvtiRtemplates:::.ar_parse(readLines(file.path(root, "50_documents", "ar.dead.question.qmd")))
+  expect_identical(vapply(items, `[[`, "", "id"), c("hz.dead.hz#fig-fit", "hz.dead.hz#tbl-estimates"))
+  expect_true(all(vapply(items, `[[`, NA, "empty")))
+})
