@@ -167,6 +167,13 @@ selected <- .vp_read$value$selected
 .provenance_data <- .vp_read$lineage$data
 .provenance_artifacts <- c(.vp_read$lineage$artifacts, list(.vp_read$record))
 CACHE_DIR <- dirname(.handoff)
+.vp_cohort <- .vp_read$lineage$cohort
+# A screen saved before NA_ACTION existed records only n.
+if (!is.null(.vp_cohort$na_action)) {
+  cat("The screen used ", .vp_cohort$n, " of ", .vp_cohort$n_supplied, " patients supplied (NA_ACTION = \"",
+      .vp_cohort$na_action, "\"; ", sum(.vp_cohort$n_imputed), " value(s) imputed, ", .vp_cohort$n_outcome_missing,
+      " missing the outcome dropped).\n", sep = "")
+}
 ```
 
 ```{r}
@@ -217,6 +224,7 @@ vpi_coverage <- function(grad, parent, screen, selected = screen$variable[screen
   out$tested <- screen$tested[m] %in% TRUE
   # The handoff's selection, which can be vp-fit's refit vote, not the full fit's own judgment.
   out$selected <- out$variable %in% selected
+  out$state <- ifelse(out$selected, "selected", ifelse(out$tested, "examined, not selected", "not examined"))
   out$drawn <- out$share_na < 1
   out
 }
@@ -316,7 +324,8 @@ if (!length(show)) {
 # The beeswarm's rows, and its height: a row per predictor, up to the 9 in page.
 .rows <- c(show, setdiff(icov$term[icov$noise & icov$drawn], show))
 bee_height <- min(9, 1 + 0.4 * length(.rows))
-knitr::kable(icov, digits = 3, row.names = FALSE)
+# The saved table keeps tested and selected; the report shows the one state they give together.
+knitr::kable(icov[setdiff(names(icov), c("tested", "selected"))], digits = 3, row.names = FALSE)
 ```
 
 ```{r}

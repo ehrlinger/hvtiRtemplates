@@ -882,7 +882,9 @@ share near `SELECT_SHARE` is a vote on the edge, not a failure.
   .real$variable[.real$selected]
 }
 vp_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
-  list(fit = fit, coverage = cov, selected = .selected, family = .family),
+  list(fit = fit, coverage = cov, selected = .selected, family = .family,
+       not_examined = as.character(.real$variable[!.real$tested]),
+       not_examined_refits = if (REPEATS > 0) as.character(.freq$variable[!.freq$examined]) else character()),
   data = .provenance_data,
   analysis = .analysis,
   cohort = .cohort,

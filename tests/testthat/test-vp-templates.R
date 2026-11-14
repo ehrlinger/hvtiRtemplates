@@ -488,7 +488,8 @@ test_that("vp-fit saves one handoff: the fit, its judged coverage, the selection
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
   env <- vp_fit_first()
   h <- readRDS(env$set_path("estimates", "vp.rds"))
-  expect_named(h, c("fit", "coverage", "selected", "family"))
+  expect_named(h, c("fit", "coverage", "selected", "family", "not_examined", "not_examined_refits"))
+  expect_identical(h$not_examined, as.character(env$.real$variable[!env$.real$tested]))
   # With refits, the selection handed on is the refits' majority vote, among the variables they examined.
   expect_identical(h$selected, env$.freq$variable[env$.freq$examined & (env$.freq$share_selected >= 0.5) %in% TRUE])
   expect_identical(h$family, "survival")
@@ -569,7 +570,7 @@ test_that("vp-explain names a selection the saved full fit did not test, and sto
   expect_error(
     rf_run("vp", "explain", vp_explain_labels, env,
            list(HORIZON = 1, SEED = 1, SAVE_FIGURES = FALSE, PARTIAL_VARS = untested[1])),
-    "saved full fit tested none of"
+    "the screen did not examine"
   )
 })
 
@@ -827,6 +828,14 @@ test_that("vpi_coverage marks the handoff's selection, not the full fit's", {
   expect_identical(cov$selected, c(TRUE, FALSE))
   # Without a handoff selection it falls back to the screen's own.
   expect_identical(env$vpi_coverage(grad, c(age = "age", x1 = "x1"), screen)$selected, c(FALSE, TRUE))
+})
+
+test_that("vpi_coverage gives each predictor one of the three states", {
+  e <- vpi_helpers_env()
+  cov <- data.frame(variable = c("s", "e", "n"), noise = FALSE, tested = c(TRUE, TRUE, FALSE))
+  grad <- data.frame(s = c(0.1, 0.2), e = c(0.1, 0.1), n = c(NA, NA))
+  out <- e$vpi_coverage(grad, c(s = "s", e = "e", n = "n"), cov, selected = "s")
+  expect_identical(out$state, c("selected", "examined, not selected", "not examined"))
 })
 
 test_that("vpi_coverage keeps a predictor ivarpro() returned no column for", {
