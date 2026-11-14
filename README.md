@@ -90,9 +90,11 @@ supplies that, so a study can use the latest while working and pin it on filing.
 In practice a study declares `hvtiRtemplates` in its `renv.lock`, and `add_job()`
 copies a template into the study as an editable job; the job's setup, guards and
 provenance run from the installed package rather than from the copy. The study
-pins the version when results are filed. The lock file is then the answer to
-"what produced this?", the question the SAS arrangement could not answer,
-because `%inc` had nothing to pin.
+pins the version when results are filed. The lock file is then one part of the
+answer to "what produced this?": it fixes the package code, and each render's
+provenance records the rest, a checksum of the job's own source and the
+registered data it read. That is the question the SAS arrangement could not
+answer, because `%inc` had nothing to pin.
 
 ## API
 
@@ -139,7 +141,9 @@ are `dc`, `hs`, `lm`, `lp`, `nb`, `rfc`, `rfr`, `rfs`, `rhf`, `rm`, `sid`, `vp`,
 and `vt`. The `lm` choices are `binary`,
 `ordinal`, `nominal`, `propensity_binary`, `propensity_ordinal`,
 `propensity_nominal`, `checkpred`, and `balancing_count`. It is `NULL` and the
-column is `NA` for a prefix with a single template. Naming no qualifier where
+column is `NA` for an unqualified prefix. A prefix is qualified or not as a
+whole, so a qualified prefix keeps its qualifier even with one template shipped,
+as `nb.boostmtree` does. Naming no qualifier where
 a prefix carries several is an error listing the choices, never a silent pick
 of the first.
 
