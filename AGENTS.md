@@ -1,8 +1,8 @@
 # hvtiRtemplates
 
 Analysis job templates for the HVTI CORR group, plus the prefix taxonomy
-that names them. Twenty-four exports across 42 source files (counted at
-1.5.0), in four groups: - the taxonomy and catalog:
+that names them. Twenty-nine exports across 60 source files (counted at
+1.6.0 prep), in five groups: - the taxonomy and catalog:
 [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
 [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html),
 [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
@@ -15,7 +15,8 @@ scaffolding and upgrading jobs:
 [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md),
 [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md),
 [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md),
-[`build_cohort()`](https://ehrlinger.github.io/hvtiRtemplates/reference/build_cohort.md)
+[`build_cohort()`](https://ehrlinger.github.io/hvtiRtemplates/reference/build_cohort.md),
+[`import_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/import_job.md)
 and
 [`stop_here()`](https://ehrlinger.github.io/hvtiRtemplates/reference/stop_here.md); -
 running jobs:
@@ -28,6 +29,12 @@ running jobs:
 [`guard_long_fit()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_long_fit.md)
 and
 [`guard_memory()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md); -
+the `ar` analysis report’s items:
+[`ar_item()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_item.md),
+[`ar_value()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_value.md),
+[`ar_paste_methods()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_paste_methods.md)
+and
+[`ar_review()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_review.md); -
 the `ac` template’s life tables:
 [`life_table()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md),
 [`life_table_at()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md),

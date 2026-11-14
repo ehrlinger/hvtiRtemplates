@@ -206,7 +206,7 @@ hvtiRtemplates::stop_here()
 </section><section class="level2"><h2 id="when-the-job-stops-you">When the job stops you<a class="anchor" aria-label="anchor" href="#when-the-job-stops-you"></a>
 </h2>
 <p>Most stops are the package refusing to guess. The message says what it needs; these are the ones you meet first.</p>
-<p><strong>“prefix ‘dc’ carries 3 templates; name one with <code>qualifier</code>, or by its full name.”</strong> Several templates share the <code>dc</code> prefix. Use the template’s full name, <code>add_job("dc.gfup", ...)</code>, as the <code>call</code> column prints it.</p>
+<p><strong>“prefix ‘dc’ carries 6 templates; name one with <code>qualifier</code>, or by its full name.”</strong> Several templates share the <code>dc</code> prefix. Use the template’s full name, <code>add_job("dc.gfup", ...)</code>, as the <code>call</code> column prints it.</p>
 <p><strong>“… already exists; refusing to overwrite.”</strong> The job is there already. Open it with <code><a href="../reference/open_job.html">open_job()</a></code> instead of adding it again.</p>
 <p><strong>“… is deprecated in favor of …”</strong> A warning, not an error: the job is still written. The message names the template that replaces it; use that one for new work.</p>
 <p><strong>“N unresolved EDIT: marker(s) remain in this job”</strong>, from <code>render_job(final = TRUE)</code>. The job is not finished. Find the markers as above, or render a draft to see them listed.</p>

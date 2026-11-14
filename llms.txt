@@ -90,17 +90,22 @@ is right; SAS could not make it safe because there was no version to
 pin. `renv.lock` supplies that, so a study can use the latest while
 working and pin it on filing.
 
-In practice a study declares `hvtiRtemplates` in its `renv.lock`,
-resolves a template through `template_path("ac")` instead of copying one
-into the study folder, and pins the version when results are filed. The
-lock file is then the answer to “what produced this?” — the question the
-SAS arrangement could not answer, because `%inc` had nothing to pin.
+In practice a study declares `hvtiRtemplates` in its `renv.lock`, and
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+copies a template into the study as an editable job; the job’s setup,
+guards and provenance run from the installed package rather than from
+the copy. The study pins the version when results are filed. The lock
+file is then one part of the answer to “what produced this?”: it fixes
+the package code, and each render’s provenance records the rest, a
+checksum of the job’s own source and the registered data it read. That
+is the question the SAS arrangement could not answer, because `%inc` had
+nothing to pin.
 
 ## API
 
 | Function | Returns |
 |----|----|
-| [`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md) | all 55 template jobs, including queued work and dependencies |
+| [`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md) | all 75 template jobs, including queued work and dependencies |
 | [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html) | the analysis prefix table: prefix, name, folder, description |
 | [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md) | supported templates: name, folder and title printed; prefix, qualifier, description, call and file in the data |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
@@ -108,7 +113,10 @@ SAS arrangement could not answer, because `%inc` had nothing to pin.
 | `add_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | the scaffolded job’s path, invisibly |
 | `open_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | job path; creates a missing job or opens an existing one |
 | `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
+| `import_job(from, subject = NULL, type = NULL, dir = NULL)` | the imported job’s path, invisibly; copies a job from another study, keeping its edits |
 | `migrate_job(source, subject, type, prefix, ...)` | the migrated job’s path, invisibly; writes an evidence report beside it |
+| `ar_item(id)`, `ar_value(id, field)` | inside an `ar` analysis report: one saved figure, table or value from a finished job, checked against the bytes that job recorded |
+| `ar_paste_methods(path)`, `ar_review(path)` | for an `ar` report: fill each empty Methods slot from its source job, leaving existing text for the analyst to compare and update; mark items as reviewed after their source job was rendered again |
 
 [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 also installs idempotent Quarto pre-render and post-render hooks in the
@@ -138,12 +146,15 @@ variables, coding, filters, and any cohort definition. Dataset
 registration records the data, not a study-wide endpoint or cohort.
 
 `qualifier` names a job type within a prefix. The current qualified
-families are `dc`, `dp`, `rfs`, `rfc`, `rfr`, and `lm`. The `lm` choices
-are `binary`, `ordinal`, `nominal`, `propensity_binary`,
-`propensity_ordinal`, `propensity_nominal`, `checkpred`, and
-`balancing_count`. It is `NULL` and the column is `NA` for a prefix with
-a single template. Naming no qualifier where a prefix carries several is
-an error listing the choices, never a silent pick of the first.
+families are `dc`, `hs`, `lm`, `lp`, `nb`, `rfc`, `rfr`, `rfs`, `rhf`,
+`rm`, `sid`, `vp`, and `vt`. The `lm` choices are `binary`, `ordinal`,
+`nominal`, `propensity_binary`, `propensity_ordinal`,
+`propensity_nominal`, `checkpred`, and `balancing_count`. It is `NULL`
+and the column is `NA` for an unqualified prefix. A prefix is qualified
+or not as a whole, so a qualified prefix keeps its qualifier even with
+one template shipped, as `nb.boostmtree` does. Naming no qualifier where
+a prefix carries several is an error listing the choices, never a silent
+pick of the first.
 
 ## Migrate a legacy job
 

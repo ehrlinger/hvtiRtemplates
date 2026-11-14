@@ -115,7 +115,7 @@
 </h2>
 <p>Study analyses were created by copying template files into a new study folder and editing them. Two things followed: improvements stayed in the study where they were made, and — the problem that actually hurts — a filed result could not say what produced it. SAS bound its analysis logic with <code>%inc kaplan</code>, resolving at run time against a mutable directory with no version, so the <code>.lst</code> filed in 2006 was produced by a <code>kaplan</code> nobody can now identify.</p>
 <p>The design rule is <strong>bind late, to something versioned</strong>. Late binding is right; SAS could not make it safe because there was no version to pin. <code>renv.lock</code> supplies that, so a study can use the latest while working and pin it on filing.</p>
-<p>In practice a study declares <code>hvtiRtemplates</code> in its <code>renv.lock</code>, resolves a template through <code>template_path("ac")</code> instead of copying one into the study folder, and pins the version when results are filed. The lock file is then the answer to “what produced this?” — the question the SAS arrangement could not answer, because <code>%inc</code> had nothing to pin.</p>
+<p>In practice a study declares <code>hvtiRtemplates</code> in its <code>renv.lock</code>, and <code><a href="reference/add_job.html">add_job()</a></code> copies a template into the study as an editable job; the job’s setup, guards and provenance run from the installed package rather than from the copy. The study pins the version when results are filed. The lock file is then one part of the answer to “what produced this?”: it fixes the package code, and each render’s provenance records the rest, a checksum of the job’s own source and the registered data it read. That is the question the SAS arrangement could not answer, because <code>%inc</code> had nothing to pin.</p>
 </div>
 <div class="section level2">
 <h2 id="api">API<a class="anchor" aria-label="anchor" href="#api"></a>
@@ -132,7 +132,7 @@
 <tbody>
 <tr>
 <td><code><a href="reference/template_catalog.html">template_catalog()</a></code></td>
-<td>all 55 template jobs, including queued work and dependencies</td>
+<td>all 75 template jobs, including queued work and dependencies</td>
 </tr>
 <tr>
 <td><code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy()</a></code></td>
@@ -164,15 +164,31 @@
 <code>path</code>, invisibly; renders a draft, or with <code>final = TRUE</code> a render that stops on an unfinished job</td>
 </tr>
 <tr>
+<td><code>import_job(from, subject = NULL, type = NULL, dir = NULL)</code></td>
+<td>the imported job’s path, invisibly; copies a job from another study, keeping its edits</td>
+</tr>
+<tr>
 <td><code>migrate_job(source, subject, type, prefix, ...)</code></td>
 <td>the migrated job’s path, invisibly; writes an evidence report beside it</td>
+</tr>
+<tr>
+<td>
+<code>ar_item(id)</code>, <code>ar_value(id, field)</code>
+</td>
+<td>inside an <code>ar</code> analysis report: one saved figure, table or value from a finished job, checked against the bytes that job recorded</td>
+</tr>
+<tr>
+<td>
+<code>ar_paste_methods(path)</code>, <code>ar_review(path)</code>
+</td>
+<td>for an <code>ar</code> report: fill each empty Methods slot from its source job, leaving existing text for the analyst to compare and update; mark items as reviewed after their source job was rendered again</td>
 </tr>
 </tbody>
 </table>
 <p><code><a href="reference/add_job.html">add_job()</a></code> also installs idempotent Quarto pre-render and post-render hooks in the study without replacing existing project settings or user hooks. Every managed render captures the registered data actually read, embeds its runtime payload in the completed HTML, and publishes a same-stem <code>.provenance.json</code> beside Quarto’s actual output. A failed render leaves the prior completed HTML and sidecar together when the output stays untouched. If publication fails after an output changes, the hooks expose a prior sidecar only when its recorded output hash still matches. Otherwise they withhold the sidecar and retain its recovery backup with a warning.</p>
 <p>Templates are <code>&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in a numbered directory (<code>20_distributions/ac.qmd</code>); a job is <code>&lt;prefix&gt;[.&lt;qualifier&gt;].&lt;subject&gt;.&lt;type&gt;.qmd</code> in the study’s matching taxonomy folder, so a study’s jobs sort by template. Jobs scaffolded before 2026-10 keep their <code>&lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> names and keep rendering. New studies use numbered folders and existing bare-folder studies keep their layout. The ordinal that once prefixed filenames was dropped in 1.1.0.</p>
 <p>The subject groups a job set. It is a statistical endpoint when the job analyses one, such as <code>death</code>; it can instead be an endpoint-free topic such as <code>cohort</code>, <code>treatment</code>, or <code>labs</code>. Each job owns its outcome variables, coding, filters, and any cohort definition. Dataset registration records the data, not a study-wide endpoint or cohort.</p>
-<p><code>qualifier</code> names a job type within a prefix. The current qualified families are <code>dc</code>, <code>dp</code>, <code>rfs</code>, <code>rfc</code>, <code>rfr</code>, and <code>lm</code>. The <code>lm</code> choices are <code>binary</code>, <code>ordinal</code>, <code>nominal</code>, <code>propensity_binary</code>, <code>propensity_ordinal</code>, <code>propensity_nominal</code>, <code>checkpred</code>, and <code>balancing_count</code>. It is <code>NULL</code> and the column is <code>NA</code> for a prefix with a single template. Naming no qualifier where a prefix carries several is an error listing the choices, never a silent pick of the first.</p>
+<p><code>qualifier</code> names a job type within a prefix. The current qualified families are <code>dc</code>, <code>hs</code>, <code>lm</code>, <code>lp</code>, <code>nb</code>, <code>rfc</code>, <code>rfr</code>, <code>rfs</code>, <code>rhf</code>, <code>rm</code>, <code>sid</code>, <code>vp</code>, and <code>vt</code>. The <code>lm</code> choices are <code>binary</code>, <code>ordinal</code>, <code>nominal</code>, <code>propensity_binary</code>, <code>propensity_ordinal</code>, <code>propensity_nominal</code>, <code>checkpred</code>, and <code>balancing_count</code>. It is <code>NULL</code> and the column is <code>NA</code> for an unqualified prefix. A prefix is qualified or not as a whole, so a qualified prefix keeps its qualifier even with one template shipped, as <code>nb.boostmtree</code> does. Naming no qualifier where a prefix carries several is an error listing the choices, never a silent pick of the first.</p>
 </div>
 <div class="section level2">
 <h2 id="migrate-a-legacy-job">Migrate a legacy job<a class="anchor" aria-label="anchor" href="#migrate-a-legacy-job"></a>

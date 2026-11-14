@@ -325,7 +325,7 @@ change is left alone: the console says so, and nothing is added to
 Most stops are the package refusing to guess. The message says what it
 needs; these are the ones you meet first.
 
-**“prefix ‘dc’ carries 3 templates; name one with `qualifier`, or by its
+**“prefix ‘dc’ carries 6 templates; name one with `qualifier`, or by its
 full name.”** Several templates share the `dc` prefix. Use the
 template’s full name, `add_job("dc.gfup", ...)`, as the `call` column
 prints it.
