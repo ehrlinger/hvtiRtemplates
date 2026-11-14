@@ -783,8 +783,10 @@ test_that("vp-dependence saves one handoff with its lineage", {
   expect_named(h, c("fit", "beta", "bar", "bar_from", "edges", "signal", "stability", "not_examined"))
   expect_s3_class(h$fit, "uvarpro")
   expect_null(h$stability)
-  # The fixture's every variable has a release rule, so nothing is handed on as unexamined.
-  expect_identical(h$not_examined, character())
+  # Whichever variables the forest built no rule for are handed on as not examined, and only those. Which
+  # they are on this fixture is chance and differs by platform (Ubuntu's build leaves x2 out at SEED 2026).
+  expect_type(h$not_examined, "character")
+  expect_identical(h$not_examined, env$.coverage$variable[env$.coverage$state == "not examined"])
   # The package's handoff reader accepts it: the lineage is complete.
   expect_no_error(hvtiRtemplates:::.read_handoff(path, "dependence", env$.cfg, "the vp-dependence job"))
 })
@@ -978,20 +980,17 @@ test_that("vp-dependence stops on an unexamined variable when MAX_UNTESTED is se
   expect_identical(h$not_examined, env$.coverage$variable[env$.coverage$rules == 0L])
 })
 
-test_that("vp-dependence's default rule limits examine every variable where varPro's left two unexamined", {
+test_that("vp-dependence's default rule limits reach uvarpro(), not varPro's 200 trees", {
   skip_on_cran()
   vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
-  # The template's own NTREE, NOISE_N and rule limits on the fixture shape. Which
-  # variable misses is chance: over SEED = 1 to 30, varPro's 200 trees left a
-  # real variable without a rule at 23 seeds and the default 500 at 7. SEED = 3
-  # is one where 200 trees leave b and x2 out and 500 cover them, so this test
-  # fails if the default falls back to 200 (dev/vp/uvarpro-coverage.R). If this
-  # seed stops telling 200 from 500 trees after a varPro or randomForestSRC
-  # update, re-pick it with dev/vp/uvarpro-coverage.R.
+  # The fit records the limits it ran under, and its rules come from that many trees, so this guards a
+  # fallback to varPro's default of 200 on every platform. An earlier version asserted that the default
+  # left no real variable unexamined at one seed; which variable misses is chance (7 of 30 seeds at 500
+  # trees, dev/vp/uvarpro-coverage.R) and differs between macOS and Ubuntu, so it failed on CI.
   env <- rf_env(vpd_data())
   rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise", "dependence-helpers"),
          env, list(VARIABLES = c("a", "b", "x2", "fs", "c"), OUTCOME = NULL, ORDINAL = NULL, SAVE_FIGURES = FALSE, SEED = 3))
-  expect_identical(c(env$NTREE, env$NOISE_N), c(500, 20))
+  expect_identical(c(env$NTREE, env$NOISE_N, env$MAX_TREE, env$MAX_RULES_TREE), c(500, 20, 500, 20))
   # The fit chunk's own uvarpro() call, without the lasso that follows it.
   find <- function(e) {
     if (!is.call(e)) return(list())
@@ -1003,8 +1002,12 @@ test_that("vp-dependence's default rule limits examine every variable where varP
   expect_length(call, 1L)
   set.seed(abs(env$SEED))
   fit <- eval(call[[1L]], env)
+  expect_equal(fit$max.tree, 500)
+  expect_equal(fit$max.rules.tree, 20)
+  expect_gt(length(unique(fit$results$tree)), 200L)
+  # The coverage table counts every rule mapped to a real variable.
   cov <- env$vpd_coverage(fit, env$.cols)
-  expect_identical(cov$variable[cov$state != "examined"], character())
+  expect_identical(cov$state == "examined", cov$rules > 0L)
 })
 
 # vp-individual ---------------------------------------------------------------
