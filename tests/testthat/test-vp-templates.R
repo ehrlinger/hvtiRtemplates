@@ -54,6 +54,38 @@ test_that("vp-fit imputes a missing predictor by default and keeps the patient",
   expect_identical(env$.cohort$na_action, "na.impute")
 })
 
+test_that("vp-fit imputes a yes/no predictor as TRUE or FALSE, not as a fraction", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  # The real imputer: given a logical column, randomForestSRC::impute() fills it with numbers such as 0.496. The study
+  # read turns a logical into 0/1, so the column is set after it, as data reaching the chunk another way would be.
+  data <- vp_data()
+  data$yn <- 0L
+  choices <- utils::modifyList(vp_choices, list(PREDICTORS = c(vp_choices$PREDICTORS, "yn")))
+  env <- rf_env(data)
+  rf_run("vp", "fit", c("setup", "edit-study-choices", "tbl-data"), env, choices)
+  yn <- env$d$xs > 0
+  env$d$yn <- replace(yn, 1:30, NA)
+  rf_run("vp", "fit", "tbl-missing", env, choices)
+  expect_type(env$d$yn, "logical")
+  expect_false(anyNA(env$d$yn))
+  expect_identical(env$d$yn[-(1:30)], yn[-(1:30)])
+})
+
+test_that("vp-fit drops a patient missing TIME whatever its EVENT holds, before checking the event coding", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$time[1] <- NA
+  data$event[1] <- 2L
+  env <- rf_env(data)
+  rf_run("vp", "fit", vp_data_labels, env, vp_choices)
+  expect_identical(env$.cohort$n_outcome_missing, 1L)
+  expect_identical(nrow(env$d), 199L)
+  # A complete patient coded 2 is still refused.
+  data$time[1] <- 1
+  expect_error(rf_run("vp", "fit", vp_data_labels, rf_env(data), vp_choices), "must be coded 0 and 1")
+})
+
 test_that("varPro's own record agrees that vp-fit dropped no patient for a missing predictor", {
   skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
@@ -522,7 +554,8 @@ test_that("vp-fit saves one handoff: the fit, its judged coverage, the selection
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
   env <- vp_fit_first()
   h <- readRDS(env$set_path("estimates", "vp.rds"))
-  expect_named(h, c("fit", "coverage", "selected", "family", "not_examined", "not_examined_refits"))
+  expect_named(h, c("fit", "coverage", "selected", "selected_by", "family", "not_examined", "not_examined_refits"))
+  expect_identical(h$selected_by, "refits")
   expect_identical(h$not_examined, as.character(env$.real$variable[!env$.real$tested]))
   # With refits, the selection handed on is the refits' majority vote, among the variables they examined.
   expect_identical(h$selected, env$.freq$variable[env$.freq$examined & (env$.freq$share_selected >= 0.5) %in% TRUE])
@@ -555,6 +588,7 @@ test_that("SELECT_SHARE = NA, or REPEATS = 0, hands on the full fit's selection"
     env <- vp_fit_first(choices = utils::modifyList(vp_choices, extra))
     h <- readRDS(env$set_path("estimates", "vp.rds"))
     expect_identical(h$selected, env$.real$variable[env$.real$selected])
+    expect_identical(h$selected_by, "full fit")
   }
 })
 
@@ -1056,6 +1090,14 @@ test_that("vpi_coverage gives each predictor one of the three states", {
   expect_identical(out$state, c("selected", "examined, not selected", "not examined"))
 })
 
+test_that("vpi_coverage calls a variable the voting refits did not examine not examined, though the full fit tested it", {
+  e <- vpi_helpers_env()
+  cov <- data.frame(variable = c("s", "e", "r"), noise = FALSE, tested = TRUE)
+  grad <- data.frame(s = c(0.1, 0.2), e = c(0.1, 0.1), r = c(0.3, 0.1))
+  out <- e$vpi_coverage(grad, c(s = "s", e = "e", r = "r"), cov, selected = "s", unexamined = "r")
+  expect_identical(out$state, c("selected", "examined, not selected", "not examined"))
+})
+
 test_that("vpi_coverage keeps a predictor ivarpro() returned no column for", {
   env <- vpi_helpers_env()
   # With nvar = 1, varPro 3.3.0 kept only x1 in xvar.names and ivarpro()
@@ -1163,6 +1205,23 @@ test_that("vp-dependence imputes a missing variable by default, and leaves OUTCO
   expect_identical(nrow(env$d), 200L)
   expect_false(anyNA(env$d[vpd_choices$VARIABLES]))
   expect_identical(env$.cohort$n_imputed[["b"]], 9L)
+})
+
+test_that("vp-dependence imputes a yes/no variable as TRUE or FALSE, not as a fraction", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  # The study read turns a logical into 0/1, so the column is set after it.
+  data <- vpd_data()
+  data$yn <- 0L
+  choices <- utils::modifyList(vpd_choices, list(VARIABLES = c(vpd_choices$VARIABLES, "yn")))
+  env <- rf_env(data)
+  rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data"), env, choices)
+  yn <- env$d$a > 0
+  env$d$yn <- replace(yn, 1:30, NA)
+  rf_run("vp", "dependence", "tbl-missing", env, choices)
+  expect_type(env$d$yn, "logical")
+  expect_false(anyNA(env$d$yn))
+  expect_identical(env$d$yn[-(1:30)], yn[-(1:30)])
 })
 
 test_that("vp-dependence hands the imputation the variables only, and drops a patient missing OUTCOME", {

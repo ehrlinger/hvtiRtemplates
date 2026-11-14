@@ -5,11 +5,11 @@
   may select differently, and stops at its cached fit until `REFIT <- TRUE`, because imputation changes the data
   the fit is keyed on.** Set `NA_ACTION <- "na.omit"` to keep complete cases. A predictor missing in more than
   `MAX_MISSING` (0.4) of the patients is refused, not imputed, and a patient missing the outcome is dropped and
-  counted either way. The missing-values table now gives patients supplied, imputed or dropped, and used.
+  counted either way. A yes/no (logical) predictor is imputed as `TRUE` or `FALSE`. The missing-values table now gives patients supplied, imputed or dropped, and used.
 - The vp reports now keep a variable the screen did not examine apart from one it examined and did not select.
   `vp-fit`'s refit vote counts only the refits that tested a variable (`MIN_TESTED_SHARE`), `MAX_UNTESTED`
-  defaults to 0.1 (was 0.5), and `vp.rds` names the variables not examined, which `vp-explain` and `vp-individual`
-  report as such.
+  defaults to 0.1 (was 0.5), and `vp.rds` names the variables not examined and records whether its selection is the refits' vote
+  (`selected_by`), which `vp-explain` and `vp-individual` report as such.
 - `vp-dependence` exposes `uvarpro()`'s rule limits (`MAX_TREE`, `MAX_RULES_TREE`), reports which variables the
   forest built no rule for, and names them in `dependence.rds` as `not_examined`. It now passes `MAX_TREE` 500
   where varPro's default is 200, so an upgraded graph changes and its lasso costs more. Its stability shares

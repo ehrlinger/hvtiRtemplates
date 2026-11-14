@@ -205,7 +205,10 @@ vpi_parent <- function(fit) {
 # not from the gradient table: ivarpro() returns columns only for the
 # predictors the fit kept, so one cut by split weights or NVAR has no column at
 # all, and would otherwise vanish from the table instead of being listed.
-vpi_coverage <- function(grad, parent, screen, selected = screen$variable[screen$selected %in% TRUE]) {
+# `unexamined` names the variables the judge that made the selection did not examine: vp-fit's refits, when their
+# vote made it. A variable the full fit tested but too few refits did is then not examined, not "not selected".
+vpi_coverage <- function(grad, parent, screen, selected = screen$variable[screen$selected %in% TRUE],
+                         unexamined = character()) {
   terms <- names(parent)
   have <- terms %in% names(grad)
   col_of <- function(t) if (t %in% names(grad)) grad[[t]] else NA_real_
@@ -224,7 +227,8 @@ vpi_coverage <- function(grad, parent, screen, selected = screen$variable[screen
   out$tested <- screen$tested[m] %in% TRUE
   # The handoff's selection, which can be vp-fit's refit vote, not the full fit's own judgment.
   out$selected <- out$variable %in% selected
-  out$state <- ifelse(out$selected, "selected", ifelse(out$tested, "examined, not selected", "not examined"))
+  out$state <- ifelse(out$selected, "selected",
+                      ifelse(out$tested & !(out$variable %in% unexamined), "examined, not selected", "not examined"))
   out$drawn <- out$share_na < 1
   out
 }
@@ -291,7 +295,9 @@ setting to give every candidate rules.
 #| label: tbl-coverage
 #| tbl-cap: "Local gradients for each predictor: patients without one, their typical size, and what the screen found"
 #| results: asis
-icov <- vpi_coverage(grad, .parent, cov, selected)
+# A screen saved before selected_by existed handed on the full fit's selection or did not record which.
+.unexamined <- if (identical(.vp_read$value$selected_by, "refits")) .vp_read$value$not_examined_refits else character()
+icov <- vpi_coverage(grad, .parent, cov, selected, unexamined = .unexamined)
 .ref <- vpi_noise_ref(icov, grad)
 .slope_of <- switch(fit$family,
   surv = "varPro's ensemble mortality, in expected events, not a probability",

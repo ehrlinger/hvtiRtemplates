@@ -341,6 +341,10 @@ if (!nrow(d)) {
 if (anyNA(d[VARIABLES])) {
   # Bound first so the cache keys VARIABLES alone: a change to OUTCOME must not stale it.
   .to_impute <- d[VARIABLES]
+  # impute() fills a logical column as a number, so a yes/no variable would come back as 0.496 and be graphed as
+  # continuous. It is imputed as a factor and turned back into TRUE/FALSE, so the graph sees the same type either way.
+  .lgl <- names(.to_impute)[vapply(.to_impute, is.logical, logical(1L))]
+  .to_impute[.lgl] <- lapply(.to_impute[.lgl], factor)
   .imputed <- cache_fit("vp-dependence-impute",
                         randomForestSRC::impute(data = .to_impute, ntree = 250, verbose = FALSE),
                         seed = SEED, dir = dirname(set_path("estimates", "dependence.rds")), refit = REFIT,
@@ -350,6 +354,7 @@ if (anyNA(d[VARIABLES])) {
     stop(nrow(d) - nrow(.imputed), " patient(s) have no observed value in VARIABLES and cannot be imputed. ",
          "Remove them in the dataset build.", call. = FALSE)
   }
+  .imputed[.lgl] <- lapply(.imputed[.lgl], function(x) as.logical(as.character(x)))
   d[VARIABLES] <- .imputed[VARIABLES]
 }
 if (anyNA(d[.cols])) stop("Variables still hold missing values after NA_ACTION; uvarpro() would drop them.", call. = FALSE)

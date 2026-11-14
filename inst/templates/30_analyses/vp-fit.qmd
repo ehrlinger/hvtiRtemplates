@@ -366,9 +366,11 @@ if (.survival) {
   # randomForestSRC reads a status above 1 as a competing event, so a 1/2
   # coding, which survival::Surv() accepts, would screen a competing-risks
   # outcome without a word. Refuse it here instead.
-  if (!all(stats::na.omit(d[[EVENT]]) %in% c(0, 1))) {
+  # Read on the patients with both TIME and EVENT: one missing either is dropped below, whatever its EVENT holds.
+  .event_seen <- d[[EVENT]][!is.na(d[[TIME]]) & !is.na(d[[EVENT]])]
+  if (!all(.event_seen %in% c(0, 1))) {
     stop(EVENT, " must be coded 0 and 1 (1 = event); found ",
-         paste(sort(unique(d[[EVENT]])), collapse = ", "), ".", call. = FALSE)
+         paste(sort(unique(.event_seen)), collapse = ", "), ".", call. = FALSE)
   }
   .family <- "survival"
 } else {
@@ -445,6 +447,10 @@ if (!nrow(d)) {
 if (anyNA(d[PREDICTORS])) {
   # Bound first so the cache keys the predictors alone: a change to an outcome column must not stale it.
   .to_impute <- d[PREDICTORS]
+  # impute() fills a logical column as a number, so a yes/no predictor would come back as 0.496 and be screened as
+  # continuous. It is imputed as a factor and turned back into TRUE/FALSE, so the screen sees the same type either way.
+  .lgl <- names(.to_impute)[vapply(.to_impute, is.logical, logical(1L))]
+  .to_impute[.lgl] <- lapply(.to_impute[.lgl], factor)
   .imputed <- cache_fit("vp-fit-impute", randomForestSRC::impute(data = .to_impute, ntree = 250, verbose = FALSE),
                         seed = SEED, dir = dirname(set_path("estimates", "vp.rds")), refit = REFIT,
                         packages = "randomForestSRC")
@@ -453,6 +459,7 @@ if (anyNA(d[PREDICTORS])) {
     stop(nrow(d) - nrow(.imputed), " patient(s) have no observed predictor and cannot be imputed. ",
          "Remove them in the dataset build.", call. = FALSE)
   }
+  .imputed[.lgl] <- lapply(.imputed[.lgl], function(x) as.logical(as.character(x)))
   d[PREDICTORS] <- .imputed[PREDICTORS]
 }
 if (anyNA(d[PREDICTORS])) stop("Predictors still hold missing values after NA_ACTION; varPro would drop them.", call. = FALSE)
@@ -820,8 +827,10 @@ if (REPEATS > 0) {
   .freq <- vp_vote(.stab, REPEATS, MIN_TESTED_SHARE)
   .unexamined <- .freq$variable[!.freq$examined]
   if (length(.unexamined)) {
-    cat("Not examined in the refits (tested in fewer than ", MIN_TESTED_SHARE * 100, "% of them), so neither ",
-        "handed on nor rejected: ", paste(.unexamined, collapse = ", "), ".\n", sep = "")
+    cat("Not examined in the refits (tested in fewer than ", MIN_TESTED_SHARE * 100, "% of them): ",
+        paste(.unexamined, collapse = ", "), ".",
+        if (is.na(SELECT_SHARE)) " The full fit's selection is handed on, so this is a note on its stability.\n"
+        else " Neither handed on nor rejected.\n", sep = "")
   }
   if (!is.na(SELECT_SHARE)) {
     .keep <- .freq$variable[.freq$examined & (.freq$share_selected >= SELECT_SHARE) %in% TRUE]
@@ -895,13 +904,10 @@ a failure.
 # informational: vp-explain reads the family from the fit itself. The selected
 # set is the refits' vote when there are refits and SELECT_SHARE is set, else
 # the full fit's own.
-.selected <- if (REPEATS > 0 && !is.na(SELECT_SHARE)) {
-  .keep
-} else {
-  .real$variable[.real$selected]
-}
+.selected_by <- if (REPEATS > 0 && !is.na(SELECT_SHARE)) "refits" else "full fit"
+.selected <- if (.selected_by == "refits") .keep else .real$variable[.real$selected]
 vp_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
-  list(fit = fit, coverage = cov, selected = .selected, family = .family,
+  list(fit = fit, coverage = cov, selected = .selected, selected_by = .selected_by, family = .family,
        not_examined = as.character(.real$variable[!.real$tested]),
        not_examined_refits = if (REPEATS > 0) as.character(.freq$variable[!.freq$examined]) else character()),
   data = .provenance_data,
