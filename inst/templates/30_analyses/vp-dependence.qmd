@@ -380,6 +380,12 @@ largest weight any noise column reaches is the bar a real edge must clear.
 # An outcome column entered in OUTCOME is a source like any other: a
 # permuted outcome is as much a null as any other permuted column.
 #
+# Only a variable with at least two observed values is a source: a permuted
+# constant is a constant, which earns no rule and so sets no bar. With the
+# proportional draw a kind can have a single copy, so one constant factor could
+# otherwise leave no categorical null at all. A refit draws again from its own
+# subsample, where a rare level can leave a factor constant.
+#
 # The kind rule is varpro_coverage()'s: a factor, text or logical column, or a
 # number with at most 5 distinct values, is categorical.
 vp_kind <- function(x) {
@@ -390,6 +396,8 @@ vp_kind <- function(x) {
   }
 }
 vp_add_noise <- function(d, predictors, n, seed) {
+  predictors <- predictors[vapply(d[predictors], function(x) length(unique(stats::na.omit(x))) >= 2L, NA)]
+  if (!length(predictors)) stop("No variable takes two or more values, so there is nothing to permute for the noise.", call. = FALSE)
   kinds <- vapply(d[predictors], vp_kind, "")
   pools <- split(predictors, kinds)
   n_cat <- as.integer(round(n * length(pools$categorical) / length(predictors)))
@@ -420,6 +428,13 @@ if (length(.noisy)) {
        paste(.noisy, collapse = ", "), ". Rename them in the dataset build.", call. = FALSE)
 }
 d_noise <- vp_add_noise(d, .cols, NOISE_N, SEED)
+# A kind among the variables with no noise column of its own has no null of its
+# kind, so its edges are judged against the other kind's noise alone.
+.no_null <- setdiff(vapply(d[.cols], vp_kind, ""), vapply(d_noise[grep("^noise", names(d_noise))], vp_kind, ""))
+if (length(.no_null)) {
+  cat("No ", paste(unique(.no_null), collapse = " or "), " variable takes two or more values, so no noise column of that ",
+      "kind was drawn and the bar comes from the other kind alone.\n", sep = "")
+}
 ```
 
 ```{r}

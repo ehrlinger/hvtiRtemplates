@@ -797,6 +797,35 @@ test_that("vp-dependence draws its noise by kind in proportion, with at least on
   # One kind only: every column is of that kind.
   expect_identical(as.vector(kinds(env$vp_add_noise(wide, names(wide)[1:30], 20, 1))), c(0L, 20L))
   expect_identical(as.vector(kinds(env$vp_add_noise(wide, "f1", 20, 1))), c(20L, 0L))
+  # A constant is never a source: its permutation is constant, earns no rule and sets no bar. Beside a varying
+  # factor the one categorical copy comes from that factor, at every seed; alone, it leaves no categorical copy.
+  wide$k1 <- factor(rep("a", 200))
+  for (seed in 1:20) {
+    src <- grep("^noise", names(env$vp_add_noise(wide, names(wide), 20, seed)), value = TRUE)
+    expect_false(any(endsWith(src, "_k1")), info = paste("seed", seed))
+    expect_identical(sum(endsWith(src, "_f1")), 1L, info = paste("seed", seed))
+  }
+  expect_identical(as.vector(kinds(env$vp_add_noise(wide, c(names(wide)[1:30], "k1"), 20, 1))), c(0L, 20L))
+  # A refit draws from its subsample, where a rare level can leave a factor constant.
+  rare <- wide[wide$f1 == "a", c(names(wide)[1:30], "f1")]
+  expect_identical(as.vector(kinds(env$vp_add_noise(rare, names(rare), 20, 1))), c(0L, 20L))
+  expect_error(env$vp_add_noise(wide, "k1", 20, 1), "two or more values")
+})
+
+test_that("vp-dependence says so when a kind of variable gets no noise column", {
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  d <- vpd_data()
+  d$fs <- factor(rep("a", nrow(d)))
+  env <- rf_env(d)
+  out <- utils::capture.output(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise"),
+                                      env, vpd_choices))
+  expect_true(any(grepl("No categorical variable takes two or more values", out, fixed = TRUE)))
+  expect_false(any(grepl("_fs$", names(env$d_noise))))
+  # With a varying factor there is nothing to say.
+  env <- rf_env(vpd_data())
+  out <- utils::capture.output(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise"),
+                                      env, vpd_choices))
+  expect_false(any(grepl("takes two or more values", out, fixed = TRUE)))
 })
 
 test_that("vp-dependence keeps the noise and the outcome in the lasso step", {
