@@ -70,7 +70,10 @@ vpd_data <- function(n = 200L, seed = 20261022L) {
 # OUTCOME and ORDINAL are NULL elements on purpose: the chunks read them, and
 # list2env() assigns a NULL element.
 vpd_choices <- list(VARIABLES = c("a", "b", "x2", "fs", "c"), OUTCOME = NULL, ORDINAL = NULL,
-                    NOISE_N = 4, NTREE = 30, REPEATS = 0, SEED = 1, SAVE_FIGURES = FALSE)
+                    NOISE_N = 4, NTREE = 30, REPEATS = 0, SEED = 1, SAVE_FIGURES = FALSE,
+                    # 30 trees is far below the 1,000 MAX_UNTESTED's 0.1 is set for, and which variable misses at
+                    # 30 differs between platforms, so the gate is loosened here and tested at 0.1 on its own.
+                    MAX_UNTESTED = 0.5)
 
 # Every chunk of vp-dependence, in order.
 vpd_labels <- c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise", "dependence-helpers",

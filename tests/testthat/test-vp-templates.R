@@ -1019,9 +1019,9 @@ test_that("vp-dependence stops on an unexamined variable by default, and with MA
   skip_on_cran()
   vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   # Five trees and two rules a tree leave b and x2 without a release rule on this cohort.
-  few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2))
+  few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2, MAX_UNTESTED = NULL))
   env <- rf_env(vpd_data())
-  # The shipped default, 0.1, stops: `few` leaves MAX_UNTESTED to the template.
+  # The shipped default, 0.1, stops: modifyList() drops vpd_choices' 0.5, so `few` leaves MAX_UNTESTED to the template.
   err <- expect_error(rf_run("vp", "dependence", c(vpd_labels[seq_len(which(vpd_labels == "coverage-gate"))]), env, few),
                       "MAX_UNTESTED")
   expect_identical(env$MAX_UNTESTED, 0.1)
@@ -1040,8 +1040,9 @@ test_that("vp-dependence's default rule limits reach uvarpro(), not varPro's 200
   vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   # The fit records the limits it ran under, and its rules come from that many trees, so this guards a
   # fallback to varPro's default of 200 on every platform. An earlier version asserted that the default
-  # left no real variable unexamined at one seed; which variable misses is chance (9 of 20 seeds at 500
-  # trees on 31 variables, dev/vp/uvarpro-coverage.R) and differs between macOS and Ubuntu, so it failed on CI.
+  # left no real variable unexamined at one seed; which variable misses is chance (7 of 30 seeds at 500
+  # trees under the earlier half-and-half noise draw, dev/vp/uvarpro-coverage.R) and differs between
+  # macOS and Ubuntu, so it failed on CI.
   env <- rf_env(vpd_data())
   rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise", "dependence-helpers"),
          env, list(VARIABLES = c("a", "b", "x2", "fs", "c"), OUTCOME = NULL, ORDINAL = NULL, SAVE_FIGURES = FALSE, SEED = 3))
