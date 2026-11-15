@@ -10,8 +10,10 @@
 # Irregular times suit neither AR(1) nor UN, which need shared visits, so the
 # job compares compound symmetry, the corpus's main form, with a random
 # intercept and slope in time. The series' slopes depend on heart failure, age
-# and sex; with those as fixed effects and one time term, the random slope
-# absorbs that spread, which is what the comparison shows.
+# and sex, so each enters the fixed effects with its interaction with time;
+# without them the two heart-failure profiles are forced to parallel curves,
+# and the one with heart failure rises though the series falls. The random
+# slope then holds only the patient-level spread the interactions leave.
 
 gallery_family(
   "mm",
@@ -22,7 +24,7 @@ gallery_family(
       "^TIME <- \"time\"$" = "TIME <- \"iv_echo\"",
       "^OUTCOME <- " = "OUTCOME <- \"lvef\"",
       "^TIME_TERMS <- " = "TIME_TERMS <- c(\"iv_echo\")",
-      "^PREDICTORS <- " = "PREDICTORS <- c(\"age\", \"female\", \"hx_chf\")",
+      "^PREDICTORS <- " = "PREDICTORS <- c(\"age\", \"female\", \"hx_chf\", \"iv_echo:age\", \"iv_echo:female\", \"iv_echo:hx_chf\")",
       "^STRUCTURE <- " = "STRUCTURE <- c(\"cs\", \"slope\")",
       "^PREDICT_AT <- NULL$" = "PREDICT_AT <- list(list(age = 60, female = 0, hx_chf = 0), list(age = 60, female = 0, hx_chf = 1))"
     ))
