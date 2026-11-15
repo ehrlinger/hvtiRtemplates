@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:14
+2026-11-14 22:20
 
 Fits a linear mixed model to a continuous response measured repeatedly
 on each patient, as PROC MIXED did with a REPEATED or RANDOM statement,
@@ -75,7 +75,7 @@ RESPONSE_SCALE <- "identity"
 # carry over line for line: in_t = 1/(t+1) is "I(1/(time + 1))", ln_t = log(t+1) is
 # "log(time + 1)". The +1 keeps a measurement at time zero finite.
 TIME_TERMS <- c("iv_echo")
-PREDICTORS <- c("age", "female", "hx_chf")
+PREDICTORS <- c("age", "female", "hx_chf", "iv_echo:age", "iv_echo:female", "iv_echo:hx_chf")
 # Demo: the within-patient correlation, first listed is reported; list several to compare them.
 #   "cs"         REPEATED / type=cs sub=id: one correlation between any two of a patient's
 #                measurements. The corpus's main form, in 27 studies or more.
@@ -387,11 +387,12 @@ Code
 cat(hvtiRtemplates:::.response_note(model_formula, RESPONSE_SCALE, "outcome"))
 ```
 
-The model fitted is `lvef ~ iv_echo + age + female + hx_chf`. The
-outcome is modeled as measured: a coefficient is the expected change in
-the outcome, in its own units, for a unit change in a numeric predictor,
-or against the reference level of a categorical one, the others held
-fixed.
+The model fitted is
+`lvef ~ iv_echo + age + female + hx_chf + iv_echo:age + iv_echo:female + iv_echo:hx_chf`.
+The outcome is modeled as measured: a coefficient is the expected change
+in the outcome, in its own units, for a unit change in a numeric
+predictor, or against the reference level of a categorical one, the
+others held fixed.
 
 Code
 
@@ -433,13 +434,16 @@ estimates <- data.frame(term = rownames(.tt), estimate = .tt[, "Value"], std_err
 knitr::kable(estimates, digits = 4)
 ```
 
-| term        | estimate | std_error | p_value |
-|:------------|---------:|----------:|--------:|
-| (Intercept) |  63.6700 |    2.7506 |  0.0000 |
-| iv_echo     |   0.3575 |    0.0415 |  0.0000 |
-| age         |  -0.1532 |    0.0426 |  0.0003 |
-| female      |   2.5631 |    1.1289 |  0.0234 |
-| hx_chf      | -11.7124 |    1.1716 |  0.0000 |
+| term           | estimate | std_error | p_value |
+|:---------------|---------:|----------:|--------:|
+| (Intercept)    |  52.7384 |    2.7517 |  0.0000 |
+| iv_echo        |   3.0227 |    0.1718 |  0.0000 |
+| age            |   0.0152 |    0.0429 |  0.7230 |
+| female         |   0.3581 |    1.1391 |  0.7533 |
+| hx_chf         |  -7.0148 |    1.1783 |  0.0000 |
+| iv_echo:age    |  -0.0435 |    0.0029 |  0.0000 |
+| iv_echo:female |   0.5479 |    0.0709 |  0.0000 |
+| iv_echo:hx_chf |  -1.1557 |    0.0723 |  0.0000 |
 
 Table 3: Fixed-effect estimates of the reported model
 
@@ -452,8 +456,8 @@ knitr::kable(covariance, digits = 4)
 
 | parameter                  | estimate |
 |:---------------------------|---------:|
-| residual variance          |   98.647 |
-| within-patient correlation |    0.866 |
+| residual variance          |  90.5933 |
+| within-patient correlation |   0.9028 |
 
 Table 4: Covariance parameters of the reported model
 
@@ -470,8 +474,8 @@ knitr::kable(comparison, digits = 1)
 
 | structure |    AIC |    BIC |
 |:----------|-------:|-------:|
-| cs        | 7369.8 | 7405.3 |
-| slope     | 7231.8 | 7272.3 |
+| cs        | 7015.8 | 7066.4 |
+| slope     | 7017.8 | 7073.5 |
 
 Table 5: Comparison of covariance structures, same fixed effects
 
@@ -487,10 +491,10 @@ knitr::kable(.ends, digits = 3, row.names = FALSE)
 
 | age | female | hx_chf | iv_echo | profile | estimate |  lower |  upper |
 |----:|-------:|-------:|--------:|--------:|---------:|-------:|-------:|
-|  60 |      0 |      0 |   0.002 |       1 |   54.476 | 52.904 | 56.049 |
-|  60 |      0 |      0 |  14.995 |       1 |   59.837 | 58.089 | 61.584 |
-|  60 |      0 |      1 |   0.002 |       2 |   42.764 | 40.649 | 44.878 |
-|  60 |      0 |      1 |  14.995 |       2 |   48.124 | 45.852 | 50.397 |
+|  60 |      0 |      0 |   0.002 |       1 |   53.651 | 52.104 | 55.198 |
+|  60 |      0 |      0 |  14.995 |       1 |   59.831 | 58.022 | 61.641 |
+|  60 |      0 |      1 |   0.002 |       2 |   46.634 | 44.537 | 48.731 |
+|  60 |      0 |      1 |  14.995 |       2 |   35.487 | 32.974 | 38.000 |
 
 Table 6: Population-average course of the response, first and last times
 of each profile
@@ -537,9 +541,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(bundle, .root), MODEL_PATH)
 
 | Group           | Item           | Value                      |
 |:----------------|:---------------|:---------------------------|
-| Run             | Started        | 2026-11-14 18:14:18 EST    |
-|                 | Ended          | 2026-11-14 18:14:19 EST    |
-|                 | Duration       | 0 s                        |
+| Run             | Started        | 2026-11-14 22:20:43 EST    |
+|                 | Ended          | 2026-11-14 22:20:44 EST    |
+|                 | Duration       | 1 s                        |
 |                 | Status         | final                      |
 |                 | Rendered by    | gallery                    |
 |                 | Host           | gallery                    |
