@@ -120,10 +120,36 @@ gallery_job <- function(root, name, spec) {
   job
 }
 
+# Did this render error come from the Quarto CLI crashing, rather than from the
+# job? Quarto's bundled Deno (2.7.14 in Quarto 1.10.18) segfaults now and then
+# on macOS within a tenth of a second of starting, before it has read the
+# document: ten crash reports in ~/Library/Logs/DiagnosticReports between
+# 2026-11-11 and 2026-11-14, all a null-pointer read in a tokio-runtime-worker
+# thread. The same job renders cleanly when run again, so one retry is safe.
+#
+# Two signatures, and only these. The quarto launcher is a bash script, and
+# bash reports the crash on stderr as the unexpanded source line,
+# `"${QUARTO_DENO}" ...`. quarto::quarto_render() passes stderr to
+# cli::cli_abort() unescaped, so cli reads `{QUARTO_DENO}` as code and fails
+# with "Could not evaluate cli `{}` expression: `QUARTO_DENO`", dropping the
+# exit status. Without that line, the exit status is still on the processx
+# error: 128 or more means a signal killed the process. Do not match "System
+# command 'quarto' failed": a job whose chunk errors fails with exactly that
+# message, exit status 1, and must fail at once.
+gallery_quarto_crash <- function(e) {
+  for (cnd in list(e, e$parent, e$parent$parent, e$parent$parent$parent)) {
+    if (is.null(cnd)) break
+    if (inherits(cnd, "system_command_status_error") && isTRUE(cnd$status >= 128L)) return(TRUE)
+    if (grepl("QUARTO_DENO", conditionMessage(cnd), fixed = TRUE)) return(TRUE)
+  }
+  FALSE
+}
+
 # Scaffold and render every job, in family order and each family's own order,
 # so a job that reads another's saved output renders after it. Returns a data
-# frame: one row per job, with its report, or the error that stopped it.
-gallery_build <- function(root, quiet = TRUE, only = NULL) {
+# frame: one row per job, with its report, or the error that stopped it, and
+# `retries`, the times its render was rerun after a Quarto CLI crash.
+gallery_build <- function(root, quiet = TRUE, only = NULL, render = render_job) {
   # Every report says who rendered it and on which machine ("About this run"),
   # and the gallery is published. HVTI_RUN_USER and HVTI_RUN_HOST replace the
   # two, so no real username or host name reaches the site. Environment
@@ -139,14 +165,21 @@ gallery_build <- function(root, quiet = TRUE, only = NULL) {
     spec <- jobs[[name]]
     message("Rendering ", name, " ...")
     t0 <- Sys.time()
+    retries <- 0L
     res <- tryCatch({
       job <- gallery_job(root, name, spec)
-      render_job(job, final = TRUE, quiet = quiet)
+      tryCatch(render(job, final = TRUE, quiet = quiet), error = function(e) {
+        if (!gallery_quarto_crash(e)) stop(e)
+        message("  Quarto CLI crashed; rendering ", name, " once more.")
+        retries <<- 1L
+        render(job, final = TRUE, quiet = quiet)
+      })
       report <- sub("[.]qmd$", ".html", job)
       if (!file.exists(report)) stop("no report written")
       list(report = report, error = NA_character_)
     }, error = function(e) list(report = NA_character_, error = conditionMessage(e)))
     data.frame(template = name, family = spec$family, report = res$report, error = res$error,
+               retries = retries,
                seconds = round(as.numeric(difftime(Sys.time(), t0, units = "secs")), 1))
   })
   do.call(rbind, rows)
@@ -157,7 +190,7 @@ if (sys.nframe() == 0L) {
   out <- if (length(args)) args[[1L]] else file.path(tempfile("gallery-"), "study")
   root <- gallery_study(out)
   built <- gallery_build(root)
-  print(built[, c("template", "family", "seconds", "error")], row.names = FALSE)
+  print(built[, c("template", "family", "seconds", "retries", "error")], row.names = FALSE)
   saveRDS(built, file.path(root, "gallery-build.rds"))
   utils::write.csv(built, file.path(root, "gallery-build.csv"), row.names = FALSE)
   # Each template's run sheet, read from the installed templates this build
