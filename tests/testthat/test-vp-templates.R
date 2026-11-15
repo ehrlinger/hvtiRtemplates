@@ -1018,20 +1018,22 @@ test_that("changing MAX_RULES_TREE makes both vp-dependence caches stale, and RE
 test_that("vp-dependence stops on an unexamined variable by default, and with MAX_UNTESTED = NULL hands it on", {
   skip_on_cran()
   vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
-  # Five trees and two rules a tree leave b and x2 without a release rule on this cohort.
+  # Five trees and two rules a tree leave a variable without a release rule on this cohort. Which one is
+  # chance and differs between platforms (x2 on macOS, b on Ubuntu), so the test reads it from the coverage.
   few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2, MAX_UNTESTED = NULL))
   env <- rf_env(vpd_data())
   # The shipped default, 0.1, stops: modifyList() drops vpd_choices' 0.5, so `few` leaves MAX_UNTESTED to the template.
   err <- expect_error(rf_run("vp", "dependence", c(vpd_labels[seq_len(which(vpd_labels == "coverage-gate"))]), env, few),
                       "MAX_UNTESTED")
   expect_identical(env$MAX_UNTESTED, 0.1)
-  expect_match(conditionMessage(err), "x2", fixed = TRUE)
+  expect_gt(length(env$.not_examined), 0L)
+  for (v in env$.not_examined) expect_match(conditionMessage(err), v, fixed = TRUE)
   expect_match(conditionMessage(err), "MAX_TREE", fixed = TRUE)
   # NULL reports and renders.
   env <- vpd_first(choices = c(few, list(MAX_UNTESTED = NULL)))  # c(), since modifyList() drops a NULL
   expect_null(env$MAX_UNTESTED)
   h <- readRDS(env$set_path("estimates", "dependence.rds"))
-  expect_true("x2" %in% h$not_examined)
+  expect_gt(length(h$not_examined), 0L)
   expect_identical(h$not_examined, env$.coverage$variable[env$.coverage$rules == 0L])
 })
 
