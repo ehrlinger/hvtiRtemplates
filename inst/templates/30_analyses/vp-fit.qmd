@@ -201,13 +201,28 @@ NOISE_N <- 20
 # 0.1 matches varPro's own trimming: below it, z is 0 by construction.
 TRIM <- 0.1
 
+# EDIT: missing predictor values. varPro removes every patient with a missing
+# value and ignores na.action, so the choice is made here, before it runs.
+# "na.impute" fills them once by random forest, from the other predictors and
+# never from the outcome: imputed values that carried the outcome would let the
+# screen rank a predictor on signal the imputation put there. "na.omit" keeps
+# complete cases, which is right when missingness itself tracks something the
+# model should not see, such as labs collected only in a later surgical era.
+# A patient missing the outcome is dropped either way.
+NA_ACTION <- "na.impute"
+# EDIT: the largest share of patients a predictor may be missing in and still
+# be imputed. Above it the render stops and names the predictor: an imputation
+# that invents most of a column decides the screen's answer for it.
+MAX_MISSING <- 0.4
+
 # EDIT: the largest share of real candidates that may go untested. Above it the
 # render stops, because a screen that tested too little reads like one that
-# found no effect. NULL only reports. 0.5 lets the exploration setting pass
-# (about 2 of 30 untested in the simulation below) and stops a guided screen
-# that tested a minority (about 19 of 30 untested at 60 events). The refits are
-# not held to it: their share tested is reported in the stability table.
-MAX_UNTESTED <- 0.5
+# found no effect. NULL only reports. 0.1 lets the exploration setting pass
+# (about 2 of 30 untested in the simulation below) and stops a screen that left
+# more than one candidate in ten unexamined, which would otherwise read as having
+# found nothing in them. The refits are not held to it: their share tested is
+# reported in the stability table.
+MAX_UNTESTED <- 0.1
 
 # EDIT: varPro's forest. The defaults are the exploration setting, which
 # tests as many candidates as it can: no guided split weights, so every
@@ -262,12 +277,19 @@ NVAR <- 30
 # REPEATS times one fit.
 REPEATS <- 20
 SUBSAMPLE <- 0.632
-# EDIT: the selection handed to vp-explain and vp-individual. With REPEATS above 0 it is every
-# candidate selected in at least SELECT_SHARE of the refits. A single fit's bar
-# is the best of a few noise columns, so on a small cohort it moves from one
-# noise draw to the next and the full fit alone can keep or drop a variable by
-# chance. NA hands on the full fit's selection instead, as REPEATS = 0 does.
+# EDIT: the selection handed to vp-explain and vp-individual. With REPEATS above 0
+# it is every candidate selected in at least SELECT_SHARE of the refits that
+# tested it. A variable tested in fewer than MIN_TESTED_SHARE of the refits is
+# not examined, so it is neither handed on nor rejected. A single fit's bar is
+# the best of a few noise columns, so on a small cohort it moves from one noise
+# draw to the next and the full fit alone can keep or drop a variable by chance.
+# NA hands on the full fit's selection instead, as REPEATS = 0 does.
 SELECT_SHARE <- 0.5
+# EDIT: the share of the refits that must have tested a variable before their
+# vote counts. A refit that did not test a variable says nothing about it, so
+# it is left out of that variable's vote; a variable tested in fewer refits than
+# this is listed as not examined, and neither handed on nor counted as rejected.
+MIN_TESTED_SHARE <- 0.5
 
 # EDIT: the seed. It is part of every cache key, seeds R's generator before
 # each random step, and is handed to varpro() as `seed =`, negated as
@@ -338,24 +360,23 @@ if (length(.missing)) {
 }
 d <- d[, c(.outcome, PREDICTORS), drop = FALSE]
 
-# A screen cannot learn from a patient with no outcome.
-.no_outcome <- Reduce(`|`, lapply(d[.outcome], is.na))
-if (any(.no_outcome)) {
-  stop(sum(.no_outcome), " patient(s) have no outcome. Resolve them in the dataset build; the screen will not.",
-       call. = FALSE)
-}
+# A screen cannot learn from a patient with no outcome. Such a patient is dropped and counted in the
+# missing-values table below, not refused here, so the checks that follow read the observed values only.
 if (.survival) {
   # randomForestSRC reads a status above 1 as a competing event, so a 1/2
   # coding, which survival::Surv() accepts, would screen a competing-risks
   # outcome without a word. Refuse it here instead.
-  if (!all(d[[EVENT]] %in% c(0, 1))) {
+  # Read on the patients with both TIME and EVENT: one missing either is dropped below, whatever its EVENT holds.
+  .event_seen <- d[[EVENT]][!is.na(d[[TIME]]) & !is.na(d[[EVENT]])]
+  if (!all(.event_seen %in% c(0, 1))) {
     stop(EVENT, " must be coded 0 and 1 (1 = event); found ",
-         paste(sort(unique(d[[EVENT]])), collapse = ", "), ".", call. = FALSE)
+         paste(sort(unique(.event_seen)), collapse = ", "), ".", call. = FALSE)
   }
   .family <- "survival"
 } else {
   .y <- d[[RESPONSE]]
-  if (is.character(.y) || is.logical(.y) || is.factor(.y) || (is.numeric(.y) && all(.y %in% c(0, 1)))) {
+  .y_seen <- .y[!is.na(.y)]
+  if (is.character(.y) || is.logical(.y) || is.factor(.y) || (is.numeric(.y) && all(.y_seen %in% c(0, 1)))) {
     # varPro screens a factor outcome as classification and a number as
     # regression, so a 0/1 outcome left numeric would be screened as a
     # continuous one. It is converted here, and the report says so.
@@ -401,23 +422,54 @@ if (!is.null(job_data$attrition)) {
 
 ```{r}
 #| label: tbl-missing
-#| tbl-cap: "Missing values in the screen's variables"
-# varpro() drops every patient with a missing value, so the screen would
-# describe fewer patients than this report claims. They are dropped here
-# instead, and counted, before the fit sees the data.
+#| tbl-cap: "Patients supplied, missing values, and patients used"
+# varPro removes every patient with a missing value, so the screen would
+# describe fewer patients than this report claims. NA_ACTION settles them here.
+# The imputation runs once, before the noise columns are added and before the
+# refits draw their patients, so the refits subsample the same completed data
+# and the stability vote holds no imputation noise.
+NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
+if (!(is.numeric(MAX_MISSING) && length(MAX_MISSING) == 1L && !is.na(MAX_MISSING) && MAX_MISSING > 0 && MAX_MISSING <= 1)) {
+  stop("MAX_MISSING must be a single share in (0, 1].", call. = FALSE)
+}
 .empty <- PREDICTORS[vapply(d[PREDICTORS], function(x) all(is.na(x)), logical(1L))]
 if (length(.empty)) {
   stop("PREDICTORS names a column with no values: ", paste(.empty, collapse = ", "),
        ". Remove it from PREDICTORS.", call. = FALSE)
 }
-.missing_values <- hvtiRtemplates:::.missing_cases(d, TIME = TIME, EVENT = EVENT, RESPONSE = RESPONSE,
-                                                   PREDICTORS = PREDICTORS, action = "drop")
-d <- d[stats::complete.cases(d), , drop = FALSE]
-.cohort <- list(n = as.integer(nrow(d)))
+.miss <- hvtiRtemplates:::.vp_missing(d, PREDICTORS, outcome = c(TIME, EVENT, RESPONSE), na_action = NA_ACTION,
+                                      max_missing = MAX_MISSING)
+d <- .miss$d
+if (!nrow(d)) {
+  stop("No patient is left: every one is missing the outcome (TIME, EVENT or RESPONSE) or, under na.omit, a predictor.",
+       call. = FALSE)
+}
+if (anyNA(d[PREDICTORS])) {
+  # Bound first so the cache keys the predictors alone: a change to an outcome column must not stale it.
+  .to_impute <- d[PREDICTORS]
+  # impute() fills a logical column as a number, so a yes/no predictor would come back as 0.496 and be screened as
+  # continuous. It is imputed as a factor and turned back into TRUE/FALSE, so the screen sees the same type either way.
+  .lgl <- names(.to_impute)[vapply(.to_impute, is.logical, logical(1L))]
+  .to_impute[.lgl] <- lapply(.to_impute[.lgl], factor)
+  .imputed <- cache_fit("vp-fit-impute", randomForestSRC::impute(data = .to_impute, ntree = 250, verbose = FALSE),
+                        seed = SEED, dir = dirname(set_path("estimates", "vp.rds")), refit = REFIT,
+                        packages = "randomForestSRC")
+  # impute() removes a row with no observed predictor; a silent loss is what this chunk exists to stop.
+  if (nrow(.imputed) != nrow(d)) {
+    stop(nrow(d) - nrow(.imputed), " patient(s) have no observed predictor and cannot be imputed. ",
+         "Remove them in the dataset build.", call. = FALSE)
+  }
+  .imputed[.lgl] <- lapply(.imputed[.lgl], function(x) as.logical(as.character(x)))
+  d[PREDICTORS] <- .imputed[PREDICTORS]
+}
+if (anyNA(d[PREDICTORS])) stop("Predictors still hold missing values after NA_ACTION; varPro would drop them.", call. = FALSE)
+.missing_values <- .miss$table
+.cohort <- c(list(n = as.integer(nrow(d))), .miss$cohort)
 if (.survival) {
   .cohort$n_events <- as.integer(sum(d[[EVENT]] == 1))
   .cohort$n_censored <- as.integer(sum(d[[EVENT]] == 0))
 }
+cat(attr(.missing_values, "rule"), "\n\n")
 knitr::kable(.missing_values)
 ```
 
@@ -464,6 +516,10 @@ if (NOISE_N < 1) {
 }
 if (!(SUBSAMPLE > 0 && SUBSAMPLE < 1)) {
   stop("SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).", call. = FALSE)
+}
+.tested_ok <- is.numeric(MIN_TESTED_SHARE) && length(MIN_TESTED_SHARE) == 1L && !is.na(MIN_TESTED_SHARE)
+if (!(.tested_ok && MIN_TESTED_SHARE > 0 && MIN_TESTED_SHARE <= 1)) {
+  stop("MIN_TESTED_SHARE must be a single share in (0, 1].", call. = FALSE)
 }
 .share_bad <- "SELECT_SHARE must be NA or a share above 0 and at most 1 (0.5 keeps what most refits select)."
 if (length(SELECT_SHARE) != 1) {
@@ -558,6 +614,22 @@ vp_coverage <- function(f, seed, max_untested = NULL) {
   cov$coverage <- as.vector(tapply(terms$coverage, terms$variable, max)[cov$variable])
   cov$tested <- cov$n_trees > 0 & cov$coverage >= TRIM
   cov[order(-cov$coverage), ]
+}
+
+# The refits' vote. A refit that did not test a variable is no evidence about it,
+# so its share selected is over the refits that tested it, and a variable tested
+# in fewer than min_tested_share of them is not examined: no vote either way.
+vp_vote <- function(stab, repeats, min_tested_share) {
+  n_tested <- tapply(stab$tested, stab$variable, sum)
+  n_selected <- tapply(stab$selected, stab$variable, sum)[names(n_tested)]
+  out <- data.frame(
+    variable = names(n_tested),
+    share_tested = as.vector(n_tested) / repeats,
+    share_selected = ifelse(as.vector(n_tested) > 0, as.vector(n_selected) / pmax(1, as.vector(n_tested)), NA_real_),
+    row.names = NULL
+  )
+  out$examined <- out$share_tested >= min_tested_share
+  out[order(-out$share_selected, -out$share_tested, na.last = TRUE), ]
 }
 ```
 
@@ -717,13 +789,17 @@ if (nrow(.gvs$imp) == 0L) {
 
 The screen refitted `REPEATS` times, each on a subsample of the patients drawn
 without replacement and with a fresh noise draw. A variable selected in most
-refits holds up; one selected once in a while is the screen's own noise. When
-`SELECT_SHARE` is set, the variables selected in at least that share of the
-refits are the set this job hands on, in place of the full fit's.
+refits holds up; one selected once in a while is the screen's own noise. A
+refit that did not test a variable says nothing about it, so the share is taken
+over the refits that did test it. When `SELECT_SHARE` is set, the variables
+selected in at least that share of those refits are the set this job hands on,
+in place of the full fit's. A variable tested in fewer than `MIN_TESTED_SHARE`
+of the refits has too few votes to count either way, so it is listed apart as
+not examined.
 
 ```{r}
 #| label: tbl-stability
-#| tbl-cap: "How often each candidate was tested and selected across the refits"
+#| tbl-cap: "How often each candidate was tested, and selected when tested, across the refits"
 #| message: true
 # Each refit is cached on its own, so raising REPEATS computes only the new
 # ones. Redrawing the noise alone would hold the patients fixed and understate
@@ -748,17 +824,17 @@ if (REPEATS > 0) {
   }))
   .per <- tapply(.stab$selected, .stab$r, sum)
   cat("Selected per refit: ", min(.per), " to ", max(.per), " variables.\n", sep = "")
-  # Over REPEATS, not over the refits a variable appears in: a refit that drops a variable counts against it.
-  .n_tested <- tapply(.stab$tested, .stab$variable, sum)
-  .freq <- data.frame(
-    variable = names(.n_tested),
-    share_tested = as.vector(.n_tested) / REPEATS,
-    share_selected = as.vector(tapply(.stab$selected, .stab$variable, sum)[names(.n_tested)]) / REPEATS
-  )
-  .freq <- .freq[order(-.freq$share_selected, -.freq$share_tested), ]
+  .freq <- vp_vote(.stab, REPEATS, MIN_TESTED_SHARE)
+  .unexamined <- .freq$variable[!.freq$examined]
+  if (length(.unexamined)) {
+    cat("Not examined in the refits (tested in fewer than ", MIN_TESTED_SHARE * 100, "% of them): ",
+        paste(.unexamined, collapse = ", "), ".",
+        if (is.na(SELECT_SHARE)) " The full fit's selection is handed on, so this is a note on its stability.\n"
+        else " Neither handed on nor rejected.\n", sep = "")
+  }
   if (!is.na(SELECT_SHARE)) {
-    .keep <- .freq$variable[.freq$share_selected >= SELECT_SHARE]
-    cat("Handed to vp-explain, selected in at least ", SELECT_SHARE * 100, "% of the refits: ",
+    .keep <- .freq$variable[.freq$examined & (.freq$share_selected >= SELECT_SHARE) %in% TRUE]
+    cat("Handed to vp-explain, selected in at least ", SELECT_SHARE * 100, "% of the refits that tested them: ",
         if (length(.keep)) paste(.keep, collapse = ", ") else "none", ".\n", sep = "")
   }
   knitr::kable(.freq, digits = 2, row.names = FALSE)
@@ -768,6 +844,15 @@ if (REPEATS > 0) {
 ```
 
 ## Reading the result
+
+**Missing values.** With `NA_ACTION <- "na.impute"`, missing predictor values
+were imputed once by random forest (`randomForestSRC::impute()`, 250 trees)
+from the other predictors, never from the outcome, before the noise columns
+were added and before the stability refits drew their patients. A predictor
+missing in more than `MAX_MISSING` of the patients is refused, not filled.
+Patients missing the outcome were excluded. With `"na.omit"`, every patient
+missing a predictor was excluded instead. The table of missing values above
+gives the counts either way.
 
 **Untested is not unimportant.** VarPro scores a variable by a trimmed mean of
 its importance in each tree, and a tree with no usable rule for the variable
@@ -804,9 +889,11 @@ lets guided split weights and `NVAR` decide which variables are examined at
 all. A selection would also need the two settings, the stability above, and
 ideally cross-validation to agree. Read the stability table before the
 coverage table: a variable selected in the full fit but rarely in the refits
-is a weak candidate, and by default it is not handed on. The refits each see
-`SUBSAMPLE` of the patients, so they have less power than the full fit; a
-share near `SELECT_SHARE` is a vote on the edge, not a failure.
+is a weak candidate, and by default it is not handed on. A variable the refits
+did not examine is listed separately: that is no evidence either way, not a
+rejection. The refits each see `SUBSAMPLE` of the patients, so they have less
+power than the full fit; a share near `SELECT_SHARE` is a vote on the edge, not
+a failure.
 
 ```{r}
 #| label: save
@@ -817,13 +904,12 @@ share near `SELECT_SHARE` is a vote on the edge, not a failure.
 # informational: vp-explain reads the family from the fit itself. The selected
 # set is the refits' vote when there are refits and SELECT_SHARE is set, else
 # the full fit's own.
-.selected <- if (REPEATS > 0 && !is.na(SELECT_SHARE)) {
-  .freq$variable[.freq$share_selected >= SELECT_SHARE]
-} else {
-  .real$variable[.real$selected]
-}
+.selected_by <- if (REPEATS > 0 && !is.na(SELECT_SHARE)) "refits" else "full fit"
+.selected <- if (.selected_by == "refits") .keep else .real$variable[.real$selected]
 vp_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
-  list(fit = fit, coverage = cov, selected = .selected, family = .family),
+  list(fit = fit, coverage = cov, selected = .selected, selected_by = .selected_by, family = .family,
+       not_examined = as.character(.real$variable[!.real$tested]),
+       not_examined_refits = if (REPEATS > 0) as.character(.freq$variable[!.freq$examined]) else character()),
   data = .provenance_data,
   analysis = .analysis,
   cohort = .cohort,

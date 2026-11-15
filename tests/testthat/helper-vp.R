@@ -23,7 +23,9 @@ vp_data <- function(n = 200L, seed = 20261021L) {
 vp_choices <- list(
   TIME = "time", EVENT = "event", RESPONSE = NULL,
   PREDICTORS = c("xs", "fs", "x1", "x2", "g1"),
-  NTREE = 50, REPEATS = 2, SEED = 1, SAVE_FIGURES = FALSE
+  NTREE = 50, REPEATS = 2, SEED = 1, SAVE_FIGURES = FALSE,
+  # The fixture is far smaller than the exploration setting MAX_UNTESTED's 0.1 is set for.
+  MAX_UNTESTED = 0.5
 )
 
 # vp_choices with the three outcome choices replaced. utils::modifyList() would
@@ -72,7 +74,8 @@ vpd_choices <- list(VARIABLES = c("a", "b", "x2", "fs", "c"), OUTCOME = NULL, OR
 
 # Every chunk of vp-dependence, in order.
 vpd_labels <- c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise", "dependence-helpers",
-                "fit", "matrix", "fig-graph", "fig-heatmap", "tbl-stability", "tbl-stability-signal", "save")
+                "fit", "tbl-coverage", "coverage-gate", "matrix", "fig-graph", "fig-heatmap", "tbl-stability",
+                "tbl-stability-signal", "save")
 
 # vp-dependence run end to end in a throwaway study.
 vpd_first <- function(data = vpd_data(), choices = vpd_choices, .local_envir = parent.frame()) {
@@ -106,4 +109,17 @@ vpi_run <- function(fit, choices) {
 vp33_skip_unless_stack <- function(pkgs) {
   testthat::skip_if_not_installed("varPro", minimum_version = "3.3.0")
   rf_skip_unless_stack(pkgs)  # nolint: object_usage_linter.
+}
+
+# Stands in for randomForestSRC::impute(): records the columns it was handed in `seen` (an environment
+# slot, so the mock can write it) and fills each missing value with that column's first observed one.
+vp_mock_impute <- function(rec) {
+  function(data, ...) {
+    rec$seen <- names(data)
+    data[] <- lapply(data, function(x) {
+      x[is.na(x)] <- x[!is.na(x)][1L]
+      x
+    })
+    data
+  }
 }

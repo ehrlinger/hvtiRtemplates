@@ -40,15 +40,128 @@ test_that("vp-fit screens a 0/1 RESPONSE as classification", {
   expect_identical(env$.analysis$outcome$kind, "classification")
 })
 
-test_that("vp-fit drops incomplete patients before the fit, and counts them", {
+test_that("vp-fit imputes a missing predictor by default and keeps the patient", {
+  skip_on_cran()
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
   data <- vp_data()
   data$x1[1:7] <- NA
   env <- rf_env(data)
   rf_run("vp", "fit", vp_data_labels, env, vp_choices)
+  expect_identical(nrow(env$d), 200L)
+  expect_false(anyNA(env$d[vp_choices$PREDICTORS]))
+  expect_identical(env$.cohort$n, 200L)
+  expect_identical(env$.cohort$n_imputed[["x1"]], 7L)
+  expect_identical(env$.cohort$na_action, "na.impute")
+})
+
+test_that("vp-fit imputes a yes/no predictor as TRUE or FALSE, not as a fraction", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  # The real imputer: given a logical column, randomForestSRC::impute() fills it with numbers such as 0.496. The study
+  # read turns a logical into 0/1, so the column is set after it, as data reaching the chunk another way would be.
+  data <- vp_data()
+  data$yn <- 0L
+  choices <- utils::modifyList(vp_choices, list(PREDICTORS = c(vp_choices$PREDICTORS, "yn")))
+  env <- rf_env(data)
+  rf_run("vp", "fit", c("setup", "edit-study-choices", "tbl-data"), env, choices)
+  yn <- env$d$xs > 0
+  env$d$yn <- replace(yn, 1:30, NA)
+  rf_run("vp", "fit", "tbl-missing", env, choices)
+  expect_type(env$d$yn, "logical")
+  expect_false(anyNA(env$d$yn))
+  expect_identical(env$d$yn[-(1:30)], yn[-(1:30)])
+})
+
+test_that("vp-fit drops a patient missing TIME whatever its EVENT holds, before checking the event coding", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$time[1] <- NA
+  data$event[1] <- 2L
+  env <- rf_env(data)
+  rf_run("vp", "fit", vp_data_labels, env, vp_choices)
+  expect_identical(env$.cohort$n_outcome_missing, 1L)
+  expect_identical(nrow(env$d), 199L)
+  # A complete patient coded 2 is still refused.
+  data$time[1] <- 1
+  expect_error(rf_run("vp", "fit", vp_data_labels, rf_env(data), vp_choices), "must be coded 0 and 1")
+})
+
+test_that("varPro's own record agrees that vp-fit dropped no patient for a missing predictor", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$x1[1:7] <- NA
+  env <- vp_fit_first(data = data)
+  obs <- env$fit$model.info$observations
+  skip_if(is.null(obs), "varPro's model.info has no observations record")
+  expect_identical(obs$omitted, 0L)
+  expect_identical(obs$input, 200L)
+})
+
+test_that("vp-fit and vp-dependence refuse a MAX_MISSING that is not one share", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  for (bad in list(NA, 0, 1.5, "half", c(0.2, 0.4))) {
+    expect_error(rf_run("vp", "fit", vp_data_labels, rf_env(vp_data()),
+                        utils::modifyList(vp_choices, list(MAX_MISSING = bad))), "MAX_MISSING")
+    expect_error(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"), rf_env(vpd_data()),
+                        utils::modifyList(vpd_choices, list(MAX_MISSING = bad))), "MAX_MISSING")
+  }
+})
+
+test_that("vp-fit and vp-dependence stop when no patient is left", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$time <- NA_real_
+  expect_error(rf_run("vp", "fit", vp_data_labels, rf_env(data), vp_choices), "No patient is left")
+  # Every patient missing a different variable leaves none under na.omit.
+  data <- vpd_data()
+  for (i in seq_len(nrow(data))) data[i, vpd_choices$VARIABLES[i %% 5L + 1L]] <- NA
+  expect_error(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"), rf_env(data),
+                      utils::modifyList(vpd_choices, list(NA_ACTION = "na.omit"))), "No patient is left")
+})
+
+test_that("vp-fit with NA_ACTION = na.omit drops incomplete patients as before, and counts them", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$x1[1:7] <- NA
+  env <- rf_env(data)
+  rf_run("vp", "fit", vp_data_labels, env, utils::modifyList(vp_choices, list(NA_ACTION = "na.omit")))
   expect_identical(nrow(env$d), 193L)
   expect_identical(env$.cohort$n, 193L)
-  expect_match(utils::tail(env$.missing_values$Missing, 1L), "7 dropped")
+  expect_identical(env$.cohort$n_dropped, 7L)
+})
+
+test_that("vp-fit drops a patient missing the outcome, and imputes without it", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$time[1:3] <- NA
+  data$x1[4:9] <- NA
+  env <- rf_env(data)
+  rec <- new.env()
+  testthat::local_mocked_bindings(impute = vp_mock_impute(rec), .package = "randomForestSRC")
+  rf_run("vp", "fit", vp_data_labels, env, vp_choices)
+  expect_identical(env$.cohort$n_outcome_missing, 3L)
+  expect_identical(nrow(env$d), 197L)
+  # The imputation was handed the predictors and nothing else: no outcome column.
+  expect_identical(rec$seen, vp_choices$PREDICTORS)
+  expect_false(any(c("time", "event") %in% rec$seen))
+})
+
+test_that("vp-fit stops on a patient with no observed predictor", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data[5, vp_choices$PREDICTORS] <- NA
+  data$x1[10:12] <- NA  # something to impute, so the imputation runs
+  expect_error(rf_run("vp", "fit", vp_data_labels, rf_env(data), vp_choices), "cannot be imputed")
+})
+
+test_that("vp-fit refuses to impute a predictor missing in most patients", {
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  data <- vp_data()
+  data$x2[1:150] <- NA
+  expect_error(rf_run("vp", "fit", vp_data_labels, rf_env(data), vp_choices), "x2 \\(75%\\)")
 })
 
 test_that("vp-fit refuses a candidate whose name could be taken for noise", {
@@ -65,7 +178,7 @@ vp_judge_fn <- function() {
   env <- new.env(parent = globalenv())
   src <- readLines(template_path("vp", "fit"), warn = FALSE)
   eval(parse(text = rf_chunk(src, "judge")), envir = env)  # nolint: object_usage_linter.
-  env$vp_judge
+  env
 }
 vp_cov <- function(variable, kind, noise, tested, z) {
   data.frame(variable = variable, kind = kind, noise = noise, tested = tested, z = z)
@@ -79,7 +192,7 @@ test_that("vp_judge falls back to the continuous bar when tested categorical noi
     tested = c(TRUE, TRUE, TRUE, TRUE, FALSE),
     z = c(0.9, 0.2, 0.3, 0, NA)
   )
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_identical(out$selected, c(TRUE, FALSE, FALSE, FALSE, FALSE))
   expect_identical(out$bar[out$variable == "f_null"], 0.3)
   expect_identical(out$bar_from[out$variable == "f_null"], "continuous (fallback)")
@@ -93,7 +206,7 @@ test_that("vp_judge keeps a categorical bar that tested noise set above zero", {
     tested = c(TRUE, TRUE, TRUE, TRUE),
     z = c(0.5, 0.2, 0.9, 0.25)
   )
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_identical(out$selected, c(TRUE, FALSE, FALSE, FALSE))
   expect_identical(unique(out$bar[out$kind == "categorical"]), 0.25)
   expect_identical(unique(out$bar_from[out$kind == "categorical"]), "categorical")
@@ -104,7 +217,7 @@ test_that("vp_judge selects nothing when no noise was tested, and says so", {
     variable = c("x_real", "noise1_x"), kind = c("continuous", "continuous"),
     noise = c(FALSE, TRUE), tested = c(TRUE, FALSE), z = c(2, NA)
   )
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_identical(out$selected, c(FALSE, FALSE))
   expect_identical(out$bar_from, c("no usable noise bar", "no usable noise bar"))
 })
@@ -120,7 +233,7 @@ test_that("vp_judge borrows no bar from noise that scored zero", {
     tested = c(TRUE, TRUE, FALSE, TRUE),
     z = c(2, 0.05, NA, 0)
   )
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_identical(out$selected, c(FALSE, FALSE, FALSE, FALSE))
   expect_identical(out$bar_from[1:2], c("no usable noise bar", "no usable noise bar"))
 })
@@ -132,7 +245,7 @@ test_that("vp_judge drops varpro_coverage()'s own bar, so one bar remains", {
   )
   cov$noise_cut <- 0
   cov$selected <- TRUE
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_false("noise_cut" %in% names(out))
   expect_identical(out$selected, c(TRUE, FALSE))
 })
@@ -142,7 +255,7 @@ test_that("vp_judge ignores a tested noise row whose z is NA", {
     variable = c("x_real", "noise1_x", "noise2_x"), kind = rep("continuous", 3),
     noise = c(FALSE, TRUE, TRUE), tested = c(TRUE, TRUE, TRUE), z = c(2, NA, 0.4)
   )
-  out <- vp_judge_fn()(cov)
+  out <- vp_judge_fn()$vp_judge(cov)
   expect_identical(unique(out$bar), 0.4)
 })
 
@@ -156,12 +269,41 @@ test_that("vp-fit's coverage call muffles the empty-noise warning, and both fits
   expect_length(grep("vp_judge\\(vp_coverage\\((fit|fr),", lines), 2L)
 })
 
+test_that("vp_vote counts a selection over the refits that tested the variable, not over REPEATS", {
+  vote <- vp_judge_fn()$vp_vote
+  stab <- rbind(
+    data.frame(r = 1:20, variable = "a", tested = 1:20 <= 3, selected = 1:20 <= 3),
+    data.frame(r = 1:20, variable = "b", tested = TRUE, selected = 1:20 <= 3)
+  )
+  v <- vote(stab, repeats = 20, min_tested_share = 0.5)
+  a <- v[v$variable == "a", ]
+  b <- v[v$variable == "b", ]
+  expect_equal(a$share_selected, 1)
+  expect_false(a$examined)
+  expect_equal(b$share_selected, 0.15)
+  expect_true(b$examined)
+})
+
+test_that("vp_vote gives NA, not 0, to a variable no refit tested", {
+  vote <- vp_judge_fn()$vp_vote
+  stab <- data.frame(r = 1:4, variable = "z", tested = FALSE, selected = FALSE)
+  expect_true(is.na(vote(stab, repeats = 4, min_tested_share = 0.5)$share_selected))
+})
+
+test_that("vp-fit hands on only variables the refits examined, and names the rest", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  env <- vp_fit_first()
+  h <- readRDS(env$set_path("estimates", "vp.rds"))
+  expect_identical(h$selected, env$.freq$variable[env$.freq$examined & (env$.freq$share_selected >= 0.5) %in% TRUE])
+})
+
 test_that("vp-fit holds the full fit to MAX_UNTESTED and leaves the refits to the stability table", {
   lines <- readLines(template_path("vp", "fit"), warn = FALSE)
   calls <- grep("vp_judge\\(vp_coverage\\((fit|fr),", lines, value = TRUE)
   expect_match(calls[1], "max_untested = MAX_UNTESTED", fixed = TRUE)
   expect_no_match(calls[2], "max_untested", fixed = TRUE)
-  expect_true("MAX_UNTESTED <- 0.5" %in% rf_chunk(lines, "edit-study-choices"))
+  expect_true("MAX_UNTESTED <- 0.1" %in% rf_chunk(lines, "edit-study-choices"))
 })
 
 test_that("vp-fit's figure takes its bar and selection from the table", {
@@ -412,13 +554,31 @@ test_that("vp-fit saves one handoff: the fit, its judged coverage, the selection
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
   env <- vp_fit_first()
   h <- readRDS(env$set_path("estimates", "vp.rds"))
-  expect_named(h, c("fit", "coverage", "selected", "family"))
-  # With refits, the selection handed on is the refits' majority vote.
-  expect_identical(h$selected, env$.freq$variable[env$.freq$share_selected >= 0.5])
+  expect_named(h, c("fit", "coverage", "selected", "selected_by", "family", "not_examined", "not_examined_refits"))
+  expect_identical(h$selected_by, "refits")
+  expect_identical(h$not_examined, as.character(env$.real$variable[!env$.real$tested]))
+  # With refits, the selection handed on is the refits' majority vote, among the variables they examined.
+  expect_identical(h$selected, env$.freq$variable[env$.freq$examined & (env$.freq$share_selected >= 0.5) %in% TRUE])
   expect_identical(h$family, "survival")
   expect_s3_class(h$fit, "varpro")
   expect_false(is.null(attr(h, "hvti_provenance")))
   expect_setequal(unique(env$.stab$r), 1:2)
+})
+
+test_that("vp-fit never hands on a variable the refits did not examine", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  # A trim of 0.3 tests some candidates in only some refits, and a share of 1 asks every refit to have tested one before its
+  # vote counts. A low SELECT_SHARE would then keep a variable tested once and selected there, were the gate not in place.
+  choices <- utils::modifyList(vp_choices, list(TRIM = 0.3, MAX_UNTESTED = 1, REPEATS = 3, MIN_TESTED_SHARE = 1, SELECT_SHARE = 0.1))
+  env <- vp_fit_first(choices = choices)
+  h <- readRDS(env$set_path("estimates", "vp.rds"))
+  freq <- env$.freq
+  would_pass <- freq$variable[!freq$examined & (freq$share_selected >= 0.1) %in% TRUE]
+  skip_if(!length(would_pass), "no unexamined variable was selected in the refits that tested it, so there is nothing to gate")
+  expect_identical(h$not_examined_refits, as.character(freq$variable[!freq$examined]))
+  expect_true(all(would_pass %in% h$not_examined_refits))
+  expect_false(any(h$not_examined_refits %in% h$selected))
 })
 
 test_that("SELECT_SHARE = NA, or REPEATS = 0, hands on the full fit's selection", {
@@ -428,6 +588,7 @@ test_that("SELECT_SHARE = NA, or REPEATS = 0, hands on the full fit's selection"
     env <- vp_fit_first(choices = utils::modifyList(vp_choices, extra))
     h <- readRDS(env$set_path("estimates", "vp.rds"))
     expect_identical(h$selected, env$.real$variable[env$.real$selected])
+    expect_identical(h$selected_by, "full fit")
   }
 })
 
@@ -436,6 +597,14 @@ test_that("SELECT_SHARE must be NA or a share in (0, 1]", {
   rf_skip_unless_stack(rf_template_packages("vp", "fit"))
   for (bad in list(0, 1.5, NaN, "half", c(0.5, 0.6))) {
     expect_error(vp_fit_first(choices = utils::modifyList(vp_choices, list(SELECT_SHARE = bad))), "SELECT_SHARE")
+  }
+})
+
+test_that("MIN_TESTED_SHARE must be one share in (0, 1]", {
+  skip_on_cran()
+  rf_skip_unless_stack(rf_template_packages("vp", "fit"))
+  for (bad in list(NA, 0, 1.5, "half", c(0.5, 0.6))) {
+    expect_error(vp_fit_first(choices = utils::modifyList(vp_choices, list(MIN_TESTED_SHARE = bad))), "MIN_TESTED_SHARE")
   }
 })
 
@@ -454,8 +623,12 @@ test_that("raising REPEATS computes only the new repeat", {
   expect_identical(file.mtime(first), stamp)
   expect_true(file.exists(file.path(env$CACHE_DIR, "vp-repeat-03.rds")))
   expect_setequal(unique(again$.stab$r), 1:3)
-  expect_true(all(again$.freq$share_tested >= 0 & again$.freq$share_selected <= 1))
-  expect_equal(again$.freq$share_selected * 3, round(again$.freq$share_selected * 3))
+  expect_true(all(again$.freq$share_tested >= 0 & again$.freq$share_tested <= 1))
+  expect_true(all(again$.freq$share_selected >= 0 & again$.freq$share_selected <= 1, na.rm = TRUE))
+  expect_equal(again$.freq$share_tested * 3, round(again$.freq$share_tested * 3))
+  # A selection is counted over the refits that tested the variable, so its count is whole.
+  .picked <- again$.freq$share_selected * again$.freq$share_tested * 3
+  expect_equal(.picked[!is.na(.picked)], round(.picked[!is.na(.picked)]))
 })
 
 test_that("REPEATS = 0 skips the stability check", {
@@ -492,7 +665,7 @@ test_that("vp-explain names a selection the saved full fit did not test, and sto
   expect_error(
     rf_run("vp", "explain", vp_explain_labels, env,
            list(HORIZON = 1, SEED = 1, SAVE_FIGURES = FALSE, PARTIAL_VARS = untested[1])),
-    "saved full fit tested none of"
+    "the saved full fit did not examine"
   )
 })
 
@@ -524,7 +697,8 @@ test_that("vp-fit and vp-explain keyed on MRN save no MRN in any file", {
   rf_skip_unless_stack(rf_template_packages("vp", "explain"))
   data <- rf_mrn_data(n = 60L)
   choices <- list(TIME = "iv_dead", EVENT = "dead", RESPONSE = NULL, PREDICTORS = c("age", "x1", "grp"),
-                  NTREE = 25, REPEATS = 1, SEED = 1, SAVE_FIGURES = FALSE)
+                  NTREE = 25, REPEATS = 1, SEED = 1, SAVE_FIGURES = FALSE,
+                  MAX_UNTESTED = 0.5)  # 60 patients is far smaller than the 0.1 default is set for.
   fit <- vp_fit_first(data, choices)
   # The ID fell back to MRN, and the job read it.
   expect_identical(attr(fit$job_data$record, "selection")$id, "mrn")
@@ -640,9 +814,13 @@ test_that("vp-dependence saves one handoff with its lineage", {
   env <- vpd_first()
   path <- env$set_path("estimates", "dependence.rds")
   h <- readRDS(path)
-  expect_named(h, c("fit", "beta", "bar", "bar_from", "edges", "signal", "stability"))
+  expect_named(h, c("fit", "beta", "bar", "bar_from", "edges", "signal", "stability", "not_examined"))
   expect_s3_class(h$fit, "uvarpro")
   expect_null(h$stability)
+  # Whichever variables the forest built no rule for are handed on as not examined, and only those. Which
+  # they are on this fixture is chance and differs by platform (Ubuntu's build leaves x2 out at SEED 2026).
+  expect_type(h$not_examined, "character")
+  expect_identical(h$not_examined, env$.coverage$variable[env$.coverage$state == "not examined"])
   # The package's handoff reader accepts it: the lineage is complete.
   expect_no_error(hvtiRtemplates:::.read_handoff(path, "dependence", env$.cfg, "the vp-dependence job"))
 })
@@ -653,7 +831,9 @@ test_that("vp-dependence traces a colliding encoded column to its factor", {
   d <- vpd_data()
   d$f <- factor(withr::with_seed(3, sample(c("s", "t", "u"), nrow(d), replace = TRUE)))
   d$fs <- withr::with_seed(4, stats::rnorm(nrow(d)))
-  env <- vpd_first(d, utils::modifyList(vpd_choices, list(VARIABLES = c("a", "c", "f", "fs"))))
+  # At 30 trees the three-level f takes the rules and fs gets none, which a MAX_UNTESTED share would stop on. This test
+  # is about the term map, which covers every column whether or not it was released, so the gate is set to report.
+  env <- vpd_first(d, c(utils::modifyList(vpd_choices, list(VARIABLES = c("a", "c", "f", "fs"))), list(MAX_UNTESTED = NULL)))
   # Asserted on varPro's own record, so it holds whatever spelling a later
   # varPro chooses: every encoded column of f maps to f, and fs stays fs.
   f_terms <- names(env$.parent)[env$.parent == "f"]
@@ -713,6 +893,157 @@ test_that("REPEATS = 0 skips the dependence stability check", {
   expect_null(readRDS(env$set_path("estimates", "dependence.rds"))$stability)
 })
 
+test_that("vpd_coverage counts each variable's release rules through varPro's term map", {
+  vp33_skip_unless_stack("varPro")
+  env <- vpd_helpers_env()
+  d <- vpd_data()
+  d$noise1_a <- withr::with_seed(7, sample(d$a))
+  withr::local_options(rf.cores = 1L)
+  fit <- varPro::uvarpro(d, ntree = 10, seed = -1)
+  cols <- names(vpd_data())
+  cov <- env$vpd_coverage(fit, cols)
+  expect_identical(cov$variable, cols)
+  # Every rule except those releasing the noise column, counted without the map: a numeric column keeps its name.
+  expect_identical(sum(cov$rules), nrow(fit$results) - sum(colnames(fit$x)[fit$results$variable] == "noise1_a"))
+  expect_identical(cov$state, ifelse(cov$rules > 0L, "examined", "not examined"))
+  # fs is a factor, split into 0/1 columns, and its rules are counted to fs.
+  expect_gt(cov$rules[cov$variable == "fs"], 0L)
+})
+
+test_that("vpd_edge_share counts an edge over the refits that examined the variable it leaves", {
+  env <- vpd_helpers_env()
+  runs <- list(
+    list(edges = "a -> c", examined = c("a", "c")),
+    list(edges = "a -> c", examined = "a"),             # c unexamined: an edge into it is still drawn, and counts
+    list(edges = character(), examined = c("b", "c")),  # a unexamined: never looked, so not counted
+    list(edges = character(), examined = "b")
+  )
+  s <- env$vpd_edge_share(runs)
+  expect_identical(s$from, "a")
+  expect_identical(s$to, "c")
+  expect_equal(s$share, 1)
+  expect_identical(s$refits, 2L)
+  # A refit that examined the tail and drew no edge counts against it.
+  s <- env$vpd_edge_share(c(runs, list(list(edges = character(), examined = "a"))))
+  expect_equal(s$share, 2 / 3)
+  expect_identical(s$refits, 3L)
+  # No refit examined the tail: NA, not 0.
+  expect_true(is.na(env$vpd_edge_share(list(list(edges = "b -> a", examined = character())))$share))
+  expect_identical(nrow(env$vpd_edge_share(list(list(edges = character(), examined = "a")))), 0L)
+})
+
+test_that("vpd_signal_share counts a variable over the refits that examined it, not over REPEATS", {
+  env <- vpd_helpers_env()
+  runs <- list(
+    list(signal = "a", examined = "a"),
+    list(signal = "a", examined = c("a", "b")),
+    list(signal = character(), examined = "b"),   # a unexamined: not counted against it
+    list(signal = character(), examined = "b"),
+    list(signal = "a", examined = "b")            # a unexamined: not counted for it either
+  )
+  s <- env$vpd_signal_share(runs)
+  expect_identical(s$variable, "a")
+  expect_equal(s$share, 1)
+  expect_identical(s$refits, 2L)
+  s <- env$vpd_signal_share(c(runs, list(list(signal = character(), examined = "a"))))
+  expect_equal(s$share, 2 / 3)
+  expect_identical(nrow(env$vpd_signal_share(list(list(signal = character(), examined = "a")))), 0L)
+})
+
+test_that("both uvarpro() calls in vp-dependence carry the rule limits, and the defaults are the measured ones", {
+  lines <- readLines(template_path("vp", "dependence"), warn = FALSE)
+  # Code only: the narration names uvarpro() in prose.
+  open <- grep("^```\\{r", lines)
+  code <- unlist(lapply(open, function(at) {
+    end <- at + which(lines[(at + 1L):length(lines)] == "```")[1L]
+    lines[(at + 1L):(end - 1L)]
+  }))
+  src <- paste(code[!grepl("^\\s*#", code)], collapse = "\n")
+  calls <- regmatches(src, gregexpr("(?s)(?<![_[:alnum:]])uvarpro\\(.*?seed = ", src, perl = TRUE))[[1L]]
+  # The full fit and the stability refit.
+  expect_length(calls, 2L)
+  for (arg in c("max.tree = min(MAX_TREE, NTREE)", "max.rules.tree = MAX_RULES_TREE")) {
+    expect_true(all(grepl(arg, calls, fixed = TRUE)), info = arg)
+  }
+  choices <- rf_chunk(lines, "edit-study-choices")
+  for (default in c("MAX_TREE <- 500", "MAX_RULES_TREE <- 20", "MAX_UNTESTED <- NULL")) {
+    expect_true(default %in% choices, info = default)
+  }
+})
+
+test_that("changing MAX_RULES_TREE makes both vp-dependence caches stale, and REFIT refits them", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  # Run in the global environment, as a render runs its chunks, as vp-fit's
+  # NODESIZE_EXTERNAL test does.
+  g <- globalenv()
+  before <- ls(g, all.names = TRUE)
+  withr::defer(rm(list = setdiff(ls(g, all.names = TRUE), before), envir = g))
+  data <- vpd_data()
+  data$ccfid <- seq_len(nrow(data))
+  g$.root <- rf_study(data, environment())
+  choices <- utils::modifyList(vpd_choices, list(REPEATS = 1))
+  run <- function(extra = list()) {
+    g$.provenance_data <- list()
+    rf_run("vp", "dependence", vpd_labels, g, utils::modifyList(choices, extra))
+  }
+  run()
+  files <- file.path(g$CACHE_DIR, c("vp-dependence.rds", "vp-dependence-repeat-01.rds"))
+  stamps <- file.mtime(files)
+  Sys.sleep(1.1)  # so a rewrite would show in the modification time
+  expect_error(run(list(MAX_RULES_TREE = 10)), "stale")
+  run(list(MAX_RULES_TREE = 10, REFIT = TRUE))
+  expect_true(all(file.mtime(files) > stamps))
+})
+
+test_that("vp-dependence stops on an unexamined variable when MAX_UNTESTED is set, and by default hands it on", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  # Five trees and two rules a tree leave b and x2 without a release rule on this cohort.
+  few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2))
+  env <- rf_env(vpd_data())
+  err <- expect_error(rf_run("vp", "dependence", c(vpd_labels[seq_len(which(vpd_labels == "coverage-gate"))]), env,
+                             utils::modifyList(few, list(MAX_UNTESTED = 0))), "MAX_UNTESTED")
+  expect_match(conditionMessage(err), "x2", fixed = TRUE)
+  expect_match(conditionMessage(err), "MAX_TREE", fixed = TRUE)
+  # The shipped default, NULL, reports and renders: `few` leaves MAX_UNTESTED to the template.
+  env <- vpd_first(choices = few)
+  expect_null(env$MAX_UNTESTED)
+  h <- readRDS(env$set_path("estimates", "dependence.rds"))
+  expect_true("x2" %in% h$not_examined)
+  expect_identical(h$not_examined, env$.coverage$variable[env$.coverage$rules == 0L])
+})
+
+test_that("vp-dependence's default rule limits reach uvarpro(), not varPro's 200 trees", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  # The fit records the limits it ran under, and its rules come from that many trees, so this guards a
+  # fallback to varPro's default of 200 on every platform. An earlier version asserted that the default
+  # left no real variable unexamined at one seed; which variable misses is chance (7 of 30 seeds at 500
+  # trees, dev/vp/uvarpro-coverage.R) and differs between macOS and Ubuntu, so it failed on CI.
+  env <- rf_env(vpd_data())
+  rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise", "dependence-helpers"),
+         env, list(VARIABLES = c("a", "b", "x2", "fs", "c"), OUTCOME = NULL, ORDINAL = NULL, SAVE_FIGURES = FALSE, SEED = 3))
+  expect_identical(c(env$NTREE, env$NOISE_N, env$MAX_TREE, env$MAX_RULES_TREE), c(500, 20, 500, 20))
+  # The fit chunk's own uvarpro() call, without the lasso that follows it.
+  find <- function(e) {
+    if (!is.call(e)) return(list())
+    if (identical(e[[1L]], as.name("uvarpro"))) return(list(e))
+    unlist(lapply(as.list(e)[-1L], find), recursive = FALSE)
+  }
+  fit_chunk <- rf_chunk(readLines(template_path("vp", "dependence"), warn = FALSE), "fit")
+  call <- unlist(lapply(parse(text = fit_chunk), find), recursive = FALSE)
+  expect_length(call, 1L)
+  set.seed(abs(env$SEED))
+  fit <- eval(call[[1L]], env)
+  expect_equal(fit$max.tree, 500)
+  expect_equal(fit$max.rules.tree, 20)
+  expect_gt(length(unique(fit$results$tree)), 200L)
+  # The coverage table counts every rule mapped to a real variable.
+  cov <- env$vpd_coverage(fit, env$.cols)
+  expect_identical(cov$state == "examined", cov$rules > 0L)
+})
+
 # vp-individual ---------------------------------------------------------------
 
 test_that("no vp-individual line fits varPro", {
@@ -749,6 +1080,22 @@ test_that("vpi_coverage marks the handoff's selection, not the full fit's", {
   expect_identical(cov$selected, c(TRUE, FALSE))
   # Without a handoff selection it falls back to the screen's own.
   expect_identical(env$vpi_coverage(grad, c(age = "age", x1 = "x1"), screen)$selected, c(FALSE, TRUE))
+})
+
+test_that("vpi_coverage gives each predictor one of the three states", {
+  e <- vpi_helpers_env()
+  cov <- data.frame(variable = c("s", "e", "n"), noise = FALSE, tested = c(TRUE, TRUE, FALSE))
+  grad <- data.frame(s = c(0.1, 0.2), e = c(0.1, 0.1), n = c(NA, NA))
+  out <- e$vpi_coverage(grad, c(s = "s", e = "e", n = "n"), cov, selected = "s")
+  expect_identical(out$state, c("selected", "examined, not selected", "not examined"))
+})
+
+test_that("vpi_coverage calls a variable the voting refits did not examine not examined, though the full fit tested it", {
+  e <- vpi_helpers_env()
+  cov <- data.frame(variable = c("s", "e", "r"), noise = FALSE, tested = TRUE)
+  grad <- data.frame(s = c(0.1, 0.2), e = c(0.1, 0.1), r = c(0.3, 0.1))
+  out <- e$vpi_coverage(grad, c(s = "s", e = "e", r = "r"), cov, selected = "s", unexamined = "r")
+  expect_identical(out$state, c("selected", "examined, not selected", "not examined"))
 })
 
 test_that("vpi_coverage keeps a predictor ivarpro() returned no column for", {
@@ -835,4 +1182,83 @@ test_that("vp-dependence and vp-individual keyed on MRN save no MRN in any file"
   expect_identical(rf_files_holding(fit$CACHE_DIR, data$MRN), character())
   # The search finds what is there: every MRN in the data as the job read it.
   expect_true(rf_bytes_hold_any(serialize(fit$job_data$data, NULL), data$MRN))
+})
+
+test_that("vp-dependence refuses a malformed rule limit or MAX_UNTESTED before fitting", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  upto <- vpd_labels[seq_len(which(vpd_labels == "fit"))]
+  # A string would compare lexically in the coverage gate; NA would reach uvarpro() as max.tree.
+  expect_error(rf_run("vp", "dependence", upto, rf_env(vpd_data()),
+                      utils::modifyList(vpd_choices, list(MAX_UNTESTED = "0.1"))), "MAX_UNTESTED must be")
+  expect_error(rf_run("vp", "dependence", upto, rf_env(vpd_data()),
+                      utils::modifyList(vpd_choices, list(MAX_TREE = NA))), "MAX_TREE and MAX_RULES_TREE")
+})
+
+test_that("vp-dependence imputes a missing variable by default, and leaves OUTCOME out of the imputation", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  data <- vpd_data()
+  data$b[1:9] <- NA
+  env <- rf_env(data)
+  rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"), env, vpd_choices)
+  expect_identical(nrow(env$d), 200L)
+  expect_false(anyNA(env$d[vpd_choices$VARIABLES]))
+  expect_identical(env$.cohort$n_imputed[["b"]], 9L)
+})
+
+test_that("vp-dependence imputes a yes/no variable as TRUE or FALSE, not as a fraction", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  # The study read turns a logical into 0/1, so the column is set after it.
+  data <- vpd_data()
+  data$yn <- 0L
+  choices <- utils::modifyList(vpd_choices, list(VARIABLES = c(vpd_choices$VARIABLES, "yn")))
+  env <- rf_env(data)
+  rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data"), env, choices)
+  yn <- env$d$a > 0
+  env$d$yn <- replace(yn, 1:30, NA)
+  rf_run("vp", "dependence", "tbl-missing", env, choices)
+  expect_type(env$d$yn, "logical")
+  expect_false(anyNA(env$d$yn))
+  expect_identical(env$d$yn[-(1:30)], yn[-(1:30)])
+})
+
+test_that("vp-dependence hands the imputation the variables only, and drops a patient missing OUTCOME", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  data <- vpd_data()
+  data$x2[1:3] <- NA
+  data$b[4:9] <- NA
+  choices <- utils::modifyList(vpd_choices, list(VARIABLES = c("a", "b", "fs", "c")))
+  choices <- c(choices[setdiff(names(choices), "OUTCOME")], list(OUTCOME = "x2"))
+  env <- rf_env(data)
+  rec <- new.env()
+  testthat::local_mocked_bindings(impute = vp_mock_impute(rec), .package = "randomForestSRC")
+  rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"), env, choices)
+  expect_identical(env$.cohort$n_outcome_missing, 3L)
+  expect_identical(nrow(env$d), 197L)
+  expect_identical(rec$seen, c("a", "b", "fs", "c"))
+  expect_false("x2" %in% rec$seen)
+})
+
+test_that("vp-dependence stops on a patient with no observed variable", {
+  skip_on_cran()
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  data <- vpd_data()
+  data[5, vpd_choices$VARIABLES] <- NA
+  data$b[10:12] <- NA  # something to impute, so the imputation runs
+  expect_error(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"),
+                      rf_env(data), vpd_choices), "cannot be imputed")
+})
+
+test_that("vp-dependence with NA_ACTION = na.omit drops incomplete patients as before", {
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  data <- vpd_data()
+  data$b[1:9] <- NA
+  env <- rf_env(data)
+  rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing"), env,
+         utils::modifyList(vpd_choices, list(NA_ACTION = "na.omit")))
+  expect_identical(nrow(env$d), 191L)
+  expect_identical(env$.cohort$n_dropped, 9L)
 })
