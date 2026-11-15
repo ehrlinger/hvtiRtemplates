@@ -198,12 +198,13 @@ NTREE <- 1000
 # rarely splits gets no rule and is never looked at. The forest builds about 10
 # rules a tree whatever MAX_RULES_TREE is from 20 up, so MAX_TREE is the lever.
 # In simulations with the noise columns below (5 variables and 200 patients, 31
-# and 400; dev/vp/uvarpro-coverage.R, 2026-11-14), 1,000 trees gave every
-# variable a rule at every seed. On 31 variables 500 trees left one or two
-# without a rule at half the seeds, and 750 one at a quarter. The cost is the
-# lasso, fitted once per rule: at 200 patients and 25 columns it took 56 s at
-# 500 trees, 83 s at 750 and 110 s at 1,000, for the full fit and again for each
-# refit. Lower both to 500 to halve that where the coverage table stays full.
+# and 400; dev/vp/uvarpro-coverage.R, 2026-11-15), 1,000 trees gave every
+# variable a rule at every seed. Forests of 500 trees left one or two of 31
+# variables without a rule at 6 of 20 seeds (and one of 5 at 1 of 30), and 750
+# trees one of 31 at 5 of 20. The cost is the lasso, fitted once per rule: at
+# 200 patients and 25 columns it took 56 s at 500 trees, 83 s at 750 and 110 s
+# at 1,000, for the full fit and again for each refit. Lower both to 500 to
+# halve that where the coverage table stays full.
 MAX_TREE <- 1000
 MAX_RULES_TREE <- 20
 # EDIT: the largest share of the variables (VARIABLES and OUTCOME) that may go

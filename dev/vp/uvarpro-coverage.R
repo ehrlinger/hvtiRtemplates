@@ -8,9 +8,11 @@
 # script cannot drift from it.
 #
 # It sweeps uvarpro()'s rule limits: max.tree in c(200, NTREE) and max.rules.tree in c(20, 50, 100, 150),
-# varPro's defaults being 200 and 20. For each pair and configuration it prints the real variables and the
+# varPro's defaults being 200 and 20, every fit a forest of NTREE trees, so the 200 rows sample rules from a
+# 1,000-tree forest rather than grow a 200-tree one. For each pair and configuration it prints the real variables and the
 # noise columns with no release rule, and the seconds the fit took. Then, because one run is one draw, it
-# refits configurations 4 and 5 over seeds at 500 trees and at the template's MAX_TREE.
+# refits configurations 4 and 5 over seeds with forests grown at 500, 750 and the template's MAX_TREE trees
+# (ntree = max.tree), the forests a study lowering both NTREE and MAX_TREE would grow.
 #
 # History. Measured first on 2026-11-14 with the noise drawn half categorical whenever any candidate was:
 # configuration 5 left 15-19 of 31 real variables without a rule at 500 trees (7-10 at 2,000), because its
@@ -38,13 +40,18 @@
 #   5       200       1982    x04, x21                     2                2.3
 #   5       1000     10004    none                         0                7.1
 #
-#   across seeds   max.tree (of 1,000)  seeds  seeds leaving a real variable without a rule  most left by one
-#   config 4       500                  30     0                                             0
-#   config 4       750                  30     0                                             0
-#   config 4       1000                 30     0                                             0
-#   config 5       500                  20     9                                             2 of 31
-#   config 5       750                  20     2                                             1 of 31
-#   config 5       1000                 20     0                                             0
+#   across seeds   ntree = max.tree  seeds  seeds leaving a real variable without a rule  most left by one
+#   config 4       500               30     1                                             1 of 5
+#   config 4       750               30     0                                             0
+#   config 4       1000              30     0                                             0
+#   config 5       500               20     6                                             2 of 31
+#   config 5       750               20     5                                             1 of 31
+#   config 5       1000              20     0                                             0
+#
+# Re-measured 2026-11-15. The first version of this loop grew every forest at 1,000 trees and lowered only
+# max.tree, so its 500 and 750 rows were rule subsamples of the 1,000-tree forest (9 and 2 seeds missing for
+# configuration 5, 0 for 4). Raised in review on #549: a seeded forest of 500 is a different fit, and neither
+# reading bounds the other.
 #
 # A scratch run of configuration 5 at 1,000 trees over SEED = 21 to 40 also left none. So the template's
 # MAX_TREE = NTREE = 1,000 is the smallest tried that gave every real variable a rule at every seed, and
@@ -152,8 +159,8 @@ best <- if (nrow(ok)) sprintf("max.tree = %d, max.rules.tree = %d", ok$max.tree[
 cat("\nSmallest covering pair:", best, "\n")
 
 # Across seeds: one run is one draw, so the configurations the template runs with noise (4 and 5) are refitted
-# at SEED = 1 to 30 (4) and 1 to 20 (5), seeding the noise and the forest as the template does, at 500 trees
-# and at the template's MAX_TREE. Every row is one fit; the summary counts the seeds that left a real variable
+# at SEED = 1 to 30 (4) and 1 to 20 (5), seeding the noise and the forest as the template does, with forests
+# grown at 500, 750 and the template's MAX_TREE trees. Every row is one fit; the summary counts the seeds that left a real variable
 # without a rule and the most any one seed left.
 max_tree_tpl <- val("MAX_TREE")
 sweep <- list()
@@ -163,7 +170,7 @@ for (k in c(4L, 5L)) {
     for (s in if (k == 4L) 1:30 else 1:20) {
       d <- env$vp_add_noise(d0, names(d0), noise_n_tpl, s)
       set.seed(s)
-      fit <- uvarpro(d, ntree = max(mt, ntree_tpl), max.tree = mt, max.rules.tree = 20, seed = -abs(s))
+      fit <- uvarpro(d, ntree = mt, max.tree = mt, max.rules.tree = 20, seed = -abs(s))
       map <- attr(fit$x, "xvar.map")
       ruled <- unique(unname(map[names(map)[fit$results$variable]]))
       real <- names(d)[!grepl("^noise", names(d))]
