@@ -3,50 +3,65 @@
 # A variable with no rules is never examined, and "not examined" must never be read as "no effect".
 # Run from the repo root: Rscript dev/vp/uvarpro-coverage.R   (local; simulated data, no study data)
 #
-# Settings are the template's own, read from it: ntree = NTREE (500) and seed = -abs(SEED), with the
-# noise columns vp_add_noise() builds from NOISE_N (20). The noise function is parsed out of the template
-# so this script cannot drift from it.
+# Settings are the template's own, read from it: ntree = NTREE and seed = -abs(SEED), with the noise
+# columns vp_add_noise() builds from NOISE_N (20). The noise function is parsed out of the template so this
+# script cannot drift from it.
 #
 # It sweeps uvarpro()'s rule limits: max.tree in c(200, NTREE) and max.rules.tree in c(20, 50, 100, 150),
-# varPro's defaults being 200 and 20. For each pair and configuration it prints the real variables and the
-# noise columns with no release rule, and the seconds the fit took. The template's defaults are the
-# smallest pair that leaves no REAL variable without rules in any configuration.
+# varPro's defaults being 200 and 20, every fit a forest of NTREE trees, so the 200 rows sample rules from a
+# 1,000-tree forest rather than grow a 200-tree one. For each pair and configuration it prints the real variables and the
+# noise columns with no release rule, and the seconds the fit took. Then, because one run is one draw, it
+# refits configurations 4 and 5 over seeds with forests grown at 500, 750 and the template's MAX_TREE trees
+# (ntree = max.tree), the forests a study lowering both NTREE and MAX_TREE would grow.
 #
-# Measured 2026-11-14, varPro 3.3.0, randomForestSRC 3.10.0, one thread (configurations 1-5 are in `cfgs`):
+# History. Measured first on 2026-11-14 with the noise drawn half categorical whenever any candidate was:
+# configuration 5 left 15-19 of 31 real variables without a rule at 500 trees (7-10 at 2,000), because its
+# one factor made 10 of the 20 noise columns binary copies, and those took about 2,100 of 4,800 rules.
+# vp_add_noise() now draws the kinds in proportion to the candidates, at least one of each kind present
+# (one categorical column there, four on the fixture). A binary column still draws several times its share
+# of rules: the one in configuration 5 took 480-720.
 #
-#   config  max.tree  max.rules.tree  rules   real variables with no rule   noise with none  seconds
-#   1       200       20 / 50 / 100 / 150  ~1940  none                          0                0.2
-#   1       500       20 / 50 / 100 / 150  ~4860  none                          0                0.5
-#   2       200       20                   1915   x07, x25                      0                0.9
-#   2       200       50 / 100 / 150       ~1960  none                          0                1.0
-#   2       500       20 / 50 / 100 / 150  ~4890  none                          0                2.0
-#   3       200       20                   1708   none                          0                2.6
-#   3       200       50 / 100 / 150       ~1710  x14; x05, x28; x08, x10, x12, x28  0           2.6
-#   3       500       20 / 50 / 100 / 150  ~4320  none                          0                4.1
-#   4       200       20                   1983   b, x2                         6                0.6
-#   4       200       50 / 100 / 150       ~1970  b; x2; b                      4-5              0.6
-#   4       500       20 / 50 / 100 / 150  ~4930  none                          2-5              1.5
-#   5       200       20 / 50 / 100 / 150  ~1920  23-26 of 31                   7-9              1.6
-#   5       500       20 / 50 / 100 / 150  ~4820  15-19 of 31                   4-6              3.2
+# Each fit seeds R's generator first, as cache_fit(seed = SEED) does in the template, because uvarpro()
+# draws from it as well as from its own seed: a first version of this sweep did not, and its counts of
+# which seeds missed did not reproduce through the template.
 #
-# No pair covers every real variable in every configuration. Configurations 1-3 carry no noise
-# columns, which the template always adds; there every pair at 500 trees (all of NTREE) covers, and
-# the defaults MAX_TREE = 500, MAX_RULES_TREE = 20 were chosen from them before configuration 5 was
-# added. Configuration 5 is configuration 2 as the template runs it, with 20 noise columns, and at
-# 500 trees about half its real variables still had no rule. Its one factor is the only categorical
-# source, so 10 noise columns are binary copies of it. In a separate check over SEED = 1 to 3 those
-# copies took 2,089 to 2,132 of about 4,800 rules, and with NTREE = MAX_TREE = 1,000 the configuration
-# left 12 to 17 of 31 real variables without a rule, with 2,000 trees 7 to 10.
+# Measured 2026-11-14, proportional noise, NTREE = MAX_TREE = 1,000, varPro 3.3.0, randomForestSRC 3.10.0,
+# one thread. max.rules.tree changed nothing at all from 20 up: every pair gave the same rules.
 #
-# The rule count follows max.tree, about 10 rules a tree, and barely moves with max.rules.tree from 20
-# up, which at these sizes is not the binding limit. Which variable misses moves with R's random state
-# (between two runs of this script configurations 2 and 3 changed which, and whether, a variable
-# missed), so one run is one draw: on the fixture shape (configuration 4) with the template's own
-# seeding, 200 trees left a real variable without a rule at 23 of SEED = 1 to 30, and 500 trees at 7.
+#   config  max.tree  rules   real variables with no rule  noise with none  seconds
+#   1       200       1882    none                         0                0.2
+#   1       1000      9555    none                         0                1.1
+#   2       200       1924    x23                          0                1.2
+#   2       1000      9655    none                         0                4.1
+#   3       200       1742    none                         0                4.1
+#   3       1000      8634    none                         0                8.0
+#   4       200       2056    none                         2                0.7
+#   4       1000      9995    none                         0                3.0
+#   5       200       1982    x04, x21                     2                2.3
+#   5       1000     10004    none                         0                7.1
+#
+#   across seeds   ntree = max.tree  seeds  seeds leaving a real variable without a rule  most left by one
+#   config 4       500               30     1                                             1 of 5
+#   config 4       750               30     0                                             0
+#   config 4       1000              30     0                                             0
+#   config 5       500               20     6                                             2 of 31
+#   config 5       750               20     5                                             1 of 31
+#   config 5       1000              20     0                                             0
+#
+# Re-measured 2026-11-15. The first version of this loop grew every forest at 1,000 trees and lowered only
+# max.tree, so its 500 and 750 rows were rule subsamples of the 1,000-tree forest (9 and 2 seeds missing for
+# configuration 5, 0 for 4). Raised in review on #549: a seeded forest of 500 is a different fit, and neither
+# reading bounds the other.
+#
+# A scratch run of configuration 5 at 1,000 trees over SEED = 21 to 40 also left none. So the template's
+# MAX_TREE = NTREE = 1,000 is the smallest tried that gave every real variable a rule at every seed, and
+# MAX_UNTESTED = 0.1 is on as the guard for data unlike these. The rule count follows max.tree, about
+# 10 rules a tree.
 #
 # The forest is not the cost. get.beta.entropy() fits a lasso for every rule, so it scales with the rule
-# count: on configuration 4 it took 20 s at 200 trees and 51 s at 500, against 0.7 s and 1.5 s for
-# uvarpro(). A render pays that once for the full fit and once for each of REPEATS refits.
+# count: on configuration 4 it took 20 s at 200 trees, 56 s at 500, 83 s at 750 and 110 s at 1,000, against
+# 0.7 s to 3.6 s for uvarpro() (a separate scratch timing, one fit each). A render pays that once for the full fit
+# and once for each of REPEATS refits.
 suppressPackageStartupMessages(library(varPro))
 # One thread, as the template runs, so the elapsed seconds are the ones a render pays.
 options(rf.cores = 1L, mc.cores = 1L)
@@ -113,6 +128,7 @@ for (k in seq_along(cfgs)) {
   for (g in seq_len(nrow(grid))) {
     mt <- grid$max.tree[g]
     mrt <- grid$max.rules.tree[g]
+    set.seed(seed)  # as cache_fit(seed = SEED) does before the call: uvarpro() also draws from R's generator
     secs <- system.time(
       fit <- uvarpro(d, ntree = ntree_tpl, max.tree = min(mt, ntree_tpl), max.rules.tree = mrt, seed = -abs(seed))
     )[["elapsed"]]
@@ -141,3 +157,31 @@ print(covers, row.names = FALSE)
 ok <- covers[covers$real_none, ]
 best <- if (nrow(ok)) sprintf("max.tree = %d, max.rules.tree = %d", ok$max.tree[1L], ok$max.rules.tree[1L]) else "none"
 cat("\nSmallest covering pair:", best, "\n")
+
+# Across seeds: one run is one draw, so the configurations the template runs with noise (4 and 5) are refitted
+# at SEED = 1 to 30 (4) and 1 to 20 (5), seeding the noise and the forest as the template does, with forests
+# grown at 500, 750 and the template's MAX_TREE trees. Every row is one fit; the summary counts the seeds that left a real variable
+# without a rule and the most any one seed left.
+max_tree_tpl <- val("MAX_TREE")
+sweep <- list()
+for (k in c(4L, 5L)) {
+  d0 <- cfgs[[k]]$d
+  for (mt in unique(c(500, 750, max_tree_tpl))) {
+    for (s in if (k == 4L) 1:30 else 1:20) {
+      d <- env$vp_add_noise(d0, names(d0), noise_n_tpl, s)
+      set.seed(s)
+      fit <- uvarpro(d, ntree = mt, max.tree = mt, max.rules.tree = 20, seed = -abs(s))
+      map <- attr(fit$x, "xvar.map")
+      ruled <- unique(unname(map[names(map)[fit$results$variable]]))
+      real <- names(d)[!grepl("^noise", names(d))]
+      sweep[[length(sweep) + 1L]] <- data.frame(config = k, max.tree = mt, seed = s, missed = length(setdiff(real, ruled)),
+                                                of = length(real))
+    }
+  }
+}
+sweep <- do.call(rbind, sweep)
+cat("\nAcross seeds (real variables with no rule):\n")
+print(do.call(rbind, lapply(split(sweep, sweep[c("config", "max.tree")], drop = TRUE), function(x) {
+  data.frame(config = x$config[1L], max.tree = x$max.tree[1L], seeds = nrow(x), seeds_missing = sum(x$missed > 0L),
+             most_missed = max(x$missed), of = x$of[1L])
+})), row.names = FALSE)

@@ -780,6 +780,54 @@ test_that("vpd_bar falls back to the fixed threshold when every noise entry is 0
   expect_identical(b$from, "fixed (fallback)")
 })
 
+test_that("vp-dependence draws its noise by kind in proportion, with at least one of each kind present", {
+  noise <- rf_chunk(readLines(template_path("vp", "dependence"), warn = FALSE), "noise")
+  env <- new.env()
+  eval(parse(text = noise[seq_len(grep("^if \\(NOISE_N < 1", noise)[1L] - 1L)]), envir = env)
+  kinds <- function(d) {
+    nz <- grep("^noise", names(d), value = TRUE)
+    table(factor(vapply(d[nz], env$vp_kind, ""), c("categorical", "continuous")))
+  }
+  # The fixture: one factor among five variables, so 4 of 20.
+  expect_identical(as.vector(kinds(env$vp_add_noise(vpd_data(), vpd_choices$VARIABLES, 20, 1))), c(4L, 16L))
+  # One factor among 31: half and half gave it 10 copies; the floor keeps 1, so the bar still has a categorical null.
+  wide <- withr::with_seed(1, as.data.frame(matrix(stats::rnorm(200 * 30), 200, 30)))
+  wide$f1 <- factor(withr::with_seed(2, sample(c("a", "b"), 200, replace = TRUE)))
+  expect_identical(as.vector(kinds(env$vp_add_noise(wide, names(wide), 20, 1))), c(1L, 19L))
+  # One kind only: every column is of that kind.
+  expect_identical(as.vector(kinds(env$vp_add_noise(wide, names(wide)[1:30], 20, 1))), c(0L, 20L))
+  expect_identical(as.vector(kinds(env$vp_add_noise(wide, "f1", 20, 1))), c(20L, 0L))
+  # A constant is never a source: its permutation is constant, earns no rule and sets no bar. Beside a varying
+  # factor the one categorical copy comes from that factor, at every seed; alone, it leaves no categorical copy.
+  wide$k1 <- factor(rep("a", 200))
+  for (seed in 1:20) {
+    src <- grep("^noise", names(env$vp_add_noise(wide, names(wide), 20, seed)), value = TRUE)
+    expect_false(any(endsWith(src, "_k1")), info = paste("seed", seed))
+    expect_identical(sum(endsWith(src, "_f1")), 1L, info = paste("seed", seed))
+  }
+  expect_identical(as.vector(kinds(env$vp_add_noise(wide, c(names(wide)[1:30], "k1"), 20, 1))), c(0L, 20L))
+  # A refit draws from its subsample, where a rare level can leave a factor constant.
+  rare <- wide[wide$f1 == "a", c(names(wide)[1:30], "f1")]
+  expect_identical(as.vector(kinds(env$vp_add_noise(rare, names(rare), 20, 1))), c(0L, 20L))
+  expect_error(env$vp_add_noise(wide, "k1", 20, 1), "two or more values")
+})
+
+test_that("vp-dependence says so when a kind of variable gets no noise column", {
+  vp33_skip_unless_stack(rf_template_packages("vp", "dependence"))
+  d <- vpd_data()
+  d$fs <- factor(rep("a", nrow(d)))
+  env <- rf_env(d)
+  out <- utils::capture.output(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise"),
+                                      env, vpd_choices))
+  expect_true(any(grepl("No categorical variable takes two or more values", out, fixed = TRUE)))
+  expect_false(any(grepl("_fs$", names(env$d_noise))))
+  # With a varying factor there is nothing to say.
+  env <- rf_env(vpd_data())
+  out <- utils::capture.output(rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise"),
+                                      env, vpd_choices))
+  expect_false(any(grepl("takes two or more values", out, fixed = TRUE)))
+})
+
 test_that("vp-dependence keeps the noise and the outcome in the lasso step", {
   src <- readLines(template_path("vp", "dependence"), warn = FALSE)
   # Calls with arguments only: the narration and comments name the function as get.beta.entropy().
@@ -966,7 +1014,7 @@ test_that("both uvarpro() calls in vp-dependence carry the rule limits, and the 
     expect_true(all(grepl(arg, calls, fixed = TRUE)), info = arg)
   }
   choices <- rf_chunk(lines, "edit-study-choices")
-  for (default in c("MAX_TREE <- 500", "MAX_RULES_TREE <- 20", "MAX_UNTESTED <- NULL")) {
+  for (default in c("NTREE <- 1000", "MAX_TREE <- 1000", "MAX_RULES_TREE <- 20", "MAX_UNTESTED <- 0.1")) {
     expect_true(default %in% choices, info = default)
   }
 })
@@ -996,21 +1044,25 @@ test_that("changing MAX_RULES_TREE makes both vp-dependence caches stale, and RE
   expect_true(all(file.mtime(files) > stamps))
 })
 
-test_that("vp-dependence stops on an unexamined variable when MAX_UNTESTED is set, and by default hands it on", {
+test_that("vp-dependence stops on an unexamined variable by default, and with MAX_UNTESTED = NULL hands it on", {
   skip_on_cran()
   vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
-  # Five trees and two rules a tree leave b and x2 without a release rule on this cohort.
-  few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2))
+  # Five trees and two rules a tree leave a variable without a release rule on this cohort. Which one is
+  # chance and differs between platforms (x2 on macOS, b on Ubuntu), so the test reads it from the coverage.
+  few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2, MAX_UNTESTED = NULL))
   env <- rf_env(vpd_data())
-  err <- expect_error(rf_run("vp", "dependence", c(vpd_labels[seq_len(which(vpd_labels == "coverage-gate"))]), env,
-                             utils::modifyList(few, list(MAX_UNTESTED = 0))), "MAX_UNTESTED")
-  expect_match(conditionMessage(err), "x2", fixed = TRUE)
+  # The shipped default, 0.1, stops: modifyList() drops vpd_choices' 0.5, so `few` leaves MAX_UNTESTED to the template.
+  err <- expect_error(rf_run("vp", "dependence", c(vpd_labels[seq_len(which(vpd_labels == "coverage-gate"))]), env, few),
+                      "MAX_UNTESTED")
+  expect_identical(env$MAX_UNTESTED, 0.1)
+  expect_gt(length(env$.not_examined), 0L)
+  for (v in env$.not_examined) expect_match(conditionMessage(err), v, fixed = TRUE)
   expect_match(conditionMessage(err), "MAX_TREE", fixed = TRUE)
-  # The shipped default, NULL, reports and renders: `few` leaves MAX_UNTESTED to the template.
-  env <- vpd_first(choices = few)
+  # NULL reports and renders.
+  env <- vpd_first(choices = c(few, list(MAX_UNTESTED = NULL)))  # c(), since modifyList() drops a NULL
   expect_null(env$MAX_UNTESTED)
   h <- readRDS(env$set_path("estimates", "dependence.rds"))
-  expect_true("x2" %in% h$not_examined)
+  expect_gt(length(h$not_examined), 0L)
   expect_identical(h$not_examined, env$.coverage$variable[env$.coverage$rules == 0L])
 })
 
@@ -1020,11 +1072,12 @@ test_that("vp-dependence's default rule limits reach uvarpro(), not varPro's 200
   # The fit records the limits it ran under, and its rules come from that many trees, so this guards a
   # fallback to varPro's default of 200 on every platform. An earlier version asserted that the default
   # left no real variable unexamined at one seed; which variable misses is chance (7 of 30 seeds at 500
-  # trees, dev/vp/uvarpro-coverage.R) and differs between macOS and Ubuntu, so it failed on CI.
+  # trees under the earlier half-and-half noise draw, dev/vp/uvarpro-coverage.R) and differs between
+  # macOS and Ubuntu, so it failed on CI.
   env <- rf_env(vpd_data())
   rf_run("vp", "dependence", c("setup", "edit-study-choices", "tbl-data", "tbl-missing", "noise", "dependence-helpers"),
          env, list(VARIABLES = c("a", "b", "x2", "fs", "c"), OUTCOME = NULL, ORDINAL = NULL, SAVE_FIGURES = FALSE, SEED = 3))
-  expect_identical(c(env$NTREE, env$NOISE_N, env$MAX_TREE, env$MAX_RULES_TREE), c(500, 20, 500, 20))
+  expect_identical(c(env$NTREE, env$NOISE_N, env$MAX_TREE, env$MAX_RULES_TREE), c(1000, 20, 1000, 20))
   # The fit chunk's own uvarpro() call, without the lasso that follows it.
   find <- function(e) {
     if (!is.call(e)) return(list())
@@ -1036,7 +1089,7 @@ test_that("vp-dependence's default rule limits reach uvarpro(), not varPro's 200
   expect_length(call, 1L)
   set.seed(abs(env$SEED))
   fit <- eval(call[[1L]], env)
-  expect_equal(fit$max.tree, 500)
+  expect_equal(fit$max.tree, 1000)
   expect_equal(fit$max.rules.tree, 20)
   expect_gt(length(unique(fit$results$tree)), 200L)
   # The coverage table counts every rule mapped to a real variable.

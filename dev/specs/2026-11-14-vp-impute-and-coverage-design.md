@@ -183,8 +183,29 @@ apart:
   unexamined at 500 trees and 7 to 10 at 2,000, past any affordable `NTREE`. A numeric default would stop most such
   renders. **The cost is the lasso, not the forest:** `get.beta.entropy()` fits one per rule, and on the fixture
   shape took 51 s at 500 trees against 20 s at 200, paid for the full fit and for each refit.
-- **Follow-up:** redesign `vp_add_noise()` in `vp-dependence` so the noise kinds are drawn in proportion to the
-  candidates, not half and half. That is what lets the gate default on (a share such as 0.1).
+- **Done (2026-11-14, `feat/vp-noise-by-kind`): the noise is drawn by kind in proportion, and the gate is on.**
+  `vp_add_noise()` now takes `round(NOISE_N * categorical / candidates)` columns from the categorical candidates,
+  held to at least one of each kind present, so the bar still has a categorical null (`vpd_bar()` takes one bar
+  over all noise columns, of either kind). With one factor among 31 that is 1 of 20 columns, not 10; on the
+  fixture, 4. A binary column still draws several times its share of rules (480 to 720 for the one).
+  Re-measured with `dev/vp/uvarpro-coverage.R` (varPro 3.3.0, one thread), seeding R before each fit as
+  `cache_fit()` does, each forest grown at the size it reports (`NTREE` = `MAX_TREE`):
+
+  | shape | `MAX_TREE` | seeds | seeds leaving a real variable without a rule | most left by one seed |
+  |---|---|---|---|---|
+  | fixture, 5 variables, 200 patients | 500 | 30 | 1 | 1 of 5 |
+  | fixture | 750 / 1,000 | 30 each | 0 | 0 |
+  | 31 variables, 400 patients | 500 | 20 | 6 | 2 of 31 |
+  | 31 variables | 750 | 20 | 5 | 1 of 31 |
+  | 31 variables | 1,000 | 20, and 20 more in a scratch run | 0 | 0 |
+
+  `max.rules.tree` changed nothing from 20 up. **Defaults: `NTREE <- 1000`, `MAX_TREE <- 1000`,
+  `MAX_UNTESTED <- 0.1`.** 1,000 is the smallest tried that covered every real variable at every seed; the gate
+  guards data unlike these. The cost is the lasso: on the fixture shape 56 s at 500 trees, 83 s at 750 and 110 s
+  at 1,000, per fit, and a render with `REPEATS <- 10` pays it 11 times, so about twice the 500-tree render. A
+  study whose coverage table stays full at 500 can lower both. A first version of this table drew the 500- and
+  750-tree rules from a 1,000-tree forest (`max.tree` below `ntree`), which is not the forest a study lowering
+  both would grow; it read 9 and 2 seeds for 31 variables and 0 for the fixture. Raised in review on #549.
 - **Report:** a `tbl-coverage` table after the fit names each variable's rule count and whether it was examined;
   the handoff carries `not_examined`. An unexamined variable has no rule, so no edge leaves it; it is still a
   predictor in every other variable's lasso, so edges into it can still appear. In the stability table an edge's
