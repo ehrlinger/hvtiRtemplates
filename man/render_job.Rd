@@ -58,6 +58,14 @@ That chunk records provenance, which needs a render, so a console run stops
 there with an error of class \code{hvtiRtemplates_not_rendered} that says to
 render the job. Everything computed above it is still in the session.
 
+Quarto's bundled Deno runtime can crash as it starts, on macOS at least,
+before it has read the job. The quarto package then reports something
+unrelated: "Could not evaluate cli \code{\{\}} expression:
+\code{QUARTO_DENO}". A render that fails that way stops with an error of
+class \code{hvtiRtemplates_quarto_crashed} that says Quarto crashed, not the
+job, and that rendering again usually works. The original error is kept as
+its parent.
+
 One job renders at a time in a study. A render started while another is
 still running in the same study stops with a message naming the running
 Quarto process; render again once it finishes. A lock left by a render that

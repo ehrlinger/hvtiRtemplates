@@ -73,6 +73,7 @@ Suggests:
     numDeriv,
     officer (>= 0.6.0),
     patchwork (>= 1.1.0),
+    processx,
     quarto,
     ragg (>= 1.2.1),
     randomForestRHF (>= 2.1.0),
