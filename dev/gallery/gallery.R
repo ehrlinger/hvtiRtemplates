@@ -126,36 +126,11 @@ gallery_job <- function(root, name, spec) {
 # seen in November 2026, with Quarto 1.10.18 and the Deno 2.7.14 it ships.
 # Crash reports land in ~/Library/Logs/DiagnosticReports/deno-*.ips. The same
 # job renders cleanly when run again, so the gallery retries it once. Once
-# a Quarto release stops writing those reports, remove this and the retry.
+# a Quarto release stops writing those reports, remove the retry.
 #
-# One signature, matched exactly. The quarto launcher is a bash script, and
-# bash reports the dead Deno on stderr as its unexpanded source line,
-# `"${QUARTO_DENO}" ...`. quarto::quarto_render() passes stderr to
-# cli::cli_abort() unescaped, so cli tries to evaluate `{QUARTO_DENO}` and
-# fails: a cli error, "Could not evaluate cli `{}` expression: `QUARTO_DENO`.",
-# whose parent is "object 'QUARTO_DENO' not found". Only that pair counts. A
-# job's error message that merely mentions QUARTO_DENO is not a crash.
-#
-# Not matched, on purpose:
-#  - "System command 'quarto' failed". A job whose chunk errors fails with
-#    exactly that message, so it must fail at once.
-#  - The exit status. 128 or more is not proof of a signal, since a program
-#    can exit 200 on its own. processx reports a launcher killed by a signal as
-#    a negative status, and Ctrl-C produces one too.
-# The signature does not say WHICH signal killed Deno. A SIGKILL mid-render,
-# such as a memory kill, also matches and costs one retry that fails the same way.
-gallery_quarto_crash <- function(e) {
-  while (!is.null(e)) {
-    if (inherits(e, "rlib_error") &&
-          identical(e$message, "Could not evaluate cli `{}` expression: `QUARTO_DENO`.") &&
-          inherits(e$parent, "simpleError") &&
-          identical(conditionMessage(e$parent), "object 'QUARTO_DENO' not found")) {
-      return(TRUE)
-    }
-    e <- e$parent
-  }
-  FALSE
-}
+# The test is the package's own, which render_job() uses to report the crash
+# plainly: R/render-job.R says what it matches and, on purpose, what it does not.
+gallery_quarto_crash <- function(e) hvtiRtemplates:::.quarto_crashed(e)
 
 # Scaffold and render every job, in family order and each family's own order,
 # so a job that reads another's saved output renders after it. Returns a data

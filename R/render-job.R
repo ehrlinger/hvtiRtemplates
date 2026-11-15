@@ -40,6 +40,14 @@
 #' there with an error of class \code{hvtiRtemplates_not_rendered} that says to
 #' render the job. Everything computed above it is still in the session.
 #'
+#' Quarto's bundled Deno runtime can crash as it starts, on macOS at least,
+#' before it has read the job. The quarto package then reports something
+#' unrelated: "Could not evaluate cli \code{\{\}} expression:
+#' \code{QUARTO_DENO}". A render that fails that way stops with an error of
+#' class \code{hvtiRtemplates_quarto_crashed} that says Quarto crashed, not the
+#' job, and that rendering again usually works. The original error is kept as
+#' its parent.
+#'
 #' One job renders at a time in a study. A render started while another is
 #' still running in the same study stops with a message naming the running
 #' Quarto process; render again once it finishes. A lock left by a render that
@@ -107,6 +115,35 @@ render_job <- function(path, final = FALSE, quiet = FALSE) {
     on.exit(if (is.na(old_r)) Sys.unsetenv("QUARTO_R") else Sys.setenv(QUARTO_R = old_r), add = TRUE)
     Sys.setenv(QUARTO_R = R.home("bin"))
   }
-  quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet)
+  tryCatch(quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet), error = function(e) {
+    if (!.quarto_crashed(e)) stop(e)
+    rlang::abort(c(
+      paste0("render_job(): Quarto crashed before rendering ", basename(path), "; the job itself did not fail."),
+      i = "Its Deno runtime was killed by a signal, most often a crash as it starts. Render the job again."
+    ), class = "hvtiRtemplates_quarto_crashed", parent = e, call = NULL)
+  })
   invisible(path)
+}
+
+# Did Quarto's Deno runtime die, rather than the job fail? The quarto launcher
+# is a bash script, and bash reports a dead Deno on stderr as its unexpanded
+# source line, `"${QUARTO_DENO}" ...`. quarto (1.5.1 at least) passes stderr to
+# cli::cli_abort() unescaped, so cli tries to evaluate `{QUARTO_DENO}` and
+# fails: "Could not evaluate cli `{}` expression: `QUARTO_DENO`.", with parent
+# "object 'QUARTO_DENO' not found". Only that exact pair counts. A job's error
+# that merely mentions QUARTO_DENO does not, and neither does an exit status:
+# 128 or more is not proof of a signal, and processx reports a launcher killed
+# by a signal as a negative status. The pair does not say which signal, so a
+# memory kill mid-render matches too. dev/gallery/gallery.R retries on it.
+.quarto_crashed <- function(e) {
+  while (!is.null(e)) {
+    if (inherits(e, "rlib_error") &&
+          identical(e$message, "Could not evaluate cli `{}` expression: `QUARTO_DENO`.") &&
+          inherits(e$parent, "simpleError") &&
+          identical(conditionMessage(e$parent), "object 'QUARTO_DENO' not found")) {
+      return(TRUE)
+    }
+    e <- e$parent
+  }
+  FALSE
 }
