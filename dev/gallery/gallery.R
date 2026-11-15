@@ -121,26 +121,38 @@ gallery_job <- function(root, name, spec) {
 }
 
 # Did this render error come from the Quarto CLI crashing, rather than from the
-# job? Quarto's bundled Deno (2.7.14 in Quarto 1.10.18) segfaults now and then
-# on macOS within a tenth of a second of starting, before it has read the
-# document: ten crash reports in ~/Library/Logs/DiagnosticReports between
-# 2026-11-11 and 2026-11-14, all a null-pointer read in a tokio-runtime-worker
-# thread. The same job renders cleanly when run again, so one retry is safe.
+# job? Quarto's bundled Deno segfaults now and then on macOS, a fraction of a
+# second after it starts and before it has read the document. It was first
+# seen in November 2026, with Quarto 1.10.18 and the Deno 2.7.14 it ships.
+# Crash reports land in ~/Library/Logs/DiagnosticReports/deno-*.ips. The same
+# job renders cleanly when run again, so the gallery retries it once. Once
+# a Quarto release stops writing those reports, remove this and the retry.
 #
-# Two signatures, and only these. The quarto launcher is a bash script, and
-# bash reports the crash on stderr as the unexpanded source line,
+# One signature, matched exactly. The quarto launcher is a bash script, and
+# bash reports the dead Deno on stderr as its unexpanded source line,
 # `"${QUARTO_DENO}" ...`. quarto::quarto_render() passes stderr to
-# cli::cli_abort() unescaped, so cli reads `{QUARTO_DENO}` as code and fails
-# with "Could not evaluate cli `{}` expression: `QUARTO_DENO`", dropping the
-# exit status. Without that line, the exit status is still on the processx
-# error: 128 or more means a signal killed the process. Do not match "System
-# command 'quarto' failed": a job whose chunk errors fails with exactly that
-# message, exit status 1, and must fail at once.
+# cli::cli_abort() unescaped, so cli tries to evaluate `{QUARTO_DENO}` and
+# fails: a cli error, "Could not evaluate cli `{}` expression: `QUARTO_DENO`.",
+# whose parent is "object 'QUARTO_DENO' not found". Only that pair counts. A
+# job's error message that merely mentions QUARTO_DENO is not a crash.
+#
+# Not matched, on purpose:
+#  - "System command 'quarto' failed". A job whose chunk errors fails with
+#    exactly that message, so it must fail at once.
+#  - The exit status. 128 or more is not proof of a signal, since a program
+#    can exit 200 on its own. processx reports a launcher killed by a signal as
+#    a negative status, and Ctrl-C produces one too.
+# The signature does not say WHICH signal killed Deno. A SIGKILL mid-render,
+# such as a memory kill, also matches and costs one retry that fails the same way.
 gallery_quarto_crash <- function(e) {
-  for (cnd in list(e, e$parent, e$parent$parent, e$parent$parent$parent)) {
-    if (is.null(cnd)) break
-    if (inherits(cnd, "system_command_status_error") && isTRUE(cnd$status >= 128L)) return(TRUE)
-    if (grepl("QUARTO_DENO", conditionMessage(cnd), fixed = TRUE)) return(TRUE)
+  while (!is.null(e)) {
+    if (inherits(e, "rlib_error") &&
+          identical(e$message, "Could not evaluate cli `{}` expression: `QUARTO_DENO`.") &&
+          inherits(e$parent, "simpleError") &&
+          identical(conditionMessage(e$parent), "object 'QUARTO_DENO' not found")) {
+      return(TRUE)
+    }
+    e <- e$parent
   }
   FALSE
 }
