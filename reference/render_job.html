@@ -112,6 +112,13 @@ chunk by chunk or with Run All, still gets through every chunk but the last.
 That chunk records provenance, which needs a render, so a console run stops
 there with an error of class <code>hvtiRtemplates_not_rendered</code> that says to
 render the job. Everything computed above it is still in the session.</p>
+<p>Quarto's bundled Deno runtime can crash as it starts, on macOS at least,
+before it has read the job. The quarto package then reports something
+unrelated: "Could not evaluate cli <code><a href="https://rdrr.io/r/base/Paren.html" class="external-link">{}</a></code> expression:
+<code>QUARTO_DENO</code>". A render that fails that way stops with an error of
+class <code>hvtiRtemplates_quarto_crashed</code> that says Quarto crashed, not the
+job, and that rendering again usually works. The original error is kept as
+its parent.</p>
 <p>One job renders at a time in a study. A render started while another is
 still running in the same study stops with a message naming the running
 Quarto process; render again once it finishes. A lock left by a render that
