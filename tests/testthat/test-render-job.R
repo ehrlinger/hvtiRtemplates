@@ -152,6 +152,7 @@ test_that("render_job passes a job's own failure through unchanged", {
 })
 
 test_that(".quarto_crashed needs the exact pair, not the token", {
+  skip_if_not_installed("processx")
   expect_false(hvtiRtemplates:::.quarto_crashed(simpleError("object 'QUARTO_DENO' not found")))
   expect_false(hvtiRtemplates:::.quarto_crashed(simpleError("Could not evaluate cli `{}` expression: `QUARTO_DENO`.")))
   e <- tryCatch(processx::run("sh", c("-c", "exit 200")), error = function(e) e)
