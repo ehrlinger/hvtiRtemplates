@@ -224,6 +224,12 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dc-eda-variables
+# EDIT: TRUE gives the percent and count pages hover labels in HTML, so a
+# reader can hover a bar for its category, reference value and count. Each bar
+# segment becomes its own element in the page, so a large cohort drawn by month
+# makes a slow render and a heavy report; FALSE shows the saved image instead,
+# the same figure without the labels.
+HOVER <- TRUE
 # EDIT: what VARIABLES = NULL draws: one variable set, or several stacked, in the
 # order named, such as c("ods", "mitral", "redcap"). Each column is drawn once, at
 # its first set's place. "ods" is the house descriptive list, every variable the
@@ -399,6 +405,7 @@ if (!column_names(SECTIONS) || !length(SECTIONS) || !all(SECTIONS %in% all_secti
 if (!is.numeric(ALPHA) || length(ALPHA) != 1L || is.na(ALPHA) || ALPHA < 0 || ALPHA > 1) {
   stop("ALPHA must be one number from 0 to 1.", call. = FALSE)
 }
+if (!isTRUE(HOVER) && !isFALSE(HOVER)) stop("HOVER must be TRUE or FALSE.", call. = FALSE)
 if (!is.numeric(LABEL_MAX) || length(LABEL_MAX) != 1L || is.na(LABEL_MAX) || LABEL_MAX < 4) {
   stop("LABEL_MAX must be one number, at least 4, or Inf to show every label whole.", call. = FALSE)
 }
@@ -834,7 +841,7 @@ draw_section <- function(section) {
   }
   # The bars carry hover labels in HTML: a page names no categories, so a reader hovers a bar
   # for its category, year and count. The saved figure is the same either way.
-  hover <- section != "continuous" && knitr::is_html_output() && requireNamespace("ggiraph", quietly = TRUE) &&
+  hover <- HOVER && section != "continuous" && knitr::is_html_output() && requireNamespace("ggiraph", quietly = TRUE) &&
     "hv_girafe" %in% getNamespaceExports("hvtiPlotR")
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA, interactive = hover)
   files <- character(0)

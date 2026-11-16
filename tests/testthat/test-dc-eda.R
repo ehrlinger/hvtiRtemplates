@@ -253,7 +253,7 @@ eda_spec_env <- function(d, ...) {
                        VARIABLE_SET = "all", TRANSFORMS = FALSE,
                        EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
-                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5,
+                       SECTIONS = c("continuous", "percent", "count"), ALPHA = 0.5, HOVER = TRUE,
                        .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL, job_data = eda_job_data("ccfid"),
                        label_map = function(d, ...) data.frame(key = names(d), label = names(d))))
   args <- list(...)
@@ -269,7 +269,7 @@ test_that("dc-eda's spec chunk checks every variable and plotting choice", {
   for (field in c("X_VAR", "X_LABEL", "X_UNIT", "VARIABLES", "VARIABLE_SET", "TRANSFORMS", "EXCLUDE", "GRID_NCOL", "GRID_NROW",
                   "UNIQUE_LIMIT",
                   "SECTIONS",
-                  "ALPHA", "LABEL_MAX", "ABBREVIATIONS")) {
+                  "ALPHA", "HOVER", "LABEL_MAX", "ABBREVIATIONS")) {
     original <- env[[field]]
     env[[field]] <- NA
     expect_error(eval(spec, env), info = field)
@@ -593,7 +593,7 @@ test_that("dc-eda's overview leaves out identifiers but keeps dates", {
                        X_VAR = "year", X_LABEL = "Year of operation", X_UNIT = "auto", VARIABLES = "age",
                        VARIABLE_SET = "all", TRANSFORMS = FALSE, EXCLUDE = character(),
                        GRID_NCOL = 4L, GRID_NROW = 4L, UNIQUE_LIMIT = 6L,
-                       SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5,
+                       SECTIONS = c("followup", "continuous", "percent", "count"), ALPHA = 0.5, HOVER = TRUE,
                        .cfg = list(), LABEL_MAX = 40, ABBREVIATIONS = NULL, job_data = eda_job_data("ccfid"),
                        label_map = function(d, ...) data.frame(key = names(d), label = names(d))))
   suppressWarnings(capture.output(eval(chunk("spec"), env)))
