@@ -854,6 +854,12 @@
 # One render at a time per study: the render state, the sidecar backups and the
 # abandoned-render recovery are all study-wide, so a second concurrent render
 # would recover the first one's live state as though it had crashed.
+# The owner a lock records, or NULL when its file is absent or unreadable.
+.read_provenance_owner <- function(path) {
+  if (!file.exists(path)) return(NULL)
+  tryCatch(jsonlite::read_json(path), error = function(e) NULL)
+}
+
 .acquire_provenance_lock <- function(root) {
   lock <- .provenance_lock_path(root)
   owner_path <- file.path(lock, "owner.json")
@@ -865,7 +871,7 @@
       .start_provenance_heartbeat(lock, owner)
       return(invisible(TRUE))
     }
-    current <- tryCatch(jsonlite::read_json(owner_path), error = function(e) NULL)
+    current <- .read_provenance_owner(owner_path)
     if (identical(current, owner)) return(invisible(FALSE))
     # An owner file not yet written belongs to a render that has only just
     # taken the lock, unless the lock has been sitting there for a while.
@@ -885,10 +891,16 @@
     # render refuses, as it would against any live render.
     stale <- tempfile(pattern = ".provenance-render.lock-stale-", tmpdir = dirname(lock))
     if (.rename_provenance_file(lock, stale)) {
-      moved <- tryCatch(jsonlite::read_json(file.path(stale, "owner.json")), error = function(e) NULL)
-      if (!identical(moved, current)) {
-        restored <- .rename_provenance_file(stale, lock)
-        stop(".acquire_provenance_lock(): another Quarto render took over this study's stale render lock first",
+      moved <- .read_provenance_owner(file.path(stale, "owner.json"))
+      # A dead owner that never wrote its owner file reads NULL, and so does a
+      # render that took the lock over a moment ago and has not written its own
+      # yet. Only the dead one's lock is still old.
+      fresh <- is.null(moved) && !isTRUE(difftime(Sys.time(), file.info(stale)$mtime, units = "secs") >= 60)
+      if (!identical(moved, current) || fresh) {
+        # rename() would replace an empty directory, so a lock a third render
+        # has just created is left alone rather than overwritten.
+        restored <- !dir.exists(lock) && .rename_provenance_file(stale, lock)
+        stop("Another Quarto render took over this study's stale render lock first",
              if (!is.null(moved)) paste0(" (", .provenance_owner_label(moved), ")"),
              ". Wait for it to finish, then render again.",
              if (!restored) paste0(" Its lock could not be put back from ", stale, "; move that directory to ", lock,

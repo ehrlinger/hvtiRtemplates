@@ -512,6 +512,24 @@ test_that("a slow start whose runner carries the marker reads submitted past two
   expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
 })
 
+test_that("a hung start that never records itself can still be cancelled, through its marker", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  marker <- sprintf("PSHVTItest%d_%d", Sys.getpid(), as.integer(Sys.time()) - 5L)
+  b <- bystander(sprintf("export %s=YES; exec %s -e \"Sys.sleep(60)\"", marker, shQuote(file.path(R.home("bin"), "Rscript"))))
+  for (i in 1:100) {
+    if (length(ps::ps_find_tree(marker))) break
+    Sys.sleep(0.1)
+  }
+  .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
+                host = Sys.info()[["nodename"]])
+  st <- cancel_job(job, grace = 5, quiet = TRUE)
+  expect_identical(st$state, "cancelled")
+  expect_identical(st$reason, "it had not started")
+  expect_false(isTRUE(tryCatch(ps::ps_is_running(b$h), error = function(e) FALSE)))
+})
+
 test_that("a submission that never started is recorded failed, saying so", {
   local_mocked_bindings(.is_windows = function() FALSE)  # no process is signalled: only the records are read
   job <- status_job()

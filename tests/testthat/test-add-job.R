@@ -273,6 +273,12 @@ test_that("add_job refuses a dangling link where the job would go, and writes no
   file.symlink(outside, first)
   expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "already exists")
   expect_false(file.exists(outside))
+  # The same at the job's name before 2026-10, which add_job() also refuses.
+  unlink(first)
+  legacy <- file.path(dirname(first), "dead_pa-hz-ac.qmd")
+  file.symlink(outside, legacy)
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "its name before 2026-10")
+  expect_false(file.exists(first))
 })
 
 test_that("add_job errors when the copy fails rather than returning a dead path", {

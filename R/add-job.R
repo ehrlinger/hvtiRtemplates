@@ -170,14 +170,14 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   # The same job scaffolded before 2026-10 has the dash spelling. A second,
   # empty copy under the new spelling would split one set's edits across two files.
   legacy <- .job_path_legacy(row, subject, type, dir)
-  if (file.exists(legacy)) {
+  if (.path_taken(legacy)) {
     stop("add_job(): this job already exists as '", legacy, "', its name before 2026-10; refusing to write a ",
          "second copy. Open it with open_job(), or rename it to '", basename(out), "' first.", call. = FALSE)
   }
   # The same job scaffolded under the template's name before a rename, such as
   # graphs/dp.trends.<subject>.<type>.qmd for a dc.trends job, for the same reason.
   renamed <- .job_paths_renamed(row, subject, type, dir)
-  renamed <- renamed[file.exists(renamed)]
+  renamed <- renamed[.path_taken(renamed)]
   if (length(renamed)) {
     stop("add_job(): this job already exists as '", renamed[[1L]], "', under the template's name before it ",
          "was renamed; refusing to write a second copy. Open it with open_job(), or move it to '", out, "' first.",
@@ -187,7 +187,7 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   # still holds the study's edits, and a new runner beside it would split them.
   # Raised by Codex on #277.
   legacy_runner <- if (length(runner)) sub("[.]qmd$", "-runner.R", legacy) else character()
-  if (length(legacy_runner) && file.exists(legacy_runner)) {
+  if (length(legacy_runner) && .path_taken(legacy_runner)) {
     stop("add_job(): this job's runner already exists as '", legacy_runner, "', its name before 2026-10; ",
          "refusing to write a second runner. Rename it to '", basename(runner), "', then run add_job() again.",
          call. = FALSE)

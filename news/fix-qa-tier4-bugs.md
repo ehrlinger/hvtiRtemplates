@@ -6,13 +6,16 @@
   Parquet, is written and digested by its value. Every such ID was written as
   `"0"`, so `read_job_data()`'s refusal of a WHERE condition that names an
   identifier's value missed an MRN-sized literal, and every patient in a
-  hand-off bundle shared one digest.
+  hand-off bundle shared one digest. An upstream output saved before this
+  change recorded that shared digest, so a downstream job reads it as changed
+  data until the upstream job is rendered again.
 * Two renders that both find a dead render's lock can no longer both take it.
   The second now checks that the lock it moved aside is the dead one's; if the
   first render took it over in the meantime, the lock goes back and the second
   render stops, as it would against any live render. Before, the second render
   rolled back the first one's live provenance files.
-* `add_job()` refuses a dangling symbolic link where the job would go, as
+* `add_job()` refuses a dangling symbolic link where the job would go, or at
+  the job's or runner's name before 2026-10 or before a template rename, as
   `upgrade_job()` already did, rather than writing the job wherever the link
   points.
 * `submit_job()` writes its run's process marker into the `submitted` record,
@@ -21,6 +24,9 @@
   start on a loaded share therefore reads as submitted rather than dead, and
   cannot be submitted a second time. A run recorded on another host is still
   read by the two-minute window, since its processes cannot be seen from here.
+  `cancel_job()` stops such a starting run through its marker and records it
+  cancelled, so a runner that hangs before it records itself can still be
+  stopped.
 * `ar_value()` stops in a final render (`render_job(final = TRUE)`) when the job
   it quotes has been edited since its last render, and still warns in a draft.
   A final report quoting a number its job no longer produces is the failure the

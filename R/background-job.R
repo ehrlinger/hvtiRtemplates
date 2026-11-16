@@ -578,10 +578,13 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
          "is gone and the job is not running there, cancel_job(other_host = \"abandon\") records it ended from here.",
          call. = FALSE)
   }
-  if (identical(st$state, "submitted")) {
-    stop("cancel_job(): ", basename(path), " was submitted and its process has not recorded itself yet; cancel it ",
-         "again once job_status() reads running, or once it reads vanished: an unstarted submission does after two minutes ",
-         "with no process carrying its marker.",
+  # A submission still starting is found by its marker, so a runner that hangs before it records itself, in a slow
+  # .Rprofile or renv start, can still be stopped: job_status() reads it submitted for as long as the marker lives.
+  starting <- identical(st$state, "submitted") && .submitted_alive(st)
+  if (identical(st$state, "submitted") && !starting) {
+    stop("cancel_job(): ", basename(path), " was submitted and no process carrying its marker can be found here yet; ",
+         "cancel it again once job_status() reads running, or once it reads vanished, which an unstarted submission ",
+         "does after two minutes.",
          call. = FALSE)
   }
   # Without a creation time the recorded pid cannot be told from a later process that reuses it. A render started
@@ -601,9 +604,9 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
     unlink(files$progress)
     return(invisible(job_status(path, quiet = quiet)))
   }
-  if (st$state %in% c("running", "vanished")) {
+  if (st$state %in% c("running", "vanished") || starting) {
     # A vanished runner can leave its render running: the marker still finds it.
-    h <- .cancel_handle(st)
+    h <- if (starting) NULL else .cancel_handle(st)
     left <- .stop_procs(function() .job_procs(h, st$marker), grace)
     if (length(left)) {
       stop("cancel_job(): process(es) ", paste(left, collapse = ", "), " of ", basename(path), " did not exit after ",
@@ -616,6 +619,11 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
     if (!(is.list(now) && identical(now$started, st$started) && isTRUE(now$state %in% c("finished", "failed")))) {
       record(state = "cancelled")
     }
+    unlink(files$progress)
+  } else if (starting) {
+    # The runner may have recorded itself, or ended, while it was being stopped, and then its own record stands.
+    now <- tryCatch(yaml::read_yaml(files$status), error = function(e) NULL)
+    if (!(is.list(now) && !identical(now$state, "submitted"))) record(state = "cancelled", reason = "it had not started")
     unlink(files$progress)
   } else if (identical(st$state, "vanished")) {
     record(state = "failed",

@@ -1055,7 +1055,7 @@ test_that("a render that loses the race for a stale lock puts the winner's lock 
     real_rename(from, to)
   }
   testthat::with_mocked_bindings(
-    expect_error(.acquire_provenance_lock(root), "another Quarto render took over this study's stale render lock first"),
+    expect_error(.acquire_provenance_lock(root), "Another Quarto render took over this study's stale render lock first"),
     .provenance_render_owner = function() second,
     .provenance_owner_alive = function(owner) FALSE,
     .rename_provenance_file = racing_rename,
@@ -1063,6 +1063,37 @@ test_that("a render that loses the race for a stale lock puts the winner's lock 
   )
   # The first render still holds its lock, where it left it.
   expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), first)
+})
+
+test_that("a stale lock with no owner file is not confused with a render that has just taken it over", {
+  root <- withr::local_tempdir()
+  second <- list(pid = 303L, created = "3.000000")
+  lock <- .provenance_lock_path(root)
+  # A render that died between creating the lock and writing its owner file,
+  # long enough ago for the lock to read stale.
+  dir.create(lock, recursive = TRUE)
+  Sys.setFileTime(lock, Sys.time() - 600)
+  # Between the second render's judgement and its move, a first render takes
+  # the lock over and has not yet written its owner file either.
+  real_rename <- .rename_provenance_file
+  moves <- 0L
+  racing_rename <- function(from, to) {
+    moves <<- moves + 1L
+    if (moves == 1L) {
+      real_rename(lock, tempfile(pattern = ".provenance-render.lock-stale-", tmpdir = dirname(lock)))
+      dir.create(lock)
+    }
+    real_rename(from, to)
+  }
+  testthat::with_mocked_bindings(
+    expect_error(.acquire_provenance_lock(root), "Another Quarto render took over this study's stale render lock first"),
+    .provenance_render_owner = function() second,
+    .rename_provenance_file = racing_rename,
+    .package = "hvtiRtemplates"
+  )
+  # The first render's lock is back where it took it, still without an owner file.
+  expect_true(dir.exists(lock))
+  expect_false(file.exists(file.path(lock, "owner.json")))
 })
 
 test_that("the owning render re-enters its lock and post-render releases it", {
