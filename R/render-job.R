@@ -198,8 +198,9 @@ render_job <- function(path, final = FALSE, quiet = FALSE, params = NULL, output
   removed <- vapply(m, function(x) if (length(x) == 2L) x[2L] else NA_character_, character(1L))
   # The folder may be gone by now, and normalizePath() leaves a missing path's symlinked parents unresolved, so resolve
   # the job's directory, which exists, and compare the two names below it as written.
-  key <- function(p) c(normalizePath(dirname(dirname(p)), winslash = "/", mustWork = FALSE), basename(dirname(p)),
-                       basename(p))
+  key <- function(p) {
+    c(normalizePath(dirname(dirname(p)), winslash = "/", mustWork = FALSE), basename(dirname(p)), basename(p))
+  }
   same <- function(a) identical(key(a), key(expected))
   any(vapply(removed[!is.na(removed)], same, logical(1L)))
 }
