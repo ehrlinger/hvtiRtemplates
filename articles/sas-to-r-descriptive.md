@@ -287,6 +287,9 @@ if (requireNamespace("hvtiRutilities", quietly = TRUE)) {
     stats = c("n", "nmiss", "mean", "std", "min", "p15", "median", "p85", "max")
   )
 }
+#> Warning: proc_means(): `vars =` and `class =` are now `var_cols =` and
+#> `class_cols =`, per the family rule that an argument naming columns ends in
+#> _cols. The old names work for one more release.
 #>   dead variable                           label  n nmiss     mean      std
 #> 1    0  iv_dead Follow-up time to death (years) 34     0 5.758529 3.269897
 #> 2    1  iv_dead Follow-up time to death (years) 46     0 4.374130 2.831019
