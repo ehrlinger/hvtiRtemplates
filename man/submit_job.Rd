@@ -4,12 +4,14 @@
 \alias{submit_job}
 \title{Render a job in the background, detached from the session}
 \usage{
-submit_job(path, final = FALSE)
+submit_job(path, final = FALSE, params = NULL, output_file = NULL)
 }
 \arguments{
 \item{path}{Character(1). The job's \code{.qmd} file.}
 
 \item{final}{Logical(1). Passed to \code{\link{render_job}}.}
+
+\item{params, output_file}{Passed to \code{\link{render_job}}.}
 }
 \value{
 Invisibly, the job's status, as \code{\link{job_status}} returns it.
@@ -30,6 +32,13 @@ with \code{\link{job_status}}. A job already running is not started twice: a
 submit that crashed can leave it behind, in which case delete it to try again.
 Stop a submitted job with \code{\link{cancel_job}}.
 Not available on Windows, which cannot detach a process this way.
+
+With \code{output_file}, the run files are named for that file rather than
+the job, so \code{job.M1000.html} keeps \code{job.M1000.run.log},
+\code{job.M1000.run.yml} and the rest, and the same job rendered to another
+name is another run: both can be submitted, and each is followed and stopped
+by giving \code{\link{job_status}} or \code{\link{cancel_job}} the same
+\code{output_file}. Quarto still renders one job at a time in a study.
 }
 \examples{
 # Not run by check: it would start a real render.

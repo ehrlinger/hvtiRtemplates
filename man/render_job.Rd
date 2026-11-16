@@ -4,7 +4,13 @@
 \alias{render_job}
 \title{Render a job}
 \usage{
-render_job(path, final = FALSE, quiet = FALSE)
+render_job(
+  path,
+  final = FALSE,
+  quiet = FALSE,
+  params = NULL,
+  output_file = NULL
+)
 }
 \arguments{
 \item{path}{Character. Path to a job \code{.qmd} file.}
@@ -14,6 +20,16 @@ only: a job whose data, or whose upstream hand-off, came from an unregistered bu
 names \code{hvtiRutilities::update_manifest()}.}
 
 \item{quiet}{Logical. Passed to \code{quarto::quarto_render()}.}
+
+\item{params}{A named list of single values, or \code{NULL}. The job's Quarto
+\code{params}, as \code{quarto render -P name:value} sets them; passed to
+\code{quarto::quarto_render()} as \code{execute_params}.}
+
+\item{output_file}{Character(1) or \code{NULL}. The report's file name, as
+\code{quarto render --output} sets it: a name with an extension and no
+directory, written beside the job. Give each set of \code{params} its own,
+so one report does not overwrite another. The run's progress file is named
+for it too.}
 }
 \value{
 \code{path}, invisibly.

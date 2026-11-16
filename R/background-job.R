@@ -1,3 +1,55 @@
+# A run's identity is a stem: the job's own, or, for a render given an output_file, that file's name without its
+# extension, so job.qmd rendered to job.M1000.html keeps job.M1000.run.yml and the rest apart from job.M500's. The key
+# is the stem as a .qmd path beside the job; .run_files() takes it as it takes a job, and the study scan in
+# .jobs_with_run_files() maps job.M1000.run.yml back to that key, so a variant run counts as a render in the study.
+.run_key <- function(path, output_file = NULL) {
+  if (is.null(output_file)) return(path)
+  file.path(dirname(path), paste0(tools::file_path_sans_ext(output_file), ".qmd"))
+}
+
+# The arguments a printed job_status() or cancel_job() call takes for the run at `key`, shown by `shown`: the job and
+# its output_file for a run submit_job() recorded with one, so the call names a file that exists; the path otherwise.
+.run_arg <- function(key, shown = key) {
+  f <- .run_files(key)$status
+  st <- if (file.exists(f)) tryCatch(yaml::read_yaml(f), error = function(e) NULL)
+  if (is.list(st) && is.character(st$job) && length(st$job) == 1L && is.character(st$output_file) &&
+        length(st$output_file) == 1L) {
+    d <- dirname(shown)
+    return(sprintf('"%s", output_file = "%s"', if (identical(d, ".")) st$job else file.path(d, st$job), st$output_file))
+  }
+  sprintf('"%s"', shown)
+}
+
+# NULL, or one file name with an extension and no directory, whose stem names no other job beside this one.
+.check_output_file <- function(output_file, path, fn) {
+  if (is.null(output_file)) return(invisible(NULL))
+  if (!is.character(output_file) || length(output_file) != 1L || is.na(output_file) || !nzchar(output_file) ||
+        grepl("[/\\\\]", output_file) || !nzchar(tools::file_ext(output_file)) ||
+        !nzchar(tools::file_path_sans_ext(output_file))) {
+    stop(fn, "(): `output_file` must be one file name with an extension and no directory, such as ",
+         "\"job.M1000.html\".", call. = FALSE)
+  }
+  key <- .run_key(path, output_file)
+  if (file.exists(key) && !identical(normalizePath(key, winslash = "/"), normalizePath(path, winslash = "/"))) {
+    stop(fn, "(): `output_file` \"", output_file, "\" would share its run files with the job ", basename(key),
+         " beside it; choose another name.", call. = FALSE)
+  }
+  invisible(output_file)
+}
+
+# NULL, or a named list of single values, which Quarto passes to the job's `params`.
+.check_params <- function(params, fn) {
+  if (is.null(params)) return(invisible(NULL))
+  ok <- is.list(params) && length(params) && !is.null(names(params)) && all(nzchar(names(params))) &&
+    !anyNA(names(params)) && !anyDuplicated(names(params)) &&
+    all(vapply(params, function(v) (is.character(v) || is.numeric(v) || is.logical(v)) && length(v) == 1L && !is.na(v),
+               logical(1)))
+  if (!ok) {
+    stop(fn, "(): `params` must be a named list of single values, such as list(fit_m = 1000).", call. = FALSE)
+  }
+  invisible(params)
+}
+
 .run_files <- function(path) {
   stem <- sub("[.]qmd$", "", path)
   list(log = paste0(stem, ".run.log"), status = paste0(stem, ".run.yml"), runner = paste0(stem, ".runner"),
@@ -57,6 +109,9 @@
 #'
 #' @param path Character(1). The job's \code{.qmd} file.
 #' @param quiet Logical(1). \code{FALSE} prints a one-line summary.
+#' @param output_file Character(1) or \code{NULL}. The output file name a run was given with
+#'   \code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} reads the
+#'   job's own run.
 #' @return Invisibly, a list: \code{state} is one of \code{"none"},
 #'   \code{"submitted"}, \code{"running"}, \code{"finished"}, \code{"failed"},
 #'   \code{"vanished"} or \code{"cancelled"} (stopped by \code{\link{cancel_job}}); the other elements are what the status file
@@ -75,7 +130,11 @@
 #' writeLines("---\ntitle: example\n---", job)
 #' job_status(job)
 #' @export
-job_status <- function(path, quiet = FALSE) {
+job_status <- function(path, quiet = FALSE, output_file = NULL) {
+  if (!is.null(output_file)) {
+    .check_output_file(output_file, path, "job_status")
+    path <- .run_key(path, output_file)
+  }
   files <- .run_files(path)
   st <- if (file.exists(files$status)) {
     tryCatch(yaml::read_yaml(files$status), error = function(e) NULL)
@@ -176,7 +235,7 @@ job_status <- function(path, quiet = FALSE) {
 
 # The runner is a separate Rscript process, so it uses only yaml and base R. Its status writes are atomic
 # (write to .tmp, rename) because job_status() may read while it writes.
-.runner_lines <- function(path, status, final, render_call) {
+.runner_lines <- function(path, status, final, render_call, extra = list()) {
   c(sprintf("path <- %s", deparse(path)),
     sprintf("status <- %s", deparse(status)),
     sprintf("final <- %s", deparse(final)),
@@ -194,6 +253,8 @@ job_status <- function(path, quiet = FALSE) {
     paste0("base <- c(list(pid = Sys.getpid()), created, list(marker = Sys.getenv('HVTI_JOB_MARKER'), ",
            "host = Sys.info()[['nodename']], ",
            "r_version = as.character(getRversion()), started = stamp(started)))"),
+    # A run given an output_file records its job and output, so a printed job_status() call can name them.
+    if (length(extra)) sprintf("base <- c(base, %s)", paste(deparse(extra), collapse = " ")),
     "put(c(list(state = 'running'), base))",
     sprintf("ok <- tryCatch({ %s; TRUE }, error = function(e) { message('Error: ', conditionMessage(e)); FALSE })",
             render_call),
@@ -224,12 +285,14 @@ job_status <- function(path, quiet = FALSE) {
 # Wrapped so tests can capture the command; wait = FALSE appends the "&" itself.
 .launch <- function(cmd) system(cmd, wait = FALSE)
 
-.submit_job <- function(path, final, render_call, root) {
-  files <- .run_files(path)
-  .claim_run(path, files, "submit_job")
+.submit_job <- function(path, final, render_call, root, output_file = NULL) {
+  key <- .run_key(path, output_file)
+  extra <- if (!is.null(output_file)) list(job = basename(path), output_file = output_file) else list()
+  files <- .run_files(key)
+  .claim_run(key, files, "submit_job")
   on.exit(unlink(files$lock, recursive = TRUE), add = TRUE)
   # "submitted" too: the gap before the runner records "running" must not let a second copy start.
-  now <- job_status(path, quiet = TRUE)
+  now <- job_status(key, quiet = TRUE)
   if (now$state %in% c("submitted", "running")) {
     # job_status() reads <job>.run.progress as well as <job>.run.yml, so deleting the status file alone still refuses.
     hint <- if (identical(now$state, "running") && is.character(now$host) && !identical(now$host, Sys.info()[["nodename"]])) {
@@ -239,15 +302,15 @@ job_status <- function(path, quiet = FALSE) {
     } else {
       " Stop it with cancel_job() first."
     }
-    stop("submit_job(): ", basename(path), " is already running; see job_status().", hint, call. = FALSE)
+    stop("submit_job(): ", basename(key), " is already running; see job_status().", hint, call. = FALSE)
   }
   rscript <- file.path(R.home("bin"), "Rscript")
   if (file.access(rscript, 1L) != 0L) stop("submit_job(): cannot execute ", rscript, ".", call. = FALSE)
   if (!suppressWarnings(file.create(files$log))) stop("submit_job(): cannot write the log file ", files$log, ".", call. = FALSE)
-  writeLines(.runner_lines(path, files$status, final, render_call), files$runner)
+  writeLines(.runner_lines(path, files$status, final, render_call, extra), files$runner)
   # The last run's progress is not this one's; job_status() would report it until the render writes its own.
   unlink(files$progress)
-  .write_status(files$status, state = "submitted", submitted = .stamp())
+  do.call(.write_status, c(list(files$status, state = "submitted", submitted = .stamp()), extra))
   setsid <- if (nzchar(Sys.which("setsid"))) "setsid " else ""
   # Every process the render starts inherits the marker, including those processx moves into a session of its own
   # (Quarto, knitr) and those a dead parent orphans, so cancel_job() finds them all by it. ps::ps_find_tree() reads
@@ -263,7 +326,7 @@ job_status <- function(path, quiet = FALSE) {
                  shQuote(root), marker, marker, shQuote(.r_home()), shQuote(as.character(.session_r())), marker, setsid,
                  shQuote(rscript), shQuote(files$runner), shQuote(files$log))
   .launch(cmd)
-  invisible(job_status(path, quiet = TRUE))
+  invisible(job_status(key, quiet = TRUE))
 }
 
 #' Render a job in the background, detached from the session
@@ -285,8 +348,16 @@ job_status <- function(path, quiet = FALSE) {
 #' Stop a submitted job with \code{\link{cancel_job}}.
 #' Not available on Windows, which cannot detach a process this way.
 #'
+#' With \code{output_file}, the run files are named for that file rather than
+#' the job, so \code{job.M1000.html} keeps \code{job.M1000.run.log},
+#' \code{job.M1000.run.yml} and the rest, and the same job rendered to another
+#' name is another run: both can be submitted, and each is followed and stopped
+#' by giving \code{\link{job_status}} or \code{\link{cancel_job}} the same
+#' \code{output_file}. Quarto still renders one job at a time in a study.
+#'
 #' @param path Character(1). The job's \code{.qmd} file.
 #' @param final Logical(1). Passed to \code{\link{render_job}}.
+#' @param params,output_file Passed to \code{\link{render_job}}.
 #' @return Invisibly, the job's status, as \code{\link{job_status}} returns it.
 #' @examples
 #' # Not run by check: it would start a real render.
@@ -294,20 +365,28 @@ job_status <- function(path, quiet = FALSE) {
 #' submit_job("analyses/nb.boostmtree.lvef.boost.qmd")
 #' }
 #' @export
-submit_job <- function(path, final = FALSE) {
+submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
     stop("submit_job(): `path` must be an existing job file.", call. = FALSE)
   }
   if (!is.logical(final) || length(final) != 1L || is.na(final)) {
     stop("submit_job(): `final` must be TRUE or FALSE.", call. = FALSE)
   }
+  .check_params(params, "submit_job")
+  .check_output_file(output_file, path, "submit_job")
   if (.is_windows()) {
     stop("submit_job(): Windows cannot detach a process from the session; render from a terminal instead.",
          call. = FALSE)
   }
   path <- normalizePath(path, winslash = "/")
   root <- .find_study_root(dirname(path))
-  .submit_job(path, final, sprintf("hvtiRtemplates::render_job(path, final = %s)", deparse(final)), root)
+  # Only the arguments given are written, so a plain submit's runner reads as it always has. niceNames keeps the
+  # parameters' names, and digits17 keeps a numeric parameter exact through the runner's source.
+  dp <- c("keepNA", "keepInteger", "niceNames", "showAttributes", "digits17")
+  extra <- c(if (!is.null(params)) sprintf(", params = %s", paste(deparse(params, control = dp), collapse = " ")),
+             if (!is.null(output_file)) sprintf(", output_file = %s", deparse(output_file)))
+  .submit_job(path, final, sprintf("hvtiRtemplates::render_job(path, final = %s%s)", deparse(final),
+                                   paste(extra, collapse = "")), root, output_file)
 }
 
 # The job's processes: the runner and its descendants, through a handle that refuses a reused pid, and every process
@@ -421,6 +500,9 @@ submit_job <- function(path, final = FALSE) {
 #'   Ignored for a job on this host.
 #' @param quiet Logical(1). \code{FALSE} prints the job's state afterwards,
 #'   as \code{\link{job_status}} does.
+#' @param output_file Character(1) or \code{NULL}. The output file name a run was given with
+#'   \code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} cancels the
+#'   job's own run.
 #' @return Invisibly, the job's status afterwards, as \code{\link{job_status}}
 #'   returns it.
 #' @examples
@@ -428,7 +510,7 @@ submit_job <- function(path, final = FALSE) {
 #' writeLines("---\ntitle: example\n---", job)
 #' if (.Platform$OS.type != "windows") cancel_job(job)
 #' @export
-cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), quiet = FALSE) {
+cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), quiet = FALSE, output_file = NULL) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
     stop("cancel_job(): `path` must be an existing job file.", call. = FALSE)
   }
@@ -437,7 +519,9 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
   }
   other_host <- match.arg(other_host)
   if (.is_windows()) stop("cancel_job(): not available on Windows, where submit_job() is not either.", call. = FALSE)
-  path <- normalizePath(path, winslash = "/")
+  .check_output_file(output_file, path, "cancel_job")
+  # From here `path` names the run: the job itself, or the stem of its output_file.
+  path <- .run_key(normalizePath(path, winslash = "/"), output_file)
   files <- .run_files(path)
   .claim_run(path, files, "cancel_job")
   on.exit(unlink(files$lock, recursive = TRUE), add = TRUE)
@@ -463,7 +547,7 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
          "cancel_job() then records the end.", call. = FALSE)
   }
   record <- function(...) {
-    run <- st[intersect(c("pid", "created", "marker", "host", "r_version", "started"), names(st))]
+    run <- st[intersect(c("pid", "created", "marker", "host", "r_version", "started", "job", "output_file"), names(st))]
     do.call(.write_status, c(list(files$status), list(...), run, list(ended = .stamp())))
   }
   if (elsewhere) {
