@@ -1,5 +1,5 @@
 # Quarto parameters and output names through render_job(), submit_job() and run_job(): one .qmd rendered with
-# different params to different reports, each run keeping its own run files under its output's stem.
+# different params to different reports, each run keeping its own run files under the job's stem and its output name.
 
 variant_wait <- function(job, output_file, states, seconds = 30) {
   for (i in seq_len(seconds * 4)) {
@@ -26,20 +26,27 @@ test_that("params and output_file are checked before anything starts", {
   expect_error(cancel_job(job, output_file = "x"), "with an extension")
 })
 
-test_that("an output_file whose stem names another job beside this one is refused", {
+test_that("an output_file whose run key names a file beside this job is refused", {
   job <- status_job()
-  writeLines("---\ntitle: y\n---", file.path(dirname(job), "other.html.qmd"))
-  expect_error(submit_job(job, output_file = "other.html"), "would share its run files with the job other.html.qmd")
+  writeLines("---\ntitle: y\n---", file.path(dirname(job), "nb.boostmtree.x.boost@other.html.qmd"))
+  expect_error(submit_job(job, output_file = "other.html"),
+               "would share its run files with the job nb.boostmtree.x.boost@other.html.qmd", fixed = TRUE)
+  # A job named for the output alone, as the key read before it carried the job, is no longer in the way.
+  writeLines("---\ntitle: y\n---", file.path(dirname(job), "plain.html.qmd"))
+  expect_silent(.check_output_file("plain.html", job, "submit_job"))
   expect_silent(.check_output_file("other.pdf", job, "submit_job"))
 })
 
-test_that("a run with an output_file keeps its run files under the whole output name", {
+test_that("a run with an output_file keeps its run files under the job and the whole output name", {
   f <- .run_files(.run_key("/s/analyses/nb.x.qmd", "nb.x.M1000.html"))
-  expect_identical(f$status, "/s/analyses/nb.x.M1000.html.run.yml")
-  expect_identical(f$log, "/s/analyses/nb.x.M1000.html.run.log")
-  expect_identical(f$progress, "/s/analyses/nb.x.M1000.html.run.progress")
-  expect_identical(f$lock, "/s/analyses/nb.x.M1000.html.run.lock")
-  expect_identical(f$runner, "/s/analyses/nb.x.M1000.html.runner")
+  expect_identical(f$status, "/s/analyses/nb.x@nb.x.M1000.html.run.yml")
+  expect_identical(f$log, "/s/analyses/nb.x@nb.x.M1000.html.run.log")
+  expect_identical(f$progress, "/s/analyses/nb.x@nb.x.M1000.html.run.progress")
+  expect_identical(f$lock, "/s/analyses/nb.x@nb.x.M1000.html.run.lock")
+  expect_identical(f$runner, "/s/analyses/nb.x@nb.x.M1000.html.runner")
+  # Two jobs given the same output name are two runs, in one folder or in two.
+  expect_false(identical(.run_key("/s/analyses/a.qmd", "report.html"), .run_key("/s/analyses/b.qmd", "report.html")))
+  expect_false(identical(.run_key("/s/analyses/a.qmd", "report.html"), .run_key("/s/graphs/a.qmd", "report.html")))
   # Two outputs that share a stem are two runs.
   expect_false(identical(.run_key("/s/analyses/nb.x.qmd", "nb.x.M.html"), .run_key("/s/analyses/nb.x.qmd", "nb.x.M.pdf")))
   # No output_file is the job's own run, with the files it has always had.
@@ -84,7 +91,7 @@ test_that("two output names of one job run side by side, and each is read and re
   expect_identical(job_status(job, quiet = TRUE, output_file = m1000)$state, "none")
   expect_identical(job_status(job, quiet = TRUE)$state, "none")
   # The same output name twice is the same run.
-  expect_error(submit_job(job, output_file = m500), "nb.boostmtree.x.boost.M500.html.qmd is already running")
+  expect_error(submit_job(job, output_file = m500), "nb.boostmtree.x.boost@nb.boostmtree.x.boost.M500.html.qmd is already running")
   # Another output name is another run: its own files take it.
   expect_no_error(submit_job(job, output_file = m1000))
   expect_identical(job_status(job, quiet = TRUE, output_file = m1000)$state, "submitted")
@@ -152,7 +159,7 @@ test_that("a render given an output_file writes its progress under that output's
   job <- file.path("studies", "analyses", "nb.boostmtree.x.boost.qmd")
   withr::local_envvar(HVTI_OUTPUT_FILE = "nb.boostmtree.x.boost.M1000.html")
   expect_identical(.progress_path(file.path("studies", "analyses", "nb.boostmtree.x.boost.rmarkdown")),
-                   file.path("studies", "analyses", "nb.boostmtree.x.boost.M1000.html.run.progress"))
+                   file.path("studies", "analyses", "nb.boostmtree.x.boost@nb.boostmtree.x.boost.M1000.html.run.progress"))
   withr::local_envvar(HVTI_OUTPUT_FILE = NA)
   expect_identical(.progress_path(job), .run_files(job)$progress)
 })
@@ -231,4 +238,76 @@ test_that("a run whose record names another output is neither reported nor cance
                "nothing was signalled")
   expect_false(signalled)
   expect_identical(yaml::read_yaml(.run_files(key)$status)$state, "running")
+})
+
+# Two jobs with the same output name, beside each other (`a`, `b`) or in another folder (`c`), each with a recorded run.
+two_jobs_one_output <- function(env = parent.frame()) {
+  root <- withr::local_tempdir(.local_envir = env)
+  dir.create(file.path(root, "analyses"))
+  dir.create(file.path(root, "graphs"))
+  jobs <- c(a = file.path(root, "analyses", "a.qmd"), b = file.path(root, "analyses", "b.qmd"),
+            c = file.path(root, "graphs", "a.qmd"))
+  for (j in jobs) writeLines("---\ntitle: x\n---", j)
+  jobs
+}
+
+test_that("two jobs with the same output_file keep separate run files and status, in one folder or two", {
+  jobs <- two_jobs_one_output()
+  out <- "report.html"
+  local_mocked_bindings(.launch = function(cmd) invisible(0L), .find_study_root = function(dir) dirname(dir))
+  submit_job(jobs[["a"]], output_file = out)
+  .write_status(.run_files(.run_key(jobs[["a"]], out))$status, state = "running", pid = Sys.getpid(),
+                host = Sys.info()[["nodename"]], job = "a.qmd", output_file = out)
+  expect_identical(job_status(jobs[["a"]], quiet = TRUE, output_file = out)$state, "running")
+  # Neither the job beside it nor the job of the same name in another folder sees a's run.
+  expect_identical(job_status(jobs[["b"]], quiet = TRUE, output_file = out)$state, "none")
+  expect_identical(job_status(jobs[["c"]], quiet = TRUE, output_file = out)$state, "none")
+  expect_no_error(submit_job(jobs[["b"]], output_file = out))
+  expect_no_error(submit_job(jobs[["c"]], output_file = out))
+  sb <- yaml::read_yaml(.run_files(.run_key(jobs[["b"]], out))$status)
+  expect_identical(c(sb$job, sb$output_file, sb$state), c("b.qmd", out, "submitted"))
+  expect_identical(yaml::read_yaml(.run_files(.run_key(jobs[["a"]], out))$status)$state, "running")
+  files <- basename(list.files(dirname(jobs[["a"]]), pattern = "[.]run[.]yml$"))
+  expect_setequal(files, c("a@report.html.run.yml", "b@report.html.run.yml"))
+  expect_identical(basename(list.files(dirname(jobs[["c"]]), pattern = "[.]run[.]yml$")), "a@report.html.run.yml")
+})
+
+test_that("cancelling one job's output never signals another job's run of the same output", {
+  skip_on_os("windows")
+  jobs <- two_jobs_one_output()
+  out <- "report.html"
+  for (j in jobs[c("a", "c")]) {
+    .write_status(.run_files(.run_key(j, out))$status, state = "running", pid = Sys.getpid(), created = "1",
+                  host = Sys.info()[["nodename"]], job = basename(j), output_file = out)
+  }
+  signalled <- FALSE
+  local_mocked_bindings(.stop_procs = function(...) {
+    signalled <<- TRUE
+    character()
+  })
+  # b has no run of its own: a's, beside it, and c's, in another folder, are not b's to cancel.
+  expect_identical(cancel_job(jobs[["b"]], grace = 0, quiet = TRUE, output_file = out)$state, "none")
+  expect_false(signalled)
+  for (j in jobs[c("a", "c")]) expect_identical(yaml::read_yaml(.run_files(.run_key(j, out))$status)$state, "running")
+})
+
+test_that("a run whose record names another job is neither reported nor cancelled", {
+  skip_on_os("windows")
+  jobs <- two_jobs_one_output()
+  out <- "report.html"
+  # b's run files holding a record that names a: a stray copy, or a record written before runs were keyed on the job.
+  key <- .run_key(jobs[["b"]], out)
+  .write_status(.run_files(key)$status, state = "running", pid = Sys.getpid(), created = "1",
+                host = Sys.info()[["nodename"]], job = "a.qmd", output_file = out)
+  expect_error(job_status(jobs[["b"]], quiet = TRUE, output_file = out), "record job a.qmd, not b.qmd", fixed = TRUE)
+  signalled <- FALSE
+  local_mocked_bindings(.stop_procs = function(...) {
+    signalled <<- TRUE
+    character()
+  })
+  expect_error(cancel_job(jobs[["b"]], grace = 0, quiet = TRUE, output_file = out), "nothing was signalled")
+  expect_false(signalled)
+  expect_identical(yaml::read_yaml(.run_files(key)$status)$state, "running")
+  # The job's own run, with no output_file, never consults the recorded job, and reads as it always has.
+  expect_identical(job_status(jobs[["b"]], quiet = TRUE)$state, "none")
 })

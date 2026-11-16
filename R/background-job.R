@@ -1,21 +1,30 @@
-# A run's identity is a stem: the job's own, or, for a render given an output_file, that whole file name, extension
-# included, so job.qmd rendered to job.M1000.html keeps job.M1000.html.run.yml and the rest apart from job.M500.html's,
-# and from job.M1000.pdf's. The key is the stem as a .qmd path beside the job; .run_files() takes it as it takes a
-# job, and the study scan in .jobs_with_run_files() maps job.M1000.html.run.yml back to that key, so a variant run
-# counts as a render in the study.
+# A run's identity is a stem beside the job: the job's own, or, for a render given an output_file, the job's stem and
+# that whole file name joined by "@", so job.qmd rendered to job.M1000.html keeps job@job.M1000.html.run.yml and the
+# rest. It is apart from job.M500.html's and job.M1000.pdf's, and from another job's run to the same output name. A
+# job's file name never holds "@" (add_job() writes [A-Za-z0-9_.]), so a key never names a real job. The key is the stem
+# as a .qmd path; .run_files() takes it as it takes a job, and the study scan in .jobs_with_run_files() maps
+# job@job.M1000.html.run.yml back to it, so a variant run counts as a render in the study.
 .run_key <- function(path, output_file = NULL) {
   if (is.null(output_file)) return(path)
-  file.path(dirname(path), paste0(output_file, ".qmd"))
+  file.path(dirname(path), paste0(sub("[.]qmd$", "", basename(path)), "@", output_file, ".qmd"))
 }
 
-# A run file found under `key` must be the run asked for: refuses one whose record names another output_file, so a
-# status read or a cancel never reports or signals a run other than the one named.
-.check_run_output <- function(st, output_file, key, fn) {
-  recorded <- if (is.list(st) && is.character(st$output_file) && length(st$output_file) == 1L) st$output_file
+# A run file found under `key` must be the run asked for: refuses one whose record names another output_file, or,
+# for a run given one, another job, so a status read or a cancel never reports or signals a run other than the one
+# named. `job` is the job's file name; a record from before runs recorded their job is judged by its output alone.
+.check_run_output <- function(st, output_file, key, fn, job = NULL) {
+  one <- function(x) if (is.list(st) && is.character(st[[x]]) && length(st[[x]]) == 1L) st[[x]]
+  done <- if (identical(fn, "cancel_job")) "signalled" else "reported"
+  recorded <- one("output_file")
   if (!is.null(recorded) && !identical(recorded, output_file)) {
     stop(fn, "(): the run files for ", basename(key), " record output_file \"", recorded, "\", not ",
-         if (is.null(output_file)) "the job's own run" else paste0("\"", output_file, "\""), "; nothing was ",
-         if (identical(fn, "cancel_job")) "signalled" else "reported", ".", call. = FALSE)
+         if (is.null(output_file)) "the job's own run" else paste0("\"", output_file, "\""), "; nothing was ", done, ".",
+         call. = FALSE)
+  }
+  recorded_job <- one("job")
+  if (!is.null(output_file) && !is.null(job) && !is.null(recorded_job) && !identical(recorded_job, job)) {
+    stop(fn, "(): the run files for ", basename(key), " record job ", recorded_job, ", not ", job, "; nothing was ",
+         done, ".", call. = FALSE)
   }
   invisible(st)
 }
@@ -144,6 +153,7 @@
 #' job_status(job)
 #' @export
 job_status <- function(path, quiet = FALSE, output_file = NULL) {
+  job <- basename(path)
   if (!is.null(output_file)) {
     .check_output_file(output_file, path, "job_status")
     path <- .run_key(path, output_file)
@@ -156,7 +166,7 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
   }
   # Asked by output_file, the record must be that output's. Asked by path alone, as the study scan asks for every run
   # it finds, the key already names the run.
-  if (!is.null(output_file)) .check_run_output(st, output_file, path, "job_status")
+  if (!is.null(output_file)) .check_run_output(st, output_file, path, "job_status", job)
   if (is.null(st) || !is.list(st) || !is.character(st$state) || length(st$state) != 1L) {
     stop("job_status(): the status file ", files$status, " cannot be read or records no state.", call. = FALSE)
   }
@@ -364,10 +374,11 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
 #' Stop a submitted job with \code{\link{cancel_job}}.
 #' Not available on Windows, which cannot detach a process this way.
 #'
-#' With \code{output_file}, the run files are named for that whole file name,
-#' extension included, rather than the job, so \code{job.M1000.html} keeps
-#' \code{job.M1000.html.run.log}, \code{job.M1000.html.run.yml} and the rest,
-#' and the same job rendered to another
+#' With \code{output_file}, the run files are named for the job and that whole
+#' file name, extension included, so \code{job.qmd} rendered to
+#' \code{job.M1000.html} keeps \code{job@job.M1000.html.run.log},
+#' \code{job@job.M1000.html.run.yml} and the rest beside the job. Another job
+#' given the same name is another run, and the same job rendered to another
 #' name is another run: both can be submitted, and each is followed and stopped
 #' by giving \code{\link{job_status}} or \code{\link{cancel_job}} the same
 #' \code{output_file}. Quarto still renders one job at a time in a study.
@@ -537,14 +548,15 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
   other_host <- match.arg(other_host)
   if (.is_windows()) stop("cancel_job(): not available on Windows, where submit_job() is not either.", call. = FALSE)
   .check_output_file(output_file, path, "cancel_job")
-  # From here `path` names the run: the job itself, or its output_file.
+  job <- basename(path)
+  # From here `path` names the run: the job itself, or the job and its output_file.
   path <- .run_key(normalizePath(path, winslash = "/"), output_file)
   files <- .run_files(path)
   .claim_run(path, files, "cancel_job")
   on.exit(unlink(files$lock, recursive = TRUE), add = TRUE)
   st <- job_status(path, quiet = TRUE)
   # Before anything is signalled: the run found is the one asked for.
-  .check_run_output(st, output_file, path, "cancel_job")
+  .check_run_output(st, output_file, path, "cancel_job", job)
   here <- Sys.info()[["nodename"]]
   elsewhere <- identical(st$state, "running") && is.character(st$host) && !identical(st$host, here)
   if (elsewhere && identical(other_host, "refuse")) {
