@@ -169,7 +169,8 @@ build_cohort <- function(data, exclude = NULL, cohort = NULL, join_by = NULL, id
       stop(where, " has ", sum(bad_exclude), " exclude value(s) that are not 0 or 1. Recode the exclude column to 0 and 1.",
            call. = FALSE)
     }
-    flagged <- listed$exclude %in% "1"
+    # The trimmed values, as validated above: " 1" passes validation, so it must flag too.
+    flagged <- exclude_values %in% "1"
     blank_reason <- flagged & (is.na(listed$reason) | !nzchar(trimws(listed$reason)))
     if (any(blank_reason)) {
       stop(where, " flags ", sum(blank_reason),
