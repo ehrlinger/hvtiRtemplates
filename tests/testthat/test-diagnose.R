@@ -76,9 +76,39 @@ test_that("every check name passes through, study_render included", {
 })
 
 test_that("an unknown failure shows the last 20 log lines", {
-  d <- .diagnose_failure(fx("unknown"), list())
+  d <- .diagnose_failure(paste("line", 1:30), list())
   expect_match(d$reason, "no known cause", fixed = TRUE)
-  expect_lte(length(strsplit(d$fix, "\n")[[1]]), 20L)
+  expect_identical(strsplit(d$fix, "\n")[[1]], paste("line", 11:30))
+})
+
+test_that("a Quarto failure is explained by its ERROR line, not a tail cut by the stack trace", {
+  d <- .diagnose_failure(fx("unknown"), list())
+  expect_match(d$reason, "^Quarto failed: YAMLException: missed comma")
+})
+
+race_job <- "<tmp>/descriptive/job.qmd"
+
+test_that("this job's execute-results race reads as not the job's failure, and claims no retry the log lacks", {
+  d <- .diagnose_failure(fx("execute-results"), list(), race_job)
+  expect_match(d$reason, "this job's execute-results folder", fixed = TRUE)
+  expect_match(d$reason, "os error 39", fixed = TRUE)
+  expect_no_match(d$reason, "every chunk", fixed = TRUE)
+  expect_match(d$fix, "^Run the job again")
+})
+
+test_that("the race after render_job()'s retry says so", {
+  log <- c("render_job(): every chunk ran, then Quarto could not remove <tmp>/descriptive/job_files/execute-results",
+           fx("execute-results"))
+  d <- .diagnose_failure(log, list(), race_job)
+  expect_match(d$fix, "already rendered it twice", fixed = TRUE)
+})
+
+test_that("an os error 39 on another document's folder, or with no job named, is only a Quarto failure", {
+  other <- "ERROR: Directory not empty (os error 39): remove '/other/other_files/execute-results'"
+  for (d in list(.diagnose_failure(other, list(), race_job), .diagnose_failure(fx("execute-results"), list()))) {
+    expect_match(d$reason, "^Quarto failed: Directory not empty")
+    expect_no_match(d$fix, "twice", fixed = TRUE)
+  }
 })
 
 test_that("a log carrying a refusal and a missing package is explained by the refusal", {

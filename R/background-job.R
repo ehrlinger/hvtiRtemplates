@@ -154,6 +154,7 @@
 #' @export
 job_status <- function(path, quiet = FALSE, output_file = NULL) {
   job <- basename(path)
+  job_path <- path
   if (!is.null(output_file)) {
     .check_output_file(output_file, path, "job_status")
     path <- .run_key(path, output_file)
@@ -212,7 +213,7 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
   st$progress <- tryCatch(.progress_view(prog), error = function(e) unreadable)
   # The diagnosis is advisory and read from a log that may be anything; it must not stop the report.
   if (st$state %in% c("failed", "vanished") && !never_started && file.exists(files$log)) {
-    st$diagnosis <- tryCatch(.diagnose_failure(readLines(files$log, warn = FALSE), st), error = function(e) NULL)
+    st$diagnosis <- tryCatch(.diagnose_failure(readLines(files$log, warn = FALSE), st, job_path), error = function(e) NULL)
   }
   if (!isTRUE(quiet)) {
     detail <- switch(st$state,
