@@ -1,6 +1,6 @@
 # Known ways a render dies, matched in order; the first that matches explains it. Design:
 # dev/specs/2026-10-22-run-job-design.md section 6, failure 7.
-.diagnose_failure <- function(log, st) {
+.diagnose_failure <- function(log, st, job = NULL) {
   # Quarto colors its output even into a file; the escapes sit at the start of the lines matched below.
   log <- gsub("\033\\[[0-9;]*m", "", log, perl = TRUE)
   # rlang/knitr print a condition's lines with "! ", "i " or "x " bullets; strip them so a check's own
@@ -67,11 +67,18 @@
   qe <- utils::tail(hit("^ERROR: "), 1L)
   if (length(qe)) {
     msg <- sub("^ERROR: ", "", log[qe])
-    if (grepl("os error 39", msg, fixed = TRUE) && grepl("execute-results", msg, fixed = TRUE)) {
-      return(list(reason = paste0("Quarto could not remove its execute-results folder on the share (", msg, "); ",
-                                  "every chunk had run, and the job itself did not fail."),
-                  fix = paste0("render_job() has already tried twice. Delete the job's _files folder ",
-                               "(`lsof +D` on it names what holds a file there), then run the job again.")))
+    # The race is this job's folder only, by the same test render_job() retries on; a retry is claimed only when the
+    # log records render_job()'s own line for one, since a render outside it, or one that stopped at once, has none.
+    if (!is.null(job) && .is_execute_results_race(log[qe], .execute_results_dir(job))) {
+      retried <- any(grepl("render_job(): every chunk ran, then Quarto could not remove", log, fixed = TRUE))
+      return(list(reason = paste0("Quarto could not remove this job's execute-results folder (", msg, "), most often ",
+                                  "because the network share had not let go of a file there; not an error in the job."),
+                  fix = if (retried) {
+                    paste0("render_job() already rendered it twice. Delete the job's _files folder ",
+                           "(`lsof +D` on it names what holds a file there), then run the job again.")
+                  } else {
+                    "Run the job again; if it fails the same way, delete the job's _files folder first."
+                  }))
     }
     return(list(reason = paste0("Quarto failed: ", msg), fix = "See the log above the Stack trace for what led to it."))
   }
