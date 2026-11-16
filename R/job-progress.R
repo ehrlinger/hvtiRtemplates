@@ -43,8 +43,11 @@
 
 # Quarto knits through <stem>.rmarkdown, so the job's own name is put back before the path is made:
 # the file job_status() reads is <job>.run.progress, beside the .qmd.
+# A render given an output_file by render_job() keeps that run's progress under the output's stem instead.
 .progress_path <- function(input) {
-  if (is.null(input)) NULL else .run_files(file.path(dirname(input), .job_file_name(input)))$progress
+  if (is.null(input)) return(NULL)
+  out <- Sys.getenv("HVTI_OUTPUT_FILE")
+  .run_files(.run_key(file.path(dirname(input), .job_file_name(input)), if (nzchar(out)) out))$progress
 }
 
 .progress_log <- function(text) {

@@ -359,15 +359,19 @@ environment(model) <- globalenv()
 .nodesize_rule <- max(15L, as.integer(ceiling(2 * sum(.grown) / max(.events, 1L))))
 .epf <- hvtiRtemplates:::.check_events_per_feature(c(cohort = .events), length(PREDICTORS), MIN_EVENTS_PER_FEATURE)
 if (isTRUE(TUNE_NODESIZE)) {
-  hvtiRtemplates::guard_long_fit("rfs-nodesize", dir = CACHE_DIR,
-                                 why = "the leaf-size search grows a 100-tree forest at each grid value", refit = REFIT)
-  tuned <- cache_fit(
-    "rfs-nodesize",
+  # Quoted once, so the check below and cache_fit() read the same call; a cache_fit() of a quoted
+  # call keys the call, so a search cached before this was quoted still loads.
+  .tune_code <- quote(
     tune.nodesize(model, d, nodesize.try = c(1:9, seq(10, max(150L, 2L * .nodesize_rule), by = 5)),
                   sampsize = function(x) x * 0.632, nsplit = NSPLIT, mtry = MTRY, splitrule = SPLITRULE,
-                  na.action = NA_ACTION, trace = FALSE, seed = abs(SEED)),
-    seed = SEED, dir = CACHE_DIR, refit = REFIT
+                  na.action = NA_ACTION, trace = FALSE, seed = abs(SEED))
   )
+  # Refused outside run_job() only when the search will actually run: a current cache loads, even under REFIT.
+  if (hvtiRutilities::cache_would_fit("rfs-nodesize", .tune_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)) {
+    hvtiRtemplates::guard_long_fit("rfs-nodesize", dir = CACHE_DIR,
+                                   why = "the leaf-size search grows a 100-tree forest at each grid value", refit = REFIT)
+  }
+  tuned <- cache_fit("rfs-nodesize", .tune_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
   .nodesize <- tuned$nsize.opt
   if (is.na(.nodesize)) {
     stop("tune.nodesize() found no leaf size: every grid value failed. Set NODESIZE instead.", call. = FALSE)

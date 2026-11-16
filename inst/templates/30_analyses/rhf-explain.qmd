@@ -301,13 +301,17 @@ and do not quote a survival probability from it.
 # The cache draws on R's generator, which rhf(seed =) does not cover. cache_fit()
 # seeds it with SEED; unseeded, identical reruns on the first real study moved
 # importance medians by about 3 and reordered ranks 2 to 6.
-hvtiRtemplates::guard_long_fit("rhf-varpro-cache", dir = CACHE_DIR,
-                               why = "the VarPro cache walks every rule of every tree at study size", refit = REFIT)
-vp_cache <- hvtiRtemplates:::.owner_only(.cache_file("rhf-varpro-cache"), cache_fit(
-  "rhf-varpro-cache",
-  varpro.cache.rhf(forest, max.rules.tree = MAX_RULES_TREE, max.tree = MAX_TREE, verbose = FALSE),
-  seed = SEED, dir = CACHE_DIR, refit = REFIT
-))
+# Quoted once, so the check below and cache_fit() read the same call; a cache_fit() of a quoted
+# call keys the call, so a cache built before this was quoted still loads. Refused outside
+# run_job() only when it will actually be built: a current cache loads, even under REFIT.
+.vp_code <- quote(varpro.cache.rhf(forest, max.rules.tree = MAX_RULES_TREE, max.tree = MAX_TREE, verbose = FALSE))
+if (hvtiRutilities::cache_would_fit("rhf-varpro-cache", .vp_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)) {
+  hvtiRtemplates::guard_long_fit("rhf-varpro-cache", dir = CACHE_DIR,
+                                 why = "the VarPro cache walks every rule of every tree at study size", refit = REFIT)
+}
+vp_cache <- hvtiRtemplates:::.owner_only(.cache_file("rhf-varpro-cache"),
+                                         cache_fit("rhf-varpro-cache", .vp_code, seed = SEED, dir = CACHE_DIR,
+                                                   refit = REFIT))
 .time_index <- unique(as.integer(round(seq.int(1L, vp_cache$K, length.out = N_TIMES))))
 imp <- hvtiRtemplates:::.owner_only(.cache_file("rhf-importance"), cache_fit(
   "rhf-importance",
@@ -401,11 +405,9 @@ if (length(PD_VARS)) {
 #|   value on every interval of a sample of patients."
 #| message: true
 if (length(PD_VARS)) {
-  hvtiRtemplates::guard_long_fit("rhf-partial", dir = CACHE_DIR,
-                                 why = "each grid value predicts the hazard over every interval of the sample",
-                                 refit = REFIT)
-  pd <- hvtiRtemplates:::.owner_only(.cache_file("rhf-partial"), cache_fit(
-    "rhf-partial",
+  # Quoted once, so the check below and cache_fit() read the same call; a cache_fit() of a quoted
+  # call keys the call, so curves cached before this was quoted still load.
+  .pd_code <- quote(
     local({
       train <- data.frame(id = forest$id, forest$yvar, forest$xvar)
       ids <- sample(unique(train$id), min(PD_N, length(unique(train$id))))
@@ -424,11 +426,20 @@ if (length(PD_VARS)) {
                      n.risk = colSums(!is.na(h)))
         }))
       }))
-    }),
-    # predict() dispatches to randomForestRHF's method, which cache_fit() cannot see in the code, so an
-    # upgrade of the package would otherwise reuse curves its old version predicted.
-    seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestRHF"
-  ))
+    })
+  )
+  # predict() dispatches to randomForestRHF's method, which cache_fit() cannot see in the code, so an
+  # upgrade of the package would otherwise reuse curves its old version predicted. Refused outside
+  # run_job() only when the curves will actually be computed: a current cache loads, even under REFIT.
+  if (hvtiRutilities::cache_would_fit("rhf-partial", .pd_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                                      packages = "randomForestRHF")) {
+    hvtiRtemplates::guard_long_fit("rhf-partial", dir = CACHE_DIR,
+                                   why = "each grid value predicts the hazard over every interval of the sample",
+                                   refit = REFIT)
+  }
+  pd <- hvtiRtemplates:::.owner_only(.cache_file("rhf-partial"),
+                                     cache_fit("rhf-partial", .pd_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                                               packages = "randomForestRHF"))
   pd <- pd[pd$n.risk >= PD_MIN_RISK, ]
   pd$point <- factor(sprintf("%.2f", pd$time), levels = sprintf("%.2f", sort(unique(pd$time))))
   # Each predictor's values in grid order on a discrete axis, keyed by predictor so two predictors sharing a

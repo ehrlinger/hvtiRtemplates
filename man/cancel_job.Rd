@@ -8,7 +8,8 @@ cancel_job(
   path,
   grace = 30,
   other_host = c("refuse", "abandon"),
-  quiet = FALSE
+  quiet = FALSE,
+  output_file = NULL
 )
 }
 \arguments{
@@ -24,6 +25,10 @@ Ignored for a job on this host.}
 
 \item{quiet}{Logical(1). \code{FALSE} prints the job's state afterwards,
 as \code{\link{job_status}} does.}
+
+\item{output_file}{Character(1) or \code{NULL}. The output file name a run was given with
+\code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} cancels the
+job's own run.}
 }
 \value{
 Invisibly, the job's status afterwards, as \code{\link{job_status}}

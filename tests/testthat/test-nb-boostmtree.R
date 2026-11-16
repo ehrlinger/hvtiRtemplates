@@ -506,22 +506,25 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
 test_that("the fit chunk refuses to start an uncached fit interactively, and names run_job()", {
   nb_skip_unless_stack()
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  withr::local_envvar(HVTI_ALLOW_LONG_FIT = NA)
   env <- nb_env(nb_study())
   env$guard_long_fit <- hvtiRtemplates::guard_long_fit
   expect_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices())),
                "run_job(", fixed = TRUE)
 })
 
-test_that("the fit chunk runs interactively once the fit is cached, and refuses a REFIT", {
+test_that("the fit chunk runs interactively once the fit is cached, REFIT left TRUE included", {
   nb_skip_unless_stack()
   root <- nb_study()
   nb_fit_in(root)
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  withr::local_envvar(HVTI_ALLOW_LONG_FIT = NA)
   env <- nb_env(root)
   expect_no_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices())))
+  # A key that matches loads under REFIT, as cache_fit() does, so the Render button rerenders after run_job().
   env2 <- nb_env(root)
-  expect_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env2, nb_choices(REFIT = TRUE))),
-               "REFIT", fixed = TRUE)
+  expect_no_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env2,
+                                               nb_choices(REFIT = TRUE))))
 })
 
 test_that("a cached fit with REFIT left TRUE guards no memory; a stale one with REFIT guards the fit", {
