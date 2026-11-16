@@ -17,8 +17,9 @@
   study's name for it. Leaving `id_col` out still reads `"ccfid"` for one more release, with a warning, and is an
   error after that. The templates already pass `ID`.
 * `options(hvti.quiet = TRUE)` silences the package's informational messages in one place. `render_job()`,
-  `run_job()`, `job_status()` and `cancel_job()` take their `quiet` default from it, and an explicit `quiet`
-  argument still wins. Warnings and errors are never silenced.
+  `run_job()` and `cancel_job()` take their `quiet` default from it, and an explicit `quiet`
+  argument still wins. Warnings and errors are never silenced, and neither is `job_status()`, whose
+  printed summary is its answer.
 * A refusal that a caller might want to catch now carries a class: `hvtiRtemplates_run_refused`,
   `hvtiRtemplates_run_claimed`, `hvtiRtemplates_run_mismatch`, `hvtiRtemplates_job_running`,
   `hvtiRtemplates_cancel_incomplete`, `hvtiRtemplates_long_fit`, `hvtiRtemplates_memory` and

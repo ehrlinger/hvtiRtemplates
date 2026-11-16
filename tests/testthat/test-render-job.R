@@ -131,6 +131,8 @@ test_that("render_job reports a Deno crash as Quarto's, and keeps the original",
   expect_s3_class(e, "hvtiRtemplates_quarto_crashed")
   expect_match(conditionMessage(e), "Quarto crashed before rendering", fixed = TRUE)
   expect_match(conditionMessage(e), "Render the job again", fixed = TRUE)
+  # Base R prints no parent, so the cause is in the message.
+  expect_match(conditionMessage(e), "Quarto said: ", fixed = TRUE)
   expect_true(hvtiRtemplates:::.quarto_crashed(e$parent))
 })
 

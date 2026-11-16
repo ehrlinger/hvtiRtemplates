@@ -55,7 +55,9 @@
 # present and typed, NA where a value does not apply, so a table prints a gap
 # rather than a plausible value. `method` is the template the job was made from.
 .run_provenance <- function(run, template, envir) {
-  sha <- utils::packageDescription("hvtiRtemplates")$RemoteSha
+  # packageDescription() gives a bare NA, not a list, when it cannot find the package.
+  desc <- suppressWarnings(utils::packageDescription("hvtiRtemplates"))
+  sha <- if (is.list(desc)) desc$RemoteSha
   seed <- get0("SEED", envir = envir, inherits = FALSE)
   whole <- length(seed) == 1L && is.numeric(seed) && !is.na(seed) && seed == trunc(seed) &&
     abs(seed) <= .Machine$integer.max

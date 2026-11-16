@@ -130,8 +130,9 @@
 #' \code{running}, so ask from a session on that host.
 #'
 #' @param path Character(1). The job's \code{.qmd} file.
-#' @param quiet Logical(1). \code{FALSE} prints a one-line summary. Defaults to the family option
-#'   \code{hvti.quiet}; an explicit value wins.
+#' @param quiet Logical(1). \code{FALSE}, the default, prints a one-line summary. The summary is
+#'   the function's result rather than an informational message, so the family option \code{hvti.quiet}
+#'   does not silence it.
 #' @param output_file Character(1) or \code{NULL}. The output file name a run was given with
 #'   \code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} reads the
 #'   job's own run.
@@ -153,7 +154,7 @@
 #' writeLines("---\ntitle: example\n---", job)
 #' job_status(job)
 #' @export
-job_status <- function(path, quiet = isTRUE(getOption("hvti.quiet")), output_file = NULL) {
+job_status <- function(path, quiet = FALSE, output_file = NULL) {
   job <- basename(path)
   job_path <- path
   if (!is.null(output_file)) {

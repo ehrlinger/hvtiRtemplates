@@ -92,7 +92,7 @@ test_that("the life table functions name what is wrong with their input", {
   expect_error(life_table(d, "t", "nope"), "not in the data: nope")
   expect_error(life_table(d, "t", "e", strata_col = c("g", "e")), "name one column")
   expect_error(life_table_tests(d, "t", "e", "g"), "fewer than two analysable strata")
-  expect_error(life_table(data.frame(t = NA, e = 1), "t", "e"), "No row has a recorded time")
+  expect_error(life_table(data.frame(t = NA, e = 1), "t", "e"), "life_table\\(\\): no row has a recorded time")
 })
 
 test_that("a stratum with nobody at risk at an event time is left out of the tests, not fatal", {

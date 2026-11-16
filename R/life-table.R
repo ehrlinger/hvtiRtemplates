@@ -99,7 +99,7 @@ life_table <- function(data, time_col, event_col, strata_col = NULL, conf_level 
   event <- event_col
   strata <- strata_col
   .lt_need_kaplan()
-  parts <- .lt_parts(data, time, event, strata)
+  parts <- .lt_parts(data, time, event, strata, "life_table")
   fits <- lapply(names(parts$rows), function(s) {
     p <- parts$rows[[s]]
     fit <- as.data.frame(TemporalHazard::hzr_kaplan(time = p$time, status = p$status, conf_level = conf_level,
@@ -132,7 +132,7 @@ life_table_at <- function(data, time_col, event_col, times, labels = NULL, strat
   if (length(labels) != length(times)) {
     stop("life_table_at(): `labels` has ", length(labels), " entries for ", length(times), " horizons.", call. = FALSE)
   }
-  parts <- .lt_parts(data, time, event, strata)
+  parts <- .lt_parts(data, time, event, strata, "life_table_at")
   out <- do.call(rbind, lapply(names(parts$rows), function(s) {
     p <- parts$rows[[s]]
     fit <- TemporalHazard::hzr_kaplan(time = p$time, status = p$status, conf_level = conf_level, event_only = TRUE)
@@ -170,7 +170,7 @@ life_table_tests <- function(data, time_col, event_col, strata_col, time, event,
   if (!is.character(strata) || length(strata) != 1L) {
     stop("life_table_tests(): `strata_col` must name one column.", call. = FALSE)
   }
-  parts <- .lt_parts(data, time, event, strata)
+  parts <- .lt_parts(data, time, event, strata, "life_table_tests")
   df <- length(parts$rows) - 1L
   if (df < 1L) {
     stop("life_table_tests(): ", strata, " has fewer than two analysable strata.", call. = FALSE)
@@ -198,7 +198,7 @@ life_table_keep <- function(data, time_col, event_col, strata_col = NULL, time, 
   time <- time_col
   event <- event_col
   strata <- strata_col
-  .lt_check_columns(data, time, event, strata)
+  .lt_check_columns(data, time, event, strata, "life_table_keep")
   keep <- !is.na(data[[time]]) & !is.na(data[[event]])
   if (!is.null(strata)) {
     raw <- as.character(data[[strata]])
@@ -213,19 +213,19 @@ life_table_keep <- function(data, time_col, event_col, strata_col = NULL, time, 
   }
 }
 
-.lt_check_columns <- function(data, time, event, strata) {
-  if (!is.data.frame(data)) stop("`data` must be a data frame.", call. = FALSE)
+.lt_check_columns <- function(data, time, event, strata, fn) {
+  if (!is.data.frame(data)) stop(fn, "(): `data` must be a data frame.", call. = FALSE)
   if (!is.null(strata) && (!is.character(strata) || length(strata) != 1L)) {
-    stop("`strata_col` must name one column, or be NULL.", call. = FALSE)
+    stop(fn, "(): `strata_col` must name one column, or be NULL.", call. = FALSE)
   }
   miss <- setdiff(c(time, event, strata), names(data))
-  if (length(miss)) stop("Column(s) not in the data: ", paste(miss, collapse = ", "), ".", call. = FALSE)
+  if (length(miss)) stop(fn, "(): column(s) not in the data: ", paste(miss, collapse = ", "), ".", call. = FALSE)
   invisible(TRUE)
 }
 
 # The analyzed rows of `data`, split by stratum, with the counts and the dropped rows.
-.lt_parts <- function(data, time, event, strata) {
-  .lt_check_columns(data, time, event, strata)
+.lt_parts <- function(data, time, event, strata, fn) {
+  .lt_check_columns(data, time, event, strata, fn)
   ok <- !is.na(data[[time]]) & !is.na(data[[event]])
   dropped <- NULL
   if (is.null(strata)) {
@@ -244,12 +244,12 @@ life_table_keep <- function(data, time_col, event_col, strata_col = NULL, time, 
     ok <- ok & !is_imp & !is_na
     lab <- raw
   }
-  if (!any(ok)) stop("No row has a recorded time, event and stratum.", call. = FALSE)
+  if (!any(ok)) stop(fn, "(): no row has a recorded time, event and stratum.", call. = FALSE)
   tm <- as.numeric(data[[time]][ok])
   # An event flag that is 0/1 in SAS can arrive as logical; hzr_kaplan() needs a number.
   st <- as.numeric(data[[event]][ok])
   if (!all(st %in% c(0, 1))) {
-    stop("`", event, "` must be 0/1 (or logical); it holds ", paste(sort(setdiff(unique(st), c(0, 1))), collapse = ", "),
+    stop(fn, "(): `", event, "` must be 0/1 (or logical); it holds ", paste(sort(setdiff(unique(st), c(0, 1))), collapse = ", "),
          ".", call. = FALSE)
   }
   lab <- lab[ok]

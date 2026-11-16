@@ -59,6 +59,8 @@ test_that("hvti.quiet silences messages and never warnings or errors", {
   expect_true(hvtiRtemplates:::.hvti_quiet())
   expect_identical(formals(render_job)$quiet, quote(isTRUE(getOption("hvti.quiet"))))
   expect_identical(formals(run_job)$quiet, quote(isTRUE(getOption("hvti.quiet"))))
+  # job_status()'s summary is its answer, not a message, so the option leaves it on.
+  expect_false(formals(job_status)$quiet)
 })
 
 test_that("a refusal a caller may catch carries an hvtiRtemplates_ class", {

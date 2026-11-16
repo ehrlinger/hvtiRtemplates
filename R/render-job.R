@@ -153,7 +153,9 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
     tryCatch(render(), error = function(e) {
       if (.quarto_crashed(e)) {
         .abort("render_job(): Quarto crashed before rendering ", basename(path), "; the job itself did not fail.\n",
-               "Its Deno runtime was killed by a signal, most often a crash as it starts. Render the job again.",
+               "Its Deno runtime was killed by a signal, most often a crash as it starts. Render the job again.\n",
+               # Base R prints no parent, so Quarto's own account goes into the message.
+               "Quarto said: ", conditionMessage(e),
                class = "quarto_crashed", parent = e)
       }
       if (.execute_results_race(e, log, from, .execute_results_dir(path))) {
@@ -170,7 +172,8 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
       .abort("render_job(): Quarto could not remove ", .execute_results_dir(path),
              " twice (Directory not empty); the job itself did not fail.\n",
              "Something on the share still holds a file there; find it with `lsof +D` on the folder.\n",
-             "Delete the folder and render the job again.",
+             "Delete the folder and render the job again.\n",
+             "Quarto said: ", conditionMessage(e2$parent),
              class = "execute_results_stuck", parent = e2$parent)
     })
   })

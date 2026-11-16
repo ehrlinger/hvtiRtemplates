@@ -4,13 +4,14 @@
 \alias{job_status}
 \title{Report a background job's state}
 \usage{
-job_status(path, quiet = isTRUE(getOption("hvti.quiet")), output_file = NULL)
+job_status(path, quiet = FALSE, output_file = NULL)
 }
 \arguments{
 \item{path}{Character(1). The job's \code{.qmd} file.}
 
-\item{quiet}{Logical(1). \code{FALSE} prints a one-line summary. Defaults to the family option
-\code{hvti.quiet}; an explicit value wins.}
+\item{quiet}{Logical(1). \code{FALSE}, the default, prints a one-line summary. The summary is
+the function's result rather than an informational message, so the family option \code{hvti.quiet}
+does not silence it.}
 
 \item{output_file}{Character(1) or \code{NULL}. The output file name a run was given with
 \code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} reads the
