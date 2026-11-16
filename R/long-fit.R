@@ -29,7 +29,14 @@
 #'   template's \code{REFIT}); the cached file then does not make the call safe, so it is refused too.
 #' @return \code{invisible(FALSE)} when the fit may proceed; otherwise an error.
 #' @examples
-#' guard_long_fit("example-fit", dir = tempdir(), why = "it takes hours")
+#' dir <- file.path(tempdir(), "guard-long-fit-example")
+#' dir.create(dir, showWarnings = FALSE)
+#' # Outside run_job(), with no cached fit, it refuses and names run_job().
+#' try(guard_long_fit("example-fit", dir = dir, why = "it takes hours"))
+#' # Once the fit is cached, it lets the job load it.
+#' saveRDS(1, file.path(dir, "example-fit.rds"))
+#' guard_long_fit("example-fit", dir = dir, why = "it takes hours")
+#' unlink(dir, recursive = TRUE)
 #' @export
 guard_long_fit <- function(name, dir, why, refit = FALSE) {
   if (!is.character(name) || !length(name) || anyNA(name) || !all(nzchar(name))) {

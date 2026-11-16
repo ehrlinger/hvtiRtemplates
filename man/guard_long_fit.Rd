@@ -42,5 +42,12 @@ tests and the template gallery render small fits that way. Set either only
 for a fit you know to be short.
 }
 \examples{
-guard_long_fit("example-fit", dir = tempdir(), why = "it takes hours")
+dir <- file.path(tempdir(), "guard-long-fit-example")
+dir.create(dir, showWarnings = FALSE)
+# Outside run_job(), with no cached fit, it refuses and names run_job().
+try(guard_long_fit("example-fit", dir = dir, why = "it takes hours"))
+# Once the fit is cached, it lets the job load it.
+saveRDS(1, file.path(dir, "example-fit.rds"))
+guard_long_fit("example-fit", dir = dir, why = "it takes hours")
+unlink(dir, recursive = TRUE)
 }
