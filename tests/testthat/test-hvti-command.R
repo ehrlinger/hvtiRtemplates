@@ -52,17 +52,17 @@ test_that("the hvti script keeps its executable bit in the installed package", {
 })
 
 test_that(".hvti_main exits nonzero when the launch fails or is refused, zero when it runs (C11)", {
-  testthat::local_mocked_bindings(run_job = function(path, final) invisible(list(state = "failed")))
+  testthat::local_mocked_bindings(run_job = function(path, final, ...) invisible(list(state = "failed")))
   expect_identical(.hvti_main(c("run", "x.qmd", "FALSE")), 1L)
-  testthat::local_mocked_bindings(run_job = function(path, final) stop("run_job(): refused; fix the checks"))
+  testthat::local_mocked_bindings(run_job = function(path, final, ...) stop("run_job(): refused; fix the checks"))
   expect_identical(suppressMessages(.hvti_main(c("run", "x.qmd", "FALSE"))), 1L)
-  testthat::local_mocked_bindings(run_job = function(path, final) invisible(list(state = "running")))
+  testthat::local_mocked_bindings(run_job = function(path, final, ...) invisible(list(state = "running")))
   expect_identical(.hvti_main(c("run", "x.qmd", "FALSE")), 0L)
 })
 
 test_that(".hvti_main passes the path through unchanged, quotes and backslashes included", {
   seen <- NULL
-  testthat::local_mocked_bindings(run_job = function(path, final) {
+  testthat::local_mocked_bindings(run_job = function(path, final, ...) {
     seen <<- list(path, final)
     list(state = "running")
   })
@@ -72,7 +72,7 @@ test_that(".hvti_main passes the path through unchanged, quotes and backslashes 
 
 test_that(".hvti_main routes status and cancel with the path, and exits 1 on their errors", {
   seen <- NULL
-  fake_status <- function(path, quiet = FALSE) {
+  fake_status <- function(path, quiet = FALSE, ...) {
     seen <<- c("status", path)
     list(state = "running")
   }
@@ -187,4 +187,82 @@ test_that("hvti finds a study-relative job path from a directory inside the stud
   got <- readLines(r$log)
   expect_identical(got[4], "status")
   expect_identical(normalizePath(got[5]), normalizePath(job))
+})
+
+test_that(".hvti_main hands -P pairs and --output to run_job(), reading values as quarto render -P does", {
+  seen <- NULL
+  testthat::local_mocked_bindings(run_job = function(path, final, params = NULL, output_file = NULL, ...) {
+    seen <<- list(params = params, output_file = output_file)
+    list(state = "running")
+  })
+  expect_identical(.hvti_main(c("run", "x.qmd", "FALSE", "x.M1000.html", "fit_m:1000", "label:M 1000: big", "boot:true",
+                                "tag:\"quoted\"")), 0L)
+  expect_identical(seen$output_file, "x.M1000.html")
+  expect_identical(seen$params, list(fit_m = 1000L, label = "M 1000: big", boot = TRUE, tag = "quoted"))
+  # A copy of hvti-version 1 passes three arguments, and runs the job's own render as it always did.
+  expect_identical(.hvti_main(c("run", "x.qmd", "FALSE")), 0L)
+  expect_null(seen$params)
+  expect_null(seen$output_file)
+  expect_identical(.hvti_main(c("run", "x.qmd", "FALSE", "")), 0L)
+  expect_null(seen$output_file)
+  expect_identical(suppressMessages(.hvti_main(c("run", "x.qmd", "FALSE", "", ":1000"))), 1L)
+})
+
+test_that(".hvti_main routes --output to status and cancel", {
+  seen <- NULL
+  testthat::local_mocked_bindings(job_status = function(path, quiet = FALSE, output_file = NULL) {
+    seen <<- output_file
+    list(state = "running")
+  }, cancel_job = function(path, ..., output_file = NULL) {
+    seen <<- output_file
+    list(state = "cancelled")
+  })
+  .hvti_main(c("status", "a.qmd", "FALSE", "a.M1000.html"))
+  expect_identical(seen, "a.M1000.html")
+  .hvti_main(c("cancel", "a.qmd", "FALSE", "a.M500.html"))
+  expect_identical(seen, "a.M500.html")
+})
+
+test_that("hvti run passes -P pairs and --output to R in order, values unchanged", {
+  skip_on_os("windows")
+  root <- lock_study(r = "4.5.3")
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines("x", job)
+  r <- fake_r("4.5.3")
+  odd <- "label:a b \"c\" $HOME `x`"
+  system2(hvti(), c("run", shQuote(job), "-P", "fit_m:1000", "--output", "x.M1000.html", "-P", shQuote(odd), "--final"),
+          env = paste0("HVTI_R_ROOT=", r$top), stdout = TRUE, stderr = TRUE)
+  got <- readLines(r$log)
+  expect_identical(got[c(4, 6, 7)], c("run", "TRUE", "x.M1000.html"))
+  expect_identical(got[8:9], c("fit_m:1000", odd))
+  # status and cancel take --output alone.
+  file.remove(r$log)
+  system2(hvti(), c("status", shQuote(job), "--output", "x.M1000.html"), env = paste0("HVTI_R_ROOT=", r$top),
+          stdout = TRUE, stderr = TRUE)
+  expect_identical(readLines(r$log)[c(4, 6, 7)], c("status", "FALSE", "x.M1000.html"))
+  # No options: the fourth argument is empty, and nothing follows it.
+  file.remove(r$log)
+  system2(hvti(), c("run", shQuote(job)), env = paste0("HVTI_R_ROOT=", r$top), stdout = TRUE, stderr = TRUE)
+  got <- readLines(r$log)
+  expect_identical(got[c(4, 6, 7)], c("run", "FALSE", ""))
+  expect_length(got, 7L)
+})
+
+test_that("hvti refuses a malformed -P or --output with the usage, before starting R", {
+  skip_on_os("windows")
+  root <- lock_study(r = "4.5.3")
+  job <- file.path(root, "analyses", "x.qmd")
+  writeLines("x", job)
+  r <- fake_r("4.5.3")
+  bad <- list(c("run", job, "-P", "fit_m"), c("run", job, "-P", ":1000"), c("run", job, "-P"),
+              c("run", job, "--output", "out/x.html"), c("run", job, "--output"),
+              c("run", job, "--output", "a.html", "--output", "b.html"),
+              c("status", job, "-P", "fit_m:1"), c("cancel", job, "--final"))
+  for (args in bad) {
+    out <- suppressWarnings(system2(hvti(), shQuote(args), env = paste0("HVTI_R_ROOT=", r$top), stdout = TRUE,
+                                    stderr = TRUE))
+    expect_match(paste(out, collapse = "\n"), "usage: hvti", fixed = TRUE, info = paste(args[-2], collapse = " "))
+    expect_identical(attr(out, "status"), 2L, info = paste(args[-2], collapse = " "))
+    expect_false(file.exists(r$log), info = paste(args[-2], collapse = " "))
+  }
 })

@@ -4,7 +4,14 @@
 \alias{run_job}
 \title{Check a job, run it in the background, and wait for its own checks}
 \usage{
-run_job(path, final = FALSE, wait = 300, quiet = FALSE)
+run_job(
+  path,
+  final = FALSE,
+  wait = 300,
+  quiet = FALSE,
+  params = NULL,
+  output_file = NULL
+)
 }
 \arguments{
 \item{path}{Character(1). The job's \code{.qmd} file.}
@@ -17,6 +24,9 @@ own checks. \code{0} submits and returns at once.}
 \item{quiet}{Logical(1). \code{TRUE} prints nothing: not the checks, the note
 for a legacy job, or the lines the wait ends on. A refusal is still an
 error, and its message then lists the failed checks and their fixes.}
+
+\item{params, output_file}{Passed to \code{\link{render_job}} through
+\code{\link{submit_job}}.}
 }
 \value{
 Invisibly, the job's status, as \code{\link{job_status}} returns it.
@@ -52,11 +62,25 @@ If the checks have not all reported when \code{wait} runs out, the render
 carries on regardless; follow it with \code{\link{job_status}}. Stop it with
 \code{\link{cancel_job}}.
 Not available on Windows, as for \code{\link{submit_job}}.
+
+A job with Quarto \code{params} takes them here, as
+\code{quarto render -P} would, with \code{output_file} naming the report as
+\code{--output} would. A run given an \code{output_file} is its own run, with
+its own run files, so one job rendered for several parameter values keeps
+each report and each run apart; give \code{\link{job_status}} and
+\code{\link{cancel_job}} the same \code{output_file} to follow or stop it.
+The checks above apply to each run, and Quarto still renders one job at a
+time in a study.
 }
 \examples{
 # Not run by check: it would start a real render.
 \dontrun{
 run_job("analyses/nb.boostmtree.lvef.boost.qmd")
+
+# A parameterized job, one report per value: run the second once the first
+# has finished, since Quarto renders one job at a time in a study.
+run_job("job.qmd", params = list(fit_m = 1000), output_file = "job.M1000.html")
+job_status("job.qmd", output_file = "job.M1000.html")
 }
 }
 \seealso{

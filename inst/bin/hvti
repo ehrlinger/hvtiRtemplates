@@ -1,12 +1,29 @@
 #!/bin/sh
-# hvti: run an hvtiR job on the R its study's renv.lock records. hvti-version: 1
+# hvti: run an hvtiR job on the R its study's renv.lock records. hvti-version: 2
 # Design: hvtiRtemplates dev/specs/2026-10-22-run-job-design.md, section 3.
-usage() { echo "usage: hvti run|status|cancel <job.qmd> [--final]" >&2; exit 2; }
+usage() {
+  echo "usage: hvti run <job.qmd> [--final] [-P name:value]... [--output file]" >&2
+  echo "       hvti status|cancel <job.qmd> [--output file]" >&2
+  exit 2
+}
 [ $# -ge 2 ] || usage
 case $1 in run|status|cancel) ;; *) usage ;; esac
-[ $# -le 3 ] || usage
-cmd=$1; job=$2; final=FALSE
-case ${3:-} in "") ;; --final) final=TRUE ;; *) usage ;; esac
+cmd=$1; job=$2; final=FALSE; output=""; nparams=0
+shift 2
+# -P and --output take what quarto render takes. Each -P is checked here and handed on in order, after the fixed
+# arguments, so a mistyped option stops with the usage before anything starts.
+while [ $# -gt 0 ]; do
+  case $1 in
+    --final) [ "$cmd" = run ] || usage; final=TRUE; shift ;;
+    -P) [ "$cmd" = run ] && [ $# -ge 2 ] || usage
+        case $2 in ?*:*) ;; *) usage ;; esac
+        nparams=$((nparams + 1)); eval "param_$nparams=\$2"; shift 2 ;;
+    --output) [ $# -ge 2 ] && [ -z "$output" ] || usage
+              case $2 in ""|*/*) usage ;; esac
+              output=$2; shift 2 ;;
+    *) usage ;;
+  esac
+done
 # The paths run_job() prints are from the study root; from deeper in the study, try the job there.
 if [ ! -f "$job" ]; then
   up=$(pwd)
@@ -36,4 +53,8 @@ fi
 # renv's activate.R prefers RENV_PROJECT over the working directory, so one inherited from another study would load
 # that study's library. Bind it to this one.
 export RENV_PROJECT="$root"
-cd "$root" && exec "$rscript" -e 'quit(status = hvtiRtemplates:::.hvti_main(commandArgs(TRUE)))' "$cmd" "$jobpath" "$final"
+# The -P pairs follow the fixed arguments as "name:value" strings, in the order given.
+set -- "$cmd" "$jobpath" "$final" "$output"
+i=1
+while [ $i -le $nparams ]; do eval "set -- \"\$@\" \"\$param_$i\""; i=$((i + 1)); done
+cd "$root" && exec "$rscript" -e 'quit(status = hvtiRtemplates:::.hvti_main(commandArgs(TRUE)))' "$@"

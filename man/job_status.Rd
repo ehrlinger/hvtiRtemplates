@@ -4,12 +4,16 @@
 \alias{job_status}
 \title{Report a background job's state}
 \usage{
-job_status(path, quiet = FALSE)
+job_status(path, quiet = FALSE, output_file = NULL)
 }
 \arguments{
 \item{path}{Character(1). The job's \code{.qmd} file.}
 
 \item{quiet}{Logical(1). \code{FALSE} prints a one-line summary.}
+
+\item{output_file}{Character(1) or \code{NULL}. The output file name a run was given with
+\code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} reads the
+job's own run.}
 }
 \value{
 Invisibly, a list: \code{state} is one of \code{"none"},

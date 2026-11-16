@@ -4,6 +4,10 @@
 # ends.
 withr::local_options(rf.cores = 2L, mc.cores = 2L, .local_envir = teardown_env())
 withr::local_envvar(OMP_THREAD_LIMIT = "2", .local_envir = teardown_env())
+# The template renders fit small synthetic cohorts with quarto_render() and render_job(), not run_job(), so
+# guard_long_fit() is told to let them through. An environment variable, not options(): Quarto renders in a
+# process of its own. test-guard-long-fit.R unsets it to test the guard itself.
+withr::local_envvar(HVTI_ALLOW_LONG_FIT = "true", .local_envir = teardown_env())
 
 # A render's R process loads the installed hvtiRtemplates, so every render first
 # checks that the copy that process loads is the code under test
