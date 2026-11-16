@@ -44,7 +44,7 @@ Remotes:
     ehrlinger/ggRandomForests,
     ehrlinger/hvtiRpropensity,
     ehrlinger/ggBoostedTrees,
-    boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.8-ccf
+    boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.11-ccf
 Suggests:
     arrow,
     bit64,

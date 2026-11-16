@@ -484,6 +484,7 @@ test_that("an uncached band is refused at the console and names submit_job()", {
   skip_on_cran()
   rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  withr::local_envvar(HVTI_ALLOW_LONG_FIT = NA)
   env <- new.env(parent = globalenv())
   env$.root <- rfs_explained_copy()
   choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))

@@ -175,14 +175,14 @@
 # Stale progress is not proof: Quarto's knitr runs in a session of its own and can outlive the Workbench
 # session, so the way out confirms on that host before abandoning (spec section 6). `rel` is the path hvti takes.
 .abandon_route <- function(st, path, rel = "") {
-  if (!.on_other_host(st)) return(sprintf('Stop it with hvtiRtemplates::cancel_job("%s").', path))
+  if (!.on_other_host(st)) return(sprintf("Stop it with hvtiRtemplates::cancel_job(%s).", .run_arg(path)))
   confirm <- if (is.character(st$marker)) {
     sprintf("On %s, confirm nothing is left with `ps eww -u $USER | grep %s`. ", st$host, st$marker)
   } else {
-    sprintf("From a session on %s, confirm with hvtiRtemplates::job_status(\"%s\") that nothing is left. ",
-            st$host, if (nzchar(rel)) rel else path)
+    sprintf("From a session on %s, confirm with hvtiRtemplates::job_status(%s) that nothing is left. ",
+            st$host, .run_arg(path, if (nzchar(rel)) rel else path))
   }
-  sprintf('%sOnly then run hvtiRtemplates::cancel_job("%s", other_host = "abandon") here.', confirm, path)
+  sprintf('%sOnly then run hvtiRtemplates::cancel_job(%s, other_host = "abandon") here.', confirm, .run_arg(path))
 }
 
 # The job's path from the study root, which is what job_status() takes from a console there; the full path when it lies outside.
@@ -203,6 +203,7 @@
 
 # THIS job already running, a stale run recorded on another host, or a crashed submit's lock directory.
 # `root` is the study root, for the path the fix gives hvti; the default names the job by its file name.
+# `path` is the run's key (.run_key()): the job, or the stem of the output_file it is rendered to.
 .check_run_state <- function(path, root = dirname(path)) {
   files <- .run_files(path)
   if (dir.exists(files$lock)) {
@@ -222,13 +223,14 @@
                   sprintf("this job is recorded running on host %s%s.", st$host,
                           if (stale) ", but its progress has not moved for over 30 minutes, so it is probably dead" else ""),
                   paste0(if (!stale) {
-                    sprintf("Check it from a session on %s with hvtiRtemplates::job_status(\"%s\"). ", st$host, .study_rel(path, root))
+                    sprintf("Check it from a session on %s with hvtiRtemplates::job_status(%s). ", st$host,
+                            .run_arg(path, .study_rel(path, root)))
                   }, abandon)))
   }
   if (st$state %in% c("running", "submitted")) {
     return(.check("run_state", FALSE, sprintf("this job is already %s.", st$state),
-                  sprintf("Follow it with hvtiRtemplates::job_status(\"%s\"), or stop it with hvtiRtemplates::cancel_job(\"%s\").",
-                          .study_rel(path, root), .study_rel(path, root))))
+                  sprintf("Follow it with hvtiRtemplates::job_status(%s), or stop it with hvtiRtemplates::cancel_job(%s).",
+                          .run_arg(path, .study_rel(path, root)), .run_arg(path, .study_rel(path, root)))))
   }
   .check("run_state", TRUE)
 }
@@ -317,14 +319,17 @@
     # Stale on a host other than this one is the only case the wait advice cannot resolve; a missing host gets the live wording.
     is_stale <- vapply(running, function(st) isTRUE(st$progress$stale) && .on_other_host(st), NA)
     # One console call per job: a joined list of paths is not an argument job_status() takes.
-    calls <- function(fn, jobs) paste(sprintf('hvtiRtemplates::%s("%s")', fn, vapply(jobs, rel_of, "")), collapse = ", ")
+    calls <- function(fn, jobs) {
+      paste(sprintf("hvtiRtemplates::%s(%s)", fn, vapply(jobs, function(j) .run_arg(j, rel_of(j)), "")), collapse = ", ")
+    }
     live <- names(running)[!is_stale & !pending]
     queued <- names(running)[pending]
     routes <- vapply(names(running)[is_stale], function(j) {
       st <- running[[j]]
       # Without a marker the abandon route's own confirmation is job_status() on that host, so it is not said twice.
       check <- if (is.character(st$marker)) {
-        sprintf("Check %s from a session on %s with hvtiRtemplates::job_status(\"%s\"). ", rel_of(j), st$host, rel_of(j))
+        sprintf("Check %s from a session on %s with hvtiRtemplates::job_status(%s). ", rel_of(j), st$host,
+                .run_arg(j, rel_of(j)))
       }
       paste0(check, .abandon_route(st, j, rel_of(j)))
     }, "")

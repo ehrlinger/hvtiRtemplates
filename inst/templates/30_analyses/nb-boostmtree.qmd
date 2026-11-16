@@ -77,7 +77,7 @@ TYPE    <- "boost"
 # step in memory at once.
 if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.8") {
   stop("This job needs boostmtree >= 2.0.8 from the CCF fork. Install it with\n",
-       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.8-ccf\")\n",
+       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.11-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
 if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.9.0") {
@@ -386,12 +386,6 @@ if (N_KNOTS >= .n_times) {
   stop("N_KNOTS (", N_KNOTS, ") must be below the number of distinct visit times (", .n_times, "), ",
        "and well below it for sparse visits.", call. = FALSE)
 }
-# The fit runs for hours at study size. Started from the console it dies with
-# the session, so an uncached fit is refused there: run the job with
-# hvtiRtemplates::run_job() instead. Once cached, these chunks load it.
-hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
-                               why = "a cross-validated boostmtree fit takes hours at study size",
-                               refit = REFIT)
 .patient <- hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root))
 # The fit, quoted once so the memory check below and cache_fit() read the same call: a
 # cache_fit() of a quoted call keys the call, so a fit cached before this was quoted still loads.
@@ -418,6 +412,13 @@ hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
 # unconditional, so a cached rerender still records the memory check that run_job() waits for.
 .need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(.patient)), nrow(d), FAMILY, k, M)
 .fitting <- hvtiRutilities::cache_would_fit("nb-boostmtree-fit", .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
+# The fit runs for hours at study size. Started from the console, the Render button or a terminal
+# it dies with the session, so a fit that will be computed is refused there: run the job with
+# hvtiRtemplates::run_job() instead. Once cached, the Render button and these chunks load it.
+if (.fitting) {
+  hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
+                                 why = "a cross-validated boostmtree fit takes hours at study size", refit = REFIT)
+}
 hvtiRtemplates::guard_memory(if (.fitting) .need(CORES) else 0,
                              sprintf("this boostmtree fit (%s patients, %s visits, %s)",
                                      format(length(unique(.patient)), big.mark = ","), format(nrow(d), big.mark = ","),
@@ -711,20 +712,25 @@ if (isTRUE(SENSITIVITY)) {
   .grid$m <- as.integer(ceiling(round(M * NU / .grid$nu, 6)))
   .grid$name <- sprintf("nb-boostmtree-sensitivity-nu%s-k%s", .grid$nu, .grid$k)
   .is_base <- .grid$nu == NU & .grid$k == K
-  # Calls `cache` (cache_fit or cache_would_fit) on the fit's code with M, NU and
-  # K rebound to row i of the grid: the code is evaluated in this frame.
-  .at_cell <- function(i, cache) {
+  # The fit's code with M, NU and K rebound to row i of the grid, evaluated in this
+  # frame: fitted (or loaded) when `fit` is TRUE, else asked whether it would fit.
+  .at_cell <- function(i, fit) {
     M <- .grid$m[[i]]
     NU <- .grid$nu[[i]]
     K <- .grid$k[[i]]
-    cache(.grid$name[[i]], .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
+    if (fit) {
+      return(cache_fit(.grid$name[[i]], .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT))
+    }
+    hvtiRutilities::cache_would_fit(.grid$name[[i]], .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
   }
-  .grid$fitting <- !.is_base & vapply(seq_len(nrow(.grid)), .at_cell, logical(1L),
-                                      cache = hvtiRutilities::cache_would_fit)
+  .grid$fitting <- !.is_base & vapply(seq_len(nrow(.grid)), .at_cell, logical(1L), fit = FALSE)
   # Refused from the console and checked against this session's memory before
   # the first fit, as the fit above is, at the largest M still to fit.
-  for (.n in .grid$name[.grid$fitting]) {
-    hvtiRtemplates::guard_long_fit(.n, dir = CACHE_DIR, why = "the sensitivity grid refits boostmtree", refit = REFIT)
+  for (.i in seq_len(nrow(.grid))) {
+    if (.grid$fitting[[.i]]) {
+      hvtiRtemplates::guard_long_fit(.grid$name[[.i]], dir = CACHE_DIR, why = "the sensitivity grid refits boostmtree",
+                                     refit = REFIT)
+    }
   }
   .m_need <- max(c(0L, .grid$m[.grid$fitting]))
   .need_grid <- function(k) {
@@ -734,7 +740,7 @@ if (isTRUE(SENSITIVITY)) {
                                sprintf("the sensitivity fits (largest M = %s)", .m_need),
                                cores = CORES, cores_fit = .need_grid)
   sensitivity <- do.call(rbind, lapply(seq_len(nrow(.grid)), function(i) {
-    f <- if (.is_base[[i]]) fit else .at_cell(i, cache_fit)
+    f <- if (.is_base[[i]]) fit else .at_cell(i, fit = TRUE)
     e <- if (is.matrix(f$err.rate)) list(f$err.rate) else f$err.rate
     data.frame(nu = .grid$nu[[i]], k = .grid$k[[i]], m = .grid$m[[i]], component = .components,
                best_m = as.integer(f$m.opt), budget = as.integer(f$m.opt) * .grid$nu[[i]],

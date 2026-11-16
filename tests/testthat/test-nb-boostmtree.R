@@ -122,7 +122,7 @@ test_that("the setup chunk passes when both packages meet their floors", {
 
 test_that("boostmtree older than 2.0.8 is refused with the fork's install line", {
   nb_skip_unless_stack()
-  expect_error(nb_mocked_setup("boostmtree", "2.0.7"), "ref = \"v2.0.8-ccf\"", fixed = TRUE)
+  expect_error(nb_mocked_setup("boostmtree", "2.0.7"), "ref = \"v2.0.11-ccf\"", fixed = TRUE)
 })
 
 test_that("ggBoostedTrees older than 0.9.0 is refused with its install line", {
@@ -529,22 +529,25 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
 test_that("the fit chunk refuses to start an uncached fit interactively, and names run_job()", {
   nb_skip_unless_stack()
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  withr::local_envvar(HVTI_ALLOW_LONG_FIT = NA)
   env <- nb_env(nb_study())
   env$guard_long_fit <- hvtiRtemplates::guard_long_fit
   expect_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices())),
                "run_job(", fixed = TRUE)
 })
 
-test_that("the fit chunk runs interactively once the fit is cached, and refuses a REFIT", {
+test_that("the fit chunk runs interactively once the fit is cached, REFIT left TRUE included", {
   nb_skip_unless_stack()
   root <- nb_study()
   nb_fit_in(root)
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  withr::local_envvar(HVTI_ALLOW_LONG_FIT = NA)
   env <- nb_env(root)
   expect_no_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices())))
+  # A key that matches loads under REFIT, as cache_fit() does, so the Render button rerenders after run_job().
   env2 <- nb_env(root)
-  expect_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env2, nb_choices(REFIT = TRUE))),
-               "REFIT", fixed = TRUE)
+  expect_no_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env2,
+                                               nb_choices(REFIT = TRUE))))
 })
 
 test_that("a cached fit with REFIT left TRUE guards no memory; a stale one with REFIT guards the fit", {
@@ -577,11 +580,11 @@ test_that("the nb-boostmtree fit chunk guards memory before cache_fit()", {
   expect_match(tpl[fit], "^hvtiRtemplates::guard_memory\\(")
   # The refusal names the counts the estimate was made from (spec section 5.2).
   expect_match(paste(tpl[fit:(fit + 3L)], collapse = " "), "patients.*visits", perl = TRUE)
-  # The grid fits through .at_cell(i, cache_fit), not a literal cache_fit( call; require that call to be found,
+  # The grid fits through .at_cell(i, fit = TRUE), not a literal cache_fit( call; require that call to be found,
   # so a guard moved after it fails here rather than comparing against min(integer(0)) = Inf.
   sens <- grep("label: sensitivity", tpl, fixed = TRUE)
   expect_length(sens, 1L)
-  grid_fit <- grep(".at_cell(i, cache_fit)", tpl, fixed = TRUE)
+  grid_fit <- grep(".at_cell(i, fit = TRUE)", tpl, fixed = TRUE)
   expect_length(grid_fit, 1L)
   expect_gt(guards[[2L]], sens)
   expect_lt(guards[[2L]], grid_fit)
