@@ -484,6 +484,34 @@ test_that("a pid reused by another process is not signalled, and the run is reco
   expect_output(job_status(job), "ended without recording an end", fixed = TRUE)
 })
 
+test_that("a slow start whose runner carries the marker reads submitted past two minutes, and vanished once it dies", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  marker <- sprintf("PSHVTItest%d_%d", Sys.getpid(), as.integer(Sys.time()) - 5L)
+  # Not /bin/sleep: macOS hides a platform binary's environment, so its marker could not be found there.
+  b <- bystander(sprintf("export %s=YES; exec %s -e \"Sys.sleep(60)\"", marker, shQuote(file.path(R.home("bin"), "Rscript"))))
+  # Until sh has exec'd into Rscript the marker is on no readable process.
+  for (i in 1:100) {
+    if (length(ps::ps_find_tree(marker))) break
+    Sys.sleep(0.1)
+  }
+  here <- Sys.info()[["nodename"]]
+  submitted <- function(host = here) {
+    .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
+                  host = host)
+  }
+  submitted()
+  expect_identical(job_status(job, quiet = TRUE)$state, "submitted")
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "already running")
+  # Another host's processes cannot be looked for from here, so the two-minute window decides there.
+  submitted("elsewhere.invalid")
+  expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
+  submitted()
+  ps::ps_kill(b$h)
+  expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
+})
+
 test_that("a submission that never started is recorded failed, saying so", {
   local_mocked_bindings(.is_windows = function() FALSE)  # no process is signalled: only the records are read
   job <- status_job()

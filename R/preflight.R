@@ -272,7 +272,8 @@
   for (job in jobs) {
     st <- tryCatch(job_status(job, quiet = TRUE), error = function(e) NULL)  # an unreadable file must not stop preflight
     # "submitted" too: between submit_job() and its runner recording "running", a second job would pass and then fail on
-    # Quarto's lock. job_status() reads a submit older than 120 s as vanished, so an unstarted one stops blocking.
+    # Quarto's lock. job_status() reads a submit older than 120 s whose marker is on no live process as vanished, so an
+    # unstarted one stops blocking.
     if (!is.null(st) && st$state %in% c("running", "submitted")) running[[job]] <- st
   }
   rel_of <- function(job) .study_rel(job, root)

@@ -203,7 +203,10 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
   }
   if (identical(st$state, "submitted")) {
     at <- as.POSIXct(st$submitted, format = "%Y-%m-%dT%H:%M:%S%z")
-    if (is.na(at) || difftime(Sys.time(), at, units = "secs") > 120) {
+    # Two minutes without "running" is read as never started, unless the run's marker is on a live process here: a
+    # slow .Rprofile or renv start on a loaded share can take longer, and reading it as vanished would let a second
+    # copy be submitted. Another host's processes cannot be looked for from this one, so there the window decides.
+    if ((is.na(at) || difftime(Sys.time(), at, units = "secs") > 120) && !.submitted_alive(st)) {
       st$state <- "vanished"
       never_started <- TRUE
     }
@@ -308,6 +311,14 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
   invisible(files$lock)
 }
 
+# Whether a submitted run is still starting: its marker, written into the submitted record, is on a live process on
+# this host. A record with no marker, from before submit_job() wrote one, or from another host, is not looked for.
+.submitted_alive <- function(st) {
+  host <- st$host
+  here <- !(is.character(host) && length(host) == 1L && !is.na(host) && !identical(host, Sys.info()[["nodename"]]))
+  here && .is_marker(st$marker) && length(tryCatch(ps::ps_find_tree(st$marker), error = function(e) list())) > 0L
+}
+
 # Wrapped so tests can capture the command; wait = FALSE appends the "&" itself.
 .launch <- function(cmd) system(cmd, wait = FALSE)
 
@@ -336,14 +347,16 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
   writeLines(.runner_lines(path, files$status, final, render_call, extra), files$runner)
   # The last run's progress is not this one's; job_status() would report it until the render writes its own.
   unlink(files$progress)
-  do.call(.write_status, c(list(files$status, state = "submitted", submitted = .stamp()), extra))
-  setsid <- if (nzchar(Sys.which("setsid"))) "setsid " else ""
   # Every process the render starts inherits the marker, including those processx moves into a session of its own
   # (Quarto, knitr) and those a dead parent orphans, so cancel_job() finds them all by it. ps::ps_find_tree() reads
   # it as PS<id>_<epoch>, matching only processes created after <epoch>. Built without the RNG, which is the study's.
   now <- Sys.time()
   marker <- sprintf("PSHVTI%d%s_%d", Sys.getpid(), format(now, "%H%M%OS6"), as.integer(now))
   marker <- gsub("[^A-Za-z0-9_]", "", marker)
+  # The marker and host go into the submitted record, so job_status() can tell a slow start from a dead one.
+  do.call(.write_status, c(list(files$status, state = "submitted", submitted = .stamp(), marker = marker,
+                                host = Sys.info()[["nodename"]]), extra))
+  setsid <- if (nzchar(Sys.which("setsid"))) "setsid " else ""
   # HVTI_RUN_R names the R that submitted the job; .job_setup() stops the render if Quarto's knitr runs on another.
   # HVTI_RUN_R_VERSION gives its version, so the refusal can name both Rs by version as well as by path.
   cmd <- sprintf(paste0("cd %s && %s=YES HVTI_JOB_MARKER=%s HVTI_RUN_R=%s HVTI_RUN_R_VERSION=%s && ",
@@ -567,7 +580,8 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
   }
   if (identical(st$state, "submitted")) {
     stop("cancel_job(): ", basename(path), " was submitted and its process has not recorded itself yet; cancel it ",
-         "again once job_status() reads running, or after two minutes, when an unstarted submission reads vanished.",
+         "again once job_status() reads running, or once it reads vanished: an unstarted submission does after two minutes ",
+         "with no process carrying its marker.",
          call. = FALSE)
   }
   # Without a creation time the recorded pid cannot be told from a later process that reuses it. A render started
