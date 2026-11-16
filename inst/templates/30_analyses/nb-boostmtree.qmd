@@ -170,9 +170,13 @@ JOIN_KEY <- NULL
 # "binary", "ordinal" or "nominal".
 # A skewed continuous response (a gradient, a lab value) is a choice to make
 # here, not later. "continuous" is squared-error boosting, so a fit on the raw
-# scale is sensitive to its outliers. A fit on log(y) is not, but its fitted
-# values and effects are then medians on the raw scale, not means, and boosting
-# has no forest weights to average raw y with: getting back to raw means needs a
+# scale is sensitive to its outliers. A fit on log(y) is less so, but it
+# estimates the conditional mean of log(y): exponentiated, its fitted values and
+# effects are geometric means on the raw scale, not arithmetic means. They are
+# medians only if, given the predictors and time, the log-scale error is
+# symmetric (its mean equals its median), as under a lognormal model; do not
+# call them medians without saying so. Boosting has no forest weights to average
+# raw y with, so getting back to arithmetic means needs a
 # retransformation (Duan's smearing), whose factor usually has to change with
 # time, because residual variance changes along the trajectory. This template
 # does not retransform. Either fit the raw scale and accept the outlier
@@ -769,7 +773,8 @@ if (isTRUE(SENSITIVITY)) {
 fit <- hvtiRtemplates:::.attach_handoff_lineage(
   fit,
   data = .provenance_data,
-  analysis = list(response = .response, time = .time, family = FAMILY, M = M, nu = NU, k = K, n_knots = N_KNOTS),
+  analysis = list(response = .response, time = .time, family = FAMILY, M = M, nu = NU, k = K, n_knots = N_KNOTS,
+                  mtry = if (is.null(MTRY)) "all" else MTRY),
   cohort = list(n_patients = length(unique(.patient)), n_visits = nrow(d)),
   selection = attr(job_data$record, "selection")
 )
@@ -786,7 +791,8 @@ cat(hvtiRtemplates:::.embed_provenance(
   run = .job$run,
   extra = list(
     subject = SUBJECT, type = TYPE,
-    analysis = list(response = .response, time = .time, family = FAMILY, M = M, nu = NU, k = K, n_knots = N_KNOTS),
+    analysis = list(response = .response, time = .time, family = FAMILY, M = M, nu = NU, k = K, n_knots = N_KNOTS,
+                    mtry = if (is.null(MTRY)) "all" else MTRY),
     cohort = list(n_patients = length(unique(.patient)), n_visits = nrow(d))
   )
 ))

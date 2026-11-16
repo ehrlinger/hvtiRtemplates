@@ -193,6 +193,21 @@ test_that("the saved fit carries the selection in its lineage", {
   expect_identical(sel$key, c("ccfid", "iv_echo"))
 })
 
+test_that("the saved fit's lineage records MTRY, as \"all\" for NULL and as given otherwise", {
+  nb_skip_unless_stack()
+  saved_analysis <- function(choices) {
+    root <- nb_study()
+    nb_fit_in(root, choices = choices)
+    attr(readRDS(file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree.rds")),
+         "hvti_provenance")$analysis
+  }
+  default <- saved_analysis(nb_choices())
+  expect_identical(default$mtry, "all")
+  expect_identical(default$k, 5)
+  expect_identical(default$n_knots, 10)
+  expect_identical(saved_analysis(nb_choices(MTRY = 2L))$mtry, 2L)
+})
+
 test_that("the cache is reused unchanged, and a changed setting stops until REFIT", {
   nb_skip_unless_stack()
   root <- nb_study()
@@ -476,6 +491,7 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   set_choice("^RESPONSE <- ", "RESPONSE <- \"lvef\"")
   set_choice("^M  <- ", "M  <- 5")
   set_choice("^N_TRACES <- ", "N_TRACES <- 10")
+  set_choice("^MTRY <- ", "MTRY <- 2L")
   set_choice("^CORES <- ", paste0("CORES <- ", nb_cores, "L"))
   # EDIT: markers remain, so this renders as a draft, with its warning and banner.
   log <- utils::capture.output(render_job(job, quiet = FALSE))
@@ -495,6 +511,10 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   expect_identical(payload$type, "boost")
   expect_identical(payload$analysis$response, "lvef")
   expect_identical(payload$analysis$family, "continuous")
+  # The tuning choices, MTRY included, are in the page's provenance, not only in its fit table.
+  expect_equal(payload$analysis$mtry, 2)
+  expect_equal(payload$analysis$k, 5)
+  expect_equal(payload$analysis$n_knots, 10)
   expect_identical(payload$cohort$n_patients, length(unique(data$MRN)))
   expect_true(file.exists(sub("[.]qmd$", ".provenance.json", job)))
   # The fit and the effects each recorded how far they got.
@@ -553,12 +573,28 @@ test_that("the nb-boostmtree fit chunk guards memory before cache_fit()", {
   expect_length(guards, 2L)
   fit <- guards[[1L]]
   expect_lt(fit, min(cache[cache > fit]))
-  sens <- grep("label: sensitivity", tpl, fixed = TRUE)
-  expect_true(guards[[2L]] > sens && guards[[2L]] < min(cache[cache > sens]))
   # Not inside an if (): a cached rerender must still record the check run_job() waits for.
   expect_match(tpl[fit], "^hvtiRtemplates::guard_memory\\(")
   # The refusal names the counts the estimate was made from (spec section 5.2).
   expect_match(paste(tpl[fit:(fit + 3L)], collapse = " "), "patients.*visits", perl = TRUE)
+  # The grid fits through .at_cell(i, cache_fit), not a literal cache_fit( call; require that call to be found,
+  # so a guard moved after it fails here rather than comparing against min(integer(0)) = Inf.
+  sens <- grep("label: sensitivity", tpl, fixed = TRUE)
+  expect_length(sens, 1L)
+  grid_fit <- grep(".at_cell(i, cache_fit)", tpl, fixed = TRUE)
+  expect_length(grid_fit, 1L)
+  expect_gt(guards[[2L]], sens)
+  expect_lt(guards[[2L]], grid_fit)
+})
+
+test_that("the saved lineage and the report provenance record the same tuning choices", {
+  tpl <- readLines(nb_template(), warn = FALSE)
+  # Each analysis = list(...) block, joined with its continuation line.
+  at <- grep("analysis = list(response = .response", tpl, fixed = TRUE)
+  expect_length(at, 2L)
+  blocks <- vapply(at, function(i) paste(trimws(tpl[i:(i + 1L)]), collapse = " "), "")
+  expect_identical(blocks[[1L]], blocks[[2L]])
+  expect_match(blocks[[1L]], 'mtry = if (is.null(MTRY)) "all" else MTRY', fixed = TRUE)
 })
 
 test_that("K and N_KNOTS reach boostmtree() as k and n.knots", {
