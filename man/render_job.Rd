@@ -82,6 +82,17 @@ class \code{hvtiRtemplates_quarto_crashed} that says Quarto crashed, not the
 job, and that rendering again usually works. The original error is kept as
 its parent.
 
+On a network share Quarto can fail after every chunk has run, unable to
+remove the job's \code{_files/execute-results} folder ("Directory not empty
+(os error 39)"), because it deletes a file there before the share has let go
+of it. A render that fails with that error, read from Quarto's own message or
+from what the render added to the job's run log, is rendered once more, with a
+message saying so; the job runs twice, which for a long fit means twice the
+time. Any other failure is passed through unchanged, and nothing is deleted. A
+second such failure stops with an error of class
+\code{hvtiRtemplates_execute_results_stuck}. Rendering from the RStudio
+Render button does not go through \code{render_job()} and is not retried.
+
 One job renders at a time in a study. A render started while another is
 still running in the same study stops with a message naming the running
 Quarto process; render again once it finishes. A lock left by a render that
