@@ -392,31 +392,34 @@ environment(model) <- globalenv()
 # is written owner-only from the start, and set so if an older cache is already
 # there. The search's cache holds results only, and is kept owner-only beside it.
 .cache_files <- file.path(CACHE_DIR, c("rhf-treesize.rds", "rhf-forest.rds"))
-# Hours at study size. Started from the console it dies with the session, so an
-# uncached fit is refused there: run the job with hvtiRtemplates::run_job().
-hvtiRtemplates::guard_long_fit("rhf-forest", dir = CACHE_DIR,
-                               why = "a hazard forest on every interval of follow-up takes hours at study size",
-                               refit = REFIT)
+# Hours at study size. Started from the console, the Render button or a terminal it dies with the
+# session, so a search or forest that will be computed is refused there: run the job with
+# hvtiRtemplates::run_job(). Each call is quoted once, so the check and cache_fit() read the same
+# call; a cache_fit() of a quoted call keys the call, so a fit cached before this was quoted still
+# loads. A current cache loads even under REFIT, so it is never refused.
 if (is.null(TREESIZE)) {
-  hvtiRtemplates::guard_long_fit("rhf-treesize", dir = CACHE_DIR,
-                                 why = "the tree-size search grows a forest at each size it tries",
-                                 refit = REFIT)
-  tuned <- hvtiRtemplates:::.owner_only(.cache_files, cache_fit(
-    "rhf-treesize",
-    tune.treesize.rhf(model, .fit_data, ntree = NTREE, perf = "risk", seed = abs(SEED), verbose = FALSE,
-                      forest = FALSE),
-    seed = SEED, dir = CACHE_DIR, refit = REFIT
-  ))
+  .tune_code <- quote(tune.treesize.rhf(model, .fit_data, ntree = NTREE, perf = "risk", seed = abs(SEED),
+                                        verbose = FALSE, forest = FALSE))
+  if (hvtiRutilities::cache_would_fit("rhf-treesize", .tune_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)) {
+    hvtiRtemplates::guard_long_fit("rhf-treesize", dir = CACHE_DIR,
+                                   why = "the tree-size search grows a forest at each size it tries",
+                                   refit = REFIT)
+  }
+  tuned <- hvtiRtemplates:::.owner_only(.cache_files,
+                                        cache_fit("rhf-treesize", .tune_code, seed = SEED, dir = CACHE_DIR, refit = REFIT))
   .treesize <- tuned$best.size
 } else {
   tuned <- NULL
   .treesize <- TREESIZE
 }
-forest <- hvtiRtemplates:::.owner_only(.cache_files, cache_fit(
-  "rhf-forest",
-  rhf(model, data = .fit_data, ntree = NTREE, treesize = .treesize, seed = -abs(SEED)),
-  seed = SEED, dir = CACHE_DIR, refit = REFIT
-))
+.forest_code <- quote(rhf(model, data = .fit_data, ntree = NTREE, treesize = .treesize, seed = -abs(SEED)))
+if (hvtiRutilities::cache_would_fit("rhf-forest", .forest_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)) {
+  hvtiRtemplates::guard_long_fit("rhf-forest", dir = CACHE_DIR,
+                                 why = "a hazard forest on every interval of follow-up takes hours at study size",
+                                 refit = REFIT)
+}
+forest <- hvtiRtemplates:::.owner_only(.cache_files,
+                                       cache_fit("rhf-forest", .forest_code, seed = SEED, dir = CACHE_DIR, refit = REFIT))
 forest
 ```
 

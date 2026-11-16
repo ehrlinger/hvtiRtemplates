@@ -113,11 +113,16 @@ not use it on a guess.
 
 Two guards in the templates catch the mistake at the moment it would cost you.
 
-**`guard_long_fit()`** sits just before an expensive fit. In the console, or running
-chunks one by one, with no cached result yet, it stops and tells you to use
-`submit_job()`, because the fit would die with your session. A render passes, and so
-does a cached result, which is why the chunks run interactively once the fit has been
-done. `nb-boostmtree` calls it today.
+**`guard_long_fit()`** sits just before an expensive fit, and acts only when the fit
+would be computed rather than loaded from its cache. Then it stops anything but a
+render `run_job()` started: the console, chunks run one by one, the Render button, and
+a `quarto render` typed in the Workbench Terminal, which is a child of your session
+too, `nohup` or not. It names the `run_job()` call to use, because the fit would die
+with your session. A cached result passes, so once `run_job()` has done the fit, the
+Render button and the chunks work again and load it, even with `REFIT` left `TRUE`.
+The long-fit templates (`nb-boostmtree`, the `rf*` and `rhf` forests, `sid-stability`)
+call it. For a fit you know to be short, `options(hvtiRtemplates.allow_interactive_fit = TRUE)`
+lets it through.
 
 **`guard_memory()`** sits at the top of a fit chunk, with the memory the fit is
 expected to need. It reads your session's limit and stops, in the first minutes of the

@@ -334,12 +334,6 @@ if (!is.null(job_data$attrition)) {
 # several places, its base learners included, and every one of them is saved
 # with it. A digest still groups the visits; it cannot be read back.
 CACHE_DIR <- dirname(set_path("estimates", "nb-boostmtree.rds"))
-# The fit runs for hours at study size. Started from the console it dies with
-# the session, so an uncached fit is refused there: run the job with
-# hvtiRtemplates::run_job() instead. Once cached, these chunks load it.
-hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
-                               why = "a cross-validated boostmtree fit takes hours at study size",
-                               refit = REFIT)
 .patient <- hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root))
 # The fit, quoted once so the memory check below and cache_fit() read the same call: a
 # cache_fit() of a quoted call keys the call, so a fit cached before this was quoted still loads.
@@ -365,6 +359,13 @@ hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
 # unconditional, so a cached rerender still records the memory check that run_job() waits for.
 .need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(.patient)), nrow(d), FAMILY, k, M)
 .fitting <- hvtiRutilities::cache_would_fit("nb-boostmtree-fit", .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
+# The fit runs for hours at study size. Started from the console, the Render button or a terminal
+# it dies with the session, so a fit that will be computed is refused there: run the job with
+# hvtiRtemplates::run_job() instead. Once cached, the Render button and these chunks load it.
+if (.fitting) {
+  hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
+                                 why = "a cross-validated boostmtree fit takes hours at study size", refit = REFIT)
+}
 hvtiRtemplates::guard_memory(if (.fitting) .need(CORES) else 0,
                              sprintf("this boostmtree fit (%s patients, %s visits, %s)",
                                      format(length(unique(.patient)), big.mark = ","), format(nrow(d), big.mark = ","),
