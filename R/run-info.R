@@ -219,7 +219,12 @@
   if (!is.null(source) && is.null(release) && is.null(found$version_file)) {
     return(list(name = dataset, kind = "data", version_file = source, working = TRUE))
   }
-  c(list(name = dataset, kind = "data", how = "dated"), found)
+  # The box prints before the data are read, so it asks hvtiRutilities itself whether the source
+  # has been rebuilt since this version was registered. read_built() asks the same question, but
+  # its answer reaches the report only in the end table, where nobody looked (training 2026-11-16).
+  # An older hvtiRutilities has no source_changed(); the box then says nothing rather than fail.
+  newer <- !is.null(cfg) && isTRUE(tryCatch(hvtiRutilities::source_changed(cfg, dataset), error = function(e) FALSE))
+  c(list(name = dataset, kind = "data", how = "dated", newer = newer), found)
 }
 
 # ---- The top box -------------------------------------------------------------
@@ -233,7 +238,8 @@
   } else {
     paste0(dataset$kind, " `", dataset$name, "`", if (!is.null(dataset$version_file)) paste0(" `", dataset$version_file, "`"),
            if (!is.null(dataset$registered)) paste0(", ", dataset$how, " ", dataset$registered),
-           if (isTRUE(dataset$working)) ", working read, not a registered version")
+           if (isTRUE(dataset$working)) ", working read, not a registered version",
+           if (isTRUE(dataset$newer)) ", **a newer build is waiting**: register it with `hvtiRutilities::update_manifest()`")
   }
   who <- paste0("rendered by ", .md_text(.who(run$user, run$user_name)), " on ", .md_text(run$host))
   line <- paste(c(state, data, who, paste0("hvtiRtemplates ", .package_version())), collapse = " \u00b7 ")

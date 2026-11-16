@@ -1,0 +1,27 @@
+processing file: job.qmd
+output file: job.knit.md
+
+
+ERROR: Directory not empty (os error 39): remove '<tmp>/descriptive/job_files/execute-results'
+
+Stack trace:
+    at Object.removeSync (ext:deno_fs/30_fs.js:250:3)
+    at safeRemoveSync (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:3228:10)
+    at removeIfExists (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:7970:5)
+    at removeFreezeResults (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:136700:3)
+    at renderExecute (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:136863:5)
+    at async renderFileInternal (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:137094:35)
+    at async renderFiles (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:136884:9)
+    at async renderProject (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:137468:23)
+    at async _Command.actionHandler (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:142798:24)
+    at async _Command.execute (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:102189:7)
+    at async _Command.parseCommand (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:102066:14)
+    at async quarto4 (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:188195:5)
+    at async file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:188224:5
+    at async file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:188078:14
+    at async mainRunner (file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:188080:5)
+    at async file:///usr/lib/rstudio-server/bin/quarto/bin/quarto.js:188217:3
+Error: ! Error running quarto CLI from R.
+Caused by error:
+  Internal error in `cli::ansi_strwrap()`
+Execution halted

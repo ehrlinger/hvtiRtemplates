@@ -48,6 +48,17 @@
 #' job, and that rendering again usually works. The original error is kept as
 #' its parent.
 #'
+#' On a network share Quarto can fail after every chunk has run, unable to
+#' remove the job's \code{_files/execute-results} folder ("Directory not empty
+#' (os error 39)"), because it deletes a file there before the share has let go
+#' of it. A render that fails with that error, read from Quarto's own message or
+#' from what the render added to the job's run log, is rendered once more, with a
+#' message saying so; the job runs twice, which for a long fit means twice the
+#' time. Any other failure is passed through unchanged, and nothing is deleted. A
+#' second such failure stops with an error of class
+#' \code{hvtiRtemplates_execute_results_stuck}. Rendering from the RStudio
+#' Render button does not go through \code{render_job()} and is not retried.
+#'
 #' One job renders at a time in a study. A render started while another is
 #' still running in the same study stops with a message naming the running
 #' Quarto process; render again once it finishes. A lock left by a render that
@@ -132,17 +143,86 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
   old_out <- Sys.getenv("HVTI_OUTPUT_FILE", unset = NA)
   on.exit(if (is.na(old_out)) Sys.unsetenv("HVTI_OUTPUT_FILE") else Sys.setenv(HVTI_OUTPUT_FILE = old_out), add = TRUE)
   if (is.null(output_file)) Sys.unsetenv("HVTI_OUTPUT_FILE") else Sys.setenv(HVTI_OUTPUT_FILE = output_file)
+  log <- .run_files(.run_key(path, output_file))$log
   render <- function() {
     quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet, execute_params = params,
                           output_file = output_file)
   }
-  tryCatch(render(), error = function(e) {
-    if (!.quarto_crashed(e)) stop(e)
-    .abort("render_job(): Quarto crashed before rendering ", basename(path), "; the job itself did not fail.\n",
-           "Its Deno runtime was killed by a signal, most often a crash as it starts. Render the job again.",
-           class = "quarto_crashed", parent = e)
+  attempt <- function() {
+    from <- .file_size(log)
+    tryCatch(render(), error = function(e) {
+      if (.quarto_crashed(e)) {
+        .abort("render_job(): Quarto crashed before rendering ", basename(path), "; the job itself did not fail.\n",
+               "Its Deno runtime was killed by a signal, most often a crash as it starts. Render the job again.",
+               class = "quarto_crashed", parent = e)
+      }
+      if (.execute_results_race(e, log, from, .execute_results_dir(path))) {
+        .abort("Quarto could not remove execute-results.", class = "execute_results_race", parent = e)
+      }
+      stop(e)
+    })
+  }
+  tryCatch(attempt(), hvtiRtemplates_execute_results_race = function(e) {
+    .hvti_inform("render_job(): every chunk ran, then Quarto could not remove ", .execute_results_dir(path),
+                 " (Directory not empty): the network share had not yet let go of a file it had just written. ",
+                 "Rendering again.")
+    tryCatch(attempt(), hvtiRtemplates_execute_results_race = function(e2) {
+      .abort("render_job(): Quarto could not remove ", .execute_results_dir(path),
+             " twice (Directory not empty); the job itself did not fail.\n",
+             "Something on the share still holds a file there; find it with `lsof +D` on the folder.\n",
+             "Delete the folder and render the job again.",
+             class = "execute_results_stuck", parent = e2$parent)
+    })
   })
   invisible(path)
+}
+
+# In a project render Quarto writes <stem>_files/execute-results/, copies it to the freezer and deletes it at once.
+# On the NFS study share the delete can come before the share lets go of the new file, which leaves a hidden .nfs*
+# entry and fails the render with "Directory not empty (os error 39)" after every chunk has run. Only that error, on
+# that folder, is the race: the folder alone is not evidence, since a failure earlier in Quarto's freezer step (a
+# read-only _freeze/, a full disk) leaves it too, and nothing here deletes it, since another render of the job may
+# own it. Quarto's stderr is kept on the processx error in the condition chain, unless cli fails while wrapping it,
+# as it did on lri, so the lines this attempt added to the run log are read as well.
+.execute_results_dir <- function(path) {
+  file.path(dirname(path), paste0(tools::file_path_sans_ext(basename(path)), "_files"), "execute-results")
+}
+
+# TRUE when `text` holds Quarto's own refusal to remove `expected`: the "remove '<path>'" form Quarto prints, naming
+# this job's folder. Two substrings are not enough: another document's folder, or a job's own error that happens to
+# mention both words, would rerun the whole job and be reported as this race.
+.is_execute_results_race <- function(text, expected) {
+  text <- unlist(strsplit(text, "\n", fixed = TRUE))
+  m <- regmatches(text, regexec("ERROR: Directory not empty \\(os error 39\\): remove '([^']+)'", text))
+  removed <- vapply(m, function(x) if (length(x) == 2L) x[2L] else NA_character_, character(1L))
+  # The folder may be gone by now, and normalizePath() leaves a missing path's symlinked parents unresolved, so resolve
+  # the job's directory, which exists, and compare the two names below it as written.
+  key <- function(p) {
+    c(normalizePath(dirname(dirname(p)), winslash = "/", mustWork = FALSE), basename(dirname(p)), basename(p))
+  }
+  same <- function(a) identical(key(a), key(expected))
+  any(vapply(removed[!is.na(removed)], same, logical(1L)))
+}
+
+.execute_results_race <- function(e, log, from, expected) {
+  while (!is.null(e)) {
+    text <- c(if (is.character(e$stderr)) e$stderr, tryCatch(conditionMessage(e), error = function(x) ""))
+    if (.is_execute_results_race(text, expected)) return(TRUE)
+    e <- e$parent
+  }
+  size <- .file_size(log)
+  if (size <= from) return(FALSE)
+  con <- file(log, "rb")
+  on.exit(close(con))
+  seek(con, from)
+  added <- strsplit(rawToChar(readBin(con, "raw", size - from)), "\n")[[1L]]
+  last <- utils::tail(grep("^ERROR: ", gsub("\033\\[[0-9;]*m", "", added), value = TRUE, useBytes = TRUE), 1L)
+  length(last) == 1L && .is_execute_results_race(last, expected)
+}
+
+.file_size <- function(path) {
+  size <- file.size(path)
+  if (is.na(size)) 0 else size
 }
 
 # Did Quarto's Deno runtime die, rather than the job fail? The quarto launcher

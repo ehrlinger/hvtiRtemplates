@@ -152,6 +152,22 @@ test_that("a build with no dated version is a working read in the box, HVTI_DATA
   expect_false(grepl(", dated", box, fixed = TRUE))
 })
 
+test_that("the box says when a newer build is waiting to be registered", {
+  # The training render of 2026-11-16 read the registered version of a rebuilt dataset and said so
+  # only in the end table. The box, the one line everyone reads, now says it.
+  withr::local_envvar(HVTI_DATA = NA)
+  s <- box_of("DATASET <- \"built\"")
+  expect_match(s$box, ", dated ", fixed = TRUE)
+  expect_false(grepl("newer build", s$box, fixed = TRUE))
+  src <- hvtiRutilities::built_path(hvtiRutilities::study_config(s$root))
+  cat("\n", file = src, append = TRUE)
+  ds <- hvtiRtemplates:::.box_dataset(s$root, s$job)
+  expect_true(ds$newer)
+  box <- hvtiRtemplates:::.run_box(list(state = "final", user = "u", host = "h"), ds)
+  expect_match(box, "**a newer build is waiting**: register it with `hvtiRutilities::update_manifest()`", fixed = TRUE)
+  expect_match(box, ", dated ", fixed = TRUE)
+})
+
 test_that("the box reads the SELECTED dataset's release pin, not the default dataset's", {
   withr::local_envvar(HVTI_DATA = NA)
   s <- box_of("DATASET <- \"echo\"")

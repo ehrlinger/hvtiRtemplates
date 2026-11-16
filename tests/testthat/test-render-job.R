@@ -158,3 +158,156 @@ test_that(".quarto_crashed needs the exact pair, not the token", {
   e <- tryCatch(processx::run("sh", c("-c", "exit 200")), error = function(e) e)
   expect_false(hvtiRtemplates:::.quarto_crashed(e))
 })
+
+race_error <- function(dir) {
+  paste0("Error returned by quarto CLI.\nERROR: Directory not empty (os error 39): remove '",
+         file.path(dir, "job_files", "execute-results"), "'")
+}
+
+test_that("render_job renders once more when Quarto reports the execute-results race, and says why", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    if (calls == 1L) stop(race_error(dir))
+    invisible(NULL)
+  }, .package = "quarto")
+
+  expect_message(render_job(job), "Directory not empty")
+  expect_identical(calls, 2L)
+})
+
+test_that("render_job gives up after a second race, with its own class and the original error kept", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    stop(race_error(dir))
+  }, .package = "quarto")
+
+  e <- expect_error(suppressMessages(render_job(job)), class = "hvtiRtemplates_execute_results_stuck")
+  expect_match(conditionMessage(e), "Delete the folder", fixed = TRUE)
+  expect_match(conditionMessage(e$parent), "os error 39", fixed = TRUE)
+  expect_identical(calls, 2L)
+})
+
+test_that("a Quarto error that only leaves execute-results behind is passed through, not retried", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  results <- file.path(dir, "job_files", "execute-results")
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    dir.create(results, recursive = TRUE, showWarnings = FALSE)
+    stop("ERROR: PermissionDenied: project freezer is read-only")
+  }, .package = "quarto")
+
+  expect_error(render_job(job), "freezer is read-only", fixed = TRUE)
+  expect_identical(calls, 1L)
+})
+
+test_that("an os error 39 on another document's execute-results is not this job's race", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  other <- "ERROR: Directory not empty (os error 39): remove '/other/other_files/execute-results'"
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    stop(other)
+  }, .package = "quarto")
+
+  expect_error(render_job(job), "/other/other_files", fixed = TRUE)
+  expect_identical(calls, 1L)
+})
+
+test_that("a job's own error that mentions os error 39 and execute-results is not the race", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    stop("chunk `clean`: could not tidy execute-results after os error 39 in ", file.path(dir, "job_files"))
+  }, .package = "quarto")
+
+  expect_error(render_job(job), "chunk `clean`", fixed = TRUE)
+  expect_identical(calls, 1L)
+})
+
+test_that("the race matches this job's folder through a symlinked study path, existing or not", {
+  real <- withr::local_tempdir()
+  link <- file.path(withr::local_tempdir(), "study")
+  # Windows may refuse a symlink; the test then runs on the real path rather than skipping.
+  if (!suppressWarnings(file.symlink(real, link))) link <- real
+  expected <- .execute_results_dir(file.path(normalizePath(real), "job.qmd"))
+  line <- function(d) paste0("ERROR: Directory not empty (os error 39): remove '", file.path(d, "job_files", "execute-results"), "'")
+  expect_true(.is_execute_results_race(line(link), expected))
+  dir.create(file.path(real, "job_files", "execute-results"), recursive = TRUE)
+  expect_true(.is_execute_results_race(line(link), expected))
+  expect_false(.is_execute_results_race(line(file.path(real, "sub")), expected))
+})
+
+test_that("render_job deletes no execute-results folder, which another render of the job may own", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  active <- file.path(dir, "job_files", "execute-results", "html.json")
+  dir.create(dirname(active), recursive = TRUE)
+  writeLines("{}", active)
+  local_mocked_bindings(quarto_render = function(...) {
+    expect_true(file.exists(active))
+    invisible(NULL)
+  }, .package = "quarto")
+
+  render_job(job)
+  expect_true(file.exists(active))
+})
+
+test_that("the race is read from the run log when the error chain lost Quarto's message", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  log <- file.path(dir, "job.run.log")
+  writeLines("an earlier run's output", log)
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    if (calls == 1L) {
+      cat("\033[91m", sub("^[^\n]*\n", "", race_error(dir)), "\033[39m\n\nStack trace:\n", file = log, append = TRUE, sep = "")
+      stop("Internal error in `cli::ansi_strwrap()`")
+    }
+    invisible(NULL)
+  }, .package = "quarto")
+
+  expect_message(render_job(job), "Directory not empty")
+  expect_identical(calls, 2L)
+})
+
+test_that("a race already in the run log before this render began is not read as this render's", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  writeLines(sub("^[^\n]*\n", "", race_error(dir)), file.path(dir, "job.run.log"))
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    stop("chunk failed")
+  }, .package = "quarto")
+
+  expect_error(render_job(job), "chunk failed")
+  expect_identical(calls, 1L)
+})
