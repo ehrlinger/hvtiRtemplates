@@ -522,7 +522,7 @@ save_figure(.fig, "rfs-fit-learning-stability")
 
 ```{r}
 #| label: fig-learning-error
-#| fig-cap: "Out-of-bag error (1 - C-index) by the number of deaths in each refit. Grey points are single refits and the
+#| fig-cap: "Out-of-bag error (1 - C-index) by the number of deaths in each refit. Gray points are single refits and the
 #|   black line their mean. Open circles have fewer than 50 deaths, too few for their error to be trusted."
 .fig <- plot(learning, panel = "error") +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
