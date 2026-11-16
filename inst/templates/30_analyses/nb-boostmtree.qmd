@@ -194,12 +194,14 @@ PREDICTORS <- NULL
 # EDIT: the learning rate and the most boosting iterations. NU is the main
 # lever: fix it, and let cross-validation choose how many of the M iterations to
 # use (Best M, reported below). 0.05 is the reference; 0.01 suits small or
-# noisy data, and needs about five times the M. M is a ceiling, not a choice:
-# set it well above where Best M will land. boostmtree's own default of 200 is
-# too low for clinical longitudinal data and stops silently before the optimum
-# (one study of 1,391 patients chose Best M = 751 at NU = 0.05). The report says
-# so when Best M lands within the last tenth of M.
-M  <- 1000
+# noisy data, and needs about five times the M. M is a ceiling: the fit stops
+# using iterations at Best M, but every one up to M is paid for. boostmtree's own
+# default of 200 is too low for clinical longitudinal data. One study of 1,391
+# patients (4,771 visits) at NU = 0.05 fitted M = 1000 and chose Best M = 751;
+# its cross-validated error at 500 was 0.3% above that best and at 250 1.1%, so
+# 500 was enough at half the time. The report says when the error was still
+# falling at M by enough to matter.
+M  <- 500
 NU <- 0.05
 
 # EDIT: terminal nodes per tree, and B-spline knots for the time effect. Both
@@ -472,22 +474,30 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 #| label: fit-checks
 #| results: asis
 # Two ways a fit looks finished and is not, said in the report, not left to the
-# figures. Best M in the last tenth of M: the error was still falling when the
-# fit stopped. lambda at boostmtree's ceiling at Best M: the penalty estimate
+# figures. Best M in the last tenth of M with the error still falling: it fell
+# by more than 0.1% over that last tenth. Best M near M alone is not enough, as
+# the curve flattens long before it turns: in the study the M comment above
+# describes, M = 500 put Best M at 498 while the error fell 0.095% over its last
+# tenth and sat 0.3% above the best a longer fit found. The 0.1% is calibrated on
+# that one fit. lambda at boostmtree's ceiling at Best M: the penalty estimate
 # ran away, a sign of a flat trajectory or too many knots for the visit times.
 .lambda_max <- formals(boostmtree::boostmtree)$lambda.max
 .lambda <- as.matrix(fit$lambda)
+.tenth <- max(1L, floor(0.9 * M))
+.last_drop <- vapply(.err, function(e) e[.tenth, "l2"] / e[M, "l2"] - 1, numeric(1L))
 fit_checks <- data.frame(
   component = fit_summary$component,
-  m_at_edge = fit_summary$best_m > 0.9 * M,
+  last_tenth_drop = .last_drop,
+  m_at_edge = fit_summary$best_m > 0.9 * M & .last_drop > 0.001,
   lambda_at_max = vapply(seq_along(fit$m.opt), function(j) {
     isTRUE(.lambda[fit$m.opt[[j]], min(j, ncol(.lambda))] >= .lambda_max)
   }, logical(1L))
 )
 .warn <- function(text) cat("::: {.callout-warning}\n", text, "\n:::\n\n", sep = "")
 for (.c in fit_checks$component[fit_checks$m_at_edge]) {
-  .warn(sprintf(paste("Best M for %s is in the last tenth of the %s iterations fitted, so the error may still have",
-                      "been falling. Raise M and refit."), .c, M))
+  .warn(sprintf(paste("Best M for %s is in the last tenth of the %s iterations fitted, and the cross-validated error",
+                      "fell %.2f%% over that tenth, so it was still falling. Raise M and refit."),
+                .c, M, 100 * fit_checks$last_tenth_drop[fit_checks$component == .c]))
 }
 for (.c in fit_checks$component[fit_checks$lambda_at_max]) {
   .warn(sprintf(paste("The smoothing parameter lambda for %s reached boostmtree's ceiling (%g) at Best M. The",

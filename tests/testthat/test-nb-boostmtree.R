@@ -598,12 +598,22 @@ test_that("the report warns when Best M is at the edge of M, and when lambda rea
   expect_false(any(grepl("callout-warning", out, fixed = TRUE)))
   expect_false(env$fit_checks$m_at_edge)
   expect_false(env$fit_checks$lambda_at_max)
-  # Best M at M, lambda at boostmtree's lambda.max: one warning for each.
+  # Best M at M but the error flat over the last tenth (0.05%, as a study's M = 500 fit was): no warning.
+  # The error path is read from .err, which tbl-fit-summary leaves; iteration 9 opens the last tenth of 10.
   env$fit$m.opt <- 10L
   env$fit_summary$best_m <- 10L
+  env$.err[[1L]][, "l2"] <- 1
+  env$.err[[1L]][9L, "l2"] <- 1.0005
+  out <- utils::capture.output(nb_run("fit-checks", env))
+  expect_false(any(grepl("callout-warning", out, fixed = TRUE)))
+  expect_false(env$fit_checks$m_at_edge)
+  expect_equal(env$fit_checks$last_tenth_drop, 0.0005)
+  # Best M at M with the error still falling (0.5% over the last tenth), lambda at boostmtree's lambda.max:
+  # one warning for each.
+  env$.err[[1L]][9L, "l2"] <- 1.005
   env$fit$lambda[] <- formals(boostmtree::boostmtree)$lambda.max
   out <- paste(utils::capture.output(nb_run("fit-checks", env)), collapse = "\n")
-  expect_match(out, "last tenth of the 10 iterations", fixed = TRUE)
+  expect_match(out, "last tenth of the 10 iterations fitted, and the cross-validated error fell 0.50%", fixed = TRUE)
   expect_match(out, "reached boostmtree's ceiling", fixed = TRUE)
   expect_true(env$fit_checks$m_at_edge)
   expect_true(env$fit_checks$lambda_at_max)

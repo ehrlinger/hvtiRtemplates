@@ -1,12 +1,16 @@
+- `nb-boostmtree` now defaults to `M <- 500` (was 1000). A study of 1,391 patients at `NU = 0.05` that fitted
+  1000 chose Best M = 751, but its cross-validated error at 500 was within 0.3% of that best, so 500 does the
+  job at half the run time. A job already in a study keeps its own `M`.
 - `nb-boostmtree` writes out its tree and spline settings as study choices, `K <- 5` terminal nodes and
   `N_KNOTS <- 10`, passed to `boostmtree()` as `k` and `n.knots`. Both are boostmtree's own defaults, and the
   choice comments now say how to set them, and `M`, `NU` and `MTRY`, from what the studies learned: fix `NU`
-  and let cross-validation choose Best M; treat `M` as a ceiling, because boostmtree's default of 200 stops
-  silently before the optimum; and keep `N_KNOTS` well below the number of distinct visit times. A fit whose
+  and let cross-validation choose Best M; treat `M` as a ceiling, because boostmtree's default of 200 is too
+  low for clinical longitudinal data; and keep `N_KNOTS` well below the number of distinct visit times. A fit whose
   `N_KNOTS` is not below them stops before it starts. **A job upgraded with `upgrade_job()` stops at its cached
   fit until `REFIT <- TRUE`, even at these default values, because the fit's code now names `k` and `n.knots`.**
-- The `nb-boostmtree` report now warns, in the report itself, when Best M lands in the last tenth of `M` (the
-  error was still falling) and when the smoothing parameter lambda reached boostmtree's `lambda.max` at Best M
+- The `nb-boostmtree` report now warns, in the report itself, when Best M lands in the last tenth of `M` and the
+  cross-validated error fell by more than 0.1% over that tenth (still falling by enough to matter; Best M near
+  `M` on a flat curve passes) and when the smoothing parameter lambda reached boostmtree's `lambda.max` at Best M
   (a flat trajectory or too many knots). The fit table records `K`, the knots and `mtry`, and the saved fit and
   provenance record `k` and `n_knots`.
 - `nb-boostmtree` has a new `SENSITIVITY` choice, off by default. Set to `TRUE`, it refits over `NU` in
