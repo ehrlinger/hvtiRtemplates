@@ -33,9 +33,10 @@ submit that crashed can leave it behind, in which case delete it to try again.
 Stop a submitted job with \code{\link{cancel_job}}.
 Not available on Windows, which cannot detach a process this way.
 
-With \code{output_file}, the run files are named for that file rather than
-the job, so \code{job.M1000.html} keeps \code{job.M1000.run.log},
-\code{job.M1000.run.yml} and the rest, and the same job rendered to another
+With \code{output_file}, the run files are named for that whole file name,
+extension included, rather than the job, so \code{job.M1000.html} keeps
+\code{job.M1000.html.run.log}, \code{job.M1000.html.run.yml} and the rest,
+and the same job rendered to another
 name is another run: both can be submitted, and each is followed and stopped
 by giving \code{\link{job_status}} or \code{\link{cancel_job}} the same
 \code{output_file}. Quarto still renders one job at a time in a study.

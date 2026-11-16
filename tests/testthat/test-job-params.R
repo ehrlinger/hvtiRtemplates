@@ -28,21 +28,23 @@ test_that("params and output_file are checked before anything starts", {
 
 test_that("an output_file whose stem names another job beside this one is refused", {
   job <- status_job()
-  writeLines("---\ntitle: y\n---", file.path(dirname(job), "other.qmd"))
-  expect_error(submit_job(job, output_file = "other.html"), "would share its run files with the job other.qmd")
-  # Its own stem is the job's own run, as with no output_file.
-  expect_identical(.run_key(job, "nb.boostmtree.x.boost.html"), job)
-  expect_silent(.check_output_file("nb.boostmtree.x.boost.html", job, "submit_job"))
+  writeLines("---\ntitle: y\n---", file.path(dirname(job), "other.html.qmd"))
+  expect_error(submit_job(job, output_file = "other.html"), "would share its run files with the job other.html.qmd")
+  expect_silent(.check_output_file("other.pdf", job, "submit_job"))
 })
 
-test_that("a run with an output_file keeps its run files under the output's stem", {
+test_that("a run with an output_file keeps its run files under the whole output name", {
   f <- .run_files(.run_key("/s/analyses/nb.x.qmd", "nb.x.M1000.html"))
-  expect_identical(f$status, "/s/analyses/nb.x.M1000.run.yml")
-  expect_identical(f$log, "/s/analyses/nb.x.M1000.run.log")
-  expect_identical(f$progress, "/s/analyses/nb.x.M1000.run.progress")
-  expect_identical(f$lock, "/s/analyses/nb.x.M1000.run.lock")
-  expect_identical(f$runner, "/s/analyses/nb.x.M1000.runner")
+  expect_identical(f$status, "/s/analyses/nb.x.M1000.html.run.yml")
+  expect_identical(f$log, "/s/analyses/nb.x.M1000.html.run.log")
+  expect_identical(f$progress, "/s/analyses/nb.x.M1000.html.run.progress")
+  expect_identical(f$lock, "/s/analyses/nb.x.M1000.html.run.lock")
+  expect_identical(f$runner, "/s/analyses/nb.x.M1000.html.runner")
+  # Two outputs that share a stem are two runs.
+  expect_false(identical(.run_key("/s/analyses/nb.x.qmd", "nb.x.M.html"), .run_key("/s/analyses/nb.x.qmd", "nb.x.M.pdf")))
+  # No output_file is the job's own run, with the files it has always had.
   expect_identical(.run_key("/s/analyses/nb.x.qmd"), "/s/analyses/nb.x.qmd")
+  expect_identical(.run_files(.run_key("/s/analyses/nb.x.qmd"))$status, "/s/analyses/nb.x.run.yml")
 })
 
 test_that("submit_job() writes params and output_file into the runner, and a plain submit's runner is unchanged", {
@@ -82,7 +84,7 @@ test_that("two output names of one job run side by side, and each is read and re
   expect_identical(job_status(job, quiet = TRUE, output_file = m1000)$state, "none")
   expect_identical(job_status(job, quiet = TRUE)$state, "none")
   # The same output name twice is the same run.
-  expect_error(submit_job(job, output_file = m500), "nb.boostmtree.x.boost.M500.qmd is already running")
+  expect_error(submit_job(job, output_file = m500), "nb.boostmtree.x.boost.M500.html.qmd is already running")
   # Another output name is another run: its own files take it.
   expect_no_error(submit_job(job, output_file = m1000))
   expect_identical(job_status(job, quiet = TRUE, output_file = m1000)$state, "submitted")
@@ -146,16 +148,16 @@ test_that("render_job() hands params and output_file to Quarto, and the render l
   expect_identical(seen$env, "")
 })
 
-test_that("a render given an output_file writes its progress under that output's stem", {
+test_that("a render given an output_file writes its progress under that output's name", {
   job <- file.path("studies", "analyses", "nb.boostmtree.x.boost.qmd")
   withr::local_envvar(HVTI_OUTPUT_FILE = "nb.boostmtree.x.boost.M1000.html")
   expect_identical(.progress_path(file.path("studies", "analyses", "nb.boostmtree.x.boost.rmarkdown")),
-                   file.path("studies", "analyses", "nb.boostmtree.x.boost.M1000.run.progress"))
+                   file.path("studies", "analyses", "nb.boostmtree.x.boost.M1000.html.run.progress"))
   withr::local_envvar(HVTI_OUTPUT_FILE = NA)
   expect_identical(.progress_path(job), .run_files(job)$progress)
 })
 
-test_that("a real submit with an output_file runs, and its runner records the run under the output's stem", {
+test_that("a real submit with an output_file runs, and its runner records the run under the output's name", {
   skip_on_os("windows")
   skip_on_cran()
   job <- status_job()
@@ -193,4 +195,40 @@ test_that("a Quarto render with params writes the named report, and its progress
     expect_identical(st$progress$stages, "show")
   }
   expect_false(file.exists(file.path(dir, "nb.boostmtree.x.boost.run.progress")))
+})
+
+test_that("two outputs sharing a stem with different extensions are separate runs", {
+  job <- status_job()
+  html <- "nb.boostmtree.x.boost.M.html"
+  pdf <- "nb.boostmtree.x.boost.M.pdf"
+  local_mocked_bindings(.launch = function(cmd) invisible(0L), .find_study_root = function(dir) dir)
+  submit_job(job, output_file = html)
+  .write_status(.run_files(.run_key(job, html))$status, state = "running", pid = Sys.getpid(),
+                host = Sys.info()[["nodename"]], job = basename(job), output_file = html)
+  expect_identical(job_status(job, quiet = TRUE, output_file = html)$state, "running")
+  expect_identical(job_status(job, quiet = TRUE, output_file = pdf)$state, "none")
+  expect_no_error(submit_job(job, output_file = pdf))
+  expect_identical(yaml::read_yaml(.run_files(.run_key(job, pdf))$status)$output_file, pdf)
+  expect_identical(yaml::read_yaml(.run_files(.run_key(job, html))$status)$state, "running")
+})
+
+test_that("a run whose record names another output is neither reported nor cancelled under the wrong name", {
+  skip_on_os("windows")
+  job <- status_job()
+  html <- "nb.boostmtree.x.boost.M.html"
+  # A record under the .pdf run's files that names the .html output, as an older stem-keyed run would leave.
+  key <- .run_key(job, "nb.boostmtree.x.boost.M.pdf")
+  .write_status(.run_files(key)$status, state = "running", pid = Sys.getpid(), created = "1",
+                host = Sys.info()[["nodename"]], job = basename(job), output_file = html)
+  expect_error(job_status(job, quiet = TRUE, output_file = "nb.boostmtree.x.boost.M.pdf"),
+               "record output_file \"nb.boostmtree.x.boost.M.html\"", fixed = TRUE)
+  signalled <- FALSE
+  local_mocked_bindings(.stop_procs = function(...) {
+    signalled <<- TRUE
+    character()
+  })
+  expect_error(cancel_job(job, grace = 0, quiet = TRUE, output_file = "nb.boostmtree.x.boost.M.pdf"),
+               "nothing was signalled")
+  expect_false(signalled)
+  expect_identical(yaml::read_yaml(.run_files(key)$status)$state, "running")
 })

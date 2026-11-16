@@ -15,6 +15,6 @@
   `quarto render -P` would, and `output_file`, the report's name as `--output` would set it, so a parameterized job
   that must now go through `run_job()` can still render one report per value:
   `run_job("job.qmd", params = list(fit_m = 1000), output_file = "job.M1000.html")`. A run given an `output_file` keeps
-  its run files under that name (`job.M1000.run.yml`, `.run.log`, `.run.progress`), so the same job rendered for
+  its run files under that whole name (`job.M1000.html.run.yml`, `.run.log`, `.run.progress`), so the same job rendered for
   another value is another run; `job_status()` and `cancel_job()` take the same `output_file` to follow or stop it.
   The checks `run_job()` makes apply to each run, and Quarto still renders one job at a time in a study.
