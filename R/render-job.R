@@ -155,7 +155,7 @@ render_job <- function(path, final = FALSE, quiet = FALSE, params = NULL, output
           i = "Its Deno runtime was killed by a signal, most often a crash as it starts. Render the job again."
         ), class = "hvtiRtemplates_quarto_crashed", parent = e, call = NULL)
       }
-      if (.execute_results_race(e, log, from)) {
+      if (.execute_results_race(e, log, from, .execute_results_dir(path))) {
         rlang::abort("Quarto could not remove execute-results.", class = "hvtiRtemplates_execute_results_race",
                      parent = e, call = NULL)
       }
@@ -189,14 +189,25 @@ render_job <- function(path, final = FALSE, quiet = FALSE, params = NULL, output
   file.path(dirname(path), paste0(tools::file_path_sans_ext(basename(path)), "_files"), "execute-results")
 }
 
-.is_execute_results_race <- function(text) {
-  any(grepl("os error 39", text, fixed = TRUE) & grepl("execute-results", text, fixed = TRUE))
+# TRUE when `text` holds Quarto's own refusal to remove `expected`: the "remove '<path>'" form Quarto prints, naming
+# this job's folder. Two substrings are not enough: another document's folder, or a job's own error that happens to
+# mention both words, would rerun the whole job and be reported as this race.
+.is_execute_results_race <- function(text, expected) {
+  text <- unlist(strsplit(text, "\n", fixed = TRUE))
+  m <- regmatches(text, regexec("ERROR: Directory not empty \\(os error 39\\): remove '([^']+)'", text))
+  removed <- vapply(m, function(x) if (length(x) == 2L) x[2L] else NA_character_, character(1L))
+  # The folder may be gone by now, and normalizePath() leaves a missing path's symlinked parents unresolved, so resolve
+  # the job's directory, which exists, and compare the two names below it as written.
+  key <- function(p) c(normalizePath(dirname(dirname(p)), winslash = "/", mustWork = FALSE), basename(dirname(p)),
+                       basename(p))
+  same <- function(a) identical(key(a), key(expected))
+  any(vapply(removed[!is.na(removed)], same, logical(1L)))
 }
 
-.execute_results_race <- function(e, log, from) {
+.execute_results_race <- function(e, log, from, expected) {
   while (!is.null(e)) {
     text <- c(if (is.character(e$stderr)) e$stderr, tryCatch(conditionMessage(e), error = function(x) ""))
-    if (.is_execute_results_race(text)) return(TRUE)
+    if (.is_execute_results_race(text, expected)) return(TRUE)
     e <- e$parent
   }
   size <- .file_size(log)
@@ -206,7 +217,7 @@ render_job <- function(path, final = FALSE, quiet = FALSE, params = NULL, output
   seek(con, from)
   added <- strsplit(rawToChar(readBin(con, "raw", size - from)), "\n")[[1L]]
   last <- utils::tail(grep("^ERROR: ", gsub("\033\\[[0-9;]*m", "", added), value = TRUE, useBytes = TRUE), 1L)
-  length(last) == 1L && .is_execute_results_race(last)
+  length(last) == 1L && .is_execute_results_race(last, expected)
 }
 
 .file_size <- function(path) {

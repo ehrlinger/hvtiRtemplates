@@ -214,6 +214,50 @@ test_that("a Quarto error that only leaves execute-results behind is passed thro
   expect_identical(calls, 1L)
 })
 
+test_that("an os error 39 on another document's execute-results is not this job's race", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  other <- "ERROR: Directory not empty (os error 39): remove '/other/other_files/execute-results'"
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    stop(other)
+  }, .package = "quarto")
+
+  expect_error(render_job(job), "/other/other_files", fixed = TRUE)
+  expect_identical(calls, 1L)
+})
+
+test_that("a job's own error that mentions os error 39 and execute-results is not the race", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    stop("chunk `clean`: could not tidy execute-results after os error 39 in ", file.path(dir, "job_files"))
+  }, .package = "quarto")
+
+  expect_error(render_job(job), "chunk `clean`", fixed = TRUE)
+  expect_identical(calls, 1L)
+})
+
+test_that("the race matches this job's folder through a symlinked study path, existing or not", {
+  real <- withr::local_tempdir()
+  link <- file.path(withr::local_tempdir(), "study")
+  # Windows may refuse a symlink; the test then runs on the real path rather than skipping.
+  if (!suppressWarnings(file.symlink(real, link))) link <- real
+  expected <- .execute_results_dir(file.path(normalizePath(real), "job.qmd"))
+  line <- function(d) paste0("ERROR: Directory not empty (os error 39): remove '", file.path(d, "job_files", "execute-results"), "'")
+  expect_true(.is_execute_results_race(line(link), expected))
+  dir.create(file.path(real, "job_files", "execute-results"), recursive = TRUE)
+  expect_true(.is_execute_results_race(line(link), expected))
+  expect_false(.is_execute_results_race(line(file.path(real, "sub")), expected))
+})
+
 test_that("render_job deletes no execute-results folder, which another render of the job may own", {
   skip_if_not_installed("quarto")
   dir <- withr::local_tempdir()
