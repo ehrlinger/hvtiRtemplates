@@ -365,8 +365,8 @@
       "WHERE condition `", shown, "` ", what, ". Each WHERE condition is saved, values included, in this ",
       "job's output, so a filter on identifier values would be saved with it. Exclude those patients in the ",
       "dataset build, or with an hvtiRdatabuild analysis set, and remove the condition from WHERE."
-    # The family's class first; the old hvti_where_identifier stays for one release, so a handler written for it still
-    # catches the refusal.
+      # The family's class first; the old hvti_where_identifier stays for one release, so a handler written for it
+      # still catches the refusal.
     ), class = c("hvtiRtemplates_where_identifier", "hvti_where_identifier"), call = NULL, shown = shown, what = what))
   }
   invisible(TRUE)
@@ -1329,9 +1329,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # itself must agree; one left NULL is taken from upstream. Every field the
 # upstream selection carries keeps its upstream value, including the ones not
 # compared here (rows, patients): a setting only fills a field upstream lacks.
-.upstream_fields <- c(dataset = "DATASET", analysis_set = "ANALYSIS_SET", where = "WHERE", id_col = "ID",
-                      key_cols = "KEY", time = "TIME", event = "EVENT", join = "JOIN", join_cols = "JOIN_VARS",
-                      reduce = "REDUCE", join_key_cols = "JOIN_KEY")
+.upstream_fields <- c(dataset = "DATASET", analysis_set = "ANALYSIS_SET", where = "WHERE", id = "ID",
+                      key = "KEY", time = "TIME", event = "EVENT", join = "JOIN", join_vars = "JOIN_VARS",
+                      reduce = "REDUCE", join_key = "JOIN_KEY")
 
 .join_fields <- c("join", "join_vars", "reduce", "join_key")
 

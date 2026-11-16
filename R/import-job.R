@@ -154,15 +154,15 @@ import_job <- function(path, subject = NULL, type = NULL, root = NULL, from, dir
   ok <- TRUE
 
   .hvti_inform("import_job(): wrote '", out, "' from '", normalizePath(path, winslash = "/"), "'.",
-          if (has_runner && !length(src_runner)) {
-            paste0("\nThe source job has no runner beside it, so '", basename(runner), "' is the template's.")
-          },
-          if (unread > 0L) {
-            paste0("\n", unread, " library() call", if (unread > 1L) "s", " in the setup chunk could not be read, ",
-                   "so what ", if (unread > 1L) "they attach" else "it attaches", " was not installed. Install it with ",
-                   "hvtiRutilities::study_need().")
-          },
-          paste(unlist(review), collapse = ""))
+               if (has_runner && !length(src_runner)) {
+                 paste0("\nThe source job has no runner beside it, so '", basename(runner), "' is the template's.")
+               },
+               if (unread > 0L) {
+                 paste0("\n", unread, " library() call", if (unread > 1L) "s", " in the setup chunk could not be read, ",
+                        "so what ", if (unread > 1L) "they attach" else "it attaches", " was not installed. Install it with ",
+                        "hvtiRutilities::study_need().")
+               },
+               paste(unlist(review), collapse = ""))
   invisible(out)
 }
 

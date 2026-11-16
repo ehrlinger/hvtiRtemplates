@@ -210,7 +210,7 @@ upgrade_job <- function(path, root = NULL, dir) {
   if (current) {
     .install_provenance_hooks(root)
     .hvti_inform("upgrade_job(): ", basename(path), " is already current with its template; ",
-            "an older upgrade's files beside it moved to ", archive, ".")
+                 "an older upgrade's files beside it moved to ", archive, ".")
     return(invisible(path))
   }
   # The current template's provenance checks need the study's hooks, which a
@@ -229,7 +229,7 @@ upgrade_job <- function(path, root = NULL, dir) {
   Sys.chmod(c(target, report_path), mode, use_umask = FALSE)
   ok <- TRUE
   .hvti_inform("upgrade_job(): upgraded ", basename(target), ". The old job is ", backup,
-          "; the report, with the chunks to check, is ", report_path, ".")
+               "; the report, with the chunks to check, is ", report_path, ".")
   .open_in_editor(target)
 }
 

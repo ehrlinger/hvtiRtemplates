@@ -29,7 +29,7 @@
          "`; give `", new, "` only.", call. = FALSE)
   }
   .warn_once(paste0(fn, ":", old), paste0(fn, "(): `", old, "` is renamed `", new, "`. The old name works for one ",
-                                         "more release, then stops; this warning is shown once per session."))
+                                          "more release, then stops; this warning is shown once per session."))
   value
 }
 
