@@ -120,7 +120,9 @@ ar_item <- function(id) {
 #' @description Reads one field of a value a finished job saved for its report,
 #'   so a number in the Results text comes from the fit and goes stale with it,
 #'   rather than being retyped. The source run must be final and its file
-#'   unchanged, as for \code{\link{ar_item}}.
+#'   unchanged, as for \code{\link{ar_item}}. When the source job has been
+#'   edited since its render, a final render (\code{render_job(final = TRUE)})
+#'   stops, and a draft warns.
 #'
 #' @param id The value's item id, \code{"<job>#<label>"}.
 #' @param field The field to return.
@@ -150,8 +152,14 @@ ar_value <- function(id, field) {
   if (!identical(r$exhibit$kind, "value")) {
     stop("Item '", id, "' is a ", r$exhibit$kind, ", not a saved value; ar_value() reads values only.", call. = FALSE)
   }
+  # A final report quoting a number its job no longer produces is the failure the ar layer exists to stop, so a final
+  # render refuses; a draft warns, so the report can still be read while the job is reworked.
   if (isTRUE(r$source_changed)) {
-    warning("The source job '", r$job, "' has been edited since its last render, so '", id,
+    if (.strict_render()) {
+      stop("ar_value(): the source job '", r$job, "' has been edited since its last render, so '", id, "' may be out ",
+           "of date, and a final render does not quote it. Render the job again, then this report.", call. = FALSE)
+    }
+    warning("ar_value(): the source job '", r$job, "' has been edited since its last render, so '", id,
             "' may be out of date. Render the job again before relying on this value.", call. = FALSE)
   }
   x <- readRDS(r$path)
