@@ -76,9 +76,21 @@ test_that("every check name passes through, study_render included", {
 })
 
 test_that("an unknown failure shows the last 20 log lines", {
-  d <- .diagnose_failure(fx("unknown"), list())
+  d <- .diagnose_failure(paste("line", 1:30), list())
   expect_match(d$reason, "no known cause", fixed = TRUE)
-  expect_lte(length(strsplit(d$fix, "\n")[[1]]), 20L)
+  expect_identical(strsplit(d$fix, "\n")[[1]], paste("line", 11:30))
+})
+
+test_that("a Quarto failure is explained by its ERROR line, not a tail cut by the stack trace", {
+  d <- .diagnose_failure(fx("unknown"), list())
+  expect_match(d$reason, "^Quarto failed: YAMLException: missed comma")
+})
+
+test_that("Quarto's execute-results race on the share reads as not the job's failure", {
+  d <- .diagnose_failure(fx("execute-results"), list())
+  expect_match(d$reason, "execute-results folder on the share", fixed = TRUE)
+  expect_match(d$reason, "os error 39", fixed = TRUE)
+  expect_match(d$fix, "already tried twice", fixed = TRUE)
 })
 
 test_that("a log carrying a refusal and a missing package is explained by the refusal", {

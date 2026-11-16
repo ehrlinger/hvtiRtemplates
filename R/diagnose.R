@@ -62,5 +62,18 @@
     return(list(reason = sprintf("the job stopped in chunk `%s`, lines %s.", label, span),
                 fix = if (length(err)) err else "See the log for the error."))
   }
+  # Quarto's own failures print "ERROR: <message>" and then a Deno stack trace long enough to push the message out of
+  # any fixed tail, so take the message itself.
+  qe <- utils::tail(hit("^ERROR: "), 1L)
+  if (length(qe)) {
+    msg <- sub("^ERROR: ", "", log[qe])
+    if (grepl("os error 39", msg, fixed = TRUE) && grepl("execute-results", msg, fixed = TRUE)) {
+      return(list(reason = paste0("Quarto could not remove its execute-results folder on the share (", msg, "); ",
+                                  "every chunk had run, and the job itself did not fail."),
+                  fix = paste0("render_job() has already tried twice. Delete the job's _files folder ",
+                               "(`lsof +D` on it names what holds a file there), then run the job again.")))
+    }
+    return(list(reason = paste0("Quarto failed: ", msg), fix = "See the log above the Stack trace for what led to it."))
+  }
   list(reason = "no known cause; the end of the log follows.", fix = paste(utils::tail(log, 20L), collapse = "\n"))
 }

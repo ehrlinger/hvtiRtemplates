@@ -158,3 +158,76 @@ test_that(".quarto_crashed needs the exact pair, not the token", {
   e <- tryCatch(processx::run("sh", c("-c", "exit 200")), error = function(e) e)
   expect_false(hvtiRtemplates:::.quarto_crashed(e))
 })
+
+test_that("render_job renders once more when Quarto cannot remove execute-results, and says why", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  results <- file.path(dir, "job_files", "execute-results")
+  dir.create(results, recursive = TRUE)
+  writeLines("{}", file.path(results, "stale.json"))
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    expect_false(dir.exists(results))  # a leftover is cleared before every attempt
+    if (calls == 1L) {
+      dir.create(results, recursive = TRUE)
+      stop("Error running quarto CLI from R.")
+    }
+    invisible(NULL)
+  }, .package = "quarto")
+
+  expect_message(render_job(job), "Directory not empty")
+  expect_identical(calls, 2L)
+})
+
+test_that("render_job gives up after a second execute-results failure, with its own class", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  results <- file.path(dir, "job_files", "execute-results")
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    dir.create(results, recursive = TRUE)
+    stop("Error running quarto CLI from R.")
+  }, .package = "quarto")
+
+  e <- expect_error(suppressMessages(render_job(job)), class = "hvtiRtemplates_execute_results_stuck")
+  expect_match(conditionMessage(e), "Delete the folder", fixed = TRUE)
+  expect_identical(calls, 2L)
+})
+
+test_that("render_job does not retry a failure that leaves no execute-results behind", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    stop("chunk failed")
+  }, .package = "quarto")
+
+  expect_error(render_job(job), "chunk failed")
+  expect_identical(calls, 1L)
+})
+
+test_that("render_job refuses a leftover execute-results it cannot delete, before running the job", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    stop("chunk failed")
+  }, .package = "quarto")
+  local_mocked_bindings(.clear_dir = function(dir) FALSE)
+
+  e <- expect_error(render_job(job), class = "hvtiRtemplates_execute_results_stuck")
+  expect_match(conditionMessage(e), "cannot be deleted", fixed = TRUE)
+  expect_identical(calls, 0L)
+})
