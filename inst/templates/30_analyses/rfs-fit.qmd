@@ -88,12 +88,13 @@ if (utils::packageVersion("ggRandomForests") < "4.0.0") {
   stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
-# gg_learning() and learning_subsample(), for the learning curve, are not in a
-# released ggRandomForests yet. This becomes a version floor once one carries them.
+# gg_learning() and learning_subsample(), for the learning curve, are on
+# ggRandomForests' main branch (ehrlinger/ggRandomForests#403) but in no release yet.
+# This becomes a version floor once one carries them.
 if (!all(c("gg_learning", "learning_subsample") %in% getNamespaceExports("ggRandomForests"))) {
   stop("This job needs a ggRandomForests with gg_learning() and learning_subsample(); ",
        utils::packageVersion("ggRandomForests"), " is installed and lacks them.\n",
-       "Install it from the feat/gg-learning branch, then re-render.", call. = FALSE)
+       "Install it with remotes::install_github(\"ehrlinger/ggRandomForests\"), then re-render.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
   stop("This job needs hvtiPlotR >= 2.8.18 for the red and blue its captions name; ", utils::packageVersion("hvtiPlotR"),
