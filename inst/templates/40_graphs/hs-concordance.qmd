@@ -360,8 +360,8 @@ EVENT <- unname(.events[[1L]])
 
 ```{r}
 #| label: cohort
-cc <- cohort_counts(d, event = EVENT, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+cc <- cohort_counts(d, time_col = TIME, event_col = EVENT)
+assert_cohort(d, expected = EXPECTED, time_col = TIME, event_col = EVENT)
 
 # The three studies this template was drawn from made three overlap choices,
 # and a fourth study made a fourth. Which one a study makes decides what its

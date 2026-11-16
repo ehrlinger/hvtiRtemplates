@@ -738,7 +738,7 @@ for (i in seq_len(nrow(fp$data))) {
   # The caption key names the house colors that COLORS <- NULL draws and the
   # shapes set here, so a study that sets COLORS renames them in .key below.
   if (row$type == "followup") {
-    fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time,
+    fc <- hvtiRutilities::followup_check(d, time_cols = PANELS[[nm]]$time, event_col = PANELS[[nm]]$status,
                                          stats = .followup_stats)
     .followup <- .followup_table(fc, d, PANELS[[nm]]$status)
     .child(paste("tbl gfup", nm, "followup"),
@@ -770,7 +770,7 @@ for (i in seq_len(nrow(fp$data))) {
   if (row$type != "followup") {
     for (j in seq_len(k)) {
       .ev <- EVENTS[[nm]]$event[[j]]
-      fc <- hvtiRutilities::followup_check(d, event = .ev, followup = EVENTS[[nm]]$time[[j]],
+      fc <- hvtiRutilities::followup_check(d, time_cols = EVENTS[[nm]]$time[[j]], event_col = .ev,
                                            stats = .followup_stats)
       .followup <- .followup_table(fc, d, .ev)
       # By the event's place in the panel, not its column name: .child() cleans
@@ -816,7 +816,7 @@ titles <- c(continuous = "Continuous variables", percent = "Categorical variable
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
 draw_section <- function(section) {
   sec <- hvtiPlotR::hv_eda_pages(if (section == "continuous") .d_eda else .d_eda_bars, x_col = X_LABEL,
-                                 section = section, vars = VARIABLES,
+                                 section = section, var_cols = VARIABLES,
                                  labels = labels, unique_limit = UNIQUE_LIMIT)
   cat("\n## ", titles[[section]], " (", sec$meta$n_vars, ")\n\n", sep = "")
   if (!sec$meta$n_vars) {
@@ -825,8 +825,8 @@ draw_section <- function(section) {
   }
   vars <- sec$data$variable
   if (section == "continuous") {
-    stats <- hvtiRutilities::proc_means(d, vars = vars, stats = c("n", "nmiss", "mean", "std", "min",
-                                                                  "p15", "median", "p85", "max"))
+    stats <- hvtiRutilities::proc_means(d, var_cols = vars, stats = c("n", "nmiss", "mean", "std", "min",
+                                                                      "p15", "median", "p85", "max"))
     .child(paste("tbl eda", section, "summary"), "Continuous variables",
            "knitr::kable(stats, digits = 2, row.names = FALSE)")
   } else if (identical(section, freq_section)) {

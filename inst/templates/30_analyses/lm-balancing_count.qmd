@@ -152,7 +152,7 @@ model_formula <- stats::reformulate(PREDICTORS, response = OUTCOME)
 fit <- hvtiRpropensity::bs_count(
   model_formula, d, outcome_col = OUTCOME, id_col = .id,
   imputation_col = IMPUTATION, dist = DISTRIBUTION,
-  n_strata = N_STRATA, covariates = PREDICTORS
+  n_strata = N_STRATA, covariate_cols = PREDICTORS
 )
 ```
 

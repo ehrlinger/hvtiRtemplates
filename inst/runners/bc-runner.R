@@ -86,7 +86,7 @@ selection <- attr(job$record, "selection")
 # reaches the screen.
 model <- stats::as.formula(paste0("survival::Surv(", TIME, ", ", EVENT, ") ~ ", paste(POOL, collapse = " + ")))
 d <- job$data[all.vars(model)]
-screen <- boot_select(d, model, fit_cox, n_rep = N_REP, sle = SLE, sls = SLS, seed = SEED)
+screen <- boot_select(d, model, fit_cox, n_boot = N_REP, sle = SLE, sls = SLS, seed = SEED)
 bag <- boot_bag(screen, base_params = BASE, requested = length(POOL),
                 manifest = list(sha256 = job$provenance$sha256))
 attr(bag, "hvti_provenance") <- list(data = list(job$provenance), artifacts = list(), analysis = NULL, cohort = NULL,

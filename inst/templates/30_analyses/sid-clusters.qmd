@@ -622,8 +622,9 @@ if (!is.null(.reg)) {
   )))
 } else {
   invisible(utils::capture.output(suppressMessages(
-    hvtiRutilities::register_data(.root, file = .csv_name, dataset = .dataset, role = "named",
-                                  population = "SID cluster assignments", kind = "ancillary", key = .id)
+    hvtiRutilities::register_data(file = .csv_name, dataset = .dataset, role = "named",
+                                  population = "SID cluster assignments", kind = "ancillary", key_cols = .id,
+                                  root = .root)
   )))
 }
 cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job to use these clusters.\n",

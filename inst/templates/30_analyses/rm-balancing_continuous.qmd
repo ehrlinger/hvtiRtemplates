@@ -163,7 +163,7 @@ knitr::kable(.missing_values)
 model_formula <- stats::reformulate(PREDICTORS, response = .response)
 fit <- hvtiRpropensity::bs_continuous(
   model_formula, d, outcome_col = OUTCOME, id_col = .id,
-  imputation_col = IMPUTATION, n_strata = N_STRATA, covariates = PREDICTORS
+  imputation_col = IMPUTATION, n_strata = N_STRATA, covariate_cols = PREDICTORS
 )
 ```
 

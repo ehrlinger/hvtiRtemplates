@@ -148,7 +148,7 @@ knitr::kable(.missing_values)
 model_formula <- stats::reformulate(PREDICTORS, response = TREATMENT)
 fit <- hvtiRpropensity::ps_ordinal(
   model_formula, d, treatment_col = TREATMENT, id_col = .id,
-  imputation_col = IMPUTATION, covariates = PREDICTORS,
+  imputation_col = IMPUTATION, covariate_cols = PREDICTORS,
   treatment_levels = TREATMENT_LEVELS
 )
 ```

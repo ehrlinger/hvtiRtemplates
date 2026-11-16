@@ -151,7 +151,7 @@ model_formula <- stats::reformulate(PREDICTORS, response = TREATMENT)
 fit <- hvtiRpropensity::ps_nominal(
   model_formula, d, treatment_col = TREATMENT, id_col = .id,
   imputation_col = IMPUTATION, ref_level = REFERENCE_LEVEL,
-  covariates = PREDICTORS, treatment_levels = TREATMENT_LEVELS
+  covariate_cols = PREDICTORS, treatment_levels = TREATMENT_LEVELS
 )
 ```
 

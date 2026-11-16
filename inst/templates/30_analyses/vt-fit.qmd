@@ -1197,7 +1197,7 @@ if (!length(.in_dist)) {
   }))
   .mc$facet <- paste("Received", .mc$received)
   .mc$arm <- .mc$arm_of_curve
-  .fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet = "facet", arm = "arm")) +
+  .fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet_col = "facet", arm_col = "arm")) +
     ggplot2::labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
   save_figure(.fig, "vt-fit-curves")
   .fig

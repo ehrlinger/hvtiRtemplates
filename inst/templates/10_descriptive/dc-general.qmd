@@ -307,7 +307,7 @@ if (length(overall_vars)) {
   cat(knitr::knit_child(text = c(
     paste0(.fence, "{r}"), "#| label: tbl-overall-means",
     "#| tbl-cap: \"Summary statistics of the overall variables\"",
-    "proc_means(d, vars = overall_vars, stats = c(\"n\", \"nmiss\", \"mean\", \"std\", \"min\", \"max\", \"sum\"))",
+    "proc_means(d, var_cols = overall_vars, stats = c(\"n\", \"nmiss\", \"mean\", \"std\", \"min\", \"max\", \"sum\"))",
     .fence
   ), envir = environment(), quiet = TRUE), sep = "\n")
 }

@@ -80,7 +80,7 @@ selection <- attr(job$record, "selection")
 # reaches the screen.
 model <- stats::reformulate(POOL, response = OUTCOME)
 d <- job$data[all.vars(model)]
-screen <- boot_select(d, model, fit_logistic, n_rep = N_REP, sle = SLE, sls = SLS, seed = SEED)
+screen <- boot_select(d, model, fit_logistic, n_boot = N_REP, sle = SLE, sls = SLS, seed = SEED)
 bag <- boot_bag(screen, base_params = "(Intercept)", requested = length(POOL),
                 manifest = list(sha256 = job$provenance$sha256))
 attr(bag, "hvti_provenance") <- list(data = list(job$provenance), artifacts = list(), analysis = NULL, cohort = NULL,
