@@ -64,6 +64,14 @@
 #'   only: a job whose data, or whose upstream hand-off, came from an unregistered build stops and
 #'   names \code{hvtiRutilities::update_manifest()}.
 #' @param quiet Logical. Passed to \code{quarto::quarto_render()}.
+#' @param params A named list of single values, or \code{NULL}. The job's Quarto
+#'   \code{params}, as \code{quarto render -P name:value} sets them; passed to
+#'   \code{quarto::quarto_render()} as \code{execute_params}.
+#' @param output_file Character(1) or \code{NULL}. The report's file name, as
+#'   \code{quarto render --output} sets it: a name with an extension and no
+#'   directory, written beside the job. Give each set of \code{params} its own,
+#'   so one report does not overwrite another. The run's progress file is named
+#'   for it too.
 #'
 #' @return \code{path}, invisibly.
 #'
@@ -93,13 +101,15 @@
 #' }
 #' }
 #' @export
-render_job <- function(path, final = FALSE, quiet = FALSE) {
+render_job <- function(path, final = FALSE, quiet = FALSE, params = NULL, output_file = NULL) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
     stop("render_job(): `path` must be an existing job file.", call. = FALSE)
   }
   if (!is.logical(final) || length(final) != 1L || is.na(final)) {
     stop("render_job(): `final` must be TRUE or FALSE.", call. = FALSE)
   }
+  .check_params(params, "render_job")
+  .check_output_file(output_file, path, "render_job")
   if (!requireNamespace("quarto", quietly = TRUE)) {
     stop("render_job(): the quarto package is required; install.packages(\"quarto\").", call. = FALSE)
   }
@@ -115,7 +125,16 @@ render_job <- function(path, final = FALSE, quiet = FALSE) {
     on.exit(if (is.na(old_r)) Sys.unsetenv("QUARTO_R") else Sys.setenv(QUARTO_R = old_r), add = TRUE)
     Sys.setenv(QUARTO_R = R.home("bin"))
   }
-  tryCatch(quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet), error = function(e) {
+  # The render's own R writes <stem>.run.progress, and learns the stem from this: set for an output_file, and unset
+  # otherwise, so a value inherited from a parent render cannot send this one's progress to another run's file.
+  old_out <- Sys.getenv("HVTI_OUTPUT_FILE", unset = NA)
+  on.exit(if (is.na(old_out)) Sys.unsetenv("HVTI_OUTPUT_FILE") else Sys.setenv(HVTI_OUTPUT_FILE = old_out), add = TRUE)
+  if (is.null(output_file)) Sys.unsetenv("HVTI_OUTPUT_FILE") else Sys.setenv(HVTI_OUTPUT_FILE = output_file)
+  render <- function() {
+    quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet, execute_params = params,
+                          output_file = output_file)
+  }
+  tryCatch(render(), error = function(e) {
     if (!.quarto_crashed(e)) stop(e)
     rlang::abort(c(
       paste0("render_job(): Quarto crashed before rendering ", basename(path), "; the job itself did not fail."),

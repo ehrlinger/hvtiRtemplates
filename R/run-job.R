@@ -19,6 +19,7 @@
 }
 
 # `rel` is the job's path from the study root, which is what job_status() takes from a console there.
+# `path` is the run's key (.run_key()), which job_status() reads like a job.
 .wait_for_checks <- function(path, expected, wait, poll = 5, rel = basename(path), quiet = FALSE) {
   deadline <- Sys.time() + wait
   repeat {
@@ -27,13 +28,13 @@
     if (st$state %in% c("finished", "failed", "vanished", "cancelled")) return(invisible(job_status(path, quiet = quiet)))
     if (all(expected %in% st$progress$checks) && identical(st$state, "running")) {
       if (!quiet) {
-        cat(sprintf("%s; running (process %s on %s). Follow it with hvtiRtemplates::job_status(\"%s\").\n",
-                    if (length(expected)) "checks passed" else "started", st$pid, st$host, rel))
+        cat(sprintf("%s; running (process %s on %s). Follow it with hvtiRtemplates::job_status(%s).\n",
+                    if (length(expected)) "checks passed" else "started", st$pid, st$host, .run_arg(path, rel)))
       }
       return(invisible(st))
     }
     if (Sys.time() >= deadline) {
-      if (!quiet) cat(sprintf("still starting; follow it with hvtiRtemplates::job_status(\"%s\").\n", rel))
+      if (!quiet) cat(sprintf("still starting; follow it with hvtiRtemplates::job_status(%s).\n", .run_arg(path, rel)))
       return(invisible(st))
     }
     Sys.sleep(poll)
@@ -42,20 +43,40 @@
 
 # hvti's whole R side. The path arrives as data (commandArgs), never as source. Exit 1 on a refusal,
 # or a launch that failed or vanished during the wait, so a shell `&&` chain stops there.
+# From hvti-version 2 the fourth argument is --output ("" for none) and any after it are -P "name:value" pairs; a copy
+# of version 1 passes three, and runs as it always did.
 .hvti_main <- function(args) {
   cmd <- args[1L]
   path <- args[2L]
   final <- identical(args[3L], "TRUE")
-  st <- tryCatch(switch(cmd,
-                        run = run_job(path, final = final),
-                        status = job_status(path),
-                        cancel = cancel_job(path)),
-                 error = function(e) {
-                   message(conditionMessage(e))
-                   NULL
-                 })
+  output_file <- if (length(args) >= 4L && nzchar(args[4L])) args[4L]
+  st <- tryCatch({
+    params <- .hvti_params(args[-seq_len(4L)])
+    switch(cmd,
+           run = run_job(path, final = final, params = params, output_file = output_file),
+           status = job_status(path, output_file = output_file),
+           cancel = cancel_job(path, output_file = output_file))
+  }, error = function(e) {
+    message(conditionMessage(e))
+    NULL
+  })
   if (is.null(st)) return(1L)
   if (identical(cmd, "run") && isTRUE(st$state %in% c("failed", "vanished", "cancelled"))) 1L else 0L
+}
+
+# hvti's -P "name:value" pairs as run_job()'s params, NULL for none. A value is read as quarto render -P reads it, as a
+# YAML scalar, so fit_m:1000 is the number 1000 and flag:true is TRUE; anything that is not a single value stays text.
+.hvti_params <- function(pairs) {
+  if (!length(pairs)) return(NULL)
+  name <- sub(":.*$", "", pairs)
+  value <- sub("^[^:]*:", "", pairs)
+  if (any(!grepl(":", pairs, fixed = TRUE)) || any(!nzchar(name))) {
+    stop("hvti: -P takes name:value, such as -P fit_m:1000.", call. = FALSE)
+  }
+  stats::setNames(lapply(value, function(v) {
+    x <- tryCatch(yaml::yaml.load(v), error = function(e) NULL)
+    if ((is.character(x) || is.numeric(x) || is.logical(x)) && length(x) == 1L && !is.na(x)) x else v
+  }), name)
 }
 
 # Once per session, so a long script of run_job() calls says it once.
@@ -94,6 +115,15 @@
 #' study's \code{renv.lock} records, from a terminal, whichever R your own
 #' session would have started. \code{hvti status} and \code{hvti cancel} do the
 #' same for \code{\link{job_status}} and \code{\link{cancel_job}}.
+#'
+#' \code{hvti run} takes \code{--final}, and the job's Quarto parameters as
+#' \code{quarto render} does, \code{-P name:value} once per parameter, with
+#' \code{--output file} naming the report; each becomes \code{\link{run_job}}'s
+#' \code{params} and \code{output_file}. A value is read as \code{quarto render}
+#' reads it, so \code{-P fit_m:1000} is a number. \code{hvti status} and
+#' \code{hvti cancel} take the same \code{--output} to name the run:
+#' \preformatted{hvti run analyses/job.qmd -P fit_m:1000 --output job.M1000.html
+#' hvti status analyses/job.qmd --output job.M1000.html}
 #'
 #' @details
 #' The command is a copy, not a symlink. The library path it would point at
@@ -163,6 +193,15 @@ install_hvti <- function(dir) {
 #' \code{\link{cancel_job}}.
 #' Not available on Windows, as for \code{\link{submit_job}}.
 #'
+#' A job with Quarto \code{params} takes them here, as
+#' \code{quarto render -P} would, with \code{output_file} naming the report as
+#' \code{--output} would. A run given an \code{output_file} is its own run, with
+#' its own run files, so one job rendered for several parameter values keeps
+#' each report and each run apart; give \code{\link{job_status}} and
+#' \code{\link{cancel_job}} the same \code{output_file} to follow or stop it.
+#' The checks above apply to each run, and Quarto still renders one job at a
+#' time in a study.
+#'
 #' @param path Character(1). The job's \code{.qmd} file.
 #' @param final Logical(1). Passed to \code{\link{submit_job}}.
 #' @param wait Numeric(1), seconds, at least 0. How long to wait for the render's
@@ -170,6 +209,8 @@ install_hvti <- function(dir) {
 #' @param quiet Logical(1). \code{TRUE} prints nothing: not the checks, the note
 #'   for a legacy job, or the lines the wait ends on. A refusal is still an
 #'   error, and its message then lists the failed checks and their fixes.
+#' @param params,output_file Passed to \code{\link{render_job}} through
+#'   \code{\link{submit_job}}.
 #' @return Invisibly, the job's status, as \code{\link{job_status}} returns it.
 #'   A job refused by the checks is an error and returns nothing.
 #' @seealso \code{\link{submit_job}}, \code{\link{job_status}},
@@ -178,12 +219,19 @@ install_hvti <- function(dir) {
 #' # Not run by check: it would start a real render.
 #' \dontrun{
 #' run_job("analyses/nb.boostmtree.lvef.boost.qmd")
+#'
+#' # A parameterized job, one report per value: run the second once the first
+#' # has finished, since Quarto renders one job at a time in a study.
+#' run_job("job.qmd", params = list(fit_m = 1000), output_file = "job.M1000.html")
+#' job_status("job.qmd", output_file = "job.M1000.html")
 #' }
 #' @export
-run_job <- function(path, final = FALSE, wait = 300, quiet = FALSE) {
+run_job <- function(path, final = FALSE, wait = 300, quiet = FALSE, params = NULL, output_file = NULL) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
     stop("run_job(): `path` must be an existing job file.", call. = FALSE)
   }
+  .check_params(params, "run_job")
+  .check_output_file(output_file, path, "run_job")
   if (!is.numeric(wait) || length(wait) != 1L || is.na(wait) || wait < 0) {
     stop("run_job(): `wait` must be a single number of seconds, 0 or more.", call. = FALSE)
   }
@@ -193,10 +241,11 @@ run_job <- function(path, final = FALSE, wait = 300, quiet = FALSE) {
   .warn_stale_hvti()
   path <- normalizePath(path, winslash = "/")
   root <- .find_study_root(dirname(path))
-  rel <- .study_rel(path, root)
-  if (!quiet) cat("Checking ", basename(path), "\n", sep = "")
-  checks <- list(.check_r_version(root), .check_packages(path, root), .check_quarto(), .check_run_state(path, root),
-                 .check_study_render(path, root))
+  key <- .run_key(path, output_file)
+  rel <- .study_rel(key, root)
+  if (!quiet) cat("Checking ", basename(path), if (!is.null(output_file)) paste0(" for ", output_file), "\n", sep = "")
+  checks <- list(.check_r_version(root), .check_packages(path, root), .check_quarto(), .check_run_state(key, root),
+                 .check_study_render(key, root))
   if (!.report_checks(checks, quiet)) {
     # Quiet printed nothing, so the error itself has to say what failed and how to fix it.
     failed <- if (quiet) {
@@ -210,7 +259,7 @@ run_job <- function(path, final = FALSE, wait = 300, quiet = FALSE) {
     cat("  note  this job predates the in-render checks (no .job_setup() call), so the render's R and memory\n",
         "        are not checked inside the render. upgrade_job(\"", basename(path), "\") adds them.\n", sep = "")
   }
-  submit_job(path, final = final)
-  if (wait == 0) return(invisible(job_status(path, quiet = TRUE)))
-  .wait_for_checks(path, expected, wait, rel = rel, quiet = quiet)
+  submit_job(path, final = final, params = params, output_file = output_file)
+  if (wait == 0) return(invisible(job_status(key, quiet = TRUE)))
+  .wait_for_checks(key, expected, wait, rel = rel, quiet = quiet)
 }

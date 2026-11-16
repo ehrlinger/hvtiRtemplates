@@ -542,9 +542,11 @@ background instead, with `run_job()` (see "Running a long job" below):
 `run_job()` checks the job, then hands it to `submit_job()`, which renders it
 detached from the session;
 `<job>.run.log` holds the output and `<job>.run.yml` the state. A template whose
-fit is long calls `guard_long_fit()`, which refuses an uncached fit in an
-interactive session and names the `run_job()` call to use. `nb-boostmtree`
-does so today. Once the fit is cached, its chunks run interactively and load it.
+fit is long calls `guard_long_fit()` once `cache_would_fit()` says the fit will be
+computed. It refuses that fit anywhere but a `run_job()` render (the console, the
+Render button, or a `quarto render` in the Workbench Terminal, `nohup` or not, all
+die with the session) and names the `run_job()` call to use. Once the fit is cached,
+the Render button and its chunks work again and load it.
 
 A render records how far it has got in `<job>.run.progress`, beside the job: the chunk
 running, the step within it where a template reports steps, and how long each finished

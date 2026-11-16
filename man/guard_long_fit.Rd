@@ -2,7 +2,7 @@
 % Please edit documentation in R/long-fit.R
 \name{guard_long_fit}
 \alias{guard_long_fit}
-\title{Stop a long fit from starting in an interactive session}
+\title{Stop a long fit from starting anywhere but a background run}
 \usage{
 guard_long_fit(name, dir, why, refit = FALSE)
 }
@@ -21,13 +21,33 @@ template's \code{REFIT}); the cached file then does not make the call safe, so i
 \code{invisible(FALSE)} when the fit may proceed; otherwise an error.
 }
 \description{
-A template calls this just before an expensive \code{cache_fit()}. In an
-interactive session (the console, or running chunks one by one) with no
-cached result yet, it stops and says to run the job with
-\code{\link{run_job}} instead, because a fit that runs for hours dies
-with the session. A render, a cached result, or
-\code{options(hvtiRtemplates.allow_interactive_fit = TRUE)} lets it pass.
+A template calls this just before an expensive \code{cache_fit()}, once
+\code{hvtiRutilities::cache_would_fit()} has said the fit will be computed
+rather than loaded. With no cached result it stops and says to run the job
+with \code{\link{run_job}}, because a fit that runs for hours dies with the
+Workbench session that started it: the console, a chunk run by hand, the
+Render button, and a \code{quarto render} typed in the Terminal tab, which is
+a child of the session too, \code{nohup} or not. Only a render started by
+\code{\link{run_job}} or \code{\link{submit_job}} passes, with a cached result
+or an explicit opt-in. Once the fit is cached, the Render button works again
+and re-renders the job from the cache.
+}
+\details{
+A render started by \code{submit_job()} carries \env{HVTI_JOB_MARKER}, which
+is how it is told apart. The opt-in is
+\code{options(hvtiRtemplates.allow_interactive_fit = TRUE)} in the session, or
+\env{HVTI_ALLOW_LONG_FIT} set to \code{"true"}, which a render's own R
+process inherits where an option set in the session does not: the package's
+tests and the template gallery render small fits that way. Set either only
+for a fit you know to be short.
 }
 \examples{
-guard_long_fit("example-fit", dir = tempdir(), why = "it takes hours")
+dir <- file.path(tempdir(), "guard-long-fit-example")
+dir.create(dir, showWarnings = FALSE)
+# Outside run_job(), with no cached fit, it refuses and names run_job().
+try(guard_long_fit("example-fit", dir = dir, why = "it takes hours"))
+# Once the fit is cached, it lets the job load it.
+saveRDS(1, file.path(dir, "example-fit.rds"))
+guard_long_fit("example-fit", dir = dir, why = "it takes hours")
+unlink(dir, recursive = TRUE)
 }

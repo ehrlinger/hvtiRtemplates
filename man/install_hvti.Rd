@@ -20,6 +20,15 @@ Copies the \code{hvti} shell command into a directory on your \code{PATH}.
 study's \code{renv.lock} records, from a terminal, whichever R your own
 session would have started. \code{hvti status} and \code{hvti cancel} do the
 same for \code{\link{job_status}} and \code{\link{cancel_job}}.
+
+\code{hvti run} takes \code{--final}, and the job's Quarto parameters as
+\code{quarto render} does, \code{-P name:value} once per parameter, with
+\code{--output file} naming the report; each becomes \code{\link{run_job}}'s
+\code{params} and \code{output_file}. A value is read as \code{quarto render}
+reads it, so \code{-P fit_m:1000} is a number. \code{hvti status} and
+\code{hvti cancel} take the same \code{--output} to name the run:
+\preformatted{hvti run analyses/job.qmd -P fit_m:1000 --output job.M1000.html
+hvti status analyses/job.qmd --output job.M1000.html}
 }
 \details{
 The command is a copy, not a symlink. The library path it would point at

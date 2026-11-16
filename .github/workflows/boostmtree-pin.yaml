@@ -1,0 +1,41 @@
+# Fails when this package's boostmtree pin disagrees with ggBoostedTrees' pin,
+# or with nb-boostmtree's install line.
+#
+# Both packages pin boostmtree in Remotes:, and both pins are needed (#557).
+# pak accepts only one GitHub ref per package, so when they disagree every
+# R job's dependency install fails before a test runs, with an error that does
+# not name the cause: main and #551 were red that way on 2026-11-16 until #554.
+# This job installs nothing, so it still runs and says which pin to move.
+#
+# No path filter: the drift can start in ggBoostedTrees with no change here.
+# The daily schedule catches it there before the next pull request does.
+name: boostmtree-pin
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # One in-flight run per workflow per ref; protected branches are exempt, as
+  # in the other workflows.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !github.ref_protected }}
+
+jobs:
+  boostmtree-pin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: boostmtree pins agree
+        run: python3 dev/check-boostmtree-pin.py

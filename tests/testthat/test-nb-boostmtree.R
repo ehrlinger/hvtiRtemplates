@@ -193,6 +193,21 @@ test_that("the saved fit carries the selection in its lineage", {
   expect_identical(sel$key, c("ccfid", "iv_echo"))
 })
 
+test_that("the saved fit's lineage records MTRY, as \"all\" for NULL and as given otherwise", {
+  nb_skip_unless_stack()
+  saved_analysis <- function(choices) {
+    root <- nb_study()
+    nb_fit_in(root, choices = choices)
+    attr(readRDS(file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree.rds")),
+         "hvti_provenance")$analysis
+  }
+  default <- saved_analysis(nb_choices())
+  expect_identical(default$mtry, "all")
+  expect_identical(default$k, 5)
+  expect_identical(default$n_knots, 10)
+  expect_identical(saved_analysis(nb_choices(MTRY = 2L))$mtry, 2L)
+})
+
 test_that("the cache is reused unchanged, and a changed setting stops until REFIT", {
   nb_skip_unless_stack()
   root <- nb_study()
@@ -301,8 +316,8 @@ test_that("every report chunk draws for every family, from a fresh fit and from 
   nb_skip_unless_stack()
   # The effects chunk emits each figure as a child chunk.
   local_child_chunks()
-  labels <- c("set", "edit-study-choices", "tbl-data", "fit", "tbl-fit", "tbl-fit-summary", "fig-error", "fig-path",
-              "fig-calibration", "fig-importance", "effects", "fig-traces", "save")
+  labels <- c("set", "edit-study-choices", "tbl-data", "fit", "tbl-fit", "tbl-fit-summary", "fit-checks", "fig-error",
+              "fig-path", "fig-calibration", "fig-importance", "effects", "fig-traces", "sensitivity", "save")
   components <- list(continuous = "lvef", binary = "lvef_bin = 1 against 0",
                      ordinal = c("lvef_ord threshold 1", "lvef_ord threshold 2"),
                      nominal = c("lvef_nom = low against high", "lvef_nom = mid against high"))
@@ -333,6 +348,9 @@ test_that("every report chunk draws for every family, from a fresh fit and from 
       expect_false(anyDuplicated(env$.effect_vars) > 0L, info = family)
       # Each component is named by its level, in the summary and on its effect figures.
       expect_identical(env$fit_summary$component, components[[family]], info = family)
+      # One check row per component; SENSITIVITY is off by default, so no grid is fitted.
+      expect_identical(env$fit_checks$component, components[[family]], info = family)
+      expect_null(env$sensitivity)
       # The save made on each pass, the cache-hit pass included, holds no ccfid.
       expect_length(nb_files_holding(root, unique(nb_family_data()$ccfid)), 0L)
     }
@@ -473,6 +491,7 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   set_choice("^RESPONSE <- ", "RESPONSE <- \"lvef\"")
   set_choice("^M  <- ", "M  <- 5")
   set_choice("^N_TRACES <- ", "N_TRACES <- 10")
+  set_choice("^MTRY <- ", "MTRY <- 2L")
   set_choice("^CORES <- ", paste0("CORES <- ", nb_cores, "L"))
   # EDIT: markers remain, so this renders as a draft, with its warning and banner.
   log <- utils::capture.output(render_job(job, quiet = FALSE))
@@ -492,6 +511,10 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   expect_identical(payload$type, "boost")
   expect_identical(payload$analysis$response, "lvef")
   expect_identical(payload$analysis$family, "continuous")
+  # The tuning choices, MTRY included, are in the page's provenance, not only in its fit table.
+  expect_equal(payload$analysis$mtry, 2)
+  expect_equal(payload$analysis$k, 5)
+  expect_equal(payload$analysis$n_knots, 10)
   expect_identical(payload$cohort$n_patients, length(unique(data$MRN)))
   expect_true(file.exists(sub("[.]qmd$", ".provenance.json", job)))
   # The fit and the effects each recorded how far they got.
@@ -506,22 +529,25 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
 test_that("the fit chunk refuses to start an uncached fit interactively, and names run_job()", {
   nb_skip_unless_stack()
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  withr::local_envvar(HVTI_ALLOW_LONG_FIT = NA)
   env <- nb_env(nb_study())
   env$guard_long_fit <- hvtiRtemplates::guard_long_fit
   expect_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices())),
                "run_job(", fixed = TRUE)
 })
 
-test_that("the fit chunk runs interactively once the fit is cached, and refuses a REFIT", {
+test_that("the fit chunk runs interactively once the fit is cached, REFIT left TRUE included", {
   nb_skip_unless_stack()
   root <- nb_study()
   nb_fit_in(root)
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
+  withr::local_envvar(HVTI_ALLOW_LONG_FIT = NA)
   env <- nb_env(root)
   expect_no_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices())))
+  # A key that matches loads under REFIT, as cache_fit() does, so the Render button rerenders after run_job().
   env2 <- nb_env(root)
-  expect_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env2, nb_choices(REFIT = TRUE))),
-               "REFIT", fixed = TRUE)
+  expect_no_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env2,
+                                               nb_choices(REFIT = TRUE))))
 })
 
 test_that("a cached fit with REFIT left TRUE guards no memory; a stale one with REFIT guards the fit", {
@@ -544,12 +570,118 @@ test_that("a cached fit with REFIT left TRUE guards no memory; a stale one with 
 
 test_that("the nb-boostmtree fit chunk guards memory before cache_fit()", {
   tpl <- readLines(nb_template(), warn = FALSE)
-  fit <- grep("guard_memory(", tpl, fixed = TRUE)
+  guards <- grep("guard_memory(", tpl, fixed = TRUE)
   cache <- grep("cache_fit(", tpl, fixed = TRUE)
-  expect_length(fit, 1L)
+  # One for the fit, one for the sensitivity grid, each ahead of the fits it guards.
+  expect_length(guards, 2L)
+  fit <- guards[[1L]]
   expect_lt(fit, min(cache[cache > fit]))
   # Not inside an if (): a cached rerender must still record the check run_job() waits for.
   expect_match(tpl[fit], "^hvtiRtemplates::guard_memory\\(")
   # The refusal names the counts the estimate was made from (spec section 5.2).
   expect_match(paste(tpl[fit:(fit + 3L)], collapse = " "), "patients.*visits", perl = TRUE)
+  # The grid fits through .at_cell(i, fit = TRUE), not a literal cache_fit( call; require that call to be found,
+  # so a guard moved after it fails here rather than comparing against min(integer(0)) = Inf.
+  sens <- grep("label: sensitivity", tpl, fixed = TRUE)
+  expect_length(sens, 1L)
+  grid_fit <- grep(".at_cell(i, fit = TRUE)", tpl, fixed = TRUE)
+  expect_length(grid_fit, 1L)
+  expect_gt(guards[[2L]], sens)
+  expect_lt(guards[[2L]], grid_fit)
+})
+
+test_that("the saved lineage and the report provenance record the same tuning choices", {
+  tpl <- readLines(nb_template(), warn = FALSE)
+  # Each analysis = list(...) block, joined with its continuation line.
+  at <- grep("analysis = list(response = .response", tpl, fixed = TRUE)
+  expect_length(at, 2L)
+  blocks <- vapply(at, function(i) paste(trimws(tpl[i:(i + 1L)]), collapse = " "), "")
+  expect_identical(blocks[[1L]], blocks[[2L]])
+  expect_match(blocks[[1L]], 'mtry = if (is.null(MTRY)) "all" else MTRY', fixed = TRUE)
+})
+
+test_that("K and N_KNOTS reach boostmtree() as k and n.knots", {
+  nb_skip_unless_stack()
+  seen <- NULL
+  env <- nb_env(nb_study())
+  env$boostmtree <- function(...) {
+    seen <<- list(...)[c("k", "n.knots")]
+    boostmtree::boostmtree(...)
+  }
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env, nb_choices(K = 3, N_KNOTS = 4)))
+  expect_identical(seen, list(k = 3, n.knots = 4))
+})
+
+test_that("N_KNOTS at or above the number of visit times stops before anything is fitted", {
+  nb_skip_unless_stack()
+  d <- nb_data()
+  # Scheduled visits: each patient's k-th visit at time k - 1, so six distinct times in all.
+  d$iv_echo <- stats::ave(d$iv_echo, d$ccfid, FUN = seq_along) - 1
+  env <- nb_env(nb_study(d))
+  env$boostmtree <- function(...) stop("fitted")
+  expect_error(utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit"), env,
+                                            nb_choices(N_KNOTS = 6))),
+               "N_KNOTS (6) must be below the number of distinct visit times (6)", fixed = TRUE)
+})
+
+test_that("the report warns when Best M is at the edge of M, and when lambda reached its ceiling", {
+  nb_skip_unless_stack()
+  env <- nb_env(nb_study())
+  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit", "tbl-fit-summary"), env,
+                               nb_choices(M = 10)))
+  # Best M well inside M, lambda below its ceiling: no warning.
+  env$fit$m.opt <- 3L
+  env$fit_summary$best_m <- 3L
+  env$fit$lambda[] <- 1
+  out <- utils::capture.output(nb_run("fit-checks", env))
+  expect_false(any(grepl("callout-warning", out, fixed = TRUE)))
+  expect_false(env$fit_checks$m_at_edge)
+  expect_false(env$fit_checks$lambda_at_max)
+  # Best M at M but the error flat over the last tenth (0.05%, as a study's M = 500 fit was): no warning.
+  # The error path is read from .err, which tbl-fit-summary leaves; iteration 9 opens the last tenth of 10.
+  env$fit$m.opt <- 10L
+  env$fit_summary$best_m <- 10L
+  env$.err[[1L]][, "l2"] <- 1
+  env$.err[[1L]][9L, "l2"] <- 1.0005
+  out <- utils::capture.output(nb_run("fit-checks", env))
+  expect_false(any(grepl("callout-warning", out, fixed = TRUE)))
+  expect_false(env$fit_checks$m_at_edge)
+  expect_equal(env$fit_checks$last_tenth_drop, 0.0005)
+  # Best M at M with the error still falling (0.5% over the last tenth), lambda at boostmtree's lambda.max:
+  # one warning for each.
+  env$.err[[1L]][9L, "l2"] <- 1.005
+  env$fit$lambda[] <- formals(boostmtree::boostmtree)$lambda.max
+  out <- paste(utils::capture.output(nb_run("fit-checks", env)), collapse = "\n")
+  expect_match(out, "last tenth of the 10 iterations fitted, and the cross-validated error fell 0.50%", fixed = TRUE)
+  expect_match(out, "reached boostmtree's ceiling", fixed = TRUE)
+  expect_true(env$fit_checks$m_at_edge)
+  expect_true(env$fit_checks$lambda_at_max)
+})
+
+test_that("SENSITIVITY refits over NU and K, reuses this fit for its own cell, and a re-render loads the grid", {
+  skip_on_cran()
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  labels <- c("set", "edit-study-choices", "tbl-data", "fit", "tbl-fit-summary", "sensitivity")
+  choices <- nb_choices(M = 4, SENSITIVITY = TRUE)
+  env <- nb_env(root)
+  out <- paste(utils::capture.output(nb_run(labels, env, choices)), collapse = "\n")
+  s <- env$sensitivity
+  expect_identical(nrow(s), 6L)
+  expect_setequal(paste(s$nu, s$k), paste(rep(c(0.01, 0.05), 3L), rep(c(3, 5, 8), each = 2L)))
+  # M scaled to hold M * NU: 4 * 0.05 / 0.01 is 20, not the 21 floating point would give.
+  expect_identical(s$m[s$nu == 0.01], rep(20L, 3L))
+  expect_identical(s$m[s$nu == 0.05], rep(4L, 3L))
+  # This job's own cell is the fit above, not a refit, so its change is exactly zero.
+  expect_identical(s$change[s$nu == 0.05 & s$k == 5], 0)
+  expect_identical(s$best_m[s$nu == 0.05 & s$k == 5], as.integer(env$fit$m.opt))
+  set_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost")
+  expect_length(list.files(set_dir, "^nb-boostmtree-sensitivity-.*\\.rds$"), 5L)
+  expect_match(out, "Sensitivity to NU and K", fixed = TRUE)
+  expect_match(out, "moves by at most", fixed = TRUE)
+  # A re-render loads every cell from its cache, unchanged.
+  env2 <- nb_env(root)
+  utils::capture.output(nb_run(labels, env2, choices))
+  expect_identical(env2$sensitivity, s)
 })

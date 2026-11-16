@@ -141,7 +141,9 @@ gallery_build <- function(root, quiet = TRUE, only = NULL, render = render_job) 
   # and the gallery is published. HVTI_RUN_USER and HVTI_RUN_HOST replace the
   # two, so no real username or host name reaches the site. Environment
   # variables, not options(): Quarto renders in a process of its own.
-  withr::local_envvar(c(HVTI_RUN_USER = "gallery", HVTI_RUN_HOST = "gallery"))
+  # HVTI_ALLOW_LONG_FIT lets guard_long_fit() pass: the gallery's fits are small
+  # synthetic cohorts, rendered with render_job() rather than run_job().
+  withr::local_envvar(c(HVTI_RUN_USER = "gallery", HVTI_RUN_HOST = "gallery", HVTI_ALLOW_LONG_FIT = "true"))
   jobs <- gallery_jobs()
   if (is.null(only) && length(missing <- gallery_missing(jobs))) {
     stop("No gallery job for shipped or in-flight template(s): ", paste(missing, collapse = ", "),
