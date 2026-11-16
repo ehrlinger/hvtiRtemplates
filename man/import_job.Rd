@@ -4,17 +4,21 @@
 \alias{import_job}
 \title{Bring a job from another study into this one}
 \usage{
-import_job(from, subject = NULL, type = NULL, dir = NULL)
+import_job(path, subject = NULL, type = NULL, root = NULL, from, dir)
 }
 \arguments{
-\item{from}{The job to import: a \code{.qmd} file in another study, named
+\item{path}{The job to import: a \code{.qmd} file in another study, named
 as \code{add_job()} names jobs.}
 
 \item{subject, type}{The job's set in this study. \code{NULL}, the default,
 keeps the source job's. See \code{\link{add_job}} for what they decide.}
 
-\item{dir}{The study root to import into. \code{NULL}, the default, finds
+\item{root}{The study root to import into. \code{NULL}, the default, finds
 it by walking up from the working directory, as \code{add_job()} does.}
+
+\item{from, dir}{Deprecated: the old names of \code{path} and \code{root}.
+They work, with a warning, for one more release; giving an old name with
+its new one is an error.}
 }
 \value{
 The imported job's path, invisibly. On any failure no file is left
@@ -60,7 +64,7 @@ study's files, are not listed.
 
 The job keeps the template version it was written from, so
 \code{\link{upgrade_job}} can bring an older job up to the current template
-afterwards: \code{upgrade_job(import_job(from))}.
+afterwards: \code{upgrade_job(import_job(path))}.
 }
 \examples{
 other <- file.path(tempdir(), "import-job-other")
@@ -68,17 +72,17 @@ here <- file.path(tempdir(), "import-job-here")
 for (d in c(other, here)) {
   invisible(hvtiRutilities::study_setup(d, study = "Example", study_tracker_id = 1L, renv = FALSE))
 }
-job <- add_job("ac", subject = "death", type = "hz", dir = other)
+job <- add_job("ac", subject = "death", type = "hz", root = other)
 # The other study's edit.
 lines <- readLines(job)
 lines <- sub("^DATASET <- \"built\"", "DATASET <- \"built_aorta\"", lines)
 writeLines(lines, job)
 
-imported <- import_job(job, subject = "reop", dir = here)
+imported <- import_job(job, subject = "reop", root = here)
 grep("^(DATASET|SUBJECT) ", readLines(imported), value = TRUE)
 
 # An existing job is never overwritten.
-try(import_job(job, subject = "reop", dir = here))
+try(import_job(job, subject = "reop", root = here))
 unlink(c(other, here), recursive = TRUE)
 }
 \seealso{

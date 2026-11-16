@@ -377,11 +377,15 @@
 # reproduces it.
 .run_facts <- function(run, data = list(), artifacts = list(), cfg = hvtiRutilities::study_config(),
                        envir = parent.frame()) {
+  job <- .facts_job(run)
   c(.facts_run(.run_reconcile(run), Sys.time()), list(
-    job = .facts_job(run),
+    job = job,
     datasets = .facts_datasets(data, cfg),
     upstream = .facts_upstream(artifacts),
-    reproducibility = .facts_reproducibility(cfg, envir)
+    reproducibility = .facts_reproducibility(cfg, envir),
+    # The family's seven-field record, beside the fields above rather than in place of them, so the table and the ar
+    # readers keep reading what they read.
+    provenance = .run_provenance(run, job$template, envir)
   ), if (!is.null(.run_state$identifiability)) list(identifiability = .run_state$identifiability))
 }
 

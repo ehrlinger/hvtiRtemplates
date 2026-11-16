@@ -7,7 +7,7 @@
 render_job(
   path,
   final = FALSE,
-  quiet = FALSE,
+  quiet = isTRUE(getOption("hvti.quiet")),
   params = NULL,
   output_file = NULL
 )
@@ -19,7 +19,9 @@ render_job(
 only: a job whose data, or whose upstream hand-off, came from an unregistered build stops and
 names \code{hvtiRutilities::update_manifest()}.}
 
-\item{quiet}{Logical. Passed to \code{quarto::quarto_render()}.}
+\item{quiet}{Logical. Passed to \code{quarto::quarto_render()}. Defaults to the
+family option \code{hvti.quiet}, so \code{options(hvti.quiet = TRUE)} quiets
+every render; an explicit value wins.}
 
 \item{params}{A named list of single values, or \code{NULL}. The job's Quarto
 \code{params}, as \code{quarto render -P name:value} sets them; passed to
@@ -103,7 +105,7 @@ if (requireNamespace("quarto", quietly = TRUE) && quarto::quarto_available()) {
   utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                    row.names = FALSE)
   invisible(hvtiRutilities::register_data(root, "built.csv"))
-  job <- add_job("dc.gfup", subject = "dead", type = "hz", dir = root)
+  job <- add_job("dc.gfup", subject = "dead", type = "hz", root = root)
 
   # A draft: the new job still holds EDIT: markers, so the report carries a
   # DRAFT banner listing them, and renders all the same.

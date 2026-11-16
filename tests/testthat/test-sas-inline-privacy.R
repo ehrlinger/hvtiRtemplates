@@ -43,7 +43,7 @@ inline_privacy_migrate <- function(root, kind, middle, after = TRUE) {
   path <- file.path(root, "descriptive", "inline.sas")
   writeLines(c(before, middle, if (after) c("age=age+10; if female=1;", suffix)), path)
   hash <- tools::md5sum(path)
-  job <- migrate_job(path, "cohort", "eda", prefix, qualifier, dir = root)
+  job <- migrate_job(path, "cohort", "eda", prefix, qualifier, root = root)
   list(job = readLines(job), report = readLines(sub("[.]qmd$", "-migration.md", job)),
        unchanged = identical(tools::md5sum(path), hash))
 }

@@ -40,14 +40,17 @@
 #'
 #' The job keeps the template version it was written from, so
 #' \code{\link{upgrade_job}} can bring an older job up to the current template
-#' afterwards: \code{upgrade_job(import_job(from))}.
+#' afterwards: \code{upgrade_job(import_job(path))}.
 #'
-#' @param from The job to import: a \code{.qmd} file in another study, named
+#' @param path The job to import: a \code{.qmd} file in another study, named
 #'   as \code{add_job()} names jobs.
 #' @param subject,type The job's set in this study. \code{NULL}, the default,
 #'   keeps the source job's. See \code{\link{add_job}} for what they decide.
-#' @param dir The study root to import into. \code{NULL}, the default, finds
+#' @param root The study root to import into. \code{NULL}, the default, finds
 #'   it by walking up from the working directory, as \code{add_job()} does.
+#' @param from,dir Deprecated: the old names of \code{path} and \code{root}.
+#'   They work, with a warning, for one more release; giving an old name with
+#'   its new one is an error.
 #'
 #' @return The imported job's path, invisibly. On any failure no file is left
 #'   behind, the runner included.
@@ -60,28 +63,30 @@
 #' for (d in c(other, here)) {
 #'   invisible(hvtiRutilities::study_setup(d, study = "Example", study_tracker_id = 1L, renv = FALSE))
 #' }
-#' job <- add_job("ac", subject = "death", type = "hz", dir = other)
+#' job <- add_job("ac", subject = "death", type = "hz", root = other)
 #' # The other study's edit.
 #' lines <- readLines(job)
 #' lines <- sub("^DATASET <- \"built\"", "DATASET <- \"built_aorta\"", lines)
 #' writeLines(lines, job)
 #'
-#' imported <- import_job(job, subject = "reop", dir = here)
+#' imported <- import_job(job, subject = "reop", root = here)
 #' grep("^(DATASET|SUBJECT) ", readLines(imported), value = TRUE)
 #'
 #' # An existing job is never overwritten.
-#' try(import_job(job, subject = "reop", dir = here))
+#' try(import_job(job, subject = "reop", root = here))
 #' unlink(c(other, here), recursive = TRUE)
 #' @export
-import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
-  tryCatch(.check_scalar_string("from", from), error = function(e) {
+import_job <- function(path, subject = NULL, type = NULL, root = NULL, from, dir) {
+  if (!missing(from)) path <- .take_renamed("import_job", "from", "path", from, !missing(path))
+  if (!missing(dir)) root <- .take_renamed("import_job", "dir", "root", dir, !missing(root))
+  tryCatch(.check_scalar_string("path", path), error = function(e) {
     stop("import_job(): ", sub("^template selection: ", "", conditionMessage(e)), call. = FALSE)
   })
-  if (!file.exists(from) || dir.exists(from)) stop("import_job(): job not found: ", from, call. = FALSE)
-  if (!grepl("[.]qmd$", from)) stop("import_job(): a job is a .qmd file: ", from, call. = FALSE)
-  fields <- .job_template_fields(from)
+  if (!file.exists(path) || dir.exists(path)) stop("import_job(): job not found: ", path, call. = FALSE)
+  if (!grepl("[.]qmd$", path)) stop("import_job(): a job is a .qmd file: ", path, call. = FALSE)
+  fields <- .job_template_fields(path)
   if (is.null(fields)) {
-    stop("import_job(): '", basename(from), "' does not name a template; expected ",
+    stop("import_job(): '", basename(path), "' does not name a template; expected ",
          "<prefix>[.<qualifier>].<subject>.<type>.qmd.", call. = FALSE)
   }
   # A job written under a template's name before a rename carries that
@@ -90,7 +95,7 @@ import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
   # folder, its report would lose them, so it is upgraded where it is first.
   renamed <- .template_rename(template_list(), fields$prefix, fields$qualifier)
   if (!is.null(renamed)) {
-    stop("import_job(): '", basename(from), "' was written under ", sub("-", ".", renamed$from, fixed = TRUE),
+    stop("import_job(): '", basename(path), "' was written under ", sub("-", ".", renamed$from, fixed = TRUE),
          ", since renamed ", sub("-", ".", renamed$to, fixed = TRUE), ", and its code may assume the old folder. ",
          "Run upgrade_job() on it in its own study, then import the upgraded job.", call. = FALSE)
   }
@@ -103,25 +108,25 @@ import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
     error = function(e) stop("import_job(): ", conditionMessage(e), call. = FALSE)
   )
   .warn_if_deprecated(row, "import_job")
-  if (is.null(dir)) dir <- .default_study_root("import_job")
+  if (is.null(root)) root <- .default_study_root("import_job")
 
-  lines <- readLines(from, warn = FALSE)
+  lines <- readLines(path, warn = FALSE)
   # The SUBJECT and TYPE lines are checked before anything is written.
-  lines <- .set_marker_lines(lines, subject, type, from)
-  src_runner <- c(sub("[.]qmd$", ".runner.R", from), sub("[.]qmd$", "-runner.R", from))
+  lines <- .set_marker_lines(lines, subject, type, path)
+  src_runner <- c(sub("[.]qmd$", ".runner.R", path), sub("[.]qmd$", "-runner.R", path))
   src_runner <- src_runner[file.exists(src_runner)]
 
   # Packages the other study added to the job's setup chunk, before anything is
   # written, so a refusal leaves this study as it was. add_job() installs the
   # template's own.
   # A job with no readable setup chunk is refused, not read as needing nothing.
-  pk <- tryCatch(.template_packages(from), error = function(e) {
+  pk <- tryCatch(.template_packages(path), error = function(e) {
     stop("import_job(): cannot read the packages the job attaches: ", conditionMessage(e), call. = FALSE)
   })
   extra <- pk$package
   unread <- attr(pk, "unread")
-  if (length(extra) && dir.exists(dir)) {
-    hvtiRutilities::study_need(extra, root = dir, caller = "import_job", only_in_renv = TRUE)
+  if (length(extra) && dir.exists(root)) {
+    hvtiRutilities::study_need(extra, root = root, caller = "import_job", only_in_renv = TRUE)
   }
 
   # add_job() refuses an existing job in any spelling, installs packages and
@@ -129,7 +134,7 @@ import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
   # replaced with the imported text.
   qualifier <- if (is.na(row$qualifier[[1L]])) NULL else row$qualifier[[1L]]
   out <- withCallingHandlers(
-    tryCatch(add_job(row$prefix[[1L]], subject, type, dir = dir, qualifier = qualifier),
+    tryCatch(add_job(row$prefix[[1L]], subject, type, root = root, qualifier = qualifier),
              error = function(e) stop(sub("^add_job\\(\\): ", "import_job(): ", conditionMessage(e)), call. = FALSE)),
     hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning")
   )
@@ -148,7 +153,7 @@ import_job <- function(from, subject = NULL, type = NULL, dir = NULL) {
   }
   ok <- TRUE
 
-  message("import_job(): wrote '", out, "' from '", normalizePath(from, winslash = "/"), "'.",
+  .hvti_inform("import_job(): wrote '", out, "' from '", normalizePath(path, winslash = "/"), "'.",
           if (has_runner && !length(src_runner)) {
             paste0("\nThe source job has no runner beside it, so '", basename(runner), "' is the template's.")
           },

@@ -36,30 +36,33 @@
 #' first, in the job.
 #'
 #' @param data A data frame, one row per patient.
-#' @param time Name of the follow-up time column.
-#' @param event Name of the event column, 0/1 or logical.
-#' @param strata Name of one stratification column, or \code{NULL} for the
+#' @param time_col Name of the follow-up time column.
+#' @param event_col Name of the event column, 0/1 or logical.
+#' @param strata_col Name of one stratification column, or \code{NULL} for the
 #'   whole cohort.
 #' @param conf_level Confidence level of the limits. Default \code{0.68268948}.
 #' @param event_only \code{TRUE} returns a row per event time only (SAS
 #'   \code{PEVENT=1}); \code{FALSE} adds a row per censoring time
 #'   (\code{PEVENT=0}).
-#' @param times Reporting horizons, in the unit of \code{time}.
+#' @param times Reporting horizons, in the unit of \code{time_col}.
 #' @param labels Labels for \code{times}. \code{NULL} labels each horizon with
 #'   its value.
+#' @param time,event,strata Deprecated: the old names of \code{time_col},
+#'   \code{event_col} and \code{strata_col}. They work, with a warning, for
+#'   one more release; giving an old name with its new one is an error.
 #'
 #' @return
 #' \code{life_table()}: a data frame with the columns of
 #' \code{TemporalHazard::hzr_kaplan()} (\code{time}, \code{n_risk},
 #' \code{n_event}, \code{n_censor}, \code{survival}, \code{std_err},
 #' \code{cl_lower}, \code{cl_upper}, \code{cumhaz}, \code{hazard},
-#' \code{density}, \code{life}), led by \code{stratum} when \code{strata} is
+#' \code{density}, \code{life}), led by \code{stratum} when \code{strata_col} is
 #' given. Its attribute \code{"counts"} has a row per stratum with \code{n},
 #' \code{n_events}, \code{n_censored} and \code{max_fup}, the last observed
 #' time; \code{"dropped"} is described under Details, or \code{NULL}.
 #'
 #' \code{life_table_at()}: a data frame with a row per stratum and horizon:
-#' \code{stratum} when \code{strata} is given, then \code{horizon},
+#' \code{stratum} when \code{strata_col} is given, then \code{horizon},
 #' \code{time}, \code{survival}, \code{cl_lower}, \code{cl_upper} and
 #' \code{n_risk}, with the \code{"dropped"} attribute.
 #'
@@ -87,7 +90,14 @@ NULL
 
 #' @rdname life_table
 #' @export
-life_table <- function(data, time, event, strata = NULL, conf_level = 0.68268948, event_only = TRUE) {
+life_table <- function(data, time_col, event_col, strata_col = NULL, conf_level = 0.68268948, event_only = TRUE,
+                       time, event, strata) {
+  if (!missing(time)) time_col <- .take_renamed("life_table", "time", "time_col", time, !missing(time_col))
+  if (!missing(event)) event_col <- .take_renamed("life_table", "event", "event_col", event, !missing(event_col))
+  if (!missing(strata)) strata_col <- .take_renamed("life_table", "strata", "strata_col", strata, !missing(strata_col))
+  time <- time_col
+  event <- event_col
+  strata <- strata_col
   .lt_need_kaplan()
   parts <- .lt_parts(data, time, event, strata)
   fits <- lapply(names(parts$rows), function(s) {
@@ -106,7 +116,14 @@ life_table <- function(data, time, event, strata = NULL, conf_level = 0.68268948
 
 #' @rdname life_table
 #' @export
-life_table_at <- function(data, time, event, times, labels = NULL, strata = NULL, conf_level = 0.68268948) {
+life_table_at <- function(data, time_col, event_col, times, labels = NULL, strata_col = NULL, conf_level = 0.68268948,
+                          time, event, strata) {
+  if (!missing(time)) time_col <- .take_renamed("life_table_at", "time", "time_col", time, !missing(time_col))
+  if (!missing(event)) event_col <- .take_renamed("life_table_at", "event", "event_col", event, !missing(event_col))
+  if (!missing(strata)) strata_col <- .take_renamed("life_table_at", "strata", "strata_col", strata, !missing(strata_col))
+  time <- time_col
+  event <- event_col
+  strata <- strata_col
   .lt_need_kaplan()
   if (!is.numeric(times) || !length(times) || anyNA(times) || any(times < 0)) {
     stop("life_table_at(): `times` must be nonnegative numbers.", call. = FALSE)
@@ -143,9 +160,15 @@ life_table_at <- function(data, time, event, times, labels = NULL, strata = NULL
 
 #' @rdname life_table
 #' @export
-life_table_tests <- function(data, time, event, strata) {
+life_table_tests <- function(data, time_col, event_col, strata_col, time, event, strata) {
+  if (!missing(time)) time_col <- .take_renamed("life_table_tests", "time", "time_col", time, !missing(time_col))
+  if (!missing(event)) event_col <- .take_renamed("life_table_tests", "event", "event_col", event, !missing(event_col))
+  if (!missing(strata)) strata_col <- .take_renamed("life_table_tests", "strata", "strata_col", strata, !missing(strata_col))
+  time <- time_col
+  event <- event_col
+  strata <- strata_col
   if (!is.character(strata) || length(strata) != 1L) {
-    stop("life_table_tests(): `strata` must name one column.", call. = FALSE)
+    stop("life_table_tests(): `strata_col` must name one column.", call. = FALSE)
   }
   parts <- .lt_parts(data, time, event, strata)
   df <- length(parts$rows) - 1L
@@ -168,7 +191,13 @@ life_table_tests <- function(data, time, event, strata) {
 
 #' @rdname life_table
 #' @export
-life_table_keep <- function(data, time, event, strata = NULL) {
+life_table_keep <- function(data, time_col, event_col, strata_col = NULL, time, event, strata) {
+  if (!missing(time)) time_col <- .take_renamed("life_table_keep", "time", "time_col", time, !missing(time_col))
+  if (!missing(event)) event_col <- .take_renamed("life_table_keep", "event", "event_col", event, !missing(event_col))
+  if (!missing(strata)) strata_col <- .take_renamed("life_table_keep", "strata", "strata_col", strata, !missing(strata_col))
+  time <- time_col
+  event <- event_col
+  strata <- strata_col
   .lt_check_columns(data, time, event, strata)
   keep <- !is.na(data[[time]]) & !is.na(data[[event]])
   if (!is.null(strata)) {
@@ -187,7 +216,7 @@ life_table_keep <- function(data, time, event, strata = NULL) {
 .lt_check_columns <- function(data, time, event, strata) {
   if (!is.data.frame(data)) stop("`data` must be a data frame.", call. = FALSE)
   if (!is.null(strata) && (!is.character(strata) || length(strata) != 1L)) {
-    stop("`strata` must name one column, or be NULL.", call. = FALSE)
+    stop("`strata_col` must name one column, or be NULL.", call. = FALSE)
   }
   miss <- setdiff(c(time, event, strata), names(data))
   if (length(miss)) stop("Column(s) not in the data: ", paste(miss, collapse = ", "), ".", call. = FALSE)

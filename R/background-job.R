@@ -17,14 +17,14 @@
   done <- if (identical(fn, "cancel_job")) "signalled" else "reported"
   recorded <- one("output_file")
   if (!is.null(recorded) && !identical(recorded, output_file)) {
-    stop(fn, "(): the run files for ", basename(key), " record output_file \"", recorded, "\", not ",
-         if (is.null(output_file)) "the job's own run" else paste0("\"", output_file, "\""), "; nothing was ", done, ".",
-         call. = FALSE)
+    .abort(fn, "(): the run files for ", basename(key), " record output_file \"", recorded, "\", not ",
+           if (is.null(output_file)) "the job's own run" else paste0("\"", output_file, "\""), "; nothing was ", done, ".",
+           class = "run_mismatch")
   }
   recorded_job <- one("job")
   if (!is.null(output_file) && !is.null(job) && !is.null(recorded_job) && !identical(recorded_job, job)) {
-    stop(fn, "(): the run files for ", basename(key), " record job ", recorded_job, ", not ", job, "; nothing was ",
-         done, ".", call. = FALSE)
+    .abort(fn, "(): the run files for ", basename(key), " record job ", recorded_job, ", not ", job, "; nothing was ",
+           done, ".", class = "run_mismatch")
   }
   invisible(st)
 }
@@ -130,7 +130,8 @@
 #' \code{running}, so ask from a session on that host.
 #'
 #' @param path Character(1). The job's \code{.qmd} file.
-#' @param quiet Logical(1). \code{FALSE} prints a one-line summary.
+#' @param quiet Logical(1). \code{FALSE} prints a one-line summary. Defaults to the family option
+#'   \code{hvti.quiet}; an explicit value wins.
 #' @param output_file Character(1) or \code{NULL}. The output file name a run was given with
 #'   \code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} reads the
 #'   job's own run.
@@ -152,7 +153,7 @@
 #' writeLines("---\ntitle: example\n---", job)
 #' job_status(job)
 #' @export
-job_status <- function(path, quiet = FALSE, output_file = NULL) {
+job_status <- function(path, quiet = isTRUE(getOption("hvti.quiet")), output_file = NULL) {
   job <- basename(path)
   if (!is.null(output_file)) {
     .check_output_file(output_file, path, "job_status")
@@ -300,10 +301,10 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
   if (!dir.create(files$lock, showWarnings = FALSE)) {
     if (!dir.exists(files$lock)) stop(fn, "(): cannot create ", files$lock, ".", call. = FALSE)
     age <- difftime(Sys.time(), file.info(files$lock)$mtime, units = "secs")
-    stop(fn, "(): ", basename(path), " is being submitted or cancelled by another call (", files$lock, " exists, ",
-         if (is.na(age)) "age unknown" else sprintf("%.0f s old", age), "). ",
-         "If no submit or cancel is in progress, a crashed one left it behind: delete that directory and try again.",
-         call. = FALSE)
+    .abort(fn, "(): ", basename(path), " is being submitted or cancelled by another call (", files$lock, " exists, ",
+           if (is.na(age)) "age unknown" else sprintf("%.0f s old", age), "). ",
+           "If no submit or cancel is in progress, a crashed one left it behind: delete that directory and try again.",
+           class = "run_claimed")
   }
   invisible(files$lock)
 }
@@ -328,7 +329,7 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
     } else {
       " Stop it with cancel_job() first."
     }
-    stop("submit_job(): ", basename(key), " is already running; see job_status().", hint, call. = FALSE)
+    .abort("submit_job(): ", basename(key), " is already running; see job_status().", hint, class = "job_running")
   }
   rscript <- file.path(R.home("bin"), "Rscript")
   if (file.access(rscript, 1L) != 0L) stop("submit_job(): cannot execute ", rscript, ".", call. = FALSE)
@@ -438,8 +439,8 @@ submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
   h <- .job_handle(st$pid, st$created)
   if (is.null(h)) return(NULL)
   ambiguous <- function(why) {
-    stop(fn, "(): process ", st$pid, " may not be the job's, ", why, ". Check it by hand and stop it if it is the ",
-         "render; cancel_job() then records the end.", call. = FALSE)
+    .abort(fn, "(): process ", st$pid, " may not be the job's, ", why, ". Check it by hand and stop it if it is the ",
+           "render; cancel_job() then records the end.", class = "run_refused")
   }
   if (.is_marker(st$marker)) {
     env <- tryCatch(unclass(ps::ps_environ(h)), error = function(e) NULL)
@@ -527,7 +528,8 @@ submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
 #'   and \code{"abandon"} records the run ended without signalling anything.
 #'   Ignored for a job on this host.
 #' @param quiet Logical(1). \code{FALSE} prints the job's state afterwards,
-#'   as \code{\link{job_status}} does.
+#'   as \code{\link{job_status}} does. Defaults to the family option \code{hvti.quiet}; an
+#'   explicit value wins.
 #' @param output_file Character(1) or \code{NULL}. The output file name a run was given with
 #'   \code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} cancels the
 #'   job's own run.
@@ -538,7 +540,8 @@ submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
 #' writeLines("---\ntitle: example\n---", job)
 #' if (.Platform$OS.type != "windows") cancel_job(job)
 #' @export
-cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), quiet = FALSE, output_file = NULL) {
+cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), quiet = isTRUE(getOption("hvti.quiet")),
+                       output_file = NULL) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
     stop("cancel_job(): `path` must be an existing job file.", call. = FALSE)
   }
@@ -560,22 +563,22 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
   here <- Sys.info()[["nodename"]]
   elsewhere <- identical(st$state, "running") && is.character(st$host) && !identical(st$host, here)
   if (elsewhere && identical(other_host, "refuse")) {
-    stop("cancel_job(): ", basename(path), " is recorded running on host ", st$host, ", and a process can only be ",
-         "checked and signalled on its own host: run cancel_job() in an R session on ", st$host, ". If that session ",
-         "is gone and the job is not running there, cancel_job(other_host = \"abandon\") records it ended from here.",
-         call. = FALSE)
+    .abort("cancel_job(): ", basename(path), " is recorded running on host ", st$host, ", and a process can only be ",
+           "checked and signalled on its own host: run cancel_job() in an R session on ", st$host, ". If that session ",
+           "is gone and the job is not running there, cancel_job(other_host = \"abandon\") records it ended from here.",
+           class = "run_refused")
   }
   if (identical(st$state, "submitted")) {
-    stop("cancel_job(): ", basename(path), " was submitted and its process has not recorded itself yet; cancel it ",
-         "again once job_status() reads running, or after two minutes, when an unstarted submission reads vanished.",
-         call. = FALSE)
+    .abort("cancel_job(): ", basename(path), " was submitted and its process has not recorded itself yet; cancel it ",
+           "again once job_status() reads running, or after two minutes, when an unstarted submission reads vanished.",
+           class = "run_refused")
   }
   # Without a creation time the recorded pid cannot be told from a later process that reuses it. A render started
   # without submit_job() records none in its progress file.
   if (identical(st$state, "running") && !elsewhere && is.null(st$created)) {
-    stop("cancel_job(): ", basename(path), " records process ", st$pid, " with no creation time, so it cannot be told ",
-         "from a later process that took the pid. Check that process by hand and stop it if it is the render; ",
-         "cancel_job() then records the end.", call. = FALSE)
+    .abort("cancel_job(): ", basename(path), " records process ", st$pid, " with no creation time, so it cannot be told ",
+           "from a later process that took the pid. Check that process by hand and stop it if it is the render; ",
+           "cancel_job() then records the end.", class = "run_refused")
   }
   record <- function(...) {
     run <- st[intersect(c("pid", "created", "marker", "host", "r_version", "started", "job", "output_file"), names(st))]
@@ -592,8 +595,8 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
     h <- .cancel_handle(st)
     left <- .stop_procs(function() .job_procs(h, st$marker), grace)
     if (length(left)) {
-      stop("cancel_job(): process(es) ", paste(left, collapse = ", "), " of ", basename(path), " did not exit after ",
-           "SIGKILL; nothing was recorded.", call. = FALSE)
+      .abort("cancel_job(): process(es) ", paste(left, collapse = ", "), " of ", basename(path), " did not exit after ",
+             "SIGKILL; nothing was recorded.", class = "cancel_incomplete")
     }
   }
   if (identical(st$state, "running")) {

@@ -32,7 +32,7 @@ test_that("migration render helper executes a trends job where current_input is 
 
 test_that("dc-trends migrates explicit year and ordered trend intent into executable chunks", {
   root <- migration_study_fixture("dc-trends")
-  out <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda", "dc", "trends", dir = root)
+  out <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda", "dc", "trends", root = root)
   txt <- readLines(out, warn = FALSE)
   expect_true("d$year <- floor(d$iv_opyrs) + 1985" %in% txt)
   expect_true("XBREAKS <- seq(1985, 2025, 5)" %in% txt)
@@ -104,7 +104,7 @@ test_that("dc-trends does not treat source transformations as registered measure
 test_that("dc-trends executes its plotting engine and retains long-data and subgroup validation", {
   root <- migration_study_fixture("dc-trends")
   local_child_chunks()
-  out <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda", "dc", "trends", dir = root)
+  out <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda", "dc", "trends", root = root)
   env <- list2env(list(
     .root = root, read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config,
     SUBJECT = "cohort", TYPE = "eda", hv_trends = hvtiPlotR::hv_trends, theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript,

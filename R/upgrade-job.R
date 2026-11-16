@@ -18,7 +18,7 @@
 #'   upgrade_job(job)
 #' }}
 #' You never name the template: the job's file name says which one it is.
-#' The job must sit inside its study; leave \code{dir} out unless you want to
+#' The job must sit inside its study; leave \code{root} out unless you want to
 #' name a different directory of the same study.
 #'
 #' Afterwards, render the job and read its report, in the \code{_archive}
@@ -89,9 +89,11 @@
 #' @param path The one job to upgrade: its \code{.qmd} file, relative to the
 #'   working directory or absolute, such as
 #'   \code{"10_descriptive/dc.general.cohort.eda.qmd"}.
-#' @param dir Any directory in the study, used only to locate the study root.
+#' @param root Any directory in the study, used only to locate the study root.
 #'   Defaults to the directory of \code{path}, which is right for any job
 #'   inside its study.
+#' @param dir Deprecated: the old name of \code{root}. It works, with a warning,
+#'   for one more release; giving both is an error.
 #'
 #' @return The upgraded job's path, invisibly. The report is in the
 #'   \code{_archive} folder beside it.
@@ -100,7 +102,7 @@
 #' \donttest{
 #' root <- file.path(tempdir(), "upgrade-job-example")
 #' invisible(hvtiRutilities::study_setup(root, "Example", 1L, renv = FALSE))
-#' job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+#' job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
 #' # A study choice, made in the job.
 #' lines <- readLines(job)
 #' lines <- sub('^DATASET <- "built"', 'DATASET <- "built_r"', lines)
@@ -110,14 +112,15 @@
 #' unlink(root, recursive = TRUE)
 #' }
 #' @export
-upgrade_job <- function(path, dir = NULL) {
+upgrade_job <- function(path, root = NULL, dir) {
+  if (!missing(dir)) root <- .take_renamed("upgrade_job", "dir", "root", dir, !missing(root))
   tryCatch(.check_scalar_string("path", path), error = function(e) {
     stop("upgrade_job(): ", sub("^template selection: ", "", conditionMessage(e)), call. = FALSE)
   })
   if (!file.exists(path) || dir.exists(path)) stop("upgrade_job(): job not found: ", path, call. = FALSE)
   if (!grepl("[.]qmd$", path)) stop("upgrade_job(): a job is a .qmd file: ", path, call. = FALSE)
   path <- normalizePath(path, winslash = "/")
-  root <- hvtiRutilities::study_root(if (is.null(dir)) dirname(path) else dir)
+  root <- hvtiRutilities::study_root(if (is.null(root)) dirname(path) else root)
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
   if (!.path_within(path, root)) stop("upgrade_job(): the job must be beneath the study root.", call. = FALSE)
 
@@ -176,7 +179,7 @@ upgrade_job <- function(path, dir = NULL) {
   dir.create(staging)
   on.exit(unlink(staging, recursive = TRUE), add = TRUE)
   qualifier <- if (is.na(row$qualifier[[1L]])) NULL else row$qualifier[[1L]]
-  staged <- suppressWarnings(add_job(row$prefix[[1L]], fields$subject, fields$type, dir = staging,
+  staged <- suppressWarnings(add_job(row$prefix[[1L]], fields$subject, fields$type, root = staging,
                                      qualifier = qualifier))
   old <- readLines(path, warn = FALSE)
   upgraded <- .upgrade_lines(old, readLines(staged, warn = FALSE), .template_prose(row$name[[1L]]))
@@ -186,7 +189,7 @@ upgrade_job <- function(path, dir = NULL) {
   jobs <- unique(c(path, target, others_all))
   if (current && !length(.legacy_upgrade_files(jobs))) {
     .install_provenance_hooks(root)
-    message("upgrade_job(): ", basename(path), " is already current with its template; nothing changed.")
+    .hvti_inform("upgrade_job(): ", basename(path), " is already current with its template; nothing changed.")
     return(invisible(path))
   }
 
@@ -206,7 +209,7 @@ upgrade_job <- function(path, dir = NULL) {
   .archive_legacy_upgrade(jobs, archive, taken, files, root)
   if (current) {
     .install_provenance_hooks(root)
-    message("upgrade_job(): ", basename(path), " is already current with its template; ",
+    .hvti_inform("upgrade_job(): ", basename(path), " is already current with its template; ",
             "an older upgrade's files beside it moved to ", archive, ".")
     return(invisible(path))
   }
@@ -225,7 +228,7 @@ upgrade_job <- function(path, dir = NULL) {
   # The job keeps its permissions: a job closed to other readers stays closed.
   Sys.chmod(c(target, report_path), mode, use_umask = FALSE)
   ok <- TRUE
-  message("upgrade_job(): upgraded ", basename(target), ". The old job is ", backup,
+  .hvti_inform("upgrade_job(): upgraded ", basename(target), ". The old job is ", backup,
           "; the report, with the chunks to check, is ", report_path, ".")
   .open_in_editor(target)
 }

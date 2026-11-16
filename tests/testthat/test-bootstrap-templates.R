@@ -164,7 +164,7 @@ test_that("a bag saved before the data contract stops each report, naming the ba
 test_that("bh reads its chunks' shared selection, and stops when a chunk has none or they disagree", {
   boot_skip_unless_stack("bh")
   root <- rf_study(rf_mrn_data(id = "ccfid"))
-  job <- hvtiRtemplates::read_job_data(hvtiRutilities::study_config(root))
+  job <- hvtiRtemplates::read_job_data(hvtiRutilities::study_config(root), id_col = "ccfid")
   run <- function() {
     boot_report("bh", boot_env(root), c("set", "edit-study-choices", "load", "tbl-data"), list(EXPECT_BOOT = 4L, EXPECT_CHUNKS = 2L))
   }
@@ -273,7 +273,7 @@ test_that("each report stops on a bag that holds the runner's rows", {
   # bh searches every chunk, not only the first, whose fields the pooled bag keeps.
   boot_skip_unless_stack("bh")
   root <- rf_study(data)
-  job <- hvtiRtemplates::read_job_data(hvtiRutilities::study_config(root))
+  job <- hvtiRtemplates::read_job_data(hvtiRutilities::study_config(root), id_col = "ccfid")
   scope <- local({
     d <- job$data
     ~ age
@@ -385,7 +385,7 @@ test_that("bh saves no MRN in its report, in or outside the global environment",
   for (env in list(globalenv(), new.env(parent = globalenv()))) {
     data <- rf_mrn_data()
     root <- rf_study(data)
-    job <- hvtiRtemplates::read_job_data(hvtiRutilities::study_config(root))
+    job <- hvtiRtemplates::read_job_data(hvtiRutilities::study_config(root), id_col = "ccfid")
     dir <- boot_save_chunks(root, list(boot_hazard_chunk(1L, job), boot_hazard_chunk(2L, job)))
     rf_restore_later(env, environment())
     env$.root <- root

@@ -20,7 +20,7 @@ test_that("EDA migration selects registered data and explicit ordered EDA contro
   root <- migration_study_fixture("dp-postage")
   source <- file.path(root, "descriptive", "dp.postage.qmd")
   bytes <- readBin(source, "raw", n = file.info(source)$size)
-  job <- migrate_job(source, "cohort", "eda", "dc", "eda", dir = root)
+  job <- migrate_job(source, "cohort", "eda", "dc", "eda", root = root)
   expect_identical(dirname(job), normalizePath(file.path(root, "descriptive"), winslash = "/"))
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built,
                        study_config = hvtiRutilities::study_config))
@@ -114,7 +114,7 @@ test_that("a migrated legacy EDA report renders real eighteen-panel pages under 
 
 test_that("EDA migration does not require databuild for registered data but validates analysis-set mode", {
   root <- migration_study_fixture("dp-postage")
-  job <- migrate_job(file.path(root, "descriptive", "dp.postage.qmd"), "cohort", "eda", "dc", "eda", dir = root)
+  job <- migrate_job(file.path(root, "descriptive", "dp.postage.qmd"), "cohort", "eda", "dc", "eda", root = root)
   env <- list2env(list(.root = root, read_built = hvtiRutilities::read_built, study_config = hvtiRutilities::study_config))
   # The full setup and registered-data branch run with the actual dependencies.
   withr::local_dir(dirname(job))
@@ -233,11 +233,11 @@ test_that("naming the removed dp-postage in migrate_job() stops, and writes noth
   # caller is told the prefixes on offer, dc among them.
   root <- migration_study_fixture("dp-postage")
   source <- file.path(root, "descriptive", "dp.postage.qmd")
-  expect_error(migrate_job(source, "cohort", "eda", "dp", "postage", dir = root),
+  expect_error(migrate_job(source, "cohort", "eda", "dp", "postage", root = root),
                "unknown template: dp[.]postage[.] Available: [^\n]*dc")
   # Left to the filename, whose second field names no template, the prefix
   # alone is unknown.
-  expect_error(migrate_job(source, "cohort", "eda", prefix = "dp", dir = root),
+  expect_error(migrate_job(source, "cohort", "eda", prefix = "dp", root = root),
                "unknown template: dp[.] Available: [^\n]*dc")
   expect_length(list.files(root, "[.]eda[.]qmd$|-migration[.]md$", recursive = TRUE), 0L)
 })

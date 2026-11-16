@@ -76,7 +76,7 @@ SEED <- 20260100L + CHUNK
 # The data contract. read_job_data() reads the rows, leaves MRN and eMRN out,
 # and records the selection; the bag carries that selection to the report.
 cfg <- hvtiRutilities::study_config()
-job <- hvtiRtemplates::read_job_data(cfg, dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY)
+job <- hvtiRtemplates::read_job_data(cfg, dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id_col = ID, key_cols = KEY)
 selection <- attr(job$record, "selection")
 # Several rows per patient is start/stop data, one row per patient segment. The
 # screen then resamples patients, keeping each one's segments together, as SAS

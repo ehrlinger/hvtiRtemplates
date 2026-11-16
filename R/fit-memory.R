@@ -146,14 +146,14 @@ guard_memory <- function(need_gib, why, cores = NULL, cores_fit = NULL,
     ok <- Filter(function(k) isTRUE(cores_fit(k) <= 0.9 * m$limit_gib), seq_len(cores - 1L))  # an NA estimate never fits
     if (length(ok)) max(unlist(ok))
   }
-  stop(.check("memory", FALSE,
-              sprintf("%s needs about %.0f GiB%s and this session is capped at %s. %s%s",
-                      why, need_gib, if (!is.null(cores)) sprintf(" with %d cores", cores) else "", where,
-                      if (to == "none") "No Workbench profile holds it: reduce CORES or the data." else
-                        sprintf("Start a \"%s\" session (%.1f GiB) or larger.", to,
-                                .workbench_profiles$cap_gib[.workbench_profiles$profile == to]),
-                      if (!is.null(k)) sprintf(" Or set CORES <- %d to fit in this one.", k) else ""))$message,
-       call. = FALSE)
+  .abort(.check("memory", FALSE,
+                sprintf("%s needs about %.0f GiB%s and this session is capped at %s. %s%s",
+                        why, need_gib, if (!is.null(cores)) sprintf(" with %d cores", cores) else "", where,
+                        if (to == "none") "No Workbench profile holds it: reduce CORES or the data." else
+                          sprintf("Start a \"%s\" session (%.1f GiB) or larger.", to,
+                                  .workbench_profiles$cap_gib[.workbench_profiles$profile == to]),
+                        if (!is.null(k)) sprintf(" Or set CORES <- %d to fit in this one.", k) else ""))$message,
+         class = "memory")
 }
 
 # The memory fields .run.yml records at a run's end; list() when nothing can be read.

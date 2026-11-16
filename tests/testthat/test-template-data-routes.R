@@ -242,7 +242,7 @@ test_that("every template that reads its own data offers the join and records th
     # patients by ID digest, so it offers no JOIN.
     if (!grepl("read_job_data(.cfg, dataset = DATASET", text, fixed = TRUE) || basename(f) == "lp-mirror.qmd") next
     readers <- readers + 1L
-    for (arg in c("join = JOIN", "join_vars = JOIN_VARS", "reduce = REDUCE", "join_key = JOIN_KEY")) {
+    for (arg in c("join = JOIN", "join_cols = JOIN_VARS", "reduce = REDUCE", "join_key_cols = JOIN_KEY")) {
       expect_true(grepl(arg, text, fixed = TRUE), info = paste(basename(f), arg))
     }
     choices <- data_route_chunks(f)$choices
@@ -286,7 +286,7 @@ test_that("descriptive templates join an ancillary dataset, long and one row per
   suppressWarnings(suppressMessages({
     hvtiRutilities::register_data(root, file = "built.csv")
     hvtiRutilities::register_data(root, file = "echo.csv", dataset = "echo", role = "named",
-                                  kind = "ancillary", key = c("ccfid", "echo_day"))
+                                  kind = "ancillary", key_cols = c("ccfid", "echo_day"))
   }))
   withr::local_dir(root)
   for (template in templates) {
@@ -344,7 +344,7 @@ test_that("templates that model one row per patient refuse a long join; long-dat
   suppressWarnings(suppressMessages({
     hvtiRutilities::register_data(root, file = "built.csv")
     hvtiRutilities::register_data(root, file = "echo.csv", dataset = "echo", role = "named",
-                                  kind = "ancillary", key = c("ccfid", "echo_day"))
+                                  kind = "ancillary", key_cols = c("ccfid", "echo_day"))
   }))
   withr::local_dir(root)
   run <- function(template, reduce) {
@@ -419,7 +419,7 @@ test_that("nb-boostmtree takes a long join whose visit time is only in the joine
   suppressWarnings(suppressMessages({
     hvtiRutilities::register_data(root, file = "built.csv")
     hvtiRutilities::register_data(root, file = "echo.csv", dataset = "echo", role = "named",
-                                  kind = "ancillary", key = c("ccfid", "iv_echo"))
+                                  kind = "ancillary", key_cols = c("ccfid", "iv_echo"))
   }))
   withr::local_dir(root)
   chunks <- data_route_chunks(template)

@@ -83,8 +83,8 @@ render_migrated_fixture <- function(kind, root = NULL) {
                            full.names = TRUE, ignore.case = TRUE)
   job <- migrate_job(
     source, "cohort", "eda", spec[["prefix"]], spec[["qualifier"]],
-    lst = optional("lst"), log = optional("log"),
-    reference = if (length(references)) references else NULL, dir = root
+    lst_path = optional("lst"), log_path = optional("log"),
+    reference_path = if (length(references)) references else NULL, root = root
   )
   declarations <- testthat::test_path("fixtures-migration", kind, "review-markers.txt")
   if (file.exists(declarations)) .resolve_fixture_markers(job, readLines(declarations, warn = FALSE))
@@ -114,7 +114,7 @@ render_all_migration_fixtures <- function() {
 # Scaffold a dc-gfup job in a synthetic study and replace whole lines by pattern.
 scaffold_gfup <- function(edits, .local_envir = parent.frame()) {
   root <- migration_study_fixture(NULL, .local_envir = .local_envir)
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "gfup")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "gfup")
   lines <- readLines(job, warn = FALSE)
   for (pattern in names(edits)) {
     hit <- grep(pattern, lines)
@@ -131,7 +131,7 @@ scaffold_gfup <- function(edits, .local_envir = parent.frame()) {
 scaffold_job <- function(prefix, qualifier, edits, kind = NULL, root = NULL, subfolder = NULL,
                          .local_envir = parent.frame()) {
   if (is.null(root)) root <- migration_study_fixture(kind, .local_envir = .local_envir)
-  job <- add_job(prefix, "cohort", "eda", dir = root, qualifier = qualifier)
+  job <- add_job(prefix, "cohort", "eda", root = root, qualifier = qualifier)
   lines <- readLines(job, warn = FALSE)
   for (pattern in names(edits)) {
     hit <- grep(pattern, lines)

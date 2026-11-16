@@ -21,7 +21,7 @@ test_that("every migration log path reports diagnostics without patient-like mes
     before <- tools::md5sum(c(source, log))
     # A legacy EDA source migrates to dc-eda.
     qualifier <- if (fixture == "dp-postage") "eda" else sub("^[^-]+-", "", fixture)
-    job <- migrate_job(source, "cohort", "eda", "dc", qualifier, log = log, dir = root)
+    job <- migrate_job(source, "cohort", "eda", "dc", qualifier, log_path = log, root = root)
     report <- readLines(sub("[.]qmd$", "-migration.md", job))
     text <- paste(report, collapse = "\n")
     expect_false(grepl("REVIEW_TOKEN|98765432", text), info = kind)

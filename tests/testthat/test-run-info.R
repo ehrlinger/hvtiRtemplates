@@ -198,7 +198,7 @@ test_that("the box sends the reader to the end table when the dataset is inherit
 test_that("the end table's facts cover the run, the job and a dataset read", {
   withr::local_envvar(HVTI_RUN_USER = "tester", HVTI_RUN_HOST = "testhost")
   rf <- run_fixture()
-  job <- read_job_data(rf$cfg, where = quote(age >= 30))
+  job <- read_job_data(rf$cfg, id_col = "ccfid", where = quote(age >= 30))
   facts <- run_facts(rf, data = list(job$provenance))
   expect_true(all(c("status", "user", "job", "datasets", "upstream", "reproducibility") %in% names(facts)))
   expect_identical(facts$user, "tester")
@@ -234,8 +234,8 @@ test_that("the end table's facts cover the run, the job and a dataset read", {
 
 test_that("a dataset read with no WHERE says none, and a read counts once however often it is repeated", {
   rf <- run_fixture()
-  first <- read_job_data(rf$cfg)
-  read_job_data(rf$cfg)
+  first <- read_job_data(rf$cfg, id_col = "ccfid")
+  read_job_data(rf$cfg, id_col = "ccfid")
   facts <- run_facts(rf, data = list(first$provenance, first$provenance))
   expect_length(facts$datasets, 1L)
   expect_identical(facts$datasets[[1L]]$where, character(0))
@@ -243,8 +243,8 @@ test_that("a dataset read with no WHERE says none, and a read counts once howeve
 
 test_that("one dataset read under two filters is listed once for each", {
   rf <- run_fixture()
-  adults <- read_job_data(rf$cfg, where = quote(age >= 30))
-  everyone <- read_job_data(rf$cfg)
+  adults <- read_job_data(rf$cfg, id_col = "ccfid", where = quote(age >= 30))
+  everyone <- read_job_data(rf$cfg, id_col = "ccfid")
   facts <- run_facts(rf, data = list(adults$provenance, everyone$provenance))
   expect_length(facts$datasets, 2L)
   expect_identical(vapply(facts$datasets, function(d) paste(d$where, collapse = ";"), ""), c("age >= 30", ""))
@@ -256,7 +256,7 @@ test_that("a newer file waiting is reported against the version the job read", {
   rf <- run_fixture()
   utils::write.csv(hazard_data(n = 170L), file.path(hvtiRutilities::study_dir("datasets", rf$root), "built.csv"),
                    row.names = FALSE)
-  job <- read_job_data(rf$cfg)
+  job <- read_job_data(rf$cfg, id_col = "ccfid")
   facts <- run_facts(rf, data = list(job$provenance))
   expect_identical(facts$datasets[[1L]]$manifest, "newer file waiting")
   expect_identical(facts$datasets[[1L]]$rows, 160L)
@@ -264,8 +264,8 @@ test_that("a newer file waiting is reported against the version the job read", {
 
 test_that("two reads whose conditions redact to the same text are two entries, and the raw WHERE is not stored", {
   rf <- run_fixture()
-  older <- read_job_data(rf$cfg, where = quote(age >= 30), key = c("ccfid", "age"))
-  oldest <- read_job_data(rf$cfg, where = quote(age >= 70), key = c("ccfid", "age"))
+  older <- read_job_data(rf$cfg, id_col = "ccfid", where = quote(age >= 30), key_cols = c("ccfid", "age"))
+  oldest <- read_job_data(rf$cfg, id_col = "ccfid", where = quote(age >= 70), key_cols = c("ccfid", "age"))
   expect_identical(attr(older$record, "selection")$where_shown, attr(oldest$record, "selection")$where_shown)
   expect_false(identical(nrow(older$data), nrow(oldest$data)))
   facts <- run_facts(rf, data = list(older$provenance, oldest$provenance))
@@ -273,7 +273,7 @@ test_that("two reads whose conditions redact to the same text are two entries, a
   expect_setequal(vapply(facts$datasets, `[[`, 0L, "rows"), c(nrow(older$data), nrow(oldest$data)))
   expect_identical(unique(vapply(facts$datasets, function(d) paste(d$where, collapse = ";"), "")), "age >= <value>")
   # The same read again is still one entry.
-  read_job_data(rf$cfg, where = quote(age >= 30), key = c("ccfid", "age"))
+  read_job_data(rf$cfg, id_col = "ccfid", where = quote(age >= 30), key_cols = c("ccfid", "age"))
   expect_length(run_facts(rf, data = list(older$provenance))$datasets, 2L)
   # Neither a raw condition nor the hash that tells the reads apart reaches the facts or the table.
   text <- paste(c(unlist(facts), hvtiRtemplates:::.run_table(facts)), collapse = " ")
@@ -300,15 +300,17 @@ test_that("a rebuilt joined dataset is reported against the joined dataset, not 
     facts <- run_facts(rf, data = list(job$provenance, job$provenance_join))
     stats::setNames(vapply(facts$datasets, `[[`, "", "manifest"), vapply(facts$datasets, `[[`, "", "name"))
   }
-  expect_identical(status(function() read_job_data(rf$cfg, join = "echo")), c(built = "current", echo = "current"))
+  expect_identical(status(function() read_job_data(rf$cfg, id_col = "ccfid", join = "echo")), c(built = "current", echo = "current"))
   # Rebuild only the joined dataset.
   utils::write.csv(rbind(echo, data.frame(ccfid = d$ccfid[4], echo_date = 100, ef = 41)),
                    file.path(datasets, "echo.csv"), row.names = FALSE)
-  expect_identical(status(function() read_job_data(rf$cfg, join = "echo")), c(built = "current", echo = "newer file waiting"))
+  expect_identical(status(function() read_job_data(rf$cfg, id_col = "ccfid", join = "echo")), c(built = "current",
+                                                                                                echo = "newer file waiting"))
   # And only the cohort.
   utils::write.csv(echo, file.path(datasets, "echo.csv"), row.names = FALSE)
   utils::write.csv(hazard_data(n = 170L), file.path(datasets, "built.csv"), row.names = FALSE)
-  expect_identical(status(function() read_job_data(rf$cfg, join = "echo")), c(built = "newer file waiting", echo = "current"))
+  expect_identical(status(function() read_job_data(rf$cfg, id_col = "ccfid", join = "echo")), c(built = "newer file waiting",
+                                                                                                echo = "current"))
 })
 
 test_that("a conditional stop_here() that fires makes the facts a draft that stopped early, and the report says so", {
@@ -462,7 +464,7 @@ test_that("an upstream handoff shows the render time its job recorded, and 'not 
 test_that("the table holds every field, by group", {
   withr::local_envvar(HVTI_RUN_USER = "tester", HVTI_RUN_HOST = "testhost")
   rf <- run_fixture()
-  job <- read_job_data(rf$cfg, where = quote(age >= 30))
+  job <- read_job_data(rf$cfg, id_col = "ccfid", where = quote(age >= 30))
   table <- paste(hvtiRtemplates:::.run_table(run_facts(rf, data = list(job$provenance))), collapse = "\n")
   for (field in c("Started", "Ended", "Duration", "Status", "Rendered by", "Host", "File", "Template", "Subject",
                   "Type", "hvtiRtemplates", "Version file", "Version date", "Source file", "Rows kept", "WHERE",
@@ -559,7 +561,7 @@ test_that("a long upstream list is capped in the table and complete in the facts
 test_that("read_job_data() leaves a record of each read, which a new setup clears", {
   rf <- run_fixture()
   expect_length(hvtiRtemplates:::.run_state$reads, 0L)
-  read_job_data(rf$cfg, where = quote(age >= 30))
+  read_job_data(rf$cfg, id_col = "ccfid", where = quote(age >= 30))
   expect_length(hvtiRtemplates:::.run_state$reads, 1L)
   r <- run_setup()
   expect_length(hvtiRtemplates:::.run_state$reads, 0L)
@@ -568,7 +570,7 @@ test_that("read_job_data() leaves a record of each read, which a new setup clear
 
 test_that("the facts and the table carry no data value and no identifier", {
   rf <- run_fixture()
-  job <- read_job_data(rf$cfg, where = quote(age > 0 | age < -1), id = "ccfid")
+  job <- read_job_data(rf$cfg, where = quote(age > 0 | age < -1), id_col = "ccfid")
   facts <- run_facts(rf, data = list(job$provenance))
   text <- paste(c(unlist(facts), hvtiRtemplates:::.run_table(facts)), collapse = " ")
   d <- hazard_data()
@@ -579,7 +581,7 @@ test_that("the facts and the table carry no data value and no identifier", {
 
 test_that("the facts serialize to JSON with their names intact", {
   rf <- run_fixture()
-  job <- read_job_data(rf$cfg)
+  job <- read_job_data(rf$cfg, id_col = "ccfid")
   json <- jsonlite::toJSON(run_facts(rf, data = list(job$provenance)), auto_unbox = TRUE, null = "null", digits = NA)
   back <- jsonlite::fromJSON(json, simplifyVector = FALSE)
   expect_true(all(c("status", "user", "job", "datasets", "upstream", "reproducibility") %in% names(back)))
@@ -661,4 +663,20 @@ test_that("a downstream report lists its upstream handoff, and names no patient"
     at <- regexpr(paste0("(?<![A-Za-z0-9])", id, "(?![A-Za-z0-9])"), text, perl = TRUE)[[1L]]
     expect_false(at > 0L, info = if (at > 0L) substring(text, max(1L, at - 120L), at + 120L) else id)
   }
+})
+
+test_that("the run record carries the family's seven provenance fields, each typed", {
+  rf <- run_fixture("SEED <- 20261116L")
+  rf$env$SEED <- 20261116
+  p <- run_facts(rf)$provenance
+  expect_named(p, c("package", "version", "sha", "method", "seed", "rng_kind", "time"))
+  expect_identical(p$package, "hvtiRtemplates")
+  expect_type(p$version, "character")
+  expect_type(p$sha, "character")
+  expect_type(p$method, "character")
+  expect_identical(p$seed, 20261116L)
+  expect_identical(p$rng_kind, RNGkind())
+  expect_s3_class(p$time, "POSIXct")
+  rm("SEED", envir = rf$env)
+  expect_identical(run_facts(rf)$provenance$seed, NA_integer_)
 })

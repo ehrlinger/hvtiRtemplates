@@ -1,6 +1,6 @@
 test_that("add_job scaffolds nb-boostmtree with its subject and type", {
   dir <- withr::local_tempdir("nb-job-")
-  job <- add_job("nb", subject = "lvef", type = "boost", dir = dir, qualifier = "boostmtree")
+  job <- add_job("nb", subject = "lvef", type = "boost", root = dir, qualifier = "boostmtree")
   expect_match(basename(job), "^nb[.]boostmtree[.]lvef[.]boost[.]qmd$")
   txt <- readLines(job)
   expect_identical(grep("^SUBJECT <- ", txt, value = TRUE), "SUBJECT <- \"lvef\"")
@@ -480,7 +480,7 @@ test_that("nb-boostmtree scaffolds and renders end to end, and the page holds no
   # Keyed on MRN, so the rendered page is searched for the identifier most likely to leak.
   data <- nb_data(id = "MRN")
   root <- nb_study(data)
-  job <- add_job("nb", subject = "lvef", type = "boost", dir = root, qualifier = "boostmtree")
+  job <- add_job("nb", subject = "lvef", type = "boost", root = root, qualifier = "boostmtree")
   set_choice <- function(from, to) {
     txt <- readLines(job)
     hit <- grep(from, txt)

@@ -972,7 +972,7 @@ test_that("a stem and a qualifier together are refused, not reconciled", {
   expect_error(template_path("dc-trends", "trends"), "not both")
   expect_error(template_path("dc-trends", "gfup"), "not both")
   expect_error(template_path("dc.trends", "trends"), "not both")
-  expect_error(add_job("dc-trends", "cohort", "eda", dir = tempdir(), qualifier = "trends"),
+  expect_error(add_job("dc-trends", "cohort", "eda", root = tempdir(), qualifier = "trends"),
                "add_job\\(\\).*not both")
   # A malformed qualifier is reported as itself, not as a clash.
   for (bad in list(NA_character_, character(0), "")) {
@@ -1009,7 +1009,7 @@ test_that("an unqualified hs is refused, naming every job type", {
   expect_identical(basename(template_path("hs", qualifier = "score")), "hs-score.qmd")
   expect_identical(basename(template_path("hs", qualifier = "concordance")), "hs-concordance.qmd")
   dir <- withr::local_tempdir()
-  expect_error(add_job("hs", subject = "dead", type = "x", dir = dir), "concordance")
+  expect_error(add_job("hs", subject = "dead", type = "x", root = dir), "concordance")
 })
 
 test_that("template_list() prints its summary columns, and a selection as selected", {

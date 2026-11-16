@@ -28,7 +28,7 @@ test_that("the log-rank test agrees with survival::survdiff over three strata", 
 test_that("life_table() is hzr_kaplan() per stratum, with the counts", {
   skip_if_not_installed("MASS")
   g <- MASS::gehan
-  lt <- life_table(g, "time", "cens", strata = "treat")
+  lt <- life_table(g, "time", "cens", strata_col = "treat")
   expect_identical(unique(lt$stratum), c("6-MP", "control"))
   ref <- as.data.frame(TemporalHazard::hzr_kaplan(g$time[g$treat == "6-MP"], g$cens[g$treat == "6-MP"],
                                                   conf_level = 0.68268948))
@@ -72,7 +72,7 @@ test_that("a missing or mean-imputed stratum is dropped, and the drop is recorde
   d <- hazard_data(60)
   d$male[1:4] <- NA
   d$male[5:7] <- 0.6
-  lt <- life_table(d, "iv_dead", "dead", strata = "male")
+  lt <- life_table(d, "iv_dead", "dead", strata_col = "male")
   expect_identical(unique(lt$stratum), c("0", "1"))
   expect_identical(sum(attr(lt, "counts")$n), 53L)
   dropped <- attr(lt, "dropped")
@@ -90,7 +90,7 @@ test_that("a missing or mean-imputed stratum is dropped, and the drop is recorde
 test_that("the life table functions name what is wrong with their input", {
   d <- data.frame(t = c(1, 2), e = c(1, 0), g = c("a", "a"))
   expect_error(life_table(d, "t", "nope"), "not in the data: nope")
-  expect_error(life_table(d, "t", "e", strata = c("g", "e")), "name one column")
+  expect_error(life_table(d, "t", "e", strata_col = c("g", "e")), "name one column")
   expect_error(life_table_tests(d, "t", "e", "g"), "fewer than two analysable strata")
   expect_error(life_table(data.frame(t = NA, e = 1), "t", "e"), "No row has a recorded time")
 })
@@ -114,12 +114,12 @@ test_that("an event that is not 0/1 stops, naming its values", {
 test_that("an all-censored stratum keeps its counts and its horizons, with no event rows", {
   d <- data.frame(t = c(1, 2, 3, 4, 1.5, 2.5, 3.5), e = c(1, 1, 0, 1, 0, 0, 0),
                   g = c("a", "a", "a", "a", "b", "b", "b"))
-  lt <- life_table(d, "t", "e", strata = "g")
+  lt <- life_table(d, "t", "e", strata_col = "g")
   expect_false("b" %in% lt$stratum)
   counts <- attr(lt, "counts")
   expect_identical(counts$n[counts$stratum == "b"], 3L)
   expect_identical(counts$n_events[counts$stratum == "b"], 0L)
-  at <- life_table_at(d, "t", "e", times = c(1, 3), strata = "g")
+  at <- life_table_at(d, "t", "e", times = c(1, 3), strata_col = "g")
   b <- at[at$stratum == "b", ]
   expect_identical(b$survival, c(1, 1))
   expect_identical(b$n_risk, c(3L, 1L))

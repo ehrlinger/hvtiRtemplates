@@ -4,7 +4,7 @@
 \alias{add_job}
 \title{Scaffold a new analysis job from a template}
 \usage{
-add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
+add_job(prefix, subject, type, root = NULL, qualifier = NULL, dir)
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
@@ -25,7 +25,7 @@ appear here.}
 Your choice, like \code{subject}, and shared the same way. Must match
 \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
 
-\item{dir}{The study root to write into. The taxonomy folder beneath it is
+\item{root}{The study root to write into. The taxonomy folder beneath it is
 created if it does not exist. \code{NULL}, the default, finds the study
 root by walking up from the working directory, and is an error outside a
 study, so a job is never written somewhere that is not a study.}
@@ -35,6 +35,9 @@ study, so a job is never written somewhere that is not a study.}
 omitting it there is an error naming the choices, never a silent pick.
 Restricted to \code{[A-Za-z0-9_]+}, because \code{.} separates the
 filename's fields.}
+
+\item{dir}{Deprecated: the old name of \code{root}. It works, with a warning,
+for one more release; giving both is an error.}
 }
 \value{
 The job's path, invisibly. On any failure -- including one after
@@ -129,18 +132,18 @@ d <- file.path(tempdir(), "add-job-example")
 invisible(hvtiRutilities::study_setup(
   d, study = "Example", study_tracker_id = 1L, renv = FALSE
 ))
-add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
+add_job(prefix = "ac", subject = "death", type = "hz", root = d)
 
 # A qualified template by its full name, the form template_list()$call prints.
 # A follow-up check belongs to the analysis it checks, so it takes that
 # set's subject and type: here, the hazard analysis of reoperation.
-add_job("dc.gfup", subject = "reop", type = "hz", dir = d)
+add_job("dc.gfup", subject = "reop", type = "hz", root = d)
 
 # A template's name before a rename is an error that names the new one.
-try(add_job("dp.trends", subject = "cohort", type = "eda", dir = d))
+try(add_job("dp.trends", subject = "cohort", type = "eda", root = d))
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
-try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
+try(add_job(prefix = "ac", subject = "death", type = "hz", root = d))
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 unlink(d, recursive = TRUE)

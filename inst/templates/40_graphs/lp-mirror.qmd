@@ -338,7 +338,7 @@ if (!is.null(MATCH)) {
   if (!is.character(MATCH) || length(MATCH) != 1L || is.na(MATCH)) {
     stop("MATCH must be NULL or one column name.", call. = FALSE)
   }
-  match_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, id = ID, one_row_per_patient = TRUE)
+  match_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, id_col = ID, one_row_per_patient = TRUE)
   match_data$provenance$role <- "match"
   .provenance_data <- c(.provenance_data, list(match_data$provenance))
   .id <- attr(match_data$record, "selection")$id

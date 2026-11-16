@@ -14,7 +14,7 @@ test_that("mm scaffolds with its study choices and EDIT: markers", {
   root <- withr::local_tempdir("mm-scaffold-")
   suppressMessages(hvtiRutilities::study_setup(root, study = "Synthetic mm study", study_tracker_id = 42L,
                                                adopt = TRUE, cleanup = FALSE, renv = FALSE))
-  job <- add_job("mm", "outcome", "mixed", dir = root)
+  job <- add_job("mm", "outcome", "mixed", root = root)
   src <- readLines(job, warn = FALSE)
   # tbl-data resolves RESPONSE_SCALE and IMPUTATION again; the study choices are the lines before it.
   src <- src[seq_len(grep("label: tbl-data", src, fixed = TRUE) - 1L)]
