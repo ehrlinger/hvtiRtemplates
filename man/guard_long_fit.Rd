@@ -2,7 +2,7 @@
 % Please edit documentation in R/long-fit.R
 \name{guard_long_fit}
 \alias{guard_long_fit}
-\title{Stop a long fit from starting in an interactive session}
+\title{Stop a long fit from starting where it would die with the session}
 \usage{
 guard_long_fit(name, dir, why, refit = FALSE)
 }
@@ -21,12 +21,25 @@ template's \code{REFIT}); the cached file then does not make the call safe, so i
 \code{invisible(FALSE)} when the fit may proceed; otherwise an error.
 }
 \description{
-A template calls this just before an expensive \code{cache_fit()}. In an
-interactive session (the console, or running chunks one by one) with no
-cached result yet, it stops and says to run the job with
-\code{\link{run_job}} instead, because a fit that runs for hours dies
-with the session. A render, a cached result, or
-\code{options(hvtiRtemplates.allow_interactive_fit = TRUE)} lets it pass.
+A template calls this just before an expensive \code{cache_fit()}. With no
+cached result yet, it stops and says to run the job with \code{\link{run_job}}
+instead, because a fit that runs for hours dies with the Workbench session
+that started it. It stops in an interactive session (the console, or running
+chunks one by one) and in a render the session launched, which is what the
+RStudio or Posit Workbench Render button does. A cached result, a render
+started by \code{\link{submit_job}} or \code{\link{run_job}}, a render from a
+terminal, or \code{options(hvtiRtemplates.allow_interactive_fit = TRUE)} lets
+it pass, so once the fit is cached the Render button works again.
+}
+\details{
+A render is session-launched when \env{RSTUDIO} is \code{"1"} and
+\env{RSTUDIO_TERM} is unset. Every process the RStudio session starts inherits
+\env{RSTUDIO}; only a shell in its Terminal tab also carries
+\env{RSTUDIO_TERM}, so a \code{nohup quarto render} typed there, or from an
+ssh login, passes. A render from \code{submit_job()} carries
+\env{HVTI_JOB_MARKER} and passes wherever it was submitted from. RStudio on
+Windows does not set \env{RSTUDIO_TERM}, so there a terminal render inside
+RStudio is stopped too.
 }
 \examples{
 guard_long_fit("example-fit", dir = tempdir(), why = "it takes hours")

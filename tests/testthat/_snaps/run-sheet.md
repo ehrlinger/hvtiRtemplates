@@ -22,7 +22,7 @@
       
       1. **Above the first section**: 1 choice marked `EDIT:`.
       1. **Study choices**: 2 choices marked `EDIT:`.
-      1. **Fit**: a long fit (it takes hours at study size) that will not start in an interactive session, so the job runs in the background; checks the fit's memory need against this session's limit before it starts; reads the study data; fits and caches its results, so a later render reloads them (`REFIT <- TRUE` recomputes them).
+      1. **Fit**: a long fit (it takes hours at study size) that will not start in an interactive session or from the Render button, so the job runs in the background; checks the fit's memory need against this session's limit before it starts; reads the study data; fits and caches its results, so a later render reloads them (`REFIT <- TRUE` recomputes them).
       1. **Save**: saves `zz.rds`, which **zz-explain** reads and **zz-boot** can read.
       
       ## Run it

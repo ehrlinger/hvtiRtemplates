@@ -256,7 +256,7 @@
       guard_long_fit = {
         why <- .literal(.call_arg(e, "why"))
         paste0("a long fit", if (!is.na(why)) paste0(" (", why, ")"), " that will not start in an ",
-               "interactive session, so the job runs in the background")
+               "interactive session or from the Render button, so the job runs in the background")
       },
       .read_handoff = {
         rows <- graph[graph$consumer == facts$name & graph$line == e$line, , drop = FALSE]
