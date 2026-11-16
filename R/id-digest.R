@@ -57,12 +57,22 @@
 #' Identifiers as text, for comparing and digesting
 #'
 #' A whole number is written without an exponent, so \code{100000} and
-#' \code{100000L} give the same text.
+#' \code{100000L} give the same text. A bit64 \code{integer64} is written by
+#' its own \code{as.character()} method: it keeps its value in the bits of a
+#' double, so \code{is.numeric()} is \code{TRUE} and \code{sprintf("\%.0f")}
+#' would read every one as \code{"0"}.
 #'
 #' @param x A vector of identifiers.
 #' @return A character vector as long as \code{x}, \code{NA} where \code{x} is.
 #' @noRd
 .id_text <- function(x) {
+  if (inherits(x, "integer64")) {
+    if (!requireNamespace("bit64", quietly = TRUE)) {
+      stop(".id_text(): an integer64 identifier needs the bit64 package to be written as text. Install bit64.",
+           call. = FALSE)
+    }
+    return(as.character(x))
+  }
   text <- if (is.factor(x)) as.character(x) else x
   if (is.numeric(text)) {
     whole <- !is.na(text) & is.finite(text) & text == trunc(text)

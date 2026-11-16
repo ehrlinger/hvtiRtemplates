@@ -968,7 +968,6 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # that models intervals asks for whole patients: each one kept with every row,
 # or dropped. Counts only; no identifier reaches the message.
 .check_whole_patients <- function(before, after, id) {
-  # Matched on the column itself, not on its text: .id_text() writes every integer64 ID as "0".
   patients <- unique(before[[id]][!is.na(before[[id]])])
   n_before <- tabulate(match(before[[id]], patients), length(patients))
   n_after <- tabulate(match(after[[id]], patients), length(patients))
