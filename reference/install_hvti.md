@@ -10,6 +10,17 @@ whichever R your own session would have started. `hvti status` and
 and
 [`cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md).
 
+`hvti run` takes `--final`, and the job's Quarto parameters as
+`quarto render` does, `-P name:value` once per parameter, with
+`--output file` naming the report; each becomes
+[`run_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)'s
+`params` and `output_file`. A value is read as `quarto render` reads it,
+so `-P fit_m:1000` is a number. `hvti status` and `hvti cancel` take the
+same `--output` to name the run:
+
+    hvti run analyses/job.qmd -P fit_m:1000 --output job.M1000.html
+    hvti status analyses/job.qmd --output job.M1000.html
+
 ## Usage
 
 ``` r
@@ -51,5 +62,5 @@ if (.Platform$OS.type != "windows") {
   install_hvti(d)
   unlink(d, recursive = TRUE)
 }
-#> Add it to your PATH: echo 'export PATH="/tmp/Rtmp6SNqBj/bin1d4b24fadb2:$PATH"' >> ~/.profile
+#> Add it to your PATH: echo 'export PATH="/tmp/RtmpRbsoOo/bin1d984b27937f:$PATH"' >> ~/.profile
 ```

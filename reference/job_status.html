@@ -62,7 +62,7 @@ A progress file older than the run the status file records is ignored.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">job_status</span><span class="op">(</span><span class="va">path</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">job_status</span><span class="op">(</span><span class="va">path</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span>, output_file <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,6 +75,12 @@ A progress file older than the run the status file records is ignored.</p>
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>Logical(1). <code>FALSE</code> prints a one-line summary.</p></dd>
+
+
+<dt id="arg-output-file">output_file<a class="anchor" aria-label="anchor" href="#arg-output-file"></a></dt>
+<dd><p>Character(1) or <code>NULL</code>. The output file name a run was given with
+<code><a href="run_job.html">run_job</a></code>'s <code>output_file</code>; its run files are kept under that name. <code>NULL</code> reads the
+job's own run.</p></dd>
 
 </dl></div>
     <div class="section level2">

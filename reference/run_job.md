@@ -21,7 +21,14 @@ fails, the diagnosis is printed here rather than left in a log.
 ## Usage
 
 ``` r
-run_job(path, final = FALSE, wait = 300, quiet = FALSE)
+run_job(
+  path,
+  final = FALSE,
+  wait = 300,
+  quiet = FALSE,
+  params = NULL,
+  output_file = NULL
+)
 ```
 
 ## Arguments
@@ -45,6 +52,13 @@ run_job(path, final = FALSE, wait = 300, quiet = FALSE)
   Logical(1). `TRUE` prints nothing: not the checks, the note for a
   legacy job, or the lines the wait ends on. A refusal is still an
   error, and its message then lists the failed checks and their fixes.
+
+- params, output_file:
+
+  Passed to
+  [`render_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  through
+  [`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md).
 
 ## Value
 
@@ -74,6 +88,17 @@ Stop it with
 Not available on Windows, as for
 [`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md).
 
+A job with Quarto `params` takes them here, as `quarto render -P` would,
+with `output_file` naming the report as `--output` would. A run given an
+`output_file` is its own run, with its own run files, so one job
+rendered for several parameter values keeps each report and each run
+apart; give
+[`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+and
+[`cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md)
+the same `output_file` to follow or stop it. The checks above apply to
+each run, and Quarto still renders one job at a time in a study.
+
 ## See also
 
 [`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
@@ -87,5 +112,10 @@ Not available on Windows, as for
 # Not run by check: it would start a real render.
 if (FALSE) { # \dontrun{
 run_job("analyses/nb.boostmtree.lvef.boost.qmd")
+
+# A parameterized job, one report per value: run the second once the first
+# has finished, since Quarto renders one job at a time in a study.
+run_job("job.qmd", params = list(fit_m = 1000), output_file = "job.M1000.html")
+job_status("job.qmd", output_file = "job.M1000.html")
 } # }
 ```

@@ -83,7 +83,14 @@ left in a log.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">run_job</span><span class="op">(</span><span class="va">path</span>, final <span class="op">=</span> <span class="cn">FALSE</span>, wait <span class="op">=</span> <span class="fl">300</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">run_job</span><span class="op">(</span></span>
+<span>  <span class="va">path</span>,</span>
+<span>  final <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  wait <span class="op">=</span> <span class="fl">300</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  params <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  output_file <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -108,6 +115,11 @@ own checks. <code>0</code> submits and returns at once.</p></dd>
 for a legacy job, or the lines the wait ends on. A refusal is still an
 error, and its message then lists the failed checks and their fixes.</p></dd>
 
+
+<dt id="arg-params-output-file">params, output_file<a class="anchor" aria-label="anchor" href="#arg-params-output-file"></a></dt>
+<dd><p>Passed to <code><a href="render_job.html">render_job</a></code> through
+<code><a href="submit_job.html">submit_job</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -128,6 +140,14 @@ If the checks have not all reported when <code>wait</code> runs out, the render
 carries on regardless; follow it with <code><a href="job_status.html">job_status</a></code>. Stop it with
 <code><a href="cancel_job.html">cancel_job</a></code>.
 Not available on Windows, as for <code><a href="submit_job.html">submit_job</a></code>.</p>
+<p>A job with Quarto <code>params</code> takes them here, as
+<code>quarto render -P</code> would, with <code>output_file</code> naming the report as
+<code>--output</code> would. A run given an <code>output_file</code> is its own run, with
+its own run files, so one job rendered for several parameter values keeps
+each report and each run apart; give <code><a href="job_status.html">job_status</a></code> and
+<code><a href="cancel_job.html">cancel_job</a></code> the same <code>output_file</code> to follow or stop it.
+The checks above apply to each run, and Quarto still renders one job at a
+time in a study.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -140,6 +160,11 @@ Not available on Windows, as for <code><a href="submit_job.html">submit_job</a><
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Not run by check: it would start a real render.</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="fu">run_job</span><span class="op">(</span><span class="st">"analyses/nb.boostmtree.lvef.boost.qmd"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A parameterized job, one report per value: run the second once the first</span></span></span>
+<span class="r-in"><span><span class="co"># has finished, since Quarto renders one job at a time in a study.</span></span></span>
+<span class="r-in"><span><span class="fu">run_job</span><span class="op">(</span><span class="st">"job.qmd"</span>, params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fit_m <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>, output_file <span class="op">=</span> <span class="st">"job.M1000.html"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="job_status.html">job_status</a></span><span class="op">(</span><span class="st">"job.qmd"</span>, output_file <span class="op">=</span> <span class="st">"job.M1000.html"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

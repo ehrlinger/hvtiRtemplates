@@ -53,7 +53,9 @@ From a terminal, the `hvti` command does the same on the R the study’s
 `renv.lock` records. Install it once with `install_hvti("~/bin")`, and
 again after updating the package. Then `hvti run`, `hvti status` and
 `hvti cancel` take the job’s file, and `hvti run <job> --final` is the
-final render.
+final render. A job with Quarto parameters takes them as `quarto render`
+does, `-P fit_m:1000 --output job.M1000.html`, and `hvti status` and
+`hvti cancel` take the same `--output` to name that run.
 
 ## Come back to it
 
@@ -125,12 +127,22 @@ Two guards in the templates catch the mistake at the moment it would
 cost you.
 
 **[`guard_long_fit()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_long_fit.md)**
-sits just before an expensive fit. In the console, or running chunks one
-by one, with no cached result yet, it stops and tells you to use
-[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
-because the fit would die with your session. A render passes, and so
-does a cached result, which is why the chunks run interactively once the
-fit has been done. `nb-boostmtree` calls it today.
+sits just before an expensive fit, and acts only when the fit would be
+computed rather than loaded from its cache. Then it stops anything but a
+render
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+started: the console, chunks run one by one, the Render button, and a
+`quarto render` typed in the Workbench Terminal, which is a child of
+your session too, `nohup` or not. It names the
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+call to use, because the fit would die with your session. A cached
+result passes, so once
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+has done the fit, the Render button and the chunks work again and load
+it, even with `REFIT` left `TRUE`. The long-fit templates
+(`nb-boostmtree`, the `rf*` and `rhf` forests, `sid-stability`) call it.
+For a fit you know to be short,
+`options(hvtiRtemplates.allow_interactive_fit = TRUE)` lets it through.
 
 **[`guard_memory()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md)**
 sits at the top of a fit chunk, with the memory the fit is expected to

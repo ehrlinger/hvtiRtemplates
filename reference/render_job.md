@@ -8,7 +8,13 @@ accepted result should.
 ## Usage
 
 ``` r
-render_job(path, final = FALSE, quiet = FALSE)
+render_job(
+  path,
+  final = FALSE,
+  quiet = FALSE,
+  params = NULL,
+  output_file = NULL
+)
 ```
 
 ## Arguments
@@ -28,6 +34,21 @@ render_job(path, final = FALSE, quiet = FALSE)
 
   Logical. Passed to
   [`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html).
+
+- params:
+
+  A named list of single values, or `NULL`. The job's Quarto `params`,
+  as `quarto render -P name:value` sets them; passed to
+  [`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html)
+  as `execute_params`.
+
+- output_file:
+
+  Character(1) or `NULL`. The report's file name, as
+  `quarto render --output` sets it: a name with an extension and no
+  directory, written beside the job. Give each set of `params` its own,
+  so one report does not overwrite another. The run's progress file is
+  named for it too.
 
 ## Value
 
@@ -123,7 +144,7 @@ if (requireNamespace("quarto", quietly = TRUE) && quarto::quarto_available()) {
 }
 #> [1] TRUE
 #> [1] 20
-#> Error in quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet) : 
+#> Error in quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet,  : 
 #>   ! Error running quarto CLI from R.
 #> Caused by error in `quarto::quarto_render()`:
 #> ✖ Error returned by quarto CLI.

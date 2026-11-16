@@ -63,7 +63,8 @@ submitted again.</p>
 <span>  <span class="va">path</span>,</span>
 <span>  grace <span class="op">=</span> <span class="fl">30</span>,</span>
 <span>  other_host <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"refuse"</span>, <span class="st">"abandon"</span><span class="op">)</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  output_file <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -90,6 +91,12 @@ Ignored for a job on this host.</p></dd>
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>Logical(1). <code>FALSE</code> prints the job's state afterwards,
 as <code><a href="job_status.html">job_status</a></code> does.</p></dd>
+
+
+<dt id="arg-output-file">output_file<a class="anchor" aria-label="anchor" href="#arg-output-file"></a></dt>
+<dd><p>Character(1) or <code>NULL</code>. The output file name a run was given with
+<code><a href="run_job.html">run_job</a></code>'s <code>output_file</code>; its run files are kept under that name. <code>NULL</code> cancels the
+job's own run.</p></dd>
 
 </dl></div>
     <div class="section level2">

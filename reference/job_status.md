@@ -14,7 +14,7 @@ ignored.
 ## Usage
 
 ``` r
-job_status(path, quiet = FALSE)
+job_status(path, quiet = FALSE, output_file = NULL)
 ```
 
 ## Arguments
@@ -26,6 +26,13 @@ job_status(path, quiet = FALSE)
 - quiet:
 
   Logical(1). `FALSE` prints a one-line summary.
+
+- output_file:
+
+  Character(1) or `NULL`. The output file name a run was given with
+  [`run_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)'s
+  `output_file`; its run files are kept under that name. `NULL` reads
+  the job's own run.
 
 ## Value
 

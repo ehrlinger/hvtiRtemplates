@@ -56,7 +56,7 @@ session that times out takes a console run with it.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">submit_job</span><span class="op">(</span><span class="va">path</span>, final <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">submit_job</span><span class="op">(</span><span class="va">path</span>, final <span class="op">=</span> <span class="cn">FALSE</span>, params <span class="op">=</span> <span class="cn">NULL</span>, output_file <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,6 +69,10 @@ session that times out takes a console run with it.</p>
 
 <dt id="arg-final">final<a class="anchor" aria-label="anchor" href="#arg-final"></a></dt>
 <dd><p>Logical(1). Passed to <code><a href="render_job.html">render_job</a></code>.</p></dd>
+
+
+<dt id="arg-params-output-file">params, output_file<a class="anchor" aria-label="anchor" href="#arg-params-output-file"></a></dt>
+<dd><p>Passed to <code><a href="render_job.html">render_job</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -86,6 +90,14 @@ with <code><a href="job_status.html">job_status</a></code>. A job already runnin
 submit that crashed can leave it behind, in which case delete it to try again.
 Stop a submitted job with <code><a href="cancel_job.html">cancel_job</a></code>.
 Not available on Windows, which cannot detach a process this way.</p>
+<p>With <code>output_file</code>, the run files are named for the job and that whole
+file name, extension included, so <code>job.qmd</code> rendered to
+<code>job.M1000.html</code> keeps <code>job@job.M1000.html.run.log</code>,
+<code>job@job.M1000.html.run.yml</code> and the rest beside the job. Another job
+given the same name is another run, and the same job rendered to another
+name is another run: both can be submitted, and each is followed and stopped
+by giving <code><a href="job_status.html">job_status</a></code> or <code><a href="cancel_job.html">cancel_job</a></code> the same
+<code>output_file</code>. Quarto still renders one job at a time in a study.</p>
     </div>
 
     <div class="section level2">

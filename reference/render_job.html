@@ -56,7 +56,13 @@ accepted result should.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">render_job</span><span class="op">(</span><span class="va">path</span>, final <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">render_job</span><span class="op">(</span></span>
+<span>  <span class="va">path</span>,</span>
+<span>  final <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  params <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  output_file <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,6 +81,20 @@ names <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/update
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>Logical. Passed to <code><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_render.html" class="external-link">quarto::quarto_render()</a></code>.</p></dd>
+
+
+<dt id="arg-params">params<a class="anchor" aria-label="anchor" href="#arg-params"></a></dt>
+<dd><p>A named list of single values, or <code>NULL</code>. The job's Quarto
+<code>params</code>, as <code>quarto render -P name:value</code> sets them; passed to
+<code><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_render.html" class="external-link">quarto::quarto_render()</a></code> as <code>execute_params</code>.</p></dd>
+
+
+<dt id="arg-output-file">output_file<a class="anchor" aria-label="anchor" href="#arg-output-file"></a></dt>
+<dd><p>Character(1) or <code>NULL</code>. The report's file name, as
+<code>quarto render --output</code> sets it: a name with an extension and no
+directory, written beside the job. Give each set of <code>params</code> its own,
+so one report does not overwrite another. The run's progress file is named
+for it too.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -161,7 +181,7 @@ renamed copy of the job meets the same one.</p>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error in quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet) : </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error in quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet,  : </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #BBBB00;">!</span> Error running quarto CLI from R.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">Caused by error in `quarto::quarto_render()`:</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> Error returned by quarto CLI.</span>

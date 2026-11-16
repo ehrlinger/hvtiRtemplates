@@ -10,7 +10,7 @@ console run with it.
 ## Usage
 
 ``` r
-submit_job(path, final = FALSE)
+submit_job(path, final = FALSE, params = NULL, output_file = NULL)
 ```
 
 ## Arguments
@@ -22,6 +22,11 @@ submit_job(path, final = FALSE)
 - final:
 
   Logical(1). Passed to
+  [`render_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md).
+
+- params, output_file:
+
+  Passed to
   [`render_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md).
 
 ## Value
@@ -43,6 +48,18 @@ leave it behind, in which case delete it to try again. Stop a submitted
 job with
 [`cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md).
 Not available on Windows, which cannot detach a process this way.
+
+With `output_file`, the run files are named for the job and that whole
+file name, extension included, so `job.qmd` rendered to `job.M1000.html`
+keeps `job@job.M1000.html.run.log`, `job@job.M1000.html.run.yml` and the
+rest beside the job. Another job given the same name is another run, and
+the same job rendered to another name is another run: both can be
+submitted, and each is followed and stopped by giving
+[`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+or
+[`cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md)
+the same `output_file`. Quarto still renders one job at a time in a
+study.
 
 ## Examples
 
