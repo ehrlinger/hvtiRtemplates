@@ -43,20 +43,40 @@
 
 # hvti's whole R side. The path arrives as data (commandArgs), never as source. Exit 1 on a refusal,
 # or a launch that failed or vanished during the wait, so a shell `&&` chain stops there.
+# From hvti-version 2 the fourth argument is --output ("" for none) and any after it are -P "name:value" pairs; a copy
+# of version 1 passes three, and runs as it always did.
 .hvti_main <- function(args) {
   cmd <- args[1L]
   path <- args[2L]
   final <- identical(args[3L], "TRUE")
-  st <- tryCatch(switch(cmd,
-                        run = run_job(path, final = final),
-                        status = job_status(path),
-                        cancel = cancel_job(path)),
-                 error = function(e) {
-                   message(conditionMessage(e))
-                   NULL
-                 })
+  output_file <- if (length(args) >= 4L && nzchar(args[4L])) args[4L]
+  st <- tryCatch({
+    params <- .hvti_params(args[-seq_len(4L)])
+    switch(cmd,
+           run = run_job(path, final = final, params = params, output_file = output_file),
+           status = job_status(path, output_file = output_file),
+           cancel = cancel_job(path, output_file = output_file))
+  }, error = function(e) {
+    message(conditionMessage(e))
+    NULL
+  })
   if (is.null(st)) return(1L)
   if (identical(cmd, "run") && isTRUE(st$state %in% c("failed", "vanished", "cancelled"))) 1L else 0L
+}
+
+# hvti's -P "name:value" pairs as run_job()'s params, NULL for none. A value is read as quarto render -P reads it, as a
+# YAML scalar, so fit_m:1000 is the number 1000 and flag:true is TRUE; anything that is not a single value stays text.
+.hvti_params <- function(pairs) {
+  if (!length(pairs)) return(NULL)
+  name <- sub(":.*$", "", pairs)
+  value <- sub("^[^:]*:", "", pairs)
+  if (any(!grepl(":", pairs, fixed = TRUE)) || any(!nzchar(name))) {
+    stop("hvti: -P takes name:value, such as -P fit_m:1000.", call. = FALSE)
+  }
+  stats::setNames(lapply(value, function(v) {
+    x <- tryCatch(yaml::yaml.load(v), error = function(e) NULL)
+    if ((is.character(x) || is.numeric(x) || is.logical(x)) && length(x) == 1L && !is.na(x)) x else v
+  }), name)
 }
 
 # Once per session, so a long script of run_job() calls says it once.
@@ -95,6 +115,15 @@
 #' study's \code{renv.lock} records, from a terminal, whichever R your own
 #' session would have started. \code{hvti status} and \code{hvti cancel} do the
 #' same for \code{\link{job_status}} and \code{\link{cancel_job}}.
+#'
+#' \code{hvti run} takes \code{--final}, and the job's Quarto parameters as
+#' \code{quarto render} does, \code{-P name:value} once per parameter, with
+#' \code{--output file} naming the report; each becomes \code{\link{run_job}}'s
+#' \code{params} and \code{output_file}. A value is read as \code{quarto render}
+#' reads it, so \code{-P fit_m:1000} is a number. \code{hvti status} and
+#' \code{hvti cancel} take the same \code{--output} to name the run:
+#' \preformatted{hvti run analyses/job.qmd -P fit_m:1000 --output job.M1000.html
+#' hvti status analyses/job.qmd --output job.M1000.html}
 #'
 #' @details
 #' The command is a copy, not a symlink. The library path it would point at

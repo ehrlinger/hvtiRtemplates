@@ -51,7 +51,9 @@ reason not to.
 From a terminal, the `hvti` command does the same on the R the study's `renv.lock`
 records. Install it once with `install_hvti("~/bin")`, and again after updating the
 package. Then `hvti run`, `hvti status` and `hvti cancel` take the job's file, and
-`hvti run <job> --final` is the final render.
+`hvti run <job> --final` is the final render. A job with Quarto parameters takes them as
+`quarto render` does, `-P fit_m:1000 --output job.M1000.html`, and `hvti status` and
+`hvti cancel` take the same `--output` to name that run.
 
 ## Come back to it
 

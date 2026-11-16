@@ -18,3 +18,7 @@
   its run files under that whole name (`job.M1000.html.run.yml`, `.run.log`, `.run.progress`), so the same job rendered for
   another value is another run; `job_status()` and `cancel_job()` take the same `output_file` to follow or stop it.
   The checks `run_job()` makes apply to each run, and Quarto still renders one job at a time in a study.
+- The `hvti` command takes the same, as `quarto render` spells them: `hvti run <job> -P fit_m:1000 --output
+  job.M1000.html`, with `-P` once per parameter and each value read as Quarto reads it, and `--output` on `hvti status`
+  and `hvti cancel` to name the run. The script is now `hvti-version: 2`, so `run_job()` warns until
+  `install_hvti()` replaces an older copy; an older copy keeps working, without the new options.
