@@ -194,7 +194,7 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   }
 
   for (path in c(out, runner)) {
-    if (file.exists(path)) {
+    if (.path_taken(path)) {
       stop("add_job(): '", path, "' already exists; refusing to overwrite.",
            call. = FALSE)
     }

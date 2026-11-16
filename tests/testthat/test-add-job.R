@@ -263,6 +263,18 @@ test_that("add_job refuses to overwrite an existing job", {
   expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "already exists")
 })
 
+test_that("add_job refuses a dangling link where the job would go, and writes nothing through it", {
+  # file.exists() is FALSE for a link whose target is missing, and file.copy() writes through it.
+  skip_on_os("windows")            # a symbolic link needs a privilege there
+  dir <- withr::local_tempdir("newjob-")
+  first <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
+  unlink(first)
+  outside <- file.path(withr::local_tempdir(), "escaped.qmd")
+  file.symlink(outside, first)
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "already exists")
+  expect_false(file.exists(outside))
+})
+
 test_that("add_job errors when the copy fails rather than returning a dead path", {
   # `file.copy()` reports failure by returning FALSE, not by erroring, so an
   # unchecked call hands back a path to a file that was never written. Provoke
