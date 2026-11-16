@@ -877,10 +877,26 @@
            ". Wait for it to finish, then render again.",
            if (!is.null(current)) .provenance_lock_hint(current, lock), call. = FALSE)
     }
-    # The owner is gone. Moving its lock aside is atomic, so of two renders
-    # that both find it stale, only one takes it over.
+    # The owner is gone, so its lock is moved aside. The move is atomic, but it
+    # moves whatever lock is there NOW: when two renders both judge the same
+    # owner dead, the first can take the lock over before the second moves it,
+    # and the second would then move the first one's live lock. So the lock
+    # moved is checked: if it is not the dead owner's, it goes back and this
+    # render refuses, as it would against any live render.
     stale <- tempfile(pattern = ".provenance-render.lock-stale-", tmpdir = dirname(lock))
-    if (.rename_provenance_file(lock, stale)) unlink(stale, recursive = TRUE)
+    if (.rename_provenance_file(lock, stale)) {
+      moved <- tryCatch(jsonlite::read_json(file.path(stale, "owner.json")), error = function(e) NULL)
+      if (!identical(moved, current)) {
+        restored <- .rename_provenance_file(stale, lock)
+        stop(".acquire_provenance_lock(): another Quarto render took over this study's stale render lock first",
+             if (!is.null(moved)) paste0(" (", .provenance_owner_label(moved), ")"),
+             ". Wait for it to finish, then render again.",
+             if (!restored) paste0(" Its lock could not be put back from ", stale, "; move that directory to ", lock,
+                                   " if that render is still running, or delete it if not."),
+             call. = FALSE)
+      }
+      unlink(stale, recursive = TRUE)
+    }
   }
   stop("Could not take the provenance render lock: ", lock, ".", call. = FALSE)
 }

@@ -1032,6 +1032,39 @@ test_that("a lock whose render has exited is taken over", {
   expect_length(list.files(file.path(root, ".hvtiR"), pattern = "stale", all.files = TRUE), 0L)
 })
 
+test_that("a render that loses the race for a stale lock puts the winner's lock back and refuses", {
+  root <- withr::local_tempdir()
+  dead <- list(pid = 101L, created = "1.000000")
+  first <- list(pid = 202L, created = "2.000000")
+  second <- list(pid = 303L, created = "3.000000")
+  testthat::with_mocked_bindings(.acquire_provenance_lock(root), .provenance_render_owner = function() dead,
+                                 .package = "hvtiRtemplates")
+  lock <- .provenance_lock_path(root)
+  # Both renders judge the dead owner's lock stale. Between the second one's
+  # judgement and its move, the first takes the lock over, so the second's move
+  # takes the first one's live lock.
+  real_rename <- .rename_provenance_file
+  moves <- 0L
+  racing_rename <- function(from, to) {
+    moves <<- moves + 1L
+    if (moves == 1L) {
+      real_rename(lock, tempfile(pattern = ".provenance-render.lock-stale-", tmpdir = dirname(lock)))
+      dir.create(lock)
+      jsonlite::write_json(first, file.path(lock, "owner.json"), auto_unbox = TRUE)
+    }
+    real_rename(from, to)
+  }
+  testthat::with_mocked_bindings(
+    expect_error(.acquire_provenance_lock(root), "another Quarto render took over this study's stale render lock first"),
+    .provenance_render_owner = function() second,
+    .provenance_owner_alive = function(owner) FALSE,
+    .rename_provenance_file = racing_rename,
+    .package = "hvtiRtemplates"
+  )
+  # The first render still holds its lock, where it left it.
+  expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), first)
+})
+
 test_that("the owning render re-enters its lock and post-render releases it", {
   root <- withr::local_tempdir()
   owner <- list(pid = 101L, created = "1.000000")
