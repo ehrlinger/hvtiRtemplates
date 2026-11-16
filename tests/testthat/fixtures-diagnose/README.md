@@ -17,6 +17,7 @@ Versions: Quarto CLI 1.10.18, quarto R package 1.5.1, knitr 1.51, boostmtree 2.0
 | `quitting.log` | chunk `fit`: `stop("boom")` | rendered as is |
 | `oom-workers.log` | chunk `fit`: `boostmtree(..., cv.flag = TRUE, control = boostmtree.control(cv.cores = 2L))` on `simLong(n = 20, n.time = 4, model = 2, family = "continuous")`, with `parallel::mclapply` mocked (`testthat::with_mocked_bindings`) to return NULL for the first worker, as boostmtree's `test-cv-cores.R` does | rendered as is |
 | `unknown.log` | a `.qmd` whose YAML front matter does not parse | rendered as is; Quarto stops before any chunk |
+| `execute-results.log` | a study job on lri, Quarto 1.6 bundled with RStudio Server, failing after every chunk ran | **transcribed** from a user's run log on 2026-11-16: the lines from Quarto's `ERROR:` to the end, with the study path replaced by `<tmp>` and the job by `job`; it cannot be made on a local disk |
 | `memory-and-package.log` | both signatures | **hand-assembled**: `oom-workers.log` followed by `no-package.log` |
 | `guard-and-package.log` | both signatures | **hand-assembled**: `guard.log` followed by `no-package.log` |
 
