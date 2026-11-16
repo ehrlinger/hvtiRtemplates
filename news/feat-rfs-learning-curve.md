@@ -8,4 +8,6 @@
   `rfs-explain` reports. The refits use their own 250-tree forest, are
   cached, and run under `guard_long_fit()`. New study choices:
   `LEARNING_FRACTIONS`, `LEARNING_B`, `LEARNING_TOP_K` and `LEARNING_NTREE`.
+  The top set compared is at most one fewer than the number of predictors,
+  since a set holding all of them agrees perfectly however the ranking moves.
   Needs a ggRandomForests that exports both functions.
