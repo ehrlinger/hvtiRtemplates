@@ -26,6 +26,30 @@ test_that("rfs-fit grows a survival forest and saves the handoff", {
   }
 })
 
+test_that("rfs-fit draws the learning curve from cached subsamples", {
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
+  env <- rf_env(rfs_data())
+  # veteran has 128 deaths in 137 patients; small refits keep this quick.
+  choices <- utils::modifyList(rfs_choices, list(LEARNING_FRACTIONS = c(0.25, 0.5), LEARNING_B = 3, LEARNING_NTREE = 25))
+  rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning",
+                         "fig-learning-stability", "fig-learning-error"), env, choices)
+
+  expect_s3_class(env$learning, "gg_learning")
+  expect_true(file.exists(file.path(env$CACHE_DIR, "rfs-learning.rds")))
+  st <- attr(env$learning, "stability")
+  # Two fractions and the whole-cohort bootstrap, three refits each.
+  expect_equal(st$fraction, c(0.25, 0.5, 1))
+  expect_equal(st$B, rep(3L, 3))
+  expect_equal(st$events[3], sum(env$forest$yvar[[env$EVENT]] == 1))
+  expect_true(all(is.finite(env$learning$error)))
+  # learning_subsample() recorded the stratified draw.
+  expect_equal(st$counts, c("exact", "exact", "expected"))
+  expect_equal(attr(env$learning, "provenance")$top_k, 5L)
+  for (panel in c("stability", "error")) {
+    expect_s3_class(ggplot2::ggplot_build(plot(env$learning, panel = panel)), "ggplot_built")
+  }
+})
+
 test_that("rfs-fit refuses a status that is not 0/1", {
   rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
   d <- rfs_data()
@@ -606,11 +630,31 @@ test_that("no explain template grows a forest on the full cohort", {
   expect_match(paste(deparse(body(hvtiRtemplates:::.band_refit)), collapse = "\n"), "randomForestSRC::rfsrc", fixed = TRUE)
 })
 
+# The argument names of every rfsrc() call in a template's R chunks. Parsed
+# rather than grepped: subsample(bootstrap = TRUE), rfs-fit's double bootstrap
+# for the learning curve, is not the forest's own `bootstrap =`.
+rfsrc_arg_names <- function(file) {
+  src <- readLines(file, warn = FALSE)
+  starts <- grep("^```\\{r", src)
+  fences <- which(src == "```")
+  code <- unlist(lapply(starts, function(a) src[(a + 1L):(fences[fences > a][1L] - 1L)]))
+  found <- list()
+  walk <- function(e) {
+    if (!is.call(e)) return(invisible())
+    if (identical(e[[1L]], as.name("rfsrc"))) found[[length(found) + 1L]] <<- names(as.list(e))[-1L]
+    for (i in seq_along(e)[-1L]) walk(e[[i]])
+  }
+  for (e in parse(text = code, keep.source = FALSE)) walk(e)
+  found
+}
+
 test_that("every fit grows the forest subsample() needs: saved, by.root", {
   for (t in c("rfs", "rfc", "rfr")) {
     src <- paste(readLines(template_path(t, "fit"), warn = FALSE), collapse = "\n")
     expect_false(grepl("forest\\s*=\\s*FALSE", src), info = t)
-    expect_false(grepl("bootstrap\\s*=", src), info = t)
+    calls <- rfsrc_arg_names(template_path(t, "fit"))
+    expect_true(length(calls) > 0, info = t)
+    for (args in calls) expect_false("bootstrap" %in% args, info = t)
   }
 })
 

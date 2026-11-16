@@ -88,6 +88,13 @@ if (utils::packageVersion("ggRandomForests") < "4.0.0") {
   stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
+# gg_learning() and learning_subsample(), for the learning curve, are not in a
+# released ggRandomForests yet. This becomes a version floor once one carries them.
+if (!all(c("gg_learning", "learning_subsample") %in% getNamespaceExports("ggRandomForests"))) {
+  stop("This job needs a ggRandomForests with gg_learning() and learning_subsample(); ",
+       utils::packageVersion("ggRandomForests"), " is installed and lacks them.\n",
+       "Install it from the feat/gg-learning branch, then re-render.", call. = FALSE)
+}
 if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
   stop("This job needs hvtiPlotR >= 2.8.18 for the red and blue its captions name; ", utils::packageVersion("hvtiPlotR"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
@@ -178,7 +185,9 @@ EVENT  <- "dead"
 PREDICTORS <- c("age", "female", "hx_chf")
 # EDIT: the fewest events per candidate predictor before the report is marked
 # draft (a final render stops). 20 is a guess, the low end of a 20 to 30 rule of
-# thumb with no study behind it; 0 reports the ratio only.
+# thumb with no study behind it; 0 reports the ratio only. The learning curve
+# under "Does the forest work?" measures what this ratio only guesses at, on
+# this cohort.
 MIN_EVENTS_PER_FEATURE <- 20
 
 # EDIT: forest size and seed. The error-by-trees plot below says whether NTREE
@@ -216,6 +225,21 @@ SPLITRULE <- "logrank"
 # sparse cohort needs. The search always drops patients missing a predictor,
 # so with NA_ACTION <- "na.impute" it tunes on the complete cases only.
 TUNE_NODESIZE <- FALSE
+
+# The learning curve: is the cohort large enough? It refits the forest on
+# subsamples of LEARNING_FRACTIONS of the patients, LEARNING_B times each, plus
+# a bootstrap of the whole cohort, and tracks two things against the number of
+# deaths: the out-of-bag error, and whether the top LEARNING_TOP_K variables by
+# importance agree from one refit to the next. The second is the bar for
+# rfs-explain, and it needs far more deaths than the first. The refits use a
+# forest of their own, LEARNING_NTREE trees with the leaf size above, because
+# the curve needs agreement between forests rather than one precise forest,
+# and NTREE trees each would multiply the cost by NTREE / LEARNING_NTREE.
+# Four fractions of 20 refits is 80 forests; it is cached and run by run_job().
+LEARNING_FRACTIONS <- c(0.125, 0.25, 0.5)
+LEARNING_B         <- 20
+LEARNING_TOP_K     <- 5
+LEARNING_NTREE     <- 250
 
 # EDIT: "na.omit" drops a patient missing any predictor; "na.impute" keeps them
 # and imputes inside the forest. The classification and regression exemplars
@@ -439,6 +463,77 @@ brier <- gg_brier(forest)
 save_figure(.fig, "rfs-fit-diagnostics-brier")
 .fig
 ```
+
+### Is the cohort large enough?
+
+```{r}
+#| label: learning
+#| message: true
+hvtiRtemplates::guard_long_fit("rfs-learning", dir = CACHE_DIR,
+                               why = sprintf("the learning curve grows %d forests of %d trees",
+                                             (length(LEARNING_FRACTIONS) + 1L) * LEARNING_B, LEARNING_NTREE),
+                               refit = REFIT)
+# One randomForestSRC::subsample() result per fraction and the whole-cohort
+# bootstrap last. Each subsample keeps the share of deaths of the cohort
+# (stratify = TRUE), and learning_subsample() records that, so the deaths
+# reported for each refit are exact rather than assumed.
+learning_fits <- cache_fit(
+  "rfs-learning",
+  {
+    .lf <- rfsrc(model, data = d, ntree = LEARNING_NTREE, nodesize = .nodesize, nsplit = NSPLIT, mtry = MTRY,
+                 splitrule = SPLITRULE, na.action = NA_ACTION, importance = "permute", seed = -abs(SEED))
+    learning_subsample(.lf, fractions = LEARNING_FRACTIONS, replicates = LEARNING_B)
+  },
+  seed = SEED, dir = CACHE_DIR, refit = REFIT
+)
+learning <- gg_learning(learning_fits, top_k = min(LEARNING_TOP_K, length(PREDICTORS)), min_events = 50)
+```
+
+```{r}
+#| label: tbl-learning
+#| tbl-cap: "Learning curve. Error is the mean out-of-bag error (1 - C-index) of the refits at each fraction; agreement
+#|   is between the refits' top variables by importance. Fraction 1 is a bootstrap of the whole cohort."
+.lt <- summary(learning)
+knitr::kable(
+  data.frame(Fraction = .lt$fraction, Patients = .lt$n, Deaths = .lt$events, Refits = .lt$B,
+             Error = sprintf("%.3f (SD %.3f)", .lt$error_mean, .lt$error_sd),
+             Jaccard = sprintf("%.2f", .lt$jaccard), `Kendall tau` = sprintf("%.2f", .lt$kendall),
+             Caution = ifelse(.lt$low_events, "few deaths", ifelse(.lt$optimistic, "optimistic", "")),
+             check.names = FALSE),
+  align = "rrrrrrrl"
+)
+```
+
+```{r}
+#| label: fig-learning-stability
+#| fig-cap: "Agreement of the top variables by importance between refits, by the number of deaths in each refit. A line
+#|   that is still rising at the whole cohort means the importance ranking would change with more patients. Open
+#|   circles have fewer than 50 deaths; open triangles are fractions above one half, where agreement is optimistic."
+.fig <- plot(learning) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
+save_figure(.fig, "rfs-fit-learning-stability")
+.fig
+```
+
+```{r}
+#| label: fig-learning-error
+#| fig-cap: "Out-of-bag error (1 - C-index) by the number of deaths in each refit. Grey points are single refits and the
+#|   black line their mean. Open circles have fewer than 50 deaths, too few for their error to be trusted."
+.fig <- plot(learning, panel = "error") +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
+save_figure(.fig, "rfs-fit-learning-error")
+.fig
+```
+
+**Reading the curve.** The error usually levels off long before the importance
+ranking does. A cohort whose error has flattened can still give a ranking that a
+second cohort of the same size would not reproduce. Read the agreement at the
+whole cohort, and whether the line is still rising there. In a simulation with
+five real predictors among twenty, a Jaccard agreement of 0.8 took about 400 to
+800 deaths when the signal was strong, and more than 1,600 when it was weak.
+That 0.8 is a reference point, not a threshold this job enforces. Agreement at a
+fraction above one half is optimistic, because refits that large share most of
+their patients, and the whole-cohort point is a bootstrap for that reason.
 
 ```{r}
 #| label: save
