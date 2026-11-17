@@ -418,8 +418,8 @@ as on a Mac without XQuartz.
 | bc, bh, bl, br | `<prefix>-frequencies` |
 | nb-boostmtree | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>-page-<NN>`, `-traces` |
 | rfc-, rfr-, rfs-explain | `<template>-importance`, `-dependence-marginal-page-<NN>`, `-dependence-partial-page-<NN>`, and with `BANDS_B` above 0 `-importance-intervals` and `-dependence-partial-bands-page-<NN>` |
-| rfc-fit | `rfc-fit-diagnostics-error`, `-roc` |
-| rfr-fit | `rfr-fit-diagnostics-error`, `-predicted` |
+| rfc-fit | `rfc-fit-diagnostics-error`, `-roc`; `rfc-fit-learning-stability`, `-error` |
+| rfr-fit | `rfr-fit-diagnostics-error`, `-predicted`; `rfr-fit-learning-stability`, `-error` |
 | rfs-fit | `rfs-fit-diagnostics-error`, `-survival`, `-brier`; `rfs-fit-learning-stability`, `-error` |
 | rhf-fit | `rhf-fit-tuning` |
 | rhf-explain | `rhf-explain-auc-cumulative`, `-auc-incident`, `-hazard`, `-chf`, `-importance`, and with `PD_VARS` set `-partial` |
