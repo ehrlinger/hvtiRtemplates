@@ -352,6 +352,21 @@ cohort_run <- function(prefix, data, .local_envir = parent.frame()) {
 }
 
 # A clean cohort passes `prefix`'s cohort chunk; zero and negative times stop it.
+# cohort_counts() warns that non-positive times are counted as analysable before the template's own guard stops on
+# them. These cases feed such times on purpose, so the warning is expected: asserted raised, and muffled only here,
+# by its message. Each run counts the cohort more than once, and expect_warning() would let the repeats through.
+expect_counts_warning <- function(expr) {
+  seen <- 0L
+  out <- withCallingHandlers(expr, warning = function(w) {
+    if (grepl("are counted as analysable", conditionMessage(w), fixed = TRUE)) {
+      seen <<- seen + 1L
+      invokeRestart("muffleWarning")
+    }
+  })
+  testthat::expect_gt(seen, 0L)
+  invisible(out)
+}
+
 expect_time_guard <- function(prefix) {
   clean <- hazard_data()
   zero <- clean
@@ -368,11 +383,17 @@ expect_time_guard <- function(prefix) {
   unused$iv_dead[5] <- 0
   env <- cohort_run(prefix, unused)
   testthat::expect_identical(env$cc$n, nrow(clean) - 1L)
-  err <- testthat::expect_error(cohort_run(prefix, zero), "iv_dead has 3 time\\(s\\) of exactly zero and 0 negative")
+  err <- expect_counts_warning(
+    testthat::expect_error(cohort_run(prefix, zero), "iv_dead has 3 time\\(s\\) of exactly zero and 0 negative")
+  )
   testthat::expect_match(conditionMessage(err), "Correct them in the dataset build")
   testthat::expect_match(conditionMessage(err), "Move only the zeros")
-  testthat::expect_error(cohort_run(prefix, negative), "iv_dead has 0 time\\(s\\) of exactly zero and 1 negative")
-  testthat::expect_error(cohort_run(prefix, both), "iv_dead has 3 time\\(s\\) of exactly zero and 1 negative")
+  expect_counts_warning(
+    testthat::expect_error(cohort_run(prefix, negative), "iv_dead has 0 time\\(s\\) of exactly zero and 1 negative")
+  )
+  expect_counts_warning(
+    testthat::expect_error(cohort_run(prefix, both), "iv_dead has 3 time\\(s\\) of exactly zero and 1 negative")
+  )
 }
 
 # ---- #436: start/stop rows (SAS lcensor) ----------------------------------------
