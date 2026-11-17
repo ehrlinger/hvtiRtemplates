@@ -1096,6 +1096,52 @@ test_that("a stale lock with no owner file is not confused with a render that ha
   expect_false(file.exists(file.path(lock, "owner.json")))
 })
 
+test_that("putting a lock back never replaces one a third render created after the move", {
+  root <- withr::local_tempdir()
+  dead <- list(pid = 101L, created = "1.000000")
+  first <- list(pid = 202L, created = "2.000000")
+  second <- list(pid = 303L, created = "3.000000")
+  testthat::with_mocked_bindings(.acquire_provenance_lock(root), .provenance_render_owner = function() dead,
+                                 .package = "hvtiRtemplates")
+  lock <- .provenance_lock_path(root)
+  real_rename <- .rename_provenance_file
+  real_create <- .create_provenance_lock
+  moves <- 0L
+  # A third render creates the lock, still empty, the instant before the second
+  # puts the first one's back, whichever way it claims the path.
+  third_takes <- function() if (!dir.exists(lock)) dir.create(lock)
+  racing_rename <- function(from, to) {
+    moves <<- moves + 1L
+    if (moves == 1L) {
+      real_rename(lock, tempfile(pattern = ".provenance-render.lock-stale-", tmpdir = dirname(lock)))
+      dir.create(lock)
+      jsonlite::write_json(first, file.path(lock, "owner.json"), auto_unbox = TRUE)
+    }
+    if (identical(to, lock)) third_takes()
+    real_rename(from, to)
+  }
+  racing_create <- function(lock) {
+    if (moves >= 1L) third_takes()
+    real_create(lock)
+  }
+  err <- testthat::with_mocked_bindings(
+    expect_error(.acquire_provenance_lock(root), "Another Quarto render took over this study's stale render lock first"),
+    .provenance_render_owner = function() second,
+    .provenance_owner_alive = function(owner) FALSE,
+    .rename_provenance_file = racing_rename,
+    .create_provenance_lock = racing_create,
+    .package = "hvtiRtemplates"
+  )
+  # The third render keeps the lock it created, and the first one's is left
+  # where it was moved, named in the error.
+  expect_true(dir.exists(lock))
+  expect_false(file.exists(file.path(lock, "owner.json")))
+  expect_match(conditionMessage(err), "could not be put back", fixed = TRUE)
+  stale <- list.files(dirname(lock), pattern = "stale", all.files = TRUE, full.names = TRUE)
+  owners <- lapply(file.path(stale, "owner.json"), .read_provenance_owner)
+  expect_true(any(vapply(owners, identical, logical(1), first)))
+})
+
 test_that("the owning render re-enters its lock and post-render releases it", {
   root <- withr::local_tempdir()
   owner <- list(pid = 101L, created = "1.000000")

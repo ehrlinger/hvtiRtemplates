@@ -860,13 +860,31 @@
   tryCatch(jsonlite::read_json(path), error = function(e) NULL)
 }
 
+# Creating the lock directory is the claim: dir.create() fails on a path that
+# exists, atomically, on every filesystem the lock lives on.
+.create_provenance_lock <- function(lock) dir.create(lock, showWarnings = FALSE)
+
+# Puts a lock moved aside by mistake back, without ever replacing one. rename()
+# would replace an empty directory, so a lock a third render created after the
+# move would be overwritten, and checking for it first leaves a gap before the
+# rename. The lock is claimed again as any render claims it, then its files are
+# moved in. When the claim fails, the third render keeps the lock and the moved
+# one stays where it is, for the error to name.
+.restore_provenance_lock <- function(stale, lock) {
+  if (!.create_provenance_lock(lock)) return(FALSE)
+  files <- list.files(stale, all.files = TRUE, no.. = TRUE)
+  moved <- vapply(files, function(f) .rename_provenance_file(file.path(stale, f), file.path(lock, f)), logical(1))
+  if (all(moved)) unlink(stale, recursive = TRUE)
+  all(moved)
+}
+
 .acquire_provenance_lock <- function(root) {
   lock <- .provenance_lock_path(root)
   owner_path <- file.path(lock, "owner.json")
   owner <- .provenance_render_owner()
   if (!dir.exists(dirname(lock))) dir.create(dirname(lock), recursive = TRUE)
   for (attempt in 1:2) {
-    if (dir.create(lock, showWarnings = FALSE)) {
+    if (.create_provenance_lock(lock)) {
       jsonlite::write_json(owner, owner_path, auto_unbox = TRUE)
       .start_provenance_heartbeat(lock, owner)
       return(invisible(TRUE))
@@ -897,9 +915,7 @@
       # yet. Only the dead one's lock is still old.
       fresh <- is.null(moved) && !isTRUE(difftime(Sys.time(), file.info(stale)$mtime, units = "secs") >= 60)
       if (!identical(moved, current) || fresh) {
-        # rename() would replace an empty directory, so a lock a third render
-        # has just created is left alone rather than overwritten.
-        restored <- !dir.exists(lock) && .rename_provenance_file(stale, lock)
+        restored <- .restore_provenance_lock(stale, lock)
         stop("Another Quarto render took over this study's stale render lock first",
              if (!is.null(moved)) paste0(" (", .provenance_owner_label(moved), ")"),
              ". Wait for it to finish, then render again.",

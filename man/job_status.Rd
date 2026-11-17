@@ -22,6 +22,10 @@ Invisibly, a list: \code{state} is one of \code{"none"},
   recorded (\code{pid}, \code{created}, \code{host}, \code{started},
   \code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version},
   \code{reason}), and \code{log}, the log file's path.
+  \code{unchecked}, for a \code{"submitted"} run past two minutes whose
+  processes could not be looked at, the lookup's error: the run is kept
+  \code{"submitted"} rather than read as \code{"vanished"}, so a second
+  copy is still refused.
   \code{progress}, the render's progress record when there is one, with
   \code{eta_s}, the estimated seconds left in the current stage, and
   \code{stale}, \code{TRUE} when it has not changed for three reporting

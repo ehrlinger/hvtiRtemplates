@@ -543,6 +543,24 @@ test_that("a submission that never started is recorded failed, saying so", {
   expect_identical(st$reason, "it never started")
 })
 
+test_that("a submission whose processes cannot be looked at stays submitted, refusing a second copy and a cancel", {
+  local_mocked_bindings(.is_windows = function() FALSE)  # nothing is signalled: the lookup fails first
+  local_mocked_bindings(ps_find_tree = function(...) stop("ps::ps_pids(): Operation not permitted"), .package = "ps")
+  job <- status_job()
+  status <- .run_files(job)$status
+  .write_status(status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = "PSHVTItest1_1",
+                host = Sys.info()[["nodename"]])
+  before <- readLines(status)
+  st <- job_status(job, quiet = TRUE)
+  expect_identical(st$state, "submitted")
+  expect_match(st$unchecked, "Operation not permitted", fixed = TRUE)
+  expect_output(job_status(job), "could not be looked at (ps::ps_pids(): Operation not permitted)", fixed = TRUE)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "already running")
+  expect_error(cancel_job(job, quiet = TRUE), "whether it is still starting is unknown. Nothing was signalled",
+               fixed = TRUE)
+  expect_identical(readLines(status), before)
+})
+
 test_that("a cancel is refused, signalling nothing, while another call holds the claim", {
   skip_on_os("windows")
   skip_on_cran()

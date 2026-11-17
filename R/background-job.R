@@ -140,6 +140,10 @@
 #'   recorded (\code{pid}, \code{created}, \code{host}, \code{started},
 #'   \code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version},
 #'   \code{reason}), and \code{log}, the log file's path.
+#'   \code{unchecked}, for a \code{"submitted"} run past two minutes whose
+#'   processes could not be looked at, the lookup's error: the run is kept
+#'   \code{"submitted"} rather than read as \code{"vanished"}, so a second
+#'   copy is still refused.
 #'   \code{progress}, the render's progress record when there is one, with
 #'   \code{eta_s}, the estimated seconds left in the current stage, and
 #'   \code{stale}, \code{TRUE} when it has not changed for three reporting
@@ -207,9 +211,15 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
     # Two minutes without "running" is read as never started, unless the run's marker is on a live process here: a
     # slow .Rprofile or renv start on a loaded share can take longer, and reading it as vanished would let a second
     # copy be submitted. Another host's processes cannot be looked for from this one, so there the window decides.
-    if ((is.na(at) || difftime(Sys.time(), at, units = "secs") > 120) && !.submitted_alive(st)) {
-      st$state <- "vanished"
-      never_started <- TRUE
+    if (is.na(at) || difftime(Sys.time(), at, units = "secs") > 120) {
+      alive <- .submitted_alive(st)
+      if (is.na(alive)) {
+        # Unknown is kept submitted, so a second copy is still refused.
+        st$unchecked <- attr(alive, "error")
+      } else if (!alive) {
+        st$state <- "vanished"
+        never_started <- TRUE
+      }
     }
   }
   st$log <- files$log
@@ -233,6 +243,13 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
                        sprintf(": %s; see %s", st$reason, files$log)
                      },
                      cancelled = sprintf(" at %s%s", st$ended, if (is.null(st$reason)) "" else paste0(": ", st$reason)),
+                     submitted = if (!is.null(st$unchecked)) {
+                       sprintf(paste0(": no 'running' within 120 s, and its processes could not be looked at (%s), ",
+                                      "so it is kept submitted and a second copy is refused; see %s"),
+                               st$unchecked, files$log)
+                     } else {
+                       ""
+                     },
                      vanished = if (never_started) {
                        sprintf(": never started: no 'running' within 120 s; see %s%s", files$log,
                                if (!file.exists(files$log) || file.size(files$log) == 0L) " (log missing or empty)" else "")
@@ -314,10 +331,15 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
 
 # Whether a submitted run is still starting: its marker, written into the submitted record, is on a live process on
 # this host. A record with no marker, from before submit_job() wrote one, or from another host, is not looked for.
+# NA when the processes could not be looked at, a sandbox refusing to list them say: that proves nothing about the
+# run, so it must not read as a dead one. The lookup's error is kept as the "error" attribute.
 .submitted_alive <- function(st) {
   host <- st$host
   here <- !(is.character(host) && length(host) == 1L && !is.na(host) && !identical(host, Sys.info()[["nodename"]]))
-  here && .is_marker(st$marker) && length(tryCatch(ps::ps_find_tree(st$marker), error = function(e) list())) > 0L
+  if (!(here && .is_marker(st$marker))) return(FALSE)
+  found <- tryCatch(ps::ps_find_tree(st$marker), error = function(e) e)
+  if (inherits(found, "error")) return(structure(NA, error = conditionMessage(found)))
+  length(found) > 0L
 }
 
 # Wrapped so tests can capture the command; wait = FALSE appends the "&" itself.
@@ -581,7 +603,14 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
   }
   # A submission still starting is found by its marker, so a runner that hangs before it records itself, in a slow
   # .Rprofile or renv start, can still be stopped: job_status() reads it submitted for as long as the marker lives.
-  starting <- identical(st$state, "submitted") && .submitted_alive(st)
+  alive <- if (identical(st$state, "submitted")) .submitted_alive(st) else FALSE
+  if (is.na(alive)) {
+    stop("cancel_job(): ", basename(path), " was submitted, and the processes on this host could not be looked at (",
+         attr(alive, "error"), "), so whether it is still starting is unknown. Nothing was signalled. Cancel it from ",
+         "an R session that can list processes, or, once you have checked by hand that it is not running, delete ",
+         files$status, ".", call. = FALSE)
+  }
+  starting <- identical(st$state, "submitted") && alive
   if (identical(st$state, "submitted") && !starting) {
     stop("cancel_job(): ", basename(path), " was submitted and no process carrying its marker can be found here yet; ",
          "cancel it again once job_status() reads running, or once it reads vanished, which an unstarted submission ",
