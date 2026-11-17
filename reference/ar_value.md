@@ -5,6 +5,8 @@ number in the Results text comes from the fit and goes stale with it,
 rather than being retyped. The source run must be final and its file
 unchanged, as for
 [`ar_item()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_item.md).
+When the source job has been edited since its render, a final render
+(`render_job(final = TRUE)`) stops, and a draft warns.
 
 ## Usage
 

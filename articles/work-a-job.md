@@ -349,8 +349,12 @@ A study renders one job at a time, whichever job it is, so renaming your
 job or rendering a copy meets the same lock. Wait for the other render
 to finish. A render that crashed gives up the lock by itself, at once on
 this node and within ten minutes on another. If the message names a
-directory to delete, the lock is from an older release: once you know
-nothing is rendering on that node, delete it and render again.
+directory to delete, the lock cannot be taken over safely by a render:
+it is from an older release, or a render stopped in the moment of
+claiming the lock (the directory then ends in `.takeover`, or the lock
+has no owner file). Once you know nothing is rendering in the study, on
+any node, delete that directory and render again. Deleting it while a
+render is running lets a second one start beside it.
 
 **“another job is … in this study”**, from
 [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md).

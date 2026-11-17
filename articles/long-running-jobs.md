@@ -166,8 +166,14 @@ other render. A lock left by a crash on this node is taken over for you
 at once. A process on another node cannot be checked from here, so a
 running render keeps a heartbeat in the lock, and one that has stopped
 for ten minutes is taken over too. A lock from an older release has no
-heartbeat and reads as still running. Once you know nothing is rendering
-on that node, delete the directory the message names.
+heartbeat and reads as still running. Two rarer leftovers are never
+cleared by age, because a render paused there for a while would come
+back and act on a claim it no longer held: a `.takeover` directory
+beside the lock, left by a render that stopped while taking over a dead
+one, and a lock with no owner file, left by a render that stopped
+between creating the lock and recording itself. Each message names the
+directory. Once you know nothing is rendering in the study, on any node,
+delete the directory the message names and render again.
 
 **Another job’s run record.** “another job is … in this study”, from
 [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md),

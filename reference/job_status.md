@@ -44,13 +44,19 @@ Invisibly, a list: `state` is one of `"none"`, `"submitted"`,
 [`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md));
 the other elements are what the status file recorded (`pid`, `created`,
 `host`, `started`, `ended`, `exit_code`, `elapsed_s`, `r_version`,
-`reason`), and `log`, the log file's path. `progress`, the render's
-progress record when there is one, with `eta_s`, the estimated seconds
-left in the current stage, and `stale`, `TRUE` when it has not changed
-for three reporting intervals and at least 30 minutes. `diagnosis`, for
-a `failed` or `vanished` run whose log can be read, a list of `reason`,
-what went wrong in plain words, and `fix`, what to do about it; it is
-returned when `quiet` is `TRUE` too.
+`reason`), and `log`, the log file's path. `unchecked`, for a
+`"submitted"` run past two minutes whose processes could not be looked
+at, why: the lookup's error, or the other host it was submitted on. The
+run is kept `"submitted"` rather than read as `"vanished"`, so a second
+copy is still refused. A submission that died on another host therefore
+no longer clears itself: check it from a session on that host, then
+`cancel_job(other_host = "abandon")` records it ended. `progress`, the
+render's progress record when there is one, with `eta_s`, the estimated
+seconds left in the current stage, and `stale`, `TRUE` when it has not
+changed for three reporting intervals and at least 30 minutes.
+`diagnosis`, for a `failed` or `vanished` run whose log can be read, a
+list of `reason`, what went wrong in plain words, and `fix`, what to do
+about it; it is returned when `quiet` is `TRUE` too.
 
 ## Details
 
@@ -63,6 +69,10 @@ started the job, `running` means the process is alive. From another host
 it means only that the run is recorded as running, because a process
 cannot be checked from there, and the summary line says so. A job that
 crashed there still reads `running`, so ask from a session on that host.
+A job submitted there and not started within two minutes stays
+`submitted` for the same reason, and a second copy is refused: one that
+died there is cleared with `cancel_job(other_host = "abandon")` once
+that host has been checked.
 
 ## Examples
 

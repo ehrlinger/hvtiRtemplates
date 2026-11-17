@@ -32,10 +32,10 @@ cancel_job(
 
 - other_host:
 
-  Character(1). For a job recorded running on another host, `"refuse"`
-  (the default) stops with an error naming that host, and `"abandon"`
-  records the run ended without signalling anything. Ignored for a job
-  on this host.
+  Character(1). For a job recorded running or submitted on another host,
+  `"refuse"` (the default) stops with an error naming that host, and
+  `"abandon"` records the run `cancelled` without signalling anything.
+  Ignored for a job on this host.
 
 - quiet:
 
@@ -75,16 +75,16 @@ as a render started without
 is refused rather than signalled by its pid alone.
 
 A process can only be checked and signalled on the host it runs on, so a
-job recorded on another host is refused, naming the host to cancel it
-from, unless `other_host = "abandon"`: then nothing is signalled, and
-the run is recorded `cancelled`, with a reason saying so, and its
-progress file removed. Use it only once that host's session is gone and
-the job is confirmed not running there, for a render left running there
-is not stopped and would go on writing the job's output. A job whose
-process is already gone without recording its end is recorded `failed`,
-with that as its reason, once any of its render still running has been
-stopped. A job that has finished, failed or never run is left as it is.
-A submit or cancel in progress holds `<job>.run.lock`, as
+job recorded running or submitted on another host is refused, naming the
+host to cancel it from, unless `other_host = "abandon"`: then nothing is
+signalled, and the run is recorded `cancelled`, with a reason saying so,
+and its progress file removed. Use it only once that host's session is
+gone and the job is confirmed not running there, for a render left
+running there is not stopped and would go on writing the job's output. A
+job whose process is already gone without recording its end is recorded
+`failed`, with that as its reason, once any of its render still running
+has been stopped. A job that has finished, failed or never run is left
+as it is. A submit or cancel in progress holds `<job>.run.lock`, as
 [`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
 describes, and a cancel is refused while it is held. Not available on
 Windows.

@@ -82,10 +82,10 @@ submitted again.</p>
 
 
 <dt id="arg-other-host">other_host<a class="anchor" aria-label="anchor" href="#arg-other-host"></a></dt>
-<dd><p>Character(1). For a job recorded running on another
-host, <code>"refuse"</code> (the default) stops with an error naming that host,
-and <code>"abandon"</code> records the run ended without signalling anything.
-Ignored for a job on this host.</p></dd>
+<dd><p>Character(1). For a job recorded running or submitted on
+another host, <code>"refuse"</code> (the default) stops with an error naming that
+host, and <code>"abandon"</code> records the run <code>cancelled</code> without signalling
+anything. Ignored for a job on this host.</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
@@ -120,8 +120,8 @@ it shuts down is stopped too. A run recorded without a creation
 time, such as a render started without <code><a href="submit_job.html">submit_job()</a></code>, is
 refused rather than signalled by its pid alone.</p>
 <p>A process can only be checked and signalled on the host it runs on, so a
-job recorded on another host is refused, naming the host to cancel it
-from, unless <code>other_host = "abandon"</code>: then nothing is signalled, and
+job recorded running or submitted on another host is refused, naming the
+host to cancel it from, unless <code>other_host = "abandon"</code>: then nothing is signalled, and
 the run is recorded <code>cancelled</code>, with a reason saying so, and its
 progress file removed. Use it only once that host's session is gone and the
 job is confirmed not running there, for a render left running there is not
