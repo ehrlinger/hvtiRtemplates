@@ -87,7 +87,7 @@ left in a log.</p>
 <span>  <span class="va">path</span>,</span>
 <span>  final <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  wait <span class="op">=</span> <span class="fl">300</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"hvti.quiet"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  params <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  output_file <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -113,7 +113,8 @@ own checks. <code>0</code> submits and returns at once.</p></dd>
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>Logical(1). <code>TRUE</code> prints nothing: not the checks, the note
 for a legacy job, or the lines the wait ends on. A refusal is still an
-error, and its message then lists the failed checks and their fixes.</p></dd>
+error, and its message then lists the failed checks and their fixes. Defaults to the family
+option <code>hvti.quiet</code>; an explicit value wins.</p></dd>
 
 
 <dt id="arg-params-output-file">params, output_file<a class="anchor" aria-label="anchor" href="#arg-params-output-file"></a></dt>

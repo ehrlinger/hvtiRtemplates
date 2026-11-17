@@ -66,7 +66,7 @@ dir <- file.path(tempdir(), "guard-long-fit-example")
 dir.create(dir, showWarnings = FALSE)
 # Outside run_job(), with no cached fit, it refuses and names run_job().
 try(guard_long_fit("example-fit", dir = dir, why = "it takes hours"))
-#> Error : This fit is not cached yet, and it takes hours: run from the console, the Render button or a terminal it dies with the Workbench session. Run the job in the background instead, from the study's R console:
+#> Error : guard_long_fit(): this fit is not cached yet, and it takes hours: run from the console, the Render button or a terminal it dies with the Workbench session. Run the job in the background instead, from the study's R console:
 #>   hvtiRtemplates::run_job("<this job>.qmd")
 #> then check it with hvtiRtemplates::job_status(). Once the fit is cached, the Render button and these chunks work again and load it. For a fit you know to be short, set options(hvtiRtemplates.allow_interactive_fit = TRUE).
 # Once the fit is cached, it lets the job load it.

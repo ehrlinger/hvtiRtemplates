@@ -59,7 +59,7 @@ accepted result should.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">render_job</span><span class="op">(</span></span>
 <span>  <span class="va">path</span>,</span>
 <span>  final <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  quiet <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"hvti.quiet"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  params <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  output_file <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -80,7 +80,9 @@ names <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/update
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
-<dd><p>Logical. Passed to <code><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_render.html" class="external-link">quarto::quarto_render()</a></code>.</p></dd>
+<dd><p>Logical. Passed to <code><a href="https://quarto-dev.github.io/quarto-r/reference/quarto_render.html" class="external-link">quarto::quarto_render()</a></code>. Defaults to the
+family option <code>hvti.quiet</code>, so <code>options(hvti.quiet = TRUE)</code> quiets
+every render; an explicit value wins.</p></dd>
 
 
 <dt id="arg-params">params<a class="anchor" aria-label="anchor" href="#arg-params"></a></dt>
@@ -176,7 +178,7 @@ renamed copy of the job meets the same one.</p>
 <span class="r-in"><span>  <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_dir.html" class="external-link">study_dir</a></span><span class="op">(</span><span class="st">"datasets"</span>, <span class="va">root</span><span class="op">)</span>, <span class="st">"built.csv"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                   row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu"><a href="https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html" class="external-link">register_data</a></span><span class="op">(</span><span class="va">root</span>, <span class="st">"built.csv"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">job</span> <span class="op">&lt;-</span> <span class="fu"><a href="add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc.gfup"</span>, subject <span class="op">=</span> <span class="st">"dead"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, dir <span class="op">=</span> <span class="va">root</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">job</span> <span class="op">&lt;-</span> <span class="fu"><a href="add_job.html">add_job</a></span><span class="op">(</span><span class="st">"dc.gfup"</span>, subject <span class="op">=</span> <span class="st">"dead"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, root <span class="op">=</span> <span class="va">root</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># A draft: the new job still holds EDIT: markers, so the report carries a</span></span></span>
 <span class="r-in"><span>  <span class="co"># DRAFT banner listing them, and renders all the same.</span></span></span>

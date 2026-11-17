@@ -25,7 +25,9 @@ job_status(path, quiet = FALSE, output_file = NULL)
 
 - quiet:
 
-  Logical(1). `FALSE` prints a one-line summary.
+  Logical(1). `FALSE`, the default, prints a one-line summary. The
+  summary is the function's result rather than an informational message,
+  so the family option `hvti.quiet` does not silence it.
 
 - output_file:
 

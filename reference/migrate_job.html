@@ -54,15 +54,20 @@ it. Review the remaining <code>EDIT:</code> markers before rendering the job.</p
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">migrate_job</span><span class="op">(</span></span>
-<span>  <span class="va">source</span>,</span>
+<span>  <span class="va">path</span>,</span>
 <span>  <span class="va">subject</span>,</span>
 <span>  <span class="va">type</span>,</span>
 <span>  prefix <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  qualifier <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  lst <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  log <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  reference <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  dir <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  lst_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  log_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reference_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  root <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">source</span>,</span>
+<span>  <span class="va">lst</span>,</span>
+<span>  <span class="va">log</span>,</span>
+<span>  <span class="va">reference</span>,</span>
+<span>  <span class="va">dir</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -70,7 +75,7 @@ it. Review the remaining <code>EDIT:</code> markers before rendering the job.</p
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-source">source<a class="anchor" aria-label="anchor" href="#arg-source"></a></dt>
+<dl><dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
 <dd><p>Path to one legacy source job, relative to the working
 directory or absolute.</p></dd>
 
@@ -101,27 +106,34 @@ prefix is read from the filename and this qualifier is used. Filename
 fields must match <code>[A-Za-z0-9_]+</code>.</p></dd>
 
 
-<dt id="arg-lst">lst<a class="anchor" aria-label="anchor" href="#arg-lst"></a></dt>
+<dt id="arg-lst-path">lst_path<a class="anchor" aria-label="anchor" href="#arg-lst-path"></a></dt>
 <dd><p>Optional path to a SAS listing, relative to the working
 directory or absolute. Defaults to the same-named file beside
-<code>source</code> when present.</p></dd>
+<code>path</code> when present.</p></dd>
 
 
-<dt id="arg-log">log<a class="anchor" aria-label="anchor" href="#arg-log"></a></dt>
+<dt id="arg-log-path">log_path<a class="anchor" aria-label="anchor" href="#arg-log-path"></a></dt>
 <dd><p>Optional path to a SAS log, relative to the working directory
-or absolute. Defaults to the same-named file beside <code>source</code> when
+or absolute. Defaults to the same-named file beside <code>path</code> when
 present.</p></dd>
 
 
-<dt id="arg-reference">reference<a class="anchor" aria-label="anchor" href="#arg-reference"></a></dt>
+<dt id="arg-reference-path">reference_path<a class="anchor" aria-label="anchor" href="#arg-reference-path"></a></dt>
 <dd><p>Optional vector of paths to output references, such as
 RTF or DOCX files, relative to the working directory or absolute. They
 record comparison targets, not analysis choices.</p></dd>
 
 
-<dt id="arg-dir">dir<a class="anchor" aria-label="anchor" href="#arg-dir"></a></dt>
+<dt id="arg-root">root<a class="anchor" aria-label="anchor" href="#arg-root"></a></dt>
 <dd><p>Any directory in the study, used only to locate the study root.
-Defaults to the directory of <code>source</code>.</p></dd>
+Defaults to the directory of <code>path</code>.</p></dd>
+
+
+<dt id="arg-source-lst-log-reference-dir">source, lst, log, reference, dir<a class="anchor" aria-label="anchor" href="#arg-source-lst-log-reference-dir"></a></dt>
+<dd><p>Deprecated: the old names of
+<code>path</code>, <code>lst_path</code>, <code>log_path</code>, <code>reference_path</code> and
+<code>root</code>. They work, with a warning, for one more release; giving an
+old name with its new one is an error.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -144,8 +156,8 @@ a warning, since that name is not the caller's to change. A
 template with no converter yet still migrates: it is scaffolded with every
 <code>EDIT:</code> marker kept, the evidence travels with it, and the report
 says the migration adapter is not yet available.</p>
-<p>Relative <code>source</code>, <code>lst</code>, <code>log</code> and <code>reference</code> paths
-resolve against the working directory, as in any R function; <code>dir</code>
+<p>Relative <code>path</code>, <code>lst_path</code>, <code>log_path</code> and <code>reference_path</code>
+paths resolve against the working directory, as in any R function; <code>root</code>
 only locates the study root. Each file must exist, be readable and lie
 beneath that root, and symbolic links are checked after resolution. The
 evidence files are never modified. The report records whether the listing

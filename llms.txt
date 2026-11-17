@@ -110,10 +110,10 @@ nothing to pin.
 | [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md) | supported templates: name, folder and title printed; prefix, qualifier, description, call and file in the data |
 | `template_path(prefix, qualifier = NULL)` | path to one supported template |
 | [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html) | leading name fields that are utilities, not analysis prefixes |
-| `add_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | the scaffolded job’s path, invisibly |
-| `open_job(prefix, subject, type, dir = NULL, qualifier = NULL)` | job path; creates a missing job or opens an existing one |
+| `add_job(prefix, subject, type, root = NULL, qualifier = NULL)` | the scaffolded job’s path, invisibly |
+| `open_job(prefix, subject, type, root = NULL, qualifier = NULL)` | job path; creates a missing job or opens an existing one |
 | `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
-| `import_job(from, subject = NULL, type = NULL, dir = NULL)` | the imported job’s path, invisibly; copies a job from another study, keeping its edits |
+| `import_job(from, subject = NULL, type = NULL, root = NULL)` | the imported job’s path, invisibly; copies a job from another study, keeping its edits |
 | `migrate_job(source, subject, type, prefix, ...)` | the migrated job’s path, invisibly; writes an evidence report beside it |
 | `ar_item(id)`, `ar_value(id, field)` | inside an `ar` analysis report: one saved figure, table or value from a finished job, checked against the bytes that job recorded |
 | `ar_paste_methods(path)`, `ar_review(path)` | for an `ar` report: fill each empty Methods slot from its source job, leaving existing text for the analyst to compare and update; mark items as reviewed after their source job was rendered again |
@@ -172,10 +172,10 @@ From that study’s root, migrate a descriptive-table job with:
 ``` r
 
 job <- hvtiRtemplates::migrate_job(
-  source = "descriptive/dc.tables.sas",
+  path = "descriptive/dc.tables.sas",
   subject = "cohort", type = "eda", prefix = "dc", qualifier = "tables",
-  lst = "descriptive/dc.tables.lst", log = "descriptive/dc.tables.log",
-  reference = "documents/general.rtf", dir = "."
+  lst_path = "descriptive/dc.tables.lst", log_path = "descriptive/dc.tables.log",
+  reference_path = "documents/general.rtf", root = "."
 )
 ```
 

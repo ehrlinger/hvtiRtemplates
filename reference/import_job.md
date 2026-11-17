@@ -8,12 +8,12 @@ the template.
 ## Usage
 
 ``` r
-import_job(from, subject = NULL, type = NULL, dir = NULL)
+import_job(path, subject = NULL, type = NULL, root = NULL, from, dir)
 ```
 
 ## Arguments
 
-- from:
+- path:
 
   The job to import: a `.qmd` file in another study, named as
   [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
@@ -26,12 +26,18 @@ import_job(from, subject = NULL, type = NULL, dir = NULL)
   [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
   for what they decide.
 
-- dir:
+- root:
 
   The study root to import into. `NULL`, the default, finds it by
   walking up from the working directory, as
   [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
   does.
+
+- from, dir:
+
+  Deprecated: the old names of `path` and `root`. They work, with a
+  warning, for one more release; giving an old name with its new one is
+  an error.
 
 ## Value
 
@@ -83,7 +89,7 @@ its study's files, are not listed.
 The job keeps the template version it was written from, so
 [`upgrade_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
 can bring an older job up to the current template afterwards:
-`upgrade_job(import_job(from))`.
+`upgrade_job(import_job(path))`.
 
 ## See also
 
@@ -98,14 +104,14 @@ here <- file.path(tempdir(), "import-job-here")
 for (d in c(other, here)) {
   invisible(hvtiRutilities::study_setup(d, study = "Example", study_tracker_id = 1L, renv = FALSE))
 }
-job <- add_job("ac", subject = "death", type = "hz", dir = other)
+job <- add_job("ac", subject = "death", type = "hz", root = other)
 # The other study's edit.
 lines <- readLines(job)
 lines <- sub("^DATASET <- \"built\"", "DATASET <- \"built_aorta\"", lines)
 writeLines(lines, job)
 
-imported <- import_job(job, subject = "reop", dir = here)
-#> import_job(): wrote '/tmp/RtmpfUUJQk/import-job-here/20_distributions/ac.reop.hz.qmd' from '/tmp/RtmpfUUJQk/import-job-other/20_distributions/ac.death.hz.qmd'.
+imported <- import_job(job, subject = "reop", root = here)
+#> import_job(): wrote '/tmp/RtmpKS48zD/import-job-here/20_distributions/ac.reop.hz.qmd' from '/tmp/RtmpKS48zD/import-job-other/20_distributions/ac.death.hz.qmd'.
 #> Review in ac.reop.hz.qmd:
 #>   DATASET: line 117
 #>   EDIT: markers: lines 33, 116, 119, 122, 127, 132, 157, 162
@@ -113,7 +119,7 @@ grep("^(DATASET|SUBJECT) ", readLines(imported), value = TRUE)
 #> [1] "SUBJECT <- \"reop\""        "DATASET <- \"built_aorta\""
 
 # An existing job is never overwritten.
-try(import_job(job, subject = "reop", dir = here))
-#> Error : import_job(): '/tmp/RtmpfUUJQk/import-job-here/20_distributions/ac.reop.hz.qmd' already exists; refusing to overwrite.
+try(import_job(job, subject = "reop", root = here))
+#> Error : import_job(): '/tmp/RtmpKS48zD/import-job-here/20_distributions/ac.reop.hz.qmd' already exists; refusing to overwrite.
 unlink(c(other, here), recursive = TRUE)
 ```

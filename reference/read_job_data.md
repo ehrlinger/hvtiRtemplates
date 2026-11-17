@@ -3,7 +3,7 @@
 The shared data step of every analysis template. It reads a registered
 dataset (or an hvtiRdatabuild analysis set), resolves the patient
 identifier, drops the medical record number columns, keeps the rows
-`where` selects and checks that rows are unique on `key`.
+`where` selects and checks that rows are unique on `key_cols`.
 
 ## Usage
 
@@ -13,15 +13,20 @@ read_job_data(
   dataset = "study",
   analysis_set = NULL,
   where = NULL,
-  id = "ccfid",
-  key = NULL,
+  id_col,
+  key_cols = NULL,
   join = NULL,
-  join_vars = NULL,
+  join_cols = NULL,
   reduce = NULL,
-  join_key = NULL,
+  join_key_cols = NULL,
   one_row_per_patient = FALSE,
-  imputation = NULL,
-  whole_patients = FALSE
+  imputation_col = NULL,
+  whole_patients = FALSE,
+  id,
+  key,
+  join_vars,
+  join_key,
+  imputation
 )
 ```
 
@@ -59,14 +64,14 @@ read_job_data(
   name for a function stays a name. Such a value must be a vector,
   `NULL`, a symbol or a call; a data frame, list, environment or S4
   object stops, since it would be saved whole. A condition that mentions
-  the `id` column, a column named `MRN` or `eMRN` (ignoring case), or an
-  SSN or `masterid` column dropped below, in this dataset or a joined
-  one, directly or as `.data$x` or `.data[["x"]]`, stops before any row
-  is filtered, because each condition is saved, values included, in the
-  job's output. Exclude those patients in the dataset build, or with an
-  hvtiRdatabuild analysis set, instead. A value from outside the data is
-  fixed in before this check, so `.data[[nm]]` is judged by the column
-  `nm` names. A column reached any other way, as by
+  the `id_col` column, a column named `MRN` or `eMRN` (ignoring case),
+  or an SSN or `masterid` column dropped below, in this dataset or a
+  joined one, directly or as `.data$x` or `.data[["x"]]`, stops before
+  any row is filtered, because each condition is saved, values included,
+  in the job's output. Exclude those patients in the dataset build, or
+  with an hvtiRdatabuild analysis set, instead. A value from outside the
+  data is fixed in before this check, so `.data[[nm]]` is judged by the
+  column `nm` names. A column reached any other way, as by
   `.data[[paste0(...)]]` or a string lookup such as
   [`get()`](https://rdrr.io/r/base/get.html), stops too, since it cannot
   be known. A function bound to such a lookup under another name is read
@@ -87,54 +92,55 @@ read_job_data(
   1, 18 or 2015, are not checked, so a study keyed on shorter
   identifiers relies on the name checks.
 
-- id:
+- id_col:
 
-  The patient identifier column. When it is the default `"ccfid"` and
+  The patient identifier column. It has no default: leaving it out
+  warns, for one release, and reads `"ccfid"`. When it is `"ccfid"` and
   absent, `MRN` and then `eMRN` are used.
 
-- key:
+- key_cols:
 
   Columns that make a row unique. `NULL` (the default) uses the key
-  registered for `dataset`, and `id`, one row per patient, when none is
-  registered. Add a visit time or date for repeated measures. A key that
-  differs from the registered one is noted in the record. Templates pass
-  their `KEY`, a study choice the analyst reviews, so the default serves
-  a direct call. With `join`, the cohort must be one row per patient. A
-  key of cohort columns is checked on the cohort, and the result is
-  keyed as `reduce` says; a key that names a joined column, such as a
-  visit time only the joined dataset carries, is checked on the joined
-  rows and keys the result.
+  registered for `dataset`, and `id_col`, one row per patient, when none
+  is registered. Add a visit time or date for repeated measures. A key
+  that differs from the registered one is noted in the record. Templates
+  pass their `KEY`, a study choice the analyst reviews, so the default
+  serves a direct call. With `join`, the cohort must be one row per
+  patient. A key of cohort columns is checked on the cohort, and the
+  result is keyed as `reduce` says; a key that names a joined column,
+  such as a visit time only the joined dataset carries, is checked on
+  the joined rows and keys the result.
 
 - join:
 
   Name of one registered ancillary dataset (such as echoes or labs) to
-  join to the cohort on `id`, or `NULL`. The cohort, `dataset` or
+  join to the cohort on `id_col`, or `NULL`. The cohort, `dataset` or
   `analysis_set`, decides the patients: joined records of other patients
   are dropped and counted. A dataset registered with a `kind` other than
   `"ancillary"` is refused.
 
-- join_vars:
+- join_cols:
 
-  Cohort columns each joined row carries, the `id` always among them;
-  `NULL` carries all of them. A column both datasets have stops, so list
-  only the cohort columns the job needs.
+  Cohort columns each joined row carries, the `id_col` always among
+  them; `NULL` carries all of them. A column both datasets have stops,
+  so list only the cohort columns the job needs.
 
 - reduce:
 
   `NULL` keeps one row per joined record, keyed on the joined dataset's
   key. `list(rule = "first", by = "echo_date")` keeps one row per cohort
-  patient, keyed on `id`: the record with the smallest `by` (`"first"`),
-  the largest (`"last"`), or the one nearest a cohort column
-  (`rule = "nearest"` with `to = "dt_surg"`). A patient with no record
-  keeps the row with the joined columns missing. `by` may name several
-  columns, such as `c("echo_date", "echo_seq")`: each later one breaks a
-  tie on those before it, in the same direction, and a missing tie-break
-  value loses the tie. Records with no value in the first `by` column
-  are left out and counted, and a patient whose chosen record still ties
-  with another stops the read, since picking one would be a hidden
-  choice.
+  patient, keyed on `id_col`: the record with the smallest `by`
+  (`"first"`), the largest (`"last"`), or the one nearest a cohort
+  column (`rule = "nearest"` with `to = "dt_surg"`). A patient with no
+  record keeps the row with the joined columns missing. `by` may name
+  several columns, such as `c("echo_date", "echo_seq")`: each later one
+  breaks a tie on those before it, in the same direction, and a missing
+  tie-break value loses the tie. Records with no value in the first `by`
+  column are left out and counted, and a patient whose chosen record
+  still ties with another stops the read, since picking one would be a
+  hidden choice.
 
-- join_key:
+- join_key_cols:
 
   Columns that make the joined dataset's rows unique, overriding its
   registered key. A join needs one or the other.
@@ -149,7 +155,7 @@ read_job_data(
   rows are selected. `FALSE`, the default, accepts the long form, as
   descriptive jobs and jobs that model repeated measures need.
 
-- imputation:
+- imputation_col:
 
   `NULL`, the default, or the name of the column that numbers the
   imputations of stacked multiple imputations, one row per patient per
@@ -157,11 +163,11 @@ read_job_data(
   counted within each imputation, so a patient who appears once in every
   imputation passes, and one who appears twice in the same imputation
   still stops the read. The column must be in the data read, and in
-  `key` for the rows to be unique. It is matched ignoring case, as `key`
-  is. It must hold no missing value and must not be the patient
-  identifier. The record says how many imputations the rows hold. It is
-  not inferred from `key`, since a visit column in `key` makes a long
-  dataset, not an imputation.
+  `key_cols` for the rows to be unique. It is matched ignoring case, as
+  `key_cols` is. It must hold no missing value and must not be the
+  patient identifier. The record says how many imputations the rows
+  hold. It is not inferred from `key_cols`, since a visit column in
+  `key_cols` makes a long dataset, not an imputation.
 
 - whole_patients:
 
@@ -171,6 +177,12 @@ read_job_data(
   all, since that shortens follow-up without a word. An `analysis_set`
   is not checked: one that selects intervals rather than patients
   shortens follow-up unnoticed. `FALSE`, the default, checks nothing.
+
+- id, key, join_vars, join_key, imputation:
+
+  Deprecated: the old names of `id_col`, `key_cols`, `join_cols`,
+  `join_key_cols` and `imputation_col`. They work, with a warning, for
+  one more release; giving an old name with its new one is an error.
 
 ## Value
 
@@ -208,15 +220,15 @@ so a downstream job can rebuild the same rows:
   rebuild the rows; it stays inside the study and is never printed;
 
 - `where_shown`, the same conditions as a report may show them, with the
-  values of any condition on a `key` column, or using `.data` or a
+  values of any condition on a `key_cols` column, or using `.data` or a
   string lookup, replaced;
 
 - `id` and `key`, the resolved column names, the key being the joined
   result's when there is a join;
 
 - `imputation`, the resolved name of the imputation column in the data's
-  own spelling, present only when `imputation` was given, so a job can
-  pass it on to a fit;
+  own spelling, present only when `imputation_col` was given, so a job
+  can pass it on to a fit;
 
 - `join`, `join_vars`, `reduce` and `join_key`, the join as read, with
   `join_vars`, `join_key` and `reduce`'s columns spelled as the data
@@ -226,10 +238,10 @@ so a downstream job can rebuild the same rows:
 
 - `rows` and `patients`, the counts kept;
 
-- `key_hash`, a SHA-256 hash of the kept `key` values, with a join the
-  joined dataset's key values too, so a downstream job can tell that it
-  rebuilt the same patients, and with `reduce` the same chosen records,
-  and not only the same counts.
+- `key_hash`, a SHA-256 hash of the kept `key_cols` values, with a join
+  the joined dataset's key values too, so a downstream job can tell that
+  it rebuilt the same patients, and with `reduce` the same chosen
+  records, and not only the same counts.
 
 ## Details
 
@@ -244,20 +256,20 @@ name (`name`, `first_name`, `pt_name`, `surname`) or contact details
 are shaped like Social Security numbers is dropped too, and the record
 notes it by name; a column named as a date or time is not read for that
 shape. A KEY column is never dropped. The record lists every column
-dropped. An explicit `id` or `key` matches its column ignoring case,
-because
+dropped. An explicit `id_col` or `key_cols` matches its column ignoring
+case, because
 [`hvtiRutilities::read_built()`](https://ehrlinger.github.io/hvtiRutilities/reference/read_built.html)
 lowercases column names. Identifier, key and date values are not
 printed: the record holds counts, and a `where` condition that mentions
-a `key` column, uses `.data` or calls a string lookup such as
+a `key_cols` column, uses `.data` or calls a string lookup such as
 [`get()`](https://rdrr.io/r/base/get.html) is shown, in the record and
 in error messages, with its values replaced by `<value>`. So is a
-condition on `id` in a selection saved before such conditions were
+condition on `id_col` in a selection saved before such conditions were
 refused. Every setting is checked before the data are read, and `join`'s
 registration too; only what needs the data, such as whether a column
 exists, is checked after. With `join`, `where` applies to the joined
 rows, so a condition may name a column from either dataset, though not a
-cohort column `join_vars` leaves out; the joined dataset's identifier
+cohort column `join_cols` leaves out; the joined dataset's identifier
 values are refused in it as the cohort's are. With `reduce`, a condition
 that names a column of the joined dataset filters its records before one
 is chosen per patient, so `rule = "last"` with `echo_type == "TTE"`
@@ -273,10 +285,10 @@ written.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE)
-#> Study: /tmp/RtmpfUUJQk/job-data-example
+#> Study: /tmp/RtmpKS48zD/job-data-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpfUUJQk/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpKS48zD/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -287,17 +299,17 @@ utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "buil
                  row.names = FALSE)
 hvtiRutilities::register_data(root, "built.csv")
 #> Warning: register_data(): `root` is now the last argument. A first argument, unnamed, that is a directory is read as the root for one more release; pass root = by name.
-#> Study: /tmp/RtmpfUUJQk/job-data-example
+#> Study: /tmp/RtmpKS48zD/job-data-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpfUUJQk/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpKS48zD/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv, registered as built_20261117.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
 cfg <- hvtiRutilities::study_config(start = root)
-job <- read_job_data(cfg, where = quote(age >= 18))
+job <- read_job_data(cfg, id_col = "ccfid", where = quote(age >= 18))
 job$record
 #>                  step                                    value
 #> 1              Source dataset `study` (built_20261117.parquet)

@@ -9,7 +9,16 @@ whatever a rule names.
 ## Usage
 
 ``` r
-build_cohort(data, exclude = NULL, cohort = NULL, join_by = NULL, id = "ccfid")
+build_cohort(
+  data,
+  exclude = NULL,
+  path = NULL,
+  join_cols = NULL,
+  id_col,
+  cohort,
+  join_by,
+  id
+)
 ```
 
 ## Arguments
@@ -28,24 +37,32 @@ build_cohort(data, exclude = NULL, cohort = NULL, join_by = NULL, id = "ccfid")
   hvtiRdatabuild analysis set treat it, and the number of such rows is
   counted. A downstream job's `WHERE` drops such rows instead.
 
-- cohort:
+- path:
 
   `NULL`, or the path to a CSV cohort list, such as a REDCap export,
-  carrying the `join_by` columns. Only master rows matched by a list row
-  are kept. Dates are written YYYY-MM-DD. A list may carry `exclude` (1
-  to exclude) and `reason` columns; each reason becomes a step of its
+  carrying the `join_cols` columns. Only master rows matched by a list
+  row are kept. Dates are written YYYY-MM-DD. A list may carry `exclude`
+  (1 to exclude) and `reason` columns; each reason becomes a step of its
   own. A list's reasons are printed in the report, so they must be
   categories (such as "Redo operation"), never free text, names or
   dates.
 
-- join_by:
+- join_cols:
 
   The columns that match a cohort-list row to a master row. Used only
-  with `cohort`.
+  with `path`.
 
-- id:
+- id_col:
 
-  The patient identifier column, used to count patients.
+  The patient identifier column, used to count patients. It has no
+  default: leaving it out warns and reads `"ccfid"` for one more
+  release, then is an error.
+
+- cohort, join_by, id:
+
+  Deprecated: the old names of `path`, `join_cols` and `id_col`. They
+  work, with a warning, for one more release; giving an old name with
+  its new one is an error.
 
 ## Value
 
@@ -70,7 +87,8 @@ is named by its number and reason.
 d <- data.frame(ccfid = c("S1", "S2", "S3", "S4"), age = c(17, 45, NA, 80),
                 redo = c(0, 0, 0, 1))
 cut <- build_cohort(d, exclude = list(age < 18 ~ "Under 18",
-                                      redo == 1 ~ "Redo operation"))
+                                      redo == 1 ~ "Redo operation"),
+                    id_col = "ccfid")
 # One row per step: rows removed, rows whose condition was missing and so
 # kept (S3, with no age), and the patients left.
 cut$attrition

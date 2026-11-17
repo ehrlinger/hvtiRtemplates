@@ -12,7 +12,7 @@ with its template without re-entering every choice by hand.
 ## Usage
 
 ``` r
-upgrade_job(path, dir = NULL)
+upgrade_job(path, root = NULL, dir)
 ```
 
 ## Arguments
@@ -23,11 +23,16 @@ upgrade_job(path, dir = NULL)
   directory or absolute, such as
   `"10_descriptive/dc.general.cohort.eda.qmd"`.
 
-- dir:
+- root:
 
   Any directory in the study, used only to locate the study root.
   Defaults to the directory of `path`, which is right for any job inside
   its study.
+
+- dir:
+
+  Deprecated: the old name of `root`. It works, with a warning, for one
+  more release; giving both is an error.
 
 ## Value
 
@@ -104,7 +109,7 @@ and several jobs are upgraded one call each:
     }
 
 You never name the template: the job's file name says which one it is.
-The job must sit inside its study; leave `dir` out unless you want to
+The job must sit inside its study; leave `root` out unless you want to
 name a different directory of the same study.
 
 Afterwards, render the job and read its report, in the `_archive` folder
@@ -134,7 +139,7 @@ modification time. A copy renamed by hand, such as
 # \donttest{
 root <- file.path(tempdir(), "upgrade-job-example")
 invisible(hvtiRutilities::study_setup(root, "Example", 1L, renv = FALSE))
-job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
 # A study choice, made in the job.
 lines <- readLines(job)
 lines <- sub('^DATASET <- "built"', 'DATASET <- "built_r"', lines)

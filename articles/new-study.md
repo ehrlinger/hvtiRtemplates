@@ -127,10 +127,10 @@ package environment:
 # A vignette builds a throwaway study; in a real study, run hvtiR::setup().
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L,
             renv = FALSE)
-#> Study: /tmp/Rtmpcz4VhU/file1f5141ca54ad/new-study
+#> Study: /tmp/RtmpFWZfZ9/file1fe59911748/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/Rtmpcz4VhU/file1f5141ca54ad/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmpFWZfZ9/file1fe59911748/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -176,10 +176,10 @@ register_data(
 #> Warning: register_data(): `root` is now the last argument. A first argument,
 #> unnamed, that is a directory is read as the root for one more release; pass
 #> root = by name.
-#> Study: /tmp/Rtmpcz4VhU/file1f5141ca54ad/new-study
+#> Study: /tmp/RtmpFWZfZ9/file1fe59911748/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/Rtmpcz4VhU/file1f5141ca54ad/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmpFWZfZ9/file1fe59911748/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv, registered as built_20261117.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -212,7 +212,7 @@ The executable example scaffolds without opening an editor:
 
 ``` r
 
-general <- add_job("dc", subject = "cohort", type = "eda", dir = new_root, qualifier = "general")
+general <- add_job("dc", subject = "cohort", type = "eda", root = new_root, qualifier = "general")
 sub(paste0(new_root, "/"), "", general, fixed = TRUE)
 #> [1] "10_descriptive/dc.general.cohort.eda.qmd"
 ```
@@ -314,9 +314,9 @@ the two chains cannot overwrite each other’s life table.
 ``` r
 
 chain <- c(
-  ac = add_job("ac", subject = "death", type = "hz", dir = new_root),
-  hz = add_job("hz", subject = "death", type = "hz", dir = new_root),
-  hp = add_job("hp", subject = "death", type = "hz", dir = new_root)
+  ac = add_job("ac", subject = "death", type = "hz", root = new_root),
+  hz = add_job("hz", subject = "death", type = "hz", root = new_root),
+  hp = add_job("hp", subject = "death", type = "hz", root = new_root)
 )
 sub(paste0(new_root, "/"), "", chain, fixed = TRUE)
 #>                                 ac                                 hz 

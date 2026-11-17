@@ -9,7 +9,7 @@ replacing one would discard them.
 ## Usage
 
 ``` r
-add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
+add_job(prefix, subject, type, root = NULL, qualifier = NULL, dir)
 ```
 
 ## Arguments
@@ -37,7 +37,7 @@ add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   like `subject`, and shared the same way. Must match `^[A-Za-z0-9_]+$`,
   for the same reason as `subject`.
 
-- dir:
+- root:
 
   The study root to write into. The taxonomy folder beneath it is
   created if it does not exist. `NULL`, the default, finds the study
@@ -50,6 +50,11 @@ add_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   where a prefix carries more than one template; omitting it there is an
   error naming the choices, never a silent pick. Restricted to
   `[A-Za-z0-9_]+`, because `.` separates the filename's fields.
+
+- dir:
+
+  Deprecated: the old name of `root`. It works, with a warning, for one
+  more release; giving both is an error.
 
 ## Value
 
@@ -153,20 +158,20 @@ d <- file.path(tempdir(), "add-job-example")
 invisible(hvtiRutilities::study_setup(
   d, study = "Example", study_tracker_id = 1L, renv = FALSE
 ))
-add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
+add_job(prefix = "ac", subject = "death", type = "hz", root = d)
 
 # A qualified template by its full name, the form template_list()$call prints.
 # A follow-up check belongs to the analysis it checks, so it takes that
 # set's subject and type: here, the hazard analysis of reoperation.
-add_job("dc.gfup", subject = "reop", type = "hz", dir = d)
+add_job("dc.gfup", subject = "reop", type = "hz", root = d)
 
 # A template's name before a rename is an error that names the new one.
-try(add_job("dp.trends", subject = "cohort", type = "eda", dir = d))
+try(add_job("dp.trends", subject = "cohort", type = "eda", root = d))
 #> Error : add_job(): dp.trends was renamed dc.trends. Renamed on 2026-10-10, and a new job is written to descriptive/ rather than graphs/. Use the new name; a job already written under the old one is still found by open_job() and upgrade_job().
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
-try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
-#> Error : add_job(): '/tmp/RtmpfUUJQk/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
+try(add_job(prefix = "ac", subject = "death", type = "hz", root = d))
+#> Error : add_job(): '/tmp/RtmpKS48zD/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #> [1] "10_descriptive/dc.gfup.reop.hz.qmd" "20_distributions/ac.death.hz.qmd"  

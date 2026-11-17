@@ -12,26 +12,40 @@ drawn over exactly the same patients.
 ``` r
 life_table(
   data,
+  time_col,
+  event_col,
+  strata_col = NULL,
+  conf_level = 0.68268948,
+  event_only = TRUE,
   time,
   event,
-  strata = NULL,
-  conf_level = 0.68268948,
-  event_only = TRUE
+  strata
 )
 
 life_table_at(
   data,
-  time,
-  event,
+  time_col,
+  event_col,
   times,
   labels = NULL,
-  strata = NULL,
-  conf_level = 0.68268948
+  strata_col = NULL,
+  conf_level = 0.68268948,
+  time,
+  event,
+  strata
 )
 
-life_table_tests(data, time, event, strata)
+life_table_tests(data, time_col, event_col, strata_col, time, event, strata)
 
-life_table_keep(data, time, event, strata = NULL)
+life_table_keep(
+  data,
+  time_col,
+  event_col,
+  strata_col = NULL,
+  time,
+  event,
+  strata
+)
 ```
 
 ## Arguments
@@ -40,15 +54,15 @@ life_table_keep(data, time, event, strata = NULL)
 
   A data frame, one row per patient.
 
-- time:
+- time_col:
 
   Name of the follow-up time column.
 
-- event:
+- event_col:
 
   Name of the event column, 0/1 or logical.
 
-- strata:
+- strata_col:
 
   Name of one stratification column, or `NULL` for the whole cohort.
 
@@ -61,9 +75,15 @@ life_table_keep(data, time, event, strata = NULL)
   `TRUE` returns a row per event time only (SAS `PEVENT=1`); `FALSE`
   adds a row per censoring time (`PEVENT=0`).
 
+- time, event, strata:
+
+  Deprecated: the old names of `time_col`, `event_col` and `strata_col`.
+  They work, with a warning, for one more release; giving an old name
+  with its new one is an error.
+
 - times:
 
-  Reporting horizons, in the unit of `time`.
+  Reporting horizons, in the unit of `time_col`.
 
 - labels:
 
@@ -75,13 +95,14 @@ life_table_keep(data, time, event, strata = NULL)
 [`TemporalHazard::hzr_kaplan()`](https://ehrlinger.github.io/TemporalHazard/reference/hzr_kaplan.html)
 (`time`, `n_risk`, `n_event`, `n_censor`, `survival`, `std_err`,
 `cl_lower`, `cl_upper`, `cumhaz`, `hazard`, `density`, `life`), led by
-`stratum` when `strata` is given. Its attribute `"counts"` has a row per
-stratum with `n`, `n_events`, `n_censored` and `max_fup`, the last
+`stratum` when `strata_col` is given. Its attribute `"counts"` has a row
+per stratum with `n`, `n_events`, `n_censored` and `max_fup`, the last
 observed time; `"dropped"` is described under Details, or `NULL`.
 
 `life_table_at()`: a data frame with a row per stratum and horizon:
-`stratum` when `strata` is given, then `horizon`, `time`, `survival`,
-`cl_lower`, `cl_upper` and `n_risk`, with the `"dropped"` attribute.
+`stratum` when `strata_col` is given, then `horizon`, `time`,
+`survival`, `cl_lower`, `cl_upper` and `n_risk`, with the `"dropped"`
+attribute.
 
 `life_table_tests()`: a data frame with a row per test: `test`, `chisq`,
 `df` and `p_value`, with the `"dropped"` attribute. A stratum with
@@ -132,6 +153,7 @@ if (requireNamespace("TemporalHazard", quietly = TRUE)) {
   life_table_at(d, "years", "dead", times = c(1, 2, 5), strata = "group")
   life_table_tests(d, "years", "dead", "group")
 }
+#> Warning: life_table_at(): `strata` is renamed `strata_col`. The old name works for one more release, then stops; this warning is shown once per session.
 #>        test      chisq df   p_value
 #> 1  Log-rank 0.31656099  1 0.5736817
 #> 2  Wilcoxon 0.02173913  1 0.8827832

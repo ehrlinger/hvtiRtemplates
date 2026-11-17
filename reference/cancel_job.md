@@ -15,7 +15,7 @@ cancel_job(
   path,
   grace = 30,
   other_host = c("refuse", "abandon"),
-  quiet = FALSE,
+  quiet = isTRUE(getOption("hvti.quiet")),
   output_file = NULL
 )
 ```
@@ -41,7 +41,8 @@ cancel_job(
 
   Logical(1). `FALSE` prints the job's state afterwards, as
   [`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
-  does.
+  does. Defaults to the family option `hvti.quiet`; an explicit value
+  wins.
 
 - output_file:
 

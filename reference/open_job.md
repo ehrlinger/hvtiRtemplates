@@ -1,6 +1,6 @@
 # Open a job, creating it from its template if needed
 
-Finds the study root from `dir`, creates the job with
+Finds the study root from `root`, creates the job with
 [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 when it does not exist, and opens it in the editor. An existing job is
 opened as it stands, never overwritten.
@@ -8,7 +8,7 @@ opened as it stands, never overwritten.
 ## Usage
 
 ``` r
-open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
+open_job(prefix, subject, type, root = NULL, qualifier = NULL, dir)
 ```
 
 ## Arguments
@@ -36,7 +36,7 @@ open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   like `subject`, and shared the same way. Must match `^[A-Za-z0-9_]+$`,
   for the same reason as `subject`.
 
-- dir:
+- root:
 
   Character. Any directory inside the study. `NULL`, the default, starts
   from the working directory, and is an error outside a study.
@@ -48,13 +48,18 @@ open_job(prefix, subject, type, dir = NULL, qualifier = NULL)
   error naming the choices, never a silent pick. Restricted to
   `[A-Za-z0-9_]+`, because `.` separates the filename's fields.
 
+- dir:
+
+  Deprecated: the old name of `root`. It works, with a warning, for one
+  more release; giving both is an error.
+
 ## Value
 
 The path to the job file, invisibly.
 
 ## Details
 
-The study root is the nearest directory at or above `dir` holding
+The study root is the nearest directory at or above `root` holding
 `_study.yml`, so this can be called from anywhere inside a study.
 Naming, prefix and qualifier rules are those of
 [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md).
@@ -77,15 +82,15 @@ root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L, renv = FALSE
 ))
-#> Study: /tmp/RtmpfUUJQk/open-job-example
+#> Study: /tmp/RtmpKS48zD/open-job-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpfUUJQk/open-job-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpKS48zD/open-job-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
 #> 
 #> 0 .R  |  0 .qmd/.Rmd  |  0 .sas  |  0 provenance sidecars
-open_job(prefix = "ac", subject = "death", type = "eda", dir = root)
+open_job(prefix = "ac", subject = "death", type = "eda", root = root)
 unlink(root, recursive = TRUE)
 ```

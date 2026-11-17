@@ -9,21 +9,26 @@ job.
 
 ``` r
 migrate_job(
-  source,
+  path,
   subject,
   type,
   prefix = NULL,
   qualifier = NULL,
-  lst = NULL,
-  log = NULL,
-  reference = NULL,
-  dir = NULL
+  lst_path = NULL,
+  log_path = NULL,
+  reference_path = NULL,
+  root = NULL,
+  source,
+  lst,
+  log,
+  reference,
+  dir
 )
 ```
 
 ## Arguments
 
-- source:
+- path:
 
   Path to one legacy source job, relative to the working directory or
   absolute.
@@ -53,28 +58,32 @@ migrate_job(
   filename and this qualifier is used. Filename fields must match
   `[A-Za-z0-9_]+`.
 
-- lst:
+- lst_path:
 
   Optional path to a SAS listing, relative to the working directory or
-  absolute. Defaults to the same-named file beside `source` when
-  present.
+  absolute. Defaults to the same-named file beside `path` when present.
 
-- log:
+- log_path:
 
   Optional path to a SAS log, relative to the working directory or
-  absolute. Defaults to the same-named file beside `source` when
-  present.
+  absolute. Defaults to the same-named file beside `path` when present.
 
-- reference:
+- reference_path:
 
   Optional vector of paths to output references, such as RTF or DOCX
   files, relative to the working directory or absolute. They record
   comparison targets, not analysis choices.
 
-- dir:
+- root:
 
   Any directory in the study, used only to locate the study root.
-  Defaults to the directory of `source`.
+  Defaults to the directory of `path`.
+
+- source, lst, log, reference, dir:
+
+  Deprecated: the old names of `path`, `lst_path`, `log_path`,
+  `reference_path` and `root`. They work, with a warning, for one more
+  release; giving an old name with its new one is an error.
 
 ## Value
 
@@ -97,12 +106,12 @@ converter yet still migrates: it is scaffolded with every `EDIT:` marker
 kept, the evidence travels with it, and the report says the migration
 adapter is not yet available.
 
-Relative `source`, `lst`, `log` and `reference` paths resolve against
-the working directory, as in any R function; `dir` only locates the
-study root. Each file must exist, be readable and lie beneath that root,
-and symbolic links are checked after resolution. The evidence files are
-never modified. The report records whether the listing and log were
-supplied, found beside the source, or not found.
+Relative `path`, `lst_path`, `log_path` and `reference_path` paths
+resolve against the working directory, as in any R function; `root` only
+locates the study root. Each file must exist, be readable and lie
+beneath that root, and symbolic links are checked after resolution. The
+evidence files are never modified. The report records whether the
+listing and log were supplied, found beside the source, or not found.
 
 The job uses the filename and study folder selected by
 [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md).

@@ -11,7 +11,7 @@ accepted result should.
 render_job(
   path,
   final = FALSE,
-  quiet = FALSE,
+  quiet = isTRUE(getOption("hvti.quiet")),
   params = NULL,
   output_file = NULL
 )
@@ -34,6 +34,9 @@ render_job(
 
   Logical. Passed to
   [`quarto::quarto_render()`](https://quarto-dev.github.io/quarto-r/reference/quarto_render.html).
+  Defaults to the family option `hvti.quiet`, so
+  `options(hvti.quiet = TRUE)` quiets every render; an explicit value
+  wins.
 
 - params:
 
@@ -141,7 +144,7 @@ if (requireNamespace("quarto", quietly = TRUE) && quarto::quarto_available()) {
   utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                    row.names = FALSE)
   invisible(hvtiRutilities::register_data(root, "built.csv"))
-  job <- add_job("dc.gfup", subject = "dead", type = "hz", dir = root)
+  job <- add_job("dc.gfup", subject = "dead", type = "hz", root = root)
 
   # A draft: the new job still holds EDIT: markers, so the report carries a
   # DRAFT banner listing them, and renders all the same.
