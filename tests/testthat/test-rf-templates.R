@@ -8,6 +8,22 @@ rfs_choices <- list(TIME = "time", EVENT = "status",
                     PREDICTORS = c("trt", "celltype", "karno", "diagtime", "age", "prior"),
                     NTREE = 50, SEED = 1)
 
+# What the learning-curve table, captions and reading note say must match what ran. Gaps filled from the whole
+# cohort make every fraction optimistic, and without the bootstrap the rightmost point is a subsample, not the whole
+# cohort. A saved report or an exported figure keeps only these, not the console messages.
+expect_learning_presentation <- function(env, filled, boot) {
+  caps <- unlist(env$.learning_caps)
+  testthat::expect_identical(env$.learning_filled, filled)
+  testthat::expect_identical(env$.learning_boot, boot)
+  testthat::expect_identical(names(caps), c("tbl", "stability", "error"))
+  testthat::expect_equal(grepl("Missing values were filled in once", caps, fixed = TRUE), rep(filled, 3))
+  testthat::expect_equal(grepl("imputed", env$.lt_caution, fixed = TRUE), rep(filled, length(env$.lt_caution)))
+  testthat::expect_equal(grepl("drawn as a square", caps, fixed = TRUE), c(FALSE, boot, boot))
+  testthat::expect_identical(grepl("Fraction 1 is a bootstrap", caps[["tbl"]], fixed = TRUE), boot)
+  testthat::expect_equal(grepl("bootstrap was left out", caps, fixed = TRUE), rep(!boot, 3))
+  testthat::expect_identical(env$.learning_note == "", !filled && boot)
+}
+
 test_that("rfs-fit grows a survival forest and saves the handoff", {
   rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
   env <- rf_env(rfs_data())
@@ -61,6 +77,7 @@ test_that("rfs-fit draws the learning curve from cached subsamples", {
   # A changed call is a refit, and that is still refused outside run_job().
   env$LEARNING_B <- 2
   expect_error(rf_run("rfs", "fit", "learning", env), "run_job(", fixed = TRUE)
+  expect_learning_presentation(env, filled = FALSE, boot = TRUE)   # veteran is complete
 })
 
 test_that("rfs-fit's top-k agreement leaves a predictor out, so it can see a ranking move", {
@@ -592,7 +609,7 @@ test_that("rfc-fit draws the learning curve against the smallest class", {
   expect_equal(st$events, c(12L, 25L, 50L))
   expect_equal(st$counts, c("exact", "exact", "expected"))
   expect_equal(grepl("(expected)", env$.lt_count, fixed = TRUE), c(FALSE, FALSE, TRUE))
-  expect_true(env$.learning_boot)   # na.omit: nothing imputed, so the bootstrap runs
+  expect_learning_presentation(env, filled = FALSE, boot = TRUE)   # na.omit: nothing imputed, so the bootstrap runs
   expect_identical(attr(env$learning, "provenance")$family, "class")
   # Four predictors: the top set leaves one out.
   expect_identical(attr(env$learning, "provenance")$top_k, 3L)
@@ -741,7 +758,7 @@ test_that("rfr-fit grows a regression forest, imputing missing predictors", {
   for (p in list(env$err, env$pred)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
 })
 
-test_that("rfr-fit draws the learning curve against patients, imputing missing predictors", {
+test_that("rfr-fit draws the learning curve against patients, filling missing predictors first", {
   rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
   env <- rf_env(rfr_data())
   choices <- utils::modifyList(rfr_choices, list(LEARNING_FRACTIONS = c(0.25, 0.5), LEARNING_B = 3, LEARNING_NTREE = 25))
@@ -752,18 +769,74 @@ test_that("rfr-fit draws the learning curve against patients, imputing missing p
   expect_true(file.exists(file.path(env$CACHE_DIR, "rfr-learning.rds")))
   st <- attr(env$learning, "stability")
   n <- nrow(rfr_data())   # na.impute keeps every patient
-  # randomForestSRC crashes R double-bootstrapping a forest that imputed missing values, so the curve stops at the
-  # largest fraction; airquality's solar.r has missing values.
-  expect_false(env$.learning_boot)
-  expect_equal(st$fraction, c(0.25, 0.5))
-  expect_equal(st$events, c(as.integer(n * 0.25), as.integer(n * 0.5)))
+  # randomForestSRC crashes R double-bootstrapping a forest that imputed missing values; airquality's solar.r has
+  # missing values. The template fills them once from the main forest, so the learning forests impute nothing and
+  # the whole-cohort bootstrap runs.
+  imp <- env$forest$imputed.indv
+  expect_true(length(imp) > 0)
+  expect_false(anyNA(env$.d_learn))
+  expect_equal(env$.d_learn[imp, names(env$forest$imputed.data)], env$forest$imputed.data, ignore_attr = TRUE)
+  expect_equal(env$.d_learn[-imp, ], env$d[-imp, ], ignore_attr = TRUE)   # only the rows with a gap change
+  expect_learning_presentation(env, filled = TRUE, boot = TRUE)
+  expect_equal(st$fraction, c(0.25, 0.5, 1))
+  expect_equal(st$events, c(as.integer(n * 0.25), as.integer(n * 0.5), n))
   expect_equal(st$n, st$events)
-  expect_equal(st$counts, c("exact", "exact"))
+  expect_equal(st$counts, c("exact", "exact", "expected"))
   expect_identical(attr(env$learning, "provenance")$family, "regr")
   expect_identical(attr(env$learning, "provenance")$top_k, 4L)
   expect_true(all(is.finite(env$learning$error)))
   for (panel in c("stability", "error")) {
     expect_s3_class(ggplot2::ggplot_build(plot(env$learning, panel = panel)), "ggplot_built")
+  }
+})
+
+test_that("rfr-fit leaves the bootstrap out, and says so, when the imputed values cannot be copied", {
+  rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
+  env <- rf_env(rfr_data())
+  choices <- utils::modifyList(rfr_choices, list(LEARNING_FRACTIONS = 0.5, LEARNING_B = 2, LEARNING_NTREE = 15))
+  rf_run("rfr", "fit", c("set", "edit-study-choices", "tbl-data", "fit"), env, choices)
+  # A forest that dropped rows: its imputed rows no longer index the data, so nothing is copied.
+  env$forest$xvar <- env$forest$xvar[-1, ]
+  env$REFIT <- TRUE
+  rf_run("rfr", "fit", c("learning", "tbl-learning", "fig-learning-stability", "fig-learning-error"), env)
+
+  expect_identical(env$.d_learn, env$d)
+  expect_learning_presentation(env, filled = FALSE, boot = FALSE)
+  expect_equal(attr(env$learning, "stability")$fraction, 0.5)
+})
+
+test_that("rfs-fit and rfc-fit fill missing predictors before the learning curve, and say so", {
+  for (fam in c("rfs", "rfc")) {
+    rf_skip_unless_stack(rf_template_packages(fam, "fit"))
+    set.seed(1)
+    if (fam == "rfs") {
+      d <- rfs_data()
+      d$karno[c(3, 9, 20)] <- NA
+      choices <- rfs_choices
+    } else {
+      d <- rfc_data()
+      d$Sepal.Width[c(4, 6, 60)] <- NA
+      choices <- rfc_choices
+    }
+    choices <- utils::modifyList(choices, list(NA_ACTION = "na.impute", LEARNING_FRACTIONS = 0.5, LEARNING_B = 2,
+                                               LEARNING_NTREE = 15))
+    env <- rf_env(d)
+    rf_run(fam, "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning",
+                         "fig-learning-stability", "fig-learning-error"), env, choices)
+    expect_false(anyNA(env$.d_learn), info = fam)
+    expect_learning_presentation(env, filled = TRUE, boot = TRUE)
+    expect_equal(attr(env$learning, "stability")$fraction, c(0.5, 1), info = fam)
+  }
+})
+
+test_that("each rf fit's reading text carries the run's learning-curve note", {
+  for (fam in c("rfs", "rfc", "rfr")) {
+    src <- readLines(template_path(fam, "fit"), warn = FALSE)
+    expect_true(any(grepl("`r .learning_note`", src, fixed = TRUE)), info = fam)
+    for (cap in c("tbl-cap: !expr .learning_caps$tbl", "fig-cap: !expr .learning_caps$stability",
+                  "fig-cap: !expr .learning_caps$error")) {
+      expect_true(paste("#|", cap) %in% src, info = paste(fam, cap))
+    }
   }
 })
 
