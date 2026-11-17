@@ -28,9 +28,9 @@ A data frame, of class `hvti_template_list`, with columns `name`,
 `prefix`, `qualifier`, `folder`, `title`, `description`, `call` and
 `file`. `title` and `description` say what the template is for, from the
 template catalog
-([`template_catalog`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md)),
+([`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md)),
 and are `NA` for a template it does not list. `call` is the
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 call that scaffolds the template, with only the arguments it requires
 and runnable as printed, e.g.
 `add_job("dc.gfup", subject = "cohort", type = "eda")`. The `subject`
@@ -56,7 +56,7 @@ accepted as input. The directory's leading digits order the folders and
 are stripped from `folder`. The placement test requires the job catalog
 and skips when it is absent. Its internal lookup helper uses the
 catalog's `(prefix, qualifier)` row, falling back to
-[`hvti_taxonomy`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
+[`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html)
 when the catalog or matching row is absent. A separate test checks that
 every template directory names a taxonomy folder, including when the
 catalog is absent.

@@ -110,7 +110,7 @@
 <li>
 <strong>Templates carry their own <code>format:</code> block</strong> rather than inheriting from a project <code>_quarto.yml</code>. A file meant to be copied must not depend on the directory it happens to sit in — that is how server-rendered reports ended up with sibling <code>_files/</code> trees instead of being self-contained.</li>
 <li>
-<strong>Roxygen here is Rd markup, not markdown.</strong> <code>DESCRIPTION</code> has no <code>Roxygen: list(markdown = TRUE)</code>, so backticks and <code>**bold**</code> land literally in the <code>.Rd</code>. Use <code>\code{}</code>, <code>\strong{}</code>, <code>\emph{}</code>, <code>\itemize{}</code> and <code>\link{}</code>.</li>
+<strong>Roxygen here is markdown</strong>, since the tier 4 rubric pass (2026-11-16). <code>DESCRIPTION</code> sets <code>Roxygen: list(markdown = TRUE)</code>, as the rest of the hvtiR family does: write backticks, <code>**bold**</code>, <code>*emphasis*</code>, <code>[fn()]</code> links and markdown lists in new text. Rd macros still work inside markdown: <code>\eqn{}</code>, and the <code>\itemize{}</code> lists the conversion left in place, which need not be rewritten. ⚠️ <strong>Write <code>%</code> bare, never <code>\%</code>.</strong> Roxygen escapes it itself, so <code>\%</code> reaches the <code>.Rd</code> as <code>\\%</code>, a literal backslash followed by an Rd comment that silently cuts the rest of the line from the help page. Plans and specs under <code>dev/</code> written before the switch say Rd markup; they describe the code as it was.</li>
 <li>
 <strong><code>testthat</code> edition 3.</strong> There are snapshot tests under <code>tests/testthat/_snaps</code>; review a snapshot diff rather than accepting it reflexively.</li>
 <li>

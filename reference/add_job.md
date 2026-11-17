@@ -17,7 +17,7 @@ add_job(prefix, subject, type, root = NULL, qualifier = NULL, dir)
 - prefix:
 
   Job type: one of the prefixes reported by
-  [`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
+  [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
   or a template's full name as reported in its `name` column, e.g.
   `"dc.trends"`; the dash spelling `"dc-trends"` is accepted too. A full
   name carries the qualifier, so `qualifier` must then be left `NULL`.
@@ -95,7 +95,7 @@ The last of these is the one that bites. `hm` reads the `hz.rds` that
 type. Give every job of one analysis the same pair, e.g.
 `subject = "death", type = "hz"` for `ac`, `hz`, `hm` and `hp`, and give
 a different analysis a different pair. The `call` column of
-[`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+[`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
 shows each template's own example values, which are a starting point,
 not a requirement.
 
@@ -129,12 +129,12 @@ to work.
 `<subject>-<type>-<prefix>[-<qualifier>].qmd` until 2026-10. They keep
 that name and keep rendering; `add_job()` refuses to write a second copy
 of such a job under the new name, and
-[`open_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+[`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
 opens it.
 
 A template the catalog marks deprecated still scaffolds, with a warning
 naming its replacement; see
-[`template_catalog`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md).
+[`template_catalog()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_catalog.md).
 
 **Renamed templates.** `dp.eda` and `dp.trends` were renamed `dc.eda`
 and `dc.trends` on 2026-10-10. The old names scaffolded the renamed
@@ -143,13 +143,13 @@ error naming the new name. A `dc.trends` job is written to the
 `descriptive` folder, where a `dp.trends` job was written to `graphs`. A
 job scaffolded under the old name keeps it and keeps rendering;
 `add_job()` refuses to write a second copy of it under the new name, and
-[`open_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+[`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
 opens it.
 
 ## See also
 
-[`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
-[`template_path`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
+[`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
+[`template_path()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_path.md)
 
 ## Examples
 
@@ -171,7 +171,7 @@ try(add_job("dp.trends", subject = "cohort", type = "eda", root = d))
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
 try(add_job(prefix = "ac", subject = "death", type = "hz", root = d))
-#> Error : add_job(): '/tmp/RtmpKS48zD/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
+#> Error : add_job(): '/tmp/RtmpiY2cPV/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #> [1] "10_descriptive/dc.gfup.reop.hz.qmd" "20_distributions/ac.death.hz.qmd"  

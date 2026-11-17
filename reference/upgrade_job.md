@@ -4,7 +4,7 @@ Upgrades **one job**: the file you name in `path`. It does not look for
 other jobs, so to upgrade several, call it once for each.
 
 A job is a copy of its template as it stood on the day
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 wrote it. `upgrade_job()` writes the job again from the template as it
 stands now and carries the study's choices across, so a job keeps up
 with its template without re-entering every choice by hand.
@@ -42,7 +42,7 @@ folder beside it.
 ## Details
 
 The template is read from the job's file name, in either spelling
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 has used. A study's choices are the top-level assignments to an
 upper-case name, such as `DATASET <- "built"`, in the job's `edit-*`
 chunks. Each choice the current template also has replaces the
@@ -80,7 +80,7 @@ is missing. Quarto renders nothing in a folder whose name starts with
 rendered by hand too, which would write its figures over the current
 job's. The old job keeps its own name before the stamp; the report takes
 the upgraded job's. The upgraded job takes the name
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 would give it today, so a job named before 2026-10 moves to the
 `.`-separated spelling. The report records the template, the package
 version, the old job's checksum, and the choices carried, not placed and
@@ -130,8 +130,8 @@ modification time. A copy renamed by hand, such as
 
 ## See also
 
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
-[`migrate_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
+[`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
 
 ## Examples
 

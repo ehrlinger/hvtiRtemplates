@@ -78,14 +78,14 @@ inside a chunk.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Outside a render, <code>NULL</code>, invisibly. Inside one, the job's
-  provenance block, for the chunk to print as the last output of the report.</p>
+provenance block, for the chunk to print as the last output of the report.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Both are allowed in a draft and refused in a final render, by the same rule
 as an unresolved <code>EDIT:</code> marker. A draft lists each one, with its line
 and reason, in a callout at the top of the report, so a partial report
-cannot pass for a whole one. <code><a href="render_job.html">render_job</a></code> with
+cannot pass for a whole one. <code><a href="render_job.html">render_job()</a></code> with
 <code>final = TRUE</code>, or any render with <code>HVTI_TEMPLATE_STRICT</code> set,
 stops while any remains. Both are found by reading the job's source, so they
 show in a diff and in review, as commented-out code does not. A
@@ -109,7 +109,7 @@ line at the end of a chunk, so the chunk shows what it returns.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="render_job.html">render_job</a></code></p></div>
+    <div class="dont-index"><p><code><a href="render_job.html">render_job()</a></code></p></div>
     </div>
 
     <div class="section level2">

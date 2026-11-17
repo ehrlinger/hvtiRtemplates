@@ -4,14 +4,14 @@ A template calls this just before an expensive `cache_fit()`, once
 [`hvtiRutilities::cache_would_fit()`](https://ehrlinger.github.io/hvtiRutilities/reference/cache_would_fit.html)
 has said the fit will be computed rather than loaded. With no cached
 result it stops and says to run the job with
-[`run_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md),
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md),
 because a fit that runs for hours dies with the Workbench session that
 started it: the console, a chunk run by hand, the Render button, and a
 `quarto render` typed in the Terminal tab, which is a child of the
 session too, `nohup` or not. Only a render started by
-[`run_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+[`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
 or
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
 passes, with a cached result or an explicit opt-in. Once the fit is
 cached, the Render button works again and re-renders the job from the
 cache.

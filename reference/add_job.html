@@ -68,7 +68,7 @@ would discard them.</p>
 
 <dl><dt id="arg-prefix">prefix<a class="anchor" aria-label="anchor" href="#arg-prefix"></a></dt>
 <dd><p>Job type: one of the prefixes reported by
-<code><a href="template_list.html">template_list</a></code>, or a template's full name as reported in
+<code><a href="template_list.html">template_list()</a></code>, or a template's full name as reported in
 its <code>name</code> column, e.g. <code>"dc.trends"</code>; the dash spelling
 <code>"dc-trends"</code> is accepted too. A full name carries the qualifier, so
 <code>qualifier</code> must then be left <code>NULL</code>.</p></dd>
@@ -113,9 +113,9 @@ for one more release; giving both is an error.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>The job's path, invisibly. On any failure – including one after
-  the copy, while substituting the set markers – no file is left behind,
-  the runner included, so a returned path always names a complete,
-  correctly-declared job.</p>
+the copy, while substituting the set markers – no file is left behind,
+the runner included, so a returned path always names a complete,
+correctly-declared job.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -129,20 +129,20 @@ list of valid values for either, only the rule that each matches
 <code>^[A-Za-z0-9_]+$</code>. They are more than a filename, though. Together
 they name the job's set, and the set is used in four places:</p><ul><li><p>the job's filename, <code>&lt;prefix&gt;[.&lt;qualifier&gt;].&lt;subject&gt;.&lt;type&gt;.qmd</code>;</p></li>
 <li><p>the job's own <code>SUBJECT</code> and <code>TYPE</code> lines, which
-    <code>add_job()</code> rewrites to your values;</p></li>
+<code>add_job()</code> rewrites to your values;</p></li>
 <li><p>the render, which stops when the filename and those two lines
-    disagree, so a job renamed by hand cannot quietly write its results
-    into another set;</p></li>
+disagree, so a job renamed by hand cannot quietly write its results
+into another set;</p></li>
 <li><p>the folder the job saves its results in, a <code>&lt;subject&gt;-&lt;type&gt;</code>
-    folder under the study's <code>estimates</code> (and, for some templates,
-    <code>graphs</code>), which is where the next job in the chain looks for
-    them.</p></li>
+folder under the study's <code>estimates</code> (and, for some templates,
+<code>graphs</code>), which is where the next job in the chain looks for
+them.</p></li>
 </ul><p>The last of these is the one that bites. <code>hm</code> reads the
 <code>hz.rds</code> that <code>hz</code> saved, and finds it only when both jobs
 carry the same subject and type. Give every job of one analysis the same
 pair, e.g. <code>subject = "death", type = "hz"</code> for <code>ac</code>, <code>hz</code>,
 <code>hm</code> and <code>hp</code>, and give a different analysis a different pair.
-The <code>call</code> column of <code><a href="template_list.html">template_list</a></code> shows each template's
+The <code>call</code> column of <code><a href="template_list.html">template_list()</a></code> shows each template's
 own example values, which are a starting point, not a requirement.</p>
 <p>A job is identified by three or four fields. One or two come from the
 template, its <code>prefix</code> and, where the prefix carries several job types,
@@ -171,9 +171,9 @@ work.</p>
 <p><strong>Names before 2026-10.</strong> Jobs were named
 <code>&lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> until 2026-10. They keep
 that name and keep rendering; <code>add_job()</code> refuses to write a second
-copy of such a job under the new name, and <code><a href="open_job.html">open_job</a></code> opens it.</p>
+copy of such a job under the new name, and <code><a href="open_job.html">open_job()</a></code> opens it.</p>
 <p>A template the catalog marks deprecated still scaffolds, with a warning
-naming its replacement; see <code><a href="template_catalog.html">template_catalog</a></code>.</p>
+naming its replacement; see <code><a href="template_catalog.html">template_catalog()</a></code>.</p>
 <p><strong>Renamed templates.</strong> <code>dp.eda</code> and <code>dp.trends</code> were renamed
 <code>dc.eda</code> and <code>dc.trends</code> on 2026-10-10. The old names scaffolded
 the renamed template, with a warning, for the releases that followed, and
@@ -181,11 +181,11 @@ are now an error naming the new name. A <code>dc.trends</code> job
 is written to the <code>descriptive</code> folder, where a <code>dp.trends</code> job
 was written to <code>graphs</code>. A job scaffolded under the old name keeps it
 and keeps rendering; <code>add_job()</code> refuses to write a second copy of it
-under the new name, and <code><a href="open_job.html">open_job</a></code> opens it.</p>
+under the new name, and <code><a href="open_job.html">open_job()</a></code> opens it.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="template_list.html">template_list</a></code>, <code><a href="template_path.html">template_path</a></code></p></div>
+    <div class="dont-index"><p><code><a href="template_list.html">template_list()</a></code>, <code><a href="template_path.html">template_path()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -207,7 +207,7 @@ under the new name, and <code><a href="open_job.html">open_job</a></code> opens 
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A job accumulates a study's edits, so an existing one is never overwritten.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">add_job</span><span class="op">(</span>prefix <span class="op">=</span> <span class="st">"ac"</span>, subject <span class="op">=</span> <span class="st">"death"</span>, type <span class="op">=</span> <span class="st">"hz"</span>, root <span class="op">=</span> <span class="va">d</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/RtmpKS48zD/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : add_job(): '/tmp/RtmpiY2cPV/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span>, pattern <span class="op">=</span> <span class="st">"[.]qmd$"</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "10_descriptive/dc.gfup.reop.hz.qmd" "20_distributions/ac.death.hz.qmd"  </span>

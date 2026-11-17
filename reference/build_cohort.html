@@ -121,16 +121,16 @@ more release; giving an old name with its new one is an error.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list:</p><ul><li><p><code>data</code>, the kept rows, with the master's columns;</p></li>
 <li><p><code>attrition</code>, a data frame with one row per step and the
-      columns <code>step</code>, <code>reason</code>, <code>rows_before</code>,
-      <code>removed</code>, <code>missing_condition</code>, <code>rows_after</code> and
-      <code>patients_after</code>.</p></li>
+columns <code>step</code>, <code>reason</code>, <code>rows_before</code>,
+<code>removed</code>, <code>missing_condition</code>, <code>rows_after</code> and
+<code>patients_after</code>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Identifiers are compared as text, so <code>100000</code> in the master
-  matches <code>"100000"</code> in a list. No message names a data value: list rows
-  that matched no master row are counted, never listed, and a rule that fails
-  is named by its number and reason.</p>
+matches <code>"100000"</code> in a list. No message names a data value: list rows
+that matched no master row are counted, never listed, and a rule that fails
+is named by its number and reason.</p>
     </div>
 
     <div class="section level2">

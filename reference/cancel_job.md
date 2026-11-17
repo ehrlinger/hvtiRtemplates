@@ -1,11 +1,11 @@
 # Stop a background job
 
 Stops a job
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
 started, and records the end the killed process could not:
 `<job>.run.yml` then reads `cancelled`, and `<job>.run.progress` is
 removed, so
-[`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+[`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
 stops reporting the run and the job can be submitted again.
 
 ## Usage
@@ -40,28 +40,28 @@ cancel_job(
 - quiet:
 
   Logical(1). `FALSE` prints the job's state afterwards, as
-  [`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+  [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
   does. Defaults to the family option `hvti.quiet`; an explicit value
   wins.
 
 - output_file:
 
   Character(1) or `NULL`. The output file name a run was given with
-  [`run_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)'s
+  [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)'s
   `output_file`; its run files are kept under that name. `NULL` cancels
   the job's own run.
 
 ## Value
 
 Invisibly, the job's status afterwards, as
-[`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+[`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
 returns it.
 
 ## Details
 
 The render and every process it started are sent `SIGTERM`, given
 `grace` seconds to exit, then sent `SIGKILL`. They are found by a marker
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
 puts in the render's environment, which reaches processes Quarto starts
 in sessions of their own, and by descent from the recorded process,
 which is signalled only while it is still the one the status file
@@ -71,7 +71,7 @@ process is left alone, and an identity in doubt is refused. The job is
 scanned afresh until no process of it remains, so one started while it
 shuts down is stopped too. A run recorded without a creation time, such
 as a render started without
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
 is refused rather than signalled by its pid alone.
 
 A process can only be checked and signalled on the host it runs on, so a
@@ -85,7 +85,7 @@ process is already gone without recording its end is recorded `failed`,
 with that as its reason, once any of its render still running has been
 stopped. A job that has finished, failed or never run is left as it is.
 A submit or cancel in progress holds `<job>.run.lock`, as
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
 describes, and a cancel is refused while it is held. Not available on
 Windows.
 

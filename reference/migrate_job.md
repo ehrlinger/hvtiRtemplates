@@ -114,7 +114,7 @@ evidence files are never modified. The report records whether the
 listing and log were supplied, found beside the source, or not found.
 
 The job uses the filename and study folder selected by
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md).
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md).
 Its report replaces the `.qmd` extension with `-migration.md` and
 records study-relative evidence paths, SHA-256 checksums, the package
 version, translated choices, unresolved choices, and ignored material.
@@ -143,8 +143,8 @@ call placed are removed, along with its temporary files.
 
 ## See also
 
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
-[`template_list`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
+[`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md)
 
 ## Examples
 

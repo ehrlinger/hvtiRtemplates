@@ -4,7 +4,7 @@ Reads one field of a value a finished job saved for its report, so a
 number in the Results text comes from the fit and goes stale with it,
 rather than being retyped. The source run must be final and its file
 unchanged, as for
-[`ar_item`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_item.md).
+[`ar_item()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_item.md).
 
 ## Usage
 

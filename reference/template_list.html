@@ -71,25 +71,25 @@ the intended starting point for a new analysis job.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame, of class <code>hvti_template_list</code>, with columns
-  <code>name</code>, <code>prefix</code>,
-  <code>qualifier</code>, <code>folder</code>, <code>title</code>, <code>description</code>,
-  <code>call</code> and <code>file</code>. <code>title</code> and <code>description</code> say
-  what the template is for, from the template catalog
-  (<code><a href="template_catalog.html">template_catalog</a></code>), and are <code>NA</code> for a template it
-  does not list.
-  <code>call</code> is the <code><a href="add_job.html">add_job</a></code> call that scaffolds the
-  template, with only the arguments it requires and runnable as printed,
-  e.g. <code>add_job("dc.gfup", subject = "cohort", type = "eda")</code>. The
-  <code>subject</code> and <code>type</code> shown are the template's own defaults;
-  change them to name the job. <code>folder</code> is the
-  taxonomy name with the directory's ordering digits stripped, so
-  <code>20_distributions</code> reports as <code>distributions</code>.
-  <code>qualifier</code> is <code>NA</code> for a prefix carrying a single template.
-  Printed whole, it shows only <code>name</code>, <code>folder</code> and
-  <code>title</code>, the title cut to fit the console's width, since the other
-  columns would wrap every row. In a console too narrow for the three,
-  <code>folder</code> is left out, then <code>title</code>. The other columns are still
-  in the data, and a selection of columns prints as selected.</p>
+<code>name</code>, <code>prefix</code>,
+<code>qualifier</code>, <code>folder</code>, <code>title</code>, <code>description</code>,
+<code>call</code> and <code>file</code>. <code>title</code> and <code>description</code> say
+what the template is for, from the template catalog
+(<code><a href="template_catalog.html">template_catalog()</a></code>), and are <code>NA</code> for a template it
+does not list.
+<code>call</code> is the <code><a href="add_job.html">add_job()</a></code> call that scaffolds the
+template, with only the arguments it requires and runnable as printed,
+e.g. <code>add_job("dc.gfup", subject = "cohort", type = "eda")</code>. The
+<code>subject</code> and <code>type</code> shown are the template's own defaults;
+change them to name the job. <code>folder</code> is the
+taxonomy name with the directory's ordering digits stripped, so
+<code>20_distributions</code> reports as <code>distributions</code>.
+<code>qualifier</code> is <code>NA</code> for a prefix carrying a single template.
+Printed whole, it shows only <code>name</code>, <code>folder</code> and
+<code>title</code>, the title cut to fit the console's width, since the other
+columns would wrap every row. In a console too narrow for the three,
+<code>folder</code> is left out, then <code>title</code>. The other columns are still
+in the data, and a selection of columns prints as selected.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -104,7 +104,7 @@ leading digits order the folders and are stripped from
 <code>folder</code>. The placement test requires the job catalog and skips when
 it is absent. Its internal lookup helper uses the catalog's
 <code>(prefix, qualifier)</code> row, falling back to
-<code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy</a></code> when the catalog or matching row is absent.
+<code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy()</a></code> when the catalog or matching row is absent.
 A separate test checks that every template directory names a taxonomy
 folder, including when the catalog is absent.</p>
     </div>

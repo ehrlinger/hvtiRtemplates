@@ -11,10 +11,10 @@ listed with how to fix it, and nothing is started until all of them are
 cleared.
 
 Then it submits the job with
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
 and waits for the render's own checks, the R it runs on and, where the
 job calls
-[`guard_memory`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md),
+[`guard_memory()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md),
 the memory its fit needs. Those can only run inside the render. If one
 fails, the diagnosis is printed here rather than left in a log.
 
@@ -40,7 +40,7 @@ run_job(
 - final:
 
   Logical(1). Passed to
-  [`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md).
+  [`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md).
 
 - wait:
 
@@ -57,14 +57,14 @@ run_job(
 - params, output_file:
 
   Passed to
-  [`render_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
   through
-  [`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md).
+  [`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md).
 
 ## Value
 
 Invisibly, the job's status, as
-[`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+[`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
 returns it. A job refused by the checks is an error and returns nothing.
 
 ## Details
@@ -73,7 +73,7 @@ Use this rather than the Render button or a background job in RStudio
 for anything long. Those stay tied to your session, and when the session
 ends the render ends with it. A render started here is detached and
 carries on. Open a new session, call
-[`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+[`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
 with the same file, and it tells you where the job has got to. There is
 no R script to write.
 
@@ -83,29 +83,29 @@ to wait for. `run_job()` says so and names
 which adds them. The wait ends early when the render finishes, fails or
 is cancelled. If the checks have not all reported when `wait` runs out,
 the render carries on regardless; follow it with
-[`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md).
+[`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md).
 Stop it with
-[`cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md).
+[`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md).
 Not available on Windows, as for
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md).
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md).
 
 A job with Quarto `params` takes them here, as `quarto render -P` would,
 with `output_file` naming the report as `--output` would. A run given an
 `output_file` is its own run, with its own run files, so one job
 rendered for several parameter values keeps each report and each run
 apart; give
-[`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+[`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
 and
-[`cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md)
+[`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md)
 the same `output_file` to follow or stop it. The checks above apply to
 each run, and Quarto still renders one job at a time in a study.
 
 ## See also
 
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
-[`job_status`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md),
-[`cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md),
-[`guard_memory`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md)
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
+[`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md),
+[`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md),
+[`guard_memory()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md)
 
 ## Examples
 

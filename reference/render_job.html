@@ -120,7 +120,7 @@ non-empty <code>QUARTO_R</code> that is already set is left alone, and Quarto
 honors it with a Quarto CLI of 1.8.13 or later. With an older CLI the
 quarto package itself sets <code>QUARTO_R</code> to the calling R for every
 render, so a value set by the user does not reach Quarto there.</p>
-<p>Jobs scaffolded by <code><a href="add_job.html">add_job</a></code> capture their data provenance while
+<p>Jobs scaffolded by <code><a href="add_job.html">add_job()</a></code> capture their data provenance while
 executing and embed it in the completed HTML. The same project hooks used by
 the Render button and bare Quarto commands then publish a same-stem
 <code>.provenance.json</code> sidecar beside the actual output. A failed execution
@@ -164,7 +164,7 @@ renamed copy of the job meets the same one.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="open_job.html">open_job</a></code></p></div>
+    <div class="dont-index"><p><code><a href="open_job.html">open_job()</a></code></p></div>
     </div>
 
     <div class="section level2">

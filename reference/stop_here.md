@@ -31,7 +31,7 @@ Both are allowed in a draft and refused in a final render, by the same
 rule as an unresolved `EDIT:` marker. A draft lists each one, with its
 line and reason, in a callout at the top of the report, so a partial
 report cannot pass for a whole one.
-[`render_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+[`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
 with `final = TRUE`, or any render with `HVTI_TEMPLATE_STRICT` set,
 stops while any remains. Both are found by reading the job's source, so
 they show in a diff and in review, as commented-out code does not. A
@@ -58,7 +58,7 @@ its own line at the end of a chunk, so the chunk shows what it returns.
 
 ## See also
 
-[`render_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+[`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
 
 ## Examples
 

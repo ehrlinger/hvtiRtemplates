@@ -26,9 +26,9 @@ A `knit_asis` object holding the item's Markdown.
 
 ## See also
 
-[`ar_value`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_value.md),
-[`ar_paste_methods`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_paste_methods.md),
-[`ar_review`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_review.md)
+[`ar_value()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_value.md),
+[`ar_paste_methods()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_paste_methods.md),
+[`ar_review()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_review.md)
 
 ## Examples
 

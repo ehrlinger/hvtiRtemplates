@@ -23,7 +23,7 @@ import_job(path, subject = NULL, type = NULL, root = NULL, from, dir)
 
   The job's set in this study. `NULL`, the default, keeps the source
   job's. See
-  [`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
   for what they decide.
 
 - root:
@@ -47,7 +47,7 @@ behind, the runner included.
 ## Details
 
 The job is written where
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 would write a new job from the same template, under the name it would
 give it, and with the same setup: the template's packages and any
 further packages the job's own setup chunk attaches are installed into
@@ -87,14 +87,14 @@ patient. Paths relative to the study, which is how a template refers to
 its study's files, are not listed.
 
 The job keeps the template version it was written from, so
-[`upgrade_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+[`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
 can bring an older job up to the current template afterwards:
 `upgrade_job(import_job(path))`.
 
 ## See also
 
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
-[`upgrade_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
+[`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
 
 ## Examples
 
@@ -111,7 +111,7 @@ lines <- sub("^DATASET <- \"built\"", "DATASET <- \"built_aorta\"", lines)
 writeLines(lines, job)
 
 imported <- import_job(job, subject = "reop", root = here)
-#> import_job(): wrote '/tmp/RtmpKS48zD/import-job-here/20_distributions/ac.reop.hz.qmd' from '/tmp/RtmpKS48zD/import-job-other/20_distributions/ac.death.hz.qmd'.
+#> import_job(): wrote '/tmp/RtmpiY2cPV/import-job-here/20_distributions/ac.reop.hz.qmd' from '/tmp/RtmpiY2cPV/import-job-other/20_distributions/ac.death.hz.qmd'.
 #> Review in ac.reop.hz.qmd:
 #>   DATASET: line 117
 #>   EDIT: markers: lines 33, 116, 119, 122, 127, 132, 157, 162
@@ -120,6 +120,6 @@ grep("^(DATASET|SUBJECT) ", readLines(imported), value = TRUE)
 
 # An existing job is never overwritten.
 try(import_job(job, subject = "reop", root = here))
-#> Error : import_job(): '/tmp/RtmpKS48zD/import-job-here/20_distributions/ac.reop.hz.qmd' already exists; refusing to overwrite.
+#> Error : import_job(): '/tmp/RtmpiY2cPV/import-job-here/20_distributions/ac.reop.hz.qmd' already exists; refusing to overwrite.
 unlink(c(other, here), recursive = TRUE)
 ```

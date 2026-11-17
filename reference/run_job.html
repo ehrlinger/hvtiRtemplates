@@ -7,9 +7,9 @@ installed at the versions locked, that Quarto can be found, that the job is
 not already running, and that no other job is rendering in the same study
 (one render at a time per study). Every failure is listed with how to
 fix it, and nothing is started until all of them are cleared.
-Then it submits the job with submit_job and waits for the
+Then it submits the job with submit_job() and waits for the
 render's own checks, the R it runs on and, where the job calls
-guard_memory, the memory its fit needs. Those can only run
+guard_memory(), the memory its fit needs. Those can only run
 inside the render. If one fails, the diagnosis is printed here rather than
 left in a log."><meta property="og:description" content="Starts a job the way a long fit should be started, and tells you at once if
 it is going to fail. Before it submits anything, run_job() checks the
@@ -19,9 +19,9 @@ installed at the versions locked, that Quarto can be found, that the job is
 not already running, and that no other job is rendering in the same study
 (one render at a time per study). Every failure is listed with how to
 fix it, and nothing is started until all of them are cleared.
-Then it submits the job with submit_job and waits for the
+Then it submits the job with submit_job() and waits for the
 render's own checks, the R it runs on and, where the job calls
-guard_memory, the memory its fit needs. Those can only run
+guard_memory(), the memory its fit needs. Those can only run
 inside the render. If one fails, the diagnosis is printed here rather than
 left in a log."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -74,9 +74,9 @@ installed at the versions locked, that Quarto can be found, that the job is
 not already running, and that no other job is rendering in the same study
 (one render at a time per study). Every failure is listed with how to
 fix it, and nothing is started until all of them are cleared.</p>
-<p>Then it submits the job with <code><a href="submit_job.html">submit_job</a></code> and waits for the
+<p>Then it submits the job with <code><a href="submit_job.html">submit_job()</a></code> and waits for the
 render's own checks, the R it runs on and, where the job calls
-<code><a href="guard_memory.html">guard_memory</a></code>, the memory its fit needs. Those can only run
+<code><a href="guard_memory.html">guard_memory()</a></code>, the memory its fit needs. Those can only run
 inside the render. If one fails, the diagnosis is printed here rather than
 left in a log.</p>
     </div>
@@ -102,7 +102,7 @@ left in a log.</p>
 
 
 <dt id="arg-final">final<a class="anchor" aria-label="anchor" href="#arg-final"></a></dt>
-<dd><p>Logical(1). Passed to <code><a href="submit_job.html">submit_job</a></code>.</p></dd>
+<dd><p>Logical(1). Passed to <code><a href="submit_job.html">submit_job()</a></code>.</p></dd>
 
 
 <dt id="arg-wait">wait<a class="anchor" aria-label="anchor" href="#arg-wait"></a></dt>
@@ -118,42 +118,42 @@ option <code>hvti.quiet</code>; an explicit value wins.</p></dd>
 
 
 <dt id="arg-params-output-file">params, output_file<a class="anchor" aria-label="anchor" href="#arg-params-output-file"></a></dt>
-<dd><p>Passed to <code><a href="render_job.html">render_job</a></code> through
-<code><a href="submit_job.html">submit_job</a></code>.</p></dd>
+<dd><p>Passed to <code><a href="render_job.html">render_job()</a></code> through
+<code><a href="submit_job.html">submit_job()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Invisibly, the job's status, as <code><a href="job_status.html">job_status</a></code> returns it.
-  A job refused by the checks is an error and returns nothing.</p>
+    <p>Invisibly, the job's status, as <code><a href="job_status.html">job_status()</a></code> returns it.
+A job refused by the checks is an error and returns nothing.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Use this rather than the Render button or a background job in RStudio for
 anything long. Those stay tied to your session, and when the session ends the
 render ends with it. A render started here is detached and carries on. Open a
-new session, call <code><a href="job_status.html">job_status</a></code> with the same file, and it tells you
+new session, call <code><a href="job_status.html">job_status()</a></code> with the same file, and it tells you
 where the job has got to. There is no R script to write.</p>
 <p>A job scaffolded before the setup consolidation has no in-render checks to
 wait for. <code>run_job()</code> says so and names <code><a href="upgrade_job.html">upgrade_job()</a></code>, which adds
 them. The wait ends early when the render finishes, fails or is cancelled.
 If the checks have not all reported when <code>wait</code> runs out, the render
-carries on regardless; follow it with <code><a href="job_status.html">job_status</a></code>. Stop it with
-<code><a href="cancel_job.html">cancel_job</a></code>.
-Not available on Windows, as for <code><a href="submit_job.html">submit_job</a></code>.</p>
+carries on regardless; follow it with <code><a href="job_status.html">job_status()</a></code>. Stop it with
+<code><a href="cancel_job.html">cancel_job()</a></code>.
+Not available on Windows, as for <code><a href="submit_job.html">submit_job()</a></code>.</p>
 <p>A job with Quarto <code>params</code> takes them here, as
 <code>quarto render -P</code> would, with <code>output_file</code> naming the report as
 <code>--output</code> would. A run given an <code>output_file</code> is its own run, with
 its own run files, so one job rendered for several parameter values keeps
-each report and each run apart; give <code><a href="job_status.html">job_status</a></code> and
-<code><a href="cancel_job.html">cancel_job</a></code> the same <code>output_file</code> to follow or stop it.
+each report and each run apart; give <code><a href="job_status.html">job_status()</a></code> and
+<code><a href="cancel_job.html">cancel_job()</a></code> the same <code>output_file</code> to follow or stop it.
 The checks above apply to each run, and Quarto still renders one job at a
 time in a study.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="submit_job.html">submit_job</a></code>, <code><a href="job_status.html">job_status</a></code>,
-  <code><a href="cancel_job.html">cancel_job</a></code>, <code><a href="guard_memory.html">guard_memory</a></code></p></div>
+    <div class="dont-index"><p><code><a href="submit_job.html">submit_job()</a></code>, <code><a href="job_status.html">job_status()</a></code>,
+<code><a href="cancel_job.html">cancel_job()</a></code>, <code><a href="guard_memory.html">guard_memory()</a></code></p></div>
     </div>
 
     <div class="section level2">

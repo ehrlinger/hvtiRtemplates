@@ -21,7 +21,7 @@ disk and `NA` for most queued ones. `deprecated_by` names the template
 replacing a deprecated one, such as `"dc-gfup"`, and `deprecation_note`
 says how to move to it; both are `NA` for a supported template. A
 deprecated template still ships, and
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 warns when it is used.
 
 ## Examples

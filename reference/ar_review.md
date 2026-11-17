@@ -32,7 +32,7 @@ The ids of the items stamped, invisibly.
 
 ## See also
 
-[`ar_paste_methods`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_paste_methods.md)
+[`ar_paste_methods()`](https://ehrlinger.github.io/hvtiRtemplates/reference/ar_paste_methods.md)
 
 ## Examples
 

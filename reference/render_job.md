@@ -77,7 +77,7 @@ is already set is left alone, and Quarto honors it with a Quarto CLI of
 does not reach Quarto there.
 
 Jobs scaffolded by
-[`add_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+[`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
 capture their data provenance while executing and embed it in the
 completed HTML. The same project hooks used by the Render button and
 bare Quarto commands then publish a same-stem `.provenance.json` sidecar
@@ -130,7 +130,7 @@ same one.
 
 ## See also
 
-[`open_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+[`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
 
 ## Examples
 

@@ -1,12 +1,12 @@
 # Report a background job's state
 
 Reads the status
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
 keeps beside a job, `<job>.run.yml`. A job whose process was killed
 never records its end, so a recorded `running` is checked against the
 process itself. A render also keeps `<job>.run.progress`, read here; a
 render started without
-[`submit_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md),
 after the last submitted run or with none, is reported from that file
 alone. A progress file older than the run the status file records is
 ignored.
@@ -32,7 +32,7 @@ job_status(path, quiet = FALSE, output_file = NULL)
 - output_file:
 
   Character(1) or `NULL`. The output file name a run was given with
-  [`run_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)'s
+  [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)'s
   `output_file`; its run files are kept under that name. `NULL` reads
   the job's own run.
 
@@ -41,7 +41,7 @@ job_status(path, quiet = FALSE, output_file = NULL)
 Invisibly, a list: `state` is one of `"none"`, `"submitted"`,
 `"running"`, `"finished"`, `"failed"`, `"vanished"` or `"cancelled"`
 (stopped by
-[`cancel_job`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md));
+[`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md));
 the other elements are what the status file recorded (`pid`, `created`,
 `host`, `started`, `ended`, `exit_code`, `elapsed_s`, `r_version`,
 `reason`), and `log`, the log file's path. `progress`, the render's
