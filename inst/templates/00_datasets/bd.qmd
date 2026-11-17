@@ -70,7 +70,12 @@ if (utils::packageVersion("hvtiRutilities") < "1.5.24") {
            utils::packageVersion("hvtiRutilities"), " is installed.")
 }
 if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.3.5") {
-  .bd_stop("setup", "this job needs hvtiRdatabuild >= 0.3.5 for compare_built(id_col =).")
+  .bd_stop("setup", "this job needs hvtiRdatabuild >= 0.3.5 for compare_built(id_col =); ",
+           if (requireNamespace("hvtiRdatabuild", quietly = TRUE)) {
+             paste(utils::packageVersion("hvtiRdatabuild"), "is installed.")
+           } else {
+             "it is not installed."
+           })
 }
 # Later chunks send warnings and messages to the console rather than the report.
 knitr::opts_chunk$set(warning = NA, message = NA)
