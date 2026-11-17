@@ -252,6 +252,16 @@ bystander <- function(cmd = "exec sleep 60") {
   list(pid = pid, h = h, dir = dir, created = sprintf("%.6f", as.numeric(ps::ps_create_time(h))))
 }
 
+# Waits until a bystander's marker is on a readable process. On Linux Rscript starts through the `R` shell script,
+# and under a loaded check that can take well past ten seconds; failing here names the cause rather than letting a
+# slow start read as a cancel or status defect.
+wait_for_marker <- function(marker, timeout = 30) {
+  deadline <- Sys.time() + timeout
+  while (!length(ps::ps_find_tree(marker)) && Sys.time() < deadline) Sys.sleep(0.1)
+  if (!length(ps::ps_find_tree(marker))) stop("the bystander's marker never appeared within ", timeout, " seconds")
+  invisible(TRUE)
+}
+
 running_on <- function(job, b, host = Sys.info()[["nodename"]]) {
   .write_status(.run_files(job)$status, state = "running", pid = b$pid, created = b$created, host = host,
                 started = .stamp(Sys.time() - 60))
@@ -492,10 +502,7 @@ test_that("a slow start whose runner carries the marker reads submitted past two
   # Not /bin/sleep: macOS hides a platform binary's environment, so its marker could not be found there.
   b <- bystander(sprintf("export %s=YES; exec %s -e \"Sys.sleep(60)\"", marker, shQuote(file.path(R.home("bin"), "Rscript"))))
   # Until sh has exec'd into Rscript the marker is on no readable process.
-  for (i in 1:100) {
-    if (length(ps::ps_find_tree(marker))) break
-    Sys.sleep(0.1)
-  }
+  wait_for_marker(marker)
   here <- Sys.info()[["nodename"]]
   submitted <- function(host = here) {
     .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
@@ -518,10 +525,7 @@ test_that("a hung start that never records itself can still be cancelled, throug
   job <- status_job()
   marker <- sprintf("PSHVTItest%d_%d", Sys.getpid(), as.integer(Sys.time()) - 5L)
   b <- bystander(sprintf("export %s=YES; exec %s -e \"Sys.sleep(60)\"", marker, shQuote(file.path(R.home("bin"), "Rscript"))))
-  for (i in 1:100) {
-    if (length(ps::ps_find_tree(marker))) break
-    Sys.sleep(0.1)
-  }
+  wait_for_marker(marker)
   .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
                 host = Sys.info()[["nodename"]])
   st <- cancel_job(job, grace = 5, quiet = TRUE)
