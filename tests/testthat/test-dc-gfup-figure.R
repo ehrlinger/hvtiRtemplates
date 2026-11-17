@@ -7,7 +7,9 @@
 # operations in 2030; the job refuses that, and these tests use 1980.
 base_edits <- list(
   "^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL",
-  "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980"
+  "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980",
+  # The fixture has no operation date, so the origin is set, not read.
+  "^OPDATE <- " = "OPDATE <- NULL"
 )
 
 test_that("dc-gfup renders a death panel and an event panel", {
@@ -89,7 +91,8 @@ test_that("dc-gfup names every missing column in one message, and keeps its tabl
 })
 
 test_that("dc-gfup reports a two-digit origin year, and keeps its tables", {
-  out <- refused_chunks(scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85"))))
+  out <- refused_chunks(scaffold_gfup(c(base_edits[c("^ANALYSIS_SET <- ", "^OPDATE <- ")],
+                                        list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85"))))
   expect_match(out, "Operations fall outside 1900", fixed = TRUE)
 })
 
@@ -107,7 +110,7 @@ test_that("a final dc-gfup render stops on a figure refusal", {
   skip_on_cran()
   skip_if_not_installed("quarto")
   skip_if_not(quarto::quarto_available())
-  s <- scaffold_gfup(c(base_edits["^ANALYSIS_SET <- "], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85")))
+  s <- scaffold_gfup(c(base_edits[c("^ANALYSIS_SET <- ", "^OPDATE <- ")], list("^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 85")))
   # Strict mode also stops on an unresolved marker, so clear them: the stop
   # under test must be the figure's.
   writeLines(gsub(paste0("ED", "IT:"), "Set:", readLines(s$job, warn = FALSE), fixed = TRUE), s$job)
@@ -137,7 +140,7 @@ window_table <- function(n_negative) {
                close_source = "estimated")
   meta$n_opyrs_negative <- n_negative
   testthat::local_mocked_bindings(hv_followup_panels = function(...) list(meta = meta), .package = "hvtiPlotR")
-  env <- list2env(list(d = data.frame(), OPYRS = "iv_opyrs", ORIGIN_YEAR = 1990, CLOSE_DATE = NULL,
+  env <- list2env(list(d = data.frame(), OPYRS = "iv_opyrs", OPDATE = NULL, ORIGIN_YEAR = 1990, CLOSE_DATE = NULL,
                        PANELS = list(), EVENTS = list()))
   eval(parse(text = chunk("window")), env)
   paste(utils::capture.output(eval(parse(text = chunk("tbl-window")), env)), collapse = "\n")
@@ -163,11 +166,42 @@ test_dc_gfup_window <- function(close_date) {
   start <- match("#| label: window", lines)
   end <- start + match("```", lines[-seq_len(start)])
   env <- list2env(list(d = hvtiPlotR::sample_goodness_followup_data(n = 60, seed = 3), OPYRS = "iv_opyrs",
-                       ORIGIN_YEAR = 1990, CLOSE_DATE = close_date, EVENTS = list(), ECHO = NULL,
+                       OPDATE = NULL, ORIGIN_YEAR = 1990, CLOSE_DATE = close_date, EVENTS = list(), ECHO = NULL,
                        PANELS = list(all = list(status = "dead", time = "iv_dead"))))
   suppressWarnings(eval(parse(text = lines[seq.int(start + 1L, end - 1L)]), env))
   env$close_source
 }
+
+# The window chunk over a cohort whose operation date counts from 1 January
+# 1990, with OPDATE named and ORIGIN_YEAR as given. Returns the job's
+# environment after the chunk, so a test reads the origin it carried forward.
+gfup_origin_window <- function(origin_year) {
+  lines <- readLines(template_path("dc", "gfup"), warn = FALSE)
+  start <- match("#| label: window", lines)
+  end <- start + match("```", lines[-seq_len(start)])
+  d <- hvtiPlotR::sample_goodness_followup_data(n = 60, seed = 3)
+  d$dt_surg <- as.Date("1990-01-01") + d$iv_opyrs * 365.2425
+  env <- list2env(list(d = d, OPYRS = "iv_opyrs", OPDATE = "dt_surg", ORIGIN_YEAR = origin_year,
+                       CLOSE_DATE = NULL, EVENTS = list(), ECHO = NULL,
+                       PANELS = list(all = list(status = "dead", time = "iv_dead"))))
+  suppressWarnings(eval(parse(text = lines[seq.int(start + 1L, end - 1L)]), env))
+  env
+}
+
+test_that("dc-gfup reads the origin from OPDATE and carries it forward", {
+  skip_if_not_installed("hvtiPlotR", "2.8.23")
+  env <- gfup_origin_window(NULL)
+  expect_true(env$figure_drawn)
+  expect_identical(as.integer(env$.origin_year), 1990L)
+  expect_match(env$fp$meta$origin_source, "read from `dt_surg`", fixed = TRUE)
+})
+
+test_that("dc-gfup refuses an ORIGIN_YEAR the operation dates contradict", {
+  skip_if_not_installed("hvtiPlotR", "2.8.23")
+  env <- gfup_origin_window(1980)
+  expect_false(env$figure_drawn)
+  expect_match(conditionMessage(env$fp), "puts the origin in 1990", fixed = TRUE)
+})
 
 test_that("dc-gfup reports the close date's source by the job's own edit point", {
   skip_if_not_installed("hvtiPlotR", "2.7.17")
@@ -201,7 +235,8 @@ gfup_drawn <- function(events, echo = NULL, colors = NULL, x_tick_by = NULL, y_t
   env <- new.env(parent = globalenv())
   # The factor tbl-qc-group builds, which needs the job's record to run.
   if (!is.null(group)) env$group_values <- factor(d[[group]])
-  list2env(list(d = d, EVENT = "dead", OPYRS = "iv_opyrs", ORIGIN_YEAR = 1990, CLOSE_DATE = NULL, ECHO = echo, EVENTS = events,
+  list2env(list(d = d, EVENT = "dead", OPYRS = "iv_opyrs", OPDATE = NULL, ORIGIN_YEAR = 1990, CLOSE_DATE = NULL,
+                ECHO = echo, EVENTS = events,
                 PANELS = list(all = list(status = "dead", time = "iv_dead", title = "All deaths")),
                 ALPHA = 0.5, COLORS = colors, GROUP = group, .in = NULL,
                 X_TICK_BY = x_tick_by, Y_TICK_BY = y_tick_by, LEGEND = legend,

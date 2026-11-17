@@ -8,6 +8,8 @@
 eda_edits <- list(
   "^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL",
   "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980",
+  # The fixture has no operation date, so the origin is set, not read.
+  "^OPDATE <- " = "OPDATE <- NULL",
   # The fixture's reference column is a whole year, not the template's dt_surg.
   "^X_VAR <- " = "X_VAR <- \"year\""
 )
@@ -125,6 +127,7 @@ test_that("dc-eda colors every point of an event panel, by the house rule or fro
     # The fixture's reference column, as a study sets X_VAR to its own.
     env$X_VAR <- "year"
     env$ORIGIN_YEAR <- 1980
+    env$OPDATE <- NULL
     if (old) {
       rm("COLORS", envir = env)
       env$COLOURS <- colors
@@ -836,6 +839,7 @@ test_that("dc-eda gives each event its own follow-up table, as each death panel 
     for (label in c("set", "edit-study-choices")) eval(chunk(label), env)
     env$X_VAR <- "year"
     env$ORIGIN_YEAR <- 1980
+    env$OPDATE <- NULL
     env$EVENTS <- events
     # Each table and figure goes through .child(), which the spec chunk
     # defines; record what it is handed instead of knitting it.
@@ -909,6 +913,7 @@ test_that("dc-eda's page captions name each variable beside its label", {
   for (label in c("set", "edit-study-choices")) eval(chunk(label), env)
   env$X_VAR <- "year"
   env$ORIGIN_YEAR <- 1980
+  env$OPDATE <- NULL
   env$VARIABLES <- "age"
   shown <- character()
   withCallingHandlers(
