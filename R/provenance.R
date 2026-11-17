@@ -873,14 +873,25 @@
 # on that judgment.
 .provenance_takeover_path <- function(lock) paste0(lock, ".takeover")
 
-# A takeover holds its sentinel for milliseconds, so one older than this belongs
-# to a render that crashed inside its takeover, and would otherwise block every
-# later one.
-.takeover_stale_secs <- 60
+# A claim is never taken from its holder by age. A holder suspended past any
+# limit, or stalled on a slow share, would resume and act on a claim it no
+# longer had, and no check it makes before or after acting can close that gap
+# on a share with no compare-and-swap. So a takeover sentinel, or a lock whose
+# render never recorded itself, that is older than this is named for a person
+# to delete, not cleared. Either one means a render stopped within moments of
+# claiming, which is rare; a render that crashes later, with its owner
+# recorded, is still taken over without anyone's help.
+.claim_stale_secs <- 60
 
-.provenance_takeover_stale <- function(sentinel) {
-  at <- file.info(sentinel)$mtime
-  !is.na(at) && as.numeric(difftime(Sys.time(), at, units = "secs")) > .takeover_stale_secs
+.claim_age_over <- function(path, secs = .claim_stale_secs) {
+  at <- file.info(path)$mtime
+  !is.na(at) && as.numeric(difftime(Sys.time(), at, units = "secs")) > secs
+}
+
+# The way out of a claim left behind, which only a person can judge safe.
+.left_claim_fix <- function(path) {
+  paste0(" Check that no Quarto render is running in this study, on this node or any other, then delete the ",
+         "directory ", path, " and render again.")
 }
 
 # Writes a render's owner over the lock's owner file. A file rename replaces its
@@ -897,25 +908,25 @@
 # is taking it over, or took it over first.
 .take_over_provenance_lock <- function(lock, dead, owner) {
   sentinel <- .provenance_takeover_path(lock)
-  if (.provenance_takeover_stale(sentinel)) unlink(sentinel, recursive = TRUE)
   if (!.create_provenance_lock(sentinel)) {
+    if (.claim_age_over(sentinel)) {
+      stop("A render stopped while taking over this study's stale render lock, and left its takeover claim behind.",
+           .left_claim_fix(sentinel), call. = FALSE)
+    }
     stop("Another Quarto render is taking over this study's stale render lock. Wait a moment, then render again.",
          call. = FALSE)
   }
-  # The token tells this render's sentinel from one a second render made after
-  # clearing it as stale, the one race a stale sentinel leaves.
+  # The token tells this render's sentinel from one made after a person deleted
+  # it, so this render never removes another's.
   token <- basename(tempfile(pattern = "takeover-"))
   writeLines(token, file.path(sentinel, "token"))
   on.exit(if (identical(.read_takeover_token(sentinel), token)) unlink(sentinel, recursive = TRUE), add = TRUE)
   owner_path <- file.path(lock, "owner.json")
   if (!dir.exists(lock)) return(FALSE)
   now <- .read_provenance_owner(owner_path)
-  # The owner judged dead is the one still recorded, and a lock with no owner
-  # file is still old: otherwise a render took the lock over or claimed it
-  # afresh after this one looked.
-  unchanged <- identical(now, dead) &&
-    !(is.null(now) && isTRUE(difftime(Sys.time(), file.info(lock)$mtime, units = "secs") < 60))
-  if (!unchanged) {
+  # The owner judged dead is the one still recorded: otherwise a render took the
+  # lock over after this one looked.
+  if (!identical(now, dead)) {
     stop("Another Quarto render took over this study's stale render lock first",
          if (!is.null(now)) paste0(" (", .provenance_owner_label(now), ")"),
          ". Wait for it to finish, then render again.", call. = FALSE)
@@ -925,7 +936,7 @@
          call. = FALSE)
   }
   if (!.write_provenance_owner(owner, owner_path)) return(FALSE)
-  if (!is.null(dead)) unlink(.provenance_heartbeat_path(lock, dead))
+  unlink(.provenance_heartbeat_path(lock, dead))
   TRUE
 }
 
@@ -947,14 +958,20 @@
     current <- .read_provenance_owner(owner_path)
     if (identical(current, owner)) return(invisible(FALSE))
     # An owner file not yet written belongs to a render that has only just
-    # taken the lock, unless the lock has been sitting there for a while.
-    unwritten_recently <- is.null(current) &&
-      difftime(Sys.time(), file.info(lock)$mtime, units = "secs") < 60
-    if (unwritten_recently || (!is.null(current) && .provenance_lock_held(current, lock))) {
-      stop("Another Quarto render is in progress in this study",
-           if (!is.null(current)) paste0(" (", .provenance_owner_label(current), ")"),
-           ". Wait for it to finish, then render again.",
-           if (!is.null(current)) .provenance_lock_hint(current, lock), call. = FALSE)
+    # taken the lock. Once the lock is old, that render stopped before
+    # recording itself, or is suspended there; nothing here can tell which, so
+    # the lock is named for a person rather than taken.
+    if (is.null(current)) {
+      if (.claim_age_over(lock)) {
+        stop("This study's render lock has no owner file and is over a minute old: a render stopped between ",
+             "creating the lock and recording itself.", .left_claim_fix(lock), call. = FALSE)
+      }
+      stop("Another Quarto render is in progress in this study. Wait for it to finish, then render again.",
+           call. = FALSE)
+    }
+    if (.provenance_lock_held(current, lock)) {
+      stop("Another Quarto render is in progress in this study (", .provenance_owner_label(current), ")",
+           ". Wait for it to finish, then render again.", .provenance_lock_hint(current, lock), call. = FALSE)
     }
     if (.take_over_provenance_lock(lock, current, owner)) {
       .start_provenance_heartbeat(lock, owner)

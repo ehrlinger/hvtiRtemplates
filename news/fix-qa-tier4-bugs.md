@@ -17,8 +17,15 @@
   judged too late stops, as it would against any live render. Before, the
   second render could move the first one's live lock aside and roll back its
   provenance files, and while the lock was moved a third render could start
-  beside the first. A sentinel left by a render that crashed during its
-  takeover is cleared after 60 seconds.
+  beside the first. ⚠️ **No claim is ever taken from a render by its age.** A
+  takeover sentinel more than a minute old, left by a render that stopped while
+  taking over, and a lock more than a minute old with no owner file, left by a
+  render that stopped between creating the lock and recording itself, both stop
+  the render with the directory's path: once no Quarto render is running in the
+  study, on any node, delete it and render again. A render paused at either
+  point would otherwise come back and run beside the one that took its claim.
+  Before, the owner-less lock was taken over after 60 seconds. A render that
+  crashes after recording itself is still taken over without anyone's help.
 * `add_job()` refuses a dangling symbolic link where the job would go, or at
   the job's or runner's name before 2026-10 or before a template rename, as
   `upgrade_job()` already did, rather than writing the job wherever the link
