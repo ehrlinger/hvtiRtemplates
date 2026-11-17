@@ -12,7 +12,6 @@
 # first few row positions when it falls back to an MRN, which must not reach a render error or a submit_job() log.
 # A position is the row's place in the sorted data as first read, kept in the column `pos`, so a repair that dropped
 # an earlier row does not move it.
-# An integer64 ID is written by as.character(), which reads its value; .id_text() would write it as "0".
 .cp_ids <- function(d, id, rows, pos) {
   if (tolower(id) %in% .job_identifier_names) {
     at <- d[[pos]][rows]
@@ -20,7 +19,7 @@
                   if (length(at) > 5L) ", ...", " of the rows ordered by patient, start and stop)"))
   }
   x <- d[[id]][rows]
-  ids <- unique(if (inherits(x, "integer64")) as.character(x) else .id_text(x))
+  ids <- unique(.id_text(x))
   paste0(" (", paste(utils::head(ids, 5L), collapse = ", "), if (length(ids) > 5L) ", ...", ")")
 }
 

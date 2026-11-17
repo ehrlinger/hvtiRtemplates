@@ -75,6 +75,16 @@ test_that("a cohort list's exclude and reason columns become steps, and the help
   expect_identical(names(out$data), names(bc_data()))
 })
 
+test_that("an exclude flag padded with spaces still excludes, and is counted", {
+  # Validation trims the flag, so " 1" passes it; the flag must be read trimmed too, or the patient stays in while
+  # the attrition table counts the rule.
+  path <- bc_list(data.frame(ccfid = c("A0002", "A0004", "A0003"), dt_surg = c("2011-02-06", "2013-04-08", "2012-03-07"),
+                             exclude = c(" 0", " 1", "1 "), reason = c("", "Redo", "Redo")))
+  out <- build_cohort(bc_data(), id_col = "ccfid", path = path, join_cols = c("ccfid", "dt_surg"))
+  expect_identical(out$data$ccfid, "A0002")
+  expect_identical(out$attrition$removed[[3L]], 2L)
+})
+
 test_that("a list's distinct reasons are separate steps, in first-appearance order, with their own counts", {
   path <- bc_list(data.frame(ccfid = c("A0001", "A0002", "A0003", "A0004"),
                              dt_surg = c("2010-01-05", "2011-02-06", "2012-03-07", "2013-04-08"),

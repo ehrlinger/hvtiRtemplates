@@ -51,6 +51,20 @@ test_that("the same ID gives the same digest, and a missing ID stays missing", {
   expect_identical(hvtiRtemplates:::.id_digest(factor("A12"), key), hvtiRtemplates:::.id_digest("A12", key))
 })
 
+test_that("an integer64 ID is written and digested by its value, not by its bits", {
+  skip_if_not_installed("bit64")
+  # bit64 keeps the value in the bits of a double: is.numeric() is TRUE, and sprintf("%.0f") read every one as "0",
+  # so every patient in a bundle shared one digest.
+  ids <- bit64::as.integer64(c(100001, 123456789012, NA))
+  expect_identical(hvtiRtemplates:::.id_text(ids), c("100001", "123456789012", NA))
+  key <- hvtiRtemplates:::.study_id_key(withr::local_tempdir("id-key-"))
+  digests <- hvtiRtemplates:::.id_digest(ids, key)
+  expect_false(identical(digests[[1L]], digests[[2L]]))
+  expect_true(is.na(digests[[3L]]))
+  # The same patient read as integer64 from parquet and as a double from a CSV digests alike.
+  expect_identical(digests[1:2], hvtiRtemplates:::.id_digest(c(100001, 123456789012), key))
+})
+
 test_that("every lm fit template saves digested IDs and a model that still scores", {
   skip_if_not_installed("hvtiRpropensity", minimum_version = "0.2.0")
   d <- lm_mi_data()

@@ -140,12 +140,6 @@ upgrade_job <- function(path, root = NULL, dir) {
   # Both files go to _archive/ beside the upgraded job, a folder Quarto does not
   # render, under one stamp: a later upgrade adds a pair rather than stopping.
   archive <- file.path(dirname(target), "_archive")
-  # A symbolic link counts as taken even when it dangles: file.exists() says
-  # FALSE for one, and writing through it would create a file wherever it points.
-  taken <- function(p) {
-    link <- Sys.readlink(p)
-    file.exists(p) | (!is.na(link) & nzchar(link))
-  }
   # An upgrade takes well under the stamp's one second, so a stamp already
   # used takes a suffix, -2 and on, shared by both files so they stay a pair.
   stamp <- .upgrade_stamp()
@@ -155,12 +149,12 @@ upgrade_job <- function(path, root = NULL, dir) {
   }
   files <- pair(stamp)
   n <- 1L
-  while (any(taken(files)) && n < 99L) {
+  while (any(.path_taken(files)) && n < 99L) {
     n <- n + 1L
     files <- pair(paste0(stamp, "-", n))
   }
   for (p in files) {
-    if (taken(p)) stop("upgrade_job(): '", p, "' already exists; refusing to overwrite.", call. = FALSE)
+    if (.path_taken(p)) stop("upgrade_job(): '", p, "' already exists; refusing to overwrite.", call. = FALSE)
   }
   backup <- files[[1L]]
   report_path <- files[[2L]]
@@ -169,7 +163,7 @@ upgrade_job <- function(path, root = NULL, dir) {
   others_all <- c(.job_path_legacy(row, fields$subject, fields$type, root),
                   .job_paths_renamed(row, fields$subject, fields$type, root))
   others <- c(target, others_all)
-  others <- others[taken(others) & normalizePath(others, winslash = "/", mustWork = FALSE) != path]
+  others <- others[.path_taken(others) & normalizePath(others, winslash = "/", mustWork = FALSE) != path]
   if (length(others)) {
     stop("upgrade_job(): '", others[[1L]], "' is another copy of this job; refusing to write a second.",
          call. = FALSE)
@@ -206,7 +200,7 @@ upgrade_job <- function(path, root = NULL, dir) {
   if (!.path_within(normalizePath(archive, winslash = "/", mustWork = TRUE), root)) {
     stop("upgrade_job(): the job folder's _archive resolves outside the study root.", call. = FALSE)
   }
-  .archive_legacy_upgrade(jobs, archive, taken, files, root)
+  .archive_legacy_upgrade(jobs, archive, .path_taken, files, root)
   if (current) {
     .install_provenance_hooks(root)
     .hvti_inform("upgrade_job(): ", basename(path), " is already current with its template; ",
@@ -657,4 +651,12 @@ upgrade_job <- function(path, root = NULL, dir) {
     lst(review), "",
     "## Markers left", "", lst(paste0("line ", markers, recycle0 = TRUE)), ""
   )
+}
+
+# Whether a path is taken. A symbolic link counts as taken even when it dangles:
+# file.exists() says FALSE for one, and writing through it would create a file
+# wherever it points. add_job() and upgrade_job() both ask this before writing.
+.path_taken <- function(p) {
+  link <- Sys.readlink(p)
+  file.exists(p) | (!is.na(link) & nzchar(link))
 }

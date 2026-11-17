@@ -127,7 +127,10 @@
 #' job, `running` means the process is alive. From another host it means only
 #' that the run is recorded as running, because a process cannot be checked from
 #' there, and the summary line says so. A job that crashed there still reads
-#' `running`, so ask from a session on that host.
+#' `running`, so ask from a session on that host. A job submitted there and
+#' not started within two minutes stays `submitted` for the same reason, and a
+#' second copy is refused: one that died there is cleared with
+#' `cancel_job(other_host = "abandon")` once that host has been checked.
 #'
 #' @param path Character(1). The job's `.qmd` file.
 #' @param quiet Logical(1). `FALSE`, the default, prints a one-line summary. The summary is
@@ -142,6 +145,13 @@
 #'   recorded (`pid`, `created`, `host`, `started`,
 #'   `ended`, `exit_code`, `elapsed_s`, `r_version`,
 #'   `reason`), and `log`, the log file's path.
+#'   `unchecked`, for a `"submitted"` run past two minutes whose
+#'   processes could not be looked at, why: the lookup's error, or the other
+#'   host it was submitted on. The run is kept `"submitted"` rather than read
+#'   as `"vanished"`, so a second copy is still refused. A submission that died
+#'   on another host therefore no longer clears itself: check it from a
+#'   session on that host, then `cancel_job(other_host = "abandon")` records
+#'   it ended.
 #'   `progress`, the render's progress record when there is one, with
 #'   `eta_s`, the estimated seconds left in the current stage, and
 #'   `stale`, `TRUE` when it has not changed for three reporting
@@ -206,9 +216,18 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
   }
   if (identical(st$state, "submitted")) {
     at <- as.POSIXct(st$submitted, format = "%Y-%m-%dT%H:%M:%S%z")
+    # Two minutes without "running" is read as never started, unless the run's marker is on a live process here: a
+    # slow .Rprofile or renv start on a loaded share can take longer, and reading it as vanished would let a second
+    # copy be submitted. Another host's processes cannot be looked for from this one, so there the window decides.
     if (is.na(at) || difftime(Sys.time(), at, units = "secs") > 120) {
-      st$state <- "vanished"
-      never_started <- TRUE
+      alive <- .submitted_alive(st)
+      if (is.na(alive)) {
+        # Unknown is kept submitted, so a second copy is still refused.
+        st$unchecked <- attr(alive, "error")
+      } else if (!alive) {
+        st$state <- "vanished"
+        never_started <- TRUE
+      }
     }
   }
   st$log <- files$log
@@ -232,6 +251,18 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
                        sprintf(": %s; see %s", st$reason, files$log)
                      },
                      cancelled = sprintf(" at %s%s", st$ended, if (is.null(st$reason)) "" else paste0(": ", st$reason)),
+                     submitted = if (!is.null(st$unchecked)) {
+                       paste0(sprintf(paste0(": no 'running' within 120 s, and its processes could not be looked at (%s), ",
+                                             "so it is kept submitted and a second copy is refused; see %s"),
+                                      st$unchecked, files$log),
+                              if (.on_other_host(st)) {
+                                sprintf(paste0(". A submission that died on %s no longer clears itself: check it from a ",
+                                               "session there, then cancel_job(other_host = \"abandon\") records it ended"),
+                                        st$host)
+                              })
+                     } else {
+                       ""
+                     },
                      vanished = if (never_started) {
                        sprintf(": never started: no 'running' within 120 s; see %s%s", files$log,
                                if (!file.exists(files$log) || file.size(files$log) == 0L) " (log missing or empty)" else "")
@@ -311,6 +342,21 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
   invisible(files$lock)
 }
 
+# Whether a submitted run is still starting: its marker, written into the submitted record, is on a live process on
+# this host. A record with no marker, from before submit_job() wrote one, is not looked for.
+# NA when the processes could not be looked at: a sandbox refusing to list them, or a run recorded on another host,
+# whose processes cannot be seen from this one. That proves nothing about the run, so it must not read as a dead one,
+# or a slow start there would be submitted twice. Why is kept as the "error" attribute.
+.submitted_alive <- function(st) {
+  host <- st$host
+  here <- !(is.character(host) && length(host) == 1L && !is.na(host) && !identical(host, Sys.info()[["nodename"]]))
+  if (!here) return(structure(NA, error = sprintf("recorded on host %s, whose processes cannot be looked at from here", host)))
+  if (!.is_marker(st$marker)) return(FALSE)
+  found <- tryCatch(ps::ps_find_tree(st$marker), error = function(e) e)
+  if (inherits(found, "error")) return(structure(NA, error = conditionMessage(found)))
+  length(found) > 0L
+}
+
 # Wrapped so tests can capture the command; wait = FALSE appends the "&" itself.
 .launch <- function(cmd) system(cmd, wait = FALSE)
 
@@ -339,14 +385,16 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
   writeLines(.runner_lines(path, files$status, final, render_call, extra), files$runner)
   # The last run's progress is not this one's; job_status() would report it until the render writes its own.
   unlink(files$progress)
-  do.call(.write_status, c(list(files$status, state = "submitted", submitted = .stamp()), extra))
-  setsid <- if (nzchar(Sys.which("setsid"))) "setsid " else ""
   # Every process the render starts inherits the marker, including those processx moves into a session of its own
   # (Quarto, knitr) and those a dead parent orphans, so cancel_job() finds them all by it. ps::ps_find_tree() reads
   # it as PS<id>_<epoch>, matching only processes created after <epoch>. Built without the RNG, which is the study's.
   now <- Sys.time()
   marker <- sprintf("PSHVTI%d%s_%d", Sys.getpid(), format(now, "%H%M%OS6"), as.integer(now))
   marker <- gsub("[^A-Za-z0-9_]", "", marker)
+  # The marker and host go into the submitted record, so job_status() can tell a slow start from a dead one.
+  do.call(.write_status, c(list(files$status, state = "submitted", submitted = .stamp(), marker = marker,
+                                host = Sys.info()[["nodename"]]), extra))
+  setsid <- if (nzchar(Sys.which("setsid"))) "setsid " else ""
   # HVTI_RUN_R names the R that submitted the job; .job_setup() stops the render if Quarto's knitr runs on another.
   # HVTI_RUN_R_VERSION gives its version, so the refusal can name both Rs by version as well as by path.
   cmd <- sprintf(paste0("cd %s && %s=YES HVTI_JOB_MARKER=%s HVTI_RUN_R=%s HVTI_RUN_R_VERSION=%s && ",
@@ -425,7 +473,14 @@ submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
 .job_procs <- function(h, marker) {
   procs <- if (is.null(h)) list() else c(list(h), tryCatch(ps::ps_children(h, recursive = TRUE), error = function(e) list()))
   if (.is_marker(marker)) {
-    procs <- c(procs, tryCatch(ps::ps_find_tree(marker), error = function(e) list()))
+    found <- tryCatch(ps::ps_find_tree(marker), error = function(e) e)
+    if (inherits(found, "error")) {
+      # With no recorded process the marker is the only way to the run, so a failed lookup is not an empty one.
+      if (is.null(h)) stop(structure(class = c("marker_lookup_failed", "error", "condition"),
+                                     list(message = conditionMessage(found), call = NULL)))
+      found <- list()
+    }
+    procs <- c(procs, found)
   }
   procs[!duplicated(vapply(procs, ps::ps_pid, 0L))]
 }
@@ -509,8 +564,8 @@ submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
 #' refused rather than signalled by its pid alone.
 #'
 #' A process can only be checked and signalled on the host it runs on, so a
-#' job recorded on another host is refused, naming the host to cancel it
-#' from, unless `other_host = "abandon"`: then nothing is signalled, and
+#' job recorded running or submitted on another host is refused, naming the
+#' host to cancel it from, unless `other_host = "abandon"`: then nothing is signalled, and
 #' the run is recorded `cancelled`, with a reason saying so, and its
 #' progress file removed. Use it only once that host's session is gone and the
 #' job is confirmed not running there, for a render left running there is not
@@ -525,10 +580,10 @@ submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
 #' @param path Character(1). The job's `.qmd` file.
 #' @param grace Numeric(1). Seconds to wait after `SIGTERM` before
 #'   `SIGKILL`.
-#' @param other_host Character(1). For a job recorded running on another
-#'   host, `"refuse"` (the default) stops with an error naming that host,
-#'   and `"abandon"` records the run ended without signalling anything.
-#'   Ignored for a job on this host.
+#' @param other_host Character(1). For a job recorded running or submitted on
+#'   another host, `"refuse"` (the default) stops with an error naming that
+#'   host, and `"abandon"` records the run `cancelled` without signalling
+#'   anything. Ignored for a job on this host.
 #' @param quiet Logical(1). `FALSE` prints the job's state afterwards,
 #'   as [job_status()] does. Defaults to the family option `hvti.quiet`; an
 #'   explicit value wins.
@@ -563,17 +618,28 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
   # Before anything is signalled: the run found is the one asked for.
   .check_run_output(st, output_file, path, "cancel_job", job)
   here <- Sys.info()[["nodename"]]
-  elsewhere <- identical(st$state, "running") && is.character(st$host) && !identical(st$host, here)
+  # A submission recorded on another host is as far out of reach as a run there: its processes cannot be looked for.
+  elsewhere <- st$state %in% c("running", "submitted") && is.character(st$host) && !identical(st$host, here)
   if (elsewhere && identical(other_host, "refuse")) {
-    .abort("cancel_job(): ", basename(path), " is recorded running on host ", st$host, ", and a process can only be ",
+    .abort("cancel_job(): ", basename(path), " is recorded ", st$state, " on host ", st$host, ", and a process can only be ",
            "checked and signalled on its own host: run cancel_job() in an R session on ", st$host, ". If that session ",
            "is gone and the job is not running there, cancel_job(other_host = \"abandon\") records it ended from here.",
            class = "run_refused")
   }
-  if (identical(st$state, "submitted")) {
-    .abort("cancel_job(): ", basename(path), " was submitted and its process has not recorded itself yet; cancel it ",
-           "again once job_status() reads running, or after two minutes, when an unstarted submission reads vanished.",
-           class = "run_refused")
+  # A submission still starting is found by its marker, so a runner that hangs before it records itself, in a slow
+  # .Rprofile or renv start, can still be stopped: job_status() reads it submitted for as long as the marker lives.
+  alive <- if (identical(st$state, "submitted") && !elsewhere) .submitted_alive(st) else FALSE
+  if (is.na(alive)) {
+    .abort("cancel_job(): ", basename(path), " was submitted, and the processes on this host could not be looked at (",
+           attr(alive, "error"), "), so whether it is still starting is unknown. Nothing was signalled. Cancel it from ",
+           "an R session that can list processes, or, once you have checked by hand that it is not running, delete ",
+           files$status, ".", class = "run_refused")
+  }
+  starting <- identical(st$state, "submitted") && alive
+  if (identical(st$state, "submitted") && !starting && !elsewhere) {
+    .abort("cancel_job(): ", basename(path), " was submitted and no process carrying its marker can be found here yet; ",
+           "cancel it again once job_status() reads running, or once it reads vanished, which an unstarted submission ",
+           "does after two minutes.", class = "run_refused")
   }
   # Without a creation time the recorded pid cannot be told from a later process that reuses it. A render started
   # without submit_job() records none in its progress file.
@@ -582,8 +648,8 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
            "from a later process that took the pid. Check that process by hand and stop it if it is the render; ",
            "cancel_job() then records the end.", class = "run_refused")
   }
-  record <- function(...) {
-    run <- st[intersect(c("pid", "created", "marker", "host", "r_version", "started", "job", "output_file"), names(st))]
+  record <- function(..., from = st) {
+    run <- from[intersect(c("pid", "created", "marker", "host", "r_version", "started", "job", "output_file"), names(from))]
     do.call(.write_status, c(list(files$status), list(...), run, list(ended = .stamp())))
   }
   if (elsewhere) {
@@ -592,10 +658,14 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
     unlink(files$progress)
     return(invisible(job_status(path, quiet = quiet)))
   }
-  if (st$state %in% c("running", "vanished")) {
+  if (st$state %in% c("running", "vanished") || starting) {
     # A vanished runner can leave its render running: the marker still finds it.
-    h <- .cancel_handle(st)
-    left <- .stop_procs(function() .job_procs(h, st$marker), grace)
+    h <- if (starting) NULL else .cancel_handle(st)
+    left <- tryCatch(.stop_procs(function() .job_procs(h, st$marker), grace), marker_lookup_failed = function(e) {
+      .abort("cancel_job(): the processes carrying ", basename(path), "'s marker could not be looked at (",
+             conditionMessage(e), "), so whether it is still running is unknown. Nothing was recorded; check by hand, ",
+             "or run cancel_job() again.", class = "cancel_incomplete")
+    })
     if (length(left)) {
       .abort("cancel_job(): process(es) ", paste(left, collapse = ", "), " of ", basename(path), " did not exit after ",
              "SIGKILL; nothing was recorded.", class = "cancel_incomplete")
@@ -606,6 +676,19 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
     now <- tryCatch(yaml::read_yaml(files$status), error = function(e) NULL)
     if (!(is.list(now) && identical(now$started, st$started) && isTRUE(now$state %in% c("finished", "failed")))) {
       record(state = "cancelled")
+    }
+    unlink(files$progress)
+  } else if (starting) {
+    # The runner may have ended while it was being stopped, and then its own record stands. One that recorded itself
+    # running was stopped like the rest, so it is cancelled, under the process it recorded.
+    now <- tryCatch(yaml::read_yaml(files$status), error = function(e) NULL)
+    same <- is.list(now) && identical(now$marker, st$marker)
+    if (!(same && isTRUE(now$state %in% c("finished", "failed", "cancelled")))) {
+      if (same && identical(now$state, "running")) {
+        record(state = "cancelled", from = now)
+      } else {
+        record(state = "cancelled", reason = "it had not started")
+      }
     }
     unlink(files$progress)
   } else if (identical(st$state, "vanished")) {

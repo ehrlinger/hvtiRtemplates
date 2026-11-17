@@ -1568,6 +1568,24 @@ test_that("stacked integer64 IDs are paired by value, not by their bits", {
   }
 })
 
+test_that("a WHERE value equal to an integer64 identifier is refused", {
+  skip_if_not_installed("bit64")
+  skip_if_not_installed("arrow")
+  # The guard compares WHERE's values with the identifiers' text. An integer64 MRN written as "0" matched nothing,
+  # so the literal passed the guard and was saved in the recorded condition.
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, "Integer64", 42L, renv = FALSE))
+  ids <- bit64::as.integer64(123456789000 + 1:3)
+  d <- data.frame(ccfid = ids, id2 = ids, age = c(50, 70, 80))
+  arrow::write_parquet(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.parquet"))
+  suppressMessages(hvtiRutilities::register_data(file = "built.parquet", key = "ccfid", root = root))
+  cfg <- hvtiRutilities::study_config(root)
+  err <- refusal(read_job_data(cfg, where = quote(id2 != 123456789001)))
+  expect_match(err, "also a patient identifier in the data")
+  expect_false(grepl("123456789001", err, fixed = TRUE))
+  expect_identical(nrow(read_job_data(cfg, where = quote(age > 60))$data), 2L)
+})
+
 test_that("the imputation setting is checked", {
   d <- data.frame(ccfid = rep(1:2, 2L), imp = rep(1:2, each = 2L), age = 50:53)
   cfg <- stacked_study(d, key = c("ccfid", "imp"))

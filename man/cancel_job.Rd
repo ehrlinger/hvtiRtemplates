@@ -18,10 +18,10 @@ cancel_job(
 \item{grace}{Numeric(1). Seconds to wait after \code{SIGTERM} before
 \code{SIGKILL}.}
 
-\item{other_host}{Character(1). For a job recorded running on another
-host, \code{"refuse"} (the default) stops with an error naming that host,
-and \code{"abandon"} records the run ended without signalling anything.
-Ignored for a job on this host.}
+\item{other_host}{Character(1). For a job recorded running or submitted on
+another host, \code{"refuse"} (the default) stops with an error naming that
+host, and \code{"abandon"} records the run \code{cancelled} without signalling
+anything. Ignored for a job on this host.}
 
 \item{quiet}{Logical(1). \code{FALSE} prints the job's state afterwards,
 as \code{\link[=job_status]{job_status()}} does. Defaults to the family option \code{hvti.quiet}; an
@@ -57,8 +57,8 @@ time, such as a render started without \code{\link[=submit_job]{submit_job()}}, 
 refused rather than signalled by its pid alone.
 
 A process can only be checked and signalled on the host it runs on, so a
-job recorded on another host is refused, naming the host to cancel it
-from, unless \code{other_host = "abandon"}: then nothing is signalled, and
+job recorded running or submitted on another host is refused, naming the
+host to cancel it from, unless \code{other_host = "abandon"}: then nothing is signalled, and
 the run is recorded \code{cancelled}, with a reason saying so, and its
 progress file removed. Use it only once that host's session is gone and the
 job is confirmed not running there, for a render left running there is not
