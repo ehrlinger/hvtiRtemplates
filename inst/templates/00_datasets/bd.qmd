@@ -439,7 +439,7 @@ if (is.null(.found)) {
     .rebuild_state <- paste0(.rebuild_state, " The KEY (", toString(KEY), ") has changed since the registered version, ",
                              "which lacks ", toString(.key_gone), ", so nothing is compared.")
   } else {
-    .comparison <- tryCatch(hvtiRdatabuild::compare_built(.join(.baseline), .join(.as_read), id_col = .id),
+    .comparison <- tryCatch(hvtiRdatabuild::compare_built(.join(.baseline), .join(.as_read), id = .id),
                             error = function(e) .bd_stop("rebuild", conditionMessage(e)))
     .rows <- attr(.comparison, "rows")
     # The patients on one side only are identifiers: the console has them, the report their count.
