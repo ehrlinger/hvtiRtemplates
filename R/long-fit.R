@@ -1,33 +1,33 @@
 #' Stop a long fit from starting anywhere but a background run
 #'
 #' @description
-#' A template calls this just before an expensive \code{cache_fit()}, once
-#' \code{hvtiRutilities::cache_would_fit()} has said the fit will be computed
+#' A template calls this just before an expensive `cache_fit()`, once
+#' `hvtiRutilities::cache_would_fit()` has said the fit will be computed
 #' rather than loaded. With no cached result it stops and says to run the job
-#' with \code{\link{run_job}}, because a fit that runs for hours dies with the
+#' with [run_job()], because a fit that runs for hours dies with the
 #' Workbench session that started it: the console, a chunk run by hand, the
-#' Render button, and a \code{quarto render} typed in the Terminal tab, which is
-#' a child of the session too, \code{nohup} or not. Only a render started by
-#' \code{\link{run_job}} or \code{\link{submit_job}} passes, with a cached result
+#' Render button, and a `quarto render` typed in the Terminal tab, which is
+#' a child of the session too, `nohup` or not. Only a render started by
+#' [run_job()] or [submit_job()] passes, with a cached result
 #' or an explicit opt-in. Once the fit is cached, the Render button works again
 #' and re-renders the job from the cache.
 #'
 #' @details
-#' A render started by \code{submit_job()} carries \env{HVTI_JOB_MARKER}, which
+#' A render started by `submit_job()` carries \env{HVTI_JOB_MARKER}, which
 #' is how it is told apart. The opt-in is
-#' \code{options(hvtiRtemplates.allow_interactive_fit = TRUE)} in the session, or
-#' \env{HVTI_ALLOW_LONG_FIT} set to \code{"true"}, which a render's own R
+#' `options(hvtiRtemplates.allow_interactive_fit = TRUE)` in the session, or
+#' \env{HVTI_ALLOW_LONG_FIT} set to `"true"`, which a render's own R
 #' process inherits where an option set in the session does not: the package's
 #' tests and the template gallery render small fits that way. Set either only
 #' for a fit you know to be short.
 #'
-#' @param name Character. The \code{cache_fit()} name, or several when one long step writes several caches;
-#'   each cache file is \code{<dir>/<name>.rds}, and the call is refused while any of them is missing.
-#' @param dir Character(1). The \code{cache_fit()} directory.
+#' @param name Character. The `cache_fit()` name, or several when one long step writes several caches;
+#'   each cache file is `<dir>/<name>.rds`, and the call is refused while any of them is missing.
+#' @param dir Character(1). The `cache_fit()` directory.
 #' @param why Character(1). Why the fit is long, shown in the error.
-#' @param refit Logical(1). \code{TRUE} when the job will recompute the fit even though a cached file exists (the
-#'   template's \code{REFIT}); the cached file then does not make the call safe, so it is refused too.
-#' @return \code{invisible(FALSE)} when the fit may proceed; otherwise an error.
+#' @param refit Logical(1). `TRUE` when the job will recompute the fit even though a cached file exists (the
+#'   template's `REFIT`); the cached file then does not make the call safe, so it is refused too.
+#' @return `invisible(FALSE)` when the fit may proceed; otherwise an error.
 #' @examples
 #' dir <- file.path(tempdir(), "guard-long-fit-example")
 #' dir.create(dir, showWarnings = FALSE)

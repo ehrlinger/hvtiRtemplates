@@ -8,7 +8,7 @@ guard_long_fit(name, dir, why, refit = FALSE)
 }
 \arguments{
 \item{name}{Character. The \code{cache_fit()} name, or several when one long step writes several caches;
-each cache file is \code{<dir>/<name>.rds}, and the call is refused while any of them is missing.}
+each cache file is \verb{<dir>/<name>.rds}, and the call is refused while any of them is missing.}
 
 \item{dir}{Character(1). The \code{cache_fit()} directory.}
 
@@ -24,11 +24,11 @@ template's \code{REFIT}); the cached file then does not make the call safe, so i
 A template calls this just before an expensive \code{cache_fit()}, once
 \code{hvtiRutilities::cache_would_fit()} has said the fit will be computed
 rather than loaded. With no cached result it stops and says to run the job
-with \code{\link{run_job}}, because a fit that runs for hours dies with the
+with \code{\link[=run_job]{run_job()}}, because a fit that runs for hours dies with the
 Workbench session that started it: the console, a chunk run by hand, the
-Render button, and a \code{quarto render} typed in the Terminal tab, which is
+Render button, and a \verb{quarto render} typed in the Terminal tab, which is
 a child of the session too, \code{nohup} or not. Only a render started by
-\code{\link{run_job}} or \code{\link{submit_job}} passes, with a cached result
+\code{\link[=run_job]{run_job()}} or \code{\link[=submit_job]{submit_job()}} passes, with a cached result
 or an explicit opt-in. Once the fit is cached, the Render button works again
 and re-renders the job from the cache.
 }

@@ -3,40 +3,40 @@
 #' These templates are supported: they render, they are tested, and they are
 #' the intended starting point for a new analysis job.
 #'
-#' A template is named \code{<prefix>.qmd}, or
-#' \code{<prefix>-<qualifier>.qmd} where one prefix carries several job
+#' A template is named `<prefix>.qmd`, or
+#' `<prefix>-<qualifier>.qmd` where one prefix carries several job
 #' types, and lives in a numbered directory named for the taxonomy folder it
-#' scaffolds into, so \code{folder} is read from the tree rather than looked
-#' up. A qualified template is shown, and selected, as \code{<prefix>.<qualifier>},
-#' e.g. \code{dc.trends}, the spelling a job's name uses; the file keeps its
-#' dash, and \code{"dc-trends"} is still accepted as input. The directory's
+#' scaffolds into, so `folder` is read from the tree rather than looked
+#' up. A qualified template is shown, and selected, as `<prefix>.<qualifier>`,
+#' e.g. `dc.trends`, the spelling a job's name uses; the file keeps its
+#' dash, and `"dc-trends"` is still accepted as input. The directory's
 #' leading digits order the folders and are stripped from
-#' \code{folder}. The placement test requires the job catalog and skips when
+#' `folder`. The placement test requires the job catalog and skips when
 #' it is absent. Its internal lookup helper uses the catalog's
-#' \code{(prefix, qualifier)} row, falling back to
-#' \code{\link{hvti_taxonomy}} when the catalog or matching row is absent.
+#' `(prefix, qualifier)` row, falling back to
+#' [hvti_taxonomy()] when the catalog or matching row is absent.
 #' A separate test checks that every template directory names a taxonomy
 #' folder, including when the catalog is absent.
 #'
-#' @return A data frame, of class \code{hvti_template_list}, with columns
-#'   \code{name}, \code{prefix},
-#'   \code{qualifier}, \code{folder}, \code{title}, \code{description},
-#'   \code{call} and \code{file}. \code{title} and \code{description} say
+#' @return A data frame, of class `hvti_template_list`, with columns
+#'   `name`, `prefix`,
+#'   `qualifier`, `folder`, `title`, `description`,
+#'   `call` and `file`. `title` and `description` say
 #'   what the template is for, from the template catalog
-#'   (\code{\link{template_catalog}}), and are \code{NA} for a template it
+#'   ([template_catalog()]), and are `NA` for a template it
 #'   does not list.
-#'   \code{call} is the \code{\link{add_job}} call that scaffolds the
+#'   `call` is the [add_job()] call that scaffolds the
 #'   template, with only the arguments it requires and runnable as printed,
-#'   e.g. \code{add_job("dc.gfup", subject = "cohort", type = "eda")}. The
-#'   \code{subject} and \code{type} shown are the template's own defaults;
-#'   change them to name the job. \code{folder} is the
+#'   e.g. `add_job("dc.gfup", subject = "cohort", type = "eda")`. The
+#'   `subject` and `type` shown are the template's own defaults;
+#'   change them to name the job. `folder` is the
 #'   taxonomy name with the directory's ordering digits stripped, so
-#'   \code{20_distributions} reports as \code{distributions}.
-#'   \code{qualifier} is \code{NA} for a prefix carrying a single template.
-#'   Printed whole, it shows only \code{name}, \code{folder} and
-#'   \code{title}, the title cut to fit the console's width, since the other
+#'   `20_distributions` reports as `distributions`.
+#'   `qualifier` is `NA` for a prefix carrying a single template.
+#'   Printed whole, it shows only `name`, `folder` and
+#'   `title`, the title cut to fit the console's width, since the other
 #'   columns would wrap every row. In a console too narrow for the three,
-#'   \code{folder} is left out, then \code{title}. The other columns are still
+#'   `folder` is left out, then `title`. The other columns are still
 #'   in the data, and a selection of columns prints as selected.
 #' @export
 #' @examples
@@ -78,7 +78,7 @@ template_list <- function() {
 }
 
 #' @rdname template_list
-#' @param x A data frame returned by \code{template_list()}.
+#' @param x A data frame returned by `template_list()`.
 #' @param ... Passed to the data frame print method.
 #' @export
 print.hvti_template_list <- function(x, ...) {
@@ -179,17 +179,17 @@ print.hvti_template_list <- function(x, ...) {
 
 #' Path to a supported template
 #'
-#' @param prefix Analysis prefix, e.g. \code{"ac"}, or a template's full name,
-#'   e.g. \code{"dc.trends"} (or \code{"dc-trends"}), which carries its
-#'   qualifier and leaves \code{qualifier} \code{NULL}. See
-#'   \code{\link{template_list}}.
-#' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
-#'   \code{dc}. Required only where a prefix carries more than one template;
+#' @param prefix Analysis prefix, e.g. `"ac"`, or a template's full name,
+#'   e.g. `"dc.trends"` (or `"dc-trends"`), which carries its
+#'   qualifier and leaves `qualifier` `NULL`. See
+#'   [template_list()].
+#' @param qualifier Job type within the prefix, e.g. `"trends"` for
+#'   `dc`. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
-#' @return The full path, as \code{character(1)}. A template the catalog
+#' @return The full path, as `character(1)`. A template the catalog
 #'   marks deprecated still resolves, with a warning naming its replacement.
-#'   A template's name before a rename, such as \code{dp.trends}, now
-#'   \code{dc.trends}, is an error naming the new name.
+#'   A template's name before a rename, such as `dp.trends`, now
+#'   `dc.trends`, is an error naming the new name.
 #' @export
 #' @examples
 #' template_path("ac")

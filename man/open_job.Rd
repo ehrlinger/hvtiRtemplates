@@ -8,7 +8,7 @@ open_job(prefix, subject, type, root = NULL, qualifier = NULL, dir)
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
-\code{\link{template_list}}, or a template's full name as reported in
+\code{\link[=template_list]{template_list()}}, or a template's full name as reported in
 its \code{name} column, e.g. \code{"dc.trends"}; the dash spelling
 \code{"dc-trends"} is accepted too. A full name carries the qualifier, so
 \code{qualifier} must then be left \code{NULL}.}
@@ -17,13 +17,13 @@ its \code{name} column, e.g. \code{"dc.trends"}; the dash spelling
 \code{"cohort"}. A subject names a statistical endpoint only when the
 job analyses one. Your choice: there is no list of valid values, and
 every job of one analysis should share it (see Details). Must
-match \code{^[A-Za-z0-9_]+$}: \code{.} separates the filename's fields,
+match \verb{^[A-Za-z0-9_]+$}: \code{.} separates the filename's fields,
 and \code{-} separated them in names before 2026-10, so neither may
 appear here.}
 
 \item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.
 Your choice, like \code{subject}, and shared the same way. Must match
-\code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
+\verb{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
 
 \item{root}{Character. Any directory inside the study. \code{NULL}, the
 default, starts from the working directory, and is an error outside a
@@ -32,7 +32,7 @@ study.}
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
 \code{dp}. Required only where a prefix carries more than one template;
 omitting it there is an error naming the choices, never a silent pick.
-Restricted to \code{[A-Za-z0-9_]+}, because \code{.} separates the
+Restricted to \verb{[A-Za-z0-9_]+}, because \code{.} separates the
 filename's fields.}
 
 \item{dir}{Deprecated: the old name of \code{root}. It works, with a warning,
@@ -43,17 +43,17 @@ The path to the job file, invisibly.
 }
 \description{
 Finds the study root from \code{root}, creates the job with
-\code{\link{add_job}} when it does not exist, and opens it in the editor.
+\code{\link[=add_job]{add_job()}} when it does not exist, and opens it in the editor.
 An existing job is opened as it stands, never overwritten.
 }
 \details{
 The study root is the nearest directory at or above \code{root} holding
-\code{_study.yml}, so this can be called from anywhere inside a study.
-Naming, prefix and qualifier rules are those of \code{\link{add_job}}.
+\verb{_study.yml}, so this can be called from anywhere inside a study.
+Naming, prefix and qualifier rules are those of \code{\link[=add_job]{add_job()}}.
 A job scaffolded before 2026-10, named
-\code{<subject>-<type>-<prefix>[-<qualifier>].qmd}, is found and opened
+\verb{<subject>-<type>-<prefix>[-<qualifier>].qmd}, is found and opened
 under that name. So is a job scaffolded under a template's name before a
-rename, such as \code{graphs/dp.trends.<subject>.<type>.qmd} for
+rename, such as \verb{graphs/dp.trends.<subject>.<type>.qmd} for
 \code{dc.trends}, when the call names the new one.
 The editor is opened only in an interactive session.
 }
@@ -66,5 +66,5 @@ open_job(prefix = "ac", subject = "death", type = "eda", root = root)
 unlink(root, recursive = TRUE)
 }
 \seealso{
-\code{\link{add_job}}, \code{\link{render_job}}
+\code{\link[=add_job]{add_job()}}, \code{\link[=render_job]{render_job()}}
 }

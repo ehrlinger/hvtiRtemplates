@@ -3,45 +3,45 @@
 #' @description
 #' Reads a legacy source job and copies its deterministic choices into a
 #' supported template. Writes the migrated job and an evidence report beside
-#' it. Review the remaining \code{EDIT:} markers before rendering the job.
+#' it. Review the remaining `EDIT:` markers before rendering the job.
 #'
 #' @details
-#' A converter is available for \code{dc-tables}, \code{dc-gfup},
-#' \code{dc-trends}, and \code{dc-eda}, each interpreting its own source
+#' A converter is available for `dc-tables`, `dc-gfup`,
+#' `dc-trends`, and `dc-eda`, each interpreting its own source
 #' choices; choices the interpreter does not recognize remain for review.
-#' Legacy EDA reports migrate into \code{dc-eda} with
-#' \code{SECTIONS <- c("continuous", "percent", "count")}, the pages they
+#' Legacy EDA reports migrate into `dc-eda` with
+#' `SECTIONS <- c("continuous", "percent", "count")`, the pages they
 #' drew. Naming a deprecated template warns and writes the job from its
 #' replacement. Naming a template by its name before a rename, such as
-#' \code{dp-trends}, is an error naming the new one, \code{dc-trends}; a
+#' `dp-trends`, is an error naming the new one, `dc-trends`; a
 #' legacy source whose own file name carries the old name,
-#' such as \code{dp.trends.sas}, migrates into the renamed template without
+#' such as `dp.trends.sas`, migrates into the renamed template without
 #' a warning, since that name is not the caller's to change. A
 #' template with no converter yet still migrates: it is scaffolded with every
-#' \code{EDIT:} marker kept, the evidence travels with it, and the report
+#' `EDIT:` marker kept, the evidence travels with it, and the report
 #' says the migration adapter is not yet available.
 #'
-#' Relative \code{path}, \code{lst_path}, \code{log_path} and \code{reference_path}
-#' paths resolve against the working directory, as in any R function; \code{root}
+#' Relative `path`, `lst_path`, `log_path` and `reference_path`
+#' paths resolve against the working directory, as in any R function; `root`
 #' only locates the study root. Each file must exist, be readable and lie
 #' beneath that root, and symbolic links are checked after resolution. The
 #' evidence files are never modified. The report records whether the listing
 #' and log were supplied, found beside the source, or not found.
 #'
-#' The job uses the filename and study folder selected by \code{\link{add_job}}.
-#' Its report replaces the \code{.qmd} extension with \code{-migration.md} and
+#' The job uses the filename and study folder selected by [add_job()].
+#' Its report replaces the `.qmd` extension with `-migration.md` and
 #' records study-relative evidence paths, SHA-256 checksums, the package
 #' version, translated choices, unresolved choices, and ignored material.
 #' Source text quoted in the report is masked, whichever converter ran:
 #' string literal contents (R raw strings included), SAS and R comment bodies,
-#' \code{\%let} values (whole, even when a macro-quoting function such as
-#' \code{\%str()} holds a semicolon), \code{\%put} text, unquoted
-#' \code{title} and \code{footnote} text, and digit runs of five or more are
-#' replaced by placeholders such as \code{"[string]"} or \code{[text]}, and
+#' `%let` values (whole, even when a macro-quoting function such as
+#' `%str()` holds a semicolon), `%put` text, unquoted
+#' `title` and `footnote` text, and digit runs of five or more are
+#' replaced by placeholders such as `"[string]"` or `[text]`, and
 #' Quarto or R Markdown prose and YAML are withheld.
 #' Statement keywords, variable names and operators remain. Absolute paths in
 #' any remaining text are redacted. The job is not masked. SAS log errors
-#' leave a blocking \code{EDIT:} marker in the generated job.
+#' leave a blocking `EDIT:` marker in the generated job.
 #' Listings, RTF files and log messages may contain patient observations.
 #' Their text is withheld; locations remain available for local review.
 #' Logs retain severity, error codes and recognized aggregate counts only.
@@ -59,36 +59,36 @@
 #'   directory or absolute.
 #' @param subject Grouping topic for the new job's filename. It is a
 #'   statistical endpoint only when the job analyses one; an endpoint-free
-#'   job may use a topic such as \code{"cohort"}.
+#'   job may use a topic such as `"cohort"`.
 #' @param type Analysis-type field for the new job's filename.
-#' @param prefix Template prefix, such as \code{"dc"}, or a template's full
-#'   name, such as \code{"dc-tables"}, which carries its qualifier and leaves
-#'   \code{qualifier} \code{NULL}. Read from the SAS
-#'   filename when \code{NULL}. When given without \code{qualifier}, the
+#' @param prefix Template prefix, such as `"dc"`, or a template's full
+#'   name, such as `"dc-tables"`, which carries its qualifier and leaves
+#'   `qualifier` `NULL`. Read from the SAS
+#'   filename when `NULL`. When given without `qualifier`, the
 #'   qualifier is still read from the filename's second field if that field
 #'   names one of this prefix's templates.
-#' @param qualifier Template qualifier, such as \code{"tables"}. Read from the
-#'   SAS filename when \code{NULL}. When given without \code{prefix}, the
+#' @param qualifier Template qualifier, such as `"tables"`. Read from the
+#'   SAS filename when `NULL`. When given without `prefix`, the
 #'   prefix is read from the filename and this qualifier is used. Filename
-#'   fields must match \code{[A-Za-z0-9_]+}.
+#'   fields must match `[A-Za-z0-9_]+`.
 #' @param lst_path Optional path to a SAS listing, relative to the working
 #'   directory or absolute. Defaults to the same-named file beside
-#'   \code{path} when present.
+#'   `path` when present.
 #' @param log_path Optional path to a SAS log, relative to the working directory
-#'   or absolute. Defaults to the same-named file beside \code{path} when
+#'   or absolute. Defaults to the same-named file beside `path` when
 #'   present.
 #' @param reference_path Optional vector of paths to output references, such as
 #'   RTF or DOCX files, relative to the working directory or absolute. They
 #'   record comparison targets, not analysis choices.
 #' @param root Any directory in the study, used only to locate the study root.
-#'   Defaults to the directory of \code{path}.
+#'   Defaults to the directory of `path`.
 #' @param source,lst,log,reference,dir Deprecated: the old names of
-#'   \code{path}, \code{lst_path}, \code{log_path}, \code{reference_path} and
-#'   \code{root}. They work, with a warning, for one more release; giving an
+#'   `path`, `lst_path`, `log_path`, `reference_path` and
+#'   `root`. They work, with a warning, for one more release; giving an
 #'   old name with its new one is an error.
 #'
 #' @return The migrated job path, invisibly. The report is written beside it.
-#' @seealso \code{\link{add_job}}, \code{\link{template_list}}
+#' @seealso [add_job()], [template_list()]
 #' @examples
 #' \donttest{
 #' root <- file.path(tempdir(), "migrate-job-example")

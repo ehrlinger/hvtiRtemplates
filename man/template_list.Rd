@@ -16,43 +16,43 @@ template_list()
 }
 \value{
 A data frame, of class \code{hvti_template_list}, with columns
-  \code{name}, \code{prefix},
-  \code{qualifier}, \code{folder}, \code{title}, \code{description},
-  \code{call} and \code{file}. \code{title} and \code{description} say
-  what the template is for, from the template catalog
-  (\code{\link{template_catalog}}), and are \code{NA} for a template it
-  does not list.
-  \code{call} is the \code{\link{add_job}} call that scaffolds the
-  template, with only the arguments it requires and runnable as printed,
-  e.g. \code{add_job("dc.gfup", subject = "cohort", type = "eda")}. The
-  \code{subject} and \code{type} shown are the template's own defaults;
-  change them to name the job. \code{folder} is the
-  taxonomy name with the directory's ordering digits stripped, so
-  \code{20_distributions} reports as \code{distributions}.
-  \code{qualifier} is \code{NA} for a prefix carrying a single template.
-  Printed whole, it shows only \code{name}, \code{folder} and
-  \code{title}, the title cut to fit the console's width, since the other
-  columns would wrap every row. In a console too narrow for the three,
-  \code{folder} is left out, then \code{title}. The other columns are still
-  in the data, and a selection of columns prints as selected.
+\code{name}, \code{prefix},
+\code{qualifier}, \code{folder}, \code{title}, \code{description},
+\code{call} and \code{file}. \code{title} and \code{description} say
+what the template is for, from the template catalog
+(\code{\link[=template_catalog]{template_catalog()}}), and are \code{NA} for a template it
+does not list.
+\code{call} is the \code{\link[=add_job]{add_job()}} call that scaffolds the
+template, with only the arguments it requires and runnable as printed,
+e.g. \code{add_job("dc.gfup", subject = "cohort", type = "eda")}. The
+\code{subject} and \code{type} shown are the template's own defaults;
+change them to name the job. \code{folder} is the
+taxonomy name with the directory's ordering digits stripped, so
+\verb{20_distributions} reports as \code{distributions}.
+\code{qualifier} is \code{NA} for a prefix carrying a single template.
+Printed whole, it shows only \code{name}, \code{folder} and
+\code{title}, the title cut to fit the console's width, since the other
+columns would wrap every row. In a console too narrow for the three,
+\code{folder} is left out, then \code{title}. The other columns are still
+in the data, and a selection of columns prints as selected.
 }
 \description{
 These templates are supported: they render, they are tested, and they are
 the intended starting point for a new analysis job.
 }
 \details{
-A template is named \code{<prefix>.qmd}, or
-\code{<prefix>-<qualifier>.qmd} where one prefix carries several job
+A template is named \verb{<prefix>.qmd}, or
+\verb{<prefix>-<qualifier>.qmd} where one prefix carries several job
 types, and lives in a numbered directory named for the taxonomy folder it
 scaffolds into, so \code{folder} is read from the tree rather than looked
-up. A qualified template is shown, and selected, as \code{<prefix>.<qualifier>},
+up. A qualified template is shown, and selected, as \verb{<prefix>.<qualifier>},
 e.g. \code{dc.trends}, the spelling a job's name uses; the file keeps its
 dash, and \code{"dc-trends"} is still accepted as input. The directory's
 leading digits order the folders and are stripped from
 \code{folder}. The placement test requires the job catalog and skips when
 it is absent. Its internal lookup helper uses the catalog's
-\code{(prefix, qualifier)} row, falling back to
-\code{\link{hvti_taxonomy}} when the catalog or matching row is absent.
+\verb{(prefix, qualifier)} row, falling back to
+\code{\link[=hvti_taxonomy]{hvti_taxonomy()}} when the catalog or matching row is absent.
 A separate test checks that every template directory names a taxonomy
 folder, including when the catalog is absent.
 }
