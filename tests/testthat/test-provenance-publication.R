@@ -1041,7 +1041,7 @@ test_that("a render that loses the race for a stale lock puts the winner's lock 
                                  .package = "hvtiRtemplates")
   lock <- .provenance_lock_path(root)
   # Both renders judge the dead owner's lock stale. Between the second one's
-  # judgement and its move, the first takes the lock over, so the second's move
+  # judgment and its move, the first takes the lock over, so the second's move
   # takes the first one's live lock.
   real_rename <- .rename_provenance_file
   moves <- 0L
@@ -1073,7 +1073,7 @@ test_that("a stale lock with no owner file is not confused with a render that ha
   # long enough ago for the lock to read stale.
   dir.create(lock, recursive = TRUE)
   Sys.setFileTime(lock, Sys.time() - 600)
-  # Between the second render's judgement and its move, a first render takes
+  # Between the second render's judgment and its move, a first render takes
   # the lock over and has not yet written its owner file either.
   real_rename <- .rename_provenance_file
   moves <- 0L
