@@ -171,10 +171,10 @@ utils::write.csv(
   delivered, file.path(study_dir("datasets", new_root), "built.csv"), row.names = FALSE
 )
 register_data(
-  new_root,
   file = "built.csv",
   role = "study",
-  population = "Synthetic full cohort"
+  population = "Synthetic full cohort",
+  root = new_root
 )
 ```
 

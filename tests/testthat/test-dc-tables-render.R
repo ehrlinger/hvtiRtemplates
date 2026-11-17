@@ -19,7 +19,7 @@ dc_tables_study <- function(.local_envir = parent.frame(), extra = NULL) {
   )
   if (!is.null(extra)) built <- cbind(built, extra)
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, file = "built.csv")))
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv")))
   root
 }
 

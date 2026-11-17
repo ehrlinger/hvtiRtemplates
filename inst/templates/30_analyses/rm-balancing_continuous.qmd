@@ -35,7 +35,7 @@ suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.2.0") stop("This template needs hvtiRpropensity >= 0.2.0.", call. = FALSE)
+if (utils::packageVersion("hvtiRpropensity") < "0.2.3") stop("This template needs hvtiRpropensity >= 0.2.3.", call. = FALSE)
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -163,7 +163,7 @@ knitr::kable(.missing_values)
 model_formula <- stats::reformulate(PREDICTORS, response = .response)
 fit <- hvtiRpropensity::bs_continuous(
   model_formula, d, outcome_col = OUTCOME, id_col = .id,
-  imputation_col = IMPUTATION, n_strata = N_STRATA, covariates = PREDICTORS
+  imputation_col = IMPUTATION, n_strata = N_STRATA, covariate_cols = PREDICTORS
 )
 ```
 

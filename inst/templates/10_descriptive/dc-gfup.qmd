@@ -53,8 +53,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
-  stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles; ",
+if (utils::packageVersion("hvtiRutilities") < "1.5.24") {
+  stop("This job needs hvtiRutilities >= 1.5.24 for followup_check()'s 15th and 85th percentiles and the *_col(s) names; ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
@@ -306,7 +306,7 @@ before sharing a report that contains an identifier.
 # The checks are hvtiRutilities::followup_check(), the function the EDA report
 # calls too, so the two reports cannot disagree. It checks every choice above
 # before computing anything, and names every missing column at once.
-fc <- hvtiRutilities::followup_check(d, event = EVENT, followup = FOLLOWUP, identifier = IDENTIFIER,
+fc <- hvtiRutilities::followup_check(d, time_cols = FOLLOWUP, event_col = EVENT, id_col = IDENTIFIER,
                                      max_rows = MAX_REVIEW_ROWS, stats = .followup_stats)
 cohort_counts <- fc$cohort
 review_rows <- fc$review
@@ -407,7 +407,7 @@ if (anyNA(group_values)) {
 # restored below, and marked "(group)" where it would repeat a column of this table.
 .gd <- d[FOLLOWUP]
 .gd$.gfup_group <- group_values
-.gm <- hvtiRutilities::proc_means(.gd, vars = FOLLOWUP, class = ".gfup_group", stats = .followup_stats)
+.gm <- hvtiRutilities::proc_means(.gd, var_cols = FOLLOWUP, class_cols = ".gfup_group", stats = .followup_stats)
 group_table <- data.frame(interval = .gm$variable, group = as.character(.gm$.gfup_group), n = .gm$n, missing = .gm$nmiss,
                           mean = .gm$mean, sd = .gm$std, min = .gm$min, p15 = .gm$p15, median = .gm$median,
                           p75 = .gm$p75, p85 = .gm$p85, p90 = .gm$p90, max = .gm$max, total = .gm$sum)

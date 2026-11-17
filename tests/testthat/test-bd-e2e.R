@@ -79,7 +79,7 @@ test_that("bd registers a dated version with its build record, and ac reads it",
 
   # ac, chunk by chunk as the hazard chain tests run it, reads the registered version.
   built <- readRDS(file.path(hvtiRutilities::study_dir("datasets", root), cfg$built))
-  cc <- hvtiRutilities::cohort_counts(built, event = "dead", time = "iv_dead")
+  cc <- hvtiRutilities::cohort_counts(built, event_col = "dead", time_col = "iv_dead")
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
   env <- hazard_env(root)

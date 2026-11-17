@@ -246,7 +246,7 @@ hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE, cleanup = FALSE, 
 d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
-hvtiRutilities::register_data(root, "built.csv")
+hvtiRutilities::register_data(root = root, file = "built.csv")
 cfg <- hvtiRutilities::study_config(start = root)
 job <- read_job_data(cfg, id_col = "ccfid", where = quote(age >= 18))
 job$record

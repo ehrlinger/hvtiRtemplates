@@ -36,10 +36,11 @@ suppressPackageStartupMessages(library(hvtiRbootstrap))
 
 # The report's own floor, checked here before the screen runs: below 0.9.3
 # boot_select() records `sle` and `sls` and then selects on AIC, so a screen of
-# hours would finish and then be refused by the report.
-if (utils::packageVersion("hvtiRbootstrap") < "0.9.3") {
-  stop("This runner needs hvtiRbootstrap >= 0.9.3; ",
-       utils::packageVersion("hvtiRbootstrap"), " is installed. boot_bag() ",
+# hours would finish and then be refused by the report. 0.9.8 is the runner's own
+# floor: boot_select() takes n_boot = from that release.
+if (utils::packageVersion("hvtiRbootstrap") < "0.9.8") {
+  stop("This runner needs hvtiRbootstrap >= 0.9.8; ",
+       utils::packageVersion("hvtiRbootstrap"), " is installed. boot_select() takes n_boot = from 0.9.8. boot_bag() ",
        "converts a boot_select() screen into the bag the report reads, and ",
        "nothing below 0.9.2 has such a function; below 0.9.3 the screen ",
        "recorded `sle` and `sls` but selected on AIC, so the report's provenance ",
@@ -86,7 +87,7 @@ selection <- attr(job$record, "selection")
 # reaches the screen.
 model <- stats::as.formula(paste0("survival::Surv(", TIME, ", ", EVENT, ") ~ ", paste(POOL, collapse = " + ")))
 d <- job$data[all.vars(model)]
-screen <- boot_select(d, model, fit_cox, n_rep = N_REP, sle = SLE, sls = SLS, seed = SEED)
+screen <- boot_select(d, model, fit_cox, n_boot = N_REP, sle = SLE, sls = SLS, seed = SEED)
 bag <- boot_bag(screen, base_params = BASE, requested = length(POOL),
                 manifest = list(sha256 = job$provenance$sha256))
 attr(bag, "hvti_provenance") <- list(data = list(job$provenance), artifacts = list(), analysis = NULL, cohort = NULL,

@@ -98,6 +98,9 @@ base <- hazard(survival::Surv(iv_dead, dead) ~ 1, data = d, dist = "multiphase",
 # Segmented rows fitted without their start stop here, before the screen.
 hvtiRtemplates:::.check_segmented_fit(segmented, base)
 t0 <- Sys.time()
+# The generator the draws come from, recorded before the screen runs, as
+# hvtiRbootstrap::boot_bag() records it for the other runners.
+rng_kind <- RNGkind()
 # EDIT: the scope, written literally per phase: the same columns as POOL.
 # id: the patient of each row, given as values rather than a column of `d`, so
 # the identifier still never reaches the screen's data. NULL resamples rows.
@@ -110,14 +113,36 @@ bs <- hzr_bootstrap(base, n_boot = N_BOOT, seed = SEED, scope = list(early = ~ a
 # it was written in, the data included. The first base parameter must be free:
 # the report's health check watches its spread.
 offered <- c(early = length(POOL), constant = length(POOL))
+# The screen's definition, recorded as hvtiRbootstrap::boot_bag() records it for
+# the bc, bl and br runners, so boot_pool_chunks() checks that chunks ran the
+# same model rather than reading them as "hazard runner (unrecorded)". The
+# formula is the base fit's with each phase's scope and then the phases, each
+# one's shapes and which are held, as text: a formula object carries its
+# environment, and with it the data. Chunks whose phases differ fit different
+# models and are refused rather than pooled. A commit, when the installer
+# recorded one, says which codebase ran; a version alone cannot.
+th_sha <- utils::packageDescription("TemporalHazard")$RemoteSha
+if (is.null(th_sha)) th_sha <- NA_character_
+model_text <- paste0(deparse1(stats::formula(base)), "; ",
+                     paste0(names(bs$scope), ": ", vapply(bs$scope, deparse1, character(1)), collapse = "; "),
+                     "; phases: ", hvtiRtemplates:::.hazard_phase_text(phases))
 bag <- list(
   n_boot = bs$n_success, seed = SEED, slentry = SLENTRY, slstay = SLSTAY, max_steps = MAX_STEPS,
   base_params = c("early.log_mu", "constant.log_mu"), requested = offered, usable = offered, n_rows = nrow(d),
   elapsed_mins = as.numeric(difftime(Sys.time(), t0, units = "mins")),
   manifest = list(sha256 = job$provenance$sha256), th_version = format(utils::packageVersion("TemporalHazard")),
+  th_sha = th_sha, method = "stepwise", fraction = 1, fitter = "TemporalHazard::hzr_bootstrap",
+  formula = model_text, rng_kind = rng_kind,
   boot = bs[c("replicates", "summary", "n_success", "n_failed")],
   resampled = if (segmented) "patients" else "rows"
 )
+# The hvtiR family's shared provenance record: seven fields, each present and
+# typed, NA where a value is unknown.
+# A seed that is not a whole number in integer range is recorded NA, not coerced with a warning.
+seed_int <- if (is.numeric(SEED) && length(SEED) == 1L && !is.na(SEED) && SEED == trunc(SEED) &&
+                  abs(SEED) <= .Machine$integer.max) as.integer(SEED) else NA_integer_
+bag$provenance <- list(package = "TemporalHazard", version = bag$th_version, sha = th_sha,
+                       method = "stepwise", seed = seed_int, rng_kind = rng_kind, time = t0)
 attr(bag, "hvti_provenance") <- list(data = list(job$provenance), artifacts = list(), analysis = NULL, cohort = NULL,
                                      selection = selection)
 out_dir <- file.path(hvtiRutilities::study_dir("estimates", cfg$root), paste0(SUBJECT, "-", TYPE))

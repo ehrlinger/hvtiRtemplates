@@ -203,6 +203,33 @@ test_that("the bh runner resamples patients on start/stop rows, and its replicat
   expect_gt(length(called$id), length(unique(called$id)))
   bag <- readRDS(file.path(hvtiRutilities::study_dir("estimates", root), "dead_pa-hz", "bh.chunk01.rds"))
   expect_identical(bag$resampled, "patients")
+  # The screen's definition, as boot_bag() records it for the other runners.
+  expect_identical(bag$fitter, "TemporalHazard::hzr_bootstrap")
+  expect_identical(bag$method, "stepwise")
+  expect_identical(bag$fraction, 1)
+  expect_match(bag$formula, "Surv(iv_start, iv_dead, dead) ~ 1; early: ~age + x1", fixed = TRUE)
+  expect_match(bag$formula, paste0("; phases: ", hvtiRtemplates:::.hazard_phase_text(env$phases)), fixed = TRUE)
+  # A second chunk of the same screen pools; one whose phases hold another
+  # shape fitted a different model, and is refused rather than pooled.
+  again <- bag
+  again$seed <- bag$seed + 1L
+  expect_no_error(hvtiRbootstrap::boot_pool_chunks(list(bag, again)))
+  other <- env$phases
+  other$early <- TemporalHazard::hzr_phase("cdf", t_half = 0.05, nu = 1, m = 1, fixed = c("t_half", "nu"))
+  again$formula <- sub(hvtiRtemplates:::.hazard_phase_text(env$phases), hvtiRtemplates:::.hazard_phase_text(other),
+                       bag$formula, fixed = TRUE)
+  expect_false(identical(again$formula, bag$formula))
+  expect_error(hvtiRbootstrap::boot_pool_chunks(list(bag, again)), "the model formula")
+  expect_type(bag$rng_kind, "character")
+  expect_length(bag$rng_kind, 3L)
+  # The family's seven-field record, every field present and typed.
+  prov <- bag$provenance
+  expect_identical(names(prov), c("package", "version", "sha", "method", "seed", "rng_kind", "time"))
+  expect_identical(prov$package, "TemporalHazard")
+  expect_identical(prov$version, format(utils::packageVersion("TemporalHazard")))
+  expect_true(is.character(prov$sha) && length(prov$sha) == 1L)
+  expect_identical(prov$seed, as.integer(bag$seed))
+  expect_s3_class(prov$time, "POSIXct")
   reps <- bag$boot$replicates
   expect_gt(length(unique(reps$replicate)), 1L)
   first <- reps$estimate[reps$parameter == unique(reps$parameter)[[1L]]]

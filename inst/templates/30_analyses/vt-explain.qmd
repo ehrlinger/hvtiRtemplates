@@ -61,7 +61,7 @@ options(rf.cores = 1L, mc.cores = 1L)
 # The versions this template was verified against on 2026-10-22. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
-for (.floor in list(c("hvtiRpropensity", "0.2.0"), c("hvtiPlotR", "2.8.9"))) {
+for (.floor in list(c("hvtiRpropensity", "0.2.3"), c("hvtiPlotR", "2.8.23"))) {
   if (utils::packageVersion(.floor[1]) < .floor[2]) {
     stop("This job needs ", .floor[1], " >= ", .floor[2], "; ", utils::packageVersion(.floor[1]),
          " is installed.\nUpdate it, then re-render.", call. = FALSE)
@@ -246,7 +246,7 @@ if (!nrow(.mc)) {
   }))
   .mc$facet <- paste("Received", .mc$received)
   .mc$arm <- .mc$arm_of_curve
-  .fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet = "facet", arm = "arm")) +
+  .fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet_col = "facet", arm_col = "arm")) +
     labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
   save_figure(.fig, "vt-explain-twin-curves")
   .fig
@@ -510,7 +510,7 @@ if (!is.null(.sc) && nrow(.sc)) {
                 x[order(x$time), ])
   }))
   .sc$arm <- .sc$arm_of_curve
-  .fig <- plot(hvtiPlotR::hv_rmst_curves(.sc, tau = HORIZON, facet = "stratum", arm = "arm")) +
+  .fig <- plot(hvtiPlotR::hv_rmst_curves(.sc, tau = HORIZON, facet_col = "stratum", arm_col = "arm")) +
     labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
   save_figure(.fig, "vt-explain-stratum-curves")
   .fig

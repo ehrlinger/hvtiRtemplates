@@ -306,8 +306,8 @@ test_that("a rebuilt joined dataset is reported against the joined dataset, not 
   echo <- data.frame(ccfid = rep(d$ccfid[1:3], each = 2L), echo_date = rep(c(95, 120), 3L),
                      ef = c(50, 55, 45, 40, 52, 48))
   utils::write.csv(echo, file.path(datasets, "echo.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(rf$root, "echo.csv", dataset = "echo", role = "named",
-                                                 kind = "ancillary", key = c("ccfid", "echo_date")))
+  suppressMessages(hvtiRutilities::register_data(root = rf$root, file = "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key_cols = c("ccfid", "echo_date")))
   rf$cfg <- hvtiRutilities::study_config(start = rf$root)
   status <- function(read) {
     # One run's reads at a time, as a new setup leaves the ledger.

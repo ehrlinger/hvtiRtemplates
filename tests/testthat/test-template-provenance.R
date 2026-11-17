@@ -608,7 +608,7 @@ test_that("event-time provenance chunks retain observed TIME and EVENT cohorts",
 
   for (prefix in names(cases)) {
     case <- cases[[prefix]]
-    cc <- hvtiRutilities::cohort_counts(case$data, event = tolower(case$event), time = tolower(case$time))
+    cc <- hvtiRutilities::cohort_counts(case$data, event_col = tolower(case$event), time_col = tolower(case$time))
     env <- new.env(parent = globalenv())
     env$.in <- file.path(tempdir(), paste0(prefix, "-provenance.rmarkdown"))
     env$SUBJECT <- "provenance"
@@ -635,7 +635,7 @@ make_provenance_study <- function(root) {
     file.path(hvtiRutilities::study_dir("datasets", root), "cohort.csv"),
     row.names = FALSE
   )
-  suppressMessages(hvtiRutilities::register_data(root, "cohort.csv"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "cohort.csv"))
   .install_provenance_hooks(root)
   invisible(root)
 }

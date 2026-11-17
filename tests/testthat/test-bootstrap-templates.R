@@ -64,15 +64,15 @@ test_that("every runner stops until FINISHED is set, before it reads or writes a
   }
 })
 
-test_that("each boot_select() runner refuses an hvtiRbootstrap below 0.9.3 before it screens", {
+test_that("each boot_select() runner refuses an hvtiRbootstrap below 0.9.8 before it screens", {
   for (prefix in boot_thin) {
     boot_skip_unless_stack(prefix)
     root <- rf_study(rf_mrn_data(id = "ccfid"))
     env <- new.env(parent = globalenv())
     testthat::with_mocked_bindings(
       expect_error(boot_run_runner(prefix, root, env),
-                   "^This runner needs hvtiRbootstrap >= 0[.]9[.]3; 0[.]9[.]2 is installed", info = prefix),
-      packageVersion = function(pkg, ...) package_version("0.9.2"), .package = "utils"
+                   "^This runner needs hvtiRbootstrap >= 0[.]9[.]8; 0[.]9[.]7 is installed", info = prefix),
+      packageVersion = function(pkg, ...) package_version("0.9.7"), .package = "utils"
     )
     expect_false(exists("job", envir = env, inherits = FALSE), info = prefix)
   }

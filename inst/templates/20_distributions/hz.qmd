@@ -231,8 +231,8 @@ if (!is.null(job_data$attrition)) {
 ```{r}
 #| label: tbl-cohort
 #| tbl-cap: "Analysable patients, events and censored patients"
-cc <- cohort_counts(d, event = EVENT, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+cc <- cohort_counts(d, time_col = TIME, event_col = EVENT)
+assert_cohort(d, expected = EXPECTED, time_col = TIME, event_col = EVENT)
 
 # A time of zero, a death on the day of operation, leaves the hazard likelihood
 # undefined, and the fit below would stop on an optimizer error that names

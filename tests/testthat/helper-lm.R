@@ -71,7 +71,7 @@ lm_study <- function(.local_envir = parent.frame(), data = lm_data()) {
     file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
     row.names = FALSE
   )
-  suppressMessages(hvtiRutilities::register_data(root, file = "built.csv"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv"))
   root
 }
 
@@ -88,7 +88,7 @@ lm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = c
   ))
   utils::write.csv(d, file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(
-    root, file = "built.csv", role = "study", population = "Synthetic cohort"
+    root = root, file = "built.csv", role = "study", population = "Synthetic cohort"
   ))
   job <- add_job("lm", "outcome", "analysis", root = root, qualifier = qualifier)
   replacements <- switch(
@@ -217,8 +217,8 @@ lp_register_match <- function(root, rows, foreign = 0L, flag = lp_data()$match[r
     d <- rbind(d, data.frame(ccfid = 9200000L + seq_len(foreign), match = rep(1L, foreign)))
   }
   utils::write.csv(d, file.path(root, "00_datasets", "match_file.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "match_file.csv", dataset = "match_file", role = "named",
-                                                 key = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "match_file.csv", dataset = "match_file", role = "named",
+                                                 key_cols = "ccfid"))
 }
 
 # lg: a study whose built dataset the lg job calibrates, and the job scaffolded

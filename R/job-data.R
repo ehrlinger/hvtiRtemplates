@@ -802,7 +802,7 @@
 #' d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 #' utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
 #'                  row.names = FALSE)
-#' hvtiRutilities::register_data(root, "built.csv")
+#' hvtiRutilities::register_data(root = root, file = "built.csv")
 #' cfg <- hvtiRutilities::study_config(start = root)
 #' job <- read_job_data(cfg, id_col = "ccfid", where = quote(age >= 18))
 #' job$record
@@ -1031,7 +1031,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     named <- names(cfg$additional_datasets)
     stop("JOIN names `", join, "`, which is not registered in _study.yml",
          if (length(named)) paste0(" (registered: ", toString(named), ")"), ". Register it with ",
-         "hvtiRutilities::register_data(kind = \"ancillary\", key = ...), or correct JOIN.", call. = FALSE)
+         "hvtiRutilities::register_data(kind = \"ancillary\", key_cols = ...), or correct JOIN.", call. = FALSE)
   }
   shape <- .registered_shape(cfg, join)
   if (!is.null(shape$kind) && !identical(shape$kind, "ancillary")) {
@@ -1446,7 +1446,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
          "Rerun the upstream job with the current template, then rerun this one.", call. = FALSE)
   }
   want <- lapply(want[keys], as.integer)
-  cc <- hvtiRutilities::cohort_counts(d, event = event, time = time)
+  cc <- hvtiRutilities::cohort_counts(d, time_col = time, event_col = event)
   if (!identical(cc[keys], want)) {
     stop("The upstream job (", source, ") counted N=", want$n, " / events=", want$n_events, " / censored=",
          want$n_censored, "; this job counts N=", cc$n, " / events=", cc$n_events, " / censored=", cc$n_censored,

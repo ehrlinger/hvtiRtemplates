@@ -52,8 +52,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.2.0") {
-  stop("This job needs hvtiRpropensity >= 0.2.0, the package's floor (ps_stddiff() and ps_stddiff_perm() date from 0.1.10); ",
+if (utils::packageVersion("hvtiRpropensity") < "0.2.3") {
+  stop("This job needs hvtiRpropensity >= 0.2.3, the package's floor (ps_stddiff() and ps_stddiff_perm() date from 0.1.10); ",
        utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
@@ -251,7 +251,7 @@ if (!(is.numeric(THRESHOLD) && length(THRESHOLD) == 1L && !is.na(THRESHOLD) && T
 if (!(is.numeric(N_PERM) && length(N_PERM) == 1L && !is.na(N_PERM) && N_PERM >= 0 && N_PERM == round(N_PERM))) {
   stop("N_PERM must be 0, to skip the permutation reference, or a whole number of permutations.", call. = FALSE)
 }
-vars <- list(gaussian = GAUSSIAN, nong_ord = NONG_ORD, binary = BINARY, categorical = CATEGORICAL)
+vars <- list(gaussian_cols = GAUSSIAN, nong_ord_cols = NONG_ORD, binary_cols = BINARY, categorical_cols = CATEGORICAL)
 all_vars <- unlist(vars, use.names = FALSE)
 if (!length(all_vars)) stop("Name at least one variable under GAUSSIAN, NONG_ORD, BINARY or CATEGORICAL.", call. = FALSE)
 twice <- unique(all_vars[duplicated(all_vars)])
@@ -304,8 +304,8 @@ if (!is.null(WEIGHT)) comparisons$Weighted <- list(data = d, weight = WEIGHT)
 
 run_stddiff <- function(cmp) {
   hvtiRpropensity::ps_stddiff(cmp$data, treatment_col = group_col,
-                              gaussian = vars$gaussian, nong_ord = vars$nong_ord,
-                              binary = vars$binary, categorical = vars$categorical,
+                              gaussian_cols = vars$gaussian_cols, nong_ord_cols = vars$nong_ord_cols,
+                              binary_cols = vars$binary_cols, categorical_cols = vars$categorical_cols,
                               weight_col = cmp$weight)
 }
 results <- lapply(comparisons, run_stddiff)
@@ -356,8 +356,8 @@ if (N_PERM > 0) {
   for (nm in setdiff(names(comparisons), "Weighted")) {
     perm[[nm]] <- hvtiRpropensity::ps_stddiff_perm(
       comparisons[[nm]]$data, treatment_col = group_col,
-      gaussian = vars$gaussian, nong_ord = vars$nong_ord,
-      binary = vars$binary, categorical = vars$categorical,
+      gaussian_cols = vars$gaussian_cols, nong_ord_cols = vars$nong_ord_cols,
+      binary_cols = vars$binary_cols, categorical_cols = vars$categorical_cols,
       n_perm = as.integer(N_PERM), seed = SEED
     )$tables$stddiff_perm
     perm[[nm]]$label <- ifelse(is.na(perm[[nm]]$label), perm[[nm]]$variable, perm[[nm]]$label)
