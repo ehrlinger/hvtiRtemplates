@@ -202,7 +202,7 @@ test_that("dc-gfup warns of an operation year of few patients only when the figu
   # figure's 365.2425-day year, so it joins 1992 and not the crowded 1991.
   panels <- list(a = list(data = data.frame(operation_year = c(rep(1991.5, 20L), 1991.9995, 1992.5))),
                  b = list(data = data.frame(operation_year = rep(1991.5, 20L))))
-  env <- list(d = d, EVENT = "dead", FOLLOWUP = "fu", CHECKS = list(), OPYRS = "op", ORIGIN_YEAR = 1990,
+  env <- list(d = d, EVENT = "dead", FOLLOWUP = "fu", CHECKS = list(), OPYRS = "op", .origin_year = 1990,
               fp = list(data = data.frame(panel = c("a", "b"), type = "followup"), tables = list(panels = panels)),
               figure_drawn = TRUE)
   f <- identifiability_chunk(template_path("dc", "gfup"), env)
