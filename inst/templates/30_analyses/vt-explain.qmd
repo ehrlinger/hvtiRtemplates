@@ -61,7 +61,7 @@ options(rf.cores = 1L, mc.cores = 1L)
 # The versions this template was verified against on 2026-10-22. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
-for (.floor in list(c("hvtiRpropensity", "0.2.0"), c("hvtiPlotR", "2.8.9"))) {
+for (.floor in list(c("hvtiRpropensity", "0.2.3"), c("hvtiPlotR", "2.8.23"))) {
   if (utils::packageVersion(.floor[1]) < .floor[2]) {
     stop("This job needs ", .floor[1], " >= ", .floor[2], "; ", utils::packageVersion(.floor[1]),
          " is installed.\nUpdate it, then re-render.", call. = FALSE)

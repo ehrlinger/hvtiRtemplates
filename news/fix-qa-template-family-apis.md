@@ -2,9 +2,11 @@
   argument names (`time_col`, `event_col`, `time_cols`, `id_col`, `var_cols`,
   `class_cols`, `key_cols`, `facet_col`, `arm_col`, `covariate_cols`, the
   `ps_stddiff()` `*_cols` arguments and `boot_select(n_boot =)`), and pass
-  `root =` last to `declare_data()` and `register_data()`. The new names arrive
-  in the family packages' next releases, which these templates therefore need;
-  the old names keep working there for one release, with a warning. `read_job_data()`'s cohort check calls
+  `root =` last to `declare_data()` and `register_data()`. The floors move to
+  the releases that carry the new names: `hvtiRutilities` 1.5.24, `hvtiPlotR`
+  2.8.23, `hvtiRpropensity` 0.2.3 and `hvtiRbootstrap` 0.9.8, in `DESCRIPTION`
+  and in the version checks of the templates and runners that call them. The
+  old names keep working in those releases, with a warning. `read_job_data()`'s cohort check calls
   `cohort_counts()` the same way. **A job already in a study keeps the old
   names until it is brought up to date with `upgrade_job()`; it renders, with
   deprecation warnings, until those packages drop the old names.**
@@ -20,4 +22,4 @@
   older chunks record no model; rerun those chunks with the current runner.
 * `dc-tables`' scatter-plot matrix caption says that its panels carry no
   coefficient and that the table above gives Spearman's (`hvtiPlotR`'s default
-  from its next release) and Pearson's.
+  from 2.8.23) and Pearson's.

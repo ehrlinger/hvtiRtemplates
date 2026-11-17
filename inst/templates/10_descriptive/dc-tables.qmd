@@ -63,8 +63,8 @@ if (utils::packageVersion("hvtiRtables") < "1.0.13") {
        "PROP_CI's intervals and summaries that a study's own sd() or median() cannot break; ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
-  stop("This job needs hvtiPlotR >= 2.7.14 for hv_correlation_matrix(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.23") {
+  stop("This job needs hvtiPlotR >= 2.8.23 for hv_correlation_matrix(var_cols =); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -617,8 +617,8 @@ if (STDDIFF) {
          "since COMPARE's \"smd\" is a different number for the same thing.", call. = FALSE)
   }
   if (!requireNamespace("hvtiRpropensity", quietly = TRUE) ||
-        utils::packageVersion("hvtiRpropensity") < "0.2.0") {
-    stop("STDDIFF needs hvtiRpropensity >= 0.2.0 for ps_stddiff().", call. = FALSE)
+        utils::packageVersion("hvtiRpropensity") < "0.2.3") {
+    stop("STDDIFF needs hvtiRpropensity >= 0.2.3 for ps_stddiff().", call. = FALSE)
   }
   buckets <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
   tbl <- hvtiRtables::hv_tbl_compare(tbl, stddiff_values(d_table, BY, buckets, MEAN_SD, ORDINAL, GROUP_1),

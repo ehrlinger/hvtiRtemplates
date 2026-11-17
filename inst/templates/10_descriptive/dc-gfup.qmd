@@ -53,8 +53,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
-  stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles; ",
+if (utils::packageVersion("hvtiRutilities") < "1.5.24") {
+  stop("This job needs hvtiRutilities >= 1.5.24 for followup_check()'s 15th and 85th percentiles and the *_col(s) names; ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.18") {

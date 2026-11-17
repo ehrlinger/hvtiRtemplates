@@ -62,9 +62,10 @@ TYPE    <- "build"
 # Registering claims the build record only from hvtiRutilities 1.5.3, and declaring the working file
 # (declare_data()) needs 1.5.12; an older one would record a bd cut as legacy or cannot declare it. The named
 # checks need proc_print(), released in 1.5.17, and the rebuild comparison compare_built(), in hvtiRdatabuild 0.3.3.
-# register_data() and declare_data() take file = from 1.5.20 (built = before).
-if (utils::packageVersion("hvtiRutilities") < "1.5.20") {
-  .bd_stop("setup", "this job needs hvtiRutilities >= 1.5.20 for register_data(file =); ",
+# register_data() and declare_data() take file = from 1.5.20 (built = before), and
+# followup_check(), proc_print() and declare_data() take the *_col(s) names from 1.5.24.
+if (utils::packageVersion("hvtiRutilities") < "1.5.24") {
+  .bd_stop("setup", "this job needs hvtiRutilities >= 1.5.24 for register_data(file =) and declare_data(key_cols =); ",
            utils::packageVersion("hvtiRutilities"), " is installed.")
 }
 if (!requireNamespace("hvtiRdatabuild", quietly = TRUE) || utils::packageVersion("hvtiRdatabuild") < "0.3.3") {
