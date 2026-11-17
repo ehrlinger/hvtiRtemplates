@@ -476,8 +476,8 @@ if (.learning_filled) {
   .learning_note <- ""
 }
 .learning_right <- if (.learning_boot) paste0(" (for the rightmost point, the whole-cohort bootstrap, drawn ",
-                                             "as a square, the cohort's count: the expected number in each ",
-                                             "draw)") else ""
+                                              "as a square, the cohort's count: the expected number in each ",
+                                              "draw)") else ""
 .learning_caps <- list(
   tbl = paste(paste0("Learning curve. Error is the mean out-of-bag error rate of the refits at each ",
                      "fraction; agreement is between the refits' top variables by importance. Smallest class",
