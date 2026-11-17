@@ -189,7 +189,7 @@ set_choices <- function(job, choices) {
 # Scaffold one demo job by its "<prefix>-<qualifier>" name and apply its choices.
 demo_job <- function(root, name) {
   parts <- strsplit(name, "-", fixed = TRUE)[[1L]]
-  job <- add_job(parts[[1L]], "cohort", "demo", dir = root, qualifier = parts[[2L]])
+  job <- add_job(parts[[1L]], "cohort", "demo", root = root, qualifier = parts[[2L]])
   set_choices(job, demo_choices[[name]])
 }
 

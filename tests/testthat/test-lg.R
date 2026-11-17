@@ -10,7 +10,7 @@ test_that("lg is a descriptive template that add_job() scaffolds, and its catalo
   expect_identical(row$folder, "descriptive")
   expect_identical(row$call, "add_job(\"lg\", subject = \"dead\", type = \"calibration\")")
   root <- lm_study()
-  job <- add_job("lg", "dead", "calibration", dir = root)
+  job <- add_job("lg", "dead", "calibration", root = root)
   expect_identical(basename(job), "lg.dead.calibration.qmd")
   expect_identical(normalizePath(dirname(job)), normalizePath(hvtiRutilities::study_dir("descriptive", root)))
   src <- readLines(job, warn = FALSE)

@@ -296,7 +296,7 @@
            call. = FALSE)
     }
     if (identical(style, "ribbon")) {
-      message("BAND_AT is ignored under BAND_STYLE = \"ribbon\".")
+      .hvti_inform("BAND_AT is ignored under BAND_STYLE = \"ribbon\".")
     } else {
       # Refused here, before any band is computed, rather than when the figure is drawn.
       for (v in names(at)) {

@@ -55,7 +55,7 @@ rm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = c
     root = root, file = "built.csv", role = "study", population = "Synthetic cohort"
   ))
   subject <- if (identical(qualifier, "balancing_continuous")) "exposure" else "outcome"
-  job <- add_job("rm", subject, "analysis", dir = root, qualifier = qualifier)
+  job <- add_job("rm", subject, "analysis", root = root, qualifier = qualifier)
   lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
   response <- if (identical(qualifier, "balancing_continuous")) "exposure" else "outcome"
   lines[grepl("^OUTCOME <- ", lines)] <- sprintf('OUTCOME <- "%s"', response)

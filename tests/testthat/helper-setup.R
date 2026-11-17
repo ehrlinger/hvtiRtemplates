@@ -89,7 +89,7 @@ render_unregistered_ac <- function(final = FALSE, quiet = TRUE, .local_envir = p
   root <- normalizePath(root)
   saveRDS(hazard_data(), file.path(hvtiRutilities::study_dir("datasets", root), "built.rds"))  # nolint: object_usage_linter.
   suppressMessages(hvtiRutilities::declare_data(root = root, file = "built.rds"))
-  job <- add_job("ac", "dead", "pa", dir = root)
+  job <- add_job("ac", "dead", "pa", root = root)
   lines <- readLines(job, warn = FALSE)
   writeLines(gsub("EDIT:", "SET:", lines, fixed = TRUE), job)
   withr::local_envvar(R_LIBS = paste(.libPaths(), collapse = .Platform$path.sep), .local_envir = .local_envir)

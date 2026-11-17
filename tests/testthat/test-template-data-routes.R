@@ -242,7 +242,7 @@ test_that("every template that reads its own data offers the join and records th
     # patients by ID digest, so it offers no JOIN.
     if (!grepl("read_job_data(.cfg, dataset = DATASET", text, fixed = TRUE) || basename(f) == "lp-mirror.qmd") next
     readers <- readers + 1L
-    for (arg in c("join = JOIN", "join_vars = JOIN_VARS", "reduce = REDUCE", "join_key = JOIN_KEY")) {
+    for (arg in c("join = JOIN", "join_cols = JOIN_VARS", "reduce = REDUCE", "join_key_cols = JOIN_KEY")) {
       expect_true(grepl(arg, text, fixed = TRUE), info = paste(basename(f), arg))
     }
     choices <- data_route_chunks(f)$choices

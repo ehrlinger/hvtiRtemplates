@@ -79,7 +79,7 @@ BASE <- "age"
 # The data contract. read_job_data() reads the rows, leaves MRN and eMRN out,
 # and records the selection; the bag carries that selection to the report.
 cfg <- hvtiRutilities::study_config()
-job <- hvtiRtemplates::read_job_data(cfg, dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id = ID, key = KEY)
+job <- hvtiRtemplates::read_job_data(cfg, dataset = DATASET, analysis_set = ANALYSIS_SET, where = WHERE, id_col = ID, key_cols = KEY)
 selection <- attr(job$record, "selection")
 
 # Only the model's columns are resampled, so the patient identifier never

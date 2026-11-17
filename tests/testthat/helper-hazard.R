@@ -88,7 +88,7 @@ hazard_env <- function(root) {
 # counts, its rows as a selection, and the time and event it fitted.
 hazard_lineage <- function(root, where = NULL, time = "iv_dead", event = "dead") {
   cfg <- hvtiRutilities::study_config(root)
-  job <- read_job_data(cfg, where = where)
+  job <- read_job_data(cfg, id_col = "ccfid", where = where)
   list(
     data = list(job$provenance),
     analysis = list(time = list(variable = time), event = list(variable = event, event = 1L, censored = 0L)),

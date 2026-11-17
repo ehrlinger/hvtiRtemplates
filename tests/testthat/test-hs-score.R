@@ -14,7 +14,7 @@ hs_score_labels <- c("read-upstream", "tbl-data", "cohort", "model", "tbl-score"
 
 # The scaffolded job's lines, as add_job() writes them into the study.
 hs_score_scaffold <- function(root) {
-  path <- suppressMessages(add_job("hs", subject = "dead_pa", type = "hz", dir = root, qualifier = "score"))
+  path <- suppressMessages(add_job("hs", subject = "dead_pa", type = "hz", root = root, qualifier = "score"))
   readLines(path, warn = FALSE)
 }
 

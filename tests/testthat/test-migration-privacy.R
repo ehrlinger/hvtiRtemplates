@@ -9,8 +9,8 @@ test_that("public migrations retain evidence locations without copying patient r
     before <- tools::md5sum(c(listing, reference))
     job <- migrate_job(
       file.path(root, "descriptive", paste0(stem, ".sas")),
-      "cohort", "eda", "dc", qualifier, lst = listing,
-      reference = reference, dir = root
+      "cohort", "eda", "dc", qualifier, lst_path = listing,
+      reference_path = reference, root = root
     )
     report <- paste(readLines(sub("[.]qmd$", "-migration.md", job)), collapse = "\n")
     expect_false(grepl("SYNTHETIC_SECRET|0[.]123456789|0[.]987654321", report))
@@ -27,7 +27,7 @@ test_that("public migration blocks jobs whose SAS log has coded errors", {
   log <- file.path(root, "descriptive", "dc.tables.log")
   writeLines("ERROR 180-322: Statement is not valid.", log)
   job <- migrate_job(
-    file.path(root, "descriptive", "dc.tables.sas"), "cohort", "eda", "dc", "tables", log = log, dir = root
+    file.path(root, "descriptive", "dc.tables.sas"), "cohort", "eda", "dc", "tables", log_path = log, root = root
   )
   expect_true(any(grepl("EDIT:.*SAS.*error", readLines(job))))
   report <- paste(readLines(sub("[.]qmd$", "-migration.md", job)), collapse = "\n")
@@ -49,7 +49,7 @@ test_that("table migration withholds inline data for every supported SAS alias",
       "%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);"
     ), source)
     before <- tools::md5sum(source)
-    job <- migrate_job(source, "cohort", "eda", "dc", "tables", dir = root)
+    job <- migrate_job(source, "cohort", "eda", "dc", "tables", root = root)
     report <- paste(readLines(sub("[.]qmd$", "-migration.md", job)), collapse = "\n")
     expect_false(grepl("PATIENT_SENTINEL", report, fixed = TRUE), info = alias)
     expect_match(report, "line=3; text=Inline SAS data content withheld", fixed = TRUE)
@@ -72,7 +72,7 @@ test_that("table migration withholds same-line and unterminated inline records",
       "%desc_tab(vartype=continuous,input=built,varlist=/* Demography */ age);",
       "data local; input patient $ age;", records
     ), source)
-    job <- migrate_job(source, "cohort", "eda", "dc", "tables", dir = root)
+    job <- migrate_job(source, "cohort", "eda", "dc", "tables", root = root)
     report <- paste(readLines(sub("[.]qmd$", "-migration.md", job)), collapse = "\n")
     expect_false(grepl("PATIENT_SENTINEL", report, fixed = TRUE))
     expect_match(report, "Inline SAS data content withheld", fixed = TRUE)

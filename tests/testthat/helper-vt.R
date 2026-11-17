@@ -111,7 +111,7 @@ vt_render_fixture <- function(.local_envir = parent.frame()) {
     lines
   }
   jobs <- vapply(c("fit", "explain"), function(q) {
-    job <- add_job("vt", "dead", "vt", dir = root, qualifier = q)
+    job <- add_job("vt", "dead", "vt", root = root, qualifier = q)
     lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
     if (q == "fit") {
       for (kv in list(c("TIME", '"time"'), c("STATUS", '"event"'), c("ARM", '"arm"'), c("ARMS", 'c("A", "B")'),

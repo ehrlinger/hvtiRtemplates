@@ -164,10 +164,10 @@ if (!identical(.s$id_key, hvtiRtemplates:::.id_key_fingerprint(.id_key))) {
 # The checksum of every dataset in manifest.yaml is checked before anything is read.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .jd <- hvtiRtemplates::read_job_data(.cfg, dataset = .s$read$dataset, analysis_set = .s$read$analysis_set,
-                                     where = .s$read$where, id = .s$id, key = .s$read$key, join = .s$read$join,
-                                     join_vars = .s$read$join_vars, reduce = .s$read$reduce,
-                                     join_key = .s$read$join_key, one_row_per_patient = TRUE,
-                                     imputation = .s$imputation)
+                                     where = .s$read$where, id_col = .s$id, key_cols = .s$read$key, join = .s$read$join,
+                                     join_cols = .s$read$join_vars, reduce = .s$read$reduce,
+                                     join_key_cols = .s$read$join_key, one_row_per_patient = TRUE,
+                                     imputation_col = .s$imputation)
 .d_all <- .jd$data
 if (!is.null(.s$imputation)) .d_all <- .d_all[.d_all[[.s$imputation]] == .s$imputation_use, , drop = FALSE]
 .provenance_data <- c(.provenance_data, list(.jd$provenance), if (!is.null(.jd$provenance_join)) list(.jd$provenance_join))

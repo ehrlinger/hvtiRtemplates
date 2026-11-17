@@ -1,10 +1,10 @@
 tables_migrate <- function(root, evidence = TRUE) {
   migrate_job(
     file.path(root, "descriptive", "dc.tables.sas"), "cohort", "eda", "dc", "tables",
-    lst = if (evidence) file.path(root, "descriptive", "dc.tables.lst") else NULL,
-    log = if (evidence) file.path(root, "descriptive", "dc.tables.log") else NULL,
-    reference = if (evidence) file.path(root, "documents", "general.rtf") else NULL,
-    dir = root
+    lst_path = if (evidence) file.path(root, "descriptive", "dc.tables.lst") else NULL,
+    log_path = if (evidence) file.path(root, "descriptive", "dc.tables.log") else NULL,
+    reference_path = if (evidence) file.path(root, "documents", "general.rtf") else NULL,
+    root = root
   )
 }
 

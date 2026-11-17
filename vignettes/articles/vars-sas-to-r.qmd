@@ -297,7 +297,7 @@ ID           <- "ccfid"
 
 # The data step, with the new argument. vars() came from the study's R/vars.R.
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, vars = vars)
+                                          where = WHERE, id_col = ID, vars = vars)
 d <- job_data$data
 ```
 

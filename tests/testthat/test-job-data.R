@@ -189,7 +189,7 @@ job_study <- function(data, .local_envir = parent.frame()) {
 
 test_that("read_job_data() reads, selects and records what it did", {
   cfg <- job_study(d0)
-  out <- read_job_data(cfg, where = rlang::exprs(age >= 18, hx_chf == 1))
+  out <- read_job_data(cfg, id_col = "ccfid", where = rlang::exprs(age >= 18, hx_chf == 1))
   expect_identical(out$data$ccfid, c(2L, 3L, 5L))
   expect_false(any(c("MRN", "eMRN") %in% names(out$data)))
   expect_s3_class(out$record, "data.frame")
@@ -206,7 +206,7 @@ test_that("read_job_data() reads, selects and records what it did", {
 
 test_that("KEY follows the ID when the ID falls back", {
   cfg <- job_study(d0[-1])
-  out <- read_job_data(cfg)
+  out <- read_job_data(cfg, id_col = "ccfid")
   # hvtiRutilities::read_built() lowercases every column name, so the resolved
   # fallback identifier is "mrn", not the "MRN" it was written to disk under.
   expect_identical(attr(out$record, "selection")$id, "mrn")
@@ -220,7 +220,7 @@ test_that("an analysis set the study has not built is named, with the fix", {
   # the setting nor the way out. Checked before hvtiRdatabuild is asked for, so a
   # study without it installed gets this message, not an install prompt.
   cfg <- job_study(d0)
-  e <- expect_error(read_job_data(cfg, analysis_set = "eda"),
+  e <- expect_error(read_job_data(cfg, id_col = "ccfid", analysis_set = "eda"),
                     "ANALYSIS_SET names `eda`, an analysis set this study has not built")
   expect_match(conditionMessage(e), "ANALYSIS_SET <- NULL", fixed = TRUE)
   expect_no_match(conditionMessage(e), "provenance_artifact|missing file")
@@ -228,7 +228,7 @@ test_that("an analysis set the study has not built is named, with the fix", {
 
 test_that("an analysis set with another dataset is refused", {
   cfg <- job_study(d0)
-  expect_error(read_job_data(cfg, dataset = "other", analysis_set = "eda"), "written from the study dataset")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "other", analysis_set = "eda"), "written from the study dataset")
 })
 
 test_that("a job outside a study is told to run study_setup()", {
@@ -336,7 +336,7 @@ test_that(".read_upstream_job_data() stops on a hand-off with no single recorded
 
 test_that(".read_upstream_job_data() rebuilds the upstream rows and returns the selection", {
   cfg <- job_study(d0)
-  up <- read_job_data(cfg, where = rlang::exprs(age >= 18, hx_chf == 1))
+  up <- read_job_data(cfg, id_col = "ccfid", where = rlang::exprs(age >= 18, hx_chf == 1))
   lineage <- list(selection = attr(up$record, "selection"))
   out <- hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list(where = NULL, id = NULL, key = NULL))
   expect_identical(names(out), c("job_data", "selection"))
@@ -350,7 +350,7 @@ test_that(".read_upstream_job_data() rebuilds the upstream rows and returns the 
 
 test_that(".read_upstream_job_data() stops when the rows it rebuilds are not the upstream cohort", {
   cfg <- job_study(d0)
-  up <- read_job_data(cfg, where = quote(age >= 18))
+  up <- read_job_data(cfg, id_col = "ccfid", where = quote(age >= 18))
   sel <- attr(up$record, "selection")
   sel$rows <- 99L
   expect_error(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list()),
@@ -386,7 +386,7 @@ test_that("a WHERE on the ID stops before any row is filtered, and never prints 
   cfg <- job_study(d_ids)
   for (where in list(quote(ccfid != 9001), quote(CCFID != 9001), rlang::exprs(age >= 18, ccfid != 9001),
                      quote(ccfid + 9001), quote(ccfid != nosuch + 9001), rlang::exprs(nosuch > 1, ccfid != 9001))) {
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     info <- paste(deparse(where), collapse = " ")
     expect_match(err, "patient identifier", info = info)
     expect_match(err, "`ccfid`", fixed = TRUE, info = info)
@@ -403,17 +403,17 @@ test_that("a WHERE on a dropped SSN or masterid stops and never prints its value
   cfg <- job_study(data.frame(ccfid = 9001:9006, ssn_base = ssn, masterid0 = 7000001:7000006,
                               ssn_missing = c(0, 1, 0, 1, 1, 1), age = c(15, 40, 55, NA, 70, 80)))
   for (where in list(quote(ssn_base == 100000005), quote(masterid0 != 7000002), quote(age > 18 & ssn_base > 0))) {
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     info <- paste(deparse(where), collapse = " ")
     expect_match(err, "patient identifier", info = info)
     expect_false(grepl("100000005|7000002", err), info = info)
     expect_false(grepl("not found", err, fixed = TRUE), info = info)
   }
   # A value equal to one, under another column's name, is refused as well.
-  err <- refusal(read_job_data(cfg, where = quote(age != 100000003)))
+  err <- refusal(read_job_data(cfg, id_col = "ccfid", where = quote(age != 100000003)))
   expect_match(err, "`ssn_base`", fixed = TRUE)
   expect_false(grepl("100000003", err, fixed = TRUE))
-  out <- read_job_data(cfg, where = quote(ssn_missing == 1))
+  out <- read_job_data(cfg, id_col = "ccfid", where = quote(ssn_missing == 1))
   expect_identical(nrow(out$data), 4L)
   expect_false(any(c("ssn_base", "masterid0") %in% names(out$data)))
 })
@@ -421,22 +421,22 @@ test_that("a WHERE on a dropped SSN or masterid stops and never prints its value
 test_that("a WHERE on MRN or eMRN stops even when neither is the ID, and on a fallback ID", {
   cfg <- job_study(d0)
   for (where in list(quote(MRN > 103), quote(emrn == 201), quote(EMRN %in% c(201, 202)))) {
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "patient identifier", info = deparse(where))
     expect_false(grepl("10[0-9]|20[0-9]", err), info = deparse(where))
   }
   fallback <- job_study(d0[-1])
-  err <- refusal(read_job_data(fallback, where = quote(mrn != 101)))
+  err <- refusal(read_job_data(fallback, id_col = "ccfid", where = quote(mrn != 101)))
   expect_match(err, "patient identifier")
   expect_false(grepl("101", err, fixed = TRUE))
   # pt_mrn is an ordinary column: its name only contains mrn.
-  expect_identical(nrow(read_job_data(cfg, where = quote(pt_mrn > 3))$data), 3L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(pt_mrn > 3))$data), 3L)
 })
 
 test_that("a WHERE on a KEY column that is not the ID is still allowed, and shown masked", {
   long <- data.frame(ccfid = c(9001L, 9001L, 9002L), iv_echo = c(0.1, 6.2, 0.3))
   cfg <- job_study(long)
-  out <- read_job_data(cfg, where = quote(iv_echo < 5), key = c("ccfid", "iv_echo"))
+  out <- read_job_data(cfg, id_col = "ccfid", where = quote(iv_echo < 5), key_cols = c("ccfid", "iv_echo"))
   sel <- attr(out$record, "selection")
   expect_identical(sel$where, "iv_echo < 5")
   expect_identical(sel$where_shown, "iv_echo < <value>")
@@ -451,13 +451,13 @@ test_that("a KEY that repeats in a stale registered version says the source was 
   cfg <- job_study(long)
   utils::write.csv(long[-2, ], file.path(hvtiRutilities::study_dir("datasets", cfg$root), "built.csv"),
                    row.names = FALSE)
-  err <- tryCatch(read_job_data(cfg, key = c("ccfid", "dt_surg")), error = conditionMessage)
+  err <- tryCatch(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "dt_surg")), error = conditionMessage)
   expect_match(err, "1 value of KEY repeats", fixed = TRUE)
   expect_match(err, "has changed since it was registered", fixed = TRUE)
   expect_match(err, "update_manifest()", fixed = TRUE)
   expect_false(grepl("9001", err, fixed = TRUE))
   # A current registration says so, and how to list the repeated rows.
-  err <- tryCatch(read_job_data(job_study(long), key = c("ccfid", "dt_surg")), error = conditionMessage)
+  err <- tryCatch(read_job_data(job_study(long), id_col = "ccfid", key_cols = c("ccfid", "dt_surg")), error = conditionMessage)
   expect_false(grepl("has changed since", err, fixed = TRUE))
   expect_match(err, "registered version of `study` is current", fixed = TRUE)
   expect_false(grepl("9001", err, fixed = TRUE))
@@ -465,7 +465,7 @@ test_that("a KEY that repeats in a stale registered version says the source was 
   # from outside that study, or inside another one.
   cfg <- job_study(long)
   withr::local_dir(job_study(data.frame(ccfid = 1:2))$root)
-  err <- tryCatch(read_job_data(cfg, key = c("ccfid", "dt_surg")), error = conditionMessage)
+  err <- tryCatch(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "dt_surg")), error = conditionMessage)
   call <- sub("^.*List the repeated rows with (.*) and correct them in the build\\.$", "\\1", err)
   expect_match(call, "^hvtiRutilities::duplicate_keys\\(")
   dk <- suppressMessages(eval(str2lang(call), baseenv()))
@@ -474,7 +474,7 @@ test_that("a KEY that repeats in a stale registered version says the source was 
 
 test_that("a selection saved before the refusal is still shown masked, and rebuilding it names the file", {
   cfg <- job_study(d_ids)
-  sel <- attr(read_job_data(cfg, where = quote(age >= 18))$record, "selection")
+  sel <- attr(read_job_data(cfg, id_col = "ccfid", where = quote(age >= 18))$record, "selection")
   # As an upstream job saved it before WHERE on the ID was refused.
   sel$where <- c("ccfid != 9001", "age >= 18")
   differs <- refusal(hvtiRtemplates:::.check_upstream_selection(sel, list(where = quote(ccfid != 9002))))
@@ -493,7 +493,7 @@ test_that("a selection saved before the refusal is still shown masked, and rebui
 
 test_that("an explicit ID or KEY matches its column ignoring case, as read_built() lowercases", {
   cfg <- job_study(d0[-1])
-  out <- read_job_data(cfg, id = "MRN", key = c("MRN", "AGE"))
+  out <- read_job_data(cfg, id_col = "MRN", key_cols = c("MRN", "AGE"))
   sel <- attr(out$record, "selection")
   expect_identical(sel$id, "mrn")
   expect_identical(sel$key, c("mrn", "age"))
@@ -502,18 +502,18 @@ test_that("an explicit ID or KEY matches its column ignoring case, as read_built
 
 test_that("a WHERE that fails to evaluate names the condition", {
   cfg <- job_study(d0)
-  expect_error(read_job_data(cfg, where = quote(AGE > 1)), "WHERE condition `AGE > 1`: .*AGE")
+  expect_error(read_job_data(cfg, id_col = "ccfid", where = quote(AGE > 1)), "WHERE condition `AGE > 1`: .*AGE")
 })
 
 test_that("settings are checked before any data is read", {
   cfg <- job_study(d0)
   # DATASET "absent" is not registered, so every error below must come from the
   # settings check, not the read.
-  expect_error(read_job_data(cfg, dataset = "absent", where = "age >= 18"), "WHERE must be NULL")
-  expect_error(read_job_data(cfg, dataset = "absent", analysis_set = c("a", "b")), "ANALYSIS_SET")
-  expect_error(read_job_data(cfg, dataset = "absent", id = 1), "ID must name one column")
-  expect_error(read_job_data(cfg, dataset = "absent", key = 1), "KEY must be NULL or name")
-  expect_error(read_job_data(cfg, dataset = ""), "DATASET")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", where = "age >= 18"), "WHERE must be NULL")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", analysis_set = c("a", "b")), "ANALYSIS_SET")
+  expect_error(read_job_data(cfg, dataset = "absent", id_col = 1), "ID must name one column")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", key_cols = 1), "KEY must be NULL or name")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = ""), "DATASET")
 })
 
 test_that("an analysis set needs hvtiRdatabuild 0.3.0 or later", {
@@ -531,14 +531,14 @@ test_that("read_job_data() reads an analysis set and keeps its attrition", {
       "    exclude:\n      - reason: under 18\n        when: age < 18\n",
       sep = "", file = cfg$file, append = TRUE)
   suppressMessages(hvtiRdatabuild::write_analysis_set("eda", cfg))
-  out <- read_job_data(cfg, analysis_set = "eda", where = quote(hx_chf == 1))
+  out <- read_job_data(cfg, id_col = "ccfid", analysis_set = "eda", where = quote(hx_chf == 1))
   expect_identical(as.integer(out$data$ccfid), c(2L, 3L, 5L))
   expect_identical(out$record$value[[1L]], "analysis set `eda` of the study dataset")
   expect_s3_class(out$attrition, "data.frame")
   expect_identical(out$attrition$reason, "under 18")
   expect_identical(as.integer(out$attrition$n_excluded), 1L)
   expect_identical(attr(out$record, "selection")$analysis_set, "eda")
-  expect_null(read_job_data(cfg)$attrition)
+  expect_null(read_job_data(cfg, id_col = "ccfid")$attrition)
 })
 
 test_that("a WHERE that reaches a column through .data is masked, and stops", {
@@ -551,12 +551,12 @@ test_that("a WHERE that reaches a column through .data is masked, and stops", {
   # .data naming the ID, MRN or eMRN as a literal stops, ignoring case.
   cfg <- job_study(d_ids)
   for (where in list(quote(.data[["ccfid"]] != 9001), quote(.data$ccfid != 9001), quote(.data[["CCFID"]] + 9001))) {
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "patient identifier", info = deparse(where))
     expect_match(err, "`ccfid`", fixed = TRUE, info = deparse(where))
     expect_false(grepl("9001", err, fixed = TRUE), info = deparse(where))
   }
-  err <- refusal(read_job_data(job_study(d0), where = quote(.data[["mrn"]] > 103)))
+  err <- refusal(read_job_data(job_study(d0), id_col = "ccfid", where = quote(.data[["mrn"]] > 103)))
   expect_match(err, "patient identifier")
   expect_false(grepl("103", err, fixed = TRUE))
 })
@@ -564,7 +564,7 @@ test_that("a WHERE that reaches a column through .data is masked, and stops", {
 test_that("a WHERE that names an ordinary column through .data is allowed, and shown masked", {
   cfg <- job_study(d_ids)
   for (where in list(quote(.data$age >= 18), quote(.data[["age"]] >= 18))) {
-    out <- read_job_data(cfg, where = where)
+    out <- read_job_data(cfg, id_col = "ccfid", where = where)
     expect_identical(out$data$ccfid, c(9002L, 9003L, 9005L, 9006L), info = deparse(where))
     # The masking still hides the values of any condition that uses .data.
     expect_match(attr(out$record, "selection")$where_shown, ">= <value>", fixed = TRUE, info = deparse(where))
@@ -574,16 +574,16 @@ test_that("a WHERE that names an ordinary column through .data is allowed, and s
 test_that("a WHERE whose .data column is not written literally stops, and asks for the name", {
   cfg <- job_study(d_ids)
   for (where in list(quote(.data[[paste0("cc", "fid")]] == 9001), quote(nrow(.data) > 9001))) {
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "name the column", info = deparse(where))
     expect_match(err, "patient identifier", info = deparse(where))
     expect_false(grepl("9001", err, fixed = TRUE), info = deparse(where))
   }
   # An index from outside the data is fixed in first, so it is judged by the column it names.
   nm <- "age"
-  expect_identical(nrow(read_job_data(cfg, where = quote(.data[[nm]] >= 18))$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(.data[[nm]] >= 18))$data), 4L)
   nm <- "ccfid"
-  err <- refusal(read_job_data(cfg, where = quote(.data[[nm]] == 9001)))
+  err <- refusal(read_job_data(cfg, id_col = "ccfid", where = quote(.data[[nm]] == 9001)))
   expect_match(err, "patient identifier (`ccfid`)", fixed = TRUE)
   expect_false(grepl("9001", err, fixed = TRUE))
 })
@@ -593,7 +593,7 @@ test_that("a WHERE that reaches the ID through an outside symbol or condition st
   col <- quote(ccfid)
   filt <- quote(ccfid != 9001)
   for (where in list(quote(col != 9001), quote(filt), rlang::exprs(age >= 18, filt))) {
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "patient identifier (`ccfid`)", fixed = TRUE, info = deparse(where))
     expect_false(grepl("9001", err, fixed = TRUE), info = deparse(where))
   }
@@ -609,14 +609,14 @@ test_that("a WHERE that looks a column up by a string stops, and is masked", {
                   quote(eval(sym("ccfid")) != 9001))
   for (where in lookups) {
     info <- paste(deparse(where), collapse = " ")
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "name the column", info = info)
     expect_false(grepl("9001", err, fixed = TRUE), info = info)
     shown <- hvtiRtemplates:::.mask_condition(where, "ccfid")
     expect_false(grepl("9001", shown, fixed = TRUE), info = info)
   }
   # A lookup that names the ID literally is refused for the ID itself.
-  expect_match(refusal(read_job_data(cfg, where = quote(evalq(ccfid) != 9001))), "patient identifier (`ccfid`)",
+  expect_match(refusal(read_job_data(cfg, id_col = "ccfid", where = quote(evalq(ccfid) != 9001))), "patient identifier (`ccfid`)",
                fixed = TRUE)
   # The masking change is for string lookups only: an ordinary condition stays readable.
   expect_identical(hvtiRtemplates:::.mask_condition(quote(age >= 18), "ccfid"), "age >= 18")
@@ -627,7 +627,7 @@ test_that("a WHERE that takes a data frame, list, environment or S4 object from 
   lookup <- data.frame(ccfid = 9001:9003, age = c(10, 30, 50))
   for (where in list(quote(with(lookup, ccfid) != 9001), quote(with(lookup, age) > 20))) {
     info <- paste(deparse(where), collapse = " ")
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "`lookup`", fixed = TRUE, info = info)
     expect_match(err, "filter on a column of the data", info = info)
     # Nothing from the frame reaches the message, and nothing is saved.
@@ -639,7 +639,7 @@ test_that("a WHERE that takes a data frame, list, environment or S4 object from 
   setClass("WhereBox", representation(x = "numeric"), where = environment())
   s4 <- methods::new("WhereBox", x = 18)
   for (where in list(quote(age > holder[["cut"]]), quote(age > get("cut", box)), quote(age > s4))) {
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "filter on a column of the data", info = paste(deparse(where), collapse = " "))
   }
   # A function name carries no data, so it is left as the name, not refused.
@@ -648,7 +648,7 @@ test_that("a WHERE that takes a data frame, list, environment or S4 object from 
                   list(quote(mapply(max, age, age) > 50), 3L, "mapply(max, age, age) > 50"),
                   list(quote(Reduce(`|`, list(age > 50, age < 20))), 4L, "Reduce(`|`, list(age > 50, age < 20))"))
   for (case in allowed) {
-    out <- read_job_data(cfg, where = case[[1L]])
+    out <- read_job_data(cfg, id_col = "ccfid", where = case[[1L]])
     expect_identical(nrow(out$data), case[[2L]], info = case[[3L]])
     expect_identical(attr(out$record, "selection")$where, case[[3L]])
   }
@@ -675,14 +675,14 @@ test_that("a function named by a string, or called from a call, is a lookup", {
   for (where in list(quote(do.call("get", list("ccfid")) != 9001), quote(match.fun("get")("ccfid") != 9001),
                      quote((function(x) x)(ccfid2) != 9001))) {
     info <- paste(deparse(where), collapse = " ")
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "name the column", info = info)
     expect_false(grepl("9001", err, fixed = TRUE), info = info)
     expect_false(grepl("9001", hvtiRtemplates:::.mask_condition(where, "ccfid"), fixed = TRUE), info = info)
   }
   # pkg::fn is a name, not a call computed at run time.
   expect_identical(hvtiRtemplates:::.mask_condition(quote(base::round(age) >= 18), "ccfid"), "base::round(age) >= 18")
-  expect_identical(nrow(read_job_data(cfg, where = quote(base::round(age) >= 18))$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(base::round(age) >= 18))$data), 4L)
 })
 
 test_that("an alias of a lookup function is refused as that lookup, before anything is filtered", {
@@ -704,14 +704,14 @@ test_that("a WHERE value that is also a patient identifier in the data is refuse
   for (where in list(quote(f("ccfid") != 4730000001), quote(id2 != 4730000001), quote(id2 %in% ids),
                      quote(age > 18 & id2 %in% c(5, 4730000002)))) {
     info <- paste(deparse(where), collapse = " ")
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "also a patient identifier in the data", info = info)
     expect_match(err, "`ccfid`", fixed = TRUE, info = info)
     expect_false(grepl("47300000", err, fixed = TRUE), info = info)
   }
   # A threshold that equals no identifier is allowed; NA never matches.
-  expect_identical(nrow(read_job_data(cfg, where = quote(age > 60))$data), 2L)
-  expect_identical(nrow(read_job_data(cfg, where = quote(!id2 %in% c(NA, 1)))$data), 6L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(age > 60))$data), 2L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(!id2 %in% c(NA, 1)))$data), 6L)
 })
 
 test_that("a WHERE constant expression that evaluates to an identifier is refused before any row is filtered", {
@@ -720,7 +720,7 @@ test_that("a WHERE constant expression that evaluates to an identifier is refuse
   for (where in list(quote(id2 != 4730000000 + 1), quote(id2 != as.numeric("4730000001")),
                      quote(id2 %in% c(4730000000 + 1, 4730000000 + 2)))) {
     info <- paste(deparse(where), collapse = " ")
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "also a patient identifier in the data", info = info)
     expect_match(err, "`ccfid`", fixed = TRUE, info = info)
     expect_false(grepl("4730000001|4.73e", err), info = info)
@@ -728,15 +728,15 @@ test_that("a WHERE constant expression that evaluates to an identifier is refuse
   # Nothing is filtered: the refusal comes from the check, before evaluation.
   expect_error(.apply_where(d, quote(id2 != 4730000000 + 1), environment(), cols = "ccfid",
                             identifiers = "ccfid", id_values = list(ccfid = .id_text(d$ccfid))),
-               class = "hvti_where_identifier")
+               class = "hvtiRtemplates_where_identifier")
   chr <- data.frame(ccfid = paste0("A", 4730000001 + 0:2), id2 = paste0("A", 4730000001 + 0:2), age = c(50, 70, 80))
-  err <- refusal(read_job_data(job_study(chr), where = quote(id2 != paste0("A47300", "00001"))))
+  err <- refusal(read_job_data(job_study(chr), id_col = "ccfid", where = quote(id2 != paste0("A47300", "00001"))))
   expect_match(err, "also a patient identifier in the data")
   expect_false(grepl("A4730000001", err, fixed = TRUE))
   # Thresholds computed from constants are allowed when they equal no identifier, or are short.
-  expect_identical(nrow(read_job_data(cfg, where = quote(age > 60 + 5))$data), 2L)
-  expect_identical(nrow(read_job_data(cfg, where = quote(age > 2000 + 26 - 1960))$data), 2L)
-  expect_identical(nrow(read_job_data(cfg, where = quote(age < 2000 + 26))$data), 3L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(age > 60 + 5))$data), 2L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(age > 2000 + 26 - 1960))$data), 2L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(age < 2000 + 26))$data), 3L)
 })
 
 test_that("a refused WHERE executes nothing: the name checks run before any value is computed", {
@@ -747,14 +747,14 @@ test_that("a refused WHERE executes nothing: the name checks run before any valu
     calls$n <- calls$n + 1L
     1
   }
-  expect_match(refusal(read_job_data(cfg, where = quote(ccfid != f()))), "patient identifier")
+  expect_match(refusal(read_job_data(cfg, id_col = "ccfid", where = quote(ccfid != f()))), "patient identifier")
   expect_identical(calls$n, 0L)
   path <- withr::local_tempfile()
   file.create(path)
-  expect_match(refusal(read_job_data(cfg, where = quote(ccfid != unlink(path)))), "patient identifier")
+  expect_match(refusal(read_job_data(cfg, id_col = "ccfid", where = quote(ccfid != unlink(path)))), "patient identifier")
   expect_true(file.exists(path))
   # Across conditions too: a later refused condition stops before an earlier one is computed.
-  expect_match(refusal(read_job_data(cfg, where = rlang::exprs(age > f(), ccfid != 9001))), "patient identifier")
+  expect_match(refusal(read_job_data(cfg, id_col = "ccfid", where = rlang::exprs(age > f(), ccfid != 9001))), "patient identifier")
   expect_identical(calls$n, 0L)
 })
 
@@ -766,7 +766,7 @@ test_that("an allowed stateful WHERE call runs exactly once", {
     calls$n <- calls$n + 1L
     if (calls$n == 1L) 75 else 55
   }
-  out <- read_job_data(cfg, where = quote(age > cutoff()))
+  out <- read_job_data(cfg, id_col = "ccfid", where = quote(age > cutoff()))
   expect_identical(calls$n, 1L)
   expect_equal(out$data$age, 80)
 })
@@ -792,19 +792,19 @@ test_that("the value check folds only base arithmetic, c(), paste and coercion, 
 
 test_that("a value transformed through a data column is allowed: the documented limit of the value check", {
   d <- data.frame(ccfid = 4730000001 + 0:2, id2 = 4730000001 + 0:2)
-  out <- read_job_data(job_study(d), where = quote(id2 / 2 != 2365000000.5))
+  out <- read_job_data(job_study(d), id_col = "ccfid", where = quote(id2 / 2 != 2365000000.5))
   expect_identical(nrow(out$data), 2L)
 })
 
 test_that("short identifiers do not collide with thresholds: hx_chf == 1 and age >= 18 are allowed with IDs 1..n", {
   cfg <- job_study(d0)
-  expect_identical(read_job_data(cfg, where = rlang::exprs(age >= 18, hx_chf == 1))$data$ccfid, c(2L, 3L, 5L))
+  expect_identical(read_job_data(cfg, id_col = "ccfid", where = rlang::exprs(age >= 18, hx_chf == 1))$data$ccfid, c(2L, 3L, 5L))
 })
 
 test_that("a copy column filtered on a 4-character ID value is allowed: the documented limit of the value check", {
   d <- d_ids
   d$id2 <- d$ccfid
-  out <- read_job_data(job_study(d), where = quote(id2 != 9001))
+  out <- read_job_data(job_study(d), id_col = "ccfid", where = quote(id2 != 9001))
   expect_identical(nrow(out$data), 5L)
 })
 
@@ -813,7 +813,7 @@ test_that("an MRN or eMRN value is refused against any column, though those colu
   cfg <- job_study(d)
   # read_built() lowercases column names, so the columns are named mrn and emrn.
   for (case in list(list(quote(score != 7000001), "`mrn`"), list(quote(score != 8000002), "`emrn`"))) {
-    err <- refusal(read_job_data(cfg, where = case[[1L]]))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = case[[1L]]))
     expect_match(err, "also a patient identifier in the data", info = case[[2L]])
     expect_match(err, case[[2L]], fixed = TRUE)
     expect_false(grepl("700000|800000", err), info = case[[2L]])
@@ -826,23 +826,23 @@ test_that("a name that is not a column is not taken for the ID", {
   mrn <- c(1, 18)
   lst <- list(mrn = 18)
   # .env$ccfid and an outside mrn are fixed in as constants, so nothing names the ID.
-  out <- read_job_data(cfg, where = quote(age > .env$ccfid))
+  out <- read_job_data(cfg, id_col = "ccfid", where = quote(age > .env$ccfid))
   expect_identical(attr(out$record, "selection")$where, "age > 18")
-  expect_identical(nrow(read_job_data(cfg, where = quote(age > .env[["ccfid"]]))$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(age > .env[["ccfid"]]))$data), 4L)
   # Its value is still checked: an outside ccfid that is a patient's identifier is refused.
   ccfid <- 4730000001
-  expect_match(refusal(read_job_data(job_study(d_long_ids), where = quote(age > .env$ccfid - 4730000000))),
+  expect_match(refusal(read_job_data(job_study(d_long_ids), id_col = "ccfid", where = quote(age > .env$ccfid - 4730000000))),
                "also a patient identifier")
-  expect_identical(nrow(read_job_data(cfg, where = quote(age > max(mrn)))$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(age > max(mrn)))$data), 4L)
   # An .env lookup that resolves to nothing is still not the ID column: it fails as an
   # unknown name, not as a refusal.
   for (where in list(quote(age > .env$emrn), quote(age > .env[["emrn"]]))) {
-    err <- refusal(read_job_data(cfg, where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", where = where))
     expect_match(err, "emrn", info = deparse(where))
     expect_false(grepl("patient identifier", err, fixed = TRUE), info = deparse(where))
   }
   # The right side of $ names a field, not a column.
-  expect_identical(nrow(read_job_data(cfg, where = quote(age >= lst$mrn))$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(age >= lst$mrn))$data), 4L)
 })
 
 test_that("a WHERE value from outside the data is fixed into the recorded condition", {
@@ -850,7 +850,7 @@ test_that("a WHERE value from outside the data is fixed into the recorded condit
   upstream <- function(where) {
     min_age <- 60
     ids <- c(2L, 3L)
-    read_job_data(cfg, where = where)
+    read_job_data(cfg, id_col = "ccfid", where = where)
   }
   bare <- upstream(quote(age >= min_age))
   expect_identical(attr(bare$record, "selection")$where, "age >= 60")
@@ -877,14 +877,14 @@ test_that("a WHERE value from outside the data is fixed into the recorded condit
 test_that("an outside value in a WHERE on the ID stops, and is never printed", {
   cfg <- job_study(d_ids)
   ids <- c(9001L, 9005L)
-  err <- refusal(read_job_data(cfg, where = quote(!ccfid %in% ids)))
+  err <- refusal(read_job_data(cfg, id_col = "ccfid", where = quote(!ccfid %in% ids)))
   expect_match(err, "patient identifier")
   expect_false(grepl("9001|9005", err))
 })
 
 test_that(".read_upstream_job_data() stops when the patients differ though the counts match", {
   cfg <- job_study(d_ids)
-  up <- read_job_data(cfg, where = quote(age >= 18))
+  up <- read_job_data(cfg, id_col = "ccfid", where = quote(age >= 18))
   sel <- attr(up$record, "selection")
   expect_match(sel$key_hash, "^[0-9a-f]{64}$")
   expect_identical(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())$job_data$data$ccfid,
@@ -922,14 +922,14 @@ test_that("a rebuilt but unregistered dataset is read, and the data table says s
   path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), "built.csv")
 
   # Registered and unchanged: the Source row names the dated version, no note.
-  out <- read_job_data(cfg)
+  out <- read_job_data(cfg, id_col = "ccfid")
   expect_match(out$record$value[out$record$step == "Source"], "built_[0-9]{8}[.]parquet")
   expect_false("Note" %in% out$record$step)
 
   # Rebuilt, not registered: the job reads the registered rows, the message
   # does not escape into the report, and the table names the call that fixes it.
   utils::write.csv(data.frame(ccfid = 1:4, dead = c(1L, 0L, 0L, 1L)), path, row.names = FALSE)
-  expect_no_message(out <- read_job_data(cfg))
+  expect_no_message(out <- read_job_data(cfg, id_col = "ccfid"))
   expect_identical(nrow(out$data), 3L)
   note <- out$record$value[out$record$step == "Note"]
   expect_length(note, 1L)
@@ -940,7 +940,7 @@ test_that("a rebuilt but unregistered dataset is read, and the data table says s
 
   # Registered: the next read is the new version, and the note is gone.
   withr::with_dir(cfg$root, suppressMessages(hvtiRutilities::update_manifest()))
-  out <- read_job_data(cfg)
+  out <- read_job_data(cfg, id_col = "ccfid")
   expect_identical(nrow(out$data), 4L)
   expect_false("Note" %in% out$record$step)
   expect_match(out$record$value[out$record$step == "Source"], "built_[0-9]{8}_r2[.]parquet")
@@ -948,8 +948,8 @@ test_that("a rebuilt but unregistered dataset is read, and the data table says s
 
 test_that("DATASET \"built\" reads the study dataset and records it as \"study\"", {
   cfg <- job_study(d0)
-  out <- read_job_data(cfg, dataset = "built")
-  expect_identical(out$data, read_job_data(cfg, dataset = "study")$data)
+  out <- read_job_data(cfg, id_col = "ccfid", dataset = "built")
+  expect_identical(out$data, read_job_data(cfg, id_col = "ccfid", dataset = "study")$data)
   expect_identical(attr(out$record, "selection")$dataset, "study")
   expect_identical(out$provenance$dataset, "study")
   # The report names the dataset as the job does; only the records are canonical.
@@ -991,7 +991,7 @@ join_study <- function(env = parent.frame(), echo_kind = "ancillary") {
 
 test_that("a job joins an ancillary dataset in long form and records the counts", {
   cfg <- join_study()
-  out <- read_job_data(cfg, join = "echo")
+  out <- read_job_data(cfg, id_col = "ccfid", join = "echo")
   expect_identical(nrow(out$data), 3L)
   expect_setequal(names(out$data), c("ccfid", "echo_date", "ef", "age", "dt_surg"))
   rec <- stats::setNames(out$record$value, out$record$step)
@@ -1016,7 +1016,7 @@ test_that("a job joins an ancillary dataset in long form and records the counts"
 
 test_that("a job reduces to one row per patient", {
   cfg <- join_study()
-  out <- read_job_data(cfg, join = "echo", join_vars = "age",
+  out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = "age",
                        reduce = list(rule = "nearest", by = "echo_date", to = "dt_surg"))
   expect_identical(nrow(out$data), 3L)
   expect_equal(out$data$ef, c(50, 45, NA))
@@ -1029,7 +1029,7 @@ test_that("a job reduces to one row per patient", {
 
 test_that("a job without a join reads exactly as before", {
   cfg <- join_study()
-  out <- read_job_data(cfg)
+  out <- read_job_data(cfg, id_col = "ccfid")
   expect_null(out$provenance_join)
   expect_false(any(grepl("^Joined|Reduced", out$record$step)))
   expect_null(attr(out$record, "selection")$join)
@@ -1043,11 +1043,11 @@ test_that("a job without a join reads exactly as before", {
 
 test_that("WHERE applies to the joined rows, and refuses the joined dataset's identifier values", {
   cfg <- join_study()
-  out <- read_job_data(cfg, join = "echo", where = quote(ef >= 50))
+  out <- read_job_data(cfg, id_col = "ccfid", join = "echo", where = quote(ef >= 50))
   expect_identical(nrow(out$data), 2L)
   expect_identical(attr(out$record, "selection")$where, "ef >= 50")
   # A value of the joined dataset's MRN, though it is dropped and the patient is outside the cohort.
-  err <- tryCatch(read_job_data(cfg, join = "echo", where = quote(ef != 9100004)), error = conditionMessage)
+  err <- tryCatch(read_job_data(cfg, id_col = "ccfid", join = "echo", where = quote(ef != 9100004)), error = conditionMessage)
   expect_match(err, "identifier")
   expect_no_match(err, "9100004")
 })
@@ -1064,9 +1064,9 @@ test_that("WHERE refuses the joined dataset's SSN by name and by value", {
   suppressMessages(hvtiRutilities::register_data(root = root, file = "echo.csv", dataset = "echo", role = "named",
                                                  kind = "ancillary", key_cols = c("ccfid", "echo_date")))
   cfg <- hvtiRutilities::study_config(root)
-  expect_false("ssn_base" %in% names(read_job_data(cfg, join = "echo")$data))
+  expect_false("ssn_base" %in% names(read_job_data(cfg, id_col = "ccfid", join = "echo")$data))
   for (where in list(quote(ssn_base == 100000002), quote(ef != 100000002))) {
-    err <- refusal(read_job_data(cfg, join = "echo", where = where))
+    err <- refusal(read_job_data(cfg, id_col = "ccfid", join = "echo", where = where))
     info <- paste(deparse(where), collapse = " ")
     expect_match(err, "identifier", info = info)
     expect_false(grepl("100000002", err, fixed = TRUE), info = info)
@@ -1081,11 +1081,11 @@ test_that("an unregistered key with no JOIN_KEY stops with both fixes", {
   y$additional_datasets$echo$kind <- NULL
   yaml::write_yaml(y, cfg$file)
   cfg <- hvtiRutilities::study_config(cfg$root)
-  err <- tryCatch(read_job_data(cfg, join = "echo"), error = conditionMessage)
+  err <- tryCatch(read_job_data(cfg, id_col = "ccfid", join = "echo"), error = conditionMessage)
   expect_match(err, "no registered key", fixed = TRUE)
   expect_match(err, "JOIN_KEY", fixed = TRUE)
   expect_match(err, "register_data", fixed = TRUE)
-  out <- read_job_data(cfg, join = "echo", join_key = c("ccfid", "echo_date"))
+  out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = c("ccfid", "echo_date"))
   expect_identical(nrow(out$data), 3L)
   expect_false("Note" %in% out$record$step)
 })
@@ -1105,10 +1105,10 @@ test_that("a joined dataset's key errors say when it was rebuilt since registrat
   echo$visit <- 1:3
   utils::write.csv(echo, file.path(dd, "echo.csv"), row.names = FALSE)
   cfg <- hvtiRutilities::study_config(root)
-  err <- tryCatch(read_job_data(cfg, join = "echo", join_key = c("ccfid", "visit")), error = conditionMessage)
+  err <- tryCatch(read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = c("ccfid", "visit")), error = conditionMessage)
   expect_match(err, "names a column it does not have: visit", fixed = TRUE)
   expect_match(err, "has changed since it was registered", fixed = TRUE)
-  err <- tryCatch(read_job_data(cfg, join = "echo", join_key = "ccfid"), error = conditionMessage)
+  err <- tryCatch(read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = "ccfid"), error = conditionMessage)
   expect_match(err, "repeat on its key", fixed = TRUE)
   expect_match(err, "has changed since it was registered", fixed = TRUE)
 })
@@ -1126,34 +1126,35 @@ test_that("a job KEY naming a joined column is kept though its values look like 
   suppressMessages(hvtiRutilities::register_data(root = root, file = "echo.csv", dataset = "echo", role = "named",
                                                  kind = "ancillary", key_cols = c("ccfid", "visit")))
   cfg <- hvtiRutilities::study_config(root)
-  out <- read_job_data(cfg, join = "echo", key = c("ccfid", "record_key"))
+  out <- read_job_data(cfg, id_col = "ccfid", join = "echo", key_cols = c("ccfid", "record_key"))
   expect_true("record_key" %in% names(out$data))
   expect_identical(attr(out$record, "selection")$key, c("ccfid", "record_key"))
   # Not named in KEY, the same column is dropped by its values.
-  expect_false("record_key" %in% names(read_job_data(cfg, join = "echo")$data))
+  expect_false("record_key" %in% names(read_job_data(cfg, id_col = "ccfid", join = "echo")$data))
 })
 
 test_that("a JOIN_KEY that differs from the registered key is used and noted", {
   cfg <- join_study()
-  out <- read_job_data(cfg, join = "echo", join_key = c("ccfid", "echo_date", "ef"))
+  out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = c("ccfid", "echo_date", "ef"))
   expect_identical(attr(out$record, "selection")$key, c("ccfid", "echo_date", "ef"))
   expect_match(out$record$value[out$record$step == "Note"], "JOIN_KEY .* differs from `echo`'s registered key")
-  expect_error(read_job_data(cfg, join = "echo", join_key = "ccfid"), "1 row of `echo` repeat on its key")
-  expect_error(read_job_data(cfg, join = "echo", join_key = c("ccfid", "nope")), "names a column it does not have: nope")
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = "ccfid"), "1 row of `echo` repeat on its key")
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = c("ccfid", "nope")),
+               "names a column it does not have: nope")
 })
 
 test_that("a job key that differs from the registered key is noted", {
   cfg <- join_study()
-  out <- read_job_data(cfg, key = c("ccfid", "age"))
+  out <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "age"))
   expect_match(out$record$value[out$record$step == "Note"], "differs from the registered key")
-  expect_false("Note" %in% read_job_data(cfg, key = "CCFID")$record$step)
+  expect_false("Note" %in% read_job_data(cfg, id_col = "ccfid", key_cols = "CCFID")$record$step)
 })
 
 test_that("JOIN refuses a dataset that is not ancillary, and the dataset already read", {
   cfg <- join_study(echo_kind = "subset")
-  expect_error(read_job_data(cfg, join = "echo"), "registered as a subset dataset.*ancillary")
-  expect_error(read_job_data(cfg, join = "built"), "already reads")
-  expect_error(read_job_data(cfg, dataset = "echo", join = "study"), "registered as a built dataset")
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo"), "registered as a subset dataset.*ancillary")
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "built"), "already reads")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "echo", join = "study"), "registered as a built dataset")
 })
 
 test_that("JOIN needs the cohort's identifier, by name, in the joined dataset", {
@@ -1163,22 +1164,23 @@ test_that("JOIN needs the cohort's identifier, by name, in the joined dataset", 
   suppressMessages(hvtiRutilities::register_data(root = cfg$root, file = "labs.csv", dataset = "labs", role = "named",
                                                  kind = "ancillary", key_cols = "pid"))
   cfg <- hvtiRutilities::study_config(cfg$root)
-  expect_error(read_job_data(cfg, join = "labs"), "has no `ccfid` column")
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "labs"), "has no `ccfid` column")
 })
 
 test_that("a KEY column neither the cohort nor the joined dataset has stops", {
   cfg <- join_study()
-  expect_error(read_job_data(cfg, key = "nope", join = "echo"), "KEY names a column")
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = "nope", join = "echo"), "KEY names a column")
 })
 
 test_that("join settings are checked before any data is read", {
   cfg <- join_study()
-  expect_error(read_job_data(cfg, dataset = "absent", join = c("a", "b")), "JOIN must be NULL")
-  expect_error(read_job_data(cfg, dataset = "absent", reduce = list(rule = "first", by = "d")), "apply only with JOIN")
-  expect_error(read_job_data(cfg, dataset = "absent", join = "echo", reduce = "first"), "REDUCE must be NULL")
-  expect_error(read_job_data(cfg, dataset = "absent", join = "echo", join_vars = 1), "JOIN_VARS must be NULL")
-  expect_error(read_job_data(cfg, dataset = "absent", join = "echo", join_key = ""), "JOIN_KEY must be NULL")
-  expect_error(read_job_data(cfg, dataset = "absent", key = character()), "KEY must be NULL or name")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", join = c("a", "b")), "JOIN must be NULL")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", reduce = list(rule = "first", by = "d")),
+               "apply only with JOIN")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", join = "echo", reduce = "first"), "REDUCE must be NULL")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", join = "echo", join_cols = 1), "JOIN_VARS must be NULL")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", join = "echo", join_key_cols = ""), "JOIN_KEY must be NULL")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", key_cols = character()), "KEY must be NULL or name")
 })
 
 test_that("a job that models one row per patient refuses a long join, before any data is read", {
@@ -1189,7 +1191,7 @@ test_that("a job that models one row per patient refuses a long join, before any
     .read_registered = function(...) stop("data was read"),
     .package = "hvtiRtemplates"
   )
-  err <- tryCatch(read_job_data(cfg, join = "echo", one_row_per_patient = TRUE), error = conditionMessage)
+  err <- tryCatch(read_job_data(cfg, id_col = "ccfid", join = "echo", one_row_per_patient = TRUE), error = conditionMessage)
   expect_match(err, "JOIN names `echo`")
   expect_match(err, "one row per patient")
   expect_match(err, "count every joined record as a patient")
@@ -1199,8 +1201,9 @@ test_that("a job that models one row per patient refuses a long join, before any
   expect_match(err, "such as dc-eda, dc-general, dc-tables, dc-trends, mm, nb-boostmtree or rhf-fit.", fixed = TRUE)
   expect_no_match(err, "gfup|dc-\\*|dp-\\*")
   expect_no_match(err, "data was read")
-  expect_error(read_job_data(cfg, join = "echo", one_row_per_patient = NA), "one_row_per_patient must be TRUE or FALSE")
-  expect_error(read_job_data(cfg, join = "echo", one_row_per_patient = "yes"), "one_row_per_patient must be")
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", one_row_per_patient = NA),
+               "one_row_per_patient must be TRUE or FALSE")
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", one_row_per_patient = "yes"), "one_row_per_patient must be")
 })
 
 test_that("WHERE may name a joined column that shares its name with a cohort column JOIN_VARS leaves out", {
@@ -1218,18 +1221,18 @@ test_that("WHERE may name a joined column that shares its name with a cohort col
                                                  kind = "ancillary", key_cols = c("ccfid", "echo_date")))
   cfg <- hvtiRutilities::study_config(root)
   for (reduce in list(NULL, list(rule = "last", by = "echo_date"))) {
-    out <- read_job_data(cfg, join = "echo", join_vars = "age", reduce = reduce, where = quote(ef >= 50))
+    out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = "age", reduce = reduce, where = quote(ef >= 50))
     expect_true(all(out$data$ef >= 50, na.rm = TRUE))
   }
   # So may KEY: the cohort's ef is not carried, so KEY's ef is the joined one.
-  out <- read_job_data(cfg, key = c("ccfid", "ef"), join = "echo", join_vars = "age")
+  out <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "ef"), join = "echo", join_cols = "age")
   expect_identical(attr(out$record, "selection")$key, c("ccfid", "ef"))
 })
 
 test_that("the same join written two ways records the same selection", {
   cfg <- join_study()
-  one <- read_job_data(cfg, join = "echo", join_vars = "age", reduce = list(rule = "first", by = "echo_date"))
-  two <- read_job_data(cfg, join = "echo", join_vars = "AGE", reduce = list(by = "ECHO_DATE", rule = "first"))
+  one <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = "age", reduce = list(rule = "first", by = "echo_date"))
+  two <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = "AGE", reduce = list(by = "ECHO_DATE", rule = "first"))
   expect_identical(attr(one$record, "selection"), attr(two$record, "selection"))
   sel <- attr(one$record, "selection")
   expect_identical(sel$reduce, list(by = "echo_date", rule = "first"))
@@ -1246,30 +1249,32 @@ test_that("the same join written two ways records the same selection", {
 test_that("a job that models one row per patient refuses a long DATASET as it does a long join", {
   cfg <- join_study()
   # echo, read whole, is keyed on (ccfid, echo_date): patient 1 has two rows.
-  err <- tryCatch(read_job_data(cfg, dataset = "echo", one_row_per_patient = TRUE), error = conditionMessage)
+  err <- tryCatch(read_job_data(cfg, id_col = "ccfid", dataset = "echo", one_row_per_patient = TRUE), error = conditionMessage)
   expect_match(err, "This job models one row per patient", fixed = TRUE)
   expect_match(err, "1 patient has more than one row", fixed = TRUE)
   expect_match(err, "REDUCE", fixed = TRUE)
   expect_no_match(err, "9100001")
-  expect_identical(nrow(read_job_data(cfg, dataset = "echo")$data), 4L)
-  expect_identical(nrow(read_job_data(cfg, dataset = "echo", one_row_per_patient = TRUE, where = quote(echo_date < 100))$data),
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", dataset = "echo")$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", dataset = "echo", one_row_per_patient = TRUE,
+                                      where = quote(echo_date < 100))$data),
                    2L)
 })
 
 test_that("a job that models one row per patient accepts a reduced join, and the default a long one", {
   cfg <- join_study()
-  out <- read_job_data(cfg, join = "echo", reduce = list(rule = "last", by = "echo_date"), one_row_per_patient = TRUE)
+  out <- read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = list(rule = "last", by = "echo_date"),
+                       one_row_per_patient = TRUE)
   expect_identical(nrow(out$data), 3L)
   expect_identical(attr(out$record, "selection")$key, "ccfid")
-  expect_identical(nrow(read_job_data(cfg, join = "echo")$data), 3L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", join = "echo")$data), 3L)
   # Without a join the setting changes nothing.
-  expect_identical(read_job_data(cfg, one_row_per_patient = TRUE)$data, read_job_data(cfg)$data)
+  expect_identical(read_job_data(cfg, id_col = "ccfid", one_row_per_patient = TRUE)$data, read_job_data(cfg, id_col = "ccfid")$data)
 })
 
 test_that("a downstream job rebuilds a joined cohort, and its join settings must agree", {
   cfg <- join_study()
   for (reduce in list(NULL, list(rule = "first", by = "echo_date"))) {
-    up <- read_job_data(cfg, join = "echo", reduce = reduce)
+    up <- read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = reduce)
     lineage <- list(selection = attr(up$record, "selection"))
     out <- hvtiRtemplates:::.read_upstream_job_data(cfg, lineage, list(key = NULL))
     expect_identical(out$job_data$data, up$data)
@@ -1284,7 +1289,7 @@ test_that("a downstream job rebuilds a joined cohort, and its join settings must
   # A selection without the join fields read no join, so a join here cannot rebuild it.
   expect_error(hvtiRtemplates:::.check_upstream_selection(list(id = "ccfid"), list(reduce = list(rule = "first", by = "d"))),
                "REDUCE here \\(first by d\\) differs from the upstream job's \\(none\\)")
-  plain <- attr(read_job_data(cfg)$record, "selection")
+  plain <- attr(read_job_data(cfg, id_col = "ccfid")$record, "selection")
   expect_error(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = plain), list(join = "echo")),
                "JOIN here \\(echo\\) differs from the upstream job's \\(none\\)")
   # Left NULL, as downstream templates leave them, they agree.
@@ -1305,34 +1310,34 @@ test_that("a stale analysis set read in a draft is a note in the data table", {
     },
     .package = "hvtiRdatabuild"
   )
-  expect_no_message(out <- read_job_data(cfg, analysis_set = "eda"))
+  expect_no_message(out <- read_job_data(cfg, id_col = "ccfid", analysis_set = "eda"))
   expect_identical(out$record$value[out$record$step == "Note"], "analysis set `eda`: stale. This draft used the older cut.")
 })
 
 test_that("a JOIN naming an unregistered dataset says so before anything is read", {
   cfg <- join_study()
-  err <- tryCatch(read_job_data(cfg, dataset = "absent", join = "echos"), error = conditionMessage)
+  err <- tryCatch(read_job_data(cfg, id_col = "ccfid", dataset = "absent", join = "echos"), error = conditionMessage)
   expect_match(err, "`echos`, which is not registered in _study.yml (registered: echo)", fixed = TRUE)
   # Registration problems stop before the cohort is read: "absent" is never reached.
-  expect_error(read_job_data(join_study(echo_kind = "subset"), dataset = "absent", join = "echo"), "subset dataset")
-  expect_error(read_job_data(cfg, dataset = "absent", join = "echo", reduce = list(rule = "fist", by = "d")),
+  expect_error(read_job_data(join_study(echo_kind = "subset"), id_col = "ccfid", dataset = "absent", join = "echo"), "subset dataset")
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", join = "echo", reduce = list(rule = "fist", by = "d")),
                "REDUCE needs rule")
-  expect_error(read_job_data(cfg, dataset = "absent", join = "echo", reduce = list(rule = "nearest", by = "d")),
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent", join = "echo", reduce = list(rule = "nearest", by = "d")),
                "needs to = one column name")
 })
 
 test_that("WHERE may not name a cohort column JOIN_VARS leaves out", {
   cfg <- join_study()
   age <- 0
-  expect_error(read_job_data(cfg, join = "echo", join_vars = "dt_surg", where = quote(age >= 55)),
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = "dt_surg", where = quote(age >= 55)),
                "WHERE names age, a cohort column JOIN_VARS leaves out")
-  out <- read_job_data(cfg, join = "echo", join_vars = c("dt_surg", "age"), where = quote(age >= 55))
+  out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = c("dt_surg", "age"), where = quote(age >= 55))
   expect_identical(nrow(out$data), 1L)
 })
 
 test_that("the data table shows the join before the WHERE that runs on its rows", {
   cfg <- join_study()
-  out <- read_job_data(cfg, join = "echo", where = quote(ef >= 50))
+  out <- read_job_data(cfg, id_col = "ccfid", join = "echo", where = quote(ef >= 50))
   steps <- out$record$step
   expect_lt(match("Joined", steps), match("`ef >= 50`", steps))
   expect_lt(match("`ef >= 50`", steps), match("Rows kept", steps))
@@ -1340,12 +1345,12 @@ test_that("the data table shows the join before the WHERE that runs on its rows"
 
 test_that("a downstream job rebuilds a joined cohort with the cohort key the upstream job used", {
   cfg <- join_study()
-  up <- read_job_data(cfg, key = c("ccfid", "age"), join = "echo")
+  up <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "age"), join = "echo")
   sel <- attr(up$record, "selection")
   expect_identical(sel$cohort_key, c("ccfid", "age"))
   out <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())
   expect_match(out$job_data$record$value[out$job_data$record$step == "Note"], "differs from the registered key")
-  expect_null(attr(read_job_data(cfg)$record, "selection")$cohort_key)
+  expect_null(attr(read_job_data(cfg, id_col = "ccfid")$record, "selection")$cohort_key)
 })
 
 test_that("one handler turns an out-of-date message into a note, for a dataset and an analysis set alike", {
@@ -1366,12 +1371,12 @@ test_that("one handler turns an out-of-date message into a note, for a dataset a
 })
 
 test_that("key = NULL, the default, reads the registered key, and the ID when none is registered", {
-  expect_identical(attr(read_job_data(job_study(d0))$record, "selection")$key, "ccfid")
+  expect_identical(attr(read_job_data(job_study(d0), id_col = "ccfid")$record, "selection")$key, "ccfid")
   root <- withr::local_tempdir()
   suppressMessages(hvtiRutilities::study_setup(root, "Registered key", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE))
   utils::write.csv(d0, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", key_cols = c("ccfid", "age")))
-  out <- read_job_data(hvtiRutilities::study_config(start = root))
+  out <- read_job_data(hvtiRutilities::study_config(start = root), id_col = "ccfid")
   expect_identical(attr(out$record, "selection")$key, c("ccfid", "age"))
   expect_false("Note" %in% out$record$step)
 })
@@ -1383,29 +1388,30 @@ test_that("a KEY of the ID is compared with the registered key as the ID resolve
   suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", key_cols = "mrn"))
   cfg <- hvtiRutilities::study_config(start = root)
   # KEY <- ID, with ID the default "ccfid", which falls back to the MRN the dataset is registered on.
-  out <- read_job_data(cfg, key = "ccfid")
+  out <- read_job_data(cfg, id_col = "ccfid", key_cols = "ccfid")
   expect_identical(attr(out$record, "selection")$key, "mrn")
   expect_false("Note" %in% out$record$step)
   # A KEY that does differ is still noted.
-  expect_match(read_job_data(cfg, key = c("ccfid", "age"))$record$value, "differs from the registered key", all = FALSE)
+  expect_match(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "age"))$record$value, "differs from the registered key",
+               all = FALSE)
 })
 
 test_that("with REDUCE, WHERE on joined columns filters the records before one is chosen", {
   cfg <- join_study()
   last <- list(rule = "last", by = "echo_date")
   # Patient 1's last echo has ef 55; the last with ef < 55 is the earlier one.
-  out <- read_job_data(cfg, join = "echo", reduce = last, where = quote(ef < 55))
+  out <- read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = last, where = quote(ef < 55))
   expect_equal(out$data$ef, c(50, 45, NA))
   expect_equal(out$data$echo_date, c(95, 95, NA))
   rec <- stats::setNames(out$record$value, out$record$step)
   expect_identical(rec[["`ef < 55`"]], "removed 1")
   expect_identical(rec[["Cohort patients with no joined record"]], "1")
   # A patient whose every record is filtered out keeps a row, and is counted as having none.
-  none <- read_job_data(cfg, join = "echo", reduce = last, where = quote(ef < 50))
+  none <- read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = last, where = quote(ef < 50))
   expect_equal(none$data$ef, c(NA, 45, NA))
   expect_identical(none$record$value[none$record$step == "Cohort patients with no joined record"], "2")
   # A condition on cohort columns filters patients, after the reduction, as before.
-  both <- read_job_data(cfg, join = "echo", reduce = last, where = rlang::exprs(age >= 60, ef < 55))
+  both <- read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = last, where = rlang::exprs(age >= 60, ef < 55))
   expect_identical(both$data$ccfid, 2:3)
   expect_equal(both$data$ef, c(45, NA))
   steps <- both$record$step
@@ -1420,19 +1426,20 @@ test_that("with REDUCE, WHERE on joined columns filters the records before one i
                                                     list(where = rlang::exprs(age >= 60, ef < 55)))
   expect_identical(again$job_data$data, both$data)
   # The joined dataset's identifier values are still refused.
-  err <- tryCatch(read_job_data(cfg, join = "echo", reduce = last, where = quote(ef != 9100004)),
+  err <- tryCatch(read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = last, where = quote(ef != 9100004)),
                   error = conditionMessage)
   expect_match(err, "identifier")
   expect_no_match(err, "9100004")
   # And a cohort column JOIN_VARS leaves out.
-  expect_error(read_job_data(cfg, join = "echo", reduce = last, join_vars = "dt_surg", where = quote(ef < age)),
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = last, join_cols = "dt_surg", where = quote(ef < age)),
                "a cohort column JOIN_VARS leaves out")
 })
 
 test_that("a downstream job stops when REDUCE chose a different record for a patient", {
   cfg <- join_study()
-  first <- attr(read_job_data(cfg, join = "echo", reduce = list(rule = "first", by = "echo_date"))$record, "selection")
-  last <- attr(read_job_data(cfg, join = "echo", reduce = list(rule = "last", by = "echo_date"))$record, "selection")
+  first <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = list(rule = "first", by = "echo_date"))$record,
+                "selection")
+  last <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = list(rule = "last", by = "echo_date"))$record, "selection")
   # The same patients and counts; patient 1's chosen echo differs.
   expect_identical(c(first$rows, first$patients), c(last$rows, last$patients))
   expect_false(identical(first$key_hash, last$key_hash))
@@ -1446,20 +1453,22 @@ test_that("a KEY naming a joined column is checked on the joined rows, so a visi
   cfg <- join_study()
   # echo_date is in the joined dataset and not the cohort, as a visit time is
   # for a repeated-measures job such as nb-boostmtree.
-  out <- read_job_data(cfg, key = c("ccfid", "echo_date"), join = "echo")
+  out <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "echo_date"), join = "echo")
   expect_identical(nrow(out$data), 3L)
   sel <- attr(out$record, "selection")
   expect_identical(sel$key, c("ccfid", "echo_date"))
   expect_identical(sel$cohort_key, c("ccfid", "echo_date"))
   # Matched ignoring case, as any KEY is.
-  expect_identical(attr(read_job_data(cfg, key = c("ccfid", "ECHO_DATE"), join = "echo")$record, "selection")$key,
+  expect_identical(attr(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "ECHO_DATE"), join = "echo")$record,
+                        "selection")$key,
                    c("ccfid", "echo_date"))
   # A downstream job rebuilds it.
   again <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())
   expect_identical(again$job_data$data, out$data)
   # A KEY that is not unique on the joined rows stops there: two records share echo_date 95.
-  expect_error(read_job_data(cfg, key = c("dt_surg", "echo_date"), join = "echo"), "values? of KEY repeat")
-  expect_error(read_job_data(cfg, key = c("ccfid", "nope"), join = "echo"), "KEY names a column this dataset does not have")
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("dt_surg", "echo_date"), join = "echo"), "values? of KEY repeat")
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "nope"), join = "echo"),
+               "KEY names a column this dataset does not have")
 })
 
 # A study whose built dataset is `data`, registered on `key`.
@@ -1475,17 +1484,18 @@ stacked_study <- function(data, key, env = parent.frame()) {
 test_that("stacked imputations are one row per patient within each imputation", {
   d <- data.frame(ccfid = rep(1:4, 2L), imp = rep(1:2, each = 4L), age = c(50, 60, 70, 80, 51, 61, 71, 81))
   cfg <- stacked_study(d, key = c("ccfid", "imp"))
-  out <- read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "imp")
+  out <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation_col = "imp")
   expect_identical(nrow(out$data), 8L)
   # The record counts patients once and says how many imputations the rows are.
   rec <- stats::setNames(out$record$value, out$record$step)
   expect_identical(rec[["Rows kept"]], "8 rows on 4 patients, in 2 imputations")
   # The column is matched as KEY is, ignoring case.
-  expect_identical(nrow(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "IMP")$data), 8L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"), one_row_per_patient = TRUE,
+                                      imputation_col = "IMP")$data), 8L)
   # Stacked rows without the setting are still a long dataset.
-  expect_error(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE), "more than one row")
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"), one_row_per_patient = TRUE), "more than one row")
   # And the default read says nothing about imputations.
-  plain <- read_job_data(cfg, key = c("ccfid", "imp"))$record
+  plain <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"))$record
   expect_identical(plain$value[plain$step == "Rows kept"], "8 rows on 4 patients")
 })
 
@@ -1493,19 +1503,20 @@ test_that("a patient repeated within one imputation, or with no imputation, is s
   # Patient 1 is twice in imputation 1: the visit column makes the rows unique.
   d <- data.frame(ccfid = c(1L, 1L, 2L, 1L, 2L), imp = c(1L, 1L, 1L, 2L, 2L), visit = c(1L, 2L, 1L, 1L, 1L), age = 50:54)
   cfg <- stacked_study(d, key = c("ccfid", "imp", "visit"))
-  expect_error(read_job_data(cfg, key = c("ccfid", "imp", "visit"), one_row_per_patient = TRUE, imputation = "imp"),
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp", "visit"), one_row_per_patient = TRUE,
+                             imputation_col = "imp"),
                "This job models one row per patient.*1 patient has more than one row within an imputation")
   # A KEY of the ID and a visit, and no imputation, is a long dataset.
   long <- data.frame(ccfid = c(1L, 1L, 2L), visit = c(1L, 2L, 1L), age = 50:52)
   cfg <- stacked_study(long, key = c("ccfid", "visit"))
-  expect_error(read_job_data(cfg, key = c("ccfid", "visit"), one_row_per_patient = TRUE),
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "visit"), one_row_per_patient = TRUE),
                "1 patient has more than one row in the data read (3 rows on 2 patients)", fixed = TRUE)
 })
 
 test_that("stacked imputations record the imputation column as the data spell it", {
   d <- data.frame(ccfid = rep(1:4, 2L), imp = rep(1:2, each = 4L), age = c(50, 60, 70, 80, 51, 61, 71, 81))
   cfg <- stacked_study(d, key = c("ccfid", "imp"))
-  out <- read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "IMP")
+  out <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation_col = "IMP")
   expect_identical(attr(out$record, "selection")$imputation, "imp")
   # A downstream job rebuilds the rows from that selection, and keeps the field upstream recorded.
   sel <- attr(out$record, "selection")
@@ -1513,7 +1524,7 @@ test_that("stacked imputations record the imputation column as the data spell it
   expect_identical(again$selection$imputation, "imp")
   expect_identical(again$job_data$data, out$data)
   # A read without imputations records no field at all.
-  plain <- read_job_data(cfg, key = c("ccfid", "imp"))
+  plain <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"))
   expect_false("imputation" %in% names(attr(plain$record, "selection")))
 })
 
@@ -1533,7 +1544,7 @@ test_that("stacked integer64 IDs are paired by value, not by their bits", {
   d <- data.frame(ccfid = rep(ids, 2L), imp = rep(1:2, each = 4L), age = c(50, 60, 70, 80, 51, 61, 71, 81))
   cfg <- i64_study(d, key = c("ccfid", "imp"))
   expect_s3_class(hvtiRutilities::read_built(cfg)$ccfid, "integer64")
-  out <- read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "imp")
+  out <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation_col = "imp")
   expect_identical(nrow(out$data), 8L)
   expect_identical(attr(out$record, "selection")$patients, 4L)
   # One patient twice in one imputation is still refused, and counted once.
@@ -1541,17 +1552,19 @@ test_that("stacked integer64 IDs are paired by value, not by their bits", {
   dup$ccfid[2L] <- dup$ccfid[1L]
   dup$visit <- c(1L, 2L, rep(1L, 6L))
   cfg <- i64_study(dup, key = c("ccfid", "imp", "visit"))
-  expect_error(read_job_data(cfg, key = c("ccfid", "imp", "visit"), one_row_per_patient = TRUE, imputation = "imp"),
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp", "visit"), one_row_per_patient = TRUE,
+                             imputation_col = "imp"),
                "1 patient has more than one row within an imputation")
   # A single dataset, with no imputation, keeps reading.
   cfg <- i64_study(d[1:4, c("ccfid", "age")], key = "ccfid")
-  expect_identical(nrow(read_job_data(cfg, key = "ccfid", one_row_per_patient = TRUE)$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", key_cols = "ccfid", one_row_per_patient = TRUE)$data), 4L)
   # Plain double and character IDs behave as before.
   for (conv in list(as.numeric, as.character)) {
     x <- d
     x$ccfid <- conv(bit64::as.character.integer64(x$ccfid))
     cfg <- stacked_study(x, key = c("ccfid", "imp"))
-    expect_identical(nrow(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "imp")$data), 8L)
+    expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"), one_row_per_patient = TRUE,
+                                        imputation_col = "imp")$data), 8L)
   }
 })
 
@@ -1559,20 +1572,21 @@ test_that("the imputation setting is checked", {
   d <- data.frame(ccfid = rep(1:2, 2L), imp = rep(1:2, each = 2L), age = 50:53)
   cfg <- stacked_study(d, key = c("ccfid", "imp"))
   for (bad in list(1, NA_character_, "", c("imp", "age"), character())) {
-    expect_error(read_job_data(cfg, imputation = bad), "imputation must be NULL or name one column")
+    expect_error(read_job_data(cfg, id_col = "ccfid", imputation_col = bad), "imputation must be NULL or name one column")
   }
-  expect_error(read_job_data(cfg, key = c("ccfid", "imp"), imputation = "nope"),
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"), imputation_col = "nope"),
                "imputation names a column this dataset does not have: nope")
 })
 
 test_that("a missing imputation index, or an imputation column that is the ID, is refused", {
   d <- data.frame(ccfid = rep(1:2, 2L), imp = c(1L, 1L, NA, 2L), age = 50:53)
   cfg <- stacked_study(d, key = c("ccfid", "imp"))
-  expect_error(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "imp"),
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation_col = "imp"),
                "IMPUTATION names a column with 1 missing value.*Every row of stacked imputations needs its imputation index")
   d <- data.frame(ccfid = rep(1:2, 2L), imp = rep(1:2, each = 2L), age = 50:53)
   cfg <- stacked_study(d, key = c("ccfid", "imp"))
-  expect_error(read_job_data(cfg, key = c("ccfid", "imp"), one_row_per_patient = TRUE, imputation = "ccfid"),
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "imp"), one_row_per_patient = TRUE,
+                             imputation_col = "ccfid"),
                "IMPUTATION names the patient ID column")
 })
 
@@ -1580,7 +1594,7 @@ test_that("read_job_data() records the identifiers it dropped, and why a column 
   # Twelve patients: the value rule needs ten distinct values before it reads a shape.
   ssn <- 100000000 + 7919 * 1:12
   cfg <- job_study(data.frame(ccfid = 1:12, age = 50 + 1:12, ssn = ssn, tax_ref = ssn, pt_name = "x"))
-  out <- read_job_data(cfg)
+  out <- read_job_data(cfg, id_col = "ccfid")
   expect_false(any(c("ssn", "tax_ref", "pt_name") %in% names(out$data)))
   dropped <- out$record$value[out$record$step == "Identifiers dropped"]
   for (col in c("ssn", "tax_ref", "pt_name")) expect_match(dropped, paste0("`", col, "`"), fixed = TRUE)
@@ -1667,17 +1681,17 @@ test_that("read_job_data(whole_patients = TRUE) refuses a WHERE that keeps part 
   cfg <- job_study(long)
   key <- c("ccfid", "iv_start")
   # A baseline column keeps or drops a patient whole.
-  out <- read_job_data(cfg, where = quote(female == 1), key = key, whole_patients = TRUE)
+  out <- read_job_data(cfg, id_col = "ccfid", where = quote(female == 1), key_cols = key, whole_patients = TRUE)
   expect_identical(sort(unique(out$data$ccfid)), c(1L, 3L))
   expect_identical(nrow(out$data), 4L)
   # A time-varying one keeps part of patient 1 (and drops patient 3 whole, which is fine).
-  expect_error(read_job_data(cfg, where = quote(lab < 9), key = key, whole_patients = TRUE),
+  expect_error(read_job_data(cfg, id_col = "ccfid", where = quote(lab < 9), key_cols = key, whole_patients = TRUE),
                "1 patient kept by WHERE lost some of their rows")
   # The default changes nothing: the same WHERE keeps the partial patient.
-  expect_identical(nrow(read_job_data(cfg, where = quote(lab < 9), key = key)$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", where = quote(lab < 9), key_cols = key)$data), 4L)
   # No WHERE, nothing to check.
-  expect_identical(nrow(read_job_data(cfg, key = key, whole_patients = TRUE)$data), 6L)
-  expect_error(read_job_data(cfg, key = key, whole_patients = NA), "whole_patients must be TRUE or FALSE")
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", key_cols = key, whole_patients = TRUE)$data), 6L)
+  expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = key, whole_patients = NA), "whole_patients must be TRUE or FALSE")
 })
 
 test_that("whole_patients reads an integer64 ID by value, as Parquet hands one over", {
@@ -1693,8 +1707,8 @@ test_that("whole_patients reads an integer64 ID by value, as Parquet hands one o
   suppressMessages(hvtiRutilities::register_data(root = root, file = "built.parquet", key_cols = c("ccfid", "iv_start")))
   cfg <- hvtiRutilities::study_config(root)
   key <- c("ccfid", "iv_start")
-  out <- read_job_data(cfg, where = quote(female == 1), key = key, whole_patients = TRUE)
+  out <- read_job_data(cfg, id_col = "ccfid", where = quote(female == 1), key_cols = key, whole_patients = TRUE)
   expect_identical(nrow(out$data), 4L)
-  expect_error(read_job_data(cfg, where = quote(lab < 9), key = key, whole_patients = TRUE),
+  expect_error(read_job_data(cfg, id_col = "ccfid", where = quote(lab < 9), key_cols = key, whole_patients = TRUE),
                "1 patient kept by WHERE lost some of their rows")
 })

@@ -54,7 +54,7 @@ mm_render_fixture <- function(choices = character(), .local_envir = parent.frame
   utils::write.csv(mm_data(), file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", role = "study",
                                                  population = "Synthetic cohort", key_cols = c("ccfid", "time")))
-  job <- add_job("mm", "outcome", "mixed", dir = root)
+  job <- add_job("mm", "outcome", "mixed", root = root)
   lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
   defaults <- c('OUTCOME <- "y"', 'RESPONSE_SCALE <- "log"', 'TIME_TERMS <- c("log(time + 1)")')
   for (replacement in c(defaults, choices)) {

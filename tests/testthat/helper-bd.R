@@ -49,7 +49,7 @@ bd_study <- function(.local_envir = parent.frame()) {
 # Scaffold the job and apply `edits`, each a regex matching exactly one line
 # and the line that replaces it, as a study author's edits would.
 bd_job <- function(root, edits = list()) {
-  job <- add_job("bd", "study", "build", dir = root)
+  job <- add_job("bd", "study", "build", root = root)
   lines <- readLines(job, warn = FALSE)
   for (pattern in names(edits)) {
     hit <- grep(pattern, lines)

@@ -1,6 +1,6 @@
 gfup_migrate <- function(root) {
   migrate_job(file.path(root, "descriptive", "dc.gfup.sas"),
-              "cohort", "eda", "dc", "gfup", dir = root)
+              "cohort", "eda", "dc", "gfup", root = root)
 }
 
 gfup_evidence <- function(root, extra = character()) {

@@ -1,6 +1,6 @@
 test_that("add_job() scaffolds bd into the study's 00_datasets folder", {
   root <- bd_study()
-  job <- add_job("bd", "study", "build", dir = root)
+  job <- add_job("bd", "study", "build", root = root)
   expect_identical(basename(dirname(job)), "00_datasets")
   lines <- readLines(job, warn = FALSE)
   expect_true(any(lines == "SUBJECT <- \"study\""))
