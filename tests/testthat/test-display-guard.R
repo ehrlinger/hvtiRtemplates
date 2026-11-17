@@ -88,7 +88,8 @@ test_that("planted identifiers reach no report", {
   expect_false(grepl("90000(01|40)|77000(01|40)", general))
   expect_match(general, "Left out as patient identifiers", fixed = TRUE)
   eda <- canary_report("dc", "eda", list("^VARIABLE_SET <- " = "VARIABLE_SET <- \"all\"", "^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL",
-                                         "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980", "^X_VAR <- " = "X_VAR <- \"year\""))
+                                         "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980", "^OPDATE <- " = "OPDATE <- NULL",
+                                         "^X_VAR <- " = "X_VAR <- \"year\""))
   expect_false(grepl("90000(01|40)|77000(01|40)", eda))
 })
 

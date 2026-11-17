@@ -154,7 +154,14 @@ JOIN_KEY <- NULL
 # x-axis without any other symptom, which is why the operation years are
 # checked and printed below.
 OPYRS <- "iv_opyrs"
-ORIGIN_YEAR <- 1990
+# EDIT: the operation date column. Each patient's date less OPYRS gives the
+# origin, so ORIGIN_YEAR <- NULL reads it from the data, and every patient with
+# a date is checked against it; those without one are counted as unchecked.
+# Set ORIGIN_YEAR to a calendar year, such as 1990, and it is checked against
+# the data instead, stopping on a disagreement. Only with OPDATE <- NULL, for a
+# study that has no operation date, is ORIGIN_YEAR used unchecked.
+OPDATE <- "dt_surg"
+ORIGIN_YEAR <- NULL
 
 # EDIT: the close date of follow-up, as.Date("YYYY-MM-DD"). NULL estimates it
 # as the latest operation date plus follow-up in the data, which is the date
@@ -656,20 +663,34 @@ cat("A point below the diagonal is follow-up short of what the close date allows
 # names every missing column at once, refuses a name used twice and the
 # wrong-origin mistake, and works out the window the panels share. dc-gfup
 # calls it with the same arguments, so these are that job's panels.
-fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
+fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR, opdate_col = OPDATE,
                                     panels = PANELS, events = EVENTS, close_date = CLOSE_DATE)
+# The origin the panels used, read from OPDATE when ORIGIN_YEAR is NULL; the
+# run record takes it from here.
+.origin_year <- fp$meta$origin_year
 close_date <- fp$meta$close_date
 # Name the edit point a reader can find in this file, not the function's argument.
 close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
+# A patient with an operation year but no operation date is drawn at the origin above,
+# which nothing about that patient confirms. Count them, so the window table and a
+# warning say how many points rest on an unchecked origin.
+.unchecked <- if (is.null(OPDATE)) NULL else sum(!is.na(d[[OPYRS]]) & is.na(d[[OPDATE]]))
+if (isTRUE(.unchecked > 0)) {
+  warning(.unchecked, " patient(s) have ", OPYRS, " but no ", OPDATE, ", so their origin is not ",
+          "checked against the operation date.", call. = FALSE)
+}
 # Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an
 # hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,
 # because a build counting from a later origin is a problem to fix there. An
 # older hvtiPlotR refuses them instead, so the field is absent and so is the row.
 .before <- fp$meta$n_opyrs_negative
 .window <- data.frame(
-  quantity = c("patients", "operation year missing", if (!is.null(.before)) "operation before origin",
+  quantity = c("origin", "patients", "operation year missing",
+               if (!is.null(.unchecked)) "origin not checked (no operation date)",
+               if (!is.null(.before)) "operation before origin",
                "first operation", "last operation", "close date", "close date is"),
-  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, .before, format(fp$meta$first_operation),
+  value = c(paste0(fp$meta$origin_year, ", ", fp$meta$origin_source),
+            fp$meta$n_obs, fp$meta$n_opyrs_missing, .unchecked, .before, format(fp$meta$first_operation),
             format(fp$meta$study_end), format(close_date), close_source)
 )
 .child("tbl gfup window", "Operation years and the close date", "knitr::kable(.window, row.names = FALSE)")
@@ -910,7 +931,7 @@ cat(hvtiRtemplates:::.embed_provenance(
                                source = attr(.abbreviations, "source")),
     sections = SECTIONS,
     followup = if ("followup" %in% SECTIONS) {
-      list(origin_year = ORIGIN_YEAR, close_date = format(close_date),
+      list(origin_year = .origin_year, close_date = format(close_date),
            close_date_source = close_source, panels = panel_counts)
     }
   )

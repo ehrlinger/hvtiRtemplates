@@ -13,7 +13,7 @@ gfup_chunk <- function(label) {
 test_that("the potential table sums follow-up recorded against follow-up possible", {
   # Operations on 1 January 2000; the close date ten years on.
   d <- data.frame(iv_opyrs = 0, dead = c(0, 0, 1, NA), iv_dead = c(10, 5, 2, 3))
-  env <- list2env(list(d = d, OPYRS = "iv_opyrs", ORIGIN_YEAR = 2000, close_date = as.Date("2010-01-01"),
+  env <- list2env(list(d = d, OPYRS = "iv_opyrs", .origin_year = 2000, close_date = as.Date("2010-01-01"),
                        figure_drawn = TRUE, PANELS = list(all = list(status = "dead", time = "iv_dead",
                                                                      title = "All deaths"))))
   eval(gfup_chunk("potential"), env)
@@ -30,7 +30,7 @@ test_that("the potential table sums follow-up recorded against follow-up possibl
 
 test_that("follow-up recorded past the close date counts only up to it, and is counted", {
   d <- data.frame(iv_opyrs = 0, dead = 0, iv_dead = c(12, 4))
-  env <- list2env(list(d = d, OPYRS = "iv_opyrs", ORIGIN_YEAR = 2000, close_date = as.Date("2010-01-01"),
+  env <- list2env(list(d = d, OPYRS = "iv_opyrs", .origin_year = 2000, close_date = as.Date("2010-01-01"),
                        figure_drawn = TRUE, PANELS = list(all = list(status = "dead", time = "iv_dead"))))
   eval(gfup_chunk("potential"), env)
   ten <- as.numeric(as.Date("2010-01-01") - as.Date("2000-01-01")) / 365.2425
@@ -43,7 +43,7 @@ test_that("follow-up recorded past the close date counts only up to it, and is c
 test_that("an event recorded after the close date is capped there and counted past it", {
   # Codex review on #408: a death at 12 years against a 10-year window.
   d <- data.frame(iv_opyrs = 0, dead = c(1, 0), iv_dead = c(12, 4))
-  env <- list2env(list(d = d, OPYRS = "iv_opyrs", ORIGIN_YEAR = 2000, close_date = as.Date("2010-01-01"),
+  env <- list2env(list(d = d, OPYRS = "iv_opyrs", .origin_year = 2000, close_date = as.Date("2010-01-01"),
                        figure_drawn = TRUE, PANELS = list(all = list(status = "dead", time = "iv_dead"))))
   eval(gfup_chunk("potential"), env)
   row <- env$potential_table
@@ -118,6 +118,7 @@ test_that("a two-group panel draws and captions its own group names", {
   s <- scaffold_gfup(list(
     "^ANALYSIS_SET <- " = "ANALYSIS_SET <- NULL",
     "^ORIGIN_YEAR <- " = "ORIGIN_YEAR <- 1980",
+    "^OPDATE <- " = "OPDATE <- NULL",
     "^EVENT <- " = "EVENT <- \"repair\"",
     "^  all = list\\(status = " = paste0("  all = list(status = \"dead\", time = \"iv_dead\", title = \"All deaths\"),\n",
                                          "  repair = list(status = \"repair\", time = \"iv_fup\", title = \"Repair\",\n",

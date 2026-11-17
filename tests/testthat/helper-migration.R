@@ -94,6 +94,7 @@ render_migrated_fixture <- function(kind, root = NULL) {
     # 1980 for the same reason.
     lines <- readLines(job, warn = FALSE)
     lines[grep("^ORIGIN_YEAR <- ", lines)] <- "ORIGIN_YEAR <- 1980"
+    lines[grep("^OPDATE <- ", lines)] <- "OPDATE <- NULL"
     writeLines(lines, job)
   }
   quarto::quarto_render(job, execute_dir = dirname(job), quiet = TRUE)

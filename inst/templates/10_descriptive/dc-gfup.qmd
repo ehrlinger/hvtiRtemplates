@@ -57,8 +57,8 @@ if (utils::packageVersion("hvtiRutilities") < "1.5.24") {
   stop("This job needs hvtiRutilities >= 1.5.24 for followup_check()'s 15th and 85th percentiles and the *_col(s) names; ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
-  stop("This job needs hvtiPlotR >= 2.8.18 for hv_followup_panels()'s competing events and echo layer, ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.23") {
+  stop("This job needs hvtiPlotR >= 2.8.23 for hv_followup_panels(opdate_col =), its competing events and echo layer, ",
        "and the red and blue its captions name; ", utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -154,7 +154,14 @@ CHECKS <- list()
 # one slides every point along the x-axis without any other symptom, which is
 # why the operation years are checked and printed below.
 OPYRS <- "iv_opyrs"
-ORIGIN_YEAR <- 1990
+# EDIT: the operation date column. Each patient's date less OPYRS gives the
+# origin, so ORIGIN_YEAR <- NULL reads it from the data, and every patient with
+# a date is checked against it; those without one are counted as unchecked.
+# Set ORIGIN_YEAR to a calendar year, such as 1990, and it is checked against
+# the data instead, stopping on a disagreement. Only with OPDATE <- NULL, for a
+# study that has no operation date, is ORIGIN_YEAR used unchecked.
+OPDATE <- "dt_surg"
+ORIGIN_YEAR <- NULL
 
 # EDIT: the close date of follow-up, as.Date("YYYY-MM-DD"). NULL estimates it
 # as the latest operation date plus follow-up in the data, which is the date
@@ -436,16 +443,27 @@ itself.
 # render says so too.
 panel_counts <- list()
 fp <- tryCatch(
-  hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
+  hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR, opdate_col = OPDATE,
                                 panels = PANELS, events = EVENTS, close_date = CLOSE_DATE,
                                 echo_time_col = ECHO),
   error = function(e) e
 )
 figure_drawn <- !inherits(fp, "error")
 if (figure_drawn) {
+  # The origin the panels used, read from OPDATE when ORIGIN_YEAR is NULL; the
+  # code below, each GROUP's panels and the run record take it from here.
+  .origin_year <- fp$meta$origin_year
   close_date <- fp$meta$close_date
   # Name the edit point a reader can find in this file, not the function's argument.
   close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
+  # A patient with an operation year but no operation date is drawn at the origin above,
+  # which nothing about that patient confirms. Count them, so the window table and a
+  # warning say how many points rest on an unchecked origin.
+  .unchecked <- if (is.null(OPDATE)) NULL else sum(!is.na(d[[OPYRS]]) & is.na(d[[OPDATE]]))
+  if (isTRUE(.unchecked > 0)) {
+    warning(.unchecked, " patient(s) have ", OPYRS, " but no ", OPDATE, ", so their origin is not ",
+            "checked against the operation date.", call. = FALSE)
+  }
 } else {
   # A final render (render_job(final = TRUE), which sets HVTI_TEMPLATE_STRICT)
   # is the accepted result, and an accepted follow-up report has its figure.
@@ -477,7 +495,7 @@ if (figure_drawn) {
   .panel <- fp$tables$panels[[nm]]
   .drawn <- if (fp$data$type[match(nm, fp$data$panel)] == "event") .panel$tables$event_data else .panel$data
   .x <- .drawn$operation_year
-  .op <- as.Date(paste0(ORIGIN_YEAR, "-01-01")) + (.x - ORIGIN_YEAR) * 365.2425
+  .op <- as.Date(paste0(.origin_year, "-01-01")) + (.x - .origin_year) * 365.2425
   .years <- stats::setNames(data.frame(as.numeric(format(.op, "%Y"))), paste0(OPYRS, ", ", nm))
   hvtiRtemplates:::.identifiability_check(.years, sparse = names(.years))
 })
@@ -498,9 +516,12 @@ cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(
 # older hvtiPlotR refuses them instead, so the field is absent and so is the row.
 .before <- fp$meta$n_opyrs_negative
 knitr::kable(data.frame(
-  quantity = c("patients", "operation year missing", if (!is.null(.before)) "operation before origin",
+  quantity = c("origin", "patients", "operation year missing",
+               if (!is.null(.unchecked)) "origin not checked (no operation date)",
+               if (!is.null(.before)) "operation before origin",
                "first operation", "last operation", "close date", "close date is"),
-  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, .before, format(fp$meta$first_operation),
+  value = c(paste0(fp$meta$origin_year, ", ", fp$meta$origin_source),
+            fp$meta$n_obs, fp$meta$n_opyrs_missing, .unchecked, .before, format(fp$meta$first_operation),
             format(fp$meta$study_end), format(close_date), close_source)
 ))
 ```
@@ -518,11 +539,11 @@ and the table says how many patients have any.
 ```{r}
 #| label: potential
 # unnumbered: computes the potential follow-up; the table chunk below shows it
-# The operation date is ORIGIN_YEAR's 1 January plus OPYRS years of 365.2425
+# The operation date is the origin's 1 January plus OPYRS years of 365.2425
 # days, the arithmetic hv_followup() draws its diagonal with, so the table and
 # the diagonal agree.
 .potential_row <- function(title, status, time) {
-  op <- as.Date(paste0(ORIGIN_YEAR, "-01-01")) + d[[OPYRS]] * 365.2425
+  op <- as.Date(paste0(.origin_year, "-01-01")) + d[[OPYRS]] * 365.2425
   calendar <- pmax(as.numeric(close_date - op) / 365.2425, 0)
   st <- d[[status]]
   observed <- d[[time]]
@@ -673,15 +694,18 @@ if (!isTRUE(LEGEND) && !isFALSE(LEGEND)) stop("LEGEND must be TRUE or FALSE.", c
   if (LEGEND) list(theme(legend.position = "inside", legend.position.inside = c(0.98, 0.98),
                          legend.justification = c(1, 1)))
 )
-# GROUP: every group's panels drawn on their own, against the cohort's close date so
-# each facet's diagonal is the cohort's. A group the panel function refuses is left out
-# of the facets and named under them; the cohort figure is unaffected.
+# GROUP: every group's panels drawn on their own, against the cohort's close date and
+# origin so each facet's diagonal is the cohort's. The cohort call above already checked
+# every patient with an operation date against that origin, so a group is not asked to
+# derive it again, and a group whose operation dates are all missing still gets its facet.
+# A group the panel function refuses is left out of the facets and named under them; the
+# cohort figure is unaffected.
 group_plots <- list()
 group_refused <- character()
 if (figure_drawn && !is.null(GROUP)) {
   for (.lv in levels(group_values)) {
     .gp <- tryCatch(hvtiPlotR::hv_followup_panels(d[group_values == .lv, , drop = FALSE], opyrs_col = OPYRS,
-                                                  origin_year = ORIGIN_YEAR, panels = PANELS, events = EVENTS,
+                                                  origin_year = .origin_year, opdate_col = NULL, panels = PANELS, events = EVENTS,
                                                   close_date = close_date, echo_time_col = ECHO),
                     error = function(e) e)
     if (inherits(.gp, "error")) group_refused <- c(group_refused, .lv) else group_plots[[.lv]] <- plot(.gp, alpha = ALPHA)
@@ -815,7 +839,7 @@ cat(hvtiRtemplates:::.embed_provenance(
       followup = list(variable = FOLLOWUP)
     ),
     cohort = as.list(cohort_counts[1L, , drop = FALSE]),
-    followup = list(origin_year = ORIGIN_YEAR,
+    followup = list(origin_year = if (figure_drawn) .origin_year else NA_integer_,
                     close_date = if (figure_drawn) format(close_date) else NA_character_,
                     close_date_source = close_source, panels = panel_counts)
   )
