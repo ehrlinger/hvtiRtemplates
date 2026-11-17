@@ -146,8 +146,9 @@ by counting assertions: revert the code and confirm the new tests go red.
   being self-contained.
 - **Roxygen here is markdown**, since the tier 4 rubric pass (2026-11-16). `DESCRIPTION` sets
   `Roxygen: list(markdown = TRUE)`, as the rest of the hvtiR family does: write backticks,
-  `**bold**`, `*emphasis*`, `[fn()]` links and markdown lists. Rd macros such as `\eqn{}` still
-  work inside markdown. ⚠️ **Write `%` bare, never `\%`.** Roxygen escapes it itself, so `\%`
+  `**bold**`, `*emphasis*`, `[fn()]` links and markdown lists in new text. Rd macros still work
+  inside markdown: `\eqn{}`, and the `\itemize{}` lists the conversion left in place, which need
+  not be rewritten. ⚠️ **Write `%` bare, never `\%`.** Roxygen escapes it itself, so `\%`
   reaches the `.Rd` as `\\%`, a literal backslash followed by an Rd comment that silently cuts the
   rest of the line from the help page. Plans and specs under `dev/` written before the switch say
   Rd markup; they describe the code as it was.
