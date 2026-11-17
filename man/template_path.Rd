@@ -10,7 +10,7 @@ template_path(prefix, qualifier = NULL)
 \item{prefix}{Analysis prefix, e.g. \code{"ac"}, or a template's full name,
 e.g. \code{"dc.trends"} (or \code{"dc-trends"}), which carries its
 qualifier and leaves \code{qualifier} \code{NULL}. See
-\code{\link{template_list}}.}
+\code{\link[=template_list]{template_list()}}.}
 
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
 \code{dc}. Required only where a prefix carries more than one template;
@@ -18,9 +18,9 @@ omitting it there is an error naming the choices, never a silent pick.}
 }
 \value{
 The full path, as \code{character(1)}. A template the catalog
-  marks deprecated still resolves, with a warning naming its replacement.
-  A template's name before a rename, such as \code{dp.trends}, now
-  \code{dc.trends}, is an error naming the new name.
+marks deprecated still resolves, with a warning naming its replacement.
+A template's name before a rename, such as \code{dp.trends}, now
+\code{dc.trends}, is an error naming the new name.
 }
 \description{
 Path to a supported template

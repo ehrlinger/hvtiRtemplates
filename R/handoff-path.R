@@ -3,15 +3,15 @@
 #' A downstream job names its upstream bundle by a file name and, when the
 #' bundle is in another set, that set's name. Neither may hold a folder, so
 #' no setting can reach outside the study's estimates. Shared by
-#' \code{lm-checkpred} and \code{lp-mirror}.
+#' `lm-checkpred` and `lp-mirror`.
 #'
-#' @param file The bundle's file name, \code{MODEL_FILE}.
-#' @param set The set holding it, \code{MODEL_SET}, or \code{NULL} for the
+#' @param file The bundle's file name, `MODEL_FILE`.
+#' @param set The set holding it, `MODEL_SET`, or `NULL` for the
 #'   job's own set.
 #' @param root The study root.
 #' @param own A function of a file name giving its path in the job's own set.
 #' @param upstream The upstream template's name, for the messages.
-#' @param set_example A set name to show in the message about \code{set}.
+#' @param set_example A set name to show in the message about `set`.
 #' @return The bundle's path. Stops when either setting is malformed or the
 #'   file does not exist.
 #' @noRd
@@ -42,7 +42,7 @@
 #' @param bundle A saved bundle.
 #' @param ids The job's identifiers.
 #' @param root The study root.
-#' @return A character vector as long as \code{ids}.
+#' @return A character vector as long as `ids`.
 #' @noRd
 .bundle_ids <- function(bundle, ids, root) {
   if (isTRUE(bundle$meta$id_digest)) .id_digest(ids, .bundle_id_key(bundle, root)) else as.character(ids)

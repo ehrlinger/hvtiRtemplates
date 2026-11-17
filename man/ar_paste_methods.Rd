@@ -16,15 +16,15 @@ The ids of the items pasted, invisibly, in file order.
 }
 \description{
 Writes the Methods paragraph each cited job recorded into every
-  \strong{empty} \code{::: methods} div of an \code{ar} analysis report, with a
-  review stamp, so the analyst edits text that starts from the job's own
-  choices. A div that already holds text is never touched.
+\strong{empty} \verb{::: methods} div of an \code{ar} analysis report, with a
+review stamp, so the analyst edits text that starts from the job's own
+choices. A div that already holds text is never touched.
 }
 \details{
 Run from the console, not from inside the render: a render that
-  edits its own source would break the checksum its provenance records. Every
-  item is resolved before anything is written, so an item that fails (a draft
-  source, a missing exhibit) leaves the file exactly as it was.
+edits its own source would break the checksum its provenance records. Every
+item is resolved before anything is written, so an item that fails (a draft
+source, a missing exhibit) leaves the file exactly as it was.
 }
 \examples{
 # A copy of a small study shipped with the package: one finished hz job and
@@ -41,5 +41,5 @@ writeLines(readLines(report)[10:14])
 unlink(dir, recursive = TRUE)
 }
 \seealso{
-\code{\link{ar_review}}, \code{\link{ar_item}}
+\code{\link[=ar_review]{ar_review()}}, \code{\link[=ar_item]{ar_item()}}
 }

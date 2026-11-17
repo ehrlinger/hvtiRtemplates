@@ -93,7 +93,7 @@ the log-rank or Wilcoxon test and is left out of its degrees of freedom.
 row of \code{data}.
 }
 \description{
-The R counterpart of the SAS \code{\%KAPLAN} macro, as the \code{ac} job calls
+The R counterpart of the SAS \verb{\%KAPLAN} macro, as the \code{ac} job calls
 it. \code{life_table()} returns the product-limit life table, overall or one
 per stratum. \code{life_table_at()} reads survival and the number at risk at
 reporting horizons, \code{life_table_tests()} compares strata, and
@@ -104,12 +104,12 @@ drawn over exactly the same patients.
 \strong{Rows analyzed.} A row is analyzed when its time and event are both
 recorded. With \code{strata}, a row whose stratum value is missing, or is a
 mean-imputed level (\code{hvtiRutilities::imputed_levels()}), is dropped too,
-as \code{\%KAPLAN} drops "invalid strata values". The dropped rows are not
+as \verb{\%KAPLAN} drops "invalid strata values". The dropped rows are not
 silent: the result carries them in its \code{"dropped"} attribute, one row
 per reason, and the \code{ac} job prints that table.
 
 \strong{Confidence level.} The default \code{conf_level} is
-\code{\%KAPLAN}'s \code{CLEVEL} default, \code{0.68268948}: one standard
+\verb{\%KAPLAN}'s \code{CLEVEL} default, \code{0.68268948}: one standard
 error, not 95\%.
 
 \strong{Reporting horizons.} Survival at a horizon is the last estimate at or
@@ -121,8 +121,8 @@ when every censored time has a row (\code{PEVENT=0}). The estimate comes from
 the row before, the count from the row after.
 
 \strong{Tests.} \code{life_table_tests()} reports the three tests SAS
-\code{PROC LIFETEST} prints for strata: the log-rank, the Wilcoxon (Gehan's
-weights, the number at risk) and \code{-2Log(LR)}, the likelihood ratio test
+\verb{PROC LIFETEST} prints for strata: the log-rank, the Wilcoxon (Gehan's
+weights, the number at risk) and \verb{-2Log(LR)}, the likelihood ratio test
 of an exponential model. All three use every analyzed row to the end of
 follow-up. To compare curves only up to a horizon, censor the data there
 first, in the job.
