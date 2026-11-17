@@ -106,7 +106,7 @@ test_that("dc-eda colors every point of an event panel, by the house rule or fro
   # The panels' tables and figures are child chunks.
   local_child_chunks()
   root <- migration_study_fixture(NULL)
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "eda")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "eda")
   chunk <- function(label) {
     lines <- readLines(job, warn = FALSE)
     start <- match(paste0("#| label: ", setup_label(label)), lines)
@@ -813,7 +813,7 @@ test_that("dc-eda gives each event its own follow-up table, as each death panel 
   withr::local_package("hvtiRutilities")
   local_child_chunks()
   root <- migration_study_fixture(NULL)
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "eda")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "eda")
   chunk <- function(label) {
     lines <- readLines(job, warn = FALSE)
     start <- match(paste0("#| label: ", setup_label(label)), lines)
@@ -893,7 +893,7 @@ test_that("dc-eda's page captions name each variable beside its label", {
   withr::local_package("hvtiRutilities")
   local_child_chunks()
   root <- migration_study_fixture(NULL)
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "eda")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "eda")
   chunk <- function(label) {
     lines <- readLines(job, warn = FALSE)
     start <- match(paste0("#| label: ", setup_label(label)), lines)

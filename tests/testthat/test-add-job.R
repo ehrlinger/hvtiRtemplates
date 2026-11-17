@@ -23,8 +23,8 @@ test_that("subjects remain safe filename fields", {
   dir.create(file.path(dir, "distributions"), recursive = TRUE)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
-  expect_error(add_job(prefix = "ac", subject = "../death", type = "hz", dir = dir), "subject")
-  expect_error(add_job(prefix = "ac", subject = "death-event", type = "hz", dir = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = "../death", type = "hz", root = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = "death-event", type = "hz", root = dir), "subject")
 })
 
 test_that("every template is free of study identifiers", {
@@ -66,7 +66,7 @@ test_that("add_job preserves a legacy study layout", {
   dir <- tempfile("newjob-")
   dir.create(file.path(dir, "distributions"), recursive = TRUE)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  out <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
+  out <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir)
   expect_true(file.exists(out))
   expect_equal(out, file.path(dir, "distributions", "ac.dead_pa.hz.qmd"))
 })
@@ -78,7 +78,7 @@ test_that("add_job follows a numbered study layout", {
     dir, study = "Numbered layout test", study_tracker_id = 1L, renv = FALSE
   ))
 
-  out <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
+  out <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir)
 
   expect_equal(
     out,
@@ -98,7 +98,7 @@ test_that("add_job leaves no job when provenance hooks cannot be installed", {
   ))
   writeLines("project: [", file.path(dir, "_quarto.yml"))
 
-  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "_quarto[.]yml")
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir), "_quarto[.]yml")
   expect_false(file.exists(file.path(dir, "20_distributions", "ac.dead_pa.hz.qmd")))
 })
 
@@ -113,7 +113,7 @@ test_that("add_job rejects inline project mappings without installing hook files
   before <- readLines(config_path, warn = FALSE)
 
   expect_error(
-    add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir),
+    add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir),
     "inline project mappings"
   )
 
@@ -128,7 +128,7 @@ test_that("add_job refuses a mixed study layout", {
   dir.create(file.path(dir, "30_analyses"), recursive = TRUE)
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
-  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "mixed")
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir), "mixed")
   expect_false(file.exists(file.path(
     dir,
     "distributions",
@@ -142,8 +142,8 @@ test_that("add_job distinguishes two analysis types over one subject", {
   # subject alone both would be `ac.dead_pa.qmd` -- two sets, one file.
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  a <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
-  b <- add_job(prefix = "ac", subject = "dead_pa", type = "rfs", dir = dir)
+  a <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir)
+  b <- add_job(prefix = "ac", subject = "dead_pa", type = "rfs", root = dir)
   expect_false(a == b)
   expect_true(all(file.exists(c(a, b))))
 
@@ -182,7 +182,7 @@ test_that("add_job errors when the template lacks the SUBJECT/TYPE marker lines"
 
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  expect_error(add_job(prefix = "zz", subject = "dead_pa", type = "hz", dir = dir), "SUBJECT")
+  expect_error(add_job(prefix = "zz", subject = "dead_pa", type = "hz", root = dir), "SUBJECT")
 
   # The failure is after the copy, so the defect Finding 1 exists to prevent
   # -- a job named for one set but declaring the template's placeholder set
@@ -202,13 +202,13 @@ test_that("add_job rejects subject/type shapes that would break the filename", {
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
-  expect_error(add_job(prefix = "ac", subject = "", type = "hz", dir = dir), "subject")
-  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "", dir = dir), "type")
-  expect_error(add_job(prefix = "ac", subject = NA_character_, type = "hz", dir = dir), "subject")
-  expect_error(add_job(prefix = "ac", subject = character(0), type = "hz", dir = dir), "subject")
-  expect_error(add_job(prefix = "ac", subject = c("a", "b"), type = "hz", dir = dir), "subject")
-  expect_error(add_job(prefix = "ac", subject = "dead-pa", type = "hz", dir = dir), "subject")
-  expect_error(add_job(prefix = "ac", subject = "../esc", type = "hz", dir = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = "", type = "hz", root = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "", root = dir), "type")
+  expect_error(add_job(prefix = "ac", subject = NA_character_, type = "hz", root = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = character(0), type = "hz", root = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = c("a", "b"), type = "hz", root = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = "dead-pa", type = "hz", root = dir), "subject")
+  expect_error(add_job(prefix = "ac", subject = "../esc", type = "hz", root = dir), "subject")
 })
 
 test_that("add_job names a missing subject or type and shows the template's call", {
@@ -221,29 +221,29 @@ test_that("add_job names a missing subject or type and shows the template's call
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   ac_call <- template_list()$call[template_list()$name == "ac"]
 
-  e <- expect_error(add_job(prefix = "ac", type = "hz", dir = dir), "`subject` is missing")
+  e <- expect_error(add_job(prefix = "ac", type = "hz", root = dir), "`subject` is missing")
   expect_match(conditionMessage(e), "^add_job\\(\\): ")
   expect_match(conditionMessage(e), "[A-Za-z0-9_]+", fixed = TRUE)
   expect_match(conditionMessage(e), ac_call, fixed = TRUE)
 
-  e <- expect_error(add_job(prefix = "ac", subject = "death", dir = dir), "`type` is missing")
+  e <- expect_error(add_job(prefix = "ac", subject = "death", root = dir), "`type` is missing")
   expect_match(conditionMessage(e), ac_call, fixed = TRUE)
 
-  e <- expect_error(add_job(prefix = "ac", dir = dir), "`subject` and `type` are missing")
+  e <- expect_error(add_job(prefix = "ac", root = dir), "`subject` and `type` are missing")
   expect_match(conditionMessage(e), ac_call, fixed = TRUE)
 
   # A qualified template's example is its own row's call, not its prefix's first.
   gfup_call <- template_list()$call[template_list()$name == "dc.gfup"]
-  e <- expect_error(add_job("dc-gfup", type = "eda", dir = dir), "`subject` is missing")
+  e <- expect_error(add_job("dc-gfup", type = "eda", root = dir), "`subject` is missing")
   expect_match(conditionMessage(e), gfup_call, fixed = TRUE)
 
   # An unresolvable prefix still names the missing field, and points at the catalog.
-  e <- expect_error(add_job(prefix = "zz", type = "hz", dir = dir), "`subject` is missing")
+  e <- expect_error(add_job(prefix = "zz", type = "hz", root = dir), "`subject` is missing")
   expect_match(conditionMessage(e), "template_list()$call", fixed = TRUE)
 
   # open_job() scaffolds through add_job() but checks its fields first, so it
   # needs the same message in its own name, before it looks for a study.
-  e <- expect_error(open_job(prefix = "ac", type = "hz", dir = dir), "^open_job\\(\\): `subject` is missing")
+  e <- expect_error(open_job(prefix = "ac", type = "hz", root = dir), "^open_job\\(\\): `subject` is missing")
   expect_match(conditionMessage(e), ac_call, fixed = TRUE)
 
   expect_false(dir.exists(dir))
@@ -252,32 +252,32 @@ test_that("add_job names a missing subject or type and shows the template's call
 test_that("add_job refuses an unknown prefix, naming the valid ones", {
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  expect_error(add_job(prefix = "zz", subject = "dead_pa", type = "hz", dir = dir), "ac")
+  expect_error(add_job(prefix = "zz", subject = "dead_pa", type = "hz", root = dir), "ac")
 })
 
 test_that("add_job refuses to overwrite an existing job", {
   # A job file accumulates a study's edits; silently replacing one discards them.
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
-  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "already exists")
+  add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir)
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir), "already exists")
 })
 
 test_that("add_job refuses a dangling link where the job would go, and writes nothing through it", {
   # file.exists() is FALSE for a link whose target is missing, and file.copy() writes through it.
   skip_on_os("windows")            # a symbolic link needs a privilege there
   dir <- withr::local_tempdir("newjob-")
-  first <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)
+  first <- add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir)
   unlink(first)
   outside <- file.path(withr::local_tempdir(), "escaped.qmd")
   file.symlink(outside, first)
-  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "already exists")
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir), "already exists")
   expect_false(file.exists(outside))
   # The same at the job's name before 2026-10, which add_job() also refuses.
   unlink(first)
   legacy <- file.path(dirname(first), "dead_pa-hz-ac.qmd")
   file.symlink(outside, legacy)
-  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir), "its name before 2026-10")
+  expect_error(add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir), "its name before 2026-10")
   expect_false(file.exists(first))
 })
 
@@ -301,7 +301,7 @@ test_that("add_job errors when the copy fails rather than returning a dead path"
   # `file.copy()` also warns ("cannot create file ... Permission denied") on its
   # way to returning FALSE. That warning is useful in real use; here it would
   # just leave the suite with a WARN, so only the error is under test.
-  expect_error(suppressWarnings(add_job(prefix = "ac", subject = "dead_pa", type = "hz", dir = dir)),
+  expect_error(suppressWarnings(add_job(prefix = "ac", subject = "dead_pa", type = "hz", root = dir)),
                "failed to write")
 })
 
@@ -369,7 +369,7 @@ test_that("add_job writes the companion runner beside a bootstrap job, and only 
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
   for (prefix in c("bl", "br", "bc", "bh")) {
-    job <- add_job(prefix = prefix, subject = "dead_pa", type = "boot", dir = dir)
+    job <- add_job(prefix = prefix, subject = "dead_pa", type = "boot", root = dir)
     runner <- sub("[.]qmd$", ".runner.R", job)
     expect_identical(basename(runner), paste0(prefix, ".dead_pa.boot.runner.R"))
     expect_true(file.exists(runner), info = prefix)
@@ -377,7 +377,7 @@ test_that("add_job writes the companion runner beside a bootstrap job, and only 
     expect_identical(grep("^SUBJECT <- ", txt, value = TRUE), "SUBJECT <- \"dead_pa\"", info = prefix)
     expect_identical(grep("^TYPE\\s+<- ", txt, value = TRUE), "TYPE    <- \"boot\"", info = prefix)
   }
-  job <- add_job(prefix = "ac", subject = "dead_pa", type = "boot", dir = dir)
+  job <- add_job(prefix = "ac", subject = "dead_pa", type = "boot", root = dir)
   expect_false(any(grepl("[.]runner[.]R$", list.files(dirname(job)))))
   expect_length(list.files(dir, pattern = "[.]runner[.]R$", recursive = TRUE), 4L)
 })
@@ -386,12 +386,12 @@ test_that("add_job refuses to overwrite an existing runner, and writes nothing",
   # A runner accumulates a study's edits, as a job does.
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  job <- add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir)
+  job <- add_job(prefix = "bl", subject = "dead_pa", type = "boot", root = dir)
   runner <- sub("[.]qmd$", ".runner.R", job)
   writeLines("edited", runner)
   unlink(job)
   # Match the file name literally: a Windows path's backslashes would be read as regex escapes.
-  expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir),
+  expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", root = dir),
                paste0(basename(runner), "' already exists; refusing to overwrite"), fixed = TRUE)
   expect_false(file.exists(job))
   expect_identical(readLines(runner), "edited")
@@ -403,11 +403,11 @@ test_that("add_job refuses when only the job's runner remains under its pre-2026
   # Raised by Codex on #277.
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  job <- add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir)
+  job <- add_job(prefix = "bl", subject = "dead_pa", type = "boot", root = dir)
   unlink(c(job, sub("[.]qmd$", ".runner.R", job)))
   legacy_runner <- file.path(dirname(job), "dead_pa-boot-bl-runner.R")
   writeLines("edited", legacy_runner)
-  expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir),
+  expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", root = dir),
                "dead_pa-boot-bl-runner.R', its name before 2026-10", fixed = TRUE)
   expect_false(file.exists(job))
   expect_false(file.exists(sub("[.]qmd$", ".runner.R", job)))
@@ -421,7 +421,7 @@ test_that("add_job leaves neither file when the runner lacks its set markers", {
   testthat::local_mocked_bindings(.runner_template = function(name) bad_runner, .package = "hvtiRtemplates")
   dir <- tempfile("newjob-")
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", dir = dir), "SUBJECT")
+  expect_error(add_job(prefix = "bl", subject = "dead_pa", type = "boot", root = dir), "SUBJECT")
   expect_length(list.files(dir, pattern = "^bl[.]dead_pa[.]boot", recursive = TRUE), 0L)
 })
 
@@ -464,7 +464,7 @@ test_that("add_job refuses a job whose old spelling already exists", {
   old <- file.path(hvtiRutilities::study_dir("distributions", d), "dead_pa-hz-ac.qmd")
   dir.create(dirname(old), recursive = TRUE, showWarnings = FALSE)
   file.copy(template_path("ac"), old)
-  expect_error(add_job("ac", "dead_pa", "hz", dir = d), "dead_pa-hz-ac.qmd", fixed = TRUE)
+  expect_error(add_job("ac", "dead_pa", "hz", root = d), "dead_pa-hz-ac.qmd", fixed = TRUE)
   expect_false(file.exists(file.path(dirname(old), "ac.dead_pa.hz.qmd")))
 })
 
@@ -482,7 +482,7 @@ test_that("add_job asks the study for the template's packages before writing", {
     },
     .package = "hvtiRutilities"
   )
-  add_job("rfc", "dead", "rfc", dir = dir, qualifier = "fit")
+  add_job("rfc", "dead", "rfc", root = dir, qualifier = "fit")
   expect_identical(seen$packages, c("randomForestSRC", "ggRandomForests", "hvtiRutilities"))
   expect_identical(seen$caller, "add_job")
   expect_true(seen$only_in_renv)
@@ -496,7 +496,7 @@ test_that("add_job writes nothing when the study cannot get the packages", {
     study_need = function(...) stop("add_job(): needs randomForestSRC"),
     .package = "hvtiRutilities"
   )
-  expect_error(add_job("rfc", "dead", "rfc", dir = dir, qualifier = "fit"), "needs randomForestSRC")
+  expect_error(add_job("rfc", "dead", "rfc", root = dir, qualifier = "fit"), "needs randomForestSRC")
   expect_length(list.files(dir, pattern = "dead", recursive = TRUE), 0L)
   expect_length(list.files(dir, recursive = TRUE, include.dirs = TRUE, all.files = TRUE), 0L)
 })

@@ -156,7 +156,7 @@ install_hvti <- function(dir) {
   }
   Sys.chmod(to, "755")
   on_path <- normalizePath(dir) %in% normalizePath(strsplit(Sys.getenv("PATH"), ":", fixed = TRUE)[[1]], mustWork = FALSE)
-  if (!on_path) message("Add it to your PATH: echo 'export PATH=\"", dir, ":$PATH\"' >> ~/.profile")
+  if (!on_path) .hvti_inform("install_hvti(): add it to your PATH: echo 'export PATH=\"", dir, ":$PATH\"' >> ~/.profile")
   invisible(to)
 }
 
@@ -208,7 +208,8 @@ install_hvti <- function(dir) {
 #'   own checks. \code{0} submits and returns at once.
 #' @param quiet Logical(1). \code{TRUE} prints nothing: not the checks, the note
 #'   for a legacy job, or the lines the wait ends on. A refusal is still an
-#'   error, and its message then lists the failed checks and their fixes.
+#'   error, and its message then lists the failed checks and their fixes. Defaults to the family
+#'   option \code{hvti.quiet}; an explicit value wins.
 #' @param params,output_file Passed to \code{\link{render_job}} through
 #'   \code{\link{submit_job}}.
 #' @return Invisibly, the job's status, as \code{\link{job_status}} returns it.
@@ -226,7 +227,7 @@ install_hvti <- function(dir) {
 #' job_status("job.qmd", output_file = "job.M1000.html")
 #' }
 #' @export
-run_job <- function(path, final = FALSE, wait = 300, quiet = FALSE, params = NULL, output_file = NULL) {
+run_job <- function(path, final = FALSE, wait = 300, quiet = isTRUE(getOption("hvti.quiet")), params = NULL, output_file = NULL) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
     stop("run_job(): `path` must be an existing job file.", call. = FALSE)
   }
@@ -251,8 +252,8 @@ run_job <- function(path, final = FALSE, wait = 300, quiet = FALSE, params = NUL
     failed <- if (quiet) {
       vapply(Filter(function(ck) !ck$ok, checks), function(ck) paste0("\n  ", ck$message, "\n  fix: ", ck$fix), "")
     }
-    stop("run_job(): refused; fix the checks marked FAIL ", if (quiet) "below" else "above", " and run again.",
-         paste(failed, collapse = ""), call. = FALSE)
+    .abort("run_job(): refused; fix the checks marked FAIL ", if (quiet) "below" else "above", " and run again.",
+           paste(failed, collapse = ""), class = "run_refused")
   }
   expected <- .expected_checks(path)
   if (!quiet && !"render_r" %in% expected) {

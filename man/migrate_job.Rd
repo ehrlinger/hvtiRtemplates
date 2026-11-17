@@ -5,19 +5,24 @@
 \title{Migrate a legacy job into a supported analysis template}
 \usage{
 migrate_job(
-  source,
+  path,
   subject,
   type,
   prefix = NULL,
   qualifier = NULL,
-  lst = NULL,
-  log = NULL,
-  reference = NULL,
-  dir = NULL
+  lst_path = NULL,
+  log_path = NULL,
+  reference_path = NULL,
+  root = NULL,
+  source,
+  lst,
+  log,
+  reference,
+  dir
 )
 }
 \arguments{
-\item{source}{Path to one legacy source job, relative to the working
+\item{path}{Path to one legacy source job, relative to the working
 directory or absolute.}
 
 \item{subject}{Grouping topic for the new job's filename. It is a
@@ -38,20 +43,25 @@ SAS filename when \code{NULL}. When given without \code{prefix}, the
 prefix is read from the filename and this qualifier is used. Filename
 fields must match \code{[A-Za-z0-9_]+}.}
 
-\item{lst}{Optional path to a SAS listing, relative to the working
+\item{lst_path}{Optional path to a SAS listing, relative to the working
 directory or absolute. Defaults to the same-named file beside
-\code{source} when present.}
+\code{path} when present.}
 
-\item{log}{Optional path to a SAS log, relative to the working directory
-or absolute. Defaults to the same-named file beside \code{source} when
+\item{log_path}{Optional path to a SAS log, relative to the working directory
+or absolute. Defaults to the same-named file beside \code{path} when
 present.}
 
-\item{reference}{Optional vector of paths to output references, such as
+\item{reference_path}{Optional vector of paths to output references, such as
 RTF or DOCX files, relative to the working directory or absolute. They
 record comparison targets, not analysis choices.}
 
-\item{dir}{Any directory in the study, used only to locate the study root.
-Defaults to the directory of \code{source}.}
+\item{root}{Any directory in the study, used only to locate the study root.
+Defaults to the directory of \code{path}.}
+
+\item{source, lst, log, reference, dir}{Deprecated: the old names of
+\code{path}, \code{lst_path}, \code{log_path}, \code{reference_path} and
+\code{root}. They work, with a warning, for one more release; giving an
+old name with its new one is an error.}
 }
 \value{
 The migrated job path, invisibly. The report is written beside it.
@@ -77,8 +87,8 @@ template with no converter yet still migrates: it is scaffolded with every
 \code{EDIT:} marker kept, the evidence travels with it, and the report
 says the migration adapter is not yet available.
 
-Relative \code{source}, \code{lst}, \code{log} and \code{reference} paths
-resolve against the working directory, as in any R function; \code{dir}
+Relative \code{path}, \code{lst_path}, \code{log_path} and \code{reference_path}
+paths resolve against the working directory, as in any R function; \code{root}
 only locates the study root. Each file must exist, be readable and lie
 beneath that root, and symbolic links are checked after resolution. The
 evidence files are never modified. The report records whether the listing

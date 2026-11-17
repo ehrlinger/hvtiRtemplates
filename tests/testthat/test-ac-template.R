@@ -180,7 +180,7 @@ test_that("CI_TIMES draws confidence bars at those times, with the tables' limit
   expect_true("GeomErrorbar" %in% geoms(curve))
   expect_false("GeomRibbon" %in% geoms(curve))
   bars <- curve$layers[[match("GeomErrorbar", geoms(curve))]]$data
-  at <- life_table_at(env$d, env$TIME, env$EVENT, times = c(1, 3), strata = "grp", conf_level = env$CLEVEL)
+  at <- life_table_at(env$d, env$TIME, env$EVENT, times = c(1, 3), strata_col = "grp", conf_level = env$CLEVEL)
   expect_identical(nrow(bars), 4L)
   expect_identical(sort(unique(bars$time)), c(1, 3))
   expect_equal(bars$cl_lower, at$cl_lower)

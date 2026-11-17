@@ -14,6 +14,8 @@ test_that("an interactive session with no cached fit is stopped and told to subm
                "run_job(", fixed = TRUE)
   expect_error(guard_long_fit("nb-boostmtree-fit", dir = dir, why = "a boostmtree fit takes hours"),
                "a boostmtree fit takes hours", fixed = TRUE)
+  expect_error(guard_long_fit("nb-boostmtree-fit", dir = dir, why = "a boostmtree fit takes hours"),
+               class = "hvtiRtemplates_long_fit")
 })
 
 test_that("a render outside run_job() with no cached fit is stopped, from the Render button or any terminal", {

@@ -4,16 +4,19 @@
 \alias{upgrade_job}
 \title{Rewrite a job from the current version of its template}
 \usage{
-upgrade_job(path, dir = NULL)
+upgrade_job(path, root = NULL, dir)
 }
 \arguments{
 \item{path}{The one job to upgrade: its \code{.qmd} file, relative to the
 working directory or absolute, such as
 \code{"10_descriptive/dc.general.cohort.eda.qmd"}.}
 
-\item{dir}{Any directory in the study, used only to locate the study root.
+\item{root}{Any directory in the study, used only to locate the study root.
 Defaults to the directory of \code{path}, which is right for any job
 inside its study.}
+
+\item{dir}{Deprecated: the old name of \code{root}. It works, with a warning,
+for one more release; giving both is an error.}
 }
 \value{
 The upgraded job's path, invisibly. The report is in the
@@ -88,7 +91,7 @@ and several jobs are upgraded one call each:
   upgrade_job(job)
 }}
 You never name the template: the job's file name says which one it is.
-The job must sit inside its study; leave \code{dir} out unless you want to
+The job must sit inside its study; leave \code{root} out unless you want to
 name a different directory of the same study.
 
 Afterwards, render the job and read its report, in the \code{_archive}
@@ -111,7 +114,7 @@ by hand, such as \code{<job>.qmd.pre-upgrade-20261020}, is left where it is.
 \donttest{
 root <- file.path(tempdir(), "upgrade-job-example")
 invisible(hvtiRutilities::study_setup(root, "Example", 1L, renv = FALSE))
-job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
 # A study choice, made in the job.
 lines <- readLines(job)
 lines <- sub('^DATASET <- "built"', 'DATASET <- "built_r"', lines)

@@ -704,7 +704,7 @@ says the pool cannot tell them apart.
 # not the whole dataset.
 .job_data <- hvtiRtemplates::read_job_data(
   .cfg, dataset = .sel$dataset, analysis_set = .sel$analysis_set,
-  where = if (length(.sel$where)) lapply(.sel$where, str2lang), id = .sel$id, key = .sel$key
+  where = if (length(.sel$where)) lapply(.sel$where, str2lang), id_col = .sel$id, key_cols = .sel$key
 )
 d <- .job_data$data
 .provenance_data <- c(.provenance_data, list(.job_data$provenance))

@@ -21,8 +21,8 @@
 #' \code{EDIT:} marker kept, the evidence travels with it, and the report
 #' says the migration adapter is not yet available.
 #'
-#' Relative \code{source}, \code{lst}, \code{log} and \code{reference} paths
-#' resolve against the working directory, as in any R function; \code{dir}
+#' Relative \code{path}, \code{lst_path}, \code{log_path} and \code{reference_path}
+#' paths resolve against the working directory, as in any R function; \code{root}
 #' only locates the study root. Each file must exist, be readable and lie
 #' beneath that root, and symbolic links are checked after resolution. The
 #' evidence files are never modified. The report records whether the listing
@@ -55,7 +55,7 @@
 #' replaced. If placement fails, only the outputs this call placed are removed,
 #' along with its temporary files.
 #'
-#' @param source Path to one legacy source job, relative to the working
+#' @param path Path to one legacy source job, relative to the working
 #'   directory or absolute.
 #' @param subject Grouping topic for the new job's filename. It is a
 #'   statistical endpoint only when the job analyses one; an endpoint-free
@@ -71,17 +71,21 @@
 #'   SAS filename when \code{NULL}. When given without \code{prefix}, the
 #'   prefix is read from the filename and this qualifier is used. Filename
 #'   fields must match \code{[A-Za-z0-9_]+}.
-#' @param lst Optional path to a SAS listing, relative to the working
+#' @param lst_path Optional path to a SAS listing, relative to the working
 #'   directory or absolute. Defaults to the same-named file beside
-#'   \code{source} when present.
-#' @param log Optional path to a SAS log, relative to the working directory
-#'   or absolute. Defaults to the same-named file beside \code{source} when
+#'   \code{path} when present.
+#' @param log_path Optional path to a SAS log, relative to the working directory
+#'   or absolute. Defaults to the same-named file beside \code{path} when
 #'   present.
-#' @param reference Optional vector of paths to output references, such as
+#' @param reference_path Optional vector of paths to output references, such as
 #'   RTF or DOCX files, relative to the working directory or absolute. They
 #'   record comparison targets, not analysis choices.
-#' @param dir Any directory in the study, used only to locate the study root.
-#'   Defaults to the directory of \code{source}.
+#' @param root Any directory in the study, used only to locate the study root.
+#'   Defaults to the directory of \code{path}.
+#' @param source,lst,log,reference,dir Deprecated: the old names of
+#'   \code{path}, \code{lst_path}, \code{log_path}, \code{reference_path} and
+#'   \code{root}. They work, with a warning, for one more release; giving an
+#'   old name with its new one is an error.
 #'
 #' @return The migrated job path, invisibly. The report is written beside it.
 #' @seealso \code{\link{add_job}}, \code{\link{template_list}}
@@ -109,8 +113,16 @@
 #' unlink(root, recursive = TRUE)
 #' }
 #' @export
-migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
-                        lst = NULL, log = NULL, reference = NULL, dir = NULL) {
+migrate_job <- function(path, subject, type, prefix = NULL, qualifier = NULL,
+                        lst_path = NULL, log_path = NULL, reference_path = NULL, root = NULL,
+                        source, lst, log, reference, dir) {
+  if (!missing(source)) path <- .take_renamed("migrate_job", "source", "path", source, !missing(path))
+  if (!missing(lst)) lst_path <- .take_renamed("migrate_job", "lst", "lst_path", lst, !missing(lst_path))
+  if (!missing(log)) log_path <- .take_renamed("migrate_job", "log", "log_path", log, !missing(log_path))
+  if (!missing(reference)) {
+    reference_path <- .take_renamed("migrate_job", "reference", "reference_path", reference, !missing(reference_path))
+  }
+  if (!missing(dir)) root <- .take_renamed("migrate_job", "dir", "root", dir, !missing(root))
   .check_field("subject", subject, fn = "migrate_job")
   .check_field("type", type, fn = "migrate_job")
   # The shared string check speaks for template selection; these arguments
@@ -120,7 +132,7 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
       stop("migrate_job(): ", sub("^template selection: ", "", conditionMessage(e)), call. = FALSE)
     })
   }
-  check_string("source", source)
+  check_string("path", path)
   if (!is.null(qualifier)) .check_field("qualifier", qualifier, fn = "migrate_job")
   # A full name, "dc-trends", is split before the field check, as in add_job().
   if (!is.null(prefix)) {
@@ -132,35 +144,39 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
     qualifier <- parts$qualifier
     .check_field("prefix", prefix, fn = "migrate_job")
   }
-  if (!is.null(dir)) check_string("dir", dir)
+  if (!is.null(root)) check_string("root", root)
   # Relative paths resolve against the working directory, as in any R
-  # function; `dir` only locates the study root. Each path is resolved once,
+  # function; `root` only locates the study root. Each path is resolved once,
   # and the existence check and the evidence both use that resolution.
-  resolve <- function(arg, path) {
-    if (!file.exists(path)) stop("migrate_job(): ", arg, " not found: ", path, call. = FALSE)
-    normalizePath(path, winslash = "/")
+  resolve <- function(arg, p) {
+    if (!file.exists(p)) stop("migrate_job(): ", arg, " not found: ", p, call. = FALSE)
+    normalizePath(p, winslash = "/")
   }
-  source <- resolve("source", source)
-  root <- if (is.null(dir)) hvtiRutilities::study_root(dirname(source)) else hvtiRutilities::study_root(dir)
+  path <- resolve("path", path)
+  root <- if (is.null(root)) hvtiRutilities::study_root(dirname(path)) else hvtiRutilities::study_root(root)
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
+  # The listing and log, given or found beside the source, kept under the evidence's names.
+  given <- list(lst = lst_path, log = log_path)
   found <- c(lst = "supplied", log = "supplied")
-  for (arg in c("lst", "log")) {
-    given <- get(arg)
-    if (!is.null(given)) {
-      check_string(arg, given)
-      assign(arg, resolve(paste0("`", arg, "`"), given))
+  evidence_paths <- list()
+  for (kind in c("lst", "log")) {
+    arg <- paste0(kind, "_path")
+    if (!is.null(given[[kind]])) {
+      check_string(arg, given[[kind]])
+      evidence_paths[[kind]] <- resolve(paste0("`", arg, "`"), given[[kind]])
     } else {
-      assign(arg, .default_evidence(source, arg))
-      found[[arg]] <- if (is.null(get(arg))) "not found beside source" else "found beside source"
+      evidence_paths[kind] <- list(.default_evidence(path, kind))
+      found[[kind]] <- if (is.null(evidence_paths[[kind]])) "not found beside source" else "found beside source"
     }
   }
-  if (!is.null(reference)) {
-    if (!is.character(reference) || !length(reference) || anyNA(reference) || any(!nzchar(reference))) {
-      stop("migrate_job(): `reference` must contain existing file paths.", call. = FALSE)
+  if (!is.null(reference_path)) {
+    if (!is.character(reference_path) || !length(reference_path) || anyNA(reference_path) ||
+          any(!nzchar(reference_path))) {
+      stop("migrate_job(): `reference_path` must contain existing file paths.", call. = FALSE)
     }
-    reference <- vapply(reference, resolve, character(1L), arg = "`reference`", USE.NAMES = FALSE)
+    reference_path <- vapply(reference_path, resolve, character(1L), arg = "`reference_path`", USE.NAMES = FALSE)
   }
-  tpl <- .infer_template(source, prefix, qualifier)
+  tpl <- .infer_template(path, prefix, qualifier)
   prefix <- tpl$prefix
   qualifier <- tpl$qualifier
   # A deprecated template's replacement draws the same output, so the job is
@@ -174,7 +190,7 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
     prefix <- parts$prefix
     qualifier <- parts$qualifier
   }
-  paths <- c(source = source, lst = lst, log = log, reference = reference)
+  paths <- c(source = path, lst = evidence_paths$lst, log = evidence_paths$log, reference = reference_path)
   paths <- vapply(paths, .migration_path, character(1L), root = root)
   row <- tryCatch(
     .select_template(template_list(), prefix, qualifier),
@@ -244,7 +260,7 @@ migrate_job <- function(source, subject, type, prefix = NULL, qualifier = NULL,
   dir.create(staging)
   on.exit(unlink(staging, recursive = TRUE), add = TRUE)
   qualifier <- if (is.na(row$qualifier[[1L]])) NULL else row$qualifier[[1L]]
-  staged <- add_job(row$prefix[[1L]], subject, type, dir = staging, qualifier = qualifier)
+  staged <- add_job(row$prefix[[1L]], subject, type, root = staging, qualifier = qualifier)
   folder <- hvtiRutilities::study_dir(row$folder[[1L]], root = root)
   if (.migration_target_exists(folder)) {
     resolved <- normalizePath(folder, winslash = "/", mustWork = TRUE)

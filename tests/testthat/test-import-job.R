@@ -11,7 +11,7 @@ import_study <- function(name, .local_envir = parent.frame()) {
 # An ac job in `root` with the other study's edits: a dataset, a row selection
 # and an absolute path to that study's file.
 edited_ac <- function(root) {
-  job <- add_job("ac", subject = "death", type = "hz", dir = root)
+  job <- add_job("ac", subject = "death", type = "hz", root = root)
   lines <- readLines(job, warn = FALSE)
   lines[lines == 'DATASET <- "built"'] <- 'DATASET <- "built_aorta"'
   lines[lines == "WHERE <- NULL"] <- "WHERE <- quote(aorta == 1)"
@@ -26,7 +26,7 @@ test_that("a job is imported with its edits, renamed to the new set", {
   here <- import_study("here")
   from <- edited_ac(other)
   msg <- character()
-  out <- withCallingHandlers(import_job(from, subject = "reop", dir = here),
+  out <- withCallingHandlers(import_job(from, subject = "reop", root = here),
                              message = function(m) {
                                msg <<- c(msg, conditionMessage(m))
                                invokeRestart("muffleMessage")
@@ -59,11 +59,11 @@ test_that("a job is imported with its edits, renamed to the new set", {
 test_that("a job with nothing study-specific left says so, and NULL selections are not listed", {
   other <- import_study("other")
   here <- import_study("here")
-  from <- add_job("ac", subject = "death", type = "hz", dir = other)
+  from <- add_job("ac", subject = "death", type = "hz", root = other)
   lines <- readLines(from, warn = FALSE)
   writeLines(gsub("EDIT:", "REVIEWED:", lines, fixed = TRUE), from)
-  expect_message(out <- import_job(from, dir = here), "DATASET: line")
-  msg <- paste(capture.output(import_job(from, type = "km", dir = here), type = "message"), collapse = "\n")
+  expect_message(out <- import_job(from, root = here), "DATASET: line")
+  msg <- paste(capture.output(import_job(from, type = "km", root = here), type = "message"), collapse = "\n")
   expect_match(msg, "DATASET: line")
   expect_no_match(msg, "WHERE|EDIT|absolute")
   expect_true(file.exists(sub("[.]hz[.]qmd$", ".km.qmd", out)))
@@ -73,67 +73,67 @@ test_that("an existing job is never overwritten, and a refusal writes nothing", 
   other <- import_study("other")
   here <- import_study("here")
   from <- edited_ac(other)
-  existing <- add_job("ac", subject = "death", type = "hz", dir = here)
+  existing <- add_job("ac", subject = "death", type = "hz", root = here)
   before <- readLines(existing, warn = FALSE)
-  expect_error(import_job(from, dir = here), "^import_job\\(\\): .*already exists; refusing to overwrite")
+  expect_error(import_job(from, root = here), "^import_job\\(\\): .*already exists; refusing to overwrite")
   expect_identical(readLines(existing, warn = FALSE), before)
 
   # The dash spelling before 2026-10 is the same job.
   file.rename(existing, file.path(dirname(existing), "death-hz-ac.qmd"))
-  expect_error(import_job(from, dir = here), "its name before 2026-10")
+  expect_error(import_job(from, root = here), "its name before 2026-10")
   expect_false(file.exists(existing))
 })
 
 test_that("a source without exactly one SUBJECT line is refused before anything is written", {
   other <- import_study("other")
   here <- import_study("here")
-  from <- add_job("ac", subject = "death", type = "hz", dir = other)
+  from <- add_job("ac", subject = "death", type = "hz", root = other)
   lines <- readLines(from, warn = FALSE)
   writeLines(lines[!grepl("^SUBJECT ", lines)], from)
-  expect_error(import_job(from, dir = here), "0 lines matching")
+  expect_error(import_job(from, root = here), "0 lines matching")
   expect_length(list.files(here, pattern = "[.]qmd$", recursive = TRUE), 0L)
 })
 
 test_that("a failure after the job is written leaves neither the job nor its runner", {
   other <- import_study("other")
   here <- import_study("here")
-  from <- add_job("bl", subject = "death", type = "boot", dir = other)
+  from <- add_job("bl", subject = "death", type = "boot", root = other)
   src_runner <- sub("[.]qmd$", ".runner.R", from)
   r <- readLines(src_runner, warn = FALSE)
   writeLines(r[!grepl("^SUBJECT ", r)], src_runner)
-  expect_error(import_job(from, dir = here), "0 lines matching")
+  expect_error(import_job(from, root = here), "0 lines matching")
   expect_length(list.files(here, pattern = "^bl[.]", recursive = TRUE), 0L)
 })
 
 test_that("from must be a job named for a template", {
   here <- import_study("here")
-  expect_error(import_job(file.path(here, "nope.qmd"), dir = here), "job not found")
+  expect_error(import_job(file.path(here, "nope.qmd"), root = here), "job not found")
   odd <- file.path(here, "notes.qmd")
   writeLines("x", odd)
-  expect_error(import_job(odd, dir = here), "does not name a template")
-  expect_error(import_job(c("a", "b"), dir = here), "^import_job\\(\\): ")
+  expect_error(import_job(odd, root = here), "does not name a template")
+  expect_error(import_job(c("a", "b"), root = here), "^import_job\\(\\): ")
   other <- import_study("other")
-  from <- add_job("ac", subject = "death", type = "hz", dir = other)
-  expect_error(import_job(from, subject = "a.b", dir = here), "^import_job\\(\\): `subject`")
+  from <- add_job("ac", subject = "death", type = "hz", root = other)
+  expect_error(import_job(from, subject = "a.b", root = here), "^import_job\\(\\): `subject`")
 })
 
 test_that("a job's runner comes with it, or the template's when it has none", {
   other <- import_study("other")
   here <- import_study("here")
-  from <- add_job("bl", subject = "death", type = "boot", dir = other)
+  from <- add_job("bl", subject = "death", type = "boot", root = other)
   src_runner <- sub("[.]qmd$", ".runner.R", from)
   r <- readLines(src_runner, warn = FALSE)
   r[r == 'DATASET <- "built"'] <- 'DATASET <- "built_aorta"'
   writeLines(r, src_runner)
 
-  expect_message(out <- import_job(from, subject = "reop", dir = here),
+  expect_message(out <- import_job(from, subject = "reop", root = here),
                  paste0("Review in ", "bl.reop.boot.runner.R:\n  DATASET: line"), fixed = TRUE)
   got <- readLines(sub("[.]qmd$", ".runner.R", out), warn = FALSE)
   expect_identical(which(r != got), grep("^SUBJECT ", r))
   expect_true('DATASET <- "built_aorta"' %in% got)
 
   unlink(src_runner)
-  expect_message(out2 <- import_job(from, subject = "stroke", dir = here), "is the template's")
+  expect_message(out2 <- import_job(from, subject = "stroke", root = here), "is the template's")
   expect_identical(readLines(sub("[.]qmd$", ".runner.R", out2), warn = FALSE)[grepl("^DATASET <- ", r)],
                    'DATASET <- "built"')
 })
@@ -141,20 +141,20 @@ test_that("a job's runner comes with it, or the template's when it has none", {
 test_that("a source runner is carried even when the template has none", {
   other <- import_study("other")
   here <- import_study("here")
-  from <- add_job("ac", subject = "death", type = "hz", dir = other)
+  from <- add_job("ac", subject = "death", type = "hz", root = other)
   expect_false(file.exists(file.path(dirname(from), "ac.death.hz.runner.R")))  # ac has no runner
   src_runner <- sub("[.]qmd$", ".runner.R", from)
   r <- c('SUBJECT <- "death"', 'TYPE <- "hz"', 'DATASET <- "built_aorta"')
   writeLines(r, src_runner)
 
-  out <- suppressMessages(import_job(from, subject = "reop", dir = here))
+  out <- suppressMessages(import_job(from, subject = "reop", root = here))
   got <- readLines(sub("[.]qmd$", ".runner.R", out), warn = FALSE)
   expect_identical(got[c(1L, 3L)], c('SUBJECT <- "reop"', 'DATASET <- "built_aorta"'))
   expect_match(got[[2L]], '^TYPE\\s+<- "hz"$')
 
   # A failure while writing it leaves neither file.
   writeLines(r[-1L], src_runner)
-  expect_error(import_job(from, subject = "stroke", dir = here), "0 lines matching")
+  expect_error(import_job(from, subject = "stroke", root = here), "0 lines matching")
   expect_length(list.files(here, pattern = "^ac[.]stroke[.]", recursive = TRUE), 0L)
 })
 
@@ -170,7 +170,7 @@ test_that("the review reads = assignments and root paths starting with a digit o
 test_that("packages attached with quoted names or options are installed", {
   other <- import_study("other")
   here <- import_study("here")
-  from <- add_job("ac", subject = "death", type = "hz", dir = other)
+  from <- add_job("ac", subject = "death", type = "hz", root = other)
   lines <- readLines(from, warn = FALSE)
   start <- grep("^#\\|\\s*label:\\s*setup\\s*$", lines)
   end <- start + grep("^```\\s*$", lines[-seq_len(start)])[1L]
@@ -183,7 +183,7 @@ test_that("packages attached with quoted names or options are installed", {
     asked[[length(asked) + 1L]] <<- list(pkgs = pkgs, caller = list(...)$caller)
     invisible(NULL)
   }, .package = "hvtiRutilities")
-  msg <- paste(capture.output(import_job(from, dir = here), type = "message"), collapse = "\n")
+  msg <- paste(capture.output(import_job(from, root = here), type = "message"), collapse = "\n")
   from_import <- unlist(lapply(asked, function(a) if (identical(a$caller, "import_job")) a$pkgs))
   expect_true(all(c("rpart", "survival", "splines") %in% from_import))
   expect_false("pkg" %in% from_import)
@@ -193,10 +193,10 @@ test_that("packages attached with quoted names or options are installed", {
 test_that("a job whose setup chunk cannot be read is refused, not read as needing nothing", {
   other <- import_study("other")
   here <- import_study("here")
-  from <- add_job("ac", subject = "death", type = "hz", dir = other)
+  from <- add_job("ac", subject = "death", type = "hz", root = other)
   lines <- readLines(from, warn = FALSE)
   writeLines(sub("label:\\s*setup", "label: not-setup", lines), from)
-  expect_error(import_job(from, dir = here), "^import_job\\(\\): cannot read the packages.*no setup chunk")
+  expect_error(import_job(from, root = here), "^import_job\\(\\): cannot read the packages.*no setup chunk")
   expect_length(list.files(here, pattern = "[.]qmd$", recursive = TRUE), 0L)
 })
 
@@ -216,7 +216,7 @@ test_that("an imported job renders in its new study", {
   utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", here), "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(here, file = "built.csv"))
 
-  out <- suppressMessages(import_job(fx$job, dir = here))
+  out <- suppressMessages(import_job(fx$job, root = here))
   quarto::quarto_render(out, execute_dir = dirname(out), quiet = TRUE)
   html <- sub("[.]qmd$", ".html", out)
   expect_true(file.exists(html))
@@ -231,16 +231,16 @@ test_that("an imported job renders in its new study", {
 test_that("a job written under a template's name before a rename is refused, and imports once upgraded", {
   other <- import_study("old")
   here <- import_study("new")
-  job <- add_job("dc.trends", subject = "cohort", type = "eda", dir = other)
+  job <- add_job("dc.trends", subject = "cohort", type = "eda", root = other)
   # As a dp.trends job was scaffolded before 2026-10-10: in graphs/, under the old name. Its code may link
   # figures as though it sat in graphs/, so it is not copied into descriptive/ as it stands.
   from <- file.path(hvtiRutilities::study_dir("graphs", other), "dp.trends.cohort.eda.qmd")
   file.rename(job, from)
-  expect_error(import_job(from, dir = here), "written under dp[.]trends, since renamed dc[.]trends.*upgrade_job\\(\\)")
+  expect_error(import_job(from, root = here), "written under dp[.]trends, since renamed dc[.]trends.*upgrade_job\\(\\)")
   expect_length(list.files(here, "[.]qmd$", recursive = TRUE), 0L)
   # Upgraded where it is, it becomes a dc.trends job, and that one imports.
   upgraded <- suppressMessages(upgrade_job(from))
-  out <- suppressMessages(import_job(upgraded, dir = here))
+  out <- suppressMessages(import_job(upgraded, root = here))
   expect_identical(normalizePath(out, winslash = "/"),
                    normalizePath(file.path(hvtiRutilities::study_dir("descriptive", here), "dc.trends.cohort.eda.qmd"),
                                  winslash = "/"))

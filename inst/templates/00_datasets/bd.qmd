@@ -263,7 +263,7 @@ names(d) <- tolower(names(d))
 ```{r}
 #| label: cohort
 .cut <- tryCatch(
-  hvtiRtemplates::build_cohort(d, exclude = EXCLUDE, cohort = COHORT, join_by = JOIN_BY, id = ID),
+  hvtiRtemplates::build_cohort(d, exclude = EXCLUDE, path = COHORT, join_cols = JOIN_BY, id_col = ID),
   error = function(e) .bd_stop("cohort", conditionMessage(e))
 )
 d <- .cut$data

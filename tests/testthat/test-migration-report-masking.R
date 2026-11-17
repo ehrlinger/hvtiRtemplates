@@ -42,7 +42,7 @@ test_that("reports mask literals, comments, long numbers and macro values for ev
     root <- migration_study_fixture(kind)
     source <- file.path(root, spec[["folder"]], paste0(spec[["stem"]], ".sas"))
     writeLines(c(sas_planted_lines, readLines(source)), source)
-    job <- migrate_job(source, "cohort", "eda", spec[["prefix"]], spec[["qualifier"]], dir = root)
+    job <- migrate_job(source, "cohort", "eda", spec[["prefix"]], spec[["qualifier"]], root = root)
     report <- masked_report(job)
     expect_no_sentinel(report, sas_sentinels, info = kind)
     expect_match(report, "\"[string]\"", fixed = TRUE, info = kind)
@@ -54,7 +54,7 @@ test_that("reports mask the same values for a SAS dp-postage source", {
   source <- file.path(root, "descriptive", "dp.postage.sas")
   writeLines(c(setdiff(sas_planted_lines, "data drop; set nothing;"), "%let dta_filename = built;", "%let pref_time_var = iv_dead;",
                "%let variables = age bmi;"), source)
-  job <- migrate_job(source, "cohort", "eda", "dc", "eda", dir = root)
+  job <- migrate_job(source, "cohort", "eda", "dc", "eda", root = root)
   expect_no_sentinel(masked_report(job), sas_sentinels, info = "dp-postage sas")
 })
 
@@ -73,7 +73,7 @@ test_that("reports withhold qmd prose and YAML and mask R literals and comments"
     "```",
     "More prose naming SENTINEL_PROSE2."
   ), source)
-  job <- migrate_job(source, "cohort", "eda", "dc", "eda", dir = root)
+  job <- migrate_job(source, "cohort", "eda", "dc", "eda", root = root)
   report <- masked_report(job)
   expect_no_sentinel(report, c("SENTINEL_YAML", "SENTINEL_AUTHOR", "SENTINEL_PROSE", "SENTINEL_RDQ",
                                "SENTINEL_RSQ", "7654321", "SENTINEL_RCOMMENT", "SENTINEL_RLINECOMMENT"))
@@ -84,7 +84,7 @@ test_that("reports carry no planted value when no converter exists", {
   root <- migration_study_fixture()
   source <- file.path(root, "distributions", "hz.dead.sas")
   writeLines(sas_planted_lines, source)
-  job <- migrate_job(source, "dead", "eda", dir = root)
+  job <- migrate_job(source, "dead", "eda", root = root)
   expect_no_sentinel(masked_report(job), sas_sentinels, info = "no converter")
 })
 
@@ -106,7 +106,7 @@ test_that("dc-tables group headings reach the job but not the report", {
   root <- migration_study_fixture("dc-tables")
   source <- file.path(root, "descriptive", "dc.tables.sas")
   writeLines("%desc_tab(vartype=continuous,input=built,varlist=/* SENTINEL_HEADING */ age);", source)
-  job <- migrate_job(source, "cohort", "eda", "dc", "tables", dir = root)
+  job <- migrate_job(source, "cohort", "eda", "dc", "tables", root = root)
   expect_no_sentinel(masked_report(job), "SENTINEL_HEADING")
   expect_match(masked_report(job), "[heading]: age", fixed = TRUE)
   expect_true(any(grepl("SENTINEL_HEADING", readLines(job, warn = FALSE), fixed = TRUE)))
@@ -138,7 +138,7 @@ test_that("macro-quoted %let values, %put text and unquoted titles are masked fo
     root <- migration_study_fixture(kind)
     source <- file.path(root, spec[["folder"]], paste0(spec[["stem"]], ".sas"))
     writeLines(c(free_text_sas_lines, readLines(source)), source)
-    job <- migrate_job(source, "cohort", "eda", spec[["prefix"]], spec[["qualifier"]], dir = root)
+    job <- migrate_job(source, "cohort", "eda", spec[["prefix"]], spec[["qualifier"]], root = root)
     report <- masked_report(job)
     expect_no_sentinel(report, free_text_sentinels, info = kind)
   }
@@ -185,6 +185,6 @@ test_that("reports mask R raw strings in a qmd source", {
     "d4 <- r\"{SENTINEL_RAW4}\"",
     "```"
   ), source)
-  job <- migrate_job(source, "cohort", "eda", "dc", "eda", dir = root)
+  job <- migrate_job(source, "cohort", "eda", "dc", "eda", root = root)
   expect_no_sentinel(masked_report(job), paste0("SENTINEL_RAW", 1:4))
 })

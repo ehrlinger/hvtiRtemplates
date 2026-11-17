@@ -18,16 +18,21 @@
 #'   \code{if ... then delete} and an hvtiRdatabuild analysis set treat it, and
 #'   the number of such rows is counted. A downstream job's \code{WHERE} drops
 #'   such rows instead.
-#' @param cohort \code{NULL}, or the path to a CSV cohort list, such as a REDCap
-#'   export, carrying the \code{join_by} columns. Only master rows matched by a
+#' @param path \code{NULL}, or the path to a CSV cohort list, such as a REDCap
+#'   export, carrying the \code{join_cols} columns. Only master rows matched by a
 #'   list row are kept. Dates are written YYYY-MM-DD. A list may carry
 #'   \code{exclude} (1 to exclude) and \code{reason} columns; each reason becomes
 #'   a step of its own. A list's reasons are printed in the report, so they
 #'   must be categories (such as "Redo operation"), never free text, names or
 #'   dates.
-#' @param join_by The columns that match a cohort-list row to a master row. Used
-#'   only with \code{cohort}.
-#' @param id The patient identifier column, used to count patients.
+#' @param join_cols The columns that match a cohort-list row to a master row.
+#'   Used only with \code{path}.
+#' @param id_col The patient identifier column, used to count patients. It has
+#'   no default: leaving it out warns and reads \code{"ccfid"} for one more
+#'   release, then is an error.
+#' @param cohort,join_by,id Deprecated: the old names of \code{path},
+#'   \code{join_cols} and \code{id_col}. They work, with a warning, for one
+#'   more release; giving an old name with its new one is an error.
 #'
 #' @details Identifiers are compared as text, so \code{100000} in the master
 #'   matches \code{"100000"} in a list. No message names a data value: list rows
@@ -47,13 +52,21 @@
 #' d <- data.frame(ccfid = c("S1", "S2", "S3", "S4"), age = c(17, 45, NA, 80),
 #'                 redo = c(0, 0, 0, 1))
 #' cut <- build_cohort(d, exclude = list(age < 18 ~ "Under 18",
-#'                                       redo == 1 ~ "Redo operation"))
+#'                                       redo == 1 ~ "Redo operation"),
+#'                     id_col = "ccfid")
 #' # One row per step: rows removed, rows whose condition was missing and so
 #' # kept (S3, with no age), and the patients left.
 #' cut$attrition
 #' cut$data
 #' @export
-build_cohort <- function(data, exclude = NULL, cohort = NULL, join_by = NULL, id = "ccfid") {
+build_cohort <- function(data, exclude = NULL, path = NULL, join_cols = NULL, id_col, cohort, join_by, id) {
+  if (!missing(cohort)) path <- .take_renamed("build_cohort", "cohort", "path", cohort, !missing(path))
+  if (!missing(join_by)) join_cols <- .take_renamed("build_cohort", "join_by", "join_cols", join_by, !missing(join_cols))
+  if (!missing(id)) id_col <- .take_renamed("build_cohort", "id", "id_col", id, !missing(id_col))
+  if (missing(id_col)) id_col <- .dropped_default("build_cohort", "id_col", "ccfid")
+  id <- id_col
+  cohort <- path
+  join_by <- join_cols
   if (!is.data.frame(data)) stop("build_cohort(): data must be a data frame.", call. = FALSE)
   if (!is.character(id) || length(id) != 1L || !id %in% names(data)) {
     stop("build_cohort(): the ID column ", id, " is not in the data. Set ID in edit-study-choices.", call. = FALSE)

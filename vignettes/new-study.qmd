@@ -200,7 +200,7 @@ The executable example scaffolds without opening an editor:
 
 ```{r}
 #| label: scaffold-eda
-general <- add_job("dc", subject = "cohort", type = "eda", dir = new_root, qualifier = "general")
+general <- add_job("dc", subject = "cohort", type = "eda", root = new_root, qualifier = "general")
 sub(paste0(new_root, "/"), "", general, fixed = TRUE)
 ```
 
@@ -289,9 +289,9 @@ different folder; the two chains cannot overwrite each other's life table.
 ```{r}
 #| label: scaffold-chain
 chain <- c(
-  ac = add_job("ac", subject = "death", type = "hz", dir = new_root),
-  hz = add_job("hz", subject = "death", type = "hz", dir = new_root),
-  hp = add_job("hp", subject = "death", type = "hz", dir = new_root)
+  ac = add_job("ac", subject = "death", type = "hz", root = new_root),
+  hz = add_job("hz", subject = "death", type = "hz", root = new_root),
+  hp = add_job("hp", subject = "death", type = "hz", root = new_root)
 )
 sub(paste0(new_root, "/"), "", chain, fixed = TRUE)
 ```

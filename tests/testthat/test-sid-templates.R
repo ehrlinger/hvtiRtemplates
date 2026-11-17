@@ -247,7 +247,7 @@ test_that("sid-clusters writes and registers the cluster letters, and nothing el
   map <- readRDS(env$set_path("estimates", "sid-clusters.rds"))$letters$pm2
   flip <- stats::setNames(rev(unname(map)), names(map))
   sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(OVERRIDES = list(pm2 = flip))))
-  again <- read_job_data(hvtiRutilities::study_config(start = env$.root), join = "clusters_10_morphology_sid")$data
+  again <- read_job_data(hvtiRutilities::study_config(start = env$.root), id_col = "ccfid", join = "clusters_10_morphology_sid")$data
   # The second render's letters are the flipped ones, patient by patient.
   expect_identical(again$c2[match(env$sid_letters$ccfid, again$ccfid)], as.character(env$sid_letters$C2))
   expect_false(identical(again$c2[match(out$ccfid, again$ccfid)], out$C2))
@@ -347,11 +347,11 @@ test_that("a later job joins the registered clusters, one per patient", {
   env <- sid_fit_first()
   sid_clusters_after(env)
   cfg <- hvtiRutilities::study_config(start = env$.root)
-  long <- read_job_data(cfg, join = "clusters_10_morphology_sid")
+  long <- read_job_data(cfg, id_col = "ccfid", join = "clusters_10_morphology_sid")
   expect_identical(nrow(long$data), 150L)
   expect_true(all(c("c2", "c3") %in% tolower(names(long$data))))
-  expect_error(read_job_data(cfg, join = "clusters_10_morphology_sid", one_row_per_patient = TRUE), "REDUCE")
-  one <- read_job_data(cfg, join = "clusters_10_morphology_sid", reduce = list(rule = "first", by = "ccfid"),
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "clusters_10_morphology_sid", one_row_per_patient = TRUE), "REDUCE")
+  one <- read_job_data(cfg, id_col = "ccfid", join = "clusters_10_morphology_sid", reduce = list(rule = "first", by = "ccfid"),
                        one_row_per_patient = TRUE)
   expect_identical(nrow(one$data), 150L)
   expect_true("ccfid" %in% names(one$data))
