@@ -155,11 +155,11 @@ JOIN_KEY <- NULL
 # checked and printed below.
 OPYRS <- "iv_opyrs"
 # EDIT: the operation date column. Each patient's date less OPYRS gives the
-# origin, so ORIGIN_YEAR <- NULL reads it from the data, and every patient is
-# checked against it. Set ORIGIN_YEAR to a calendar year, such as 1990, and it
-# is checked against the data instead, stopping on a disagreement. Only with
-# OPDATE <- NULL, for a study that has no operation date, is ORIGIN_YEAR used
-# unchecked.
+# origin, so ORIGIN_YEAR <- NULL reads it from the data, and every patient with
+# a date is checked against it; those without one are counted as unchecked.
+# Set ORIGIN_YEAR to a calendar year, such as 1990, and it is checked against
+# the data instead, stopping on a disagreement. Only with OPDATE <- NULL, for a
+# study that has no operation date, is ORIGIN_YEAR used unchecked.
 OPDATE <- "dt_surg"
 ORIGIN_YEAR <- NULL
 
@@ -671,16 +671,26 @@ fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_Y
 close_date <- fp$meta$close_date
 # Name the edit point a reader can find in this file, not the function's argument.
 close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
+# A patient with an operation year but no operation date is drawn at the origin above,
+# which nothing about that patient confirms. Count them, so the window table and a
+# warning say how many points rest on an unchecked origin.
+.unchecked <- if (is.null(OPDATE)) NULL else sum(!is.na(d[[OPYRS]]) & is.na(d[[OPDATE]]))
+if (isTRUE(.unchecked > 0)) {
+  warning(.unchecked, " patient(s) have ", OPYRS, " but no ", OPDATE, ", so their origin is not ",
+          "checked against the operation date.", call. = FALSE)
+}
 # Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an
 # hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,
 # because a build counting from a later origin is a problem to fix there. An
 # older hvtiPlotR refuses them instead, so the field is absent and so is the row.
 .before <- fp$meta$n_opyrs_negative
 .window <- data.frame(
-  quantity = c("origin", "patients", "operation year missing", if (!is.null(.before)) "operation before origin",
+  quantity = c("origin", "patients", "operation year missing",
+               if (!is.null(.unchecked)) "origin not checked (no operation date)",
+               if (!is.null(.before)) "operation before origin",
                "first operation", "last operation", "close date", "close date is"),
   value = c(paste0(fp$meta$origin_year, ", ", fp$meta$origin_source),
-            fp$meta$n_obs, fp$meta$n_opyrs_missing, .before, format(fp$meta$first_operation),
+            fp$meta$n_obs, fp$meta$n_opyrs_missing, .unchecked, .before, format(fp$meta$first_operation),
             format(fp$meta$study_end), format(close_date), close_source)
 )
 .child("tbl gfup window", "Operation years and the close date", "knitr::kable(.window, row.names = FALSE)")

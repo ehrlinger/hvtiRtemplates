@@ -158,6 +158,9 @@ test_that("dc-eda's window table carries the same row", {
   lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   expect_true(any(grepl("operation before origin", lines, fixed = TRUE)))
   expect_true(any(grepl(".before <- fp$meta$n_opyrs_negative", lines, fixed = TRUE)))
+  # and dc-gfup's count of patients whose origin no operation date confirms
+  expect_true(any(grepl("origin not checked (no operation date)", lines, fixed = TRUE)))
+  expect_true(any(grepl("sum(!is.na(d[[OPYRS]]) & is.na(d[[OPDATE]]))", lines, fixed = TRUE)))
 })
 
 test_dc_gfup_window <- function(close_date) {
@@ -212,9 +215,10 @@ test_that("dc-gfup reports the close date's source by the job's own edit point",
 # The window and figures chunks over hvtiPlotR's sample data, with a second
 # non-fatal event and an echo column derived from it, as a render would run them
 # after its data step. save_figure() keeps each panel instead of writing it.
-# Returns the environment and everything the chunks printed.
+# Returns the environment and everything the chunks printed. `undated` names, by a
+# function of the data, the patients whose operation date is blanked when OPDATE is set.
 gfup_drawn <- function(events, echo = NULL, colors = NULL, x_tick_by = NULL, y_tick_by = NULL, legend = FALSE,
-                       group = NULL) {
+                       group = NULL, opdate = NULL, undated = function(d) logical(nrow(d))) {
   withr::local_package("ggplot2")
   withr::local_package("hvtiPlotR")
   # Each child chunk is printed as written, so its caption can be read: knitr
@@ -231,11 +235,16 @@ gfup_drawn <- function(events, echo = NULL, colors = NULL, x_tick_by = NULL, y_t
   # Every fifth patient has no echo: NA draws no tick and raises nothing.
   d$iv_echo <- ifelse(seq_len(nrow(d)) %% 5L == 0L, NA, d$iv_dead * 0.6)
   d$arm <- rep(c("A", "B"), length.out = nrow(d))
+  if (!is.null(opdate)) {
+    d[[opdate]] <- as.Date("1990-01-01") + d$iv_opyrs * 365.2425
+    d[[opdate]][undated(d)] <- NA
+  }
   saved <- list()
   env <- new.env(parent = globalenv())
   # The factor tbl-qc-group builds, which needs the job's record to run.
   if (!is.null(group)) env$group_values <- factor(d[[group]])
-  list2env(list(d = d, EVENT = "dead", OPYRS = "iv_opyrs", OPDATE = NULL, ORIGIN_YEAR = 1990, CLOSE_DATE = NULL,
+  list2env(list(d = d, EVENT = "dead", OPYRS = "iv_opyrs", OPDATE = opdate,
+                ORIGIN_YEAR = if (is.null(opdate)) 1990 else NULL, CLOSE_DATE = NULL,
                 ECHO = echo, EVENTS = events,
                 PANELS = list(all = list(status = "dead", time = "iv_dead", title = "All deaths")),
                 ALPHA = 0.5, COLORS = colors, GROUP = group, .in = NULL,
@@ -313,6 +322,27 @@ test_that("dc-gfup's single-event caption is unchanged by competing events", {
   r <- gfup_drawn(one)
   expect_match(r$out, paste0("Blue open circles mark patients without the event, green open triangles patients with ",
                              "the event, and red crosses patients who died and the dashed"), fixed = TRUE)
+})
+
+test_that("a group whose operation dates are all missing keeps its facet", {
+  skip_if_not_installed("hvtiPlotR", "2.8.23")
+  expect_warning(
+    r <- gfup_drawn(list(), group = "arm", opdate = "dt_surg", undated = function(d) d$arm == "B"),
+    "have iv_opyrs but no dt_surg"
+  )
+  expect_identical(as.integer(r$env$.origin_year), 1990L)
+  expect_identical(r$env$group_refused, character())
+  expect_setequal(names(r$env$group_plots), c("A", "B"))
+})
+
+test_that("a patient with no operation date is counted as unchecked, not passed silently", {
+  skip_if_not_installed("hvtiPlotR", "2.8.23")
+  expect_warning(
+    r <- gfup_drawn(list(), opdate = "dt_surg", undated = function(d) seq_len(nrow(d)) == 7L),
+    "^1 patient\\(s\\) have iv_opyrs but no dt_surg"
+  )
+  expect_identical(r$env$.unchecked, 1L)
+  expect_true(r$env$figure_drawn)
 })
 
 test_that("GROUP adds a faceted figure per panel, one facet per group", {
