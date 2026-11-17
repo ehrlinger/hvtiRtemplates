@@ -80,9 +80,11 @@ test_that("rfs-fit's top-k agreement leaves a predictor out, so it can see a ran
   # One predictor: no ranking to agree on, so Kendall tau has nothing to compare and the job says to read the error.
   env1 <- rf_env(rfs_data())
   choices1 <- utils::modifyList(choices, list(PREDICTORS = "karno"))
-  rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning"), env1, choices1)
+  # gg_learning() warns that top_k covers every predictor; the template has already said so and muffles it.
+  expect_no_warning(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning"), env1, choices1))
   expect_identical(attr(env1$learning, "provenance")$top_k, 1L)
   expect_true(all(is.na(attr(env1$learning, "stability")$kendall)))
+  expect_true(all(is.na(attr(env1$learning, "stability")$jaccard)))
   expect_match(paste(rf_chunk(readLines(template_path("rfs", "fit")), "learning"), collapse = "\n"), "Read the error curve only",
                fixed = TRUE)
 })
@@ -574,6 +576,32 @@ test_that("rfc-fit grows a classification forest from a character outcome", {
   for (p in list(env$err, env$roc)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
 })
 
+test_that("rfc-fit draws the learning curve against the smallest class", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
+  env <- rf_env(rfc_data())
+  # 100 flowers, 50 of each species; small refits keep this quick.
+  choices <- utils::modifyList(rfc_choices, list(LEARNING_FRACTIONS = c(0.25, 0.5), LEARNING_B = 3, LEARNING_NTREE = 25))
+  rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning",
+                         "fig-learning-stability", "fig-learning-error"), env, choices)
+
+  expect_s3_class(env$learning, "gg_learning")
+  expect_true(file.exists(file.path(env$CACHE_DIR, "rfc-learning.rds")))
+  st <- attr(env$learning, "stability")
+  expect_equal(st$fraction, c(0.25, 0.5, 1))
+  # The smallest class, stratified: the whole part of 50 times each fraction, and the cohort's 50 for the bootstrap.
+  expect_equal(st$events, c(12L, 25L, 50L))
+  expect_equal(st$counts, c("exact", "exact", "expected"))
+  expect_equal(grepl("(expected)", env$.lt_count, fixed = TRUE), c(FALSE, FALSE, TRUE))
+  expect_true(env$.learning_boot)   # na.omit: nothing imputed, so the bootstrap runs
+  expect_identical(attr(env$learning, "provenance")$family, "class")
+  # Four predictors: the top set leaves one out.
+  expect_identical(attr(env$learning, "provenance")$top_k, 3L)
+  expect_true(all(is.finite(env$learning$error)))
+  for (panel in c("stability", "error")) {
+    expect_s3_class(ggplot2::ggplot_build(plot(env$learning, panel = panel)), "ggplot_built")
+  }
+})
+
 test_that("rfc-fit selects the named ROC class regardless of factor order", {
   rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
   d <- rfc_data()
@@ -711,6 +739,32 @@ test_that("rfr-fit grows a regression forest, imputing missing predictors", {
   expect_identical(env$forest$n, nrow(rfr_data()))   # na.impute kept every patient
   expect_true(file.exists(file.path(env$CACHE_DIR, "rfr.rds")))
   for (p in list(env$err, env$pred)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
+})
+
+test_that("rfr-fit draws the learning curve against patients, imputing missing predictors", {
+  rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
+  env <- rf_env(rfr_data())
+  choices <- utils::modifyList(rfr_choices, list(LEARNING_FRACTIONS = c(0.25, 0.5), LEARNING_B = 3, LEARNING_NTREE = 25))
+  rf_run("rfr", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning",
+                         "fig-learning-stability", "fig-learning-error"), env, choices)
+
+  expect_s3_class(env$learning, "gg_learning")
+  expect_true(file.exists(file.path(env$CACHE_DIR, "rfr-learning.rds")))
+  st <- attr(env$learning, "stability")
+  n <- nrow(rfr_data())   # na.impute keeps every patient
+  # randomForestSRC crashes R double-bootstrapping a forest that imputed missing values, so the curve stops at the
+  # largest fraction; airquality's solar.r has missing values.
+  expect_false(env$.learning_boot)
+  expect_equal(st$fraction, c(0.25, 0.5))
+  expect_equal(st$events, c(as.integer(n * 0.25), as.integer(n * 0.5)))
+  expect_equal(st$n, st$events)
+  expect_equal(st$counts, c("exact", "exact"))
+  expect_identical(attr(env$learning, "provenance")$family, "regr")
+  expect_identical(attr(env$learning, "provenance")$top_k, 4L)
+  expect_true(all(is.finite(env$learning$error)))
+  for (panel in c("stability", "error")) {
+    expect_s3_class(ggplot2::ggplot_build(plot(env$learning, panel = panel)), "ggplot_built")
+  }
 })
 
 test_that("rfr-fit refuses a non-numeric outcome", {

@@ -227,6 +227,15 @@
                             .run_arg(path, .study_rel(path, root)))
                   }, abandon)))
   }
+  if (identical(st$state, "submitted") && !is.null(st$unchecked) && .on_other_host(st)) {
+    return(.check("run_state", FALSE,
+                  sprintf(paste("this job is recorded submitted on host %s and has not started there within two minutes.",
+                                "Its processes cannot be checked from here, and a submission that died there no longer",
+                                "clears itself."), st$host),
+                  paste0(sprintf("Check it from a session on %s with hvtiRtemplates::job_status(%s). ", st$host,
+                                 .run_arg(path, .study_rel(path, root))),
+                         .abandon_route(st, path, .study_rel(path, root)))))
+  }
   if (st$state %in% c("running", "submitted")) {
     return(.check("run_state", FALSE, sprintf("this job is already %s.", st$state),
                   sprintf("Follow it with hvtiRtemplates::job_status(%s), or stop it with hvtiRtemplates::cancel_job(%s).",
@@ -272,7 +281,8 @@
   for (job in jobs) {
     st <- tryCatch(job_status(job, quiet = TRUE), error = function(e) NULL)  # an unreadable file must not stop preflight
     # "submitted" too: between submit_job() and its runner recording "running", a second job would pass and then fail on
-    # Quarto's lock. job_status() reads a submit older than 120 s as vanished, so an unstarted one stops blocking.
+    # Quarto's lock. job_status() reads a submit older than 120 s whose marker is on no live process as vanished, so an
+    # unstarted one stops blocking. One recorded on another host cannot be looked for, so it blocks until abandoned.
     if (!is.null(st) && st$state %in% c("running", "submitted")) running[[job]] <- st
   }
   rel_of <- function(job) .study_rel(job, root)
@@ -293,12 +303,15 @@
   running <- running[!editor_dead]
   if (length(running)) {
     pending <- vapply(running, function(st) identical(st$state, "submitted"), NA)
+    # A submission on another host that has not started cannot be checked from here, and does not clear itself.
+    remote <- vapply(running, function(st) identical(st$state, "submitted") && !is.null(st$unchecked) && .on_other_host(st), NA)
     describe <- function(job) {
       st <- running[[job]]
       if (identical(st$state, "submitted")) {
         at <- as.POSIXct(st$submitted, format = "%Y-%m-%dT%H:%M:%S%z")
         ago <- as.numeric(difftime(Sys.time(), at, units = "secs"))
-        return(sprintf("%s, submitted %s ago and not started yet", rel_of(job), .fmt_dur(max(ago, 0))))
+        return(sprintf("%s, submitted %s ago%s and not started yet", rel_of(job), .fmt_dur(max(ago, 0)),
+                       if (remote[[job]]) paste(" on", st$host) else ""))
       }
       pr <- st$progress
       stage <- if (is.character(pr$stage) && length(pr$stage) == 1L) {
@@ -323,7 +336,7 @@
       paste(sprintf("hvtiRtemplates::%s(%s)", fn, vapply(jobs, function(j) .run_arg(j, rel_of(j)), "")), collapse = ", ")
     }
     live <- names(running)[!is_stale & !pending]
-    queued <- names(running)[pending]
+    queued <- names(running)[pending & !remote]
     routes <- vapply(names(running)[is_stale], function(j) {
       st <- running[[j]]
       # Without a marker the abandon route's own confirmation is job_status() on that host, so it is not said twice.
@@ -335,10 +348,15 @@
     }, "")
     fix <- c(if (any(!is_stale & !pending)) {
       sprintf("Wait for it to finish (%s), or stop it (%s), then run again.", calls("job_status", live), calls("cancel_job", live))
-    }, if (any(pending)) {
+    }, if (any(pending & !remote)) {
       # cancel_job() refuses a submit whose runner has not recorded itself, so cancel is not offered yet.
       sprintf("Wait for it to start and finish (%s), then run again.", calls("job_status", queued))
-    }, routes)
+    }, vapply(names(running)[remote], function(j) {
+      st <- running[[j]]
+      sprintf(paste("%s has not started on %s within two minutes, and a submission that died there no longer clears",
+                    "itself. Check it from a session on %s with hvtiRtemplates::job_status(%s). %s"),
+              rel_of(j), st$host, st$host, .run_arg(j, rel_of(j)), .abandon_route(st, j, rel_of(j)))
+    }, ""), routes)
     return(.check("study_render", FALSE,
                   sprintf("another job is %s in this study: %s. Quarto renders one job at a time in a study.",
                           if (all(pending)) "about to render" else "rendering",
@@ -354,6 +372,19 @@
                                 "so its job is not known."), .provenance_owner_label(owner)),
                   paste0("Wait for it to finish, then run again.", .provenance_lock_hint(owner, lock)),
                   note))
+  }
+  # A claim a render left behind in the moment of claiming is never cleared by age (see .claim_stale_secs), so the
+  # render would stop on it. A lock with no owner file blocks every render; a takeover sentinel blocks only the
+  # takeover of a dead owner, and with no lock at all a render creates a fresh one and never reads it.
+  left <- if (dir.exists(lock)) {
+    sentinel <- .provenance_takeover_path(lock)
+    if (is.null(owner) && .claim_age_over(lock)) lock else if (!is.null(owner) && .claim_age_over(sentinel)) sentinel
+  }
+  if (!is.null(left)) {
+    return(.check("study_render", FALSE,
+                  paste("a Quarto render stopped while claiming this study's render lock and left its claim behind,",
+                        "which a render will not clear by itself."),
+                  trimws(.left_claim_fix(left)), note))
   }
   .check("study_render", TRUE, note = note)
 }

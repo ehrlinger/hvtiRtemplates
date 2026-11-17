@@ -252,6 +252,16 @@ bystander <- function(cmd = "exec sleep 60") {
   list(pid = pid, h = h, dir = dir, created = sprintf("%.6f", as.numeric(ps::ps_create_time(h))))
 }
 
+# Waits until a bystander's marker is on a readable process. On Linux Rscript starts through the `R` shell script,
+# and under a loaded check that can take well past ten seconds; failing here names the cause rather than letting a
+# slow start read as a cancel or status defect.
+wait_for_marker <- function(marker, timeout = 30) {
+  deadline <- Sys.time() + timeout
+  while (!length(ps::ps_find_tree(marker)) && Sys.time() < deadline) Sys.sleep(0.1)
+  if (!length(ps::ps_find_tree(marker))) stop("the bystander's marker never appeared within ", timeout, " seconds")
+  invisible(TRUE)
+}
+
 running_on <- function(job, b, host = Sys.info()[["nodename"]]) {
   .write_status(.run_files(job)$status, state = "running", pid = b$pid, created = b$created, host = host,
                 started = .stamp(Sys.time() - 60))
@@ -484,6 +494,75 @@ test_that("a pid reused by another process is not signalled, and the run is reco
   expect_output(job_status(job), "ended without recording an end", fixed = TRUE)
 })
 
+test_that("a slow start whose runner carries the marker reads submitted past two minutes, and vanished once it dies", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  marker <- sprintf("PSHVTItest%d_%d", Sys.getpid(), as.integer(Sys.time()) - 5L)
+  # Not /bin/sleep: macOS hides a platform binary's environment, so its marker could not be found there.
+  b <- bystander(sprintf("export %s=YES; exec %s -e \"Sys.sleep(60)\"", marker, shQuote(file.path(R.home("bin"), "Rscript"))))
+  # Until sh has exec'd into Rscript the marker is on no readable process.
+  wait_for_marker(marker)
+  here <- Sys.info()[["nodename"]]
+  submitted <- function(host = here) {
+    .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
+                  host = host)
+  }
+  submitted()
+  expect_identical(job_status(job, quiet = TRUE)$state, "submitted")
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "already running")
+  # Another host's processes cannot be looked for from here, so past two minutes the run is unknown, not vanished.
+  submitted("elsewhere.invalid")
+  expect_identical(job_status(job, quiet = TRUE)$state, "submitted")
+  submitted()
+  ps::ps_kill(b$h)
+  expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
+})
+
+test_that("a hung start that never records itself can still be cancelled, through its marker", {
+  skip_on_os("windows")
+  skip_on_cran()
+  job <- status_job()
+  marker <- sprintf("PSHVTItest%d_%d", Sys.getpid(), as.integer(Sys.time()) - 5L)
+  b <- bystander(sprintf("export %s=YES; exec %s -e \"Sys.sleep(60)\"", marker, shQuote(file.path(R.home("bin"), "Rscript"))))
+  wait_for_marker(marker)
+  .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
+                host = Sys.info()[["nodename"]])
+  st <- cancel_job(job, grace = 5, quiet = TRUE)
+  expect_identical(st$state, "cancelled")
+  expect_identical(st$reason, "it had not started")
+  expect_false(isTRUE(tryCatch(ps::ps_is_running(b$h), error = function(e) FALSE)))
+})
+
+test_that("a starting run whose marker cannot be looked up while it is stopped is not recorded cancelled", {
+  local_mocked_bindings(.is_windows = function() FALSE, .submitted_alive = function(st) TRUE)
+  local_mocked_bindings(ps_find_tree = function(...) stop("permission denied"), .package = "ps")
+  job <- status_job()
+  marker <- "PSHVTItest1_1"
+  .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
+                host = Sys.info()[["nodename"]])
+  expect_error(cancel_job(job, grace = 1, quiet = TRUE), class = "hvtiRtemplates_cancel_incomplete")
+  expect_identical(yaml::read_yaml(.run_files(job)$status)$state, "submitted")
+})
+
+test_that("a starting run that records itself running while it is stopped is recorded cancelled, not vanished", {
+  local_mocked_bindings(.is_windows = function() FALSE, .submitted_alive = function(st) TRUE)
+  job <- status_job()
+  marker <- "PSHVTItest1_1"
+  here <- Sys.info()[["nodename"]]
+  .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
+                host = here)
+  # The runner records itself between cancel_job() reading "submitted" and its processes being stopped.
+  local_mocked_bindings(.stop_procs = function(discover, grace) {
+    .write_status(.run_files(job)$status, state = "running", pid = 999999L, marker = marker, host = here,
+                  started = .stamp(Sys.time()))
+    integer()
+  })
+  st <- cancel_job(job, grace = 1, quiet = TRUE)
+  expect_identical(st$state, "cancelled")
+  expect_identical(yaml::read_yaml(.run_files(job)$status)$pid, 999999L)
+})
+
 test_that("a submission that never started is recorded failed, saying so", {
   local_mocked_bindings(.is_windows = function() FALSE)  # no process is signalled: only the records are read
   job <- status_job()
@@ -491,6 +570,45 @@ test_that("a submission that never started is recorded failed, saying so", {
   st <- cancel_job(job, quiet = TRUE)
   expect_identical(st$state, "failed")
   expect_identical(st$reason, "it never started")
+})
+
+test_that("a submission whose processes cannot be looked at stays submitted, refusing a second copy and a cancel", {
+  local_mocked_bindings(.is_windows = function() FALSE)  # nothing is signalled: the lookup fails first
+  local_mocked_bindings(ps_find_tree = function(...) stop("ps::ps_pids(): Operation not permitted"), .package = "ps")
+  job <- status_job()
+  status <- .run_files(job)$status
+  .write_status(status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = "PSHVTItest1_1",
+                host = Sys.info()[["nodename"]])
+  before <- readLines(status)
+  st <- job_status(job, quiet = TRUE)
+  expect_identical(st$state, "submitted")
+  expect_match(st$unchecked, "Operation not permitted", fixed = TRUE)
+  expect_output(job_status(job), "could not be looked at (ps::ps_pids(): Operation not permitted)", fixed = TRUE)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "already running")
+  expect_error(cancel_job(job, quiet = TRUE), "whether it is still starting is unknown. Nothing was signalled",
+               fixed = TRUE)
+  expect_identical(readLines(status), before)
+})
+
+test_that("a submission recorded on another host stays submitted, refusing a second copy, until it is abandoned", {
+  local_mocked_bindings(.is_windows = function() FALSE)  # nothing is signalled: the run is on another host
+  job <- status_job()
+  status <- .run_files(job)$status
+  .write_status(status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = "PSHVTItest1_1",
+                host = "lri-r06")
+  st <- job_status(job, quiet = TRUE)
+  expect_identical(st$state, "submitted")
+  expect_match(st$unchecked, "recorded on host lri-r06", fixed = TRUE)
+  out <- capture.output(job_status(job))
+  expect_match(out, "A submission that died on lri-r06 no longer clears itself", fixed = TRUE, all = FALSE)
+  expect_match(out, 'cancel_job(other_host = "abandon")', fixed = TRUE, all = FALSE)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "already running")
+  before <- readLines(status)
+  expect_error(cancel_job(job, quiet = TRUE), "is recorded submitted on host lri-r06", fixed = TRUE)
+  expect_identical(readLines(status), before)
+  st <- cancel_job(job, other_host = "abandon", quiet = TRUE)
+  expect_identical(st$state, "cancelled")
+  expect_match(st$reason, "abandoned from .*nothing signalled")
 })
 
 test_that("a cancel is refused, signalling nothing, while another call holds the claim", {

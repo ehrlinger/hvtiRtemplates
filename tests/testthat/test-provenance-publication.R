@@ -1029,7 +1029,262 @@ test_that("a lock whose render has exited is taken over", {
     .package = "hvtiRtemplates"
   )
   expect_identical(jsonlite::read_json(file.path(.provenance_lock_path(root), "owner.json")), live)
-  expect_length(list.files(file.path(root, ".hvtiR"), pattern = "stale", all.files = TRUE), 0L)
+  expect_false(dir.exists(.provenance_takeover_path(.provenance_lock_path(root))))
+})
+
+# A rename that moves the lock directory itself fails the test: the canonical
+# lock must never be moved, or a third render can claim the path while a
+# possibly live owner is displaced.
+lock_never_moves <- function(lock) {
+  real_rename <- .rename_provenance_file
+  function(from, to) {
+    if (identical(normalizePath(from, mustWork = FALSE), normalizePath(lock, mustWork = FALSE))) {
+      stop("the lock directory was moved")
+    }
+    real_rename(from, to)
+  }
+}
+
+test_that("a render that judged a dead owner too late refuses, and a third cannot enter while the new owner lives", {
+  root <- withr::local_tempdir()
+  dead <- list(pid = 101L, created = "1.000000")
+  first <- list(pid = 202L, created = "2.000000")
+  second <- list(pid = 303L, created = "3.000000")
+  third <- list(pid = 404L, created = "4.000000")
+  testthat::with_mocked_bindings(.acquire_provenance_lock(root), .provenance_render_owner = function() dead,
+                                 .package = "hvtiRtemplates")
+  lock <- .provenance_lock_path(root)
+  real_create <- .create_provenance_lock
+  third_tried <- FALSE
+  # The second render judged the dead owner dead. Before it claims the sentinel,
+  # the first has taken the lock over, and a third render tries to start.
+  racing_create <- function(path) {
+    if (identical(path, .provenance_takeover_path(lock)) && !third_tried) {
+      third_tried <<- TRUE
+      testthat::with_mocked_bindings(
+        expect_true(.acquire_provenance_lock(root)),
+        .provenance_render_owner = function() first,
+        .package = "hvtiRtemplates"
+      )
+      expect_true(dir.exists(lock))
+      testthat::with_mocked_bindings(
+        expect_error(.acquire_provenance_lock(root), "Another Quarto render is in progress in this study"),
+        .provenance_render_owner = function() third,
+        .package = "hvtiRtemplates"
+      )
+    }
+    real_create(path)
+  }
+  testthat::with_mocked_bindings(
+    expect_error(.acquire_provenance_lock(root),
+                 "Another Quarto render took over this study's stale render lock first (process 202)", fixed = TRUE),
+    .provenance_render_owner = function() second,
+    .provenance_owner_alive = function(owner) !identical(owner, dead),
+    .create_provenance_lock = racing_create,
+    .rename_provenance_file = lock_never_moves(lock),
+    .package = "hvtiRtemplates"
+  )
+  expect_true(third_tried)
+  expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), first)
+  expect_false(dir.exists(.provenance_takeover_path(lock)))
+})
+
+test_that("two takeovers of one dead owner's lock are serialized: the second refuses while the first holds it", {
+  root <- withr::local_tempdir()
+  dead <- list(pid = 101L, created = "1.000000")
+  first <- list(pid = 202L, created = "2.000000")
+  second <- list(pid = 303L, created = "3.000000")
+  testthat::with_mocked_bindings(.acquire_provenance_lock(root), .provenance_render_owner = function() dead,
+                                 .package = "hvtiRtemplates")
+  lock <- .provenance_lock_path(root)
+  real_write <- .write_provenance_owner
+  second_tried <- FALSE
+  # Both renders judged the owner dead. The second arrives while the first holds
+  # the sentinel, about to write its owner.
+  racing_write <- function(owner, owner_path) {
+    if (!second_tried) {
+      second_tried <<- TRUE
+      testthat::with_mocked_bindings(
+        expect_error(.acquire_provenance_lock(root), "is taking over this study's stale render lock"),
+        .provenance_render_owner = function() second,
+        .package = "hvtiRtemplates"
+      )
+    }
+    real_write(owner, owner_path)
+  }
+  testthat::with_mocked_bindings(
+    expect_true(.acquire_provenance_lock(root)),
+    .provenance_render_owner = function() first,
+    .provenance_owner_alive = function(owner) FALSE,
+    .write_provenance_owner = racing_write,
+    .rename_provenance_file = lock_never_moves(lock),
+    .package = "hvtiRtemplates"
+  )
+  expect_true(second_tried)
+  expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), first)
+  expect_false(dir.exists(.provenance_takeover_path(lock)))
+})
+
+test_that("a takeover sentinel is never cleared by age: an old one refuses and is named for a person to delete", {
+  root <- withr::local_tempdir()
+  dead <- list(pid = 101L, created = "1.000000")
+  live <- list(pid = 202L, created = "2.000000")
+  testthat::with_mocked_bindings(.acquire_provenance_lock(root), .provenance_render_owner = function() dead,
+                                 .package = "hvtiRtemplates")
+  lock <- .provenance_lock_path(root)
+  sentinel <- .provenance_takeover_path(lock)
+  dir.create(sentinel)
+  # Fresh: another render may be mid-takeover, so this one waits.
+  testthat::with_mocked_bindings(
+    expect_error(.acquire_provenance_lock(root), "is taking over this study's stale render lock. Wait a moment"),
+    .provenance_render_owner = function() live,
+    .provenance_owner_alive = function(owner) FALSE,
+    .package = "hvtiRtemplates"
+  )
+  # Old: still refused, and the message says what to delete and when.
+  Sys.setFileTime(sentinel, Sys.time() - 600)
+  testthat::with_mocked_bindings(
+    expect_error(.acquire_provenance_lock(root), paste0("delete the directory ", sentinel), fixed = TRUE),
+    .provenance_render_owner = function() live,
+    .provenance_owner_alive = function(owner) FALSE,
+    .package = "hvtiRtemplates"
+  )
+  expect_true(dir.exists(sentinel))
+  expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), dead)
+})
+
+test_that("a takeover suspended past the sentinel's age keeps its claim: the next render refuses, one owner results", {
+  root <- withr::local_tempdir()
+  dead <- list(pid = 101L, created = "1.000000")
+  first <- list(pid = 202L, created = "2.000000")
+  second <- list(pid = 303L, created = "3.000000")
+  testthat::with_mocked_bindings(.acquire_provenance_lock(root), .provenance_render_owner = function() dead,
+                                 .package = "hvtiRtemplates")
+  lock <- .provenance_lock_path(root)
+  sentinel <- .provenance_takeover_path(lock)
+  real_write <- .write_provenance_owner
+  second_tried <- FALSE
+  # The first render has passed its checks and is suspended before writing its
+  # owner, long enough for its sentinel to look abandoned. The second arrives.
+  paused_write <- function(owner, owner_path) {
+    if (!second_tried) {
+      second_tried <<- TRUE
+      Sys.setFileTime(sentinel, Sys.time() - 600)
+      testthat::with_mocked_bindings(
+        expect_error(.acquire_provenance_lock(root), paste0("delete the directory ", sentinel), fixed = TRUE),
+        .provenance_render_owner = function() second,
+        .provenance_owner_alive = function(owner) FALSE,
+        .package = "hvtiRtemplates"
+      )
+      expect_identical(jsonlite::read_json(owner_path), dead)
+    }
+    real_write(owner, owner_path)
+  }
+  testthat::with_mocked_bindings(
+    expect_true(.acquire_provenance_lock(root)),
+    .provenance_render_owner = function() first,
+    .provenance_owner_alive = function(owner) FALSE,
+    .write_provenance_owner = paused_write,
+    .rename_provenance_file = lock_never_moves(lock),
+    .package = "hvtiRtemplates"
+  )
+  expect_true(second_tried)
+  expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), first)
+  expect_false(dir.exists(sentinel))
+})
+
+test_that("an old lock whose render never wrote its owner file refuses and is named for a person to delete", {
+  root <- withr::local_tempdir()
+  live <- list(pid = 202L, created = "2.000000")
+  lock <- .provenance_lock_path(root)
+  dir.create(lock, recursive = TRUE)
+  # Young: its render has only just created it.
+  testthat::with_mocked_bindings(
+    expect_error(.acquire_provenance_lock(root), "Another Quarto render is in progress in this study. Wait", fixed = TRUE),
+    .provenance_render_owner = function() live,
+    .package = "hvtiRtemplates"
+  )
+  Sys.setFileTime(lock, Sys.time() - 600)
+  testthat::with_mocked_bindings(
+    expect_error(.acquire_provenance_lock(root), paste0("delete the directory ", lock), fixed = TRUE),
+    .provenance_render_owner = function() live,
+    .rename_provenance_file = lock_never_moves(lock),
+    .package = "hvtiRtemplates"
+  )
+  expect_false(file.exists(file.path(lock, "owner.json")))
+  expect_false(dir.exists(.provenance_takeover_path(lock)))
+})
+
+test_that("a render suspended between creating the lock and recording itself keeps it: a taker refuses", {
+  root <- withr::local_tempdir()
+  creator <- list(pid = 202L, created = "2.000000")
+  taker <- list(pid = 303L, created = "3.000000")
+  lock <- .provenance_lock_path(root)
+  real_create <- .create_provenance_lock
+  taker_tried <- FALSE
+  paused_create <- function(path) {
+    made <- real_create(path)
+    if (made && identical(path, lock) && !taker_tried) {
+      taker_tried <<- TRUE
+      Sys.setFileTime(lock, Sys.time() - 600)
+      testthat::with_mocked_bindings(
+        expect_error(.acquire_provenance_lock(root), paste0("delete the directory ", lock), fixed = TRUE),
+        .provenance_render_owner = function() taker,
+        .create_provenance_lock = real_create,
+        .package = "hvtiRtemplates"
+      )
+      expect_false(file.exists(file.path(lock, "owner.json")))
+    }
+    made
+  }
+  testthat::with_mocked_bindings(
+    expect_true(.acquire_provenance_lock(root)),
+    .provenance_render_owner = function() creator,
+    .create_provenance_lock = paused_create,
+    .package = "hvtiRtemplates"
+  )
+  expect_true(taker_tried)
+  expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), creator)
+})
+
+test_that("an owner judged stopped that releases during a takeover leaves the lock to the taker, and no third enters", {
+  root <- withr::local_tempdir()
+  stalled <- list(pid = 101L, created = "1.000000", host = "elsewhere.invalid")
+  taker <- list(pid = 202L, created = "2.000000")
+  third <- list(pid = 303L, created = "3.000000")
+  testthat::with_mocked_bindings(.acquire_provenance_lock(root), .provenance_render_owner = function() stalled,
+                                 .start_provenance_heartbeat = function(lock, owner) invisible(NULL),
+                                 .package = "hvtiRtemplates")
+  lock <- .provenance_lock_path(root)
+  real_write <- .write_provenance_owner
+  raced <- FALSE
+  # The taker has judged the stalled owner gone and holds the sentinel. The stalled render finishes and releases,
+  # and a third render starts.
+  paused_write <- function(owner, owner_path) {
+    if (!raced) {
+      raced <<- TRUE
+      testthat::with_mocked_bindings(.release_provenance_lock(root), .provenance_render_owner = function() stalled,
+                                     .package = "hvtiRtemplates")
+      expect_true(dir.exists(lock))
+      testthat::with_mocked_bindings(
+        expect_error(.acquire_provenance_lock(root), "Another Quarto render"),
+        .provenance_render_owner = function() third,
+        .provenance_lock_held = function(owner, lock) FALSE,
+        .package = "hvtiRtemplates"
+      )
+    }
+    real_write(owner, owner_path)
+  }
+  testthat::with_mocked_bindings(
+    expect_true(.acquire_provenance_lock(root)),
+    .provenance_render_owner = function() taker,
+    .provenance_lock_held = function(owner, lock) FALSE,
+    .write_provenance_owner = paused_write,
+    .package = "hvtiRtemplates"
+  )
+  expect_true(raced)
+  expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), taker)
+  expect_false(dir.exists(.provenance_takeover_path(lock)))
 })
 
 test_that("the owning render re-enters its lock and post-render releases it", {

@@ -108,12 +108,16 @@ test_that("table cells and value names are escaped", {
   expect_match(body("methods"), "&lt;i&gt;n&lt;/i&gt;", fixed = TRUE)
 })
 
-test_that("ar_value() warns when its source job has been edited since the render", {
+test_that("ar_value() warns in a draft, and refuses in a final render, when its source job was edited since the render", {
   root <- ar_fake_study()
   qmd <- ar_fake_job(root)
   withr::local_dir(root)
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "")
   expect_no_warning(ar_value("hz.dead.hz#methods", "n"))
   cat("# edited\n", file = qmd, append = TRUE)
   expect_warning(v <- ar_value("hz.dead.hz#methods", "n"), "hz.dead.hz.*edited since its last render")
   expect_identical(v, 160L)
+  # render_job(final = TRUE) sets HVTI_TEMPLATE_STRICT.
+  withr::local_envvar(HVTI_TEMPLATE_STRICT = "1")
+  expect_error(ar_value("hz.dead.hz#methods", "n"), "hz.dead.hz.*edited since its last render.*a final render does not")
 })
