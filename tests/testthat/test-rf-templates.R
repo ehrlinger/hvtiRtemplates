@@ -80,9 +80,11 @@ test_that("rfs-fit's top-k agreement leaves a predictor out, so it can see a ran
   # One predictor: no ranking to agree on, so Kendall tau has nothing to compare and the job says to read the error.
   env1 <- rf_env(rfs_data())
   choices1 <- utils::modifyList(choices, list(PREDICTORS = "karno"))
-  rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning"), env1, choices1)
+  # gg_learning() warns that top_k covers every predictor; the template has already said so and muffles it.
+  expect_no_warning(rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning"), env1, choices1))
   expect_identical(attr(env1$learning, "provenance")$top_k, 1L)
   expect_true(all(is.na(attr(env1$learning, "stability")$kendall)))
+  expect_true(all(is.na(attr(env1$learning, "stability")$jaccard)))
   expect_match(paste(rf_chunk(readLines(template_path("rfs", "fit")), "learning"), collapse = "\n"), "Read the error curve only",
                fixed = TRUE)
 })

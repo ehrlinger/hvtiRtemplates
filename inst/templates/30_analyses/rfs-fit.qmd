@@ -504,7 +504,14 @@ if (length(PREDICTORS) < 2L) {
   message("One predictor: there is no importance ranking, so the agreement measures are not informative. ",
           "Read the error curve only.")
 }
-learning <- gg_learning(learning_fits, top_k = .learning_k, min_events = 50)
+# With one predictor gg_learning() warns that top_k covers every predictor and leaves the Jaccard agreement NA. The
+# message above already says so, and its advice to lower top_k cannot apply, so that one warning is muffled.
+learning <- withCallingHandlers(
+  gg_learning(learning_fits, top_k = .learning_k, min_events = 50),
+  warning = function(w) {
+    if (length(PREDICTORS) < 2L && grepl("'top_k'", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
+  }
+)
 ```
 
 ```{r}
