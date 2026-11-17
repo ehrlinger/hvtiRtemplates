@@ -741,7 +741,7 @@ test_that("rfr-fit grows a regression forest, imputing missing predictors", {
   for (p in list(env$err, env$pred)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
 })
 
-test_that("rfr-fit draws the learning curve against patients, imputing missing predictors", {
+test_that("rfr-fit draws the learning curve against patients, filling missing predictors first", {
   rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
   env <- rf_env(rfr_data())
   choices <- utils::modifyList(rfr_choices, list(LEARNING_FRACTIONS = c(0.25, 0.5), LEARNING_B = 3, LEARNING_NTREE = 25))
@@ -752,13 +752,19 @@ test_that("rfr-fit draws the learning curve against patients, imputing missing p
   expect_true(file.exists(file.path(env$CACHE_DIR, "rfr-learning.rds")))
   st <- attr(env$learning, "stability")
   n <- nrow(rfr_data())   # na.impute keeps every patient
-  # randomForestSRC crashes R double-bootstrapping a forest that imputed missing values, so the curve stops at the
-  # largest fraction; airquality's solar.r has missing values.
-  expect_false(env$.learning_boot)
-  expect_equal(st$fraction, c(0.25, 0.5))
-  expect_equal(st$events, c(as.integer(n * 0.25), as.integer(n * 0.5)))
+  # randomForestSRC crashes R double-bootstrapping a forest that imputed missing values; airquality's solar.r has
+  # missing values. The template fills them once from the main forest, so the learning forests impute nothing and
+  # the whole-cohort bootstrap runs.
+  imp <- env$forest$imputed.indv
+  expect_true(length(imp) > 0)
+  expect_false(anyNA(env$.d_learn))
+  expect_equal(env$.d_learn[imp, names(env$forest$imputed.data)], env$forest$imputed.data, ignore_attr = TRUE)
+  expect_equal(env$.d_learn[-imp, ], env$d[-imp, ], ignore_attr = TRUE)   # only the rows with a gap change
+  expect_true(env$.learning_boot)
+  expect_equal(st$fraction, c(0.25, 0.5, 1))
+  expect_equal(st$events, c(as.integer(n * 0.25), as.integer(n * 0.5), n))
   expect_equal(st$n, st$events)
-  expect_equal(st$counts, c("exact", "exact"))
+  expect_equal(st$counts, c("exact", "exact", "expected"))
   expect_identical(attr(env$learning, "provenance")$family, "regr")
   expect_identical(attr(env$learning, "provenance")$top_k, 4L)
   expect_true(all(is.finite(env$learning$error)))
