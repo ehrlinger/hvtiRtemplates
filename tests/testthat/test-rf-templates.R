@@ -26,6 +26,67 @@ test_that("rfs-fit grows a survival forest and saves the handoff", {
   }
 })
 
+test_that("rfs-fit draws the learning curve from cached subsamples", {
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
+  env <- rf_env(rfs_data())
+  # veteran has 128 deaths in 137 patients; small refits keep this quick.
+  choices <- utils::modifyList(rfs_choices, list(LEARNING_FRACTIONS = c(0.25, 0.5), LEARNING_B = 3, LEARNING_NTREE = 25))
+  rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning",
+                         "fig-learning-stability", "fig-learning-error"), env, choices)
+
+  expect_s3_class(env$learning, "gg_learning")
+  expect_true(file.exists(file.path(env$CACHE_DIR, "rfs-learning.rds")))
+  st <- attr(env$learning, "stability")
+  # Two fractions and the whole-cohort bootstrap, three refits each.
+  expect_equal(st$fraction, c(0.25, 0.5, 1))
+  expect_equal(st$B, rep(3L, 3))
+  expect_equal(st$events[3], sum(env$forest$yvar[[env$EVENT]] == 1))
+  expect_true(all(is.finite(env$learning$error)))
+  # learning_subsample() recorded the stratified draw.
+  expect_equal(st$counts, c("exact", "exact", "expected"))
+  expect_equal(attr(env$learning, "provenance")$top_k, 5L)
+  # The bootstrap draws with replacement, so the table calls its deaths expected; the subsamples' are exact.
+  expect_equal(grepl("(expected)", env$.lt_deaths, fixed = TRUE), c(FALSE, FALSE, TRUE))
+  for (panel in c("stability", "error")) {
+    expect_s3_class(ggplot2::ggplot_build(plot(env$learning, panel = panel)), "ggplot_built")
+  }
+
+  # REFIT = TRUE with a current cache loads it, so a Render-button run is not refused when no refit would run.
+  withr::local_envvar(HVTI_ALLOW_LONG_FIT = "false", RSTUDIO = "1", RSTUDIO_TERM = NA, HVTI_JOB_MARKER = NA)
+  withr::local_options(rlang_interactive = FALSE, hvtiRtemplates.allow_interactive_fit = NULL)
+  before <- env$learning_fits
+  env$REFIT <- TRUE
+  expect_no_error(rf_run("rfs", "fit", "learning", env))
+  expect_identical(env$learning_fits, before)
+  # A changed call is a refit, and that is still refused outside run_job().
+  env$LEARNING_B <- 2
+  expect_error(rf_run("rfs", "fit", "learning", env), "run_job(", fixed = TRUE)
+})
+
+test_that("rfs-fit's top-k agreement leaves a predictor out, so it can see a ranking move", {
+  rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
+  env <- rf_env(rfs_data())
+  # Three predictors, as in the template's default.
+  choices <- utils::modifyList(rfs_choices, list(PREDICTORS = c("trt", "karno", "age"), LEARNING_FRACTIONS = 0.5,
+                                                 LEARNING_B = 3, LEARNING_NTREE = 25))
+  rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning"), env, choices)
+  expect_identical(attr(env$learning, "provenance")$top_k, 2L)
+  # Two completely reversed rankings: a top set of all three predictors would score a perfect Jaccard of 1.
+  reversed <- list(c(trt = 3, karno = 2, age = 1), c(trt = 1, karno = 2, age = 3))
+  stability <- getFromNamespace(".learning_stability", "ggRandomForests")
+  expect_equal(stability(reversed, 3L)[["jaccard"]], 1)
+  expect_lt(stability(reversed, env$.learning_k)[["jaccard"]], 1)
+
+  # One predictor: no ranking to agree on, so Kendall tau has nothing to compare and the job says to read the error.
+  env1 <- rf_env(rfs_data())
+  choices1 <- utils::modifyList(choices, list(PREDICTORS = "karno"))
+  rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning"), env1, choices1)
+  expect_identical(attr(env1$learning, "provenance")$top_k, 1L)
+  expect_true(all(is.na(attr(env1$learning, "stability")$kendall)))
+  expect_match(paste(rf_chunk(readLines(template_path("rfs", "fit")), "learning"), collapse = "\n"), "Read the error curve only",
+               fixed = TRUE)
+})
+
 test_that("rfs-fit refuses a status that is not 0/1", {
   rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
   d <- rfs_data()
@@ -607,11 +668,31 @@ test_that("no explain template grows a forest on the full cohort", {
   expect_match(paste(deparse(body(hvtiRtemplates:::.band_refit)), collapse = "\n"), "randomForestSRC::rfsrc", fixed = TRUE)
 })
 
+# The argument names of every rfsrc() call in a template's R chunks. Parsed
+# rather than grepped: subsample(bootstrap = TRUE), rfs-fit's double bootstrap
+# for the learning curve, is not the forest's own `bootstrap =`.
+rfsrc_arg_names <- function(file) {
+  src <- readLines(file, warn = FALSE)
+  starts <- grep("^```\\{r", src)
+  fences <- which(src == "```")
+  code <- unlist(lapply(starts, function(a) src[(a + 1L):(fences[fences > a][1L] - 1L)]))
+  found <- list()
+  walk <- function(e) {
+    if (!is.call(e)) return(invisible())
+    if (identical(e[[1L]], as.name("rfsrc"))) found[[length(found) + 1L]] <<- names(as.list(e))[-1L]
+    for (i in seq_along(e)[-1L]) walk(e[[i]])
+  }
+  for (e in parse(text = code, keep.source = FALSE)) walk(e)
+  found
+}
+
 test_that("every fit grows the forest subsample() needs: saved, by.root", {
   for (t in c("rfs", "rfc", "rfr")) {
     src <- paste(readLines(template_path(t, "fit"), warn = FALSE), collapse = "\n")
     expect_false(grepl("forest\\s*=\\s*FALSE", src), info = t)
-    expect_false(grepl("bootstrap\\s*=", src), info = t)
+    calls <- rfsrc_arg_names(template_path(t, "fit"))
+    expect_true(length(calls) > 0, info = t)
+    for (args in calls) expect_false("bootstrap" %in% args, info = t)
   }
 })
 
