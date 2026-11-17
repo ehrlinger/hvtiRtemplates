@@ -10,6 +10,28 @@
 # excluded from object_usage_linter: their OTHER study dependencies, such as
 # TemporalHazard, are in no DESCRIPTION field at all.
 
+test_that("the bh runner's phase text tells apart every phase setting a chunk is fitted with", {
+  skip_if_not_installed("TemporalHazard", minimum_version = "1.2.8")
+  ph <- function(...) TemporalHazard::hzr_phase(...)
+  base <- list(early = ph("cdf", t_half = 0.05, nu = 1, m = 1, fixed = "shapes"), constant = ph("constant"))
+  txt <- hvtiRtemplates:::.hazard_phase_text(base)
+  expect_type(txt, "character")
+  expect_length(txt, 1L)
+  expect_identical(hvtiRtemplates:::.hazard_phase_text(base), txt)
+  expect_match(txt, "early = cdf(t_half = 0.05, nu = 1, m = 1; fixed: t_half, nu, m); constant = constant(", fixed = TRUE)
+  variants <- list(
+    shape = list(early = ph("cdf", t_half = 0.1, nu = 1, m = 1, fixed = "shapes"), constant = ph("constant")),
+    held = list(early = ph("cdf", t_half = 0.05, nu = 1, m = 1, fixed = c("t_half", "nu")), constant = ph("constant")),
+    type = list(early = ph("cdf", t_half = 0.05, nu = 1, m = 1, fixed = "shapes"),
+                late = ph("g3", tau = 1, gamma = 1, alpha = 1, eta = 1, fixed = "shapes")),
+    own_formula = list(early = ph("cdf", t_half = 0.05, nu = 1, m = 1, fixed = "shapes", formula = ~ age),
+                       constant = ph("constant"))
+  )
+  for (v in names(variants)) {
+    expect_false(identical(hvtiRtemplates:::.hazard_phase_text(variants[[v]]), txt), label = v)
+  }
+})
+
 test_that("boot_clusters() counts a replicate once when it selects two forms", {
   skip_if_not_installed("hvtiRbootstrap")
   withr::local_seed(1)

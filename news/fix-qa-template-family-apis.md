@@ -9,11 +9,13 @@
   names until it is brought up to date with `upgrade_job()`; it renders, with
   deprecation warnings, until those packages drop the old names.**
 * The `bh` hazard bootstrap runner records its screen the way the `bc`, `bl` and
-  `br` runners do: the fitter, the model formula with each phase's scope, the
-  selection method, the draw fraction, the RNG kind, TemporalHazard's commit
+  `br` runners do: the fitter, the model formula with each phase's scope and
+  each phase's distribution, shape values and held parameters, the selection
+  method, the draw fraction, the RNG kind, TemporalHazard's commit
   when the installer recorded one, and the family's seven-field `$provenance`.
   `boot_pool_chunks()` therefore checks that a hazard run's chunks share a model
-  instead of reading every one as "hazard runner (unrecorded)". **A run whose
+  instead of reading every one as "hazard runner (unrecorded)", and refuses
+  chunks fitted with different phases. **A run whose
   chunks were written partly before this change refuses to pool**, because the
   older chunks record no model; rerun those chunks with the current runner.
 * `dc-tables`' scatter-plot matrix caption says that its panels carry no

@@ -116,13 +116,16 @@ offered <- c(early = length(POOL), constant = length(POOL))
 # The screen's definition, recorded as hvtiRbootstrap::boot_bag() records it for
 # the bc, bl and br runners, so boot_pool_chunks() checks that chunks ran the
 # same model rather than reading them as "hazard runner (unrecorded)". The
-# formula is the base fit's with each phase's scope, as text: a formula object
-# carries its environment, and with it the data. A commit, when the installer
+# formula is the base fit's with each phase's scope and then the phases, each
+# one's shapes and which are held, as text: a formula object carries its
+# environment, and with it the data. Chunks whose phases differ fit different
+# models and are refused rather than pooled. A commit, when the installer
 # recorded one, says which codebase ran; a version alone cannot.
 th_sha <- utils::packageDescription("TemporalHazard")$RemoteSha
 if (is.null(th_sha)) th_sha <- NA_character_
 model_text <- paste0(deparse1(stats::formula(base)), "; ",
-                     paste0(names(bs$scope), ": ", vapply(bs$scope, deparse1, character(1)), collapse = "; "))
+                     paste0(names(bs$scope), ": ", vapply(bs$scope, deparse1, character(1)), collapse = "; "),
+                     "; phases: ", hvtiRtemplates:::.hazard_phase_text(phases))
 bag <- list(
   n_boot = bs$n_success, seed = SEED, slentry = SLENTRY, slstay = SLSTAY, max_steps = MAX_STEPS,
   base_params = c("early.log_mu", "constant.log_mu"), requested = offered, usable = offered, n_rows = nrow(d),

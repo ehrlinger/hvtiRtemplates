@@ -125,6 +125,26 @@
   invisible(TRUE)
 }
 
+# The runner's phases as text, for the model signature boot_pool_chunks()
+# compares: each phase's distribution, its shape values, which of them are held
+# fixed, and the phase's own formula when it has one. Chunks fitted with
+# different phases screened different models, and their draws must not pool,
+# however alike their response formula and scope. Text rather than the phase
+# objects, because a phase's formula carries the environment it was written in.
+.hazard_phase_text <- function(phases) {
+  one <- function(name, ph) {
+    ph <- unclass(ph)
+    shapes <- setdiff(names(ph), c("type", "formula", "fixed"))
+    values <- vapply(shapes, function(k) deparse1(ph[[k]]), character(1))
+    paste0(name, " = ", ph$type, "(", paste0(shapes, " = ", values, collapse = ", "),
+           "; fixed: ", if (length(ph$fixed)) paste(ph$fixed, collapse = ", ") else "none",
+           if (!is.null(ph$formula)) paste0("; ", deparse1(ph$formula)), ")")
+  }
+  nms <- names(phases)
+  if (is.null(nms)) nms <- as.character(seq_along(phases))
+  paste(mapply(one, nms, phases, USE.NAMES = FALSE), collapse = "; ")
+}
+
 # The report's check on what it reads: a bag screened on segmented rows must say
 # it resampled patients. A bag from a runner before patient resampling did not,
 # and its frequencies are those of a row bootstrap. Each chunk file says so for
