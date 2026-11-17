@@ -534,6 +534,35 @@ test_that("a hung start that never records itself can still be cancelled, throug
   expect_false(isTRUE(tryCatch(ps::ps_is_running(b$h), error = function(e) FALSE)))
 })
 
+test_that("a starting run whose marker cannot be looked up while it is stopped is not recorded cancelled", {
+  local_mocked_bindings(.is_windows = function() FALSE, .submitted_alive = function(st) TRUE)
+  local_mocked_bindings(ps_find_tree = function(...) stop("permission denied"), .package = "ps")
+  job <- status_job()
+  marker <- "PSHVTItest1_1"
+  .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
+                host = Sys.info()[["nodename"]])
+  expect_error(cancel_job(job, grace = 1, quiet = TRUE), class = "hvtiRtemplates_cancel_incomplete")
+  expect_identical(yaml::read_yaml(.run_files(job)$status)$state, "submitted")
+})
+
+test_that("a starting run that records itself running while it is stopped is recorded cancelled, not vanished", {
+  local_mocked_bindings(.is_windows = function() FALSE, .submitted_alive = function(st) TRUE)
+  job <- status_job()
+  marker <- "PSHVTItest1_1"
+  here <- Sys.info()[["nodename"]]
+  .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
+                host = here)
+  # The runner records itself between cancel_job() reading "submitted" and its processes being stopped.
+  local_mocked_bindings(.stop_procs = function(discover, grace) {
+    .write_status(.run_files(job)$status, state = "running", pid = 999999L, marker = marker, host = here,
+                  started = .stamp(Sys.time()))
+    integer()
+  })
+  st <- cancel_job(job, grace = 1, quiet = TRUE)
+  expect_identical(st$state, "cancelled")
+  expect_identical(yaml::read_yaml(.run_files(job)$status)$pid, 999999L)
+})
+
 test_that("a submission that never started is recorded failed, saying so", {
   local_mocked_bindings(.is_windows = function() FALSE)  # no process is signalled: only the records are read
   job <- status_job()

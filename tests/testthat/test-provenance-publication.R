@@ -1247,6 +1247,46 @@ test_that("a render suspended between creating the lock and recording itself kee
   expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), creator)
 })
 
+test_that("an owner judged stopped that releases during a takeover leaves the lock to the taker, and no third enters", {
+  root <- withr::local_tempdir()
+  stalled <- list(pid = 101L, created = "1.000000", host = "elsewhere.invalid")
+  taker <- list(pid = 202L, created = "2.000000")
+  third <- list(pid = 303L, created = "3.000000")
+  testthat::with_mocked_bindings(.acquire_provenance_lock(root), .provenance_render_owner = function() stalled,
+                                 .start_provenance_heartbeat = function(lock, owner) invisible(NULL),
+                                 .package = "hvtiRtemplates")
+  lock <- .provenance_lock_path(root)
+  real_write <- .write_provenance_owner
+  raced <- FALSE
+  # The taker has judged the stalled owner gone and holds the sentinel. The stalled render finishes and releases,
+  # and a third render starts.
+  paused_write <- function(owner, owner_path) {
+    if (!raced) {
+      raced <<- TRUE
+      testthat::with_mocked_bindings(.release_provenance_lock(root), .provenance_render_owner = function() stalled,
+                                     .package = "hvtiRtemplates")
+      expect_true(dir.exists(lock))
+      testthat::with_mocked_bindings(
+        expect_error(.acquire_provenance_lock(root), "Another Quarto render"),
+        .provenance_render_owner = function() third,
+        .provenance_lock_held = function(owner, lock) FALSE,
+        .package = "hvtiRtemplates"
+      )
+    }
+    real_write(owner, owner_path)
+  }
+  testthat::with_mocked_bindings(
+    expect_true(.acquire_provenance_lock(root)),
+    .provenance_render_owner = function() taker,
+    .provenance_lock_held = function(owner, lock) FALSE,
+    .write_provenance_owner = paused_write,
+    .package = "hvtiRtemplates"
+  )
+  expect_true(raced)
+  expect_identical(jsonlite::read_json(file.path(lock, "owner.json")), taker)
+  expect_false(dir.exists(.provenance_takeover_path(lock)))
+})
+
 test_that("the owning render re-enters its lock and post-render releases it", {
   root <- withr::local_tempdir()
   owner <- list(pid = 101L, created = "1.000000")

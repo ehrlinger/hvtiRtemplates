@@ -27,6 +27,9 @@
   point would otherwise come back and run beside the one that took its claim.
   Before, the owner-less lock was taken over after 60 seconds. A render that
   crashes after recording itself is still taken over without anyone's help.
+  A render releases its lock under the same sentinel, so a render on another
+  host judged stopped that finishes during a takeover leaves the lock to the
+  render taking it over, and a third render cannot claim it in between.
 * `add_job()` refuses a dangling symbolic link where the job would go, or at
   the job's or runner's name before 2026-10 or before a template rename, as
   `upgrade_job()` already did, rather than writing the job wherever the link
@@ -43,7 +46,10 @@
   nothing. `job_status()` and the preflight check say so.
   `cancel_job()` stops such a starting run through its marker and records it
   cancelled, so a runner that hangs before it records itself can still be
-  stopped. When this host's processes cannot be listed at all, as in a sandbox,
+  stopped. If the runner records itself running while it is being stopped, it
+  is recorded cancelled under its own process rather than read as vanished, and
+  if the marker cannot be looked up partway through, `cancel_job()` stops
+  without recording anything rather than reading the failure as no process. When this host's processes cannot be listed at all, as in a sandbox,
   the run stays submitted and `job_status()` says why: a second copy is still
   refused, and `cancel_job()` refuses too, signalling nothing.
 * `ar_value()` stops in a final render (`render_job(final = TRUE)`) when the job

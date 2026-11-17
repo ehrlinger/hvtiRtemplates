@@ -473,7 +473,14 @@ submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
 .job_procs <- function(h, marker) {
   procs <- if (is.null(h)) list() else c(list(h), tryCatch(ps::ps_children(h, recursive = TRUE), error = function(e) list()))
   if (.is_marker(marker)) {
-    procs <- c(procs, tryCatch(ps::ps_find_tree(marker), error = function(e) list()))
+    found <- tryCatch(ps::ps_find_tree(marker), error = function(e) e)
+    if (inherits(found, "error")) {
+      # With no recorded process the marker is the only way to the run, so a failed lookup is not an empty one.
+      if (is.null(h)) stop(structure(class = c("marker_lookup_failed", "error", "condition"),
+                                     list(message = conditionMessage(found), call = NULL)))
+      found <- list()
+    }
+    procs <- c(procs, found)
   }
   procs[!duplicated(vapply(procs, ps::ps_pid, 0L))]
 }
@@ -641,8 +648,8 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
            "from a later process that took the pid. Check that process by hand and stop it if it is the render; ",
            "cancel_job() then records the end.", class = "run_refused")
   }
-  record <- function(...) {
-    run <- st[intersect(c("pid", "created", "marker", "host", "r_version", "started", "job", "output_file"), names(st))]
+  record <- function(..., from = st) {
+    run <- from[intersect(c("pid", "created", "marker", "host", "r_version", "started", "job", "output_file"), names(from))]
     do.call(.write_status, c(list(files$status), list(...), run, list(ended = .stamp())))
   }
   if (elsewhere) {
@@ -654,7 +661,11 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
   if (st$state %in% c("running", "vanished") || starting) {
     # A vanished runner can leave its render running: the marker still finds it.
     h <- if (starting) NULL else .cancel_handle(st)
-    left <- .stop_procs(function() .job_procs(h, st$marker), grace)
+    left <- tryCatch(.stop_procs(function() .job_procs(h, st$marker), grace), marker_lookup_failed = function(e) {
+      .abort("cancel_job(): the processes carrying ", basename(path), "'s marker could not be looked at (",
+             conditionMessage(e), "), so whether it is still running is unknown. Nothing was recorded; check by hand, ",
+             "or run cancel_job() again.", class = "cancel_incomplete")
+    })
     if (length(left)) {
       .abort("cancel_job(): process(es) ", paste(left, collapse = ", "), " of ", basename(path), " did not exit after ",
              "SIGKILL; nothing was recorded.", class = "cancel_incomplete")
@@ -668,9 +679,17 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
     }
     unlink(files$progress)
   } else if (starting) {
-    # The runner may have recorded itself, or ended, while it was being stopped, and then its own record stands.
+    # The runner may have ended while it was being stopped, and then its own record stands. One that recorded itself
+    # running was stopped like the rest, so it is cancelled, under the process it recorded.
     now <- tryCatch(yaml::read_yaml(files$status), error = function(e) NULL)
-    if (!(is.list(now) && !identical(now$state, "submitted"))) record(state = "cancelled", reason = "it had not started")
+    same <- is.list(now) && identical(now$marker, st$marker)
+    if (!(same && isTRUE(now$state %in% c("finished", "failed", "cancelled")))) {
+      if (same && identical(now$state, "running")) {
+        record(state = "cancelled", from = now)
+      } else {
+        record(state = "cancelled", reason = "it had not started")
+      }
+    }
     unlink(files$progress)
   } else if (identical(st$state, "vanished")) {
     record(state = "failed",

@@ -983,8 +983,19 @@
 
 .release_provenance_lock <- function(root) {
   lock <- .provenance_lock_path(root)
-  current <- tryCatch(jsonlite::read_json(file.path(lock, "owner.json")), error = function(e) NULL)
-  if (identical(current, .provenance_render_owner())) unlink(lock, recursive = TRUE)
+  owner_path <- file.path(lock, "owner.json")
+  me <- .provenance_render_owner()
+  if (!identical(.read_provenance_owner(owner_path), me)) return(invisible(NULL))
+  # A render that judged this one stopped, as one on another host may after a stalled heartbeat, may be taking the
+  # lock over. The lock is removed only under the takeover sentinel, so it never vanishes beneath a takeover, where a
+  # fresh render could claim it and have its owner overwritten. If the sentinel is held, the lock is left to the
+  # render holding it, which records itself as owner.
+  sentinel <- .provenance_takeover_path(lock)
+  if (!.create_provenance_lock(sentinel)) return(invisible(NULL))
+  token <- basename(tempfile(pattern = "release-"))
+  writeLines(token, file.path(sentinel, "token"))
+  on.exit(if (identical(.read_takeover_token(sentinel), token)) unlink(sentinel, recursive = TRUE), add = TRUE)
+  if (identical(.read_provenance_owner(owner_path), me)) unlink(lock, recursive = TRUE)
   invisible(NULL)
 }
 

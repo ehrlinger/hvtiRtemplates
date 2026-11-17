@@ -1578,7 +1578,7 @@ test_that("a WHERE value equal to an integer64 identifier is refused", {
   ids <- bit64::as.integer64(123456789000 + 1:3)
   d <- data.frame(ccfid = ids, id2 = ids, age = c(50, 70, 80))
   arrow::write_parquet(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.parquet"))
-  suppressMessages(hvtiRutilities::register_data(file = "built.parquet", key_cols = "ccfid", root = root))
+  suppressMessages(hvtiRutilities::register_data(file = "built.parquet", key = "ccfid", root = root))
   cfg <- hvtiRutilities::study_config(root)
   err <- refusal(read_job_data(cfg, where = quote(id2 != 123456789001)))
   expect_match(err, "also a patient identifier in the data")
