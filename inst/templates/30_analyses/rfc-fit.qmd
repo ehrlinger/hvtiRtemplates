@@ -414,14 +414,15 @@ auc
 # randomForestSRC 3.10.0 crashes R when it double-bootstraps a forest that imputed missing values (na.impute on
 # data with any NA); the plain subsamples are safe. So the learning curve first fills the gaps, once, with the main
 # forest's imputed values, and its own forests then have nothing to impute. Those values came from the whole cohort,
-# outcomes included, so each refit has seen a little of the patients it leaves out: harmless with a few gaps,
-# optimistic with many. If the gaps cannot be filled, the whole-cohort bootstrap is left out instead and the curve
-# stops at the largest fraction.
+# outcomes included, so each refit has seen part of the patients it leaves out, and every fraction may be
+# optimistic; the table, captions and reading text say so. If the gaps cannot be filled (the forest dropped rows),
+# the whole-cohort bootstrap is left out instead and the curve stops at the largest fraction.
+.learning_filled <- NA_ACTION == "na.impute" && length(forest$imputed.indv) > 0L && nrow(forest$xvar) == nrow(d)
 .d_learn <- d
-if (NA_ACTION == "na.impute" && length(forest$imputed.indv) > 0L && nrow(forest$xvar) == nrow(d)) {
+if (.learning_filled) {
   .d_learn[forest$imputed.indv, names(forest$imputed.data)] <- forest$imputed.data
   message(sprintf(paste0("The learning curve fills the gaps in %d rows once, with the main forest's imputed values. ",
-                         "Those used the whole cohort, so with many gaps the curve is optimistic."),
+                         "Those were estimated from the whole cohort, so every fraction may be optimistic."),
                   length(forest$imputed.indv)))
 }
 .learning_boot <- !(NA_ACTION == "na.impute" && anyNA(.d_learn))
@@ -459,22 +460,61 @@ learning <- withCallingHandlers(
     if (length(PREDICTORS) < 2L && grepl("'top_k'", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
   }
 )
+# The captions and the reading note follow what ran. Without the bootstrap the rightmost point is the largest
+# subsample, not the whole cohort; with filled gaps every fraction may be optimistic, not only those above one half.
+# In a saved report or an exported figure the console messages above are gone, so this is where a reader learns it.
+if (.learning_filled) {
+  .learning_note <- paste0("Missing values were filled in once with the forest's imputed values, which were ",
+                           "estimated from the whole cohort, outcomes included. Every refit has therefore ",
+                           "seen part of the patients it leaves out, so its error and agreement may be ",
+                           "optimistic at every fraction, not only above one half.")
+} else if (!.learning_boot) {
+  .learning_note <- paste0("The whole-cohort bootstrap was left out: the forest imputes missing values that ",
+                           "could not be filled in, and randomForestSRC cannot double-bootstrap such a ",
+                           "forest. The curve stops at the largest fraction, a subsample.")
+} else {
+  .learning_note <- ""
+}
+.learning_right <- if (.learning_boot) paste0(" (for the rightmost point, the whole-cohort bootstrap, drawn ",
+                                             "as a square, the cohort's count: the expected number in each ",
+                                             "draw)") else ""
+.learning_caps <- list(
+  tbl = paste(paste0("Learning curve. Error is the mean out-of-bag error rate of the refits at each ",
+                     "fraction; agreement is between the refits' top variables by importance. Smallest class",
+                     " counts the patients in the outcome's rarest class."),
+              if (.learning_boot) paste0("Fraction 1 is a bootstrap of the whole cohort: its count is the ",
+                                         "cohort's, the number expected in each draw, which varies because ",
+                                         "the bootstrap draws with replacement."),
+              .learning_note),
+  stability = paste(sprintf(paste0("Agreement of the top variables by importance between refits, by the ",
+                                   "number of cases in the smallest class in each refit%s. A line that is ",
+                                   "still rising at the rightmost point means the importance ranking would ",
+                                   "change with more patients. Open markers have fewer than 50 cases in the ",
+                                   "smallest class; triangles are fractions above one half, where agreement ",
+                                   "is optimistic."), .learning_right),
+                    .learning_note),
+  error = paste(sprintf(paste0("Out-of-bag error rate by the number of cases in the smallest class in each ",
+                               "refit%s. Gray points are single refits and the black line their mean, each ",
+                               "mean drawn in its fraction's marker. Open markers have fewer than 50 cases ",
+                               "in the smallest class, too few for their error to be trusted."), .learning_right),
+                .learning_note)
+)
 ```
 
 ```{r}
 #| label: tbl-learning
-#| tbl-cap: "Learning curve. Error is the mean out-of-bag error rate of the refits at each fraction; agreement is
-#|   between the refits' top variables by importance. Smallest class counts the patients in the outcome's rarest
-#|   class. Fraction 1, when shown, is a bootstrap of the whole cohort: its count is the cohort's, the number expected
-#|   in each draw, which varies because the bootstrap draws with replacement."
+#| tbl-cap: !expr .learning_caps$tbl
 .lt <- summary(learning)
 # Exact for a stratified subsample; for the bootstrap, and any unstratified draw, the count is the expected one.
 .lt_count <- ifelse(.lt$counts == "exact", format(.lt$events), paste(format(.lt$events), "(expected)"))
+.lt_caution <- ifelse(.lt$low_events, "few cases", ifelse(.lt$optimistic, "optimistic", ""))
+# Filled gaps make every fraction optimistic, so every row says so; the caption says why.
+if (.learning_filled) .lt_caution <- ifelse(nzchar(.lt_caution), paste0(.lt_caution, ", imputed"), "imputed")
 knitr::kable(
   data.frame(Fraction = .lt$fraction, Patients = .lt$n, `Smallest class` = .lt_count, Refits = .lt$B,
              Error = sprintf("%.3f (SD %.3f)", .lt$error_mean, .lt$error_sd),
              Jaccard = sprintf("%.2f", .lt$jaccard), `Kendall tau` = sprintf("%.2f", .lt$kendall),
-             Caution = ifelse(.lt$low_events, "few cases", ifelse(.lt$optimistic, "optimistic", "")),
+             Caution = .lt_caution,
              check.names = FALSE),
   align = "rrrrrrrl"
 )
@@ -482,11 +522,7 @@ knitr::kable(
 
 ```{r}
 #| label: fig-learning-stability
-#| fig-cap: "Agreement of the top variables by importance between refits, by the number of cases in the smallest class
-#|   in each refit (for the rightmost point, the whole-cohort bootstrap, drawn as a square, the cohort's count: the
-#|   expected number in each draw). A line that is still rising at the whole cohort means the importance ranking would
-#|   change with more patients. Open markers have fewer than 50 cases in the smallest class; triangles are fractions
-#|   above one half, where agreement is optimistic."
+#| fig-cap: !expr .learning_caps$stability
 .fig <- plot(learning) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
 save_figure(.fig, "rfc-fit-learning-stability")
@@ -495,10 +531,7 @@ save_figure(.fig, "rfc-fit-learning-stability")
 
 ```{r}
 #| label: fig-learning-error
-#| fig-cap: "Out-of-bag error rate by the number of cases in the smallest class in each refit (for the rightmost
-#|   point, the whole-cohort bootstrap, drawn as a square, the cohort's count: the expected number in each draw). Gray
-#|   points are single refits and the black line their mean, each mean drawn in its fraction's marker. Open markers
-#|   have fewer than 50 cases in the smallest class, too few for their error to be trusted."
+#| fig-cap: !expr .learning_caps$error
 .fig <- plot(learning, panel = "error") +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
 save_figure(.fig, "rfc-fit-learning-error")
@@ -513,11 +546,7 @@ five real predictors among twenty, a Jaccard agreement of 0.8 took about 525 cas
 the signal was strong, and was not reached by 920 when it was weak.
 That 0.8 is a reference point, not a threshold this job enforces. Agreement at a
 fraction above one half is optimistic, because refits that large share most of
-their patients, and the whole-cohort point is a bootstrap for that reason. When the
-forest imputes missing values, the curve fills them in first, once, with the
-forest's own imputed values, because randomForestSRC cannot double-bootstrap a
-forest that imputes. Those values came from the whole cohort, so with many
-missing values the curve is optimistic. The
+their patients, and the whole-cohort point is a bootstrap for that reason. `r .learning_note` The
 agreement is between the top variables, so it needs predictors left out: with
 five or fewer predictors the job compares the top one fewer than there are.
 
