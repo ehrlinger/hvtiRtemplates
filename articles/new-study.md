@@ -127,10 +127,10 @@ package environment:
 # A vignette builds a throwaway study; in a real study, run hvtiR::setup().
 study_setup(new_root, study = "Synthetic new study", study_tracker_id = 42L,
             renv = FALSE)
-#> Study: /tmp/Rtmpr0LnaL/file21755dcce254/new-study
+#> Study: /tmp/RtmpG1LqN3/file1f3c3a076aca/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/Rtmpr0LnaL/file21755dcce254/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmpG1LqN3/file1f3c3a076aca/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -176,10 +176,10 @@ register_data(
 #> Warning: register_data(): `root` is now the last argument. A first argument,
 #> unnamed, that is a directory is read as the root for one more release; pass
 #> root = by name.
-#> Study: /tmp/Rtmpr0LnaL/file21755dcce254/new-study
+#> Study: /tmp/RtmpG1LqN3/file1f3c3a076aca/new-study
 #> 
 #> [x] _study.yml — study: Synthetic new study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/Rtmpr0LnaL/file21755dcce254/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic new study", study_tracker_id = 42L, root = "/tmp/RtmpG1LqN3/file1f3c3a076aca/new-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv, registered as built_20261117.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars

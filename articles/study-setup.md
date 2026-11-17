@@ -147,10 +147,10 @@ study_setup(
   cleanup = FALSE,
   renv = FALSE
 )
-#> Study: /tmp/RtmpI7ptN5/file21b92f618c5d/legacy-study
+#> Study: /tmp/RtmpKWMV0B/file1f801ed5d103/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpI7ptN5/file21b92f618c5d/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpKWMV0B/file1f801ed5d103/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -204,10 +204,10 @@ register_data(
 #> Warning: register_data(): `root` is now the last argument. A first argument,
 #> unnamed, that is a directory is read as the root for one more release; pass
 #> root = by name.
-#> Study: /tmp/RtmpI7ptN5/file21b92f618c5d/legacy-study
+#> Study: /tmp/RtmpKWMV0B/file1f801ed5d103/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpI7ptN5/file21b92f618c5d/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpKWMV0B/file1f801ed5d103/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv, registered as built_20261117.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -331,15 +331,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/RtmpI7ptN5/file21b92f618c5d/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#> "/tmp/RtmpKWMV0B/file1f801ed5d103/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
 #>                                                                                tables 
-#>  "/tmp/RtmpI7ptN5/file21b92f618c5d/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>  "/tmp/RtmpKWMV0B/file1f801ed5d103/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/RtmpI7ptN5/file21b92f618c5d/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>    "/tmp/RtmpKWMV0B/file1f801ed5d103/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
 #>                                                                                trends 
-#>  "/tmp/RtmpI7ptN5/file21b92f618c5d/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
+#>  "/tmp/RtmpKWMV0B/file1f801ed5d103/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/RtmpI7ptN5/file21b92f618c5d/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
+#>     "/tmp/RtmpKWMV0B/file1f801ed5d103/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output
