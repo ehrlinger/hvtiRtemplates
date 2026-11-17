@@ -391,6 +391,32 @@ test_that("study_render refuses a live render lock with no running job, and pass
   expect_true(.check_study_render(mine, root)$ok)
 })
 
+test_that("study_render refuses a claim left behind in the render lock, and names it, only once it is old", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  lock <- .provenance_lock_path(root)
+  sentinel <- .provenance_takeover_path(lock)
+  # A lock with no owner file: young, its render is only just recording itself.
+  dir.create(lock, recursive = TRUE)
+  expect_true(.check_study_render(mine, root)$ok)
+  Sys.setFileTime(lock, Sys.time() - 600)
+  ck <- .check_study_render(mine, root)
+  expect_false(ck$ok)
+  expect_match(ck$fix, paste("delete the directory", lock), fixed = TRUE)
+  # A dead owner's lock with a takeover sentinel beside it.
+  jsonlite::write_json(list(pid = 4242L, created = "1.000000"), file.path(lock, "owner.json"), auto_unbox = TRUE)
+  testthat::local_mocked_bindings(.provenance_owner_alive = function(owner) FALSE)
+  dir.create(sentinel)
+  expect_true(.check_study_render(mine, root)$ok)
+  Sys.setFileTime(sentinel, Sys.time() - 600)
+  ck <- .check_study_render(mine, root)
+  expect_false(ck$ok)
+  expect_match(ck$fix, paste("delete the directory", sentinel), fixed = TRUE)
+  # With no lock, a render creates one and never reads the sentinel.
+  unlink(lock, recursive = TRUE)
+  expect_true(.check_study_render(mine, root)$ok)
+})
+
 test_that("study_render refuses a render lock held on another host and names the host", {
   root <- lock_study()
   mine <- file.path(root, "analyses", "mine.qmd")

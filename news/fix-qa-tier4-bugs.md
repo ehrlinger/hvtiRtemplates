@@ -21,7 +21,8 @@
   takeover sentinel more than a minute old, left by a render that stopped while
   taking over, and a lock more than a minute old with no owner file, left by a
   render that stopped between creating the lock and recording itself, both stop
-  the render with the directory's path: once no Quarto render is running in the
+  the render, and `run_job()`'s study check before it submits, with the
+  directory's path: once no Quarto render is running in the
   study, on any node, delete it and render again. A render paused at either
   point would otherwise come back and run beside the one that took its claim.
   Before, the owner-less lock was taken over after 60 seconds. A render that

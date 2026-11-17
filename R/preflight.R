@@ -373,5 +373,18 @@
                   paste0("Wait for it to finish, then run again.", .provenance_lock_hint(owner, lock)),
                   note))
   }
+  # A claim a render left behind in the moment of claiming is never cleared by age (see .claim_stale_secs), so the
+  # render would stop on it. A lock with no owner file blocks every render; a takeover sentinel blocks only the
+  # takeover of a dead owner, and with no lock at all a render creates a fresh one and never reads it.
+  left <- if (dir.exists(lock)) {
+    sentinel <- .provenance_takeover_path(lock)
+    if (is.null(owner) && .claim_age_over(lock)) lock else if (!is.null(owner) && .claim_age_over(sentinel)) sentinel
+  }
+  if (!is.null(left)) {
+    return(.check("study_render", FALSE,
+                  paste("a Quarto render stopped while claiming this study's render lock and left its claim behind,",
+                        "which a render will not clear by itself."),
+                  trimws(.left_claim_fix(left)), note))
+  }
   .check("study_render", TRUE, note = note)
 }
