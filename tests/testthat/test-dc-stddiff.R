@@ -51,8 +51,8 @@ run_stddiff <- function(..., d = stddiff_data()) {
 test_that("the unadjusted comparison is ps_stddiff() on the whole cohort", {
   env <- run_stddiff(GAUSSIAN = "age", NONG_ORD = "nyha", BINARY = "hx_chf", CATEGORICAL = "race")
   expect_named(env$results, "Unadjusted")
-  direct <- hvtiRpropensity::ps_stddiff(stddiff_data(), treatment_col = "tavr", gaussian = "age",
-                                        nong_ord = "nyha", binary = "hx_chf", categorical = "race")
+  direct <- hvtiRpropensity::ps_stddiff(stddiff_data(), treatment_col = "tavr", gaussian_cols = "age",
+                                        nong_ord_cols = "nyha", binary_cols = "hx_chf", categorical_cols = "race")
   expect_equal(env$balance$Unadjusted, direct$tables$stddiff$stddiff)
   expect_identical(env$balance$variable, c("age", "nyha", "hx_chf", "race"))
   expect_length(env$perm, 0L)
@@ -62,9 +62,9 @@ test_that("MATCH and WEIGHT add the matched and weighted comparisons", {
   env <- run_stddiff(MATCH = "match", WEIGHT = "mtwt")
   expect_named(env$results, c("Unadjusted", "Matched", "Weighted"))
   d <- stddiff_data()
-  matched <- hvtiRpropensity::ps_stddiff(d[d$match == 1L, ], "tavr", gaussian = "age", binary = NULL)
+  matched <- hvtiRpropensity::ps_stddiff(d[d$match == 1L, ], "tavr", gaussian_cols = "age", binary_cols = NULL)
   expect_equal(env$balance$Matched[[1L]], matched$tables$stddiff$stddiff[[1L]])
-  weighted <- hvtiRpropensity::ps_stddiff(d, "tavr", gaussian = "age", weight_col = "mtwt")
+  weighted <- hvtiRpropensity::ps_stddiff(d, "tavr", gaussian_cols = "age", weight_col = "mtwt")
   expect_equal(env$balance$Weighted[[1L]], weighted$tables$stddiff$stddiff[[1L]])
   expect_identical(env$group_counts$comparison, c("Unadjusted", "Matched", "Weighted"))
   expect_equal(env$group_counts[[2L]], c(30, 20, 30))

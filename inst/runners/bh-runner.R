@@ -135,8 +135,11 @@ bag <- list(
 )
 # The hvtiR family's shared provenance record: seven fields, each present and
 # typed, NA where a value is unknown.
+# A seed that is not a whole number in integer range is recorded NA, not coerced with a warning.
+seed_int <- if (is.numeric(SEED) && length(SEED) == 1L && !is.na(SEED) && SEED == trunc(SEED) &&
+                  abs(SEED) <= .Machine$integer.max) as.integer(SEED) else NA_integer_
 bag$provenance <- list(package = "TemporalHazard", version = bag$th_version, sha = th_sha,
-                       method = "stepwise", seed = as.integer(SEED), rng_kind = rng_kind, time = t0)
+                       method = "stepwise", seed = seed_int, rng_kind = rng_kind, time = t0)
 attr(bag, "hvti_provenance") <- list(data = list(job$provenance), artifacts = list(), analysis = NULL, cohort = NULL,
                                      selection = selection)
 out_dir <- file.path(hvtiRutilities::study_dir("estimates", cfg$root), paste0(SUBJECT, "-", TYPE))

@@ -380,9 +380,9 @@ test_that("endpoint-driven templates own explicit cohort definitions", {
   count_calls <- helper_calls[grepl("\\bcohort_counts\\(", helper_calls)]
   assert_calls <- helper_calls[grepl("\\bassert_cohort\\(", helper_calls)]
 
-  expect_true(all(grepl("event = [^,]+, time = [^)]+\\)", count_calls)),
+  expect_true(all(grepl("time_col = [^,]+, event_col = [^)]+\\)", count_calls)),
               info = "every shipped cohort_counts() call needs its job event and time")
-  expect_true(all(grepl("expected = [^,]+, event = [^,]+, time = [^)]+\\)", assert_calls)),
+  expect_true(all(grepl("expected = [^,]+, time_col = [^,]+, event_col = [^)]+\\)", assert_calls)),
               info = "every shipped assert_cohort() call needs expected counts, event, and time")
 
   cohort_section <- function(src) {
@@ -410,11 +410,11 @@ test_that("endpoint-driven templates own explicit cohort definitions", {
 
     expect_true(any(grepl(shipped[[prefix]], src)), info = paste(info, "does not ship its expected counts as designed"))
     expect_true(any(grepl(
-      paste0("^cc <- cohort_counts\\(d, event = ", event, ", time = TIME\\)$"),
+      paste0("^cc <- cohort_counts\\(d, time_col = TIME, event_col = ", event, "\\)$"),
       src
     )), info = paste(info, "does not count its own event and time columns"))
     expect_true(any(grepl(
-      paste0(asserted[[prefix]], "assert_cohort\\(d, expected = EXPECTED, event = ", event, ", time = TIME\\)$"),
+      paste0(asserted[[prefix]], "assert_cohort\\(d, expected = EXPECTED, time_col = TIME, event_col = ", event, "\\)$"),
       src
     )), info = paste(info, "does not assert its own expected counts"))
     expect_false(grepl("_study[.]yml.*cohort|cohort.*_study[.]yml",

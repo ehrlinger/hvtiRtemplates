@@ -2,9 +2,9 @@
   argument names (`time_col`, `event_col`, `time_cols`, `id_col`, `var_cols`,
   `class_cols`, `key_cols`, `facet_col`, `arm_col`, `covariate_cols`, the
   `ps_stddiff()` `*_cols` arguments and `boot_select(n_boot =)`), and pass
-  `root =` last to `declare_data()` and `register_data()`. The old names still
-  work in the family's current releases but warn on every render, and stop
-  working in their next releases. `read_job_data()`'s cohort check calls
+  `root =` last to `declare_data()` and `register_data()`. The new names arrive
+  in the family packages' next releases, which these templates therefore need;
+  the old names keep working there for one release, with a warning. `read_job_data()`'s cohort check calls
   `cohort_counts()` the same way. **A job already in a study keeps the old
   names until it is brought up to date with `upgrade_job()`; it renders, with
   deprecation warnings, until those packages drop the old names.**

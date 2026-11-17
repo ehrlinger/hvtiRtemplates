@@ -65,7 +65,7 @@ test_that("a downstream job passes on the upstream counts and stops on others, n
   data <- hazard_data()
   root <- hazard_study(data)
   lineage <- hazard_lineage(root, where = quote(age >= 18))
-  cc <- hvtiRutilities::cohort_counts(data[data$age >= 18, ], event = "dead", time = "iv_dead")
+  cc <- hvtiRutilities::cohort_counts(data[data$age >= 18, ], event_col = "dead", time_col = "iv_dead")
   expect_identical(lineage$cohort, cc)
   hazard_upstream(root, lineage)
   for (prefix in names(hazard_cohort_gates)) {
@@ -120,7 +120,7 @@ test_that("hp stops when ac and hz chose different rows", {
   # Only the rows differ: the cohort counts alone are stopped by an earlier check.
   ac <- hazard_lineage(root, where = quote(age >= 18))
   ac$cohort <- lineage$cohort
-  hazard_save(list(overall = data.frame(time = 1)), ac, hazard_set_path(root, "ac.rds"))
+  hazard_save(list(overall = data.frame(time_col = 1)), ac, hazard_set_path(root, "ac.rds"))
   expect_error(hazard_downstream("hp", root), "ac and hz handoffs read different data")
 })
 
@@ -130,7 +130,7 @@ test_that("hp names an ac.rds saved before the data contract, rather than callin
   hazard_upstream(root, lineage)
   ac <- lineage
   ac$selection <- NULL
-  hazard_save(list(overall = data.frame(time = 1)), ac, hazard_set_path(root, "ac.rds"))
+  hazard_save(list(overall = data.frame(time_col = 1)), ac, hazard_set_path(root, "ac.rds"))
   err <- expect_error(hazard_downstream("hp", root), "ac\\.rds.*predates the data contract")
   expect_match(conditionMessage(err), "Rerun the ac job with the current template")
   expect_no_match(conditionMessage(err), "read different data")
@@ -343,7 +343,7 @@ test_that("hp saves each figure as a PNG, a PDF and a TIFF, and FIGURES keeps on
     env <- hazard_env(hazard_study())
     hazard_run("hp", c("set", "edit-study-choices"), env, choices)
     env$fit <- fit
-    env$km <- data.frame(time = c(0, 1, 2, 5), survival = c(1, 0.9, 0.85, 0.7))
+    env$km <- data.frame(time_col = c(0, 1, 2, 5), survival = c(1, 0.9, 0.85, 0.7))
     env$t_max <- 5
     utils::capture.output(hazard_run("hp", c("grid", "fig-survival", "fig-hazard", "fig-phases"), env))
     list.files(dirname(env$set_path("graphs", "x")))

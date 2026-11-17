@@ -67,7 +67,7 @@ hazard_study <- function(data = hazard_data(), .local_envir = parent.frame()) {
     adopt = TRUE, cleanup = FALSE, renv = FALSE
   ))
   utils::write.csv(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, file = "built.csv")))
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv")))
   normalizePath(root)
 }
 
@@ -92,7 +92,7 @@ hazard_lineage <- function(root, where = NULL, time = "iv_dead", event = "dead")
   list(
     data = list(job$provenance),
     analysis = list(time = list(variable = time), event = list(variable = event, event = 1L, censored = 0L)),
-    cohort = hvtiRutilities::cohort_counts(job$data, event = event, time = time),
+    cohort = hvtiRutilities::cohort_counts(job$data, event_col = event, time_col = time),
     selection = c(attr(job$record, "selection"), list(time = time, event = event))
   )
 }
@@ -131,7 +131,7 @@ hazard_downstream <- function(prefix, root, choices = list()) {
 # the warnings' messages in `.warnings`. `choices` adds to the study choices.
 hz_fit_run <- function(last = "noconserve", data = hazard_data(), choices = list(), .local_envir = parent.frame()) {
   root <- hazard_study(data, .local_envir = .local_envir)
-  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  cc <- hvtiRutilities::cohort_counts(data, event_col = "dead", time_col = "iv_dead")
   env <- hazard_env(root)
   labels <- c("tbl-data", "tbl-cohort", "tbl-phases", "edit-start", "edit-response", "tbl-response-check", "guard",
               "fit-deterministic", "tbl-convergence", "edit-multistart", "tbl-multistart", "noconserve")
@@ -182,7 +182,7 @@ hazard_rds_bytes <- function(path) {
 # ends. hm runs in `hm_env`, so a test can also run it somewhere a render does
 # not. `hs_choices` adds to hs-setup's study choices. Returns the environment hm ran in.
 hazard_chain_run <- function(root, data, hm_env = globalenv(), hs_choices = list(), .local_envir = parent.frame()) {
-  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  cc <- hvtiRutilities::cohort_counts(data, event_col = "dead", time_col = "iv_dead")
   expected <- list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)
   env <- globalenv()
   before <- ls(env, all.names = TRUE)
@@ -251,7 +251,7 @@ concordance_fit <- function(root, data, groups = c("a", "b"), .local_envir = par
   withr::defer(rm(list = setdiff(ls(env, all.names = TRUE), before), envir = env), envir = .local_envir)
   for (g in groups) {
     rows <- data[data$group == g, , drop = FALSE]
-    cc <- hvtiRutilities::cohort_counts(rows, event = "dead", time = "iv_dead")
+    cc <- hvtiRutilities::cohort_counts(rows, event_col = "dead", time_col = "iv_dead")
     expected <- list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)
     list2env(as.list(hazard_env(root), all.names = TRUE), envir = env)
     where <- bquote(group == .(g))
@@ -276,7 +276,7 @@ concordance_core <- c("tbl-data", "models", "cohort", "tbl-groups", "tbl-covaria
 
 # Choices that make the job runnable against concordance_fit()'s estate.
 concordance_choices <- function(data, ...) {
-  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  cc <- hvtiRutilities::cohort_counts(data, event_col = "dead", time_col = "iv_dead")
   utils::modifyList(list(
     EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored),
     MODELS = c(a = "dead-a", b = "dead-b"), GROUP = "group", HORIZON = 2,
@@ -343,7 +343,7 @@ hm_guard <- function(root, reported) {
 # Run `prefix`'s data and cohort chunks on `data`, with counts that match it.
 cohort_run <- function(prefix, data, .local_envir = parent.frame()) {
   root <- hazard_study(data, .local_envir = .local_envir)
-  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  cc <- hvtiRutilities::cohort_counts(data, event_col = "dead", time_col = "iv_dead")
   env <- hazard_env(root)
   hazard_run(prefix, c("set", "edit-study-choices"), env,
              list(EXPECTED = list(n = cc$n, n_events = cc$n_events, n_censored = cc$n_censored)))
@@ -403,7 +403,7 @@ start_stop_choices <- list(START = "iv_start", KEY = c("ccfid", "iv_start"))
 # chunks, so hm.rds holds a time-varying model. `env` is the global
 # environment, as a render's is: a saved fit refers to it by reference.
 start_stop_hm <- function(root, env, data) {
-  cc <- hvtiRutilities::cohort_counts(data, event = "dead", time = "iv_dead")
+  cc <- hvtiRutilities::cohort_counts(data, event_col = "dead", time_col = "iv_dead")
   list2env(as.list(hazard_env(root), all.names = TRUE), envir = env)
   suppressWarnings(utils::capture.output({
     hazard_run("hz", c("set", "edit-study-choices"), env,

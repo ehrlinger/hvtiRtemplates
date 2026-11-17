@@ -86,8 +86,8 @@ sd_buckets <- list(continuous = c("age", "creat"), binary = c("female", "smoker"
                    categorical = c("nyha", "race"))
 
 expected_stddiff <- function(data, gaussian, nong_ord, binary, categorical, treated_level = NULL) {
-  r <- hvtiRpropensity::ps_stddiff(data, treatment_col = "grp", gaussian = gaussian, nong_ord = nong_ord,
-                                   binary = binary, categorical = categorical, treated_level = treated_level)
+  r <- hvtiRpropensity::ps_stddiff(data, treatment_col = "grp", gaussian_cols = gaussian, nong_ord_cols = nong_ord,
+                                   binary_cols = binary, categorical_cols = categorical, treated_level = treated_level)
   s <- r$tables$stddiff
   stats::setNames(sprintf("%.1f", 100 * s$stddiff), s$variable)
 }

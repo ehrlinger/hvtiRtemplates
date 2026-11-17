@@ -1,7 +1,7 @@
 eda_page <- function(section, d) {
   testthat::skip_if_not_installed("hvtiPlotR")
   testthat::skip_if_not_installed("patchwork")
-  sec <- hvtiPlotR::hv_eda_pages(d, x_col = "year", section = section, vars = setdiff(names(d), "year"))
+  sec <- hvtiPlotR::hv_eda_pages(d, x_col = "year", section = section, var_cols = setdiff(names(d), "year"))
   plot(sec, ncol = 2, nrow = 4)[[1L]] & hvtiPlotR::theme_hv_manuscript(base_size = 8)
 }
 
@@ -50,7 +50,7 @@ test_that(".eda_x_breaks keeps the first level and about n in all", {
 test_that("a job scaffolded before 2026-10-15 still draws its pages through .eda_direct_labels()", {
   testthat::skip_if_not_installed("hvtiPlotR")
   d <- eda_data()
-  sec <- hvtiPlotR::hv_eda_pages(d, x_col = "year", section = "percent", vars = "valve")
+  sec <- hvtiPlotR::hv_eda_pages(d, x_col = "year", section = "percent", var_cols = "valve")
   env <- list2env(list(pages = plot(sec, ncol = 2L, nrow = 4L), i = 1L, scale_fill_hv = hvtiPlotR::scale_fill_hv,
                        theme_hv_manuscript = hvtiPlotR::theme_hv_manuscript))
   # dc-eda's page line until 2026-10-15, word for word, as copied jobs still carry it.

@@ -209,10 +209,10 @@ descriptive jobs below depend only on a registered study dataset.
 ```{r}
 #| label: register-data
 register_data(
-  adopted_root,
   file = "built.csv",
   role = "study",
-  population = "Synthetic full cohort"
+  population = "Synthetic full cohort",
+  root = adopted_root
 )
 verify_manifest(file.path(adopted_root, "manifest.yaml"))
 cfg <- study_config(adopted_root)

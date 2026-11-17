@@ -183,7 +183,7 @@ job_study <- function(data, .local_envir = parent.frame()) {
   root <- withr::local_tempdir(.local_envir = .local_envir)
   suppressMessages(hvtiRutilities::study_setup(root, "Job data", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE))
   utils::write.csv(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "built.csv"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv"))
   hvtiRutilities::study_config(start = root)
 }
 
@@ -983,9 +983,9 @@ join_study <- function(env = parent.frame(), echo_kind = "ancillary") {
   utils::write.csv(data.frame(ccfid = c(1L, 1L, 2L, 4L), echo_date = c(95, 120, 95, 100), ef = c(50, 55, 45, 40),
                               mrn = c(9100001L, 9100001L, 9100002L, 9100004L)),
                    file.path(dd, "echo.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
-  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
-                                                 kind = echo_kind, key = c("ccfid", "echo_date")))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", key_cols = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "echo.csv", dataset = "echo", role = "named",
+                                                 kind = echo_kind, key_cols = c("ccfid", "echo_date")))
   hvtiRutilities::study_config(root)
 }
 
@@ -1060,9 +1060,9 @@ test_that("WHERE refuses the joined dataset's SSN by name and by value", {
   utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70)), file.path(dd, "built.csv"), row.names = FALSE)
   utils::write.csv(data.frame(ccfid = c(1L, 2L, 4L), echo_date = c(95, 95, 100), ef = c(50, 45, 40),
                               ssn_base = c(100000001, 100000002, 0)), file.path(dd, "echo.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
-  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
-                                                 kind = "ancillary", key = c("ccfid", "echo_date")))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", key_cols = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key_cols = c("ccfid", "echo_date")))
   cfg <- hvtiRutilities::study_config(root)
   expect_false("ssn_base" %in% names(read_job_data(cfg, join = "echo")$data))
   for (where in list(quote(ssn_base == 100000002), quote(ef != 100000002))) {
@@ -1098,9 +1098,9 @@ test_that("a joined dataset's key errors say when it was rebuilt since registrat
   utils::write.csv(data.frame(ccfid = 1:3, age = c(50, 60, 70)), file.path(dd, "built.csv"), row.names = FALSE)
   echo <- data.frame(ccfid = c(1L, 1L, 2L), echo_date = c("2020-01-01", "2021-01-01", "2020-06-01"))
   utils::write.csv(echo, file.path(dd, "echo.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
-  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
-                                                 kind = "ancillary", key = c("ccfid", "echo_date")))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", key_cols = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key_cols = c("ccfid", "echo_date")))
   # Rebuilt with a visit column, not registered: the job reads the version without it.
   echo$visit <- 1:3
   utils::write.csv(echo, file.path(dd, "echo.csv"), row.names = FALSE)
@@ -1122,9 +1122,9 @@ test_that("a job KEY naming a joined column is kept though its values look like 
   # Twelve nine-digit record keys: enough distinct values for the SSN value rule.
   utils::write.csv(data.frame(ccfid = rep(1:3, 4), visit = rep(1:4, each = 3), record_key = 123456700L + 1:12,
                               ef = 40 + 1:12), file.path(dd, "echo.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
-  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
-                                                 kind = "ancillary", key = c("ccfid", "visit")))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", key_cols = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key_cols = c("ccfid", "visit")))
   cfg <- hvtiRutilities::study_config(root)
   out <- read_job_data(cfg, join = "echo", key = c("ccfid", "record_key"))
   expect_true("record_key" %in% names(out$data))
@@ -1160,8 +1160,8 @@ test_that("JOIN needs the cohort's identifier, by name, in the joined dataset", 
   cfg <- join_study()
   dd <- hvtiRutilities::study_dir("datasets", cfg$root)
   utils::write.csv(data.frame(pid = 1:2, v = 1:2), file.path(dd, "labs.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(cfg$root, "labs.csv", dataset = "labs", role = "named",
-                                                 kind = "ancillary", key = "pid"))
+  suppressMessages(hvtiRutilities::register_data(root = cfg$root, file = "labs.csv", dataset = "labs", role = "named",
+                                                 kind = "ancillary", key_cols = "pid"))
   cfg <- hvtiRutilities::study_config(cfg$root)
   expect_error(read_job_data(cfg, join = "labs"), "has no `ccfid` column")
 })
@@ -1213,9 +1213,9 @@ test_that("WHERE may name a joined column that shares its name with a cohort col
                    row.names = FALSE)
   utils::write.csv(data.frame(ccfid = c(1L, 1L, 2L), echo_date = c(95, 120, 95), ef = c(50, 55, 45)),
                    file.path(dd, "echo.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "ccfid"))
-  suppressMessages(hvtiRutilities::register_data(root, "echo.csv", dataset = "echo", role = "named",
-                                                 kind = "ancillary", key = c("ccfid", "echo_date")))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", key_cols = "ccfid"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "echo.csv", dataset = "echo", role = "named",
+                                                 kind = "ancillary", key_cols = c("ccfid", "echo_date")))
   cfg <- hvtiRutilities::study_config(root)
   for (reduce in list(NULL, list(rule = "last", by = "echo_date"))) {
     out <- read_job_data(cfg, join = "echo", join_vars = "age", reduce = reduce, where = quote(ef >= 50))
@@ -1370,7 +1370,7 @@ test_that("key = NULL, the default, reads the registered key, and the ID when no
   root <- withr::local_tempdir()
   suppressMessages(hvtiRutilities::study_setup(root, "Registered key", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE))
   utils::write.csv(d0, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = c("ccfid", "age")))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", key_cols = c("ccfid", "age")))
   out <- read_job_data(hvtiRutilities::study_config(start = root))
   expect_identical(attr(out$record, "selection")$key, c("ccfid", "age"))
   expect_false("Note" %in% out$record$step)
@@ -1380,7 +1380,7 @@ test_that("a KEY of the ID is compared with the registered key as the ID resolve
   root <- withr::local_tempdir()
   suppressMessages(hvtiRutilities::study_setup(root, "Fallback", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE))
   utils::write.csv(d0[-1], file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = "mrn"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", key_cols = "mrn"))
   cfg <- hvtiRutilities::study_config(start = root)
   # KEY <- ID, with ID the default "ccfid", which falls back to the MRN the dataset is registered on.
   out <- read_job_data(cfg, key = "ccfid")
@@ -1468,7 +1468,7 @@ stacked_study <- function(data, key, env = parent.frame()) {
   root <- file.path(withr::local_tempdir(.local_envir = env), "study")
   suppressMessages(hvtiRutilities::study_setup(root, "Stacked", 42L, renv = FALSE))
   utils::write.csv(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "built.csv", key = key))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv", key_cols = key))
   hvtiRutilities::study_config(root)
 }
 
@@ -1526,7 +1526,7 @@ test_that("stacked integer64 IDs are paired by value, not by their bits", {
     root <- file.path(withr::local_tempdir(.local_envir = env), "study")
     suppressMessages(hvtiRutilities::study_setup(root, "Integer64", 42L, renv = FALSE))
     arrow::write_parquet(data, file.path(hvtiRutilities::study_dir("datasets", root), "built.parquet"))
-    suppressMessages(hvtiRutilities::register_data(root, "built.parquet", key = key))
+    suppressMessages(hvtiRutilities::register_data(root = root, file = "built.parquet", key_cols = key))
     hvtiRutilities::study_config(root)
   }
   ids <- bit64::as.integer64(9100000000000 + 1:4)
@@ -1690,7 +1690,7 @@ test_that("whole_patients reads an integer64 ID by value, as Parquet hands one o
   long <- data.frame(ccfid = bit64::as.integer64(9100000000000 + c(1, 1, 1, 2, 2, 3)), iv_start = c(0, 1, 2, 0, 1, 0),
                      iv_stop = c(1, 2, 3, 1, 2, 4), lab = c(5, 9, 5, 5, 5, 9), female = c(1, 1, 1, 0, 0, 1))
   arrow::write_parquet(long, file.path(hvtiRutilities::study_dir("datasets", root), "built.parquet"))
-  suppressMessages(hvtiRutilities::register_data(root, "built.parquet", key = c("ccfid", "iv_start")))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "built.parquet", key_cols = c("ccfid", "iv_start")))
   cfg <- hvtiRutilities::study_config(root)
   key <- c("ccfid", "iv_start")
   out <- read_job_data(cfg, where = quote(female == 1), key = key, whole_patients = TRUE)

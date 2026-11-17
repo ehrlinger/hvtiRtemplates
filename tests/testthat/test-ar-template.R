@@ -21,7 +21,7 @@ test_that("an ar job renders against a finished hz job", {
   # Stand in for a finished job: set the one choice an unedited hz stops on, the
   # expected counts, then remove the marker word only. Truncating a line at the
   # marker would leave a one-line HTML comment unclosed.
-  cc <- hvtiRutilities::cohort_counts(dat, event = "dead", time = "iv_dead")
+  cc <- hvtiRutilities::cohort_counts(dat, event_col = "dead", time_col = "iv_dead")
   src <- readLines(hz)
   gate <- grep("^EXPECTED <- ", src)
   expect_length(gate, 1L)

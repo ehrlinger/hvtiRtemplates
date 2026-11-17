@@ -175,7 +175,7 @@ test_that("dc-eda never draws the job's ID or KEY, which read_job_data() keeps",
                       ssn = 100000000 + 7919 * seq_len(n), ssdi_ref = 100000000 + 7919 * seq_len(n),
                       last_name = "x")
   utils::write.csv(built, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"), row.names = FALSE)
-  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root, file = "built.csv")))
+  suppressWarnings(suppressMessages(hvtiRutilities::register_data(root = root, file = "built.csv")))
   lines <- readLines(template_path("dc", "eda"), warn = FALSE)
   chunk <- function(label) {
     start <- match(paste0("#| label: ", setup_label(label)), lines)
@@ -298,7 +298,7 @@ test_that("dc-eda's spec chunk checks every variable and plotting choice", {
 
 # The first panel of a section's first page, drawn from the spec chunk's data.
 eda_first_panel <- function(env, section, vars) {
-  sec <- hvtiPlotR::hv_eda_pages(env$.d_eda, x_col = env$X_LABEL, section = section, vars = vars)
+  sec <- hvtiPlotR::hv_eda_pages(env$.d_eda, x_col = env$X_LABEL, section = section, var_cols = vars)
   plot(sec, ncol = 2L, nrow = 4L)[[1L]][[1L]]
 }
 
@@ -344,7 +344,7 @@ test_that("a date X_VAR spanning under three years is drawn in months, and X_UNI
   src <- readLines(template_path("dc", "eda"), warn = FALSE)
   expect_length(grep("& scale_x_discrete(limits = levels(.x_bars))", src, fixed = TRUE), 1L)
   for (section in c("percent", "count")) {
-    sec <- hvtiPlotR::hv_eda_pages(env$.d_eda_bars, x_col = env$X_LABEL, section = section, vars = "valve")
+    sec <- hvtiPlotR::hv_eda_pages(env$.d_eda_bars, x_col = env$X_LABEL, section = section, var_cols = "valve")
     page <- plot(sec, ncol = 2L, nrow = 4L)[[1L]] & ggplot2::scale_x_discrete(limits = levels(months))
     bars <- page[[1L]]
     expect_identical(bars$labels$x, "Month of operation")

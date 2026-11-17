@@ -4,7 +4,7 @@ make_hook_study <- function(root) {
   ))
   data_path <- file.path(hvtiRutilities::study_dir("datasets", root), "cohort.csv")
   utils::write.csv(data.frame(id = 1L), data_path, row.names = FALSE)
-  suppressMessages(hvtiRutilities::register_data(root, "cohort.csv"))
+  suppressMessages(hvtiRutilities::register_data(root = root, file = "cohort.csv"))
   invisible(root)
 }
 
