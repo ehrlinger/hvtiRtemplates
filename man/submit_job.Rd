@@ -9,15 +9,15 @@ submit_job(path, final = FALSE, params = NULL, output_file = NULL)
 \arguments{
 \item{path}{Character(1). The job's \code{.qmd} file.}
 
-\item{final}{Logical(1). Passed to \code{\link{render_job}}.}
+\item{final}{Logical(1). Passed to \code{\link[=render_job]{render_job()}}.}
 
-\item{params, output_file}{Passed to \code{\link{render_job}}.}
+\item{params, output_file}{Passed to \code{\link[=render_job]{render_job()}}.}
 }
 \value{
-Invisibly, the job's status, as \code{\link{job_status}} returns it.
+Invisibly, the job's status, as \code{\link[=job_status]{job_status()}} returns it.
 }
 \description{
-Starts \code{\link{render_job}} on the job in a separate process that
+Starts \code{\link[=render_job]{render_job()}} on the job in a separate process that
 outlives the R session, the way \code{nohup} from a terminal does, and
 returns at once. Use it for a job whose fit runs for hours: a Workbench
 session that times out takes a console run with it.
@@ -25,12 +25,12 @@ session that times out takes a console run with it.
 \details{
 The process runs the \code{Rscript} of the R that called
 \code{submit_job()}, from the study root, so the study's \code{renv} and
-\code{.Renviron} apply. It writes \code{<job>.run.log} (everything the render
-prints) and \code{<job>.run.yml} (its state) beside the job; read the state
-with \code{\link{job_status}}. A job already running is not started twice: a
-\code{<job>.run.lock} directory is taken while a submit is in progress, and a
+\code{.Renviron} apply. It writes \verb{<job>.run.log} (everything the render
+prints) and \verb{<job>.run.yml} (its state) beside the job; read the state
+with \code{\link[=job_status]{job_status()}}. A job already running is not started twice: a
+\verb{<job>.run.lock} directory is taken while a submit is in progress, and a
 submit that crashed can leave it behind, in which case delete it to try again.
-Stop a submitted job with \code{\link{cancel_job}}.
+Stop a submitted job with \code{\link[=cancel_job]{cancel_job()}}.
 Not available on Windows, which cannot detach a process this way.
 
 With \code{output_file}, the run files are named for the job and that whole
@@ -39,7 +39,7 @@ file name, extension included, so \code{job.qmd} rendered to
 \code{job@job.M1000.html.run.yml} and the rest beside the job. Another job
 given the same name is another run, and the same job rendered to another
 name is another run: both can be submitted, and each is followed and stopped
-by giving \code{\link{job_status}} or \code{\link{cancel_job}} the same
+by giving \code{\link[=job_status]{job_status()}} or \code{\link[=cancel_job]{cancel_job()}} the same
 \code{output_file}. Quarto still renders one job at a time in a study.
 }
 \examples{

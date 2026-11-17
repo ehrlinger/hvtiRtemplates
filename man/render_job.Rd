@@ -24,11 +24,11 @@ family option \code{hvti.quiet}, so \code{options(hvti.quiet = TRUE)} quiets
 every render; an explicit value wins.}
 
 \item{params}{A named list of single values, or \code{NULL}. The job's Quarto
-\code{params}, as \code{quarto render -P name:value} sets them; passed to
+\code{params}, as \verb{quarto render -P name:value} sets them; passed to
 \code{quarto::quarto_render()} as \code{execute_params}.}
 
 \item{output_file}{Character(1) or \code{NULL}. The report's file name, as
-\code{quarto render --output} sets it: a name with an extension and no
+\verb{quarto render --output} sets it: a name with an extension and no
 directory, written beside the job. Give each set of \code{params} its own,
 so one report does not overwrite another. The run's progress file is named
 for it too.}
@@ -38,7 +38,7 @@ for it too.}
 }
 \description{
 Renders a job from its own directory. By default the render is a draft:
-open \code{EDIT:} markers appear in the report's DRAFT banner. With
+open \verb{EDIT:} markers appear in the report's DRAFT banner. With
 \code{final = TRUE} an unfinished job stops instead, as the render of an
 accepted result should.
 }
@@ -60,7 +60,7 @@ honors it with a Quarto CLI of 1.8.13 or later. With an older CLI the
 quarto package itself sets \code{QUARTO_R} to the calling R for every
 render, so a value set by the user does not reach Quarto there.
 
-Jobs scaffolded by \code{\link{add_job}} capture their data provenance while
+Jobs scaffolded by \code{\link[=add_job]{add_job()}} capture their data provenance while
 executing and embed it in the completed HTML. The same project hooks used by
 the Render button and bare Quarto commands then publish a same-stem
 \code{.provenance.json} sidecar beside the actual output. A failed execution
@@ -85,7 +85,7 @@ job, and that rendering again usually works. The original error is kept as
 its parent.
 
 On a network share Quarto can fail after every chunk has run, unable to
-remove the job's \code{_files/execute-results} folder ("Directory not empty
+remove the job's \verb{_files/execute-results} folder ("Directory not empty
 (os error 39)"), because it deletes a file there before the share has let go
 of it. A render that fails with that error, read from Quarto's own message or
 from what the render added to the job's run log, is rendered once more, with a
@@ -132,5 +132,5 @@ if (requireNamespace("quarto", quietly = TRUE) && quarto::quarto_available()) {
 }
 }
 \seealso{
-\code{\link{open_job}}
+\code{\link[=open_job]{open_job()}}
 }

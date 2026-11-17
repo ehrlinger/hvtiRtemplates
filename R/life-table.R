@@ -1,36 +1,36 @@
 #' Kaplan-Meier life tables, as the ac job reports them
 #'
 #' @description
-#' The R counterpart of the SAS \code{\%KAPLAN} macro, as the \code{ac} job calls
-#' it. \code{life_table()} returns the product-limit life table, overall or one
-#' per stratum. \code{life_table_at()} reads survival and the number at risk at
-#' reporting horizons, \code{life_table_tests()} compares strata, and
-#' \code{life_table_keep()} names the rows all three analyze, so a figure can be
+#' The R counterpart of the SAS `%KAPLAN` macro, as the `ac` job calls
+#' it. `life_table()` returns the product-limit life table, overall or one
+#' per stratum. `life_table_at()` reads survival and the number at risk at
+#' reporting horizons, `life_table_tests()` compares strata, and
+#' `life_table_keep()` names the rows all three analyze, so a figure can be
 #' drawn over exactly the same patients.
 #'
 #' @details
-#' \strong{Rows analyzed.} A row is analyzed when its time and event are both
-#' recorded. With \code{strata}, a row whose stratum value is missing, or is a
-#' mean-imputed level (\code{hvtiRutilities::imputed_levels()}), is dropped too,
-#' as \code{\%KAPLAN} drops "invalid strata values". The dropped rows are not
-#' silent: the result carries them in its \code{"dropped"} attribute, one row
-#' per reason, and the \code{ac} job prints that table.
+#' **Rows analyzed.** A row is analyzed when its time and event are both
+#' recorded. With `strata`, a row whose stratum value is missing, or is a
+#' mean-imputed level (`hvtiRutilities::imputed_levels()`), is dropped too,
+#' as `%KAPLAN` drops "invalid strata values". The dropped rows are not
+#' silent: the result carries them in its `"dropped"` attribute, one row
+#' per reason, and the `ac` job prints that table.
 #'
-#' \strong{Confidence level.} The default \code{conf_level} is
-#' \code{\%KAPLAN}'s \code{CLEVEL} default, \code{0.68268948}: one standard
-#' error, not 95\%.
+#' **Confidence level.** The default `conf_level` is
+#' `%KAPLAN`'s `CLEVEL` default, `0.68268948`: one standard
+#' error, not 95%.
 #'
-#' \strong{Reporting horizons.} Survival at a horizon is the last estimate at or
+#' **Reporting horizons.** Survival at a horizon is the last estimate at or
 #' before it, and 1 before the first event. Beyond the last observation the
-#' estimate is not defined and is \code{NA}, unless survival has already reached
+#' estimate is not defined and is `NA`, unless survival has already reached
 #' zero. The number at risk is the number of patients whose time is greater than
 #' the horizon: the at-risk count on the first life-table row AFTER the horizon,
-#' when every censored time has a row (\code{PEVENT=0}). The estimate comes from
+#' when every censored time has a row (`PEVENT=0`). The estimate comes from
 #' the row before, the count from the row after.
 #'
-#' \strong{Tests.} \code{life_table_tests()} reports the three tests SAS
-#' \code{PROC LIFETEST} prints for strata: the log-rank, the Wilcoxon (Gehan's
-#' weights, the number at risk) and \code{-2Log(LR)}, the likelihood ratio test
+#' **Tests.** `life_table_tests()` reports the three tests SAS
+#' `PROC LIFETEST` prints for strata: the log-rank, the Wilcoxon (Gehan's
+#' weights, the number at risk) and `-2Log(LR)`, the likelihood ratio test
 #' of an exponential model. All three use every analyzed row to the end of
 #' follow-up. To compare curves only up to a horizon, censor the data there
 #' first, in the job.
@@ -38,41 +38,41 @@
 #' @param data A data frame, one row per patient.
 #' @param time_col Name of the follow-up time column.
 #' @param event_col Name of the event column, 0/1 or logical.
-#' @param strata_col Name of one stratification column, or \code{NULL} for the
+#' @param strata_col Name of one stratification column, or `NULL` for the
 #'   whole cohort.
-#' @param conf_level Confidence level of the limits. Default \code{0.68268948}.
-#' @param event_only \code{TRUE} returns a row per event time only (SAS
-#'   \code{PEVENT=1}); \code{FALSE} adds a row per censoring time
-#'   (\code{PEVENT=0}).
-#' @param times Reporting horizons, in the unit of \code{time_col}.
-#' @param labels Labels for \code{times}. \code{NULL} labels each horizon with
+#' @param conf_level Confidence level of the limits. Default `0.68268948`.
+#' @param event_only `TRUE` returns a row per event time only (SAS
+#'   `PEVENT=1`); `FALSE` adds a row per censoring time
+#'   (`PEVENT=0`).
+#' @param times Reporting horizons, in the unit of `time_col`.
+#' @param labels Labels for `times`. `NULL` labels each horizon with
 #'   its value.
-#' @param time,event,strata Deprecated: the old names of \code{time_col},
-#'   \code{event_col} and \code{strata_col}. They work, with a warning, for
+#' @param time,event,strata Deprecated: the old names of `time_col`,
+#'   `event_col` and `strata_col`. They work, with a warning, for
 #'   one more release; giving an old name with its new one is an error.
 #'
 #' @return
-#' \code{life_table()}: a data frame with the columns of
-#' \code{TemporalHazard::hzr_kaplan()} (\code{time}, \code{n_risk},
-#' \code{n_event}, \code{n_censor}, \code{survival}, \code{std_err},
-#' \code{cl_lower}, \code{cl_upper}, \code{cumhaz}, \code{hazard},
-#' \code{density}, \code{life}), led by \code{stratum} when \code{strata_col} is
-#' given. Its attribute \code{"counts"} has a row per stratum with \code{n},
-#' \code{n_events}, \code{n_censored} and \code{max_fup}, the last observed
-#' time; \code{"dropped"} is described under Details, or \code{NULL}.
+#' `life_table()`: a data frame with the columns of
+#' `TemporalHazard::hzr_kaplan()` (`time`, `n_risk`,
+#' `n_event`, `n_censor`, `survival`, `std_err`,
+#' `cl_lower`, `cl_upper`, `cumhaz`, `hazard`,
+#' `density`, `life`), led by `stratum` when `strata_col` is
+#' given. Its attribute `"counts"` has a row per stratum with `n`,
+#' `n_events`, `n_censored` and `max_fup`, the last observed
+#' time; `"dropped"` is described under Details, or `NULL`.
 #'
-#' \code{life_table_at()}: a data frame with a row per stratum and horizon:
-#' \code{stratum} when \code{strata_col} is given, then \code{horizon},
-#' \code{time}, \code{survival}, \code{cl_lower}, \code{cl_upper} and
-#' \code{n_risk}, with the \code{"dropped"} attribute.
+#' `life_table_at()`: a data frame with a row per stratum and horizon:
+#' `stratum` when `strata_col` is given, then `horizon`,
+#' `time`, `survival`, `cl_lower`, `cl_upper` and
+#' `n_risk`, with the `"dropped"` attribute.
 #'
-#' \code{life_table_tests()}: a data frame with a row per test: \code{test},
-#' \code{chisq}, \code{df} and \code{p_value}, with the \code{"dropped"}
+#' `life_table_tests()`: a data frame with a row per test: `test`,
+#' `chisq`, `df` and `p_value`, with the `"dropped"`
 #' attribute. A stratum with nobody at risk at any event time adds nothing to
 #' the log-rank or Wilcoxon test and is left out of its degrees of freedom.
 #'
-#' \code{life_table_keep()}: a logical vector, \code{TRUE} for each analyzed
-#' row of \code{data}.
+#' `life_table_keep()`: a logical vector, `TRUE` for each analyzed
+#' row of `data`.
 #'
 #' @examples
 #' if (requireNamespace("TemporalHazard", quietly = TRUE)) {

@@ -19,9 +19,9 @@ The ids of the items stamped, invisibly.
 }
 \description{
 After rereading an item's methods, results and interpretation
-  against a source job that has been rendered again, \code{ar_review()}
-  moves that item's review stamp to the job's current run, which clears the
-  report's callout. The analyst's text is not changed.
+against a source job that has been rendered again, \code{ar_review()}
+moves that item's review stamp to the job's current run, which clears the
+report's callout. The analyst's text is not changed.
 }
 \examples{
 # A copy of a small study shipped with the package: one finished hz job and
@@ -38,5 +38,5 @@ ar_review(report, "hz.dead.hz#fig-fit")
 unlink(dir, recursive = TRUE)
 }
 \seealso{
-\code{\link{ar_paste_methods}}
+\code{\link[=ar_paste_methods]{ar_paste_methods()}}
 }

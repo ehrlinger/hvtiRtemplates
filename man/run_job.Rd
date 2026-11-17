@@ -16,7 +16,7 @@ run_job(
 \arguments{
 \item{path}{Character(1). The job's \code{.qmd} file.}
 
-\item{final}{Logical(1). Passed to \code{\link{submit_job}}.}
+\item{final}{Logical(1). Passed to \code{\link[=submit_job]{submit_job()}}.}
 
 \item{wait}{Numeric(1), seconds, at least 0. How long to wait for the render's
 own checks. \code{0} submits and returns at once.}
@@ -26,12 +26,12 @@ for a legacy job, or the lines the wait ends on. A refusal is still an
 error, and its message then lists the failed checks and their fixes. Defaults to the family
 option \code{hvti.quiet}; an explicit value wins.}
 
-\item{params, output_file}{Passed to \code{\link{render_job}} through
-\code{\link{submit_job}}.}
+\item{params, output_file}{Passed to \code{\link[=render_job]{render_job()}} through
+\code{\link[=submit_job]{submit_job()}}.}
 }
 \value{
-Invisibly, the job's status, as \code{\link{job_status}} returns it.
-  A job refused by the checks is an error and returns nothing.
+Invisibly, the job's status, as \code{\link[=job_status]{job_status()}} returns it.
+A job refused by the checks is an error and returns nothing.
 }
 \description{
 Starts a job the way a long fit should be started, and tells you at once if
@@ -43,9 +43,9 @@ not already running, and that no other job is rendering in the same study
 (one render at a time per study). Every failure is listed with how to
 fix it, and nothing is started until all of them are cleared.
 
-Then it submits the job with \code{\link{submit_job}} and waits for the
+Then it submits the job with \code{\link[=submit_job]{submit_job()}} and waits for the
 render's own checks, the R it runs on and, where the job calls
-\code{\link{guard_memory}}, the memory its fit needs. Those can only run
+\code{\link[=guard_memory]{guard_memory()}}, the memory its fit needs. Those can only run
 inside the render. If one fails, the diagnosis is printed here rather than
 left in a log.
 }
@@ -53,23 +53,23 @@ left in a log.
 Use this rather than the Render button or a background job in RStudio for
 anything long. Those stay tied to your session, and when the session ends the
 render ends with it. A render started here is detached and carries on. Open a
-new session, call \code{\link{job_status}} with the same file, and it tells you
+new session, call \code{\link[=job_status]{job_status()}} with the same file, and it tells you
 where the job has got to. There is no R script to write.
 
 A job scaffolded before the setup consolidation has no in-render checks to
 wait for. \code{run_job()} says so and names \code{upgrade_job()}, which adds
 them. The wait ends early when the render finishes, fails or is cancelled.
 If the checks have not all reported when \code{wait} runs out, the render
-carries on regardless; follow it with \code{\link{job_status}}. Stop it with
-\code{\link{cancel_job}}.
-Not available on Windows, as for \code{\link{submit_job}}.
+carries on regardless; follow it with \code{\link[=job_status]{job_status()}}. Stop it with
+\code{\link[=cancel_job]{cancel_job()}}.
+Not available on Windows, as for \code{\link[=submit_job]{submit_job()}}.
 
 A job with Quarto \code{params} takes them here, as
-\code{quarto render -P} would, with \code{output_file} naming the report as
+\verb{quarto render -P} would, with \code{output_file} naming the report as
 \code{--output} would. A run given an \code{output_file} is its own run, with
 its own run files, so one job rendered for several parameter values keeps
-each report and each run apart; give \code{\link{job_status}} and
-\code{\link{cancel_job}} the same \code{output_file} to follow or stop it.
+each report and each run apart; give \code{\link[=job_status]{job_status()}} and
+\code{\link[=cancel_job]{cancel_job()}} the same \code{output_file} to follow or stop it.
 The checks above apply to each run, and Quarto still renders one job at a
 time in a study.
 }
@@ -85,6 +85,6 @@ job_status("job.qmd", output_file = "job.M1000.html")
 }
 }
 \seealso{
-\code{\link{submit_job}}, \code{\link{job_status}},
-  \code{\link{cancel_job}}, \code{\link{guard_memory}}
+\code{\link[=submit_job]{submit_job()}}, \code{\link[=job_status]{job_status()}},
+\code{\link[=cancel_job]{cancel_job()}}, \code{\link[=guard_memory]{guard_memory()}}
 }

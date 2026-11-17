@@ -86,20 +86,20 @@
 #' Call this at the top of a fit chunk, with the memory the fit is expected to need. It reads the
 #' memory limit of the session (the Linux cgroup, falling back to the machine's physical memory) and
 #' stops, in the first minutes of a render, when the need exceeds 90 percent of it. The refusal names the
-#' Workbench profile that would hold the fit and, when \code{cores_fit} is given, the largest
-#' \code{cores} that would fit in this session.
+#' Workbench profile that would hold the fit and, when `cores_fit` is given, the largest
+#' `cores` that would fit in this session.
 #'
-#' @param need_gib Expected peak memory of the fit, in GiB. \code{0} (a cached re-render) and
-#'   \code{NA} (no estimate) pass.
+#' @param need_gib Expected peak memory of the fit, in GiB. `0` (a cached re-render) and
+#'   `NA` (no estimate) pass.
 #' @param why Character(1). What needs the memory, in a few words, for the message, best with the
 #'   counts the estimate was made from ("this boostmtree fit (1,391 patients, 4,771 visits, continuous)").
-#' @param cores Number of parallel workers the fit would use, a whole number of at least 1, or \code{NULL}.
+#' @param cores Number of parallel workers the fit would use, a whole number of at least 1, or `NULL`.
 #' @param cores_fit A function taking a number of cores and returning the GiB the fit would need, or
-#'   \code{NULL}. Used only to name a core count that fits.
+#'   `NULL`. Used only to name a core count that fits.
 #' @param proc,sys Paths of the cgroup files, for tests. The defaults read the running session.
 #'
 #' @return The session's memory limit in GiB, invisibly, when the fit fits. Otherwise an error whose
-#'   text begins \code{memory:}.
+#'   text begins `memory:`.
 #'
 #' @details
 #' A detached job counts against its submitting session's cgroup, so this is the cap the fit will hit.

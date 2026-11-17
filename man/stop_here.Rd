@@ -13,7 +13,7 @@ inside a chunk.}
 }
 \value{
 Outside a render, \code{NULL}, invisibly. Inside one, the job's
-  provenance block, for the chunk to print as the last output of the report.
+provenance block, for the chunk to print as the last output of the report.
 }
 \description{
 Called in a chunk of a job, \code{stop_here()} ends the render there: the
@@ -25,13 +25,13 @@ out. To leave out one chunk in the middle instead, give that chunk a
 }
 \details{
 Both are allowed in a draft and refused in a final render, by the same rule
-as an unresolved \code{EDIT:} marker. A draft lists each one, with its line
+as an unresolved \verb{EDIT:} marker. A draft lists each one, with its line
 and reason, in a callout at the top of the report, so a partial report
-cannot pass for a whole one. \code{\link{render_job}} with
+cannot pass for a whole one. \code{\link[=render_job]{render_job()}} with
 \code{final = TRUE}, or any render with \code{HVTI_TEMPLATE_STRICT} set,
 stops while any remains. Both are found by reading the job's source, so they
 show in a diff and in review, as commented-out code does not. A
-\code{stop_here()} the source scan cannot see, as inside an \code{if ()} or
+\code{stop_here()} the source scan cannot see, as inside an \verb{if ()} or
 called with an argument, refuses a final render itself when it runs. In a
 draft it is recorded in the report's provenance as a stop, the run facts
 there and in the "About this run" table report a draft that stopped early
@@ -57,5 +57,5 @@ line at the end of a chunk, so the chunk shows what it returns.
 stop_here()
 }
 \seealso{
-\code{\link{render_job}}
+\code{\link[=render_job]{render_job()}}
 }

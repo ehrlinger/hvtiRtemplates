@@ -144,9 +144,14 @@ by counting assertions: revert the code and confirm the new tests go red.
   `_quarto.yml`. A file meant to be copied must not depend on the directory it happens to sit
   in — that is how server-rendered reports ended up with sibling `_files/` trees instead of
   being self-contained.
-- **Roxygen here is Rd markup, not markdown.** `DESCRIPTION` has no
-  `Roxygen: list(markdown = TRUE)`, so backticks and `**bold**` land literally in the `.Rd`.
-  Use `\code{}`, `\strong{}`, `\emph{}`, `\itemize{}` and `\link{}`.
+- **Roxygen here is markdown**, since the tier 4 rubric pass (2026-11-16). `DESCRIPTION` sets
+  `Roxygen: list(markdown = TRUE)`, as the rest of the hvtiR family does: write backticks,
+  `**bold**`, `*emphasis*`, `[fn()]` links and markdown lists in new text. Rd macros still work
+  inside markdown: `\eqn{}`, and the `\itemize{}` lists the conversion left in place, which need
+  not be rewritten. ⚠️ **Write `%` bare, never `\%`.** Roxygen escapes it itself, so `\%`
+  reaches the `.Rd` as `\\%`, a literal backslash followed by an Rd comment that silently cuts the
+  rest of the line from the help page. Plans and specs under `dev/` written before the switch say
+  Rd markup; they describe the code as it was.
 - **`testthat` edition 3.** There are snapshot tests under `tests/testthat/_snaps`; review a
   snapshot diff rather than accepting it reflexively.
 - **This repo holds templates only.** The SAS macro corpus was removed on 2026-08-14 and

@@ -16,9 +16,9 @@ The field's value.
 }
 \description{
 Reads one field of a value a finished job saved for its report,
-  so a number in the Results text comes from the fit and goes stale with it,
-  rather than being retyped. The source run must be final and its file
-  unchanged, as for \code{\link{ar_item}}.
+so a number in the Results text comes from the fit and goes stale with it,
+rather than being retyped. The source run must be final and its file
+unchanged, as for \code{\link[=ar_item]{ar_item()}}.
 }
 \examples{
 if (requireNamespace("knitr", quietly = TRUE)) {

@@ -26,9 +26,9 @@ read_job_data(
 )
 }
 \arguments{
-\item{cfg}{Study configuration, from \code{\link[hvtiRutilities]{study_config}}.}
+\item{cfg}{Study configuration, from \code{\link[hvtiRutilities:study_config]{hvtiRutilities::study_config()}}.}
 
-\item{dataset}{Name of a dataset registered in \code{_study.yml};
+\item{dataset}{Name of a dataset registered in \verb{_study.yml};
 \code{"built"} and \code{"study"} both name the study dataset, and the
 selection records \code{"study"}.}
 
@@ -150,93 +150,93 @@ giving an old name with its new one is an error.}
 }
 \value{
 A list:
-  \itemize{
-    \item \code{data}, the selected rows;
-    \item \code{record}, a data frame of \code{step} and \code{value} to
-      print, whose \code{"selection"} attribute holds the settings used. Its
-      \code{"Source"} row names the file read, the dated version for a
-      dataset registered as one. When the dataset's source has been rebuilt
-      since it was registered, the registered version is read and a final
-      \code{"Note"} row says so, naming
-      \code{hvtiRutilities::update_manifest()}, the call that registers the
-      new file. A stale analysis set read in a draft gets a \code{"Note"}
-      row the same way. With \code{join}, rows name the joined dataset
-      and the rows read from it, count its records outside the cohort and
-      the cohort patients with none, and name the reduction;
-    \item \code{provenance}, the read's provenance record;
-    \item \code{provenance_join}, the joined dataset's provenance record,
-      naming the version read, or \code{NULL} without \code{join};
-    \item \code{attrition}, an analysis set's per-rule attrition table, or
-      \code{NULL} for a dataset read whole.
-  }
-  The \code{"selection"} attribute is a list that a job saves in its
-  hand-off, so a downstream job can rebuild the same rows:
-  \itemize{
-    \item \code{dataset}, with \code{"built"} recorded as \code{"study"},
-      and \code{analysis_set}, as given;
-    \item \code{where}, the exact text of each condition, values included,
-      used to rebuild the rows; it stays inside the study and is never
-      printed;
-    \item \code{where_shown}, the same conditions as a report may show them,
-      with the values of any condition on a \code{key_cols} column, or using
-      \code{.data} or a string lookup, replaced;
-    \item \code{id} and \code{key}, the resolved column names, the
-      key being the joined result's when there is a join;
-    \item \code{imputation}, the resolved name of the imputation column in
-      the data's own spelling, present only when \code{imputation_col} was
-      given, so a job can pass it on to a fit;
-    \item \code{join}, \code{join_vars}, \code{reduce} and
-      \code{join_key}, the join as read, with \code{join_vars},
-      \code{join_key} and \code{reduce}'s columns spelled as the data
-      spell them and \code{reduce}'s fields in name order, so the same join
-      written two ways records the same; and \code{cohort_key}, the cohort's
-      own key. All five are present only with a join;
-    \item \code{rows} and \code{patients}, the counts kept;
-    \item \code{key_hash}, a SHA-256 hash of the kept \code{key_cols} values,
-      with a join the joined dataset's key values too, so a downstream job
-      can tell that it rebuilt the same patients, and with \code{reduce} the
-      same chosen records, and not only the same counts.
-  }
+\itemize{
+\item \code{data}, the selected rows;
+\item \code{record}, a data frame of \code{step} and \code{value} to
+print, whose \code{"selection"} attribute holds the settings used. Its
+\code{"Source"} row names the file read, the dated version for a
+dataset registered as one. When the dataset's source has been rebuilt
+since it was registered, the registered version is read and a final
+\code{"Note"} row says so, naming
+\code{hvtiRutilities::update_manifest()}, the call that registers the
+new file. A stale analysis set read in a draft gets a \code{"Note"}
+row the same way. With \code{join}, rows name the joined dataset
+and the rows read from it, count its records outside the cohort and
+the cohort patients with none, and name the reduction;
+\item \code{provenance}, the read's provenance record;
+\item \code{provenance_join}, the joined dataset's provenance record,
+naming the version read, or \code{NULL} without \code{join};
+\item \code{attrition}, an analysis set's per-rule attrition table, or
+\code{NULL} for a dataset read whole.
+}
+The \code{"selection"} attribute is a list that a job saves in its
+hand-off, so a downstream job can rebuild the same rows:
+\itemize{
+\item \code{dataset}, with \code{"built"} recorded as \code{"study"},
+and \code{analysis_set}, as given;
+\item \code{where}, the exact text of each condition, values included,
+used to rebuild the rows; it stays inside the study and is never
+printed;
+\item \code{where_shown}, the same conditions as a report may show them,
+with the values of any condition on a \code{key_cols} column, or using
+\code{.data} or a string lookup, replaced;
+\item \code{id} and \code{key}, the resolved column names, the
+key being the joined result's when there is a join;
+\item \code{imputation}, the resolved name of the imputation column in
+the data's own spelling, present only when \code{imputation_col} was
+given, so a job can pass it on to a fit;
+\item \code{join}, \code{join_vars}, \code{reduce} and
+\code{join_key}, the join as read, with \code{join_vars},
+\code{join_key} and \code{reduce}'s columns spelled as the data
+spell them and \code{reduce}'s fields in name order, so the same join
+written two ways records the same; and \code{cohort_key}, the cohort's
+own key. All five are present only with a join;
+\item \code{rows} and \code{patients}, the counts kept;
+\item \code{key_hash}, a SHA-256 hash of the kept \code{key_cols} values,
+with a join the joined dataset's key values too, so a downstream job
+can tell that it rebuilt the same patients, and with \code{reduce} the
+same chosen records, and not only the same counts.
+}
 }
 \description{
 The shared data step of every analysis template. It reads a
-  registered dataset (or an hvtiRdatabuild analysis set), resolves the
-  patient identifier, drops the medical record number columns, keeps the rows
-  \code{where} selects and checks that rows are unique on \code{key_cols}.
+registered dataset (or an hvtiRdatabuild analysis set), resolves the
+patient identifier, drops the medical record number columns, keeps the rows
+\code{where} selects and checks that rows are unique on \code{key_cols}.
 }
 \details{
 Direct identifiers are dropped unless one is the identifier, from a
-  joined dataset too: columns named, ignoring case, \code{ccfid}, \code{MRN},
-  \code{eMRN}, \code{masterid} (\code{masterid0}, \code{masterid1}), a Social
-  Security number (\code{ssn}, \code{soc_sec}, \code{social_security},
-  \code{pt_ssn}, or one with a source qualifier such as \code{ssn_base} or
-  \code{ssn_num_base}, unless every value is an indicator's, as in a 0/1
-  \code{ssn_missing}), and, held as text, a patient name
-  (\code{name}, \code{first_name}, \code{pt_name}, \code{surname}) or contact
-  details (\code{address}, \code{street}, \code{phone}, \code{email}). Any
-  other column whose values are shaped like Social Security numbers is dropped
-  too, and the record notes it by name; a column named as a date or time is
-  not read for that shape. A KEY column is never dropped. The
-  record lists every column dropped. An explicit \code{id_col} or \code{key_cols}
-  matches its column ignoring case, because
-  \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
-  key and date values are not printed: the record holds counts, and a
-  \code{where} condition that mentions a \code{key_cols} column, uses
-  \code{.data} or calls a string lookup such as \code{get()} is shown, in
-  the record and in error messages, with its values replaced by
-  \code{<value>}. So is a condition on \code{id_col} in a selection saved before
-  such conditions were refused. Every setting is checked before the data are
-  read, and \code{join}'s registration too; only what needs the data, such
-  as whether a column exists, is checked after. With \code{join},
-  \code{where} applies to the joined rows, so a condition may name a column
-  from either dataset, though not a cohort column \code{join_cols} leaves
-  out; the joined dataset's identifier values are refused in it as the
-  cohort's are. With \code{reduce}, a condition that names a column of the
-  joined dataset filters its records before one is chosen per patient, so
-  \code{rule = "last"} with \code{echo_type == "TTE"} keeps each patient's
-  last such echo, and a patient left with no record is counted as having none.
-  The other conditions filter the reduced rows. The data table shows them in
-  that order; the selection records them as written.
+joined dataset too: columns named, ignoring case, \code{ccfid}, \code{MRN},
+\code{eMRN}, \code{masterid} (\code{masterid0}, \code{masterid1}), a Social
+Security number (\code{ssn}, \code{soc_sec}, \code{social_security},
+\code{pt_ssn}, or one with a source qualifier such as \code{ssn_base} or
+\code{ssn_num_base}, unless every value is an indicator's, as in a 0/1
+\code{ssn_missing}), and, held as text, a patient name
+(\code{name}, \code{first_name}, \code{pt_name}, \code{surname}) or contact
+details (\code{address}, \code{street}, \code{phone}, \code{email}). Any
+other column whose values are shaped like Social Security numbers is dropped
+too, and the record notes it by name; a column named as a date or time is
+not read for that shape. A KEY column is never dropped. The
+record lists every column dropped. An explicit \code{id_col} or \code{key_cols}
+matches its column ignoring case, because
+\code{hvtiRutilities::read_built()} lowercases column names. Identifier,
+key and date values are not printed: the record holds counts, and a
+\code{where} condition that mentions a \code{key_cols} column, uses
+\code{.data} or calls a string lookup such as \code{get()} is shown, in
+the record and in error messages, with its values replaced by
+\verb{<value>}. So is a condition on \code{id_col} in a selection saved before
+such conditions were refused. Every setting is checked before the data are
+read, and \code{join}'s registration too; only what needs the data, such
+as whether a column exists, is checked after. With \code{join},
+\code{where} applies to the joined rows, so a condition may name a column
+from either dataset, though not a cohort column \code{join_cols} leaves
+out; the joined dataset's identifier values are refused in it as the
+cohort's are. With \code{reduce}, a condition that names a column of the
+joined dataset filters its records before one is chosen per patient, so
+\code{rule = "last"} with \code{echo_type == "TTE"} keeps each patient's
+last such echo, and a patient left with no record is counted as having none.
+The other conditions filter the reduced rows. The data table shows them in
+that order; the selection records them as written.
 }
 \examples{
 \donttest{

@@ -111,44 +111,44 @@
 #' Report a background job's state
 #'
 #' @description
-#' Reads the status \code{\link{submit_job}} keeps beside a job,
-#' \code{<job>.run.yml}. A job whose process was killed never records its
-#' end, so a recorded \code{running} is checked against the process itself.
-#' A render also keeps \code{<job>.run.progress}, read here; a render started
-#' without \code{\link{submit_job}}, after the last submitted run or with none, is reported from that file alone.
+#' Reads the status [submit_job()] keeps beside a job,
+#' `<job>.run.yml`. A job whose process was killed never records its
+#' end, so a recorded `running` is checked against the process itself.
+#' A render also keeps `<job>.run.progress`, read here; a render started
+#' without [submit_job()], after the last submitted run or with none, is reported from that file alone.
 #' A progress file older than the run the status file records is ignored.
 #'
 #' @details
 #' A long step writes a line to the render log at most every
-#' \code{getOption("hvtiRtemplates.progress_every", 10)} minutes.
+#' `getOption("hvtiRtemplates.progress_every", 10)` minutes.
 #'
 #' A status that does not change between two calls is not a failure: one long
 #' fit can hold a job in the same step for hours. On the host that started the
-#' job, \code{running} means the process is alive. From another host it means only
+#' job, `running` means the process is alive. From another host it means only
 #' that the run is recorded as running, because a process cannot be checked from
 #' there, and the summary line says so. A job that crashed there still reads
-#' \code{running}, so ask from a session on that host.
+#' `running`, so ask from a session on that host.
 #'
-#' @param path Character(1). The job's \code{.qmd} file.
-#' @param quiet Logical(1). \code{FALSE}, the default, prints a one-line summary. The summary is
-#'   the function's result rather than an informational message, so the family option \code{hvti.quiet}
+#' @param path Character(1). The job's `.qmd` file.
+#' @param quiet Logical(1). `FALSE`, the default, prints a one-line summary. The summary is
+#'   the function's result rather than an informational message, so the family option `hvti.quiet`
 #'   does not silence it.
-#' @param output_file Character(1) or \code{NULL}. The output file name a run was given with
-#'   \code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} reads the
+#' @param output_file Character(1) or `NULL`. The output file name a run was given with
+#'   [run_job()]'s `output_file`; its run files are kept under that name. `NULL` reads the
 #'   job's own run.
-#' @return Invisibly, a list: \code{state} is one of \code{"none"},
-#'   \code{"submitted"}, \code{"running"}, \code{"finished"}, \code{"failed"},
-#'   \code{"vanished"} or \code{"cancelled"} (stopped by \code{\link{cancel_job}}); the other elements are what the status file
-#'   recorded (\code{pid}, \code{created}, \code{host}, \code{started},
-#'   \code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version},
-#'   \code{reason}), and \code{log}, the log file's path.
-#'   \code{progress}, the render's progress record when there is one, with
-#'   \code{eta_s}, the estimated seconds left in the current stage, and
-#'   \code{stale}, \code{TRUE} when it has not changed for three reporting
-#'   intervals and at least 30 minutes. \code{diagnosis}, for a \code{failed}
-#'   or \code{vanished} run whose log can be read, a list of \code{reason}, what
-#'   went wrong in plain words, and \code{fix}, what to do about it; it is
-#'   returned when \code{quiet} is \code{TRUE} too.
+#' @return Invisibly, a list: `state` is one of `"none"`,
+#'   `"submitted"`, `"running"`, `"finished"`, `"failed"`,
+#'   `"vanished"` or `"cancelled"` (stopped by [cancel_job()]); the other elements are what the status file
+#'   recorded (`pid`, `created`, `host`, `started`,
+#'   `ended`, `exit_code`, `elapsed_s`, `r_version`,
+#'   `reason`), and `log`, the log file's path.
+#'   `progress`, the render's progress record when there is one, with
+#'   `eta_s`, the estimated seconds left in the current stage, and
+#'   `stale`, `TRUE` when it has not changed for three reporting
+#'   intervals and at least 30 minutes. `diagnosis`, for a `failed`
+#'   or `vanished` run whose log can be read, a list of `reason`, what
+#'   went wrong in plain words, and `fix`, what to do about it; it is
+#'   returned when `quiet` is `TRUE` too.
 #' @examples
 #' job <- file.path(tempdir(), "example.qmd")
 #' writeLines("---\ntitle: example\n---", job)
@@ -361,35 +361,35 @@ job_status <- function(path, quiet = FALSE, output_file = NULL) {
 #' Render a job in the background, detached from the session
 #'
 #' @description
-#' Starts \code{\link{render_job}} on the job in a separate process that
-#' outlives the R session, the way \code{nohup} from a terminal does, and
+#' Starts [render_job()] on the job in a separate process that
+#' outlives the R session, the way `nohup` from a terminal does, and
 #' returns at once. Use it for a job whose fit runs for hours: a Workbench
 #' session that times out takes a console run with it.
 #'
 #' @details
-#' The process runs the \code{Rscript} of the R that called
-#' \code{submit_job()}, from the study root, so the study's \code{renv} and
-#' \code{.Renviron} apply. It writes \code{<job>.run.log} (everything the render
-#' prints) and \code{<job>.run.yml} (its state) beside the job; read the state
-#' with \code{\link{job_status}}. A job already running is not started twice: a
-#' \code{<job>.run.lock} directory is taken while a submit is in progress, and a
+#' The process runs the `Rscript` of the R that called
+#' `submit_job()`, from the study root, so the study's `renv` and
+#' `.Renviron` apply. It writes `<job>.run.log` (everything the render
+#' prints) and `<job>.run.yml` (its state) beside the job; read the state
+#' with [job_status()]. A job already running is not started twice: a
+#' `<job>.run.lock` directory is taken while a submit is in progress, and a
 #' submit that crashed can leave it behind, in which case delete it to try again.
-#' Stop a submitted job with \code{\link{cancel_job}}.
+#' Stop a submitted job with [cancel_job()].
 #' Not available on Windows, which cannot detach a process this way.
 #'
-#' With \code{output_file}, the run files are named for the job and that whole
-#' file name, extension included, so \code{job.qmd} rendered to
-#' \code{job.M1000.html} keeps \code{job@job.M1000.html.run.log},
-#' \code{job@job.M1000.html.run.yml} and the rest beside the job. Another job
+#' With `output_file`, the run files are named for the job and that whole
+#' file name, extension included, so `job.qmd` rendered to
+#' `job.M1000.html` keeps `job@job.M1000.html.run.log`,
+#' `job@job.M1000.html.run.yml` and the rest beside the job. Another job
 #' given the same name is another run, and the same job rendered to another
 #' name is another run: both can be submitted, and each is followed and stopped
-#' by giving \code{\link{job_status}} or \code{\link{cancel_job}} the same
-#' \code{output_file}. Quarto still renders one job at a time in a study.
+#' by giving [job_status()] or [cancel_job()] the same
+#' `output_file`. Quarto still renders one job at a time in a study.
 #'
-#' @param path Character(1). The job's \code{.qmd} file.
-#' @param final Logical(1). Passed to \code{\link{render_job}}.
-#' @param params,output_file Passed to \code{\link{render_job}}.
-#' @return Invisibly, the job's status, as \code{\link{job_status}} returns it.
+#' @param path Character(1). The job's `.qmd` file.
+#' @param final Logical(1). Passed to [render_job()].
+#' @param params,output_file Passed to [render_job()].
+#' @return Invisibly, the job's status, as [job_status()] returns it.
 #' @examples
 #' # Not run by check: it would start a real render.
 #' \dontrun{
@@ -488,16 +488,16 @@ submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
 #' Stop a background job
 #'
 #' @description
-#' Stops a job \code{\link{submit_job}} started, and records the end the
-#' killed process could not: \code{<job>.run.yml} then reads
-#' \code{cancelled}, and \code{<job>.run.progress} is removed, so
-#' \code{\link{job_status}} stops reporting the run and the job can be
+#' Stops a job [submit_job()] started, and records the end the
+#' killed process could not: `<job>.run.yml` then reads
+#' `cancelled`, and `<job>.run.progress` is removed, so
+#' [job_status()] stops reporting the run and the job can be
 #' submitted again.
 #'
 #' @details
-#' The render and every process it started are sent \code{SIGTERM}, given
-#' \code{grace} seconds to exit, then sent \code{SIGKILL}. They are found by
-#' a marker \code{\link{submit_job}} puts in the render's environment, which
+#' The render and every process it started are sent `SIGTERM`, given
+#' `grace` seconds to exit, then sent `SIGKILL`. They are found by
+#' a marker [submit_job()] puts in the render's environment, which
 #' reaches processes Quarto starts in sessions of their own, and by descent
 #' from the recorded process, which is signalled only while it is still the
 #' one the status file records: it must carry the run's marker or, recorded
@@ -505,37 +505,37 @@ submit_job <- function(path, final = FALSE, params = NULL, output_file = NULL) {
 #' by another process is left alone, and an identity in doubt is refused. The
 #' job is scanned afresh until no process of it remains, so one started while
 #' it shuts down is stopped too. A run recorded without a creation
-#' time, such as a render started without \code{\link{submit_job}}, is
+#' time, such as a render started without [submit_job()], is
 #' refused rather than signalled by its pid alone.
 #'
 #' A process can only be checked and signalled on the host it runs on, so a
 #' job recorded on another host is refused, naming the host to cancel it
-#' from, unless \code{other_host = "abandon"}: then nothing is signalled, and
-#' the run is recorded \code{cancelled}, with a reason saying so, and its
+#' from, unless `other_host = "abandon"`: then nothing is signalled, and
+#' the run is recorded `cancelled`, with a reason saying so, and its
 #' progress file removed. Use it only once that host's session is gone and the
 #' job is confirmed not running there, for a render left running there is not
 #' stopped and would go on writing the job's output. A job whose process is already gone without recording its end is
-#' recorded \code{failed}, with that as its reason, once any of its render
+#' recorded `failed`, with that as its reason, once any of its render
 #' still running has been stopped. A job that has finished,
 #' failed or never run is left as it is. A submit or cancel in progress holds
-#' \code{<job>.run.lock}, as \code{\link{submit_job}} describes, and a cancel
+#' `<job>.run.lock`, as [submit_job()] describes, and a cancel
 #' is refused while it is held.
 #' Not available on Windows.
 #'
-#' @param path Character(1). The job's \code{.qmd} file.
-#' @param grace Numeric(1). Seconds to wait after \code{SIGTERM} before
-#'   \code{SIGKILL}.
+#' @param path Character(1). The job's `.qmd` file.
+#' @param grace Numeric(1). Seconds to wait after `SIGTERM` before
+#'   `SIGKILL`.
 #' @param other_host Character(1). For a job recorded running on another
-#'   host, \code{"refuse"} (the default) stops with an error naming that host,
-#'   and \code{"abandon"} records the run ended without signalling anything.
+#'   host, `"refuse"` (the default) stops with an error naming that host,
+#'   and `"abandon"` records the run ended without signalling anything.
 #'   Ignored for a job on this host.
-#' @param quiet Logical(1). \code{FALSE} prints the job's state afterwards,
-#'   as \code{\link{job_status}} does. Defaults to the family option \code{hvti.quiet}; an
+#' @param quiet Logical(1). `FALSE` prints the job's state afterwards,
+#'   as [job_status()] does. Defaults to the family option `hvti.quiet`; an
 #'   explicit value wins.
-#' @param output_file Character(1) or \code{NULL}. The output file name a run was given with
-#'   \code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} cancels the
+#' @param output_file Character(1) or `NULL`. The output file name a run was given with
+#'   [run_job()]'s `output_file`; its run files are kept under that name. `NULL` cancels the
 #'   job's own run.
-#' @return Invisibly, the job's status afterwards, as \code{\link{job_status}}
+#' @return Invisibly, the job's status afterwards, as [job_status()]
 #'   returns it.
 #' @examples
 #' job <- file.path(tempdir(), "example.qmd")

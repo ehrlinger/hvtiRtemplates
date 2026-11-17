@@ -20,30 +20,30 @@ for one more release; giving both is an error.}
 }
 \value{
 The upgraded job's path, invisibly. The report is in the
-  \code{_archive} folder beside it.
+\verb{_archive} folder beside it.
 }
 \description{
 Upgrades \strong{one job}: the file you name in \code{path}. It does not
 look for other jobs, so to upgrade several, call it once for each.
 
-A job is a copy of its template as it stood on the day \code{\link{add_job}}
+A job is a copy of its template as it stood on the day \code{\link[=add_job]{add_job()}}
 wrote it. \code{upgrade_job()} writes the job again from the template as it
 stands now and carries the study's choices across, so a job keeps up with
 its template without re-entering every choice by hand.
 }
 \details{
 The template is read from the job's file name, in either spelling
-\code{\link{add_job}} has used. A study's choices are the top-level
+\code{\link[=add_job]{add_job()}} has used. A study's choices are the top-level
 assignments to an upper-case name, such as \code{DATASET <- "built"}, in the
-job's \code{edit-*} chunks. Each choice the current template also has
+job's \verb{edit-*} chunks. Each choice the current template also has
 replaces the template's assignment, its source text unchanged, multi-line
 values included. \code{SUBJECT} and \code{TYPE} are not carried: the file
-name owns them. Where the job had resolved a choice's \code{EDIT:} marker,
+name owns them. Where the job had resolved a choice's \verb{EDIT:} marker,
 the upgraded job drops the template's marker for it too.
 
 Nothing is dropped silently. A choice the current template no longer has is
 written, commented out, at the end of the template's
-\code{edit-study-choices} chunk under a new \code{EDIT:} marker, so the job
+\code{edit-study-choices} chunk under a new \verb{EDIT:} marker, so the job
 renders as a draft until someone decides. Prose and code outside the
 choices come from the current template, because without the template the
 job was copied from an analyst's edit cannot be told from the old
@@ -57,16 +57,16 @@ the template's earlier wording is left behind. The report names the old
 lines carried, so they can be checked against the new comment above them.
 
 The one exception is the job's description. Where the template opens with
-an \code{EDIT:} comment asking for it, the text the old job has in that
+an \verb{EDIT:} comment asking for it, the text the old job has in that
 place is carried instead, once the study has deleted the comment's marker.
 While the marker stands, the report names those lines for review.
 
-Both files go to \code{_archive} in the upgraded job's folder, created if
+Both files go to \verb{_archive} in the upgraded job's folder, created if
 it is missing. Quarto renders nothing in a folder whose name starts with
-\code{_}, and the old job's \code{.pre-upgrade} extension keeps it from
+\verb{_}, and the old job's \code{.pre-upgrade} extension keeps it from
 being rendered by hand too, which would write its figures over the current
 job's. The old job keeps its own name before the stamp; the report takes the
-upgraded job's. The upgraded job takes the name \code{\link{add_job}}
+upgraded job's. The upgraded job takes the name \code{\link[=add_job]{add_job()}}
 would give it today, so a job named before 2026-10 moves to the
 \code{.}-separated spelling. The report records the
 template, the package version, the old job's checksum, and the choices
@@ -76,7 +76,7 @@ patient. The upgrade refuses to overwrite any existing file.
 
 A message says what happened and, after an upgrade, names both archived files.
 A job the upgrade would not change is left alone: the message says so, and no
-new pair is added to \code{_archive}. A pair an older upgrade left beside the job
+new pair is added to \verb{_archive}. A pair an older upgrade left beside the job
 still moves there. A job holding code outside its choices is one the upgrade
 would change, even when the template has not moved: that code leaves the job,
 and the archived copy keeps it.
@@ -94,9 +94,9 @@ You never name the template: the job's file name says which one it is.
 The job must sit inside its study; leave \code{root} out unless you want to
 name a different directory of the same study.
 
-Afterwards, render the job and read its report, in the \code{_archive}
-folder beside it as \code{<job>.<stamp>-upgrade.md}, for the chunks to
-check. The old job is kept there too, as \code{<job>.<stamp>.pre-upgrade},
+Afterwards, render the job and read its report, in the \verb{_archive}
+folder beside it as \verb{<job>.<stamp>-upgrade.md}, for the chunks to
+check. The old job is kept there too, as \verb{<job>.<stamp>.pre-upgrade},
 and the stamp, the date and time of the upgrade, pairs the two. The job's
 own folder is left holding the job, and the same job can be upgraded again
 with nothing moved aside: each upgrade that changes it adds its own pair. A pair whose
@@ -104,10 +104,10 @@ stamp is already used, from an upgrade in the same second, takes a shared
 \code{-2}, \code{-3} suffix after the stamp.
 
 An upgrade before version 1.5.1 left its pair beside the job instead, as
-\code{<job>.qmd.pre-upgrade} and \code{<job>-upgrade.md}. The next upgrade
-moves such a pair into \code{_archive} as \code{<job>.<stamp>.pre-upgrade} and
-\code{<job>.<stamp>-upgrade.md}, the stamp taken from the report's modification time. A copy renamed
-by hand, such as \code{<job>.qmd.pre-upgrade-20261020}, is left where it is.
+\verb{<job>.qmd.pre-upgrade} and \verb{<job>-upgrade.md}. The next upgrade
+moves such a pair into \verb{_archive} as \verb{<job>.<stamp>.pre-upgrade} and
+\verb{<job>.<stamp>-upgrade.md}, the stamp taken from the report's modification time. A copy renamed
+by hand, such as \verb{<job>.qmd.pre-upgrade-20261020}, is left where it is.
 }
 
 \examples{
@@ -125,5 +125,5 @@ unlink(root, recursive = TRUE)
 }
 }
 \seealso{
-\code{\link{add_job}}, \code{\link{migrate_job}}
+\code{\link[=add_job]{add_job()}}, \code{\link[=migrate_job]{migrate_job()}}
 }

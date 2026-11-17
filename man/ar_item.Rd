@@ -15,11 +15,11 @@ A \code{knit_asis} object holding the item's Markdown.
 }
 \description{
 Called once per item in an \code{ar} job. Finds the exhibit a
-  finished job recorded under \code{id}, checks that the job last rendered as
-  final and that the file still holds the bytes it recorded, and shows the
-  exhibit with a link to the job's report. Callouts above it say what to
-  check: a job edited since its render, Methods boilerplate that changed, or
-  text written against an earlier run.
+finished job recorded under \code{id}, checks that the job last rendered as
+final and that the file still holds the bytes it recorded, and shows the
+exhibit with a link to the job's report. Callouts above it say what to
+check: a job edited since its render, Methods boilerplate that changed, or
+text written against an earlier run.
 }
 \examples{
 if (requireNamespace("knitr", quietly = TRUE)) {
@@ -38,5 +38,5 @@ if (requireNamespace("knitr", quietly = TRUE)) {
 }
 }
 \seealso{
-\code{\link{ar_value}}, \code{\link{ar_paste_methods}}, \code{\link{ar_review}}
+\code{\link[=ar_value]{ar_value()}}, \code{\link[=ar_paste_methods]{ar_paste_methods()}}, \code{\link[=ar_review]{ar_review()}}
 }

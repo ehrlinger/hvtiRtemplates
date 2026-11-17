@@ -8,7 +8,7 @@ add_job(prefix, subject, type, root = NULL, qualifier = NULL, dir)
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
-\code{\link{template_list}}, or a template's full name as reported in
+\code{\link[=template_list]{template_list()}}, or a template's full name as reported in
 its \code{name} column, e.g. \code{"dc.trends"}; the dash spelling
 \code{"dc-trends"} is accepted too. A full name carries the qualifier, so
 \code{qualifier} must then be left \code{NULL}.}
@@ -17,13 +17,13 @@ its \code{name} column, e.g. \code{"dc.trends"}; the dash spelling
 \code{"cohort"}. A subject names a statistical endpoint only when the
 job analyses one. Your choice: there is no list of valid values, and
 every job of one analysis should share it (see Details). Must
-match \code{^[A-Za-z0-9_]+$}: \code{.} separates the filename's fields,
+match \verb{^[A-Za-z0-9_]+$}: \code{.} separates the filename's fields,
 and \code{-} separated them in names before 2026-10, so neither may
 appear here.}
 
 \item{type}{The analysis type the job's set belongs to, e.g. \code{"hz"}.
 Your choice, like \code{subject}, and shared the same way. Must match
-\code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
+\verb{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.}
 
 \item{root}{The study root to write into. The taxonomy folder beneath it is
 created if it does not exist. \code{NULL}, the default, finds the study
@@ -33,7 +33,7 @@ study, so a job is never written somewhere that is not a study.}
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
 \code{dp}. Required only where a prefix carries more than one template;
 omitting it there is an error naming the choices, never a silent pick.
-Restricted to \code{[A-Za-z0-9_]+}, because \code{.} separates the
+Restricted to \verb{[A-Za-z0-9_]+}, because \code{.} separates the
 filename's fields.}
 
 \item{dir}{Deprecated: the old name of \code{root}. It works, with a warning,
@@ -41,13 +41,13 @@ for one more release; giving both is an error.}
 }
 \value{
 The job's path, invisibly. On any failure -- including one after
-  the copy, while substituting the set markers -- no file is left behind,
-  the runner included, so a returned path always names a complete,
-  correctly-declared job.
+the copy, while substituting the set markers -- no file is left behind,
+the runner included, so a returned path always names a complete,
+correctly-declared job.
 }
 \description{
 Copies a supported job template into the taxonomy folder it belongs to,
-named \code{<prefix>[.<qualifier>].<subject>.<type>.qmd}, so a study's jobs
+named \verb{<prefix>[.<qualifier>].<subject>.<type>.qmd}, so a study's jobs
 sort by template, then subject, then type. Refuses to overwrite an existing
 job: a job file accumulates a study's edits, and silently replacing one
 would discard them.
@@ -61,32 +61,32 @@ Outside a renv project nothing is installed.
 together with \code{qualifier} where a prefix carries several job types.
 \code{subject} and \code{type} are yours to choose. The catalog holds no
 list of valid values for either, only the rule that each matches
-\code{^[A-Za-z0-9_]+$}. They are more than a filename, though. Together
+\verb{^[A-Za-z0-9_]+$}. They are more than a filename, though. Together
 they name the job's set, and the set is used in four places:
 \itemize{
-  \item the job's filename, \code{<prefix>[.<qualifier>].<subject>.<type>.qmd};
-  \item the job's own \code{SUBJECT} and \code{TYPE} lines, which
-    \code{add_job()} rewrites to your values;
-  \item the render, which stops when the filename and those two lines
-    disagree, so a job renamed by hand cannot quietly write its results
-    into another set;
-  \item the folder the job saves its results in, a \code{<subject>-<type>}
-    folder under the study's \code{estimates} (and, for some templates,
-    \code{graphs}), which is where the next job in the chain looks for
-    them.
+\item the job's filename, \verb{<prefix>[.<qualifier>].<subject>.<type>.qmd};
+\item the job's own \code{SUBJECT} and \code{TYPE} lines, which
+\code{add_job()} rewrites to your values;
+\item the render, which stops when the filename and those two lines
+disagree, so a job renamed by hand cannot quietly write its results
+into another set;
+\item the folder the job saves its results in, a \verb{<subject>-<type>}
+folder under the study's \code{estimates} (and, for some templates,
+\code{graphs}), which is where the next job in the chain looks for
+them.
 }
 The last of these is the one that bites. \code{hm} reads the
 \code{hz.rds} that \code{hz} saved, and finds it only when both jobs
 carry the same subject and type. Give every job of one analysis the same
-pair, e.g. \code{subject = "death", type = "hz"} for \code{ac}, \code{hz},
+pair, e.g. \verb{subject = "death", type = "hz"} for \code{ac}, \code{hz},
 \code{hm} and \code{hp}, and give a different analysis a different pair.
-The \code{call} column of \code{\link{template_list}} shows each template's
+The \code{call} column of \code{\link[=template_list]{template_list()}} shows each template's
 own example values, which are a starting point, not a requirement.
 
 A job is identified by three or four fields. One or two come from the
 template, its \code{prefix} and, where the prefix carries several job types,
 its \code{qualifier}; two come from the caller. The pair
-\code{(subject, type)} names the \strong{set} the job belongs to, and both
+\verb{(subject, type)} names the \strong{set} the job belongs to, and both
 are required. The subject is the grouping topic, not necessarily a
 statistical endpoint. An endpoint-driven job may use \code{"death"}; an
 endpoint-free job may use \code{"cohort"}, \code{"treatment"}, or
@@ -102,21 +102,21 @@ preserved, while the provenance publisher is kept last. Repeated calls are
 idempotent.
 
 A template whose job runs from a companion script also writes that script
-beside the job, from \code{inst/runners/<name>-runner.R}: today the
+beside the job, from \verb{inst/runners/<name>-runner.R}: today the
 bootstrap reports \code{bl}, \code{br}, \code{bc} and \code{bh}, whose
 runner screens and saves the bag the report reads. The runner is named
-\code{<prefix>[.<qualifier>].<subject>.<type>.runner.R}, gets the same \code{SUBJECT} and
+\verb{<prefix>[.<qualifier>].<subject>.<type>.runner.R}, gets the same \code{SUBJECT} and
 \code{TYPE} substitution, and is refused, like the job, if it already
-exists. Its study choices carry \code{EDIT:} markers for the author to
+exists. Its study choices carry \verb{EDIT:} markers for the author to
 work.
 
 \strong{Names before 2026-10.} Jobs were named
-\code{<subject>-<type>-<prefix>[-<qualifier>].qmd} until 2026-10. They keep
+\verb{<subject>-<type>-<prefix>[-<qualifier>].qmd} until 2026-10. They keep
 that name and keep rendering; \code{add_job()} refuses to write a second
-copy of such a job under the new name, and \code{\link{open_job}} opens it.
+copy of such a job under the new name, and \code{\link[=open_job]{open_job()}} opens it.
 
 A template the catalog marks deprecated still scaffolds, with a warning
-naming its replacement; see \code{\link{template_catalog}}.
+naming its replacement; see \code{\link[=template_catalog]{template_catalog()}}.
 
 \strong{Renamed templates.} \code{dp.eda} and \code{dp.trends} were renamed
 \code{dc.eda} and \code{dc.trends} on 2026-10-10. The old names scaffolded
@@ -125,7 +125,7 @@ are now an error naming the new name. A \code{dc.trends} job
 is written to the \code{descriptive} folder, where a \code{dp.trends} job
 was written to \code{graphs}. A job scaffolded under the old name keeps it
 and keeps rendering; \code{add_job()} refuses to write a second copy of it
-under the new name, and \code{\link{open_job}} opens it.
+under the new name, and \code{\link[=open_job]{open_job()}} opens it.
 }
 \examples{
 d <- file.path(tempdir(), "add-job-example")
@@ -149,5 +149,5 @@ list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 unlink(d, recursive = TRUE)
 }
 \seealso{
-\code{\link{template_list}}, \code{\link{template_path}}
+\code{\link[=template_list]{template_list()}}, \code{\link[=template_path]{template_path()}}
 }
