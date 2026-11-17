@@ -25,9 +25,12 @@ recorded (\code{pid}, \code{created}, \code{host}, \code{started},
 \code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version},
 \code{reason}), and \code{log}, the log file's path.
 \code{unchecked}, for a \code{"submitted"} run past two minutes whose
-processes could not be looked at, the lookup's error: the run is kept
-\code{"submitted"} rather than read as \code{"vanished"}, so a second
-copy is still refused.
+processes could not be looked at, why: the lookup's error, or the other
+host it was submitted on. The run is kept \code{"submitted"} rather than read
+as \code{"vanished"}, so a second copy is still refused. A submission that died
+on another host therefore no longer clears itself: check it from a
+session on that host, then \code{cancel_job(other_host = "abandon")} records
+it ended.
 \code{progress}, the render's progress record when there is one, with
 \code{eta_s}, the estimated seconds left in the current stage, and
 \code{stale}, \code{TRUE} when it has not changed for three reporting
@@ -53,7 +56,10 @@ fit can hold a job in the same step for hours. On the host that started the
 job, \code{running} means the process is alive. From another host it means only
 that the run is recorded as running, because a process cannot be checked from
 there, and the summary line says so. A job that crashed there still reads
-\code{running}, so ask from a session on that host.
+\code{running}, so ask from a session on that host. A job submitted there and
+not started within two minutes stays \code{submitted} for the same reason, and a
+second copy is refused: one that died there is cleared with
+\code{cancel_job(other_host = "abandon")} once that host has been checked.
 }
 \examples{
 job <- file.path(tempdir(), "example.qmd")

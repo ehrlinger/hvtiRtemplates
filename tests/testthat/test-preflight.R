@@ -204,6 +204,18 @@ test_that("the abandon fix tells the user to confirm on that host first, by mark
   expect_lt(regexpr("grep", ck$fix, fixed = TRUE), regexpr("cancel_job(", ck$fix, fixed = TRUE))
 })
 
+test_that("run_state says a submission on another host no longer clears itself, and how to abandon it", {
+  job <- status_job()
+  .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600),
+                marker = "PSabc123_1", host = "lri-r06")
+  ck <- .check_run_state(job)
+  expect_false(ck$ok)
+  expect_match(ck$message, "recorded submitted on host lri-r06", fixed = TRUE)
+  expect_match(ck$message, "no longer clears itself", fixed = TRUE)
+  expect_match(ck$fix, 'other_host = "abandon"', fixed = TRUE)
+  expect_lt(regexpr("job_status(", ck$fix, fixed = TRUE), regexpr("cancel_job(", ck$fix, fixed = TRUE))
+})
+
 test_that("a lock directory older than ten minutes is refused by name", {
   job <- status_job()
   lock <- .run_files(job)$lock
@@ -287,6 +299,22 @@ test_that("study_render reports stale progress instead of a time left", {
   ck <- .check_study_render(mine, root)
   expect_match(ck$message, "has not moved for over 30 minutes", fixed = TRUE)
   expect_no_match(ck$message, "left", fixed = TRUE)
+})
+
+test_that("study_render blocks on a submission on another host, and says how to clear one that died there", {
+  root <- lock_study()
+  mine <- file.path(root, "analyses", "mine.qmd")
+  other <- file.path(root, "analyses", "queued.qmd")
+  writeLines("---\ntitle: x\n---", other)
+  .write_status(.run_files(other)$status, state = "submitted", submitted = .stamp(Sys.time() - 600),
+                marker = "PSabc123_1", host = "lri-r06")
+  ck <- .check_study_render(mine, root)
+  expect_false(ck$ok)
+  expect_match(ck$message, "analyses/queued.qmd, submitted 10m", fixed = TRUE)
+  expect_match(ck$message, "on lri-r06 and not started yet", fixed = TRUE)
+  expect_match(ck$fix, "no longer clears itself", fixed = TRUE)
+  expect_match(ck$fix, 'other_host = "abandon"', fixed = TRUE)
+  expect_no_match(ck$fix, "Wait for it to start", fixed = TRUE)
 })
 
 test_that("study_render names every running job", {

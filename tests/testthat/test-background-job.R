@@ -511,9 +511,9 @@ test_that("a slow start whose runner carries the marker reads submitted past two
   submitted()
   expect_identical(job_status(job, quiet = TRUE)$state, "submitted")
   expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "already running")
-  # Another host's processes cannot be looked for from here, so the two-minute window decides there.
+  # Another host's processes cannot be looked for from here, so past two minutes the run is unknown, not vanished.
   submitted("elsewhere.invalid")
-  expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
+  expect_identical(job_status(job, quiet = TRUE)$state, "submitted")
   submitted()
   ps::ps_kill(b$h)
   expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
@@ -559,6 +559,27 @@ test_that("a submission whose processes cannot be looked at stays submitted, ref
   expect_error(cancel_job(job, quiet = TRUE), "whether it is still starting is unknown. Nothing was signalled",
                fixed = TRUE)
   expect_identical(readLines(status), before)
+})
+
+test_that("a submission recorded on another host stays submitted, refusing a second copy, until it is abandoned", {
+  local_mocked_bindings(.is_windows = function() FALSE)  # nothing is signalled: the run is on another host
+  job <- status_job()
+  status <- .run_files(job)$status
+  .write_status(status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = "PSHVTItest1_1",
+                host = "lri-r06")
+  st <- job_status(job, quiet = TRUE)
+  expect_identical(st$state, "submitted")
+  expect_match(st$unchecked, "recorded on host lri-r06", fixed = TRUE)
+  out <- capture.output(job_status(job))
+  expect_match(out, "A submission that died on lri-r06 no longer clears itself", fixed = TRUE, all = FALSE)
+  expect_match(out, 'cancel_job(other_host = "abandon")', fixed = TRUE, all = FALSE)
+  expect_error(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)), "already running")
+  before <- readLines(status)
+  expect_error(cancel_job(job, quiet = TRUE), "is recorded submitted on host lri-r06", fixed = TRUE)
+  expect_identical(readLines(status), before)
+  st <- cancel_job(job, other_host = "abandon", quiet = TRUE)
+  expect_identical(st$state, "cancelled")
+  expect_match(st$reason, "abandoned from .*nothing signalled")
 })
 
 test_that("a cancel is refused, signalling nothing, while another call holds the claim", {

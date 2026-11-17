@@ -861,21 +861,76 @@
 }
 
 # Creating the lock directory is the claim: dir.create() fails on a path that
-# exists, atomically, on every filesystem the lock lives on.
+# exists, atomically, on every filesystem the lock lives on, the study's SMB
+# share included.
 .create_provenance_lock <- function(lock) dir.create(lock, showWarnings = FALSE)
 
-# Puts a lock moved aside by mistake back, without ever replacing one. rename()
-# would replace an empty directory, so a lock a third render created after the
-# move would be overwritten, and checking for it first leaves a gap before the
-# rename. The lock is claimed again as any render claims it, then its files are
-# moved in. When the claim fails, the third render keeps the lock and the moved
-# one stays where it is, for the error to name.
-.restore_provenance_lock <- function(stale, lock) {
-  if (!.create_provenance_lock(lock)) return(FALSE)
-  files <- list.files(stale, all.files = TRUE, no.. = TRUE)
-  moved <- vapply(files, function(f) .rename_provenance_file(file.path(stale, f), file.path(lock, f)), logical(1))
-  if (all(moved)) unlink(stale, recursive = TRUE)
-  all(moved)
+# A dead owner's lock is taken over in place: the lock directory never moves, so
+# no render can claim the path while a possibly live owner is displaced. What
+# serializes takeovers is a sibling sentinel, claimed the same way. Only its
+# holder may change the owner of an existing lock, and it re-reads the owner
+# under the sentinel, so two renders that judged one owner dead cannot both act
+# on that judgment.
+.provenance_takeover_path <- function(lock) paste0(lock, ".takeover")
+
+# A takeover holds its sentinel for milliseconds, so one older than this belongs
+# to a render that crashed inside its takeover, and would otherwise block every
+# later one.
+.takeover_stale_secs <- 60
+
+.provenance_takeover_stale <- function(sentinel) {
+  at <- file.info(sentinel)$mtime
+  !is.na(at) && as.numeric(difftime(Sys.time(), at, units = "secs")) > .takeover_stale_secs
+}
+
+# Writes a render's owner over the lock's owner file. A file rename replaces its
+# target atomically, as the provenance state writes rely on.
+.write_provenance_owner <- function(owner, owner_path) {
+  temporary <- tempfile(pattern = ".owner-", tmpdir = dirname(owner_path), fileext = ".json")
+  on.exit(if (file.exists(temporary)) unlink(temporary), add = TRUE)
+  jsonlite::write_json(owner, temporary, auto_unbox = TRUE)
+  .rename_provenance_file(temporary, owner_path)
+}
+
+# TRUE when `owner` now holds the lock in place of `dead`, FALSE when the lock
+# went away meanwhile, so the caller claims it afresh. Stops when another render
+# is taking it over, or took it over first.
+.take_over_provenance_lock <- function(lock, dead, owner) {
+  sentinel <- .provenance_takeover_path(lock)
+  if (.provenance_takeover_stale(sentinel)) unlink(sentinel, recursive = TRUE)
+  if (!.create_provenance_lock(sentinel)) {
+    stop("Another Quarto render is taking over this study's stale render lock. Wait a moment, then render again.",
+         call. = FALSE)
+  }
+  # The token tells this render's sentinel from one a second render made after
+  # clearing it as stale, the one race a stale sentinel leaves.
+  token <- basename(tempfile(pattern = "takeover-"))
+  writeLines(token, file.path(sentinel, "token"))
+  on.exit(if (identical(.read_takeover_token(sentinel), token)) unlink(sentinel, recursive = TRUE), add = TRUE)
+  owner_path <- file.path(lock, "owner.json")
+  if (!dir.exists(lock)) return(FALSE)
+  now <- .read_provenance_owner(owner_path)
+  # The owner judged dead is the one still recorded, and a lock with no owner
+  # file is still old: otherwise a render took the lock over or claimed it
+  # afresh after this one looked.
+  unchanged <- identical(now, dead) &&
+    !(is.null(now) && isTRUE(difftime(Sys.time(), file.info(lock)$mtime, units = "secs") < 60))
+  if (!unchanged) {
+    stop("Another Quarto render took over this study's stale render lock first",
+         if (!is.null(now)) paste0(" (", .provenance_owner_label(now), ")"),
+         ". Wait for it to finish, then render again.", call. = FALSE)
+  }
+  if (!identical(.read_takeover_token(sentinel), token)) {
+    stop("Another Quarto render is taking over this study's stale render lock. Wait a moment, then render again.",
+         call. = FALSE)
+  }
+  if (!.write_provenance_owner(owner, owner_path)) return(FALSE)
+  if (!is.null(dead)) unlink(.provenance_heartbeat_path(lock, dead))
+  TRUE
+}
+
+.read_takeover_token <- function(sentinel) {
+  tryCatch(readLines(file.path(sentinel, "token"), warn = FALSE)[[1L]], error = function(e) NULL)
 }
 
 .acquire_provenance_lock <- function(root) {
@@ -901,29 +956,9 @@
            ". Wait for it to finish, then render again.",
            if (!is.null(current)) .provenance_lock_hint(current, lock), call. = FALSE)
     }
-    # The owner is gone, so its lock is moved aside. The move is atomic, but it
-    # moves whatever lock is there NOW: when two renders both judge the same
-    # owner dead, the first can take the lock over before the second moves it,
-    # and the second would then move the first one's live lock. So the lock
-    # moved is checked: if it is not the dead owner's, it goes back and this
-    # render refuses, as it would against any live render.
-    stale <- tempfile(pattern = ".provenance-render.lock-stale-", tmpdir = dirname(lock))
-    if (.rename_provenance_file(lock, stale)) {
-      moved <- .read_provenance_owner(file.path(stale, "owner.json"))
-      # A dead owner that never wrote its owner file reads NULL, and so does a
-      # render that took the lock over a moment ago and has not written its own
-      # yet. Only the dead one's lock is still old.
-      fresh <- is.null(moved) && !isTRUE(difftime(Sys.time(), file.info(stale)$mtime, units = "secs") >= 60)
-      if (!identical(moved, current) || fresh) {
-        restored <- .restore_provenance_lock(stale, lock)
-        stop("Another Quarto render took over this study's stale render lock first",
-             if (!is.null(moved)) paste0(" (", .provenance_owner_label(moved), ")"),
-             ". Wait for it to finish, then render again.",
-             if (!restored) paste0(" Its lock could not be put back from ", stale, "; move that directory to ", lock,
-                                   " if that render is still running, or delete it if not."),
-             call. = FALSE)
-      }
-      unlink(stale, recursive = TRUE)
+    if (.take_over_provenance_lock(lock, current, owner)) {
+      .start_provenance_heartbeat(lock, owner)
+      return(invisible(TRUE))
     }
   }
   stop("Could not take the provenance render lock: ", lock, ".", call. = FALSE)
