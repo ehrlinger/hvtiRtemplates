@@ -181,9 +181,9 @@ concordance_upstream <- function(root, job) {
       "^WHERE <- NULL$" = sprintf("WHERE <- quote(%s & approach == \"%s\")", hazard_where, g),
       "^EXPECTED <- list\\(n = NA_integer_" = concordance_counts(root, g)
     )
-    hz <- set_choices(add_job("hz", "dead", g, dir = root), c(rows, concordance_hz_choices))
+    hz <- set_choices(add_job("hz", "dead", g, root = root), c(rows, concordance_hz_choices))
     # hm takes its counts from this group's hz.rds, so only the SAS job is set.
-    hm <- set_choices(add_job("hm", "dead", g, dir = root), list(
+    hm <- set_choices(add_job("hm", "dead", g, root = root), list(
       "^SAS_JOB   <- c\\(\"analyses\", \"hm.dead.sas\"\\)$" = "SAS_JOB   <- c(\"analyses\", \"hm.dead_group.sas\")"
     ))
     for (upstream in c(hz, hm)) {

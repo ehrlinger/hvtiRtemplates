@@ -56,9 +56,10 @@ guard_long_fit <- function(name, dir, why, refit = FALSE) {
   job <- if (requireNamespace("knitr", quietly = TRUE)) knitr::current_input(dir = TRUE) else NULL
   call <- sprintf("hvtiRtemplates::run_job(\"%s\")", if (is.null(job)) "<this job>.qmd" else job)
   state <- if (isTRUE(refit)) "is being recomputed (REFIT)" else "is not cached yet"
-  stop("This fit ", state, ", and ", why, ": run from the console, the Render button or a terminal it dies with the ",
-       "Workbench session. Run the job in the background instead, from the study's R console:\n  ", call,
-       "\nthen check it with hvtiRtemplates::job_status(). Once the fit is cached, the Render button and these chunks ",
-       "work again and load it. For a fit you know to be short, set ",
-       "options(hvtiRtemplates.allow_interactive_fit = TRUE).", call. = FALSE)
+  .abort("guard_long_fit(): this fit ", state, ", and ", why, ": run from the console, the Render button or a terminal ",
+         "it dies with the ",
+         "Workbench session. Run the job in the background instead, from the study's R console:\n  ", call,
+         "\nthen check it with hvtiRtemplates::job_status(). Once the fit is cached, the Render button and these chunks ",
+         "work again and load it. For a fit you know to be short, set ",
+         "options(hvtiRtemplates.allow_interactive_fit = TRUE).", class = "long_fit")
 }

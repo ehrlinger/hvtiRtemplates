@@ -50,7 +50,7 @@
   if (installed) return(TRUE)
   if (is.null(.figure_state$ragg_told)) {
     .figure_state$ragg_told <- TRUE
-    message("Figures are saved without a TIFF copy: install the ragg package to write one.")
+    .hvti_inform("Figures are saved without a TIFF copy: install the ragg package to write one.")
   }
   FALSE
 }

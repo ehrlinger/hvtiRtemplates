@@ -126,7 +126,7 @@ test_that("upgrade_job() never overwrites an archived file and names a job it ca
 test_that("add_job() stamps its job and upgrade_job() reads the stamp", {
   local_template_moved()
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   version <- as.character(utils::packageVersion("hvtiRtemplates"))
   sha <- digest::digest(file = template_path("dc", "general"), algo = "sha256")
   expect_true(paste0("<!-- hvtiRtemplates: dc.general ", version, " sha256:", sha, " -->") %in% readLines(job))
@@ -167,7 +167,7 @@ test_that("the report names marker lines and never quotes them", {
   # dc-tables marks WORD_FILE inline, so a value left unresolved shares its
   # line with the marker the report lists.
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "tables")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "tables")
   lines <- readLines(job)
   i <- grep("^WORD_FILE <- ", lines)
   lines[[i]] <- sub('"dc-tables.docx"', '"x99999123.docx"', lines[[i]], fixed = TRUE)
@@ -241,7 +241,7 @@ test_that("two statements on one line carry only the choice the template has", {
 
 test_that("a job under a renamed template moves to its folder, created if the study lacks it", {
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "trends")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "trends")
   old <- file.path(root, "graphs", "dp.trends.cohort.eda.qmd")
   file.rename(job, old)
   unlink(file.path(root, "descriptive"), recursive = TRUE)
@@ -269,7 +269,7 @@ test_that("an upgrade leaves the job folder holding the job alone", {
 test_that("a job upgrades again without moving the last upgrade's files aside", {
   local_template_moved()
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   local_mocked_bindings(.upgrade_stamp = function() "20261020-101300")
   upgrade_job(job)
   local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
@@ -285,7 +285,7 @@ test_that("upgrades within one second each keep their pair", {
   local_template_moved()
   # An upgrade finishes well inside a second, so back-to-back upgrades share a stamp.
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
   for (i in 1:3) upgrade_job(job)
   expect_identical(sort(list.files(file.path(dirname(job), "_archive"))),
@@ -295,7 +295,7 @@ test_that("upgrades within one second each keep their pair", {
 
 test_that("a job already current is left alone, and the message says so", {
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   writeLines(sub('^DATASET <- "built"', 'DATASET <- "built_r"', readLines(job)), job)
   before <- readLines(job)
   expect_message(out <- upgrade_job(job), "already current with its template; nothing changed", fixed = TRUE)
@@ -307,7 +307,7 @@ test_that("a job already current is left alone, and the message says so", {
 test_that("an upgrade names the two files it archived", {
   local_template_moved()
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   local_mocked_bindings(.upgrade_stamp = function() "20261102-120000")
   said <- capture_messages(upgrade_job(job))
   said <- said[grepl("upgraded", said, fixed = TRUE)]
@@ -318,7 +318,7 @@ test_that("an upgrade names the two files it archived", {
 
 test_that("a job already current still moves an older upgrade's pair, and adds none", {
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   before <- readLines(job)
   backup <- paste0(job, ".pre-upgrade")
   report <- sub("[.]qmd$", "-upgrade.md", job)
@@ -348,7 +348,7 @@ test_that("an upgrade moves the pair an older upgrade left beside the job into _
   # The old upgrade refused to run while its pair was there, so studies hold
   # them beside the job, and some hold hand-renamed copies made to get past it.
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   legacy <- legacy_pair(job, "2026-10-20 10:13:00")
   hand <- paste0(job, ".pre-upgrade-20261020")
   writeLines("an analyst's copy", hand)
@@ -367,7 +367,7 @@ test_that("an upgrade moves the pair an older upgrade left beside the job into _
 
 test_that("a legacy pair whose archived name is taken keeps both, under a suffix", {
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   arch <- file.path(dirname(job), "_archive")
   dir.create(arch)
   writeLines("already archived", file.path(arch, "dc.general.cohort.eda.20261020-101300.pre-upgrade"))
@@ -384,7 +384,7 @@ test_that("a legacy pair split across a rename keeps one stamp", {
   # An old upgrade that renamed the job left the old job under the old
   # spelling and the report under the new; they are still one upgrade's pair.
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   legacy <- legacy_pair(job, "2026-10-20 10:13:00")
   old_spelling <- file.path(dirname(job), "cohort-eda-dc-general.qmd.pre-upgrade")
   file.rename(legacy[["backup"]], old_spelling)
@@ -397,7 +397,7 @@ test_that("a legacy pair split across a rename keeps one stamp", {
 
 test_that("a legacy old job without its report is archived under its own time", {
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   legacy <- legacy_pair(job, "2026-10-19 08:00:00")
   unlink(legacy[["report"]])
   local_mocked_bindings(.upgrade_stamp = function() "20261023-121500")
@@ -410,7 +410,7 @@ test_that("two legacy pairs that would share an archived name stop the upgrade b
   # A job moved below its stage folder and its canonical path are both spellings
   # of it, and their pairs have the same file names.
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   nested <- file.path(dirname(job), "nested", basename(job))
   dir.create(dirname(nested))
   file.rename(job, nested)
@@ -427,7 +427,7 @@ test_that("two legacy pairs that would share an archived name stop the upgrade b
 test_that("a legacy file under an old spelling that resolves outside the study is not moved", {
   skip_on_os("windows")
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "trends")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "trends")
   # dc-trends was dp-trends, under graphs/; make graphs/ a link out of the study.
   outside <- withr::local_tempdir()
   unlink(file.path(root, "graphs"), recursive = TRUE)
@@ -451,7 +451,7 @@ test_that("upgrade_job() installs the study's provenance hooks", {
 # A study job that reports through a hand-added stopgap, `.bm_progress()`, defined in the job. The template now
 # reports through the job's own `get(".job")$progress()`, and an upgrade must leave exactly that one reporter.
 nb_stopgap_job <- function(root, helper_in) {
-  job <- add_job("nb", subject = "lvef", type = "boost", dir = root, qualifier = "boostmtree")
+  job <- add_job("nb", subject = "lvef", type = "boost", root = root, qualifier = "boostmtree")
   lines <- readLines(job)
   fit <- grep('progress = get(".job")$progress("iteration")', lines, fixed = TRUE)
   eff <- grep('progress = get(".job")$progress("prediction")', lines, fixed = TRUE)
@@ -502,7 +502,7 @@ test_that("an empty report section reads None, never a blank entry", {
   local_template_moved()
   root <- migration_study_fixture()
   # Nothing unplaced and nothing new: the current template against its own copy.
-  job <- upgrade_job(add_job("dc", "cohort", "eda", dir = root, qualifier = "general"))
+  job <- upgrade_job(add_job("dc", "cohort", "eda", root = root, qualifier = "general"))
   report <- readLines(upgrade_report(job))
   section <- function(title) {
     from <- which(report == paste("##", title)) + 1L
@@ -517,7 +517,7 @@ test_that("an empty report section reads None, never a blank entry", {
 test_that("the job's own description is carried in place of the template's comment", {
   local_template_moved()
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   token <- paste0("ED", "IT", ":")
   lines <- readLines(job)
   i <- grep(paste0("^<!-- ", token, " name the job"), lines)
@@ -534,7 +534,7 @@ test_that("the job's own description is carried in place of the template's comme
 
 test_that("a description still unwritten stays the template's comment, written once", {
   root <- migration_study_fixture()
-  job <- upgrade_job(add_job("dc", "cohort", "eda", dir = root, qualifier = "general"))
+  job <- upgrade_job(add_job("dc", "cohort", "eda", root = root, qualifier = "general"))
   token <- paste0("ED", "IT", ":")
   expect_length(grep(paste0("^<!-- ", token, " name the job"), readLines(job)), 1L)
 })
@@ -554,7 +554,7 @@ test_that("a description is carried from a job scaffolded before add_job() stamp
 test_that("comment lines a study added above a choice are carried and listed for review", {
   local_template_moved()
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   lines <- readLines(job)
   i <- grep("^DATASET <- ", lines)
   lines <- c(lines[seq_len(i - 1L)], "# The day-level set, same-day pairs averaged;", "# see datasets/bd.day.R.",
@@ -569,7 +569,7 @@ test_that("comment lines a study added above a choice are carried and listed for
 
 test_that("a rewritten placeholder line after the comment is carried as the description", {
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "general", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "general", root = root, qualifier = "general")
   lines <- readLines(job)
   i <- grep("^<!-- EDIT: name the job", lines)
   j <- grep("^Replaces `descriptive/dc.general`[.]$", lines)
@@ -583,7 +583,7 @@ test_that("a rewritten placeholder line after the comment is carried as the desc
 
 test_that("an older template's wording of the comment, untouched, is still open", {
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   lines <- readLines(job)
   i <- grep("^<!-- EDIT: name the job", lines)
   lines[[i]] <- "<!-- EDIT: say which job this replaces. -->"
@@ -597,7 +597,7 @@ test_that("an older template's wording of the comment, untouched, is still open"
 
 test_that("a job whose template had no comment there keeps the current template's", {
   root <- migration_study_fixture()
-  job <- add_job("dc", "cohort", "eda", dir = root, qualifier = "general")
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general")
   lines <- readLines(job)
   i <- grep("^<!-- EDIT: name the job", lines)
   writeLines(lines[-(i:(i + 1L))], job)
@@ -648,7 +648,7 @@ with_rationale <- function(job, name = "PREDICTORS", note = rationale) {
 test_that("a study's comment above a carried choice is carried into the upgraded job, directly above it", {
   local_template_moved()
   root <- migration_study_fixture()
-  job <- add_job("vp", "dead", "svd", dir = root, qualifier = "fit")
+  job <- add_job("vp", "dead", "svd", root = root, qualifier = "fit")
   i <- with_rationale(job)
   upgraded <- readLines(upgrade_job(job))
   at <- grep("^PREDICTORS <- ", upgraded)
@@ -662,7 +662,7 @@ test_that("a study's comment above a carried choice is carried into the upgraded
 
 test_that("a job whose only edit is a comment above a choice is already current", {
   root <- migration_study_fixture()
-  job <- add_job("vp", "dead", "svd", dir = root, qualifier = "fit")
+  job <- add_job("vp", "dead", "svd", root = root, qualifier = "fit")
   with_rationale(job)
   before <- readLines(job)
   expect_message(upgrade_job(job), "already current")
@@ -684,7 +684,7 @@ test_that("an older template's wording above a choice is template prose, and is 
   saveRDS(history, archive)
   withr::local_options(hvtiRtemplates.template_history = archive)
   root <- migration_study_fixture()
-  job <- add_job("vp", "dead", "svd", dir = root, qualifier = "fit")
+  job <- add_job("vp", "dead", "svd", root = root, qualifier = "fit")
   with_rationale(job, note = c(sub("^# EDIT: ", "# ", old_wording), rationale))
   upgraded <- readLines(upgrade_job(job))
   expect_false(any(grepl("as an older template worded them", upgraded)))
@@ -695,7 +695,7 @@ test_that("an older template's wording above a choice is template prose, and is 
 test_that("a study's comment set off from its choice by a blank line is carried, not dropped unseen", {
   local_template_moved()
   root <- migration_study_fixture()
-  job <- add_job("vp", "dead", "svd", dir = root, qualifier = "fit")
+  job <- add_job("vp", "dead", "svd", root = root, qualifier = "fit")
   lines <- readLines(job)
   i <- grep("^PREDICTORS <- ", lines)
   top <- i - 1L

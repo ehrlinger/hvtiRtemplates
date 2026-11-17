@@ -336,7 +336,7 @@ boot_settings <- function(prefix, ...) {
 # The runner add_job() writes beside the `prefix` report in the study at
 # `root`, for the set the report's `set` chunk names.
 boot_scaffold <- function(prefix, root) {
-  suppressMessages(add_job(prefix, "dead_pa", "hz", dir = root))
+  suppressMessages(add_job(prefix, "dead_pa", "hz", root = root))
   sub("[.]qmd$", ".runner.R", hvtiRtemplates:::.job_path(
     hvtiRtemplates:::.select_template(template_list(), prefix, NULL), "dead_pa", "hz", root
   ))

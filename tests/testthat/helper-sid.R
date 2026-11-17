@@ -75,7 +75,7 @@ sid_render_fixture <- function(.local_envir = parent.frame()) {
   d <- cbind(ccfid = seq_len(nrow(d)), d[c("a", "b", "c", "e", "f")])
   utils::write.csv(d, file.path(root, "00_datasets", "built.csv"), row.names = FALSE)
   suppressMessages(hvtiRutilities::register_data(root, file = "built.csv", role = "study", population = "Synthetic cohort"))
-  fit <- add_job("sid", "morph", "sid", dir = root, qualifier = "fit")  # nolint: object_usage_linter.
+  fit <- add_job("sid", "morph", "sid", root = root, qualifier = "fit")  # nolint: object_usage_linter.
   sid_edit_job(fit, c('VARS <- c("a", "b", "c", "e", "f")', "NTREE <- 200", "SID_REDUCE <- FALSE", "MICE_MAXIT <- 5", "M <- 2"))
   quarto::quarto_render(fit, execute_dir = dirname(fit), quiet = TRUE)
   list(root = root, fit = fit)
@@ -94,7 +94,7 @@ sid_edit_job <- function(job, choices) {
 # the save chunk's CSV name, for simulating a failure there. Returns the html path.
 sid_render_clusters <- function(fixture, choices, before_csv = NULL, quiet = TRUE) {
   job <- list.files(dirname(fixture$fit), pattern = "clusters.*[.]qmd$", full.names = TRUE)[1L]
-  if (is.na(job)) job <- add_job("sid", "morph", "sid", dir = fixture$root, qualifier = "clusters")  # nolint: object_usage_linter.
+  if (is.na(job)) job <- add_job("sid", "morph", "sid", root = fixture$root, qualifier = "clusters")  # nolint: object_usage_linter.
   sid_edit_job(job, choices)
   if (!is.null(before_csv)) {
     lines <- readLines(job, warn = FALSE)

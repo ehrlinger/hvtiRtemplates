@@ -74,7 +74,9 @@
 #' @param final Logical. \code{TRUE} for the accepted result. A final render reads registered data
 #'   only: a job whose data, or whose upstream hand-off, came from an unregistered build stops and
 #'   names \code{hvtiRutilities::update_manifest()}.
-#' @param quiet Logical. Passed to \code{quarto::quarto_render()}.
+#' @param quiet Logical. Passed to \code{quarto::quarto_render()}. Defaults to the
+#'   family option \code{hvti.quiet}, so \code{options(hvti.quiet = TRUE)} quiets
+#'   every render; an explicit value wins.
 #' @param params A named list of single values, or \code{NULL}. The job's Quarto
 #'   \code{params}, as \code{quarto render -P name:value} sets them; passed to
 #'   \code{quarto::quarto_render()} as \code{execute_params}.
@@ -97,7 +99,7 @@
 #'   utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
 #'                    row.names = FALSE)
 #'   invisible(hvtiRutilities::register_data(root, "built.csv"))
-#'   job <- add_job("dc.gfup", subject = "dead", type = "hz", dir = root)
+#'   job <- add_job("dc.gfup", subject = "dead", type = "hz", root = root)
 #'
 #'   # A draft: the new job still holds EDIT: markers, so the report carries a
 #'   # DRAFT banner listing them, and renders all the same.
@@ -112,7 +114,7 @@
 #' }
 #' }
 #' @export
-render_job <- function(path, final = FALSE, quiet = FALSE, params = NULL, output_file = NULL) {
+render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet")), params = NULL, output_file = NULL) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
     stop("render_job(): `path` must be an existing job file.", call. = FALSE)
   }
@@ -150,29 +152,29 @@ render_job <- function(path, final = FALSE, quiet = FALSE, params = NULL, output
     from <- .file_size(log)
     tryCatch(render(), error = function(e) {
       if (.quarto_crashed(e)) {
-        rlang::abort(c(
-          paste0("render_job(): Quarto crashed before rendering ", basename(path), "; the job itself did not fail."),
-          i = "Its Deno runtime was killed by a signal, most often a crash as it starts. Render the job again."
-        ), class = "hvtiRtemplates_quarto_crashed", parent = e, call = NULL)
+        .abort("render_job(): Quarto crashed before rendering ", basename(path), "; the job itself did not fail.\n",
+               "Its Deno runtime was killed by a signal, most often a crash as it starts. Render the job again.\n",
+               # Base R prints no parent, so Quarto's own account goes into the message.
+               "Quarto said: ", conditionMessage(e),
+               class = "quarto_crashed", parent = e)
       }
       if (.execute_results_race(e, log, from, .execute_results_dir(path))) {
-        rlang::abort("Quarto could not remove execute-results.", class = "hvtiRtemplates_execute_results_race",
-                     parent = e, call = NULL)
+        .abort("Quarto could not remove execute-results.", class = "execute_results_race", parent = e)
       }
       stop(e)
     })
   }
   tryCatch(attempt(), hvtiRtemplates_execute_results_race = function(e) {
-    message("render_job(): every chunk ran, then Quarto could not remove ", .execute_results_dir(path),
-            " (Directory not empty): the network share had not yet let go of a file it had just written. ",
-            "Rendering again.")
+    .hvti_inform("render_job(): every chunk ran, then Quarto could not remove ", .execute_results_dir(path),
+                 " (Directory not empty): the network share had not yet let go of a file it had just written. ",
+                 "Rendering again.")
     tryCatch(attempt(), hvtiRtemplates_execute_results_race = function(e2) {
-      rlang::abort(c(
-        paste0("render_job(): Quarto could not remove ", .execute_results_dir(path),
-               " twice (Directory not empty); the job itself did not fail."),
-        i = "Something on the share still holds a file there; find it with `lsof +D` on the folder.",
-        i = "Delete the folder and render the job again."
-      ), class = "hvtiRtemplates_execute_results_stuck", parent = e2$parent, call = NULL)
+      .abort("render_job(): Quarto could not remove ", .execute_results_dir(path),
+             " twice (Directory not empty); the job itself did not fail.\n",
+             "Something on the share still holds a file there; find it with `lsof +D` on the folder.\n",
+             "Delete the folder and render the job again.\n",
+             "Quarto said: ", conditionMessage(e2$parent),
+             class = "execute_results_stuck", parent = e2$parent)
     })
   })
   invisible(path)

@@ -37,9 +37,9 @@ test_that("an old name is an error naming the new one, from every entry point", 
     }
   }
   root <- migration_study_fixture(NULL)
-  expect_error(add_job("dp.trends", "cohort", "eda", dir = root), "dp[.]trends was renamed dc[.]trends")
-  expect_error(add_job("dp", "cohort", "eda", dir = root, qualifier = "eda"), "dp[.]eda was renamed dc[.]eda")
-  expect_error(suppressMessages(open_job("dp", "other", "eda", dir = root, qualifier = "trends")),
+  expect_error(add_job("dp.trends", "cohort", "eda", root = root), "dp[.]trends was renamed dc[.]trends")
+  expect_error(add_job("dp", "cohort", "eda", root = root, qualifier = "eda"), "dp[.]eda was renamed dc[.]eda")
+  expect_error(suppressMessages(open_job("dp", "other", "eda", root = root, qualifier = "trends")),
                "dp[.]trends was renamed dc[.]trends")
   # Nothing was written under either name.
   expect_length(list.files(root, "[.]qmd$", recursive = TRUE), 0L)
@@ -48,14 +48,14 @@ test_that("an old name is an error naming the new one, from every entry point", 
 test_that("migrate_job() refuses an old name the caller passes, and maps one a legacy source carries", {
   root <- migration_study_fixture("dc-trends")
   source <- file.path(root, "graphs", "dp.trends.sas")
-  expect_error(migrate_job(source, "cohort", "eda", "dp", "trends", dir = root),
+  expect_error(migrate_job(source, "cohort", "eda", "dp", "trends", root = root),
                "^migrate_job\\(\\): dp[.]trends was renamed dc[.]trends")
-  expect_error(migrate_job(source, "cohort", "eda", prefix = "dp", dir = root), "dp[.]trends was renamed dc[.]trends")
+  expect_error(migrate_job(source, "cohort", "eda", prefix = "dp", root = root), "dp[.]trends was renamed dc[.]trends")
   expect_false(file.exists(file.path(root, "descriptive", "dc.trends.cohort.eda.qmd")))
 
   # The corpus names its trends jobs dp.trends.*, and always will: that name is
   # the source's, not the caller's, so it maps to dc-trends without a word.
-  got <- caught_warnings(migrate_job(source, "cohort", "eda", dir = root))
+  got <- caught_warnings(migrate_job(source, "cohort", "eda", root = root))
   expect_length(Filter(function(w) inherits(w, "hvtiRtemplates_deprecated"), got$warnings), 0L)
   expect_identical(normalizePath(got$value), normalizePath(file.path(root, "descriptive", "dc.trends.cohort.eda.qmd")))
   # The converter that ran is dc-trends's: the source's year rule reached the job.
@@ -63,7 +63,7 @@ test_that("migrate_job() refuses an old name the caller passes, and maps one a l
   # Naming only the qualifier leaves the prefix to the source's name, so it maps silently too.
   root <- migration_study_fixture("dc-trends")
   source <- file.path(root, "graphs", "dp.trends.sas")
-  got <- caught_warnings(migrate_job(source, "cohort", "eda", qualifier = "trends", dir = root))
+  got <- caught_warnings(migrate_job(source, "cohort", "eda", qualifier = "trends", root = root))
   expect_length(Filter(function(w) inherits(w, "hvtiRtemplates_deprecated"), got$warnings), 0L)
   expect_identical(normalizePath(got$value), normalizePath(file.path(root, "descriptive", "dc.trends.cohort.eda.qmd")))
 })
@@ -75,15 +75,15 @@ test_that("an existing dp.trends job is opened under the new name, and never dup
     s <- list(root = migration_study_fixture(NULL))
     s$old <- file.path(s$root, "graphs", paste0(stem, ".qmd"))
     file.copy(template_path("dc.trends"), s$old)
-    expect_message(opened <- open_job("dc", "cohort", "eda", dir = s$root, qualifier = "trends"),
+    expect_message(opened <- open_job("dc", "cohort", "eda", root = s$root, qualifier = "trends"),
                    "already exists; opening it unchanged")
     expect_identical(normalizePath(opened), normalizePath(s$old), info = stem)
-    expect_error(add_job("dc.trends", "cohort", "eda", dir = s$root),
+    expect_error(add_job("dc.trends", "cohort", "eda", root = s$root),
                  "already exists as '[^']*graphs/[^']*dp[.-]trends[^']*', under the template's name before it was renamed")
     expect_false(file.exists(file.path(s$root, "descriptive", "dc.trends.cohort.eda.qmd")), info = stem)
   }
   # A different set is a different job, and scaffolds in descriptive as usual.
-  made <- suppressMessages(open_job("dc", "other", "eda", dir = s$root, qualifier = "trends"))
+  made <- suppressMessages(open_job("dc", "other", "eda", root = s$root, qualifier = "trends"))
   expect_identical(normalizePath(made), normalizePath(file.path(s$root, "descriptive", "dc.trends.other.eda.qmd")))
 })
 
@@ -91,7 +91,7 @@ test_that("migrate_job() refuses to write a second copy of an existing dp.trends
   root <- migration_study_fixture("dc-trends")
   old <- file.path(root, "graphs", "dp.trends.cohort.eda.qmd")
   file.copy(template_path("dc.trends"), old)
-  expect_error(migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda", "dc", "trends", dir = root),
+  expect_error(migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda", "dc", "trends", root = root),
                "under the template's name before it was renamed")
   expect_false(file.exists(file.path(root, "descriptive", "dc.trends.cohort.eda.qmd")))
 })
@@ -103,7 +103,7 @@ test_that("an existing dp.trends job in graphs still renders, with its figures e
   # A migrated job carries real choices for the fixture's data. Moved to where
   # and as what a dp-trends job was scaffolded, it is the job a study holds.
   root <- migration_study_fixture("dc-trends")
-  job <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda", "dc", "trends", dir = root)
+  job <- migrate_job(file.path(root, "graphs", "dp.trends.sas"), "cohort", "eda", "dc", "trends", root = root)
   .resolve_fixture_markers(job, readLines(testthat::test_path("fixtures-migration", "dc-trends", "review-markers.txt")))
   old <- file.path(root, "graphs", "dp.trends.cohort.eda.qmd")
   expect_true(file.rename(job, old))
@@ -120,9 +120,9 @@ test_that("an existing dp.trends job in graphs still renders, with its figures e
 
 test_that("dp-gfup is removed, and asking for it names dc.gfup", {
   root <- migration_study_fixture(NULL)
-  calls <- list(quote(add_job("dp.gfup", "cohort", "eda", dir = root)),
-                quote(add_job("dp", "cohort", "eda", dir = root, qualifier = "gfup")),
-                quote(open_job("dp", "cohort", "eda", dir = root, qualifier = "gfup")),
+  calls <- list(quote(add_job("dp.gfup", "cohort", "eda", root = root)),
+                quote(add_job("dp", "cohort", "eda", root = root, qualifier = "gfup")),
+                quote(open_job("dp", "cohort", "eda", root = root, qualifier = "gfup")),
                 quote(template_path("dp", "gfup")),
                 quote(template_path("dp-gfup")))
   for (call in calls) {
@@ -136,8 +136,8 @@ test_that("dp-gfup is removed, and asking for it names dc.gfup", {
 
 test_that("the removed dp-postage is an unknown template, with no namesake to offer", {
   root <- migration_study_fixture(NULL)
-  for (call in list(quote(add_job("dp.postage", "cohort", "eda", dir = root)),
-                    quote(add_job("dp", "cohort", "eda", dir = root, qualifier = "postage")),
+  for (call in list(quote(add_job("dp.postage", "cohort", "eda", root = root)),
+                    quote(add_job("dp", "cohort", "eda", root = root, qualifier = "postage")),
                     quote(template_path("dp", "postage")))) {
     expect_error(eval(call), "unknown template: dp[.]postage[.] Available: ", info = deparse(call))
   }
@@ -149,7 +149,7 @@ test_that("a supported template does not warn", {
   root <- migration_study_fixture(NULL)
   expect_no_warning(template_path("dc", "eda"))
   expect_no_warning(template_path("dc.trends"))
-  expect_no_warning(add_job("dc", "cohort", "eda", dir = root, qualifier = "eda"))
+  expect_no_warning(add_job("dc", "cohort", "eda", root = root, qualifier = "eda"))
 })
 
 test_that("the deprecation warning follows the catalog, whichever template it marks", {

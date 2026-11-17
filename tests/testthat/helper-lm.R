@@ -90,7 +90,7 @@ lm_render_fixture <- function(qualifier, data = NULL, render = TRUE, choices = c
   suppressMessages(hvtiRutilities::register_data(
     root, file = "built.csv", role = "study", population = "Synthetic cohort"
   ))
-  job <- add_job("lm", "outcome", "analysis", dir = root, qualifier = qualifier)
+  job <- add_job("lm", "outcome", "analysis", root = root, qualifier = qualifier)
   replacements <- switch(
     qualifier,
     binary = c(
@@ -188,7 +188,7 @@ lp_data <- function(n = 120L) {
 # as lm_render_fixture() does. Returns the root, the job and the bundle path.
 lp_fixture <- function(lines = character(), data = lp_data(), .local_envir = parent.frame()) {
   fit <- lm_render_fixture("propensity_binary", data = data, render = FALSE, .local_envir = .local_envir)
-  job <- add_job("lp.mirror", "outcome", "analysis", dir = fit$root)
+  job <- add_job("lp.mirror", "outcome", "analysis", root = fit$root)
   src <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
   for (line in lines) {
     key <- sub(" .*", "", line)
@@ -260,7 +260,7 @@ lg_chosen_variables <- c(
 lg_fixture <- function(lines = character(), variables = lg_chosen_variables, data = lg_data(),
                        .local_envir = parent.frame()) {
   root <- lm_study(.local_envir = .local_envir, data = data)
-  job <- add_job("lg", "dead", "calibration", dir = root)
+  job <- add_job("lg", "dead", "calibration", root = root)
   src <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
   for (line in lines) {
     key <- sub(" .*", "", line)

@@ -8,7 +8,7 @@ run_job(
   path,
   final = FALSE,
   wait = 300,
-  quiet = FALSE,
+  quiet = isTRUE(getOption("hvti.quiet")),
   params = NULL,
   output_file = NULL
 )
@@ -23,7 +23,8 @@ own checks. \code{0} submits and returns at once.}
 
 \item{quiet}{Logical(1). \code{TRUE} prints nothing: not the checks, the note
 for a legacy job, or the lines the wait ends on. A refusal is still an
-error, and its message then lists the failed checks and their fixes.}
+error, and its message then lists the failed checks and their fixes. Defaults to the family
+option \code{hvti.quiet}; an explicit value wins.}
 
 \item{params, output_file}{Passed to \code{\link{render_job}} through
 \code{\link{submit_job}}.}

@@ -102,10 +102,12 @@
 #' @param type The analysis type the job's set belongs to, e.g. \code{"hz"}.
 #'   Your choice, like \code{subject}, and shared the same way. Must match
 #'   \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.
-#' @param dir The study root to write into. The taxonomy folder beneath it is
+#' @param root The study root to write into. The taxonomy folder beneath it is
 #'   created if it does not exist. \code{NULL}, the default, finds the study
 #'   root by walking up from the working directory, and is an error outside a
 #'   study, so a job is never written somewhere that is not a study.
+#' @param dir Deprecated: the old name of \code{root}. It works, with a warning,
+#'   for one more release; giving both is an error.
 #'
 #' @return The job's path, invisibly. On any failure -- including one after
 #'   the copy, while substituting the set markers -- no file is left behind,
@@ -121,22 +123,23 @@
 #' invisible(hvtiRutilities::study_setup(
 #'   d, study = "Example", study_tracker_id = 1L, renv = FALSE
 #' ))
-#' add_job(prefix = "ac", subject = "death", type = "hz", dir = d)
+#' add_job(prefix = "ac", subject = "death", type = "hz", root = d)
 #'
 #' # A qualified template by its full name, the form template_list()$call prints.
 #' # A follow-up check belongs to the analysis it checks, so it takes that
 #' # set's subject and type: here, the hazard analysis of reoperation.
-#' add_job("dc.gfup", subject = "reop", type = "hz", dir = d)
+#' add_job("dc.gfup", subject = "reop", type = "hz", root = d)
 #'
 #' # A template's name before a rename is an error that names the new one.
-#' try(add_job("dp.trends", subject = "cohort", type = "eda", dir = d))
+#' try(add_job("dp.trends", subject = "cohort", type = "eda", root = d))
 #'
 #' # A job accumulates a study's edits, so an existing one is never overwritten.
-#' try(add_job(prefix = "ac", subject = "death", type = "hz", dir = d))
+#' try(add_job(prefix = "ac", subject = "death", type = "hz", root = d))
 #'
 #' list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #' unlink(d, recursive = TRUE)
-add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
+add_job <- function(prefix, subject, type, root = NULL, qualifier = NULL, dir) {
+  if (!missing(dir)) root <- .take_renamed("add_job", "dir", "root", dir, !missing(root))
   absent <- c("subject", "type")[c(missing(subject), missing(type))]
   if (length(absent)) {
     stop(.missing_field_message(absent, if (!missing(prefix)) prefix, qualifier), call. = FALSE)
@@ -158,10 +161,10 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
     error = function(e) stop("add_job(): ", conditionMessage(e), call. = FALSE)
   )
   .warn_if_deprecated(row, "add_job")
-  if (is.null(dir)) dir <- .default_study_root("add_job")
+  if (is.null(root)) root <- .default_study_root("add_job")
 
-  out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = dir)
-  out <- .job_path(row, subject, type, dir)
+  out_dir <- hvtiRutilities::study_dir(row$folder[[1L]], root = root)
+  out <- .job_path(row, subject, type, root)
   # A job that runs from a companion script gets that script too, named to
   # pair with the job. Both are checked before either is written, so a
   # refusal leaves the study as it was.
@@ -169,14 +172,14 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   runner <- if (nzchar(runner_src)) sub("[.]qmd$", ".runner.R", out) else character()
   # The same job scaffolded before 2026-10 has the dash spelling. A second,
   # empty copy under the new spelling would split one set's edits across two files.
-  legacy <- .job_path_legacy(row, subject, type, dir)
+  legacy <- .job_path_legacy(row, subject, type, root)
   if (file.exists(legacy)) {
     stop("add_job(): this job already exists as '", legacy, "', its name before 2026-10; refusing to write a ",
          "second copy. Open it with open_job(), or rename it to '", basename(out), "' first.", call. = FALSE)
   }
   # The same job scaffolded under the template's name before a rename, such as
   # graphs/dp.trends.<subject>.<type>.qmd for a dc.trends job, for the same reason.
-  renamed <- .job_paths_renamed(row, subject, type, dir)
+  renamed <- .job_paths_renamed(row, subject, type, root)
   renamed <- renamed[file.exists(renamed)]
   if (length(renamed)) {
     stop("add_job(): this job already exists as '", renamed[[1L]], "', under the template's name before it ",
@@ -206,8 +209,8 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
   # render time.
   needs <- .template_packages(row$file[[1L]])
   # A root that does not exist yet cannot be a renv project, and study_need() requires one that does.
-  if (dir.exists(dir)) {
-    hvtiRutilities::study_need(needs$package, root = dir, caller = "add_job", only_in_renv = TRUE)
+  if (dir.exists(root)) {
+    hvtiRutilities::study_need(needs$package, root = root, caller = "add_job", only_in_renv = TRUE)
   }
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
   if (!file.copy(row$file[[1L]], out, overwrite = FALSE)) {
@@ -229,7 +232,7 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
     }
     .set_markers(runner, subject, type)
   }
-  .install_provenance_hooks(dir)
+  .install_provenance_hooks(root)
   ok <- TRUE
   invisible(out)
 }
@@ -269,7 +272,7 @@ add_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
     up <- dirname(d)
     if (identical(up, d)) {
       stop(fn, "(): the working directory is not inside a study (no _study.yml in ", start,
-           " or above it). Pass `dir`, the study root, or run hvtiRutilities::study_setup() first.",
+           " or above it). Pass `root`, the study root, or run hvtiRutilities::study_setup() first.",
            call. = FALSE)
     }
     d <- up

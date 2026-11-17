@@ -10,7 +10,7 @@ test_that("lp-mirror is a graphs template that add_job() scaffolds by its full n
   expect_identical(row$folder, "graphs")
   expect_identical(row$call, "add_job(\"lp.mirror\", subject = \"treatment\", type = \"propensity\")")
   root <- lm_study()
-  job <- add_job("lp.mirror", "treatment", "propensity", dir = root)
+  job <- add_job("lp.mirror", "treatment", "propensity", root = root)
   expect_identical(basename(job), "lp.mirror.treatment.propensity.qmd")
   expect_identical(normalizePath(dirname(job)), normalizePath(hvtiRutilities::study_dir("graphs", root)))
   src <- readLines(job, warn = FALSE)

@@ -235,8 +235,8 @@ FIGURES <- NULL
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, whole_patients = TRUE)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY, whole_patients = TRUE)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))

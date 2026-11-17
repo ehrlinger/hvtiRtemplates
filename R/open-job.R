@@ -1,12 +1,12 @@
 #' Open a job, creating it from its template if needed
 #'
 #' @description
-#' Finds the study root from \code{dir}, creates the job with
+#' Finds the study root from \code{root}, creates the job with
 #' \code{\link{add_job}} when it does not exist, and opens it in the editor.
 #' An existing job is opened as it stands, never overwritten.
 #'
 #' @details
-#' The study root is the nearest directory at or above \code{dir} holding
+#' The study root is the nearest directory at or above \code{root} holding
 #' \code{_study.yml}, so this can be called from anywhere inside a study.
 #' Naming, prefix and qualifier rules are those of \code{\link{add_job}}.
 #' A job scaffolded before 2026-10, named
@@ -17,9 +17,11 @@
 #' The editor is opened only in an interactive session.
 #'
 #' @inheritParams add_job
-#' @param dir Character. Any directory inside the study. \code{NULL}, the
+#' @param root Character. Any directory inside the study. \code{NULL}, the
 #'   default, starts from the working directory, and is an error outside a
 #'   study.
+#' @param dir Deprecated: the old name of \code{root}. It works, with a warning,
+#'   for one more release; giving both is an error.
 #'
 #' @return The path to the job file, invisibly.
 #'
@@ -29,16 +31,17 @@
 #' suppressMessages(hvtiRutilities::study_setup(
 #'   root, study = "Example", study_tracker_id = 1L, renv = FALSE
 #' ))
-#' open_job(prefix = "ac", subject = "death", type = "eda", dir = root)
+#' open_job(prefix = "ac", subject = "death", type = "eda", root = root)
 #' unlink(root, recursive = TRUE)
 #' @export
-open_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
+open_job <- function(prefix, subject, type, root = NULL, qualifier = NULL, dir) {
+  if (!missing(dir)) root <- .take_renamed("open_job", "dir", "root", dir, !missing(root))
   # The same message as add_job(), since a new user scaffolds through either.
   absent <- c("subject", "type")[c(missing(subject), missing(type))]
   if (length(absent)) {
     stop(.missing_field_message(absent, if (!missing(prefix)) prefix, qualifier, fn = "open_job"), call. = FALSE)
   }
-  root <- if (is.null(dir)) .default_study_root("open_job") else hvtiRutilities::study_root(dir)
+  root <- if (is.null(root)) .default_study_root("open_job") else hvtiRutilities::study_root(root)
   row <- tryCatch(
     .select_template(template_list(), prefix, qualifier),
     error = function(e) stop("open_job(): ", conditionMessage(e), call. = FALSE)
@@ -56,11 +59,11 @@ open_job <- function(prefix, subject, type, dir = NULL, qualifier = NULL) {
     if (length(earlier)) out <- earlier[[1L]]
   }
   if (file.exists(out)) {
-    message("open_job(): '", out, "' already exists; opening it unchanged.")
+    .hvti_inform("open_job(): '", out, "' already exists; opening it unchanged.")
   } else {
     # Warned above already; add_job()'s own warning would say it twice.
     out <- withCallingHandlers(
-      add_job(prefix, subject, type, dir = root, qualifier = qualifier),
+      add_job(prefix, subject, type, root = root, qualifier = qualifier),
       hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning")
     )
   }

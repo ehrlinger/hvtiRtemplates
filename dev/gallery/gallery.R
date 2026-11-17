@@ -113,7 +113,7 @@ gallery_study <- function(root) {
 gallery_job <- function(root, name, spec) {
   parts <- strsplit(spec$template %||% name, "-", fixed = TRUE)[[1L]]
   qualifier <- if (length(parts) > 1L) paste(parts[-1L], collapse = "-") else NULL
-  job <- add_job(parts[[1L]], spec$subject, spec$type, dir = root, qualifier = qualifier)
+  job <- add_job(parts[[1L]], spec$subject, spec$type, root = root, qualifier = qualifier)
   if (!is.null(spec$prepare)) spec$prepare(root, job)
   job <- set_choices(job, spec$choices %||% list())
   if (!is.null(spec$finish)) spec$finish(root, job)

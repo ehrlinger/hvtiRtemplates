@@ -8,7 +8,7 @@ cancel_job(
   path,
   grace = 30,
   other_host = c("refuse", "abandon"),
-  quiet = FALSE,
+  quiet = isTRUE(getOption("hvti.quiet")),
   output_file = NULL
 )
 }
@@ -24,7 +24,8 @@ and \code{"abandon"} records the run ended without signalling anything.
 Ignored for a job on this host.}
 
 \item{quiet}{Logical(1). \code{FALSE} prints the job's state afterwards,
-as \code{\link{job_status}} does.}
+as \code{\link{job_status}} does. Defaults to the family option \code{hvti.quiet}; an
+explicit value wins.}
 
 \item{output_file}{Character(1) or \code{NULL}. The output file name a run was given with
 \code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} cancels the

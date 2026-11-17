@@ -9,35 +9,49 @@
 \usage{
 life_table(
   data,
+  time_col,
+  event_col,
+  strata_col = NULL,
+  conf_level = 0.68268948,
+  event_only = TRUE,
   time,
   event,
-  strata = NULL,
-  conf_level = 0.68268948,
-  event_only = TRUE
+  strata
 )
 
 life_table_at(
   data,
-  time,
-  event,
+  time_col,
+  event_col,
   times,
   labels = NULL,
-  strata = NULL,
-  conf_level = 0.68268948
+  strata_col = NULL,
+  conf_level = 0.68268948,
+  time,
+  event,
+  strata
 )
 
-life_table_tests(data, time, event, strata)
+life_table_tests(data, time_col, event_col, strata_col, time, event, strata)
 
-life_table_keep(data, time, event, strata = NULL)
+life_table_keep(
+  data,
+  time_col,
+  event_col,
+  strata_col = NULL,
+  time,
+  event,
+  strata
+)
 }
 \arguments{
 \item{data}{A data frame, one row per patient.}
 
-\item{time}{Name of the follow-up time column.}
+\item{time_col}{Name of the follow-up time column.}
 
-\item{event}{Name of the event column, 0/1 or logical.}
+\item{event_col}{Name of the event column, 0/1 or logical.}
 
-\item{strata}{Name of one stratification column, or \code{NULL} for the
+\item{strata_col}{Name of one stratification column, or \code{NULL} for the
 whole cohort.}
 
 \item{conf_level}{Confidence level of the limits. Default \code{0.68268948}.}
@@ -46,7 +60,11 @@ whole cohort.}
 \code{PEVENT=1}); \code{FALSE} adds a row per censoring time
 (\code{PEVENT=0}).}
 
-\item{times}{Reporting horizons, in the unit of \code{time}.}
+\item{time, event, strata}{Deprecated: the old names of \code{time_col},
+\code{event_col} and \code{strata_col}. They work, with a warning, for
+one more release; giving an old name with its new one is an error.}
+
+\item{times}{Reporting horizons, in the unit of \code{time_col}.}
 
 \item{labels}{Labels for \code{times}. \code{NULL} labels each horizon with
 its value.}
@@ -56,13 +74,13 @@ its value.}
 \code{TemporalHazard::hzr_kaplan()} (\code{time}, \code{n_risk},
 \code{n_event}, \code{n_censor}, \code{survival}, \code{std_err},
 \code{cl_lower}, \code{cl_upper}, \code{cumhaz}, \code{hazard},
-\code{density}, \code{life}), led by \code{stratum} when \code{strata} is
+\code{density}, \code{life}), led by \code{stratum} when \code{strata_col} is
 given. Its attribute \code{"counts"} has a row per stratum with \code{n},
 \code{n_events}, \code{n_censored} and \code{max_fup}, the last observed
 time; \code{"dropped"} is described under Details, or \code{NULL}.
 
 \code{life_table_at()}: a data frame with a row per stratum and horizon:
-\code{stratum} when \code{strata} is given, then \code{horizon},
+\code{stratum} when \code{strata_col} is given, then \code{horizon},
 \code{time}, \code{survival}, \code{cl_lower}, \code{cl_upper} and
 \code{n_risk}, with the \code{"dropped"} attribute.
 

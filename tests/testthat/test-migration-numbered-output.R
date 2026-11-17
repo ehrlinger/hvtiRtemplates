@@ -19,7 +19,7 @@ test_that("numbered migrated jobs save and embed figures in their logical folder
     folder <- if (trends) "40_graphs" else "10_descriptive"
     job <- migrate_job(
       file.path(root, folder, if (trends) "dp.trends.sas" else "dc.tables.sas"),
-      "cohort", "eda", "dc", if (trends) "trends" else "tables", dir = root
+      "cohort", "eda", "dc", if (trends) "trends" else "tables", root = root
     )
     expect_identical(dirname(job), file.path(root, "10_descriptive"))
     env <- list2env(list(
