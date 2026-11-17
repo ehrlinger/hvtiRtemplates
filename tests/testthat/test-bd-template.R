@@ -7,6 +7,21 @@ test_that("add_job() scaffolds bd into the study's 00_datasets folder", {
   expect_true(any(lines == "TYPE    <- \"build\""))
 })
 
+test_that("bd's setup stops below hvtiRdatabuild 0.3.5, naming the installed version", {
+  # compare_built() takes id_col = from 0.3.5. Below it the call fails with "unused argument" only in the
+  # rebuild chunk, after the working file is written, so setup must refuse first. Every test library carries
+  # 0.3.5 or later, so the guard is only exercised by faking an older version in the real setup chunk.
+  bd_skip()
+  src <- readLines(template_path("bd"), warn = FALSE)
+  start <- grep("^#\\|\\s*label:\\s*setup\\s*$", src)[1L]
+  expect_false(is.na(start))
+  end <- start + grep("^```\\s*$", src[-seq_len(start)])[1L] - 1L
+  setup <- gsub('utils::packageVersion("hvtiRdatabuild")', 'package_version("0.3.4")', src[start:end], fixed = TRUE)
+  withr::local_dir(withr::local_tempdir())
+  expect_error(eval(parse(text = setup), envir = new.env(parent = globalenv())),
+               "hvtiRdatabuild >= 0\\.3\\.5 for compare_built\\(id_col =\\); 0\\.3\\.4 is installed")
+})
+
 test_that("a run without REGISTER writes the working file and its record and registers nothing", {
   bd_skip()
   m <- bd_master()
