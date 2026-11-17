@@ -1,31 +1,31 @@
 #' Open a job, creating it from its template if needed
 #'
 #' @description
-#' Finds the study root from \code{root}, creates the job with
-#' \code{\link{add_job}} when it does not exist, and opens it in the editor.
+#' Finds the study root from `root`, creates the job with
+#' [add_job()] when it does not exist, and opens it in the editor.
 #' An existing job is opened as it stands, never overwritten.
 #'
 #' @details
-#' The study root is the nearest directory at or above \code{root} holding
-#' \code{_study.yml}, so this can be called from anywhere inside a study.
-#' Naming, prefix and qualifier rules are those of \code{\link{add_job}}.
+#' The study root is the nearest directory at or above `root` holding
+#' `_study.yml`, so this can be called from anywhere inside a study.
+#' Naming, prefix and qualifier rules are those of [add_job()].
 #' A job scaffolded before 2026-10, named
-#' \code{<subject>-<type>-<prefix>[-<qualifier>].qmd}, is found and opened
+#' `<subject>-<type>-<prefix>[-<qualifier>].qmd`, is found and opened
 #' under that name. So is a job scaffolded under a template's name before a
-#' rename, such as \code{graphs/dp.trends.<subject>.<type>.qmd} for
-#' \code{dc.trends}, when the call names the new one.
+#' rename, such as `graphs/dp.trends.<subject>.<type>.qmd` for
+#' `dc.trends`, when the call names the new one.
 #' The editor is opened only in an interactive session.
 #'
 #' @inheritParams add_job
-#' @param root Character. Any directory inside the study. \code{NULL}, the
+#' @param root Character. Any directory inside the study. `NULL`, the
 #'   default, starts from the working directory, and is an error outside a
 #'   study.
-#' @param dir Deprecated: the old name of \code{root}. It works, with a warning,
+#' @param dir Deprecated: the old name of `root`. It works, with a warning,
 #'   for one more release; giving both is an error.
 #'
 #' @return The path to the job file, invisibly.
 #'
-#' @seealso \code{\link{add_job}}, \code{\link{render_job}}
+#' @seealso [add_job()], [render_job()]
 #' @examples
 #' root <- file.path(tempdir(), "open-job-example")
 #' suppressMessages(hvtiRutilities::study_setup(

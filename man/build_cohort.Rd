@@ -23,7 +23,7 @@ build_cohort(
 condition is evaluated against the data, with the rule's own environment
 for anything else it names, and must give \code{TRUE} or \code{FALSE} for
 every row. A row whose condition is missing is \strong{not} excluded, as SAS
-\code{if ... then delete} and an hvtiRdatabuild analysis set treat it, and
+\verb{if ... then delete} and an hvtiRdatabuild analysis set treat it, and
 the number of such rows is counted. A downstream job's \code{WHERE} drops
 such rows instead.}
 
@@ -48,13 +48,13 @@ more release; giving an old name with its new one is an error.}
 }
 \value{
 A list:
-  \itemize{
-    \item \code{data}, the kept rows, with the master's columns;
-    \item \code{attrition}, a data frame with one row per step and the
-      columns \code{step}, \code{reason}, \code{rows_before},
-      \code{removed}, \code{missing_condition}, \code{rows_after} and
-      \code{patients_after}.
-  }
+\itemize{
+\item \code{data}, the kept rows, with the master's columns;
+\item \code{attrition}, a data frame with one row per step and the
+columns \code{step}, \code{reason}, \code{rows_before},
+\code{removed}, \code{missing_condition}, \code{rows_after} and
+\code{patients_after}.
+}
 }
 \description{
 The cohort step of a \code{bd} build job. It keeps the master rows a study
@@ -65,9 +65,9 @@ rule names.
 }
 \details{
 Identifiers are compared as text, so \code{100000} in the master
-  matches \code{"100000"} in a list. No message names a data value: list rows
-  that matched no master row are counted, never listed, and a rule that fails
-  is named by its number and reason.
+matches \code{"100000"} in a list. No message names a data value: list rows
+that matched no master row are counted, never listed, and a rule that fails
+is named by its number and reason.
 }
 \examples{
 d <- data.frame(ccfid = c("S1", "S2", "S3", "S4"), age = c(17, 45, NA, 80),

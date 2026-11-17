@@ -2,32 +2,32 @@
 #'
 #' @description
 #' Renders a job from its own directory. By default the render is a draft:
-#' open \code{EDIT:} markers appear in the report's DRAFT banner. With
-#' \code{final = TRUE} an unfinished job stops instead, as the render of an
+#' open `EDIT:` markers appear in the report's DRAFT banner. With
+#' `final = TRUE` an unfinished job stops instead, as the render of an
 #' accepted result should.
 #'
 #' @details
-#' \code{final = TRUE} sets \code{HVTI_TEMPLATE_STRICT} to \code{1} for this
+#' `final = TRUE` sets `HVTI_TEMPLATE_STRICT` to `1` for this
 #' render only and restores its previous value afterwards, including after an
 #' error. The job's own edit guard decides whether it is finished; this
 #' function does not search for markers itself, so it cannot disagree with a
 #' render started from the editor or from Quarto.
 #'
 #' Quarto starts its own R to run the job's chunks, and by default it takes
-#' whichever R comes first on the \code{PATH}, which on a server with several
+#' whichever R comes first on the `PATH`, which on a server with several
 #' versions installed need not be the R that called this function. A study
-#' whose \code{renv} library belongs to the calling R then fails to find its
-#' packages. So the render sets \code{QUARTO_R} to this R's \code{bin}
-#' directory, \code{R.home("bin")}, and restores it afterwards. A
-#' non-empty \code{QUARTO_R} that is already set is left alone, and Quarto
+#' whose `renv` library belongs to the calling R then fails to find its
+#' packages. So the render sets `QUARTO_R` to this R's `bin`
+#' directory, `R.home("bin")`, and restores it afterwards. A
+#' non-empty `QUARTO_R` that is already set is left alone, and Quarto
 #' honors it with a Quarto CLI of 1.8.13 or later. With an older CLI the
-#' quarto package itself sets \code{QUARTO_R} to the calling R for every
+#' quarto package itself sets `QUARTO_R` to the calling R for every
 #' render, so a value set by the user does not reach Quarto there.
 #'
-#' Jobs scaffolded by \code{\link{add_job}} capture their data provenance while
+#' Jobs scaffolded by [add_job()] capture their data provenance while
 #' executing and embed it in the completed HTML. The same project hooks used by
 #' the Render button and bare Quarto commands then publish a same-stem
-#' \code{.provenance.json} sidecar beside the actual output. A failed execution
+#' `.provenance.json` sidecar beside the actual output. A failed execution
 #' that leaves the prior HTML untouched also leaves its sidecar in place. If
 #' publication fails after an output changes, the hooks expose a prior sidecar
 #' only when its recorded output hash still matches. Otherwise they withhold the
@@ -37,27 +37,27 @@
 #' in a clean session, so the report comes from this job alone. A console run,
 #' chunk by chunk or with Run All, still gets through every chunk but the last.
 #' That chunk records provenance, which needs a render, so a console run stops
-#' there with an error of class \code{hvtiRtemplates_not_rendered} that says to
+#' there with an error of class `hvtiRtemplates_not_rendered` that says to
 #' render the job. Everything computed above it is still in the session.
 #'
 #' Quarto's bundled Deno runtime can crash as it starts, on macOS at least,
 #' before it has read the job. The quarto package then reports something
 #' unrelated: "Could not evaluate cli \code{\{\}} expression:
-#' \code{QUARTO_DENO}". A render that fails that way stops with an error of
-#' class \code{hvtiRtemplates_quarto_crashed} that says Quarto crashed, not the
+#' `QUARTO_DENO`". A render that fails that way stops with an error of
+#' class `hvtiRtemplates_quarto_crashed` that says Quarto crashed, not the
 #' job, and that rendering again usually works. The original error is kept as
 #' its parent.
 #'
 #' On a network share Quarto can fail after every chunk has run, unable to
-#' remove the job's \code{_files/execute-results} folder ("Directory not empty
+#' remove the job's `_files/execute-results` folder ("Directory not empty
 #' (os error 39)"), because it deletes a file there before the share has let go
 #' of it. A render that fails with that error, read from Quarto's own message or
 #' from what the render added to the job's run log, is rendered once more, with a
 #' message saying so; the job runs twice, which for a long fit means twice the
 #' time. Any other failure is passed through unchanged, and nothing is deleted. A
 #' second such failure stops with an error of class
-#' \code{hvtiRtemplates_execute_results_stuck}. Rendering from the RStudio
-#' Render button does not go through \code{render_job()} and is not retried.
+#' `hvtiRtemplates_execute_results_stuck`. Rendering from the RStudio
+#' Render button does not go through `render_job()` and is not retried.
 #'
 #' One job renders at a time in a study. A render started while another is
 #' still running in the same study stops with a message naming the running
@@ -70,25 +70,25 @@
 #' delete once you know nothing is rendering there. The lock is the study's, so a
 #' renamed copy of the job meets the same one.
 #'
-#' @param path Character. Path to a job \code{.qmd} file.
-#' @param final Logical. \code{TRUE} for the accepted result. A final render reads registered data
+#' @param path Character. Path to a job `.qmd` file.
+#' @param final Logical. `TRUE` for the accepted result. A final render reads registered data
 #'   only: a job whose data, or whose upstream hand-off, came from an unregistered build stops and
-#'   names \code{hvtiRutilities::update_manifest()}.
-#' @param quiet Logical. Passed to \code{quarto::quarto_render()}. Defaults to the
-#'   family option \code{hvti.quiet}, so \code{options(hvti.quiet = TRUE)} quiets
+#'   names `hvtiRutilities::update_manifest()`.
+#' @param quiet Logical. Passed to `quarto::quarto_render()`. Defaults to the
+#'   family option `hvti.quiet`, so `options(hvti.quiet = TRUE)` quiets
 #'   every render; an explicit value wins.
-#' @param params A named list of single values, or \code{NULL}. The job's Quarto
-#'   \code{params}, as \code{quarto render -P name:value} sets them; passed to
-#'   \code{quarto::quarto_render()} as \code{execute_params}.
-#' @param output_file Character(1) or \code{NULL}. The report's file name, as
-#'   \code{quarto render --output} sets it: a name with an extension and no
-#'   directory, written beside the job. Give each set of \code{params} its own,
+#' @param params A named list of single values, or `NULL`. The job's Quarto
+#'   `params`, as `quarto render -P name:value` sets them; passed to
+#'   `quarto::quarto_render()` as `execute_params`.
+#' @param output_file Character(1) or `NULL`. The report's file name, as
+#'   `quarto render --output` sets it: a name with an extension and no
+#'   directory, written beside the job. Give each set of `params` its own,
 #'   so one report does not overwrite another. The run's progress file is named
 #'   for it too.
 #'
-#' @return \code{path}, invisibly.
+#' @return `path`, invisibly.
 #'
-#' @seealso \code{\link{open_job}}
+#' @seealso [open_job()]
 #' @examples
 #' \donttest{
 #' if (requireNamespace("quarto", quietly = TRUE) && quarto::quarto_available()) {

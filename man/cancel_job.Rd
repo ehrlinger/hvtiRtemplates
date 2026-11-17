@@ -24,28 +24,28 @@ and \code{"abandon"} records the run ended without signalling anything.
 Ignored for a job on this host.}
 
 \item{quiet}{Logical(1). \code{FALSE} prints the job's state afterwards,
-as \code{\link{job_status}} does. Defaults to the family option \code{hvti.quiet}; an
+as \code{\link[=job_status]{job_status()}} does. Defaults to the family option \code{hvti.quiet}; an
 explicit value wins.}
 
 \item{output_file}{Character(1) or \code{NULL}. The output file name a run was given with
-\code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} cancels the
+\code{\link[=run_job]{run_job()}}'s \code{output_file}; its run files are kept under that name. \code{NULL} cancels the
 job's own run.}
 }
 \value{
-Invisibly, the job's status afterwards, as \code{\link{job_status}}
-  returns it.
+Invisibly, the job's status afterwards, as \code{\link[=job_status]{job_status()}}
+returns it.
 }
 \description{
-Stops a job \code{\link{submit_job}} started, and records the end the
-killed process could not: \code{<job>.run.yml} then reads
-\code{cancelled}, and \code{<job>.run.progress} is removed, so
-\code{\link{job_status}} stops reporting the run and the job can be
+Stops a job \code{\link[=submit_job]{submit_job()}} started, and records the end the
+killed process could not: \verb{<job>.run.yml} then reads
+\code{cancelled}, and \verb{<job>.run.progress} is removed, so
+\code{\link[=job_status]{job_status()}} stops reporting the run and the job can be
 submitted again.
 }
 \details{
 The render and every process it started are sent \code{SIGTERM}, given
 \code{grace} seconds to exit, then sent \code{SIGKILL}. They are found by
-a marker \code{\link{submit_job}} puts in the render's environment, which
+a marker \code{\link[=submit_job]{submit_job()}} puts in the render's environment, which
 reaches processes Quarto starts in sessions of their own, and by descent
 from the recorded process, which is signalled only while it is still the
 one the status file records: it must carry the run's marker or, recorded
@@ -53,7 +53,7 @@ without one, match its creation time to the second, so a pid since reused
 by another process is left alone, and an identity in doubt is refused. The
 job is scanned afresh until no process of it remains, so one started while
 it shuts down is stopped too. A run recorded without a creation
-time, such as a render started without \code{\link{submit_job}}, is
+time, such as a render started without \code{\link[=submit_job]{submit_job()}}, is
 refused rather than signalled by its pid alone.
 
 A process can only be checked and signalled on the host it runs on, so a
@@ -66,7 +66,7 @@ stopped and would go on writing the job's output. A job whose process is already
 recorded \code{failed}, with that as its reason, once any of its render
 still running has been stopped. A job that has finished,
 failed or never run is left as it is. A submit or cancel in progress holds
-\code{<job>.run.lock}, as \code{\link{submit_job}} describes, and a cancel
+\verb{<job>.run.lock}, as \code{\link[=submit_job]{submit_job()}} describes, and a cancel
 is refused while it is held.
 Not available on Windows.
 }

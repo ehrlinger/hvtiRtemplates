@@ -29,7 +29,7 @@ counts the estimate was made from ("this boostmtree fit (1,391 patients, 4,771 v
 }
 \value{
 The session's memory limit in GiB, invisibly, when the fit fits. Otherwise an error whose
-  text begins \code{memory:}.
+text begins \verb{memory:}.
 }
 \description{
 Call this at the top of a fit chunk, with the memory the fit is expected to need. It reads the

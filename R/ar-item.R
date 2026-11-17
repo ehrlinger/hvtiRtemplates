@@ -78,17 +78,17 @@
 
 #' Show one item of an ar analysis report
 #'
-#' @description Called once per item in an \code{ar} job. Finds the exhibit a
-#'   finished job recorded under \code{id}, checks that the job last rendered as
+#' @description Called once per item in an `ar` job. Finds the exhibit a
+#'   finished job recorded under `id`, checks that the job last rendered as
 #'   final and that the file still holds the bytes it recorded, and shows the
 #'   exhibit with a link to the job's report. Callouts above it say what to
 #'   check: a job edited since its render, Methods boilerplate that changed, or
 #'   text written against an earlier run.
 #'
-#' @param id The item, \code{"<job>#<label>"}: the source job's file name
-#'   without \code{.qmd}, and the chunk label it saved the exhibit under.
-#' @return A \code{knit_asis} object holding the item's Markdown.
-#' @seealso \code{\link{ar_value}}, \code{\link{ar_paste_methods}}, \code{\link{ar_review}}
+#' @param id The item, `"<job>#<label>"`: the source job's file name
+#'   without `.qmd`, and the chunk label it saved the exhibit under.
+#' @return A `knit_asis` object holding the item's Markdown.
+#' @seealso [ar_value()], [ar_paste_methods()], [ar_review()]
 #' @examples
 #' if (requireNamespace("knitr", quietly = TRUE)) {
 #'   # A copy of a small study shipped with the package: one finished hz job and
@@ -120,11 +120,11 @@ ar_item <- function(id) {
 #' @description Reads one field of a value a finished job saved for its report,
 #'   so a number in the Results text comes from the fit and goes stale with it,
 #'   rather than being retyped. The source run must be final and its file
-#'   unchanged, as for \code{\link{ar_item}}. When the source job has been
-#'   edited since its render, a final render (\code{render_job(final = TRUE)})
+#'   unchanged, as for [ar_item()]. When the source job has been
+#'   edited since its render, a final render (`render_job(final = TRUE)`)
 #'   stops, and a draft warns.
 #'
-#' @param id The value's item id, \code{"<job>#<label>"}.
+#' @param id The value's item id, `"<job>#<label>"`.
 #' @param field The field to return.
 #' @return The field's value.
 #' @examples

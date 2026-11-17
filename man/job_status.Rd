@@ -14,34 +14,34 @@ the function's result rather than an informational message, so the family option
 does not silence it.}
 
 \item{output_file}{Character(1) or \code{NULL}. The output file name a run was given with
-\code{\link{run_job}}'s \code{output_file}; its run files are kept under that name. \code{NULL} reads the
+\code{\link[=run_job]{run_job()}}'s \code{output_file}; its run files are kept under that name. \code{NULL} reads the
 job's own run.}
 }
 \value{
 Invisibly, a list: \code{state} is one of \code{"none"},
-  \code{"submitted"}, \code{"running"}, \code{"finished"}, \code{"failed"},
-  \code{"vanished"} or \code{"cancelled"} (stopped by \code{\link{cancel_job}}); the other elements are what the status file
-  recorded (\code{pid}, \code{created}, \code{host}, \code{started},
-  \code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version},
-  \code{reason}), and \code{log}, the log file's path.
-  \code{unchecked}, for a \code{"submitted"} run past two minutes whose
-  processes could not be looked at, the lookup's error: the run is kept
-  \code{"submitted"} rather than read as \code{"vanished"}, so a second
-  copy is still refused.
-  \code{progress}, the render's progress record when there is one, with
-  \code{eta_s}, the estimated seconds left in the current stage, and
-  \code{stale}, \code{TRUE} when it has not changed for three reporting
-  intervals and at least 30 minutes. \code{diagnosis}, for a \code{failed}
-  or \code{vanished} run whose log can be read, a list of \code{reason}, what
-  went wrong in plain words, and \code{fix}, what to do about it; it is
-  returned when \code{quiet} is \code{TRUE} too.
+\code{"submitted"}, \code{"running"}, \code{"finished"}, \code{"failed"},
+\code{"vanished"} or \code{"cancelled"} (stopped by \code{\link[=cancel_job]{cancel_job()}}); the other elements are what the status file
+recorded (\code{pid}, \code{created}, \code{host}, \code{started},
+\code{ended}, \code{exit_code}, \code{elapsed_s}, \code{r_version},
+\code{reason}), and \code{log}, the log file's path.
+\code{unchecked}, for a \code{"submitted"} run past two minutes whose
+processes could not be looked at, the lookup's error: the run is kept
+\code{"submitted"} rather than read as \code{"vanished"}, so a second
+copy is still refused.
+\code{progress}, the render's progress record when there is one, with
+\code{eta_s}, the estimated seconds left in the current stage, and
+\code{stale}, \code{TRUE} when it has not changed for three reporting
+intervals and at least 30 minutes. \code{diagnosis}, for a \code{failed}
+or \code{vanished} run whose log can be read, a list of \code{reason}, what
+went wrong in plain words, and \code{fix}, what to do about it; it is
+returned when \code{quiet} is \code{TRUE} too.
 }
 \description{
-Reads the status \code{\link{submit_job}} keeps beside a job,
-\code{<job>.run.yml}. A job whose process was killed never records its
+Reads the status \code{\link[=submit_job]{submit_job()}} keeps beside a job,
+\verb{<job>.run.yml}. A job whose process was killed never records its
 end, so a recorded \code{running} is checked against the process itself.
-A render also keeps \code{<job>.run.progress}, read here; a render started
-without \code{\link{submit_job}}, after the last submitted run or with none, is reported from that file alone.
+A render also keeps \verb{<job>.run.progress}, read here; a render started
+without \code{\link[=submit_job]{submit_job()}}, after the last submitted run or with none, is reported from that file alone.
 A progress file older than the run the status file records is ignored.
 }
 \details{

@@ -65,7 +65,7 @@
 #' Paste each item's Methods boilerplate into an ar report
 #'
 #' @description Writes the Methods paragraph each cited job recorded into every
-#'   \strong{empty} \code{::: methods} div of an \code{ar} analysis report, with a
+#'   **empty** `::: methods` div of an `ar` analysis report, with a
 #'   review stamp, so the analyst edits text that starts from the job's own
 #'   choices. A div that already holds text is never touched.
 #'
@@ -74,10 +74,10 @@
 #'   item is resolved before anything is written, so an item that fails (a draft
 #'   source, a missing exhibit) leaves the file exactly as it was.
 #'
-#' @param path Path to the \code{ar} job file.
-#' @param root The study root. \code{NULL} finds it above \code{path}.
+#' @param path Path to the `ar` job file.
+#' @param root The study root. `NULL` finds it above `path`.
 #' @return The ids of the items pasted, invisibly, in file order.
-#' @seealso \code{\link{ar_review}}, \code{\link{ar_item}}
+#' @seealso [ar_review()], [ar_item()]
 #' @examples
 #' # A copy of a small study shipped with the package: one finished hz job and
 #' # an ar report citing two of its exhibits.
@@ -115,16 +115,16 @@ ar_paste_methods <- function(path, root = NULL) {
 #' Mark ar report items as reviewed against their sources' current runs
 #'
 #' @description After rereading an item's methods, results and interpretation
-#'   against a source job that has been rendered again, \code{ar_review()}
+#'   against a source job that has been rendered again, `ar_review()`
 #'   moves that item's review stamp to the job's current run, which clears the
 #'   report's callout. The analyst's text is not changed.
 #'
-#' @param path Path to the \code{ar} job file.
-#' @param item Item ids to stamp, such as \code{"hz.dead.hz#fig-fit"}.
-#'   \code{NULL} stamps every item.
-#' @param root The study root. \code{NULL} finds it above \code{path}.
+#' @param path Path to the `ar` job file.
+#' @param item Item ids to stamp, such as `"hz.dead.hz#fig-fit"`.
+#'   `NULL` stamps every item.
+#' @param root The study root. `NULL` finds it above `path`.
 #' @return The ids of the items stamped, invisibly.
-#' @seealso \code{\link{ar_paste_methods}}
+#' @seealso [ar_paste_methods()]
 #' @examples
 #' # A copy of a small study shipped with the package: one finished hz job and
 #' # an ar report citing two of its exhibits.

@@ -2,50 +2,50 @@
 #'
 #' @description
 #' Copies a supported job template into the taxonomy folder it belongs to,
-#' named \code{<prefix>[.<qualifier>].<subject>.<type>.qmd}, so a study's jobs
+#' named `<prefix>[.<qualifier>].<subject>.<type>.qmd`, so a study's jobs
 #' sort by template, then subject, then type. Refuses to overwrite an existing
 #' job: a job file accumulates a study's edits, and silently replacing one
 #' would discard them.
 #'
 #' @details
-#' \strong{Packages.} When the study is a renv project, the packages the template attaches are installed into
-#' its library and recorded in \code{renv.lock} before the job is written; if they cannot be had, nothing is written.
+#' **Packages.** When the study is a renv project, the packages the template attaches are installed into
+#' its library and recorded in `renv.lock` before the job is written; if they cannot be had, nothing is written.
 #' Outside a renv project nothing is installed.
 #'
-#' \strong{What each argument decides.} \code{prefix} chooses the template,
-#' together with \code{qualifier} where a prefix carries several job types.
-#' \code{subject} and \code{type} are yours to choose. The catalog holds no
+#' **What each argument decides.** `prefix` chooses the template,
+#' together with `qualifier` where a prefix carries several job types.
+#' `subject` and `type` are yours to choose. The catalog holds no
 #' list of valid values for either, only the rule that each matches
-#' \code{^[A-Za-z0-9_]+$}. They are more than a filename, though. Together
+#' `^[A-Za-z0-9_]+$`. They are more than a filename, though. Together
 #' they name the job's set, and the set is used in four places:
 #' \itemize{
-#'   \item the job's filename, \code{<prefix>[.<qualifier>].<subject>.<type>.qmd};
-#'   \item the job's own \code{SUBJECT} and \code{TYPE} lines, which
-#'     \code{add_job()} rewrites to your values;
+#'   \item the job's filename, `<prefix>[.<qualifier>].<subject>.<type>.qmd`;
+#'   \item the job's own `SUBJECT` and `TYPE` lines, which
+#'     `add_job()` rewrites to your values;
 #'   \item the render, which stops when the filename and those two lines
 #'     disagree, so a job renamed by hand cannot quietly write its results
 #'     into another set;
-#'   \item the folder the job saves its results in, a \code{<subject>-<type>}
-#'     folder under the study's \code{estimates} (and, for some templates,
-#'     \code{graphs}), which is where the next job in the chain looks for
+#'   \item the folder the job saves its results in, a `<subject>-<type>`
+#'     folder under the study's `estimates` (and, for some templates,
+#'     `graphs`), which is where the next job in the chain looks for
 #'     them.
 #' }
-#' The last of these is the one that bites. \code{hm} reads the
-#' \code{hz.rds} that \code{hz} saved, and finds it only when both jobs
+#' The last of these is the one that bites. `hm` reads the
+#' `hz.rds` that `hz` saved, and finds it only when both jobs
 #' carry the same subject and type. Give every job of one analysis the same
-#' pair, e.g. \code{subject = "death", type = "hz"} for \code{ac}, \code{hz},
-#' \code{hm} and \code{hp}, and give a different analysis a different pair.
-#' The \code{call} column of \code{\link{template_list}} shows each template's
+#' pair, e.g. `subject = "death", type = "hz"` for `ac`, `hz`,
+#' `hm` and `hp`, and give a different analysis a different pair.
+#' The `call` column of [template_list()] shows each template's
 #' own example values, which are a starting point, not a requirement.
 #'
 #' A job is identified by three or four fields. One or two come from the
-#' template, its \code{prefix} and, where the prefix carries several job types,
-#' its \code{qualifier}; two come from the caller. The pair
-#' \code{(subject, type)} names the \strong{set} the job belongs to, and both
+#' template, its `prefix` and, where the prefix carries several job types,
+#' its `qualifier`; two come from the caller. The pair
+#' `(subject, type)` names the **set** the job belongs to, and both
 #' are required. The subject is the grouping topic, not necessarily a
-#' statistical endpoint. An endpoint-driven job may use \code{"death"}; an
-#' endpoint-free job may use \code{"cohort"}, \code{"treatment"}, or
-#' \code{"labs"} without inventing an outcome. One subject can be analyzed by
+#' statistical endpoint. An endpoint-driven job may use `"death"`; an
+#' endpoint-free job may use `"cohort"`, `"treatment"`, or
+#' `"labs"` without inventing an outcome. One subject can be analyzed by
 #' several methods, and the jobs those chains share would otherwise collide. A
 #' death-hazard set and a death random-forest-survival set both begin from the
 #' same life table, so keyed on the subject alone both would be written to one
@@ -57,56 +57,56 @@
 #' idempotent.
 #'
 #' A template whose job runs from a companion script also writes that script
-#' beside the job, from \code{inst/runners/<name>-runner.R}: today the
-#' bootstrap reports \code{bl}, \code{br}, \code{bc} and \code{bh}, whose
+#' beside the job, from `inst/runners/<name>-runner.R`: today the
+#' bootstrap reports `bl`, `br`, `bc` and `bh`, whose
 #' runner screens and saves the bag the report reads. The runner is named
-#' \code{<prefix>[.<qualifier>].<subject>.<type>.runner.R}, gets the same \code{SUBJECT} and
-#' \code{TYPE} substitution, and is refused, like the job, if it already
-#' exists. Its study choices carry \code{EDIT:} markers for the author to
+#' `<prefix>[.<qualifier>].<subject>.<type>.runner.R`, gets the same `SUBJECT` and
+#' `TYPE` substitution, and is refused, like the job, if it already
+#' exists. Its study choices carry `EDIT:` markers for the author to
 #' work.
 #'
-#' \strong{Names before 2026-10.} Jobs were named
-#' \code{<subject>-<type>-<prefix>[-<qualifier>].qmd} until 2026-10. They keep
-#' that name and keep rendering; \code{add_job()} refuses to write a second
-#' copy of such a job under the new name, and \code{\link{open_job}} opens it.
+#' **Names before 2026-10.** Jobs were named
+#' `<subject>-<type>-<prefix>[-<qualifier>].qmd` until 2026-10. They keep
+#' that name and keep rendering; `add_job()` refuses to write a second
+#' copy of such a job under the new name, and [open_job()] opens it.
 #'
 #' A template the catalog marks deprecated still scaffolds, with a warning
-#' naming its replacement; see \code{\link{template_catalog}}.
+#' naming its replacement; see [template_catalog()].
 #'
-#' \strong{Renamed templates.} \code{dp.eda} and \code{dp.trends} were renamed
-#' \code{dc.eda} and \code{dc.trends} on 2026-10-10. The old names scaffolded
+#' **Renamed templates.** `dp.eda` and `dp.trends` were renamed
+#' `dc.eda` and `dc.trends` on 2026-10-10. The old names scaffolded
 #' the renamed template, with a warning, for the releases that followed, and
-#' are now an error naming the new name. A \code{dc.trends} job
-#' is written to the \code{descriptive} folder, where a \code{dp.trends} job
-#' was written to \code{graphs}. A job scaffolded under the old name keeps it
-#' and keeps rendering; \code{add_job()} refuses to write a second copy of it
-#' under the new name, and \code{\link{open_job}} opens it.
+#' are now an error naming the new name. A `dc.trends` job
+#' is written to the `descriptive` folder, where a `dp.trends` job
+#' was written to `graphs`. A job scaffolded under the old name keeps it
+#' and keeps rendering; `add_job()` refuses to write a second copy of it
+#' under the new name, and [open_job()] opens it.
 #'
-#' @param qualifier Job type within the prefix, e.g. \code{"trends"} for
-#'   \code{dp}. Required only where a prefix carries more than one template;
+#' @param qualifier Job type within the prefix, e.g. `"trends"` for
+#'   `dp`. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
-#'   Restricted to \code{[A-Za-z0-9_]+}, because \code{.} separates the
+#'   Restricted to `[A-Za-z0-9_]+`, because `.` separates the
 #'   filename's fields.
 #' @param prefix Job type: one of the prefixes reported by
-#'   \code{\link{template_list}}, or a template's full name as reported in
-#'   its \code{name} column, e.g. \code{"dc.trends"}; the dash spelling
-#'   \code{"dc-trends"} is accepted too. A full name carries the qualifier, so
-#'   \code{qualifier} must then be left \code{NULL}.
-#' @param subject Grouping topic for the job set, e.g. \code{"death"} or
-#'   \code{"cohort"}. A subject names a statistical endpoint only when the
+#'   [template_list()], or a template's full name as reported in
+#'   its `name` column, e.g. `"dc.trends"`; the dash spelling
+#'   `"dc-trends"` is accepted too. A full name carries the qualifier, so
+#'   `qualifier` must then be left `NULL`.
+#' @param subject Grouping topic for the job set, e.g. `"death"` or
+#'   `"cohort"`. A subject names a statistical endpoint only when the
 #'   job analyses one. Your choice: there is no list of valid values, and
 #'   every job of one analysis should share it (see Details). Must
-#'   match \code{^[A-Za-z0-9_]+$}: \code{.} separates the filename's fields,
-#'   and \code{-} separated them in names before 2026-10, so neither may
+#'   match `^[A-Za-z0-9_]+$`: `.` separates the filename's fields,
+#'   and `-` separated them in names before 2026-10, so neither may
 #'   appear here.
-#' @param type The analysis type the job's set belongs to, e.g. \code{"hz"}.
-#'   Your choice, like \code{subject}, and shared the same way. Must match
-#'   \code{^[A-Za-z0-9_]+$}, for the same reason as \code{subject}.
+#' @param type The analysis type the job's set belongs to, e.g. `"hz"`.
+#'   Your choice, like `subject`, and shared the same way. Must match
+#'   `^[A-Za-z0-9_]+$`, for the same reason as `subject`.
 #' @param root The study root to write into. The taxonomy folder beneath it is
-#'   created if it does not exist. \code{NULL}, the default, finds the study
+#'   created if it does not exist. `NULL`, the default, finds the study
 #'   root by walking up from the working directory, and is an error outside a
 #'   study, so a job is never written somewhere that is not a study.
-#' @param dir Deprecated: the old name of \code{root}. It works, with a warning,
+#' @param dir Deprecated: the old name of `root`. It works, with a warning,
 #'   for one more release; giving both is an error.
 #'
 #' @return The job's path, invisibly. On any failure -- including one after
@@ -114,7 +114,7 @@
 #'   the runner included, so a returned path always names a complete,
 #'   correctly-declared job.
 #'
-#' @seealso \code{\link{template_list}}, \code{\link{template_path}}
+#' @seealso [template_list()], [template_path()]
 #'
 #' @export
 #'

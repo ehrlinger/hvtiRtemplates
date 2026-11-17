@@ -16,17 +16,17 @@ Invisibly, the path of the installed command.
 }
 \description{
 Copies the \code{hvti} shell command into a directory on your \code{PATH}.
-\code{hvti run job.qmd} then starts \code{\link{run_job}} on the R that the
+\verb{hvti run job.qmd} then starts \code{\link[=run_job]{run_job()}} on the R that the
 study's \code{renv.lock} records, from a terminal, whichever R your own
-session would have started. \code{hvti status} and \code{hvti cancel} do the
-same for \code{\link{job_status}} and \code{\link{cancel_job}}.
+session would have started. \verb{hvti status} and \verb{hvti cancel} do the
+same for \code{\link[=job_status]{job_status()}} and \code{\link[=cancel_job]{cancel_job()}}.
 
-\code{hvti run} takes \code{--final}, and the job's Quarto parameters as
-\code{quarto render} does, \code{-P name:value} once per parameter, with
-\code{--output file} naming the report; each becomes \code{\link{run_job}}'s
-\code{params} and \code{output_file}. A value is read as \code{quarto render}
-reads it, so \code{-P fit_m:1000} is a number. \code{hvti status} and
-\code{hvti cancel} take the same \code{--output} to name the run:
+\verb{hvti run} takes \code{--final}, and the job's Quarto parameters as
+\verb{quarto render} does, \verb{-P name:value} once per parameter, with
+\verb{--output file} naming the report; each becomes \code{\link[=run_job]{run_job()}}'s
+\code{params} and \code{output_file}. A value is read as \verb{quarto render}
+reads it, so \verb{-P fit_m:1000} is a number. \verb{hvti status} and
+\verb{hvti cancel} take the same \code{--output} to name the run:
 \preformatted{hvti run analyses/job.qmd -P fit_m:1000 --output job.M1000.html
 hvti status analyses/job.qmd --output job.M1000.html}
 }
@@ -47,5 +47,5 @@ if (.Platform$OS.type != "windows") {
 }
 }
 \seealso{
-\code{\link{run_job}}
+\code{\link[=run_job]{run_job()}}
 }

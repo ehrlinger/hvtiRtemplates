@@ -1,6 +1,6 @@
 #' The study's secret key for patient-ID digests
 #'
-#' Reads the key from \code{<root>/.hvti/id_key}, creating it on first use from
+#' Reads the key from `<root>/.hvti/id_key`, creating it on first use from
 #' 32 cryptographically random bytes, hex encoded. The file is readable by its
 #' owner and the study's group, so colleagues can render the study's jobs, and by
 #' no one else where the operating system supports that. The key is never
@@ -8,7 +8,7 @@
 #'
 #' @param root The study root.
 #' @param create Whether a missing key may be made. Only a step that saves new
-#'   digests passes \code{TRUE}; a reader of saved digests needs the key they
+#'   digests passes `TRUE`; a reader of saved digests needs the key they
 #'   were made with, so a missing one is an error.
 #' @return The key, one string of 64 hex characters.
 #' @noRd
@@ -56,14 +56,14 @@
 
 #' Identifiers as text, for comparing and digesting
 #'
-#' A whole number is written without an exponent, so \code{100000} and
-#' \code{100000L} give the same text. A bit64 \code{integer64} is written by
-#' its own \code{as.character()} method: it keeps its value in the bits of a
-#' double, so \code{is.numeric()} is \code{TRUE} and \code{sprintf("\%.0f")}
-#' would read every one as \code{"0"}.
+#' A whole number is written without an exponent, so `100000` and
+#' `100000L` give the same text. A bit64 `integer64` is written by
+#' its own `as.character()` method: it keeps its value in the bits of a
+#' double, so `is.numeric()` is `TRUE` and `sprintf("%.0f")`
+#' would read every one as `"0"`.
 #'
 #' @param x A vector of identifiers.
-#' @return A character vector as long as \code{x}, \code{NA} where \code{x} is.
+#' @return A character vector as long as `x`, `NA` where `x` is.
 #' @noRd
 .id_text <- function(x) {
   if (inherits(x, "integer64")) {
@@ -85,11 +85,11 @@
 #'
 #' HMAC-SHA256 of each identifier under the study key, so an ID can be
 #' compared and joined on without being stored. A whole number is written
-#' without an exponent first, so \code{100000} and \code{100000L} digest alike.
+#' without an exponent first, so `100000` and `100000L` digest alike.
 #'
 #' @param x A vector of identifiers.
-#' @param key The key from \code{.study_id_key()}.
-#' @return A character vector as long as \code{x}, \code{NA} where \code{x} is.
+#' @param key The key from `.study_id_key()`.
+#' @return A character vector as long as `x`, `NA` where `x` is.
 #' @noRd
 .id_digest <- function(x, key) {
   text <- .id_text(x)
@@ -103,7 +103,7 @@
 #' Saved with a digested bundle, so a reader can tell that the study's key was
 #' lost or replaced since, which would otherwise make every digest miss.
 #'
-#' @param key The key from \code{.study_id_key()}.
+#' @param key The key from `.study_id_key()`.
 #' @return Sixteen hex characters.
 #' @noRd
 .id_key_fingerprint <- function(key) substr(digest::hmac(key, "hvtiRtemplates id key fingerprint", "sha256"), 1L, 16L)
@@ -113,7 +113,7 @@
 #' Reads the key without creating one, and stops when it is missing or is not
 #' the key the bundle's digests were made with.
 #'
-#' @param bundle A bundle saved by \code{.digest_bundle_ids()}.
+#' @param bundle A bundle saved by `.digest_bundle_ids()`.
 #' @param root The study root.
 #' @return The key.
 #' @noRd
@@ -130,13 +130,13 @@
 
 #' Replace the patient IDs in a bundle with their study-keyed digest
 #'
-#' Every data frame in the bundle that carries \code{id_col}, the fitted
+#' Every data frame in the bundle that carries `id_col`, the fitted
 #' models' own copies of their data included, has that column replaced by
-#' \code{.id_digest()}. The bundle's \code{meta$id_digest} is set to
-#' \code{TRUE} so a reader knows to digest its own IDs before comparing.
+#' `.id_digest()`. The bundle's `meta$id_digest` is set to
+#' `TRUE` so a reader knows to digest its own IDs before comparing.
 #' Attributes, such as the carried lineage, are kept and not searched.
 #'
-#' @param bundle A fitted bundle such as an \code{lm_fit}.
+#' @param bundle A fitted bundle such as an `lm_fit`.
 #' @param root The study root, whose key is used.
 #' @param id_col The ID column's name.
 #' @param skip Names of top-level elements to leave alone, such as models

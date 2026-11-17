@@ -16,11 +16,11 @@ The field's value.
 }
 \description{
 Reads one field of a value a finished job saved for its report,
-  so a number in the Results text comes from the fit and goes stale with it,
-  rather than being retyped. The source run must be final and its file
-  unchanged, as for \code{\link{ar_item}}. When the source job has been
-  edited since its render, a final render (\code{render_job(final = TRUE)})
-  stops, and a draft warns.
+so a number in the Results text comes from the fit and goes stale with it,
+rather than being retyped. The source run must be final and its file
+unchanged, as for \code{\link[=ar_item]{ar_item()}}. When the source job has been
+edited since its render, a final render (\code{render_job(final = TRUE)})
+stops, and a draft warns.
 }
 \examples{
 if (requireNamespace("knitr", quietly = TRUE)) {

@@ -11,7 +11,7 @@ import_job(path, subject = NULL, type = NULL, root = NULL, from, dir)
 as \code{add_job()} names jobs.}
 
 \item{subject, type}{The job's set in this study. \code{NULL}, the default,
-keeps the source job's. See \code{\link{add_job}} for what they decide.}
+keeps the source job's. See \code{\link[=add_job]{add_job()}} for what they decide.}
 
 \item{root}{The study root to import into. \code{NULL}, the default, finds
 it by walking up from the working directory, as \code{add_job()} does.}
@@ -22,7 +22,7 @@ its new one is an error.}
 }
 \value{
 The imported job's path, invisibly. On any failure no file is left
-  behind, the runner included.
+behind, the runner included.
 }
 \description{
 Copies a job \code{.qmd} from another study into the current study, keeping
@@ -30,7 +30,7 @@ the source study's edits, so a job adapted once, such as an aorta-specific
 \code{ac} job, can be adapted again rather than rebuilt from the template.
 }
 \details{
-The job is written where \code{\link{add_job}} would write a new job from
+The job is written where \code{\link[=add_job]{add_job()}} would write a new job from
 the same template, under the name it would give it, and with the same
 setup: the template's packages and any further packages the job's own
 setup chunk attaches are installed into the study's renv library, the
@@ -51,19 +51,19 @@ it, including choices that were right for that study and may be wrong for
 this one. \code{import_job()} rewrites none of them. Instead its message
 lists, by line number, each one to check:
 \itemize{
-  \item the \code{DATASET} the job reads;
-  \item a \code{WHERE} row selection, unless it is \code{NULL};
-  \item every \code{EDIT:} marker still in the job;
-  \item every absolute file path, such as \code{"/studies/aorta/..."} or
-    \code{"C:/..."}, which names a file in the other study or on another
-    machine.
+\item the \code{DATASET} the job reads;
+\item a \code{WHERE} row selection, unless it is \code{NULL};
+\item every \verb{EDIT:} marker still in the job;
+\item every absolute file path, such as \code{"/studies/aorta/..."} or
+\code{"C:/..."}, which names a file in the other study or on another
+machine.
 }
 Values are never quoted in the message, because a selection can name a
 patient. Paths relative to the study, which is how a template refers to its
 study's files, are not listed.
 
 The job keeps the template version it was written from, so
-\code{\link{upgrade_job}} can bring an older job up to the current template
+\code{\link[=upgrade_job]{upgrade_job()}} can bring an older job up to the current template
 afterwards: \code{upgrade_job(import_job(path))}.
 }
 \examples{
@@ -86,5 +86,5 @@ try(import_job(job, subject = "reop", root = here))
 unlink(c(other, here), recursive = TRUE)
 }
 \seealso{
-\code{\link{add_job}}, \code{\link{upgrade_job}}
+\code{\link[=add_job]{add_job()}}, \code{\link[=upgrade_job]{upgrade_job()}}
 }

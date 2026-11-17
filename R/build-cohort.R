@@ -3,49 +3,49 @@
 #' Cut a study cohort from a master, recording who was dropped and why
 #'
 #' @description
-#' The cohort step of a \code{bd} build job. It keeps the master rows a study
+#' The cohort step of a `bd` build job. It keeps the master rows a study
 #' is made of and returns, beside them, an attrition table: one row per step,
 #' with the rows each step removed and the patients left. A step is named by its
 #' reason, never by its rule's text, so the table is safe to print whatever a
 #' rule names.
 #'
 #' @param data A data frame read from the master.
-#' @param exclude \code{NULL}, or a list of rules written
-#'   \code{condition ~ "Reason"}, applied in order to the rows still kept. Each
+#' @param exclude `NULL`, or a list of rules written
+#'   `condition ~ "Reason"`, applied in order to the rows still kept. Each
 #'   condition is evaluated against the data, with the rule's own environment
-#'   for anything else it names, and must give \code{TRUE} or \code{FALSE} for
-#'   every row. A row whose condition is missing is \strong{not} excluded, as SAS
-#'   \code{if ... then delete} and an hvtiRdatabuild analysis set treat it, and
-#'   the number of such rows is counted. A downstream job's \code{WHERE} drops
+#'   for anything else it names, and must give `TRUE` or `FALSE` for
+#'   every row. A row whose condition is missing is **not** excluded, as SAS
+#'   `if ... then delete` and an hvtiRdatabuild analysis set treat it, and
+#'   the number of such rows is counted. A downstream job's `WHERE` drops
 #'   such rows instead.
-#' @param path \code{NULL}, or the path to a CSV cohort list, such as a REDCap
-#'   export, carrying the \code{join_cols} columns. Only master rows matched by a
+#' @param path `NULL`, or the path to a CSV cohort list, such as a REDCap
+#'   export, carrying the `join_cols` columns. Only master rows matched by a
 #'   list row are kept. Dates are written YYYY-MM-DD. A list may carry
-#'   \code{exclude} (1 to exclude) and \code{reason} columns; each reason becomes
+#'   `exclude` (1 to exclude) and `reason` columns; each reason becomes
 #'   a step of its own. A list's reasons are printed in the report, so they
 #'   must be categories (such as "Redo operation"), never free text, names or
 #'   dates.
 #' @param join_cols The columns that match a cohort-list row to a master row.
-#'   Used only with \code{path}.
+#'   Used only with `path`.
 #' @param id_col The patient identifier column, used to count patients. It has
-#'   no default: leaving it out warns and reads \code{"ccfid"} for one more
+#'   no default: leaving it out warns and reads `"ccfid"` for one more
 #'   release, then is an error.
-#' @param cohort,join_by,id Deprecated: the old names of \code{path},
-#'   \code{join_cols} and \code{id_col}. They work, with a warning, for one
+#' @param cohort,join_by,id Deprecated: the old names of `path`,
+#'   `join_cols` and `id_col`. They work, with a warning, for one
 #'   more release; giving an old name with its new one is an error.
 #'
-#' @details Identifiers are compared as text, so \code{100000} in the master
-#'   matches \code{"100000"} in a list. No message names a data value: list rows
+#' @details Identifiers are compared as text, so `100000` in the master
+#'   matches `"100000"` in a list. No message names a data value: list rows
 #'   that matched no master row are counted, never listed, and a rule that fails
 #'   is named by its number and reason.
 #'
 #' @return A list:
 #'   \itemize{
-#'     \item \code{data}, the kept rows, with the master's columns;
-#'     \item \code{attrition}, a data frame with one row per step and the
-#'       columns \code{step}, \code{reason}, \code{rows_before},
-#'       \code{removed}, \code{missing_condition}, \code{rows_after} and
-#'       \code{patients_after}.
+#'     \item `data`, the kept rows, with the master's columns;
+#'     \item `attrition`, a data frame with one row per step and the
+#'       columns `step`, `reason`, `rows_before`,
+#'       `removed`, `missing_condition`, `rows_after` and
+#'       `patients_after`.
 #'   }
 #'
 #' @examples

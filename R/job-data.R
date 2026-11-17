@@ -600,197 +600,197 @@
 #' @description The shared data step of every analysis template. It reads a
 #'   registered dataset (or an hvtiRdatabuild analysis set), resolves the
 #'   patient identifier, drops the medical record number columns, keeps the rows
-#'   \code{where} selects and checks that rows are unique on \code{key_cols}.
+#'   `where` selects and checks that rows are unique on `key_cols`.
 #'
-#' @param cfg Study configuration, from \code{\link[hvtiRutilities]{study_config}}.
-#' @param dataset Name of a dataset registered in \code{_study.yml};
-#'   \code{"built"} and \code{"study"} both name the study dataset, and the
-#'   selection records \code{"study"}.
+#' @param cfg Study configuration, from [hvtiRutilities::study_config()].
+#' @param dataset Name of a dataset registered in `_study.yml`;
+#'   `"built"` and `"study"` both name the study dataset, and the
+#'   selection records `"study"`.
 #' @param analysis_set Name of an analysis set written by
-#'   \code{hvtiRdatabuild::write_analysis_set()}, or \code{NULL} to read
-#'   \code{dataset} whole. Analysis sets derive from the study dataset only.
-#' @param where Rows to keep: \code{NULL}, one condition from \code{quote()}, or
-#'   a list from \code{rlang::exprs()}, all of which must hold. Conditions follow
-#'   \code{dplyr::filter()}: a row where a condition is \code{NA} is dropped. A
-#'   value from outside the data, written \code{.env$min_age} or as a name that
+#'   `hvtiRdatabuild::write_analysis_set()`, or `NULL` to read
+#'   `dataset` whole. Analysis sets derive from the study dataset only.
+#' @param where Rows to keep: `NULL`, one condition from `quote()`, or
+#'   a list from `rlang::exprs()`, all of which must hold. Conditions follow
+#'   `dplyr::filter()`: a row where a condition is `NA` is dropped. A
+#'   value from outside the data, written `.env$min_age` or as a name that
 #'   is not a column, is fixed into the condition when the data are read, so the
 #'   recorded condition rebuilds the same rows wherever it runs. Only a plain
-#'   name and \code{.env$x} are fixed in; \code{x$y} and \code{x@y} are kept as
+#'   name and `.env$x` are fixed in; `x$y` and `x@y` are kept as
 #'   written, and a name for a function stays a name. Such a value must be a
-#'   vector, \code{NULL}, a symbol or a call; a data frame, list, environment or
+#'   vector, `NULL`, a symbol or a call; a data frame, list, environment or
 #'   S4 object stops, since it would be saved whole. A condition
-#'   that mentions the \code{id_col} column, a column named \code{MRN} or
-#'   \code{eMRN} (ignoring case), or an SSN or \code{masterid} column dropped
-#'   below, in this dataset or a joined one, directly or as \code{.data$x} or
-#'   \code{.data[["x"]]}, stops before any row is filtered, because each
+#'   that mentions the `id_col` column, a column named `MRN` or
+#'   `eMRN` (ignoring case), or an SSN or `masterid` column dropped
+#'   below, in this dataset or a joined one, directly or as `.data$x` or
+#'   `.data[["x"]]`, stops before any row is filtered, because each
 #'   condition is saved, values included, in the job's output. Exclude those
 #'   patients in the dataset build, or with an hvtiRdatabuild analysis set,
 #'   instead. A value from outside the data is fixed in before this check, so
-#'   \code{.data[[nm]]} is judged by the column \code{nm} names. A column
-#'   reached any other way, as by \code{.data[[paste0(...)]]} or a string
-#'   lookup such as \code{get()}, stops too, since it cannot be known.
+#'   `.data[[nm]]` is judged by the column `nm` names. A column
+#'   reached any other way, as by `.data[[paste0(...)]]` or a string
+#'   lookup such as `get()`, stops too, since it cannot be known.
 #'   A function bound to such a lookup under another name is read as that
 #'   lookup. Values are checked as well as names, after every name check: the
 #'   check covers literal values (including a vector fixed in from outside) of
-#'   five or more characters that equal a value of the identifier, \code{MRN},
-#'   \code{eMRN}, SSN or \code{masterid} columns in the data, and folds only arithmetic,
-#'   \code{c()}, \code{paste}/\code{paste0} and numeric or character coercion
-#'   of constants (such as \code{4730000000 + 1}) to check their result. So a
+#'   five or more characters that equal a value of the identifier, `MRN`,
+#'   `eMRN`, SSN or `masterid` columns in the data, and folds only arithmetic,
+#'   `c()`, `paste`/`paste0` and numeric or character coercion
+#'   of constants (such as `4730000000 + 1`) to check their result. So a
 #'   wrapper function or a copy of the identifier under another name is caught
 #'   when it is compared with such a value. The check never calls any other
 #'   function: a value produced by any other call, or computed from a data
-#'   column, as in \code{id2 / 2 != 2365000000.5}, is not checked. A threshold
+#'   column, as in `id2 / 2 != 2365000000.5`, is not checked. A threshold
 #'   that happens to equal a patient's identifier is refused too, and the
 #'   message says so; numbers are compared as whole numbers where they are
-#'   whole, and \code{NA} never matches. Thresholds shorter than five
+#'   whole, and `NA` never matches. Thresholds shorter than five
 #'   characters, such as 1, 18 or 2015, are not checked, so a study keyed on
 #'   shorter identifiers relies on the name checks.
 #' @param id_col The patient identifier column. It has no default: leaving it
-#'   out warns, for one release, and reads \code{"ccfid"}. When it is
-#'   \code{"ccfid"} and absent, \code{MRN} and then \code{eMRN} are used.
-#' @param key_cols Columns that make a row unique. \code{NULL} (the default) uses
-#'   the key registered for \code{dataset}, and \code{id_col}, one row per
+#'   out warns, for one release, and reads `"ccfid"`. When it is
+#'   `"ccfid"` and absent, `MRN` and then `eMRN` are used.
+#' @param key_cols Columns that make a row unique. `NULL` (the default) uses
+#'   the key registered for `dataset`, and `id_col`, one row per
 #'   patient, when none is registered. Add a visit time or date for repeated
 #'   measures. A key that differs from the registered one is noted in the
-#'   record. Templates pass their \code{KEY}, a study choice the analyst
-#'   reviews, so the default serves a direct call. With \code{join}, the cohort must be one row per patient. A key
+#'   record. Templates pass their `KEY`, a study choice the analyst
+#'   reviews, so the default serves a direct call. With `join`, the cohort must be one row per patient. A key
 #'   of cohort columns is checked on the cohort, and the result is keyed as
-#'   \code{reduce} says; a key that names a joined column, such as a visit
+#'   `reduce` says; a key that names a joined column, such as a visit
 #'   time only the joined dataset carries, is checked on the joined rows and
 #'   keys the result.
 #' @param join Name of one registered ancillary dataset (such as echoes or
-#'   labs) to join to the cohort on \code{id_col}, or \code{NULL}. The cohort,
-#'   \code{dataset} or \code{analysis_set}, decides the patients: joined
+#'   labs) to join to the cohort on `id_col`, or `NULL`. The cohort,
+#'   `dataset` or `analysis_set`, decides the patients: joined
 #'   records of other patients are dropped and counted. A dataset registered
-#'   with a \code{kind} other than \code{"ancillary"} is refused.
-#' @param join_cols Cohort columns each joined row carries, the \code{id_col}
-#'   always among them; \code{NULL} carries all of them. A column both
+#'   with a `kind` other than `"ancillary"` is refused.
+#' @param join_cols Cohort columns each joined row carries, the `id_col`
+#'   always among them; `NULL` carries all of them. A column both
 #'   datasets have stops, so list only the cohort columns the job needs.
-#' @param reduce \code{NULL} keeps one row per joined record, keyed on the
-#'   joined dataset's key. \code{list(rule = "first", by = "echo_date")}
-#'   keeps one row per cohort patient, keyed on \code{id_col}: the record with
-#'   the smallest \code{by} (\code{"first"}), the largest (\code{"last"}),
-#'   or the one nearest a cohort column (\code{rule = "nearest"} with
-#'   \code{to = "dt_surg"}). A patient with no record keeps the row with the
-#'   joined columns missing. \code{by} may name several columns, such as
-#'   \code{c("echo_date", "echo_seq")}: each later one breaks a tie on those
+#' @param reduce `NULL` keeps one row per joined record, keyed on the
+#'   joined dataset's key. `list(rule = "first", by = "echo_date")`
+#'   keeps one row per cohort patient, keyed on `id_col`: the record with
+#'   the smallest `by` (`"first"`), the largest (`"last"`),
+#'   or the one nearest a cohort column (`rule = "nearest"` with
+#'   `to = "dt_surg"`). A patient with no record keeps the row with the
+#'   joined columns missing. `by` may name several columns, such as
+#'   `c("echo_date", "echo_seq")`: each later one breaks a tie on those
 #'   before it, in the same direction, and a missing tie-break value loses the
-#'   tie. Records with no value in the first \code{by} column are left out and
+#'   tie. Records with no value in the first `by` column are left out and
 #'   counted, and a patient whose chosen record still ties with another stops
 #'   the read, since picking one would be a hidden choice.
 #' @param join_key_cols Columns that make the joined dataset's rows unique,
 #'   overriding its registered key. A join needs one or the other.
-#' @param one_row_per_patient \code{TRUE} for a job that models one row per
+#' @param one_row_per_patient `TRUE` for a job that models one row per
 #'   patient, such as a hazard, logistic or random forest fit. Such a job stops
-#'   on a \code{join} without \code{reduce}, before any data are read, since
+#'   on a `join` without `reduce`, before any data are read, since
 #'   the long form would count every joined record as a patient, and on rows
 #'   kept that repeat a patient, as a dataset of repeated records read whole
-#'   would, after the rows are selected. \code{FALSE},
+#'   would, after the rows are selected. `FALSE`,
 #'   the default, accepts the long form, as descriptive jobs and jobs that model
 #'   repeated measures need.
-#' @param whole_patients \code{TRUE} for a job that models intervals of a
+#' @param whole_patients `TRUE` for a job that models intervals of a
 #'   patient's follow-up, such as a random hazard forest on counting-process
-#'   rows. With a \code{where}, it stops when a patient kept by \code{where}
+#'   rows. With a `where`, it stops when a patient kept by `where`
 #'   lost some of their rows but not all, since that shortens follow-up without
-#'   a word. An \code{analysis_set} is not checked: one that selects intervals
-#'   rather than patients shortens follow-up unnoticed. \code{FALSE}, the
+#'   a word. An `analysis_set` is not checked: one that selects intervals
+#'   rather than patients shortens follow-up unnoticed. `FALSE`, the
 #'   default, checks nothing.
-#' @param imputation_col \code{NULL}, the default, or the name of the column that
+#' @param imputation_col `NULL`, the default, or the name of the column that
 #'   numbers the imputations of stacked multiple imputations, one row per
-#'   patient per imputation. With \code{one_row_per_patient = TRUE} the rows
+#'   patient per imputation. With `one_row_per_patient = TRUE` the rows
 #'   are then counted within each imputation, so a patient who appears once in
 #'   every imputation passes, and one who appears twice in the same imputation
 #'   still stops the read. The column must be in the data read, and in
-#'   \code{key_cols} for the rows to be unique. It is matched ignoring case, as
-#'   \code{key_cols} is. It must hold no missing value and must not be the patient
+#'   `key_cols` for the rows to be unique. It is matched ignoring case, as
+#'   `key_cols` is. It must hold no missing value and must not be the patient
 #'   identifier. The record says how many imputations the rows hold. It is
-#'   not inferred from \code{key_cols}, since a visit column in \code{key_cols} makes a
+#'   not inferred from `key_cols`, since a visit column in `key_cols` makes a
 #'   long dataset, not an imputation.
 #'
 #' @param id,key,join_vars,join_key,imputation Deprecated: the old names of
-#'   \code{id_col}, \code{key_cols}, \code{join_cols}, \code{join_key_cols} and
-#'   \code{imputation_col}. They work, with a warning, for one more release;
+#'   `id_col`, `key_cols`, `join_cols`, `join_key_cols` and
+#'   `imputation_col`. They work, with a warning, for one more release;
 #'   giving an old name with its new one is an error.
 #'
 #' @details Direct identifiers are dropped unless one is the identifier, from a
-#'   joined dataset too: columns named, ignoring case, \code{ccfid}, \code{MRN},
-#'   \code{eMRN}, \code{masterid} (\code{masterid0}, \code{masterid1}), a Social
-#'   Security number (\code{ssn}, \code{soc_sec}, \code{social_security},
-#'   \code{pt_ssn}, or one with a source qualifier such as \code{ssn_base} or
-#'   \code{ssn_num_base}, unless every value is an indicator's, as in a 0/1
-#'   \code{ssn_missing}), and, held as text, a patient name
-#'   (\code{name}, \code{first_name}, \code{pt_name}, \code{surname}) or contact
-#'   details (\code{address}, \code{street}, \code{phone}, \code{email}). Any
+#'   joined dataset too: columns named, ignoring case, `ccfid`, `MRN`,
+#'   `eMRN`, `masterid` (`masterid0`, `masterid1`), a Social
+#'   Security number (`ssn`, `soc_sec`, `social_security`,
+#'   `pt_ssn`, or one with a source qualifier such as `ssn_base` or
+#'   `ssn_num_base`, unless every value is an indicator's, as in a 0/1
+#'   `ssn_missing`), and, held as text, a patient name
+#'   (`name`, `first_name`, `pt_name`, `surname`) or contact
+#'   details (`address`, `street`, `phone`, `email`). Any
 #'   other column whose values are shaped like Social Security numbers is dropped
 #'   too, and the record notes it by name; a column named as a date or time is
 #'   not read for that shape. A KEY column is never dropped. The
-#'   record lists every column dropped. An explicit \code{id_col} or \code{key_cols}
+#'   record lists every column dropped. An explicit `id_col` or `key_cols`
 #'   matches its column ignoring case, because
-#'   \code{hvtiRutilities::read_built()} lowercases column names. Identifier,
+#'   `hvtiRutilities::read_built()` lowercases column names. Identifier,
 #'   key and date values are not printed: the record holds counts, and a
-#'   \code{where} condition that mentions a \code{key_cols} column, uses
-#'   \code{.data} or calls a string lookup such as \code{get()} is shown, in
+#'   `where` condition that mentions a `key_cols` column, uses
+#'   `.data` or calls a string lookup such as `get()` is shown, in
 #'   the record and in error messages, with its values replaced by
-#'   \code{<value>}. So is a condition on \code{id_col} in a selection saved before
+#'   `<value>`. So is a condition on `id_col` in a selection saved before
 #'   such conditions were refused. Every setting is checked before the data are
-#'   read, and \code{join}'s registration too; only what needs the data, such
-#'   as whether a column exists, is checked after. With \code{join},
-#'   \code{where} applies to the joined rows, so a condition may name a column
-#'   from either dataset, though not a cohort column \code{join_cols} leaves
+#'   read, and `join`'s registration too; only what needs the data, such
+#'   as whether a column exists, is checked after. With `join`,
+#'   `where` applies to the joined rows, so a condition may name a column
+#'   from either dataset, though not a cohort column `join_cols` leaves
 #'   out; the joined dataset's identifier values are refused in it as the
-#'   cohort's are. With \code{reduce}, a condition that names a column of the
+#'   cohort's are. With `reduce`, a condition that names a column of the
 #'   joined dataset filters its records before one is chosen per patient, so
-#'   \code{rule = "last"} with \code{echo_type == "TTE"} keeps each patient's
+#'   `rule = "last"` with `echo_type == "TTE"` keeps each patient's
 #'   last such echo, and a patient left with no record is counted as having none.
 #'   The other conditions filter the reduced rows. The data table shows them in
 #'   that order; the selection records them as written.
 #'
 #' @return A list:
 #'   \itemize{
-#'     \item \code{data}, the selected rows;
-#'     \item \code{record}, a data frame of \code{step} and \code{value} to
-#'       print, whose \code{"selection"} attribute holds the settings used. Its
-#'       \code{"Source"} row names the file read, the dated version for a
+#'     \item `data`, the selected rows;
+#'     \item `record`, a data frame of `step` and `value` to
+#'       print, whose `"selection"` attribute holds the settings used. Its
+#'       `"Source"` row names the file read, the dated version for a
 #'       dataset registered as one. When the dataset's source has been rebuilt
 #'       since it was registered, the registered version is read and a final
-#'       \code{"Note"} row says so, naming
-#'       \code{hvtiRutilities::update_manifest()}, the call that registers the
-#'       new file. A stale analysis set read in a draft gets a \code{"Note"}
-#'       row the same way. With \code{join}, rows name the joined dataset
+#'       `"Note"` row says so, naming
+#'       `hvtiRutilities::update_manifest()`, the call that registers the
+#'       new file. A stale analysis set read in a draft gets a `"Note"`
+#'       row the same way. With `join`, rows name the joined dataset
 #'       and the rows read from it, count its records outside the cohort and
 #'       the cohort patients with none, and name the reduction;
-#'     \item \code{provenance}, the read's provenance record;
-#'     \item \code{provenance_join}, the joined dataset's provenance record,
-#'       naming the version read, or \code{NULL} without \code{join};
-#'     \item \code{attrition}, an analysis set's per-rule attrition table, or
-#'       \code{NULL} for a dataset read whole.
+#'     \item `provenance`, the read's provenance record;
+#'     \item `provenance_join`, the joined dataset's provenance record,
+#'       naming the version read, or `NULL` without `join`;
+#'     \item `attrition`, an analysis set's per-rule attrition table, or
+#'       `NULL` for a dataset read whole.
 #'   }
-#'   The \code{"selection"} attribute is a list that a job saves in its
+#'   The `"selection"` attribute is a list that a job saves in its
 #'   hand-off, so a downstream job can rebuild the same rows:
 #'   \itemize{
-#'     \item \code{dataset}, with \code{"built"} recorded as \code{"study"},
-#'       and \code{analysis_set}, as given;
-#'     \item \code{where}, the exact text of each condition, values included,
+#'     \item `dataset`, with `"built"` recorded as `"study"`,
+#'       and `analysis_set`, as given;
+#'     \item `where`, the exact text of each condition, values included,
 #'       used to rebuild the rows; it stays inside the study and is never
 #'       printed;
-#'     \item \code{where_shown}, the same conditions as a report may show them,
-#'       with the values of any condition on a \code{key_cols} column, or using
-#'       \code{.data} or a string lookup, replaced;
-#'     \item \code{id} and \code{key}, the resolved column names, the
+#'     \item `where_shown`, the same conditions as a report may show them,
+#'       with the values of any condition on a `key_cols` column, or using
+#'       `.data` or a string lookup, replaced;
+#'     \item `id` and `key`, the resolved column names, the
 #'       key being the joined result's when there is a join;
-#'     \item \code{imputation}, the resolved name of the imputation column in
-#'       the data's own spelling, present only when \code{imputation_col} was
+#'     \item `imputation`, the resolved name of the imputation column in
+#'       the data's own spelling, present only when `imputation_col` was
 #'       given, so a job can pass it on to a fit;
-#'     \item \code{join}, \code{join_vars}, \code{reduce} and
-#'       \code{join_key}, the join as read, with \code{join_vars},
-#'       \code{join_key} and \code{reduce}'s columns spelled as the data
-#'       spell them and \code{reduce}'s fields in name order, so the same join
-#'       written two ways records the same; and \code{cohort_key}, the cohort's
+#'     \item `join`, `join_vars`, `reduce` and
+#'       `join_key`, the join as read, with `join_vars`,
+#'       `join_key` and `reduce`'s columns spelled as the data
+#'       spell them and `reduce`'s fields in name order, so the same join
+#'       written two ways records the same; and `cohort_key`, the cohort's
 #'       own key. All five are present only with a join;
-#'     \item \code{rows} and \code{patients}, the counts kept;
-#'     \item \code{key_hash}, a SHA-256 hash of the kept \code{key_cols} values,
+#'     \item `rows` and `patients`, the counts kept;
+#'     \item `key_hash`, a SHA-256 hash of the kept `key_cols` values,
 #'       with a join the joined dataset's key values too, so a downstream job
-#'       can tell that it rebuilt the same patients, and with \code{reduce} the
+#'       can tell that it rebuilt the same patients, and with `reduce` the
 #'       same chosen records, and not only the same counts.
 #'   }
 #'
@@ -1459,7 +1459,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 #' Stop on a bootstrap bag that carries patient-level data
 #'
 #' A bag holds a screen's replicates and its settings, never the rows it
-#' resampled. \code{boot_bag()} builds one that way, but a hazard bag is a list
+#' resampled. `boot_bag()` builds one that way, but a hazard bag is a list
 #' its runner writes by hand, and a field, or the environment of a formula or
 #' a function saved in it, can hold the runner's data.
 #'
@@ -1473,13 +1473,13 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 #' A binding that cannot be read, and an active binding, which is never
 #' evaluated, are reported rather than passed. The carried lineage is searched
 #' like any other attribute, except that the names of the selection's own
-#' fields are not matched: \code{read_job_data()} writes them, and its
-#' \code{id} field holds a column name, not patient values.
+#' fields are not matched: `read_job_data()` writes them, and its
+#' `id` field holds a column name, not patient values.
 #'
 #' @param bag The bag or chunk, as read.
 #' @param id The job's resolved ID column.
 #' @param source What to call the bag in the message.
-#' @return \code{TRUE}, invisibly, or an error naming each place found.
+#' @return `TRUE`, invisibly, or an error naming each place found.
 #' @noRd
 .check_bag_identifiers <- function(bag, id, source = "The bootstrap bag") {
   wanted <- unique(tolower(c(id, .job_identifier_names)))
