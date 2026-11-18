@@ -158,7 +158,7 @@ if (requireNamespace("quarto", quietly = TRUE) && quarto::quarto_available()) {
   unlink(root, recursive = TRUE)
 }
 #> [1] TRUE
-#> [1] 20
+#> [1] 21
 #> Error in quarto::quarto_render(path, execute_dir = dirname(path), quiet = quiet,  : 
 #>   ! Error running quarto CLI from R.
 #> Caused by error in `quarto::quarto_render()`:
