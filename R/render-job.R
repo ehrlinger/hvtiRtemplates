@@ -65,10 +65,12 @@
 #' crashed on this node is taken over automatically. A process on another node
 #' cannot be checked from here, so a running render touches a heartbeat file in
 #' the lock from its own node, and a lock whose heartbeat has stopped for ten
-#' minutes is taken over too. A lock from a render too old to keep a heartbeat
-#' reads as still running: the message names the node and the lock directory to
-#' delete once you know nothing is rendering there. The lock is the study's, so a
-#' renamed copy of the job meets the same one.
+#' minutes is taken over too. Three leftovers are never taken over by age, and
+#' stop the render with the directory to delete: a lock from a render too old to
+#' keep a heartbeat, a `.takeover` directory left by a render that stopped while
+#' taking over a dead one, and a lock with no owner file. Delete it once no render
+#' is running in the study, on any node. The lock is the study's, so a renamed
+#' copy of the job meets the same one.
 #'
 #' @param path Character. Path to a job `.qmd` file.
 #' @param final Logical. `TRUE` for the accepted result. A final render reads registered data

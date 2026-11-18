@@ -36,8 +36,9 @@ hvtiR::install()
 
 `hvtiR::install()` installs every member in one call, so the versions the
 members require of one another resolve together. Update later with
-`hvtiR::update()`, from a fresh R session: it will not overwrite a package
-that is already loaded.
+`hvtiR::update()`. On Linux and macOS it installs over a package that is
+already loaded and then tells you to restart R; on Windows, run it from a
+fresh R session.
 
 To install hvtiRtemplates on its own:
 
@@ -107,9 +108,9 @@ answer, because `%inc` had nothing to pin.
 | `hvti_non_prefixes()` | leading name fields that are utilities, not analysis prefixes |
 | `add_job(prefix, subject, type, root = NULL, qualifier = NULL)` | the scaffolded job's path, invisibly |
 | `open_job(prefix, subject, type, root = NULL, qualifier = NULL)` | job path; creates a missing job or opens an existing one |
-| `render_job(path, final = FALSE, quiet = FALSE)` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
-| `import_job(from, subject = NULL, type = NULL, root = NULL)` | the imported job's path, invisibly; copies a job from another study, keeping its edits |
-| `migrate_job(source, subject, type, prefix, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
+| `render_job(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet")))` | `path`, invisibly; renders a draft, or with `final = TRUE` a render that stops on an unfinished job |
+| `import_job(path, subject = NULL, type = NULL, root = NULL)` | the imported job's path, invisibly; copies a job from another study, keeping its edits |
+| `migrate_job(path, subject, type, prefix, ...)` | the migrated job's path, invisibly; writes an evidence report beside it |
 | `ar_item(id)`, `ar_value(id, field)` | inside an `ar` analysis report: one saved figure, table or value from a finished job, checked against the bytes that job recorded |
 | `ar_paste_methods(path)`, `ar_review(path)` | for an `ar` report: fill each empty Methods slot from its source job, leaving existing text for the analyst to compare and update; mark items as reviewed after their source job was rendered again |
 
@@ -168,8 +169,8 @@ job <- hvtiRtemplates::migrate_job(
 )
 ```
 
-Use your study's source and evidence filenames. `lst`, `log`, and `reference`
-are optional; supplied files must exist beneath `dir`. The call writes
+Use your study's source and evidence filenames. `lst_path`, `log_path`, and
+`reference_path` are optional; supplied files must exist beneath `root`. The call writes
 `descriptive/dc.tables.cohort.eda.qmd` and
 `descriptive/dc.tables.cohort.eda-migration.md` in a study with bare folders.
 It preserves the evidence files and refuses to overwrite either output.

@@ -10,7 +10,7 @@
 #'
 #' @details
 #' **Rows analyzed.** A row is analyzed when its time and event are both
-#' recorded. With `strata`, a row whose stratum value is missing, or is a
+#' recorded. With `strata_col`, a row whose stratum value is missing, or is a
 #' mean-imputed level (`hvtiRutilities::imputed_levels()`), is dropped too,
 #' as `%KAPLAN` drops "invalid strata values". The dropped rows are not
 #' silent: the result carries them in its `"dropped"` attribute, one row
@@ -82,7 +82,7 @@
 #'     group = c("a", "b", "a", "b", "a", "b", "a", "b", "a", NA)
 #'   )
 #'   life_table(d, "years", "dead")
-#'   life_table_at(d, "years", "dead", times = c(1, 2, 5), strata = "group")
+#'   life_table_at(d, "years", "dead", times = c(1, 2, 5), strata_col = "group")
 #'   life_table_tests(d, "years", "dead", "group")
 #' }
 #' @name life_table

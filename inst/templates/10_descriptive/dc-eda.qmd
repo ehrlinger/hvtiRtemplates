@@ -149,8 +149,8 @@ REDUCE <- NULL
 JOIN_KEY <- NULL
 
 # Follow-up. These are dc-gfup's choices, and mean what they mean there.
-# EDIT: the years-since-origin interval to the operation, and that origin. The
-# origin differs between studies, and a wrong one slides every point along the
+# EDIT: the years-since-origin interval to the operation. The origin it counts
+# from differs between studies, and a wrong one slides every point along the
 # x-axis without any other symptom, which is why the operation years are
 # checked and printed below.
 OPYRS <- "iv_opyrs"
@@ -679,7 +679,7 @@ if (isTRUE(.unchecked > 0)) {
   warning(.unchecked, " patient(s) have ", OPYRS, " but no ", OPDATE, ", so their origin is not ",
           "checked against the operation date.", call. = FALSE)
 }
-# Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an
+# Operations before the origin are drawn, left of the diagonal, by an
 # hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,
 # because a build counting from a later origin is a problem to fix there. An
 # older hvtiPlotR refuses them instead, so the field is absent and so is the row.
@@ -861,8 +861,8 @@ draw_section <- function(section) {
     .child(paste("tbl eda", section, "frequencies"), "Categorical variables, missing counted",
            "knitr::kable(freq, row.names = FALSE)")
   }
-  # The bars carry hover labels in HTML: a page names no categories, so a reader hovers a bar
-  # for its category, year and count. The saved figure is the same either way.
+  # With HOVER, the bars carry hover labels in HTML: a page names no categories, so a reader
+  # hovers a bar for its category, reference value and count. The saved figure is the same either way.
   hover <- HOVER && section != "continuous" && knitr::is_html_output() && requireNamespace("ggiraph", quietly = TRUE) &&
     "hv_girafe" %in% getNamespaceExports("hvtiPlotR")
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA, interactive = hover)

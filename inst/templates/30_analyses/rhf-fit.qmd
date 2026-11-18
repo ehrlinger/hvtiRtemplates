@@ -392,7 +392,7 @@ environment(model) <- globalenv()
 # is written owner-only from the start, and set so if an older cache is already
 # there. The search's cache holds results only, and is kept owner-only beside it.
 .cache_files <- file.path(CACHE_DIR, c("rhf-treesize.rds", "rhf-forest.rds"))
-# Hours at study size. Started from the console, the Render button or a terminal it dies with the
+# Hours at study size. Started from the console, the Render button or a terminal, it dies with the
 # session, so a search or forest that will be computed is refused there: run the job with
 # hvtiRtemplates::run_job(). Each call is quoted once, so the check and cache_fit() read the same
 # call; a cache_fit() of a quoted call keys the call, so a fit cached before this was quoted still

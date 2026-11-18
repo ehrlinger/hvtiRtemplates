@@ -33,8 +33,9 @@ format:
      used. Replace this comment with that text. -->
 
 An `rfr-fit` job grows a regression forest and checks that it learned
-something: out-of-bag error by number of trees, and the out-of-bag
-predictions. **Importance and dependence plots are not here.** They are
+something: out-of-bag error by number of trees, the out-of-bag
+predictions, and a learning curve that asks whether the cohort is large
+enough. **Importance and dependence plots are not here.** They are
 the `rfr-explain` job in this same set, which reads the forest this job saves
 instead of growing its own, so the explanations always describe this forest.
 
@@ -204,8 +205,8 @@ SEED  <- 2026
 # it needs far more patients than the first. The refits use a forest of
 # their own, LEARNING_NTREE trees, because the curve needs agreement between
 # forests rather than one precise forest, and NTREE trees each would multiply the
-# cost by NTREE / LEARNING_NTREE. Four fractions of 20 refits is 80 forests; it is
-# cached and run by run_job().
+# cost by NTREE / LEARNING_NTREE. Three fractions and the whole-cohort
+# bootstrap, 20 refits each, is 80 forests; it is cached and run by run_job().
 LEARNING_FRACTIONS <- c(0.125, 0.25, 0.5)
 LEARNING_B         <- 20
 LEARNING_TOP_K     <- 5
@@ -390,8 +391,8 @@ save_figure(.fig, "rfr-fit-diagnostics-predicted")
 #| label: learning
 #| message: true
 # One randomForestSRC::subsample() result per fraction and the whole-cohort
-# bootstrap last. A regression subsample takes the whole part of the fraction times the
-# patients, so the count of patients in each subsample refit is exact. The
+# bootstrap last. A regression subsample takes that fraction of the patients, rounded
+# down, so the count of patients in each subsample refit is exact. The
 # bootstrap draws as many patients as the cohort, with replacement, so some appear
 # more than once and others not at all.
 # randomForestSRC 3.10.0 crashes R when it double-bootstraps a forest that imputed missing values (na.impute on
@@ -525,7 +526,7 @@ That 0.8 is a reference point, not a threshold this job enforces. Agreement at a
 fraction above one half is optimistic, because refits that large share most of
 their patients, and the whole-cohort point is a bootstrap for that reason. `r .learning_note` The
 agreement is between the top variables, so it needs predictors left out: with
-five or fewer predictors the job compares the top one fewer than there are.
+`r LEARNING_TOP_K` or fewer predictors the job compares the top one fewer than there are.
 
 ```{r}
 #| label: save

@@ -31,7 +31,7 @@ root by walking up from the working directory, and is an error outside a
 study, so a job is never written somewhere that is not a study.}
 
 \item{qualifier}{Job type within the prefix, e.g. \code{"trends"} for
-\code{dp}. Required only where a prefix carries more than one template;
+\code{dc}. Required only where a prefix carries more than one template;
 omitting it there is an error naming the choices, never a silent pick.
 Restricted to \verb{[A-Za-z0-9_]+}, because \code{.} separates the
 filename's fields.}

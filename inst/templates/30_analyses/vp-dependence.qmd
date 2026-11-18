@@ -768,7 +768,7 @@ Edges into it can still appear, because it is a predictor in every other
 variable's lasso. The coverage table says which variables those are, and the
 render stops when their share passes `MAX_UNTESTED`, unless it is `NULL`.
 
-**A missing variable is not an independent one.** A variable with no edge at
+**A variable with no edge is not an independent one.** A variable with no edge at
 the bar has no link strong enough to beat the noise in this forest. It may
 still depend on others more weakly, and the heatmap shows every pair at any
 strength.

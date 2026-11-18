@@ -149,10 +149,10 @@ GROUP <- NULL
 CHECKS <- list()
 
 # The figure. These are dc-eda's follow-up choices, and mean what they mean there.
-# EDIT: the years-since-origin interval to the operation, and that origin, a
-# calendar year such as 1990. The origin differs between studies, and a wrong
-# one slides every point along the x-axis without any other symptom, which is
-# why the operation years are checked and printed below.
+# EDIT: the years-since-origin interval to the operation. The origin it counts
+# from differs between studies, and a wrong one slides every point along the
+# x-axis without any other symptom, which is why the operation years are
+# checked and printed below.
 OPYRS <- "iv_opyrs"
 # EDIT: the operation date column. Each patient's date less OPYRS gives the
 # origin, so ORIGIN_YEAR <- NULL reads it from the data, and every patient with
@@ -435,7 +435,7 @@ itself.
 # hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
 # names every missing column at once, refuses a name used twice and the
 # wrong-origin mistake, and works out the window the panels share: from
-# 1 January of ORIGIN_YEAR, where hv_followup() draws its diagonal, to the last
+# 1 January of the origin year, where hv_followup() draws its diagonal, to the last
 # operation. The EDA report calls the same function, so its panels are these.
 # A refusal does not stop a draft: the tables above are the follow-up check and
 # do not depend on the figure, so the refusal is reported where the figure would
@@ -510,7 +510,7 @@ cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(
 #| tbl-cap: "Operation years and the close date"
 #| eval: !expr figure_drawn
 #| include: !expr figure_drawn
-# Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an
+# Operations before the origin are drawn, left of the diagonal, by an
 # hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,
 # because a build counting from a later origin is a problem to fix there. An
 # older hvtiPlotR refuses them instead, so the field is absent and so is the row.
@@ -608,7 +608,7 @@ their point.
 if (!figure_drawn) {
   cat("\n::: {.callout-warning title=\"The figure was not drawn\"}\n",
       conditionMessage(fp), "\n\nThe tables above do not depend on it. Fix the choice the ",
-      "message names, usually `OPYRS` or `ORIGIN_YEAR`, and render again.\n:::\n\n", sep = "")
+      "message names, usually `OPYRS`, `OPDATE` or `ORIGIN_YEAR`, and render again.\n:::\n\n", sep = "")
 }
 figure_link <- function(file) {
   xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd(), error = FALSE)
