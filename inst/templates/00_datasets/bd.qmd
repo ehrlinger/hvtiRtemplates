@@ -536,7 +536,7 @@ if (length(.shapes)) {
 #| label: followup
 #| results: asis
 # unnumbered: its two tables are child chunks with their own labels and captions
-# identifier = NULL: the report holds aggregates only. The suspicious rows the check
+# id_col = NULL: the report holds aggregates only. The suspicious rows the check
 # finds go to the console, without an identifier, for the author to look at.
 if (is.null(EVENT)) {
   cat("No follow-up pair is named in EVENT.\n")

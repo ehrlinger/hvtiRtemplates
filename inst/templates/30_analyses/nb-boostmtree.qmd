@@ -35,8 +35,9 @@ format:
 An `nb-boostmtree` job fits boosted multivariate trees to a response measured
 repeatedly over follow-up, one row per visit, and reports how well it fits and
 what drives it: the cross-validated error path, observed against fitted values
-over time, variable importance, partial effects over time, and a sample of
-patients' fitted trajectories.
+over time, variable importance, partial effects over time, a sample of
+patients' fitted trajectories and, when SENSITIVITY is on, how much the fit
+moves with the learning rate and the size of the trees.
 
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
@@ -224,7 +225,7 @@ N_KNOTS <- 10
 # cross-validated with M scaled so M * NU is held fixed, and reports Best M and
 # the cross-validated error for each. If they barely move, the defaults above
 # are not what the result depends on; if they move, the report should say so.
-# Off by default: it is five more fits, two of them five times as long.
+# Off by default: it is five more fits, three of them five times as long.
 SENSITIVITY <- FALSE
 
 # EDIT: predictors tried at each split of each tree, or NULL for every one of
@@ -412,7 +413,7 @@ if (N_KNOTS >= .n_times) {
 # unconditional, so a cached rerender still records the memory check that run_job() waits for.
 .need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(.patient)), nrow(d), FAMILY, k, M)
 .fitting <- hvtiRutilities::cache_would_fit("nb-boostmtree-fit", .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
-# The fit runs for hours at study size. Started from the console, the Render button or a terminal
+# The fit runs for hours at study size. Started from the console, the Render button or a terminal,
 # it dies with the session, so a fit that will be computed is refused there: run the job with
 # hvtiRtemplates::run_job() instead. Once cached, the Render button and these chunks load it.
 if (.fitting) {

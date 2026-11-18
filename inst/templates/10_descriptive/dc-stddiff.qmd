@@ -53,7 +53,7 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 if (utils::packageVersion("hvtiRpropensity") < "0.2.3") {
-  stop("This job needs hvtiRpropensity >= 0.2.3, the package's floor (ps_stddiff() and ps_stddiff_perm() date from 0.1.10); ",
+  stop("This job needs hvtiRpropensity >= 0.2.3, the package's floor, for ps_stddiff() and ps_stddiff_perm() with the *_cols names; ",
        utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.0") {

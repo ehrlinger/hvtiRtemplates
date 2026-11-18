@@ -1040,7 +1040,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   }
   resolved <- .resolve_job_key(join_key, shape$key, NULL, "JOIN_KEY", paste0("`", join, "`'s registered key"))
   if (is.null(resolved$key)) {
-    stop("`", join, "` has no registered key and this job sets no JOIN_KEY. Register it with key = ... in ",
+    stop("`", join, "` has no registered key and this job sets no JOIN_KEY. Register it with key_cols = ... in ",
          "hvtiRutilities::register_data(), or set JOIN_KEY in this job's study choices.", call. = FALSE)
   }
   resolved

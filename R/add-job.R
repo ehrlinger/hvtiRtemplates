@@ -83,7 +83,7 @@
 #' under the new name, and [open_job()] opens it.
 #'
 #' @param qualifier Job type within the prefix, e.g. `"trends"` for
-#'   `dp`. Required only where a prefix carries more than one template;
+#'   `dc`. Required only where a prefix carries more than one template;
 #'   omitting it there is an error naming the choices, never a silent pick.
 #'   Restricted to `[A-Za-z0-9_]+`, because `.` separates the
 #'   filename's fields.

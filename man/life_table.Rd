@@ -102,7 +102,7 @@ drawn over exactly the same patients.
 }
 \details{
 \strong{Rows analyzed.} A row is analyzed when its time and event are both
-recorded. With \code{strata}, a row whose stratum value is missing, or is a
+recorded. With \code{strata_col}, a row whose stratum value is missing, or is a
 mean-imputed level (\code{hvtiRutilities::imputed_levels()}), is dropped too,
 as \verb{\%KAPLAN} drops "invalid strata values". The dropped rows are not
 silent: the result carries them in its \code{"dropped"} attribute, one row
@@ -135,7 +135,7 @@ if (requireNamespace("TemporalHazard", quietly = TRUE)) {
     group = c("a", "b", "a", "b", "a", "b", "a", "b", "a", NA)
   )
   life_table(d, "years", "dead")
-  life_table_at(d, "years", "dead", times = c(1, 2, 5), strata = "group")
+  life_table_at(d, "years", "dead", times = c(1, 2, 5), strata_col = "group")
   life_table_tests(d, "years", "dead", "group")
 }
 }

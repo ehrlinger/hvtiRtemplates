@@ -265,8 +265,8 @@ if (requireNamespace("hvtiRutilities", quietly = TRUE)) {
   d$iv_fup <- pmin(d$iv_dead, 0.85 * d$iv_dead)
   hvtiRutilities::proc_means(
     d,
-    vars = c("iv_dead", "iv_fup"),
-    class = "dead",
+    var_cols = c("iv_dead", "iv_fup"),
+    class_cols = "dead",
     stats = c("n", "nmiss", "mean", "std", "min", "p15", "median", "p85", "max")
   )
 }

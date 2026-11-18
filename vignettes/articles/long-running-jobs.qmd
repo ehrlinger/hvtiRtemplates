@@ -117,7 +117,7 @@ Two guards in the templates catch the mistake at the moment it would cost you.
 
 **`guard_long_fit()`** sits just before an expensive fit, and acts only when the fit
 would be computed rather than loaded from its cache. Then it stops anything but a
-render `run_job()` started: the console, chunks run one by one, the Render button, and
+render `run_job()` or `submit_job()` started: the console, chunks run one by one, the Render button, and
 a `quarto render` typed in the Workbench Terminal, which is a child of your session
 too, `nohup` or not. It names the `run_job()` call to use, because the fit would die
 with your session. A cached result passes, so once `run_job()` has done the fit, the
