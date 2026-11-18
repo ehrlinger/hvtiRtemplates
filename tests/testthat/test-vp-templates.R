@@ -1045,14 +1045,16 @@ test_that("changing MAX_RULES_TREE makes both vp-dependence caches stale, and RE
   expect_true(all(file.mtime(files) > stamps))
 })
 
-test_that("vp-dependence stops on an unexamined variable by default, and with MAX_UNTESTED = NULL hands it on", {
+test_that("vp-dependence stops on an unexamined variable at MIN_UNTESTED = 0, and with MAX_UNTESTED = NULL hands it on", {
   skip_on_cran()
   vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   # Five trees and two rules a tree leave a variable without a release rule on this cohort. Which one is
   # chance and differs between platforms (x2 on macOS, b on Ubuntu), so the test reads it from the coverage.
-  few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2, MAX_UNTESTED = NULL))
+  # MIN_UNTESTED = 0 holds the five variables to the share alone; at its default of 1, one miss would pass, and the
+  # coverage-gate test covers that boundary.
+  few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2, MAX_UNTESTED = NULL, MIN_UNTESTED = 0))
   env <- rf_env(vpd_data())
-  # The shipped default, 0.1, stops: modifyList() drops vpd_choices' 0.5, so `few` leaves MAX_UNTESTED to the template.
+  # The shipped share, 0.1, stops: modifyList() drops vpd_choices' 0.5, so `few` leaves MAX_UNTESTED to the template.
   err <- expect_error(rf_run("vp", "dependence", c(vpd_labels[seq_len(which(vpd_labels == "coverage-gate"))]), env, few),
                       "MAX_UNTESTED")
   expect_identical(env$MAX_UNTESTED, 0.1)
