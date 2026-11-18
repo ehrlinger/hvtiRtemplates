@@ -43,7 +43,7 @@ open_job(prefix, subject, type, root = NULL, qualifier = NULL, dir)
 
 - qualifier:
 
-  Job type within the prefix, e.g. `"trends"` for `dp`. Required only
+  Job type within the prefix, e.g. `"trends"` for `dc`. Required only
   where a prefix carries more than one template; omitting it there is an
   error naming the choices, never a silent pick. Restricted to
   `[A-Za-z0-9_]+`, because `.` separates the filename's fields.
@@ -82,10 +82,10 @@ root <- file.path(tempdir(), "open-job-example")
 suppressMessages(hvtiRutilities::study_setup(
   root, study = "Example", study_tracker_id = 1L, renv = FALSE
 ))
-#> Study: /tmp/Rtmpr1SMgO/open-job-example
+#> Study: /tmp/RtmpdC5qoj/open-job-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/Rtmpr1SMgO/open-job-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpdC5qoj/open-job-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars

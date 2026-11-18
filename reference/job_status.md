@@ -49,7 +49,7 @@ the other elements are what the status file recorded (`pid`, `created`,
 at, why: the lookup's error, or the other host it was submitted on. The
 run is kept `"submitted"` rather than read as `"vanished"`, so a second
 copy is still refused. A submission that died on another host therefore
-no longer clears itself: check it from a session on that host, then
+does not clear itself: check it from a session on that host, then
 `cancel_job(other_host = "abandon")` records it ended. `progress`, the
 render's progress record when there is one, with `eta_s`, the estimated
 seconds left in the current stage, and `stale`, `TRUE` when it has not

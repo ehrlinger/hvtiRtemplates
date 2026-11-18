@@ -170,7 +170,7 @@ row of <code>data</code>.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><strong>Rows analyzed.</strong> A row is analyzed when its time and event are both
-recorded. With <code>strata</code>, a row whose stratum value is missing, or is a
+recorded. With <code>strata_col</code>, a row whose stratum value is missing, or is a
 mean-imputed level (<code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/imputed_levels.html" class="external-link">hvtiRutilities::imputed_levels()</a></code>), is dropped too,
 as <code>%KAPLAN</code> drops "invalid strata values". The dropped rows are not
 silent: the result carries them in its <code>"dropped"</code> attribute, one row
@@ -202,10 +202,9 @@ first, in the job.</p>
 <span class="r-in"><span>    group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"a"</span>, <span class="cn">NA</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu">life_table</span><span class="op">(</span><span class="va">d</span>, <span class="st">"years"</span>, <span class="st">"dead"</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="fu">life_table_at</span><span class="op">(</span><span class="va">d</span>, <span class="st">"years"</span>, <span class="st">"dead"</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">5</span><span class="op">)</span>, strata <span class="op">=</span> <span class="st">"group"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">life_table_at</span><span class="op">(</span><span class="va">d</span>, <span class="st">"years"</span>, <span class="st">"dead"</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">5</span><span class="op">)</span>, strata_col <span class="op">=</span> <span class="st">"group"</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu">life_table_tests</span><span class="op">(</span><span class="va">d</span>, <span class="st">"years"</span>, <span class="st">"dead"</span>, <span class="st">"group"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>life_table_at(): `strata` is renamed `strata_col`. The old name works for one more release, then stops; this warning is shown once per session.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        test      chisq df   p_value</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1  Log-rank 0.31656099  1 0.5736817</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2  Wilcoxon 0.02173913  1 0.8827832</span>

@@ -115,8 +115,8 @@ Wilcoxon test and is left out of its degrees of freedom.
 ## Details
 
 **Rows analyzed.** A row is analyzed when its time and event are both
-recorded. With `strata`, a row whose stratum value is missing, or is a
-mean-imputed level
+recorded. With `strata_col`, a row whose stratum value is missing, or is
+a mean-imputed level
 ([`hvtiRutilities::imputed_levels()`](https://ehrlinger.github.io/hvtiRutilities/reference/imputed_levels.html)),
 is dropped too, as `%KAPLAN` drops "invalid strata values". The dropped
 rows are not silent: the result carries them in its `"dropped"`
@@ -150,10 +150,9 @@ if (requireNamespace("TemporalHazard", quietly = TRUE)) {
     group = c("a", "b", "a", "b", "a", "b", "a", "b", "a", NA)
   )
   life_table(d, "years", "dead")
-  life_table_at(d, "years", "dead", times = c(1, 2, 5), strata = "group")
+  life_table_at(d, "years", "dead", times = c(1, 2, 5), strata_col = "group")
   life_table_tests(d, "years", "dead", "group")
 }
-#> Warning: life_table_at(): `strata` is renamed `strata_col`. The old name works for one more release, then stops; this warning is shown once per session.
 #>        test      chisq df   p_value
 #> 1  Log-rank 0.31656099  1 0.5736817
 #> 2  Wilcoxon 0.02173913  1 0.8827832

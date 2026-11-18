@@ -131,6 +131,8 @@ sits just before an expensive fit, and acts only when the fit would be
 computed rather than loaded from its cache. Then it stops anything but a
 render
 [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+or
+[`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
 started: the console, chunks run one by one, the Render button, and a
 `quarto render` typed in the Workbench Terminal, which is a child of
 your session too, `nohup` or not. It names the
