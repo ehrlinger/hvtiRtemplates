@@ -1,3 +1,298 @@
+# hvtiRtemplates 1.6.1
+
+- `vp-fit` and `vp-dependence` now impute missing predictor values once, by random forest and without the
+  outcome, before the screen (`NA_ACTION <- "na.impute"`), instead of dropping every patient with a missing value,
+  which varPro did silently whatever `na.action` it was given. **A job already in a study is a copy of the old
+  template and changes only when it is brought up to date with `upgrade_job()`. One that is will use more patients,
+  may select differently, and stops at its cached fit until `REFIT <- TRUE`, because imputation changes the data
+  the fit is keyed on.** Set `NA_ACTION <- "na.omit"` to keep complete cases. A predictor missing in more than
+  `MAX_MISSING` (0.4) of the patients is refused, not imputed, and a patient missing the outcome is dropped and
+  counted either way. A yes/no (logical) predictor is imputed as `TRUE` or `FALSE`. The missing-values table now gives patients supplied, imputed or dropped, and used.
+- The vp reports now keep a variable the screen did not examine apart from one it examined and did not select.
+  `vp-fit`'s refit vote counts only the refits that tested a variable (`MIN_TESTED_SHARE`), `MAX_UNTESTED`
+  defaults to 0.1 (was 0.5), and `vp.rds` names the variables not examined and records whether its selection is the refits' vote
+  (`selected_by`), which `vp-explain` and `vp-individual` report as such.
+- `vp-dependence` exposes `uvarpro()`'s rule limits (`MAX_TREE`, `MAX_RULES_TREE`), reports which variables the
+  forest built no rule for, and names them in `dependence.rds` as `not_examined`. It now passes `MAX_TREE` 500
+  where varPro's default is 200, so an upgraded graph changes and its lasso costs more. Its stability shares
+  count only the refits that examined the variable concerned: the edge and signal stability tables in
+  `dependence.rds` both gain a `refits` column, and a share can be `NA`. `MAX_UNTESTED` is available there but off
+  by default: on wide data the noise columns take most of the rules, and a redesign of the noise draw comes first.
+
+- `vp-dependence` draws its noise columns by kind in proportion to the variables, with at least one of each kind
+  present, instead of half categorical whenever any variable is categorical. Only a variable that takes two or
+  more values is a source, in the full fit and in each refit, since a permuted constant sets no bar; the report
+  says when a kind gets no noise column. With one factor among 31 variables,
+  half and half made 10 of the 20 columns binary copies of that factor, and they took nearly half the forest's
+  rules. `NTREE` and `MAX_TREE` are now 1,000 (were 500), and `MAX_UNTESTED` now defaults to 0.1 (was `NULL`), so
+  a render stops when more than a tenth of the variables get no release rule. In simulations at the new defaults
+  every variable got a rule at every seed. The lasso takes about twice as long as at 500 trees. **A job already in
+  a study is a copy of the old template and changes only when it is brought up to date with `upgrade_job()`. One
+  that is will draw different noise columns and more trees, so its bar and graph change, and it stops at its
+  cached fit until `REFIT <- TRUE`.**
+
+- `render_job()` now says plainly when Quarto itself crashed. Quarto's bundled Deno runtime can die as it starts,
+  on macOS at least, and the quarto package then reports an unrelated error, "Could not evaluate cli `{}`
+  expression: `QUARTO_DENO`". Such a render now stops with an error of class `hvtiRtemplates_quarto_crashed`
+  saying that Quarto crashed, not the job, and to render again. A job's own failure is reported as before.
+
+- `guard_long_fit()` now stops an uncached long fit everywhere but a render `run_job()` or `submit_job()` started.
+  Until now it stopped one only in an interactive session, so the RStudio or Posit Workbench **Render button** let an
+  hours-long fit start inside the session, where it died on the session's timeout, as a boostmtree fit did
+  mid-`predict()` on 2026-11-16. A `quarto render` typed in the Workbench Terminal is a child of the session too,
+  `nohup` or not, and is stopped as well. The error names the `hvtiRtemplates::run_job()` call to use. A cached
+  result passes, so once `run_job()` has done the fit the Render button works again. For a fit known to be short,
+  `options(hvtiRtemplates.allow_interactive_fit = TRUE)` still lets it through, and the new environment variable
+  `HVTI_ALLOW_LONG_FIT=true` does the same for a render's own R process, which an option set in the session does
+  not reach.
+- `nb-boostmtree`, `rfs-fit`, `rhf-fit` and `rhf-explain` now call `guard_long_fit()` only when
+  `hvtiRutilities::cache_would_fit()` says the fit will be computed, as the `rf*-explain` and
+  `sid-stability` templates already did. A cache whose key matches loads even under `REFIT <- TRUE`, so it is no
+  longer refused. **A job already in a study changes only when it is brought up to date with `upgrade_job()`.**
+- `run_job()`, `submit_job()` and `render_job()` take `params`, a named list passed to the job's Quarto `params` as
+  `quarto render -P` would, and `output_file`, the report's name as `--output` would set it, so a parameterized job
+  that must now go through `run_job()` can still render one report per value:
+  `run_job("job.qmd", params = list(fit_m = 1000), output_file = "job.M1000.html")`. A run given an `output_file` keeps
+  its run files under the job's name and that whole name (`job@job.M1000.html.run.yml`, `.run.log`, `.run.progress`), so the same job rendered for
+  another value is another run; `job_status()` and `cancel_job()` take the same `output_file` to follow or stop it.
+  The checks `run_job()` makes apply to each run, and Quarto still renders one job at a time in a study.
+- The `hvti` command takes the same, as `quarto render` spells them: `hvti run <job> -P fit_m:1000 --output
+  job.M1000.html`, with `-P` once per parameter and each value read as Quarto reads it, and `--output` on `hvti status`
+  and `hvti cancel` to name the run. The script is now `hvti-version: 2`, so `run_job()` warns until
+  `install_hvti()` replaces an older copy; an older copy keeps working, without the new options.
+
+* `dc-eda` has a new `HOVER` choice. Set it to `FALSE` to show the percent and count pages as saved images instead of
+  interactive hover-label widgets. The widget puts every bar segment into the HTML page as its own element, so a
+  large cohort drawn by month renders slowly and makes a heavy report.
+
+* `Remotes:` installs `boostmtree` 2.0.11 from the CCF fork (`v2.0.11-ccf`),
+  matching the pin `ggBoostedTrees` already carries, and `nb-boostmtree`'s
+  setup chunk names that tag in its install line. 2.0.11 makes
+  `nb-boostmtree`'s partial effects faster: `partial.plot()` predicts only at
+  the time points it plots, and a cross-validated prediction walks each step's
+  out-of-bag list once. 2.0.9 holds less memory per boosting step. The floor
+  stays at 2.0.8, but that does not keep a study on 2.0.8: `ggBoostedTrees`
+  imports `boostmtree` and pins 2.0.11 itself, so updating the package family
+  (or reinstalling `ggBoostedTrees`) installs 2.0.11. That makes an existing
+  job's cached fit stale, because `cache_fit()` records package versions, and
+  the next render stops until `REFIT <- TRUE`. Before updating a study with
+  cached `nb-boostmtree` fits, check that hours of refitting are acceptable.
+
+- `nb-boostmtree` now defaults to `M <- 500` (was 1000). A study of 1,391 patients at `NU = 0.05` that fitted
+  1000 chose Best M = 751, but its cross-validated error at 500 was within 0.3% of that best, so 500 does the
+  job at half the run time. A job already in a study keeps its own `M`.
+- `nb-boostmtree` writes out its tree and spline settings as study choices, `K <- 5` terminal nodes and
+  `N_KNOTS <- 10`, passed to `boostmtree()` as `k` and `n.knots`. Both are boostmtree's own defaults, and the
+  choice comments now say how to set them, and `M`, `NU` and `MTRY`, from what the studies learned: fix `NU`
+  and let cross-validation choose Best M; treat `M` as a ceiling, because boostmtree's default of 200 is too
+  low for clinical longitudinal data; and keep `N_KNOTS` well below the number of distinct visit times. A fit whose
+  `N_KNOTS` is not below them stops before it starts. **A job upgraded with `upgrade_job()` stops at its cached
+  fit until `REFIT <- TRUE`, even at these default values, because the fit's code now names `k` and `n.knots`.**
+- The `nb-boostmtree` report now warns, in the report itself, when Best M lands in the last tenth of `M` and the
+  cross-validated error fell by more than 0.1% over that tenth (still falling by enough to matter; Best M near
+  `M` on a flat curve passes) and when the smoothing parameter lambda reached boostmtree's `lambda.max` at Best M
+  (a flat trajectory or too many knots). The fit table records `K`, the knots and `mtry`, and the saved fit and
+  provenance record `k`, `n_knots` and `mtry` (`"all"` when `MTRY` is `NULL`).
+- `nb-boostmtree` has a new `SENSITIVITY` choice, off by default. Set to `TRUE`, it refits over `NU` in
+  {0.01, 0.05} and `K` in {3, 5, 8}, with `M` scaled to hold `M * NU` fixed, caches each fit beside the job's,
+  and reports Best M and the cross-validated error of each, with the largest change from the job's own fit.
+  It is five more fits, two of them five times as long.
+- The `nb-boostmtree` choice comments say what to do about a skewed continuous response: `"continuous"` is
+  squared-error boosting, and a fit on log(y) gives geometric means on the raw scale (medians only if the
+  log-scale error is symmetric); arithmetic means need a retransformation, whose smearing factor usually depends on
+  time, that the template does not do. They cite Pande et al. (2017), *Machine Learning* 106:277-305.
+
+* `render_job()`, and so `run_job()` and `submit_job()`, now renders once more when Quarto fails with "Directory not
+  empty (os error 39)" removing the job's `_files/execute-results` folder. Quarto writes and deletes that folder in
+  one step of every project render, and on the study share the delete can arrive before the share lets go of the
+  file, failing a job after every chunk has run. Only that error is retried, read from Quarto's message or the run
+  log; any other failure passes through, and nothing is deleted. A second such failure stops with an error of class
+  `hvtiRtemplates_execute_results_stuck` that says to delete the folder.
+* `job_status()` explains a failure Quarto itself raised by its `ERROR:` line. It used to show the last 20 lines of
+  the log, which a Deno stack trace fills, so the message that named the cause was cut off.
+
+* `rfs-fit` gains a learning curve under "Does the forest work?": it refits
+  the forest on subsamples of the cohort and reports, against the number of
+  deaths, the out-of-bag error and whether the top variables by importance
+  agree between refits (`ggRandomForests::learning_subsample()` and
+  `gg_learning()`). The error usually settles long before the ranking does,
+  so the curve answers what `MIN_EVENTS_PER_FEATURE` only guesses: whether
+  this cohort is large enough for the importance and dependence results
+  `rfs-explain` reports. The refits use their own 250-tree forest, are
+  cached, and run under `guard_long_fit()`. New study choices:
+  `LEARNING_FRACTIONS`, `LEARNING_B`, `LEARNING_TOP_K` and `LEARNING_NTREE`.
+  The top set compared is at most one fewer than the number of predictors,
+  since a set holding all of them agrees perfectly however the ranking moves.
+  Needs a ggRandomForests that exports both functions.
+
+* The box at the top of a report now says when a newer build of its dataset is waiting to be registered, and names `hvtiRutilities::update_manifest()`. The job still reads the registered version, as before; until now the only sign of the newer file was a note in the data table and "newer file waiting" in the About this run table, at the end of the report. Needs hvtiRutilities' new `source_changed()`; with an older hvtiRutilities the box says nothing extra.
+
+* Templates and the bootstrap runners call the family packages by their new
+  argument names (`time_col`, `event_col`, `time_cols`, `id_col`, `var_cols`,
+  `class_cols`, `key_cols`, `facet_col`, `arm_col`, `covariate_cols`, the
+  `ps_stddiff()` `*_cols` arguments and `boot_select(n_boot =)`), and pass
+  `root =` last to `declare_data()` and `register_data()`. The floors move to
+  the releases that carry the new names: `hvtiRutilities` 1.5.24, `hvtiPlotR`
+  2.8.23, `hvtiRpropensity` 0.2.3 and `hvtiRbootstrap` 0.9.8, in `DESCRIPTION`
+  and in the version checks of the templates and runners that call them. The
+  old names keep working in those releases, with a warning. `read_job_data()`'s cohort check calls
+  `cohort_counts()` the same way. **A job already in a study keeps the old
+  names until it is brought up to date with `upgrade_job()`; it renders, with
+  deprecation warnings, until those packages drop the old names.**
+* The `bh` hazard bootstrap runner records its screen the way the `bc`, `bl` and
+  `br` runners do: the fitter, the model formula with each phase's scope and
+  each phase's distribution, shape values and held parameters, the selection
+  method, the draw fraction, the RNG kind, TemporalHazard's commit
+  when the installer recorded one, and the family's seven-field `$provenance`.
+  `boot_pool_chunks()` therefore checks that a hazard run's chunks share a model
+  instead of reading every one as "hazard runner (unrecorded)", and refuses
+  chunks fitted with different phases. **A run whose
+  chunks were written partly before this change refuses to pool**, because the
+  older chunks record no model; rerun those chunks with the current runner.
+* `dc-tables`' scatter-plot matrix caption says that its panels carry no
+  coefficient and that the table above gives Spearman's (`hvtiPlotR`'s default
+  from 2.8.23) and Pearson's.
+
+* `build_cohort()` excludes a patient whose cohort-list `exclude` cell is padded
+  with spaces (`" 1"`). The value was trimmed when checked and read untrimmed
+  when applied, so the patient stayed in the cohort while the attrition table
+  counted the rule.
+* A 64-bit integer (`integer64`) patient identifier, as `arrow` reads one from
+  Parquet, is written and digested by its value. Every such ID was written as
+  `"0"`, so `read_job_data()`'s refusal of a WHERE condition that names an
+  identifier's value missed an MRN-sized literal, and every patient in a
+  hand-off bundle shared one digest. An upstream output saved before this
+  change recorded that shared digest, so a downstream job reads it as changed
+  data until the upstream job is rendered again.
+* Two renders that both find a dead render's lock can no longer both take it,
+  and no third render can start while one takes it over. The lock is now taken
+  over in place and never moved aside: a render that finds a dead owner claims
+  a takeover sentinel beside the lock, checks again under it that the dead
+  owner is still the one recorded, and only then writes its own. A render that
+  judged too late stops, as it would against any live render. Before, the
+  second render could move the first one's live lock aside and roll back its
+  provenance files, and while the lock was moved a third render could start
+  beside the first. ⚠️ **No claim is ever taken from a render by its age.** A
+  takeover sentinel more than a minute old, left by a render that stopped while
+  taking over, and a lock more than a minute old with no owner file, left by a
+  render that stopped between creating the lock and recording itself, both stop
+  the render, and `run_job()`'s study check before it submits, with the
+  directory's path: once no Quarto render is running in the
+  study, on any node, delete it and render again. A render paused at either
+  point would otherwise come back and run beside the one that took its claim.
+  Before, the owner-less lock was taken over after 60 seconds. A render that
+  crashes after recording itself is still taken over without anyone's help.
+  A render releases its lock under the same sentinel, so a render on another
+  host judged stopped that finishes during a takeover leaves the lock to the
+  render taking it over, and a third render cannot claim it in between.
+* `add_job()` refuses a dangling symbolic link where the job would go, or at
+  the job's or runner's name before 2026-10 or before a template rename, as
+  `upgrade_job()` already did, rather than writing the job wherever the link
+  points.
+* `submit_job()` writes its run's process marker into the `submitted` record,
+  and `job_status()` looks for a process carrying it before reading a run that
+  has not started after two minutes as vanished. A slow `.Rprofile` or `renv`
+  start on a loaded share therefore reads as submitted rather than dead, and
+  cannot be submitted a second time. A run submitted on another host cannot be
+  looked for from here, so it too stays submitted past two minutes, and a
+  second copy is refused. ⚠️ **A submission that died on another host no
+  longer clears itself after two minutes:** check it from a session there,
+  then `cancel_job(other_host = "abandon")` records it cancelled, signalling
+  nothing. `job_status()` and the preflight check say so.
+  `cancel_job()` stops such a starting run through its marker and records it
+  cancelled, so a runner that hangs before it records itself can still be
+  stopped. If the runner records itself running while it is being stopped, it
+  is recorded cancelled under its own process rather than read as vanished, and
+  if the marker cannot be looked up partway through, `cancel_job()` stops
+  without recording anything rather than reading the failure as no process. When this host's processes cannot be listed at all, as in a sandbox,
+  the run stays submitted and `job_status()` says why: a second copy is still
+  refused, and `cancel_job()` refuses too, signalling nothing.
+* `ar_value()` stops in a final render (`render_job(final = TRUE)`) when the job
+  it quotes has been edited since its last render, and still warns in a draft.
+  A final report quoting a number its job no longer produces is the failure the
+  `ar` report exists to prevent.
+
+* Arguments now follow the hvtiR family's naming rule, and each old name works, with a warning once per session,
+  for one more release. Giving an old name together with its new one is an error that names both. Each new name
+  sits where the old one did, so a call that passes these arguments by position is unchanged.
+  - `add_job()`, `open_job()`, `upgrade_job()`, `import_job()` and `migrate_job()` take `root` in place of `dir`.
+    `import_job()` takes `path` in place of `from`. `migrate_job()` takes `path`, `lst_path`, `log_path` and
+    `reference_path` in place of `source`, `lst`, `log` and `reference`.
+  - `read_job_data()` takes `id_col`, `key_cols`, `join_cols`, `join_key_cols` and `imputation_col` in place of
+    `id`, `key`, `join_vars`, `join_key` and `imputation`.
+  - `build_cohort()` takes `path`, `join_cols` and `id_col` in place of `cohort`, `join_by` and `id`.
+  - `life_table()`, `life_table_at()`, `life_table_tests()` and `life_table_keep()` take `time_col`, `event_col`
+    and `strata_col` in place of `time`, `event` and `strata`.
+
+  ⚠️ A shortened argument name that R used to complete, such as `read_job_data(cfg, imp = "imp")`, no longer
+  resolves. Both the old and the new name start with the same letters, so R cannot tell which one is meant. Write
+  the argument name out in full.
+* `read_job_data()` and `build_cohort()` no longer assume the identifier column is `"ccfid"`, because that is one
+  study's name for it. Leaving `id_col` out still reads `"ccfid"` for one more release, with a warning, and is an
+  error after that. The templates already pass `ID`.
+* `options(hvti.quiet = TRUE)` silences the package's informational messages in one place. `render_job()`,
+  `run_job()` and `cancel_job()` take their `quiet` default from it, and an explicit `quiet`
+  argument still wins. Warnings and errors are never silenced, and neither is `job_status()`, whose
+  printed summary is its answer.
+* A refusal that a caller might want to catch now carries a class: `hvtiRtemplates_run_refused`,
+  `hvtiRtemplates_run_claimed`, `hvtiRtemplates_run_mismatch`, `hvtiRtemplates_job_running`,
+  `hvtiRtemplates_cancel_incomplete`, `hvtiRtemplates_long_fit`, `hvtiRtemplates_memory` and
+  `hvtiRtemplates_quarto_crashed`. A refused `WHERE` on the identifier is now `hvtiRtemplates_where_identifier`, and
+  it keeps its old class `hvti_where_identifier` for one release. `render_job()` now raises base R conditions in
+  place of `rlang::abort()`.
+* A report's run record gains `provenance`. It holds the family's seven fields: `package`, `version`, `sha`,
+  `method` (the template), `seed`, `rng_kind` and `time`. Each field is always present and always the same type,
+  and it is `NA` where it does not apply.
+
+* The package documentation is written in roxygen markdown, as the rest of the hvtiR family's is.
+  The help pages read as before; their links now show the function they point to with its
+  parentheses, as `template_list()`.
+
+* `rfs-fit` with a single predictor no longer passes on `gg_learning()`'s
+  warning that `top_k` covers every predictor. The job already says the
+  agreement measures are not informative with one predictor, and the
+  warning's advice to lower `top_k` cannot apply there.
+
+* `rfc-fit` and `rfr-fit` gain the learning curve `rfs-fit` has, under "Is the
+  cohort large enough?": out-of-bag error and the agreement of the top
+  variables by importance across refits on subsamples, against the cases in
+  the smallest class (`rfc`) or the patients (`rfr`). Same study choices
+  (`LEARNING_FRACTIONS`, `LEARNING_B`, `LEARNING_TOP_K`, `LEARNING_NTREE`),
+  cached and run under `guard_long_fit()`. New figures
+  `rfc-fit-learning-stability`, `rfc-fit-learning-error`,
+  `rfr-fit-learning-stability` and `rfr-fit-learning-error`. `rfs-fit`'s
+  captions now name the square that marks the whole-cohort bootstrap.
+* The learning curve in `rfs-fit`, `rfc-fit` and `rfr-fit` leaves out the
+  whole-cohort bootstrap when `NA_ACTION` is `"na.impute"` and the data have
+  missing values, and says so. randomForestSRC 3.10.0 crashes R when it
+  double-bootstraps a forest that imputed missing values; the plain
+  subsamples are unaffected. Before this, such an `rfs-fit` render crashed.
+
+* `rfs-fit`, `rfc-fit` and `rfr-fit`: when the forest imputes missing values, the learning curve now fills them in once from the main forest's imputed values, so its whole-cohort bootstrap point runs instead of being left out (randomForestSRC 3.10.0 aborts R double-bootstrapping a forest that imputes). Those values were estimated from the whole cohort, so every fraction may be optimistic: the table marks each row "imputed", and the captions and reading text say why. The learning table, figure captions and reading text now follow what ran, including the fallback that leaves the bootstrap out when the imputed values cannot be copied.
+
+* `bd` compares a rebuild with its registered version through
+  `hvtiRdatabuild::compare_built(id_col =)`, the family's name for the argument,
+  so it no longer raises the `id =` deprecation warning. The template's
+  `hvtiRdatabuild` check and `DESCRIPTION`'s bound move to 0.3.5, the first
+  release with `id_col =`.
+
+- `dc-eda` and `dc-gfup` read the follow-up origin from the operation date. A new choice, `OPDATE <- "dt_surg"`,
+  is passed to `hvtiPlotR::hv_followup_panels(opdate_col =)`, and `ORIGIN_YEAR` now defaults to `NULL`, so the
+  origin is each patient's operation date less `OPYRS`, checked for every patient who has one. A patient with
+  an operation year but no operation date cannot be checked: the window table counts them in a new row,
+  "origin not checked (no operation date)", and the render warns. `dc-gfup` draws each `GROUP` on the
+  cohort's checked origin, so a group whose operation dates are all missing keeps its facet. A study that sets
+  `ORIGIN_YEAR` has it checked against the data, and the render stops when the two disagree. Until now a wrong
+  origin, such as the template's old default of 1990 on a study counting from another year, slid every point
+  along the axis and printed a "first operation" years before the study began, with no other symptom. The
+  "Operation years and the close date" table gains an "origin" row saying where the year came from. A study
+  with no operation date sets `OPDATE <- NULL` and keeps `ORIGIN_YEAR`, unchecked as before. A job brought
+  forward with `upgrade_job()` keeps its own `ORIGIN_YEAR`, which is now checked: if it was wrong, the render
+  stops and names the year the data give. `dc-gfup` now
+  needs hvtiPlotR 2.8.23, as `dc-eda` already did.
+
+- Docs sweep of the text merged since 1.6.0. The README, the vignettes, the reference pages and the templates now use the arguments as the tier 4 QA pass renamed them (`import_job(path)`, `migrate_job(path)`, `strata_col`, `lst_path`, `key_cols`, `id_col`, `var_cols`, `class_cols`), and the README describes `hvtiR::update()` as it now behaves: on Linux and macOS it installs over a loaded package and asks you to restart R. `render_job()`'s reference page lists all three leftovers that stop a render rather than being taken over. In the templates, `dc-eda` and `dc-gfup` describe the origin as read from the operation date; the `rf*-fit` introductions mention the learning curve, and its text counts the refits correctly and follows `LEARNING_TOP_K`; `nb-boostmtree` mentions its sensitivity grid and says three of its five extra fits run five times as long; `vp-individual` explains the coverage table's `state` column.
+
 # hvtiRtemplates 1.6.0
 
 * New in-flight template `ar`, an analysis report for one research question.
