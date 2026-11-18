@@ -46,9 +46,9 @@ shows three ways to find them.
 4.  **Importance**: fits and caches its results, so a later render
     reloads them (`REFIT <- TRUE` recomputes them).
 5.  **Dependence**: a long fit that will not start in an interactive
-    session, so the job runs in the background; fits and caches its
-    results, so a later render reloads them (`REFIT <- TRUE` recomputes
-    them).
+    session, from the Render button or from a terminal, so the job runs
+    in the background; fits and caches its results, so a later render
+    reloads them (`REFIT <- TRUE` recomputes them).
 
 ## Run it
 
@@ -74,5 +74,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.6.0 · built 2026-11-14.
+Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18.
 The template holds the details; this sheet is its outline.

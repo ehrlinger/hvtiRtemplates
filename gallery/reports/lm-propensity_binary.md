@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:13
+2026-11-18 12:01
 
 Fits a binary-treatment propensity model, including pooled inference for
 stacked imputations and the scored columns used by matching and
@@ -20,8 +20,8 @@ suppressPackageStartupMessages({
   library(hvtiRpropensity)
   library(hvtiRutilities)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.2.0") {
-  stop("This template needs hvtiRpropensity >= 0.2.0.", call. = FALSE)
+if (utils::packageVersion("hvtiRpropensity") < "0.2.3") {
+  stop("This template needs hvtiRpropensity >= 0.2.3.", call. = FALSE)
 }
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
@@ -36,8 +36,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 Code
 
@@ -98,9 +98,9 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE,
-                                          imputation = IMPUTATION)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY, one_row_per_patient = TRUE,
+                                          imputation_col = IMPUTATION)
 # This job's data are the model's training data, which lm-checkpred tells from its validation data.
 job_data$provenance$role <- "training"
 if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"
@@ -118,7 +118,7 @@ hvtiRtemplates:::.check_job_columns(d, TREATMENT = TREATMENT, PREDICTORS = PREDI
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -162,7 +162,7 @@ Code
 model_formula <- stats::reformulate(PREDICTORS, response = TREATMENT)
 fit <- hvtiRpropensity::ps_logistic(
   model_formula, d, treatment_col = TREATMENT, id_col = .id,
-  imputation_col = IMPUTATION, covariates = PREDICTORS,
+  imputation_col = IMPUTATION, covariate_cols = PREDICTORS,
   treatment_levels = TREATMENT_LEVELS, treated_level = TREATED_LEVEL
 )
 ```
@@ -221,14 +221,14 @@ Code
 knitr::kable(fit$tables$smd)
 ```
 
-|        | variable |     smd |
-|:-------|:---------|--------:|
-| age    | age      |  0.8446 |
-| female | female   | -0.0664 |
-| hx_chf | hx_chf   |  0.4385 |
-| hx_dm  | hx_dm    |  0.0450 |
-| lvef   | lvef     | -0.3432 |
-| bmi    | bmi      | -0.0920 |
+| variable |     smd |
+|:---------|--------:|
+| age      |  0.8446 |
+| female   | -0.0665 |
+| hx_chf   |  0.4391 |
+| hx_dm    |  0.0451 |
+| lvef     | -0.3432 |
+| bmi      | -0.0920 |
 
 Table 6: Standardized mean differences between the treatment groups
 
@@ -264,9 +264,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-14 18:13:45 EST |
-|  | Ended | 2026-11-14 18:13:46 EST |
-|  | Duration | 0 s |
+| Run | Started | 2026-11-18 12:01:50 EST |
+|  | Ended | 2026-11-18 12:01:51 EST |
+|  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -274,12 +274,12 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |  | Template | lm.propensity_binary |
 |  | Subject | approach |
 |  | Type | propensity |
-|  | hvtiRtemplates | 1.6.0 |
-| Dataset `built` | Version file | built_20261114.parquet |
-|  | Version date | 2026-11-14 |
+|  | hvtiRtemplates | 1.6.1 |
+| Dataset `built` | Version file | built_20261118.parquet |
+|  | Version date | 2026-11-18 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d99147a5c095 |
+|  | sha256 | d4581c9fbd56 |
 |  | Manifest | current |
 | Reproducibility | renv | not active |

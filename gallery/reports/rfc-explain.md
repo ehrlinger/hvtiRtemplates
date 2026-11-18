@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:16
+2026-11-18 12:05
 
 Explains the forest the `rfc-fit` job in this set saved: which
 predictors drive it, and how.
@@ -74,7 +74,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.0
+hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -375,7 +375,7 @@ Code
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/41c432fe706cdd19d5f5ce374cf5f23e.png)
+![](assets/a78585d33fdedc9787b9acf04c40fb07.png)
 
 Figure 2: Predicted class probability against each selected predictor,
 as observed, one panel per predictor. Points are individual patients,
@@ -425,8 +425,8 @@ level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-14 18:16:47 EST |
-|  | Ended | 2026-11-14 18:16:53 EST |
+| Run | Started | 2026-11-18 12:05:03 EST |
+|  | Ended | 2026-11-18 12:05:09 EST |
 |  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -435,12 +435,12 @@ level of a categorical one.
 |  | Template | rfc.explain |
 |  | Subject | complication |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.6.0 |
-| Dataset `built` | Version file | built_20261114.parquet |
-|  | Version date | 2026-11-14 |
+|  | hvtiRtemplates | 1.6.1 |
+| Dataset `built` | Version file | built_20261118.parquet |
+|  | Version date | 2026-11-18 |
 |  | Source file | built.rds |
-|  | sha256 | d99147a5c095 |
+|  | sha256 | d4581c9fbd56 |
 |  | Manifest | current |
-| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-11-14 18:16:39 -0500, data built_20261114.parquet |
+| Upstream | Handoff | `complication-rf/rfc.rds` (forest), rendered 2026-11-18 12:04:46 -0500, data built_20261118.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:10
+2026-11-18 11:57
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -67,8 +67,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -181,8 +181,8 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -191,7 +191,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -509,8 +509,8 @@ against an older figure by its shape and not point by point.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-14 18:10:39 EST |
-|  | Ended | 2026-11-14 18:10:40 EST |
+| Run | Started | 2026-11-18 11:57:54 EST |
+|  | Ended | 2026-11-18 11:57:56 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -521,12 +521,12 @@ against an older figure by its shape and not point by point.
 |  | Template | dc.trends |
 |  | Subject | cohort |
 |  | Type | eda |
-|  | hvtiRtemplates | 1.6.0 |
-| Dataset `built` | Version file | built_20261114.parquet |
-|  | Version date | 2026-11-14 |
+|  | hvtiRtemplates | 1.6.1 |
+| Dataset `built` | Version file | built_20261118.parquet |
+|  | Version date | 2026-11-18 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d99147a5c095 |
+|  | sha256 | d4581c9fbd56 |
 |  | Manifest | current |
 | Reproducibility | renv | not active |

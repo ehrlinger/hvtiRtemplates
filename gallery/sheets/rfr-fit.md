@@ -29,6 +29,9 @@ on the gallery's synthetic study.
 - **Packages:** `randomForestSRC` (\>= 3.7.0), `ggRandomForests` (\>=
   4.0.0), `hvtiRutilities`. The job checks each floor when it starts, so
   an older library stops it at the top rather than partway through.
+- **A background run.** A long job starts from the study's R console
+  with `hvtiRtemplates::run_job()`, which checks it first and renders it
+  in a process that outlives the session.
 
 ## Outline
 
@@ -43,10 +46,24 @@ shows three ways to find them.
 3.  **Cohort**: reads the study data.
 4.  **Forest**: fits and caches its results, so a later render reloads
     them (`REFIT <- TRUE` recomputes them).
-5.  **Does the forest work?**: saves `rfr.rds`, which **rfr-explain**
-    reads.
+5.  **Does the forest work?**
+    - **Is the cohort large enough?**: a long fit that will not start in
+      an interactive session, from the Render button or from a terminal,
+      so the job runs in the background; fits and caches its results, so
+      a later render reloads them (`REFIT <- TRUE` recomputes them);
+      saves `rfr.rds`, which **rfr-explain** reads.
 
 ## Run it
+
+**Run it in the background.** The fit is long, and a fit run chunk by
+chunk dies with the session. From the study's R console,
+`hvtiRtemplates::run_job("30_analyses/rfr.fit.<subject>.<type>.qmd")`
+(`analyses/` in an older study whose folders carry no number) checks the
+job, then renders it in a background process that outlives the session;
+add `final = TRUE` for the final render. `hvtiRtemplates::job_status()`
+and `hvtiRtemplates::cancel_job()`, given the same path, follow it and
+stop it. Once the fit is cached, its chunks run interactively and load
+it.
 
 **Render a draft as you go.** `render_job(job)` runs the whole job in a
 clean R session and writes the report beside it. Render early and often:
@@ -67,5 +84,5 @@ and it records the job's provenance beside the report.
   pair is how it finds the file:
   `add_job("rfr.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.6.0 · built 2026-11-14.
+Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18.
 The template holds the details; this sheet is its outline.

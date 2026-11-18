@@ -2244,7 +2244,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-14 18:08</p>
+      <p class="date">2026-11-18 11:55</p>
     </div>
   </div>
   
@@ -2256,7 +2256,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: bc 1.6.0 sha256:0c7287c1606b24ef1a192cf97056334bcc30c53c9dc2527f791678bfa0db8dc9 -->
+<!-- hvtiRtemplates: bc 1.6.1 sha256:fd6e46ece1f9dd8f7bac15ac097b1248fde3e911b03bfd96f3fe0b2d8a098c9b -->
 <!-- Demo: name the SAS job this replaces, and paste its `%bootreg` call
      verbatim. The call is the specification: it names the candidate pool, the
      entry and stay levels, the replicate count and `proc=`. Prose describing
@@ -2359,7 +2359,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.6.0</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.6.1</p>
 </div>
 </div>
 </div>
@@ -2673,8 +2673,8 @@ Table 1: The data the bootstrap runner read
 8                                                                      100
 9                                                                        0
 10                                                                     0.0
-11                                                           version:0.9.7
-12 sha256:d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace
+11                            sha:199e06115d4dcc9c73154e13d349c51ba836c962
+12 sha256:d4581c9fbd569b21078f37c93904b16a1b0c9c7f5416350a50b26db441ac4df4
 13                                               1 distinct (listed below)</code></pre>
 </div>
 </div>
@@ -2770,7 +2770,7 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 <div class="cell-output cell-output-stdout">
 <pre><code>                                check       value   ok note
 1              Replicates that fitted         100 TRUE &lt;NA&gt;
-2              Replicates that failed           0   NA &lt;NA&gt;
+2              Replicates that failed           0 TRUE &lt;NA&gt;
 3   Distinct candidates ever selected           7 TRUE &lt;NA&gt;
 4 SD of the first free base parameter 0.004289426 TRUE &lt;NA&gt;</code></pre>
 </div>
@@ -3038,7 +3038,7 @@ Table 2: The seed of each bootstrap chunk, for a reproducible rerun
 <span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="co"># not the whole dataset.</span></span>
 <span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>.job_data <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">read_job_data</span>(</span>
 <span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>  .cfg, <span class="at">dataset =</span> .sel<span class="sc">$</span>dataset, <span class="at">analysis_set =</span> .sel<span class="sc">$</span>analysis_set,</span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">where =</span> <span class="cf">if</span> (<span class="fu">length</span>(.sel<span class="sc">$</span>where)) <span class="fu">lapply</span>(.sel<span class="sc">$</span>where, str2lang), <span class="at">id =</span> .sel<span class="sc">$</span>id, <span class="at">key =</span> .sel<span class="sc">$</span>key</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">where =</span> <span class="cf">if</span> (<span class="fu">length</span>(.sel<span class="sc">$</span>where)) <span class="fu">lapply</span>(.sel<span class="sc">$</span>where, str2lang), <span class="at">id_col =</span> .sel<span class="sc">$</span>id, <span class="at">key_cols =</span> .sel<span class="sc">$</span>key</span>
 <span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> .job_data<span class="sc">$</span>data</span>
 <span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(.provenance_data, <span class="fu">list</span>(.job_data<span class="sc">$</span>provenance))</span>
@@ -3162,12 +3162,12 @@ Figure 1: Bootstrap selection frequency of each candidate variable. Black fille
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-14 18:08:24 EST</td>
+<td style="text-align: left;">2026-11-18 11:55:34 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-14 18:08:25 EST</td>
+<td style="text-align: left;">2026-11-18 11:55:36 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3212,17 +3212,17 @@ Figure 1: Bootstrap selection frequency of each candidate variable. Black fille
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.0</td>
+<td style="text-align: left;">1.6.1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261114.parquet</td>
+<td style="text-align: left;">built_20261118.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-14</td>
+<td style="text-align: left;">2026-11-18</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3242,7 +3242,7 @@ Figure 1: Bootstrap selection frequency of each candidate variable. Black fille
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">d99147a5c095</td>
+<td style="text-align: left;">d4581c9fbd56</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3252,7 +3252,7 @@ Figure 1: Bootstrap selection frequency of each candidate variable. Black fille
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>dead-boot/bc.rds</code> (bootstrap-bag), rendered not recorded, data built_20261114.parquet</td>
+<td style="text-align: left;"><code>dead-boot/bc.rds</code> (bootstrap-bag), rendered not recorded, data built_20261118.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -3262,7 +3262,7 @@ Figure 1: Bootstrap selection frequency of each candidate variable. Black fille
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"bc.dead.boot","rendered":"2026-11-14T23:08:25Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.22","source":null},{"package":"hvtiRbootstrap","version":"0.9.7","source":"github","sha":"6f90120d78e2a919feff6c4d43c5b77c33f9a82f"},{"package":"hvtiRtemplates","version":"1.6.0","source":null},{"package":"hvtiRutilities","version":"1.5.23","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261114.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-14T23:07:49Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"},{"dataset":"study","path":"00_datasets/built_20261114.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-14T23:07:49Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[{"path":"90_estimates/dead-boot/bc.rds","role":"bootstrap-bag","bytes":5495,"mtime":"2026-11-14T23:08:22Z","sha256":"cfb8c52aa320487f4542c8087148092a214c7893b7948b6116fdb9d9a3689b7e"}],"subject":"dead","type":"boot","source_sha256":"fca0d9f14f6fcd1e0440f2fa308a21293303071a080a989ec5a4af2b34a819a5","run":{"start":"2026-11-14T18:08:24-0500","end":"2026-11-14T18:08:25-0500","time_zone":"EST","duration_seconds":1.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"bc.dead.boot.qmd","template":"bc","prefix":"bc","subject":"dead","type":"boot","hvtiRtemplates":"1.6.0"},"datasets":[{"name":"built","version_file":"built_20261114.parquet","registered":"2026-11-14","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-boot/bc.rds","set":"dead-boot","role":"bootstrap-bag","dataset_version":"built_20261114.parquet"}],"reproducibility":{"renv":{"active":false}}},"source":"30_analyses/bc.dead.boot.qmd",".hvti_render_id":"f97607340acd2a0f013bbc4c0da17125d7efcc25c4976348d34573de2f6ddf35",".hvti_source_sha256":"fca0d9f14f6fcd1e0440f2fa308a21293303071a080a989ec5a4af2b34a819a5"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"bc.dead.boot","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 11:55:36","job":"bc.dead.boot","rendered":"2026-11-18T16:55:36Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.1","source":"standard"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.6.0","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.4","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRbootstrap","version":"0.9.8","source":"github","sha":"199e06115d4dcc9c73154e13d349c51ba836c962"},{"package":"hvtiRtemplates","version":"1.6.1","source":"github","sha":"308962ac911e2087cee3271ad1320e7e12023d02"},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.8","source":"standard"},{"package":"openssl","version":"2.6.0","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.3","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"standard"},{"package":"xfun","version":"0.62","source":"standard"},{"package":"xml2","version":"1.6.0","source":"standard"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261118.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-18T16:54:55Z","sha256":"d4581c9fbd569b21078f37c93904b16a1b0c9c7f5416350a50b26db441ac4df4"},{"dataset":"study","path":"00_datasets/built_20261118.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-18T16:54:55Z","sha256":"d4581c9fbd569b21078f37c93904b16a1b0c9c7f5416350a50b26db441ac4df4"}],"artifacts":[{"path":"90_estimates/dead-boot/bc.rds","role":"bootstrap-bag","bytes":5831,"mtime":"2026-11-18T16:55:32Z","sha256":"73a82b96c968bd91ca17414b9e4331b13d01979b2ebef704c54cd0cd044405ae"}],"subject":"dead","type":"boot","source_sha256":"b9e11e5a73305729dcbe261246cdef22ba91786dcf999abc4603024a0a022c5e","run":{"start":"2026-11-18T11:55:34-0500","end":"2026-11-18T11:55:36-0500","time_zone":"EST","duration_seconds":1.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"bc.dead.boot.qmd","template":"bc","prefix":"bc","subject":"dead","type":"boot","hvtiRtemplates":"1.6.1"},"datasets":[{"name":"built","version_file":"built_20261118.parquet","registered":"2026-11-18","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d4581c9fbd56","manifest":"current"}],"upstream":[{"file":"90_estimates/dead-boot/bc.rds","set":"dead-boot","role":"bootstrap-bag","dataset_version":"built_20261118.parquet"}],"reproducibility":{"renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.1","sha":"308962ac911e2087cee3271ad1320e7e12023d02","method":"bc","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 11:55:34"}},"source":"30_analyses/bc.dead.boot.qmd",".hvti_render_id":"3e1ae0d2c74b1ae2444d6024fb60055949a1d3886e62c428053d6fc4e167f845",".hvti_source_sha256":"b9e11e5a73305729dcbe261246cdef22ba91786dcf999abc4603024a0a022c5e"}</script>
 </section>
 
 </main>

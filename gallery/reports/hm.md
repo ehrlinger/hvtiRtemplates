@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:11
+2026-11-18 11:59
 
 An `hm` job builds the risk-factor model **on top of** the shape
 parameters the `hz` job fitted. The shapes are not re-derived here; they
@@ -68,7 +68,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.0
+hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -166,7 +166,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261114.parquet) |
+| Source              | dataset `study` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -1008,8 +1008,8 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-14 18:11:32 EST |
-|  | Ended | 2026-11-14 18:11:39 EST |
+| Run | Started | 2026-11-18 11:59:15 EST |
+|  | Ended | 2026-11-18 11:59:22 EST |
 |  | Duration | 7 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -1018,13 +1018,13 @@ saveRDS(hm_art, set_path("estimates", "hm.rds"))
 |  | Template | hm |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.6.0 |
-| Dataset `built` | Version file | built_20261114.parquet |
-|  | Version date | 2026-11-14 |
+|  | hvtiRtemplates | 1.6.1 |
+| Dataset `built` | Version file | built_20261118.parquet |
+|  | Version date | 2026-11-18 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | d99147a5c095 |
+|  | sha256 | d4581c9fbd56 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-11-14 18:11:23 -0500, data built_20261114.parquet |
+| Upstream | Handoff | `dead-hz/hz.rds` (hazard-shape-model), rendered 2026-11-18 11:58:57 -0500, data built_20261118.parquet |
 | Reproducibility | renv | not active |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:20
+2026-11-18 12:25
 
 Gallery job on the synthetic intervals: the hazard of the simulated
 event, from one time-varying marker (xtd) and three baseline markers.
@@ -77,8 +77,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `intervals` `intervals_20261114.parquet`, dated
-2026-11-14 · rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `intervals` `intervals_20261118.parquet`, dated
+2026-11-18 · rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -208,8 +208,8 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, whole_patients = TRUE)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY, whole_patients = TRUE)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -253,7 +253,7 @@ if (length(.chr)) {
 
 | Data                |                                                  |
 |:--------------------|:-------------------------------------------------|
-| Source              | dataset `intervals` (intervals_20261114.parquet) |
+| Source              | dataset `intervals` (intervals_20261118.parquet) |
 | Rows read           | 471                                              |
 | ID                  | `patient_id`                                     |
 | Identifiers dropped | none                                             |
@@ -403,31 +403,34 @@ environment(model) <- globalenv()
 # is written owner-only from the start, and set so if an older cache is already
 # there. The search's cache holds results only, and is kept owner-only beside it.
 .cache_files <- file.path(CACHE_DIR, c("rhf-treesize.rds", "rhf-forest.rds"))
-# Hours at study size. Started from the console it dies with the session, so an
-# uncached fit is refused there: run the job with hvtiRtemplates::run_job().
-hvtiRtemplates::guard_long_fit("rhf-forest", dir = CACHE_DIR,
-                               why = "a hazard forest on every interval of follow-up takes hours at study size",
-                               refit = REFIT)
+# Hours at study size. Started from the console, the Render button or a terminal, it dies with the
+# session, so a search or forest that will be computed is refused there: run the job with
+# hvtiRtemplates::run_job(). Each call is quoted once, so the check and cache_fit() read the same
+# call; a cache_fit() of a quoted call keys the call, so a fit cached before this was quoted still
+# loads. A current cache loads even under REFIT, so it is never refused.
 if (is.null(TREESIZE)) {
-  hvtiRtemplates::guard_long_fit("rhf-treesize", dir = CACHE_DIR,
-                                 why = "the tree-size search grows a forest at each size it tries",
-                                 refit = REFIT)
-  tuned <- hvtiRtemplates:::.owner_only(.cache_files, cache_fit(
-    "rhf-treesize",
-    tune.treesize.rhf(model, .fit_data, ntree = NTREE, perf = "risk", seed = abs(SEED), verbose = FALSE,
-                      forest = FALSE),
-    seed = SEED, dir = CACHE_DIR, refit = REFIT
-  ))
+  .tune_code <- quote(tune.treesize.rhf(model, .fit_data, ntree = NTREE, perf = "risk", seed = abs(SEED),
+                                        verbose = FALSE, forest = FALSE))
+  if (hvtiRutilities::cache_would_fit("rhf-treesize", .tune_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)) {
+    hvtiRtemplates::guard_long_fit("rhf-treesize", dir = CACHE_DIR,
+                                   why = "the tree-size search grows a forest at each size it tries",
+                                   refit = REFIT)
+  }
+  tuned <- hvtiRtemplates:::.owner_only(.cache_files,
+                                        cache_fit("rhf-treesize", .tune_code, seed = SEED, dir = CACHE_DIR, refit = REFIT))
   .treesize <- tuned$best.size
 } else {
   tuned <- NULL
   .treesize <- TREESIZE
 }
-forest <- hvtiRtemplates:::.owner_only(.cache_files, cache_fit(
-  "rhf-forest",
-  rhf(model, data = .fit_data, ntree = NTREE, treesize = .treesize, seed = -abs(SEED)),
-  seed = SEED, dir = CACHE_DIR, refit = REFIT
-))
+.forest_code <- quote(rhf(model, data = .fit_data, ntree = NTREE, treesize = .treesize, seed = -abs(SEED)))
+if (hvtiRutilities::cache_would_fit("rhf-forest", .forest_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)) {
+  hvtiRtemplates::guard_long_fit("rhf-forest", dir = CACHE_DIR,
+                                 why = "a hazard forest on every interval of follow-up takes hours at study size",
+                                 refit = REFIT)
+}
+forest <- hvtiRtemplates:::.owner_only(.cache_files,
+                                       cache_fit("rhf-forest", .forest_code, seed = SEED, dir = CACHE_DIR, refit = REFIT))
 forest
 ```
 
@@ -515,9 +518,9 @@ hvtiRtemplates:::.owner_only(set_path("estimates", "rhf.rds"), saveRDS(forest, s
 
 | Group               | Item           | Value                      |
 |:--------------------|:---------------|:---------------------------|
-| Run                 | Started        | 2026-11-14 18:20:21 EST    |
-|                     | Ended          | 2026-11-14 18:20:23 EST    |
-|                     | Duration       | 2 s                        |
+| Run                 | Started        | 2026-11-18 12:25:29 EST    |
+|                     | Ended          | 2026-11-18 12:25:32 EST    |
+|                     | Duration       | 3 s                        |
 |                     | Status         | final                      |
 |                     | Rendered by    | gallery                    |
 |                     | Host           | gallery                    |
@@ -525,13 +528,13 @@ hvtiRtemplates:::.owner_only(set_path("estimates", "rhf.rds"), saveRDS(forest, s
 |                     | Template       | rhf.fit                    |
 |                     | Subject        | event                      |
 |                     | Type           | rhf                        |
-|                     | hvtiRtemplates | 1.6.0                      |
-| Dataset `intervals` | Version file   | intervals_20261114.parquet |
-|                     | Version date   | 2026-11-14                 |
+|                     | hvtiRtemplates | 1.6.1                      |
+| Dataset `intervals` | Version file   | intervals_20261118.parquet |
+|                     | Version date   | 2026-11-18                 |
 |                     | Source file    | intervals.rds              |
 |                     | Rows kept      | 471 rows on 150 patients   |
 |                     | WHERE          | none                       |
-|                     | sha256         | beb287931ea4               |
+|                     | sha256         | 84290a069a2d               |
 |                     | Manifest       | current                    |
 | Reproducibility     | Seed           | 2026                       |
 |                     | renv           | not active                 |

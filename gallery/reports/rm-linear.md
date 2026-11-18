@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:20
+2026-11-18 12:25
 
 Fits an ordinary least-squares model of a continuous outcome,
 untransformed or on the log scale, on one dataset or on stacked multiple
@@ -22,7 +22,7 @@ suppressPackageStartupMessages({
   library(hvtiRutilities)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.2.0") stop("This template needs hvtiRpropensity >= 0.2.0.", call. = FALSE)
+if (utils::packageVersion("hvtiRpropensity") < "0.2.3") stop("This template needs hvtiRpropensity >= 0.2.3.", call. = FALSE)
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -42,8 +42,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 Code
 
@@ -114,9 +114,9 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE,
-                                          imputation = IMPUTATION)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY, one_row_per_patient = TRUE,
+                                          imputation_col = IMPUTATION)
 job_data$provenance$role <- "training"
 if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"
 d <- job_data$data
@@ -138,7 +138,7 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -326,8 +326,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-14 18:20:36 EST  |
-|                 | Ended          | 2026-11-14 18:20:37 EST  |
+| Run             | Started        | 2026-11-18 12:25:45 EST  |
+|                 | Ended          | 2026-11-18 12:25:46 EST  |
 |                 | Duration       | 2 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -336,12 +336,12 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |                 | Template       | rm.linear                |
 |                 | Subject        | los                      |
 |                 | Type           | model                    |
-|                 | hvtiRtemplates | 1.6.0                    |
-| Dataset `built` | Version file   | built_20261114.parquet   |
-|                 | Version date   | 2026-11-14               |
+|                 | hvtiRtemplates | 1.6.1                    |
+| Dataset `built` | Version file   | built_20261118.parquet   |
+|                 | Version date   | 2026-11-18               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | d99147a5c095             |
+|                 | sha256         | d4581c9fbd56             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

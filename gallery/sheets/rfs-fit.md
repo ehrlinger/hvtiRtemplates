@@ -48,10 +48,15 @@ shows three ways to find them.
 3.  **Cohort**: reads the study data.
 4.  **Forest**: a long fit (the leaf-size search grows a 100-tree forest
     at each grid value) that will not start in an interactive session,
-    so the job runs in the background; fits and caches its results, so a
-    later render reloads them (`REFIT <- TRUE` recomputes them).
-5.  **Does the forest work?**: saves `rfs.rds`, which **rfs-explain**
-    reads.
+    from the Render button or from a terminal, so the job runs in the
+    background; fits and caches its results, so a later render reloads
+    them (`REFIT <- TRUE` recomputes them).
+5.  **Does the forest work?**
+    - **Is the cohort large enough?**: a long fit that will not start in
+      an interactive session, from the Render button or from a terminal,
+      so the job runs in the background; fits and caches its results, so
+      a later render reloads them (`REFIT <- TRUE` recomputes them);
+      saves `rfs.rds`, which **rfs-explain** reads.
 
 ## Run it
 
@@ -85,5 +90,5 @@ and it records the job's provenance beside the report.
   pair is how it finds the file:
   `add_job("rfs.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.6.0 · built 2026-11-14.
+Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18.
 The template holds the details; this sheet is its outline.

@@ -50,13 +50,13 @@
 <li><strong>Study choices</strong>: 9 choices marked <code>EDIT:</code>.</li>
 <li><strong>The forest</strong>: reads what <strong>rfs-fit</strong> saved (<code>rfs.rds</code>).</li>
 <li><strong>Importance</strong>: fits and caches its results, so a later render reloads them (<code>REFIT &lt;- TRUE</code> recomputes them).</li>
-<li><strong>Dependence</strong>: a long fit that will not start in an interactive session, so the job runs in the background; fits and caches its results, so a later render reloads them (<code>REFIT &lt;- TRUE</code> recomputes them).</li>
+<li><strong>Dependence</strong>: a long fit that will not start in an interactive session, from the Render button or from a terminal, so the job runs in the background; fits and caches its results, so a later render reloads them (<code>REFIT &lt;- TRUE</code> recomputes them).</li>
 </ol>
 <h2>Run it</h2>
 <p><strong>Run it in the background.</strong> The fit is long, and a fit run chunk by chunk dies with the session. From the study's R console, <code>hvtiRtemplates::run_job(&quot;30_analyses/rfs.explain.&lt;subject&gt;.&lt;type&gt;.qmd&quot;)</code> (<code>analyses/</code> in an older study whose folders carry no number) checks the job, then renders it in a background process that outlives the session; add <code>final = TRUE</code> for the final render. <code>hvtiRtemplates::job_status()</code> and <code>hvtiRtemplates::cancel_job()</code>, given the same path, follow it and stop it. Once the fit is cached, its chunks run interactively and load it.</p>
 <p><strong>Render a draft as you go.</strong> <code>render_job(job)</code> runs the whole job in a clean R session and writes the report beside it. Render early and often: while any <code>EDIT:</code> marker is left, the report opens with a DRAFT banner listing them, and its numbers are not a result. <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#render-as-you-go">Work a job</a> explains why to render rather than run chunks by hand.</p>
 <p><strong>Then the final.</strong> Once no marker is left, <code>render_job(job, final = TRUE)</code> renders the accepted result. It refuses an open marker, a skipped chunk, <code>stop_here()</code> and unregistered data, and it records the job's provenance beside the report.</p>
-<footer>Generated from the template by hvtiRtemplates, 1.6.0 · built 2026-11-14. The template holds the details; this sheet is its outline.</footer>
+<footer>Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18. The template holds the details; this sheet is its outline.</footer>
 </main>
 </body>
 </html>

@@ -29,7 +29,7 @@ on the gallery's synthetic study.
   only: register the build with `hvtiRutilities::update_manifest()`
   first.
 - **Packages:** `hvtiRutilities`, `hvtiRtables` (\>= 1.0.13),
-  `hvtiPlotR` (\>= 2.7.14), `ggplot2`. The job checks each floor when it
+  `hvtiPlotR` (\>= 2.8.23), `ggplot2`. The job checks each floor when it
   starts, so an older library stops it at the top rather than partway
   through.
 
@@ -61,5 +61,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.6.0 · built 2026-11-14.
+Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18.
 The template holds the details; this sheet is its outline.

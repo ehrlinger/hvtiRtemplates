@@ -47,21 +47,22 @@ shows three ways to find them.
 2.  **Study choices**: 11 choices marked `EDIT:`.
 3.  **Cohort**: reads the study data.
 4.  **Cleanup before the fit**
-5.  **Forest**: a long fit (a hazard forest on every interval of
+5.  **Forest**: a long fit (the tree-size search grows a forest at each
+    size it tries) that will not start in an interactive session, from
+    the Render button or from a terminal, so the job runs in the
+    background; a long fit (a hazard forest on every interval of
     follow-up takes hours at study size) that will not start in an
-    interactive session, so the job runs in the background; a long fit
-    (the tree-size search grows a forest at each size it tries) that
-    will not start in an interactive session, so the job runs in the
-    background; fits and caches its results, so a later render reloads
-    them (`REFIT <- TRUE` recomputes them).
+    interactive session, from the Render button or from a terminal, so
+    the job runs in the background; fits and caches its results, so a
+    later render reloads them (`REFIT <- TRUE` recomputes them).
 6.  **Does the forest work?**: saves `rhf.rds`, which **rhf-explain**
     reads.
 
 ## Run it
 
-**Run it in the background.** The fit is long (a hazard forest on every
-interval of follow-up takes hours at study size), and a fit run chunk by
-chunk dies with the session. From the study's R console,
+**Run it in the background.** The fit is long (the tree-size search
+grows a forest at each size it tries), and a fit run chunk by chunk dies
+with the session. From the study's R console,
 `hvtiRtemplates::run_job("30_analyses/rhf.fit.<subject>.<type>.qmd")`
 (`analyses/` in an older study whose folders carry no number) checks the
 job, then renders it in a background process that outlives the session;
@@ -89,5 +90,5 @@ and it records the job's provenance beside the report.
   pair is how it finds the file:
   `add_job("rhf.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.6.0 · built 2026-11-14.
+Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18.
 The template holds the details; this sheet is its outline.

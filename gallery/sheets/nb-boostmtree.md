@@ -43,15 +43,20 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 13 choices marked `EDIT:`.
+2.  **Study choices**: 15 choices marked `EDIT:`.
 3.  **Cohort**: reads the study data.
 4.  **Fit**: a long fit (a cross-validated boostmtree fit takes hours at
-    study size) that will not start in an interactive session, so the
-    job runs in the background; checks the fit's memory need against
-    this session's limit before it starts; fits and caches its results,
-    so a later render reloads them (`REFIT <- TRUE` recomputes them).
-5.  **Does the fit work?**: fits and caches its results, so a later
-    render reloads them (`REFIT <- TRUE` recomputes them).
+    study size) that will not start in an interactive session, from the
+    Render button or from a terminal, so the job runs in the background;
+    checks the fit's memory need against this session's limit before it
+    starts; fits and caches its results, so a later render reloads them
+    (`REFIT <- TRUE` recomputes them).
+5.  **Does the fit work?**: a long fit (the sensitivity grid refits
+    boostmtree) that will not start in an interactive session, from the
+    Render button or from a terminal, so the job runs in the background;
+    checks the fit's memory need against this session's limit before it
+    starts; fits and caches its results, so a later render reloads them
+    (`REFIT <- TRUE` recomputes them).
 
 ## Run it
 
@@ -78,5 +83,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.6.0 · built 2026-11-14.
+Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18.
 The template holds the details; this sheet is its outline.

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:20
+2026-11-18 12:26
 
 This job builds the dissimilarity that `sid-clusters` turns into
 clusters. SID clustering (Mantero and Ishwaran, 2021) is unsupervised:
@@ -59,8 +59,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -155,8 +155,8 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -190,7 +190,7 @@ cat("Patients with every clustering variable missing, dropped:", sum(.empty), "\
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -386,9 +386,9 @@ saveRDS(sid_handoff, set_path("estimates", "sid.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-14 18:20:47 EST  |
-|                 | Ended          | 2026-11-14 18:20:52 EST  |
-|                 | Duration       | 5 s                      |
+| Run             | Started        | 2026-11-18 12:25:57 EST  |
+|                 | Ended          | 2026-11-18 12:26:02 EST  |
+|                 | Duration       | 4 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -396,13 +396,13 @@ saveRDS(sid_handoff, set_path("estimates", "sid.rds"))
 |                 | Template       | sid.fit                  |
 |                 | Subject        | echo                     |
 |                 | Type           | sid                      |
-|                 | hvtiRtemplates | 1.6.0                    |
-| Dataset `built` | Version file   | built_20261114.parquet   |
-|                 | Version date   | 2026-11-14               |
+|                 | hvtiRtemplates | 1.6.1                    |
+| Dataset `built` | Version file   | built_20261118.parquet   |
+|                 | Version date   | 2026-11-18               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | d99147a5c095             |
+|                 | sha256         | d4581c9fbd56             |
 |                 | Manifest       | current                  |
 | Reproducibility | Seed           | 1024                     |
 |                 | renv           | not active               |

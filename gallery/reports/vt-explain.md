@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:22
+2026-11-18 12:27
 
 Explains the `vt-fit` job in this set: which patients the twins say
 repair suits, stratified by the echo-phenotype clusters.
@@ -39,7 +39,7 @@ options(rf.cores = 1L, mc.cores = 1L)
 # The versions this template was verified against on 2026-10-22. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
-for (.floor in list(c("hvtiRpropensity", "0.2.0"), c("hvtiPlotR", "2.8.9"))) {
+for (.floor in list(c("hvtiRpropensity", "0.2.3"), c("hvtiPlotR", "2.8.23"))) {
   if (utils::packageVersion(.floor[1]) < .floor[2]) {
     stop("This job needs ", .floor[1], " >= ", .floor[2], "; ", utils::packageVersion(.floor[1]),
          " is installed.\nUpdate it, then re-render.", call. = FALSE)
@@ -72,7 +72,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.0
+hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -148,10 +148,10 @@ if (!identical(.s$id_key, hvtiRtemplates:::.id_key_fingerprint(.id_key))) {
 # The checksum of every dataset in manifest.yaml is checked before anything is read.
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .jd <- hvtiRtemplates::read_job_data(.cfg, dataset = .s$read$dataset, analysis_set = .s$read$analysis_set,
-                                     where = .s$read$where, id = .s$id, key = .s$read$key, join = .s$read$join,
-                                     join_vars = .s$read$join_vars, reduce = .s$read$reduce,
-                                     join_key = .s$read$join_key, one_row_per_patient = TRUE,
-                                     imputation = .s$imputation)
+                                     where = .s$read$where, id_col = .s$id, key_cols = .s$read$key, join = .s$read$join,
+                                     join_cols = .s$read$join_vars, reduce = .s$read$reduce,
+                                     join_key_cols = .s$read$join_key, one_row_per_patient = TRUE,
+                                     imputation_col = .s$imputation)
 .d_all <- .jd$data
 if (!is.null(.s$imputation)) .d_all <- .d_all[.d_all[[.s$imputation]] == .s$imputation_use, , drop = FALSE]
 .provenance_data <- c(.provenance_data, list(.jd$provenance), if (!is.null(.jd$provenance_join)) list(.jd$provenance_join))
@@ -239,7 +239,7 @@ if (!nrow(.mc)) {
   }))
   .mc$facet <- paste("Received", .mc$received)
   .mc$arm <- .mc$arm_of_curve
-  .fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet = "facet", arm = "arm")) +
+  .fig <- plot(hvtiPlotR::hv_rmst_curves(.mc, tau = HORIZON, facet_col = "facet", arm_col = "arm")) +
     labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
   save_figure(.fig, "vt-explain-twin-curves")
   .fig
@@ -312,7 +312,7 @@ if (!nrow(.cp)) {
 }
 ```
 
-![](assets/5f73faadb14fabd6f014f1ca47bafddd.png)
+![](assets/ba14bd270b92adf597a2a9bde9159e64.png)
 
 Figure 5: Each treated patient in distribution: predicted RMST under the
 arm received (own) against under the other arm (twin). On the dashed
@@ -406,7 +406,7 @@ if (!nrow(.dd)) {
 }
 ```
 
-![](assets/7473adf8cd39b0431a698b885a511f21.png)
+![](assets/3abf240f752fc6fba1df1b829045c6e9.png)
 
 Figure 6: Each treated patient’s RMST difference against their distance
 to the nearest patient of the other arm (for the isolation forest, their
@@ -558,7 +558,7 @@ if (!is.null(.sa) && nrow(.sa)) {
 }
 ```
 
-![](assets/a4cbfc3616e83a0bec96889a017adf40.png)
+![](assets/1060e856b4e502bf6b01a60a16748378.png)
 
 Figure 7: The RMST difference by stratum, one panel per arm received.
 Box: 15th to 85th percentile of the patients in distribution, whiskers
@@ -578,7 +578,7 @@ if (!is.null(.sc) && nrow(.sc)) {
                 x[order(x$time), ])
   }))
   .sc$arm <- .sc$arm_of_curve
-  .fig <- plot(hvtiPlotR::hv_rmst_curves(.sc, tau = HORIZON, facet = "stratum", arm = "arm")) +
+  .fig <- plot(hvtiPlotR::hv_rmst_curves(.sc, tau = HORIZON, facet_col = "stratum", arm_col = "arm")) +
     labs(x = "Time", y = "Mean predicted survival", color = "Curve under", fill = "Curve under")
   save_figure(.fig, "vt-explain-stratum-curves")
   .fig
@@ -684,18 +684,18 @@ print(knitr::kable(.betas, digits = 2, row.names = FALSE))
 | variable |  beta | lower | upper | unestimable |
 |:---------|------:|------:|------:|------------:|
 | age      |  0.27 |  0.20 |  0.34 |           0 |
-| female   |  0.06 |  0.01 |  0.13 |           0 |
+| female   |  0.06 | -0.01 |  0.13 |           0 |
 | bmi      |  0.00 | -0.07 |  0.06 |           0 |
-| hx_chf   | -0.05 | -0.13 |  0.03 |           0 |
-| hx_dm    |  0.00 | -0.07 |  0.07 |           0 |
-| nyha_pr  |  0.04 | -0.03 |  0.11 |           0 |
-| lvef     | -0.05 | -0.13 |  0.01 |           0 |
-| creat_pr |  0.00 | -0.08 |  0.08 |           0 |
-| lvedd    |  0.84 |  0.81 |  0.88 |           0 |
-| lvesd    |  0.86 |  0.83 |  0.89 |           0 |
+| hx_chf   | -0.05 | -0.12 |  0.03 |           0 |
+| hx_dm    |  0.00 | -0.06 |  0.07 |           0 |
+| nyha_pr  |  0.04 | -0.02 |  0.12 |           0 |
+| lvef     | -0.05 | -0.14 |  0.03 |           0 |
+| creat_pr |  0.00 | -0.08 |  0.07 |           0 |
+| lvedd    |  0.84 |  0.80 |  0.88 |           0 |
+| lvesd    |  0.86 |  0.82 |  0.89 |           0 |
 | la_diam  |  0.18 |  0.11 |  0.26 |           0 |
-| rvsp     |  0.16 |  0.10 |  0.24 |           0 |
-| e_e      |  0.09 |  0.02 |  0.15 |           0 |
+| rvsp     |  0.16 |  0.08 |  0.25 |           0 |
+| e_e      |  0.09 |  0.03 |  0.15 |           0 |
 
 Table 4: Standardized beta for each characteristic. A positive beta: the
 characteristic goes with a higher relative risk of the event by 8 under
@@ -720,7 +720,7 @@ if (!nrow(.bp)) {
 }
 ```
 
-![](assets/951c36434e7e004064169f63170f12a8.png)
+![](assets/c7bf4a1f4d03d2ec5ed225cf3813f784.png)
 
 Figure 9: Standardized association of each characteristic with the
 estimated effect, by overlap-weighted regression. A positive beta: the
@@ -925,9 +925,9 @@ WarningBefore this goes in a manuscript
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-14 18:22:08 EST |
-|  | Ended | 2026-11-14 18:22:14 EST |
-|  | Duration | 6 s |
+| Run | Started | 2026-11-18 12:27:23 EST |
+|  | Ended | 2026-11-18 12:27:30 EST |
+|  | Duration | 7 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -936,15 +936,15 @@ WarningBefore this goes in a manuscript
 |  | Template | vt.explain |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.6.0 |
-| Dataset `built` | Version file | built_20261114.parquet |
-|  | Version date | 2026-11-14 |
+|  | hvtiRtemplates | 1.6.1 |
+| Dataset `built` | Version file | built_20261118.parquet |
+|  | Version date | 2026-11-18 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d99147a5c095 |
+|  | sha256 | d4581c9fbd56 |
 |  | Manifest | current |
 | Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered not recorded |
-|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-14 18:21:51 -0500, data built_20261114.parquet |
-|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-14 18:20:57 -0500, data built_20261114.parquet |
+|  | Handoff | `reint-vt/vt.rds` (twins), rendered 2026-11-18 12:27:06 -0500, data built_20261118.parquet |
+|  | Handoff | `echo-sid/sid-clusters.rds` (SID clusters), rendered 2026-11-18 12:26:07 -0500, data built_20261118.parquet |
 | Reproducibility | renv | not active |

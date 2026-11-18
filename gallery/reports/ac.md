@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:23
+2026-11-18 11:58
 
 An `ac` job is the first look at an outcome: the Kaplan-Meier life
 table, survival and patients at risk at the reporting horizons, the
@@ -56,8 +56,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -190,8 +190,8 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -200,7 +200,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -226,8 +226,8 @@ if (!is.null(job_data$attrition)) {
 Code
 
 ``` r
-cc <- cohort_counts(d, event = EVENT, time = TIME)
-if (!is.null(EXPECTED)) assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+cc <- cohort_counts(d, time_col = TIME, event_col = EVENT)
+if (!is.null(EXPECTED)) assert_cohort(d, expected = EXPECTED, time_col = TIME, event_col = EVENT)
 
 # A time of zero, a death on the day of operation, leaves the hazard likelihood
 # undefined, and hz would stop on an optimizer error that names neither the
@@ -427,7 +427,7 @@ Code
 .at_risk <- function(strata, column) {
   .times <- sort(unique(c(grid, risk_times(if (is.null(PLOT_MAX)) .fu_end else PLOT_MAX))))
   hvtiRtemplates:::.identifiability_counts(
-    hvtiRtemplates::life_table_at(d, TIME, EVENT, times = .times, strata = strata, conf_level = CLEVEL)$n_risk,
+    hvtiRtemplates::life_table_at(d, TIME, EVENT, times = .times, strata_col = strata, conf_level = CLEVEL)$n_risk,
     column, check = "at_risk"
   )
 }
@@ -923,7 +923,7 @@ strata_fits <- list()
 .selection <- attr(job_data$record, "selection")
 hvtiRtemplates:::.refuse_display(STRATA, hvtiRtemplates:::.no_values(d, .selection$id, .selection$key), "STRATA")
 for (v in STRATA) {
-  .lt <- hvtiRtemplates::life_table(d, TIME, EVENT, strata = v, conf_level = CLEVEL)
+  .lt <- hvtiRtemplates::life_table(d, TIME, EVENT, strata_col = v, conf_level = CLEVEL)
   strata_fits[[v]] <- .lt
   .counts <- attr(.lt, "counts")
   .child(paste("tbl km counts", v), paste0("Patients, events and end of follow-up by ", v),
@@ -933,17 +933,17 @@ for (v in STRATA) {
     .child(paste("tbl km dropped", v), paste0("Patients left out of the ", v, " strata, as %KAPLAN leaves them out"),
            "knitr::kable(.dropped, row.names = FALSE)")
   }
-  .at <- as_percent(hvtiRtemplates::life_table_at(d, TIME, EVENT, times = grid, labels = labs, strata = v,
+  .at <- as_percent(hvtiRtemplates::life_table_at(d, TIME, EVENT, times = grid, labels = labs, strata_col = v,
                                                   conf_level = CLEVEL))
   .child(paste("tbl km horizons", v), paste0("Survival (%) and patients at risk at the reporting horizons, by ", v),
          "knitr::kable(.at, row.names = FALSE, digits = 4)")
   if (nrow(.counts) > 1L) {
-    .tests <- hvtiRtemplates::life_table_tests(d, TIME, EVENT, strata = v)
+    .tests <- hvtiRtemplates::life_table_tests(d, TIME, EVENT, strata_col = v)
     .child(paste("tbl km tests", v), paste0("Tests of equal survival across ", v),
            "knitr::kable(.tests, row.names = FALSE, digits = 4)")
   }
   .rows <- .lt
-  if (!EVENT_ONLY) .rows <- hvtiRtemplates::life_table(d, TIME, EVENT, strata = v, conf_level = CLEVEL, event_only = FALSE)
+  if (!EVENT_ONLY) .rows <- hvtiRtemplates::life_table(d, TIME, EVENT, strata_col = v, conf_level = CLEVEL, event_only = FALSE)
   .child(paste("tbl km life table", v), paste0("Life table by ", v),
          "knitr::kable(as_percent(.rows), row.names = FALSE, digits = 4)")
 }
@@ -1991,7 +1991,7 @@ km_figure <- function(strata = NULL) {
   at <- risk_times(plot_max)
   # The numbers at risk are the tables' own, counted after each time, so the
   # figure and the tables agree where a patient is followed to exactly that time.
-  risk <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = at, strata = strata, conf_level = CLEVEL)
+  risk <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = at, strata_col = strata, conf_level = CLEVEL)
   risk <- data.frame(strata = if (is.null(strata)) "All" else factor(risk$stratum, levels = levels(dd[[strata]])),
                      report_time = risk$time, n.risk = risk$n_risk)
   hv <- hvtiPlotR::hv_survival(dd, time_col = TIME, event_col = EVENT, group_col = strata,
@@ -2040,7 +2040,7 @@ km_figure <- function(strata = NULL) {
   }
   bars <- CI_TIMES[CI_TIMES <= plot_max]
   if (length(bars)) {
-    ci <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = bars, strata = strata, conf_level = CLEVEL)
+    ci <- hvtiRtemplates::life_table_at(d, TIME, EVENT, times = bars, strata_col = strata, conf_level = CLEVEL)
     ci <- ci[!is.na(ci$cl_lower), , drop = FALSE]
     ci$strata <- if (is.null(strata)) rep("All", nrow(ci)) else factor(ci$stratum, levels = levels(dd[[strata]]))
     # The time asked for, which sets the bars' width below.
@@ -2180,8 +2180,8 @@ hvtiRtemplates:::.methods_text(sprintf(
 
 | Group           | Item                | Value                    |
 |:----------------|:--------------------|:-------------------------|
-| Run             | Started             | 2026-11-14 18:23:06 EST  |
-|                 | Ended               | 2026-11-14 18:23:11 EST  |
+| Run             | Started             | 2026-11-18 11:58:40 EST  |
+|                 | Ended               | 2026-11-18 11:58:45 EST  |
 |                 | Duration            | 5 s                      |
 |                 | Status              | final                    |
 |                 | Rendered by         | gallery                  |
@@ -2192,12 +2192,12 @@ hvtiRtemplates:::.methods_text(sprintf(
 |                 | Template            | ac                       |
 |                 | Subject             | dead                     |
 |                 | Type                | hz                       |
-|                 | hvtiRtemplates      | 1.6.0                    |
-| Dataset `built` | Version file        | built_20261114.parquet   |
-|                 | Version date        | 2026-11-14               |
+|                 | hvtiRtemplates      | 1.6.1                    |
+| Dataset `built` | Version file        | built_20261118.parquet   |
+|                 | Version date        | 2026-11-18               |
 |                 | Source file         | built.rds                |
 |                 | Rows kept           | 725 rows on 725 patients |
 |                 | WHERE               | `!is.na(creat_pr)`       |
-|                 | sha256              | d99147a5c095             |
+|                 | sha256              | d4581c9fbd56             |
 |                 | Manifest            | current                  |
 | Reproducibility | renv                | not active               |

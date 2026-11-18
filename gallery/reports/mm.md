@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 22:20
+2026-11-18 12:02
 
 Fits a linear mixed model to a continuous response measured repeatedly
 on each patient, as PROC MIXED did with a REPEATED or RANDOM statement,
@@ -34,8 +34,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `echo` `echo_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `echo` `echo_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 Code
 
@@ -123,9 +123,9 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = FALSE,
-                                          imputation = IMPUTATION)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY, one_row_per_patient = FALSE,
+                                          imputation_col = IMPUTATION)
 job_data$provenance$role <- "training"
 if (!is.null(job_data$provenance_join)) job_data$provenance_join$role <- "training"
 d <- job_data$data
@@ -143,7 +143,7 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 
 | Data                |                                        |
 |:--------------------|:---------------------------------------|
-| Source              | dataset `echo` (echo_20261114.parquet) |
+| Source              | dataset `echo` (echo_20261118.parquet) |
 | Rows read           | 1,180                                  |
 | ID                  | `patient_id`                           |
 | Identifiers dropped | none                                   |
@@ -541,8 +541,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(bundle, .root), MODEL_PATH)
 
 | Group           | Item           | Value                      |
 |:----------------|:---------------|:---------------------------|
-| Run             | Started        | 2026-11-14 22:20:43 EST    |
-|                 | Ended          | 2026-11-14 22:20:44 EST    |
+| Run             | Started        | 2026-11-18 12:02:25 EST    |
+|                 | Ended          | 2026-11-18 12:02:25 EST    |
 |                 | Duration       | 1 s                        |
 |                 | Status         | final                      |
 |                 | Rendered by    | gallery                    |
@@ -551,12 +551,12 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(bundle, .root), MODEL_PATH)
 |                 | Template       | mm                         |
 |                 | Subject        | lvef                       |
 |                 | Type           | mixed                      |
-|                 | hvtiRtemplates | 1.6.0                      |
-| Dataset `echo`  | Version file   | echo_20261114.parquet      |
-|                 | Version date   | 2026-11-14                 |
+|                 | hvtiRtemplates | 1.6.1                      |
+| Dataset `echo`  | Version file   | echo_20261118.parquet      |
+|                 | Version date   | 2026-11-18                 |
 |                 | Source file    | echo.rds                   |
 |                 | Rows kept      | 1,180 rows on 300 patients |
 |                 | WHERE          | none                       |
-|                 | sha256         | 96a19e865571               |
+|                 | sha256         | 3bd453f95518               |
 |                 | Manifest       | current                    |
 | Reproducibility | renv           | not active                 |

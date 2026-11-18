@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:20
+2026-11-18 12:25
 
 Gallery job on the synthetic cohort: how the nine preoperative
 predictors the rf fits grow on depend on each other, with no outcome
@@ -92,8 +92,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -155,14 +155,39 @@ OUTCOME <- NULL
 # removes. Unordered categories stay factors.
 ORDINAL <- "nyha_pr"
 
-# Demo: how many permuted noise columns to add, split evenly between
-# categorical and continuous variables. The largest dependence a noise column
-# reaches is the bar an edge must clear.
+# Demo: how many permuted noise columns to add, split between categorical and
+# continuous variables in proportion to the variables. The largest dependence a
+# noise column reaches is the bar an edge must clear.
 NOISE_N <- 20
 
 # Demo: the unsupervised forest. Below about 100 trees the noise reaches
-# almost as high as a real link, so the bar loses its meaning.
-NTREE <- 200
+# almost as high as a real link, so the bar loses its meaning. 1,000 is set by
+# the rules below, not by the bar: see MAX_TREE.
+NTREE <- 1000
+
+# Demo: the rules uvarpro() builds. It samples MAX_TREE of the trees (all of
+# NTREE at most) and up to MAX_RULES_TREE branches in each, and a variable is
+# examined only through the rules that release it: too few and a variable that
+# rarely splits gets no rule and is never looked at. The forest builds about 10
+# rules a tree whatever MAX_RULES_TREE is from 20 up, so MAX_TREE is the lever.
+# In simulations with the noise columns below (5 variables and 200 patients, 31
+# and 400; dev/vp/uvarpro-coverage.R, 2026-11-15), 1,000 trees gave every
+# variable a rule at every seed. Forests of 500 trees left one or two of 31
+# variables without a rule at 6 of 20 seeds (and one of 5 at 1 of 30), and 750
+# trees one of 31 at 5 of 20. The cost is the lasso, fitted once per rule: at
+# 200 patients and 25 columns it took 56 s at 500 trees, 83 s at 750 and 110 s
+# at 1,000, for the full fit and again for each refit. Lower both to 500 to
+# halve that where the coverage table stays full.
+MAX_TREE <- 1000
+MAX_RULES_TREE <- 20
+# Demo: the largest share of the variables (VARIABLES and OUTCOME) that may go
+# unexamined, with no release rule in the full fit, before the render stops. A
+# variable with no rule has no edge leaving it, and that absence must not be
+# read as independence. At the defaults above none went unexamined in the
+# simulations, so a share past 0.1 says the forest is too small for these data
+# and the fix is more trees (MAX_TREE with NTREE). NULL reports the unexamined in
+# the coverage table and does not stop.
+MAX_UNTESTED <- NULL
 
 # Demo: the fixed edge cutoff the noise bar is reported beside, and falls back
 # to when no noise column earned any weight. 0.25 is varPro's default.
@@ -173,6 +198,16 @@ THRESHOLD_FIXED <- 0.25
 # refit costs one forest and one lasso step.
 REPEATS <- 3
 SUBSAMPLE <- 0.632
+
+# Demo: missing values. uvarpro() removes every patient with a missing value
+# and ignores na.action, so the choice is made here. "na.impute" fills the
+# VARIABLES once by random forest, from each other and never from OUTCOME: the
+# graph measures edges into OUTCOME, and an imputation that used it would draw
+# some of them itself. "na.omit" keeps complete cases. A patient missing
+# OUTCOME, when it is set, is dropped either way.
+NA_ACTION <- "na.impute"
+# Demo: the largest share of patients a variable may be missing in and still be imputed.
+MAX_MISSING <- 0.4
 
 # Demo: the seed. It is part of every cache key, seeds R's generator before
 # the forest and again before the lasso, and is handed to uvarpro() as `seed =`.
@@ -201,8 +236,8 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -245,7 +280,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -270,26 +305,64 @@ if (!is.null(job_data$attrition)) {
 Code
 
 ``` r
-# uvarpro() drops every patient with a missing value, so the graph would
-# describe fewer patients than this report claims. They are dropped here
-# instead, and counted, before the fit sees the data.
+# uvarpro() removes every patient with a missing value. NA_ACTION settles them
+# here, once, before the noise columns and the refits.
+NA_ACTION <- match.arg(NA_ACTION, c("na.impute", "na.omit"))
+if (!(is.numeric(MAX_MISSING) && length(MAX_MISSING) == 1L && !is.na(MAX_MISSING) && MAX_MISSING > 0 && MAX_MISSING <= 1)) {
+  stop("MAX_MISSING must be a single share in (0, 1].", call. = FALSE)
+}
 .empty <- .cols[vapply(d[.cols], function(x) all(is.na(x)), logical(1L))]
 if (length(.empty)) {
   stop("VARIABLES or OUTCOME names a column with no values: ", paste(.empty, collapse = ", "),
        ". Remove it.", call. = FALSE)
 }
-.missing_values <- hvtiRtemplates:::.missing_cases(d, VARIABLES = VARIABLES, OUTCOME = OUTCOME, action = "drop")
-d <- d[stats::complete.cases(d), , drop = FALSE]
-.cohort <- list(n = as.integer(nrow(d)))
+.miss <- hvtiRtemplates:::.vp_missing(d, VARIABLES, outcome = OUTCOME, na_action = NA_ACTION, max_missing = MAX_MISSING)
+d <- .miss$d
+if (!nrow(d)) {
+  stop("No patient is left: every one is missing OUTCOME or, under na.omit, a variable.", call. = FALSE)
+}
+if (anyNA(d[VARIABLES])) {
+  # Bound first so the cache keys VARIABLES alone: a change to OUTCOME must not stale it.
+  .to_impute <- d[VARIABLES]
+  # impute() fills a logical column as a number, so a yes/no variable would come back as 0.496 and be graphed as
+  # continuous. It is imputed as a factor and turned back into TRUE/FALSE, so the graph sees the same type either way.
+  .lgl <- names(.to_impute)[vapply(.to_impute, is.logical, logical(1L))]
+  .to_impute[.lgl] <- lapply(.to_impute[.lgl], factor)
+  .imputed <- cache_fit("vp-dependence-impute",
+                        randomForestSRC::impute(data = .to_impute, ntree = 250, verbose = FALSE),
+                        seed = SEED, dir = dirname(set_path("estimates", "dependence.rds")), refit = REFIT,
+                        packages = "randomForestSRC")
+  # impute() removes a row with no observed value; a silent loss is what this chunk exists to stop.
+  if (nrow(.imputed) != nrow(d)) {
+    stop(nrow(d) - nrow(.imputed), " patient(s) have no observed value in VARIABLES and cannot be imputed. ",
+         "Remove them in the dataset build.", call. = FALSE)
+  }
+  .imputed[.lgl] <- lapply(.imputed[.lgl], function(x) as.logical(as.character(x)))
+  d[VARIABLES] <- .imputed[VARIABLES]
+}
+if (anyNA(d[.cols])) stop("Variables still hold missing values after NA_ACTION; uvarpro() would drop them.", call. = FALSE)
+.missing_values <- .miss$table
+.cohort <- c(list(n = as.integer(nrow(d))), .miss$cohort)
+cat(attr(.missing_values, "rule"), "\n\n")
+```
+
+    Missing predictor values were imputed once by random forest, without the outcome, before the screen. 
+
+Code
+
+``` r
 knitr::kable(.missing_values)
 ```
 
-| Variable       | Setting   | Missing                              |
-|:---------------|:----------|:-------------------------------------|
-| creat_pr       | VARIABLES | 75                                   |
-| Complete cases |           | 725 of 800 rows analyzed; 75 dropped |
+| Row                      | Count   |
+|:-------------------------|:--------|
+| Supplied                 | 800     |
+| Outcome missing, dropped | 0       |
+| Missing: creat_pr        | 75 (9%) |
+| Imputed: creat_pr        | 75 (9%) |
+| Used                     | 800     |
 
-Table 2: Missing values in the variables studied
+Table 2: Patients supplied, missing values, and patients used
 
 ## Noise
 
@@ -302,10 +375,19 @@ clear.
 Code
 
 ``` r
-# Half the copies come from categorical variables and half from continuous
-# ones, as far as each kind allows, so both kinds of column contribute to the
-# null. An outcome column entered in OUTCOME is a source like any other: a
+# The copies are drawn by kind in proportion to the variables, with at least
+# one of each kind present, so both kinds of column contribute to the null and
+# neither crowds out the real variables. Half and half, the rule this replaced,
+# made 10 of 20 columns binary copies of the one factor among 31 variables, and
+# those copies took nearly half the forest's release rules (2026-11-14).
+# An outcome column entered in OUTCOME is a source like any other: a
 # permuted outcome is as much a null as any other permuted column.
+#
+# Only a variable with at least two observed values is a source: a permuted
+# constant is a constant, which earns no rule and so sets no bar. With the
+# proportional draw a kind can have a single copy, so one constant factor could
+# otherwise leave no categorical null at all. A refit draws again from its own
+# subsample, where a rare level can leave a factor constant.
 #
 # The kind rule is varpro_coverage()'s: a factor, text or logical column, or a
 # number with at most 5 distinct values, is categorical.
@@ -317,15 +399,12 @@ vp_kind <- function(x) {
   }
 }
 vp_add_noise <- function(d, predictors, n, seed) {
+  predictors <- predictors[vapply(d[predictors], function(x) length(unique(stats::na.omit(x))) >= 2L, NA)]
+  if (!length(predictors)) stop("No variable takes two or more values, so there is nothing to permute for the noise.", call. = FALSE)
   kinds <- vapply(d[predictors], vp_kind, "")
   pools <- split(predictors, kinds)
-  n_cat <- if (length(pools$categorical) && length(pools$continuous)) {
-    n %/% 2L
-  } else if (length(pools$categorical)) {
-    n
-  } else {
-    0L
-  }
+  n_cat <- as.integer(round(n * length(pools$categorical) / length(predictors)))
+  if (length(pools$categorical) && length(pools$continuous) && n >= 2L) n_cat <- min(n - 1L, max(1L, n_cat))
   set.seed(abs(seed))
   draw <- function(pool, k) if (k == 0L) character() else pool[sample.int(length(pool), k, replace = k > length(pool))]
   src <- c(draw(pools$categorical, n_cat), draw(pools$continuous, n - n_cat))
@@ -352,6 +431,13 @@ if (length(.noisy)) {
        paste(.noisy, collapse = ", "), ". Rename them in the dataset build.", call. = FALSE)
 }
 d_noise <- vp_add_noise(d, .cols, NOISE_N, SEED)
+# A kind among the variables with no noise column of its own has no null of its
+# kind, so its edges are judged against the other kind's noise alone.
+.no_null <- setdiff(vapply(d[.cols], vp_kind, ""), vapply(d_noise[grep("^noise", names(d_noise))], vp_kind, ""))
+if (length(.no_null)) {
+  cat("No ", paste(unique(.no_null), collapse = " or "), " variable takes two or more values, so no noise column of that ",
+      "kind was drawn and the bar comes from the other kind alone.\n", sep = "")
+}
 ```
 
 Code
@@ -396,6 +482,48 @@ vpd_bar <- function(I, noise, fixed) {
   w <- w[is.finite(w)]
   if (length(w) && max(w) > 0) list(bar = max(w), from = "noise") else list(bar = fixed, from = "fixed (fallback)")
 }
+# Whether the forest examined each variable: how many release rules it built
+# for it. fit$results has a row per rule, its `variable` an index into the
+# encoded columns, which vpd_parent() traces to variables. A variable with no
+# rule was never released, so no contrast of its own was ever tested.
+vpd_coverage <- function(fit, cols) {
+  parent <- vpd_parent(fit)
+  released <- unname(parent[colnames(fit$x)[fit$results$variable]])
+  rules <- vapply(cols, function(v) sum(released %in% v), integer(1L), USE.NAMES = FALSE)
+  data.frame(variable = cols, rules = rules, state = ifelse(rules > 0L, "examined", "not examined"))
+}
+# How often each key, an edge or a signal-set variable, was drawn across the
+# refits, over the refits that examined the variable it depends on, as vp-fit's
+# vote counts a selection over the refits that tested the variable. A refit
+# that built no rule for that variable never looked, so it counts neither for
+# the key nor against it. Each run is list(edges = "from -> to" keys, signal =
+# variable names, examined = variable names). A share with no such refit is NA,
+# not 0.
+vpd_share <- function(runs, what, owner = function(k) k) {
+  keys <- sort(unique(unlist(lapply(runs, `[[`, what))))
+  own <- owner(keys)
+  refits <- drawn <- integer(length(keys))
+  for (run in runs) {
+    seen <- own %in% run$examined
+    refits <- refits + seen
+    drawn <- drawn + (seen & keys %in% run[[what]])
+  }
+  data.frame(key = keys, share = ifelse(refits > 0L, drawn / pmax(1L, refits), NA_real_), refits = refits)
+}
+# An edge runs from a variable's row of the matrix, its contrast, to a column,
+# and every variable is a column in every row's lasso. So an edge needs only
+# its tail examined: one into a variable with no rule can still be drawn. The
+# graph is directed (gg_udependent()'s default, which vpd_graph() keeps), so no
+# edge is read both ways.
+vpd_edge_share <- function(runs) {
+  s <- vpd_share(runs, "edges", owner = function(k) sub(" -> .*$", "", k))
+  ends <- strsplit(s$key, " -> ", fixed = TRUE)
+  data.frame(from = vapply(ends, `[`, "", 1L), to = vapply(ends, `[`, "", 2L), share = s$share, refits = s$refits)
+}
+vpd_signal_share <- function(runs) {
+  s <- vpd_share(runs, "signal")
+  data.frame(variable = s$key, share = s$share, refits = s$refits)
+}
 ```
 
 ## Fit
@@ -409,11 +537,24 @@ Code
 # cache_fit() writes <dir>/<name>.rds and its default dir is the study's
 # estimates folder, not this set's, so every call here names the set's.
 CACHE_DIR <- dirname(set_path("estimates", "dependence.rds"))
+.count_ok <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && x >= 1
+if (!.count_ok(MAX_TREE) || !.count_ok(MAX_RULES_TREE)) {
+  stop("MAX_TREE and MAX_RULES_TREE must each be a single whole number of at least 1.", call. = FALSE)
+}
+if (!is.null(MAX_UNTESTED) && !(is.numeric(MAX_UNTESTED) && length(MAX_UNTESTED) == 1L && !is.na(MAX_UNTESTED) &&
+                                  MAX_UNTESTED >= 0 && MAX_UNTESTED <= 1)) {
+  stop("MAX_UNTESTED must be NULL or a single share in [0, 1].", call. = FALSE)
+}
 set.seed(abs(SEED))
 # packages = keys each cache on the engine doing the work as well as on
 # varPro, which only calls it: randomForestSRC grows the forest and glmnet
 # fits the lasso, and an update to either must not reuse an old result.
-fit <- cache_fit("vp-dependence", uvarpro(d_noise, ntree = NTREE, seed = -abs(SEED)),
+# The rule limits are written into the call itself: cache_fit() keys the
+# variables its expression names, so a changed MAX_TREE or MAX_RULES_TREE
+# makes the cache stale rather than reloading a fit built under the old ones.
+fit <- cache_fit("vp-dependence",
+                 uvarpro(d_noise, ntree = NTREE, max.tree = min(MAX_TREE, NTREE), max.rules.tree = MAX_RULES_TREE,
+                         seed = -abs(SEED)),
                  seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
 # The lasso step draws its cross-validation folds from R's generator, so it is
 # seeded again. pre.filter = FALSE keeps every column: the pre-filter would
@@ -421,6 +562,60 @@ fit <- cache_fit("vp-dependence", uvarpro(d_noise, ntree = NTREE, seed = -abs(SE
 set.seed(abs(SEED))
 beta_raw <- cache_fit("vp-dependence-beta", get.beta.entropy(fit, pre.filter = FALSE, papply = lapply),
                       seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "glmnet")
+```
+
+## Coverage
+
+A variable is **examined** when the forest built at least one release
+rule for it. One that was not examined has no contrast of its own in the
+matrix below, so no edge leaves it, and that is because it was not
+looked at, not because it is independent. It is still a predictor in
+every other variable’s lasso, so edges into it can still appear.
+
+Code
+
+``` r
+.coverage <- vpd_coverage(fit, .cols)
+.not_examined <- .coverage$variable[.coverage$state == "not examined"]
+knitr::kable(.coverage, row.names = FALSE)
+```
+
+| variable | rules | state        |
+|:---------|------:|:-------------|
+| age      |     2 | examined     |
+| female   |   644 | examined     |
+| bmi      |     0 | not examined |
+| hx_chf   |  3234 | examined     |
+| hx_dm    |  2305 | examined     |
+| nyha_pr  |    32 | examined     |
+| lvef     |    11 | examined     |
+| plvmassi |     6 | examined     |
+| creat_pr |     2 | examined     |
+
+Table 3: Whether the forest examined each variable
+
+Code
+
+``` r
+# Below the table, so the reader sees the counts before the verdict.
+if (length(.not_examined)) {
+  cat("Not examined: ", paste(.not_examined, collapse = ", "), ". The forest built no rule for them, so no edge ",
+      "leaves them; edges into them can still appear.\n", sep = "")
+}
+```
+
+Not examined: bmi. The forest built no rule for them, so no edge leaves
+them; edges into them can still appear.
+
+Code
+
+``` r
+if (!is.null(MAX_UNTESTED) && length(.not_examined) / length(.cols) > MAX_UNTESTED) {
+  stop(length(.not_examined), " of ", length(.cols), " variables were not examined, more than MAX_UNTESTED (",
+       MAX_UNTESTED, ") allows: ", paste(.not_examined, collapse = ", "), ". The forest built no release rule for ",
+       "them. Raise MAX_TREE (up to NTREE), MAX_RULES_TREE or NTREE, set REFIT <- TRUE and re-render; ",
+       "MAX_UNTESTED <- NULL reports them without stopping.", call. = FALSE)
+}
 ```
 
 ## The dependence matrix
@@ -445,7 +640,7 @@ cat(if (bar$from == "noise") {
 })
 ```
 
-The noise bar is 1.58, the largest weight a permuted noise column
+The noise bar is 1.03, the largest weight a permuted noise column
 reached; varPro’s fixed cutoff is 0.25.
 
 Code
@@ -473,7 +668,7 @@ if (length(.unlinked)) {
 ```
 
 No link at the bar, so not drawn (not evidence of independence): female,
-hx_dm, age, bmi, nyha_pr, plvmassi, creat_pr.
+hx_dm, nyha_pr, plvmassi, age, bmi, creat_pr.
 
 Code
 
@@ -492,7 +687,7 @@ save_figure(.fig, "vp-dependence-graph", width = 6.5, height = 6)
 .fig
 ```
 
-![](assets/489431a8e547e4ed245f1a9926775126.png)
+![](assets/48048098989d1ce0324e8c54e881b971.png)
 
 Figure 1: Dependence between the variables, at the noise bar. An arrow
 runs from a released variable to a variable that helps separate the
@@ -521,7 +716,7 @@ save_figure(.fig, "vp-dependence-heatmap", width = 6.5, height = 6)
 .fig
 ```
 
-![](assets/765a5aa2458bb248ae4fc8e87486d80e.png)
+![](assets/d6d0ebb20a3f5432b50d07883da2b199.png)
 
 Figure 2: Dependence between every pair of variables at any strength,
 the larger of the two directions, clustered so related variables sit
@@ -531,9 +726,14 @@ together. Outcome columns, if any, are outlined.
 
 The graph refitted `REPEATS` times, each on a subsample of the patients
 drawn without replacement and with a fresh noise draw, and each judged
-against its own noise bar. A share is over `REPEATS`, so a refit that
-drops an edge counts against it. An edge drawn in most refits holds up;
-one drawn once in a while is the forest’s own noise.
+against its own noise bar. An edge’s share is over the refits that
+examined the variable the edge leaves, the count beside it: a refit that
+examined it and drew no edge counts against the edge, and one that built
+no rule for it never looked, so it does not count. The share is NA when
+no refit examined that variable. A variable’s share in the signal set is
+counted the same way, over the refits that examined it. An edge drawn in
+most refits holds up; one drawn once in a while is the forest’s own
+noise.
 
 Code
 
@@ -547,7 +747,9 @@ if (REPEATS > 0) {
     rows <- sort(sample.int(nrow(d), floor(SUBSAMPLE * nrow(d))))
     dr <- vp_add_noise(d[rows, , drop = FALSE], .cols, NOISE_N, SEED + r)
     set.seed(abs(SEED) + r)
-    fr <- cache_fit(sprintf("vp-dependence-repeat-%02d", r), uvarpro(dr, ntree = NTREE, seed = -abs(SEED + r)),
+    fr <- cache_fit(sprintf("vp-dependence-repeat-%02d", r),
+                    uvarpro(dr, ntree = NTREE, max.tree = min(MAX_TREE, NTREE), max.rules.tree = MAX_RULES_TREE,
+                            seed = -abs(SEED + r)),
                     seed = SEED + r, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
     set.seed(abs(SEED) + r)
     br <- cache_fit(sprintf("vp-dependence-repeat-%02d-beta", r),
@@ -559,24 +761,16 @@ if (REPEATS > 0) {
     b <- vpd_bar(sq, nz, THRESHOLD_FIXED)
     real <- sq[!nz, !nz, drop = FALSE]
     g <- vpd_graph(fr, real, b$bar)
+    cr <- vpd_coverage(fr, .cols)
     list(bar = b$bar, edges = paste(g$edges$variable_from, g$edges$variable_to, sep = " -> "),
-         signal = as.character(g$nodes$variable[g$nodes$selected]))
+         signal = as.character(g$nodes$variable[g$nodes$selected]), examined = cr$variable[cr$rules > 0L])
   })
-  # Counted by hand rather than with table(), which names nothing when no refit
-  # drew an edge, so an empty result stays a table with no rows.
-  .share <- function(x) {
-    keys <- sort(unique(as.character(x)))
-    list(keys = keys, share = vapply(keys, function(k) sum(x == k), numeric(1L), USE.NAMES = FALSE) / REPEATS)
-  }
-  .edges <- .share(unlist(lapply(.runs, `[[`, "edges")))
-  .sig <- .share(unlist(lapply(.runs, `[[`, "signal")))
-  .split <- strsplit(.edges$keys, " -> ", fixed = TRUE)
   .vpd_stab <- list(
-    edges = data.frame(from = vapply(.split, `[`, "", 1L), to = vapply(.split, `[`, "", 2L), share = .edges$share),
-    signal = data.frame(variable = .sig$keys, share = .sig$share),
+    edges = vpd_edge_share(.runs),
+    signal = vpd_signal_share(.runs),
     bars = vapply(.runs, `[[`, numeric(1L), "bar")
   )
-  .vpd_stab$edges <- .vpd_stab$edges[order(-.vpd_stab$edges$share), ]
+  .vpd_stab$edges <- .vpd_stab$edges[order(-.vpd_stab$edges$share, na.last = TRUE), ]
   cat(sprintf("The noise bar ranged from %.3g to %.3g across the refits.\n", min(.vpd_stab$bars), max(.vpd_stab$bars)))
   if (!nrow(.vpd_stab$edges)) cat("No edge cleared its refit's bar in any refit.\n")
   knitr::kable(.vpd_stab$edges, digits = 2, row.names = FALSE)
@@ -585,31 +779,42 @@ if (REPEATS > 0) {
 }
 ```
 
-    The noise bar ranged from 1.26 to 2.46 across the refits.
+    The noise bar ranged from 0.548 to 3.37 across the refits.
 
-| from   | to   | share |
-|:-------|:-----|------:|
-| hx_chf | lvef |  0.67 |
+| from   | to       | share | refits |
+|:-------|:---------|------:|-------:|
+| hx_chf | lvef     |  0.67 |      3 |
+| hx_dm  | creat_pr |  0.33 |      3 |
 
-Table 3: How often each edge cleared its refit’s noise bar, most often
+Table 4: How often each edge cleared its refit’s noise bar, most often
 first
 
 Code
 
 ``` r
-# Over REPEATS, as the edge table is. Empty when REPEATS is 0.
+# Over the refits that examined each variable, as the edge table is. Empty when REPEATS is 0.
 if (!is.null(.vpd_stab)) {
-  knitr::kable(.vpd_stab$signal[order(-.vpd_stab$signal$share), ], digits = 2, row.names = FALSE)
+  knitr::kable(.vpd_stab$signal[order(-.vpd_stab$signal$share, na.last = TRUE), ], digits = 2, row.names = FALSE)
 }
 ```
 
-| variable | share |
-|----------|-------|
+| variable | share | refits |
+|----------|-------|--------|
 
-Table 4: How often each variable was in the signal set across the
+Table 5: How often each variable was in the signal set across the
 refits, most often first
 
 ## Reading the result
+
+**Missing values.** With `NA_ACTION <- "na.impute"`, missing values in
+the variables were imputed once by random forest
+(`randomForestSRC::impute()`, 250 trees) from the other variables, never
+from `OUTCOME`, before the noise columns were added and before the
+stability refits drew their patients. A variable missing in more than
+`MAX_MISSING` of the patients is refused, not filled. Patients missing
+`OUTCOME`, when it is set, were excluded. With `"na.omit"`, every
+patient missing a variable was excluded instead. The table of missing
+values above gives the counts either way.
 
 **An edge is dependence in the data, not a cause.** It says that one
 variable helps tell apart the patients another variable’s rules pick
@@ -617,8 +822,16 @@ out. Its arrow reads “the variable at the head helps separate the
 contrast of the variable at the tail”, which is a statement about how
 the data are arranged, not about which variable acts on which.
 
-**A missing variable is not an independent one.** A variable with no
-edge at the bar has no link strong enough to beat the noise in this
+**A variable the forest did not examine is not an independent one.** It
+has no rule of its own, so no edge leaves it in the graph: an edge it
+lacks is missing because it was not looked at, not because the variable
+is independent. Edges into it can still appear, because it is a
+predictor in every other variable’s lasso. The coverage table says which
+variables those are, and the render stops when their share passes
+`MAX_UNTESTED`, unless it is `NULL`.
+
+**A variable with no edge is not an independent one.** A variable with
+no edge at the bar has no link strong enough to beat the noise in this
 forest. It may still depend on others more weakly, and the heatmap shows
 every pair at any strength.
 
@@ -640,7 +853,7 @@ Code
 # one file so they cannot drift apart.
 vpd_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
   list(fit = fit, beta = beta, bar = bar$bar, bar_from = bar$from, edges = gg$edges, signal = signal,
-       stability = .vpd_stab),
+       stability = .vpd_stab, not_examined = .not_examined),
   data = .provenance_data, analysis = .analysis, cohort = .cohort,
   selection = attr(job_data$record, "selection")
 )
@@ -651,9 +864,9 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 
 | Group           | Item           | Value                      |
 |:----------------|:---------------|:---------------------------|
-| Run             | Started        | 2026-11-14 18:19:29 EST    |
-|                 | Ended          | 2026-11-14 18:20:15 EST    |
-|                 | Duration       | 46 s                       |
+| Run             | Started        | 2026-11-18 12:08:11 EST    |
+|                 | Ended          | 2026-11-18 12:25:21 EST    |
+|                 | Duration       | 17 min 10 s                |
 |                 | Status         | final                      |
 |                 | Rendered by    | gallery                    |
 |                 | Host           | gallery                    |
@@ -661,13 +874,13 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 |                 | Template       | vp.dependence              |
 |                 | Subject        | preop                      |
 |                 | Type           | vp                         |
-|                 | hvtiRtemplates | 1.6.0                      |
-| Dataset `built` | Version file   | built_20261114.parquet     |
-|                 | Version date   | 2026-11-14                 |
+|                 | hvtiRtemplates | 1.6.1                      |
+| Dataset `built` | Version file   | built_20261118.parquet     |
+|                 | Version date   | 2026-11-18                 |
 |                 | Source file    | built.rds                  |
 |                 | Rows kept      | 800 rows on 800 patients   |
 |                 | WHERE          | none                       |
-|                 | sha256         | d99147a5c095               |
+|                 | sha256         | d4581c9fbd56               |
 |                 | Manifest       | current                    |
 | Reproducibility | Seed           | 2026                       |
 |                 | renv           | not active                 |

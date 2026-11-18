@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:13
+2026-11-18 12:02
 
 Draws the propensity score of the treated patients above the axis and of
 the controls below it, from the bundle an `lm-propensity_binary` job
@@ -54,8 +54,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -288,7 +288,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261114.parquet) |
+| Source              | dataset `study` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -337,7 +337,7 @@ if (!is.null(MATCH)) {
   if (!is.character(MATCH) || length(MATCH) != 1L || is.na(MATCH)) {
     stop("MATCH must be NULL or one column name.", call. = FALSE)
   }
-  match_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, id = ID, one_row_per_patient = TRUE)
+  match_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, id_col = ID, one_row_per_patient = TRUE)
   match_data$provenance$role <- "match"
   .provenance_data <- c(.provenance_data, list(match_data$provenance))
   .id <- attr(match_data$record, "selection")$id
@@ -527,8 +527,8 @@ Table 5: Patients in each group, and those matched
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-14 18:13:57 EST |
-|  | Ended | 2026-11-14 18:13:58 EST |
+| Run | Started | 2026-11-18 12:02:03 EST |
+|  | Ended | 2026-11-18 12:02:05 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -537,13 +537,13 @@ Table 5: Patients in each group, and those matched
 |  | Template | lp.mirror |
 |  | Subject | approach |
 |  | Type | matched |
-|  | hvtiRtemplates | 1.6.0 |
-| Dataset `built` | Version file | built_20261114.parquet |
-|  | Version date | 2026-11-14 |
+|  | hvtiRtemplates | 1.6.1 |
+| Dataset `built` | Version file | built_20261118.parquet |
+|  | Version date | 2026-11-18 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d99147a5c095 |
+|  | sha256 | d4581c9fbd56 |
 |  | Manifest | current |
-| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-11-14 18:13:45 -0500, data built_20261114.parquet |
+| Upstream | Handoff | `approach-propensity/lm-propensity_binary.rds` (propensity-model), rendered 2026-11-18 12:01:50 -0500, data built_20261118.parquet |
 | Reproducibility | renv | not active |

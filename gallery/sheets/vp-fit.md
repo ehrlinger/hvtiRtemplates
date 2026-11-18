@@ -41,8 +41,9 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 14 choices marked `EDIT:`.
-3.  **Cohort**: reads the study data.
+2.  **Study choices**: 17 choices marked `EDIT:`.
+3.  **Cohort**: reads the study data; fits and caches its results, so a
+    later render reloads them (`REFIT <- TRUE` recomputes them).
 4.  **Noise**
 5.  **Fit**: fits and caches its results, so a later render reloads them
     (`REFIT <- TRUE` recomputes them).
@@ -80,5 +81,5 @@ and it records the job's provenance beside the report.
   name the file and its set. Add it with
   `add_job("vt.fit", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.6.0 · built 2026-11-14.
+Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18.
 The template holds the details; this sheet is its outline.

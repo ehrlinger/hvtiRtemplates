@@ -2242,7 +2242,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-14 18:10</p>
+      <p class="date">2026-11-18 11:58</p>
     </div>
   </div>
   
@@ -2254,7 +2254,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: dc.gfup 1.6.0 sha256:692d43fff32da9debb69e16ee32c347b16950bf7e157940b94519bda6349b461 -->
+<!-- hvtiRtemplates: dc.gfup 1.6.1 sha256:11468e15d9b270f6b4c8ecd587dbf9cff83e0043f0d56a2a5e2ece249bbce7e4 -->
 <!-- Demo: name the job this replaces (descriptive/dc.gfup). -->
 <p>Replaces <code>descriptive/dc.gfup</code>.</p>
 <p>A <code>dc-gfup</code> job checks follow-up before time-related analyses. We summarize the full cohort and the event and censored subsets, review missing, negative and zero intervals, then draw the goodness-of-follow-up figure. Follow-up units must be years. The potential follow-up, how much follow-up the close date allows, is computed here from the operation year and the close date.</p>
@@ -2271,12 +2271,12 @@ vertical-align: -.125em;
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(hvtiPlotR)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(ggplot2)</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRutilities&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;1.4.5&quot;</span>) {</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRutilities &gt;= 1.4.5 for followup_check()&#39;s 15th and 85th percentiles; &quot;</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRutilities&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;1.5.24&quot;</span>) {</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiRutilities &gt;= 1.5.24 for followup_check()&#39;s 15th and 85th percentiles and the *_col(s) names; &quot;</span>,</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>       utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiRutilities&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.8.18&quot;</span>) {</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.8.18 for hv_followup_panels()&#39;s competing events and echo layer, &quot;</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.8.23&quot;</span>) {</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs hvtiPlotR &gt;= 2.8.23 for hv_followup_panels(opdate_col =), its competing events and echo layer, &quot;</span>,</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;and the red and blue its captions name; &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;hvtiPlotR&quot;</span>), <span class="st">&quot; is installed.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># The study root is the nearest directory above this file holding _study.yml,</span></span>
@@ -2306,7 +2306,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261114.parquet</code>, dated 2026-11-14 · rendered by gallery on gallery · hvtiRtemplates 1.6.0</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261118.parquet</code>, dated 2026-11-18 · rendered by gallery on gallery · hvtiRtemplates 1.6.1</p>
 </div>
 </div>
 </div>
@@ -2376,87 +2376,94 @@ vertical-align: -.125em;
 <span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>CHECKS <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">c</span>(<span class="st">&quot;dead&quot;</span>, <span class="st">&quot;reop&quot;</span>))</span>
 <span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># The figure. These are dc-eda&#39;s follow-up choices, and mean what they mean there.</span></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the years-since-origin interval to the operation, and that origin, a</span></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># calendar year such as 1990. The origin differs between studies, and a wrong</span></span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># one slides every point along the x-axis without any other symptom, which is</span></span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># why the operation years are checked and printed below.</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the years-since-origin interval to the operation. The origin it counts</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># from differs between studies, and a wrong one slides every point along the</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># x-axis without any other symptom, which is why the operation years are</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># checked and printed below.</span></span>
 <span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>OPYRS <span class="ot">&lt;-</span> <span class="st">&quot;iv_opyrs&quot;</span></span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>ORIGIN_YEAR <span class="ot">&lt;-</span> <span class="dv">1990</span></span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the close date of follow-up, as.Date(&quot;YYYY-MM-DD&quot;). NULL estimates it</span></span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co"># as the latest operation date plus follow-up in the data, which is the date</span></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co"># follow-up is known to reach, not the date it was closed; the report says</span></span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># which one it drew.</span></span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>CLOSE_DATE <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2025-12-31&quot;</span>)</span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: one entry per death panel. `status` is the 1/0 death indicator and</span></span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="co"># `time` its follow-up in years; the default draws the same columns as the</span></span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="co"># EVENT and FOLLOWUP defaults above. A study that ascertains deaths two ways draws both,</span></span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co"># for example</span></span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co">#   systematic = list(status = &quot;deads&quot;, time = &quot;iv_deads&quot;, title = &quot;Systematic deaths&quot;)</span></span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># A non-fatal event drawn on its own, without death, is a panel too; `levels`</span></span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># names its two groups, censored first, in place of Alive and Dead:</span></span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co">#   reop = list(status = &quot;ev_reop&quot;, time = &quot;iv_reop&quot;, title = &quot;Reoperation&quot;,</span></span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co">#               levels = c(&quot;No reoperation&quot;, &quot;Reoperation&quot;))</span></span>
-<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># EVENT above must be drawn by one entry here or in EVENTS below, or the</span></span>
-<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># report&#39;s table and its figures describe different events.</span></span>
-<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>PANELS <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>  <span class="at">all =</span> <span class="fu">list</span>(<span class="at">status =</span> <span class="st">&quot;dead&quot;</span>, <span class="at">time =</span> <span class="st">&quot;iv_dead&quot;</span>, <span class="at">title =</span> <span class="st">&quot;All deaths&quot;</span>)</span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: optional event panels, one entry per panel. `event` and `time` are the</span></span>
-<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co"># event&#39;s indicator and interval; `death` and `death_time` the death it</span></span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># competes with. A flagged event counts only when it comes strictly before</span></span>
-<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># death, so ties go to death. list() draws none. For example</span></span>
-<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="co">#   reop = list(event = &quot;ev_reop&quot;, time = &quot;iv_reop&quot;, death = &quot;dead&quot;,</span></span>
-<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="co">#               death_time = &quot;iv_dead&quot;, label = &quot;Reoperation&quot;)</span></span>
-<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a><span class="co"># Competing non-fatal events share one panel when `event`, `time` and `label`</span></span>
-<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="co"># are vectors, one element per event and at most four; `death` and</span></span>
-<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="co"># `death_time` stay single. Each patient shows the earliest event before death,</span></span>
-<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="co"># and a tie between two events goes to the one listed first, so list the event</span></span>
-<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="co"># that should win a tie first:</span></span>
-<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="co">#   nonfatal = list(event = c(&quot;ev_reop&quot;, &quot;ev_stroke&quot;), time = c(&quot;iv_reop&quot;, &quot;iv_stroke&quot;),</span></span>
-<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="co">#                   death = &quot;dead&quot;, death_time = &quot;iv_dead&quot;, label = c(&quot;Reoperation&quot;, &quot;Stroke&quot;))</span></span>
-<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>EVENTS <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">reop =</span> <span class="fu">list</span>(<span class="at">event =</span> <span class="st">&quot;reop&quot;</span>, <span class="at">time =</span> <span class="st">&quot;iv_reop&quot;</span>, <span class="at">death =</span> <span class="st">&quot;dead&quot;</span>, <span class="at">death_time =</span> <span class="st">&quot;iv_dead&quot;</span>, <span class="at">label =</span> <span class="st">&quot;Reoperation&quot;</span>))</span>
-<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: NULL draws no echoes. Name the column holding each patient&#39;s echo</span></span>
-<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="co"># interval in years, such as &quot;iv_echo&quot; from a JOIN reduced to one echo per</span></span>
-<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="co"># patient, to mark it on every panel with a gray tick. A patient with no echo</span></span>
-<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a><span class="co"># (NA) gets no tick.</span></span>
-<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>ECHO <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: point transparency. 0.5 lets a dense cohort read as a distribution</span></span>
-<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="co"># rather than a blob; raise it for a small one.</span></span>
-<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>ALPHA <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
-<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the years between ticks, on the year-of-operation axis (X_TICK_BY) and the</span></span>
-<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a><span class="co"># follow-up axis (Y_TICK_BY), such as 2 for a ten-year study or 5 or 10 for a long</span></span>
-<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a><span class="co"># one. NULL leaves ggplot&#39;s own choice. Each tick falls on a multiple of the step.</span></span>
-<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>X_TICK_BY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a>Y_TICK_BY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: TRUE draws a legend naming the marks, in the corner above the diagonal</span></span>
-<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a><span class="co"># where no patient can be. FALSE leaves the key to the caption, which names the</span></span>
-<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a><span class="co"># marks either way.</span></span>
-<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>LEGEND <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead</span></span>
-<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a><span class="co"># red, alive blue and non-fatal events green, then reddish purple, olive</span></span>
-<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="co"># and black, all colorblind safe. Name alive, dead and event to choose your own;</span></span>
-<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a><span class="co"># c(alive = &quot;#377EB8&quot;, dead = &quot;#E41A1C&quot;, event = &quot;#4DAF4A&quot;) is ColorBrewer</span></span>
-<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a><span class="co"># Set1, what these jobs drew before 1.2.3. For competing events, repeat event,</span></span>
-<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a><span class="co"># one color per event in the order EVENTS lists them, as many as the largest</span></span>
-<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="co"># panel has: c(alive = ..., dead = ..., event = ..., event = ...).</span></span>
-<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure caption names these colors, so choosing your own means naming them</span></span>
-<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a><span class="co"># in the caption key too, where the figures are drawn.</span></span>
-<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>COLORS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
-<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;dc-gfup&quot;). The names are the</span></span>
-<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
-<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the operation date column. Each patient&#39;s date less OPYRS gives the</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co"># origin, so ORIGIN_YEAR &lt;- NULL reads it from the data, and every patient with</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># a date is checked against it; those without one are counted as unchecked.</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co"># Set ORIGIN_YEAR to a calendar year, such as 1990, and it is checked against</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co"># the data instead, stopping on a disagreement. Only with OPDATE &lt;- NULL, for a</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># study that has no operation date, is ORIGIN_YEAR used unchecked.</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>OPDATE <span class="ot">&lt;-</span> <span class="st">&quot;dt_surg&quot;</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>ORIGIN_YEAR <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the close date of follow-up, as.Date(&quot;YYYY-MM-DD&quot;). NULL estimates it</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="co"># as the latest operation date plus follow-up in the data, which is the date</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co"># follow-up is known to reach, not the date it was closed; the report says</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># which one it drew.</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>CLOSE_DATE <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2025-12-31&quot;</span>)</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: one entry per death panel. `status` is the 1/0 death indicator and</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># `time` its follow-up in years; the default draws the same columns as the</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># EVENT and FOLLOWUP defaults above. A study that ascertains deaths two ways draws both,</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># for example</span></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="co">#   systematic = list(status = &quot;deads&quot;, time = &quot;iv_deads&quot;, title = &quot;Systematic deaths&quot;)</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># A non-fatal event drawn on its own, without death, is a panel too; `levels`</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="co"># names its two groups, censored first, in place of Alive and Dead:</span></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="co">#   reop = list(status = &quot;ev_reop&quot;, time = &quot;iv_reop&quot;, title = &quot;Reoperation&quot;,</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co">#               levels = c(&quot;No reoperation&quot;, &quot;Reoperation&quot;))</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co"># EVENT above must be drawn by one entry here or in EVENTS below, or the</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># report&#39;s table and its figures describe different events.</span></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>PANELS <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>  <span class="at">all =</span> <span class="fu">list</span>(<span class="at">status =</span> <span class="st">&quot;dead&quot;</span>, <span class="at">time =</span> <span class="st">&quot;iv_dead&quot;</span>, <span class="at">title =</span> <span class="st">&quot;All deaths&quot;</span>)</span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: optional event panels, one entry per panel. `event` and `time` are the</span></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="co"># event&#39;s indicator and interval; `death` and `death_time` the death it</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="co"># competes with. A flagged event counts only when it comes strictly before</span></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="co"># death, so ties go to death. list() draws none. For example</span></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="co">#   reop = list(event = &quot;ev_reop&quot;, time = &quot;iv_reop&quot;, death = &quot;dead&quot;,</span></span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="co">#               death_time = &quot;iv_dead&quot;, label = &quot;Reoperation&quot;)</span></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="co"># Competing non-fatal events share one panel when `event`, `time` and `label`</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a><span class="co"># are vectors, one element per event and at most four; `death` and</span></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="co"># `death_time` stay single. Each patient shows the earliest event before death,</span></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="co"># and a tie between two events goes to the one listed first, so list the event</span></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="co"># that should win a tie first:</span></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a><span class="co">#   nonfatal = list(event = c(&quot;ev_reop&quot;, &quot;ev_stroke&quot;), time = c(&quot;iv_reop&quot;, &quot;iv_stroke&quot;),</span></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a><span class="co">#                   death = &quot;dead&quot;, death_time = &quot;iv_dead&quot;, label = c(&quot;Reoperation&quot;, &quot;Stroke&quot;))</span></span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>EVENTS <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">reop =</span> <span class="fu">list</span>(<span class="at">event =</span> <span class="st">&quot;reop&quot;</span>, <span class="at">time =</span> <span class="st">&quot;iv_reop&quot;</span>, <span class="at">death =</span> <span class="st">&quot;dead&quot;</span>, <span class="at">death_time =</span> <span class="st">&quot;iv_dead&quot;</span>, <span class="at">label =</span> <span class="st">&quot;Reoperation&quot;</span>))</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: NULL draws no echoes. Name the column holding each patient&#39;s echo</span></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a><span class="co"># interval in years, such as &quot;iv_echo&quot; from a JOIN reduced to one echo per</span></span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a><span class="co"># patient, to mark it on every panel with a gray tick. A patient with no echo</span></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a><span class="co"># (NA) gets no tick.</span></span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>ECHO <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: point transparency. 0.5 lets a dense cohort read as a distribution</span></span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a><span class="co"># rather than a blob; raise it for a small one.</span></span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>ALPHA <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the years between ticks, on the year-of-operation axis (X_TICK_BY) and the</span></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a><span class="co"># follow-up axis (Y_TICK_BY), such as 2 for a ten-year study or 5 or 10 for a long</span></span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a><span class="co"># one. NULL leaves ggplot&#39;s own choice. Each tick falls on a multiple of the step.</span></span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a>X_TICK_BY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>Y_TICK_BY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: TRUE draws a legend naming the marks, in the corner above the diagonal</span></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a><span class="co"># where no patient can be. FALSE leaves the key to the caption, which names the</span></span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a><span class="co"># marks either way.</span></span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>LEGEND <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: NULL draws the house colors through hvtiPlotR::scale_color_hv(): dead</span></span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a><span class="co"># red, alive blue and non-fatal events green, then reddish purple, olive</span></span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a><span class="co"># and black, all colorblind safe. Name alive, dead and event to choose your own;</span></span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a><span class="co"># c(alive = &quot;#377EB8&quot;, dead = &quot;#E41A1C&quot;, event = &quot;#4DAF4A&quot;) is ColorBrewer</span></span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a><span class="co"># Set1, what these jobs drew before 1.2.3. For competing events, repeat event,</span></span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a><span class="co"># one color per event in the order EVENTS lists them, as many as the largest</span></span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a><span class="co"># panel has: c(alive = ..., dead = ..., event = ..., event = ...).</span></span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure caption names these colors, so choosing your own means naming them</span></span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a><span class="co"># in the caption key too, where the figures are drawn.</span></span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a>COLORS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;dc-gfup&quot;). The names are the</span></span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2489,8 +2496,8 @@ vertical-align: -.125em;
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>hvtiRutilities<span class="sc">::</span><span class="fu">verify_manifest</span>(<span class="fu">file.path</span>(.root, <span class="st">&quot;manifest.yaml&quot;</span>))</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>.cfg <span class="ot">&lt;-</span> <span class="fu">study_config</span>(<span class="at">start =</span> .root)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>job_data <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">read_job_data</span>(.cfg, <span class="at">dataset =</span> DATASET, <span class="at">analysis_set =</span> ANALYSIS_SET,</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id =</span> ID, <span class="at">key =</span> KEY, <span class="at">join =</span> JOIN, <span class="at">join_vars =</span> JOIN_VARS,</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY, <span class="at">one_row_per_patient =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id_col =</span> ID, <span class="at">key_cols =</span> KEY, <span class="at">join =</span> JOIN, <span class="at">join_cols =</span> JOIN_VARS,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key_cols =</span> JOIN_KEY, <span class="at">one_row_per_patient =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
@@ -2513,7 +2520,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261114.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261118.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2563,7 +2570,7 @@ Table 1: The data this job read
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The checks are hvtiRutilities::followup_check(), the function the EDA report</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># calls too, so the two reports cannot disagree. It checks every choice above</span></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># before computing anything, and names every missing column at once.</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>fc <span class="ot">&lt;-</span> hvtiRutilities<span class="sc">::</span><span class="fu">followup_check</span>(d, <span class="at">event =</span> EVENT, <span class="at">followup =</span> FOLLOWUP, <span class="at">identifier =</span> IDENTIFIER,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>fc <span class="ot">&lt;-</span> hvtiRutilities<span class="sc">::</span><span class="fu">followup_check</span>(d, <span class="at">time_cols =</span> FOLLOWUP, <span class="at">event_col =</span> EVENT, <span class="at">id_col =</span> IDENTIFIER,</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">max_rows =</span> MAX_REVIEW_ROWS, <span class="at">stats =</span> .followup_stats)</span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>cohort_counts <span class="ot">&lt;-</span> fc<span class="sc">$</span>cohort</span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>review_rows <span class="ot">&lt;-</span> fc<span class="sc">$</span>review</span>
@@ -2737,7 +2744,7 @@ Table 2: Follow-up by interval and patient group: missing, negative and zero va
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># hvtiPlotR::hv_followup_panels() checks every panel and event against the data,</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># names every missing column at once, refuses a name used twice and the</span></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># wrong-origin mistake, and works out the window the panels share: from</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1 January of ORIGIN_YEAR, where hv_followup() draws its diagonal, to the last</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1 January of the origin year, where hv_followup() draws its diagonal, to the last</span></span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># operation. The EDA report calls the same function, so its panels are these.</span></span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># A refusal does not stop a draft: the tables above are the follow-up check and</span></span>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co"># do not depend on the figure, so the refusal is reported where the figure would</span></span>
@@ -2745,30 +2752,41 @@ Table 2: Follow-up by interval and patient group: missing, negative and zero va
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co"># render says so too.</span></span>
 <span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>panel_counts <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>fp <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">hv_followup_panels</span>(d, <span class="at">opyrs_col =</span> OPYRS, <span class="at">origin_year =</span> ORIGIN_YEAR,</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">hv_followup_panels</span>(d, <span class="at">opyrs_col =</span> OPYRS, <span class="at">origin_year =</span> ORIGIN_YEAR, <span class="at">opdate_col =</span> OPDATE,</span>
 <span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>                                <span class="at">panels =</span> PANELS, <span class="at">events =</span> EVENTS, <span class="at">close_date =</span> CLOSE_DATE,</span>
 <span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>                                <span class="at">echo_time_col =</span> ECHO),</span>
 <span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">error =</span> <span class="cf">function</span>(e) e</span>
 <span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>figure_drawn <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">inherits</span>(fp, <span class="st">&quot;error&quot;</span>)</span>
 <span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (figure_drawn) {</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  close_date <span class="ot">&lt;-</span> fp<span class="sc">$</span>meta<span class="sc">$</span>close_date</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Name the edit point a reader can find in this file, not the function&#39;s argument.</span></span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  close_source <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(CLOSE_DATE)) fp<span class="sc">$</span>meta<span class="sc">$</span>close_source <span class="cf">else</span> <span class="st">&quot;set in CLOSE_DATE&quot;</span></span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A final render (render_job(final = TRUE), which sets HVTI_TEMPLATE_STRICT)</span></span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># is the accepted result, and an accepted follow-up report has its figure.</span></span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">tolower</span>(<span class="fu">Sys.getenv</span>(<span class="st">&quot;HVTI_TEMPLATE_STRICT&quot;</span>)) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;0&quot;</span>, <span class="st">&quot;false&quot;</span>, <span class="st">&quot;no&quot;</span>)) {</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;The goodness-of-follow-up figure was not drawn: &quot;</span>, <span class="fu">conditionMessage</span>(fp),</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;</span><span class="sc">\n</span><span class="st">This render stops because HVTI_TEMPLATE_STRICT is set; a draft render reports it and carries on.&quot;</span>,</span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>         <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">&quot;The goodness-of-follow-up figure was not drawn: &quot;</span>, <span class="fu">conditionMessage</span>(fp), <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The box under the title was printed before this was known; the end table says draft.</span></span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.run_mark_draft</span>(<span class="st">&quot;the goodness-of-follow-up figure was not drawn&quot;</span>)</span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  close_date <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  close_source <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;not drawn:&quot;</span>, <span class="fu">conditionMessage</span>(fp))</span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The origin the panels used, read from OPDATE when ORIGIN_YEAR is NULL; the</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># code below, each GROUP&#39;s panels and the run record take it from here.</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  .origin_year <span class="ot">&lt;-</span> fp<span class="sc">$</span>meta<span class="sc">$</span>origin_year</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  close_date <span class="ot">&lt;-</span> fp<span class="sc">$</span>meta<span class="sc">$</span>close_date</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Name the edit point a reader can find in this file, not the function&#39;s argument.</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  close_source <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(CLOSE_DATE)) fp<span class="sc">$</span>meta<span class="sc">$</span>close_source <span class="cf">else</span> <span class="st">&quot;set in CLOSE_DATE&quot;</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A patient with an operation year but no operation date is drawn at the origin above,</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># which nothing about that patient confirms. Count them, so the window table and a</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># warning say how many points rest on an unchecked origin.</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  .unchecked <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(OPDATE)) <span class="cn">NULL</span> <span class="cf">else</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(d[[OPYRS]]) <span class="sc">&amp;</span> <span class="fu">is.na</span>(d[[OPDATE]]))</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">isTRUE</span>(.unchecked <span class="sc">&gt;</span> <span class="dv">0</span>)) {</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">warning</span>(.unchecked, <span class="st">&quot; patient(s) have &quot;</span>, OPYRS, <span class="st">&quot; but no &quot;</span>, OPDATE, <span class="st">&quot;, so their origin is not &quot;</span>,</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;checked against the operation date.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A final render (render_job(final = TRUE), which sets HVTI_TEMPLATE_STRICT)</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>  <span class="co"># is the accepted result, and an accepted follow-up report has its figure.</span></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">tolower</span>(<span class="fu">Sys.getenv</span>(<span class="st">&quot;HVTI_TEMPLATE_STRICT&quot;</span>)) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;0&quot;</span>, <span class="st">&quot;false&quot;</span>, <span class="st">&quot;no&quot;</span>)) {</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;The goodness-of-follow-up figure was not drawn: &quot;</span>, <span class="fu">conditionMessage</span>(fp),</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;</span><span class="sc">\n</span><span class="st">This render stops because HVTI_TEMPLATE_STRICT is set; a draft render reports it and carries on.&quot;</span>,</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>         <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">warning</span>(<span class="st">&quot;The goodness-of-follow-up figure was not drawn: &quot;</span>, <span class="fu">conditionMessage</span>(fp), <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The box under the title was printed before this was known; the end table says draft.</span></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.run_mark_draft</span>(<span class="st">&quot;the goodness-of-follow-up figure was not drawn&quot;</span>)</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>  close_date <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>  close_source <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;not drawn:&quot;</span>, <span class="fu">conditionMessage</span>(fp))</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <details class="code-fold">
@@ -2785,7 +2803,7 @@ Table 2: Follow-up by interval and patient group: missing, negative and zero va
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  .panel <span class="ot">&lt;-</span> fp<span class="sc">$</span>tables<span class="sc">$</span>panels[[nm]]</span>
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  .drawn <span class="ot">&lt;-</span> <span class="cf">if</span> (fp<span class="sc">$</span>data<span class="sc">$</span>type[<span class="fu">match</span>(nm, fp<span class="sc">$</span>data<span class="sc">$</span>panel)] <span class="sc">==</span> <span class="st">&quot;event&quot;</span>) .panel<span class="sc">$</span>tables<span class="sc">$</span>event_data <span class="cf">else</span> .panel<span class="sc">$</span>data</span>
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  .x <span class="ot">&lt;-</span> .drawn<span class="sc">$</span>operation_year</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  .op <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="fu">paste0</span>(ORIGIN_YEAR, <span class="st">&quot;-01-01&quot;</span>)) <span class="sc">+</span> (.x <span class="sc">-</span> ORIGIN_YEAR) <span class="sc">*</span> <span class="fl">365.2425</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  .op <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="fu">paste0</span>(.origin_year, <span class="st">&quot;-01-01&quot;</span>)) <span class="sc">+</span> (.x <span class="sc">-</span> .origin_year) <span class="sc">*</span> <span class="fl">365.2425</span></span>
 <span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  .years <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="fu">data.frame</span>(<span class="fu">as.numeric</span>(<span class="fu">format</span>(.op, <span class="st">&quot;%Y&quot;</span>))), <span class="fu">paste0</span>(OPYRS, <span class="st">&quot;, &quot;</span>, nm))</span>
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">:::</span><span class="fu">.identifiability_check</span>(.years, <span class="at">sparse =</span> <span class="fu">names</span>(.years))</span>
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>})</span>
@@ -2797,17 +2815,20 @@ Table 2: Follow-up by interval and patient group: missing, negative and zero va
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Operations before the origin are drawn, left of the diagonal, by an</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># because a build counting from a later origin is a problem to fix there. An</span></span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># older hvtiPlotR refuses them instead, so the field is absent and so is the row.</span></span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>.before <span class="ot">&lt;-</span> fp<span class="sc">$</span>meta<span class="sc">$</span>n_opyrs_negative</span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(<span class="st">&quot;patients&quot;</span>, <span class="st">&quot;operation year missing&quot;</span>, <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.before)) <span class="st">&quot;operation before origin&quot;</span>,</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>               <span class="st">&quot;first operation&quot;</span>, <span class="st">&quot;last operation&quot;</span>, <span class="st">&quot;close date&quot;</span>, <span class="st">&quot;close date is&quot;</span>),</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(fp<span class="sc">$</span>meta<span class="sc">$</span>n_obs, fp<span class="sc">$</span>meta<span class="sc">$</span>n_opyrs_missing, .before, <span class="fu">format</span>(fp<span class="sc">$</span>meta<span class="sc">$</span>first_operation),</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>            <span class="fu">format</span>(fp<span class="sc">$</span>meta<span class="sc">$</span>study_end), <span class="fu">format</span>(close_date), close_source)</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(<span class="st">&quot;origin&quot;</span>, <span class="st">&quot;patients&quot;</span>, <span class="st">&quot;operation year missing&quot;</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>               <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.unchecked)) <span class="st">&quot;origin not checked (no operation date)&quot;</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>               <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.before)) <span class="st">&quot;operation before origin&quot;</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>               <span class="st">&quot;first operation&quot;</span>, <span class="st">&quot;last operation&quot;</span>, <span class="st">&quot;close date&quot;</span>, <span class="st">&quot;close date is&quot;</span>),</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(<span class="fu">paste0</span>(fp<span class="sc">$</span>meta<span class="sc">$</span>origin_year, <span class="st">&quot;, &quot;</span>, fp<span class="sc">$</span>meta<span class="sc">$</span>origin_source),</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>            fp<span class="sc">$</span>meta<span class="sc">$</span>n_obs, fp<span class="sc">$</span>meta<span class="sc">$</span>n_opyrs_missing, .unchecked, .before, <span class="fu">format</span>(fp<span class="sc">$</span>meta<span class="sc">$</span>first_operation),</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>            <span class="fu">format</span>(fp<span class="sc">$</span>meta<span class="sc">$</span>study_end), <span class="fu">format</span>(close_date), close_source)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-window" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2817,6 +2838,10 @@ Table 3: Operation years and the close date
 <div aria-describedby="tbl-window-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
 <table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 48%">
+<col style="width: 51%">
+</colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">quantity</th>
@@ -2825,11 +2850,19 @@ Table 3: Operation years and the close date
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">origin</td>
+<td style="text-align: left;">1990, read from <code>dt_surg</code> less <code>iv_opyrs</code></td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">patients</td>
 <td style="text-align: left;">800</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">operation year missing</td>
+<td style="text-align: left;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">origin not checked (no operation date)</td>
 <td style="text-align: left;">0</td>
 </tr>
 <tr class="odd">
@@ -2867,11 +2900,11 @@ Table 3: Operation years and the close date
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: computes the potential follow-up; the table chunk below shows it</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The operation date is ORIGIN_YEAR&#39;s 1 January plus OPYRS years of 365.2425</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The operation date is the origin&#39;s 1 January plus OPYRS years of 365.2425</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># days, the arithmetic hv_followup() draws its diagonal with, so the table and</span></span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># the diagonal agree.</span></span>
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>.potential_row <span class="ot">&lt;-</span> <span class="cf">function</span>(title, status, time) {</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  op <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="fu">paste0</span>(ORIGIN_YEAR, <span class="st">&quot;-01-01&quot;</span>)) <span class="sc">+</span> d[[OPYRS]] <span class="sc">*</span> <span class="fl">365.2425</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  op <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="fu">paste0</span>(.origin_year, <span class="st">&quot;-01-01&quot;</span>)) <span class="sc">+</span> d[[OPYRS]] <span class="sc">*</span> <span class="fl">365.2425</span></span>
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  calendar <span class="ot">&lt;-</span> <span class="fu">pmax</span>(<span class="fu">as.numeric</span>(close_date <span class="sc">-</span> op) <span class="sc">/</span> <span class="fl">365.2425</span>, <span class="dv">0</span>)</span>
 <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  st <span class="ot">&lt;-</span> d[[status]]</span>
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  observed <span class="ot">&lt;-</span> d[[time]]</span>
@@ -2975,7 +3008,7 @@ Table 4: Follow-up recorded against follow-up possible by the close date, per p
 <span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>figure_drawn) {</span>
 <span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">::: {.callout-warning title=</span><span class="sc">\&quot;</span><span class="st">The figure was not drawn</span><span class="sc">\&quot;</span><span class="st">}</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
 <span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">conditionMessage</span>(fp), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">The tables above do not depend on it. Fix the choice the &quot;</span>,</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;message names, usually `OPYRS` or `ORIGIN_YEAR`, and render again.</span><span class="sc">\n</span><span class="st">:::</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;message names, usually `OPYRS`, `OPDATE` or `ORIGIN_YEAR`, and render again.</span><span class="sc">\n</span><span class="st">:::</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
 <span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>figure_link <span class="ot">&lt;-</span> <span class="cf">function</span>(file) {</span>
 <span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  xfun<span class="sc">::</span><span class="fu">relative_path</span>(file, <span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.in&quot;</span>) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(.in)) <span class="fu">dirname</span>(.in) <span class="cf">else</span> <span class="fu">getwd</span>(), <span class="at">error =</span> <span class="cn">FALSE</span>)</span>
@@ -3061,96 +3094,99 @@ Table 4: Follow-up recorded against follow-up possible by the close date, per p
 <span id="cb13-102"><a href="#cb13-102" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (LEGEND) <span class="fu">list</span>(<span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;inside&quot;</span>, <span class="at">legend.position.inside =</span> <span class="fu">c</span>(<span class="fl">0.98</span>, <span class="fl">0.98</span>),</span>
 <span id="cb13-103"><a href="#cb13-103" aria-hidden="true" tabindex="-1"></a>                         <span class="at">legend.justification =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>)))</span>
 <span id="cb13-104"><a href="#cb13-104" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-105"><a href="#cb13-105" aria-hidden="true" tabindex="-1"></a><span class="co"># GROUP: every group&#39;s panels drawn on their own, against the cohort&#39;s close date so</span></span>
-<span id="cb13-106"><a href="#cb13-106" aria-hidden="true" tabindex="-1"></a><span class="co"># each facet&#39;s diagonal is the cohort&#39;s. A group the panel function refuses is left out</span></span>
-<span id="cb13-107"><a href="#cb13-107" aria-hidden="true" tabindex="-1"></a><span class="co"># of the facets and named under them; the cohort figure is unaffected.</span></span>
-<span id="cb13-108"><a href="#cb13-108" aria-hidden="true" tabindex="-1"></a>group_plots <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb13-109"><a href="#cb13-109" aria-hidden="true" tabindex="-1"></a>group_refused <span class="ot">&lt;-</span> <span class="fu">character</span>()</span>
-<span id="cb13-110"><a href="#cb13-110" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (figure_drawn <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(GROUP)) {</span>
-<span id="cb13-111"><a href="#cb13-111" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (.lv <span class="cf">in</span> <span class="fu">levels</span>(group_values)) {</span>
-<span id="cb13-112"><a href="#cb13-112" aria-hidden="true" tabindex="-1"></a>    .gp <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(hvtiPlotR<span class="sc">::</span><span class="fu">hv_followup_panels</span>(d[group_values <span class="sc">==</span> .lv, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">opyrs_col =</span> OPYRS,</span>
-<span id="cb13-113"><a href="#cb13-113" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">origin_year =</span> ORIGIN_YEAR, <span class="at">panels =</span> PANELS, <span class="at">events =</span> EVENTS,</span>
-<span id="cb13-114"><a href="#cb13-114" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">close_date =</span> close_date, <span class="at">echo_time_col =</span> ECHO),</span>
-<span id="cb13-115"><a href="#cb13-115" aria-hidden="true" tabindex="-1"></a>                    <span class="at">error =</span> <span class="cf">function</span>(e) e)</span>
-<span id="cb13-116"><a href="#cb13-116" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">inherits</span>(.gp, <span class="st">&quot;error&quot;</span>)) group_refused <span class="ot">&lt;-</span> <span class="fu">c</span>(group_refused, .lv) <span class="cf">else</span> group_plots[[.lv]] <span class="ot">&lt;-</span> <span class="fu">plot</span>(.gp, <span class="at">alpha =</span> ALPHA)</span>
-<span id="cb13-117"><a href="#cb13-117" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-118"><a href="#cb13-118" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-119"><a href="#cb13-119" aria-hidden="true" tabindex="-1"></a><span class="co"># The cohort figure `p` of panel `nm`, faceted by GROUP: it keeps p&#39;s scales, labels and</span></span>
-<span id="cb13-120"><a href="#cb13-120" aria-hidden="true" tabindex="-1"></a><span class="co"># theme, and its data and every layer that carries its own, the diagonal included, become</span></span>
-<span id="cb13-121"><a href="#cb13-121" aria-hidden="true" tabindex="-1"></a><span class="co"># the groups&#39; own, stacked with the group they came from, so no facet shows another</span></span>
-<span id="cb13-122"><a href="#cb13-122" aria-hidden="true" tabindex="-1"></a><span class="co"># group&#39;s points or the cohort&#39;s.</span></span>
-<span id="cb13-123"><a href="#cb13-123" aria-hidden="true" tabindex="-1"></a>.facet_groups <span class="ot">&lt;-</span> <span class="cf">function</span>(p, nm) {</span>
-<span id="cb13-124"><a href="#cb13-124" aria-hidden="true" tabindex="-1"></a>  ps <span class="ot">&lt;-</span> <span class="fu">lapply</span>(group_plots, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, nm)</span>
-<span id="cb13-125"><a href="#cb13-125" aria-hidden="true" tabindex="-1"></a>  stack <span class="ot">&lt;-</span> <span class="cf">function</span>(get) {</span>
-<span id="cb13-126"><a href="#cb13-126" aria-hidden="true" tabindex="-1"></a>    out <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">Map</span>(<span class="cf">function</span>(q, lv) <span class="fu">cbind</span>(<span class="fu">get</span>(q), <span class="at">.gfup_group =</span> <span class="fu">rep</span>(lv, <span class="fu">nrow</span>(<span class="fu">get</span>(q)))), ps, <span class="fu">names</span>(ps)))</span>
-<span id="cb13-127"><a href="#cb13-127" aria-hidden="true" tabindex="-1"></a>    out<span class="sc">$</span>.gfup_group <span class="ot">&lt;-</span> <span class="fu">factor</span>(out<span class="sc">$</span>.gfup_group, <span class="at">levels =</span> <span class="fu">levels</span>(group_values))</span>
-<span id="cb13-128"><a href="#cb13-128" aria-hidden="true" tabindex="-1"></a>    out</span>
-<span id="cb13-129"><a href="#cb13-129" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-130"><a href="#cb13-130" aria-hidden="true" tabindex="-1"></a>  p<span class="sc">$</span>data <span class="ot">&lt;-</span> <span class="fu">stack</span>(<span class="cf">function</span>(q) q<span class="sc">$</span>data)</span>
-<span id="cb13-131"><a href="#cb13-131" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (k <span class="cf">in</span> <span class="fu">seq_along</span>(p<span class="sc">$</span>layers)) {</span>
-<span id="cb13-132"><a href="#cb13-132" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.data.frame</span>(p<span class="sc">$</span>layers[[k]]<span class="sc">$</span>data)) p<span class="sc">$</span>layers[[k]]<span class="sc">$</span>data <span class="ot">&lt;-</span> <span class="fu">stack</span>(<span class="cf">function</span>(q) q<span class="sc">$</span>layers[[k]]<span class="sc">$</span>data)</span>
-<span id="cb13-133"><a href="#cb13-133" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-134"><a href="#cb13-134" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The strips name the column, and the years are angled so narrow facets do not run them together.</span></span>
-<span id="cb13-135"><a href="#cb13-135" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This guide replaces the scale&#39;s, so it keeps the scale&#39;s overlap check.</span></span>
-<span id="cb13-136"><a href="#cb13-136" aria-hidden="true" tabindex="-1"></a>  p <span class="sc">+</span> <span class="fu">facet_wrap</span>(<span class="sc">~</span>.gfup_group, <span class="at">labeller =</span> <span class="fu">as_labeller</span>(<span class="cf">function</span>(x) <span class="fu">paste0</span>(GROUP, <span class="st">&quot;: &quot;</span>, x))) <span class="sc">+</span></span>
-<span id="cb13-137"><a href="#cb13-137" aria-hidden="true" tabindex="-1"></a>    <span class="fu">guides</span>(<span class="at">x =</span> <span class="fu">guide_axis</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">check.overlap =</span> <span class="cn">TRUE</span>))</span>
-<span id="cb13-138"><a href="#cb13-138" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-139"><a href="#cb13-139" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="cf">if</span> (figure_drawn) <span class="fu">nrow</span>(fp<span class="sc">$</span>data) <span class="cf">else</span> <span class="dv">0</span>L)) {</span>
-<span id="cb13-140"><a href="#cb13-140" aria-hidden="true" tabindex="-1"></a>  row <span class="ot">&lt;-</span> fp<span class="sc">$</span>data[i, ]</span>
-<span id="cb13-141"><a href="#cb13-141" aria-hidden="true" tabindex="-1"></a>  nm <span class="ot">&lt;-</span> row<span class="sc">$</span>panel</span>
-<span id="cb13-142"><a href="#cb13-142" aria-hidden="true" tabindex="-1"></a>  panel_counts[[nm]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">drawn =</span> row<span class="sc">$</span>n_drawn, <span class="at">excluded =</span> row<span class="sc">$</span>n_excluded)</span>
-<span id="cb13-143"><a href="#cb13-143" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">### &quot;</span>, row<span class="sc">$</span>title, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>, row<span class="sc">$</span>n_drawn, <span class="st">&quot; patients drawn; &quot;</span>, row<span class="sc">$</span>n_excluded,</span>
-<span id="cb13-144"><a href="#cb13-144" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot; missing a column this panel needs.&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb13-145"><a href="#cb13-145" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(ECHO)) <span class="fu">cat</span>(<span class="st">&quot; &quot;</span>, fp<span class="sc">$</span>tables<span class="sc">$</span>panels[[nm]]<span class="sc">$</span>meta<span class="sc">$</span>n_echo, <span class="st">&quot; with an echo marked.&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb13-146"><a href="#cb13-146" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
-<span id="cb13-147"><a href="#cb13-147" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The caption key names the house colors that COLORS &lt;- NULL draws and the</span></span>
-<span id="cb13-148"><a href="#cb13-148" aria-hidden="true" tabindex="-1"></a>  <span class="co"># shapes set here, so a study that sets COLORS renames them in .key below.</span></span>
-<span id="cb13-149"><a href="#cb13-149" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (row<span class="sc">$</span>type <span class="sc">==</span> <span class="st">&quot;followup&quot;</span>) {</span>
-<span id="cb13-150"><a href="#cb13-150" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The plot&#39;s groups are Alive and Dead whatever the status; `levels` renames them.</span></span>
-<span id="cb13-151"><a href="#cb13-151" aria-hidden="true" tabindex="-1"></a>    .lv <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="cf">if</span> (<span class="fu">is.null</span>(PANELS[[nm]]<span class="sc">$</span>levels)) <span class="fu">c</span>(<span class="st">&quot;Alive&quot;</span>, <span class="st">&quot;Dead&quot;</span>) <span class="cf">else</span> PANELS[[nm]]<span class="sc">$</span>levels,</span>
-<span id="cb13-152"><a href="#cb13-152" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">c</span>(<span class="st">&quot;Alive&quot;</span>, <span class="st">&quot;Dead&quot;</span>))</span>
-<span id="cb13-153"><a href="#cb13-153" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> plots[[nm]] <span class="sc">+</span></span>
-<span id="cb13-154"><a href="#cb13-154" aria-hidden="true" tabindex="-1"></a>      <span class="fu">status_colors</span>(<span class="fu">c</span>(<span class="st">&quot;Alive&quot;</span>, <span class="st">&quot;Dead&quot;</span>), .lv) <span class="sc">+</span></span>
-<span id="cb13-155"><a href="#cb13-155" aria-hidden="true" tabindex="-1"></a>      <span class="fu">scale_shape_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="at">Alive =</span> <span class="dv">1</span>, <span class="at">Dead =</span> <span class="dv">4</span>), <span class="at">labels =</span> .lv)</span>
-<span id="cb13-156"><a href="#cb13-156" aria-hidden="true" tabindex="-1"></a>    .key <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(PANELS[[nm]]<span class="sc">$</span>levels)) {</span>
-<span id="cb13-157"><a href="#cb13-157" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;Blue open circles mark patients alive and red crosses patients who died&quot;</span></span>
-<span id="cb13-158"><a href="#cb13-158" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
-<span id="cb13-159"><a href="#cb13-159" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste0</span>(<span class="st">&quot;Blue open circles mark &quot;</span>, .lv[[<span class="st">&quot;Alive&quot;</span>]], <span class="st">&quot; and red crosses &quot;</span>, .lv[[<span class="st">&quot;Dead&quot;</span>]])</span>
-<span id="cb13-160"><a href="#cb13-160" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb13-161"><a href="#cb13-161" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb13-162"><a href="#cb13-162" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The levels are the panel&#39;s own: &quot;No event&quot;, one per event in the order</span></span>
-<span id="cb13-163"><a href="#cb13-163" aria-hidden="true" tabindex="-1"></a>    <span class="co"># EVENTS lists them, and &quot;Death&quot;.</span></span>
-<span id="cb13-164"><a href="#cb13-164" aria-hidden="true" tabindex="-1"></a>    levels <span class="ot">&lt;-</span> fp<span class="sc">$</span>tables<span class="sc">$</span>panels[[nm]]<span class="sc">$</span>meta<span class="sc">$</span>event_levels</span>
-<span id="cb13-165"><a href="#cb13-165" aria-hidden="true" tabindex="-1"></a>    k <span class="ot">&lt;-</span> <span class="fu">length</span>(levels) <span class="sc">-</span> <span class="dv">2</span>L</span>
-<span id="cb13-166"><a href="#cb13-166" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> plots[[nm]] <span class="sc">+</span></span>
-<span id="cb13-167"><a href="#cb13-167" aria-hidden="true" tabindex="-1"></a>      <span class="fu">status_colors</span>(levels) <span class="sc">+</span></span>
-<span id="cb13-168"><a href="#cb13-168" aria-hidden="true" tabindex="-1"></a>      <span class="fu">scale_shape_manual</span>(<span class="at">values =</span> stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">6</span>)[<span class="fu">seq_len</span>(k)], <span class="dv">4</span>), levels))</span>
-<span id="cb13-169"><a href="#cb13-169" aria-hidden="true" tabindex="-1"></a>    .with <span class="ot">&lt;-</span> <span class="cf">if</span> (k <span class="sc">==</span> <span class="dv">1</span>L) <span class="st">&quot;patients with the event&quot;</span> <span class="cf">else</span> <span class="fu">paste</span>(<span class="st">&quot;patients whose first event was&quot;</span>, levels[<span class="dv">1</span>L <span class="sc">+</span> <span class="fu">seq_len</span>(k)])</span>
-<span id="cb13-170"><a href="#cb13-170" aria-hidden="true" tabindex="-1"></a>    .key <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Blue open circles mark patients without &quot;</span>, <span class="cf">if</span> (k <span class="sc">==</span> <span class="dv">1</span>L) <span class="st">&quot;the event&quot;</span> <span class="cf">else</span> <span class="st">&quot;an event&quot;</span>, <span class="st">&quot;, &quot;</span>,</span>
-<span id="cb13-171"><a href="#cb13-171" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">paste</span>(<span class="fu">c</span>(<span class="st">&quot;green&quot;</span>, <span class="st">&quot;reddish purple&quot;</span>, <span class="st">&quot;olive&quot;</span>, <span class="st">&quot;black&quot;</span>)[<span class="fu">seq_len</span>(k)],</span>
-<span id="cb13-172"><a href="#cb13-172" aria-hidden="true" tabindex="-1"></a>                         <span class="fu">c</span>(<span class="st">&quot;open triangles&quot;</span>, <span class="st">&quot;open squares&quot;</span>, <span class="st">&quot;open diamonds&quot;</span>, <span class="st">&quot;open inverted triangles&quot;</span>)[<span class="fu">seq_len</span>(k)],</span>
-<span id="cb13-173"><a href="#cb13-173" aria-hidden="true" tabindex="-1"></a>                         .with, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
-<span id="cb13-174"><a href="#cb13-174" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;, and red crosses patients who died&quot;</span>)</span>
-<span id="cb13-175"><a href="#cb13-175" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-176"><a href="#cb13-176" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(ECHO)) .key <span class="ot">&lt;-</span> <span class="fu">paste0</span>(.key, <span class="st">&quot;, gray ticks the follow-up at each patient&#39;s echo,&quot;</span>)</span>
-<span id="cb13-177"><a href="#cb13-177" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Year of operation&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Follow-up (years)&quot;</span>, <span class="at">color =</span> <span class="cn">NULL</span>, <span class="at">shape =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb13-178"><a href="#cb13-178" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span> .axes_and_legend</span>
-<span id="cb13-179"><a href="#cb13-179" aria-hidden="true" tabindex="-1"></a>  file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(p, <span class="fu">paste0</span>(<span class="st">&quot;dc-gfup-&quot;</span>, nm), <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-180"><a href="#cb13-180" aria-hidden="true" tabindex="-1"></a>  .link <span class="ot">&lt;-</span> <span class="fu">figure_link</span>(file)</span>
-<span id="cb13-181"><a href="#cb13-181" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig gfup&quot;</span>, nm),</span>
-<span id="cb13-182"><a href="#cb13-182" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste0</span>(<span class="st">&quot;Follow-up against year of operation, &quot;</span>, row<span class="sc">$</span>title, <span class="st">&quot;. &quot;</span>, .key, <span class="st">&quot; and the dashed orange diagonal &quot;</span>,</span>
-<span id="cb13-183"><a href="#cb13-183" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;the longest follow-up possible for each year of operation.&quot;</span>),</span>
-<span id="cb13-184"><a href="#cb13-184" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>)</span>
-<span id="cb13-185"><a href="#cb13-185" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(group_plots)) {</span>
-<span id="cb13-186"><a href="#cb13-186" aria-hidden="true" tabindex="-1"></a>    file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(<span class="fu">.facet_groups</span>(p, nm), <span class="fu">paste0</span>(<span class="st">&quot;dc-gfup-&quot;</span>, nm, <span class="st">&quot;-by-group&quot;</span>), <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-187"><a href="#cb13-187" aria-hidden="true" tabindex="-1"></a>    .link <span class="ot">&lt;-</span> <span class="fu">figure_link</span>(file)</span>
-<span id="cb13-188"><a href="#cb13-188" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig gfup&quot;</span>, nm, <span class="st">&quot;by group&quot;</span>),</span>
-<span id="cb13-189"><a href="#cb13-189" aria-hidden="true" tabindex="-1"></a>           <span class="fu">paste0</span>(<span class="st">&quot;Follow-up against year of operation, &quot;</span>, row<span class="sc">$</span>title, <span class="st">&quot;. One panel per &quot;</span>, GROUP, <span class="st">&quot; group; &quot;</span>,</span>
-<span id="cb13-190"><a href="#cb13-190" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;patients with no value for it have a panel of their own. The marks are those of the figure above, and &quot;</span>,</span>
-<span id="cb13-191"><a href="#cb13-191" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;each diagonal is the longest follow-up the cohort&#39;s close date allows.&quot;</span>),</span>
-<span id="cb13-192"><a href="#cb13-192" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>)</span>
-<span id="cb13-193"><a href="#cb13-193" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-194"><a href="#cb13-194" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb13-105"><a href="#cb13-105" aria-hidden="true" tabindex="-1"></a><span class="co"># GROUP: every group&#39;s panels drawn on their own, against the cohort&#39;s close date and</span></span>
+<span id="cb13-106"><a href="#cb13-106" aria-hidden="true" tabindex="-1"></a><span class="co"># origin so each facet&#39;s diagonal is the cohort&#39;s. The cohort call above already checked</span></span>
+<span id="cb13-107"><a href="#cb13-107" aria-hidden="true" tabindex="-1"></a><span class="co"># every patient with an operation date against that origin, so a group is not asked to</span></span>
+<span id="cb13-108"><a href="#cb13-108" aria-hidden="true" tabindex="-1"></a><span class="co"># derive it again, and a group whose operation dates are all missing still gets its facet.</span></span>
+<span id="cb13-109"><a href="#cb13-109" aria-hidden="true" tabindex="-1"></a><span class="co"># A group the panel function refuses is left out of the facets and named under them; the</span></span>
+<span id="cb13-110"><a href="#cb13-110" aria-hidden="true" tabindex="-1"></a><span class="co"># cohort figure is unaffected.</span></span>
+<span id="cb13-111"><a href="#cb13-111" aria-hidden="true" tabindex="-1"></a>group_plots <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb13-112"><a href="#cb13-112" aria-hidden="true" tabindex="-1"></a>group_refused <span class="ot">&lt;-</span> <span class="fu">character</span>()</span>
+<span id="cb13-113"><a href="#cb13-113" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (figure_drawn <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.null</span>(GROUP)) {</span>
+<span id="cb13-114"><a href="#cb13-114" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (.lv <span class="cf">in</span> <span class="fu">levels</span>(group_values)) {</span>
+<span id="cb13-115"><a href="#cb13-115" aria-hidden="true" tabindex="-1"></a>    .gp <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(hvtiPlotR<span class="sc">::</span><span class="fu">hv_followup_panels</span>(d[group_values <span class="sc">==</span> .lv, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">opyrs_col =</span> OPYRS,</span>
+<span id="cb13-116"><a href="#cb13-116" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">origin_year =</span> .origin_year, <span class="at">opdate_col =</span> <span class="cn">NULL</span>, <span class="at">panels =</span> PANELS, <span class="at">events =</span> EVENTS,</span>
+<span id="cb13-117"><a href="#cb13-117" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">close_date =</span> close_date, <span class="at">echo_time_col =</span> ECHO),</span>
+<span id="cb13-118"><a href="#cb13-118" aria-hidden="true" tabindex="-1"></a>                    <span class="at">error =</span> <span class="cf">function</span>(e) e)</span>
+<span id="cb13-119"><a href="#cb13-119" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">inherits</span>(.gp, <span class="st">&quot;error&quot;</span>)) group_refused <span class="ot">&lt;-</span> <span class="fu">c</span>(group_refused, .lv) <span class="cf">else</span> group_plots[[.lv]] <span class="ot">&lt;-</span> <span class="fu">plot</span>(.gp, <span class="at">alpha =</span> ALPHA)</span>
+<span id="cb13-120"><a href="#cb13-120" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-121"><a href="#cb13-121" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-122"><a href="#cb13-122" aria-hidden="true" tabindex="-1"></a><span class="co"># The cohort figure `p` of panel `nm`, faceted by GROUP: it keeps p&#39;s scales, labels and</span></span>
+<span id="cb13-123"><a href="#cb13-123" aria-hidden="true" tabindex="-1"></a><span class="co"># theme, and its data and every layer that carries its own, the diagonal included, become</span></span>
+<span id="cb13-124"><a href="#cb13-124" aria-hidden="true" tabindex="-1"></a><span class="co"># the groups&#39; own, stacked with the group they came from, so no facet shows another</span></span>
+<span id="cb13-125"><a href="#cb13-125" aria-hidden="true" tabindex="-1"></a><span class="co"># group&#39;s points or the cohort&#39;s.</span></span>
+<span id="cb13-126"><a href="#cb13-126" aria-hidden="true" tabindex="-1"></a>.facet_groups <span class="ot">&lt;-</span> <span class="cf">function</span>(p, nm) {</span>
+<span id="cb13-127"><a href="#cb13-127" aria-hidden="true" tabindex="-1"></a>  ps <span class="ot">&lt;-</span> <span class="fu">lapply</span>(group_plots, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, nm)</span>
+<span id="cb13-128"><a href="#cb13-128" aria-hidden="true" tabindex="-1"></a>  stack <span class="ot">&lt;-</span> <span class="cf">function</span>(get) {</span>
+<span id="cb13-129"><a href="#cb13-129" aria-hidden="true" tabindex="-1"></a>    out <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">Map</span>(<span class="cf">function</span>(q, lv) <span class="fu">cbind</span>(<span class="fu">get</span>(q), <span class="at">.gfup_group =</span> <span class="fu">rep</span>(lv, <span class="fu">nrow</span>(<span class="fu">get</span>(q)))), ps, <span class="fu">names</span>(ps)))</span>
+<span id="cb13-130"><a href="#cb13-130" aria-hidden="true" tabindex="-1"></a>    out<span class="sc">$</span>.gfup_group <span class="ot">&lt;-</span> <span class="fu">factor</span>(out<span class="sc">$</span>.gfup_group, <span class="at">levels =</span> <span class="fu">levels</span>(group_values))</span>
+<span id="cb13-131"><a href="#cb13-131" aria-hidden="true" tabindex="-1"></a>    out</span>
+<span id="cb13-132"><a href="#cb13-132" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-133"><a href="#cb13-133" aria-hidden="true" tabindex="-1"></a>  p<span class="sc">$</span>data <span class="ot">&lt;-</span> <span class="fu">stack</span>(<span class="cf">function</span>(q) q<span class="sc">$</span>data)</span>
+<span id="cb13-134"><a href="#cb13-134" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (k <span class="cf">in</span> <span class="fu">seq_along</span>(p<span class="sc">$</span>layers)) {</span>
+<span id="cb13-135"><a href="#cb13-135" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.data.frame</span>(p<span class="sc">$</span>layers[[k]]<span class="sc">$</span>data)) p<span class="sc">$</span>layers[[k]]<span class="sc">$</span>data <span class="ot">&lt;-</span> <span class="fu">stack</span>(<span class="cf">function</span>(q) q<span class="sc">$</span>layers[[k]]<span class="sc">$</span>data)</span>
+<span id="cb13-136"><a href="#cb13-136" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-137"><a href="#cb13-137" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The strips name the column, and the years are angled so narrow facets do not run them together.</span></span>
+<span id="cb13-138"><a href="#cb13-138" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This guide replaces the scale&#39;s, so it keeps the scale&#39;s overlap check.</span></span>
+<span id="cb13-139"><a href="#cb13-139" aria-hidden="true" tabindex="-1"></a>  p <span class="sc">+</span> <span class="fu">facet_wrap</span>(<span class="sc">~</span>.gfup_group, <span class="at">labeller =</span> <span class="fu">as_labeller</span>(<span class="cf">function</span>(x) <span class="fu">paste0</span>(GROUP, <span class="st">&quot;: &quot;</span>, x))) <span class="sc">+</span></span>
+<span id="cb13-140"><a href="#cb13-140" aria-hidden="true" tabindex="-1"></a>    <span class="fu">guides</span>(<span class="at">x =</span> <span class="fu">guide_axis</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">check.overlap =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb13-141"><a href="#cb13-141" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-142"><a href="#cb13-142" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="cf">if</span> (figure_drawn) <span class="fu">nrow</span>(fp<span class="sc">$</span>data) <span class="cf">else</span> <span class="dv">0</span>L)) {</span>
+<span id="cb13-143"><a href="#cb13-143" aria-hidden="true" tabindex="-1"></a>  row <span class="ot">&lt;-</span> fp<span class="sc">$</span>data[i, ]</span>
+<span id="cb13-144"><a href="#cb13-144" aria-hidden="true" tabindex="-1"></a>  nm <span class="ot">&lt;-</span> row<span class="sc">$</span>panel</span>
+<span id="cb13-145"><a href="#cb13-145" aria-hidden="true" tabindex="-1"></a>  panel_counts[[nm]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">drawn =</span> row<span class="sc">$</span>n_drawn, <span class="at">excluded =</span> row<span class="sc">$</span>n_excluded)</span>
+<span id="cb13-146"><a href="#cb13-146" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">### &quot;</span>, row<span class="sc">$</span>title, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>, row<span class="sc">$</span>n_drawn, <span class="st">&quot; patients drawn; &quot;</span>, row<span class="sc">$</span>n_excluded,</span>
+<span id="cb13-147"><a href="#cb13-147" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot; missing a column this panel needs.&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb13-148"><a href="#cb13-148" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(ECHO)) <span class="fu">cat</span>(<span class="st">&quot; &quot;</span>, fp<span class="sc">$</span>tables<span class="sc">$</span>panels[[nm]]<span class="sc">$</span>meta<span class="sc">$</span>n_echo, <span class="st">&quot; with an echo marked.&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb13-149"><a href="#cb13-149" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb13-150"><a href="#cb13-150" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The caption key names the house colors that COLORS &lt;- NULL draws and the</span></span>
+<span id="cb13-151"><a href="#cb13-151" aria-hidden="true" tabindex="-1"></a>  <span class="co"># shapes set here, so a study that sets COLORS renames them in .key below.</span></span>
+<span id="cb13-152"><a href="#cb13-152" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (row<span class="sc">$</span>type <span class="sc">==</span> <span class="st">&quot;followup&quot;</span>) {</span>
+<span id="cb13-153"><a href="#cb13-153" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The plot&#39;s groups are Alive and Dead whatever the status; `levels` renames them.</span></span>
+<span id="cb13-154"><a href="#cb13-154" aria-hidden="true" tabindex="-1"></a>    .lv <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="cf">if</span> (<span class="fu">is.null</span>(PANELS[[nm]]<span class="sc">$</span>levels)) <span class="fu">c</span>(<span class="st">&quot;Alive&quot;</span>, <span class="st">&quot;Dead&quot;</span>) <span class="cf">else</span> PANELS[[nm]]<span class="sc">$</span>levels,</span>
+<span id="cb13-155"><a href="#cb13-155" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">c</span>(<span class="st">&quot;Alive&quot;</span>, <span class="st">&quot;Dead&quot;</span>))</span>
+<span id="cb13-156"><a href="#cb13-156" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> plots[[nm]] <span class="sc">+</span></span>
+<span id="cb13-157"><a href="#cb13-157" aria-hidden="true" tabindex="-1"></a>      <span class="fu">status_colors</span>(<span class="fu">c</span>(<span class="st">&quot;Alive&quot;</span>, <span class="st">&quot;Dead&quot;</span>), .lv) <span class="sc">+</span></span>
+<span id="cb13-158"><a href="#cb13-158" aria-hidden="true" tabindex="-1"></a>      <span class="fu">scale_shape_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="at">Alive =</span> <span class="dv">1</span>, <span class="at">Dead =</span> <span class="dv">4</span>), <span class="at">labels =</span> .lv)</span>
+<span id="cb13-159"><a href="#cb13-159" aria-hidden="true" tabindex="-1"></a>    .key <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(PANELS[[nm]]<span class="sc">$</span>levels)) {</span>
+<span id="cb13-160"><a href="#cb13-160" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;Blue open circles mark patients alive and red crosses patients who died&quot;</span></span>
+<span id="cb13-161"><a href="#cb13-161" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb13-162"><a href="#cb13-162" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste0</span>(<span class="st">&quot;Blue open circles mark &quot;</span>, .lv[[<span class="st">&quot;Alive&quot;</span>]], <span class="st">&quot; and red crosses &quot;</span>, .lv[[<span class="st">&quot;Dead&quot;</span>]])</span>
+<span id="cb13-163"><a href="#cb13-163" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb13-164"><a href="#cb13-164" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb13-165"><a href="#cb13-165" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The levels are the panel&#39;s own: &quot;No event&quot;, one per event in the order</span></span>
+<span id="cb13-166"><a href="#cb13-166" aria-hidden="true" tabindex="-1"></a>    <span class="co"># EVENTS lists them, and &quot;Death&quot;.</span></span>
+<span id="cb13-167"><a href="#cb13-167" aria-hidden="true" tabindex="-1"></a>    levels <span class="ot">&lt;-</span> fp<span class="sc">$</span>tables<span class="sc">$</span>panels[[nm]]<span class="sc">$</span>meta<span class="sc">$</span>event_levels</span>
+<span id="cb13-168"><a href="#cb13-168" aria-hidden="true" tabindex="-1"></a>    k <span class="ot">&lt;-</span> <span class="fu">length</span>(levels) <span class="sc">-</span> <span class="dv">2</span>L</span>
+<span id="cb13-169"><a href="#cb13-169" aria-hidden="true" tabindex="-1"></a>    p <span class="ot">&lt;-</span> plots[[nm]] <span class="sc">+</span></span>
+<span id="cb13-170"><a href="#cb13-170" aria-hidden="true" tabindex="-1"></a>      <span class="fu">status_colors</span>(levels) <span class="sc">+</span></span>
+<span id="cb13-171"><a href="#cb13-171" aria-hidden="true" tabindex="-1"></a>      <span class="fu">scale_shape_manual</span>(<span class="at">values =</span> stats<span class="sc">::</span><span class="fu">setNames</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">6</span>)[<span class="fu">seq_len</span>(k)], <span class="dv">4</span>), levels))</span>
+<span id="cb13-172"><a href="#cb13-172" aria-hidden="true" tabindex="-1"></a>    .with <span class="ot">&lt;-</span> <span class="cf">if</span> (k <span class="sc">==</span> <span class="dv">1</span>L) <span class="st">&quot;patients with the event&quot;</span> <span class="cf">else</span> <span class="fu">paste</span>(<span class="st">&quot;patients whose first event was&quot;</span>, levels[<span class="dv">1</span>L <span class="sc">+</span> <span class="fu">seq_len</span>(k)])</span>
+<span id="cb13-173"><a href="#cb13-173" aria-hidden="true" tabindex="-1"></a>    .key <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;Blue open circles mark patients without &quot;</span>, <span class="cf">if</span> (k <span class="sc">==</span> <span class="dv">1</span>L) <span class="st">&quot;the event&quot;</span> <span class="cf">else</span> <span class="st">&quot;an event&quot;</span>, <span class="st">&quot;, &quot;</span>,</span>
+<span id="cb13-174"><a href="#cb13-174" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">paste</span>(<span class="fu">c</span>(<span class="st">&quot;green&quot;</span>, <span class="st">&quot;reddish purple&quot;</span>, <span class="st">&quot;olive&quot;</span>, <span class="st">&quot;black&quot;</span>)[<span class="fu">seq_len</span>(k)],</span>
+<span id="cb13-175"><a href="#cb13-175" aria-hidden="true" tabindex="-1"></a>                         <span class="fu">c</span>(<span class="st">&quot;open triangles&quot;</span>, <span class="st">&quot;open squares&quot;</span>, <span class="st">&quot;open diamonds&quot;</span>, <span class="st">&quot;open inverted triangles&quot;</span>)[<span class="fu">seq_len</span>(k)],</span>
+<span id="cb13-176"><a href="#cb13-176" aria-hidden="true" tabindex="-1"></a>                         .with, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
+<span id="cb13-177"><a href="#cb13-177" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;, and red crosses patients who died&quot;</span>)</span>
+<span id="cb13-178"><a href="#cb13-178" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-179"><a href="#cb13-179" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(ECHO)) .key <span class="ot">&lt;-</span> <span class="fu">paste0</span>(.key, <span class="st">&quot;, gray ticks the follow-up at each patient&#39;s echo,&quot;</span>)</span>
+<span id="cb13-180"><a href="#cb13-180" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> p <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Year of operation&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Follow-up (years)&quot;</span>, <span class="at">color =</span> <span class="cn">NULL</span>, <span class="at">shape =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb13-181"><a href="#cb13-181" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span> .axes_and_legend</span>
+<span id="cb13-182"><a href="#cb13-182" aria-hidden="true" tabindex="-1"></a>  file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(p, <span class="fu">paste0</span>(<span class="st">&quot;dc-gfup-&quot;</span>, nm), <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-183"><a href="#cb13-183" aria-hidden="true" tabindex="-1"></a>  .link <span class="ot">&lt;-</span> <span class="fu">figure_link</span>(file)</span>
+<span id="cb13-184"><a href="#cb13-184" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig gfup&quot;</span>, nm),</span>
+<span id="cb13-185"><a href="#cb13-185" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste0</span>(<span class="st">&quot;Follow-up against year of operation, &quot;</span>, row<span class="sc">$</span>title, <span class="st">&quot;. &quot;</span>, .key, <span class="st">&quot; and the dashed orange diagonal &quot;</span>,</span>
+<span id="cb13-186"><a href="#cb13-186" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;the longest follow-up possible for each year of operation.&quot;</span>),</span>
+<span id="cb13-187"><a href="#cb13-187" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>)</span>
+<span id="cb13-188"><a href="#cb13-188" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(group_plots)) {</span>
+<span id="cb13-189"><a href="#cb13-189" aria-hidden="true" tabindex="-1"></a>    file <span class="ot">&lt;-</span> <span class="fu">save_figure</span>(<span class="fu">.facet_groups</span>(p, nm), <span class="fu">paste0</span>(<span class="st">&quot;dc-gfup-&quot;</span>, nm, <span class="st">&quot;-by-group&quot;</span>), <span class="at">linked =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-190"><a href="#cb13-190" aria-hidden="true" tabindex="-1"></a>    .link <span class="ot">&lt;-</span> <span class="fu">figure_link</span>(file)</span>
+<span id="cb13-191"><a href="#cb13-191" aria-hidden="true" tabindex="-1"></a>    <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig gfup&quot;</span>, nm, <span class="st">&quot;by group&quot;</span>),</span>
+<span id="cb13-192"><a href="#cb13-192" aria-hidden="true" tabindex="-1"></a>           <span class="fu">paste0</span>(<span class="st">&quot;Follow-up against year of operation, &quot;</span>, row<span class="sc">$</span>title, <span class="st">&quot;. One panel per &quot;</span>, GROUP, <span class="st">&quot; group; &quot;</span>,</span>
+<span id="cb13-193"><a href="#cb13-193" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;patients with no value for it have a panel of their own. The marks are those of the figure above, and &quot;</span>,</span>
+<span id="cb13-194"><a href="#cb13-194" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;each diagonal is the longest follow-up the cohort&#39;s close date allows.&quot;</span>),</span>
+<span id="cb13-195"><a href="#cb13-195" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;knitr::include_graphics(.link, error = FALSE)&quot;</span>)</span>
+<span id="cb13-196"><a href="#cb13-196" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-197"><a href="#cb13-197" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <section id="all-deaths" class="level3">
 <h3 class="anchored" data-anchor-id="all-deaths">All deaths</h3>
@@ -3295,12 +3331,12 @@ Table 5: dead by reop
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-14 18:10:45 EST</td>
+<td style="text-align: left;">2026-11-18 11:58:01 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-14 18:10:46 EST</td>
+<td style="text-align: left;">2026-11-18 11:58:02 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -3345,17 +3381,17 @@ Table 5: dead by reop
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.0</td>
+<td style="text-align: left;">1.6.1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261114.parquet</td>
+<td style="text-align: left;">built_20261118.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-14</td>
+<td style="text-align: left;">2026-11-18</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3375,7 +3411,7 @@ Table 5: dead by reop
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">d99147a5c095</td>
+<td style="text-align: left;">d4581c9fbd56</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3390,7 +3426,7 @@ Table 5: dead by reop
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"dc.gfup.cohort.eda","rendered":"2026-11-14T23:10:46Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.22","source":null},{"package":"hvtiRtemplates","version":"1.6.0","source":null},{"package":"hvtiRutilities","version":"1.5.23","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261114.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-14T23:07:49Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"cohort","type":"eda","analysis":{"event":{"variable":"dead","event":1,"censored":0},"followup":{"variable":"iv_dead"}},"cohort":{"full":800,"event":445,"censored":355,"missing_event":0},"followup":{"origin_year":1990,"close_date":"2025-12-31","close_date_source":"set in CLOSE_DATE","panels":{"all":{"drawn":800,"excluded":0},"reop":{"drawn":800,"excluded":0}}},"source_sha256":"06d4f7609f30eaa38a5bd31a1f430fabf3812a81d7ce320ea7343e7c56c74526","run":{"start":"2026-11-14T18:10:45-0500","end":"2026-11-14T18:10:46-0500","time_zone":"EST","duration_seconds":1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.gfup.cohort.eda.qmd","template":"dc.gfup","prefix":"dc","qualifier":"gfup","subject":"cohort","type":"eda","hvtiRtemplates":"1.6.0"},"datasets":[{"name":"built","version_file":"built_20261114.parquet","registered":"2026-11-14","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}}},"source":"10_descriptive/dc.gfup.cohort.eda.qmd",".hvti_render_id":"4341873f2b43e961a6c5f599daac07761c708cb75b7fb20c9bb46e9c3af22cca",".hvti_source_sha256":"06d4f7609f30eaa38a5bd31a1f430fabf3812a81d7ce320ea7343e7c56c74526"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"dc.gfup.cohort.eda","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 11:58:02","job":"dc.gfup.cohort.eda","rendered":"2026-11-18T16:58:02Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"8d1dfb4f4ac43272273952775846ae06ae12ed02f97c3e898d5036adc0857cc0"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.1","source":"standard"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.6.0","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.4","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRtemplates","version":"1.6.1","source":"github","sha":"308962ac911e2087cee3271ad1320e7e12023d02"},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"officer","version":"0.7.8","source":"standard"},{"package":"openssl","version":"2.6.0","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"png","version":"0.1.9","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.3","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"withr","version":"3.0.3","source":"standard"},{"package":"xfun","version":"0.62","source":"standard"},{"package":"xml2","version":"1.6.0","source":"standard"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261118.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-18T16:54:55Z","sha256":"d4581c9fbd569b21078f37c93904b16a1b0c9c7f5416350a50b26db441ac4df4"}],"artifacts":[],"subject":"cohort","type":"eda","analysis":{"event":{"variable":"dead","event":1,"censored":0},"followup":{"variable":"iv_dead"}},"cohort":{"full":800,"event":445,"censored":355,"missing_event":0},"followup":{"origin_year":1990,"close_date":"2025-12-31","close_date_source":"set in CLOSE_DATE","panels":{"all":{"drawn":800,"excluded":0},"reop":{"drawn":800,"excluded":0}}},"source_sha256":"daf61bbc81031ee34a143b79206c8fc56c4789f648b0965823d8646fd700c03a","run":{"start":"2026-11-18T11:58:01-0500","end":"2026-11-18T11:58:02-0500","time_zone":"EST","duration_seconds":1.1,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"dc.gfup.cohort.eda.qmd","template":"dc.gfup","prefix":"dc","qualifier":"gfup","subject":"cohort","type":"eda","hvtiRtemplates":"1.6.1"},"datasets":[{"name":"built","version_file":"built_20261118.parquet","registered":"2026-11-18","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d4581c9fbd56","manifest":"current"}],"upstream":[],"reproducibility":{"renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.1","sha":"308962ac911e2087cee3271ad1320e7e12023d02","method":"dc.gfup","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 11:58:01"}},"source":"10_descriptive/dc.gfup.cohort.eda.qmd",".hvti_render_id":"bc2736f6e2f5eebfe5cbe7cc856270da4f46c29bcf85ef8afb620ff9a03e78bf",".hvti_source_sha256":"daf61bbc81031ee34a143b79206c8fc56c4789f648b0965823d8646fd700c03a"}</script>
 </section>
 
 </main>

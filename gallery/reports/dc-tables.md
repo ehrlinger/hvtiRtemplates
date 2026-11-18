@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:10
+2026-11-18 11:57
 
 A `dc-tables` job is the formatted descriptive table: every variable the
 study reports, grouped under the section headings the SAS `%desc_tab`
@@ -43,8 +43,8 @@ if (utils::packageVersion("hvtiRtables") < "1.0.13") {
        "PROP_CI's intervals and summaries that a study's own sd() or median() cannot break; ",
        utils::packageVersion("hvtiRtables"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.7.14") {
-  stop("This job needs hvtiPlotR >= 2.7.14 for hv_correlation_matrix(); ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.23") {
+  stop("This job needs hvtiPlotR >= 2.8.23 for hv_correlation_matrix(var_cols =); ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -290,8 +290,8 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -300,7 +300,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -425,10 +425,10 @@ stddiff_values <- function(d, by, buckets, mean_sd = character(0), ordinal = cha
   none <- function(x) if (length(x)) x else NULL
   r <- hvtiRpropensity::ps_stddiff(
     d, treatment_col = by, treated_level = group_1,
-    gaussian = none(intersect(buckets$continuous, mean_sd)),
-    nong_ord = none(c(setdiff(buckets$continuous, mean_sd), intersect(buckets$categorical, ordinal))),
-    binary = none(buckets$binary),
-    categorical = none(setdiff(buckets$categorical, ordinal))
+    gaussian_cols = none(intersect(buckets$continuous, mean_sd)),
+    nong_ord_cols = none(c(setdiff(buckets$continuous, mean_sd), intersect(buckets$categorical, ordinal))),
+    binary_cols = none(buckets$binary),
+    categorical_cols = none(setdiff(buckets$categorical, ordinal))
   )
   s <- r$tables$stddiff
   stats::setNames(sprintf("%.1f", 100 * s$stddiff), s$variable)
@@ -602,8 +602,8 @@ if (STDDIFF) {
          "since COMPARE's \"smd\" is a different number for the same thing.", call. = FALSE)
   }
   if (!requireNamespace("hvtiRpropensity", quietly = TRUE) ||
-        utils::packageVersion("hvtiRpropensity") < "0.2.0") {
-    stop("STDDIFF needs hvtiRpropensity >= 0.2.0 for ps_stddiff().", call. = FALSE)
+        utils::packageVersion("hvtiRpropensity") < "0.2.3") {
+    stop("STDDIFF needs hvtiRpropensity >= 0.2.3 for ps_stddiff().", call. = FALSE)
   }
   buckets <- list(continuous = CONTINUOUS, binary = BINARY, categorical = CATEGORICAL)
   tbl <- hvtiRtables::hv_tbl_compare(tbl, stddiff_values(d_table, BY, buckets, MEAN_SD, ORDINAL, GROUP_1),
@@ -779,7 +779,7 @@ if (is.null(CORR)) {
     ct <- rbind(ct[names(st)], st)
     attr(ct, "conf_level") <- conf_level
   }
-  cm <- hv_correlation_matrix(d, vars = unique(c(CORR$with, CORR$vars)))
+  cm <- hv_correlation_matrix(d, var_cols = unique(c(CORR$with, CORR$vars)))
   fname <- "dc-tables-correlation-matrix.png"
   # Free size: a scatter-plot matrix, so a single 6 by 4 panel would leave each cell too small to read.
   save_figure(plot(cm) + theme_hv_manuscript(base_size = 12), sub("[.]png$", "", fname), width = 10, height = 10,
@@ -791,7 +791,8 @@ if (is.null(CORR)) {
     "knitr::kable(ct)", .fence, "",
     paste0(.fence, "{r}"), "#| label: fig-correlation-matrix",
     paste0("#| fig-cap: \"Scatter-plot matrix of the correlated variables. Each cell plots one variable against another, ",
-           "each patient a small translucent black filled circle.\""),
+           "each patient a small translucent black filled circle. The panels carry no coefficient; ",
+           "the table above gives Spearman's and Pearson's for each pair.\""),
     "knitr::include_graphics(file.path(paste0(SUBJECT, \"-\", TYPE), fname), error = FALSE)", .fence
   ), envir = environment(), quiet = TRUE), sep = "\n")
 }
@@ -803,8 +804,8 @@ Correlation variant not requested (`CORR <- NULL`).
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-14 18:10:33 EST  |
-|                 | Ended          | 2026-11-14 18:10:34 EST  |
+| Run             | Started        | 2026-11-18 11:57:48 EST  |
+|                 | Ended          | 2026-11-18 11:57:49 EST  |
 |                 | Duration       | 1 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -814,12 +815,12 @@ Correlation variant not requested (`CORR <- NULL`).
 |                 | Template       | dc.tables                |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.6.0                    |
-| Dataset `built` | Version file   | built_20261114.parquet   |
-|                 | Version date   | 2026-11-14               |
+|                 | hvtiRtemplates | 1.6.1                    |
+| Dataset `built` | Version file   | built_20261118.parquet   |
+|                 | Version date   | 2026-11-18               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | d99147a5c095             |
+|                 | sha256         | d4581c9fbd56             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

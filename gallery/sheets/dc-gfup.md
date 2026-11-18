@@ -30,7 +30,7 @@ on the gallery's synthetic study.
   report then says it is a draft. A final render reads registered data
   only: register the build with `hvtiRutilities::update_manifest()`
   first.
-- **Packages:** `hvtiRutilities` (\>= 1.4.5), `hvtiPlotR` (\>= 2.8.18),
+- **Packages:** `hvtiRutilities` (\>= 1.5.24), `hvtiPlotR` (\>= 2.8.23),
   `ggplot2`. The job checks each floor when it starts, so an older
   library stops it at the top rather than partway through.
 
@@ -43,7 +43,7 @@ job](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html#find-wh
 shows three ways to find them.
 
 1.  **Above the first section**: 1 choice marked `EDIT:`.
-2.  **Study choices**: 19 choices marked `EDIT:`.
+2.  **Study choices**: 20 choices marked `EDIT:`.
 3.  **Data**: reads the study data.
 4.  **Follow-up checks**
 5.  **Operation years and the close date**
@@ -65,5 +65,5 @@ explains why to render rather than run chunks by hand.
 an open marker, a skipped chunk, `stop_here()` and unregistered data,
 and it records the job's provenance beside the report.
 
-Generated from the template by hvtiRtemplates, 1.6.0 · built 2026-11-14.
+Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18.
 The template holds the details; this sheet is its outline.

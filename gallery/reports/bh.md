@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:10
+2026-11-18 11:57
 
 This job **does not fit the final model**. It screens. The companion
 `hm` job fits the multivariable model.
@@ -81,7 +81,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.0
+hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -375,8 +375,8 @@ provenance
     8                                                                        8
     9                                                                        0
     10                                                                     0.1
-    11                                                           version:1.3.0
-    12 sha256:d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace
+    11                            sha:86f33984e8cac819358633bde76dd2c9c704199a
+    12 sha256:d4581c9fbd569b21078f37c93904b16a1b0c9c7f5416350a50b26db441ac4df4
     13                                               4 distinct (listed below)
 
 Code
@@ -460,7 +460,7 @@ health
 
                                     check    value   ok note
     1              Replicates that fitted        8 TRUE <NA>
-    2              Replicates that failed        0   NA <NA>
+    2              Replicates that failed        0 TRUE <NA>
     3   Distinct candidates ever selected       14 TRUE <NA>
     4 SD of the first free base parameter 3.248388 TRUE <NA>
 
@@ -799,7 +799,7 @@ Code
 # not the whole dataset.
 .job_data <- hvtiRtemplates::read_job_data(
   .cfg, dataset = .sel$dataset, analysis_set = .sel$analysis_set,
-  where = if (length(.sel$where)) lapply(.sel$where, str2lang), id = .sel$id, key = .sel$key
+  where = if (length(.sel$where)) lapply(.sel$where, str2lang), id_col = .sel$id, key_cols = .sel$key
 )
 d <- .job_data$data
 .provenance_data <- c(.provenance_data, list(.job_data$provenance))
@@ -923,8 +923,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-14 18:10:26 EST |
-|  | Ended | 2026-11-14 18:10:27 EST |
+| Run | Started | 2026-11-18 11:57:41 EST |
+|  | Ended | 2026-11-18 11:57:42 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -933,16 +933,16 @@ saveRDS(report, report_file)
 |  | Template | bh |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.6.0 |
-| Dataset `built` | Version file | built_20261114.parquet |
-|  | Version date | 2026-11-14 |
+|  | hvtiRtemplates | 1.6.1 |
+| Dataset `built` | Version file | built_20261118.parquet |
+|  | Version date | 2026-11-18 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | d99147a5c095 |
+|  | sha256 | d4581c9fbd56 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261114.parquet |
-|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261114.parquet |
-|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261114.parquet |
-|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261114.parquet |
+| Upstream | Handoff | `dead-boot/bh.chunk01.rds` (bootstrap-chunk), rendered not recorded, data built_20261118.parquet |
+|  | Handoff | `dead-boot/bh.chunk02.rds` (bootstrap-chunk), rendered not recorded, data built_20261118.parquet |
+|  | Handoff | `dead-boot/bh.chunk03.rds` (bootstrap-chunk), rendered not recorded, data built_20261118.parquet |
+|  | Handoff | `dead-boot/bh.chunk04.rds` (bootstrap-chunk), rendered not recorded, data built_20261118.parquet |
 | Reproducibility | renv | not active |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:11
+2026-11-18 11:59
 
 An `hz` job produces a parametric fit and persists it. The life table it
 is read against is an `ac` job, the figures over it are `hp`, and the
@@ -65,8 +65,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -163,8 +163,8 @@ hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 # With START, a patient has a row per segment and KEY must say so.
 hvtiRtemplates:::.check_start_settings(START, KEY, JOIN, REDUCE)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY,
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY,
                                           one_row_per_patient = is.null(START))
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
@@ -174,7 +174,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -200,8 +200,8 @@ if (!is.null(job_data$attrition)) {
 Code
 
 ``` r
-cc <- cohort_counts(d, event = EVENT, time = TIME)
-assert_cohort(d, expected = EXPECTED, event = EVENT, time = TIME)
+cc <- cohort_counts(d, time_col = TIME, event_col = EVENT)
+assert_cohort(d, expected = EXPECTED, time_col = TIME, event_col = EVENT)
 
 # A time of zero, a death on the day of operation, leaves the hazard likelihood
 # undefined, and the fit below would stop on an optimizer error that names
@@ -856,9 +856,9 @@ hvtiRtemplates:::.methods_text(sprintf(
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-14 18:11:23 EST  |
-|                 | Ended          | 2026-11-14 18:11:28 EST  |
-|                 | Duration       | 4 s                      |
+| Run             | Started        | 2026-11-18 11:58:57 EST  |
+|                 | Ended          | 2026-11-18 11:59:10 EST  |
+|                 | Duration       | 13 s                     |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -866,12 +866,12 @@ hvtiRtemplates:::.methods_text(sprintf(
 |                 | Template       | hz                       |
 |                 | Subject        | dead                     |
 |                 | Type           | hz                       |
-|                 | hvtiRtemplates | 1.6.0                    |
-| Dataset `built` | Version file   | built_20261114.parquet   |
-|                 | Version date   | 2026-11-14               |
+|                 | hvtiRtemplates | 1.6.1                    |
+| Dataset `built` | Version file   | built_20261118.parquet   |
+|                 | Version date   | 2026-11-18               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 725 rows on 725 patients |
 |                 | WHERE          | `!is.na(creat_pr)`       |
-|                 | sha256         | d99147a5c095             |
+|                 | sha256         | d4581c9fbd56             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

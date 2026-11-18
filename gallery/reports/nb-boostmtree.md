@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:16
+2026-11-18 12:03
 
 Gallery job on the synthetic echo series: LV ejection fraction over
 follow-up (iv_echo), six baseline predictors.
@@ -13,7 +13,9 @@ An `nb-boostmtree` job fits boosted multivariate trees to a response
 measured repeatedly over follow-up, one row per visit, and reports how
 well it fits and what drives it: the cross-validated error path,
 observed against fitted values over time, variable importance, partial
-effects over time, and a sample of patients’ fitted trajectories.
+effects over time, a sample of patients’ fitted trajectories and, when
+SENSITIVITY is on, how much the fit moves with the learning rate and the
+size of the trees.
 
 Code
 
@@ -38,7 +40,7 @@ TYPE    <- "boost"
 # step in memory at once.
 if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.8") {
   stop("This job needs boostmtree >= 2.0.8 from the CCF fork. Install it with\n",
-       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.8-ccf\")\n",
+       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.11-ccf\")\n",
        "then re-render.", call. = FALSE)
 }
 if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.9.0") {
@@ -76,8 +78,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `echo` `echo_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `echo` `echo_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -133,6 +135,23 @@ JOIN_KEY <- NULL
 
 # Demo: the response measured at each visit, and its kind: "continuous",
 # "binary", "ordinal" or "nominal".
+# A skewed continuous response (a gradient, a lab value) is a choice to make
+# here, not later. "continuous" is squared-error boosting, so a fit on the raw
+# scale is sensitive to its outliers. A fit on log(y) is less so, but it
+# estimates the conditional mean of log(y): exponentiated, its fitted values and
+# effects are geometric means on the raw scale, not arithmetic means. They are
+# medians only if, given the predictors and time, the log-scale error is
+# symmetric (its mean equals its median), as under a lognormal model; do not
+# call them medians without saying so. Boosting has no forest weights to average
+# raw y with, so getting back to arithmetic means needs a
+# retransformation (Duan's smearing), whose factor usually has to change with
+# time, because residual variance changes along the trajectory. This template
+# does not retransform. Either fit the raw scale and accept the outlier
+# sensitivity, or fit log(y) (build the column upstream) and report the
+# effects as on the log scale. The method is Pande A, Li L, Rajeswaran J,
+# Ehrlinger J, Kogalur UB, Blackstone EH, Ishwaran H. Boosted multivariate trees
+# for longitudinal data. Machine Learning 2017;106:277-305,
+# doi:10.1007/s10994-016-5597-1.
 RESPONSE <- "lvef"
 FAMILY   <- "continuous"
 
@@ -143,17 +162,45 @@ FAMILY   <- "continuous"
 # carries dates or derived outcomes that should not drive the fit.
 PREDICTORS <- NULL
 
-# Demo: boosting iterations and the learning rate. Studies used 0.01 to 0.05; a
-# smaller NU needs a larger M. The error path below says whether M was enough:
-# the cross-validated best M should sit well inside it, not at its right edge.
+# Demo: the learning rate and the most boosting iterations. NU is the main
+# lever: fix it, and let cross-validation choose how many of the M iterations to
+# use (Best M, reported below). 0.05 is the reference; 0.01 suits small or
+# noisy data, and needs about five times the M. M is a ceiling: the fit stops
+# using iterations at Best M, but every one up to M is paid for. boostmtree's own
+# default of 200 is too low for clinical longitudinal data. One study of 1,391
+# patients (4,771 visits) at NU = 0.05 fitted M = 1000 and chose Best M = 751;
+# its cross-validated error at 500 was 0.3% above that best and at 250 1.1%, so
+# 500 was enough at half the time. The report says when the error was still
+# falling at M by enough to matter.
 M  <- 200
 NU <- 0.05
+
+# Demo: terminal nodes per tree, and B-spline knots for the time effect. Both
+# are boostmtree's defaults, written out so the report records them.
+# K = 5 keeps the trees small, as in any boosting, allowing interactions up to
+# about order 4. Vary it only as the sensitivity check below, not as a tuning
+# dimension. The P-spline penalty (cubic, d = 3, third-order, pen.ord = 3, its
+# lambda estimated at each iteration) does most of the smoothing, so N_KNOTS
+# matters little once there are enough. The limit is the time grid: keep it well
+# below the number of distinct visit times, 5 to 7 for sparse or scheduled
+# visits. The fit stops if it is not below them.
+K       <- 5
+N_KNOTS <- 10
+
+# Demo: TRUE refits over a grid of NU (0.01, 0.05) and K (3, 5, 8), each fit
+# cross-validated with M scaled so M * NU is held fixed, and reports Best M and
+# the cross-validated error for each. If they barely move, the defaults above
+# are not what the result depends on; if they move, the report should say so.
+# Off by default: it is five more fits, three of them five times as long.
+SENSITIVITY <- FALSE
 
 # Demo: predictors tried at each split of each tree, or NULL for every one of
 # them, boostmtree's default. Fewer than all makes the trees less alike, as in a
 # random forest, at the cost of a noisier single tree; set it to reproduce a
-# study that fitted with a smaller mtry. A different MTRY is a different fit, so
-# it is part of the cache key.
+# study that fitted with a smaller mtry. NULL is the reference fit; about a
+# third of the predictors adds stochastic-boosting decorrelation, which matters
+# more when there are many predictors or they are highly correlated. A different
+# MTRY is a different fit, so it is part of the cache key.
 MTRY <- NULL
 
 # Demo: cores for the cross-validated fit, whose cost grows with the square of
@@ -201,8 +248,8 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -277,7 +324,7 @@ if (length(.chr)) {
 
 | Data                |                                        |
 |:--------------------|:---------------------------------------|
-| Source              | dataset `echo` (echo_20261114.parquet) |
+| Source              | dataset `echo` (echo_20261118.parquet) |
 | Rows read           | 1,180                                  |
 | ID                  | `patient_id`                           |
 | Identifiers dropped | none                                   |
@@ -309,18 +356,20 @@ Code
 # several places, its base learners included, and every one of them is saved
 # with it. A digest still groups the visits; it cannot be read back.
 CACHE_DIR <- dirname(set_path("estimates", "nb-boostmtree.rds"))
-# The fit runs for hours at study size. Started from the console it dies with
-# the session, so an uncached fit is refused there: run the job with
-# hvtiRtemplates::run_job() instead. Once cached, these chunks load it.
-hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
-                               why = "a cross-validated boostmtree fit takes hours at study size",
-                               refit = REFIT)
+# A spline with as many knots as there are visit times has nothing left for the
+# penalty to smooth: stopped here, before hours of fitting, not after.
+.n_times <- length(unique(d[[.time]]))
+if (N_KNOTS >= .n_times) {
+  stop("N_KNOTS (", N_KNOTS, ") must be below the number of distinct visit times (", .n_times, "), ",
+       "and well below it for sparse visits.", call. = FALSE)
+}
 .patient <- hvtiRtemplates:::.id_digest(d[[.id]], hvtiRtemplates:::.study_id_key(.root))
 # The fit, quoted once so the memory check below and cache_fit() read the same call: a
 # cache_fit() of a quoted call keys the call, so a fit cached before this was quoted still loads.
 .fit_code <- quote(
   boostmtree(x = d[.predictors], tm = d[[.time]], id = .patient, y = d[[.response]],
-             family = FAMILY, M = M, nu = NU, mtry = MTRY, mod.grad = TRUE, cv.flag = TRUE, verbose = FALSE,
+             family = FAMILY, M = M, nu = NU, k = K, n.knots = N_KNOTS, mtry = MTRY, mod.grad = TRUE,
+             cv.flag = TRUE, verbose = FALSE,
              # get() keeps CORES out of cache_fit()'s key, which sees only the values
              # the call names directly: changing it must not mark an identical fit stale.
              control = boostmtree.control(cv.cores = get("CORES")),
@@ -340,6 +389,13 @@ hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
 # unconditional, so a cached rerender still records the memory check that run_job() waits for.
 .need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(.patient)), nrow(d), FAMILY, k, M)
 .fitting <- hvtiRutilities::cache_would_fit("nb-boostmtree-fit", .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
+# The fit runs for hours at study size. Started from the console, the Render button or a terminal,
+# it dies with the session, so a fit that will be computed is refused there: run the job with
+# hvtiRtemplates::run_job() instead. Once cached, the Render button and these chunks load it.
+if (.fitting) {
+  hvtiRtemplates::guard_long_fit("nb-boostmtree-fit", dir = CACHE_DIR,
+                                 why = "a cross-validated boostmtree fit takes hours at study size", refit = REFIT)
+}
 hvtiRtemplates::guard_memory(if (.fitting) .need(CORES) else 0,
                              sprintf("this boostmtree fit (%s patients, %s visits, %s)",
                                      format(length(unique(.patient)), big.mark = ","), format(nrow(d), big.mark = ","),
@@ -358,18 +414,22 @@ Code
 
 ``` r
 knitr::kable(data.frame(
-  quantity = c("Family", "Iterations (M)", "Learning rate (nu)", "Patients", "Visits"),
-  value = c(FAMILY, M, NU, length(unique(.patient)), nrow(d))
+  quantity = c("Family", "Iterations (M)", "Learning rate (nu)", "Terminal nodes (K)", "Spline knots",
+               "Predictors per split (mtry)", "Patients", "Visits"),
+  value = c(FAMILY, M, NU, K, N_KNOTS, if (is.null(MTRY)) "all" else MTRY, length(unique(.patient)), nrow(d))
 ), col.names = c("", ""))
 ```
 
-|                    |            |
-|:-------------------|:-----------|
-| Family             | continuous |
-| Iterations (M)     | 200        |
-| Learning rate (nu) | 0.05       |
-| Patients           | 300        |
-| Visits             | 1180       |
+|                             |            |
+|:----------------------------|:-----------|
+| Family                      | continuous |
+| Iterations (M)              | 200        |
+| Learning rate (nu)          | 0.05       |
+| Terminal nodes (K)          | 5          |
+| Spline knots                | 10         |
+| Predictors per split (mtry) | all        |
+| Patients                    | 300        |
+| Visits                      | 1180       |
 
 Table 2: The fit
 
@@ -408,9 +468,45 @@ knitr::kable(fit_summary, col.names = c("Response component", "Best M (cross-val
 
 |  | Response component | Best M (cross-validated) | Cross-validated error there (standardized) |
 |:---|:---|---:|---:|
-| l2 | lvef | 200 | 0.8804792 |
+| l2 | lvef | 149 | 0.8830741 |
 
 Table 3: Cross-validated fit, by response component
+
+Code
+
+``` r
+# Two ways a fit looks finished and is not, said in the report, not left to the
+# figures. Best M in the last tenth of M with the error still falling: it fell
+# by more than 0.1% over that last tenth. Best M near M alone is not enough, as
+# the curve flattens long before it turns: in the study the M comment above
+# describes, M = 500 put Best M at 498 while the error fell 0.095% over its last
+# tenth and sat 0.3% above the best a longer fit found. The 0.1% is calibrated on
+# that one fit. lambda at boostmtree's ceiling at Best M: the penalty estimate
+# ran away, a sign of a flat trajectory or too many knots for the visit times.
+.lambda_max <- formals(boostmtree::boostmtree)$lambda.max
+.lambda <- as.matrix(fit$lambda)
+.tenth <- max(1L, floor(0.9 * M))
+.last_drop <- vapply(.err, function(e) e[.tenth, "l2"] / e[M, "l2"] - 1, numeric(1L))
+fit_checks <- data.frame(
+  component = fit_summary$component,
+  last_tenth_drop = .last_drop,
+  m_at_edge = fit_summary$best_m > 0.9 * M & .last_drop > 0.001,
+  lambda_at_max = vapply(seq_along(fit$m.opt), function(j) {
+    isTRUE(.lambda[fit$m.opt[[j]], min(j, ncol(.lambda))] >= .lambda_max)
+  }, logical(1L))
+)
+.warn <- function(text) cat("::: {.callout-warning}\n", text, "\n:::\n\n", sep = "")
+for (.c in fit_checks$component[fit_checks$m_at_edge]) {
+  .warn(sprintf(paste("Best M for %s is in the last tenth of the %s iterations fitted, and the cross-validated error",
+                      "fell %.2f%% over that tenth, so it was still falling. Raise M and refit."),
+                .c, M, 100 * fit_checks$last_tenth_drop[fit_checks$component == .c]))
+}
+for (.c in fit_checks$component[fit_checks$lambda_at_max]) {
+  .warn(sprintf(paste("The smoothing parameter lambda for %s reached boostmtree's ceiling (%g) at Best M. The",
+                      "trajectory over time may be flat, or N_KNOTS (%s) too many for the visit times."),
+                .c, .lambda_max, N_KNOTS))
+}
+```
 
 Code
 
@@ -422,7 +518,7 @@ save_figure(p_error, "nb-boostmtree-error")
 p_error
 ```
 
-![](assets/bef60a27e2f150cbc2646b859478048d.png)
+![](assets/fcb28082f5e30e7abcee6553678a58f4.png)
 
 Figure 1: Cross-validated error by boosting iteration. The black solid
 line is the error after each iteration, and the black dashed vertical
@@ -437,7 +533,7 @@ save_figure(p_path, "nb-boostmtree-path", height = 8)
 p_path
 ```
 
-![](assets/b391e2c3342185631e10562bc54265cc.png)
+![](assets/8748824734856a08921a60c83e84dd98.png)
 
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel
 per parameter. Each black solid line is the parameter’s fitted value
@@ -454,7 +550,7 @@ save_figure(p_calibration, "nb-boostmtree-calibration")
 p_calibration
 ```
 
-![](assets/8d28c3e5c25ea5c119cc1704e74e2dcc.png)
+![](assets/ed4e2ac1596f35fab6aac02d9418ecaf.png)
 
 Figure 3: Observed against fitted values over follow-up, in time bins.
 Each gray horizontal segment spans a time bin at its observed mean, with
@@ -477,7 +573,7 @@ save_figure(p_vimp, "nb-boostmtree-importance", width = 6.5, height = 7)
 p_vimp
 ```
 
-![](assets/8dac4a6e1c61bcff75d569d7186938a2.png)
+![](assets/40ba411dfc3a0a8af9e7e5da4001d5eb.png)
 
 Figure 4: Importance of each predictor’s main effect and of its
 interaction with time, one panel for each. Horizontal dark gray bars
@@ -583,12 +679,12 @@ Code
 .p
 ```
 
-![](assets/88be9d5f72df66d573d2187e112c450f.png)
+![](assets/66f66bb7046ab78fbf75bdf4c41d5926.png)
 
 Figure 5: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-1 of 2: nyha_pr, hx_chf, bmi, age.
+1 of 2: nyha_pr, hx_chf, age, bmi.
 
 Code
 
@@ -596,12 +692,12 @@ Code
 .p
 ```
 
-![](assets/ecff16f30f9b3967282e7f74cbc93cf6.png)
+![](assets/d1cd1fc663079644dd8783317a938a39.png)
 
 Figure 6: Partial effects over follow-up, continuous predictors, one
 panel per predictor. Each solid line is the effect at one follow-up
 time, colored from dark to light blue by time as in the color bar. Page
-2 of 2: female, hx_dm.
+2 of 2: hx_dm, female.
 
 Code
 
@@ -646,7 +742,7 @@ save_figure(p_traces, "nb-boostmtree-traces")
 p_traces
 ```
 
-![](assets/75de85bac4acd6e258192226c39da951.png)
+![](assets/10b8443314fa77f4c2bb98c69e59d64d.png)
 
 Figure 7: Fitted trajectories for a sample of patients, with the
 cohort’s mean fitted value over time. Thin translucent black lines trace
@@ -657,13 +753,89 @@ within ten time bins.
 Code
 
 ``` r
+# unnumbered: its child chunk carries its own label and caption
+# The fit above at NU and K, beside fits over NU in {0.01, 0.05} and K in
+# {3, 5, 8}. Each fit's M is scaled so M * NU matches this job's, the same
+# boosting budget at every learning rate. Each is the fit above with M, NU and K
+# rebound, cached under its own name and keyed as the fit is, so a re-render
+# loads them and a changed choice stops until REFIT.
+sensitivity <- NULL
+if (isTRUE(SENSITIVITY)) {
+  .grid <- unique(rbind(data.frame(nu = NU, k = K), expand.grid(nu = c(0.01, 0.05), k = c(3, 5, 8))))
+  # Rounded first: 4 * 0.05 / 0.01 is 20.000000000000004, and ceiling() would make it 21.
+  .grid$m <- as.integer(ceiling(round(M * NU / .grid$nu, 6)))
+  .grid$name <- sprintf("nb-boostmtree-sensitivity-nu%s-k%s", .grid$nu, .grid$k)
+  .is_base <- .grid$nu == NU & .grid$k == K
+  # The fit's code with M, NU and K rebound to row i of the grid, evaluated in this
+  # frame: fitted (or loaded) when `fit` is TRUE, else asked whether it would fit.
+  .at_cell <- function(i, fit) {
+    M <- .grid$m[[i]]
+    NU <- .grid$nu[[i]]
+    K <- .grid$k[[i]]
+    if (fit) {
+      return(cache_fit(.grid$name[[i]], .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT))
+    }
+    hvtiRutilities::cache_would_fit(.grid$name[[i]], .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
+  }
+  .grid$fitting <- !.is_base & vapply(seq_len(nrow(.grid)), .at_cell, logical(1L), fit = FALSE)
+  # Refused from the console and checked against this session's memory before
+  # the first fit, as the fit above is, at the largest M still to fit.
+  for (.i in seq_len(nrow(.grid))) {
+    if (.grid$fitting[[.i]]) {
+      hvtiRtemplates::guard_long_fit(.grid$name[[.i]], dir = CACHE_DIR, why = "the sensitivity grid refits boostmtree",
+                                     refit = REFIT)
+    }
+  }
+  .m_need <- max(c(0L, .grid$m[.grid$fitting]))
+  .need_grid <- function(k) {
+    hvtiRtemplates:::.boostmtree_need_gib(length(unique(.patient)), nrow(d), FAMILY, k, .m_need)
+  }
+  hvtiRtemplates::guard_memory(if (any(.grid$fitting)) .need_grid(CORES) else 0,
+                               sprintf("the sensitivity fits (largest M = %s)", .m_need),
+                               cores = CORES, cores_fit = .need_grid)
+  sensitivity <- do.call(rbind, lapply(seq_len(nrow(.grid)), function(i) {
+    f <- if (.is_base[[i]]) fit else .at_cell(i, fit = TRUE)
+    e <- if (is.matrix(f$err.rate)) list(f$err.rate) else f$err.rate
+    data.frame(nu = .grid$nu[[i]], k = .grid$k[[i]], m = .grid$m[[i]], component = .components,
+               best_m = as.integer(f$m.opt), budget = as.integer(f$m.opt) * .grid$nu[[i]],
+               cv_error = mapply(function(x, m) x[m, "l2"], e, f$m.opt),
+               at_edge = as.integer(f$m.opt) > 0.9 * .grid$m[[i]])
+  }))
+  # How far each fit's error is from this job's, by component: the number the
+  # verdict rests on. The budget, Best M * nu, is Best M on a scale comparable
+  # across learning rates.
+  .base_err <- sensitivity$cv_error[sensitivity$nu == NU & sensitivity$k == K]
+  sensitivity$change <- sensitivity$cv_error / .base_err[match(sensitivity$component, .components)] - 1
+  .fence <- strrep("`", 3)
+  cat("## Sensitivity to NU and K\n\n")
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-sensitivity",
+    "#| tbl-cap: \"Cross-validated fit over the learning rate (nu) and terminal nodes (K), M scaled to hold M * nu\"",
+    paste("knitr::kable(transform(sensitivity, cv_error = signif(cv_error, 4), change = sprintf('%+.1f%%', 100 * change)),",
+          "col.names = c('nu', 'K', 'M', 'Response component', 'Best M', 'Best M * nu', 'CV error',",
+          "'Best M at edge', 'Change from this fit'))"),
+    .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+  .spread <- max(abs(sensitivity$change))
+  cat(sprintf(paste0("\nThe cross-validated error moves by at most %.1f%% across the grid",
+                     "%s. Best M * nu runs from %.1f to %.1f.\n\n"),
+              100 * .spread,
+              if (any(sensitivity$at_edge)) ", but at least one fit stopped at its edge, so its error is an upper bound" else "",
+              min(sensitivity$budget), max(sensitivity$budget)))
+}
+```
+
+Code
+
+``` r
 # The product of this job. It is separate from the cache on purpose: the cache
 # is this job's internals and this file its interface, which carries the
 # selection a later job would rebuild the rows from.
 fit <- hvtiRtemplates:::.attach_handoff_lineage(
   fit,
   data = .provenance_data,
-  analysis = list(response = .response, time = .time, family = FAMILY, M = M, nu = NU),
+  analysis = list(response = .response, time = .time, family = FAMILY, M = M, nu = NU, k = K, n_knots = N_KNOTS,
+                  mtry = if (is.null(MTRY)) "all" else MTRY),
   cohort = list(n_patients = length(unique(.patient)), n_visits = nrow(d)),
   selection = attr(job_data$record, "selection")
 )
@@ -674,9 +846,9 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 
 | Group           | Item           | Value                        |
 |:----------------|:---------------|:-----------------------------|
-| Run             | Started        | 2026-11-14 18:14:24 EST      |
-|                 | Ended          | 2026-11-14 18:16:10 EST      |
-|                 | Duration       | 1 min 46 s                   |
+| Run             | Started        | 2026-11-18 12:02:30 EST      |
+|                 | Ended          | 2026-11-18 12:03:54 EST      |
+|                 | Duration       | 1 min 23 s                   |
 |                 | Status         | final                        |
 |                 | Rendered by    | gallery                      |
 |                 | Host           | gallery                      |
@@ -684,13 +856,13 @@ saveRDS(fit, set_path("estimates", "nb-boostmtree.rds"))
 |                 | Template       | nb.boostmtree                |
 |                 | Subject        | lvef                         |
 |                 | Type           | boost                        |
-|                 | hvtiRtemplates | 1.6.0                        |
-| Dataset `echo`  | Version file   | echo_20261114.parquet        |
-|                 | Version date   | 2026-11-14                   |
+|                 | hvtiRtemplates | 1.6.1                        |
+| Dataset `echo`  | Version file   | echo_20261118.parquet        |
+|                 | Version date   | 2026-11-18                   |
 |                 | Source file    | echo.rds                     |
 |                 | Rows kept      | 1,180 rows on 300 patients   |
 |                 | WHERE          | none                         |
-|                 | sha256         | 96a19e865571                 |
+|                 | sha256         | 3bd453f95518                 |
 |                 | Manifest       | current                      |
 | Reproducibility | Seed           | 2026                         |
 |                 | renv           | not active                   |

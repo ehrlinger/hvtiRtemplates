@@ -2235,7 +2235,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-14 18:16</p>
+      <p class="date">2026-11-18 12:03</p>
     </div>
   </div>
   
@@ -2247,12 +2247,12 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: nb.boostmtree 1.6.0 sha256:a60c5c95e7d42d56befaed9c45fc80ad92eaf67bc28a2edf7a403dfd80112360 -->
+<!-- hvtiRtemplates: nb.boostmtree 1.6.1 sha256:b037f911518241bc014e75df7c8ed5ce7d912cb6db05d72f685f50b8bb08755c -->
 <p>Gallery job on the synthetic echo series: LV ejection fraction over follow-up (iv_echo), six baseline predictors.</p>
 <!--
      say which response, visit time and predictors it used.
      Replace this comment with that text. -->
-<p>An <code>nb-boostmtree</code> job fits boosted multivariate trees to a response measured repeatedly over follow-up, one row per visit, and reports how well it fits and what drives it: the cross-validated error path, observed against fitted values over time, variable importance, partial effects over time, and a sample of patients’ fitted trajectories.</p>
+<p>An <code>nb-boostmtree</code> job fits boosted multivariate trees to a response measured repeatedly over follow-up, one row per visit, and reports how well it fits and what drives it: the cross-validated error path, observed against fitted values over time, variable importance, partial effects over time, a sample of patients’ fitted trajectories and, when SENSITIVITY is on, how much the fit moves with the learning rate and the size of the trees.</p>
 <!-- The two values below are written by add_job() from the subject/type it
      was called with, which are also the filename's first two fields. They
      name the SET this job belongs to, and every artifact path in the
@@ -2290,7 +2290,7 @@ vertical-align: -.125em;
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># step in memory at once.</span></span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;boostmtree&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>) <span class="sc">||</span> utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;boostmtree&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.0.8&quot;</span>) {</span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs boostmtree &gt;= 2.0.8 from the CCF fork. Install it with</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;  remotes::install_github(</span><span class="sc">\&quot;</span><span class="st">ehrlinger/boostmtree_src</span><span class="sc">\&quot;</span><span class="st">, subdir = </span><span class="sc">\&quot;</span><span class="st">boostmtree</span><span class="sc">\&quot;</span><span class="st">, ref = </span><span class="sc">\&quot;</span><span class="st">v2.0.8-ccf</span><span class="sc">\&quot;</span><span class="st">)</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;  remotes::install_github(</span><span class="sc">\&quot;</span><span class="st">ehrlinger/boostmtree_src</span><span class="sc">\&quot;</span><span class="st">, subdir = </span><span class="sc">\&quot;</span><span class="st">boostmtree</span><span class="sc">\&quot;</span><span class="st">, ref = </span><span class="sc">\&quot;</span><span class="st">v2.0.11-ccf</span><span class="sc">\&quot;</span><span class="st">)</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">&quot;ggBoostedTrees&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>) <span class="sc">||</span> utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;ggBoostedTrees&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;0.9.0&quot;</span>) {</span>
@@ -2333,7 +2333,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>echo</code> <code>echo_20261114.parquet</code>, dated 2026-11-14 · rendered by gallery on gallery · hvtiRtemplates 1.6.0</p>
+<p><strong>final</strong> · data <code>echo</code> <code>echo_20261118.parquet</code>, dated 2026-11-18 · rendered by gallery on gallery · hvtiRtemplates 1.6.1</p>
 </div>
 </div>
 </div>
@@ -2390,64 +2390,109 @@ vertical-align: -.125em;
 <span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the response measured at each visit, and its kind: &quot;continuous&quot;,</span></span>
 <span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;binary&quot;, &quot;ordinal&quot; or &quot;nominal&quot;.</span></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>RESPONSE <span class="ot">&lt;-</span> <span class="st">&quot;lvef&quot;</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>FAMILY   <span class="ot">&lt;-</span> <span class="st">&quot;continuous&quot;</span></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the predictors, or NULL for every other column, which is what the</span></span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># studies this template came from all did. NULL leaves out the ID, every KEY</span></span>
-<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co"># column, the time, the response, and any ccfid, MRN or eMRN column; it takes</span></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="co"># everything else, dates included. Name the predictors when the built dataset</span></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="co"># carries dates or derived outcomes that should not drive the fit.</span></span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>PREDICTORS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: boosting iterations and the learning rate. Studies used 0.01 to 0.05; a</span></span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># smaller NU needs a larger M. The error path below says whether M was enough:</span></span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># the cross-validated best M should sit well inside it, not at its right edge.</span></span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>M  <span class="ot">&lt;-</span> <span class="dv">200</span></span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>NU <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: predictors tried at each split of each tree, or NULL for every one of</span></span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a><span class="co"># them, boostmtree&#39;s default. Fewer than all makes the trees less alike, as in a</span></span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a><span class="co"># random forest, at the cost of a noisier single tree; set it to reproduce a</span></span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a><span class="co"># study that fitted with a smaller mtry. A different MTRY is a different fit, so</span></span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># it is part of the cache key.</span></span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>MTRY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: cores for the cross-validated fit, whose cost grows with the square of</span></span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># the number of patients; about 80% of it runs in parallel, so speed levels off</span></span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># near 4 to 5 times however many cores you give it. Each core is a forked copy of</span></span>
-<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="co"># R holding its own working data, and memory, not speed, is what limits CORES on</span></span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="co"># a large study. The fit refuses to start, in the first minutes, when this session&#39;s</span></span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="co"># memory cannot hold it at this CORES, and says which Workbench profile to start;</span></span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co"># the measurements behind that estimate are in R/fit-memory.R and ?guard_memory.</span></span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># Run time at M = 1000, by patients and cores (2026-10-19, boostmtree 2.0.4, ordinal):</span></span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># about 7 h at 1,000 patients on 4 cores, 5 h at 1,000 on 8, 22 h at 2,000 on 8 and</span></span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># 110 h at 4,000 on 4. On 2.0.8 (2026-10-21, continuous, 1,391 patients, M = 1000,</span></span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># 8 cores) the fit took about 1 h. Hours scale with M.</span></span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># CORES should never exceed the session&#39;s CPUs; Windows cannot fork.</span></span>
-<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># Not part of the cache key: the fit is identical on any number of cores.</span></span>
-<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>CORES <span class="ot">&lt;-</span> <span class="cf">if</span> (.Platform<span class="sc">$</span>OS.type <span class="sc">==</span> <span class="st">&quot;windows&quot;</span>) <span class="dv">1</span>L <span class="cf">else</span> <span class="dv">4</span>L</span>
-<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: seeds the fit and the sample of patients the trajectory plot draws, so</span></span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="co"># the report reproduces. Part of the cache key.</span></span>
-<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the variables to draw partial effects for, or NULL for the six most</span></span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># important. N_TRACES patients are sampled for the trajectory plot; Inf draws</span></span>
-<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># every one.</span></span>
-<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>EFFECT_VARIABLES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>N_TRACES <span class="ot">&lt;-</span> <span class="dv">100</span></span>
-<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
-<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old fit; TRUE recomputes it.</span></span>
-<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="co"># A skewed continuous response (a gradient, a lab value) is a choice to make</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># here, not later. &quot;continuous&quot; is squared-error boosting, so a fit on the raw</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co"># scale is sensitive to its outliers. A fit on log(y) is less so, but it</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co"># estimates the conditional mean of log(y): exponentiated, its fitted values and</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="co"># effects are geometric means on the raw scale, not arithmetic means. They are</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="co"># medians only if, given the predictors and time, the log-scale error is</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="co"># symmetric (its mean equals its median), as under a lognormal model; do not</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="co"># call them medians without saying so. Boosting has no forest weights to average</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co"># raw y with, so getting back to arithmetic means needs a</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co"># retransformation (Duan&#39;s smearing), whose factor usually has to change with</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="co"># time, because residual variance changes along the trajectory. This template</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="co"># does not retransform. Either fit the raw scale and accept the outlier</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co"># sensitivity, or fit log(y) (build the column upstream) and report the</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># effects as on the log scale. The method is Pande A, Li L, Rajeswaran J,</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="co"># Ehrlinger J, Kogalur UB, Blackstone EH, Ishwaran H. Boosted multivariate trees</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a><span class="co"># for longitudinal data. Machine Learning 2017;106:277-305,</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="co"># doi:10.1007/s10994-016-5597-1.</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>RESPONSE <span class="ot">&lt;-</span> <span class="st">&quot;lvef&quot;</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>FAMILY   <span class="ot">&lt;-</span> <span class="st">&quot;continuous&quot;</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the predictors, or NULL for every other column, which is what the</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a><span class="co"># studies this template came from all did. NULL leaves out the ID, every KEY</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a><span class="co"># column, the time, the response, and any ccfid, MRN or eMRN column; it takes</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a><span class="co"># everything else, dates included. Name the predictors when the built dataset</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="co"># carries dates or derived outcomes that should not drive the fit.</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>PREDICTORS <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the learning rate and the most boosting iterations. NU is the main</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="co"># lever: fix it, and let cross-validation choose how many of the M iterations to</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a><span class="co"># use (Best M, reported below). 0.05 is the reference; 0.01 suits small or</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a><span class="co"># noisy data, and needs about five times the M. M is a ceiling: the fit stops</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># using iterations at Best M, but every one up to M is paid for. boostmtree&#39;s own</span></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># default of 200 is too low for clinical longitudinal data. One study of 1,391</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># patients (4,771 visits) at NU = 0.05 fitted M = 1000 and chose Best M = 751;</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># its cross-validated error at 500 was 0.3% above that best and at 250 1.1%, so</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># 500 was enough at half the time. The report says when the error was still</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># falling at M by enough to matter.</span></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>M  <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>NU <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: terminal nodes per tree, and B-spline knots for the time effect. Both</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># are boostmtree&#39;s defaults, written out so the report records them.</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co"># K = 5 keeps the trees small, as in any boosting, allowing interactions up to</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># about order 4. Vary it only as the sensitivity check below, not as a tuning</span></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># dimension. The P-spline penalty (cubic, d = 3, third-order, pen.ord = 3, its</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="co"># lambda estimated at each iteration) does most of the smoothing, so N_KNOTS</span></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="co"># matters little once there are enough. The limit is the time grid: keep it well</span></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a><span class="co"># below the number of distinct visit times, 5 to 7 for sparse or scheduled</span></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="co"># visits. The fit stops if it is not below them.</span></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>K       <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>N_KNOTS <span class="ot">&lt;-</span> <span class="dv">10</span></span>
 <span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
-<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;nb-boostmtree-error&quot;). The names are the</span></span>
-<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
-<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: TRUE refits over a grid of NU (0.01, 0.05) and K (3, 5, 8), each fit</span></span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="co"># cross-validated with M scaled so M * NU is held fixed, and reports Best M and</span></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="co"># the cross-validated error for each. If they barely move, the defaults above</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a><span class="co"># are not what the result depends on; if they move, the report should say so.</span></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a><span class="co"># Off by default: it is five more fits, three of them five times as long.</span></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a>SENSITIVITY <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: predictors tried at each split of each tree, or NULL for every one of</span></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a><span class="co"># them, boostmtree&#39;s default. Fewer than all makes the trees less alike, as in a</span></span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a><span class="co"># random forest, at the cost of a noisier single tree; set it to reproduce a</span></span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a><span class="co"># study that fitted with a smaller mtry. NULL is the reference fit; about a</span></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="co"># third of the predictors adds stochastic-boosting decorrelation, which matters</span></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a><span class="co"># more when there are many predictors or they are highly correlated. A different</span></span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a><span class="co"># MTRY is a different fit, so it is part of the cache key.</span></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>MTRY <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: cores for the cross-validated fit, whose cost grows with the square of</span></span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a><span class="co"># the number of patients; about 80% of it runs in parallel, so speed levels off</span></span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a><span class="co"># near 4 to 5 times however many cores you give it. Each core is a forked copy of</span></span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a><span class="co"># R holding its own working data, and memory, not speed, is what limits CORES on</span></span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a><span class="co"># a large study. The fit refuses to start, in the first minutes, when this session&#39;s</span></span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a><span class="co"># memory cannot hold it at this CORES, and says which Workbench profile to start;</span></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a><span class="co"># the measurements behind that estimate are in R/fit-memory.R and ?guard_memory.</span></span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a><span class="co"># Run time at M = 1000, by patients and cores (2026-10-19, boostmtree 2.0.4, ordinal):</span></span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a><span class="co"># about 7 h at 1,000 patients on 4 cores, 5 h at 1,000 on 8, 22 h at 2,000 on 8 and</span></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a><span class="co"># 110 h at 4,000 on 4. On 2.0.8 (2026-10-21, continuous, 1,391 patients, M = 1000,</span></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a><span class="co"># 8 cores) the fit took about 1 h. Hours scale with M.</span></span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="co"># CORES should never exceed the session&#39;s CPUs; Windows cannot fork.</span></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a><span class="co"># Not part of the cache key: the fit is identical on any number of cores.</span></span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a>CORES <span class="ot">&lt;-</span> <span class="cf">if</span> (.Platform<span class="sc">$</span>OS.type <span class="sc">==</span> <span class="st">&quot;windows&quot;</span>) <span class="dv">1</span>L <span class="cf">else</span> <span class="dv">4</span>L</span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: seeds the fit and the sample of patients the trajectory plot draws, so</span></span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a><span class="co"># the report reproduces. Part of the cache key.</span></span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the variables to draw partial effects for, or NULL for the six most</span></span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a><span class="co"># important. N_TRACES patients are sampled for the trajectory plot; Inf draws</span></span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a><span class="co"># every one.</span></span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>EFFECT_VARIABLES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>N_TRACES <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old fit; TRUE recomputes it.</span></span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;nb-boostmtree-error&quot;). The names are the</span></span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2459,8 +2504,8 @@ vertical-align: -.125em;
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>hvtiRutilities<span class="sc">::</span><span class="fu">verify_manifest</span>(<span class="fu">file.path</span>(.root, <span class="st">&quot;manifest.yaml&quot;</span>))</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>.cfg <span class="ot">&lt;-</span> <span class="fu">study_config</span>(<span class="at">start =</span> .root)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>job_data <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">::</span><span class="fu">read_job_data</span>(.cfg, <span class="at">dataset =</span> DATASET, <span class="at">analysis_set =</span> ANALYSIS_SET,</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id =</span> ID, <span class="at">key =</span> KEY, <span class="at">join =</span> JOIN, <span class="at">join_vars =</span> JOIN_VARS,</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key =</span> JOIN_KEY)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">where =</span> WHERE, <span class="at">id_col =</span> ID, <span class="at">key_cols =</span> KEY, <span class="at">join =</span> JOIN, <span class="at">join_cols =</span> JOIN_VARS,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">reduce =</span> REDUCE, <span class="at">join_key_cols =</span> JOIN_KEY)</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> job_data<span class="sc">$</span>data</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>.provenance_data <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;.provenance_data&quot;</span>)) .provenance_data <span class="cf">else</span> <span class="fu">list</span>(), <span class="fu">list</span>(job_data<span class="sc">$</span>provenance),</span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(job_data<span class="sc">$</span>provenance_join)) <span class="fu">list</span>(job_data<span class="sc">$</span>provenance_join))</span>
@@ -2549,7 +2594,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>echo</code> (echo_20261114.parquet)</td>
+<td style="text-align: left;">dataset <code>echo</code> (echo_20261118.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2597,43 +2642,52 @@ Table 1: The data this job read
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># several places, its base learners included, and every one of them is saved</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># with it. A digest still groups the visits; it cannot be read back.</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="fu">dirname</span>(<span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;nb-boostmtree.rds&quot;</span>))</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># The fit runs for hours at study size. Started from the console it dies with</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># the session, so an uncached fit is refused there: run the job with</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># hvtiRtemplates::run_job() instead. Once cached, these chunks load it.</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;nb-boostmtree-fit&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                               <span class="at">why =</span> <span class="st">&quot;a cross-validated boostmtree fit takes hours at study size&quot;</span>,</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                               <span class="at">refit =</span> REFIT)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>.patient <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.id_digest</span>(d[[.id]], hvtiRtemplates<span class="sc">:::</span><span class="fu">.study_id_key</span>(.root))</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># The fit, quoted once so the memory check below and cache_fit() read the same call: a</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># cache_fit() of a quoted call keys the call, so a fit cached before this was quoted still loads.</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>.fit_code <span class="ot">&lt;-</span> <span class="fu">quote</span>(</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">boostmtree</span>(<span class="at">x =</span> d[.predictors], <span class="at">tm =</span> d[[.time]], <span class="at">id =</span> .patient, <span class="at">y =</span> d[[.response]],</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>             <span class="at">family =</span> FAMILY, <span class="at">M =</span> M, <span class="at">nu =</span> NU, <span class="at">mtry =</span> MTRY, <span class="at">mod.grad =</span> <span class="cn">TRUE</span>, <span class="at">cv.flag =</span> <span class="cn">TRUE</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>             <span class="co"># get() keeps CORES out of cache_fit()&#39;s key, which sees only the values</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>             <span class="co"># the call names directly: changing it must not mark an identical fit stale.</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>             <span class="at">control =</span> <span class="fu">boostmtree.control</span>(<span class="at">cv.cores =</span> <span class="fu">get</span>(<span class="st">&quot;CORES&quot;</span>)),</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>             <span class="co"># Reports each boosting iteration to &lt;job&gt;.run.progress and the render log.</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>             <span class="co"># get() keeps the job&#39;s run record out of the cache key&#39;s inputs, as for</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>             <span class="co"># CORES: it changes what is reported, never what is fitted.</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>             <span class="co"># The fit keeps the reporter (boostmtree&#39;s formula environment holds it), which</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>             <span class="co"># is safe because the reporter&#39;s frame holds only `unit`: no run record is</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>             <span class="co"># saved with the fit.</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>             <span class="at">progress =</span> <span class="fu">get</span>(<span class="st">&quot;.job&quot;</span>)<span class="sc">$</span><span class="fu">progress</span>(<span class="st">&quot;iteration&quot;</span>))</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Refuses here, in the first minutes of the render, a fit this session&#39;s memory cannot hold, and</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co"># names the Workbench profile to start; the numbers behind the estimate are in hvtiRtemplates&#39;</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"># R/fit-memory.R. A cached fit is only loaded, so it needs nothing. Whether cache_fit() will fit</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co"># is its own decision, asked the way it makes it: a file whose key matches loads even with REFIT</span></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co"># left TRUE, and a stale file stops it before any fit unless REFIT is set. The call itself is</span></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co"># unconditional, so a cached rerender still records the memory check that run_job() waits for.</span></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>.need <span class="ot">&lt;-</span> <span class="cf">function</span>(k) hvtiRtemplates<span class="sc">:::</span><span class="fu">.boostmtree_need_gib</span>(<span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="fu">nrow</span>(d), FAMILY, k, M)</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>.fitting <span class="ot">&lt;-</span> hvtiRutilities<span class="sc">::</span><span class="fu">cache_would_fit</span>(<span class="st">&quot;nb-boostmtree-fit&quot;</span>, .fit_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">::</span><span class="fu">guard_memory</span>(<span class="cf">if</span> (.fitting) <span class="fu">.need</span>(CORES) <span class="cf">else</span> <span class="dv">0</span>,</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">sprintf</span>(<span class="st">&quot;this boostmtree fit (%s patients, %s visits, %s)&quot;</span>,</span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">format</span>(<span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>), <span class="fu">format</span>(<span class="fu">nrow</span>(d), <span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>),</span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>                                     FAMILY),</span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>                             <span class="at">cores =</span> CORES, <span class="at">cores_fit =</span> .need)</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;nb-boostmtree-fit&quot;</span>, .fit_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># A spline with as many knots as there are visit times has nothing left for the</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># penalty to smooth: stopped here, before hours of fitting, not after.</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>.n_times <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(d[[.time]]))</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (N_KNOTS <span class="sc">&gt;=</span> .n_times) {</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;N_KNOTS (&quot;</span>, N_KNOTS, <span class="st">&quot;) must be below the number of distinct visit times (&quot;</span>, .n_times, <span class="st">&quot;), &quot;</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;and well below it for sparse visits.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>.patient <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.id_digest</span>(d[[.id]], hvtiRtemplates<span class="sc">:::</span><span class="fu">.study_id_key</span>(.root))</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># The fit, quoted once so the memory check below and cache_fit() read the same call: a</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co"># cache_fit() of a quoted call keys the call, so a fit cached before this was quoted still loads.</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>.fit_code <span class="ot">&lt;-</span> <span class="fu">quote</span>(</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">boostmtree</span>(<span class="at">x =</span> d[.predictors], <span class="at">tm =</span> d[[.time]], <span class="at">id =</span> .patient, <span class="at">y =</span> d[[.response]],</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>             <span class="at">family =</span> FAMILY, <span class="at">M =</span> M, <span class="at">nu =</span> NU, <span class="at">k =</span> K, <span class="at">n.knots =</span> N_KNOTS, <span class="at">mtry =</span> MTRY, <span class="at">mod.grad =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>             <span class="at">cv.flag =</span> <span class="cn">TRUE</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>             <span class="co"># get() keeps CORES out of cache_fit()&#39;s key, which sees only the values</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>             <span class="co"># the call names directly: changing it must not mark an identical fit stale.</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>             <span class="at">control =</span> <span class="fu">boostmtree.control</span>(<span class="at">cv.cores =</span> <span class="fu">get</span>(<span class="st">&quot;CORES&quot;</span>)),</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>             <span class="co"># Reports each boosting iteration to &lt;job&gt;.run.progress and the render log.</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>             <span class="co"># get() keeps the job&#39;s run record out of the cache key&#39;s inputs, as for</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>             <span class="co"># CORES: it changes what is reported, never what is fitted.</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>             <span class="co"># The fit keeps the reporter (boostmtree&#39;s formula environment holds it), which</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>             <span class="co"># is safe because the reporter&#39;s frame holds only `unit`: no run record is</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>             <span class="co"># saved with the fit.</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>             <span class="at">progress =</span> <span class="fu">get</span>(<span class="st">&quot;.job&quot;</span>)<span class="sc">$</span><span class="fu">progress</span>(<span class="st">&quot;iteration&quot;</span>))</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Refuses here, in the first minutes of the render, a fit this session&#39;s memory cannot hold, and</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co"># names the Workbench profile to start; the numbers behind the estimate are in hvtiRtemplates&#39;</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co"># R/fit-memory.R. A cached fit is only loaded, so it needs nothing. Whether cache_fit() will fit</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co"># is its own decision, asked the way it makes it: a file whose key matches loads even with REFIT</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co"># left TRUE, and a stale file stops it before any fit unless REFIT is set. The call itself is</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co"># unconditional, so a cached rerender still records the memory check that run_job() waits for.</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>.need <span class="ot">&lt;-</span> <span class="cf">function</span>(k) hvtiRtemplates<span class="sc">:::</span><span class="fu">.boostmtree_need_gib</span>(<span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="fu">nrow</span>(d), FAMILY, k, M)</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>.fitting <span class="ot">&lt;-</span> hvtiRutilities<span class="sc">::</span><span class="fu">cache_would_fit</span>(<span class="st">&quot;nb-boostmtree-fit&quot;</span>, .fit_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="co"># The fit runs for hours at study size. Started from the console, the Render button or a terminal,</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="co"># it dies with the session, so a fit that will be computed is refused there: run the job with</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="co"># hvtiRtemplates::run_job() instead. Once cached, the Render button and these chunks load it.</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (.fitting) {</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;nb-boostmtree-fit&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">why =</span> <span class="st">&quot;a cross-validated boostmtree fit takes hours at study size&quot;</span>, <span class="at">refit =</span> REFIT)</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">::</span><span class="fu">guard_memory</span>(<span class="cf">if</span> (.fitting) <span class="fu">.need</span>(CORES) <span class="cf">else</span> <span class="dv">0</span>,</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">sprintf</span>(<span class="st">&quot;this boostmtree fit (%s patients, %s visits, %s)&quot;</span>,</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">format</span>(<span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>), <span class="fu">format</span>(<span class="fu">nrow</span>(d), <span class="at">big.mark =</span> <span class="st">&quot;,&quot;</span>),</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>                                     FAMILY),</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>                             <span class="at">cores =</span> CORES, <span class="at">cores_fit =</span> .need)</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;nb-boostmtree-fit&quot;</span>, .fit_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p><code>cv.flag = TRUE</code> and <code>mod.grad = TRUE</code> are not settings. Every study fitted with both, and cross-validation is how the job chooses its best number of iterations.</p>
@@ -2644,9 +2698,10 @@ Table 1: The data this job read
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(<span class="st">&quot;Family&quot;</span>, <span class="st">&quot;Iterations (M)&quot;</span>, <span class="st">&quot;Learning rate (nu)&quot;</span>, <span class="st">&quot;Patients&quot;</span>, <span class="st">&quot;Visits&quot;</span>),</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(FAMILY, M, NU, <span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="fu">nrow</span>(d))</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">quantity =</span> <span class="fu">c</span>(<span class="st">&quot;Family&quot;</span>, <span class="st">&quot;Iterations (M)&quot;</span>, <span class="st">&quot;Learning rate (nu)&quot;</span>, <span class="st">&quot;Terminal nodes (K)&quot;</span>, <span class="st">&quot;Spline knots&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>               <span class="st">&quot;Predictors per split (mtry)&quot;</span>, <span class="st">&quot;Patients&quot;</span>, <span class="st">&quot;Visits&quot;</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(FAMILY, M, NU, K, N_KNOTS, <span class="cf">if</span> (<span class="fu">is.null</span>(MTRY)) <span class="st">&quot;all&quot;</span> <span class="cf">else</span> MTRY, <span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="fu">nrow</span>(d))</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">&quot;&quot;</span>, <span class="st">&quot;&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-fit" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2670,10 +2725,22 @@ Table 2: The fit
 <td style="text-align: left;">0.05</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">Terminal nodes (K)</td>
+<td style="text-align: left;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Spline knots</td>
+<td style="text-align: left;">10</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Predictors per split (mtry)</td>
+<td style="text-align: left;">all</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">Patients</td>
 <td style="text-align: left;">300</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Visits</td>
 <td style="text-align: left;">1180</td>
 </tr>
@@ -2742,8 +2809,8 @@ Table 3: Cross-validated fit, by response component
 <tr class="odd">
 <td style="text-align: left;">l2</td>
 <td style="text-align: left;">lvef</td>
-<td style="text-align: right;">200</td>
-<td style="text-align: right;">0.8804792</td>
+<td style="text-align: right;">149</td>
+<td style="text-align: right;">0.8830741</td>
 </tr>
 </tbody>
 </table>
@@ -2752,20 +2819,54 @@ Table 3: Cross-validated fit, by response component
 </figure>
 </div>
 </div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Two ways a fit looks finished and is not, said in the report, not left to the</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># figures. Best M in the last tenth of M with the error still falling: it fell</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># by more than 0.1% over that last tenth. Best M near M alone is not enough, as</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># the curve flattens long before it turns: in the study the M comment above</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># describes, M = 500 put Best M at 498 while the error fell 0.095% over its last</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># tenth and sat 0.3% above the best a longer fit found. The 0.1% is calibrated on</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># that one fit. lambda at boostmtree&#39;s ceiling at Best M: the penalty estimate</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ran away, a sign of a flat trajectory or too many knots for the visit times.</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>.lambda_max <span class="ot">&lt;-</span> <span class="fu">formals</span>(boostmtree<span class="sc">::</span>boostmtree)<span class="sc">$</span>lambda.max</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>.lambda <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(fit<span class="sc">$</span>lambda)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>.tenth <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">1</span>L, <span class="fu">floor</span>(<span class="fl">0.9</span> <span class="sc">*</span> M))</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>.last_drop <span class="ot">&lt;-</span> <span class="fu">vapply</span>(.err, <span class="cf">function</span>(e) e[.tenth, <span class="st">&quot;l2&quot;</span>] <span class="sc">/</span> e[M, <span class="st">&quot;l2&quot;</span>] <span class="sc">-</span> <span class="dv">1</span>, <span class="fu">numeric</span>(<span class="dv">1</span>L))</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>fit_checks <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">component =</span> fit_summary<span class="sc">$</span>component,</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">last_tenth_drop =</span> .last_drop,</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">m_at_edge =</span> fit_summary<span class="sc">$</span>best_m <span class="sc">&gt;</span> <span class="fl">0.9</span> <span class="sc">*</span> M <span class="sc">&amp;</span> .last_drop <span class="sc">&gt;</span> <span class="fl">0.001</span>,</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_at_max =</span> <span class="fu">vapply</span>(<span class="fu">seq_along</span>(fit<span class="sc">$</span>m.opt), <span class="cf">function</span>(j) {</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">isTRUE</span>(.lambda[fit<span class="sc">$</span>m.opt[[j]], <span class="fu">min</span>(j, <span class="fu">ncol</span>(.lambda))] <span class="sc">&gt;=</span> .lambda_max)</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  }, <span class="fu">logical</span>(<span class="dv">1</span>L))</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>.warn <span class="ot">&lt;-</span> <span class="cf">function</span>(text) <span class="fu">cat</span>(<span class="st">&quot;::: {.callout-warning}</span><span class="sc">\n</span><span class="st">&quot;</span>, text, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">:::</span><span class="sc">\n\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.c <span class="cf">in</span> fit_checks<span class="sc">$</span>component[fit_checks<span class="sc">$</span>m_at_edge]) {</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.warn</span>(<span class="fu">sprintf</span>(<span class="fu">paste</span>(<span class="st">&quot;Best M for %s is in the last tenth of the %s iterations fitted, and the cross-validated error&quot;</span>,</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;fell %.2f%% over that tenth, so it was still falling. Raise M and refit.&quot;</span>),</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>                .c, M, <span class="dv">100</span> <span class="sc">*</span> fit_checks<span class="sc">$</span>last_tenth_drop[fit_checks<span class="sc">$</span>component <span class="sc">==</span> .c]))</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.c <span class="cf">in</span> fit_checks<span class="sc">$</span>component[fit_checks<span class="sc">$</span>lambda_at_max]) {</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.warn</span>(<span class="fu">sprintf</span>(<span class="fu">paste</span>(<span class="st">&quot;The smoothing parameter lambda for %s reached boostmtree&#39;s ceiling (%g) at Best M. The&quot;</span>,</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;trajectory over time may be flat, or N_KNOTS (%s) too many for the visit times.&quot;</span>),</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>                .c, .lambda_max, N_KNOTS))</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The cross-validated error by iteration; the next figure draws the fitted rho, phi and lambda.</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Best M at the right edge means M was too small.</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>p_error <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_boost_error</span>(fit)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_error, <span class="st">&quot;nb-boostmtree-error&quot;</span>)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>p_error</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The cross-validated error by iteration; the next figure draws the fitted rho, phi and lambda.</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Best M at the right edge means M was too small.</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>p_error <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_boost_error</span>(fit)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_error, <span class="st">&quot;nb-boostmtree-error&quot;</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>p_error</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-error" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/bef60a27e2f150cbc2646b859478048d.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/fcb28082f5e30e7abcee6553678a58f4.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-error-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 1: Cross-validated error by boosting iteration. The black solid line is the error after each iteration, and the black dashed vertical line marks the iteration with the lowest error, Best M.
@@ -2777,16 +2878,16 @@ Figure 1: Cross-validated error by boosting iteration. The black solid line is 
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: three stacked panels, one per parameter.</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>p_path <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_boost_path</span>(fit)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_path, <span class="st">&quot;nb-boostmtree-path&quot;</span>, <span class="at">height =</span> <span class="dv">8</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>p_path</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: three stacked panels, one per parameter.</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>p_path <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_boost_path</span>(fit)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_path, <span class="st">&quot;nb-boostmtree-path&quot;</span>, <span class="at">height =</span> <span class="dv">8</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>p_path</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-path" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/b391e2c3342185631e10562bc54265cc.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/8748824734856a08921a60c83e84dd98.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-path-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel per parameter. Each black solid line is the parameter’s fitted value after each iteration.
@@ -2798,18 +2899,18 @@ Figure 2: Fitted rho, phi and lambda by boosting iteration, one panel per param
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Observed against fitted values over follow-up, in time bins.</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript theme hides the legend and its title, and the caption reads the shapes from the legend.</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>p_calibration <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_boost_calibration</span>(fit)) <span class="sc">+</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_calibration, <span class="st">&quot;nb-boostmtree-calibration&quot;</span>)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>p_calibration</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Observed against fitted values over follow-up, in time bins.</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The manuscript theme hides the legend and its title, and the caption reads the shapes from the legend.</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>p_calibration <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_boost_calibration</span>(fit)) <span class="sc">+</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_calibration, <span class="st">&quot;nb-boostmtree-calibration&quot;</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>p_calibration</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-calibration" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-calibration-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/8d28c3e5c25ea5c119cc1704e74e2dcc.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/ed4e2ac1596f35fab6aac02d9418ecaf.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-calibration-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 3: Observed against fitted values over follow-up, in time bins. Each gray horizontal segment spans a time bin at its observed mean, with a vertical black bar for the interval around it; black circles mark the observed means, black triangles the fitted means, and the black dashed line joins the fitted means over time.
@@ -2821,22 +2922,22 @@ Figure 3: Observed against fitted values over follow-up, in time bins. Each gra
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Importance of each predictor&#39;s main effect and its interaction with time; the</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># interaction is where a predictor whose effect changes over follow-up shows.</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># vimp.boostmtree() permutes each predictor at random, so it is seeded and</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># cached like the fit. Unseeded, the importances moved from render to render,</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># and with them the six variables the effects below are drawn for.</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>vimp <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;nb-boostmtree-vimp&quot;</span>, <span class="fu">vimp.boostmtree</span>(fit), <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one row per predictor, and one panel per effect, at the 6.5 in page width.</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>p_vimp <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_boost_vimp</span>(vimp)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_vimp, <span class="st">&quot;nb-boostmtree-importance&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>p_vimp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Importance of each predictor&#39;s main effect and its interaction with time; the</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># interaction is where a predictor whose effect changes over follow-up shows.</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># vimp.boostmtree() permutes each predictor at random, so it is seeded and</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># cached like the fit. Unseeded, the importances moved from render to render,</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># and with them the six variables the effects below are drawn for.</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>vimp <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;nb-boostmtree-vimp&quot;</span>, <span class="fu">vimp.boostmtree</span>(fit), <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size: one row per predictor, and one panel per effect, at the 6.5 in page width.</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>p_vimp <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_boost_vimp</span>(vimp)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_vimp, <span class="st">&quot;nb-boostmtree-importance&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>p_vimp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-importance" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/8dac4a6e1c61bcff75d569d7186938a2.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/40ba411dfc3a0a8af9e7e5da4001d5eb.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 4: Importance of each predictor’s main effect and of its interaction with time, one panel for each. Horizontal dark gray bars give the importance of each predictor.
@@ -2847,127 +2948,109 @@ Figure 4: Importance of each predictor’s main effect and of its interaction w
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: each child chunk below carries its own label and caption</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Partial effects over time, for EFFECT_VARIABLES or the six most important.</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># An ordinal or nominal fit reports importance once per response component, so</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># a variable is ranked by its largest importance across them.</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>.vimp_main <span class="ot">&lt;-</span> <span class="fu">gg_boost_vimp</span>(vimp, <span class="at">components =</span> <span class="st">&quot;main&quot;</span>)</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>.top <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">tapply</span>(.vimp_main<span class="sc">$</span>importance, <span class="fu">as.character</span>(.vimp_main<span class="sc">$</span>variable), max), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>.effect_vars <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(EFFECT_VARIABLES)) <span class="fu">head</span>(<span class="fu">names</span>(.top), <span class="dv">6</span>L) <span class="cf">else</span> EFFECT_VARIABLES</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>.unknown <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(.effect_vars, .predictors)</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.unknown)) <span class="fu">stop</span>(<span class="st">&quot;EFFECT_VARIABLES names no predictor: &quot;</span>, <span class="fu">paste</span>(.unknown, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co"># One partial.plot() covers every response component: ggBoostedTrees 0.9.0 and</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co"># later take an ordinal or nominal one whole and facet its figure by component.</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Each component is renamed as the fit summary names it, not by its bare level.</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>.fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>.seen <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>.child <span class="ot">&lt;-</span> <span class="cf">function</span>(label, caption, code, <span class="at">opts =</span> <span class="cn">NULL</span>) {</span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  label <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;(^-+|-+$)&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">gsub</span>(<span class="st">&quot;[^a-z0-9]+&quot;</span>, <span class="st">&quot;-&quot;</span>, <span class="fu">tolower</span>(label)))</span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.seen[[label]])) <span class="fu">stop</span>(<span class="st">&quot;Two outputs would share the label &quot;</span>, label, <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  .seen[[label]] <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  .opt <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;#| &quot;</span>, <span class="fu">sub</span>(<span class="st">&quot;-.*$&quot;</span>, <span class="st">&quot;&quot;</span>, label), <span class="st">&quot;-cap: &quot;</span>, <span class="fu">encodeString</span>(caption, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>))</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(<span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: &quot;</span>, label), .opt, opts, code, .fence),</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>                        <span class="at">envir =</span> <span class="fu">parent.frame</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="co"># partial.plot() is the slowest step after the fit: one prediction over every</span></span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="co"># patient per grid value, 25 values per continuous covariate. It is cached</span></span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a><span class="co"># beside the fit and keyed on it, so a re-render that changes only prose skips</span></span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="co"># it, and a refit or a changed EFFECT_VARIABLES stops until REFIT, as the fit does.</span></span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>.partial <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;nb-boostmtree-partial&quot;</span>,</span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">partial.plot</span>(fit, <span class="at">x.var.names =</span> .effect_vars, <span class="at">output =</span> <span class="st">&quot;data&quot;</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">progress =</span> <span class="fu">get</span>(<span class="st">&quot;.job&quot;</span>)<span class="sc">$</span><span class="fu">progress</span>(<span class="st">&quot;prediction&quot;</span>)),</span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>                      <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>.effect <span class="ot">&lt;-</span> <span class="fu">gg_boost_effect</span>(.partial)</span>
-<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>.relabel <span class="ot">&lt;-</span> .components[<span class="fu">match</span>(<span class="fu">levels</span>(.effect<span class="sc">$</span>response), .labels)]</span>
-<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a><span class="co"># A component ggBoostedTrees names differently from the fit would otherwise be</span></span>
-<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn under a blank label; stop and say so instead.</span></span>
-<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">anyNA</span>(.relabel)) {</span>
-<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;ggBoostedTrees labels a response component this job does not recognize: &quot;</span>,</span>
-<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>       <span class="fu">paste</span>(<span class="fu">levels</span>(.effect<span class="sc">$</span>response)[<span class="fu">is.na</span>(.relabel)], <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(.effect<span class="sc">$</span>response) <span class="ot">&lt;-</span> .relabel</span>
-<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a><span class="co"># What ggBoostedTrees 0.9.0 still cannot do: a continuous covariate is drawn as</span></span>
-<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a><span class="co"># a curve and a factor as a point per level, on axes ggplot2 cannot share, so</span></span>
-<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a><span class="co"># plot() refuses an effect holding both. Each kind is drawn in its own figure,</span></span>
-<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a><span class="co"># which is why p_effects is a list.</span></span>
-<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>.discrete <span class="ot">&lt;-</span> <span class="fu">tapply</span>(<span class="sc">!</span><span class="fu">is.na</span>(.effect<span class="sc">$</span>x_label), .effect<span class="sc">$</span>variable, any)</span>
-<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>.discrete <span class="ot">&lt;-</span> .discrete[<span class="sc">!</span><span class="fu">is.na</span>(.discrete)]</span>
-<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>.parts <span class="ot">&lt;-</span> <span class="fu">split</span>(<span class="fu">names</span>(.discrete), .discrete)</span>
-<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>.kinds <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">names</span>(.parts) <span class="sc">==</span> <span class="st">&quot;TRUE&quot;</span>, <span class="st">&quot;categorical&quot;</span>, <span class="st">&quot;continuous&quot;</span>)</span>
-<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size, paged: one facet per predictor, two by two on a page no larger than</span></span>
-<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a><span class="co"># 6.5 by 9 in. With several response components ggBoostedTrees draws one column</span></span>
-<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a><span class="co"># per predictor and one row per component, so a page holds two predictors.</span></span>
-<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>.n_components <span class="ot">&lt;-</span> <span class="fu">nlevels</span>(.effect<span class="sc">$</span>response)</span>
-<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>.pages <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">unname</span>(.parts), <span class="cf">function</span>(v) {</span>
-<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (.n_components <span class="sc">&gt;</span> <span class="dv">1</span>L) {</span>
-<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.figure_pages</span>(<span class="fu">length</span>(v), <span class="at">panel_height =</span> <span class="dv">3</span> <span class="sc">*</span> .n_components, <span class="at">page_height =</span> <span class="dv">3</span> <span class="sc">*</span> .n_components)</span>
-<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.figure_pages</span>(<span class="fu">length</span>(v), <span class="at">page_height =</span> <span class="dv">6</span>)</span>
-<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a><span class="co"># One plot per page, kind by kind: p_effects holds every page, and .effect_page says which kind and page each is.</span></span>
-<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>p_effects <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>.effect_page <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.k <span class="cf">in</span> <span class="fu">seq_along</span>(.parts)) {</span>
-<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (.j <span class="cf">in</span> <span class="fu">seq_along</span>(.pages[[.k]])) {</span>
-<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a>    part <span class="ot">&lt;-</span> .effect[.effect<span class="sc">$</span>variable <span class="sc">%in%</span> .parts[[.k]][.pages[[.k]][[.j]]<span class="sc">$</span>index], , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>    part<span class="sc">$</span>variable <span class="ot">&lt;-</span> <span class="fu">droplevels</span>(part<span class="sc">$</span>variable)</span>
-<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.</span></span>
-<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a>    p_effects[[<span class="fu">length</span>(p_effects) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">plot</span>(part) <span class="sc">+</span></span>
-<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a>      hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
-<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a>    .effect_page[[<span class="fu">length</span>(.effect_page) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">kind =</span> .kinds[[.k]], <span class="at">page =</span> .j, <span class="at">of =</span> <span class="fu">length</span>(.pages[[.k]]),</span>
-<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a>                                                      <span class="at">size =</span> .pages[[.k]][[.j]], <span class="at">vars =</span> <span class="fu">levels</span>(part<span class="sc">$</span>variable))</span>
-<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-74"><a href="#cb12-74" aria-hidden="true" tabindex="-1"></a>.key <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">continuous =</span> <span class="fu">paste</span>(<span class="st">&quot;Each solid line is the effect at one follow-up time, colored from dark to light blue by&quot;</span>,</span>
-<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&quot;time as in the color bar.&quot;</span>),</span>
-<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a>          <span class="at">categorical =</span> <span class="fu">paste</span>(<span class="st">&quot;Each point is the effect at one level and follow-up time, colored from dark to light blue by&quot;</span>,</span>
-<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;time as in the color bar.&quot;</span>))</span>
-<span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.i <span class="cf">in</span> <span class="fu">seq_along</span>(p_effects)) {</span>
-<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a>  .p <span class="ot">&lt;-</span> p_effects[[.i]]</span>
-<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a>  .pg <span class="ot">&lt;-</span> .effect_page[[.i]]</span>
-<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.p, <span class="fu">sprintf</span>(<span class="st">&quot;nb-boostmtree-effects-%s-page-%02d&quot;</span>, .pg<span class="sc">$</span>kind, .pg<span class="sc">$</span>page),</span>
-<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a>              <span class="at">width =</span> .pg<span class="sc">$</span>size<span class="sc">$</span>width, <span class="at">height =</span> .pg<span class="sc">$</span>size<span class="sc">$</span>height)</span>
-<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a>  .on_page <span class="ot">&lt;-</span> <span class="cf">if</span> (.pg<span class="sc">$</span>of <span class="sc">&gt;</span> <span class="dv">1</span>L) <span class="fu">paste0</span>(<span class="st">&quot; Page &quot;</span>, .pg<span class="sc">$</span>page, <span class="st">&quot; of &quot;</span>, .pg<span class="sc">$</span>of, <span class="st">&quot;: &quot;</span>, <span class="fu">paste</span>(.pg<span class="sc">$</span>vars, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>) <span class="cf">else</span> <span class="st">&quot;&quot;</span></span>
-<span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig effects&quot;</span>, .pg<span class="sc">$</span>kind, .pg<span class="sc">$</span>page),</span>
-<span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste0</span>(<span class="st">&quot;Partial effects over follow-up, &quot;</span>, .pg<span class="sc">$</span>kind, <span class="st">&quot; predictors, one panel per predictor. &quot;</span>, .key[[.pg<span class="sc">$</span>kind]],</span>
-<span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a>                .on_page),</span>
-<span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;.p&quot;</span>, <span class="at">opts =</span> <span class="fu">c</span>(<span class="fu">sprintf</span>(<span class="st">&quot;#| fig-width: %g&quot;</span>, hvtiRtemplates<span class="sc">:::</span><span class="fu">.report_size</span>(.pg<span class="sc">$</span>size<span class="sc">$</span>width)),</span>
-<span id="cb12-88"><a href="#cb12-88" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">sprintf</span>(<span class="st">&quot;#| fig-height: %g&quot;</span>, hvtiRtemplates<span class="sc">:::</span><span class="fu">.report_size</span>(.pg<span class="sc">$</span>size<span class="sc">$</span>height))))</span>
-<span id="cb12-89"><a href="#cb12-89" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: each child chunk below carries its own label and caption</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Partial effects over time, for EFFECT_VARIABLES or the six most important.</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># An ordinal or nominal fit reports importance once per response component, so</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># a variable is ranked by its largest importance across them.</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>.vimp_main <span class="ot">&lt;-</span> <span class="fu">gg_boost_vimp</span>(vimp, <span class="at">components =</span> <span class="st">&quot;main&quot;</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>.top <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">tapply</span>(.vimp_main<span class="sc">$</span>importance, <span class="fu">as.character</span>(.vimp_main<span class="sc">$</span>variable), max), <span class="at">decreasing =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>.effect_vars <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(EFFECT_VARIABLES)) <span class="fu">head</span>(<span class="fu">names</span>(.top), <span class="dv">6</span>L) <span class="cf">else</span> EFFECT_VARIABLES</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>.unknown <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(.effect_vars, .predictors)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.unknown)) <span class="fu">stop</span>(<span class="st">&quot;EFFECT_VARIABLES names no predictor: &quot;</span>, <span class="fu">paste</span>(.unknown, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co"># One partial.plot() covers every response component: ggBoostedTrees 0.9.0 and</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co"># later take an ordinal or nominal one whole and facet its figure by component.</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Each component is renamed as the fit summary names it, not by its bare level.</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>.fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>.seen <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>.child <span class="ot">&lt;-</span> <span class="cf">function</span>(label, caption, code, <span class="at">opts =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  label <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;(^-+|-+$)&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="fu">gsub</span>(<span class="st">&quot;[^a-z0-9]+&quot;</span>, <span class="st">&quot;-&quot;</span>, <span class="fu">tolower</span>(label)))</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.seen[[label]])) <span class="fu">stop</span>(<span class="st">&quot;Two outputs would share the label &quot;</span>, label, <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  .seen[[label]] <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  .opt <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;#| &quot;</span>, <span class="fu">sub</span>(<span class="st">&quot;-.*$&quot;</span>, <span class="st">&quot;&quot;</span>, label), <span class="st">&quot;-cap: &quot;</span>, <span class="fu">encodeString</span>(caption, <span class="at">quote =</span> <span class="st">&quot;</span><span class="sc">\&quot;</span><span class="st">&quot;</span>))</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(<span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="fu">paste0</span>(<span class="st">&quot;#| label: &quot;</span>, label), .opt, opts, code, .fence),</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>                        <span class="at">envir =</span> <span class="fu">parent.frame</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a><span class="co"># partial.plot() is the slowest step after the fit: one prediction over every</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a><span class="co"># patient per grid value, 25 values per continuous covariate. It is cached</span></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a><span class="co"># beside the fit and keyed on it, so a re-render that changes only prose skips</span></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a><span class="co"># it, and a refit or a changed EFFECT_VARIABLES stops until REFIT, as the fit does.</span></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>.partial <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;nb-boostmtree-partial&quot;</span>,</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">partial.plot</span>(fit, <span class="at">x.var.names =</span> .effect_vars, <span class="at">output =</span> <span class="st">&quot;data&quot;</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">progress =</span> <span class="fu">get</span>(<span class="st">&quot;.job&quot;</span>)<span class="sc">$</span><span class="fu">progress</span>(<span class="st">&quot;prediction&quot;</span>)),</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>                      <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>.effect <span class="ot">&lt;-</span> <span class="fu">gg_boost_effect</span>(.partial)</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>.relabel <span class="ot">&lt;-</span> .components[<span class="fu">match</span>(<span class="fu">levels</span>(.effect<span class="sc">$</span>response), .labels)]</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a><span class="co"># A component ggBoostedTrees names differently from the fit would otherwise be</span></span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn under a blank label; stop and say so instead.</span></span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">anyNA</span>(.relabel)) {</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;ggBoostedTrees labels a response component this job does not recognize: &quot;</span>,</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>       <span class="fu">paste</span>(<span class="fu">levels</span>(.effect<span class="sc">$</span>response)[<span class="fu">is.na</span>(.relabel)], <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(.effect<span class="sc">$</span>response) <span class="ot">&lt;-</span> .relabel</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a><span class="co"># What ggBoostedTrees 0.9.0 still cannot do: a continuous covariate is drawn as</span></span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a><span class="co"># a curve and a factor as a point per level, on axes ggplot2 cannot share, so</span></span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a><span class="co"># plot() refuses an effect holding both. Each kind is drawn in its own figure,</span></span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a><span class="co"># which is why p_effects is a list.</span></span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>.discrete <span class="ot">&lt;-</span> <span class="fu">tapply</span>(<span class="sc">!</span><span class="fu">is.na</span>(.effect<span class="sc">$</span>x_label), .effect<span class="sc">$</span>variable, any)</span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>.discrete <span class="ot">&lt;-</span> .discrete[<span class="sc">!</span><span class="fu">is.na</span>(.discrete)]</span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>.parts <span class="ot">&lt;-</span> <span class="fu">split</span>(<span class="fu">names</span>(.discrete), .discrete)</span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>.kinds <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">names</span>(.parts) <span class="sc">==</span> <span class="st">&quot;TRUE&quot;</span>, <span class="st">&quot;categorical&quot;</span>, <span class="st">&quot;continuous&quot;</span>)</span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Free size, paged: one facet per predictor, two by two on a page no larger than</span></span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a><span class="co"># 6.5 by 9 in. With several response components ggBoostedTrees draws one column</span></span>
+<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a><span class="co"># per predictor and one row per component, so a page holds two predictors.</span></span>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>.n_components <span class="ot">&lt;-</span> <span class="fu">nlevels</span>(.effect<span class="sc">$</span>response)</span>
+<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>.pages <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">unname</span>(.parts), <span class="cf">function</span>(v) {</span>
+<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (.n_components <span class="sc">&gt;</span> <span class="dv">1</span>L) {</span>
+<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.figure_pages</span>(<span class="fu">length</span>(v), <span class="at">panel_height =</span> <span class="dv">3</span> <span class="sc">*</span> .n_components, <span class="at">page_height =</span> <span class="dv">3</span> <span class="sc">*</span> .n_components)</span>
+<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.figure_pages</span>(<span class="fu">length</span>(v), <span class="at">page_height =</span> <span class="dv">6</span>)</span>
+<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a><span class="co"># One plot per page, kind by kind: p_effects holds every page, and .effect_page says which kind and page each is.</span></span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>p_effects <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>.effect_page <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.k <span class="cf">in</span> <span class="fu">seq_along</span>(.parts)) {</span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (.j <span class="cf">in</span> <span class="fu">seq_along</span>(.pages[[.k]])) {</span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>    part <span class="ot">&lt;-</span> .effect[.effect<span class="sc">$</span>variable <span class="sc">%in%</span> .parts[[.k]][.pages[[.k]][[.j]]<span class="sc">$</span>index], , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>    part<span class="sc">$</span>variable <span class="ot">&lt;-</span> <span class="fu">droplevels</span>(part<span class="sc">$</span>variable)</span>
+<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.</span></span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a>    p_effects[[<span class="fu">length</span>(p_effects) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">plot</span>(part) <span class="sc">+</span></span>
+<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a>      hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a>    .effect_page[[<span class="fu">length</span>(.effect_page) <span class="sc">+</span> <span class="dv">1</span>L]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">kind =</span> .kinds[[.k]], <span class="at">page =</span> .j, <span class="at">of =</span> <span class="fu">length</span>(.pages[[.k]]),</span>
+<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a>                                                      <span class="at">size =</span> .pages[[.k]][[.j]], <span class="at">vars =</span> <span class="fu">levels</span>(part<span class="sc">$</span>variable))</span>
+<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-74"><a href="#cb13-74" aria-hidden="true" tabindex="-1"></a>.key <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">continuous =</span> <span class="fu">paste</span>(<span class="st">&quot;Each solid line is the effect at one follow-up time, colored from dark to light blue by&quot;</span>,</span>
+<span id="cb13-75"><a href="#cb13-75" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&quot;time as in the color bar.&quot;</span>),</span>
+<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a>          <span class="at">categorical =</span> <span class="fu">paste</span>(<span class="st">&quot;Each point is the effect at one level and follow-up time, colored from dark to light blue by&quot;</span>,</span>
+<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;time as in the color bar.&quot;</span>))</span>
+<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (.i <span class="cf">in</span> <span class="fu">seq_along</span>(p_effects)) {</span>
+<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a>  .p <span class="ot">&lt;-</span> p_effects[[.i]]</span>
+<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a>  .pg <span class="ot">&lt;-</span> .effect_page[[.i]]</span>
+<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.p, <span class="fu">sprintf</span>(<span class="st">&quot;nb-boostmtree-effects-%s-page-%02d&quot;</span>, .pg<span class="sc">$</span>kind, .pg<span class="sc">$</span>page),</span>
+<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a>              <span class="at">width =</span> .pg<span class="sc">$</span>size<span class="sc">$</span>width, <span class="at">height =</span> .pg<span class="sc">$</span>size<span class="sc">$</span>height)</span>
+<span id="cb13-83"><a href="#cb13-83" aria-hidden="true" tabindex="-1"></a>  .on_page <span class="ot">&lt;-</span> <span class="cf">if</span> (.pg<span class="sc">$</span>of <span class="sc">&gt;</span> <span class="dv">1</span>L) <span class="fu">paste0</span>(<span class="st">&quot; Page &quot;</span>, .pg<span class="sc">$</span>page, <span class="st">&quot; of &quot;</span>, .pg<span class="sc">$</span>of, <span class="st">&quot;: &quot;</span>, <span class="fu">paste</span>(.pg<span class="sc">$</span>vars, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.&quot;</span>) <span class="cf">else</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb13-84"><a href="#cb13-84" aria-hidden="true" tabindex="-1"></a>  <span class="fu">.child</span>(<span class="fu">paste</span>(<span class="st">&quot;fig effects&quot;</span>, .pg<span class="sc">$</span>kind, .pg<span class="sc">$</span>page),</span>
+<span id="cb13-85"><a href="#cb13-85" aria-hidden="true" tabindex="-1"></a>         <span class="fu">paste0</span>(<span class="st">&quot;Partial effects over follow-up, &quot;</span>, .pg<span class="sc">$</span>kind, <span class="st">&quot; predictors, one panel per predictor. &quot;</span>, .key[[.pg<span class="sc">$</span>kind]],</span>
+<span id="cb13-86"><a href="#cb13-86" aria-hidden="true" tabindex="-1"></a>                .on_page),</span>
+<span id="cb13-87"><a href="#cb13-87" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;.p&quot;</span>, <span class="at">opts =</span> <span class="fu">c</span>(<span class="fu">sprintf</span>(<span class="st">&quot;#| fig-width: %g&quot;</span>, hvtiRtemplates<span class="sc">:::</span><span class="fu">.report_size</span>(.pg<span class="sc">$</span>size<span class="sc">$</span>width)),</span>
+<span id="cb13-88"><a href="#cb13-88" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">sprintf</span>(<span class="st">&quot;#| fig-height: %g&quot;</span>, hvtiRtemplates<span class="sc">:::</span><span class="fu">.report_size</span>(.pg<span class="sc">$</span>size<span class="sc">$</span>height))))</span>
+<span id="cb13-89"><a href="#cb13-89" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>.p</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output-display">
-<div id="fig-effects-continuous-1" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-effects-continuous-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/88be9d5f72df66d573d2187e112c450f.png" class="img-fluid figure-img" width="936">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-effects-continuous-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 5: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar. Page 1 of 2: nyha_pr, hx_chf, bmi, age.
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>.p</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="fig-effects-continuous-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<div id="fig-effects-continuous-1" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-effects-continuous-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/ecff16f30f9b3967282e7f74cbc93cf6.png" class="img-fluid figure-img" width="936">
+<div aria-describedby="fig-effects-continuous-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img role="img" src="assets/66f66bb7046ab78fbf75bdf4c41d5926.png" class="img-fluid figure-img" width="936">
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-effects-continuous-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure 6: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar. Page 2 of 2: female, hx_dm.
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-effects-continuous-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 5: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar. Page 1 of 2: nyha_pr, hx_chf, age, bmi.
 </figcaption>
 </figure>
 </div>
@@ -2976,49 +3059,67 @@ Figure 6: Partial effects over follow-up, continuous predictors, one panel per 
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fitted trajectories for a sample of patients, with their observed values as</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># points, and the cohort&#39;s mean fitted value over time drawn across them. The</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are labeled by digest, so none is identified.</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>traces <span class="ot">&lt;-</span> <span class="fu">gg_boost_trajectory</span>(fit)</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Visit times are irregular, so most exact times belong to one patient, and a</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># mean taken at each time would join single values. The mean is taken instead</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># within ten equal-count time bins, over every patient&#39;s fitted values, and</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn at each bin&#39;s mean time. A bin is per response component when there</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co"># are several.</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>.edges <span class="ot">&lt;-</span> <span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">quantile</span>(traces<span class="sc">$</span>time, <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">11</span>L), <span class="at">names =</span> <span class="cn">FALSE</span>))</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co"># plot() reports that it chose the patients at random; SEED makes the choice</span></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the same on every render.</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>p_traces <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(SEED, <span class="fu">plot</span>(traces, <span class="at">n_max =</span> N_TRACES)) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> .time, <span class="at">y =</span> .response) <span class="sc">+</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>.p</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="fig-effects-continuous-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-effects-continuous-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img role="img" src="assets/d1cd1fc663079644dd8783317a938a39.png" class="img-fluid figure-img" width="936">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-effects-continuous-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure 6: Partial effects over follow-up, continuous predictors, one panel per predictor. Each solid line is the effect at one follow-up time, colored from dark to light blue by time as in the color bar. Page 2 of 2: hx_dm, female.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fitted trajectories for a sample of patients, with their observed values as</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># points, and the cohort&#39;s mean fitted value over time drawn across them. The</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># patients are labeled by digest, so none is identified.</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>traces <span class="ot">&lt;-</span> <span class="fu">gg_boost_trajectory</span>(fit)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Visit times are irregular, so most exact times belong to one patient, and a</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co"># mean taken at each time would join single values. The mean is taken instead</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co"># within ten equal-count time bins, over every patient&#39;s fitted values, and</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn at each bin&#39;s mean time. A bin is per response component when there</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co"># are several.</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>.edges <span class="ot">&lt;-</span> <span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">quantile</span>(traces<span class="sc">$</span>time, <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out =</span> <span class="dv">11</span>L), <span class="at">names =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="co"># plot() reports that it chose the patients at random; SEED makes the choice</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the same on every render.</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>p_traces <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(SEED, <span class="fu">plot</span>(traces, <span class="at">n_max =</span> N_TRACES)) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> .time, <span class="at">y =</span> .response) <span class="sc">+</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
 <pre><code>Drawing 100 of 300 subjects, chosen at random. Pass n_max = Inf to draw all, or subset to choose; call set.seed() first for a reproducible sample.</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.edges) <span class="sc">&lt;</span> <span class="dv">2</span>L) {</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Every visit at one time leaves no span to bin, and no line to draw.</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  trace_means <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Every visit is at one time, so no mean line is drawn.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  traces<span class="sc">$</span>.bin <span class="ot">&lt;-</span> <span class="fu">cut</span>(traces<span class="sc">$</span>time, .edges, <span class="at">include.lowest =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  .by <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">c</span>(<span class="st">&quot;response&quot;</span>, <span class="st">&quot;.bin&quot;</span>), <span class="fu">names</span>(traces))</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  trace_means <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">split</span>(traces, traces[.by], <span class="at">drop =</span> <span class="cn">TRUE</span>), <span class="cf">function</span>(b) {</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(b[<span class="dv">1</span>L, <span class="fu">setdiff</span>(.by, <span class="st">&quot;.bin&quot;</span>), <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">time =</span> <span class="fu">mean</span>(b<span class="sc">$</span>time), <span class="at">fitted =</span> <span class="fu">mean</span>(b<span class="sc">$</span>fitted),</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">n_patients =</span> <span class="fu">length</span>(<span class="fu">unique</span>(b<span class="sc">$</span>id)))</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  }))</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  p_traces <span class="ot">&lt;-</span> p_traces <span class="sc">+</span></span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_line</span>(<span class="at">data =</span> trace_means, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data[[<span class="st">&quot;time&quot;</span>]], <span class="at">y =</span> .data[[<span class="st">&quot;fitted&quot;</span>]]),</span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>                       <span class="at">linewidth =</span> <span class="fl">1.2</span>, <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_traces, <span class="st">&quot;nb-boostmtree-traces&quot;</span>)</span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>p_traces</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.edges) <span class="sc">&lt;</span> <span class="dv">2</span>L) {</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Every visit at one time leaves no span to bin, and no line to draw.</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  trace_means <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Every visit is at one time, so no mean line is drawn.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  traces<span class="sc">$</span>.bin <span class="ot">&lt;-</span> <span class="fu">cut</span>(traces<span class="sc">$</span>time, .edges, <span class="at">include.lowest =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  .by <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">c</span>(<span class="st">&quot;response&quot;</span>, <span class="st">&quot;.bin&quot;</span>), <span class="fu">names</span>(traces))</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  trace_means <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">split</span>(traces, traces[.by], <span class="at">drop =</span> <span class="cn">TRUE</span>), <span class="cf">function</span>(b) {</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(b[<span class="dv">1</span>L, <span class="fu">setdiff</span>(.by, <span class="st">&quot;.bin&quot;</span>), <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">time =</span> <span class="fu">mean</span>(b<span class="sc">$</span>time), <span class="at">fitted =</span> <span class="fu">mean</span>(b<span class="sc">$</span>fitted),</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">n_patients =</span> <span class="fu">length</span>(<span class="fu">unique</span>(b<span class="sc">$</span>id)))</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  }))</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  p_traces <span class="ot">&lt;-</span> p_traces <span class="sc">+</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_line</span>(<span class="at">data =</span> trace_means, ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data[[<span class="st">&quot;time&quot;</span>]], <span class="at">y =</span> .data[[<span class="st">&quot;fitted&quot;</span>]]),</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>                       <span class="at">linewidth =</span> <span class="fl">1.2</span>, <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(p_traces, <span class="st">&quot;nb-boostmtree-traces&quot;</span>)</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>p_traces</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-traces" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-traces-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/75de85bac4acd6e258192226c39da951.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/10b8443314fa77f4c2bb98c69e59d64d.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-traces-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mean fitted value over time. Thin translucent black lines trace each sampled patient’s fitted values, translucent black circles their observed values, and the thick black line the cohort’s mean fitted value within ten time bins.
@@ -3027,20 +3128,94 @@ Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mea
 </div>
 </div>
 </div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># unnumbered: its child chunk carries its own label and caption</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co"># The fit above at NU and K, beside fits over NU in {0.01, 0.05} and K in</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co"># {3, 5, 8}. Each fit&#39;s M is scaled so M * NU matches this job&#39;s, the same</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># boosting budget at every learning rate. Each is the fit above with M, NU and K</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># rebound, cached under its own name and keyed as the fit is, so a re-render</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="co"># loads them and a changed choice stops until REFIT.</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>sensitivity <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">isTRUE</span>(SENSITIVITY)) {</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  .grid <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">rbind</span>(<span class="fu">data.frame</span>(<span class="at">nu =</span> NU, <span class="at">k =</span> K), <span class="fu">expand.grid</span>(<span class="at">nu =</span> <span class="fu">c</span>(<span class="fl">0.01</span>, <span class="fl">0.05</span>), <span class="at">k =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">8</span>))))</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Rounded first: 4 * 0.05 / 0.01 is 20.000000000000004, and ceiling() would make it 21.</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  .grid<span class="sc">$</span>m <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">ceiling</span>(<span class="fu">round</span>(M <span class="sc">*</span> NU <span class="sc">/</span> .grid<span class="sc">$</span>nu, <span class="dv">6</span>)))</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  .grid<span class="sc">$</span>name <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(<span class="st">&quot;nb-boostmtree-sensitivity-nu%s-k%s&quot;</span>, .grid<span class="sc">$</span>nu, .grid<span class="sc">$</span>k)</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  .is_base <span class="ot">&lt;-</span> .grid<span class="sc">$</span>nu <span class="sc">==</span> NU <span class="sc">&amp;</span> .grid<span class="sc">$</span>k <span class="sc">==</span> K</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The fit&#39;s code with M, NU and K rebound to row i of the grid, evaluated in this</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># frame: fitted (or loaded) when `fit` is TRUE, else asked whether it would fit.</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  .at_cell <span class="ot">&lt;-</span> <span class="cf">function</span>(i, fit) {</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    M <span class="ot">&lt;-</span> .grid<span class="sc">$</span>m[[i]]</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    NU <span class="ot">&lt;-</span> .grid<span class="sc">$</span>nu[[i]]</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    K <span class="ot">&lt;-</span> .grid<span class="sc">$</span>k[[i]]</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (fit) {</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">return</span>(<span class="fu">cache_fit</span>(.grid<span class="sc">$</span>name[[i]], .fit_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT))</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>    hvtiRutilities<span class="sc">::</span><span class="fu">cache_would_fit</span>(.grid<span class="sc">$</span>name[[i]], .fit_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)</span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>  .grid<span class="sc">$</span>fitting <span class="ot">&lt;-</span> <span class="sc">!</span>.is_base <span class="sc">&amp;</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(.grid)), .at_cell, <span class="fu">logical</span>(<span class="dv">1</span>L), <span class="at">fit =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Refused from the console and checked against this session&#39;s memory before</span></span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the first fit, as the fit above is, at the largest M still to fit.</span></span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (.i <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(.grid))) {</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (.grid<span class="sc">$</span>fitting[[.i]]) {</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>      hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(.grid<span class="sc">$</span>name[[.i]], <span class="at">dir =</span> CACHE_DIR, <span class="at">why =</span> <span class="st">&quot;the sensitivity grid refits boostmtree&quot;</span>,</span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">refit =</span> REFIT)</span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>  .m_need <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">c</span>(<span class="dv">0</span>L, .grid<span class="sc">$</span>m[.grid<span class="sc">$</span>fitting]))</span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a>  .need_grid <span class="ot">&lt;-</span> <span class="cf">function</span>(k) {</span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">:::</span><span class="fu">.boostmtree_need_gib</span>(<span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="fu">nrow</span>(d), FAMILY, k, .m_need)</span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">::</span><span class="fu">guard_memory</span>(<span class="cf">if</span> (<span class="fu">any</span>(.grid<span class="sc">$</span>fitting)) <span class="fu">.need_grid</span>(CORES) <span class="cf">else</span> <span class="dv">0</span>,</span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">sprintf</span>(<span class="st">&quot;the sensitivity fits (largest M = %s)&quot;</span>, .m_need),</span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>                               <span class="at">cores =</span> CORES, <span class="at">cores_fit =</span> .need_grid)</span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>  sensitivity <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(.grid)), <span class="cf">function</span>(i) {</span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>    f <span class="ot">&lt;-</span> <span class="cf">if</span> (.is_base[[i]]) fit <span class="cf">else</span> <span class="fu">.at_cell</span>(i, <span class="at">fit =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>    e <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.matrix</span>(f<span class="sc">$</span>err.rate)) <span class="fu">list</span>(f<span class="sc">$</span>err.rate) <span class="cf">else</span> f<span class="sc">$</span>err.rate</span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">nu =</span> .grid<span class="sc">$</span>nu[[i]], <span class="at">k =</span> .grid<span class="sc">$</span>k[[i]], <span class="at">m =</span> .grid<span class="sc">$</span>m[[i]], <span class="at">component =</span> .components,</span>
+<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a>               <span class="at">best_m =</span> <span class="fu">as.integer</span>(f<span class="sc">$</span>m.opt), <span class="at">budget =</span> <span class="fu">as.integer</span>(f<span class="sc">$</span>m.opt) <span class="sc">*</span> .grid<span class="sc">$</span>nu[[i]],</span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a>               <span class="at">cv_error =</span> <span class="fu">mapply</span>(<span class="cf">function</span>(x, m) x[m, <span class="st">&quot;l2&quot;</span>], e, f<span class="sc">$</span>m.opt),</span>
+<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a>               <span class="at">at_edge =</span> <span class="fu">as.integer</span>(f<span class="sc">$</span>m.opt) <span class="sc">&gt;</span> <span class="fl">0.9</span> <span class="sc">*</span> .grid<span class="sc">$</span>m[[i]])</span>
+<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a>  }))</span>
+<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a>  <span class="co"># How far each fit&#39;s error is from this job&#39;s, by component: the number the</span></span>
+<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a>  <span class="co"># verdict rests on. The budget, Best M * nu, is Best M on a scale comparable</span></span>
+<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a>  <span class="co"># across learning rates.</span></span>
+<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a>  .base_err <span class="ot">&lt;-</span> sensitivity<span class="sc">$</span>cv_error[sensitivity<span class="sc">$</span>nu <span class="sc">==</span> NU <span class="sc">&amp;</span> sensitivity<span class="sc">$</span>k <span class="sc">==</span> K]</span>
+<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a>  sensitivity<span class="sc">$</span>change <span class="ot">&lt;-</span> sensitivity<span class="sc">$</span>cv_error <span class="sc">/</span> .base_err[<span class="fu">match</span>(sensitivity<span class="sc">$</span>component, .components)] <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a>  .fence <span class="ot">&lt;-</span> <span class="fu">strrep</span>(<span class="st">&quot;`&quot;</span>, <span class="dv">3</span>)</span>
+<span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;## Sensitivity to NU and K</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(knitr<span class="sc">::</span><span class="fu">knit_child</span>(<span class="at">text =</span> <span class="fu">c</span>(</span>
+<span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(.fence, <span class="st">&quot;{r}&quot;</span>), <span class="st">&quot;#| label: tbl-sensitivity&quot;</span>,</span>
+<span id="cb19-58"><a href="#cb19-58" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;#| tbl-cap: </span><span class="sc">\&quot;</span><span class="st">Cross-validated fit over the learning rate (nu) and terminal nodes (K), M scaled to hold M * nu</span><span class="sc">\&quot;</span><span class="st">&quot;</span>,</span>
+<span id="cb19-59"><a href="#cb19-59" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste</span>(<span class="st">&quot;knitr::kable(transform(sensitivity, cv_error = signif(cv_error, 4), change = sprintf(&#39;%+.1f%%&#39;, 100 * change)),&quot;</span>,</span>
+<span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a>          <span class="st">&quot;col.names = c(&#39;nu&#39;, &#39;K&#39;, &#39;M&#39;, &#39;Response component&#39;, &#39;Best M&#39;, &#39;Best M * nu&#39;, &#39;CV error&#39;,&quot;</span>,</span>
+<span id="cb19-61"><a href="#cb19-61" aria-hidden="true" tabindex="-1"></a>          <span class="st">&quot;&#39;Best M at edge&#39;, &#39;Change from this fit&#39;))&quot;</span>),</span>
+<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a>    .fence</span>
+<span id="cb19-63"><a href="#cb19-63" aria-hidden="true" tabindex="-1"></a>  ), <span class="at">envir =</span> <span class="fu">environment</span>(), <span class="at">quiet =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb19-64"><a href="#cb19-64" aria-hidden="true" tabindex="-1"></a>  .spread <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(sensitivity<span class="sc">$</span>change))</span>
+<span id="cb19-65"><a href="#cb19-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="fu">paste0</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">The cross-validated error moves by at most %.1f%% across the grid&quot;</span>,</span>
+<span id="cb19-66"><a href="#cb19-66" aria-hidden="true" tabindex="-1"></a>                     <span class="st">&quot;%s. Best M * nu runs from %.1f to %.1f.</span><span class="sc">\n\n</span><span class="st">&quot;</span>),</span>
+<span id="cb19-67"><a href="#cb19-67" aria-hidden="true" tabindex="-1"></a>              <span class="dv">100</span> <span class="sc">*</span> .spread,</span>
+<span id="cb19-68"><a href="#cb19-68" aria-hidden="true" tabindex="-1"></a>              <span class="cf">if</span> (<span class="fu">any</span>(sensitivity<span class="sc">$</span>at_edge)) <span class="st">&quot;, but at least one fit stopped at its edge, so its error is an upper bound&quot;</span> <span class="cf">else</span> <span class="st">&quot;&quot;</span>,</span>
+<span id="cb19-69"><a href="#cb19-69" aria-hidden="true" tabindex="-1"></a>              <span class="fu">min</span>(sensitivity<span class="sc">$</span>budget), <span class="fu">max</span>(sensitivity<span class="sc">$</span>budget)))</span>
+<span id="cb19-70"><a href="#cb19-70" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job. It is separate from the cache on purpose: the cache</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># is this job&#39;s internals and this file its interface, which carries the</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co"># selection a later job would rebuild the rows from.</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  fit,</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(<span class="at">response =</span> .response, <span class="at">time =</span> .time, <span class="at">family =</span> FAMILY, <span class="at">M =</span> M, <span class="at">nu =</span> NU),</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> <span class="fu">list</span>(<span class="at">n_patients =</span> <span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="at">n_visits =</span> <span class="fu">nrow</span>(d)),</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(fit, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;nb-boostmtree.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job. It is separate from the cache on purpose: the cache</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># is this job&#39;s internals and this file its interface, which carries the</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co"># selection a later job would rebuild the rows from.</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  fit,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data,</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">analysis =</span> <span class="fu">list</span>(<span class="at">response =</span> .response, <span class="at">time =</span> .time, <span class="at">family =</span> FAMILY, <span class="at">M =</span> M, <span class="at">nu =</span> NU, <span class="at">k =</span> K, <span class="at">n_knots =</span> N_KNOTS,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">mtry =</span> <span class="cf">if</span> (<span class="fu">is.null</span>(MTRY)) <span class="st">&quot;all&quot;</span> <span class="cf">else</span> MTRY),</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohort =</span> <span class="fu">list</span>(<span class="at">n_patients =</span> <span class="fu">length</span>(<span class="fu">unique</span>(.patient)), <span class="at">n_visits =</span> <span class="fu">nrow</span>(d)),</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(fit, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;nb-boostmtree.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -3058,17 +3233,17 @@ Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mea
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-14 18:14:24 EST</td>
+<td style="text-align: left;">2026-11-18 12:02:30 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-14 18:16:10 EST</td>
+<td style="text-align: left;">2026-11-18 12:03:54 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">1 min 46 s</td>
+<td style="text-align: left;">1 min 23 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3108,17 +3283,17 @@ Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mea
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.0</td>
+<td style="text-align: left;">1.6.1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>echo</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">echo_20261114.parquet</td>
+<td style="text-align: left;">echo_20261118.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-14</td>
+<td style="text-align: left;">2026-11-18</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3138,7 +3313,7 @@ Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mea
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">96a19e865571</td>
+<td style="text-align: left;">3bd453f95518</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3158,7 +3333,7 @@ Figure 7: Fitted trajectories for a sample of patients, with the cohort’s mea
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"nb.boostmtree.lvef.boost","rendered":"2026-11-14T23:16:10Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"boostmtree","version":"2.0.8","source":"github","sha":"d81e55aa9acb748f4e09bec387755d48499cd426"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggBoostedTrees","version":"0.10.0","source":"github","sha":"0f06d194547428007874a5fabacad73cb9ec66b7"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.22","source":null},{"package":"hvtiRtemplates","version":"1.6.0","source":null},{"package":"hvtiRutilities","version":"1.5.23","source":null},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"RhpcBLASctl","version":"0.23.42","source":"CRAN"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"echo","path":"00_datasets/echo_20261114.parquet","role":"analysis","bytes":20990,"mtime":"2026-11-14T23:14:16Z","sha256":"96a19e865571b9f7460854417d3b394c8d7d7a63ff2064d75ea6d0656c8c7080"}],"artifacts":[],"subject":"lvef","type":"boost","analysis":{"response":"lvef","time":"iv_echo","family":"continuous","M":200,"nu":0.05},"cohort":{"n_patients":300,"n_visits":1180},"source_sha256":"674eba9c8dbcb5b6c2594f010c88a08c0f58de636adba1debd4f1e4c3e5d13ce","run":{"start":"2026-11-14T18:14:24-0500","end":"2026-11-14T18:16:10-0500","time_zone":"EST","duration_seconds":105.8,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"nb.boostmtree.lvef.boost.qmd","template":"nb.boostmtree","prefix":"nb","qualifier":"boostmtree","subject":"lvef","type":"boost","hvtiRtemplates":"1.6.0"},"datasets":[{"name":"echo","version_file":"echo_20261114.parquet","registered":"2026-11-14","source_file":"echo.rds","rows":1180,"patients":300,"where":[],"sha256":"96a19e865571","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}}},"source":"30_analyses/nb.boostmtree.lvef.boost.qmd",".hvti_render_id":"7e854705b11e18e7b41e89fca026539cacc83f48a664e0193566772393cd0d40",".hvti_source_sha256":"674eba9c8dbcb5b6c2594f010c88a08c0f58de636adba1debd4f1e4c3e5d13ce"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"nb.boostmtree.lvef.boost","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 12:03:54","job":"nb.boostmtree.lvef.boost","rendered":"2026-11-18T17:03:54Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.1","source":"standard"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"boostmtree","version":"2.0.11","source":"github","sha":"94489dfccdc623289306ee244f2ed1ede8462df4"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"gdtools","version":"0.6.0","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggBoostedTrees","version":"0.10.0","source":"github","sha":"0a13e579af2c66fc613fb833b1ad3accdde0442f"},{"package":"ggplot2","version":"4.0.4","source":"standard"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRtemplates","version":"1.6.1","source":"github","sha":"308962ac911e2087cee3271ad1320e7e12023d02"},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.8","source":"standard"},{"package":"openssl","version":"2.6.0","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"RhpcBLASctl","version":"0.23.42","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.3","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"standard"},{"package":"xfun","version":"0.62","source":"standard"},{"package":"xml2","version":"1.6.0","source":"standard"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"echo","path":"00_datasets/echo_20261118.parquet","role":"analysis","bytes":20990,"mtime":"2026-11-18T17:02:23Z","sha256":"3bd453f9551889dd69f4a2f741586db731f07447df26ed424057c90999ec9341"}],"artifacts":[],"subject":"lvef","type":"boost","analysis":{"response":"lvef","time":"iv_echo","family":"continuous","M":200,"nu":0.05,"k":5,"n_knots":10,"mtry":"all"},"cohort":{"n_patients":300,"n_visits":1180},"source_sha256":"41bd53f26160b5dd77e02d3e8276978bca06644e86bc0b0fa415cef5df920978","run":{"start":"2026-11-18T12:02:30-0500","end":"2026-11-18T12:03:54-0500","time_zone":"EST","duration_seconds":83.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"nb.boostmtree.lvef.boost.qmd","template":"nb.boostmtree","prefix":"nb","qualifier":"boostmtree","subject":"lvef","type":"boost","hvtiRtemplates":"1.6.1"},"datasets":[{"name":"echo","version_file":"echo_20261118.parquet","registered":"2026-11-18","source_file":"echo.rds","rows":1180,"patients":300,"where":[],"sha256":"3bd453f95518","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.1","sha":"308962ac911e2087cee3271ad1320e7e12023d02","method":"nb.boostmtree","seed":2026,"rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 12:02:30"}},"source":"30_analyses/nb.boostmtree.lvef.boost.qmd",".hvti_render_id":"1d2a3080d12f184ec4a35b4efb19cb2024ac98d3d6bd9669309d1364a09671e4",".hvti_source_sha256":"41bd53f26160b5dd77e02d3e8276978bca06644e86bc0b0fa415cef5df920978"}</script>
 </section>
 
 </main>

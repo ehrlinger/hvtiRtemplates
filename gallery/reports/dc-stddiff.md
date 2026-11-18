@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:11
+2026-11-18 11:58
 
 A `dc-stddiff` job is the balance table: for each baseline variable, the
 standardized difference between two groups, before any adjustment and,
@@ -36,8 +36,8 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRpropensity") < "0.2.0") {
-  stop("This job needs hvtiRpropensity >= 0.2.0, the package's floor (ps_stddiff() and ps_stddiff_perm() date from 0.1.10); ",
+if (utils::packageVersion("hvtiRpropensity") < "0.2.3") {
+  stop("This job needs hvtiRpropensity >= 0.2.3, the package's floor, for ps_stddiff() and ps_stddiff_perm() with the *_cols names; ",
        utils::packageVersion("hvtiRpropensity"), " is installed.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.0") {
@@ -66,8 +66,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -171,8 +171,8 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -181,7 +181,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -228,7 +228,7 @@ if (!(is.numeric(THRESHOLD) && length(THRESHOLD) == 1L && !is.na(THRESHOLD) && T
 if (!(is.numeric(N_PERM) && length(N_PERM) == 1L && !is.na(N_PERM) && N_PERM >= 0 && N_PERM == round(N_PERM))) {
   stop("N_PERM must be 0, to skip the permutation reference, or a whole number of permutations.", call. = FALSE)
 }
-vars <- list(gaussian = GAUSSIAN, nong_ord = NONG_ORD, binary = BINARY, categorical = CATEGORICAL)
+vars <- list(gaussian_cols = GAUSSIAN, nong_ord_cols = NONG_ORD, binary_cols = BINARY, categorical_cols = CATEGORICAL)
 all_vars <- unlist(vars, use.names = FALSE)
 if (!length(all_vars)) stop("Name at least one variable under GAUSSIAN, NONG_ORD, BINARY or CATEGORICAL.", call. = FALSE)
 twice <- unique(all_vars[duplicated(all_vars)])
@@ -281,8 +281,8 @@ if (!is.null(WEIGHT)) comparisons$Weighted <- list(data = d, weight = WEIGHT)
 
 run_stddiff <- function(cmp) {
   hvtiRpropensity::ps_stddiff(cmp$data, treatment_col = group_col,
-                              gaussian = vars$gaussian, nong_ord = vars$nong_ord,
-                              binary = vars$binary, categorical = vars$categorical,
+                              gaussian_cols = vars$gaussian_cols, nong_ord_cols = vars$nong_ord_cols,
+                              binary_cols = vars$binary_cols, categorical_cols = vars$categorical_cols,
                               weight_col = cmp$weight)
 }
 results <- lapply(comparisons, run_stddiff)
@@ -333,8 +333,8 @@ if (N_PERM > 0) {
   for (nm in setdiff(names(comparisons), "Weighted")) {
     perm[[nm]] <- hvtiRpropensity::ps_stddiff_perm(
       comparisons[[nm]]$data, treatment_col = group_col,
-      gaussian = vars$gaussian, nong_ord = vars$nong_ord,
-      binary = vars$binary, categorical = vars$categorical,
+      gaussian_cols = vars$gaussian_cols, nong_ord_cols = vars$nong_ord_cols,
+      binary_cols = vars$binary_cols, categorical_cols = vars$categorical_cols,
       n_perm = as.integer(N_PERM), seed = SEED
     )$tables$stddiff_perm
     perm[[nm]]$label <- ifelse(is.na(perm[[nm]]$label), perm[[nm]]$variable, perm[[nm]]$label)
@@ -558,8 +558,8 @@ rather than balance, so it is not part of this job.
 
 | Group           | Item           | Value                           |
 |:----------------|:---------------|:--------------------------------|
-| Run             | Started        | 2026-11-14 18:11:10 EST         |
-|                 | Ended          | 2026-11-14 18:11:11 EST         |
+| Run             | Started        | 2026-11-18 11:58:27 EST         |
+|                 | Ended          | 2026-11-18 11:58:28 EST         |
 |                 | Duration       | 1 s                             |
 |                 | Status         | final                           |
 |                 | Rendered by    | gallery                         |
@@ -568,13 +568,13 @@ rather than balance, so it is not part of this job.
 |                 | Template       | dc.stddiff                      |
 |                 | Subject        | approach                        |
 |                 | Type           | balance                         |
-|                 | hvtiRtemplates | 1.6.0                           |
-| Dataset `built` | Version file   | built_20261114.parquet          |
-|                 | Version date   | 2026-11-14                      |
+|                 | hvtiRtemplates | 1.6.1                           |
+| Dataset `built` | Version file   | built_20261118.parquet          |
+|                 | Version date   | 2026-11-18                      |
 |                 | Source file    | built.rds                       |
 |                 | Rows kept      | 800 rows on 800 patients        |
 |                 | WHERE          | none                            |
-|                 | sha256         | d99147a5c095                    |
+|                 | sha256         | d4581c9fbd56                    |
 |                 | Manifest       | current                         |
 | Reproducibility | Seed           | 20261006                        |
 |                 | renv           | not active                      |

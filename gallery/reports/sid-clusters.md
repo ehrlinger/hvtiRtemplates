@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:21
+2026-11-18 12:26
 
 This job turns a `sid-fit` dissimilarity into clusters. It runs PAM
 (partitioning around medoids) on the SID distance for each K in a range,
@@ -44,10 +44,11 @@ if (utils::packageVersion("hvtiPlotR") < "2.8.9") {
   stop("This job needs hvtiPlotR >= 2.8.9; ", utils::packageVersion("hvtiPlotR"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
-# register_data() takes file = from 1.5.20 (built = before). Checked here, before
+# register_data() takes file = from 1.5.20 (built = before) and key_cols = from
+# 1.5.24 (key = before). Checked here, before
 # the save chunk writes sid-clusters.rds, so an older library leaves nothing behind.
-if (utils::packageVersion("hvtiRutilities") < "1.5.20") {
-  stop("This job needs hvtiRutilities >= 1.5.20 for register_data(file =); ",
+if (utils::packageVersion("hvtiRutilities") < "1.5.24") {
+  stop("This job needs hvtiRutilities >= 1.5.24 for register_data(file =, key_cols =); ",
        utils::packageVersion("hvtiRutilities"), " is installed.\nUpdate it, then re-render.",
        call. = FALSE)
 }
@@ -71,7 +72,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.0
+hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -670,8 +671,9 @@ if (!is.null(.reg)) {
   )))
 } else {
   invisible(utils::capture.output(suppressMessages(
-    hvtiRutilities::register_data(.root, file = .csv_name, dataset = .dataset, role = "named",
-                                  population = "SID cluster assignments", kind = "ancillary", key = .id)
+    hvtiRutilities::register_data(file = .csv_name, dataset = .dataset, role = "named",
+                                  population = "SID cluster assignments", kind = "ancillary", key_cols = .id,
+                                  root = .root)
   )))
 }
 cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job to use these clusters.\n",
@@ -686,8 +688,8 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-14 18:20:57 EST |
-|  | Ended | 2026-11-14 18:21:02 EST |
+| Run | Started | 2026-11-18 12:26:07 EST |
+|  | Ended | 2026-11-18 12:26:12 EST |
 |  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -699,13 +701,13 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 |  | Template | sid.clusters |
 |  | Subject | echo |
 |  | Type | sid |
-|  | hvtiRtemplates | 1.6.0 |
-| Dataset `built` | Version file | built_20261114.parquet |
-|  | Version date | 2026-11-14 |
+|  | hvtiRtemplates | 1.6.1 |
+| Dataset `built` | Version file | built_20261118.parquet |
+|  | Version date | 2026-11-18 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d99147a5c095 |
+|  | sha256 | d4581c9fbd56 |
 |  | Manifest | current |
-| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-14 18:20:47 -0500, data built_20261114.parquet |
+| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-18 12:25:57 -0500, data built_20261118.parquet |
 | Reproducibility | renv | not active |

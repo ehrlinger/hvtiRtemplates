@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:10
+2026-11-18 11:58
 
 Replaces `descriptive/dc.gfup`.
 
@@ -39,12 +39,12 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
-  stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles; ",
+if (utils::packageVersion("hvtiRutilities") < "1.5.24") {
+  stop("This job needs hvtiRutilities >= 1.5.24 for followup_check()'s 15th and 85th percentiles and the *_col(s) names; ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
-  stop("This job needs hvtiPlotR >= 2.8.18 for hv_followup_panels()'s competing events and echo layer, ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.23") {
+  stop("This job needs hvtiPlotR >= 2.8.23 for hv_followup_panels(opdate_col =), its competing events and echo layer, ",
        "and the red and blue its captions name; ", utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
@@ -69,8 +69,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -139,12 +139,19 @@ GROUP <- NULL
 CHECKS <- list(c("dead", "reop"))
 
 # The figure. These are dc-eda's follow-up choices, and mean what they mean there.
-# Demo: the years-since-origin interval to the operation, and that origin, a
-# calendar year such as 1990. The origin differs between studies, and a wrong
-# one slides every point along the x-axis without any other symptom, which is
-# why the operation years are checked and printed below.
+# Demo: the years-since-origin interval to the operation. The origin it counts
+# from differs between studies, and a wrong one slides every point along the
+# x-axis without any other symptom, which is why the operation years are
+# checked and printed below.
 OPYRS <- "iv_opyrs"
-ORIGIN_YEAR <- 1990
+# Demo: the operation date column. Each patient's date less OPYRS gives the
+# origin, so ORIGIN_YEAR <- NULL reads it from the data, and every patient with
+# a date is checked against it; those without one are counted as unchecked.
+# Set ORIGIN_YEAR to a calendar year, such as 1990, and it is checked against
+# the data instead, stopping on a disagreement. Only with OPDATE <- NULL, for a
+# study that has no operation date, is ORIGIN_YEAR used unchecked.
+OPDATE <- "dt_surg"
+ORIGIN_YEAR <- NULL
 
 # Demo: the close date of follow-up, as.Date("YYYY-MM-DD"). NULL estimates it
 # as the latest operation date plus follow-up in the data, which is the date
@@ -230,8 +237,8 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY, one_row_per_patient = TRUE)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY, one_row_per_patient = TRUE)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -240,7 +247,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -285,7 +292,7 @@ Code
 # The checks are hvtiRutilities::followup_check(), the function the EDA report
 # calls too, so the two reports cannot disagree. It checks every choice above
 # before computing anything, and names every missing column at once.
-fc <- hvtiRutilities::followup_check(d, event = EVENT, followup = FOLLOWUP, identifier = IDENTIFIER,
+fc <- hvtiRutilities::followup_check(d, time_cols = FOLLOWUP, event_col = EVENT, id_col = IDENTIFIER,
                                      max_rows = MAX_REVIEW_ROWS, stats = .followup_stats)
 cohort_counts <- fc$cohort
 review_rows <- fc$review
@@ -371,7 +378,7 @@ Code
 # hvtiPlotR::hv_followup_panels() checks every panel and event against the data,
 # names every missing column at once, refuses a name used twice and the
 # wrong-origin mistake, and works out the window the panels share: from
-# 1 January of ORIGIN_YEAR, where hv_followup() draws its diagonal, to the last
+# 1 January of the origin year, where hv_followup() draws its diagonal, to the last
 # operation. The EDA report calls the same function, so its panels are these.
 # A refusal does not stop a draft: the tables above are the follow-up check and
 # do not depend on the figure, so the refusal is reported where the figure would
@@ -379,16 +386,27 @@ Code
 # render says so too.
 panel_counts <- list()
 fp <- tryCatch(
-  hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
+  hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR, opdate_col = OPDATE,
                                 panels = PANELS, events = EVENTS, close_date = CLOSE_DATE,
                                 echo_time_col = ECHO),
   error = function(e) e
 )
 figure_drawn <- !inherits(fp, "error")
 if (figure_drawn) {
+  # The origin the panels used, read from OPDATE when ORIGIN_YEAR is NULL; the
+  # code below, each GROUP's panels and the run record take it from here.
+  .origin_year <- fp$meta$origin_year
   close_date <- fp$meta$close_date
   # Name the edit point a reader can find in this file, not the function's argument.
   close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
+  # A patient with an operation year but no operation date is drawn at the origin above,
+  # which nothing about that patient confirms. Count them, so the window table and a
+  # warning say how many points rest on an unchecked origin.
+  .unchecked <- if (is.null(OPDATE)) NULL else sum(!is.na(d[[OPYRS]]) & is.na(d[[OPDATE]]))
+  if (isTRUE(.unchecked > 0)) {
+    warning(.unchecked, " patient(s) have ", OPYRS, " but no ", OPDATE, ", so their origin is not ",
+            "checked against the operation date.", call. = FALSE)
+  }
 } else {
   # A final render (render_job(final = TRUE), which sets HVTI_TEMPLATE_STRICT)
   # is the accepted result, and an accepted follow-up report has its figure.
@@ -420,7 +438,7 @@ Code
   .panel <- fp$tables$panels[[nm]]
   .drawn <- if (fp$data$type[match(nm, fp$data$panel)] == "event") .panel$tables$event_data else .panel$data
   .x <- .drawn$operation_year
-  .op <- as.Date(paste0(ORIGIN_YEAR, "-01-01")) + (.x - ORIGIN_YEAR) * 365.2425
+  .op <- as.Date(paste0(.origin_year, "-01-01")) + (.x - .origin_year) * 365.2425
   .years <- stats::setNames(data.frame(as.numeric(format(.op, "%Y"))), paste0(OPYRS, ", ", nm))
   hvtiRtemplates:::.identifiability_check(.years, sparse = names(.years))
 })
@@ -433,28 +451,33 @@ cat(hvtiRtemplates:::.identifiability_notice(do.call(rbind, c(
 Code
 
 ``` r
-# Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an
+# Operations before the origin are drawn, left of the diagonal, by an
 # hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,
 # because a build counting from a later origin is a problem to fix there. An
 # older hvtiPlotR refuses them instead, so the field is absent and so is the row.
 .before <- fp$meta$n_opyrs_negative
 knitr::kable(data.frame(
-  quantity = c("patients", "operation year missing", if (!is.null(.before)) "operation before origin",
+  quantity = c("origin", "patients", "operation year missing",
+               if (!is.null(.unchecked)) "origin not checked (no operation date)",
+               if (!is.null(.before)) "operation before origin",
                "first operation", "last operation", "close date", "close date is"),
-  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, .before, format(fp$meta$first_operation),
+  value = c(paste0(fp$meta$origin_year, ", ", fp$meta$origin_source),
+            fp$meta$n_obs, fp$meta$n_opyrs_missing, .unchecked, .before, format(fp$meta$first_operation),
             format(fp$meta$study_end), format(close_date), close_source)
 ))
 ```
 
-| quantity                | value             |
-|:------------------------|:------------------|
-| patients                | 800               |
-| operation year missing  | 0                 |
-| operation before origin | 0                 |
-| first operation         | 1990-01-25        |
-| last operation          | 2024-12-10        |
-| close date              | 2025-12-31        |
-| close date is           | set in CLOSE_DATE |
+| quantity | value |
+|:---|:---|
+| origin | 1990, read from `dt_surg` less `iv_opyrs` |
+| patients | 800 |
+| operation year missing | 0 |
+| origin not checked (no operation date) | 0 |
+| operation before origin | 0 |
+| first operation | 1990-01-25 |
+| last operation | 2024-12-10 |
+| close date | 2025-12-31 |
+| close date is | set in CLOSE_DATE |
 
 Table 3: Operation years and the close date
 
@@ -473,11 +496,11 @@ Code
 
 ``` r
 # unnumbered: computes the potential follow-up; the table chunk below shows it
-# The operation date is ORIGIN_YEAR's 1 January plus OPYRS years of 365.2425
+# The operation date is the origin's 1 January plus OPYRS years of 365.2425
 # days, the arithmetic hv_followup() draws its diagonal with, so the table and
 # the diagonal agree.
 .potential_row <- function(title, status, time) {
-  op <- as.Date(paste0(ORIGIN_YEAR, "-01-01")) + d[[OPYRS]] * 365.2425
+  op <- as.Date(paste0(.origin_year, "-01-01")) + d[[OPYRS]] * 365.2425
   calendar <- pmax(as.numeric(close_date - op) / 365.2425, 0)
   st <- d[[status]]
   observed <- d[[time]]
@@ -547,7 +570,7 @@ Code
 if (!figure_drawn) {
   cat("\n::: {.callout-warning title=\"The figure was not drawn\"}\n",
       conditionMessage(fp), "\n\nThe tables above do not depend on it. Fix the choice the ",
-      "message names, usually `OPYRS` or `ORIGIN_YEAR`, and render again.\n:::\n\n", sep = "")
+      "message names, usually `OPYRS`, `OPDATE` or `ORIGIN_YEAR`, and render again.\n:::\n\n", sep = "")
 }
 figure_link <- function(file) {
   xfun::relative_path(file, if (exists(".in") && !is.null(.in)) dirname(.in) else getwd(), error = FALSE)
@@ -633,15 +656,18 @@ if (!isTRUE(LEGEND) && !isFALSE(LEGEND)) stop("LEGEND must be TRUE or FALSE.", c
   if (LEGEND) list(theme(legend.position = "inside", legend.position.inside = c(0.98, 0.98),
                          legend.justification = c(1, 1)))
 )
-# GROUP: every group's panels drawn on their own, against the cohort's close date so
-# each facet's diagonal is the cohort's. A group the panel function refuses is left out
-# of the facets and named under them; the cohort figure is unaffected.
+# GROUP: every group's panels drawn on their own, against the cohort's close date and
+# origin so each facet's diagonal is the cohort's. The cohort call above already checked
+# every patient with an operation date against that origin, so a group is not asked to
+# derive it again, and a group whose operation dates are all missing still gets its facet.
+# A group the panel function refuses is left out of the facets and named under them; the
+# cohort figure is unaffected.
 group_plots <- list()
 group_refused <- character()
 if (figure_drawn && !is.null(GROUP)) {
   for (.lv in levels(group_values)) {
     .gp <- tryCatch(hvtiPlotR::hv_followup_panels(d[group_values == .lv, , drop = FALSE], opyrs_col = OPYRS,
-                                                  origin_year = ORIGIN_YEAR, panels = PANELS, events = EVENTS,
+                                                  origin_year = .origin_year, opdate_col = NULL, panels = PANELS, events = EVENTS,
                                                   close_date = close_date, echo_time_col = ECHO),
                     error = function(e) e)
     if (inherits(.gp, "error")) group_refused <- c(group_refused, .lv) else group_plots[[.lv]] <- plot(.gp, alpha = ALPHA)
@@ -817,8 +843,8 @@ Table 5: dead by reop
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-14 18:10:45 EST  |
-|                 | Ended          | 2026-11-14 18:10:46 EST  |
+| Run             | Started        | 2026-11-18 11:58:01 EST  |
+|                 | Ended          | 2026-11-18 11:58:02 EST  |
 |                 | Duration       | 1 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -827,12 +853,12 @@ Table 5: dead by reop
 |                 | Template       | dc.gfup                  |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.6.0                    |
-| Dataset `built` | Version file   | built_20261114.parquet   |
-|                 | Version date   | 2026-11-14               |
+|                 | hvtiRtemplates | 1.6.1                    |
+| Dataset `built` | Version file   | built_20261118.parquet   |
+|                 | Version date   | 2026-11-18               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | d99147a5c095             |
+|                 | sha256         | d4581c9fbd56             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

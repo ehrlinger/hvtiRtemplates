@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:11
+2026-11-18 11:59
 
 Code
 
@@ -27,7 +27,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.0
+hvtiRtemplates 1.6.1
 
 ## Question
 
@@ -62,7 +62,7 @@ hvtiRtemplates::ar_item("hz.dead.hz#fig-fit")
 folder](https://ehrlinger.github.io/hvtiRtemplates/gallery/20_distributions/hz.dead.hz.md)
 
 The hazard of the event recorded in dead was modeled as a parametric
-multiphase hazard with 2 phases (TemporalHazard 1.3.0), fitted by
+multiphase hazard with 2 phases (TemporalHazard 1.3.1), fitted by
 maximum likelihood to 725 patients with 406 events.
 
 ## Item 2: Parameter estimates
@@ -89,7 +89,7 @@ hvtiRtemplates::ar_item("hz.dead.hz#tbl-estimates")
 folder](https://ehrlinger.github.io/hvtiRtemplates/gallery/20_distributions/hz.dead.hz.md)
 
 The hazard of the event recorded in dead was modeled as a parametric
-multiphase hazard with 2 phases (TemporalHazard 1.3.0), fitted by
+multiphase hazard with 2 phases (TemporalHazard 1.3.1), fitted by
 maximum likelihood to 725 patients with 406 events.
 
 ## About this run
@@ -98,8 +98,8 @@ maximum likelihood to 725 patients with 406 events.
 
 | Group           | Item           | Value                   |
 |:----------------|:---------------|:------------------------|
-| Run             | Started        | 2026-11-14 18:11:50 EST |
-|                 | Ended          | 2026-11-14 18:11:50 EST |
+| Run             | Started        | 2026-11-18 11:59:32 EST |
+|                 | Ended          | 2026-11-18 11:59:32 EST |
 |                 | Duration       | 0 s                     |
 |                 | Status         | final                   |
 |                 | Rendered by    | gallery                 |
@@ -108,5 +108,5 @@ maximum likelihood to 725 patients with 406 events.
 |                 | Template       | ar                      |
 |                 | Subject        | dead                    |
 |                 | Type           | question                |
-|                 | hvtiRtemplates | 1.6.0                   |
+|                 | hvtiRtemplates | 1.6.1                   |
 | Reproducibility | renv           | not active              |

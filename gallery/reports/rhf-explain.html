@@ -2237,7 +2237,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-14 18:20</p>
+      <p class="date">2026-11-18 12:25</p>
     </div>
   </div>
   
@@ -2249,7 +2249,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: rhf.explain 1.6.0 sha256:116299fbc80a5a3c7036563ec1753f75ae2ef752444fb05d371e2cf33f04901b -->
+<!-- hvtiRtemplates: rhf.explain 1.6.1 sha256:8ddb2c185b7d1fa6416fa04c852a77d80d1d2903d1874ee1a0910110eead5a3b -->
 <p>Explains the forest the <code>rhf-fit</code> job in this set saved: how well it ranks patients over follow-up, their hazard curves, and which markers drive it.</p>
 <!--
      the importance and hazard curves are meant to answer. -->
@@ -2310,7 +2310,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.6.0</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.6.1</p>
 </div>
 </div>
 </div>
@@ -2608,28 +2608,32 @@ Figure 4: Out-of-bag predicted cumulative hazard over follow-up for the same pa
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The cache draws on R&#39;s generator, which rhf(seed =) does not cover. cache_fit()</span></span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># seeds it with SEED; unseeded, identical reruns on the first real study moved</span></span>
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># importance medians by about 3 and reordered ranks 2 to 6.</span></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rhf-varpro-cache&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>                               <span class="at">why =</span> <span class="st">&quot;the VarPro cache walks every rule of every tree at study size&quot;</span>, <span class="at">refit =</span> REFIT)</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>vp_cache <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(<span class="fu">.cache_file</span>(<span class="st">&quot;rhf-varpro-cache&quot;</span>), <span class="fu">cache_fit</span>(</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;rhf-varpro-cache&quot;</span>,</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">varpro.cache.rhf</span>(forest, <span class="at">max.rules.tree =</span> MAX_RULES_TREE, <span class="at">max.tree =</span> MAX_TREE, <span class="at">verbose =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>.time_index <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">as.integer</span>(<span class="fu">round</span>(<span class="fu">seq.int</span>(<span class="dv">1</span>L, vp_cache<span class="sc">$</span>K, <span class="at">length.out =</span> N_TIMES))))</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>imp <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(<span class="fu">.cache_file</span>(<span class="st">&quot;rhf-importance&quot;</span>), <span class="fu">cache_fit</span>(</span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;rhf-importance&quot;</span>,</span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">importance.rhf</span>(forest, <span class="at">cache =</span> vp_cache, <span class="at">time.index =</span> .time_index, <span class="at">verbose =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_rhf_importance</span>(forest, <span class="at">importance_fit =</span> imp)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rhf-explain-importance&quot;</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Quoted once, so the check below and cache_fit() read the same call; a cache_fit() of a quoted</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># call keys the call, so a cache built before this was quoted still loads. Refused outside</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># run_job() only when it will actually be built: a current cache loads, even under REFIT.</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>.vp_code <span class="ot">&lt;-</span> <span class="fu">quote</span>(<span class="fu">varpro.cache.rhf</span>(forest, <span class="at">max.rules.tree =</span> MAX_RULES_TREE, <span class="at">max.tree =</span> MAX_TREE, <span class="at">verbose =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (hvtiRutilities<span class="sc">::</span><span class="fu">cache_would_fit</span>(<span class="st">&quot;rhf-varpro-cache&quot;</span>, .vp_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT)) {</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rhf-varpro-cache&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">why =</span> <span class="st">&quot;the VarPro cache walks every rule of every tree at study size&quot;</span>, <span class="at">refit =</span> REFIT)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>vp_cache <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(<span class="fu">.cache_file</span>(<span class="st">&quot;rhf-varpro-cache&quot;</span>),</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>                                         <span class="fu">cache_fit</span>(<span class="st">&quot;rhf-varpro-cache&quot;</span>, .vp_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR,</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>                                                   <span class="at">refit =</span> REFIT))</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>.time_index <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">as.integer</span>(<span class="fu">round</span>(<span class="fu">seq.int</span>(<span class="dv">1</span>L, vp_cache<span class="sc">$</span>K, <span class="at">length.out =</span> N_TIMES))))</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>imp <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(<span class="fu">.cache_file</span>(<span class="st">&quot;rhf-importance&quot;</span>), <span class="fu">cache_fit</span>(</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;rhf-importance&quot;</span>,</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">importance.rhf</span>(forest, <span class="at">cache =</span> vp_cache, <span class="at">time.index =</span> .time_index, <span class="at">verbose =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="fu">plot</span>(<span class="fu">gg_rhf_importance</span>(forest, <span class="at">importance_fit =</span> imp)) <span class="sc">+</span> hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;rhf-explain-importance&quot;</span>, <span class="at">height =</span> <span class="dv">7</span>)</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-importance" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/2484947ba7b1c2247b91d9740d7df607.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/c22154588980f70805c74130fb086a16.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 5: VarPro importance of each predictor at points across follow-up.
@@ -2660,8 +2664,8 @@ Table 3: VarPro importance of each predictor at each point of follow-up
 7       x_2 0.07936124          4 (0.05925916, 0.07936124] 0.05925916
 10      x_1 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
 12      x_3 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
-11      x_2 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
 9       xtd 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
+11      x_2 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
 14      x_1 0.26939733          9 (0.23891066, 0.26939733] 0.23891066
 16      x_3 0.26939733          9 (0.23891066, 0.26939733] 0.23891066
 15      x_2 0.26939733          9 (0.23891066, 0.26939733] 0.23891066
@@ -2671,26 +2675,26 @@ Table 3: VarPro importance of each predictor at each point of follow-up
 19      x_2 1.58222842         12 (0.40479201, 1.58222842] 0.40479201
 17      xtd 1.58222842         12 (0.40479201, 1.58222842] 0.40479201
          stop    midpoint n.risk n.rules importance
-1  0.01978419 0.009892094    245    1310 4.14133218
-2  0.01978419 0.009892094    245    1310 0.77939241
-4  0.01978419 0.009892094    245    1310 0.34870874
-3  0.01978419 0.009892094    245    1310 0.19191829
-6  0.07936124 0.069310203    135     890 1.26089608
-5  0.07936124 0.069310203    135     890 0.72734812
-8  0.07936124 0.069310203    135     890 0.30455109
-7  0.07936124 0.069310203    135     890 0.11720421
-10 0.15200539 0.135172527    112     794 0.97050885
-12 0.15200539 0.135172527    112     794 0.40026483
-11 0.15200539 0.135172527    112     794 0.25148825
-9  0.15200539 0.135172527    112     794 0.19248935
-14 0.26939733 0.254153994     62     646 1.18221283
-16 0.26939733 0.254153994     62     646 0.26143557
-15 0.26939733 0.254153994     62     646 0.09655036
-13 0.26939733 0.254153994     62     646 0.00000000
-18 1.58222842 0.993510214     34     394 0.87807159
-20 1.58222842 0.993510214     34     394 0.19981972
-19 1.58222842 0.993510214     34     394 0.00000000
-17 1.58222842 0.993510214     34     394 0.00000000</code></pre>
+1  0.01978419 0.009892094    245    1322 3.92225755
+2  0.01978419 0.009892094    245    1322 0.79421909
+4  0.01978419 0.009892094    245    1322 0.40151470
+3  0.01978419 0.009892094    245    1322 0.20658802
+6  0.07936124 0.069310203    135     910 1.20528807
+5  0.07936124 0.069310203    135     910 0.63493654
+8  0.07936124 0.069310203    135     910 0.32888679
+7  0.07936124 0.069310203    135     910 0.11015310
+10 0.15200539 0.135172527    112     827 0.88831194
+12 0.15200539 0.135172527    112     827 0.46363143
+9  0.15200539 0.135172527    112     827 0.23812199
+11 0.15200539 0.135172527    112     827 0.22461201
+14 0.26939733 0.254153994     62     678 1.13495267
+16 0.26939733 0.254153994     62     678 0.25859276
+15 0.26939733 0.254153994     62     678 0.11387092
+13 0.26939733 0.254153994     62     678 0.02951002
+18 1.58222842 0.993510214     34     383 0.85561399
+20 1.58222842 0.993510214     34     383 0.24770238
+19 1.58222842 0.993510214     34     383 0.00000000
+17 1.58222842 0.993510214     34     383 0.00000000</code></pre>
 </div>
 </div>
 </figure>
@@ -2748,50 +2752,57 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(PD_VARS)) {</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rhf-partial&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">why =</span> <span class="st">&quot;each grid value predicts the hazard over every interval of the sample&quot;</span>,</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">refit =</span> REFIT)</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  pd <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(<span class="fu">.cache_file</span>(<span class="st">&quot;rhf-partial&quot;</span>), <span class="fu">cache_fit</span>(</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;rhf-partial&quot;</span>,</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">local</span>({</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>      train <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> forest<span class="sc">$</span>id, forest<span class="sc">$</span>yvar, forest<span class="sc">$</span>xvar)</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>      ids <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">unique</span>(train<span class="sc">$</span>id), <span class="fu">min</span>(PD_N, <span class="fu">length</span>(<span class="fu">unique</span>(train<span class="sc">$</span>id))))</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>      nd <span class="ot">&lt;-</span> train[train<span class="sc">$</span>id <span class="sc">%in%</span> ids, ]</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(PD_VARS, <span class="cf">function</span>(v) {</span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>        x <span class="ot">&lt;-</span> nd[[v]]</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>        <span class="co"># A factor keeps its levels, so a factor labeled 0 and 1 is set by level, not by its codes.</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>        grid <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.factor</span>(x)) <span class="fu">levels</span>(x) <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">all</span>(x <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))) <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>) <span class="cf">else</span></span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>          <span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">quantile</span>(x, <span class="fu">seq</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="at">length.out =</span> PD_GRID), <span class="at">names =</span> <span class="cn">FALSE</span>))</span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>        <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(grid, <span class="cf">function</span>(g) {</span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>          <span class="co"># [] &lt;- keeps the column&#39;s class and levels.</span></span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>          nd[[v]][] <span class="ot">&lt;-</span> g</span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>          h <span class="ot">&lt;-</span> <span class="fu">predict</span>(forest, nd)<span class="sc">$</span>hazard.test[, .time_index, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>          <span class="fu">data.frame</span>(<span class="at">variable =</span> v, <span class="at">level =</span> <span class="cf">if</span> (<span class="fu">is.factor</span>(x)) g <span class="cf">else</span> <span class="fu">format</span>(<span class="fu">signif</span>(g, <span class="dv">3</span>)), <span class="at">time.index =</span> .time_index,</span>
-<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>                     <span class="at">time =</span> forest<span class="sc">$</span>time.interest[.time_index], <span class="at">hazard =</span> <span class="fu">colMeans</span>(h, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>                     <span class="at">n.risk =</span> <span class="fu">colSums</span>(<span class="sc">!</span><span class="fu">is.na</span>(h)))</span>
-<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>        }))</span>
-<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>      }))</span>
-<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>    }),</span>
-<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># predict() dispatches to randomForestRHF&#39;s method, which cache_fit() cannot see in the code, so an</span></span>
-<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># upgrade of the package would otherwise reuse curves its old version predicted.</span></span>
-<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT, <span class="at">packages =</span> <span class="st">&quot;randomForestRHF&quot;</span></span>
-<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>  ))</span>
-<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>  pd <span class="ot">&lt;-</span> pd[pd<span class="sc">$</span>n.risk <span class="sc">&gt;=</span> PD_MIN_RISK, ]</span>
-<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>  pd<span class="sc">$</span>point <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">sprintf</span>(<span class="st">&quot;%.2f&quot;</span>, pd<span class="sc">$</span>time), <span class="at">levels =</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.2f&quot;</span>, <span class="fu">sort</span>(<span class="fu">unique</span>(pd<span class="sc">$</span>time))))</span>
-<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Each predictor&#39;s values in grid order on a discrete axis, keyed by predictor so two predictors sharing a</span></span>
-<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># label do not share a place.</span></span>
-<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>  .key <span class="ot">&lt;-</span> <span class="fu">paste</span>(pd<span class="sc">$</span>variable, pd<span class="sc">$</span>level, <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\r</span><span class="st">&quot;</span>)</span>
-<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>  pd<span class="sc">$</span>at <span class="ot">&lt;-</span> <span class="fu">factor</span>(.key, <span class="at">levels =</span> <span class="fu">unique</span>(.key))</span>
-<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>  .fig <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(pd, ggplot2<span class="sc">::</span><span class="fu">aes</span>(at, hazard, <span class="at">color =</span> point, <span class="at">group =</span> point)) <span class="sc">+</span></span>
-<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_line</span>() <span class="sc">+</span></span>
-<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> <span class="cf">function</span>(b) <span class="fu">sub</span>(<span class="st">&quot;^.*</span><span class="sc">\r</span><span class="st">&quot;</span>, <span class="st">&quot;&quot;</span>, b)) <span class="sc">+</span></span>
-<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>variable, <span class="at">scales =</span> <span class="st">&quot;free_x&quot;</span>) <span class="sc">+</span></span>
-<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Value set on every interval&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Mean predicted hazard&quot;</span>, <span class="at">color =</span> <span class="st">&quot;Time&quot;</span>) <span class="sc">+</span></span>
-<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
-<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.fig, <span class="st">&quot;rhf-explain-partial&quot;</span>)</span>
-<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>  .fig</span>
-<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Quoted once, so the check below and cache_fit() read the same call; a cache_fit() of a quoted</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># call keys the call, so curves cached before this was quoted still load.</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  .pd_code <span class="ot">&lt;-</span> <span class="fu">quote</span>(</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">local</span>({</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>      train <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> forest<span class="sc">$</span>id, forest<span class="sc">$</span>yvar, forest<span class="sc">$</span>xvar)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>      ids <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">unique</span>(train<span class="sc">$</span>id), <span class="fu">min</span>(PD_N, <span class="fu">length</span>(<span class="fu">unique</span>(train<span class="sc">$</span>id))))</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>      nd <span class="ot">&lt;-</span> train[train<span class="sc">$</span>id <span class="sc">%in%</span> ids, ]</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(PD_VARS, <span class="cf">function</span>(v) {</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>        x <span class="ot">&lt;-</span> nd[[v]]</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>        <span class="co"># A factor keeps its levels, so a factor labeled 0 and 1 is set by level, not by its codes.</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>        grid <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.factor</span>(x)) <span class="fu">levels</span>(x) <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">all</span>(x <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))) <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>) <span class="cf">else</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>          <span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">quantile</span>(x, <span class="fu">seq</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="at">length.out =</span> PD_GRID), <span class="at">names =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>        <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(grid, <span class="cf">function</span>(g) {</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>          <span class="co"># [] &lt;- keeps the column&#39;s class and levels.</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>          nd[[v]][] <span class="ot">&lt;-</span> g</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>          h <span class="ot">&lt;-</span> <span class="fu">predict</span>(forest, nd)<span class="sc">$</span>hazard.test[, .time_index, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>          <span class="fu">data.frame</span>(<span class="at">variable =</span> v, <span class="at">level =</span> <span class="cf">if</span> (<span class="fu">is.factor</span>(x)) g <span class="cf">else</span> <span class="fu">format</span>(<span class="fu">signif</span>(g, <span class="dv">3</span>)), <span class="at">time.index =</span> .time_index,</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>                     <span class="at">time =</span> forest<span class="sc">$</span>time.interest[.time_index], <span class="at">hazard =</span> <span class="fu">colMeans</span>(h, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>                     <span class="at">n.risk =</span> <span class="fu">colSums</span>(<span class="sc">!</span><span class="fu">is.na</span>(h)))</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>        }))</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>      }))</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># predict() dispatches to randomForestRHF&#39;s method, which cache_fit() cannot see in the code, so an</span></span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># upgrade of the package would otherwise reuse curves its old version predicted. Refused outside</span></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># run_job() only when the curves will actually be computed: a current cache loads, even under REFIT.</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (hvtiRutilities<span class="sc">::</span><span class="fu">cache_would_fit</span>(<span class="st">&quot;rhf-partial&quot;</span>, .pd_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT,</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">packages =</span> <span class="st">&quot;randomForestRHF&quot;</span>)) {</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>    hvtiRtemplates<span class="sc">::</span><span class="fu">guard_long_fit</span>(<span class="st">&quot;rhf-partial&quot;</span>, <span class="at">dir =</span> CACHE_DIR,</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">why =</span> <span class="st">&quot;each grid value predicts the hazard over every interval of the sample&quot;</span>,</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">refit =</span> REFIT)</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>  pd <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.owner_only</span>(<span class="fu">.cache_file</span>(<span class="st">&quot;rhf-partial&quot;</span>),</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>                                     <span class="fu">cache_fit</span>(<span class="st">&quot;rhf-partial&quot;</span>, .pd_code, <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT,</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">packages =</span> <span class="st">&quot;randomForestRHF&quot;</span>))</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>  pd <span class="ot">&lt;-</span> pd[pd<span class="sc">$</span>n.risk <span class="sc">&gt;=</span> PD_MIN_RISK, ]</span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>  pd<span class="sc">$</span>point <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">sprintf</span>(<span class="st">&quot;%.2f&quot;</span>, pd<span class="sc">$</span>time), <span class="at">levels =</span> <span class="fu">sprintf</span>(<span class="st">&quot;%.2f&quot;</span>, <span class="fu">sort</span>(<span class="fu">unique</span>(pd<span class="sc">$</span>time))))</span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Each predictor&#39;s values in grid order on a discrete axis, keyed by predictor so two predictors sharing a</span></span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># label do not share a place.</span></span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>  .key <span class="ot">&lt;-</span> <span class="fu">paste</span>(pd<span class="sc">$</span>variable, pd<span class="sc">$</span>level, <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\r</span><span class="st">&quot;</span>)</span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>  pd<span class="sc">$</span>at <span class="ot">&lt;-</span> <span class="fu">factor</span>(.key, <span class="at">levels =</span> <span class="fu">unique</span>(.key))</span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>  .fig <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(pd, ggplot2<span class="sc">::</span><span class="fu">aes</span>(at, hazard, <span class="at">color =</span> point, <span class="at">group =</span> point)) <span class="sc">+</span></span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> <span class="cf">function</span>(b) <span class="fu">sub</span>(<span class="st">&quot;^.*</span><span class="sc">\r</span><span class="st">&quot;</span>, <span class="st">&quot;&quot;</span>, b)) <span class="sc">+</span></span>
+<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>variable, <span class="at">scales =</span> <span class="st">&quot;free_x&quot;</span>) <span class="sc">+</span></span>
+<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Value set on every interval&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Mean predicted hazard&quot;</span>, <span class="at">color =</span> <span class="st">&quot;Time&quot;</span>) <span class="sc">+</span></span>
+<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a>    hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>, <span class="at">legend.position =</span> <span class="st">&quot;top&quot;</span>, <span class="at">legend.title =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>())</span>
+<span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">save_figure</span>(.fig, <span class="st">&quot;rhf-explain-partial&quot;</span>)</span>
+<span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a>  .fig</span>
+<span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2814,12 +2825,12 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-14 18:20:29 EST</td>
+<td style="text-align: left;">2026-11-18 12:25:37 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-14 18:20:31 EST</td>
+<td style="text-align: left;">2026-11-18 12:25:40 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -2864,17 +2875,17 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.0</td>
+<td style="text-align: left;">1.6.1</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>intervals</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">intervals_20261114.parquet</td>
+<td style="text-align: left;">intervals_20261118.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-14</td>
+<td style="text-align: left;">2026-11-18</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2884,7 +2895,7 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">beb287931ea4</td>
+<td style="text-align: left;">84290a069a2d</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2894,7 +2905,7 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>event-rhf/rhf.rds</code> (forest), rendered 2026-11-14 18:20:21 -0500, data intervals_20261114.parquet</td>
+<td style="text-align: left;"><code>event-rhf/rhf.rds</code> (forest), rendered 2026-11-18 12:25:29 -0500, data intervals_20261118.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -2909,7 +2920,7 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"job":"rhf.explain.event.rhf","rendered":"2026-11-14T23:20:31Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"61119a9ebfdfffe0ab2f05196c237f9bcf753aed0c7b9715508bbb357851d147"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"9215655193d3a25191022290838cac8efa66bd03"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.22","source":null},{"package":"hvtiRtemplates","version":"1.6.0","source":null},{"package":"hvtiRutilities","version":"1.5.23","source":null},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestRHF","version":"2.1.0","source":"CRAN"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"intervals","path":"00_datasets/intervals_20261114.parquet","role":"analysis","bytes":28287,"mtime":"2026-11-14T23:20:18Z","sha256":"beb287931ea4627b2e0e57dab4c81dba7106e059066c352c09d2b07f3073f3c5"}],"artifacts":[{"path":"90_estimates/event-rhf/rhf.rds","role":"forest","bytes":2231860,"mtime":"2026-11-14T23:20:23Z","sha256":"3b9694c8e2430b6b68d6a1a0526439ca691a6a51e4016919f8465f36bb7b3ff9"}],"subject":"event","type":"rhf","analysis":{"start":{"variable":"start"},"stop":{"variable":"stop"},"event":{"variable":"event","event":1,"censored":0},"repair":[],"caps":[],"lookahead":{"interval":null,"action":"keep","final_intervals":146}},"cohort":{"n":150,"n_events":127,"n_censored":23},"source_sha256":"c93769f21e805008d165c227508a929220d02f104c74564a73803d1091c89bf2","run":{"start":"2026-11-14T18:20:29-0500","end":"2026-11-14T18:20:31-0500","time_zone":"EST","duration_seconds":2.3,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rhf.explain.event.rhf.qmd","template":"rhf.explain","prefix":"rhf","qualifier":"explain","subject":"event","type":"rhf","hvtiRtemplates":"1.6.0"},"datasets":[{"name":"intervals","version_file":"intervals_20261114.parquet","registered":"2026-11-14","source_file":"intervals.rds","sha256":"beb287931ea4","manifest":"current"}],"upstream":[{"file":"90_estimates/event-rhf/rhf.rds","set":"event-rhf","role":"forest","rendered_at":"2026-11-14T18:20:21-0500","dataset_version":"intervals_20261114.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false}}},"source":"30_analyses/rhf.explain.event.rhf.qmd",".hvti_render_id":"71f30da2bf4f5bc9b7f9d98564cce5c882374708dd96b97b0de4d34bb913ec86",".hvti_source_sha256":"c93769f21e805008d165c227508a929220d02f104c74564a73803d1091c89bf2"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"rhf.explain.event.rhf","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 12:25:40","job":"rhf.explain.event.rhf","rendered":"2026-11-18T17:25:40Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"61119a9ebfdfffe0ab2f05196c237f9bcf753aed0c7b9715508bbb357851d147"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.6.0","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.4","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"0a76b04ab95d31c1056059c2fd30ecdb9e2df0cc"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRtemplates","version":"1.6.1","source":"github","sha":"308962ac911e2087cee3271ad1320e7e12023d02"},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"igraph","version":"2.3.4","source":"standard"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.8","source":"standard"},{"package":"openssl","version":"2.6.0","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestRHF","version":"2.1.0","source":"CRAN"},{"package":"randomForestSRC","version":"3.10.0","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.3","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.4.0","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"standard"},{"package":"xfun","version":"0.62","source":"standard"},{"package":"xml2","version":"1.6.0","source":"standard"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"intervals","path":"00_datasets/intervals_20261118.parquet","role":"analysis","bytes":28287,"mtime":"2026-11-18T17:25:26Z","sha256":"84290a069a2d3ebcb9d11d8d6988510906785a800d3e205f75b8e5eaedb7016e"}],"artifacts":[{"path":"90_estimates/event-rhf/rhf.rds","role":"forest","bytes":2231838,"mtime":"2026-11-18T17:25:32Z","sha256":"96cb5700ba04d5565abafeebb2395236aa3f44ed5c7e71345a012d21ba6f5ad2"}],"subject":"event","type":"rhf","analysis":{"start":{"variable":"start"},"stop":{"variable":"stop"},"event":{"variable":"event","event":1,"censored":0},"repair":[],"caps":[],"lookahead":{"interval":null,"action":"keep","final_intervals":146}},"cohort":{"n":150,"n_events":127,"n_censored":23},"source_sha256":"8f8b1ae42624ad5130f1d2db3f42476934aba0bf194a7227c4af33bae08ec1c0","run":{"start":"2026-11-18T12:25:37-0500","end":"2026-11-18T12:25:40-0500","time_zone":"EST","duration_seconds":2.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rhf.explain.event.rhf.qmd","template":"rhf.explain","prefix":"rhf","qualifier":"explain","subject":"event","type":"rhf","hvtiRtemplates":"1.6.1"},"datasets":[{"name":"intervals","version_file":"intervals_20261118.parquet","registered":"2026-11-18","source_file":"intervals.rds","sha256":"84290a069a2d","manifest":"current"}],"upstream":[{"file":"90_estimates/event-rhf/rhf.rds","set":"event-rhf","role":"forest","rendered_at":"2026-11-18T12:25:29-0500","dataset_version":"intervals_20261118.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.1","sha":"308962ac911e2087cee3271ad1320e7e12023d02","method":"rhf.explain","seed":2026,"rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 12:25:37"}},"source":"30_analyses/rhf.explain.event.rhf.qmd",".hvti_render_id":"c4ac1abc5afb82e11a1cae06a5ed82a3a4756836110f42d8a258105904dff662",".hvti_source_sha256":"8f8b1ae42624ad5130f1d2db3f42476934aba0bf194a7227c4af33bae08ec1c0"}</script>
 </section>
 
 </main>

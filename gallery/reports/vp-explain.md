@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:19
+2026-11-18 12:07
 
 Explains the `vp-fit` screen in this set: survival at five years along
 each selected predictor.
@@ -76,7 +76,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.0
+hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -139,7 +139,16 @@ selected <- .vp_read$value$selected
 .provenance_data <- .vp_read$lineage$data
 .provenance_artifacts <- c(.vp_read$lineage$artifacts, list(.vp_read$record))
 CACHE_DIR <- dirname(.handoff)
+.vp_cohort <- .vp_read$lineage$cohort
+# A screen saved before NA_ACTION existed records only n.
+if (!is.null(.vp_cohort$na_action)) {
+  cat("The screen used ", .vp_cohort$n, " of ", .vp_cohort$n_supplied, " patients supplied (NA_ACTION = \"",
+      .vp_cohort$na_action, "\"; ", sum(.vp_cohort$n_imputed), " value(s) imputed, ", .vp_cohort$n_outcome_missing,
+      " missing the outcome dropped, ", .vp_cohort$n_dropped, " dropped for a missing predictor).\n", sep = "")
+}
 ```
+
+    The screen used 800 of 800 patients supplied (NA_ACTION = "na.impute"; 75 value(s) imputed, 0 missing the outcome dropped, 0 dropped for a missing predictor).
 
 Code
 
@@ -184,13 +193,14 @@ if (is.null(PARTIAL_VARS)) {
 if (length(.untested)) {
   # vp-fit's selection can be its refits' vote, which may include a variable the
   # full fit, the one saved here, did not test: its partial would rest on no rules.
-  cat("Not drawn, because the saved full fit did not test them: ", paste(.untested, collapse = ", "), "\n", sep = "")
+  cat("Not drawn: the saved full fit did not examine them, so it has no rules to draw a partial from: ",
+      paste(.untested, collapse = ", "), "\n", sep = "")
   sel <- setdiff(sel, .untested)
 }
 if (!length(sel)) {
   stop(if (length(.untested)) {
-    paste0("No tested variable to draw: the saved full fit tested none of ", paste(.untested, collapse = ", "),
-           ". Name tested variables in PARTIAL_VARS.")
+    paste0("No variable to draw: the saved full fit did not examine ", paste(.untested, collapse = ", "),
+           ", so it has no rules to draw a partial from. Name variables the full fit examined in PARTIAL_VARS.")
   } else {
     "No tested variable to draw. The screen selected none; name tested variables in PARTIAL_VARS."
   }, call. = FALSE)
@@ -252,11 +262,11 @@ for (.i in seq_along(.pages)) {
 }
 ```
 
-    Warning: Removed 276 rows containing non-finite outside the scale range
+    Warning: Removed 316 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 276 rows containing non-finite outside the scale range
+    Removed 316 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 276 rows containing non-finite outside the scale range
+    Removed 316 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
 Code
@@ -265,10 +275,10 @@ Code
 .fig
 ```
 
-    Warning: Removed 276 rows containing non-finite outside the scale range
+    Warning: Removed 316 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/891126b02b80439792b9fceeb984bf3e.png)
+![](assets/bf50c97da78be18602b96b6c1f85aea8.png)
 
 Figure 1: VarPro partial dependence on each drawn predictor, one panel
 per predictor. For a continuous predictor a black solid line marks the
@@ -280,9 +290,9 @@ spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-14 18:18:15 EST |
-|  | Ended | 2026-11-14 18:19:14 EST |
-|  | Duration | 59 s |
+| Run | Started | 2026-11-18 12:06:54 EST |
+|  | Ended | 2026-11-18 12:07:55 EST |
+|  | Duration | 1 min 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -290,12 +300,12 @@ spread of the partial effect at each level.
 |  | Template | vp.explain |
 |  | Subject | dead |
 |  | Type | vp |
-|  | hvtiRtemplates | 1.6.0 |
-| Dataset `built` | Version file | built_20261114.parquet |
-|  | Version date | 2026-11-14 |
+|  | hvtiRtemplates | 1.6.1 |
+| Dataset `built` | Version file | built_20261118.parquet |
+|  | Version date | 2026-11-18 |
 |  | Source file | built.rds |
-|  | sha256 | d99147a5c095 |
+|  | sha256 | d4581c9fbd56 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-14 18:17:16 -0500, data built_20261114.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-18 12:05:42 -0500, data built_20261118.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

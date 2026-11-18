@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:08
+2026-11-18 11:55
 
 This job reports a bootstrap variable selection screen over a **linear**
 model: how often each candidate survived stepwise selection across
@@ -100,7 +100,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.0
+hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -388,8 +388,8 @@ provenance
     8                                                                      100
     9                                                                        0
     10                                                                     0.0
-    11                                                           version:0.9.7
-    12 sha256:d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace
+    11                            sha:199e06115d4dcc9c73154e13d349c51ba836c962
+    12 sha256:d4581c9fbd569b21078f37c93904b16a1b0c9c7f5416350a50b26db441ac4df4
     13                                               1 distinct (listed below)
 
 Code
@@ -475,7 +475,7 @@ health
 
                                     check    value   ok note
     1              Replicates that fitted      100 TRUE <NA>
-    2              Replicates that failed        0   NA <NA>
+    2              Replicates that failed        0 TRUE <NA>
     3   Distinct candidates ever selected        8 TRUE <NA>
     4 SD of the first free base parameter 6.050854 TRUE <NA>
 
@@ -796,7 +796,7 @@ Code
 # not the whole dataset.
 .job_data <- hvtiRtemplates::read_job_data(
   .cfg, dataset = .sel$dataset, analysis_set = .sel$analysis_set,
-  where = if (length(.sel$where)) lapply(.sel$where, str2lang), id = .sel$id, key = .sel$key
+  where = if (length(.sel$where)) lapply(.sel$where, str2lang), id_col = .sel$id, key_cols = .sel$key
 )
 d <- .job_data$data
 .provenance_data <- c(.provenance_data, list(.job_data$provenance))
@@ -906,8 +906,8 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-14 18:08:11 EST |
-|  | Ended | 2026-11-14 18:08:13 EST |
+| Run | Started | 2026-11-18 11:55:20 EST |
+|  | Ended | 2026-11-18 11:55:21 EST |
 |  | Duration | 1 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -916,13 +916,13 @@ saveRDS(report, report_file)
 |  | Template | br |
 |  | Subject | icu |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.6.0 |
-| Dataset `built` | Version file | built_20261114.parquet |
-|  | Version date | 2026-11-14 |
+|  | hvtiRtemplates | 1.6.1 |
+| Dataset `built` | Version file | built_20261118.parquet |
+|  | Version date | 2026-11-18 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d99147a5c095 |
+|  | sha256 | d4581c9fbd56 |
 |  | Manifest | current |
-| Upstream | Handoff | `icu-boot/br.rds` (bootstrap-bag), rendered not recorded, data built_20261114.parquet |
+| Upstream | Handoff | `icu-boot/br.rds` (bootstrap-bag), rendered not recorded, data built_20261118.parquet |
 | Reproducibility | renv | not active |

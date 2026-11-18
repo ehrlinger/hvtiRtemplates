@@ -34,7 +34,7 @@ on the gallery's synthetic study.
   render them final too: a final render refuses a hand-off saved from
   unregistered data.
 - **Packages:** `randomForestSRC`, `cluster`, `hvtiRpropensity`,
-  `hvtiPlotR` (\>= 2.8.20), `hvtiRutilities`. The job checks each floor
+  `hvtiPlotR` (\>= 2.8.23), `hvtiRutilities`. The job checks each floor
   when it starts, so an older library stops it at the top rather than
   partway through.
 
@@ -86,5 +86,5 @@ and it records the job's provenance beside the report.
   pair is how it finds the file:
   `add_job("vt.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.6.0 · built 2026-11-14.
+Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18.
 The template holds the details; this sheet is its outline.

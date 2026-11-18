@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-14 18:10
+2026-11-18 11:58
 
 Replaces an older EDA report.
 
@@ -39,12 +39,13 @@ suppressPackageStartupMessages({
   library(hvtiPlotR)
   library(ggplot2)
 })
-if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
-  stop("This job needs hvtiPlotR >= 2.8.18 for hv_eda_pages(), hv_followup_panels() and the red and blue its captions name; ",
+if (utils::packageVersion("hvtiPlotR") < "2.8.23") {
+  stop("This job needs hvtiPlotR >= 2.8.23 for hv_eda_pages(var_cols =), hv_followup_panels() ",
+       "and the red and blue its captions name; ",
        utils::packageVersion("hvtiPlotR"), " is installed.", call. = FALSE)
 }
-if (utils::packageVersion("hvtiRutilities") < "1.4.5") {
-  stop("This job needs hvtiRutilities >= 1.4.5 for followup_check()'s 15th and 85th percentiles ",
+if (utils::packageVersion("hvtiRutilities") < "1.5.24") {
+  stop("This job needs hvtiRutilities >= 1.5.24 for followup_check()'s 15th and 85th percentiles and the *_col(s) names ",
        "and study_abbreviations(); ",
        utils::packageVersion("hvtiRutilities"), " is installed.", call. = FALSE)
 }
@@ -80,8 +81,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261114.parquet`, dated 2026-11-14 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.0
+**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.1
 
 ## Study choices
 
@@ -141,12 +142,19 @@ REDUCE <- NULL
 JOIN_KEY <- NULL
 
 # Follow-up. These are dc-gfup's choices, and mean what they mean there.
-# Demo: the years-since-origin interval to the operation, and that origin. The
-# origin differs between studies, and a wrong one slides every point along the
+# Demo: the years-since-origin interval to the operation. The origin it counts
+# from differs between studies, and a wrong one slides every point along the
 # x-axis without any other symptom, which is why the operation years are
 # checked and printed below.
 OPYRS <- "iv_opyrs"
-ORIGIN_YEAR <- 1990
+# Demo: the operation date column. Each patient's date less OPYRS gives the
+# origin, so ORIGIN_YEAR <- NULL reads it from the data, and every patient with
+# a date is checked against it; those without one are counted as unchecked.
+# Set ORIGIN_YEAR to a calendar year, such as 1990, and it is checked against
+# the data instead, stopping on a disagreement. Only with OPDATE <- NULL, for a
+# study that has no operation date, is ORIGIN_YEAR used unchecked.
+OPDATE <- "dt_surg"
+ORIGIN_YEAR <- NULL
 
 # Demo: the close date of follow-up, as.Date("YYYY-MM-DD"). NULL estimates it
 # as the latest operation date plus follow-up in the data, which is the date
@@ -217,6 +225,12 @@ UNIQUE_LIMIT <- 6L
 SECTIONS <- c("followup", "continuous", "percent", "count")
 ALPHA <- 0.5
 # MIGRATE-END: dc-eda-variables
+# Demo: TRUE gives the percent and count pages hover labels in HTML, so a
+# reader can hover a bar for its category, reference value and count. Each bar
+# segment becomes its own element in the page, so a large cohort drawn by month
+# makes a slow render and a heavy report; FALSE shows the saved image instead,
+# the same figure without the labels.
+HOVER <- TRUE
 # Demo: what VARIABLES = NULL draws: one variable set, or several stacked, in the
 # order named, such as c("ods", "mitral", "redcap"). Each column is drawn once, at
 # its first set's place. "ods" is the house descriptive list, every variable the
@@ -307,8 +321,8 @@ Code
 hvtiRutilities::verify_manifest(file.path(.root, "manifest.yaml"))
 .cfg <- study_config(start = .root)
 job_data <- hvtiRtemplates::read_job_data(.cfg, dataset = DATASET, analysis_set = ANALYSIS_SET,
-                                          where = WHERE, id = ID, key = KEY, join = JOIN, join_vars = JOIN_VARS,
-                                          reduce = REDUCE, join_key = JOIN_KEY)
+                                          where = WHERE, id_col = ID, key_cols = KEY, join = JOIN, join_cols = JOIN_VARS,
+                                          reduce = REDUCE, join_key_cols = JOIN_KEY)
 d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
@@ -317,7 +331,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261114.parquet) |
+| Source              | dataset `built` (built_20261118.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -380,6 +394,7 @@ if (!column_names(SECTIONS) || !length(SECTIONS) || !all(SECTIONS %in% all_secti
 if (!is.numeric(ALPHA) || length(ALPHA) != 1L || is.na(ALPHA) || ALPHA < 0 || ALPHA > 1) {
   stop("ALPHA must be one number from 0 to 1.", call. = FALSE)
 }
+if (!isTRUE(HOVER) && !isFALSE(HOVER)) stop("HOVER must be TRUE or FALSE.", call. = FALSE)
 if (!is.numeric(LABEL_MAX) || length(LABEL_MAX) != 1L || is.na(LABEL_MAX) || LABEL_MAX < 4) {
   stop("LABEL_MAX must be one number, at least 4, or Inf to show every label whole.", call. = FALSE)
 }
@@ -705,20 +720,34 @@ Code
 # names every missing column at once, refuses a name used twice and the
 # wrong-origin mistake, and works out the window the panels share. dc-gfup
 # calls it with the same arguments, so these are that job's panels.
-fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR,
+fp <- hvtiPlotR::hv_followup_panels(d, opyrs_col = OPYRS, origin_year = ORIGIN_YEAR, opdate_col = OPDATE,
                                     panels = PANELS, events = EVENTS, close_date = CLOSE_DATE)
+# The origin the panels used, read from OPDATE when ORIGIN_YEAR is NULL; the
+# run record takes it from here.
+.origin_year <- fp$meta$origin_year
 close_date <- fp$meta$close_date
 # Name the edit point a reader can find in this file, not the function's argument.
 close_source <- if (is.null(CLOSE_DATE)) fp$meta$close_source else "set in CLOSE_DATE"
-# Operations before ORIGIN_YEAR are drawn, left of the diagonal, by an
+# A patient with an operation year but no operation date is drawn at the origin above,
+# which nothing about that patient confirms. Count them, so the window table and a
+# warning say how many points rest on an unchecked origin.
+.unchecked <- if (is.null(OPDATE)) NULL else sum(!is.na(d[[OPYRS]]) & is.na(d[[OPDATE]]))
+if (isTRUE(.unchecked > 0)) {
+  warning(.unchecked, " patient(s) have ", OPYRS, " but no ", OPDATE, ", so their origin is not ",
+          "checked against the operation date.", call. = FALSE)
+}
+# Operations before the origin are drawn, left of the diagonal, by an
 # hvtiPlotR that counts them in meta$n_opyrs_negative; this row says how many,
 # because a build counting from a later origin is a problem to fix there. An
 # older hvtiPlotR refuses them instead, so the field is absent and so is the row.
 .before <- fp$meta$n_opyrs_negative
 .window <- data.frame(
-  quantity = c("patients", "operation year missing", if (!is.null(.before)) "operation before origin",
+  quantity = c("origin", "patients", "operation year missing",
+               if (!is.null(.unchecked)) "origin not checked (no operation date)",
+               if (!is.null(.before)) "operation before origin",
                "first operation", "last operation", "close date", "close date is"),
-  value = c(fp$meta$n_obs, fp$meta$n_opyrs_missing, .before, format(fp$meta$first_operation),
+  value = c(paste0(fp$meta$origin_year, ", ", fp$meta$origin_source),
+            fp$meta$n_obs, fp$meta$n_opyrs_missing, .unchecked, .before, format(fp$meta$first_operation),
             format(fp$meta$study_end), format(close_date), close_source)
 )
 .child("tbl gfup window", "Operation years and the close date", "knitr::kable(.window, row.names = FALSE)")
@@ -730,15 +759,17 @@ Code
 knitr::kable(.window, row.names = FALSE)
 ```
 
-| quantity                | value             |
-|:------------------------|:------------------|
-| patients                | 800               |
-| operation year missing  | 0                 |
-| operation before origin | 0                 |
-| first operation         | 1990-01-25        |
-| last operation          | 2024-12-10        |
-| close date              | 2025-12-31        |
-| close date is           | set in CLOSE_DATE |
+| quantity | value |
+|:---|:---|
+| origin | 1990, read from `dt_surg` less `iv_opyrs` |
+| patients | 800 |
+| operation year missing | 0 |
+| origin not checked (no operation date) | 0 |
+| operation before origin | 0 |
+| first operation | 1990-01-25 |
+| last operation | 2024-12-10 |
+| close date | 2025-12-31 |
+| close date is | set in CLOSE_DATE |
 
 Table 3: Operation years and the close date
 
@@ -805,7 +836,7 @@ for (i in seq_len(nrow(fp$data))) {
   # The caption key names the house colors that COLORS <- NULL draws and the
   # shapes set here, so a study that sets COLORS renames them in .key below.
   if (row$type == "followup") {
-    fc <- hvtiRutilities::followup_check(d, event = PANELS[[nm]]$status, followup = PANELS[[nm]]$time,
+    fc <- hvtiRutilities::followup_check(d, time_cols = PANELS[[nm]]$time, event_col = PANELS[[nm]]$status,
                                          stats = .followup_stats)
     .followup <- .followup_table(fc, d, PANELS[[nm]]$status)
     .child(paste("tbl gfup", nm, "followup"),
@@ -837,7 +868,7 @@ for (i in seq_len(nrow(fp$data))) {
   if (row$type != "followup") {
     for (j in seq_len(k)) {
       .ev <- EVENTS[[nm]]$event[[j]]
-      fc <- hvtiRutilities::followup_check(d, event = .ev, followup = EVENTS[[nm]]$time[[j]],
+      fc <- hvtiRutilities::followup_check(d, time_cols = EVENTS[[nm]]$time[[j]], event_col = .ev,
                                            stats = .followup_stats)
       .followup <- .followup_table(fc, d, .ev)
       # By the event's place in the panel, not its column name: .child() cleans
@@ -948,7 +979,7 @@ titles <- c(continuous = "Continuous variables", percent = "Categorical variable
 freq_section <- intersect(c("percent", "count"), SECTIONS)[1L]
 draw_section <- function(section) {
   sec <- hvtiPlotR::hv_eda_pages(if (section == "continuous") .d_eda else .d_eda_bars, x_col = X_LABEL,
-                                 section = section, vars = VARIABLES,
+                                 section = section, var_cols = VARIABLES,
                                  labels = labels, unique_limit = UNIQUE_LIMIT)
   cat("\n## ", titles[[section]], " (", sec$meta$n_vars, ")\n\n", sep = "")
   if (!sec$meta$n_vars) {
@@ -957,8 +988,8 @@ draw_section <- function(section) {
   }
   vars <- sec$data$variable
   if (section == "continuous") {
-    stats <- hvtiRutilities::proc_means(d, vars = vars, stats = c("n", "nmiss", "mean", "std", "min",
-                                                                  "p15", "median", "p85", "max"))
+    stats <- hvtiRutilities::proc_means(d, var_cols = vars, stats = c("n", "nmiss", "mean", "std", "min",
+                                                                      "p15", "median", "p85", "max"))
     .child(paste("tbl eda", section, "summary"), "Continuous variables",
            "knitr::kable(stats, digits = 2, row.names = FALSE)")
   } else if (identical(section, freq_section)) {
@@ -971,9 +1002,9 @@ draw_section <- function(section) {
     .child(paste("tbl eda", section, "frequencies"), "Categorical variables, missing counted",
            "knitr::kable(freq, row.names = FALSE)")
   }
-  # The bars carry hover labels in HTML: a page names no categories, so a reader hovers a bar
-  # for its category, year and count. The saved figure is the same either way.
-  hover <- section != "continuous" && knitr::is_html_output() && requireNamespace("ggiraph", quietly = TRUE) &&
+  # With HOVER, the bars carry hover labels in HTML: a page names no categories, so a reader
+  # hovers a bar for its category, reference value and count. The saved figure is the same either way.
+  hover <- HOVER && section != "continuous" && knitr::is_html_output() && requireNamespace("ggiraph", quietly = TRUE) &&
     "hv_girafe" %in% getNamespaceExports("hvtiPlotR")
   pages <- plot(sec, ncol = GRID_NCOL, nrow = GRID_NROW, alpha = ALPHA, interactive = hover)
   files <- character(0)
@@ -1119,8 +1150,8 @@ apart by color alone; the categorical frequency table above names them.
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-14 18:10:51 EST  |
-|                 | Ended          | 2026-11-14 18:10:58 EST  |
+| Run             | Started        | 2026-11-18 11:58:07 EST  |
+|                 | Ended          | 2026-11-18 11:58:14 EST  |
 |                 | Duration       | 7 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -1129,12 +1160,12 @@ apart by color alone; the categorical frequency table above names them.
 |                 | Template       | dc.eda                   |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.6.0                    |
-| Dataset `built` | Version file   | built_20261114.parquet   |
-|                 | Version date   | 2026-11-14               |
+|                 | hvtiRtemplates | 1.6.1                    |
+| Dataset `built` | Version file   | built_20261118.parquet   |
+|                 | Version date   | 2026-11-18               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | d99147a5c095             |
+|                 | sha256         | d4581c9fbd56             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |
