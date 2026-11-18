@@ -64,9 +64,9 @@ gallery_family(
       "^DATASET <- \"built\"$" = "DATASET <- \"echo\"",
       "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
       "^RESPONSE <- " = "RESPONSE <- \"lvef\"",
-      # A study's M is in the thousands; 200 keeps the gallery fast, and the
-      # error path says whether it was enough.
-      "^M  <- 1000$" = "M  <- 200"
+      # The template's M is 500; 200 keeps the gallery fast, and the error
+      # path says whether it was enough.
+      "^M  <- 500$" = "M  <- 200"
     ))
   )
 )

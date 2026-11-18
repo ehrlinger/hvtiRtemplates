@@ -103,7 +103,9 @@ gallery_family(
         "Describes the `vp-fit` screen in this set patient by patient: each selected predictor's local gradient.\n\n<!--"
     )),
     # No outcome: the nine predictors the rf fits grow on, with NYHA class entered as
-    # the grade it is. A smaller forest and three refits keep the render short.
+    # the grade it is. Three refits keep the render short. The template's 1,000
+    # trees still leave one of the nine unexamined, which the default
+    # MAX_UNTESTED (0.1) refuses, so the gallery reports it instead of stopping.
     "vp-dependence" = list(subject = "preop", type = "vp", choices = list(
       "^<!-- EDIT: say which variables this studies" = paste0(
         "Gallery job on the synthetic cohort: how the nine preoperative predictors the rf fits grow on ",
@@ -112,7 +114,7 @@ gallery_family(
       "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
       "^VARIABLES <- " = sub("^PREDICTORS", "VARIABLES", rf_predictors),
       "^ORDINAL <- " = "ORDINAL <- \"nyha_pr\"",
-      "^NTREE <- " = "NTREE <- 200",
+      "^MAX_UNTESTED <- " = "MAX_UNTESTED <- NULL",
       "^REPEATS <- " = "REPEATS <- 3"
     ))
   )
