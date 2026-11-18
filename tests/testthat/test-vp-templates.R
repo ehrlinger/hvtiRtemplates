@@ -1014,7 +1014,8 @@ test_that("both uvarpro() calls in vp-dependence carry the rule limits, and the 
     expect_true(all(grepl(arg, calls, fixed = TRUE)), info = arg)
   }
   choices <- rf_chunk(lines, "edit-study-choices")
-  for (default in c("NTREE <- 1000", "MAX_TREE <- 1000", "MAX_RULES_TREE <- 20", "MAX_UNTESTED <- 0.1")) {
+  for (default in c("NTREE <- 1000", "MAX_TREE <- 1000", "MAX_RULES_TREE <- 20", "MAX_UNTESTED <- 0.1",
+                    "MIN_UNTESTED <- 1")) {
     expect_true(default %in% choices, info = default)
   }
 })
@@ -1044,14 +1045,16 @@ test_that("changing MAX_RULES_TREE makes both vp-dependence caches stale, and RE
   expect_true(all(file.mtime(files) > stamps))
 })
 
-test_that("vp-dependence stops on an unexamined variable by default, and with MAX_UNTESTED = NULL hands it on", {
+test_that("vp-dependence stops on an unexamined variable at MIN_UNTESTED = 0, and with MAX_UNTESTED = NULL hands it on", {
   skip_on_cran()
   vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
   # Five trees and two rules a tree leave a variable without a release rule on this cohort. Which one is
   # chance and differs between platforms (x2 on macOS, b on Ubuntu), so the test reads it from the coverage.
-  few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2, MAX_UNTESTED = NULL))
+  # MIN_UNTESTED = 0 holds the five variables to the share alone; at its default of 1, one miss would pass, and the
+  # coverage-gate test covers that boundary.
+  few <- utils::modifyList(vpd_choices, list(MAX_TREE = 5, MAX_RULES_TREE = 2, MAX_UNTESTED = NULL, MIN_UNTESTED = 0))
   env <- rf_env(vpd_data())
-  # The shipped default, 0.1, stops: modifyList() drops vpd_choices' 0.5, so `few` leaves MAX_UNTESTED to the template.
+  # The shipped share, 0.1, stops: modifyList() drops vpd_choices' 0.5, so `few` leaves MAX_UNTESTED to the template.
   err <- expect_error(rf_run("vp", "dependence", c(vpd_labels[seq_len(which(vpd_labels == "coverage-gate"))]), env, few),
                       "MAX_UNTESTED")
   expect_identical(env$MAX_UNTESTED, 0.1)
@@ -1064,6 +1067,40 @@ test_that("vp-dependence stops on an unexamined variable by default, and with MA
   h <- readRDS(env$set_path("estimates", "dependence.rds"))
   expect_gt(length(h$not_examined), 0L)
   expect_identical(h$not_examined, env$.coverage$variable[env$.coverage$rules == 0L])
+})
+
+test_that("vp-dependence's coverage gate allows MIN_UNTESTED unexamined variables however few there are", {
+  # The gate chunk alone, on a stated coverage, so each boundary is exact rather than left to a forest.
+  gate <- rf_chunk(readLines(template_path("vp", "dependence"), warn = FALSE), "coverage-gate")
+  run_gate <- function(n_cols, n_not, max_untested = 0.1, min_untested = 1) {
+    env <- new.env(parent = globalenv())
+    env$.cols <- paste0("v", seq_len(n_cols))
+    env$.not_examined <- utils::head(env$.cols, n_not)
+    env$MAX_UNTESTED <- max_untested
+    env$MIN_UNTESTED <- min_untested
+    utils::capture.output(eval(parse(text = gate), envir = env))
+  }
+  # Nine variables, one unexamined: the share alone (1/9 > 0.1) stopped this render.
+  expect_no_error(run_gate(9, 1))
+  expect_error(run_gate(9, 2), "2 of 9 variables were not examined", fixed = TRUE)
+  expect_error(run_gate(9, 1, min_untested = 0), "MIN_UNTESTED (0)", fixed = TRUE)
+  # Thirty variables: the share allows three, so MIN_UNTESTED changes nothing there.
+  expect_no_error(run_gate(30, 3))
+  err <- expect_error(run_gate(30, 4), "4 of 30 variables were not examined", fixed = TRUE)
+  expect_match(conditionMessage(err), "v1, v2, v3, v4", fixed = TRUE)
+  # A larger floor overrides the share, and NULL turns the gate off.
+  expect_no_error(run_gate(30, 4, min_untested = 4))
+  expect_no_error(run_gate(9, 9, max_untested = NULL))
+})
+
+test_that("vp-dependence refuses a MIN_UNTESTED that is not a whole number of at least 0", {
+  skip_on_cran()
+  vp33_skip_unless_stack(c(rf_template_packages("vp", "dependence"), "ggraph"))
+  labels <- vpd_labels[seq_len(which(vpd_labels == "fit"))]
+  for (bad in list(-1, 0.5, NA_real_, c(1, 2), "1")) {
+    expect_error(rf_run("vp", "dependence", labels, rf_env(vpd_data()), utils::modifyList(vpd_choices, list(MIN_UNTESTED = bad))),
+                 "MIN_UNTESTED must be a single whole number", fixed = TRUE)
+  }
 })
 
 test_that("vp-dependence's default rule limits reach uvarpro(), not varPro's 200 trees", {

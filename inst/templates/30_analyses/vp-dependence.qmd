@@ -207,14 +207,21 @@ NTREE <- 1000
 # halve that where the coverage table stays full.
 MAX_TREE <- 1000
 MAX_RULES_TREE <- 20
-# EDIT: the largest share of the variables (VARIABLES and OUTCOME) that may go
-# unexamined, with no release rule in the full fit, before the render stops. A
-# variable with no rule has no edge leaving it, and that absence must not be
-# read as independence. At the defaults above none went unexamined in the
-# simulations, so a share past 0.1 says the forest is too small for these data
-# and the fix is more trees (MAX_TREE with NTREE). NULL reports the unexamined in
-# the coverage table and does not stop.
+# EDIT: how many of the variables (VARIABLES and OUTCOME) may go unexamined,
+# with no release rule in the full fit, before the render stops. A variable
+# with no rule has no edge leaving it, and that absence must not be read as
+# independence. The render stops when the unexamined are both more than
+# MAX_UNTESTED's share of the variables and more than MIN_UNTESTED of them.
+# At the defaults above none went unexamined in the simulations, so a share
+# past 0.1 says the forest is too small for these data and the fix is more
+# trees (MAX_TREE with NTREE). The share alone allows none at 10 variables or
+# fewer, where one unexamined variable can be chance: a nine-variable cohort
+# left one of nine unexamined at 1,000 trees (three at 500). MIN_UNTESTED lets
+# that one through and still stops on two; 0 holds a small study to the share
+# alone. NULL MAX_UNTESTED reports the unexamined in the coverage table and
+# does not stop.
 MAX_UNTESTED <- 0.1
+MIN_UNTESTED <- 1
 
 # EDIT: the fixed edge cutoff the noise bar is reported beside, and falls back
 # to when no noise column earned any weight. 0.25 is varPro's default.
@@ -542,6 +549,10 @@ if (!is.null(MAX_UNTESTED) && !(is.numeric(MAX_UNTESTED) && length(MAX_UNTESTED)
                                   MAX_UNTESTED >= 0 && MAX_UNTESTED <= 1)) {
   stop("MAX_UNTESTED must be NULL or a single share in [0, 1].", call. = FALSE)
 }
+if (!(is.numeric(MIN_UNTESTED) && length(MIN_UNTESTED) == 1L && !is.na(MIN_UNTESTED) && MIN_UNTESTED >= 0 &&
+        MIN_UNTESTED == round(MIN_UNTESTED))) {
+  stop("MIN_UNTESTED must be a single whole number of at least 0.", call. = FALSE)
+}
 set.seed(abs(SEED))
 # packages = keys each cache on the engine doing the work as well as on
 # varPro, which only calls it: randomForestSRC grows the forest and glmnet
@@ -585,11 +596,14 @@ if (length(.not_examined)) {
   cat("Not examined: ", paste(.not_examined, collapse = ", "), ". The forest built no rule for them, so no edge ",
       "leaves them; edges into them can still appear.\n", sep = "")
 }
-if (!is.null(MAX_UNTESTED) && length(.not_examined) / length(.cols) > MAX_UNTESTED) {
+# Both must be exceeded, so MIN_UNTESTED is a floor under the share's allowance:
+# at 9 variables and 0.1 the share allows none and MIN_UNTESTED one.
+if (!is.null(MAX_UNTESTED) && length(.not_examined) > MIN_UNTESTED &&
+      length(.not_examined) / length(.cols) > MAX_UNTESTED) {
   stop(length(.not_examined), " of ", length(.cols), " variables were not examined, more than MAX_UNTESTED (",
-       MAX_UNTESTED, ") allows: ", paste(.not_examined, collapse = ", "), ". The forest built no release rule for ",
-       "them. Raise MAX_TREE (up to NTREE), MAX_RULES_TREE or NTREE, set REFIT <- TRUE and re-render; ",
-       "MAX_UNTESTED <- NULL reports them without stopping.", call. = FALSE)
+       MAX_UNTESTED, ") and MIN_UNTESTED (", MIN_UNTESTED, ") allow: ", paste(.not_examined, collapse = ", "),
+       ". The forest built no release rule for them. Raise MAX_TREE (up to NTREE), MAX_RULES_TREE or NTREE, ",
+       "set REFIT <- TRUE and re-render; MAX_UNTESTED <- NULL reports them without stopping.", call. = FALSE)
 }
 ```
 
@@ -766,7 +780,8 @@ no rule of its own, so no edge leaves it in the graph: an edge it lacks is
 missing because it was not looked at, not because the variable is independent.
 Edges into it can still appear, because it is a predictor in every other
 variable's lasso. The coverage table says which variables those are, and the
-render stops when their share passes `MAX_UNTESTED`, unless it is `NULL`.
+render stops when their share passes `MAX_UNTESTED` and their count passes
+`MIN_UNTESTED`, unless `MAX_UNTESTED` is `NULL`.
 
 **A variable with no edge is not an independent one.** A variable with no edge at
 the bar has no link strong enough to beat the noise in this forest. It may
