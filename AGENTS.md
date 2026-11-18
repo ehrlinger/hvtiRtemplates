@@ -452,7 +452,7 @@ substituting a guess.
   `hvtiRimputation`, `hvtiRlifetables`, `hvtiRpropensity`, `hvtiRtables`, `hvtiRtemplates`,
   `hvtiRutilities` and `TemporalHazard`. `hvtiBoostmtree` left the `hvtiR` registry at 1.1.2,
   replaced by `ggBoostedTrees`, which is the likeliest reason its ruleset was not brought
-  along; it is recorded here, not changed. This paragraph has now been wrong about the family
+  along; it is recorded here, not changed. The repository was deleted on 2026-11-18. This paragraph has now been wrong about the family
   twice, in opposite directions, so the lesson stands: **read the ruleset for the repo you
   are in** rather than trusting any family-wide claim, including this one.
   <sub>History (superseded 2026-09-10): measured over fourteen repositories on 2026-09-02,
