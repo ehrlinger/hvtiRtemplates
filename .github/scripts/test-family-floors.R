@@ -6,6 +6,9 @@
 # Linux runs SKIP 0 under NOT_CRAN=true (AGENTS.md, "The automated gates"), so
 # any skip here is new.
 
+# testthat stops after 10 failures by default. One missing function at a floor
+# fails many tests, and the cap would hide every other break behind it.
+options(testthat.progress.max_fails = Inf)
 res <- as.data.frame(testthat::test_local(stop_on_failure = TRUE, reporter = "summary"))
 skipped <- res[res$skipped, c("file", "test")]
 cat(sprintf("\nFamily floors: FAIL %d | WARN %d | SKIP %d | PASS %d\n",
