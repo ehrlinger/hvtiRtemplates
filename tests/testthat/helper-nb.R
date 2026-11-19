@@ -19,11 +19,25 @@ nb_run <- function(labels, env, choices = list()) {
     if (identical(label, "setup")) {
       eval_setup_chunk(code, env)  # nolint: object_usage_linter.
     } else {
-      suppressMessages(eval(parse(text = code), envir = env))
+      withCallingHandlers(
+        suppressMessages(eval(parse(text = code), envir = env)),
+        warning = function(w) if (nb_small_cohort_notice(w)) invokeRestart("muffleWarning")
+      )
     }
     if (identical(label, "edit-study-choices")) list2env(choices, envir = env)
   }
   invisible(env)
+}
+
+# ggBoostedTrees (since #46) warns when some subjects were never out of bag by
+# m.opt, since their fitted trajectory is the starting value rather than a
+# prediction. On nb_data()'s 40 patients a few always are, so the notice is true
+# of the test cohort and says nothing about the template. It is muffled by its
+# message and nothing else, as the rf tests muffle their drawing notices, and a
+# study still sees it in its report.
+nb_small_cohort_notice <- function(w) {
+  grepl("^gg_boost_trajectory: [0-9]+ of [0-9]+ subject\\(s\\) were never out of bag by m\\.opt",
+        conditionMessage(w))
 }
 
 # A small longitudinal cohort: 40 patients, 3 to 6 visits each, a continuous
