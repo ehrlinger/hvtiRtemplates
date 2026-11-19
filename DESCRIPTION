@@ -53,7 +53,7 @@ Suggests:
     cluster (>= 2.1.8),
     fs,
     ggBoostedTrees (>= 0.9.1),
-    ggRandomForests (>= 4.0.0),
+    ggRandomForests (>= 4.0.1),
     ggiraph (>= 0.9.5),
     ggplot2,
     ggraph,
