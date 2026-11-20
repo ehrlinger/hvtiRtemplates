@@ -256,15 +256,23 @@ bystander <- function(cmd = "exec sleep 60") {
 # Waits until a bystander's marker is on a readable process. On Linux Rscript starts through the `R` shell script,
 # and under a loaded check that can take well past ten seconds; failing here names the cause rather than letting a
 # slow start read as a cancel or status defect. The wait stops early if the bystander dies, and a failure says
-# whether it was still alive and what it printed, so a slow start can be told from a dead one (#587).
+# what state the process was in, what it was running and what it printed, so a slow start (still `sh`), an
+# unreadable marker (already R) and a silent death (a zombie, killed by a signal) can be told apart (#587).
 wait_for_marker <- function(marker, b, timeout = 60) {
+  # A process killed by a signal and not yet reaped still reads as running; only its status says it died.
+  live <- function() alive(b$h) && !identical(tryCatch(ps::ps_status(b$h), error = function(e) NA), "zombie")
   deadline <- Sys.time() + timeout
-  while (!length(ps::ps_find_tree(marker)) && alive(b$h) && Sys.time() < deadline) Sys.sleep(0.1)
+  while (!length(ps::ps_find_tree(marker)) && live() && Sys.time() < deadline) Sys.sleep(0.1)
   if (length(ps::ps_find_tree(marker))) return(invisible(TRUE))
   out <- file.path(b$dir, "out")
   said <- if (file.exists(out)) paste(utils::tail(readLines(out, warn = FALSE), 20), collapse = "\n") else ""
+  state <- tryCatch(ps::ps_status(b$h), error = function(e) "gone")
+  cmd <- tryCatch(paste(ps::ps_cmdline(b$h), collapse = " "), error = function(e) "unreadable")
+  kids <- tryCatch(vapply(ps::ps_children(b$h, recursive = TRUE), function(k) paste(ps::ps_cmdline(k), collapse = " "), ""),
+                   error = function(e) character())
   stop("the bystander's marker never appeared within ", timeout, " seconds; the bystander ",
-       if (alive(b$h)) "is still running" else "had exited",
+       if (live()) "is still running" else "had exited", " (status ", state, ", running `", cmd, "`",
+       if (length(kids)) paste0(", children: ", paste0("`", kids, "`", collapse = ", ")), ")",
        if (nzchar(said)) paste0(", after printing:\n", said) else ", having printed nothing", call. = FALSE)
 }
 
