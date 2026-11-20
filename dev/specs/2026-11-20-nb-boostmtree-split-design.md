@@ -90,15 +90,18 @@ share), dropped the same day.
 ## 4. Architecture
 
 ```
-nb-boostmtree_fit      fit (+ N_REFITS refits)  ->  estimates/nb-boostmtree-fit.rds
+nb-boostmtree_fit      fit (+ N_REFITS refits)  ->  estimates/nb-boostmtree_fit.rds
 nb-boostmtree_explain  reads that file, never fits  ->  importance, effects, trajectories
 ```
 
-The handoff is `set_path("estimates", "nb-boostmtree-fit.rds")`, within one
+The handoff is `set_path("estimates", "nb-boostmtree_fit.rds")`, within one
 `(subject, type)` set, as `rfs.rds` is. **It is not `nb-boostmtree.rds`**, the
 file the deprecated job writes: that holds a bare fit, and while the old
 template stays on disk (section 7), rendering an old job in the same set would
-overwrite a bundle of the same name and break `_explain`. Distinct names give
+overwrite a bundle of the same name and break `_explain`. Nor is it
+`nb-boostmtree-fit.rds`: the deprecated job caches its fit under the name
+`nb-boostmtree-fit` in the same folder, so that path is its cache file. The
+underscore name matches the template and collides with nothing the old job writes. Distinct names give
 each file one owner and one format. The fit's cache directory follows the new
 name for the same reason.
 
@@ -182,7 +185,7 @@ only within one randomForestSRC version.
 
 ## 6. `nb-boostmtree_explain`
 
-**Reading the fit.** Reads `estimates/nb-boostmtree-fit.rds` in its own set
+**Reading the fit.** Reads `estimates/nb-boostmtree_fit.rds` in its own set
 through `.read_handoff(path, "fit", .cfg, "the nb-boostmtree_fit job")`, as
 `rfs-explain` reads `rfs.rds`, never with a bare `readRDS()`. Stops, naming
 `nb-boostmtree_fit`, when the file is missing, its lineage is incomplete, or
@@ -273,7 +276,8 @@ sharing `helper-nb.R`)
   and `_explain` refuses a bundle whose lineage is missing or sits only on the
   inner fit. A final render of `_explain` over a fit made from unregistered
   working data is refused, as for `rfs-explain` (the regression test).
-- Paths: `_fit` writes `nb-boostmtree-fit.rds` and never `nb-boostmtree.rds`, and
+- Paths: `_fit` writes `nb-boostmtree_fit.rds`, never `nb-boostmtree.rds` or the old
+  job's cache `nb-boostmtree-fit.rds`, and
   rendering the deprecated job in the same set leaves `_explain`'s input intact.
 - `K_SHADOW` is in the cache key (changing it refits); `K_SHADOW = 0` renders the
   single-run figure with no band, runs vimp once, and never calls the pool.
@@ -289,7 +293,7 @@ sharing `helper-nb.R`)
 
 **Gallery.** `dev/gallery/family-nb.R` gets `_fit` and `_explain` entries
 **beside** `nb-boostmtree`, rendered in the order `_fit`, then `_explain`;
-`_explain` reads the gallery fit's `nb-boostmtree-fit.rds`. The old entry stays
+`_explain` reads the gallery fit's `nb-boostmtree_fit.rds`. The old entry stays
 for the deprecation window: its row is still `shipped` and its file is on disk,
 so `gallery_missing()` wants a job for it and `gallery_build()` stops without
 one (`dev/gallery/gallery.R`). It goes when the file does. The distinct
