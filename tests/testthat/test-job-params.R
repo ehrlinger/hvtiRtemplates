@@ -23,11 +23,7 @@ test_that("params and output_file are checked before anything starts", {
     expect_error(fn(job, output_file = c("a.html", "b.html")), "one file name")
   }
   expect_error(job_status(job, output_file = "../x.html"), "no directory")
-})
-
-test_that("cancel_job() checks output_file before anything starts", {
-  skip_on_os("windows")
-  expect_error(cancel_job(status_job(), output_file = "x"), "with an extension")
+  expect_error(cancel_job(job, output_file = "x"), "with an extension")
 })
 
 test_that("an output_file whose run key names a file beside this job is refused", {
