@@ -51,7 +51,7 @@ test_that("the copy is read where the render starts, so two studies can resolve 
   # R CMD check sets R_PROFILE_USER to "", so no R it starts reads a directory's .Rprofile.
   withr::local_envvar(R_PROFILE_USER = NA)
   a <- .fingerprint_there(plain, rscript)
-  skip_if(!length(a), "no installed hvtiRtemplates for the plain directory to find")
+  skip_if(!identical(a[1L], "FINGERPRINT"), "no loadable hvtiRtemplates for the plain directory to find")
   b <- .fingerprint_there(other, rscript)
   # The other study loads its own copy, from its own library, wherever the plain one lives.
   expect_identical(b[[3L]], "0.0.1")
@@ -67,6 +67,52 @@ test_that("the copy is read where the render starts, so two studies can resolve 
     .stale_install_reason(plain, rscript)
     .stale_install_reason(other, rscript)
     expect_length(.install_state$reasons, 2L)
+  })
+})
+
+test_that("a copy found where the render looks that cannot load says so, not that it is missing (#491)", {
+  skip_on_cran()
+  # Under R CMD check on Windows the Rscript this starts ignores R_LIBS, as it ignores a study's
+  # .Rprofile (#511), and loads the check's own copy, so no test can set its library there.
+  skip_on_os("windows")
+  # A copy whose import is not on the child's library path, as when a study's .Rprofile drops the
+  # user library that held the dependencies. The child sees only the copy's library.
+  copy_lib <- withr::local_tempdir()
+  pkg <- function(name, imports = NULL) {
+    src <- file.path(withr::local_tempdir(.local_envir = parent.frame()), name)
+    dir.create(file.path(src, "R"), recursive = TRUE)
+    writeLines(c(paste("Package:", name), "Version: 0.0.1", "Title: A Planted Package",
+                 "Description: A planted package.", "License: GPL-3",
+                 if (!is.null(imports)) paste("Imports:", imports)), file.path(src, "DESCRIPTION"))
+    writeLines(if (is.null(imports)) "export(planted)" else paste0("import(", imports, ")"), file.path(src, "NAMESPACE"))
+    writeLines("planted <- function() TRUE", file.path(src, "R", "planted.R"))
+    src
+  }
+  r_bin <- file.path(R.home("bin"), "R")
+  install <- function(src, lib) {
+    out <- system2(r_bin, c("CMD", "INSTALL", "--no-test-load", "-l", shQuote(lib), shQuote(src)),
+                   stdout = TRUE, stderr = TRUE)
+    expect_true(dir.exists(file.path(lib, basename(src))), label = paste(out, collapse = "\n"))
+  }
+  # The dependency goes in the copy's own library, which R CMD INSTALL -l puts on the path it
+  # resolves imports from, and is removed once the copy is in.
+  install(pkg("plantedDropped"), copy_lib)
+  install(pkg("hvtiRtemplates", imports = "plantedDropped"), copy_lib)
+  unlink(file.path(copy_lib, "plantedDropped"), recursive = TRUE)
+  # R_LIBS puts the copy first, and the dependency's library is on no path the child has. Empty
+  # startup files, so a user or site profile cannot rewrite the library path.
+  quiet <- withr::local_tempfile(lines = "")
+  withr::local_envvar(R_LIBS = copy_lib, R_PROFILE_USER = quiet, R_PROFILE = quiet)
+  rscript <- file.path(R.home("bin"), "Rscript")
+  dir <- withr::local_tempdir()
+  there <- .fingerprint_there(dir, rscript)
+  expect_identical(there[[1L]], "CANNOT-LOAD")
+  expect_identical(normalizePath(there[[2L]]), normalizePath(copy_lib))
+  with_fake_stale({
+    reason <- .stale_install_reason(dir, rscript)
+    expect_match(reason, "cannot load where a render's R process looks", fixed = TRUE)
+    expect_match(reason, "plantedDropped", fixed = TRUE)
+    expect_no_match(reason, "is not installed", fixed = TRUE)
   })
 })
 
@@ -90,7 +136,7 @@ test_that("a submission that reaches the launch skips when the copy it would run
     cond <- tryCatch(.submit_job(job, final = FALSE, render_call = "1", root = dirname(job)),
                      skip = function(e) e)
     expect_s3_class(cond, "skip")
-    expect_match(conditionMessage(cond), "is not the code under test|is not installed where")
+    expect_match(conditionMessage(cond), "is not the code under test|is not installed where|cannot load where")
   })
 })
 
