@@ -1,3 +1,78 @@
+# hvtiRtemplates 1.6.2
+
+- `vp-dependence`'s coverage gate no longer stops a small study on one unexamined variable. It stopped when the
+  unexamined were more than `MAX_UNTESTED`'s share of the variables, and at the default 0.1 that allowed none at
+  10 variables or fewer: a nine-variable cohort stopped at the template's own 1,000 trees, with one variable left
+  without a release rule. A new study choice, `MIN_UNTESTED <- 1`, is a floor under that allowance, so the render
+  now stops only when the unexamined pass both the share and the count. From 11 variables up the share allows at
+  least one and nothing changes. `MIN_UNTESTED <- 0` restores the old rule. **A job already in a study is a copy
+  of the old template** and keeps the old gate until it is re-copied or edited. `vp-fit` keeps its share-only
+  gate, which `ggRandomForests::varpro_coverage()` applies.
+
+* `DESCRIPTION` now asks for ggRandomForests 4.0.1, the first release that exports `gg_learning()` and
+  `learning_subsample()`. The `rfs-fit`, `rfc-fit` and `rfr-fit` learning curves need both, and 4.0.0, which the
+  floor used to admit, now stops those templates at their version check. A new CI job, `family-floors`, tests
+  the package against every hvtiR family floor `DESCRIPTION` declares, and found the gap.
+
+* `Remotes:` installs `boostmtree` 2.0.13 from the CCF fork (`v2.0.13-ccf`), matching the pin `ggBoostedTrees` now
+  carries, and `nb-boostmtree`'s install line names that tag. Until both pins agreed, pak refused to install the
+  package's dependencies at all. 2.0.12 makes a saved fit much smaller under randomForestSRC 3.9.0 and earlier.
+  2.0.13 draws a fresh subsample at each boosting iteration when `boostmtree.control(seed = )` is set;
+  `nb-boostmtree` seeds through `cache_fit()` rather than that argument, so its fits are not affected. The floor
+  stays at 2.0.8.
+
+* The `nb-boostmtree` tests no longer report ggBoostedTrees' never-out-of-bag notice as a warning. It is true of
+  the tests' 40-patient cohort, not of the template, which still shows it to a study.
+
+* The `study_render` test of a stale job on another host no longer fails at random. It rewrote the run's start
+  time from a fresh clock reading, and when that fell one second after the progress file's, the progress was read
+  as left over from an earlier run and the job was not seen as stale (#590).
+
+* The background-job tests that wait for a process's marker now wait up to 60 seconds rather than 30, stop as soon
+  as that process dies, and when they fail say whether it was still running and what it printed, so a slow start
+  on a loaded machine can be told from a process that never started (#587).
+
+* The render tests' stale-install check now tells a copy that is found but cannot load, because an import is missing
+  from the library path the render's R uses, from a copy that is not installed. It used to skip with "not installed
+  where a render's R process looks" either way, which sent the reader to reinstall a package already there; the skip
+  now names the copy's library and the load error (#491). The check does not model `hvti`'s choice of the study
+  lock's R under `HVTI_R_ROOT`, and a comment at `.quarto_rscript()` says why: no test renders through that R (#492).
+
+* A full test run no longer leaves `Rplots.pdf` in `tests/testthat`. Three groups of tests drew with no device
+  open, so R opened its default one, which in `Rscript` is `pdf()` writing to the working directory. The
+  `dc-tables` label test ran the template's `table-label-changes` chunk, whose `knitr::knit_child()` opens a device
+  with `dev.new()` when no render is in progress; it now points the `device` option at a null pdf. The
+  `sid-clusters` and `sid-stability` tests ran the `fig-silhouette` and `fig-agreement` chunks, which print their
+  plots; the helpers that run them now open a null pdf of their own. The suite also checks for a stray
+  `Rplots*.pdf` after every test: the test that left one gets a warning naming it, and the run stops at teardown
+  (#494). That check uses `testthat::set_state_inspector()` with its `tolerance` argument, so `Suggests:` now asks
+  for testthat 3.3.0, up from 3.0.0.
+
+* `cancel_job()` checks `output_file` before it refuses to run on Windows, as `submit_job()` already does, so a
+  malformed `output_file` there gets its own error rather than the platform refusal.
+* Four tests in `test-job-params.R` call `submit_job()`, which does not run on Windows, and now skip there as the
+  file's other five do. The file arrived after the 2026-11-16 weekly sweep, and pull requests run no Windows leg,
+  so it first ran on Windows in a dispatched sweep and failed.
+
+* When a background-job test's process never shows its marker, the failure now
+  names the process's status, command line and children, and a process killed
+  by a signal but not yet reaped is read as dead, not as still running (#587).
+
+* Docs sweep before 1.6.2. The version-floor block in seventeen templates (rf, rhf, sid, vp and vt) no longer
+  claims the floors were "verified against on <date>", a date several had outgrown when a floor was raised; it now
+  says they are the oldest versions the template works with, and each floor keeps its own reason (#582). `rfc-fit`,
+  `rfr-fit` and `rfs-fit` raise their ggRandomForests floor to 4.0.1, the first release with `gg_learning()` and
+  `learning_subsample()`, in place of a check for the two functions that said no release carried them yet.
+  `rfs-fit` says "events" rather than "deaths" in its narration, captions and learning-curve table, since its
+  endpoint is any time-to-event outcome (#583). `rfc-fit`, `rfr-fit` and `rfs-fit` drop learning-curve simulation
+  figures that had no source and keep the guidance they illustrated (#579). `template_catalog()` documents that
+  `uses` names the functions a template is built on rather than every call, and `hp` and `hs-setup` no longer list
+  functions they do not call (#584).
+
+* When `test-background-job.R`'s bystander process is never found by its marker, the failure now also says whether
+  the marker is in that process's environment and when it started against the time the marker encodes, the two
+  reasons `ps::ps_find_tree()` can miss it (#587).
+
 # hvtiRtemplates 1.6.1
 
 - `vp-fit` and `vp-dependence` now impute missing predictor values once, by random forest and without the
