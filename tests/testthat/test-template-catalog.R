@@ -1,7 +1,7 @@
 test_that("the template catalog ships every owed job type", {
   catalog <- template_catalog()
   expect_s3_class(catalog, "data.frame")
-  expect_equal(nrow(catalog), 76L)
+  expect_equal(nrow(catalog), 77L)
   expect_equal(length(unique(catalog$prefix)), 45L)
   expect_false(any(c("destination", "replaced_by") %in% names(catalog)))
   expect_true(all(c("uses", "upstream", "downstream", "workflows") %in% names(catalog)))
@@ -18,7 +18,7 @@ test_that("the template catalog ships every owed job type", {
 
   # nb's census describes boostmtree: the exemplar survey found no BoostMLR job.
   nb <- catalog[catalog$prefix == "nb", ]
-  expect_setequal(nb$qualifier, c("boostmtree", "boostmtree_fit", "boostmlr"))
+  expect_setequal(nb$qualifier, c("boostmtree", "boostmtree_fit", "boostmtree_explain", "boostmlr"))
   census <- c("sas_breadth", "sas_breadth_jobs", "r_exemplars", "r_jobs")
   expect_true(all(is.na(unlist(nb[nb$qualifier == "boostmlr", census]))))
   expect_false(anyNA(unlist(nb[nb$qualifier == "boostmtree", census])))

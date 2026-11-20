@@ -223,3 +223,15 @@ nb_files_holding <- function(root, values) {
     any(vapply(values, function(v) nb_bytes_hold(bytes, v), logical(1L)))
   }, files)
 }
+
+nb_explain_choices <- function(...) utils::modifyList(list(N_VIMP = 3, SEED = 11, CORES = nb_cores), list(...))
+
+# Fit in `root` with `fit_choices`, then run explain chunks `labels` in a fresh environment.
+nb_explain_in <- function(root, labels = c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance",
+                                           "importance-runs"),
+                          choices = nb_explain_choices(), fit_choices = nb_choices(), fit = TRUE) {
+  if (fit) nb_fit_in(root, choices = fit_choices)
+  env <- nb_env(root)
+  utils::capture.output(nb_explain_run(labels, env, choices))
+  env
+}
