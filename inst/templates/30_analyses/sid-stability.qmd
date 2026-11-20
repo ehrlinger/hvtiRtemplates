@@ -71,7 +71,7 @@ suppressPackageStartupMessages({
 # rf.cores = 1: randomForestSRC's results change with the thread count even
 # with every seed held fixed, so a refit is only reproducible single-threaded.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-11-10.
+# The oldest versions this template works with.
 if (utils::packageVersion("cluster") < "2.1.8") {
   stop("This job needs cluster >= 2.1.8; ", utils::packageVersion("cluster"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)

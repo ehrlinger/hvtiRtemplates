@@ -58,7 +58,7 @@ suppressPackageStartupMessages({
 })
 # One thread, so a bootstrap reproduces from machine to machine.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-22. Below them a
+# The oldest versions this template works with. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
 for (.floor in list(c("hvtiRpropensity", "0.2.3"), c("hvtiPlotR", "2.8.23"))) {

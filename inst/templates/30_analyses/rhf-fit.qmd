@@ -69,7 +69,7 @@ suppressPackageStartupMessages({
 # speed on a large forest, at the cost of that guarantee: a cached fit records
 # its seed, data and package versions, never the threads it ran on.
 options(rf.cores = 1L)
-# The versions this template was verified against, end to end, on 2026-10-26.
+# The oldest versions this template works with.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
 if (utils::packageVersion("randomForestRHF") < "2.1.0") {

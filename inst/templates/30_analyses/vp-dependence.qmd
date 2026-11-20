@@ -74,7 +74,7 @@ suppressPackageStartupMessages({
 # uvarpro() and get.beta.entropy() take no cores argument: rf.cores reaches the
 # forest and mc.cores the lasso's workers.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-22. Below them a
+# The oldest versions this template works with. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {

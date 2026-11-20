@@ -65,7 +65,7 @@ suppressPackageStartupMessages({
 # prediction from VarPro's forests. mc.cores does the same for varPro's own
 # workers, which rf.cores does not reach.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-21.
+# The oldest versions this template works with.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
   stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
