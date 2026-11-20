@@ -47,8 +47,8 @@ Two further decisions the spec left open: the #580 run-time table records the **
 Shell variables used throughout (set them in each new shell):
 
 ```sh
-WT=/Users/ehrlinj/Documents/GitHub/hvtiRtemplates-nb-split
-LIB=/Users/ehrlinj/Library/Caches/hvtiRtemplates-nb-split-lib
+WT=$HOME/Documents/GitHub/hvtiRtemplates-nb-split
+LIB=$HOME/Library/Caches/hvtiRtemplates-nb-split-lib
 export R_LIBS="$LIB" NOT_CRAN=true _R_CHECK_LIMIT_CORES_=TRUE
 ```
 
@@ -66,7 +66,7 @@ export R_LIBS="$LIB" NOT_CRAN=true _R_CHECK_LIMIT_CORES_=TRUE
 - [ ] **Step 1: Check the spec PR and pick the base.**
 
 ```sh
-cd /Users/ehrlinj/Documents/GitHub/hvtiRtemplates && git fetch origin && gh pr view 596 --json state,mergedAt --jq '"\(.state) \(.mergedAt)"'
+cd $HOME/Documents/GitHub/hvtiRtemplates && git fetch origin && gh pr view 596 --json state,mergedAt --jq '"\(.state) \(.mergedAt)"'
 ```
 
 `MERGED <date>`: base is `origin/main`. Anything else: base is `origin/docs/nb-boostmtree-split-spec`, and the PR in Task 8 says it is stacked on #596's content but is opened against `main` (a PR opened against another branch gets no Copilot review; AGENTS.md).
@@ -74,7 +74,7 @@ cd /Users/ehrlinj/Documents/GitHub/hvtiRtemplates && git fetch origin && gh pr v
 - [ ] **Step 2: Create the worktree.** Another session has `docs/sweep-1.6.2` checked out in the main clone, so work in a worktree.
 
 ```sh
-cd /Users/ehrlinj/Documents/GitHub/hvtiRtemplates && git worktree add "$WT" -b feat/nb-boostmtree-split origin/main
+cd $HOME/Documents/GitHub/hvtiRtemplates && git worktree add "$WT" -b feat/nb-boostmtree-split origin/main
 ```
 
 (Use `origin/docs/nb-boostmtree-split-spec` in place of `origin/main` if Step 1 said so.) Expected: `Preparing worktree (new branch 'feat/nb-boostmtree-split')`.
