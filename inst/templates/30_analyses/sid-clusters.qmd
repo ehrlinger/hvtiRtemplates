@@ -66,7 +66,7 @@ suppressPackageStartupMessages({
 # Nothing below is random, but the threads are pinned as in every forest job,
 # so a library that does reach for them behaves the same on every machine.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-22.
+# The oldest versions this template works with.
 if (utils::packageVersion("cluster") < "2.1.8") {
   stop("This job needs cluster >= 2.1.8; ", utils::packageVersion("cluster"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)

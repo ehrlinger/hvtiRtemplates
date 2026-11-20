@@ -6,7 +6,8 @@
 #'
 #' @return A data frame. `uses`, `upstream`, `downstream`, and
 #'   `workflows` are list columns of character vectors. Unmeasured counts
-#'   are `NA_integer_`.
+#'   are `NA_integer_`. `uses` names the functions a template is built on,
+#'   the ones a reader should know about, not every function it calls.
 #'   `description` is a one-sentence summary, given for every template on
 #'   disk and `NA` for most queued ones. `deprecated_by` names the
 #'   template replacing a deprecated one, such as `"dc-gfup"`, and

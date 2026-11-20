@@ -77,24 +77,18 @@ suppressPackageStartupMessages({
 # cost of that guarantee: a cached fit records its seed, data and package
 # versions, never the threads it ran on.
 options(rf.cores = 1L)
-# The versions this template was verified against, end to end, on 2026-09-19.
+# The oldest versions this template works with.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
   stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
-if (utils::packageVersion("ggRandomForests") < "4.0.0") {
-  stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
+# 4.0.1 is the first release with gg_learning() and learning_subsample(), for the
+# learning curve.
+if (utils::packageVersion("ggRandomForests") < "4.0.1") {
+  stop("This job needs ggRandomForests >= 4.0.1; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
-}
-# gg_learning() and learning_subsample(), for the learning curve, are on
-# ggRandomForests' main branch (ehrlinger/ggRandomForests#403) but in no release yet.
-# This becomes a version floor once one carries them.
-if (!all(c("gg_learning", "learning_subsample") %in% getNamespaceExports("ggRandomForests"))) {
-  stop("This job needs a ggRandomForests with gg_learning() and learning_subsample(); ",
-       utils::packageVersion("ggRandomForests"), " is installed and lacks them.\n",
-       "Install it with remotes::install_github(\"ehrlinger/ggRandomForests\"), then re-render.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
@@ -542,9 +536,9 @@ save_figure(.fig, "rfc-fit-learning-error")
 **Reading the curve.** The error usually levels off long before the importance
 ranking does. A cohort whose error has flattened can still give a ranking that a
 second cohort of the same size would not reproduce. Read the agreement at the
-whole cohort, and whether the line is still rising there. In a simulation with
-five real predictors among twenty, a Jaccard agreement of 0.8 took about 525 cases in the smallest class when
-the signal was strong, and was not reached by 920 when it was weak.
+whole cohort, and whether the line is still rising there. How many cases a
+stable ranking needs depends on the signal: the weaker the predictors, the more
+cases in the smallest class it takes to reach an agreement of 0.8.
 That 0.8 is a reference point, not a threshold this job enforces. Agreement at a
 fraction above one half is optimistic, because refits that large share most of
 their patients, and the whole-cohort point is a bootstrap for that reason. `r .learning_note` The

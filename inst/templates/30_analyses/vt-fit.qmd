@@ -63,7 +63,7 @@ suppressPackageStartupMessages({
 # randomForestSRC runs on every core its OpenMP build can see, and the forests
 # changed with the thread count with every seed held fixed.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-22; hvtiPlotR has
+# The oldest versions this template works with; hvtiPlotR has
 # its own check, below. Below them a call here can fail or change meaning, and
 # the message would arrive mid-render rather than here.
 for (.floor in list(c("randomForestSRC", "3.7.0"), c("hvtiRpropensity", "0.2.3"))) {

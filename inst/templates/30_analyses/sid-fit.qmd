@@ -67,7 +67,7 @@ suppressPackageStartupMessages({
 # randomForestSRC runs on every core its OpenMP build can see, and the forest
 # changes with the thread count with every seed held fixed.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-22.
+# The oldest versions this template works with.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
   stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
