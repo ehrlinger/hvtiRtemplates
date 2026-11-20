@@ -1198,7 +1198,7 @@ test_that("a job that models one row per patient refuses a long join, before any
   expect_match(err, "REDUCE <- list(rule = \"last\", by = \"<date>\")", fixed = TRUE)
   expect_match(err, "a template that takes repeated records")
   # It names the templates that take a long join, read from the templates themselves.
-  expect_match(err, "such as dc-eda, dc-general, dc-tables, dc-trends, mm, nb-boostmtree or rhf-fit.", fixed = TRUE)
+  expect_match(err, "such as dc-eda, dc-general, dc-tables, dc-trends, mm, nb-boostmtree, nb-boostmtree_fit or rhf-fit.", fixed = TRUE)
   expect_no_match(err, "gfup|dc-\\*|dp-\\*")
   expect_no_match(err, "data was read")
   expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", one_row_per_patient = NA),

@@ -133,7 +133,7 @@ test_that("ggBoostedTrees older than 0.9.0 is refused with its install line", {
 test_that("the fit groups visits by the study-keyed digest, never the ID", {
   nb_skip_unless_stack()
   root <- nb_study()
-  env <- nb_fit_in(root)
+  env <- nb_fit_in(root, template = "nb.boostmtree")
   expect_s3_class(env$fit, "boostmtree")
   raw_ids <- unique(nb_data()$ccfid)
   expect_false(any(as.character(raw_ids) %in% as.character(env$fit$id.unique)))
@@ -147,7 +147,7 @@ test_that("no saved file holds an MRN, run in globalenv or outside it", {
   mrns <- unique(data$MRN)
   for (parent in list(globalenv(), new.env(parent = globalenv()))) {
     root <- nb_study(data)
-    env <- nb_fit_in(root, parent)
+    env <- nb_fit_in(root, parent, template = "nb.boostmtree")
     expect_identical(tolower(attr(env$job_data$record, "selection")$id), "mrn")
     set_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost")
     expect_setequal(list.files(set_dir),
@@ -178,7 +178,7 @@ test_that("a WHERE on the patient identifier stops before anything is fitted or 
   # a WHERE is saved verbatim in the lineage, so an identifier filter would be too.
   data <- nb_data(id = "MRN")
   root <- nb_study(data)
-  expect_error(nb_fit_in(root, choices = nb_choices(WHERE = quote(MRN != 4730000001))),
+  expect_error(nb_fit_in(root, choices = nb_choices(WHERE = quote(MRN != 4730000001)), template = "nb.boostmtree"),
                class = "hvti_where_identifier")
   expect_length(list.files(hvtiRutilities::study_dir("estimates", root), recursive = TRUE), 0L)
 })
@@ -186,7 +186,7 @@ test_that("a WHERE on the patient identifier stops before anything is fitted or 
 test_that("the saved fit carries the selection in its lineage", {
   nb_skip_unless_stack()
   root <- nb_study()
-  env <- nb_fit_in(root)
+  env <- nb_fit_in(root, template = "nb.boostmtree")
   saved <- readRDS(file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree.rds"))
   sel <- attr(saved, "hvti_provenance")$selection
   expect_identical(sel$id, "ccfid")
@@ -197,7 +197,7 @@ test_that("the saved fit's lineage records MTRY, as \"all\" for NULL and as give
   nb_skip_unless_stack()
   saved_analysis <- function(choices) {
     root <- nb_study()
-    nb_fit_in(root, choices = choices)
+    nb_fit_in(root, choices = choices, template = "nb.boostmtree")
     attr(readRDS(file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree.rds")),
          "hvti_provenance")$analysis
   }
@@ -211,17 +211,17 @@ test_that("the saved fit's lineage records MTRY, as \"all\" for NULL and as give
 test_that("the cache is reused unchanged, and a changed setting stops until REFIT", {
   nb_skip_unless_stack()
   root <- nb_study()
-  env <- nb_fit_in(root)
+  env <- nb_fit_in(root, template = "nb.boostmtree")
   cache <- file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree-fit.rds")
   before <- list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache))
-  env2 <- nb_fit_in(root)
+  env2 <- nb_fit_in(root, template = "nb.boostmtree")
   # Reused, not refitted to an equal result: the cache file is untouched.
   expect_identical(list(md5 = unname(tools::md5sum(cache)), mtime = file.mtime(cache)), before)
   expect_identical(env2$fit$id.unique, env$fit$id.unique)
   # The stale cache stops and names what changed.
-  expect_error(nb_fit_in(root, choices = nb_choices(NU = 0.01)), "inputs$NU", fixed = TRUE,
+  expect_error(nb_fit_in(root, choices = nb_choices(NU = 0.01), template = "nb.boostmtree"), "inputs$NU", fixed = TRUE,
                class = "hvtiRutilities_stale_cache")
-  env3 <- nb_fit_in(root, choices = nb_choices(NU = 0.01, REFIT = TRUE))
+  env3 <- nb_fit_in(root, choices = nb_choices(NU = 0.01, REFIT = TRUE), template = "nb.boostmtree")
   expect_s3_class(env3$fit, "boostmtree")
 })
 
@@ -263,7 +263,7 @@ test_that("changing CORES reuses the cached fit rather than stopping", {
   # Unmocked, as a study runs it. Windows cannot fork and says so when asked
   # for two cores; that notice, and nothing else, is muffled.
   fit_with <- function(cores) {
-    withCallingHandlers(nb_fit_in(root, choices = nb_choices(CORES = cores)), warning = function(w) {
+    withCallingHandlers(nb_fit_in(root, choices = nb_choices(CORES = cores), template = "nb.boostmtree"), warning = function(w) {
       if (grepl("which Windows does not support", conditionMessage(w), fixed = TRUE)) invokeRestart("muffleWarning")
     })
   }
@@ -539,7 +539,7 @@ test_that("the fit chunk refuses to start an uncached fit interactively, and nam
 test_that("the fit chunk runs interactively once the fit is cached, REFIT left TRUE included", {
   nb_skip_unless_stack()
   root <- nb_study()
-  nb_fit_in(root)
+  nb_fit_in(root, template = "nb.boostmtree")
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
   withr::local_envvar(HVTI_ALLOW_LONG_FIT = NA)
   env <- nb_env(root)
@@ -553,7 +553,7 @@ test_that("the fit chunk runs interactively once the fit is cached, REFIT left T
 test_that("a cached fit with REFIT left TRUE guards no memory; a stale one with REFIT guards the fit", {
   nb_skip_unless_stack()
   root <- nb_study()
-  nb_fit_in(root)
+  nb_fit_in(root, template = "nb.boostmtree")
   needs <- numeric()
   testthat::local_mocked_bindings(guard_memory = function(need_gib, ...) {
     needs <<- c(needs, need_gib)

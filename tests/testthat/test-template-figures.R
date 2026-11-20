@@ -1,5 +1,5 @@
 figure_templates <- c("dc-gfup", "dc-stddiff", "dc-tables", "dc-eda", "dc-trends", "hp", "lp-mirror", "lg",
-                      "bc", "bh", "bl", "br", "nb-boostmtree", "rfc-explain", "rfr-explain", "rfs-explain",
+                      "bc", "bh", "bl", "br", "nb-boostmtree", "nb-boostmtree_fit", "rfc-explain", "rfr-explain", "rfs-explain",
                       "rfc-fit", "rfr-fit", "rfs-fit")
 
 template_source <- function(name) {
@@ -33,6 +33,7 @@ test_that("every printed figure is also saved, under its documented name", {
     lg = "lg-",
     `nb-boostmtree` = c("nb-boostmtree-error", "nb-boostmtree-path", "nb-boostmtree-calibration",
                         "nb-boostmtree-importance", "nb-boostmtree-effects-", "nb-boostmtree-traces"),
+    `nb-boostmtree_fit` = c("nb-boostmtree_fit-error", "nb-boostmtree_fit-path", "nb-boostmtree_fit-calibration"),
     `rfc-fit` = c("rfc-fit-diagnostics-error", "rfc-fit-diagnostics-roc",
                   "rfc-fit-learning-stability", "rfc-fit-learning-error"),
     `rfr-fit` = c("rfr-fit-diagnostics-error", "rfr-fit-diagnostics-predicted",

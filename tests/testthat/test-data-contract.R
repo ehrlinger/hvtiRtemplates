@@ -11,7 +11,7 @@ pending_contract_families <- setdiff(template_stems(), c(
   "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
   "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal", "rm-balancing_continuous", "rm-linear",
   "rfs-fit", "rfs-explain", "rfc-fit", "rfc-explain", "rfr-fit", "rfr-explain",
-  "bl", "br", "bc", "bh", "nb-boostmtree"
+  "bl", "br", "bc", "bh", "nb-boostmtree", "nb-boostmtree_fit"
 ))
 
 template_chunk <- function(src, label) {
@@ -43,7 +43,7 @@ expected_defaults <- function(name) {
   # hs-concordance takes them from the hm models it reads.
   if (name %in% c("hm", "hp", "hs-setup", "hs-score", "hs-concordance")) out <- c(out, TIME = "TIME <- NULL", EVENT = "EVENT <- NULL")
   # nb-boostmtree reads one row per visit, so the ID alone is not unique.
-  if (name == "nb-boostmtree") out[["KEY"]] <- "KEY <- c(ID, TIME)"
+  if (name %in% c("nb-boostmtree", "nb-boostmtree_fit")) out[["KEY"]] <- "KEY <- c(ID, TIME)"
   out
 }
 

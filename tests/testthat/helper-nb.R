@@ -1,15 +1,15 @@
 # nb-boostmtree is run here chunk by chunk, as the rf and hazard templates are.
 
-nb_template <- function() {
+nb_template <- function(name = "nb.boostmtree") {
   templates <- template_list()
-  hit <- which(templates$name == "nb.boostmtree")
-  if (length(hit) != 1L) stop("template 'nb-boostmtree' found ", length(hit), " times", call. = FALSE)
+  hit <- which(templates$name == name)
+  if (length(hit) != 1L) stop("template '", name, "' found ", length(hit), " times", call. = FALSE)
   templates$file[[hit]]
 }
 
 # Evaluate chunks `labels` in `env`; `choices` overwrite edit-study-choices.
-nb_run <- function(labels, env, choices = list()) {
-  src <- readLines(nb_template(), warn = FALSE)
+nb_run <- function(labels, env, choices = list(), template = "nb.boostmtree") {
+  src <- readLines(nb_template(template), warn = FALSE)
   # "set" is the old name of the setup chunk, and a list that names both runs it once.
   for (label in unique(vapply(labels, setup_label, ""))) {  # nolint: object_usage_linter.
     at <- which(trimws(src) == paste0("#| label: ", label))
@@ -28,6 +28,10 @@ nb_run <- function(labels, env, choices = list()) {
   }
   invisible(env)
 }
+nb_fit_run <- function(labels, env, choices = list()) nb_run(labels, env, choices, "nb.boostmtree_fit")
+nb_explain_run <- function(labels, env, choices = list()) nb_run(labels, env, choices, "nb.boostmtree_explain")
+nb_bundle_path <- function(root) file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost", "nb-boostmtree_fit.rds")
+nb_set_dir <- function(root) file.path(hvtiRutilities::study_dir("estimates", root), "lvef-boost")
 
 # ggBoostedTrees (since #46) warns when some subjects were never out of bag by
 # m.opt, since their fitted trajectory is the starting value rather than a
@@ -100,7 +104,7 @@ nb_env <- function(root, parent = globalenv()) {
   }
   if (requireNamespace("ggBoostedTrees", quietly = TRUE)) {
     for (f in c("gg_boost_error", "gg_boost_path", "gg_boost_calibration", "gg_boost_vimp", "gg_boost_effect",
-                "gg_boost_trajectory")) {
+                "gg_boost_trajectory", "boost_shadow")) {
       assign(f, getExportedValue("ggBoostedTrees", f), envir = env)
     }
   }
@@ -109,8 +113,8 @@ nb_env <- function(root, parent = globalenv()) {
 
 # The setup chunk without the lines that need a study or attach packages: what
 # is left is the version floors.
-nb_setup_code <- function() {
-  src <- readLines(nb_template(), warn = FALSE)
+nb_setup_code <- function(template = "nb.boostmtree") {
+  src <- readLines(nb_template(template), warn = FALSE)
   at <- which(trimws(src) == "#| label: setup")
   end <- at + which(src[(at + 1L):length(src)] == "```")[1L]
   setup <- src[(at + 1L):(end - 1L)]
@@ -119,8 +123,8 @@ nb_setup_code <- function() {
 
 # The real packages are installed, so the mocked version is the only thing that
 # can trip each floor.
-nb_mocked_setup <- function(pkg, version) {
-  setup <- nb_setup_code()
+nb_mocked_setup <- function(pkg, version, template = "nb.boostmtree") {
+  setup <- nb_setup_code(template)
   env <- new.env(parent = globalenv())
   testthat::local_mocked_bindings(
     packageVersion = function(p, ...) if (identical(p, pkg)) package_version(version) else package_version("99.0.0"),
@@ -132,7 +136,7 @@ nb_mocked_setup <- function(pkg, version) {
 # On CI a missing or too-old stack stops the suite instead of skipping it: boostmtree 2.0.8 reaches CI only through
 # the Remotes pin, and a skip would let every nb test go quiet unnoticed.
 nb_skip_unless_stack <- function() {
-  floors <- c(boostmtree = "2.0.8", ggBoostedTrees = "0.9.0")
+  floors <- c(boostmtree = "2.0.13", ggBoostedTrees = "0.10.2")
   for (pkg in names(floors)) {
     ok <- requireNamespace(pkg, quietly = TRUE) && utils::packageVersion(pkg) >= floors[[pkg]]
     if (ok) next
@@ -193,9 +197,9 @@ nb_file_bytes <- function(path) {
   }
   do.call(c, pieces)
 }
-nb_fit_in <- function(root, parent = globalenv(), choices = nb_choices()) {
+nb_fit_in <- function(root, parent = globalenv(), choices = nb_choices(), template = "nb.boostmtree_fit") {
   env <- nb_env(root, parent)
-  utils::capture.output(nb_run(c("set", "edit-study-choices", "tbl-data", "fit", "save"), env, choices))
+  utils::capture.output(nb_run(c("setup", "edit-study-choices", "tbl-data", "fit", "save"), env, choices, template))
   env
 }
 
