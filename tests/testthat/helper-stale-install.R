@@ -120,7 +120,7 @@ skip_if_stale_install <- function(dir = getwd(), rscript = file.path(R.home("bin
 # The R Quarto's knitr engine starts, found as Quarto's rBinaryPath() finds it: QUARTO_R (an R
 # binary, or the directory holding one), else R_HOME/bin, else PATH. Under R CMD check the
 # Rscript on PATH is a stub that refuses to run, and Quarto never reaches it, for R_HOME is set.
-# hvti's own choice, the lock's R under HVTI_R_ROOT or /opt/R, is not modelled (#492): every test
+# hvti's own choice, the lock's R under HVTI_R_ROOT or /opt/R, is not modeled (#492): every test
 # that runs inst/bin/hvti points HVTI_R_ROOT at a stub Rscript that records its arguments and
 # loads nothing, so no render in the suite starts the R hvti picks.
 .quarto_rscript <- function() {
