@@ -80,7 +80,7 @@ Suggests:
     randomForestSRC (>= 3.7.0),
     survival,
     TemporalHazard (>= 1.2.17),
-    testthat (>= 3.0.0),
+    testthat (>= 3.3.0),
     varPro (>= 3.3.0),
     withr,
     xml2
