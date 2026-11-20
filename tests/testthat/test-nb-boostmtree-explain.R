@@ -141,6 +141,19 @@ test_that("explain stops, naming the fit job, on a missing file, a non-boostmtre
                "has no complete hvti_provenance lineage", fixed = TRUE)
 })
 
+test_that("explain stops, naming the fit job, when the bundle lacks a field", {
+  nb_skip_unless_stack()
+  root <- nb_study()
+  nb_fit_in(root)
+  path <- nb_bundle_path(root)
+  b <- readRDS(path)
+  b$k_shadow <- NULL
+  saveRDS(b, path)
+  expect_error(utils::capture.output(nb_explain_run(c("setup", "edit-study-choices", "fit"), nb_env(root),
+                                                    nb_explain_choices())),
+               "lacks k_shadow. Render the nb-boostmtree_fit job in this set again", fixed = TRUE)
+})
+
 test_that("a final render refuses a fit saved from unregistered working data", {
   nb_skip_unless_stack()
   root <- nb_study()
@@ -206,8 +219,9 @@ test_that("raising N_VIMP reuses the cached runs and adds only the new ones", {
 
 test_that("with K_SHADOW = 0 explain runs importance once, draws one run, and never pools", {
   nb_skip_unless_stack()
+  local_child_chunks()
   root <- nb_study()
-  nb_fit_in(root, choices = nb_choices(K_SHADOW = 0))
+  nb_fit_in(root, choices = nb_choices(K_SHADOW = 0, N_REFITS = 1))
   env <- nb_env(root)
   pooled <- 0L
   env$gg_boost_vimp <- function(object, ...) {
@@ -215,10 +229,15 @@ test_that("with K_SHADOW = 0 explain runs importance once, draws one run, and ne
     ggBoostedTrees::gg_boost_vimp(object, ...)
   }
   out <- utils::capture.output(nb_explain_run(c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance",
-                                                "importance-runs"), env, nb_explain_choices()))
+                                                "importance-runs", "effects"), env, nb_explain_choices()))
   expect_identical(pooled, 0L)
   expect_identical(env$.n_vimp, 1L)
   expect_identical(names(env$.runs), "fit0.run1")
+  expect_length(list.files(nb_set_dir(root), "^nb-boostmtree_explain-vimp-.*[.]rds$"), 1L)
+  expect_identical(env$.runs_plan$name, "fit0.run1")
+  expect_gt(length(env$.effect_vars), 0L)
+  expect_false(any(grepl("shadow", env$.effect_vars)))
+  expect_true(all(env$.effect_vars %in% c("age", "female", "grp")))
   expect_null(env$.pool)
   expect_null(env$importance_table)
   expect_true(any(grepl("no noise band and no share could be computed", out, fixed = TRUE)))
@@ -264,7 +283,7 @@ test_that("the partial effects report their steps", {
   root <- nb_study()
   nb_fit_in(root)
   env <- nb_env(root)
-  nb_explain_run(c("setup", "edit-study-choices"), env, nb_explain_choices())
+  utils::capture.output(nb_explain_run(c("setup", "edit-study-choices"), env, nb_explain_choices()))
   seen <- new.env(parent = emptyenv())
   seen$units <- character()
   bare <- list2env(list(seen = seen), parent = baseenv())

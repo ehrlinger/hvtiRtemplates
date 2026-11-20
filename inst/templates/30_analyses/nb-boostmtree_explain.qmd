@@ -177,6 +177,11 @@ if (!file.exists(.handoff)) {
 .bundle <- .fit_read$value
 .provenance_data <- .fit_read$lineage$data
 .provenance_artifacts <- c(.fit_read$lineage$artifacts, list(.fit_read$record))
+.missing <- setdiff(c("fit", "refits", "versions", "k_shadow", "seed"), names(.bundle))
+if (length(.missing)) {
+  stop("nb-boostmtree_fit.rds lacks ", paste(.missing, collapse = ", "), ". Render the nb-boostmtree_fit job in this set ",
+       "again.", call. = FALSE)
+}
 fit <- .bundle$fit
 if (!(inherits(fit, "boostmtree") && inherits(fit, "grow"))) {
   stop("nb-boostmtree_fit.rds does not hold a (boostmtree, grow) fit. Render the nb-boostmtree_fit job in this set ",
@@ -252,6 +257,8 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 # N_VIMP runs, run j seeded SEED + j and cached on its own, and the runs are
 # pooled: each is judged against its own band, never a pooled one.
 .fits <- c(list(fit0 = fit), stats::setNames(refits, sprintf("fit%d", seq_along(refits))))
+# Without shadows there is no band to pool against, so importance runs once, on the SEED fit.
+if (.bundle$k_shadow == 0) .fits <- .fits["fit0"]
 .n_vimp <- if (.bundle$k_shadow > 0) as.integer(N_VIMP) else 1L
 .runs_plan <- data.frame(fit = rep(names(.fits), each = .n_vimp), run = rep(seq_len(.n_vimp), times = length(.fits)),
                          stringsAsFactors = FALSE)
@@ -261,8 +268,7 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
   f <- .fits[[.runs_plan$fit[[i]]]]
   # One randomForestSRC thread per forked worker, so CORES runs use CORES threads.
   if (CORES > 1L) withr::local_options(rf.cores = 1L)
-  # packages = "randomForestSRC": it runs under boostmtree and neither call names it, so
-  # cache_fit() would not key it.
+  # randomForestSRC runs under boostmtree and neither call names it, so it is keyed here.
   cache_fit(sprintf("nb-boostmtree_explain-vimp-%s-run%d", .runs_plan$fit[[i]], .runs_plan$run[[i]]), .vimp_code,
             seed = SEED + .runs_plan$run[[i]], dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
 }
@@ -296,12 +302,10 @@ if (is.null(.pool)) {
                                 "median_importance", "q25", "q75")]
   class(importance_table) <- "data.frame"
   cat(sprintf(paste("Importance pools %d runs on %s, %d in all. For each predictor and panel the table gives the",
-                    "runs in which it cleared that run's noise band, their share, the median importance and the",
-                    "25th and 75th percentiles of the margin over the band. The share says how stable a single",
-                    "run's verdict is, not whether the effect is real: in a 50-seed simulation, strong effects",
-                    "cleared the band in 98 to 100%% of runs, true nulls in 0 to 6%% and borderline effects in",
-                    "14 to 46%%. A share in that last range is a borderline effect, and more runs or refits will",
-                    "not settle it.\n\n"),
+                    "runs in which its importance exceeded its shadows (that run's noise band), their share, the",
+                    "median importance and the 25th and 75th percentiles of the margin over the band. The share says",
+                    "how stable a single run's verdict is, not whether the effect is real. In a 50-seed study, some",
+                    "covariates were detected in 14%% to 46%% of runs.\n\n"),
               .n_vimp, if (length(.fits) == 1L) "1 fit" else sprintf("each of %d fits", length(.fits)),
               nrow(.runs_plan)))
   .fence <- strrep("`", 3)
