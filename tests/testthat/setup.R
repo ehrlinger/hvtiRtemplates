@@ -54,3 +54,38 @@ local({
     .env = teardown_env()
   )
 })
+
+# A test that draws with no device open makes R open its default one, which in
+# Rscript is pdf() writing Rplots.pdf into this directory (#494). Nothing fails
+# when that happens, and the file is swept into the next commit. So the suite
+# looks twice. The state inspector compares, before and after every test, this
+# process's open devices and the Rplots*.pdf here, and on a change adds a warning
+# to that test that names it. Both, because each misses a case: a plain draw
+# leaves the default device open, which only this process sees, while
+# knitr::knit_child() closes the device it opened and leaves only the file. The
+# file is shared, so under a parallel run a file change can also be reported on
+# a test running in another worker at the time; the device change cannot. The
+# teardown then stops the run on any new or rewritten Rplots*.pdf, since a
+# warning alone fails nothing. Names and modification times, so a stale
+# Rplots.pdf that a test overwrites is caught too.
+local({
+  dir <- getwd()
+  rplots <- function() {
+    files <- list.files(dir, pattern = "^Rplots.*\\.pdf$")
+    stats::setNames(as.numeric(file.mtime(file.path(dir, files))), files)
+  }
+  before <- rplots()
+  # tolerance = 0: the default is relative, and on an epoch mtime it hides a change of up to about 27 seconds.
+  testthat::set_state_inspector(function() list(devices = names(grDevices::dev.list()), rplots = rplots()),
+                                tolerance = 0)
+  withr::defer({
+    testthat::set_state_inspector(NULL)
+    after <- rplots()
+    was <- before[names(after)]
+    new <- names(after)[is.na(was) | after != was]
+    if (length(new)) {
+      stop("A test drew with no device open and left ", paste(new, collapse = ", "), " in ", dir,
+           ". The test's warning names it; give it a device of its own (#494).", call. = FALSE)
+    }
+  }, envir = teardown_env())
+})

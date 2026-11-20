@@ -759,8 +759,13 @@ test_that("the Word table prints the study's table labels and levels, says what 
   sup <- xml2::xml_find_all(xml, "//w:r[w:rPr/w:vertAlign[@w:val='superscript']]/w:t", ns)
   expect_true("2" %in% xml2::xml_text(sup))
   expect_false(any(grepl("^2^", cells, fixed = TRUE)))
-  # The report lists every change and the rule or file behind it.
-  changes <- paste(capture.output(eval(tables_chunk(template, "table-label-changes"), env)), collapse = "\n")
+  # The report lists every change and the rule or file behind it. The chunk calls knitr::knit_child(), and outside a
+  # render knitr opens its chunk device with dev.new(), so getOption("device") decides where it goes: in Rscript that
+  # is pdf(), which writes Rplots.pdf into tests/testthat (#494). withr::local_pdf(NULL) is not enough, because knitr
+  # opens a device of its own.
+  changes <- withr::with_options(list(device = function(...) grDevices::pdf(NULL, ...)), {
+    paste(capture.output(eval(tables_chunk(template, "table-label-changes"), env)), collapse = "\n")
+  })
   expect_match(changes, "levels White, Black, Other", fixed = TRUE)
   expect_true(all(c("table_labels.yml", "value_labels.yml", "preoperative, case, units", "coding, case") %in%
                     env$.labeled$changes$rule))
