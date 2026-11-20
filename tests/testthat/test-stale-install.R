@@ -72,10 +72,9 @@ test_that("the copy is read where the render starts, so two studies can resolve 
 
 test_that("a copy found where the render looks that cannot load says so, not that it is missing (#491)", {
   skip_on_cran()
-  # A dependency installed in one library and a copy that imports it in another, as when a study's
-  # .Rprofile drops the user library that held the dependencies. The child sees only the copy's.
+  # A copy whose import is not on the child's library path, as when a study's .Rprofile drops the
+  # user library that held the dependencies. The child sees only the copy's library.
   copy_lib <- withr::local_tempdir()
-  dep_lib <- withr::local_tempdir()
   pkg <- function(name, imports = NULL) {
     src <- file.path(withr::local_tempdir(.local_envir = parent.frame()), name)
     dir.create(file.path(src, "R"), recursive = TRUE)
@@ -92,8 +91,12 @@ test_that("a copy found where the render looks that cannot load says so, not tha
                    stdout = TRUE, stderr = TRUE)
     expect_true(dir.exists(file.path(lib, basename(src))), label = paste(out, collapse = "\n"))
   }
-  install(pkg("plantedDropped"), dep_lib)
-  withr::with_envvar(c(R_LIBS = dep_lib), install(pkg("hvtiRtemplates", imports = "plantedDropped"), copy_lib))
+  # The dependency goes in the copy's own library, which R CMD INSTALL -l puts on the path it
+  # resolves imports from, and is removed once the copy is in. R_LIBS at install time did not reach
+  # that path on Windows under R CMD check.
+  install(pkg("plantedDropped"), copy_lib)
+  install(pkg("hvtiRtemplates", imports = "plantedDropped"), copy_lib)
+  unlink(file.path(copy_lib, "plantedDropped"), recursive = TRUE)
   # R_LIBS, not a startup file, puts the copy first: Windows under R CMD check reads no study
   # .Rprofile (#511). The dependency's library is on no path the child has. Empty startup files,
   # so a user or site profile cannot rewrite the library path.
