@@ -606,8 +606,8 @@ cancel_job <- function(path, grace = 30, other_host = c("refuse", "abandon"), qu
     stop("cancel_job(): `grace` must be a number of seconds, 0 or more.", call. = FALSE)
   }
   other_host <- match.arg(other_host)
-  if (.is_windows()) stop("cancel_job(): not available on Windows, where submit_job() is not either.", call. = FALSE)
   .check_output_file(output_file, path, "cancel_job")
+  if (.is_windows()) stop("cancel_job(): not available on Windows, where submit_job() is not either.", call. = FALSE)
   job <- basename(path)
   # From here `path` names the run: the job itself, or the job and its output_file.
   path <- .run_key(normalizePath(path, winslash = "/"), output_file)
