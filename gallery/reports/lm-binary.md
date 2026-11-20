@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:01
+2026-11-20 17:28
 
 Fits a binary outcome model and preserves the fitted model, predictions,
 and pooled inference. For stacked imputations, coefficients and
@@ -37,8 +37,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.1
+**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -121,7 +121,7 @@ hvtiRtemplates:::.check_job_columns(d, OUTCOME = OUTCOME, PREDICTORS = PREDICTOR
 
 | Data |  |
 |:---|:---|
-| Source | dataset `built` (built_20261118.parquet) |
+| Source | dataset `built` (built_20261120.parquet) |
 | Rows read | 800 |
 | ID | `patient_id` |
 | Identifiers dropped | none |
@@ -240,8 +240,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item           | Value                                      |
 |:----------------|:---------------|:-------------------------------------------|
-| Run             | Started        | 2026-11-18 12:01:27 EST                    |
-|                 | Ended          | 2026-11-18 12:01:28 EST                    |
+| Run             | Started        | 2026-11-20 17:28:23 EST                    |
+|                 | Ended          | 2026-11-20 17:28:24 EST                    |
 |                 | Duration       | 0 s                                        |
 |                 | Status         | final                                      |
 |                 | Rendered by    | gallery                                    |
@@ -250,12 +250,12 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |                 | Template       | lm.binary                                  |
 |                 | Subject        | stroke                                     |
 |                 | Type           | model                                      |
-|                 | hvtiRtemplates | 1.6.1                                      |
-| Dataset `built` | Version file   | built_20261118.parquet                     |
-|                 | Version date   | 2026-11-18                                 |
+|                 | hvtiRtemplates | 1.6.2                                      |
+| Dataset `built` | Version file   | built_20261120.parquet                     |
+|                 | Version date   | 2026-11-20                                 |
 |                 | Source file    | built.rds                                  |
 |                 | Rows kept      | 572 rows on 572 patients                   |
 |                 | WHERE          | `as.integer(format(dt_surg, "%Y")) < 2015` |
-|                 | sha256         | d4581c9fbd56                               |
+|                 | sha256         | d99147a5c095                               |
 |                 | Manifest       | current                                    |
 | Reproducibility | renv           | not active                                 |

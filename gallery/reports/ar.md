@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 11:59
+2026-11-20 17:26
 
 Code
 
@@ -27,7 +27,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.1
+hvtiRtemplates 1.6.2
 
 ## Question
 
@@ -98,8 +98,8 @@ maximum likelihood to 725 patients with 406 events.
 
 | Group           | Item           | Value                   |
 |:----------------|:---------------|:------------------------|
-| Run             | Started        | 2026-11-18 11:59:32 EST |
-|                 | Ended          | 2026-11-18 11:59:32 EST |
+| Run             | Started        | 2026-11-20 17:26:17 EST |
+|                 | Ended          | 2026-11-20 17:26:17 EST |
 |                 | Duration       | 0 s                     |
 |                 | Status         | final                   |
 |                 | Rendered by    | gallery                 |
@@ -108,5 +108,5 @@ maximum likelihood to 725 patients with 406 events.
 |                 | Template       | ar                      |
 |                 | Subject        | dead                    |
 |                 | Type           | question                |
-|                 | hvtiRtemplates | 1.6.1                   |
+|                 | hvtiRtemplates | 1.6.2                   |
 | Reproducibility | renv           | not active              |

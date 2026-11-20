@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 11:59
+2026-11-20 17:26
 
 An `hp` job **reads** its inputs and does not recompute them: the
 actuarial life table from the `ac` job and the parametric fit from the
@@ -59,7 +59,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.1
+hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -193,7 +193,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `study` (built_20261118.parquet) |
+| Source              | dataset `study` (built_20261120.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -513,9 +513,9 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 11:59:27 EST |
-|  | Ended | 2026-11-18 11:59:27 EST |
-|  | Duration | 1 s |
+| Run | Started | 2026-11-20 17:26:06 EST |
+|  | Ended | 2026-11-20 17:26:07 EST |
+|  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -523,14 +523,14 @@ write.csv(nomogram, set_path("estimates", "hp-nomogram.csv"), row.names = FALSE)
 |  | Template | hp |
 |  | Subject | dead |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `built` | Version file | built_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `built` | Version file | built_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 725 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | d4581c9fbd56 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-11-18 11:58:40 -0500, data built_20261118.parquet |
-|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-11-18 11:58:57 -0500, data built_20261118.parquet |
+| Upstream | Handoff | `dead-hz/ac.rds` (actuarial-estimate), rendered 2026-11-20 17:22:35 -0500, data built_20261120.parquet |
+|  | Handoff | `dead-hz/hz.rds` (hazard-model), rendered 2026-11-20 17:23:31 -0500, data built_20261120.parquet |
 | Reproducibility | renv | not active |

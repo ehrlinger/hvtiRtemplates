@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:01
+2026-11-20 17:28
 
 An `hs-score` job scores each **segment** of a start/stop cohort with
 the time-varying model an `hm` job fitted on it. A segment is a stretch
@@ -71,7 +71,7 @@ set_path <- .job$set_path
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.1
+hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -144,7 +144,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                                |
 |:--------------------|:-----------------------------------------------|
-| Source              | dataset `segments` (segments_20261118.parquet) |
+| Source              | dataset `segments` (segments_20261120.parquet) |
 | Rows read           | 2,014                                          |
 | ID                  | `patient_id`                                   |
 | Identifiers dropped | none                                           |
@@ -285,8 +285,8 @@ saveRDS(hs_art, set_path("estimates", "hs-score.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 12:01:23 EST |
-|  | Ended | 2026-11-18 12:01:23 EST |
+| Run | Started | 2026-11-20 17:28:19 EST |
+|  | Ended | 2026-11-20 17:28:19 EST |
 |  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -295,14 +295,14 @@ saveRDS(hs_art, set_path("estimates", "hs-score.rds"))
 |  | Template | hs.score |
 |  | Subject | dead_segments |
 |  | Type | hz |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `segments` | Version file | segments_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `segments` | Version file | segments_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | segments.rds |
 |  | Rows kept | 1,823 rows on 725 patients |
 |  | WHERE | `!is.na(creat_pr)` |
-|  | sha256 | e37a382cf6c2 |
+|  | sha256 | bdbfaba0795e |
 |  | Manifest | current |
 | Upstream | Handoff | `dead_segments-hz/hz.rds` (hazard-shape-model), rendered not recorded |
-|  | Handoff | `dead_segments-hz/hm.rds` (hazard-regression-model), rendered 2026-11-18 12:00:57 -0500, data segments_20261118.parquet |
+|  | Handoff | `dead_segments-hz/hm.rds` (hazard-regression-model), rendered 2026-11-20 17:27:51 -0500, data segments_20261120.parquet |
 | Reproducibility | renv | not active |

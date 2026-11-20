@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:26
+2026-11-20 17:37
 
 This job turns a `sid-fit` dissimilarity into clusters. It runs PAM
 (partitioning around medoids) on the SID distance for each K in a range,
@@ -35,7 +35,7 @@ suppressPackageStartupMessages({
 # Nothing below is random, but the threads are pinned as in every forest job,
 # so a library that does reach for them behaves the same on every machine.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-22.
+# The oldest versions this template works with.
 if (utils::packageVersion("cluster") < "2.1.8") {
   stop("This job needs cluster >= 2.1.8; ", utils::packageVersion("cluster"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
@@ -72,7 +72,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.1
+hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -688,8 +688,8 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 12:26:07 EST |
-|  | Ended | 2026-11-18 12:26:12 EST |
+| Run | Started | 2026-11-20 17:37:00 EST |
+|  | Ended | 2026-11-20 17:37:05 EST |
 |  | Duration | 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -701,13 +701,13 @@ cat("Registered `", .dataset, "`: set JOIN <- \"", .dataset, "\" in a later job 
 |  | Template | sid.clusters |
 |  | Subject | echo |
 |  | Type | sid |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `built` | Version file | built_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `built` | Version file | built_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d4581c9fbd56 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-18 12:25:57 -0500, data built_20261118.parquet |
+| Upstream | Handoff | `echo-sid/sid.rds` (SID fit), rendered 2026-11-20 17:36:50 -0500, data built_20261120.parquet |
 | Reproducibility | renv | not active |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 11:55
+2026-11-20 17:14
 
 This job reports a bootstrap variable selection screen over a **Cox
 proportional hazards** model: how often each candidate survived stepwise
@@ -103,7 +103,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.1
+hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -394,7 +394,7 @@ provenance
     9                                                                        0
     10                                                                     0.0
     11                            sha:199e06115d4dcc9c73154e13d349c51ba836c962
-    12 sha256:d4581c9fbd569b21078f37c93904b16a1b0c9c7f5416350a50b26db441ac4df4
+    12 sha256:d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace
     13                                               1 distinct (listed below)
 
 Code
@@ -921,9 +921,9 @@ saveRDS(report, report_file)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 11:55:34 EST |
-|  | Ended | 2026-11-18 11:55:36 EST |
-|  | Duration | 1 s |
+| Run | Started | 2026-11-20 17:14:44 EST |
+|  | Ended | 2026-11-20 17:14:47 EST |
+|  | Duration | 3 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -931,13 +931,13 @@ saveRDS(report, report_file)
 |  | Template | bc |
 |  | Subject | dead |
 |  | Type | boot |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `built` | Version file | built_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `built` | Version file | built_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d4581c9fbd56 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-boot/bc.rds` (bootstrap-bag), rendered not recorded, data built_20261118.parquet |
+| Upstream | Handoff | `dead-boot/bc.rds` (bootstrap-bag), rendered not recorded, data built_20261120.parquet |
 | Reproducibility | renv | not active |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 11:58
+2026-11-20 17:21
 
 Replaces an older EDA report.
 
@@ -81,8 +81,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.1
+**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -331,7 +331,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261118.parquet) |
+| Source              | dataset `built` (built_20261120.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -1150,9 +1150,9 @@ apart by color alone; the categorical frequency table above names them.
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-18 11:58:07 EST  |
-|                 | Ended          | 2026-11-18 11:58:14 EST  |
-|                 | Duration       | 7 s                      |
+| Run             | Started        | 2026-11-20 17:21:21 EST  |
+|                 | Ended          | 2026-11-20 17:21:38 EST  |
+|                 | Duration       | 17 s                     |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
 |                 | Host           | gallery                  |
@@ -1160,12 +1160,12 @@ apart by color alone; the categorical frequency table above names them.
 |                 | Template       | dc.eda                   |
 |                 | Subject        | cohort                   |
 |                 | Type           | eda                      |
-|                 | hvtiRtemplates | 1.6.1                    |
-| Dataset `built` | Version file   | built_20261118.parquet   |
-|                 | Version date   | 2026-11-18               |
+|                 | hvtiRtemplates | 1.6.2                    |
+| Dataset `built` | Version file   | built_20261120.parquet   |
+|                 | Version date   | 2026-11-20               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | d4581c9fbd56             |
+|                 | sha256         | d99147a5c095             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

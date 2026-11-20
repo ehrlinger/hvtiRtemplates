@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:01
+2026-11-20 17:28
 
 Fits a binary-treatment propensity model, including pooled inference for
 stacked imputations and the scored columns used by matching and
@@ -36,8 +36,8 @@ set_path <- .job$set_path
 .job$notice
 ```
 
-**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.1
+**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.2
 
 Code
 
@@ -118,7 +118,7 @@ hvtiRtemplates:::.check_job_columns(d, TREATMENT = TREATMENT, PREDICTORS = PREDI
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261118.parquet) |
+| Source              | dataset `built` (built_20261120.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -264,9 +264,9 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 12:01:50 EST |
-|  | Ended | 2026-11-18 12:01:51 EST |
-|  | Duration | 1 s |
+| Run | Started | 2026-11-20 17:28:43 EST |
+|  | Ended | 2026-11-20 17:28:43 EST |
+|  | Duration | 0 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -274,12 +274,12 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |  | Template | lm.propensity_binary |
 |  | Subject | approach |
 |  | Type | propensity |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `built` | Version file | built_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `built` | Version file | built_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d4581c9fbd56 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Reproducibility | renv | not active |

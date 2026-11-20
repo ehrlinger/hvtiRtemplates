@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:25
+2026-11-20 17:42
 
 Gallery job on the synthetic cohort: how the nine preoperative
 predictors the rf fits grow on depend on each other, with no outcome
@@ -43,7 +43,7 @@ suppressPackageStartupMessages({
 # uvarpro() and get.beta.entropy() take no cores argument: rf.cores reaches the
 # forest and mc.cores the lasso's workers.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-22. Below them a
+# The oldest versions this template works with. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
@@ -92,8 +92,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.1
+**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -180,14 +180,21 @@ NTREE <- 1000
 # halve that where the coverage table stays full.
 MAX_TREE <- 1000
 MAX_RULES_TREE <- 20
-# Demo: the largest share of the variables (VARIABLES and OUTCOME) that may go
-# unexamined, with no release rule in the full fit, before the render stops. A
-# variable with no rule has no edge leaving it, and that absence must not be
-# read as independence. At the defaults above none went unexamined in the
-# simulations, so a share past 0.1 says the forest is too small for these data
-# and the fix is more trees (MAX_TREE with NTREE). NULL reports the unexamined in
-# the coverage table and does not stop.
+# Demo: how many of the variables (VARIABLES and OUTCOME) may go unexamined,
+# with no release rule in the full fit, before the render stops. A variable
+# with no rule has no edge leaving it, and that absence must not be read as
+# independence. The render stops when the unexamined are both more than
+# MAX_UNTESTED's share of the variables and more than MIN_UNTESTED of them.
+# At the defaults above none went unexamined in the simulations, so a share
+# past 0.1 says the forest is too small for these data and the fix is more
+# trees (MAX_TREE with NTREE). The share alone allows none at 10 variables or
+# fewer, where one unexamined variable can be chance: a nine-variable cohort
+# left one of nine unexamined at 1,000 trees (three at 500). MIN_UNTESTED lets
+# that one through and still stops on two; 0 holds a small study to the share
+# alone. NULL MAX_UNTESTED reports the unexamined in the coverage table and
+# does not stop.
 MAX_UNTESTED <- NULL
+MIN_UNTESTED <- 1
 
 # Demo: the fixed edge cutoff the noise bar is reported beside, and falls back
 # to when no noise column earned any weight. 0.25 is varPro's default.
@@ -280,7 +287,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261118.parquet) |
+| Source              | dataset `built` (built_20261120.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -340,6 +347,13 @@ if (anyNA(d[VARIABLES])) {
   .imputed[.lgl] <- lapply(.imputed[.lgl], function(x) as.logical(as.character(x)))
   d[VARIABLES] <- .imputed[VARIABLES]
 }
+```
+
+    cache_fit(): loaded 'vp-dependence-impute' from cache
+
+Code
+
+``` r
 if (anyNA(d[.cols])) stop("Variables still hold missing values after NA_ACTION; uvarpro() would drop them.", call. = FALSE)
 .missing_values <- .miss$table
 .cohort <- c(list(n = as.integer(nrow(d))), .miss$cohort)
@@ -545,6 +559,10 @@ if (!is.null(MAX_UNTESTED) && !(is.numeric(MAX_UNTESTED) && length(MAX_UNTESTED)
                                   MAX_UNTESTED >= 0 && MAX_UNTESTED <= 1)) {
   stop("MAX_UNTESTED must be NULL or a single share in [0, 1].", call. = FALSE)
 }
+if (!(is.numeric(MIN_UNTESTED) && length(MIN_UNTESTED) == 1L && !is.na(MIN_UNTESTED) && MIN_UNTESTED >= 0 &&
+        MIN_UNTESTED == round(MIN_UNTESTED))) {
+  stop("MIN_UNTESTED must be a single whole number of at least 0.", call. = FALSE)
+}
 set.seed(abs(SEED))
 # packages = keys each cache on the engine doing the work as well as on
 # varPro, which only calls it: randomForestSRC grows the forest and glmnet
@@ -556,6 +574,13 @@ fit <- cache_fit("vp-dependence",
                  uvarpro(d_noise, ntree = NTREE, max.tree = min(MAX_TREE, NTREE), max.rules.tree = MAX_RULES_TREE,
                          seed = -abs(SEED)),
                  seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
+```
+
+    cache_fit(): loaded 'vp-dependence' from cache
+
+Code
+
+``` r
 # The lasso step draws its cross-validation folds from R's generator, so it is
 # seeded again. pre.filter = FALSE keeps every column: the pre-filter would
 # drop the noise the bar is made from, and any outcome column.
@@ -563,6 +588,8 @@ set.seed(abs(SEED))
 beta_raw <- cache_fit("vp-dependence-beta", get.beta.entropy(fit, pre.filter = FALSE, papply = lapply),
                       seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "glmnet")
 ```
+
+    cache_fit(): loaded 'vp-dependence-beta' from cache
 
 ## Coverage
 
@@ -583,14 +610,14 @@ knitr::kable(.coverage, row.names = FALSE)
 | variable | rules | state        |
 |:---------|------:|:-------------|
 | age      |     2 | examined     |
-| female   |   644 | examined     |
+| female   |   612 | examined     |
 | bmi      |     0 | not examined |
-| hx_chf   |  3234 | examined     |
-| hx_dm    |  2305 | examined     |
-| nyha_pr  |    32 | examined     |
-| lvef     |    11 | examined     |
-| plvmassi |     6 | examined     |
-| creat_pr |     2 | examined     |
+| hx_chf   |  3365 | examined     |
+| hx_dm    |  2319 | examined     |
+| nyha_pr  |    31 | examined     |
+| lvef     |    36 | examined     |
+| plvmassi |     0 | not examined |
+| creat_pr |     5 | examined     |
 
 Table 3: Whether the forest examined each variable
 
@@ -604,17 +631,20 @@ if (length(.not_examined)) {
 }
 ```
 
-Not examined: bmi. The forest built no rule for them, so no edge leaves
-them; edges into them can still appear.
+Not examined: bmi, plvmassi. The forest built no rule for them, so no
+edge leaves them; edges into them can still appear.
 
 Code
 
 ``` r
-if (!is.null(MAX_UNTESTED) && length(.not_examined) / length(.cols) > MAX_UNTESTED) {
+# Both must be exceeded, so MIN_UNTESTED is a floor under the share's allowance:
+# at 9 variables and 0.1 the share allows none and MIN_UNTESTED one.
+if (!is.null(MAX_UNTESTED) && length(.not_examined) > MIN_UNTESTED &&
+      length(.not_examined) / length(.cols) > MAX_UNTESTED) {
   stop(length(.not_examined), " of ", length(.cols), " variables were not examined, more than MAX_UNTESTED (",
-       MAX_UNTESTED, ") allows: ", paste(.not_examined, collapse = ", "), ". The forest built no release rule for ",
-       "them. Raise MAX_TREE (up to NTREE), MAX_RULES_TREE or NTREE, set REFIT <- TRUE and re-render; ",
-       "MAX_UNTESTED <- NULL reports them without stopping.", call. = FALSE)
+       MAX_UNTESTED, ") and MIN_UNTESTED (", MIN_UNTESTED, ") allow: ", paste(.not_examined, collapse = ", "),
+       ". The forest built no release rule for them. Raise MAX_TREE (up to NTREE), MAX_RULES_TREE or NTREE, ",
+       "set REFIT <- TRUE and re-render; MAX_UNTESTED <- NULL reports them without stopping.", call. = FALSE)
 }
 ```
 
@@ -640,7 +670,7 @@ cat(if (bar$from == "noise") {
 })
 ```
 
-The noise bar is 1.03, the largest weight a permuted noise column
+The noise bar is 0.598, the largest weight a permuted noise column
 reached; varPro’s fixed cutoff is 0.25.
 
 Code
@@ -668,7 +698,7 @@ if (length(.unlinked)) {
 ```
 
 No link at the bar, so not drawn (not evidence of independence): female,
-hx_dm, nyha_pr, plvmassi, age, bmi, creat_pr.
+hx_dm, age, bmi, nyha_pr, plvmassi, creat_pr.
 
 Code
 
@@ -687,7 +717,7 @@ save_figure(.fig, "vp-dependence-graph", width = 6.5, height = 6)
 .fig
 ```
 
-![](assets/48048098989d1ce0324e8c54e881b971.png)
+![](assets/36e64144638771d52c66dc25a7c1641d.png)
 
 Figure 1: Dependence between the variables, at the noise bar. An arrow
 runs from a released variable to a variable that helps separate the
@@ -716,7 +746,7 @@ save_figure(.fig, "vp-dependence-heatmap", width = 6.5, height = 6)
 .fig
 ```
 
-![](assets/d6d0ebb20a3f5432b50d07883da2b199.png)
+![](assets/55eb4576c70c91bc5bb23bdacb350b66.png)
 
 Figure 2: Dependence between every pair of variables at any strength,
 the larger of the two directions, clustered so related variables sit
@@ -779,12 +809,11 @@ if (REPEATS > 0) {
 }
 ```
 
-    The noise bar ranged from 0.548 to 3.37 across the refits.
+    The noise bar ranged from 0.757 to 1.21 across the refits.
 
-| from   | to       | share | refits |
-|:-------|:---------|------:|-------:|
-| hx_chf | lvef     |  0.67 |      3 |
-| hx_dm  | creat_pr |  0.33 |      3 |
+| from   | to   | share | refits |
+|:-------|:-----|------:|-------:|
+| hx_chf | lvef |     1 |      3 |
 
 Table 4: How often each edge cleared its refit’s noise bar, most often
 first
@@ -828,7 +857,8 @@ lacks is missing because it was not looked at, not because the variable
 is independent. Edges into it can still appear, because it is a
 predictor in every other variable’s lasso. The coverage table says which
 variables those are, and the render stops when their share passes
-`MAX_UNTESTED`, unless it is `NULL`.
+`MAX_UNTESTED` and their count passes `MIN_UNTESTED`, unless
+`MAX_UNTESTED` is `NULL`.
 
 **A variable with no edge is not an independent one.** A variable with
 no edge at the bar has no link strong enough to beat the noise in this
@@ -864,9 +894,9 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 
 | Group           | Item           | Value                      |
 |:----------------|:---------------|:---------------------------|
-| Run             | Started        | 2026-11-18 12:08:11 EST    |
-|                 | Ended          | 2026-11-18 12:25:21 EST    |
-|                 | Duration       | 17 min 10 s                |
+| Run             | Started        | 2026-11-20 17:39:10 EST    |
+|                 | Ended          | 2026-11-20 17:42:10 EST    |
+|                 | Duration       | 3 min 0 s                  |
 |                 | Status         | final                      |
 |                 | Rendered by    | gallery                    |
 |                 | Host           | gallery                    |
@@ -874,13 +904,13 @@ saveRDS(vpd_handoff, set_path("estimates", "dependence.rds"))
 |                 | Template       | vp.dependence              |
 |                 | Subject        | preop                      |
 |                 | Type           | vp                         |
-|                 | hvtiRtemplates | 1.6.1                      |
-| Dataset `built` | Version file   | built_20261118.parquet     |
-|                 | Version date   | 2026-11-18                 |
+|                 | hvtiRtemplates | 1.6.2                      |
+| Dataset `built` | Version file   | built_20261120.parquet     |
+|                 | Version date   | 2026-11-20                 |
 |                 | Source file    | built.rds                  |
 |                 | Rows kept      | 800 rows on 800 patients   |
 |                 | WHERE          | none                       |
-|                 | sha256         | d4581c9fbd56               |
+|                 | sha256         | d99147a5c095               |
 |                 | Manifest       | current                    |
 | Reproducibility | Seed           | 2026                       |
 |                 | renv           | not active                 |

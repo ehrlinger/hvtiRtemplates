@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:05
+2026-11-20 17:32
 
 Gallery job on the synthetic cohort: postoperative length of stay,
 logged (log_los).
@@ -44,24 +44,18 @@ suppressPackageStartupMessages({
 # cost of that guarantee: a cached fit records its seed, data and package
 # versions, never the threads it ran on.
 options(rf.cores = 1L)
-# The versions this template was verified against, end to end, on 2026-09-19.
+# The oldest versions this template works with.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
   stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
-if (utils::packageVersion("ggRandomForests") < "4.0.0") {
-  stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
+# 4.0.1 is the first release with gg_learning() and learning_subsample(), for the
+# learning curve.
+if (utils::packageVersion("ggRandomForests") < "4.0.1") {
+  stop("This job needs ggRandomForests >= 4.0.1; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
-}
-# gg_learning() and learning_subsample(), for the learning curve, are on
-# ggRandomForests' main branch (ehrlinger/ggRandomForests#403) but in no release yet.
-# This becomes a version floor once one carries them.
-if (!all(c("gg_learning", "learning_subsample") %in% getNamespaceExports("ggRandomForests"))) {
-  stop("This job needs a ggRandomForests with gg_learning() and learning_subsample(); ",
-       utils::packageVersion("ggRandomForests"), " is installed and lacks them.\n",
-       "Install it with remotes::install_github(\"ehrlinger/ggRandomForests\"), then re-render.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
@@ -94,8 +88,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.1
+**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -267,7 +261,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261118.parquet) |
+| Source              | dataset `built` (built_20261120.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -389,7 +383,7 @@ save_figure(.fig, "rfr-fit-diagnostics-predicted")
 .fig
 ```
 
-![](assets/00b8ceda0d7cfbb9a54aa4d9e217ef01.png)
+![](assets/9c99fceb87e57879bfd01d24e3d6a382.png)
 
 Figure 2: Out-of-bag predicted values. Black circles, jittered sideways,
 mark the individual predictions, and the unfilled notched box plot marks
@@ -580,19 +574,19 @@ agreement may be optimistic at every fraction, not only above one half.
 importance ranking does. A cohort whose error has flattened can still
 give a ranking that a second cohort of the same size would not
 reproduce. Read the agreement at the whole cohort, and whether the line
-is still rising there. In a simulation with five real predictors among
-twenty, a Jaccard agreement of 0.8 took about 200 patients when the
-signal was strong and about 800 when it was weak. That 0.8 is a
-reference point, not a threshold this job enforces. Agreement at a
-fraction above one half is optimistic, because refits that large share
-most of their patients, and the whole-cohort point is a bootstrap for
-that reason. Missing values were filled in once with the forest’s
-imputed values, which were estimated from the whole cohort, outcomes
-included. Every refit has therefore seen part of the patients it leaves
-out, so its error and agreement may be optimistic at every fraction, not
-only above one half. The agreement is between the top variables, so it
-needs predictors left out: with 5 or fewer predictors the job compares
-the top one fewer than there are.
+is still rising there. How many patients a stable ranking needs depends
+on the signal: the weaker the predictors, the more patients it takes to
+reach an agreement of 0.8. That 0.8 is a reference point, not a
+threshold this job enforces. Agreement at a fraction above one half is
+optimistic, because refits that large share most of their patients, and
+the whole-cohort point is a bootstrap for that reason. Missing values
+were filled in once with the forest’s imputed values, which were
+estimated from the whole cohort, outcomes included. Every refit has
+therefore seen part of the patients it leaves out, so its error and
+agreement may be optimistic at every fraction, not only above one half.
+The agreement is between the top variables, so it needs predictors left
+out: with 5 or fewer predictors the job compares the top one fewer than
+there are.
 
 Code
 
@@ -616,8 +610,8 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-18 12:05:15 EST  |
-|                 | Ended          | 2026-11-18 12:05:25 EST  |
+| Run             | Started        | 2026-11-20 17:32:15 EST  |
+|                 | Ended          | 2026-11-20 17:32:26 EST  |
 |                 | Duration       | 11 s                     |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -626,13 +620,13 @@ saveRDS(forest, set_path("estimates", "rfr.rds"))
 |                 | Template       | rfr.fit                  |
 |                 | Subject        | los                      |
 |                 | Type           | rf                       |
-|                 | hvtiRtemplates | 1.6.1                    |
-| Dataset `built` | Version file   | built_20261118.parquet   |
-|                 | Version date   | 2026-11-18               |
+|                 | hvtiRtemplates | 1.6.2                    |
+| Dataset `built` | Version file   | built_20261120.parquet   |
+|                 | Version date   | 2026-11-20               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | d4581c9fbd56             |
+|                 | sha256         | d99147a5c095             |
 |                 | Manifest       | current                  |
 | Reproducibility | Seed           | 2026                     |
 |                 | renv           | not active               |

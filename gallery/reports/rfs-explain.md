@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:04
+2026-11-20 17:31
 
 Explains the forest the `rfs-fit` job in this set saved: which
 predictors drive it, and how.
@@ -34,7 +34,7 @@ suppressPackageStartupMessages({
 # cost of that guarantee: a cached fit records its seed, data and package
 # versions, never the threads it ran on.
 options(rf.cores = 1L)
-# The versions this template was verified against, end to end, on 2026-09-19.
+# The oldest versions this template works with.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
@@ -80,7 +80,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.1
+hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -357,7 +357,7 @@ Code
 
     `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
 
-![](assets/18e0ea911ac0e4e910043baf71c13535.png)
+![](assets/0a1844801b764ecb9225173349361991.png)
 
 Figure 2: Predicted survival against each selected predictor, as
 observed, one panel per predictor and follow-up time. Points are
@@ -438,9 +438,9 @@ each level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 12:04:33 EST |
-|  | Ended | 2026-11-18 12:04:41 EST |
-|  | Duration | 8 s |
+| Run | Started | 2026-11-20 17:31:31 EST |
+|  | Ended | 2026-11-20 17:31:40 EST |
+|  | Duration | 9 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -448,12 +448,12 @@ each level of a categorical one.
 |  | Template | rfs.explain |
 |  | Subject | dead |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `built` | Version file | built_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `built` | Version file | built_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | built.rds |
-|  | sha256 | d4581c9fbd56 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-11-18 12:04:00 -0500, data built_20261118.parquet |
+| Upstream | Handoff | `dead-rf/rfs.rds` (forest), rendered 2026-11-20 17:30:58 -0500, data built_20261120.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

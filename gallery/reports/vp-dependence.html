@@ -2239,7 +2239,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-18 12:25</p>
+      <p class="date">2026-11-20 17:42</p>
     </div>
   </div>
   
@@ -2251,7 +2251,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: vp.dependence 1.6.1 sha256:064b70c180105ae3ccb82f78810681496dc034c09a2260955b5d51e23504fc5c -->
+<!-- hvtiRtemplates: vp.dependence 1.6.2 sha256:f177b1e318847f44a28503913c87e4868b3470ab3798b3d6c3069bce9b32a0a5 -->
 <p>Gallery job on the synthetic cohort: how the nine preoperative predictors the rf fits grow on depend on each other, with no outcome entered.</p>
 <!--
      dependence answers, and whether the outcome is entered among them.
@@ -2282,7 +2282,7 @@ vertical-align: -.125em;
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># uvarpro() and get.beta.entropy() take no cores argument: rf.cores reaches the</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># forest and mc.cores the lasso&#39;s workers.</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">rf.cores =</span> <span class="dv">1</span>L, <span class="at">mc.cores =</span> <span class="dv">1</span>L)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># The versions this template was verified against on 2026-10-22. Below them a</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># The oldest versions this template works with. Below them a</span></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># call here can fail or change meaning, and the message would arrive mid-render</span></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># rather than here.</span></span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;randomForestSRC&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;3.7.0&quot;</span>) {</span>
@@ -2336,7 +2336,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data <code>built</code> <code>built_20261118.parquet</code>, dated 2026-11-18 · rendered by gallery on gallery · hvtiRtemplates 1.6.1</p>
+<p><strong>final</strong> · data <code>built</code> <code>built_20261120.parquet</code>, dated 2026-11-20 · rendered by gallery on gallery · hvtiRtemplates 1.6.2</p>
 </div>
 </div>
 </div>
@@ -2424,50 +2424,57 @@ vertical-align: -.125em;
 <span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a><span class="co"># halve that where the coverage table stays full.</span></span>
 <span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>MAX_TREE <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
 <span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>MAX_RULES_TREE <span class="ot">&lt;-</span> <span class="dv">20</span></span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the largest share of the variables (VARIABLES and OUTCOME) that may go</span></span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># unexamined, with no release rule in the full fit, before the render stops. A</span></span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># variable with no rule has no edge leaving it, and that absence must not be</span></span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># read as independence. At the defaults above none went unexamined in the</span></span>
-<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># simulations, so a share past 0.1 says the forest is too small for these data</span></span>
-<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># and the fix is more trees (MAX_TREE with NTREE). NULL reports the unexamined in</span></span>
-<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="co"># the coverage table and does not stop.</span></span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>MAX_UNTESTED <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the fixed edge cutoff the noise bar is reported beside, and falls back</span></span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># to when no noise column earned any weight. 0.25 is varPro&#39;s default.</span></span>
-<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>THRESHOLD_FIXED <span class="ot">&lt;-</span> <span class="fl">0.25</span></span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the stability check. REPEATS refits, each on SUBSAMPLE of the patients</span></span>
-<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn without replacement and with a fresh noise draw. 0 skips it; each</span></span>
-<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a><span class="co"># refit costs one forest and one lasso step.</span></span>
-<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>REPEATS <span class="ot">&lt;-</span> <span class="dv">3</span></span>
-<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a>SUBSAMPLE <span class="ot">&lt;-</span> <span class="fl">0.632</span></span>
-<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: missing values. uvarpro() removes every patient with a missing value</span></span>
-<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="co"># and ignores na.action, so the choice is made here. &quot;na.impute&quot; fills the</span></span>
-<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="co"># VARIABLES once by random forest, from each other and never from OUTCOME: the</span></span>
-<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="co"># graph measures edges into OUTCOME, and an imputation that used it would draw</span></span>
-<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a><span class="co"># some of them itself. &quot;na.omit&quot; keeps complete cases. A patient missing</span></span>
-<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a><span class="co"># OUTCOME, when it is set, is dropped either way.</span></span>
-<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>NA_ACTION <span class="ot">&lt;-</span> <span class="st">&quot;na.impute&quot;</span></span>
-<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the largest share of patients a variable may be missing in and still be imputed.</span></span>
-<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>MAX_MISSING <span class="ot">&lt;-</span> <span class="fl">0.4</span></span>
-<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the seed. It is part of every cache key, seeds R&#39;s generator before</span></span>
-<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a><span class="co"># the forest and again before the lasso, and is handed to uvarpro() as `seed =`.</span></span>
-<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
-<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
-<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
-<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
-<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
-<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
-<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;vp-dependence-graph&quot;). The names are the</span></span>
-<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
-<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
-<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: how many of the variables (VARIABLES and OUTCOME) may go unexamined,</span></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a><span class="co"># with no release rule in the full fit, before the render stops. A variable</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="co"># with no rule has no edge leaving it, and that absence must not be read as</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a><span class="co"># independence. The render stops when the unexamined are both more than</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="co"># MAX_UNTESTED&#39;s share of the variables and more than MIN_UNTESTED of them.</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="co"># At the defaults above none went unexamined in the simulations, so a share</span></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a><span class="co"># past 0.1 says the forest is too small for these data and the fix is more</span></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># trees (MAX_TREE with NTREE). The share alone allows none at 10 variables or</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a><span class="co"># fewer, where one unexamined variable can be chance: a nine-variable cohort</span></span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="co"># left one of nine unexamined at 1,000 trees (three at 500). MIN_UNTESTED lets</span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a><span class="co"># that one through and still stops on two; 0 holds a small study to the share</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="co"># alone. NULL MAX_UNTESTED reports the unexamined in the coverage table and</span></span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a><span class="co"># does not stop.</span></span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>MAX_UNTESTED <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>MIN_UNTESTED <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the fixed edge cutoff the noise bar is reported beside, and falls back</span></span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="co"># to when no noise column earned any weight. 0.25 is varPro&#39;s default.</span></span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>THRESHOLD_FIXED <span class="ot">&lt;-</span> <span class="fl">0.25</span></span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the stability check. REPEATS refits, each on SUBSAMPLE of the patients</span></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="co"># drawn without replacement and with a fresh noise draw. 0 skips it; each</span></span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a><span class="co"># refit costs one forest and one lasso step.</span></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>REPEATS <span class="ot">&lt;-</span> <span class="dv">3</span></span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>SUBSAMPLE <span class="ot">&lt;-</span> <span class="fl">0.632</span></span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: missing values. uvarpro() removes every patient with a missing value</span></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="co"># and ignores na.action, so the choice is made here. &quot;na.impute&quot; fills the</span></span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a><span class="co"># VARIABLES once by random forest, from each other and never from OUTCOME: the</span></span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a><span class="co"># graph measures edges into OUTCOME, and an imputation that used it would draw</span></span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a><span class="co"># some of them itself. &quot;na.omit&quot; keeps complete cases. A patient missing</span></span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a><span class="co"># OUTCOME, when it is set, is dropped either way.</span></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a>NA_ACTION <span class="ot">&lt;-</span> <span class="st">&quot;na.impute&quot;</span></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the largest share of patients a variable may be missing in and still be imputed.</span></span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>MAX_MISSING <span class="ot">&lt;-</span> <span class="fl">0.4</span></span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a><span class="co"># Demo: the seed. It is part of every cache key, seeds R&#39;s generator before</span></span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a><span class="co"># the forest and again before the lasso, and is handed to uvarpro() as `seed =`.</span></span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>SEED <span class="ot">&lt;-</span> <span class="dv">2026</span></span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a><span class="co"># Set TRUE after changing a choice above. A cache whose inputs changed stops the</span></span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a><span class="co"># render instead of returning the old result; TRUE recomputes only the caches</span></span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a><span class="co"># that are out of date.</span></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>REFIT <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a><span class="co"># Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.</span></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a><span class="co"># SAVE_FIGURES &lt;- FALSE saves none; FIGURES keeps only the figures whose names</span></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a><span class="co"># start with one of its entries, e.g. FIGURES &lt;- c(&quot;vp-dependence-graph&quot;). The names are the</span></span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="co"># file names, listed for each template in the templates README.</span></span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>SAVE_FIGURES <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a>FIGURES <span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2539,7 +2546,7 @@ Table 1: The data this job read
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Source</td>
-<td style="text-align: left;">dataset <code>built</code> (built_20261118.parquet)</td>
+<td style="text-align: left;">dataset <code>built</code> (built_20261120.parquet)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Rows read</td>
@@ -2613,18 +2620,24 @@ Table 1: The data this job read
 <span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  .imputed[.lgl] <span class="ot">&lt;-</span> <span class="fu">lapply</span>(.imputed[.lgl], <span class="cf">function</span>(x) <span class="fu">as.logical</span>(<span class="fu">as.character</span>(x)))</span>
 <span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  d[VARIABLES] <span class="ot">&lt;-</span> .imputed[VARIABLES]</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">anyNA</span>(d[.cols])) <span class="fu">stop</span>(<span class="st">&quot;Variables still hold missing values after NA_ACTION; uvarpro() would drop them.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>.missing_values <span class="ot">&lt;-</span> .miss<span class="sc">$</span>table</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>.cohort <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">list</span>(<span class="at">n =</span> <span class="fu">as.integer</span>(<span class="fu">nrow</span>(d))), .miss<span class="sc">$</span>cohort)</span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">attr</span>(.missing_values, <span class="st">&quot;rule&quot;</span>), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>cache_fit(): loaded &#39;vp-dependence-impute&#39; from cache</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">anyNA</span>(d[.cols])) <span class="fu">stop</span>(<span class="st">&quot;Variables still hold missing values after NA_ACTION; uvarpro() would drop them.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>.missing_values <span class="ot">&lt;-</span> .miss<span class="sc">$</span>table</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>.cohort <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">list</span>(<span class="at">n =</span> <span class="fu">as.integer</span>(<span class="fu">nrow</span>(d))), .miss<span class="sc">$</span>cohort)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">attr</span>(.missing_values, <span class="st">&quot;rule&quot;</span>), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Missing predictor values were imputed once by random forest, without the outcome, before the screen. </code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.missing_values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.missing_values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-missing" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2675,155 +2688,155 @@ Table 2: Patients supplied, missing values, and patients used
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The copies are drawn by kind in proportion to the variables, with at least</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># one of each kind present, so both kinds of column contribute to the null and</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># neither crowds out the real variables. Half and half, the rule this replaced,</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># made 10 of 20 columns binary copies of the one factor among 31 variables, and</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># those copies took nearly half the forest&#39;s release rules (2026-11-14).</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># An outcome column entered in OUTCOME is a source like any other: a</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># permuted outcome is as much a null as any other permuted column.</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Only a variable with at least two observed values is a source: a permuted</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co"># constant is a constant, which earns no rule and so sets no bar. With the</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="co"># proportional draw a kind can have a single copy, so one constant factor could</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co"># otherwise leave no categorical null at all. A refit draws again from its own</span></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="co"># subsample, where a rare level can leave a factor constant.</span></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="co"># The kind rule is varpro_coverage()&#39;s: a factor, text or logical column, or a</span></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="co"># number with at most 5 distinct values, is categorical.</span></span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>vp_kind <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.factor</span>(x) <span class="sc">||</span> <span class="fu">is.character</span>(x) <span class="sc">||</span> <span class="fu">is.logical</span>(x) <span class="sc">||</span> <span class="fu">length</span>(<span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">na.omit</span>(x))) <span class="sc">&lt;=</span> <span class="dv">5</span>L) {</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;categorical&quot;</span></span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;continuous&quot;</span></span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>vp_add_noise <span class="ot">&lt;-</span> <span class="cf">function</span>(d, predictors, n, seed) {</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  predictors <span class="ot">&lt;-</span> predictors[<span class="fu">vapply</span>(d[predictors], <span class="cf">function</span>(x) <span class="fu">length</span>(<span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">na.omit</span>(x))) <span class="sc">&gt;=</span> <span class="dv">2</span>L, <span class="cn">NA</span>)]</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">length</span>(predictors)) <span class="fu">stop</span>(<span class="st">&quot;No variable takes two or more values, so there is nothing to permute for the noise.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  kinds <span class="ot">&lt;-</span> <span class="fu">vapply</span>(d[predictors], vp_kind, <span class="st">&quot;&quot;</span>)</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  pools <span class="ot">&lt;-</span> <span class="fu">split</span>(predictors, kinds)</span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  n_cat <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">round</span>(n <span class="sc">*</span> <span class="fu">length</span>(pools<span class="sc">$</span>categorical) <span class="sc">/</span> <span class="fu">length</span>(predictors)))</span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(pools<span class="sc">$</span>categorical) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(pools<span class="sc">$</span>continuous) <span class="sc">&amp;&amp;</span> n <span class="sc">&gt;=</span> <span class="dv">2</span>L) n_cat <span class="ot">&lt;-</span> <span class="fu">min</span>(n <span class="sc">-</span> <span class="dv">1</span>L, <span class="fu">max</span>(<span class="dv">1</span>L, n_cat))</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(<span class="fu">abs</span>(seed))</span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>  draw <span class="ot">&lt;-</span> <span class="cf">function</span>(pool, k) <span class="cf">if</span> (k <span class="sc">==</span> <span class="dv">0</span>L) <span class="fu">character</span>() <span class="cf">else</span> pool[<span class="fu">sample.int</span>(<span class="fu">length</span>(pool), k, <span class="at">replace =</span> k <span class="sc">&gt;</span> <span class="fu">length</span>(pool))]</span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>  src <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">draw</span>(pools<span class="sc">$</span>categorical, n_cat), <span class="fu">draw</span>(pools<span class="sc">$</span>continuous, n <span class="sc">-</span> n_cat))</span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(src)) {</span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(seed) <span class="sc">+</span> i)</span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    d[[<span class="fu">paste0</span>(<span class="st">&quot;noise&quot;</span>, i, <span class="st">&quot;_&quot;</span>, src[i])]] <span class="ot">&lt;-</span> <span class="fu">sample</span>(d[[src[i]]])</span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>  d</span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (NOISE_N <span class="sc">&lt;</span> <span class="dv">1</span>) {</span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;NOISE_N must be at least 1: the edge bar needs noise to beat.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>(SUBSAMPLE <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> SUBSAMPLE <span class="sc">&lt;</span> <span class="dv">1</span>)) {</span>
-<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (REPEATS <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> <span class="fu">floor</span>(SUBSAMPLE <span class="sc">*</span> <span class="fu">nrow</span>(d)) <span class="sc">&lt;</span> <span class="dv">2</span>) {</span>
-<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SUBSAMPLE of &quot;</span>, <span class="fu">nrow</span>(d), <span class="st">&quot; patients leaves fewer than 2 for a refit. Raise SUBSAMPLE or set REPEATS to 0.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a><span class="co"># The noise columns are found by the &quot;noise&quot; prefix, so a real variable named</span></span>
-<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a><span class="co"># that way would be judged as noise.</span></span>
-<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>.noisy <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">&quot;^noise&quot;</span>, .cols, <span class="at">value =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.noisy)) {</span>
-<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Variable(s) whose names start with </span><span class="sc">\&quot;</span><span class="st">noise</span><span class="sc">\&quot;</span><span class="st">, which this job reserves for its noise columns: &quot;</span>,</span>
-<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>       <span class="fu">paste</span>(.noisy, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;. Rename them in the dataset build.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>d_noise <span class="ot">&lt;-</span> <span class="fu">vp_add_noise</span>(d, .cols, NOISE_N, SEED)</span>
-<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a><span class="co"># A kind among the variables with no noise column of its own has no null of its</span></span>
-<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a><span class="co"># kind, so its edges are judged against the other kind&#39;s noise alone.</span></span>
-<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a>.no_null <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">vapply</span>(d[.cols], vp_kind, <span class="st">&quot;&quot;</span>), <span class="fu">vapply</span>(d_noise[<span class="fu">grep</span>(<span class="st">&quot;^noise&quot;</span>, <span class="fu">names</span>(d_noise))], vp_kind, <span class="st">&quot;&quot;</span>))</span>
-<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.no_null)) {</span>
-<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;No &quot;</span>, <span class="fu">paste</span>(<span class="fu">unique</span>(.no_null), <span class="at">collapse =</span> <span class="st">&quot; or &quot;</span>), <span class="st">&quot; variable takes two or more values, so no noise column of that &quot;</span>,</span>
-<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;kind was drawn and the bar comes from the other kind alone.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The copies are drawn by kind in proportion to the variables, with at least</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># one of each kind present, so both kinds of column contribute to the null and</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># neither crowds out the real variables. Half and half, the rule this replaced,</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># made 10 of 20 columns binary copies of the one factor among 31 variables, and</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># those copies took nearly half the forest&#39;s release rules (2026-11-14).</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># An outcome column entered in OUTCOME is a source like any other: a</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co"># permuted outcome is as much a null as any other permuted column.</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Only a variable with at least two observed values is a source: a permuted</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co"># constant is a constant, which earns no rule and so sets no bar. With the</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># proportional draw a kind can have a single copy, so one constant factor could</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co"># otherwise leave no categorical null at all. A refit draws again from its own</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co"># subsample, where a rare level can leave a factor constant.</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co"># The kind rule is varpro_coverage()&#39;s: a factor, text or logical column, or a</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co"># number with at most 5 distinct values, is categorical.</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>vp_kind <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.factor</span>(x) <span class="sc">||</span> <span class="fu">is.character</span>(x) <span class="sc">||</span> <span class="fu">is.logical</span>(x) <span class="sc">||</span> <span class="fu">length</span>(<span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">na.omit</span>(x))) <span class="sc">&lt;=</span> <span class="dv">5</span>L) {</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;categorical&quot;</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;continuous&quot;</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>vp_add_noise <span class="ot">&lt;-</span> <span class="cf">function</span>(d, predictors, n, seed) {</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  predictors <span class="ot">&lt;-</span> predictors[<span class="fu">vapply</span>(d[predictors], <span class="cf">function</span>(x) <span class="fu">length</span>(<span class="fu">unique</span>(stats<span class="sc">::</span><span class="fu">na.omit</span>(x))) <span class="sc">&gt;=</span> <span class="dv">2</span>L, <span class="cn">NA</span>)]</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">length</span>(predictors)) <span class="fu">stop</span>(<span class="st">&quot;No variable takes two or more values, so there is nothing to permute for the noise.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  kinds <span class="ot">&lt;-</span> <span class="fu">vapply</span>(d[predictors], vp_kind, <span class="st">&quot;&quot;</span>)</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>  pools <span class="ot">&lt;-</span> <span class="fu">split</span>(predictors, kinds)</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>  n_cat <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">round</span>(n <span class="sc">*</span> <span class="fu">length</span>(pools<span class="sc">$</span>categorical) <span class="sc">/</span> <span class="fu">length</span>(predictors)))</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(pools<span class="sc">$</span>categorical) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(pools<span class="sc">$</span>continuous) <span class="sc">&amp;&amp;</span> n <span class="sc">&gt;=</span> <span class="dv">2</span>L) n_cat <span class="ot">&lt;-</span> <span class="fu">min</span>(n <span class="sc">-</span> <span class="dv">1</span>L, <span class="fu">max</span>(<span class="dv">1</span>L, n_cat))</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(<span class="fu">abs</span>(seed))</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>  draw <span class="ot">&lt;-</span> <span class="cf">function</span>(pool, k) <span class="cf">if</span> (k <span class="sc">==</span> <span class="dv">0</span>L) <span class="fu">character</span>() <span class="cf">else</span> pool[<span class="fu">sample.int</span>(<span class="fu">length</span>(pool), k, <span class="at">replace =</span> k <span class="sc">&gt;</span> <span class="fu">length</span>(pool))]</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>  src <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">draw</span>(pools<span class="sc">$</span>categorical, n_cat), <span class="fu">draw</span>(pools<span class="sc">$</span>continuous, n <span class="sc">-</span> n_cat))</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(src)) {</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(seed) <span class="sc">+</span> i)</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>    d[[<span class="fu">paste0</span>(<span class="st">&quot;noise&quot;</span>, i, <span class="st">&quot;_&quot;</span>, src[i])]] <span class="ot">&lt;-</span> <span class="fu">sample</span>(d[[src[i]]])</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>  d</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (NOISE_N <span class="sc">&lt;</span> <span class="dv">1</span>) {</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;NOISE_N must be at least 1: the edge bar needs noise to beat.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>(SUBSAMPLE <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> SUBSAMPLE <span class="sc">&lt;</span> <span class="dv">1</span>)) {</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SUBSAMPLE must be a share between 0 and 1 (0.632 draws 63.2% of the patients).&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (REPEATS <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> <span class="fu">floor</span>(SUBSAMPLE <span class="sc">*</span> <span class="fu">nrow</span>(d)) <span class="sc">&lt;</span> <span class="dv">2</span>) {</span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;SUBSAMPLE of &quot;</span>, <span class="fu">nrow</span>(d), <span class="st">&quot; patients leaves fewer than 2 for a refit. Raise SUBSAMPLE or set REPEATS to 0.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a><span class="co"># The noise columns are found by the &quot;noise&quot; prefix, so a real variable named</span></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a><span class="co"># that way would be judged as noise.</span></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>.noisy <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">&quot;^noise&quot;</span>, .cols, <span class="at">value =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.noisy)) {</span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;Variable(s) whose names start with </span><span class="sc">\&quot;</span><span class="st">noise</span><span class="sc">\&quot;</span><span class="st">, which this job reserves for its noise columns: &quot;</span>,</span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>       <span class="fu">paste</span>(.noisy, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;. Rename them in the dataset build.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>d_noise <span class="ot">&lt;-</span> <span class="fu">vp_add_noise</span>(d, .cols, NOISE_N, SEED)</span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a><span class="co"># A kind among the variables with no noise column of its own has no null of its</span></span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a><span class="co"># kind, so its edges are judged against the other kind&#39;s noise alone.</span></span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>.no_null <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">vapply</span>(d[.cols], vp_kind, <span class="st">&quot;&quot;</span>), <span class="fu">vapply</span>(d_noise[<span class="fu">grep</span>(<span class="st">&quot;^noise&quot;</span>, <span class="fu">names</span>(d_noise))], vp_kind, <span class="st">&quot;&quot;</span>))</span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.no_null)) {</span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;No &quot;</span>, <span class="fu">paste</span>(<span class="fu">unique</span>(.no_null), <span class="at">collapse =</span> <span class="st">&quot; or &quot;</span>), <span class="st">&quot; variable takes two or more values, so no noise column of that &quot;</span>,</span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;kind was drawn and the bar comes from the other kind alone.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The decisions this job makes from the importance matrix, in one chunk of</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># their own so they can be checked on a hand-built matrix without a fit.</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># varPro splits a factor into one 0/1 column per level and records which</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># variable each column came from, in attr(fit$x, &quot;xvar.map&quot;). That record is</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># read, never guessed from the names: a factor f with a level s beside a</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co"># numeric fs gets a column named fs.1, which belongs to f, and no rule on the</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co"># spelling can tell.</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>vpd_parent <span class="ot">&lt;-</span> <span class="cf">function</span>(fit) {</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  map <span class="ot">&lt;-</span> <span class="fu">attr</span>(fit<span class="sc">$</span>x, <span class="st">&quot;xvar.map&quot;</span>)</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(map)) {</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;This varPro fit records no xvar.map, so its encoded columns cannot be traced to variables. &quot;</span>,</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;Update varPro to 3.3.0 or later, set REFIT &lt;- TRUE, and re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  map</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co"># get.beta.entropy() returns rows only for the variables that formed a</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="co"># contrast, so the matrix is padded to square, missing entries 0. A patient is</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="co"># only ever one level of a factor, so links between two levels say nothing</span></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co"># about the data and are zeroed, as gg_udependent() does.</span></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>vpd_square <span class="ot">&lt;-</span> <span class="cf">function</span>(I, parent) {</span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  nm <span class="ot">&lt;-</span> <span class="fu">union</span>(<span class="fu">rownames</span>(I), <span class="fu">colnames</span>(I))</span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  sq <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="fu">length</span>(nm), <span class="fu">length</span>(nm), <span class="at">dimnames =</span> <span class="fu">list</span>(nm, nm))</span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  sq[<span class="fu">rownames</span>(I), <span class="fu">colnames</span>(I)] <span class="ot">&lt;-</span> I</span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> parent[nm]</span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  same <span class="ot">&lt;-</span> <span class="fu">outer</span>(p, p, <span class="st">&quot;==&quot;</span>)</span>
-<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  same[<span class="fu">is.na</span>(same)] <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  sq[same] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">diag</span>(sq) <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>  sq</span>
-<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a><span class="co"># The bar: the largest weight any noise term reached, released (its row) or</span></span>
-<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="co"># as a predictor (its column). Both are chance. A bar is usable only above 0;</span></span>
-<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a><span class="co"># when no noise earned any weight the fixed threshold stands in, and says so.</span></span>
-<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>vpd_bar <span class="ot">&lt;-</span> <span class="cf">function</span>(I, noise, fixed) {</span>
-<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>  w <span class="ot">&lt;-</span> <span class="fu">c</span>(I[noise, , <span class="at">drop =</span> <span class="cn">FALSE</span>], I[, noise, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
-<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  w <span class="ot">&lt;-</span> w[<span class="fu">is.finite</span>(w)]</span>
-<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(w) <span class="sc">&amp;&amp;</span> <span class="fu">max</span>(w) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">list</span>(<span class="at">bar =</span> <span class="fu">max</span>(w), <span class="at">from =</span> <span class="st">&quot;noise&quot;</span>) <span class="cf">else</span> <span class="fu">list</span>(<span class="at">bar =</span> fixed, <span class="at">from =</span> <span class="st">&quot;fixed (fallback)&quot;</span>)</span>
-<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Whether the forest examined each variable: how many release rules it built</span></span>
-<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a><span class="co"># for it. fit$results has a row per rule, its `variable` an index into the</span></span>
-<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a><span class="co"># encoded columns, which vpd_parent() traces to variables. A variable with no</span></span>
-<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a><span class="co"># rule was never released, so no contrast of its own was ever tested.</span></span>
-<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>vpd_coverage <span class="ot">&lt;-</span> <span class="cf">function</span>(fit, cols) {</span>
-<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>  parent <span class="ot">&lt;-</span> <span class="fu">vpd_parent</span>(fit)</span>
-<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>  released <span class="ot">&lt;-</span> <span class="fu">unname</span>(parent[<span class="fu">colnames</span>(fit<span class="sc">$</span>x)[fit<span class="sc">$</span>results<span class="sc">$</span>variable]])</span>
-<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>  rules <span class="ot">&lt;-</span> <span class="fu">vapply</span>(cols, <span class="cf">function</span>(v) <span class="fu">sum</span>(released <span class="sc">%in%</span> v), <span class="fu">integer</span>(<span class="dv">1</span>L), <span class="at">USE.NAMES =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">variable =</span> cols, <span class="at">rules =</span> rules, <span class="at">state =</span> <span class="fu">ifelse</span>(rules <span class="sc">&gt;</span> <span class="dv">0</span>L, <span class="st">&quot;examined&quot;</span>, <span class="st">&quot;not examined&quot;</span>))</span>
-<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a><span class="co"># How often each key, an edge or a signal-set variable, was drawn across the</span></span>
-<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a><span class="co"># refits, over the refits that examined the variable it depends on, as vp-fit&#39;s</span></span>
-<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a><span class="co"># vote counts a selection over the refits that tested the variable. A refit</span></span>
-<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a><span class="co"># that built no rule for that variable never looked, so it counts neither for</span></span>
-<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a><span class="co"># the key nor against it. Each run is list(edges = &quot;from -&gt; to&quot; keys, signal =</span></span>
-<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a><span class="co"># variable names, examined = variable names). A share with no such refit is NA,</span></span>
-<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a><span class="co"># not 0.</span></span>
-<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>vpd_share <span class="ot">&lt;-</span> <span class="cf">function</span>(runs, what, <span class="at">owner =</span> <span class="cf">function</span>(k) k) {</span>
-<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>  keys <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(<span class="fu">unlist</span>(<span class="fu">lapply</span>(runs, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, what))))</span>
-<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>  own <span class="ot">&lt;-</span> <span class="fu">owner</span>(keys)</span>
-<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>  refits <span class="ot">&lt;-</span> drawn <span class="ot">&lt;-</span> <span class="fu">integer</span>(<span class="fu">length</span>(keys))</span>
-<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (run <span class="cf">in</span> runs) {</span>
-<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>    seen <span class="ot">&lt;-</span> own <span class="sc">%in%</span> run<span class="sc">$</span>examined</span>
-<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>    refits <span class="ot">&lt;-</span> refits <span class="sc">+</span> seen</span>
-<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>    drawn <span class="ot">&lt;-</span> drawn <span class="sc">+</span> (seen <span class="sc">&amp;</span> keys <span class="sc">%in%</span> run[[what]])</span>
-<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">key =</span> keys, <span class="at">share =</span> <span class="fu">ifelse</span>(refits <span class="sc">&gt;</span> <span class="dv">0</span>L, drawn <span class="sc">/</span> <span class="fu">pmax</span>(<span class="dv">1</span>L, refits), <span class="cn">NA_real_</span>), <span class="at">refits =</span> refits)</span>
-<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a><span class="co"># An edge runs from a variable&#39;s row of the matrix, its contrast, to a column,</span></span>
-<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a><span class="co"># and every variable is a column in every row&#39;s lasso. So an edge needs only</span></span>
-<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a><span class="co"># its tail examined: one into a variable with no rule can still be drawn. The</span></span>
-<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a><span class="co"># graph is directed (gg_udependent()&#39;s default, which vpd_graph() keeps), so no</span></span>
-<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a><span class="co"># edge is read both ways.</span></span>
-<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>vpd_edge_share <span class="ot">&lt;-</span> <span class="cf">function</span>(runs) {</span>
-<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">vpd_share</span>(runs, <span class="st">&quot;edges&quot;</span>, <span class="at">owner =</span> <span class="cf">function</span>(k) <span class="fu">sub</span>(<span class="st">&quot; -&gt; .*$&quot;</span>, <span class="st">&quot;&quot;</span>, k))</span>
-<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a>  ends <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(s<span class="sc">$</span>key, <span class="st">&quot; -&gt; &quot;</span>, <span class="at">fixed =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">from =</span> <span class="fu">vapply</span>(ends, <span class="st">`</span><span class="at">[</span><span class="st">`</span>, <span class="st">&quot;&quot;</span>, <span class="dv">1</span>L), <span class="at">to =</span> <span class="fu">vapply</span>(ends, <span class="st">`</span><span class="at">[</span><span class="st">`</span>, <span class="st">&quot;&quot;</span>, <span class="dv">2</span>L), <span class="at">share =</span> s<span class="sc">$</span>share, <span class="at">refits =</span> s<span class="sc">$</span>refits)</span>
-<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a>vpd_signal_share <span class="ot">&lt;-</span> <span class="cf">function</span>(runs) {</span>
-<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">vpd_share</span>(runs, <span class="st">&quot;signal&quot;</span>)</span>
-<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">variable =</span> s<span class="sc">$</span>key, <span class="at">share =</span> s<span class="sc">$</span>share, <span class="at">refits =</span> s<span class="sc">$</span>refits)</span>
-<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The decisions this job makes from the importance matrix, in one chunk of</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># their own so they can be checked on a hand-built matrix without a fit.</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># varPro splits a factor into one 0/1 column per level and records which</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># variable each column came from, in attr(fit$x, &quot;xvar.map&quot;). That record is</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co"># read, never guessed from the names: a factor f with a level s beside a</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># numeric fs gets a column named fs.1, which belongs to f, and no rule on the</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co"># spelling can tell.</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>vpd_parent <span class="ot">&lt;-</span> <span class="cf">function</span>(fit) {</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  map <span class="ot">&lt;-</span> <span class="fu">attr</span>(fit<span class="sc">$</span>x, <span class="st">&quot;xvar.map&quot;</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(map)) {</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">&quot;This varPro fit records no xvar.map, so its encoded columns cannot be traced to variables. &quot;</span>,</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;Update varPro to 3.3.0 or later, set REFIT &lt;- TRUE, and re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  map</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="co"># get.beta.entropy() returns rows only for the variables that formed a</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="co"># contrast, so the matrix is padded to square, missing entries 0. A patient is</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="co"># only ever one level of a factor, so links between two levels say nothing</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a><span class="co"># about the data and are zeroed, as gg_udependent() does.</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>vpd_square <span class="ot">&lt;-</span> <span class="cf">function</span>(I, parent) {</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>  nm <span class="ot">&lt;-</span> <span class="fu">union</span>(<span class="fu">rownames</span>(I), <span class="fu">colnames</span>(I))</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>  sq <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="fu">length</span>(nm), <span class="fu">length</span>(nm), <span class="at">dimnames =</span> <span class="fu">list</span>(nm, nm))</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  sq[<span class="fu">rownames</span>(I), <span class="fu">colnames</span>(I)] <span class="ot">&lt;-</span> I</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> parent[nm]</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>  same <span class="ot">&lt;-</span> <span class="fu">outer</span>(p, p, <span class="st">&quot;==&quot;</span>)</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>  same[<span class="fu">is.na</span>(same)] <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>  sq[same] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">diag</span>(sq) <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>  sq</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a><span class="co"># The bar: the largest weight any noise term reached, released (its row) or</span></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a><span class="co"># as a predictor (its column). Both are chance. A bar is usable only above 0;</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a><span class="co"># when no noise earned any weight the fixed threshold stands in, and says so.</span></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>vpd_bar <span class="ot">&lt;-</span> <span class="cf">function</span>(I, noise, fixed) {</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>  w <span class="ot">&lt;-</span> <span class="fu">c</span>(I[noise, , <span class="at">drop =</span> <span class="cn">FALSE</span>], I[, noise, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>  w <span class="ot">&lt;-</span> w[<span class="fu">is.finite</span>(w)]</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(w) <span class="sc">&amp;&amp;</span> <span class="fu">max</span>(w) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="fu">list</span>(<span class="at">bar =</span> <span class="fu">max</span>(w), <span class="at">from =</span> <span class="st">&quot;noise&quot;</span>) <span class="cf">else</span> <span class="fu">list</span>(<span class="at">bar =</span> fixed, <span class="at">from =</span> <span class="st">&quot;fixed (fallback)&quot;</span>)</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Whether the forest examined each variable: how many release rules it built</span></span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a><span class="co"># for it. fit$results has a row per rule, its `variable` an index into the</span></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a><span class="co"># encoded columns, which vpd_parent() traces to variables. A variable with no</span></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a><span class="co"># rule was never released, so no contrast of its own was ever tested.</span></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>vpd_coverage <span class="ot">&lt;-</span> <span class="cf">function</span>(fit, cols) {</span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>  parent <span class="ot">&lt;-</span> <span class="fu">vpd_parent</span>(fit)</span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>  released <span class="ot">&lt;-</span> <span class="fu">unname</span>(parent[<span class="fu">colnames</span>(fit<span class="sc">$</span>x)[fit<span class="sc">$</span>results<span class="sc">$</span>variable]])</span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>  rules <span class="ot">&lt;-</span> <span class="fu">vapply</span>(cols, <span class="cf">function</span>(v) <span class="fu">sum</span>(released <span class="sc">%in%</span> v), <span class="fu">integer</span>(<span class="dv">1</span>L), <span class="at">USE.NAMES =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">variable =</span> cols, <span class="at">rules =</span> rules, <span class="at">state =</span> <span class="fu">ifelse</span>(rules <span class="sc">&gt;</span> <span class="dv">0</span>L, <span class="st">&quot;examined&quot;</span>, <span class="st">&quot;not examined&quot;</span>))</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a><span class="co"># How often each key, an edge or a signal-set variable, was drawn across the</span></span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a><span class="co"># refits, over the refits that examined the variable it depends on, as vp-fit&#39;s</span></span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a><span class="co"># vote counts a selection over the refits that tested the variable. A refit</span></span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a><span class="co"># that built no rule for that variable never looked, so it counts neither for</span></span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a><span class="co"># the key nor against it. Each run is list(edges = &quot;from -&gt; to&quot; keys, signal =</span></span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a><span class="co"># variable names, examined = variable names). A share with no such refit is NA,</span></span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a><span class="co"># not 0.</span></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>vpd_share <span class="ot">&lt;-</span> <span class="cf">function</span>(runs, what, <span class="at">owner =</span> <span class="cf">function</span>(k) k) {</span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>  keys <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">unique</span>(<span class="fu">unlist</span>(<span class="fu">lapply</span>(runs, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, what))))</span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a>  own <span class="ot">&lt;-</span> <span class="fu">owner</span>(keys)</span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a>  refits <span class="ot">&lt;-</span> drawn <span class="ot">&lt;-</span> <span class="fu">integer</span>(<span class="fu">length</span>(keys))</span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (run <span class="cf">in</span> runs) {</span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>    seen <span class="ot">&lt;-</span> own <span class="sc">%in%</span> run<span class="sc">$</span>examined</span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a>    refits <span class="ot">&lt;-</span> refits <span class="sc">+</span> seen</span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a>    drawn <span class="ot">&lt;-</span> drawn <span class="sc">+</span> (seen <span class="sc">&amp;</span> keys <span class="sc">%in%</span> run[[what]])</span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">key =</span> keys, <span class="at">share =</span> <span class="fu">ifelse</span>(refits <span class="sc">&gt;</span> <span class="dv">0</span>L, drawn <span class="sc">/</span> <span class="fu">pmax</span>(<span class="dv">1</span>L, refits), <span class="cn">NA_real_</span>), <span class="at">refits =</span> refits)</span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a><span class="co"># An edge runs from a variable&#39;s row of the matrix, its contrast, to a column,</span></span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a><span class="co"># and every variable is a column in every row&#39;s lasso. So an edge needs only</span></span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a><span class="co"># its tail examined: one into a variable with no rule can still be drawn. The</span></span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a><span class="co"># graph is directed (gg_udependent()&#39;s default, which vpd_graph() keeps), so no</span></span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a><span class="co"># edge is read both ways.</span></span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a>vpd_edge_share <span class="ot">&lt;-</span> <span class="cf">function</span>(runs) {</span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">vpd_share</span>(runs, <span class="st">&quot;edges&quot;</span>, <span class="at">owner =</span> <span class="cf">function</span>(k) <span class="fu">sub</span>(<span class="st">&quot; -&gt; .*$&quot;</span>, <span class="st">&quot;&quot;</span>, k))</span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a>  ends <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(s<span class="sc">$</span>key, <span class="st">&quot; -&gt; &quot;</span>, <span class="at">fixed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">from =</span> <span class="fu">vapply</span>(ends, <span class="st">`</span><span class="at">[</span><span class="st">`</span>, <span class="st">&quot;&quot;</span>, <span class="dv">1</span>L), <span class="at">to =</span> <span class="fu">vapply</span>(ends, <span class="st">`</span><span class="at">[</span><span class="st">`</span>, <span class="st">&quot;&quot;</span>, <span class="dv">2</span>L), <span class="at">share =</span> s<span class="sc">$</span>share, <span class="at">refits =</span> s<span class="sc">$</span>refits)</span>
+<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a>vpd_signal_share <span class="ot">&lt;-</span> <span class="cf">function</span>(runs) {</span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">vpd_share</span>(runs, <span class="st">&quot;signal&quot;</span>)</span>
+<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">variable =</span> s<span class="sc">$</span>key, <span class="at">share =</span> s<span class="sc">$</span>share, <span class="at">refits =</span> s<span class="sc">$</span>refits)</span>
+<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -2832,38 +2845,51 @@ Table 2: Patients supplied, missing values, and patients used
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Empty until the stability chunk fills it, which it does only when REPEATS is</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># above 0, so a session that ran the job before cannot carry an old result in.</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>.vpd_stab <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># cache_fit() writes &lt;dir&gt;/&lt;name&gt;.rds and its default dir is the study&#39;s</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># estimates folder, not this set&#39;s, so every call here names the set&#39;s.</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="fu">dirname</span>(<span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;dependence.rds&quot;</span>))</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>.count_ok <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">is.numeric</span>(x) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(x) <span class="sc">==</span> <span class="dv">1</span>L <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(x) <span class="sc">&amp;&amp;</span> x <span class="sc">&gt;=</span> <span class="dv">1</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">.count_ok</span>(MAX_TREE) <span class="sc">||</span> <span class="sc">!</span><span class="fu">.count_ok</span>(MAX_RULES_TREE)) {</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;MAX_TREE and MAX_RULES_TREE must each be a single whole number of at least 1.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(MAX_UNTESTED) <span class="sc">&amp;&amp;</span> <span class="sc">!</span>(<span class="fu">is.numeric</span>(MAX_UNTESTED) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(MAX_UNTESTED) <span class="sc">==</span> <span class="dv">1</span>L <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(MAX_UNTESTED) <span class="sc">&amp;&amp;</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>                                  MAX_UNTESTED <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> MAX_UNTESTED <span class="sc">&lt;=</span> <span class="dv">1</span>)) {</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;MAX_UNTESTED must be NULL or a single share in [0, 1].&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED))</span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co"># packages = keys each cache on the engine doing the work as well as on</span></span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co"># varPro, which only calls it: randomForestSRC grows the forest and glmnet</span></span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co"># fits the lasso, and an update to either must not reuse an old result.</span></span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="co"># The rule limits are written into the call itself: cache_fit() keys the</span></span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="co"># variables its expression names, so a changed MAX_TREE or MAX_RULES_TREE</span></span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="co"># makes the cache stale rather than reloading a fit built under the old ones.</span></span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;vp-dependence&quot;</span>,</span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">uvarpro</span>(d_noise, <span class="at">ntree =</span> NTREE, <span class="at">max.tree =</span> <span class="fu">min</span>(MAX_TREE, NTREE), <span class="at">max.rules.tree =</span> MAX_RULES_TREE,</span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>                         <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED)),</span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>                 <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT, <span class="at">packages =</span> <span class="st">&quot;randomForestSRC&quot;</span>)</span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="co"># The lasso step draws its cross-validation folds from R&#39;s generator, so it is</span></span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="co"># seeded again. pre.filter = FALSE keeps every column: the pre-filter would</span></span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="co"># drop the noise the bar is made from, and any outcome column.</span></span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED))</span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>beta_raw <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;vp-dependence-beta&quot;</span>, <span class="fu">get.beta.entropy</span>(fit, <span class="at">pre.filter =</span> <span class="cn">FALSE</span>, <span class="at">papply =</span> lapply),</span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>                      <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT, <span class="at">packages =</span> <span class="st">&quot;glmnet&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Empty until the stability chunk fills it, which it does only when REPEATS is</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># above 0, so a session that ran the job before cannot carry an old result in.</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>.vpd_stab <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># cache_fit() writes &lt;dir&gt;/&lt;name&gt;.rds and its default dir is the study&#39;s</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># estimates folder, not this set&#39;s, so every call here names the set&#39;s.</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="fu">dirname</span>(<span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;dependence.rds&quot;</span>))</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>.count_ok <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">is.numeric</span>(x) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(x) <span class="sc">==</span> <span class="dv">1</span>L <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(x) <span class="sc">&amp;&amp;</span> x <span class="sc">&gt;=</span> <span class="dv">1</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">.count_ok</span>(MAX_TREE) <span class="sc">||</span> <span class="sc">!</span><span class="fu">.count_ok</span>(MAX_RULES_TREE)) {</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;MAX_TREE and MAX_RULES_TREE must each be a single whole number of at least 1.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(MAX_UNTESTED) <span class="sc">&amp;&amp;</span> <span class="sc">!</span>(<span class="fu">is.numeric</span>(MAX_UNTESTED) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(MAX_UNTESTED) <span class="sc">==</span> <span class="dv">1</span>L <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(MAX_UNTESTED) <span class="sc">&amp;&amp;</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>                                  MAX_UNTESTED <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> MAX_UNTESTED <span class="sc">&lt;=</span> <span class="dv">1</span>)) {</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;MAX_UNTESTED must be NULL or a single share in [0, 1].&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>(<span class="fu">is.numeric</span>(MIN_UNTESTED) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(MIN_UNTESTED) <span class="sc">==</span> <span class="dv">1</span>L <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(MIN_UNTESTED) <span class="sc">&amp;&amp;</span> MIN_UNTESTED <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        MIN_UNTESTED <span class="sc">==</span> <span class="fu">round</span>(MIN_UNTESTED))) {</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;MIN_UNTESTED must be a single whole number of at least 0.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED))</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="co"># packages = keys each cache on the engine doing the work as well as on</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="co"># varPro, which only calls it: randomForestSRC grows the forest and glmnet</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="co"># fits the lasso, and an update to either must not reuse an old result.</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="co"># The rule limits are written into the call itself: cache_fit() keys the</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="co"># variables its expression names, so a changed MAX_TREE or MAX_RULES_TREE</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="co"># makes the cache stale rather than reloading a fit built under the old ones.</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;vp-dependence&quot;</span>,</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">uvarpro</span>(d_noise, <span class="at">ntree =</span> NTREE, <span class="at">max.tree =</span> <span class="fu">min</span>(MAX_TREE, NTREE), <span class="at">max.rules.tree =</span> MAX_RULES_TREE,</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>                         <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED)),</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>                 <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT, <span class="at">packages =</span> <span class="st">&quot;randomForestSRC&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code>cache_fit(): loaded &#39;vp-dependence&#39; from cache</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The lasso step draws its cross-validation folds from R&#39;s generator, so it is</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># seeded again. pre.filter = FALSE keeps every column: the pre-filter would</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># drop the noise the bar is made from, and any outcome column.</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED))</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>beta_raw <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="st">&quot;vp-dependence-beta&quot;</span>, <span class="fu">get.beta.entropy</span>(fit, <span class="at">pre.filter =</span> <span class="cn">FALSE</span>, <span class="at">papply =</span> lapply),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                      <span class="at">seed =</span> SEED, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT, <span class="at">packages =</span> <span class="st">&quot;glmnet&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>cache_fit(): loaded &#39;vp-dependence-beta&#39; from cache</code></pre>
+</div>
 </div>
 </section>
 <section id="coverage" class="level2">
@@ -2872,9 +2898,9 @@ Table 2: Patients supplied, missing values, and patients used
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>.coverage <span class="ot">&lt;-</span> <span class="fu">vpd_coverage</span>(fit, .cols)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>.not_examined <span class="ot">&lt;-</span> .coverage<span class="sc">$</span>variable[.coverage<span class="sc">$</span>state <span class="sc">==</span> <span class="st">&quot;not examined&quot;</span>]</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.coverage, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>.coverage <span class="ot">&lt;-</span> <span class="fu">vpd_coverage</span>(fit, .cols)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>.not_examined <span class="ot">&lt;-</span> .coverage<span class="sc">$</span>variable[.coverage<span class="sc">$</span>state <span class="sc">==</span> <span class="st">&quot;not examined&quot;</span>]</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(.coverage, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-coverage" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -2899,7 +2925,7 @@ Table 3: Whether the forest examined each variable
 </tr>
 <tr class="even">
 <td style="text-align: left;">female</td>
-<td style="text-align: right;">644</td>
+<td style="text-align: right;">612</td>
 <td style="text-align: left;">examined</td>
 </tr>
 <tr class="odd">
@@ -2909,32 +2935,32 @@ Table 3: Whether the forest examined each variable
 </tr>
 <tr class="even">
 <td style="text-align: left;">hx_chf</td>
-<td style="text-align: right;">3234</td>
+<td style="text-align: right;">3365</td>
 <td style="text-align: left;">examined</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">hx_dm</td>
-<td style="text-align: right;">2305</td>
+<td style="text-align: right;">2319</td>
 <td style="text-align: left;">examined</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">nyha_pr</td>
-<td style="text-align: right;">32</td>
+<td style="text-align: right;">31</td>
 <td style="text-align: left;">examined</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">lvef</td>
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">36</td>
 <td style="text-align: left;">examined</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">plvmassi</td>
-<td style="text-align: right;">6</td>
-<td style="text-align: left;">examined</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">not examined</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">creat_pr</td>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">5</td>
 <td style="text-align: left;">examined</td>
 </tr>
 </tbody>
@@ -2946,21 +2972,24 @@ Table 3: Whether the forest examined each variable
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Below the table, so the reader sees the counts before the verdict.</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.not_examined)) {</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Not examined: &quot;</span>, <span class="fu">paste</span>(.not_examined, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;. The forest built no rule for them, so no edge &quot;</span>,</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;leaves them; edges into them can still appear.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Below the table, so the reader sees the counts before the verdict.</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.not_examined)) {</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Not examined: &quot;</span>, <span class="fu">paste</span>(.not_examined, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;. The forest built no rule for them, so no edge &quot;</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;leaves them; edges into them can still appear.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<p>Not examined: bmi. The forest built no rule for them, so no edge leaves them; edges into them can still appear.</p>
+<p>Not examined: bmi, plvmassi. The forest built no rule for them, so no edge leaves them; edges into them can still appear.</p>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(MAX_UNTESTED) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(.not_examined) <span class="sc">/</span> <span class="fu">length</span>(.cols) <span class="sc">&gt;</span> MAX_UNTESTED) {</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="fu">length</span>(.not_examined), <span class="st">&quot; of &quot;</span>, <span class="fu">length</span>(.cols), <span class="st">&quot; variables were not examined, more than MAX_UNTESTED (&quot;</span>,</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>       MAX_UNTESTED, <span class="st">&quot;) allows: &quot;</span>, <span class="fu">paste</span>(.not_examined, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;. The forest built no release rule for &quot;</span>,</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;them. Raise MAX_TREE (up to NTREE), MAX_RULES_TREE or NTREE, set REFIT &lt;- TRUE and re-render; &quot;</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;MAX_UNTESTED &lt;- NULL reports them without stopping.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Both must be exceeded, so MIN_UNTESTED is a floor under the share&#39;s allowance:</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># at 9 variables and 0.1 the share allows none and MIN_UNTESTED one.</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(MAX_UNTESTED) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(.not_examined) <span class="sc">&gt;</span> MIN_UNTESTED <span class="sc">&amp;&amp;</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">length</span>(.not_examined) <span class="sc">/</span> <span class="fu">length</span>(.cols) <span class="sc">&gt;</span> MAX_UNTESTED) {</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="fu">length</span>(.not_examined), <span class="st">&quot; of &quot;</span>, <span class="fu">length</span>(.cols), <span class="st">&quot; variables were not examined, more than MAX_UNTESTED (&quot;</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>       MAX_UNTESTED, <span class="st">&quot;) and MIN_UNTESTED (&quot;</span>, MIN_UNTESTED, <span class="st">&quot;) allow: &quot;</span>, <span class="fu">paste</span>(.not_examined, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>),</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;. The forest built no release rule for them. Raise MAX_TREE (up to NTREE), MAX_RULES_TREE or NTREE, &quot;</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot;set REFIT &lt;- TRUE and re-render; MAX_UNTESTED &lt;- NULL reports them without stopping.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </section>
 <section id="the-dependence-matrix" class="level2">
@@ -2968,62 +2997,62 @@ Table 3: Whether the forest examined each variable
 <p>Each row of the matrix is a variable VarPro released: its rules pick out a group of patients, and the lasso asks which other variables separate that group from the rest. Each entry is how strongly the column’s variable does.</p>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>.parent <span class="ot">&lt;-</span> <span class="fu">vpd_parent</span>(fit)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>beta <span class="ot">&lt;-</span> <span class="fu">vpd_square</span>(beta_raw, .parent)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>.noise <span class="ot">&lt;-</span> <span class="fu">startsWith</span>(<span class="fu">unname</span>(.parent[<span class="fu">rownames</span>(beta)]), <span class="st">&quot;noise&quot;</span>) <span class="sc">%in%</span> <span class="cn">TRUE</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>bar <span class="ot">&lt;-</span> <span class="fu">vpd_bar</span>(beta, .noise, THRESHOLD_FIXED)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="cf">if</span> (bar<span class="sc">$</span>from <span class="sc">==</span> <span class="st">&quot;noise&quot;</span>) {</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sprintf</span>(<span class="st">&quot;The noise bar is %.3g, the largest weight a permuted noise column reached; varPro&#39;s fixed cutoff is %.3g.</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>          bar<span class="sc">$</span>bar, THRESHOLD_FIXED)</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sprintf</span>(<span class="st">&quot;No noise column earned any weight, so the fixed cutoff %.3g stands in for the noise bar.</span><span class="sc">\n</span><span class="st">&quot;</span>, THRESHOLD_FIXED)</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>.parent <span class="ot">&lt;-</span> <span class="fu">vpd_parent</span>(fit)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>beta <span class="ot">&lt;-</span> <span class="fu">vpd_square</span>(beta_raw, .parent)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>.noise <span class="ot">&lt;-</span> <span class="fu">startsWith</span>(<span class="fu">unname</span>(.parent[<span class="fu">rownames</span>(beta)]), <span class="st">&quot;noise&quot;</span>) <span class="sc">%in%</span> <span class="cn">TRUE</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>bar <span class="ot">&lt;-</span> <span class="fu">vpd_bar</span>(beta, .noise, THRESHOLD_FIXED)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="cf">if</span> (bar<span class="sc">$</span>from <span class="sc">==</span> <span class="st">&quot;noise&quot;</span>) {</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sprintf</span>(<span class="st">&quot;The noise bar is %.3g, the largest weight a permuted noise column reached; varPro&#39;s fixed cutoff is %.3g.</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>          bar<span class="sc">$</span>bar, THRESHOLD_FIXED)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sprintf</span>(<span class="st">&quot;No noise column earned any weight, so the fixed cutoff %.3g stands in for the noise bar.</span><span class="sc">\n</span><span class="st">&quot;</span>, THRESHOLD_FIXED)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<p>The noise bar is 1.03, the largest weight a permuted noise column reached; varPro’s fixed cutoff is 0.25.</p>
+<p>The noise bar is 0.598, the largest weight a permuted noise column reached; varPro’s fixed cutoff is 0.25.</p>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The graph holds real variables only. sdependent() keeps an edge at &gt;= its</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># threshold, so the noise entry the bar came from would otherwise be drawn.</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>beta_real <span class="ot">&lt;-</span> beta[<span class="sc">!</span>.noise, <span class="sc">!</span>.noise, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># gg_udependent() warns when no edge clears the bar. This report says so in</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># its own words below the graph, so that one warning is muffled, by its</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># message and nothing else.</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>vpd_graph <span class="ot">&lt;-</span> <span class="cf">function</span>(fit, beta, bar) {</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">withCallingHandlers</span>(</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gg_udependent</span>(fit, <span class="at">beta.mat =</span> beta, <span class="at">threshold =</span> bar),</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">warning =</span> <span class="cf">function</span>(w) <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">&quot;no edges found&quot;</span>, <span class="fu">conditionMessage</span>(w), <span class="at">fixed =</span> <span class="cn">TRUE</span>)) <span class="fu">invokeRestart</span>(<span class="st">&quot;muffleWarning&quot;</span>)</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>gg <span class="ot">&lt;-</span> <span class="fu">vpd_graph</span>(fit, beta_real, bar<span class="sc">$</span>bar)</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>signal <span class="ot">&lt;-</span> <span class="fu">as.character</span>(gg<span class="sc">$</span>nodes<span class="sc">$</span>variable[gg<span class="sc">$</span>nodes<span class="sc">$</span>selected])</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>.linked <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">c</span>(gg<span class="sc">$</span>edges<span class="sc">$</span>variable_from, gg<span class="sc">$</span>edges<span class="sc">$</span>variable_to))</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>.unlinked <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">rownames</span>(beta_real), .linked)</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.unlinked)) {</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">No link at the bar, so not drawn (not evidence of independence): &quot;</span>, <span class="fu">paste</span>(.unlinked, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The graph holds real variables only. sdependent() keeps an edge at &gt;= its</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># threshold, so the noise entry the bar came from would otherwise be drawn.</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>beta_real <span class="ot">&lt;-</span> beta[<span class="sc">!</span>.noise, <span class="sc">!</span>.noise, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># gg_udependent() warns when no edge clears the bar. This report says so in</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co"># its own words below the graph, so that one warning is muffled, by its</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co"># message and nothing else.</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>vpd_graph <span class="ot">&lt;-</span> <span class="cf">function</span>(fit, beta, bar) {</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">withCallingHandlers</span>(</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gg_udependent</span>(fit, <span class="at">beta.mat =</span> beta, <span class="at">threshold =</span> bar),</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">warning =</span> <span class="cf">function</span>(w) <span class="cf">if</span> (<span class="fu">grepl</span>(<span class="st">&quot;no edges found&quot;</span>, <span class="fu">conditionMessage</span>(w), <span class="at">fixed =</span> <span class="cn">TRUE</span>)) <span class="fu">invokeRestart</span>(<span class="st">&quot;muffleWarning&quot;</span>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>gg <span class="ot">&lt;-</span> <span class="fu">vpd_graph</span>(fit, beta_real, bar<span class="sc">$</span>bar)</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>signal <span class="ot">&lt;-</span> <span class="fu">as.character</span>(gg<span class="sc">$</span>nodes<span class="sc">$</span>variable[gg<span class="sc">$</span>nodes<span class="sc">$</span>selected])</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>.linked <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">c</span>(gg<span class="sc">$</span>edges<span class="sc">$</span>variable_from, gg<span class="sc">$</span>edges<span class="sc">$</span>variable_to))</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>.unlinked <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">rownames</span>(beta_real), .linked)</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(.unlinked)) {</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">No link at the bar, so not drawn (not evidence of independence): &quot;</span>, <span class="fu">paste</span>(.unlinked, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>), <span class="st">&quot;.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<p>No link at the bar, so not drawn (not evidence of independence): female, hx_dm, nyha_pr, plvmassi, age, bmi, creat_pr.</p>
+<p>No link at the bar, so not drawn (not evidence of independence): female, hx_dm, age, bmi, nyha_pr, plvmassi, creat_pr.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># With no edge there is nothing to draw, and the matrix chunk above has said</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># which variables have no link. A blank panel stands in, so the caption still</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># has its figure, and it says why.</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">nrow</span>(gg<span class="sc">$</span>edges) <span class="sc">==</span> <span class="dv">0</span>L) {</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">ggplot</span>() <span class="sc">+</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">annotate</span>(<span class="st">&quot;text&quot;</span>, <span class="at">x =</span> <span class="dv">0</span>, <span class="at">y =</span> <span class="dv">0</span>, <span class="at">label =</span> <span class="st">&quot;No edge clears the bar.&quot;</span>) <span class="sc">+</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">theme_void</span>()</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(gg)</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;vp-dependence-graph&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># With no edge there is nothing to draw, and the matrix chunk above has said</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># which variables have no link. A blank panel stands in, so the caption still</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># has its figure, and it says why.</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">nrow</span>(gg<span class="sc">$</span>edges) <span class="sc">==</span> <span class="dv">0</span>L) {</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">annotate</span>(<span class="st">&quot;text&quot;</span>, <span class="at">x =</span> <span class="dv">0</span>, <span class="at">y =</span> <span class="dv">0</span>, <span class="at">label =</span> <span class="st">&quot;No edge clears the bar.&quot;</span>) <span class="sc">+</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">theme_void</span>()</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(gg)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;vp-dependence-graph&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-graph" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-graph-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/48048098989d1ce0324e8c54e881b971.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/36e64144638771d52c66dc25a7c1641d.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-graph-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 1: Dependence between the variables, at the noise bar. An arrow runs from a released variable to a variable that helps separate the patients its rules pick out, and the stronger the link the darker the arrow; blue variables are the signal set. A variable with no edge at the bar is not drawn.
@@ -3035,28 +3064,28 @@ Figure 1: Dependence between the variables, at the noise bar. An arrow runs fro
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>.sym <span class="ot">&lt;-</span> <span class="fu">pmax</span>(beta_real, <span class="fu">t</span>(beta_real))</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>.ord <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">nrow</span>(.sym) <span class="sc">&gt;</span> <span class="dv">2</span>L) <span class="fu">rownames</span>(.sym)[stats<span class="sc">::</span><span class="fu">hclust</span>(stats<span class="sc">::</span><span class="fu">dist</span>(.sym))<span class="sc">$</span>order] <span class="cf">else</span> <span class="fu">rownames</span>(.sym)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>.long <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">row =</span> <span class="fu">rep</span>(<span class="fu">rownames</span>(.sym), <span class="fu">ncol</span>(.sym)), <span class="at">col =</span> <span class="fu">rep</span>(<span class="fu">colnames</span>(.sym), <span class="at">each =</span> <span class="fu">nrow</span>(.sym)),</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">weight =</span> <span class="fu">as.vector</span>(.sym))</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>.long<span class="sc">$</span>row <span class="ot">&lt;-</span> <span class="fu">factor</span>(.long<span class="sc">$</span>row, <span class="at">levels =</span> .ord)</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>.long<span class="sc">$</span>col <span class="ot">&lt;-</span> <span class="fu">factor</span>(.long<span class="sc">$</span>col, <span class="at">levels =</span> .ord)</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>.out <span class="ot">&lt;-</span> .long[.parent[<span class="fu">as.character</span>(.long<span class="sc">$</span>row)] <span class="sc">%in%</span> OUTCOME <span class="sc">|</span> .parent[<span class="fu">as.character</span>(.long<span class="sc">$</span>col)] <span class="sc">%in%</span> OUTCOME, ]</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(.long, ggplot2<span class="sc">::</span><span class="fu">aes</span>(col, row, <span class="at">fill =</span> weight)) <span class="sc">+</span></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_tile</span>() <span class="sc">+</span></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_tile</span>(<span class="at">data =</span> .out, <span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">&quot;black&quot;</span>, <span class="at">linewidth =</span> <span class="fl">0.3</span>) <span class="sc">+</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">&quot;white&quot;</span>, <span class="at">high =</span> <span class="st">&quot;steelblue4&quot;</span>, <span class="at">name =</span> <span class="st">&quot;Weight&quot;</span>) <span class="sc">+</span></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">axis.text.x =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">vjust =</span> <span class="fl">0.5</span>))</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;vp-dependence-heatmap&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>.sym <span class="ot">&lt;-</span> <span class="fu">pmax</span>(beta_real, <span class="fu">t</span>(beta_real))</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>.ord <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">nrow</span>(.sym) <span class="sc">&gt;</span> <span class="dv">2</span>L) <span class="fu">rownames</span>(.sym)[stats<span class="sc">::</span><span class="fu">hclust</span>(stats<span class="sc">::</span><span class="fu">dist</span>(.sym))<span class="sc">$</span>order] <span class="cf">else</span> <span class="fu">rownames</span>(.sym)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>.long <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">row =</span> <span class="fu">rep</span>(<span class="fu">rownames</span>(.sym), <span class="fu">ncol</span>(.sym)), <span class="at">col =</span> <span class="fu">rep</span>(<span class="fu">colnames</span>(.sym), <span class="at">each =</span> <span class="fu">nrow</span>(.sym)),</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">weight =</span> <span class="fu">as.vector</span>(.sym))</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>.long<span class="sc">$</span>row <span class="ot">&lt;-</span> <span class="fu">factor</span>(.long<span class="sc">$</span>row, <span class="at">levels =</span> .ord)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>.long<span class="sc">$</span>col <span class="ot">&lt;-</span> <span class="fu">factor</span>(.long<span class="sc">$</span>col, <span class="at">levels =</span> .ord)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>.out <span class="ot">&lt;-</span> .long[.parent[<span class="fu">as.character</span>(.long<span class="sc">$</span>row)] <span class="sc">%in%</span> OUTCOME <span class="sc">|</span> .parent[<span class="fu">as.character</span>(.long<span class="sc">$</span>col)] <span class="sc">%in%</span> OUTCOME, ]</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>.fig <span class="ot">&lt;-</span> ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(.long, ggplot2<span class="sc">::</span><span class="fu">aes</span>(col, row, <span class="at">fill =</span> weight)) <span class="sc">+</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_tile</span>() <span class="sc">+</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">geom_tile</span>(<span class="at">data =</span> .out, <span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">color =</span> <span class="st">&quot;black&quot;</span>, <span class="at">linewidth =</span> <span class="fl">0.3</span>) <span class="sc">+</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_fill_gradient</span>(<span class="at">low =</span> <span class="st">&quot;white&quot;</span>, <span class="at">high =</span> <span class="st">&quot;steelblue4&quot;</span>, <span class="at">name =</span> <span class="st">&quot;Weight&quot;</span>) <span class="sc">+</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  hvtiPlotR<span class="sc">::</span><span class="fu">theme_hv_manuscript</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">axis.text.x =</span> ggplot2<span class="sc">::</span><span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">hjust =</span> <span class="dv">1</span>, <span class="at">vjust =</span> <span class="fl">0.5</span>))</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="fu">save_figure</span>(.fig, <span class="st">&quot;vp-dependence-heatmap&quot;</span>, <span class="at">width =</span> <span class="fl">6.5</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>.fig</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-heatmap" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-heatmap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/d6d0ebb20a3f5432b50d07883da2b199.png" class="img-fluid figure-img" width="936">
+<img role="img" src="assets/55eb4576c70c91bc5bb23bdacb350b66.png" class="img-fluid figure-img" width="936">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-heatmap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 2: Dependence between every pair of variables at any strength, the larger of the two directions, clustered so related variables sit together. Outcome columns, if any, are outlined.
@@ -3072,48 +3101,48 @@ Figure 2: Dependence between every pair of variables at any strength, the large
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Each refit draws its patients and its noise from seeds that move with r</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># (abs(SEED) + r, and abs(SEED + r) inside vp_add_noise(), as in vp-fit), and</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co"># is cached on its own, so raising REPEATS computes only the new ones.</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (REPEATS <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  .runs <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(REPEATS), <span class="cf">function</span>(r) {</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED) <span class="sc">+</span> r)</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    rows <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">sample.int</span>(<span class="fu">nrow</span>(d), <span class="fu">floor</span>(SUBSAMPLE <span class="sc">*</span> <span class="fu">nrow</span>(d))))</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    dr <span class="ot">&lt;-</span> <span class="fu">vp_add_noise</span>(d[rows, , <span class="at">drop =</span> <span class="cn">FALSE</span>], .cols, NOISE_N, SEED <span class="sc">+</span> r)</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED) <span class="sc">+</span> r)</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    fr <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="fu">sprintf</span>(<span class="st">&quot;vp-dependence-repeat-%02d&quot;</span>, r),</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">uvarpro</span>(dr, <span class="at">ntree =</span> NTREE, <span class="at">max.tree =</span> <span class="fu">min</span>(MAX_TREE, NTREE), <span class="at">max.rules.tree =</span> MAX_RULES_TREE,</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>                            <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED <span class="sc">+</span> r)),</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>                    <span class="at">seed =</span> SEED <span class="sc">+</span> r, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT, <span class="at">packages =</span> <span class="st">&quot;randomForestSRC&quot;</span>)</span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED) <span class="sc">+</span> r)</span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    br <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="fu">sprintf</span>(<span class="st">&quot;vp-dependence-repeat-%02d-beta&quot;</span>, r),</span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">get.beta.entropy</span>(fr, <span class="at">pre.filter =</span> <span class="cn">FALSE</span>, <span class="at">papply =</span> lapply),</span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>                    <span class="at">seed =</span> SEED <span class="sc">+</span> r, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT, <span class="at">packages =</span> <span class="st">&quot;glmnet&quot;</span>)</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    pr <span class="ot">&lt;-</span> <span class="fu">vpd_parent</span>(fr)</span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    sq <span class="ot">&lt;-</span> <span class="fu">vpd_square</span>(br, pr)</span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>    nz <span class="ot">&lt;-</span> <span class="fu">startsWith</span>(<span class="fu">unname</span>(pr[<span class="fu">rownames</span>(sq)]), <span class="st">&quot;noise&quot;</span>) <span class="sc">%in%</span> <span class="cn">TRUE</span></span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">&lt;-</span> <span class="fu">vpd_bar</span>(sq, nz, THRESHOLD_FIXED)</span>
-<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>    real <span class="ot">&lt;-</span> sq[<span class="sc">!</span>nz, <span class="sc">!</span>nz, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>    g <span class="ot">&lt;-</span> <span class="fu">vpd_graph</span>(fr, real, b<span class="sc">$</span>bar)</span>
-<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>    cr <span class="ot">&lt;-</span> <span class="fu">vpd_coverage</span>(fr, .cols)</span>
-<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">bar =</span> b<span class="sc">$</span>bar, <span class="at">edges =</span> <span class="fu">paste</span>(g<span class="sc">$</span>edges<span class="sc">$</span>variable_from, g<span class="sc">$</span>edges<span class="sc">$</span>variable_to, <span class="at">sep =</span> <span class="st">&quot; -&gt; &quot;</span>),</span>
-<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>         <span class="at">signal =</span> <span class="fu">as.character</span>(g<span class="sc">$</span>nodes<span class="sc">$</span>variable[g<span class="sc">$</span>nodes<span class="sc">$</span>selected]), <span class="at">examined =</span> cr<span class="sc">$</span>variable[cr<span class="sc">$</span>rules <span class="sc">&gt;</span> <span class="dv">0</span>L])</span>
-<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>  .vpd_stab <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">edges =</span> <span class="fu">vpd_edge_share</span>(.runs),</span>
-<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">signal =</span> <span class="fu">vpd_signal_share</span>(.runs),</span>
-<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">bars =</span> <span class="fu">vapply</span>(.runs, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="fu">numeric</span>(<span class="dv">1</span>L), <span class="st">&quot;bar&quot;</span>)</span>
-<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>  .vpd_stab<span class="sc">$</span>edges <span class="ot">&lt;-</span> .vpd_stab<span class="sc">$</span>edges[<span class="fu">order</span>(<span class="sc">-</span>.vpd_stab<span class="sc">$</span>edges<span class="sc">$</span>share, <span class="at">na.last =</span> <span class="cn">TRUE</span>), ]</span>
-<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;The noise bar ranged from %.3g to %.3g across the refits.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">min</span>(.vpd_stab<span class="sc">$</span>bars), <span class="fu">max</span>(.vpd_stab<span class="sc">$</span>bars)))</span>
-<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">nrow</span>(.vpd_stab<span class="sc">$</span>edges)) <span class="fu">cat</span>(<span class="st">&quot;No edge cleared its refit&#39;s bar in any refit.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(.vpd_stab<span class="sc">$</span>edges, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Skipped: REPEATS is 0.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Each refit draws its patients and its noise from seeds that move with r</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co"># (abs(SEED) + r, and abs(SEED + r) inside vp_add_noise(), as in vp-fit), and</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co"># is cached on its own, so raising REPEATS computes only the new ones.</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (REPEATS <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  .runs <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(REPEATS), <span class="cf">function</span>(r) {</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED) <span class="sc">+</span> r)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    rows <span class="ot">&lt;-</span> <span class="fu">sort</span>(<span class="fu">sample.int</span>(<span class="fu">nrow</span>(d), <span class="fu">floor</span>(SUBSAMPLE <span class="sc">*</span> <span class="fu">nrow</span>(d))))</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    dr <span class="ot">&lt;-</span> <span class="fu">vp_add_noise</span>(d[rows, , <span class="at">drop =</span> <span class="cn">FALSE</span>], .cols, NOISE_N, SEED <span class="sc">+</span> r)</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED) <span class="sc">+</span> r)</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>    fr <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="fu">sprintf</span>(<span class="st">&quot;vp-dependence-repeat-%02d&quot;</span>, r),</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">uvarpro</span>(dr, <span class="at">ntree =</span> NTREE, <span class="at">max.tree =</span> <span class="fu">min</span>(MAX_TREE, NTREE), <span class="at">max.rules.tree =</span> MAX_RULES_TREE,</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>                            <span class="at">seed =</span> <span class="sc">-</span><span class="fu">abs</span>(SEED <span class="sc">+</span> r)),</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>                    <span class="at">seed =</span> SEED <span class="sc">+</span> r, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT, <span class="at">packages =</span> <span class="st">&quot;randomForestSRC&quot;</span>)</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(<span class="fu">abs</span>(SEED) <span class="sc">+</span> r)</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    br <span class="ot">&lt;-</span> <span class="fu">cache_fit</span>(<span class="fu">sprintf</span>(<span class="st">&quot;vp-dependence-repeat-%02d-beta&quot;</span>, r),</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">get.beta.entropy</span>(fr, <span class="at">pre.filter =</span> <span class="cn">FALSE</span>, <span class="at">papply =</span> lapply),</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>                    <span class="at">seed =</span> SEED <span class="sc">+</span> r, <span class="at">dir =</span> CACHE_DIR, <span class="at">refit =</span> REFIT, <span class="at">packages =</span> <span class="st">&quot;glmnet&quot;</span>)</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>    pr <span class="ot">&lt;-</span> <span class="fu">vpd_parent</span>(fr)</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>    sq <span class="ot">&lt;-</span> <span class="fu">vpd_square</span>(br, pr)</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>    nz <span class="ot">&lt;-</span> <span class="fu">startsWith</span>(<span class="fu">unname</span>(pr[<span class="fu">rownames</span>(sq)]), <span class="st">&quot;noise&quot;</span>) <span class="sc">%in%</span> <span class="cn">TRUE</span></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">&lt;-</span> <span class="fu">vpd_bar</span>(sq, nz, THRESHOLD_FIXED)</span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>    real <span class="ot">&lt;-</span> sq[<span class="sc">!</span>nz, <span class="sc">!</span>nz, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>    g <span class="ot">&lt;-</span> <span class="fu">vpd_graph</span>(fr, real, b<span class="sc">$</span>bar)</span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>    cr <span class="ot">&lt;-</span> <span class="fu">vpd_coverage</span>(fr, .cols)</span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">bar =</span> b<span class="sc">$</span>bar, <span class="at">edges =</span> <span class="fu">paste</span>(g<span class="sc">$</span>edges<span class="sc">$</span>variable_from, g<span class="sc">$</span>edges<span class="sc">$</span>variable_to, <span class="at">sep =</span> <span class="st">&quot; -&gt; &quot;</span>),</span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>         <span class="at">signal =</span> <span class="fu">as.character</span>(g<span class="sc">$</span>nodes<span class="sc">$</span>variable[g<span class="sc">$</span>nodes<span class="sc">$</span>selected]), <span class="at">examined =</span> cr<span class="sc">$</span>variable[cr<span class="sc">$</span>rules <span class="sc">&gt;</span> <span class="dv">0</span>L])</span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>  .vpd_stab <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">edges =</span> <span class="fu">vpd_edge_share</span>(.runs),</span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">signal =</span> <span class="fu">vpd_signal_share</span>(.runs),</span>
+<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">bars =</span> <span class="fu">vapply</span>(.runs, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="fu">numeric</span>(<span class="dv">1</span>L), <span class="st">&quot;bar&quot;</span>)</span>
+<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>  .vpd_stab<span class="sc">$</span>edges <span class="ot">&lt;-</span> .vpd_stab<span class="sc">$</span>edges[<span class="fu">order</span>(<span class="sc">-</span>.vpd_stab<span class="sc">$</span>edges<span class="sc">$</span>share, <span class="at">na.last =</span> <span class="cn">TRUE</span>), ]</span>
+<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;The noise bar ranged from %.3g to %.3g across the refits.</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">min</span>(.vpd_stab<span class="sc">$</span>bars), <span class="fu">max</span>(.vpd_stab<span class="sc">$</span>bars)))</span>
+<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">nrow</span>(.vpd_stab<span class="sc">$</span>edges)) <span class="fu">cat</span>(<span class="st">&quot;No edge cleared its refit&#39;s bar in any refit.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(.vpd_stab<span class="sc">$</span>edges, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Skipped: REPEATS is 0.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>The noise bar ranged from 0.548 to 3.37 across the refits.</code></pre>
+<pre><code>The noise bar ranged from 0.757 to 1.21 across the refits.</code></pre>
 </div>
 <div id="tbl-stability" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -3135,13 +3164,7 @@ Table 4: How often each edge cleared its refit’s noise bar, most often first
 <tr class="odd">
 <td style="text-align: left;">hx_chf</td>
 <td style="text-align: left;">lvef</td>
-<td style="text-align: right;">0.67</td>
-<td style="text-align: right;">3</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">hx_dm</td>
-<td style="text-align: left;">creat_pr</td>
-<td style="text-align: right;">0.33</td>
+<td style="text-align: right;">1</td>
 <td style="text-align: right;">3</td>
 </tr>
 </tbody>
@@ -3154,10 +3177,10 @@ Table 4: How often each edge cleared its refit’s noise bar, most often first
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Over the refits that examined each variable, as the edge table is. Empty when REPEATS is 0.</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.vpd_stab)) {</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(.vpd_stab<span class="sc">$</span>signal[<span class="fu">order</span>(<span class="sc">-</span>.vpd_stab<span class="sc">$</span>signal<span class="sc">$</span>share, <span class="at">na.last =</span> <span class="cn">TRUE</span>), ], <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Over the refits that examined each variable, as the edge table is. Empty when REPEATS is 0.</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(.vpd_stab)) {</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(.vpd_stab<span class="sc">$</span>signal[<span class="fu">order</span>(<span class="sc">-</span>.vpd_stab<span class="sc">$</span>signal<span class="sc">$</span>share, <span class="at">na.last =</span> <span class="cn">TRUE</span>), ], <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div id="tbl-stability-signal" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -3187,22 +3210,22 @@ Table 5: How often each variable was in the signal set across the refits, most 
 <h2 class="anchored" data-anchor-id="reading-the-result">Reading the result</h2>
 <p><strong>Missing values.</strong> With <code>NA_ACTION &lt;- &quot;na.impute&quot;</code>, missing values in the variables were imputed once by random forest (<code>randomForestSRC::impute()</code>, 250 trees) from the other variables, never from <code>OUTCOME</code>, before the noise columns were added and before the stability refits drew their patients. A variable missing in more than <code>MAX_MISSING</code> of the patients is refused, not filled. Patients missing <code>OUTCOME</code>, when it is set, were excluded. With <code>&quot;na.omit&quot;</code>, every patient missing a variable was excluded instead. The table of missing values above gives the counts either way.</p>
 <p><strong>An edge is dependence in the data, not a cause.</strong> It says that one variable helps tell apart the patients another variable’s rules pick out. Its arrow reads “the variable at the head helps separate the contrast of the variable at the tail”, which is a statement about how the data are arranged, not about which variable acts on which.</p>
-<p><strong>A variable the forest did not examine is not an independent one.</strong> It has no rule of its own, so no edge leaves it in the graph: an edge it lacks is missing because it was not looked at, not because the variable is independent. Edges into it can still appear, because it is a predictor in every other variable’s lasso. The coverage table says which variables those are, and the render stops when their share passes <code>MAX_UNTESTED</code>, unless it is <code>NULL</code>.</p>
+<p><strong>A variable the forest did not examine is not an independent one.</strong> It has no rule of its own, so no edge leaves it in the graph: an edge it lacks is missing because it was not looked at, not because the variable is independent. Edges into it can still appear, because it is a predictor in every other variable’s lasso. The coverage table says which variables those are, and the render stops when their share passes <code>MAX_UNTESTED</code> and their count passes <code>MIN_UNTESTED</code>, unless <code>MAX_UNTESTED</code> is <code>NULL</code>.</p>
 <p><strong>A variable with no edge is not an independent one.</strong> A variable with no edge at the bar has no link strong enough to beat the noise in this forest. It may still depend on others more weakly, and the heatmap shows every pair at any strength.</p>
 <p><strong>The bar is chance, measured in this fit.</strong> It is the largest weight a permuted copy reached, so it moves with the data and the settings in a way varPro’s fixed 0.25 does not. Read the stability tables before the graph: an edge drawn in the full fit but rarely in the refits is a weak one.</p>
 <p><strong>An outcome among the variables is shared structure.</strong> When <code>OUTCOME</code> is set, an edge to an outcome column says that variable and the outcome vary together among these patients. It is not a prediction, and nothing here was fitted to predict the outcome.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job: the fit, the matrix, the bar and what it kept, in</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># one file so they cannot drift apart.</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>vpd_handoff <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">beta =</span> beta, <span class="at">bar =</span> bar<span class="sc">$</span>bar, <span class="at">bar_from =</span> bar<span class="sc">$</span>from, <span class="at">edges =</span> gg<span class="sc">$</span>edges, <span class="at">signal =</span> signal,</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">stability =</span> .vpd_stab, <span class="at">not_examined =</span> .not_examined),</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data, <span class="at">analysis =</span> .analysis, <span class="at">cohort =</span> .cohort,</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(vpd_handoff, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;dependence.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The product of this job: the fit, the matrix, the bar and what it kept, in</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co"># one file so they cannot drift apart.</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>vpd_handoff <span class="ot">&lt;-</span> hvtiRtemplates<span class="sc">:::</span><span class="fu">.attach_handoff_lineage</span>(</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">beta =</span> beta, <span class="at">bar =</span> bar<span class="sc">$</span>bar, <span class="at">bar_from =</span> bar<span class="sc">$</span>from, <span class="at">edges =</span> gg<span class="sc">$</span>edges, <span class="at">signal =</span> signal,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">stability =</span> .vpd_stab, <span class="at">not_examined =</span> .not_examined),</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> .provenance_data, <span class="at">analysis =</span> .analysis, <span class="at">cohort =</span> .cohort,</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">selection =</span> <span class="fu">attr</span>(job_data<span class="sc">$</span>record, <span class="st">&quot;selection&quot;</span>)</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(vpd_handoff, <span class="fu">set_path</span>(<span class="st">&quot;estimates&quot;</span>, <span class="st">&quot;dependence.rds&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -3220,17 +3243,17 @@ Table 5: How often each variable was in the signal set across the refits, most 
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-18 12:08:11 EST</td>
+<td style="text-align: left;">2026-11-20 17:39:10 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-18 12:25:21 EST</td>
+<td style="text-align: left;">2026-11-20 17:42:10 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Duration</td>
-<td style="text-align: left;">17 min 10 s</td>
+<td style="text-align: left;">3 min 0 s</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3270,17 +3293,17 @@ Table 5: How often each variable was in the signal set across the refits, most 
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.1</td>
+<td style="text-align: left;">1.6.2</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>built</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">built_20261118.parquet</td>
+<td style="text-align: left;">built_20261120.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-18</td>
+<td style="text-align: left;">2026-11-20</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3300,7 +3323,7 @@ Table 5: How often each variable was in the signal set across the refits, most 
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">d4581c9fbd56</td>
+<td style="text-align: left;">d99147a5c095</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -3320,7 +3343,7 @@ Table 5: How often each variable was in the signal set across the refits, most 
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"vp.dependence.preop.vp","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 12:25:21","job":"vp.dependence.preop.vp","rendered":"2026-11-18T17:25:21Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"643650dc3441ef8125f8caad34c1406cc1241bf9290cdee6aa3000338776c02e"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.1","source":"standard"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cachem","version":"1.1.0","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.6.0","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggforce","version":"0.5.0","source":"CRAN"},{"package":"ggplot2","version":"4.0.4","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"0a76b04ab95d31c1056059c2fd30ecdb9e2df0cc"},{"package":"ggraph","version":"2.2.2","source":"CRAN"},{"package":"ggrepel","version":"0.9.8","source":"CRAN"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"graphlayouts","version":"1.2.5","source":"CRAN"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gridExtra","version":"2.3.1","source":"CRAN"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRtemplates","version":"1.6.1","source":"github","sha":"308962ac911e2087cee3271ad1320e7e12023d02"},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"igraph","version":"2.3.4","source":"standard"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"MASS","version":"7.3.66","source":"CRAN"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"memoise","version":"2.0.1","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.8","source":"standard"},{"package":"openssl","version":"2.6.0","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"polyclip","version":"1.10.7","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.3","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidygraph","version":"1.3.1","source":"CRAN"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"tweenr","version":"2.0.3","source":"CRAN"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.4.0","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"viridis","version":"0.6.5","source":"CRAN"},{"package":"viridisLite","version":"0.4.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"standard"},{"package":"xfun","version":"0.62","source":"standard"},{"package":"xml2","version":"1.6.0","source":"standard"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261118.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-18T16:54:55Z","sha256":"d4581c9fbd569b21078f37c93904b16a1b0c9c7f5416350a50b26db441ac4df4"}],"artifacts":[],"subject":"preop","type":"vp","analysis":{"kind":"unsupervised","variables":["age","female","bmi","hx_chf","hx_dm","nyha_pr","lvef","plvmassi","creat_pr"],"outcome":null},"cohort":{"n":800,"na_action":"na.impute","n_supplied":800,"n_outcome_missing":0,"n_imputed":[0,0,0,0,0,0,0,0,75],"n_dropped":0},"source_sha256":"00875b6a5b9b559acd1f8508be0b01dda7c973d9293af917bf6b3b7b9982ac0a","run":{"start":"2026-11-18T12:08:11-0500","end":"2026-11-18T12:25:21-0500","time_zone":"EST","duration_seconds":1029.9,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vp.dependence.preop.vp.qmd","template":"vp.dependence","prefix":"vp","qualifier":"dependence","subject":"preop","type":"vp","hvtiRtemplates":"1.6.1"},"datasets":[{"name":"built","version_file":"built_20261118.parquet","registered":"2026-11-18","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d4581c9fbd56","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.1","sha":"308962ac911e2087cee3271ad1320e7e12023d02","method":"vp.dependence","seed":2026,"rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 12:08:11"}},"source":"30_analyses/vp.dependence.preop.vp.qmd",".hvti_render_id":"321403dc639efeca9ff782ccc5520d23d2e00e6f0e24fd481850516cd0ed123d",".hvti_source_sha256":"00875b6a5b9b559acd1f8508be0b01dda7c973d9293af917bf6b3b7b9982ac0a"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"vp.dependence.preop.vp","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:42:10","job":"vp.dependence.preop.vp","rendered":"2026-11-20T22:42:10Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"22efb2006c7a5bb52ef0f5835ff411c15d3d7c302aad63ef291ede46874c447a"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"arrow","version":"26.0.0","source":"CRAN"},{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"assertthat","version":"0.2.1","source":"CRAN"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"bit","version":"4.6.0","source":"standard"},{"package":"bit64","version":"4.8.6","source":"standard"},{"package":"cachem","version":"1.1.0","source":"standard"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggforce","version":"0.5.0","source":"CRAN"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.1","source":null},{"package":"ggraph","version":"2.2.2","source":"CRAN"},{"package":"ggrepel","version":"0.9.8","source":"CRAN"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"graphlayouts","version":"1.2.5","source":"CRAN"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gridExtra","version":"2.3.1","source":"CRAN"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRtemplates","version":"1.6.2","source":null},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"MASS","version":"7.3.66","source":"CRAN"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"memoise","version":"2.0.1","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"polyclip","version":"1.10.7","source":"CRAN"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidygraph","version":"1.3.1","source":"CRAN"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"tweenr","version":"2.0.3","source":"CRAN"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"viridis","version":"0.6.5","source":"CRAN"},{"package":"viridisLite","version":"0.4.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"study","path":"00_datasets/built_20261120.parquet","role":"analysis","bytes":75792,"mtime":"2026-11-20T22:12:32Z","sha256":"d99147a5c095656e5a643e267ea2bf4232ef2841cd5b0035467a6071bd8c6ace"}],"artifacts":[],"subject":"preop","type":"vp","analysis":{"kind":"unsupervised","variables":["age","female","bmi","hx_chf","hx_dm","nyha_pr","lvef","plvmassi","creat_pr"],"outcome":null},"cohort":{"n":800,"na_action":"na.impute","n_supplied":800,"n_outcome_missing":0,"n_imputed":[0,0,0,0,0,0,0,0,75],"n_dropped":0},"source_sha256":"ec9ab05b69b93f5b915946cd274353b682677d1321ff4229d787c8ec186b4488","run":{"start":"2026-11-20T17:39:10-0500","end":"2026-11-20T17:42:10-0500","time_zone":"EST","duration_seconds":179.6,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"vp.dependence.preop.vp.qmd","template":"vp.dependence","prefix":"vp","qualifier":"dependence","subject":"preop","type":"vp","hvtiRtemplates":"1.6.2"},"datasets":[{"name":"built","version_file":"built_20261120.parquet","registered":"2026-11-20","source_file":"built.rds","rows":800,"patients":800,"where":[],"sha256":"d99147a5c095","manifest":"current"}],"upstream":[],"reproducibility":{"seed":"2026","renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.2","sha":null,"method":"vp.dependence","seed":2026,"rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:39:10"}},"source":"30_analyses/vp.dependence.preop.vp.qmd",".hvti_render_id":"db316f21cc5e07cf789349b95a84b801820490cef00fada77194a25b3c00f6e1",".hvti_source_sha256":"ec9ab05b69b93f5b915946cd274353b682677d1321ff4229d787c8ec186b4488"}</script>
 </section>
 
 </main>

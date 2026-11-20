@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:25
+2026-11-20 17:36
 
 Explains the forest the `rhf-fit` job in this set saved: how well it
 ranks patients over follow-up, their hazard curves, and which markers
@@ -33,7 +33,7 @@ suppressPackageStartupMessages({
 })
 # One thread, so the VarPro cache reproduces from machine to machine; see rhf-fit.
 options(rf.cores = 1L)
-# The versions this template was verified against, end to end, on 2026-10-26.
+# The oldest versions this template works with.
 if (utils::packageVersion("randomForestRHF") < "2.1.0") {
   stop("This job needs randomForestRHF >= 2.1.0; ", utils::packageVersion("randomForestRHF"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
@@ -63,7 +63,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.1
+hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -329,7 +329,7 @@ save_figure(.fig, "rhf-explain-importance", height = 7)
 .fig
 ```
 
-![](assets/c22154588980f70805c74130fb086a16.png)
+![](assets/2484947ba7b1c2247b91d9740d7df607.png)
 
 Figure 5: VarPro importance of each predictor at points across
 follow-up.
@@ -351,8 +351,8 @@ as.data.frame(imp)
     7       x_2 0.07936124          4 (0.05925916, 0.07936124] 0.05925916
     10      x_1 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
     12      x_3 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
-    9       xtd 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
     11      x_2 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
+    9       xtd 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
     14      x_1 0.26939733          9 (0.23891066, 0.26939733] 0.23891066
     16      x_3 0.26939733          9 (0.23891066, 0.26939733] 0.23891066
     15      x_2 0.26939733          9 (0.23891066, 0.26939733] 0.23891066
@@ -362,26 +362,26 @@ as.data.frame(imp)
     19      x_2 1.58222842         12 (0.40479201, 1.58222842] 0.40479201
     17      xtd 1.58222842         12 (0.40479201, 1.58222842] 0.40479201
              stop    midpoint n.risk n.rules importance
-    1  0.01978419 0.009892094    245    1322 3.92225755
-    2  0.01978419 0.009892094    245    1322 0.79421909
-    4  0.01978419 0.009892094    245    1322 0.40151470
-    3  0.01978419 0.009892094    245    1322 0.20658802
-    6  0.07936124 0.069310203    135     910 1.20528807
-    5  0.07936124 0.069310203    135     910 0.63493654
-    8  0.07936124 0.069310203    135     910 0.32888679
-    7  0.07936124 0.069310203    135     910 0.11015310
-    10 0.15200539 0.135172527    112     827 0.88831194
-    12 0.15200539 0.135172527    112     827 0.46363143
-    9  0.15200539 0.135172527    112     827 0.23812199
-    11 0.15200539 0.135172527    112     827 0.22461201
-    14 0.26939733 0.254153994     62     678 1.13495267
-    16 0.26939733 0.254153994     62     678 0.25859276
-    15 0.26939733 0.254153994     62     678 0.11387092
-    13 0.26939733 0.254153994     62     678 0.02951002
-    18 1.58222842 0.993510214     34     383 0.85561399
-    20 1.58222842 0.993510214     34     383 0.24770238
-    19 1.58222842 0.993510214     34     383 0.00000000
-    17 1.58222842 0.993510214     34     383 0.00000000
+    1  0.01978419 0.009892094    245    1310 4.14133218
+    2  0.01978419 0.009892094    245    1310 0.77939241
+    4  0.01978419 0.009892094    245    1310 0.34870874
+    3  0.01978419 0.009892094    245    1310 0.19191829
+    6  0.07936124 0.069310203    135     890 1.26089608
+    5  0.07936124 0.069310203    135     890 0.72734812
+    8  0.07936124 0.069310203    135     890 0.30455109
+    7  0.07936124 0.069310203    135     890 0.11720421
+    10 0.15200539 0.135172527    112     794 0.97050885
+    12 0.15200539 0.135172527    112     794 0.40026483
+    11 0.15200539 0.135172527    112     794 0.25148825
+    9  0.15200539 0.135172527    112     794 0.19248935
+    14 0.26939733 0.254153994     62     646 1.18221283
+    16 0.26939733 0.254153994     62     646 0.26143557
+    15 0.26939733 0.254153994     62     646 0.09655036
+    13 0.26939733 0.254153994     62     646 0.00000000
+    18 1.58222842 0.993510214     34     394 0.87807159
+    20 1.58222842 0.993510214     34     394 0.19981972
+    19 1.58222842 0.993510214     34     394 0.00000000
+    17 1.58222842 0.993510214     34     394 0.00000000
 
 Table 3: VarPro importance of each predictor at each point of follow-up
 
@@ -523,8 +523,8 @@ if (length(PD_VARS)) {
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 12:25:37 EST |
-|  | Ended | 2026-11-18 12:25:40 EST |
+| Run | Started | 2026-11-20 17:36:31 EST |
+|  | Ended | 2026-11-20 17:36:33 EST |
 |  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -533,12 +533,12 @@ if (length(PD_VARS)) {
 |  | Template | rhf.explain |
 |  | Subject | event |
 |  | Type | rhf |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `intervals` | Version file | intervals_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `intervals` | Version file | intervals_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | intervals.rds |
-|  | sha256 | 84290a069a2d |
+|  | sha256 | beb287931ea4 |
 |  | Manifest | current |
-| Upstream | Handoff | `event-rhf/rhf.rds` (forest), rendered 2026-11-18 12:25:29 -0500, data intervals_20261118.parquet |
+| Upstream | Handoff | `event-rhf/rhf.rds` (forest), rendered 2026-11-20 17:36:22 -0500, data intervals_20261120.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

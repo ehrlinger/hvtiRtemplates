@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 11:57
+2026-11-20 17:20
 
 A `dc-trends` job shows how the cohort changed over the years of
 operation: the share of patients with a characteristic, or the level of
@@ -67,8 +67,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.1
+**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -191,7 +191,7 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261118.parquet) |
+| Source              | dataset `built` (built_20261120.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -509,9 +509,9 @@ against an older figure by its shape and not point by point.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 11:57:54 EST |
-|  | Ended | 2026-11-18 11:57:56 EST |
-|  | Duration | 1 s |
+| Run | Started | 2026-11-20 17:20:45 EST |
+|  | Ended | 2026-11-20 17:20:47 EST |
+|  | Duration | 2 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -521,12 +521,12 @@ against an older figure by its shape and not point by point.
 |  | Template | dc.trends |
 |  | Subject | cohort |
 |  | Type | eda |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `built` | Version file | built_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `built` | Version file | built_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d4581c9fbd56 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Reproducibility | renv | not active |

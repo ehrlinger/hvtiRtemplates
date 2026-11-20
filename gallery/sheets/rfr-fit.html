@@ -40,7 +40,7 @@
 <ul>
 <li><strong>A study.</strong> The job runs inside a study folder set up with <code>_study.yml</code>. <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html">Start a new study</a> shows how.</li>
 <li><strong>The study's data.</strong> <code>DATASET</code> names the registered dataset it reads (<code>&quot;built&quot;</code> unless you change it). A draft can read a build that is not registered yet, so you can start before the build is final, and the report then says it is a draft. A final render reads registered data only: register the build with <code>hvtiRutilities::update_manifest()</code> first.</li>
-<li><strong>Packages:</strong> <code>randomForestSRC</code> (&gt;= 3.7.0), <code>ggRandomForests</code> (&gt;= 4.0.0), <code>hvtiRutilities</code>. The job checks each floor when it starts, so an older library stops it at the top rather than partway through.</li>
+<li><strong>Packages:</strong> <code>randomForestSRC</code> (&gt;= 3.7.0), <code>ggRandomForests</code> (&gt;= 4.0.1), <code>hvtiRutilities</code>. The job checks each floor when it starts, so an older library stops it at the top rather than partway through.</li>
 <li><strong>A background run.</strong> A long job starts from the study's R console with <code>hvtiRtemplates::run_job()</code>, which checks it first and renders it in a process that outlives the session.</li>
 </ul>
 <h2>Outline</h2>
@@ -60,7 +60,7 @@
 <ul>
 <li><strong>rfr-explain</strong> reads what this job saves (<code>rfr.rds</code>). Add it to the same set, with this job's <code>subject</code> and <code>type</code>, because that shared pair is how it finds the file: <code>add_job(&quot;rfr.explain&quot;, subject = &quot;&lt;subject&gt;&quot;, type = &quot;&lt;type&gt;&quot;)</code>.</li>
 </ul>
-<footer>Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18. The template holds the details; this sheet is its outline.</footer>
+<footer>Generated from the template by hvtiRtemplates, 1.6.2 · built 2026-11-20. The template holds the details; this sheet is its outline.</footer>
 </main>
 </body>
 </html>

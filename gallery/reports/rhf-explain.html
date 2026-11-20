@@ -2237,7 +2237,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">2026-11-18 12:25</p>
+      <p class="date">2026-11-20 17:36</p>
     </div>
   </div>
   
@@ -2249,7 +2249,7 @@ vertical-align: -.125em;
 </header>
 
 
-<!-- hvtiRtemplates: rhf.explain 1.6.1 sha256:8ddb2c185b7d1fa6416fa04c852a77d80d1d2903d1874ee1a0910110eead5a3b -->
+<!-- hvtiRtemplates: rhf.explain 1.6.2 sha256:6e6274fc7d1e5c5ab01b97931ef623581fab64468475c09bd1fef38970eca7b6 -->
 <p>Explains the forest the <code>rhf-fit</code> job in this set saved: how well it ranks patients over follow-up, their hazard curves, and which markers drive it.</p>
 <!--
      the importance and hazard curves are meant to answer. -->
@@ -2276,7 +2276,7 @@ vertical-align: -.125em;
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># One thread, so the VarPro cache reproduces from machine to machine; see rhf-fit.</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">rf.cores =</span> <span class="dv">1</span>L)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># The versions this template was verified against, end to end, on 2026-10-26.</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># The oldest versions this template works with.</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;randomForestRHF&quot;</span>) <span class="sc">&lt;</span> <span class="st">&quot;2.1.0&quot;</span>) {</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;This job needs randomForestRHF &gt;= 2.1.0; &quot;</span>, utils<span class="sc">::</span><span class="fu">packageVersion</span>(<span class="st">&quot;randomForestRHF&quot;</span>),</span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>       <span class="st">&quot; is installed.</span><span class="sc">\n</span><span class="st">Update it, then re-render.&quot;</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
@@ -2310,7 +2310,7 @@ vertical-align: -.125em;
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.6.1</p>
+<p><strong>final</strong> · data: see About this run · rendered by gallery on gallery · hvtiRtemplates 1.6.2</p>
 </div>
 </div>
 </div>
@@ -2633,7 +2633,7 @@ Figure 4: Out-of-bag predicted cumulative hazard over follow-up for the same pa
 <div id="fig-importance" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img role="img" src="assets/c22154588980f70805c74130fb086a16.png" class="img-fluid figure-img" width="864">
+<img role="img" src="assets/2484947ba7b1c2247b91d9740d7df607.png" class="img-fluid figure-img" width="864">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-importance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure 5: VarPro importance of each predictor at points across follow-up.
@@ -2664,8 +2664,8 @@ Table 3: VarPro importance of each predictor at each point of follow-up
 7       x_2 0.07936124          4 (0.05925916, 0.07936124] 0.05925916
 10      x_1 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
 12      x_3 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
-9       xtd 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
 11      x_2 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
+9       xtd 0.15200539          6 (0.11833967, 0.15200539] 0.11833967
 14      x_1 0.26939733          9 (0.23891066, 0.26939733] 0.23891066
 16      x_3 0.26939733          9 (0.23891066, 0.26939733] 0.23891066
 15      x_2 0.26939733          9 (0.23891066, 0.26939733] 0.23891066
@@ -2675,26 +2675,26 @@ Table 3: VarPro importance of each predictor at each point of follow-up
 19      x_2 1.58222842         12 (0.40479201, 1.58222842] 0.40479201
 17      xtd 1.58222842         12 (0.40479201, 1.58222842] 0.40479201
          stop    midpoint n.risk n.rules importance
-1  0.01978419 0.009892094    245    1322 3.92225755
-2  0.01978419 0.009892094    245    1322 0.79421909
-4  0.01978419 0.009892094    245    1322 0.40151470
-3  0.01978419 0.009892094    245    1322 0.20658802
-6  0.07936124 0.069310203    135     910 1.20528807
-5  0.07936124 0.069310203    135     910 0.63493654
-8  0.07936124 0.069310203    135     910 0.32888679
-7  0.07936124 0.069310203    135     910 0.11015310
-10 0.15200539 0.135172527    112     827 0.88831194
-12 0.15200539 0.135172527    112     827 0.46363143
-9  0.15200539 0.135172527    112     827 0.23812199
-11 0.15200539 0.135172527    112     827 0.22461201
-14 0.26939733 0.254153994     62     678 1.13495267
-16 0.26939733 0.254153994     62     678 0.25859276
-15 0.26939733 0.254153994     62     678 0.11387092
-13 0.26939733 0.254153994     62     678 0.02951002
-18 1.58222842 0.993510214     34     383 0.85561399
-20 1.58222842 0.993510214     34     383 0.24770238
-19 1.58222842 0.993510214     34     383 0.00000000
-17 1.58222842 0.993510214     34     383 0.00000000</code></pre>
+1  0.01978419 0.009892094    245    1310 4.14133218
+2  0.01978419 0.009892094    245    1310 0.77939241
+4  0.01978419 0.009892094    245    1310 0.34870874
+3  0.01978419 0.009892094    245    1310 0.19191829
+6  0.07936124 0.069310203    135     890 1.26089608
+5  0.07936124 0.069310203    135     890 0.72734812
+8  0.07936124 0.069310203    135     890 0.30455109
+7  0.07936124 0.069310203    135     890 0.11720421
+10 0.15200539 0.135172527    112     794 0.97050885
+12 0.15200539 0.135172527    112     794 0.40026483
+11 0.15200539 0.135172527    112     794 0.25148825
+9  0.15200539 0.135172527    112     794 0.19248935
+14 0.26939733 0.254153994     62     646 1.18221283
+16 0.26939733 0.254153994     62     646 0.26143557
+15 0.26939733 0.254153994     62     646 0.09655036
+13 0.26939733 0.254153994     62     646 0.00000000
+18 1.58222842 0.993510214     34     394 0.87807159
+20 1.58222842 0.993510214     34     394 0.19981972
+19 1.58222842 0.993510214     34     394 0.00000000
+17 1.58222842 0.993510214     34     394 0.00000000</code></pre>
 </div>
 </div>
 </figure>
@@ -2825,12 +2825,12 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 <tr class="odd">
 <td style="text-align: left;">Run</td>
 <td style="text-align: left;">Started</td>
-<td style="text-align: left;">2026-11-18 12:25:37 EST</td>
+<td style="text-align: left;">2026-11-20 17:36:31 EST</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Ended</td>
-<td style="text-align: left;">2026-11-18 12:25:40 EST</td>
+<td style="text-align: left;">2026-11-20 17:36:33 EST</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
@@ -2875,17 +2875,17 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;">1.6.1</td>
+<td style="text-align: left;">1.6.2</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dataset <code>intervals</code></td>
 <td style="text-align: left;">Version file</td>
-<td style="text-align: left;">intervals_20261118.parquet</td>
+<td style="text-align: left;">intervals_20261120.parquet</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">Version date</td>
-<td style="text-align: left;">2026-11-18</td>
+<td style="text-align: left;">2026-11-20</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2895,7 +2895,7 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 <tr class="odd">
 <td style="text-align: left;"></td>
 <td style="text-align: left;">sha256</td>
-<td style="text-align: left;">84290a069a2d</td>
+<td style="text-align: left;">beb287931ea4</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
@@ -2905,7 +2905,7 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 <tr class="odd">
 <td style="text-align: left;">Upstream</td>
 <td style="text-align: left;">Handoff</td>
-<td style="text-align: left;"><code>event-rhf/rhf.rds</code> (forest), rendered 2026-11-18 12:25:29 -0500, data intervals_20261118.parquet</td>
+<td style="text-align: left;"><code>event-rhf/rhf.rds</code> (forest), rendered 2026-11-20 17:36:22 -0500, data intervals_20261120.parquet</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Reproducibility</td>
@@ -2920,7 +2920,7 @@ Table 4: Exposure at each importance point: patients at risk, patient-time (in 
 </tbody>
 </table>
 <!-- hvti-provenance-managed -->
-<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"rhf.explain.event.rhf","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 12:25:40","job":"rhf.explain.event.rhf","rendered":"2026-11-18T17:25:40Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"61119a9ebfdfffe0ab2f05196c237f9bcf753aed0c7b9715508bbb357851d147"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.6.0","source":"standard"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.4","source":"standard"},{"package":"ggRandomForests","version":"4.0.0","source":"github","sha":"0a76b04ab95d31c1056059c2fd30ecdb9e2df0cc"},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"standard"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRtemplates","version":"1.6.1","source":"github","sha":"308962ac911e2087cee3271ad1320e7e12023d02"},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"igraph","version":"2.3.4","source":"standard"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"standard"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.8","source":"standard"},{"package":"openssl","version":"2.6.0","source":"standard"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestRHF","version":"2.1.0","source":"CRAN"},{"package":"randomForestSRC","version":"3.10.0","source":"standard"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.3","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.4.0","source":"standard"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"standard"},{"package":"xfun","version":"0.62","source":"standard"},{"package":"xml2","version":"1.6.0","source":"standard"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"intervals","path":"00_datasets/intervals_20261118.parquet","role":"analysis","bytes":28287,"mtime":"2026-11-18T17:25:26Z","sha256":"84290a069a2d3ebcb9d11d8d6988510906785a800d3e205f75b8e5eaedb7016e"}],"artifacts":[{"path":"90_estimates/event-rhf/rhf.rds","role":"forest","bytes":2231838,"mtime":"2026-11-18T17:25:32Z","sha256":"96cb5700ba04d5565abafeebb2395236aa3f44ed5c7e71345a012d21ba6f5ad2"}],"subject":"event","type":"rhf","analysis":{"start":{"variable":"start"},"stop":{"variable":"stop"},"event":{"variable":"event","event":1,"censored":0},"repair":[],"caps":[],"lookahead":{"interval":null,"action":"keep","final_intervals":146}},"cohort":{"n":150,"n_events":127,"n_censored":23},"source_sha256":"8f8b1ae42624ad5130f1d2db3f42476934aba0bf194a7227c4af33bae08ec1c0","run":{"start":"2026-11-18T12:25:37-0500","end":"2026-11-18T12:25:40-0500","time_zone":"EST","duration_seconds":2.4,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rhf.explain.event.rhf.qmd","template":"rhf.explain","prefix":"rhf","qualifier":"explain","subject":"event","type":"rhf","hvtiRtemplates":"1.6.1"},"datasets":[{"name":"intervals","version_file":"intervals_20261118.parquet","registered":"2026-11-18","source_file":"intervals.rds","sha256":"84290a069a2d","manifest":"current"}],"upstream":[{"file":"90_estimates/event-rhf/rhf.rds","set":"event-rhf","role":"forest","rendered_at":"2026-11-18T12:25:29-0500","dataset_version":"intervals_20261118.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.1","sha":"308962ac911e2087cee3271ad1320e7e12023d02","method":"rhf.explain","seed":2026,"rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-18 12:25:37"}},"source":"30_analyses/rhf.explain.event.rhf.qmd",".hvti_render_id":"c4ac1abc5afb82e11a1cae06a5ed82a3a4756836110f42d8a258105904dff662",".hvti_source_sha256":"8f8b1ae42624ad5130f1d2db3f42476934aba0bf194a7227c4af33bae08ec1c0"}</script>
+<script type="application/json" id="hvti-provenance">{"package":"hvtiRutilities","version":"1.5.26","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3","method":"rhf.explain.event.rhf","seed":"NA","rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:36:33","job":"rhf.explain.event.rhf","rendered":"2026-11-20T22:36:33Z","study":{"name":"Template gallery (synthetic)","file":"_study.yml","sha256":"61119a9ebfdfffe0ab2f05196c237f9bcf753aed0c7b9715508bbb357851d147"},"r":{"version":"4.6.1","platform":"aarch64-apple-darwin23"},"packages":[{"package":"askpass","version":"1.2.1","source":"standard"},{"package":"BART","version":"2.9.10","source":"standard"},{"package":"base","version":"4.6.1","source":"base"},{"package":"cli","version":"3.6.6","source":"standard"},{"package":"codetools","version":"0.2.20","source":"CRAN"},{"package":"compiler","version":"4.6.1","source":"base"},{"package":"consort","version":"1.2.4","source":"standard"},{"package":"data.tree","version":"1.2.0","source":"standard"},{"package":"datasets","version":"4.6.1","source":"base"},{"package":"DiagrammeR","version":"1.0.12","source":"standard"},{"package":"digest","version":"0.6.39","source":"standard"},{"package":"dplyr","version":"1.2.1","source":"standard"},{"package":"evaluate","version":"1.0.5","source":"standard"},{"package":"farver","version":"2.1.2","source":"standard"},{"package":"fastmap","version":"1.2.0","source":"standard"},{"package":"fontBitstreamVera","version":"0.1.1","source":"standard"},{"package":"fontLiberation","version":"0.1.0","source":"standard"},{"package":"fontquiver","version":"0.2.1","source":"standard"},{"package":"forcats","version":"1.0.1","source":"standard"},{"package":"foreach","version":"1.5.2","source":"standard"},{"package":"gbm","version":"2.3.1","source":"standard"},{"package":"gdtools","version":"0.5.2","source":"CRAN"},{"package":"generics","version":"0.1.4","source":"standard"},{"package":"ggalluvial","version":"0.12.6","source":"standard"},{"package":"ggplot2","version":"4.0.3","source":"standard"},{"package":"ggRandomForests","version":"4.0.1","source":null},{"package":"ggupset","version":"0.4.1","source":"standard"},{"package":"glmnet","version":"5.2","source":"CRAN"},{"package":"glue","version":"1.8.1","source":"standard"},{"package":"graphics","version":"4.6.1","source":"base"},{"package":"grDevices","version":"4.6.1","source":"base"},{"package":"grid","version":"4.6.1","source":"base"},{"package":"gtable","version":"0.3.6","source":"standard"},{"package":"haven","version":"2.5.5","source":"standard"},{"package":"hms","version":"1.1.4","source":"standard"},{"package":"htmltools","version":"0.5.9","source":"standard"},{"package":"htmlwidgets","version":"1.6.4","source":"standard"},{"package":"hvtiPlotR","version":"2.8.24","source":"github","sha":"6a97bd665af91771c1de46d68b633b7a9c0a439c"},{"package":"hvtiRtemplates","version":"1.6.2","source":null},{"package":"hvtiRutilities","version":"1.5.26","source":"github","sha":"d84bd678ae17d0c13eaab74f55691c030d1abaf3"},{"package":"igraph","version":"2.3.4","source":"CRAN"},{"package":"iterators","version":"1.0.14","source":"standard"},{"package":"jsonlite","version":"2.0.0","source":"standard"},{"package":"knitr","version":"1.52","source":"CRAN"},{"package":"labeling","version":"0.4.3","source":"standard"},{"package":"labelled","version":"2.16.1","source":"standard"},{"package":"lattice","version":"0.23.1","source":"standard"},{"package":"lifecycle","version":"1.0.5","source":"standard"},{"package":"magrittr","version":"2.0.5","source":"standard"},{"package":"Matrix","version":"1.7.6","source":"standard"},{"package":"methods","version":"4.6.1","source":"base"},{"package":"nlme","version":"3.1.172","source":"CRAN"},{"package":"officer","version":"0.7.7","source":"CRAN"},{"package":"openssl","version":"2.5.0","source":"CRAN"},{"package":"otel","version":"0.2.0","source":"standard"},{"package":"parallel","version":"4.6.1","source":"base"},{"package":"patchwork","version":"1.3.2","source":"standard"},{"package":"pillar","version":"1.11.1","source":"standard"},{"package":"pkgconfig","version":"2.0.3","source":"standard"},{"package":"ps","version":"1.9.3","source":"standard"},{"package":"purrr","version":"1.2.2","source":"standard"},{"package":"R6","version":"2.6.1","source":"standard"},{"package":"ragg","version":"1.5.2","source":"standard"},{"package":"randomForest","version":"4.7.1.2","source":"standard"},{"package":"randomForestRHF","version":"2.1.0","source":"CRAN"},{"package":"randomForestSRC","version":"3.10.0","source":"CRAN"},{"package":"RColorBrewer","version":"1.1.3","source":"standard"},{"package":"Rcpp","version":"1.1.2","source":"standard"},{"package":"rlang","version":"1.3.0","source":"standard"},{"package":"rmarkdown","version":"2.32","source":"standard"},{"package":"rvg","version":"0.4.2","source":"standard"},{"package":"S7","version":"0.2.2","source":"standard"},{"package":"scales","version":"1.4.0","source":"standard"},{"package":"shape","version":"1.4.6.1","source":"standard"},{"package":"splines","version":"4.6.1","source":"base"},{"package":"stats","version":"4.6.1","source":"base"},{"package":"stringi","version":"1.8.9","source":"standard"},{"package":"stringr","version":"1.6.0","source":"standard"},{"package":"survival","version":"3.8.12","source":"CRAN"},{"package":"systemfonts","version":"1.3.2","source":"standard"},{"package":"textshaping","version":"1.0.5","source":"standard"},{"package":"tibble","version":"3.3.1","source":"standard"},{"package":"tidyr","version":"1.3.2","source":"standard"},{"package":"tidyselect","version":"1.2.1","source":"standard"},{"package":"tools","version":"4.6.1","source":"base"},{"package":"utils","version":"4.6.1","source":"base"},{"package":"uuid","version":"1.2.2","source":"standard"},{"package":"varPro","version":"3.3.0","source":"CRAN"},{"package":"vctrs","version":"0.7.3","source":"standard"},{"package":"visNetwork","version":"2.1.4","source":"standard"},{"package":"withr","version":"3.0.3","source":"CRAN"},{"package":"xfun","version":"0.62","source":"CRAN"},{"package":"xml2","version":"1.6.0","source":"CRAN"},{"package":"yaml","version":"2.3.12","source":"standard"},{"package":"zip","version":"3.0.2","source":"standard"}],"renv_lock":null,"data":[{"dataset":"intervals","path":"00_datasets/intervals_20261120.parquet","role":"analysis","bytes":28287,"mtime":"2026-11-20T22:36:20Z","sha256":"beb287931ea4627b2e0e57dab4c81dba7106e059066c352c09d2b07f3073f3c5"}],"artifacts":[{"path":"90_estimates/event-rhf/rhf.rds","role":"forest","bytes":2231840,"mtime":"2026-11-20T22:36:25Z","sha256":"8e248236128d3b05197357f63d2392f5c64193b58ee54b0004e15a91c8826b87"}],"subject":"event","type":"rhf","analysis":{"start":{"variable":"start"},"stop":{"variable":"stop"},"event":{"variable":"event","event":1,"censored":0},"repair":[],"caps":[],"lookahead":{"interval":null,"action":"keep","final_intervals":146}},"cohort":{"n":150,"n_events":127,"n_censored":23},"source_sha256":"c21c77479a19d1161df3b9e49b259efdab4575860f77db0169008f1f12ec471f","run":{"start":"2026-11-20T17:36:31-0500","end":"2026-11-20T17:36:33-0500","time_zone":"EST","duration_seconds":2.5,"status":"final","open_markers":0,"skipped_chunks":0,"stopped_early":false,"user":"gallery","host":"gallery","job":{"file":"rhf.explain.event.rhf.qmd","template":"rhf.explain","prefix":"rhf","qualifier":"explain","subject":"event","type":"rhf","hvtiRtemplates":"1.6.2"},"datasets":[{"name":"intervals","version_file":"intervals_20261120.parquet","registered":"2026-11-20","source_file":"intervals.rds","sha256":"beb287931ea4","manifest":"current"}],"upstream":[{"file":"90_estimates/event-rhf/rhf.rds","set":"event-rhf","role":"forest","rendered_at":"2026-11-20T17:36:22-0500","dataset_version":"intervals_20261120.parquet"}],"reproducibility":{"seed":"2026","renv":{"active":false}},"provenance":{"package":"hvtiRtemplates","version":"1.6.2","sha":null,"method":"rhf.explain","seed":2026,"rng_kind":["Mersenne-Twister","Inversion","Rejection"],"time":"2026-11-20 17:36:31"}},"source":"30_analyses/rhf.explain.event.rhf.qmd",".hvti_render_id":"793d15b8c15ed42c744f90e58c65d33f8afdb4c4770dae7a3ee434ffc8fd65a5",".hvti_source_sha256":"c21c77479a19d1161df3b9e49b259efdab4575860f77db0169008f1f12ec471f"}</script>
 </section>
 
 </main>

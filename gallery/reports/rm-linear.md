@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:25
+2026-11-20 17:36
 
 Fits an ordinary least-squares model of a continuous outcome,
 untransformed or on the log scale, on one dataset or on stacked multiple
@@ -42,8 +42,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.1
+**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.2
 
 Code
 
@@ -138,7 +138,7 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261118.parquet) |
+| Source              | dataset `built` (built_20261120.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -326,8 +326,8 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-18 12:25:45 EST  |
-|                 | Ended          | 2026-11-18 12:25:46 EST  |
+| Run             | Started        | 2026-11-20 17:36:38 EST  |
+|                 | Ended          | 2026-11-20 17:36:40 EST  |
 |                 | Duration       | 2 s                      |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -336,12 +336,12 @@ saveRDS(hvtiRtemplates:::.digest_bundle_ids(fit, .root), MODEL_PATH)
 |                 | Template       | rm.linear                |
 |                 | Subject        | los                      |
 |                 | Type           | model                    |
-|                 | hvtiRtemplates | 1.6.1                    |
-| Dataset `built` | Version file   | built_20261118.parquet   |
-|                 | Version date   | 2026-11-18               |
+|                 | hvtiRtemplates | 1.6.2                    |
+| Dataset `built` | Version file   | built_20261120.parquet   |
+|                 | Version date   | 2026-11-20               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | d4581c9fbd56             |
+|                 | sha256         | d99147a5c095             |
 |                 | Manifest       | current                  |
 | Reproducibility | renv           | not active               |

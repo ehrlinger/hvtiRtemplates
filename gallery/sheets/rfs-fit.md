@@ -28,7 +28,7 @@ on the gallery's synthetic study.
   only: register the build with `hvtiRutilities::update_manifest()`
   first.
 - **Packages:** `randomForestSRC` (\>= 3.7.0), `ggRandomForests` (\>=
-  4.0.0), `hvtiRutilities`, `hvtiPlotR` (\>= 2.8.18). The job checks
+  4.0.1), `hvtiRutilities`, `hvtiPlotR` (\>= 2.8.18). The job checks
   each floor when it starts, so an older library stops it at the top
   rather than partway through.
 - **A background run.** A long job starts from the study's R console
@@ -90,5 +90,5 @@ and it records the job's provenance beside the report.
   pair is how it finds the file:
   `add_job("rfs.explain", subject = "<subject>", type = "<type>")`.
 
-Generated from the template by hvtiRtemplates, 1.6.1 · built 2026-11-18.
+Generated from the template by hvtiRtemplates, 1.6.2 · built 2026-11-20.
 The template holds the details; this sheet is its outline.

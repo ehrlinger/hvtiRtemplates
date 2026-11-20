@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:05
+2026-11-20 17:32
 
 Explains the forest the `rfr-fit` job in this set saved: which
 predictors drive it, and how.
@@ -34,7 +34,7 @@ suppressPackageStartupMessages({
 # cost of that guarantee: a cached fit records its seed, data and package
 # versions, never the threads it ran on.
 options(rf.cores = 1L)
-# The versions this template was verified against, end to end, on 2026-09-19.
+# The oldest versions this template works with.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
@@ -74,7 +74,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.1
+hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -381,8 +381,8 @@ level of a categorical one.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 12:05:31 EST |
-|  | Ended | 2026-11-18 12:05:37 EST |
+| Run | Started | 2026-11-20 17:32:31 EST |
+|  | Ended | 2026-11-20 17:32:37 EST |
 |  | Duration | 6 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -391,12 +391,12 @@ level of a categorical one.
 |  | Template | rfr.explain |
 |  | Subject | los |
 |  | Type | rf |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `built` | Version file | built_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `built` | Version file | built_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | built.rds |
-|  | sha256 | d4581c9fbd56 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-11-18 12:05:15 -0500, data built_20261118.parquet |
+| Upstream | Handoff | `los-rf/rfr.rds` (forest), rendered 2026-11-20 17:32:15 -0500, data built_20261120.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |

@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:27
+2026-11-20 17:38
 
 Gallery job on the synthetic cohort: mitral repair against replacement,
 and freedom from reintervention to eight years.
@@ -41,7 +41,7 @@ suppressPackageStartupMessages({
 # randomForestSRC runs on every core its OpenMP build can see, and the forests
 # changed with the thread count with every seed held fixed.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-22; hvtiPlotR has
+# The oldest versions this template works with; hvtiPlotR has
 # its own check, below. Below them a call here can fail or change meaning, and
 # the message would arrive mid-render rather than here.
 for (.floor in list(c("randomForestSRC", "3.7.0"), c("hvtiRpropensity", "0.2.3"))) {
@@ -83,8 +83,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.1
+**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -286,7 +286,7 @@ knitr::kable(.counts)
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261118.parquet) |
+| Source              | dataset `built` (built_20261120.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -1696,8 +1696,8 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 12:27:06 EST |
-|  | Ended | 2026-11-18 12:27:17 EST |
+| Run | Started | 2026-11-20 17:37:56 EST |
+|  | Ended | 2026-11-20 17:38:07 EST |
 |  | Duration | 11 s |
 |  | Status | final |
 |  | Rendered by | gallery |
@@ -1708,13 +1708,13 @@ saveRDS(vt_handoff, set_path("estimates", "vt.rds"))
 |  | Template | vt.fit |
 |  | Subject | reint |
 |  | Type | vt |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `built` | Version file | built_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `built` | Version file | built_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | built.rds |
 |  | Rows kept | 800 rows on 800 patients |
 |  | WHERE | none |
-|  | sha256 | d4581c9fbd56 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
 | Reproducibility | Seed | 1024 |
 |  | renv | not active |

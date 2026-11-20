@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:04
+2026-11-20 17:31
 
 Gallery job on the synthetic cohort: survival after operation (iv_dead,
 dead) on nine preoperative predictors.
@@ -40,24 +40,18 @@ suppressPackageStartupMessages({
 # cost of that guarantee: a cached fit records its seed, data and package
 # versions, never the threads it ran on.
 options(rf.cores = 1L)
-# The versions this template was verified against, end to end, on 2026-09-19.
+# The oldest versions this template works with.
 # Below them a call here can fail or change meaning, and the message would
 # arrive mid-render rather than here.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
   stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
-if (utils::packageVersion("ggRandomForests") < "4.0.0") {
-  stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
+# 4.0.1 is the first release with gg_learning() and learning_subsample(), for the
+# learning curve.
+if (utils::packageVersion("ggRandomForests") < "4.0.1") {
+  stop("This job needs ggRandomForests >= 4.0.1; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
-}
-# gg_learning() and learning_subsample(), for the learning curve, are on
-# ggRandomForests' main branch (ehrlinger/ggRandomForests#403) but in no release yet.
-# This becomes a version floor once one carries them.
-if (!all(c("gg_learning", "learning_subsample") %in% getNamespaceExports("ggRandomForests"))) {
-  stop("This job needs a ggRandomForests with gg_learning() and learning_subsample(); ",
-       utils::packageVersion("ggRandomForests"), " is installed and lacks them.\n",
-       "Install it with remotes::install_github(\"ehrlinger/ggRandomForests\"), then re-render.", call. = FALSE)
 }
 if (utils::packageVersion("hvtiPlotR") < "2.8.18") {
   stop("This job needs hvtiPlotR >= 2.8.18 for the red and blue its captions name; ", utils::packageVersion("hvtiPlotR"),
@@ -94,8 +88,8 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 .job$notice
 ```
 
-**final** · data `built` `built_20261118.parquet`, dated 2026-11-18 ·
-rendered by gallery on gallery · hvtiRtemplates 1.6.1
+**final** · data `built` `built_20261120.parquet`, dated 2026-11-20 ·
+rendered by gallery on gallery · hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -169,11 +163,11 @@ NTREE <- 300
 SEED  <- 2026
 
 # Demo: how the trees split, sized for the events this cohort has. A survival
-# split is decided by deaths, not patients, so a leaf needs a few deaths to say
-# anything. NULL sizes a leaf for about 2 deaths, nodesize = 2 * n / events, and
-# never below randomForestSRC's survival default of 15: about 60 for 60 deaths
+# split is decided by events, not patients, so a leaf needs a few events to say
+# anything. NULL sizes a leaf for about 2 events, nodesize = 2 * n / events, and
+# never below randomForestSRC's survival default of 15: about 60 for 60 events
 # in 1,900 patients, about 160 for 150 in 12,000, and 15 for a cohort where
-# deaths are common. A number overrides it.
+# events are common. A number overrides it.
 NODESIZE <- NULL
 # randomForestSRC's own defaults, written out so the report says what was used:
 # 10 random split points per variable, sqrt(predictors) tried at each split
@@ -187,9 +181,9 @@ SPLITRULE <- "logrank"
 # value grows a 100-tree forest. The search here differs from that function's
 # defaults in two ways, both for sparse events. It grows each forest on 63.2% of
 # patients; the default, min(0.632 n, max(150, n^0.8)), keeps about 420 of
-# 1,900 patients and 1,830 of 12,000, which is about 13 and 23 deaths at the
+# 1,900 patients and 1,830 of 12,000, which is about 13 and 23 events at the
 # event rates above, too few to tell one leaf size from another. And its grid
-# reaches twice the 2-death size rather than stopping at 150, which a large
+# reaches twice the 2-event size rather than stopping at 150, which a large
 # sparse cohort needs. The search always drops patients missing a predictor,
 # so with NA_ACTION <- "na.impute" it tunes on the complete cases only.
 TUNE_NODESIZE <- FALSE
@@ -197,10 +191,10 @@ TUNE_NODESIZE <- FALSE
 # The learning curve: is the cohort large enough? It refits the forest on
 # subsamples of LEARNING_FRACTIONS of the patients, LEARNING_B times each, plus
 # a bootstrap of the whole cohort, and tracks two things against the number of
-# deaths: the out-of-bag error, and whether the top LEARNING_TOP_K variables by
+# events: the out-of-bag error, and whether the top LEARNING_TOP_K variables by
 # importance agree from one refit to the next (the top one fewer than there are
 # predictors, when that is smaller). The second is the bar for
-# rfs-explain, and it needs far more deaths than the first. The refits use a
+# rfs-explain, and it needs far more events than the first. The refits use a
 # forest of their own, LEARNING_NTREE trees with the leaf size above, because
 # the curve needs agreement between forests rather than one precise forest,
 # and NTREE trees each would multiply the cost by NTREE / LEARNING_NTREE.
@@ -301,7 +295,7 @@ if (length(.chr)) {
 
 | Data                |                                          |
 |:--------------------|:-----------------------------------------|
-| Source              | dataset `built` (built_20261118.parquet) |
+| Source              | dataset `built` (built_20261120.parquet) |
 | Rows read           | 800                                      |
 | ID                  | `patient_id`                             |
 | Identifiers dropped | none                                     |
@@ -363,7 +357,7 @@ model <- stats::as.formula(paste0("Surv(", TIME, ", ", EVENT, ") ~ ."))
 # object beside the formula, `job_data` and its patient IDs included, into
 # the forest.
 environment(model) <- globalenv()
-# The leaf size for about 2 deaths per leaf, counted on the patients the forest
+# The leaf size for about 2 events per leaf, counted on the patients the forest
 # will be grown on: na.omit drops a patient missing any predictor.
 .grown <- if (NA_ACTION == "na.omit") stats::complete.cases(d) else rep(TRUE, nrow(d))
 .events <- sum(d[[EVENT]][.grown] == 1)
@@ -435,7 +429,7 @@ forest
                  (OOB) standardized CRPS: 0.17501862
        (OOB) Requested performance error: 0.32486021
 
-**With few events, expect noise in importance.** At 60 or 150 deaths a
+**With few events, expect noise in importance.** At 60 or 150 events a
 predictor carrying no signal can get a VIMP of 0 or below in
 `rfs-explain`. That is the expected reading for noise, not a defect;
 `rfs-explain` says how to read it.
@@ -509,9 +503,9 @@ Code
 
 ``` r
 # One randomForestSRC::subsample() result per fraction and the whole-cohort
-# bootstrap last. Each subsample keeps the share of deaths of the cohort
-# (stratify = TRUE), and learning_subsample() records that, so the deaths in each
-# subsample refit are exact. The bootstrap draws with replacement, so its deaths
+# bootstrap last. Each subsample keeps the share of events of the cohort
+# (stratify = TRUE), and learning_subsample() records that, so the events in each
+# subsample refit are exact. The bootstrap draws with replacement, so its events
 # vary from draw to draw: the count shown for it is the cohort's, the expected
 # number in each draw, not an exact one.
 # randomForestSRC 3.10.0 crashes R when it double-bootstraps a forest that imputed missing values (na.impute on
@@ -580,24 +574,24 @@ if (.learning_filled) {
   .learning_note <- ""
 }
 .learning_right <- if (.learning_boot) paste0(" (for the rightmost point, the whole-cohort bootstrap, drawn ",
-                                              "as a square, the cohort's deaths: the expected number in each ",
+                                              "as a square, the cohort's events: the expected number in each ",
                                               "draw)") else ""
 .learning_caps <- list(
   tbl = paste(paste0("Learning curve. Error is the mean out-of-bag error (1 - C-index) of the refits at each",
                      " fraction; agreement is between the refits' top variables by importance."),
-              if (.learning_boot) paste0("Fraction 1 is a bootstrap of the whole cohort: its deaths are the ",
+              if (.learning_boot) paste0("Fraction 1 is a bootstrap of the whole cohort: its events are the ",
                                          "cohort's, the number expected in each draw, which varies because ",
                                          "the bootstrap draws with replacement."),
               .learning_note),
   stability = paste(sprintf(paste0("Agreement of the top variables by importance between refits, by the ",
-                                   "number of deaths in each refit%s. A line that is still rising at the ",
+                                   "number of events in each refit%s. A line that is still rising at the ",
                                    "rightmost point means the importance ranking would change with more ",
-                                   "patients. Open markers have fewer than 50 deaths; triangles are ",
+                                   "patients. Open markers have fewer than 50 events; triangles are ",
                                    "fractions above one half, where agreement is optimistic."), .learning_right),
                     .learning_note),
-  error = paste(sprintf(paste0("Out-of-bag error (1 - C-index) by the number of deaths in each refit%s. Gray",
+  error = paste(sprintf(paste0("Out-of-bag error (1 - C-index) by the number of events in each refit%s. Gray",
                                " points are single refits and the black line their mean, each mean drawn in ",
-                               "its fraction's marker. Open markers have fewer than 50 deaths, too few for ",
+                               "its fraction's marker. Open markers have fewer than 50 events, too few for ",
                                "their error to be trusted."), .learning_right),
                 .learning_note)
 )
@@ -609,11 +603,11 @@ Code
 .lt <- summary(learning)
 # Exact for a stratified subsample; for the bootstrap, and any unstratified draw, the count is the expected one.
 .lt_deaths <- ifelse(.lt$counts == "exact", format(.lt$events), paste(format(.lt$events), "(expected)"))
-.lt_caution <- ifelse(.lt$low_events, "few deaths", ifelse(.lt$optimistic, "optimistic", ""))
+.lt_caution <- ifelse(.lt$low_events, "few events", ifelse(.lt$optimistic, "optimistic", ""))
 # Filled gaps make every fraction optimistic, so every row says so; the caption says why.
 if (.learning_filled) .lt_caution <- ifelse(nzchar(.lt_caution), paste0(.lt_caution, ", imputed"), "imputed")
 knitr::kable(
-  data.frame(Fraction = .lt$fraction, Patients = .lt$n, Deaths = .lt_deaths, Refits = .lt$B,
+  data.frame(Fraction = .lt$fraction, Patients = .lt$n, Events = .lt_deaths, Refits = .lt$B,
              Error = sprintf("%.3f (SD %.3f)", .lt$error_mean, .lt$error_sd),
              Jaccard = sprintf("%.2f", .lt$jaccard), `Kendall tau` = sprintf("%.2f", .lt$kendall),
              Caution = .lt_caution,
@@ -622,7 +616,7 @@ knitr::kable(
 )
 ```
 
-| Fraction | Patients | Deaths | Refits | Error | Jaccard | Kendall tau | Caution |
+| Fraction | Patients | Events | Refits | Error | Jaccard | Kendall tau | Caution |
 |---:|---:|---:|---:|---:|---:|---:|:---|
 | 0.125 | 89 | 50 | 20 | 0.369 (SD 0.044) | 0.57 | 0.26 |  |
 | 0.250 | 180 | 101 | 20 | 0.344 (SD 0.028) | 0.63 | 0.42 |  |
@@ -632,7 +626,7 @@ knitr::kable(
 Table 3: Learning curve. Error is the mean out-of-bag error (1 -
 C-index) of the refits at each fraction; agreement is between the
 refits’ top variables by importance. Fraction 1 is a bootstrap of the
-whole cohort: its deaths are the cohort’s, the number expected in each
+whole cohort: its events are the cohort’s, the number expected in each
 draw, which varies because the bootstrap draws with replacement.
 
 Code
@@ -647,11 +641,11 @@ save_figure(.fig, "rfs-fit-learning-stability")
 ![](assets/436f1f5337852799ef48a703816fbdd7.png)
 
 Figure 4: Agreement of the top variables by importance between refits,
-by the number of deaths in each refit (for the rightmost point, the
-whole-cohort bootstrap, drawn as a square, the cohort’s deaths: the
+by the number of events in each refit (for the rightmost point, the
+whole-cohort bootstrap, drawn as a square, the cohort’s events: the
 expected number in each draw). A line that is still rising at the
 rightmost point means the importance ranking would change with more
-patients. Open markers have fewer than 50 deaths; triangles are
+patients. Open markers have fewer than 50 events; triangles are
 fractions above one half, where agreement is optimistic.
 
 Code
@@ -665,28 +659,27 @@ save_figure(.fig, "rfs-fit-learning-error")
 
 ![](assets/169a8d6571849468ef6fb15f368daa9e.png)
 
-Figure 5: Out-of-bag error (1 - C-index) by the number of deaths in each
+Figure 5: Out-of-bag error (1 - C-index) by the number of events in each
 refit (for the rightmost point, the whole-cohort bootstrap, drawn as a
-square, the cohort’s deaths: the expected number in each draw). Gray
+square, the cohort’s events: the expected number in each draw). Gray
 points are single refits and the black line their mean, each mean drawn
-in its fraction’s marker. Open markers have fewer than 50 deaths, too
+in its fraction’s marker. Open markers have fewer than 50 events, too
 few for their error to be trusted.
 
 **Reading the curve.** The error usually levels off long before the
 importance ranking does. A cohort whose error has flattened can still
 give a ranking that a second cohort of the same size would not
 reproduce. Read the agreement at the whole cohort, and whether the line
-is still rising there. In a simulation with five real predictors among
-twenty, a Jaccard agreement of 0.8 took about 400 to 800 deaths when the
-signal was strong, and more than 1,600 when it was weak. That 0.8 is a
-reference point, not a threshold this job enforces. Agreement at a
-fraction above one half is optimistic, because refits that large share
-most of their patients, and the whole-cohort point is a bootstrap for
-that reason. Its deaths are the cohort’s: a bootstrap draws with
-replacement, so each draw has about that many, some more and some fewer.
-The agreement is between the top variables, so it needs predictors left
-out: with 5 or fewer predictors the job compares the top one fewer than
-there are.
+is still rising there. How many events a stable ranking needs depends on
+the signal: the weaker the predictors, the more events it takes to reach
+an agreement of 0.8. That 0.8 is a reference point, not a threshold this
+job enforces. Agreement at a fraction above one half is optimistic,
+because refits that large share most of their patients, and the
+whole-cohort point is a bootstrap for that reason. Its events are the
+cohort’s: a bootstrap draws with replacement, so each draw has about
+that many, some more and some fewer. The agreement is between the top
+variables, so it needs predictors left out: with 5 or fewer predictors
+the job compares the top one fewer than there are.
 
 Code
 
@@ -719,8 +712,8 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 
 | Group           | Item           | Value                    |
 |:----------------|:---------------|:-------------------------|
-| Run             | Started        | 2026-11-18 12:04:00 EST  |
-|                 | Ended          | 2026-11-18 12:04:27 EST  |
+| Run             | Started        | 2026-11-20 17:30:58 EST  |
+|                 | Ended          | 2026-11-20 17:31:25 EST  |
 |                 | Duration       | 27 s                     |
 |                 | Status         | final                    |
 |                 | Rendered by    | gallery                  |
@@ -729,13 +722,13 @@ saveRDS(forest, set_path("estimates", "rfs.rds"))
 |                 | Template       | rfs.fit                  |
 |                 | Subject        | dead                     |
 |                 | Type           | rf                       |
-|                 | hvtiRtemplates | 1.6.1                    |
-| Dataset `built` | Version file   | built_20261118.parquet   |
-|                 | Version date   | 2026-11-18               |
+|                 | hvtiRtemplates | 1.6.2                    |
+| Dataset `built` | Version file   | built_20261120.parquet   |
+|                 | Version date   | 2026-11-20               |
 |                 | Source file    | built.rds                |
 |                 | Rows kept      | 800 rows on 800 patients |
 |                 | WHERE          | none                     |
-|                 | sha256         | d4581c9fbd56             |
+|                 | sha256         | d99147a5c095             |
 |                 | Manifest       | current                  |
 | Reproducibility | Seed           | 2026                     |
 |                 | renv           | not active               |

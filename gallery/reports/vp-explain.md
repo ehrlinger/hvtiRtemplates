@@ -4,7 +4,7 @@
 
 Published
 
-2026-11-18 12:07
+2026-11-20 17:34
 
 Explains the `vp-fit` screen in this set: survival at five years along
 each selected predictor.
@@ -35,7 +35,7 @@ suppressPackageStartupMessages({
 # prediction from VarPro's forests. mc.cores does the same for varPro's own
 # workers, which rf.cores does not reach.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-21.
+# The oldest versions this template works with.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
   stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
@@ -76,7 +76,7 @@ save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", link
 ```
 
 **final** · data: see About this run · rendered by gallery on gallery ·
-hvtiRtemplates 1.6.1
+hvtiRtemplates 1.6.2
 
 ## Study choices
 
@@ -262,11 +262,11 @@ for (.i in seq_along(.pages)) {
 }
 ```
 
-    Warning: Removed 316 rows containing non-finite outside the scale range
+    Warning: Removed 220 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 316 rows containing non-finite outside the scale range
+    Removed 220 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
-    Removed 316 rows containing non-finite outside the scale range
+    Removed 220 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
 Code
@@ -275,10 +275,10 @@ Code
 .fig
 ```
 
-    Warning: Removed 316 rows containing non-finite outside the scale range
+    Warning: Removed 220 rows containing non-finite outside the scale range
     (`stat_boxplot()`).
 
-![](assets/bf50c97da78be18602b96b6c1f85aea8.png)
+![](assets/9da05a196be1617a831fb600a806d3d1.png)
 
 Figure 1: VarPro partial dependence on each drawn predictor, one panel
 per predictor. For a continuous predictor a black solid line marks the
@@ -290,9 +290,9 @@ spread of the partial effect at each level.
 
 | Group | Item | Value |
 |:---|:---|:---|
-| Run | Started | 2026-11-18 12:06:54 EST |
-|  | Ended | 2026-11-18 12:07:55 EST |
-|  | Duration | 1 min 1 s |
+| Run | Started | 2026-11-20 17:33:53 EST |
+|  | Ended | 2026-11-20 17:34:59 EST |
+|  | Duration | 1 min 5 s |
 |  | Status | final |
 |  | Rendered by | gallery |
 |  | Host | gallery |
@@ -300,12 +300,12 @@ spread of the partial effect at each level.
 |  | Template | vp.explain |
 |  | Subject | dead |
 |  | Type | vp |
-|  | hvtiRtemplates | 1.6.1 |
-| Dataset `built` | Version file | built_20261118.parquet |
-|  | Version date | 2026-11-18 |
+|  | hvtiRtemplates | 1.6.2 |
+| Dataset `built` | Version file | built_20261120.parquet |
+|  | Version date | 2026-11-20 |
 |  | Source file | built.rds |
-|  | sha256 | d4581c9fbd56 |
+|  | sha256 | d99147a5c095 |
 |  | Manifest | current |
-| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-18 12:05:42 -0500, data built_20261118.parquet |
+| Upstream | Handoff | `dead-vp/vp.rds` (screen), rendered 2026-11-20 17:32:42 -0500, data built_20261120.parquet |
 | Reproducibility | Seed | 2026 |
 |  | renv | not active |
