@@ -75,12 +75,19 @@ templates' PR.
 ## 4. Architecture
 
 ```
-nb-boostmtree_fit      fit (+ N_REFITS refits)  ->  estimates/nb-boostmtree.rds
+nb-boostmtree_fit      fit (+ N_REFITS refits)  ->  estimates/nb-boostmtree-fit.rds
 nb-boostmtree_explain  reads that file, never fits  ->  importance, effects, trajectories
 ```
 
-The handoff is `set_path("estimates", "nb-boostmtree.rds")`, within one
-`(subject, type)` set, as `rfs.rds` is. The saved object:
+The handoff is `set_path("estimates", "nb-boostmtree-fit.rds")`, within one
+`(subject, type)` set, as `rfs.rds` is. **It is not `nb-boostmtree.rds`**, the
+file the deprecated job writes: that holds a bare fit, and while the old
+template stays on disk (section 7), rendering an old job in the same set would
+overwrite a bundle of the same name and break `_explain`. Distinct names give
+each file one owner and one format. The fit's cache directory follows the new
+name for the same reason.
+
+The saved object:
 
 ```r
 list(fit      = fit,          # the SEED fit, a (boostmtree, grow) object
@@ -89,6 +96,15 @@ list(fit      = fit,          # the SEED fit, a (boostmtree, grow) object
      k_shadow = K_SHADOW,
      seed     = SEED)
 ```
+
+**Lineage goes on the outer list.** Today's save chunk attaches handoff lineage
+to the fit with `.attach_handoff_lineage()`. `_fit` attaches it to the bundle
+instead, with the same `data`, `analysis`, `cohort` and `selection` arguments
+(`analysis` gains `k_shadow` and `n_refits`). `.read_handoff()` validates
+lineage on the object it reads (`.validate_handoff_lineage()` in
+`R/provenance.R`), so lineage left on the inner `fit` would make the bundle fail
+validation, and reading it with a plain `readRDS()` instead would skip the
+final-render check for unregistered working data.
 
 Both templates: floors **boostmtree >= 2.0.13** (the seed fix) and
 **ggBoostedTrees >= 0.10.2** (section 3). `DESCRIPTION` floors move only in this
@@ -150,9 +166,14 @@ only within one randomForestSRC version.
 
 ## 6. `nb-boostmtree_explain`
 
-**Reading the fit.** Reads `estimates/nb-boostmtree.rds` in its own set. Stops,
-naming `nb-boostmtree_fit`, when the file is missing or `fit` is not a
-`(boostmtree, grow)` object. Never fits.
+**Reading the fit.** Reads `estimates/nb-boostmtree-fit.rds` in its own set
+through `.read_handoff(path, "fit", .cfg, "the nb-boostmtree_fit job")`, as
+`rfs-explain` reads `rfs.rds`, never with a bare `readRDS()`. Stops, naming
+`nb-boostmtree_fit`, when the file is missing, its lineage is incomplete, or
+`fit` is not a `(boostmtree, grow)` object. The lineage records `.read_handoff()`
+returns go into this job's provenance, as `rfs-explain` passes
+`.forest_read$lineage`, so the report traces back to the data the fit read.
+Never fits.
 
 **Version check.** Compares the recorded boostmtree and randomForestSRC versions
 with the installed ones and warns on a difference: vimp pushes permuted data down
@@ -224,6 +245,12 @@ sharing `helper-nb.R`)
 - Handoff: the fit writes the list in section 4; explain reads it; explain stops
   on a missing file and on a non-boostmtree object; explain warns on a version
   mismatch, driven from a temporary `.rds` with faked versions.
+- Lineage: the saved bundle carries complete `hvti_provenance` on the outer list,
+  and `_explain` refuses a bundle whose lineage is missing or sits only on the
+  inner fit. A final render of `_explain` over a fit made from unregistered
+  working data is refused, as for `rfs-explain` (the regression test).
+- Paths: `_fit` writes `nb-boostmtree-fit.rds` and never `nb-boostmtree.rds`, and
+  rendering the deprecated job in the same set leaves `_explain`'s input intact.
 - `K_SHADOW` is in the cache key (changing it refits); `K_SHADOW = 0` renders with
   no band.
 - Pooling: the importance table's shares come from several runs, and raising
@@ -234,8 +261,14 @@ sharing `helper-nb.R`)
 - **#493**: both end-to-end renders capture Quarto's raw stderr and print it on
   failure, render in their own temporary directories, and keep `skip_on_cran()`.
 
-**Gallery.** `dev/gallery/family-nb.R` gets `_fit` and `_explain` entries in place
-of `nb-boostmtree`; `_explain` reads the gallery fit's `.rds`. Rebuilt on release
+**Gallery.** `dev/gallery/family-nb.R` gets `_fit` and `_explain` entries
+**beside** `nb-boostmtree`, rendered in the order `_fit`, then `_explain`;
+`_explain` reads the gallery fit's `nb-boostmtree-fit.rds`. The old entry stays
+for the deprecation window: its row is still `shipped` and its file is on disk,
+so `gallery_missing()` wants a job for it and `gallery_build()` stops without
+one (`dev/gallery/gallery.R`). It goes when the file does. The distinct
+handoff names (section 4) mean the old job cannot overwrite what `_explain`
+reads, whatever the order. Rebuilt on release
 day.
 
 ## 9. Order of work, and what is not yet measured
