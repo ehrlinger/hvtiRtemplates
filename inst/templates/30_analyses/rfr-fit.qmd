@@ -88,17 +88,11 @@ if (utils::packageVersion("randomForestSRC") < "3.7.0") {
   stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
 }
-if (utils::packageVersion("ggRandomForests") < "4.0.0") {
-  stop("This job needs ggRandomForests >= 4.0.0; ", utils::packageVersion("ggRandomForests"),
+# 4.0.1 is the first release with gg_learning() and learning_subsample(), for the
+# learning curve.
+if (utils::packageVersion("ggRandomForests") < "4.0.1") {
+  stop("This job needs ggRandomForests >= 4.0.1; ", utils::packageVersion("ggRandomForests"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
-}
-# gg_learning() and learning_subsample(), for the learning curve, are on
-# ggRandomForests' main branch (ehrlinger/ggRandomForests#403) but in no release yet.
-# This becomes a version floor once one carries them.
-if (!all(c("gg_learning", "learning_subsample") %in% getNamespaceExports("ggRandomForests"))) {
-  stop("This job needs a ggRandomForests with gg_learning() and learning_subsample(); ",
-       utils::packageVersion("ggRandomForests"), " is installed and lacks them.\n",
-       "Install it with remotes::install_github(\"ehrlinger/ggRandomForests\"), then re-render.", call. = FALSE)
 }
 # The study root is the nearest directory above this file holding _study.yml,
 # so the job renders the same from the Render button, quarto render, or
