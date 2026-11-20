@@ -1,7 +1,7 @@
 test_that("the rfc-fit template's setup chunk yields its packages and floors", {
   pkgs <- .template_packages(template_path("rfc", qualifier = "fit"))
   expect_identical(pkgs$package, c("randomForestSRC", "ggRandomForests", "hvtiRutilities"))
-  expect_identical(pkgs$floor, c("3.7.0", "4.0.0", NA))
+  expect_identical(pkgs$floor, c("3.7.0", "4.0.1", NA))
 })
 
 test_that("every shipped template's setup chunk names at least one package", {
