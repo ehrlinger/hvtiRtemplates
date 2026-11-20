@@ -75,7 +75,9 @@ local({
     stats::setNames(as.numeric(file.mtime(file.path(dir, files))), files)
   }
   before <- rplots()
-  testthat::set_state_inspector(function() list(devices = names(grDevices::dev.list()), rplots = rplots()))
+  # tolerance = 0: the default is relative, and on an epoch mtime it hides a change of up to about 27 seconds.
+  testthat::set_state_inspector(function() list(devices = names(grDevices::dev.list()), rplots = rplots()),
+                                tolerance = 0)
   withr::defer({
     testthat::set_state_inspector(NULL)
     after <- rplots()
