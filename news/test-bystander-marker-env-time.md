@@ -1,1 +1,0 @@
-* When `test-background-job.R`'s bystander process is never found by its marker, the failure now also says whether the marker is in that process's environment and when it started against the time the marker encodes, the two reasons `ps::ps_find_tree()` can miss it (#587).
