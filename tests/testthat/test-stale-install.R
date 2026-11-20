@@ -72,6 +72,9 @@ test_that("the copy is read where the render starts, so two studies can resolve 
 
 test_that("a copy found where the render looks that cannot load says so, not that it is missing (#491)", {
   skip_on_cran()
+  # Under R CMD check on Windows the Rscript this starts ignores R_LIBS, as it ignores a study's
+  # .Rprofile (#511), and loads the check's own copy, so no test can set its library there.
+  skip_on_os("windows")
   # A copy whose import is not on the child's library path, as when a study's .Rprofile drops the
   # user library that held the dependencies. The child sees only the copy's library.
   copy_lib <- withr::local_tempdir()
@@ -92,14 +95,12 @@ test_that("a copy found where the render looks that cannot load says so, not tha
     expect_true(dir.exists(file.path(lib, basename(src))), label = paste(out, collapse = "\n"))
   }
   # The dependency goes in the copy's own library, which R CMD INSTALL -l puts on the path it
-  # resolves imports from, and is removed once the copy is in. R_LIBS at install time did not reach
-  # that path on Windows under R CMD check.
+  # resolves imports from, and is removed once the copy is in.
   install(pkg("plantedDropped"), copy_lib)
   install(pkg("hvtiRtemplates", imports = "plantedDropped"), copy_lib)
   unlink(file.path(copy_lib, "plantedDropped"), recursive = TRUE)
-  # R_LIBS, not a startup file, puts the copy first: Windows under R CMD check reads no study
-  # .Rprofile (#511). The dependency's library is on no path the child has. Empty startup files,
-  # so a user or site profile cannot rewrite the library path.
+  # R_LIBS puts the copy first, and the dependency's library is on no path the child has. Empty
+  # startup files, so a user or site profile cannot rewrite the library path.
   quiet <- withr::local_tempfile(lines = "")
   withr::local_envvar(R_LIBS = copy_lib, R_PROFILE_USER = quiet, R_PROFILE = quiet)
   rscript <- file.path(R.home("bin"), "Rscript")
