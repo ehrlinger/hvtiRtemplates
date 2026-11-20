@@ -546,11 +546,29 @@ test_that("a predictor that varies within a patient stops before any guard or fi
   data$hr <- 60 + seq_len(nrow(data)) %% 7
   root <- nb_study(data)
   env <- nb_env(root)
-  # Stopped before any guard: nothing cached, nothing saved.
-  expect_error(utils::capture.output(nb_fit_run(c("setup", "edit-study-choices", "tbl-data", "fit"), env, nb_choices())),
-               "vary between visits.*hr.*K_SHADOW <- 0")
+  # Reaching the cache check, a guard or a fit would fail here, so the constancy error must come first.
+  env$boostmtree <- function(...) stop("fitted")
+  env$cache_fit <- function(...) stop("cache_fit reached")
+  testthat::with_mocked_bindings(
+    expect_error(utils::capture.output(nb_fit_run(c("setup", "edit-study-choices", "tbl-data", "fit"), env, nb_choices())),
+                 "vary between visits.*hr.*K_SHADOW <- 0"),
+    guard_memory = function(...) stop("guard_memory reached"),
+    guard_long_fit = function(...) stop("guard_long_fit reached")
+  )
   expect_length(list.files(nb_set_dir(root), "[.]rds$"), 0L)
   expect_no_error(nb_fit_in(root, choices = nb_choices(K_SHADOW = 0)))
+})
+
+test_that("a fit cached under another randomForestSRC is stale, so the recorded version is the one it was grown with", {
+  nb_skip_unless_stack()
+  root <- nb_study()
+  nb_fit_in(root)
+  real <- utils::packageVersion
+  testthat::local_mocked_bindings(
+    packageVersion = function(p, ...) if (identical(p, "randomForestSRC")) package_version("0.0.1") else real(p, ...),
+    .package = "utils"
+  )
+  expect_error(nb_fit_in(root), "randomForestSRC", class = "hvtiRutilities_stale_cache")
 })
 
 test_that("N_REFITS grows each refit under SEED + i, caches it, and the summary and error figure use them", {
@@ -573,7 +591,7 @@ test_that("N_REFITS grows each refit under SEED + i, caches it, and the summary 
   expect_identical(attr(readRDS(nb_bundle_path(root)), "hvti_provenance")$analysis$n_refits, 2)
 })
 
-test_that("the plateau is every iteration within 1% of the lowest error, and Best M lies on it", {
+test_that("the plateau spans the first to the last iteration within 1% of the lowest error, and Best M lies on it", {
   nb_skip_unless_stack()
   root <- nb_study()
   env <- nb_env(root)

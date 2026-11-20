@@ -89,8 +89,8 @@ suppressPackageStartupMessages({
 })
 # Without the guard in .job_setup(), an unedited job renders green over a
 # meaningless analysis. Here that is a boosted fit on the template's placeholder
-# response, predictors and iteration count, whose error path and effect plots
-# look exactly like a result.
+# response, predictors and iteration count, whose error path and fitted-value
+# plots look exactly like a result.
 # To render a job you have not finished, leave a chunk out with the chunk
 # option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
 # in a chunk to leave out everything below it. A draft lists each one in a
@@ -249,8 +249,7 @@ MTRY <- NULL
 # Not part of the cache key: the fit is identical on any number of cores.
 CORES <- if (.Platform$OS.type == "windows") 1L else 4L
 
-# EDIT: seeds the fit and the sample of patients the trajectory plot draws, so
-# the report reproduces. Part of the cache key.
+# EDIT: seeds the fit (and each refit, under SEED + i), so the report reproduces. Part of the cache key.
 SEED <- 2026
 
 # EDIT: shadow copies of every predictor, fitted beside the real ones. Each copy
@@ -444,7 +443,8 @@ if (K_SHADOW > 0) {
 # The fits run one after another, so the need is one fit's.
 .need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(length(unique(.patient)), nrow(d), FAMILY, k, M)
 .fitting <- vapply(seq_along(.fit_seeds), function(i) {
-  hvtiRutilities::cache_would_fit(.fit_names[[i]], .fit_code, seed = .fit_seeds[[i]], dir = CACHE_DIR, refit = REFIT)
+  hvtiRutilities::cache_would_fit(.fit_names[[i]], .fit_code, seed = .fit_seeds[[i]], dir = CACHE_DIR, refit = REFIT,
+                                  packages = "randomForestSRC")
 }, logical(1L))
 # The fit runs for hours at study size. Started from the console, the Render button or a terminal,
 # it dies with the session, so a fit that will be computed is refused there: run the job with
@@ -460,12 +460,16 @@ hvtiRtemplates::guard_memory(if (any(.fitting)) .need(CORES) else 0,
                                      format(length(unique(.patient)), big.mark = ","), format(nrow(d), big.mark = ","),
                                      FAMILY),
                              cores = CORES, cores_fit = .need)
-fit <- cache_fit(.fit_names[[1L]], .fit_code, seed = .fit_seeds[[1L]], dir = CACHE_DIR, refit = REFIT)
+fit <- cache_fit(.fit_names[[1L]], .fit_code, seed = .fit_seeds[[1L]], dir = CACHE_DIR, refit = REFIT,
+                 packages = "randomForestSRC")
 refits <- lapply(seq_len(N_REFITS), function(i) {
-  cache_fit(.fit_names[[i + 1L]], .fit_code, seed = .fit_seeds[[i + 1L]], dir = CACHE_DIR, refit = REFIT)
+  cache_fit(.fit_names[[i + 1L]], .fit_code, seed = .fit_seeds[[i + 1L]], dir = CACHE_DIR, refit = REFIT,
+            packages = "randomForestSRC")
 })
-# The versions these fits were grown with. cache_fit() keys package versions, so a
-# cached fit loads only under the versions it was grown with, and these are they.
+# The versions these fits were grown with. cache_fit() keys the versions of the packages the
+# fit call names (boostmtree, ggBoostedTrees) and of those passed as packages =. randomForestSRC
+# runs under boostmtree and is named by neither, so every cache call passes it: a fit cached under
+# another randomForestSRC is then stale, and these are the versions it was grown with.
 .versions <- vapply(c("boostmtree", "randomForestSRC", "ggBoostedTrees"),
                     function(p) format(utils::packageVersion(p)), character(1L))
 ```
@@ -496,7 +500,7 @@ knitr::kable(data.frame(
 .err <- if (is.matrix(fit$err.rate)) list(fit$err.rate) else fit$err.rate
 # Each component is named by the level that defines it, which boostmtree keeps
 # in fit$q.set: a threshold for an ordinal fit, a class compared against the
-# reference class for a binary or nominal one. partial.plot() selects a
+# reference class for a binary or nominal one. the explain job selects a
 # component by the same label ("response" for a continuous fit).
 .labels <- if (identical(fit$family, "continuous")) "response" else as.character(fit$q.set)
 .reference <- setdiff(as.character(fit$y.levels), .labels)
@@ -510,8 +514,9 @@ knitr::kable(data.frame(
   nominal = paste(.response, "=", .labels, "against", paste(.reference, collapse = ", ")),
   ordinal = paste(.response, "threshold", .labels)
 )
-# The plateau: every iteration whose cross-validated error is within 1% of the
-# lowest. Best M is one draw on it: across 50 seeds at nu = 0.25 and M = 400 it
+# The plateau: the first to the last iteration whose cross-validated error is within 1% of the
+# lowest (a curve that leaves the band and returns is spanned, not split). Best M is one draw
+# on it: across 50 seeds at nu = 0.25 and M = 400 it
 # ran from 156 to 400. Prediction stays at Best M; the 1% is for display and
 # changes no fitted value. A rule that picks an iteration on the plateau waits
 # until predictions at its two ends are compared and found to differ.
@@ -524,7 +529,7 @@ fit_summary <- data.frame(
   plateau_error = mapply(function(e, p) e[min(p), "l2"], .err, .plateau)
 )
 .cols <- c("Response component", "Best M (cross-validated)", "Cross-validated error there (standardized)",
-           "Plateau (within 1% of the lowest error)", "Error where the plateau starts")
+           "Plateau (first to last iteration within 1% of the lowest error)", "Error where the plateau starts")
 # With refits, the spread of Best M across fits, one column per component's row.
 # Their mean is not reported: Best M piles up at M on a flat curve, so its mean
 # depends on M rather than the data, and no fit was grown at it.
@@ -645,9 +650,11 @@ if (isTRUE(SENSITIVITY)) {
     NU <- .grid$nu[[i]]
     K <- .grid$k[[i]]
     if (fit) {
-      return(cache_fit(.grid$name[[i]], .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT))
+      return(cache_fit(.grid$name[[i]], .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                       packages = "randomForestSRC"))
     }
-    hvtiRutilities::cache_would_fit(.grid$name[[i]], .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)
+    hvtiRutilities::cache_would_fit(.grid$name[[i]], .fit_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                                    packages = "randomForestSRC")
   }
   .grid$fitting <- !.is_base & vapply(seq_len(nrow(.grid)), .at_cell, logical(1L), fit = FALSE)
   # Refused from the console and checked against this session's memory before
