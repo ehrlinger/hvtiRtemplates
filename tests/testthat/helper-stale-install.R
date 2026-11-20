@@ -13,9 +13,20 @@
 # and the .__*__ bindings R and devtools::load_all() add to a namespace. The code
 # carries no backslash, which Rscript -e rewrites, and sorts by radix: testthat sets the
 # C collation, which a child inherits, so a locale-aware sort orders the two copies differently.
+# A copy that is found and cannot load, an import missing from this R's library path, is told
+# apart from no copy at all (#491): reinstalling would not fix it.
 .install_fingerprint_code <- '
-if (!requireNamespace("hvtiRtemplates", quietly = TRUE)) {
+if (!nzchar(system.file(package = "hvtiRtemplates"))) {
   cat("NOT-INSTALLED", "\n")
+  quit(save = "no")
+}
+why <- tryCatch({
+  loadNamespace("hvtiRtemplates")
+  NULL
+}, error = function(e) gsub("[[:space:]]+", " ", conditionMessage(e)))
+if (!is.null(why)) {
+  cat("CANNOT-LOAD", dirname(system.file(package = "hvtiRtemplates")), "\n")
+  cat("CANNOT-LOAD-WHY", why, "\n")
   quit(save = "no")
 }
 ns <- asNamespace("hvtiRtemplates")
@@ -49,8 +60,9 @@ cat("FINGERPRINT", unname(tools::md5sum(tmp)), as.character(utils::packageVersio
 # The fingerprint of the copy a render's R process loads: `rscript` started in `dir`, with this
 # process's environment (RENV_PROJECT among it) and the usual startup files, so a study's
 # .Rprofile and renv activation choose the library as they do for the render. character(0)
-# when that process finds no hvtiRtemplates. Any other outcome stops: a check that could not
-# run must not read as an answer, either way.
+# when that process finds no hvtiRtemplates, and c("CANNOT-LOAD", library, error) when it finds
+# a copy that fails to load. Any other outcome stops: a check that could not run must not read
+# as an answer, either way.
 .fingerprint_there <- function(dir, rscript) {
   args <- c("-e", shQuote(.install_fingerprint_code))
   out <- withr::with_dir(dir, suppressWarnings(system2(rscript, args, stdout = TRUE, stderr = TRUE)))
@@ -60,6 +72,12 @@ cat("FINGERPRINT", unname(tools::md5sum(tmp)), as.character(utils::packageVersio
     if (length(there) >= 4L) return(there)
   }
   if (any(grepl("^NOT-INSTALLED", out))) return(character(0))
+  lib <- grep("^CANNOT-LOAD ", out, value = TRUE)
+  why <- grep("^CANNOT-LOAD-WHY ", out, value = TRUE)
+  if (length(lib) && length(why)) {
+    return(c("CANNOT-LOAD", trimws(sub("^CANNOT-LOAD ", "", utils::tail(lib, 1L))),
+             trimws(sub("^CANNOT-LOAD-WHY ", "", utils::tail(why, 1L)))))
+  }
   stop("could not read the installed hvtiRtemplates with ", rscript, " in ", dir, ":\n",
        paste(utils::tail(out, 10L), collapse = "\n"), call. = FALSE)
 }
@@ -79,6 +97,10 @@ cat("FINGERPRINT", unname(tools::md5sum(tmp)), as.character(utils::packageVersio
   fix <- "Install this source (devtools::install() or R CMD INSTALL .), then run the tests again."
   reason <- if (!length(there)) {
     paste0("hvtiRtemplates is not installed where a render's R process looks, and a render loads it. ", fix)
+  } else if (identical(there[[1L]], "CANNOT-LOAD")) {
+    paste0("the installed hvtiRtemplates in ", there[[2L]], " cannot load where a render's R process looks, ",
+           "and a render loads it: ", there[[3L]], " A missing or outdated dependency is fixed on that R's ",
+           "library path, and a broken copy by reinstalling this source (devtools::install() or R CMD INSTALL .).")
   } else if (!identical(there[[2L]], here[[2L]])) {
     paste0("the installed hvtiRtemplates ", there[[3L]], " in ", paste(there[-(1:3)], collapse = " "),
            " is not the code under test, and a render loads it. ", fix)
@@ -98,6 +120,9 @@ skip_if_stale_install <- function(dir = getwd(), rscript = file.path(R.home("bin
 # The R Quarto's knitr engine starts, found as Quarto's rBinaryPath() finds it: QUARTO_R (an R
 # binary, or the directory holding one), else R_HOME/bin, else PATH. Under R CMD check the
 # Rscript on PATH is a stub that refuses to run, and Quarto never reaches it, for R_HOME is set.
+# hvti's own choice, the lock's R under HVTI_R_ROOT or /opt/R, is not modelled (#492): every test
+# that runs inst/bin/hvti points HVTI_R_ROOT at a stub Rscript that records its arguments and
+# loads nothing, so no render in the suite starts the R hvti picks.
 .quarto_rscript <- function() {
   # Windows names the binary Rscript.exe. Its R_HOME/bin holds only a launcher, which could not
   # read the installed copy under R CMD check (#512), so the binary in bin/x64 comes first.
