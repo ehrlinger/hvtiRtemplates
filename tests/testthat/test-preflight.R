@@ -469,7 +469,10 @@ test_that("study_render sends a stale other-host job through confirm-then-abando
   root <- lock_study()
   mine <- file.path(root, "analyses", "mine.qmd")
   other <- other_running_job(root, age_min = 120)
-  .write_status(.run_files(other)$status, state = "running", pid = 1L, host = "lri-r03", started = .stamp(Sys.time() - 7200),
+  # Keep the helper's start stamp: a fresh one can land a second later, and progress that began before its run is
+  # read as a leftover and dropped, so the job no longer looks stale (#590).
+  started <- yaml::read_yaml(.run_files(other)$status)$started
+  .write_status(.run_files(other)$status, state = "running", pid = 1L, host = "lri-r03", started = started,
                 marker = "PSabc123_1")
   ck <- .check_study_render(mine, root)
   expect_match(ck$fix, 'hvtiRtemplates::job_status("analyses/nb.boostmtree.x.boost.qmd")', fixed = TRUE)
