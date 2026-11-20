@@ -270,10 +270,19 @@ wait_for_marker <- function(marker, b, timeout = 60) {
   cmd <- tryCatch(paste(ps::ps_cmdline(b$h), collapse = " "), error = function(e) "unreadable")
   kids <- tryCatch(vapply(ps::ps_children(b$h, recursive = TRUE), function(k) paste(ps::ps_cmdline(k), collapse = " "), ""),
                    error = function(e) character())
+  # ps_find_tree() skips a process that started before the time the marker encodes, so a process that carries the
+  # marker can still be missed (#587). Report both halves: whether the marker is in its environment, and its start
+  # time against the marker's.
+  env <- tryCatch(unclass(ps::ps_environ(b$h))[marker], error = function(e) "unreadable")
+  after <- as.numeric(sub("^.*_", "", marker))
+  started <- tryCatch(as.numeric(ps::ps_create_time(b$h)), error = function(e) NA_real_)
   stop("the bystander's marker never appeared within ", timeout, " seconds; the bystander ",
        if (live()) "is still running" else "had exited", " (status ", state, ", running `", cmd, "`",
        if (length(kids)) paste0(", children: ", paste0("`", kids, "`", collapse = ", ")), ")",
-       if (nzchar(said)) paste0(", after printing:\n", said) else ", having printed nothing", call. = FALSE)
+       if (nzchar(said)) paste0(", after printing:\n", said) else ", having printed nothing",
+       "; its environment has the marker as ", if (is.na(env)) "unset" else paste0("\"", env, "\""),
+       ", and it started ", sprintf("%.2f", started - after), " s after the marker's time (",
+       sprintf("%.2f", started - as.numeric(Sys.time())), " s from now)", call. = FALSE)
 }
 
 running_on <- function(job, b, host = Sys.info()[["nodename"]]) {
