@@ -64,7 +64,7 @@ suppressPackageStartupMessages({
 })
 # One thread, so the VarPro cache reproduces from machine to machine; see rhf-fit.
 options(rf.cores = 1L)
-# The versions this template was verified against, end to end, on 2026-10-26.
+# The oldest versions this template works with.
 if (utils::packageVersion("randomForestRHF") < "2.1.0") {
   stop("This job needs randomForestRHF >= 2.1.0; ", utils::packageVersion("randomForestRHF"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)

@@ -9,7 +9,8 @@ template_catalog()
 \value{
 A data frame. \code{uses}, \code{upstream}, \code{downstream}, and
 \code{workflows} are list columns of character vectors. Unmeasured counts
-are \code{NA_integer_}.
+are \code{NA_integer_}. \code{uses} names the functions a template is built on,
+the ones a reader should know about, not every function it calls.
 \code{description} is a one-sentence summary, given for every template on
 disk and \code{NA} for most queued ones. \code{deprecated_by} names the
 template replacing a deprecated one, such as \code{"dc-gfup"}, and

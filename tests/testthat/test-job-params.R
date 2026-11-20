@@ -55,6 +55,7 @@ test_that("a run with an output_file keeps its run files under the job and the w
 })
 
 test_that("submit_job() writes params and output_file into the runner, and a plain submit's runner is unchanged", {
+  skip_on_os("windows")
   job <- status_job()
   launched <- character()
   local_mocked_bindings(.launch = function(cmd) launched <<- c(launched, cmd), .find_study_root = function(dir) dir)
@@ -80,6 +81,7 @@ test_that("submit_job() writes params and output_file into the runner, and a pla
 })
 
 test_that("two output names of one job run side by side, and each is read and refused by its own name", {
+  skip_on_os("windows")
   job <- status_job()
   m500 <- "nb.boostmtree.x.boost.M500.html"
   m1000 <- "nb.boostmtree.x.boost.M1000.html"
@@ -205,6 +207,7 @@ test_that("a Quarto render with params writes the named report, and its progress
 })
 
 test_that("two outputs sharing a stem with different extensions are separate runs", {
+  skip_on_os("windows")
   job <- status_job()
   html <- "nb.boostmtree.x.boost.M.html"
   pdf <- "nb.boostmtree.x.boost.M.pdf"
@@ -252,6 +255,7 @@ two_jobs_one_output <- function(env = parent.frame()) {
 }
 
 test_that("two jobs with the same output_file keep separate run files and status, in one folder or two", {
+  skip_on_os("windows")
   jobs <- two_jobs_one_output()
   out <- "report.html"
   local_mocked_bindings(.launch = function(cmd) invisible(0L), .find_study_root = function(dir) dirname(dir))

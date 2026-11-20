@@ -440,10 +440,6 @@
       "sas_breadth_jobs": 541,
       "disposition": "thin",
       "uses": [
-        "hvtiPlotR::hv_hazard",
-        "hvtiPlotR::hazard_plot",
-        "hvtiPlotR::hv_survival",
-        "hvtiPlotR::hv_atrisk_compose",
         "TemporalHazard::hazard"
       ]
     },
@@ -476,8 +472,7 @@
       "sas_breadth_jobs": 140,
       "disposition": "scaffold",
       "uses": [
-        "TemporalHazard::hazard",
-        "TemporalHazard::hzr_stepwise"
+        "TemporalHazard::hazard"
       ]
     },
     {

@@ -74,3 +74,24 @@ test_that("every template on disk has a catalog description", {
   expect_false(anyNA(desc), info = paste(on_disk$name[is.na(desc)], collapse = ", "))
   expect_true(all(nzchar(trimws(desc[!is.na(desc)]))))
 })
+
+test_that("every function a shipped template's `uses` names appears in that template", {
+  # `uses` names the functions a template is built on, not every call (#584), so
+  # this checks one direction only: a name listed there must be in the file. hp
+  # once listed four hvtiPlotR drawing functions it never called.
+  catalog <- template_catalog()
+  on_disk <- template_list()
+  key <- function(prefix, qualifier) paste(prefix, ifelse(is.na(qualifier), "", qualifier))
+  rows <- match(key(on_disk$prefix, on_disk$qualifier), key(catalog$prefix, catalog$qualifier))
+  missing <- character()
+  for (i in seq_len(nrow(on_disk))) {
+    qualifier <- if (is.na(on_disk$qualifier[i])) NULL else on_disk$qualifier[i]
+    text <- paste(readLines(template_path(on_disk$prefix[i], qualifier = qualifier)), collapse = "\n")
+    for (fn in catalog$uses[[rows[i]]]) {
+      if (!grepl(paste0("\\b", sub("^.*::", "", fn), "\\b"), text, perl = TRUE)) {
+        missing <- c(missing, paste0(on_disk$name[i], ": ", fn))
+      }
+    }
+  }
+  expect_identical(missing, character())
+})

@@ -79,7 +79,7 @@ suppressPackageStartupMessages({
 # the thread count with every seed held fixed. mc.cores does the same for
 # varPro's own workers, which rf.cores does not reach.
 options(rf.cores = 1L, mc.cores = 1L)
-# The versions this template was verified against on 2026-10-21. Below them a
+# The oldest versions this template works with. Below them a
 # call here can fail or change meaning, and the message would arrive mid-render
 # rather than here.
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {

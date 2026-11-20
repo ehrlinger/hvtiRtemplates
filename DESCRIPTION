@@ -1,8 +1,8 @@
 Package: hvtiRtemplates
 Type: Package
 Title: Analysis Job Templates for the HVTI CORR Group
-Version: 1.6.1
-Date: 2026-11-18
+Version: 1.6.2
+Date: 2026-11-20
 Authors@R: c(
     person(
       "John", "Ehrlinger",
@@ -80,7 +80,7 @@ Suggests:
     randomForestSRC (>= 3.7.0),
     survival,
     TemporalHazard (>= 1.2.17),
-    testthat (>= 3.0.0),
+    testthat (>= 3.3.0),
     varPro (>= 3.3.0),
     withr,
     xml2
