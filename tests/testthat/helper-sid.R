@@ -57,9 +57,12 @@ sid_clusters_labels <- c("setup", "edit-study-choices", "sid-helpers", "handoff"
                          "tbl-sizes", "small-clusters", "fig-sankey", "sankey-single", "k-unset", "fig-silhouette", "tbl-silhouette",
                          "fig-mds", "tbl-collapse", "save")
 
-# sid-clusters run in the set a sid-fit just wrote, in the same study.
+# sid-clusters run in the set a sid-fit just wrote, in the same study. Its fig-silhouette chunk prints the plot,
+# which a render captures; run here, it would open R's default device, pdf() writing Rplots.pdf into
+# tests/testthat (#494), so the run gets a null device of its own.
 sid_clusters_after <- function(env, choices = sid_clusters_choices) {
   rf_skip_unless_stack(rf_template_packages("sid", "clusters"))  # nolint: object_usage_linter.
+  withr::local_pdf(NULL)
   rf_run("sid", "clusters", sid_clusters_labels, env, choices)  # nolint: object_usage_linter.
 }
 
@@ -123,8 +126,10 @@ sid_stability_labels <- c("setup", "edit-study-choices", "stability-helpers", "h
                           "summarize", "agreement-text", "tbl-stability", "fig-agreement", "tbl-label-free",
                           "tbl-lost", "coassoc", "tbl-coassoc", "fig-coassoc", "tbl-drop", "save")
 
-# sid-stability run in the set a sid-fit and a sid-clusters just wrote, in the same study.
+# sid-stability run in the set a sid-fit and a sid-clusters just wrote, in the same study. Its fig-agreement chunk
+# prints the plot, so the run gets a null device of its own, as sid_clusters_after() does (#494).
 sid_stability_after <- function(env, choices = sid_stability_choices) {
   rf_skip_unless_stack(rf_template_packages("sid", "stability"))  # nolint: object_usage_linter.
+  withr::local_pdf(NULL)
   rf_run("sid", "stability", sid_stability_labels, env, choices)  # nolint: object_usage_linter.
 }
