@@ -1785,7 +1785,7 @@ The plateau width at `nu = 0.05` is **not measured** by this retime (its fits ru
 cd "$WT" && git push -u origin feat/nb-boostmtree-split && gh pr create --base main --title "feat: split nb-boostmtree into nb-boostmtree_fit and nb-boostmtree_explain" --body-file <body.md>
 ```
 
-The body says: what ships (two templates, deprecation, `migrate_job()`); **the handoff name `nb-boostmtree_fit.rds` departs from the spec's `nb-boostmtree-fit.rds`, why (refinement 1), and that John confirms it**; refinements 2 and 3; the time-varying-predictor refusal; the Task 7 numbers and the memory decision with `r_max`; "Not measured" (plateau width at `nu = 0.05`, predictions at the plateau's two ends, vimp and refit cost at clinical size); that `/code-review` stood in for Copilot; `Closes #580`, `Closes #493`; and ends with
+The body says: what ships (two templates, deprecation, `migrate_job()`); the handoff name `nb-boostmtree_fit.rds` and why (refinement 1; the spec was updated to it on 2026-11-20); refinements 2 and 3; the time-varying-predictor refusal; the Task 7 numbers and the memory decision with `r_max`; "Not measured" (plateau width at `nu = 0.05`, predictions at the plateau's two ends, vimp and refit cost at clinical size); that `/code-review` stood in for Copilot; `Closes #580`, `Closes #493`; and ends with
 
 ```
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
