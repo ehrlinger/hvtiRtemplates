@@ -53,24 +53,39 @@ version recorded. Floors: boostmtree 2.0.8, ggBoostedTrees 0.9.0.
 ## 3. ggBoostedTrees 0.10.2: pooled importance
 
 A patch release, its own PR in `ggBoostedTrees`, merged and tagged before the
-templates' PR.
+templates' PR. **The design is ggBoostedTrees'**: "Pooled variable importance:
+box of margins over the shadow band" (`docs/superpowers/specs/2026-11-20-pooled-vimp-box-design.md`
+on `feat/pooled-vimp-box`, approved by John 2026-11-20). What follows is what
+these templates rely on; where the two differ, that spec governs. It replaced an
+earlier design recorded here (nested lists, `summary()` method, stems shaded by
+share), dropped the same day.
 
-- `gg_boost_vimp()` accepts a **list** of `vimp.boostmtree()` results as well as
-  one. One result behaves exactly as today.
-- Given a list, each run is compared with **its own** shadow band (the largest
-  shadow importance in that run's panel). Pooling the raw importances first would
-  compare against a band made of a different run's noise.
-- Per covariate and panel (main effect, interaction with time) it returns the
-  **share of runs above the band**, and the **median and range** of importance.
-- The plot keeps today's two panels and stems; the mark shows the share. The
-  caption says how many runs and how many fits the pool spans. A vimp result does
-  not record which fit it came from, so the fit count comes from the nesting: a
-  list of runs is one fit, and a list of such lists is one list per fit.
-- Help page and vignette: the share is **how stable a verdict is, not a test**.
-  #49 withdrew a claimed false-positive rate because shadows within one copy share
-  a shuffle; the pooled share inherits that caveat and must not reintroduce a rate.
-- No shadows in a run, no band: the share is `NA` and the plot draws importances
-  only, as a single run does today.
+- **Input.** `gg_boost_vimp(list(v1, v2, ...))`, a new `gg_boost_vimp.list()`
+  method. A **flat** list of `vimp.boostmtree` runs: repeated runs on one fit,
+  one run on each of several refits, or a mix. Runs are labelled by the list's
+  names, or `1..N`. The pool does not know which run came from which fit, so a
+  caller that wants that in the report says it itself and encodes it in the names.
+  A bare `vimp.boostmtree` object behaves exactly as today.
+- **Refusals**, each naming the run: an element that is not a `vimp.boostmtree`
+  (BoostMLR included); **a run with no shadow covariates**; a run whose
+  covariates, components, responses or metric differ from the first run's; an
+  empty list; empty or duplicated names.
+- **Each run is judged against its own band**: `band` is the largest shadow
+  importance in that run's panel, floored at 0 (the rule
+  `.vimp_shadow_thresholds()` already uses); `margin = importance - band`;
+  detected when `margin > 0`. Raw importances are never pooled first.
+- **Result.** Class `gg_boost_vimp_pool`, one row per variable, component and
+  response, shadows excluded: `n_runs`, `n_detected`, `share`,
+  `median_importance`, and the 15th, 25th, 50th, 75th and 85th percentiles of the
+  margin over runs (`q15` to `q85`). The per-run rows travel as the `runs`
+  attribute. **No pooled verdict**: the share is reported and the reader judges.
+- **Plot.** `autoplot.gg_boost_vimp_pool()`, the single-run figure's panels and
+  facets, with x the margin over each run's own band and a line at zero: a box
+  from the 25th to 75th percentile, whiskers 15th to 85th, each run a small point,
+  and a `k/N` label giving the share. Rows run by their largest median margin.
+- **Docs.** The share is **how stable a verdict is, not a test**. #49 withdrew a
+  claimed false-positive rate because shadows within one copy share a shuffle;
+  the pool inherits that caveat and states no rate.
 
 ## 4. Architecture
 
@@ -120,8 +135,9 @@ save and provenance. The importance, effects and trajectory chunks move to
 **New study choices**
 
 - `K_SHADOW <- 5`. Shadows enter through `ggBoostedTrees::boost_shadow(x, id, k)`
-  before the fit. 0 turns them off, and the `EDIT:` says that then no band and no
-  verdict can be drawn. Part of the cache key: a fit with shadows is a different
+  before the fit. 0 turns them off, and the `EDIT:` says that then no band can be
+  drawn and the explain job cannot pool runs (the pool refuses runs without
+  shadows). Part of the cache key: a fit with shadows is a different
   model. The comment gives the cost, measured 2026-11-20 on the Mac at n = 100,
   `M = 400`, `nu = 0.25`: shadows add about 17% to the fit (34.5 s to 40.5 s) and
   multiply one vimp run by about 3.6 (1.9 s to 6.8 s).
@@ -187,18 +203,26 @@ the saved trees, and that path runs through randomForestSRC.
   on the core count. The `EDIT:` gives the cost (about 0.17 fits per run at
   `K_SHADOW = 5`, n = 100) and says the share is stability, not significance.
 - With refits in the file, every fit gets `N_VIMP` runs: `N_VIMP * (1 + N_REFITS)`.
+  All of them go to `gg_boost_vimp()` as one flat named list, names `fit<i>.run<j>`
+  (`fit0` the SEED fit). The pool does not count fits, so the importance prose
+  states the pool itself ("10 runs on 1 fit", "10 runs on each of 6 fits").
 - Kept from today: `EFFECT_VARIABLES`, `N_TRACES`, `REFIT`, `SAVE_FIGURES`, `FIGURES`.
 
 **Sections**
 
-1. **Importance.** `gg_boost_vimp(<list of runs>)`, and a table of every
-   covariate's share above the band, median and range, per panel. No detected /
-   not-detected rule. The prose explains a borderline share by the 14 to 46% the
-   study measured. With `K_SHADOW = 0`, importances only, and the prose says no
-   band could be drawn.
+1. **Importance.** `plot(gg_boost_vimp(<named list of runs>))`, the box of
+   margins over each run's band, and a table from the pool of every covariate's
+   `n_detected` of `n_runs`, `share`, `median_importance` and the margin's 25th to
+   75th percentiles, per panel. No detected / not-detected rule. The prose
+   explains a borderline share by the 14 to 46% the study measured.
+   **With `K_SHADOW = 0`** the pool refuses runs without shadows, so the job does
+   not pool: it draws the single-run figure for the first run (importances, no
+   band), says in the prose that no band and no share could be computed, and runs
+   vimp once rather than `N_VIMP` times, since the extra runs would feed nothing.
 2. **Partial effects.** Today's `gg_boost_effect` machinery, on the SEED fit.
-   With `EFFECT_VARIABLES = NULL`, the six covariates with the highest **median**
-   importance across runs, so the pages stop reshuffling from render to render.
+   With `EFFECT_VARIABLES = NULL`, the six covariates with the highest
+   `median_importance` across runs (the pool's column; the first run's importance
+   when `K_SHADOW = 0`), so the pages stop reshuffling from render to render.
 3. **Trajectories.** Today's `fig-traces`, unchanged.
 
 Out of scope: `gg_boost_prediction()` (landmark prediction, ggBoostedTrees
@@ -251,11 +275,13 @@ sharing `helper-nb.R`)
   working data is refused, as for `rfs-explain` (the regression test).
 - Paths: `_fit` writes `nb-boostmtree-fit.rds` and never `nb-boostmtree.rds`, and
   rendering the deprecated job in the same set leaves `_explain`'s input intact.
-- `K_SHADOW` is in the cache key (changing it refits); `K_SHADOW = 0` renders with
-  no band.
-- Pooling: the importance table's shares come from several runs, and raising
-  `N_VIMP` reuses the cached runs. **Proved by mutation**: break the per-run band
-  and the tests go red.
+- `K_SHADOW` is in the cache key (changing it refits); `K_SHADOW = 0` renders the
+  single-run figure with no band, runs vimp once, and never calls the pool.
+- Pooling: the importance table's `n_detected` and `share` come from `N_VIMP`
+  runs named `fit<i>.run<j>`, and raising `N_VIMP` reuses the cached runs. The
+  per-run band arithmetic is ggBoostedTrees' to test; here, assert the job hands
+  the pool every run and reports its counts unaltered. **Proved by mutation**:
+  drop a run from the list and the tests go red.
 - Deprecation: `add_job` warns, `upgrade_job` on an old `nb-boostmtree` job drops
   no chunk, `migrate_job` writes `_fit` and its warning names `_explain`.
 - **#493**: both end-to-end renders capture Quarto's raw stderr and print it on
