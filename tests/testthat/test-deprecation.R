@@ -17,7 +17,7 @@ caught_warnings <- function(expr) {
   list(value = value, warnings = caught)
 }
 
-test_that("the catalog lists the two renames, and marks nothing deprecated", {
+test_that("the catalog lists the two renames, and marks only nb-boostmtree deprecated", {
   renames <- hvtiRtemplates:::.template_renames()
   expect_identical(renames$from, c("dp-eda", "dp-trends"))
   expect_identical(renames$to, c("dc-eda", "dc-trends"))
@@ -25,7 +25,11 @@ test_that("the catalog lists the two renames, and marks nothing deprecated", {
   shipped <- sub(".", "-", template_list()$name, fixed = TRUE)
   expect_true(all(renames$to %in% shipped))
   expect_false(any(renames$from %in% shipped))
-  expect_true(all(is.na(template_catalog()$deprecated_by)))
+  catalog <- template_catalog()
+  marked <- catalog[!is.na(catalog$deprecated_by), ]
+  expect_identical(paste(marked$prefix, marked$qualifier, sep = "-"), "nb-boostmtree")
+  expect_identical(marked$deprecated_by, "nb-boostmtree_fit")
+  expect_match(marked$deprecation_note, "nb-boostmtree_explain", fixed = TRUE)
 })
 
 test_that("an old name is an error naming the new one, from every entry point", {
@@ -168,4 +172,34 @@ test_that("a rename follows the catalog's renamed list, whichever name it retire
   local_mocked_bindings(.template_renames = function() renames)
   expect_error(template_path("zz.gfup"), "zz.gfup was renamed dc.gfup. A test note.", fixed = TRUE)
   expect_error(template_path("dp.trends"), "unknown template: dp[.]trends[.] Qualified 'trends': dc[.]trends")
+})
+
+test_that("nb-boostmtree warns from add_job() and still scaffolds", {
+  root <- migration_study_fixture(NULL)
+  expect_warning(job <- add_job("nb", "lvef", "boost", root = root, qualifier = "boostmtree"),
+                 "nb.boostmtree is deprecated in favor of nb.boostmtree_fit", class = "hvtiRtemplates_deprecated")
+  expect_true(file.exists(job))
+})
+
+test_that("upgrade_job() on an old nb-boostmtree job warns and keeps every chunk", {
+  root <- migration_study_fixture(NULL)
+  job <- withCallingHandlers(add_job("nb", "lvef", "boost", root = root, qualifier = "boostmtree"),
+                             hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
+  labels <- grep("^#\\| label: ", readLines(job), value = TRUE)
+  expect_warning(upgrade_job(job), "nb.boostmtree is deprecated", class = "hvtiRtemplates_deprecated")
+  expect_identical(grep("^#\\| label: ", readLines(job), value = TRUE), labels)
+  expect_true(all(c("#| label: fig-importance", "#| label: effects", "#| label: fig-traces") %in% labels))
+})
+
+test_that("migrate_job() writes an nb-boostmtree source as nb-boostmtree_fit and names the explain job", {
+  root <- migration_study_fixture(NULL)
+  dir.create(file.path(root, "analyses"), showWarnings = FALSE)
+  source <- file.path(root, "analyses", "nb.boostmtree.lvef.sas")
+  writeLines(c("* nb boostmtree job;", "data a; set b; run;"), source)
+  got <- caught_warnings(migrate_job(source, "lvef", "boost", prefix = "nb", qualifier = "boostmtree", root = root))
+  dep <- Filter(function(w) inherits(w, "hvtiRtemplates_deprecated"), got$warnings)
+  expect_length(dep, 1L)
+  expect_match(conditionMessage(dep[[1L]]), "written from nb.boostmtree_fit instead", fixed = TRUE)
+  expect_match(conditionMessage(dep[[1L]]), "nb-boostmtree_explain", fixed = TRUE)
+  expect_match(basename(got$value), "^nb[.]boostmtree_fit[.]lvef[.]boost[.]qmd$")
 })

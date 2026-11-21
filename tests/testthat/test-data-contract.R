@@ -11,7 +11,7 @@ pending_contract_families <- setdiff(template_stems(), c(
   "lm-balancing_count", "lm-binary", "lm-checkpred", "lm-nominal", "lm-ordinal",
   "lm-propensity_binary", "lm-propensity_nominal", "lm-propensity_ordinal", "rm-balancing_continuous", "rm-linear",
   "rfs-fit", "rfs-explain", "rfc-fit", "rfc-explain", "rfr-fit", "rfr-explain",
-  "bl", "br", "bc", "bh", "nb-boostmtree"
+  "bl", "br", "bc", "bh", "nb-boostmtree", "nb-boostmtree_fit", "nb-boostmtree_explain"
 ))
 
 template_chunk <- function(src, label) {
@@ -26,8 +26,10 @@ template_chunk <- function(src, label) {
 # checks it with .read_upstream_job_data(). hm, hp and hs also read data; the explain jobs and the bootstrap
 # reports read a saved forest or bag, so they have no DATASET or ANALYSIS_SET.
 downstream_templates <- c("hm", "hp", "hs-setup", "hs-score", "rfs-explain", "rfc-explain", "rfr-explain",
-                          "bl", "br", "bc", "bh")
-reads_data <- function(name) !name %in% c("rfs-explain", "rfc-explain", "rfr-explain", "bl", "br", "bc", "bh")
+                          "bl", "br", "bc", "bh", "nb-boostmtree_explain")
+reads_data <- function(name) {
+  !name %in% c("rfs-explain", "rfc-explain", "rfr-explain", "bl", "br", "bc", "bh", "nb-boostmtree_explain")
+}
 
 expected_defaults <- function(name) {
   if (name %in% downstream_templates) {
@@ -43,7 +45,7 @@ expected_defaults <- function(name) {
   # hs-concordance takes them from the hm models it reads.
   if (name %in% c("hm", "hp", "hs-setup", "hs-score", "hs-concordance")) out <- c(out, TIME = "TIME <- NULL", EVENT = "EVENT <- NULL")
   # nb-boostmtree reads one row per visit, so the ID alone is not unique.
-  if (name == "nb-boostmtree") out[["KEY"]] <- "KEY <- c(ID, TIME)"
+  if (name %in% c("nb-boostmtree", "nb-boostmtree_fit")) out[["KEY"]] <- "KEY <- c(ID, TIME)"
   out
 }
 

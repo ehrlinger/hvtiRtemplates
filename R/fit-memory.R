@@ -66,6 +66,10 @@
 #    names Medium, the profile it ran in (spec section 8), and is a lower bound: nothing shows Small holds it.
 #  - Any other family takes the largest a, conservatively; that is unmeasured.
 #  - growth: 0.35e-3 GiB per boosting step per 1,000 visits, ordinal only (the CORES comment's term).
+#  - Shadows: 5 shadow copies (4 predictors to 24) changed peak memory by -14% to +26% in the 2026-11-20
+#    retime (boostmtree 2.0.13, Large session, simulated data, M = 10), within the sampler's scatter, so the
+#    estimate has no predictor term (decided 2026-11-20). Unmeasured with many more real predictors. The
+#    same retime measured 7-12 times less than this estimate; recalibration waits on an M = 500 run (#601).
 # The upper bound is unknown: Penny's Large run (started 2026-10-22 13:26 on lri-r03) has not recorded a
 # peak, so whether 8 cores fits Large (threshold 138.2 GiB) is not asserted anywhere.
 .boostmtree_need_gib <- function(patients, visits, family, cores, m) {

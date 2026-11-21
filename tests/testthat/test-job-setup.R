@@ -200,7 +200,8 @@ test_that("add_job() still substitutes SUBJECT and TYPE in every template's sing
   for (i in seq_len(nrow(tl))) {
     prefix <- strsplit(tl$name[[i]], ".", fixed = TRUE)[[1L]]
     qualifier <- if (length(prefix) > 1L) paste(prefix[-1L], collapse = ".") else NULL
-    job <- add_job(prefix[[1L]], "mysubject", "mytype", root = root, qualifier = qualifier)
+    job <- withCallingHandlers(add_job(prefix[[1L]], "mysubject", "mytype", root = root, qualifier = qualifier),
+                               hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
     src <- readLines(job, warn = FALSE)
     expect_identical(grep("^SUBJECT\\s+<- ", src, value = TRUE), "SUBJECT <- \"mysubject\"", info = tl$name[[i]])
     expect_identical(sub("\\s+", " ", grep("^TYPE\\s+<- ", src, value = TRUE)), "TYPE <- \"mytype\"",

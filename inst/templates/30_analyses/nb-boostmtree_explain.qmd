@@ -1,0 +1,516 @@
+---
+title: "Boosted multivariate trees: boostmtree explain"
+date: now
+date-format: "YYYY-MM-DD HH:mm"
+# Carried in the file rather than inherited from _quarto.yml. A file meant to be
+# COPIED should not depend on settings from the directory it happens to sit in:
+# rendered as a standalone document the project's format block never applies,
+# which is how server-rendered reports end up with sibling _files/ trees instead
+# of being self-contained.
+#
+# NOTE: output-dir is a PROJECT setting and cannot be set here, so the .html
+# lands next to its source. With embed-resources that is a single standalone
+# file, which is the property that actually matters when a report is sent on.
+format:
+  html:
+    fig-width: 9
+    fig-height: 6
+    theme: cosmo
+    toc: true
+    toc-location: left
+    page-layout: full
+    grid:
+      body-width: 2000px
+      sidebar-width: 250px
+    toc-depth: 3
+    code-fold: true
+    df-print: default
+    embed-resources: true
+---
+
+<!-- EDIT: say which nb-boostmtree_fit job in this set this explains, and what
+     question the importance and effect plots are meant to answer. -->
+
+Explains the fit the `nb-boostmtree_fit` job in this set saved.
+
+An `nb-boostmtree_explain` job never fits. It reads `nb-boostmtree_fit.rds`,
+which the fit job writes, and reports variable importance over repeated runs,
+partial effects over time and a sample of patients' fitted trajectories, all of
+that saved fit and no other. Each importance run is cached on its own, so
+raising N_VIMP pays only for the new runs.
+
+<!-- The two values below are written by add_job() from the subject/type it
+     was called with, which are also the filename's first two fields. They
+     name the SET this job belongs to, and every artifact path in the
+     document is computed from them, so no output path below needs editing.
+
+     Do NOT hand-edit these declarations: the render-time guard below checks
+     them against this file's own name and stops if they disagree. To put
+     this job in a different set, call add_job() again with the new
+     subject/type rather than editing this copy in place.
+
+     A set is keyed on (subject, analysis type), not on the subject alone.
+     One subject may be analyzed by several methods, such as parametric hazard,
+     random forest survival or competing risks, and those chains share their upstream.
+     Two sets keyed on `dead_pa` alone would write their life tables to the
+     same file. -->
+
+
+```{r}
+#| label: setup
+#| results: asis
+SUBJECT <- "lvef"
+TYPE    <- "boost"
+.in <- knitr::current_input(dir = TRUE)
+# boostmtree must be the CCF fork, 2.0.13 or later. Every study fits with
+# cv.flag = TRUE, and in boostmtree 2.0.0 (the CRAN release) that flag leaves the
+# in-sample fit frozen, so the stored coefficients diverge with M and every
+# non-cross-validated result is wrong (kogalur/boostmtree#2, fixed by #3). 2.0.13
+# is the floor because it is the release whose seed reproduces a fit: before it,
+# the same SEED could grow a different fit. A seed reproduces a fit only within one
+# randomForestSRC version, which is why the saved fit records that version too.
+# 2.0.8 added the progress = argument and the lower worker memory this job relies on.
+if (!requireNamespace("boostmtree", quietly = TRUE) || utils::packageVersion("boostmtree") < "2.0.13") {
+  stop("This job needs boostmtree >= 2.0.13 from the CCF fork. Install it with\n",
+       "  remotes::install_github(\"ehrlinger/boostmtree_src\", subdir = \"boostmtree\", ref = \"v2.0.13-ccf\")\n",
+       "then re-render.", call. = FALSE)
+}
+# ggBoostedTrees 0.10.2 adds the pooled importance this job reads (gg_boost_vimp() on
+# a list of runs), and is the floor the fit job holds, so the pair installs together.
+if (!requireNamespace("ggBoostedTrees", quietly = TRUE) || utils::packageVersion("ggBoostedTrees") < "0.10.2") {
+  stop("This job needs ggBoostedTrees >= 0.10.2. Install it with\n",
+       "  remotes::install_github(\"ehrlinger/ggBoostedTrees@v0.10.2\")\nthen re-render.", call. = FALSE)
+}
+suppressPackageStartupMessages({
+  library(boostmtree)
+  library(ggBoostedTrees)
+  library(hvtiRutilities)
+})
+# Without the guard in .job_setup(), an unedited job renders green over a
+# meaningless analysis. Here that is importance and effects drawn for a fit this
+# job was never pointed at, which look exactly like a result.
+# To render a job you have not finished, leave a chunk out with the chunk
+# option skip, giving the reason in quotes, or call hvtiRtemplates::stop_here()
+# in a chunk to leave out everything below it. A draft lists each one in a
+# callout; a final render refuses them, as it refuses an unresolved marker.
+# ?stop_here has more.
+.job <- hvtiRtemplates:::.job_setup(SUBJECT, TYPE, envir = environment())
+.root <- .job$root
+set_path <- .job$set_path
+.provenance_data <- list()
+# Saves a figure as <name>.png, .pdf and .tiff in this set's graphs/ folder (or `kind`'s),
+# under the SAVE_FIGURES and FIGURES study choices.
+save_figure <- function(plot, name, width = 6, height = 4, kind = "graphs", linked = FALSE) {
+  hvtiRtemplates:::.save_figure(plot, set_path(kind, paste0(name, ".png")), width, height,
+                                SAVE_FIGURES, FIGURES, linked)
+}
+
+# The importance runs and partial effects are cached through set_path(), by set,
+# beside the fit this job reads, and no other set's.
+# The draft banners, if any, and the box under the title, after all the code above.
+.job$notice
+```
+
+## Study choices
+
+Edit these values for this study before rendering. The response, visit time,
+predictors, iterations, shadows and refits are not here: they come from the fit.
+
+```{r}
+#| label: edit-study-choices
+# EDIT: the fit's selection is used; set any of these only to confirm it.
+# NULL takes the value the fit job used.
+WHERE <- NULL
+ID <- NULL
+KEY <- NULL
+
+# EDIT: importance runs on each fit the fit job saved (the SEED fit and its
+# N_REFITS refits), so N_VIMP * (1 + N_REFITS) in all. Each run permutes every
+# predictor once at random; repeated runs show how stable a verdict is. A share of
+# runs is stability, not significance: there is no error rate behind it. Each run
+# costs about 0.17 of a fit at K_SHADOW = 5 (measured at 100 patients). Each is
+# cached on its own, so raising N_VIMP pays only for the new runs. With no shadows
+# in the fit there is no band to judge runs against, and importance runs once.
+# With EFFECT_VARIABLES <- NULL, raising N_VIMP can change which six variables lead,
+# and the partial-effects cache then stops the render until REFIT <- TRUE; the
+# importance runs themselves are reused.
+N_VIMP <- 10
+
+# EDIT: cores for the importance runs, one run per core. Each core is a forked copy
+# of R holding the fit, so memory limits CORES on a large study. Not part of any
+# cache key: cache_fit() seeds every run, so results do not depend on it.
+CORES <- if (.Platform$OS.type == "windows") 1L else 4L
+
+# EDIT: seeds the importance runs, run j on fit i under SEED + j + 1000 * i (the SEED
+# fit is fit 0), so no two runs share a permutation, and the sample of patients the
+# trajectory plot draws. Part of every cache key.
+SEED <- 2026
+
+# EDIT: the variables to draw partial effects for, or NULL for the six with the
+# largest median importance across runs. N_TRACES patients are sampled for the
+# trajectory plot; Inf draws every one.
+EFFECT_VARIABLES <- NULL
+N_TRACES <- 100
+
+# Set TRUE after changing a choice above. A cache whose inputs changed stops the
+# render instead of returning the old fit; TRUE recomputes it.
+REFIT <- FALSE
+
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
+# SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("nb-boostmtree_explain-importance"). The names are the
+# file names, listed for each template in the templates README.
+SAVE_FIGURES <- TRUE
+FIGURES <- NULL
+```
+
+## The fit
+
+```{r}
+#| label: fit
+#| results: asis
+.handoff <- set_path("estimates", "nb-boostmtree_fit.rds")
+if (!file.exists(.handoff)) {
+  stop("No fit at ", .handoff, ". Render the nb-boostmtree_fit job in this set first; ",
+       "this job explains that fit and never fits its own.", call. = FALSE)
+}
+.cfg <- study_config(start = .root)
+# Read through .read_handoff(), never readRDS(): it validates the lineage the fit
+# job attached, and a final render refuses a fit saved from unregistered data.
+.fit_read <- hvtiRtemplates:::.read_handoff(.handoff, "fit", .cfg, "the nb-boostmtree_fit job")
+.bundle <- .fit_read$value
+.provenance_data <- .fit_read$lineage$data
+.provenance_artifacts <- c(.fit_read$lineage$artifacts, list(.fit_read$record))
+.missing <- setdiff(c("fit", "refits", "versions", "k_shadow", "seed"), names(.bundle))
+if (length(.missing)) {
+  stop("nb-boostmtree_fit.rds lacks ", paste(.missing, collapse = ", "), ". Render the nb-boostmtree_fit job in this set ",
+       "again.", call. = FALSE)
+}
+fit <- .bundle$fit
+if (!(inherits(fit, "boostmtree") && inherits(fit, "grow"))) {
+  stop("nb-boostmtree_fit.rds does not hold a (boostmtree, grow) fit. Render the nb-boostmtree_fit job in this set ",
+       "again.", call. = FALSE)
+}
+refits <- .bundle$refits
+CACHE_DIR <- dirname(.handoff)
+.response <- .fit_read$lineage$analysis$response
+.time <- .fit_read$lineage$analysis$time
+# The fit's real predictors; its shadow copies are named shadow<j>.<predictor>.
+.predictors <- fit$x.var.names[!grepl("^shadow[0-9]+[.]", fit$x.var.names)]
+# Importance pushes permuted data down the saved trees, and that path runs
+# through randomForestSRC, so a run under other versions may not match one under
+# the fit's. Said in the report and as a warning, not refused.
+.recorded <- .bundle$versions[c("boostmtree", "randomForestSRC")]
+.installed <- vapply(names(.recorded), function(p) format(utils::packageVersion(p)), character(1L))
+.moved <- names(.recorded)[.recorded != .installed]
+if (length(.moved)) {
+  .msg <- paste0("The fit was grown with ", paste(.moved, .recorded[.moved], collapse = " and "),
+                 "; this session has ", paste(.moved, .installed[.moved], collapse = " and "),
+                 ". Importance runs through randomForestSRC on the saved trees, so these runs may not match ",
+                 "one on the fit's versions. Render nb-boostmtree_fit again to grow the fit on these.")
+  cat("::: {.callout-warning}\n", .msg, "\n:::\n\n", sep = "")
+  warning(.msg, call. = FALSE)
+}
+# Each component is named by the level that defines it, which boostmtree keeps
+# in fit$q.set: a threshold for an ordinal fit, a class compared against the
+# reference class for a binary or nominal one. partial.plot() selects a
+# component by the same label ("response" for a continuous fit).
+.labels <- if (identical(fit$family, "continuous")) "response" else as.character(fit$q.set)
+.reference <- setdiff(as.character(fit$y.levels), .labels)
+# An ordinal component is a cumulative logit at its threshold, but boostmtree's
+# documentation does not say which side of the threshold it models, so the
+# label names the threshold only. (Its 2.0.2 source codes P(y <= k); read the
+# installed package before relying on that.)
+.components <- switch(fit$family,
+  continuous = .response,
+  binary = ,
+  nominal = paste(.response, "=", .labels, "against", paste(.reference, collapse = ", ")),
+  ordinal = paste(.response, "threshold", .labels)
+)
+```
+
+```{r}
+#| label: tbl-data
+#| tbl-cap: "The data the fit job read"
+# This job reads no data: the fit carries its training rows. The fit job
+# recorded how it chose them, and a setting above that differs from the fit's
+# stops here rather than describe rows the fit was not grown on.
+.sel <- hvtiRtemplates:::.read_upstream_job_data(
+  .cfg, .fit_read$lineage, list(where = WHERE, id = ID, key = KEY), read = FALSE, source = "nb-boostmtree_fit.rds"
+)$selection
+knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
+                        value = c(.sel$id, paste(.sel$key, collapse = ", "),
+                                  if (length(.sel$where_shown)) paste(.sel$where_shown, collapse = "; ") else "none",
+                                  .sel$rows)),
+             col.names = c("Data", ""))
+```
+
+## Importance
+
+```{r}
+#| label: fig-importance
+#| fig-cap: "Importance of each predictor's main effect and of its interaction with time, one panel for each. With shadow
+#|   covariates, each box spans the 25th to 75th percentile of a predictor's margin over its own run's noise band
+#|   across runs, the whiskers the 15th to 85th, each point is one run, the label k/N counts the runs in which it
+#|   cleared the band, and the vertical line marks zero. Without shadows, horizontal dark gray bars give one run's
+#|   importance."
+#| fig-width: 9.75
+#| fig-height: 10.5
+# vimp.boostmtree() permutes each predictor at random, so one run's verdict on a
+# predictor near the noise band can land on either side of it. Each fit gets
+# N_VIMP runs, run j on fit i seeded SEED + j + 1000 * i and cached on its own, and the runs are
+# pooled: each is judged against its own band, never a pooled one.
+if (!is.numeric(N_VIMP) || length(N_VIMP) != 1L || is.na(N_VIMP) || N_VIMP < 1 || N_VIMP > 999 || N_VIMP != round(N_VIMP)) {
+  # At most 999, so the seeds below, SEED + j + 1000 * i, never coincide across fits.
+  stop("N_VIMP must be a whole number from 1 to 999, the importance runs on each fit.", call. = FALSE)
+}
+.fits <- c(list(fit0 = fit), stats::setNames(refits, sprintf("fit%d", seq_along(refits))))
+# Without shadows there is no band to pool against, so importance runs once, on the SEED fit.
+if (.bundle$k_shadow == 0) .fits <- .fits["fit0"]
+.n_vimp <- if (.bundle$k_shadow > 0) as.integer(N_VIMP) else 1L
+.runs_plan <- data.frame(fit = rep(names(.fits), each = .n_vimp), run = rep(seq_len(.n_vimp), times = length(.fits)),
+                         stringsAsFactors = FALSE)
+.runs_plan$name <- paste0(.runs_plan$fit, ".run", .runs_plan$run)
+# Run j on fit i is seeded SEED + j + 1000 * i, so no two runs share a seed: vimp.boostmtree() permutes with
+# sample(), and one seed across the fits would give every fit the same permutations. fit0 keeps SEED + j.
+.runs_plan$seed <- SEED + .runs_plan$run + 1000L * (match(.runs_plan$fit, names(.fits)) - 1L)
+.runs_plan$cache <- sprintf("nb-boostmtree_explain-vimp-%s-run%d", .runs_plan$fit, .runs_plan$run)
+.vimp_code <- quote(vimp.boostmtree(f))
+# Refuses here, before any run, importance this session's memory cannot hold, and a run that will be computed
+# from the Render button or a terminal, where it dies with the session. Whether cache_fit() will run is its
+# own decision, asked the way it makes it. Each worker holds a fitted model, so the estimate is the fit's,
+# which is conservative for importance and has not been measured for it.
+.need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(fit$n, sum(fit$ni), fit$family, k, fit$M)
+.computing <- vapply(seq_len(nrow(.runs_plan)), function(i) {
+  hvtiRutilities::cache_would_fit(.runs_plan$cache[[i]], .vimp_code, seed = .runs_plan$seed[[i]], dir = CACHE_DIR,
+                                  refit = REFIT, packages = "randomForestSRC")
+}, logical(1L))
+if (any(.computing)) {
+  hvtiRtemplates::guard_long_fit(.runs_plan$cache[.computing], dir = CACHE_DIR,
+                                 why = "repeated boostmtree importance takes hours at study size", refit = REFIT)
+}
+hvtiRtemplates::guard_memory(if (any(.computing)) .need(CORES) else 0,
+                             sprintf("these importance runs (%s patients, %s visits, %s)",
+                                     format(fit$n, big.mark = ","), format(sum(fit$ni), big.mark = ","), fit$family),
+                             cores = CORES, cores_fit = .need)
+.vimp_run <- function(i) {
+  f <- .fits[[.runs_plan$fit[[i]]]]
+  # One randomForestSRC thread per forked worker, so CORES runs use CORES threads.
+  if (CORES > 1L) withr::local_options(rf.cores = 1L)
+  # randomForestSRC runs under boostmtree and neither call names it, so it is keyed here.
+  cache_fit(.runs_plan$cache[[i]], .vimp_code, seed = .runs_plan$seed[[i]], dir = CACHE_DIR, refit = REFIT,
+            packages = "randomForestSRC")
+}
+.runs <- if (CORES > 1L) {
+  parallel::mclapply(seq_len(nrow(.runs_plan)), .vimp_run, mc.cores = CORES)
+} else {
+  lapply(seq_len(nrow(.runs_plan)), .vimp_run)
+}
+# A worker that was killed, out of memory for one, returns NULL rather than an error.
+.lost <- which(vapply(.runs, is.null, logical(1L)))
+if (length(.lost)) {
+  stop("The importance run ", .runs_plan$name[[.lost[[1L]]]], " returned nothing: its worker was probably killed, ",
+       "most often for want of memory. Lower CORES and render again; the runs already cached are kept.", call. = FALSE)
+}
+# mclapply() returns an error as a value; raise the first one as it was, its class
+# included, so a stale cache still names what changed.
+.failed <- which(vapply(.runs, inherits, logical(1L), "try-error"))
+if (length(.failed)) stop(attr(.runs[[.failed[[1L]]]], "condition"))
+names(.runs) <- .runs_plan$name
+.pool <- if (.bundle$k_shadow > 0) gg_boost_vimp(.runs) else NULL
+p_vimp <- plot(if (is.null(.pool)) gg_boost_vimp(.runs[[1L]]) else .pool) + hvtiPlotR::theme_hv_manuscript(base_size = 12)
+save_figure(p_vimp, "nb-boostmtree_explain-importance", width = 6.5, height = 7)
+p_vimp
+```
+
+```{r}
+#| label: importance-runs
+#| results: asis
+# unnumbered: its child chunk carries its own label and caption
+importance_table <- NULL
+if (is.null(.pool)) {
+  cat("The fit has no shadow covariates (K_SHADOW was 0 in nb-boostmtree_fit), so no noise band and no share could ",
+      "be computed, and importance ran once. The figure shows that one run; a predictor's place in it is not a ",
+      "verdict.\n\n", sep = "")
+} else {
+  importance_table <- .pool[, c("variable", "component", "response", "n_detected", "n_runs", "share",
+                                "median_importance", "q25", "q75")]
+  class(importance_table) <- "data.frame"
+  cat(sprintf(paste("Importance pools %d runs on %s, %d in all. For each predictor and panel the table gives the",
+                    "runs in which its importance exceeded its shadows (that run's noise band), their share, the",
+                    "median importance and the 25th and 75th percentiles of the margin over the band. The share says",
+                    "how stable a single run's verdict is, not whether the effect is real. In a 50-seed study, some",
+                    "covariates cleared their run's noise band in 14%% to 46%% of runs.\n\n"),
+              .n_vimp, if (length(.fits) == 1L) "1 fit" else sprintf("each of %d fits", length(.fits)),
+              nrow(.runs_plan)))
+  .fence <- strrep("`", 3)
+  cat(knitr::knit_child(text = c(
+    paste0(.fence, "{r}"), "#| label: tbl-importance",
+    "#| tbl-cap: \"How often each predictor cleared its run's noise band, by panel\"",
+    paste("knitr::kable(importance_table, digits = 3, col.names = c('Predictor', 'Effect', 'Response', 'Runs cleared',",
+          "'Runs', 'Share', 'Median importance', 'Margin, 25th percentile', 'Margin, 75th percentile'))"),
+    .fence
+  ), envir = environment(), quiet = TRUE), sep = "\n")
+}
+```
+
+## Partial effects
+
+```{r}
+#| label: effects
+#| results: asis
+# unnumbered: each child chunk below carries its own label and caption
+# Partial effects over time, on the SEED fit, for EFFECT_VARIABLES or the six
+# with the largest median importance across runs (the first run's importance
+# when the fit has no shadows), so the pages do not reshuffle between renders.
+# An ordinal or nominal fit reports importance once per response component, so a
+# variable is ranked by its largest importance across them.
+if (is.null(.pool)) {
+  .vimp_main <- gg_boost_vimp(.runs[[1L]], components = "main")
+  .top <- sort(tapply(.vimp_main$importance, as.character(.vimp_main$variable), max), decreasing = TRUE)
+} else {
+  .vimp_main <- .pool[.pool$component == "main", ]
+  .top <- sort(tapply(.vimp_main$median_importance, as.character(.vimp_main$variable), max), decreasing = TRUE)
+}
+.effect_vars <- if (is.null(EFFECT_VARIABLES)) head(names(.top), 6L) else EFFECT_VARIABLES
+.unknown <- setdiff(.effect_vars, .predictors)
+if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unknown, collapse = ", "), call. = FALSE)
+# One partial.plot() covers every response component: ggBoostedTrees 0.9.0 and
+# later take an ordinal or nominal one whole and facet its figure by component.
+# Each component is renamed as the fit summary names it, not by its bare level.
+.fence <- strrep("`", 3)
+.seen <- new.env()
+.child <- function(label, caption, code, opts = NULL) {
+  label <- gsub("(^-+|-+$)", "", gsub("[^a-z0-9]+", "-", tolower(label)))
+  if (!is.null(.seen[[label]])) stop("Two outputs would share the label ", label, ".", call. = FALSE)
+  .seen[[label]] <- TRUE
+  .opt <- paste0("#| ", sub("-.*$", "", label), "-cap: ", encodeString(caption, quote = "\""))
+  cat(knitr::knit_child(text = c(paste0(.fence, "{r}"), paste0("#| label: ", label), .opt, opts, code, .fence),
+                        envir = parent.frame(), quiet = TRUE), sep = "\n")
+  cat("\n")
+}
+# partial.plot() is the slowest step after the fit: one prediction over every
+# patient per grid value, 25 values per continuous covariate. It is cached
+# beside the fit and keyed on it, so a re-render that changes only prose skips
+# it, and a refit or a changed EFFECT_VARIABLES stops until REFIT, as the fit does.
+.partial <- cache_fit("nb-boostmtree_explain-partial",
+                      partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE,
+                                   progress = get(".job")$progress("prediction")),
+                      # randomForestSRC runs under boostmtree and neither call names it, so it is keyed here.
+                      seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
+.effect <- gg_boost_effect(.partial)
+.relabel <- .components[match(levels(.effect$response), .labels)]
+# A component ggBoostedTrees names differently from the fit would otherwise be
+# drawn under a blank label; stop and say so instead.
+if (anyNA(.relabel)) {
+  stop("ggBoostedTrees labels a response component this job does not recognize: ",
+       paste(levels(.effect$response)[is.na(.relabel)], collapse = ", "), ".", call. = FALSE)
+}
+levels(.effect$response) <- .relabel
+# What ggBoostedTrees 0.9.0 still cannot do: a continuous covariate is drawn as
+# a curve and a factor as a point per level, on axes ggplot2 cannot share, so
+# plot() refuses an effect holding both. Each kind is drawn in its own figure,
+# which is why p_effects is a list.
+.discrete <- tapply(!is.na(.effect$x_label), .effect$variable, any)
+.discrete <- .discrete[!is.na(.discrete)]
+.parts <- split(names(.discrete), .discrete)
+.kinds <- ifelse(names(.parts) == "TRUE", "categorical", "continuous")
+# Free size, paged: one facet per predictor, two by two on a page no larger than
+# 6.5 by 9 in. With several response components ggBoostedTrees draws one column
+# per predictor and one row per component, so a page holds two predictors.
+.n_components <- nlevels(.effect$response)
+.pages <- lapply(unname(.parts), function(v) {
+  if (.n_components > 1L) {
+    hvtiRtemplates:::.figure_pages(length(v), panel_height = 3 * .n_components, page_height = 3 * .n_components)
+  } else {
+    hvtiRtemplates:::.figure_pages(length(v), page_height = 6)
+  }
+})
+# One plot per page, kind by kind: p_effects holds every page, and .effect_page says which kind and page each is.
+p_effects <- list()
+.effect_page <- list()
+for (.k in seq_along(.parts)) {
+  for (.j in seq_along(.pages[[.k]])) {
+    part <- .effect[.effect$variable %in% .parts[[.k]][.pages[[.k]][[.j]]$index], , drop = FALSE]
+    part$variable <- droplevels(part$variable)
+    # The manuscript theme hides the legend and its title, and the caption reads the time colors from the legend.
+    p_effects[[length(p_effects) + 1L]] <- plot(part) +
+      hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
+    .effect_page[[length(.effect_page) + 1L]] <- list(kind = .kinds[[.k]], page = .j, of = length(.pages[[.k]]),
+                                                      size = .pages[[.k]][[.j]], vars = levels(part$variable))
+  }
+}
+.key <- c(continuous = paste("Each solid line is the effect at one follow-up time, colored from dark to light blue by",
+                             "time as in the color bar."),
+          categorical = paste("Each point is the effect at one level and follow-up time, colored from dark to light blue by",
+                              "time as in the color bar."))
+for (.i in seq_along(p_effects)) {
+  .p <- p_effects[[.i]]
+  .pg <- .effect_page[[.i]]
+  save_figure(.p, sprintf("nb-boostmtree_explain-effects-%s-page-%02d", .pg$kind, .pg$page),
+              width = .pg$size$width, height = .pg$size$height)
+  .on_page <- if (.pg$of > 1L) paste0(" Page ", .pg$page, " of ", .pg$of, ": ", paste(.pg$vars, collapse = ", "), ".") else ""
+  .child(paste("fig effects", .pg$kind, .pg$page),
+         paste0("Partial effects over follow-up, ", .pg$kind, " predictors, one panel per predictor. ", .key[[.pg$kind]],
+                .on_page),
+         ".p", opts = c(sprintf("#| fig-width: %g", hvtiRtemplates:::.report_size(.pg$size$width)),
+                        sprintf("#| fig-height: %g", hvtiRtemplates:::.report_size(.pg$size$height))))
+}
+```
+
+## Trajectories
+
+```{r}
+#| label: fig-traces
+#| fig-cap: "Fitted trajectories for a sample of patients, with the cohort's mean fitted value over time. Thin translucent
+#|   black lines trace each sampled patient's fitted values, translucent black circles their observed values, and the
+#|   thick black line the cohort's mean fitted value within ten time bins."
+# Fitted trajectories for a sample of patients, with their observed values as
+# points, and the cohort's mean fitted value over time drawn across them. The
+# patients are labeled by digest, so none is identified.
+traces <- gg_boost_trajectory(fit)
+# Visit times are irregular, so most exact times belong to one patient, and a
+# mean taken at each time would join single values. The mean is taken instead
+# within ten equal-count time bins, over every patient's fitted values, and
+# drawn at each bin's mean time. A bin is per response component when there
+# are several.
+.edges <- unique(stats::quantile(traces$time, seq(0, 1, length.out = 11L), names = FALSE))
+# plot() reports that it chose the patients at random; SEED makes the choice
+# the same on every render.
+p_traces <- withr::with_seed(SEED, plot(traces, n_max = N_TRACES)) + ggplot2::labs(x = .time, y = .response) +
+  hvtiPlotR::theme_hv_manuscript(base_size = 12)
+if (length(.edges) < 2L) {
+  # Every visit at one time leaves no span to bin, and no line to draw.
+  trace_means <- NULL
+  cat("Every visit is at one time, so no mean line is drawn.\n")
+} else {
+  traces$.bin <- cut(traces$time, .edges, include.lowest = TRUE)
+  .by <- intersect(c("response", ".bin"), names(traces))
+  trace_means <- do.call(rbind, lapply(split(traces, traces[.by], drop = TRUE), function(b) {
+    data.frame(b[1L, setdiff(.by, ".bin"), drop = FALSE], time = mean(b$time), fitted = mean(b$fitted),
+               n_patients = length(unique(b$id)))
+  }))
+  p_traces <- p_traces +
+    ggplot2::geom_line(data = trace_means, ggplot2::aes(x = .data[["time"]], y = .data[["fitted"]]),
+                       linewidth = 1.2, inherit.aes = FALSE)
+}
+save_figure(p_traces, "nb-boostmtree_explain-traces")
+p_traces
+```
+
+```{r}
+#| label: provenance
+#| echo: false
+#| results: asis
+cat(hvtiRtemplates:::.embed_provenance(
+  .in,
+  data = .provenance_data,
+  run = .job$run,
+  artifacts = .provenance_artifacts,
+  extra = list(
+    subject = SUBJECT, type = TYPE,
+    analysis = c(.fit_read$lineage$analysis, list(n_vimp = .n_vimp, n_runs = nrow(.runs_plan))),
+    cohort = .fit_read$lineage$cohort
+  )
+))
+```

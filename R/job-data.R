@@ -1165,7 +1165,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # read_job_data() and does not set one_row_per_patient = TRUE. Read from the
 # installed templates, where that setting is written, so the refusal above
 # cannot name a template that refuses too. hz sets it to is.null(START): its
-# start/stop rows refuse a long join too, in .check_start_settings().
+# start/stop rows refuse a long join too, in .check_start_settings(). A deprecated template is left out.
 .long_join_templates <- function(root = system.file("templates", package = "hvtiRtemplates")) {
   files <- list.files(root, pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
   takes <- vapply(files, function(f) {
@@ -1173,7 +1173,12 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     grepl("read_job_data(.cfg, dataset = DATASET", text, fixed = TRUE) &&
       !grepl("one_row_per_patient = (TRUE|is[.]null[(]START[)])", text)
   }, logical(1L))
-  sort(sub("[.]qmd$", "", basename(files[takes])), method = "radix")
+  stems <- sub("[.]qmd$", "", basename(files[takes]))
+  # A deprecated template is not one to recommend, so the catalog's `deprecated_by` rows are left out.
+  catalog <- template_catalog()
+  catalog <- catalog[!is.na(catalog$deprecated_by), , drop = FALSE]
+  deprecated <- paste0(catalog$prefix, ifelse(is.na(catalog$qualifier), "", paste0("-", catalog$qualifier)))
+  sort(setdiff(stems, deprecated), method = "radix")
 }
 
 .such_as <- function(x) {

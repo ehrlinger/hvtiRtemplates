@@ -9,7 +9,7 @@ ref per package, so when the two disagree the dependency install fails before
 any test runs, with an error that does not name the cause. This check runs
 without installing anything and names it.
 
-It also checks the tag in nb-boostmtree's install line, the third copy.
+It also checks the tag in each nb-boostmtree template's install line, the further copies.
 
 Usage: python3 dev/check-boostmtree-pin.py [path/to/ggBoostedTrees/DESCRIPTION]
 With no argument it reads ggBoostedTrees' DESCRIPTION from GitHub `main`.
@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 GGBT_URL = "https://raw.githubusercontent.com/ehrlinger/ggBoostedTrees/main/DESCRIPTION"
-TEMPLATE = ROOT / "inst" / "templates" / "30_analyses" / "nb-boostmtree.qmd"
+TEMPLATES = sorted((ROOT / "inst" / "templates" / "30_analyses").glob("nb-boostmtree*.qmd"))
 PIN = re.compile(r"boostmtree=ehrlinger/boostmtree_src/boostmtree@([^\s,]+)")
 
 
@@ -50,7 +50,6 @@ def main():
             sys.exit(f"check-boostmtree-pin: could not read {GGBT_URL}: {err}. "
                      f"Pass a local copy of ggBoostedTrees' DESCRIPTION as the argument.")
     theirs = pin_of(ggbt_text, "ggBoostedTrees")
-    hint = re.findall(r'ref = \\"([^"\\]+)\\"', TEMPLATE.read_text(encoding="utf-8"))
 
     problems = []
     if ours != theirs:
@@ -58,13 +57,15 @@ def main():
             f"DESCRIPTION pins boostmtree @{ours} but ggBoostedTrees pins @{theirs}. pak refuses two refs for one "
             f"package, so the dependency install fails. Set both to the same tag."
         )
-    if hint != [ours]:
-        problems.append(
-            f"nb-boostmtree.qmd's install line names {hint or 'no tag'}, not the DESCRIPTION pin @{ours}."
-        )
+    if not TEMPLATES:
+        problems.append("no nb-boostmtree*.qmd template found in inst/templates/30_analyses/: nothing to check.")
+    for template in TEMPLATES:
+        hint = re.findall(r'ref = \\"([^"\\]+)\\"', template.read_text(encoding="utf-8"))
+        if hint != [ours]:
+            problems.append(f"{template.name}'s install line names {hint or 'no tag'}, not the DESCRIPTION pin @{ours}.")
     if problems:
         sys.exit("check-boostmtree-pin:\n  " + "\n  ".join(problems))
-    print(f"boostmtree pin @{ours}: DESCRIPTION, ggBoostedTrees and nb-boostmtree's install line agree.")
+    print(f"boostmtree pin @{ours}: DESCRIPTION, ggBoostedTrees and the nb-boostmtree templates' install lines agree.")
 
 
 if __name__ == "__main__":

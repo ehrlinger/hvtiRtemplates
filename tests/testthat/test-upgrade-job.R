@@ -451,7 +451,8 @@ test_that("upgrade_job() installs the study's provenance hooks", {
 # A study job that reports through a hand-added stopgap, `.bm_progress()`, defined in the job. The template now
 # reports through the job's own `get(".job")$progress()`, and an upgrade must leave exactly that one reporter.
 nb_stopgap_job <- function(root, helper_in) {
-  job <- add_job("nb", subject = "lvef", type = "boost", root = root, qualifier = "boostmtree")
+  job <- withCallingHandlers(add_job("nb", subject = "lvef", type = "boost", root = root, qualifier = "boostmtree"),
+                             hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
   lines <- readLines(job)
   fit <- grep('progress = get(".job")$progress("iteration")', lines, fixed = TRUE)
   eff <- grep('progress = get(".job")$progress("prediction")', lines, fixed = TRUE)
@@ -473,7 +474,8 @@ test_that("upgrading a job with a hand-added progress stopgap leaves the templat
     root <- migration_study_fixture()
     job <- nb_stopgap_job(root, helper_in)
     stopifnot(any(grepl(".bm_progress", readLines(job), fixed = TRUE)))
-    upgraded <- readLines(upgrade_job(job))
+    upgraded <- readLines(withCallingHandlers(upgrade_job(job),
+                                              hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning")))
     code <- upgraded[!grepl("^\\s*#", upgraded)]
     # No stopgap runs: the helper and both calls to it are gone from the code.
     expect_false(any(grepl(".bm_progress", code, fixed = TRUE)), info = helper_in)
@@ -609,9 +611,9 @@ test_that("a job whose template had no comment there keeps the current template'
 
 test_that("template prose reworded since the old job is never read as its description", {
   # Two template versions whose introductions differ, as after a template edit.
-  old <- readLines(template_path("nb", "boostmtree"))
+  old <- readLines(template_path("nb", "boostmtree_fit"))
   new <- old
-  k <- grep("^An `nb-boostmtree` job fits", new)
+  k <- grep("^An `nb-boostmtree_fit` job fits", new)
   new[[k]] <- sub("fits boosted", "fits and validates boosted", new[[k]], fixed = TRUE)
   u <- .upgrade_lines(old, new)
   expect_identical(u$description$status, "not found")
