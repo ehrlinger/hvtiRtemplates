@@ -261,22 +261,31 @@ bystander <- function(cmd = "exec sleep 60") {
 wait_for_marker <- function(marker, b, timeout = 60) {
   # A process killed by a signal and not yet reaped still reads as running; only its status says it died.
   live <- function() alive(b$h) && !identical(tryCatch(ps::ps_status(b$h), error = function(e) NA), "zombie")
-  deadline <- Sys.time() + timeout
-  while (!length(ps::ps_find_tree(marker)) && live() && Sys.time() < deadline) Sys.sleep(0.1)
+  # ps_is_running() reads FALSE when /proc/<pid>/stat cannot be parsed, which can happen for an instant while the
+  # bystander execs from sh into R, so the wait ends early only after a second of consecutive not-running reads.
+  # Ending on the first one gave up on a bystander that carried its marker throughout (#587).
+  start <- Sys.time()
+  deadline <- start + timeout
+  gone <- 0L
+  while (!length(ps::ps_find_tree(marker)) && gone < 10L && Sys.time() < deadline) {
+    gone <- if (live()) 0L else gone + 1L
+    Sys.sleep(0.1)
+  }
   if (length(ps::ps_find_tree(marker))) return(invisible(TRUE))
+  waited <- as.numeric(difftime(Sys.time(), start, units = "secs"))
   out <- file.path(b$dir, "out")
   said <- if (file.exists(out)) paste(utils::tail(readLines(out, warn = FALSE), 20), collapse = "\n") else ""
   state <- tryCatch(ps::ps_status(b$h), error = function(e) "gone")
   cmd <- tryCatch(paste(ps::ps_cmdline(b$h), collapse = " "), error = function(e) "unreadable")
   kids <- tryCatch(vapply(ps::ps_children(b$h, recursive = TRUE), function(k) paste(ps::ps_cmdline(k), collapse = " "), ""),
                    error = function(e) character())
-  # ps_find_tree() skips a process that started before the time the marker encodes, so a process that carries the
-  # marker can still be missed (#587). Report both halves: whether the marker is in its environment, and its start
-  # time against the marker's.
+  # Whether the marker is in its environment, and its start time against the marker's: the evidence that ruled out
+  # a missing marker and ps's time filter for #587 (ps 1.9.3 accepts the time but compares it on neither Linux nor
+  # macOS).
   env <- tryCatch(unclass(ps::ps_environ(b$h))[marker], error = function(e) "unreadable")
   after <- as.numeric(sub("^.*_", "", marker))
   started <- tryCatch(as.numeric(ps::ps_create_time(b$h)), error = function(e) NA_real_)
-  stop("the bystander's marker never appeared within ", timeout, " seconds; the bystander ",
+  stop("the bystander's marker never appeared in ", sprintf("%.1f", waited), " of ", timeout, " seconds; the bystander ",
        if (live()) "is still running" else "had exited", " (status ", state, ", running `", cmd, "`",
        if (length(kids)) paste0(", children: ", paste0("`", kids, "`", collapse = ", ")), ")",
        if (nzchar(said)) paste0(", after printing:\n", said) else ", having printed nothing",
