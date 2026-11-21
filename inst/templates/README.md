@@ -47,7 +47,9 @@ refuses to overwrite an existing job.
 | `30_analyses/vt-explain.qmd` | the virtual-twins contrast by arm, eligibility rule and stratum, standardized betas and who might benefit (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/rhf-fit.qmd` | random hazard forest on counting-process rows with time-varying predictors: the rows checked, tree size tuned, forest grown (in flight) | `30_analyses/` or `analyses/` |
 | `30_analyses/rhf-explain.qmd` | AUC over follow-up, hazard curves and VarPro importance over time for an `rhf` forest (in flight) | `30_analyses/` or `analyses/` |
-| `30_analyses/nb-boostmtree.qmd` | boosted multivariate trees for a response measured at each visit | `30_analyses/` or `analyses/` |
+| `30_analyses/nb-boostmtree_fit.qmd` | boosted multivariate trees for a response measured at each visit: the fit, with shadow covariates and optional refits, its error path and plateau, saved for the explain job | `30_analyses/` or `analyses/` |
+| `30_analyses/nb-boostmtree_explain.qmd` | importance pooled over repeated runs against shadow covariates, partial effects and trajectories for an `nb-boostmtree_fit` fit; never fits | `30_analyses/` or `analyses/` |
+| `30_analyses/nb-boostmtree.qmd` | deprecated in favor of `nb-boostmtree_fit` and `nb-boostmtree_explain`; removed in the release after | `30_analyses/` or `analyses/` |
 | `50_documents/ar.qmd` | analysis report: one research question answered from finished jobs, as numbered items with Methods, Results and Interpretation for researchers to choose from (in flight) | `50_documents/` or `documents/` |
 
 `dc-eda` and `dc-trends` were `dp-eda` and `dp-trends` until 2026-10-10, and
@@ -108,7 +110,7 @@ each of them, or when one cohort is scored through a single model fitted on anot
 sets the deaths each group had against the deaths each model expects for it, and tests them, the one-sample
 log-rank, for a model the author confirms in `INDEPENDENT` was fitted on other patients. `hs-score` is for an `hm` model fitted on start/stop segments, which `hs-setup` refuses:
 it scores each segment at its own start, as the SAS jobs for a time-varying model do. `nb-boostmtree` is qualified from the start, because `nb` will also hold a BoostMLR job,
-`nb-boostmlr`, which is still to come.
+`nb-boostmlr`, which is still to come. The stage goes after the package, `nb-boostmtree_fit` and `nb-boostmtree_explain`, because the qualifier already names the package; `-` cannot appear in a qualifier, so the stage is joined by `_`.
 `lp` is qualified from its first template, `lp-mirror`, so a later `lp` shape, such as calibration, arrives as a
 qualifier of its own. The other prefixes here remain unqualified. A
 prefix is wholly qualified or wholly unqualified, never half-decomposed.
@@ -416,7 +418,9 @@ as on a Mac without XQuartz.
 | lg | `lg-<covariate>`, one for each covariate in `VARIABLES`, such as `lg-age` |
 | lp-mirror | `lp-mirror-unmatched`, `lp-mirror-weighted`, and `lp-mirror-matched` when `MATCH` is set |
 | bc, bh, bl, br | `<prefix>-frequencies` |
-| nb-boostmtree | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>-page-<NN>`, `-traces` |
+| nb-boostmtree_fit | `nb-boostmtree_fit-error`, `-path`, `-calibration` |
+| nb-boostmtree_explain | `nb-boostmtree_explain-importance`, `-effects-<kind>-page-<NN>`, `-traces` |
+| nb-boostmtree (deprecated) | `nb-boostmtree-error`, `-path`, `-calibration`, `-importance`, `-effects-<kind>-page-<NN>`, `-traces` |
 | rfc-, rfr-, rfs-explain | `<template>-importance`, `-dependence-marginal-page-<NN>`, `-dependence-partial-page-<NN>`, and with `BANDS_B` above 0 `-importance-intervals` and `-dependence-partial-bands-page-<NN>` |
 | rfc-fit | `rfc-fit-diagnostics-error`, `-roc`; `rfc-fit-learning-stability`, `-error` |
 | rfr-fit | `rfr-fit-diagnostics-error`, `-predicted`; `rfr-fit-learning-stability`, `-error` |
@@ -604,7 +608,7 @@ change. Fix everything listed and run the job again.
 
 `guard_memory()` names the Workbench profile that would hold the fit and, for a fit that runs
 on several cores, the largest core count that fits the session you are in. Its estimate for
-`nb-boostmtree` is set so that it refuses the two fits measured being killed, COMMENCE in a
+`nb-boostmtree_fit` (and the deprecated `nb-boostmtree`) is set so that it refuses the two fits measured being killed, COMMENCE in a
 Default session and an ordinal fit in a Medium one. It is not verified between them or above
 them: nothing shows, for instance, that a Small session cannot hold COMMENCE, so the profile it
 names may be larger than the fit needs, and a fit it passes can still fail. Its coefficients are

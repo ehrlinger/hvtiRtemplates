@@ -1,8 +1,9 @@
-# Boosted multivariate trees family: nb-boostmtree, for a response measured
+# Boosted multivariate trees family: nb-boostmtree_fit and nb-boostmtree_explain, for a response measured
 # repeatedly over follow-up. The cohort has one row per patient, so this
 # family's prepare() writes a second dataset, an echocardiography series of
 # one row per visit, and registers it as "echo". The job reads it by DATASET,
 # keyed on patient and visit time.
+# nb-boostmtree stays beside them while it is deprecated: its row still ships and gallery_missing() wants a job for every shipped row. It goes when its file does.
 #
 # 300 of the cohort's patients followed a year or more have two to six
 # echoes each, at irregular times inside their own follow-up (to 15 years),
@@ -67,6 +68,24 @@ gallery_family(
       # The template's M is 500; 200 keeps the gallery fast, and the error
       # path says whether it was enough.
       "^M  <- 500$" = "M  <- 200"
+    )),
+    "nb-boostmtree_fit" = list(subject = "lvef", type = "boost", prepare = nb_register_echo, choices = list(
+      "^<!-- EDIT: name the job this replaces" = paste0(
+        "Gallery job on the synthetic echo series: LV ejection fraction over follow-up (iv_echo), six baseline predictors,",
+        " with five shadow copies of each.\n\n<!--"
+      ),
+      "^DATASET <- \"built\"$" = "DATASET <- \"echo\"",
+      "^ID <- \"ccfid\"$" = "ID <- \"patient_id\"",
+      "^RESPONSE <- " = "RESPONSE <- \"lvef\"",
+      # The template's M is 500; 200 keeps the gallery fast, and the error
+      # path and plateau say whether it was enough.
+      "^M  <- 500$" = "M  <- 200"
+    )),
+    # Rendered after the fit, whose nb-boostmtree_fit.rds it reads in the same set.
+    "nb-boostmtree_explain" = list(subject = "lvef", type = "boost", choices = list(
+      "^<!-- EDIT: say which nb-boostmtree_fit job" = paste0(
+        "Gallery job: explains the nb-boostmtree_fit gallery job's fit of LV ejection fraction.\n\n<!--"
+      )
     ))
   )
 )
