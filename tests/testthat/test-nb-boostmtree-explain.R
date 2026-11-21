@@ -217,6 +217,77 @@ test_that("raising N_VIMP reuses the cached runs and adds only the new ones", {
   expect_identical(unique(env$importance_table$n_runs), 3L)
 })
 
+test_that("the importance guards are reached only when runs are still to compute", {
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  nb_fit_in(root)
+  labels <- c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance")
+  long <- list()
+  memory <- list()
+  guarded <- function(env, choices) {
+    long <<- list()
+    memory <<- list()
+    testthat::with_mocked_bindings(
+      utils::capture.output(nb_explain_run(labels, env, choices)),
+      guard_long_fit = function(name, ...) long[[length(long) + 1L]] <<- name,
+      guard_memory = function(need, ...) memory[[length(memory) + 1L]] <<- need
+    )
+  }
+  choices <- nb_explain_choices(N_VIMP = 2)
+  guarded(nb_env(root), choices)
+  # Nothing is cached yet, so every run is to compute and the guard is asked about all of them.
+  expect_identical(long, list(sprintf("nb-boostmtree_explain-vimp-fit0-run%d", 1:2)))
+  expect_length(memory, 1L)
+  expect_gt(memory[[1L]], 0)
+  # Cached now: the long-fit guard is not called, and the memory guard is asked for nothing.
+  guarded(nb_env(root), choices)
+  expect_length(long, 0L)
+  expect_identical(memory, list(0))
+  # Raising N_VIMP guards only the new run.
+  guarded(nb_env(root), nb_explain_choices(N_VIMP = 3))
+  expect_identical(long, list("nb-boostmtree_explain-vimp-fit0-run3"))
+})
+
+test_that("a worker that returns nothing stops the render, naming the run and CORES", {
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  nb_fit_in(root)
+  env <- nb_env(root)
+  env$cache_fit <- function(...) NULL
+  expect_error(utils::capture.output(nb_explain_run(c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance"), env,
+                                                    nb_explain_choices(N_VIMP = 1))),
+               "fit0.run1 returned nothing.*Lower CORES")
+})
+
+test_that("vimp runs are seeded SEED + j + 1000 * i, so no two fits share a permutation", {
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  env <- nb_explain_in(root, fit_choices = nb_choices(N_REFITS = 1), choices = nb_explain_choices(N_VIMP = 2, SEED = 11))
+  plan <- env$.runs_plan
+  seed <- function(name) plan$seed[plan$name == name]
+  expect_identical(seed("fit0.run1"), 12)
+  expect_identical(seed("fit0.run2"), 13)
+  expect_false(seed("fit0.run1") == seed("fit1.run1"))
+  expect_identical(seed("fit1.run1"), 1012)
+  expect_length(unique(plan$seed), nrow(plan))
+})
+
+test_that("N_VIMP must be a whole number of at least 1", {
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  nb_fit_in(root)
+  for (bad in list(0, 2.5, NA_real_, c(2, 3), "3")) {
+    env <- nb_env(root)
+    expect_error(utils::capture.output(nb_explain_run(c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance"), env,
+                                                      nb_explain_choices(N_VIMP = bad))),
+                 "N_VIMP must be a whole number of at least 1", info = format(bad))
+  }
+})
+
 test_that("with K_SHADOW = 0 explain runs importance once, draws one run, and never pools", {
   nb_skip_unless_stack()
   local_child_chunks()

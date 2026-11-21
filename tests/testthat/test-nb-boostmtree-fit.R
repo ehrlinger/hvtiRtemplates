@@ -546,7 +546,8 @@ test_that("a predictor that varies within a patient stops before any guard or fi
   data$hr <- 60 + seq_len(nrow(data)) %% 7
   root <- nb_study(data)
   env <- nb_env(root)
-  # Reaching the cache check, a guard or a fit would fail here, so the constancy error must come first.
+  # cache_would_fit() is real and would answer. The guards, boostmtree and cache_fit() are stubbed to stop, so
+  # reaching any of them fails the test and the constancy error must come first.
   env$boostmtree <- function(...) stop("fitted")
   env$cache_fit <- function(...) stop("cache_fit reached")
   testthat::with_mocked_bindings(
@@ -656,4 +657,16 @@ test_that("nb-boostmtree_fit scaffolds and renders end to end, and the page hold
   expect_true("fit" %in% vapply(prog$done, `[[`, "", "stage"))
   expect_true(any(grepl("iteration 5/5", log, fixed = TRUE)))
   expect_false(grepl("iteration [0-9]+/[0-9]+", page))
+})
+
+test_that("a failed render fails nb_render() with the error the job raised (#493)", {
+  skip_on_cran()
+  nb_skip_unless_stack()
+  testthat::skip_if_not_installed("quarto")
+  testthat::skip_if_not(quarto::quarto_available(), "Quarto CLI is required for rendering")
+  root <- nb_study()
+  job <- add_job("nb", subject = "lvef", type = "boost", root = root, qualifier = "boostmtree_fit")
+  # The failure is forced in the scaffolded job, never in the template.
+  nb_set_choice(job, "^N_REFITS <- ", "N_REFITS <- 0; stop(\"boom 493\")")
+  expect_failure(nb_render(job), "boom 493")
 })

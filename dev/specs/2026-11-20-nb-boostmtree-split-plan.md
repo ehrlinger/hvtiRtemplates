@@ -28,7 +28,7 @@ Two further decisions the spec left open: the #580 run-time table records the **
 - Bundle: `list(fit = <SEED fit>, refits = <list of N_REFITS fits>, versions = c(boostmtree =, randomForestSRC =, ggBoostedTrees =), k_shadow = K_SHADOW, seed = SEED)`.
 - Lineage on the **outer** list via `hvtiRtemplates:::.attach_handoff_lineage()`; none on `fit`. `analysis` gains `k_shadow` and `n_refits`.
 - `_fit` study choices: `K_SHADOW <- 5`, `N_REFITS <- 0`. `_explain` study choices: `WHERE <- NULL`, `ID <- NULL`, `KEY <- NULL`, `N_VIMP <- 10`, `CORES`, `SEED <- 2026`, `EFFECT_VARIABLES <- NULL`, `N_TRACES <- 100`, `REFIT <- FALSE`, `SAVE_FIGURES <- TRUE`, `FIGURES <- NULL`.
-- Refit `i` is grown under `SEED + i`; vimp run `j` under `SEED + j` (explain's SEED). Pooled run names `fit<i>.run<j>`, `fit0` the SEED fit.
+- Refit `i` is grown under `SEED + i`; vimp run `j` on fit `i` under `SEED + j + 1000 * i` (explain's SEED; fit0 keeps `SEED + j`) (changed 2026-11-20 after the final review: shared seeds gave every fit the same permutations). Pooled run names `fit<i>.run<j>`, `fit0` the SEED fit.
 - Plateau: iterations whose cross-validated `l2` error is within 1% of the minimum; **display only**. Prediction stays at `m.opt`. No selection rule.
 - No detected / not-detected rule anywhere: the pool's `share` is reported, the reader judges.
 - `K_SHADOW = 0` in the fit: `_explain` runs vimp once, draws the single-run figure, never calls the pool.

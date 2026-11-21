@@ -238,11 +238,11 @@ MTRY <- NULL
 # a large study. The fit refuses to start, in the first minutes, when this session's
 # memory cannot hold it at this CORES, and says which Workbench profile to start;
 # the measurements behind that estimate are in R/fit-memory.R and ?guard_memory.
-# Run time at M = 500, NU = 0.05, K_SHADOW = 5, continuous, with the peak memory of the fit and its workers
-# together, by patients and cores (2026-11-20 retime, boostmtree 2.0.13, randomForestSRC 3.10.0,
-# simulated data with 4 predictors and their 20 shadows): about 0.5 h and 2 GiB at 1,000 patients on 4 cores,
-# 0.5 h and 3 GiB at 1,000 on 8, 1 h and 7 GiB at 2,000 on 8, and 7 h and 9 GiB at 4,000 on 4.
-# Timed at M = 10 and multiplied by 50; hours scale with M (M = 20 took 2.00 times as long).
+# Run times at M = 500, NU = 0.05, K_SHADOW = 5, continuous, estimated from runs at M = 10 times 50 (hours scale with
+# M: M = 20 took 2.00 times as long); the GiB are the peaks of the fit and its workers together, measured at M = 10
+# (2026-11-20 retime, boostmtree 2.0.13, randomForestSRC 3.10.0, simulated data, 4 predictors and their 20 shadows):
+# 0.5 h and 2 GiB at 1,000 patients on 4 cores, 0.5 h and 3 GiB at 1,000 on 8, 1 h and 7 GiB at 2,000 on 8, and
+# 7 h and 9 GiB at 4,000 on 4.
 # CORES should never exceed the session's CPUs; Windows cannot fork.
 # Not part of the cache key: the fit is identical on any number of cores.
 CORES <- if (.Platform$OS.type == "windows") 1L else 4L
@@ -265,8 +265,8 @@ K_SHADOW <- 5
 
 # EDIT: extra fits, each grown like the fit above under seed SEED + i and cached
 # on its own. Each costs one full fit. Refitting is how the job catches an
-# importance verdict that moves between seeds: in a 50-seed simulation a
-# borderline effect cleared the noise band in 14 to 46% of runs, and a refit moved
+# importance verdict that moves between seeds: in a 50-seed simulation
+# some predictors cleared the noise band in 14 to 46% of runs, and a refit moved
 # it as much as a rerun of importance did. 0 fits once.
 N_REFITS <- 0
 
@@ -498,7 +498,7 @@ knitr::kable(data.frame(
 .err <- if (is.matrix(fit$err.rate)) list(fit$err.rate) else fit$err.rate
 # Each component is named by the level that defines it, which boostmtree keeps
 # in fit$q.set: a threshold for an ordinal fit, a class compared against the
-# reference class for a binary or nominal one. the explain job selects a
+# reference class for a binary or nominal one. The explain job selects a
 # component by the same label ("response" for a continuous fit).
 .labels <- if (identical(fit$family, "continuous")) "response" else as.character(fit$q.set)
 .reference <- setdiff(as.character(fit$y.levels), .labels)

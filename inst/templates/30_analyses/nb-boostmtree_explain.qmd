@@ -131,6 +131,9 @@ KEY <- NULL
 # costs about 0.17 of a fit at K_SHADOW = 5 (measured at 100 patients). Each is
 # cached on its own, so raising N_VIMP pays only for the new runs. With no shadows
 # in the fit there is no band to judge runs against, and importance runs once.
+# With EFFECT_VARIABLES <- NULL, raising N_VIMP can change which six variables lead,
+# and the partial-effects cache then stops the render until REFIT <- TRUE; the
+# importance runs themselves are reused.
 N_VIMP <- 10
 
 # EDIT: cores for the importance runs, one run per core. Each core is a forked copy
@@ -138,8 +141,9 @@ N_VIMP <- 10
 # cache key: cache_fit() seeds every run, so results do not depend on it.
 CORES <- if (.Platform$OS.type == "windows") 1L else 4L
 
-# EDIT: seeds the importance runs, run j on every fit under SEED + j, and the
-# sample of patients the trajectory plot draws. Part of every cache key.
+# EDIT: seeds the importance runs, run j on fit i under SEED + j + 1000 * i (the SEED
+# fit is fit 0), so no two runs share a permutation, and the sample of patients the
+# trajectory plot draws. Part of every cache key.
 SEED <- 2026
 
 # EDIT: the variables to draw partial effects for, or NULL for the six with the
@@ -254,8 +258,11 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 #| fig-height: 10.5
 # vimp.boostmtree() permutes each predictor at random, so one run's verdict on a
 # predictor near the noise band can land on either side of it. Each fit gets
-# N_VIMP runs, run j seeded SEED + j and cached on its own, and the runs are
+# N_VIMP runs, run j on fit i seeded SEED + j + 1000 * i and cached on its own, and the runs are
 # pooled: each is judged against its own band, never a pooled one.
+if (!is.numeric(N_VIMP) || length(N_VIMP) != 1L || is.na(N_VIMP) || N_VIMP < 1 || N_VIMP != round(N_VIMP)) {
+  stop("N_VIMP must be a whole number of at least 1, the importance runs on each fit.", call. = FALSE)
+}
 .fits <- c(list(fit0 = fit), stats::setNames(refits, sprintf("fit%d", seq_along(refits))))
 # Without shadows there is no band to pool against, so importance runs once, on the SEED fit.
 if (.bundle$k_shadow == 0) .fits <- .fits["fit0"]
@@ -263,19 +270,46 @@ if (.bundle$k_shadow == 0) .fits <- .fits["fit0"]
 .runs_plan <- data.frame(fit = rep(names(.fits), each = .n_vimp), run = rep(seq_len(.n_vimp), times = length(.fits)),
                          stringsAsFactors = FALSE)
 .runs_plan$name <- paste0(.runs_plan$fit, ".run", .runs_plan$run)
+# Run j on fit i is seeded SEED + j + 1000 * i, so no two runs share a seed: vimp.boostmtree() permutes with
+# sample(), and one seed across the fits would give every fit the same permutations. fit0 keeps SEED + j.
+.runs_plan$seed <- SEED + .runs_plan$run + 1000L * (match(.runs_plan$fit, names(.fits)) - 1L)
+.runs_plan$cache <- sprintf("nb-boostmtree_explain-vimp-%s-run%d", .runs_plan$fit, .runs_plan$run)
 .vimp_code <- quote(vimp.boostmtree(f))
+# Refuses here, before any run, importance this session's memory cannot hold, and a run that will be computed
+# from the Render button or a terminal, where it dies with the session. Whether cache_fit() will run is its
+# own decision, asked the way it makes it. Each worker holds a fitted model, so the estimate is the fit's,
+# which is conservative for importance and has not been measured for it.
+.need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(fit$n, sum(fit$ni), fit$family, k, fit$M)
+.computing <- vapply(seq_len(nrow(.runs_plan)), function(i) {
+  hvtiRutilities::cache_would_fit(.runs_plan$cache[[i]], .vimp_code, seed = .runs_plan$seed[[i]], dir = CACHE_DIR,
+                                  refit = REFIT, packages = "randomForestSRC")
+}, logical(1L))
+if (any(.computing)) {
+  hvtiRtemplates::guard_long_fit(.runs_plan$cache[.computing], dir = CACHE_DIR,
+                                 why = "repeated boostmtree importance takes hours at study size", refit = REFIT)
+}
+hvtiRtemplates::guard_memory(if (any(.computing)) .need(CORES) else 0,
+                             sprintf("these importance runs (%s patients, %s visits, %s)",
+                                     format(fit$n, big.mark = ","), format(sum(fit$ni), big.mark = ","), fit$family),
+                             cores = CORES, cores_fit = .need)
 .vimp_run <- function(i) {
   f <- .fits[[.runs_plan$fit[[i]]]]
   # One randomForestSRC thread per forked worker, so CORES runs use CORES threads.
   if (CORES > 1L) withr::local_options(rf.cores = 1L)
   # randomForestSRC runs under boostmtree and neither call names it, so it is keyed here.
-  cache_fit(sprintf("nb-boostmtree_explain-vimp-%s-run%d", .runs_plan$fit[[i]], .runs_plan$run[[i]]), .vimp_code,
-            seed = SEED + .runs_plan$run[[i]], dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
+  cache_fit(.runs_plan$cache[[i]], .vimp_code, seed = .runs_plan$seed[[i]], dir = CACHE_DIR, refit = REFIT,
+            packages = "randomForestSRC")
 }
 .runs <- if (CORES > 1L) {
   parallel::mclapply(seq_len(nrow(.runs_plan)), .vimp_run, mc.cores = CORES)
 } else {
   lapply(seq_len(nrow(.runs_plan)), .vimp_run)
+}
+# A worker that was killed, out of memory for one, returns NULL rather than an error.
+.lost <- which(vapply(.runs, is.null, logical(1L)))
+if (length(.lost)) {
+  stop("The importance run ", .runs_plan$name[[.lost[[1L]]]], " returned nothing: its worker was probably killed, ",
+       "most often for want of memory. Lower CORES and render again; the runs already cached are kept.", call. = FALSE)
 }
 # mclapply() returns an error as a value; raise the first one as it was, its class
 # included, so a stale cache still names what changed.
@@ -305,7 +339,7 @@ if (is.null(.pool)) {
                     "runs in which its importance exceeded its shadows (that run's noise band), their share, the",
                     "median importance and the 25th and 75th percentiles of the margin over the band. The share says",
                     "how stable a single run's verdict is, not whether the effect is real. In a 50-seed study, some",
-                    "covariates were detected in 14%% to 46%% of runs.\n\n"),
+                    "covariates cleared their run's noise band in 14%% to 46%% of runs.\n\n"),
               .n_vimp, if (length(.fits) == 1L) "1 fit" else sprintf("each of %d fits", length(.fits)),
               nrow(.runs_plan)))
   .fence <- strrep("`", 3)

@@ -278,6 +278,7 @@ nb_render <- function(job) {
     message <- tryCatch(conditionMessage(result), error = function(x) "<the error message could not be formatted>")
     testthat::fail(paste(c(paste("render_job() failed:", message), "--- stderr on the condition chain ---", chain,
                            "--- console, last 80 lines ---", utils::tail(printed, 80L)), collapse = "\n"))
+    return(invisible(printed))
   }
   printed
 }

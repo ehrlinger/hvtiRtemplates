@@ -267,7 +267,7 @@ test_that("every template that reads its own data offers the join and records th
   expect_identical(readers, 31L)
   # The refusal names the rest, read from the same templates.
   expect_identical(hvtiRtemplates:::.long_join_templates(normalizePath(template_root)),
-                   c("dc-eda", "dc-general", "dc-tables", "dc-trends", "mm", "nb-boostmtree", "nb-boostmtree_fit", "rhf-fit"))
+                   c("dc-eda", "dc-general", "dc-tables", "dc-trends", "mm", "nb-boostmtree_fit", "rhf-fit"))
 })
 
 test_that("descriptive templates join an ancillary dataset, long and one row per patient", {
