@@ -474,7 +474,8 @@ test_that("upgrading a job with a hand-added progress stopgap leaves the templat
     root <- migration_study_fixture()
     job <- nb_stopgap_job(root, helper_in)
     stopifnot(any(grepl(".bm_progress", readLines(job), fixed = TRUE)))
-    upgraded <- readLines(withCallingHandlers(upgrade_job(job), hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning")))
+    upgraded <- readLines(withCallingHandlers(upgrade_job(job),
+                                              hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning")))
     code <- upgraded[!grepl("^\\s*#", upgraded)]
     # No stopgap runs: the helper and both calls to it are gone from the code.
     expect_false(any(grepl(".bm_progress", code, fixed = TRUE)), info = helper_in)

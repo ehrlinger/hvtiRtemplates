@@ -78,8 +78,9 @@ choices; choices the interpreter does not recognize remain for review.
 Legacy EDA reports migrate into \code{dc-eda} with
 \code{SECTIONS <- c("continuous", "percent", "count")}, the pages they
 drew. Naming a deprecated template warns and writes the job from its
-replacement; the warning carries the catalog's note, which names any other
-template the old one's output moved to. Naming a template by its name before a rename, such as
+replacement; the warning carries the catalog's note, which names any
+other template the old one's output moved to. Naming a template by its
+name before a rename, such as
 \code{dp-trends}, is an error naming the new one, \code{dc-trends}; a
 legacy source whose own file name carries the old name,
 such as \code{dp.trends.sas}, migrates into the renamed template without

@@ -12,8 +12,9 @@
 #' Legacy EDA reports migrate into `dc-eda` with
 #' `SECTIONS <- c("continuous", "percent", "count")`, the pages they
 #' drew. Naming a deprecated template warns and writes the job from its
-#' replacement; the warning carries the catalog's note, which names any other
-#' template the old one's output moved to. Naming a template by its name before a rename, such as
+#' replacement; the warning carries the catalog's note, which names any
+#' other template the old one's output moved to. Naming a template by its
+#' name before a rename, such as
 #' `dp-trends`, is an error naming the new one, `dc-trends`; a
 #' legacy source whose own file name carries the old name,
 #' such as `dp.trends.sas`, migrates into the renamed template without
