@@ -10,3 +10,5 @@
   shadows on boostmtree 2.0.13 (#580). Moving a job from `nb-boostmtree` to `nb-boostmtree_fit` refits, because the
   cache name and the shadow covariates differ.
 * The nb end-to-end render tests print Quarto's own error output when a render fails (#493).
+* The `Suggests:` floor on ggBoostedTrees is now 0.10.2, which the split templates need for `boost_shadow()` and pooled
+  importance; 0.9.1 promised a version the nb templates cannot run on.
