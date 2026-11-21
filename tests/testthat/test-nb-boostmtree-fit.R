@@ -610,3 +610,16 @@ test_that("the report provenance carries the versions and the shadow and refit c
   expect_true(any(grepl("versions = as.list(.versions)", tpl[prov:length(tpl)], fixed = TRUE)))
   expect_true(any(grepl("k_shadow = K_SHADOW, n_refits = N_REFITS", tpl[prov:length(tpl)], fixed = TRUE)))
 })
+
+test_that("rendering the deprecated job in the same set leaves the explain job's input intact", {
+  nb_skip_unless_stack()
+  root <- nb_study()
+  nb_fit_in(root)
+  bundle <- nb_bundle_path(root)
+  before <- list(md5 = unname(tools::md5sum(bundle)), mtime = file.mtime(bundle))
+  nb_fit_in(root, template = "nb.boostmtree")
+  expect_identical(list(md5 = unname(tools::md5sum(bundle)), mtime = file.mtime(bundle)), before)
+  expect_true(file.exists(file.path(nb_set_dir(root), "nb-boostmtree.rds")))
+  env <- nb_env(root)
+  expect_no_error(utils::capture.output(nb_explain_run(c("setup", "edit-study-choices", "fit"), env, nb_explain_choices())))
+})

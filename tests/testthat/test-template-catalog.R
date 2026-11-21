@@ -86,7 +86,9 @@ test_that("every function a shipped template's `uses` names appears in that temp
   missing <- character()
   for (i in seq_len(nrow(on_disk))) {
     qualifier <- if (is.na(on_disk$qualifier[i])) NULL else on_disk$qualifier[i]
-    text <- paste(readLines(template_path(on_disk$prefix[i], qualifier = qualifier)), collapse = "\n")
+    path <- withCallingHandlers(template_path(on_disk$prefix[i], qualifier = qualifier),
+                                hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
+    text <- paste(readLines(path), collapse = "\n")
     for (fn in catalog$uses[[rows[i]]]) {
       if (!grepl(paste0("\\b", sub("^.*::", "", fn), "\\b"), text, perl = TRUE)) {
         missing <- c(missing, paste0(on_disk$name[i], ": ", fn))

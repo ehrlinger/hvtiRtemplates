@@ -925,7 +925,9 @@
         "ggBoostedTrees::gg_boost_vimp",
         "ggBoostedTrees::gg_boost_effect",
         "ggBoostedTrees::gg_boost_trajectory"
-      ]
+      ],
+      "deprecated_by": "nb-boostmtree_fit",
+      "deprecation_note": "Its fit moved to nb-boostmtree_fit, and its importance, partial effects and trajectories to nb-boostmtree_explain, which reads the fit nb-boostmtree_fit saves; scaffold both with add_job()."
     },
     {
       "prefix": "nb",

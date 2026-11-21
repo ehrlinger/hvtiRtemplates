@@ -110,7 +110,7 @@ row has no template on disk.
 | template | status | breadth | jobs | R exemplars | blocked on |
 |---|---|---|---|---|---|
 | `nb-boostmlr` | queued | — | — | — | — |
-| `nb-boostmtree` | shipped | 21 | 18 | 19 | — |
+| `nb-boostmtree` | shipped, deprecated for `nb-boostmtree_fit` | 21 | 18 | 19 | — |
 | `nb-boostmtree_explain` | shipped | — | — | — | — |
 | `nb-boostmtree_fit` | shipped | 21 | 18 | 19 | — |
 | `rfc-explain` | shipped | — | — | — | — |

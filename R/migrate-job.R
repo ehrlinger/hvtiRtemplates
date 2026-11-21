@@ -12,7 +12,8 @@
 #' Legacy EDA reports migrate into `dc-eda` with
 #' `SECTIONS <- c("continuous", "percent", "count")`, the pages they
 #' drew. Naming a deprecated template warns and writes the job from its
-#' replacement. Naming a template by its name before a rename, such as
+#' replacement; the warning carries the catalog's note, which names any other
+#' template the old one's output moved to. Naming a template by its name before a rename, such as
 #' `dp-trends`, is an error naming the new one, `dc-trends`; a
 #' legacy source whose own file name carries the old name,
 #' such as `dp.trends.sas`, migrates into the renamed template without
@@ -179,13 +180,15 @@ migrate_job <- function(path, subject, type, prefix = NULL, qualifier = NULL,
   tpl <- .infer_template(path, prefix, qualifier)
   prefix <- tpl$prefix
   qualifier <- tpl$qualifier
-  # A deprecated template's replacement draws the same output, so the job is
-  # written from the replacement rather than from a template about to go.
+  # A deprecated template's replacement may draw only part of its output:
+  # nb-boostmtree split into a fit job and an explain job, and the catalog's
+  # replacement is the fit. The job is written from that replacement, and the
+  # warning carries the catalog's deprecation note, which names the rest.
   deprecated <- .template_deprecation(prefix, qualifier)
   if (!is.null(deprecated)) {
     .warn_deprecated(paste0("migrate_job(): ", deprecated$name, " is deprecated in favor of ",
                             deprecated$deprecated_by, ", so this job is written from ",
-                            deprecated$deprecated_by, " instead."))
+                            deprecated$deprecated_by, " instead. ", deprecated$note))
     parts <- .split_template_name(deprecated$deprecated_by)
     prefix <- parts$prefix
     qualifier <- parts$qualifier
