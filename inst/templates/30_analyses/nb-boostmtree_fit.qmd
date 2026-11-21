@@ -198,11 +198,8 @@ PREDICTORS <- NULL
 # use (Best M, reported below). 0.05 is the reference; 0.01 suits small or
 # noisy data, and needs about five times the M. M is a ceiling: the fit stops
 # using iterations at Best M, but every one up to M is paid for. boostmtree's own
-# default of 200 is too low for clinical longitudinal data. One study of 1,391
-# patients (4,771 visits) at NU = 0.05 fitted M = 1000 and chose Best M = 751;
-# its cross-validated error at 500 was 0.3% above that best and at 250 1.1%, so
-# 500 was enough at half the time. The report says when the error was still
-# falling at M by enough to matter.
+# default of 200 is too low for clinical longitudinal data. The report says when
+# the error was still falling at M by enough to matter.
 M  <- 500
 NU <- 0.05
 
@@ -241,10 +238,11 @@ MTRY <- NULL
 # a large study. The fit refuses to start, in the first minutes, when this session's
 # memory cannot hold it at this CORES, and says which Workbench profile to start;
 # the measurements behind that estimate are in R/fit-memory.R and ?guard_memory.
-# Run time at M = 1000, by patients and cores (2026-10-19, boostmtree 2.0.4, ordinal):
-# about 7 h at 1,000 patients on 4 cores, 5 h at 1,000 on 8, 22 h at 2,000 on 8 and
-# 110 h at 4,000 on 4. On 2.0.8 (2026-10-21, continuous, 1,391 patients, M = 1000,
-# 8 cores) the fit took about 1 h. Hours scale with M.
+# Run time at M = 500, NU = 0.05, K_SHADOW = 5, continuous, with the peak memory of the fit and its workers
+# together, by patients and cores (2026-11-20 retime, boostmtree 2.0.13, randomForestSRC 3.10.0,
+# simulated data with 4 predictors and their 20 shadows): about 0.5 h and 2 GiB at 1,000 patients on 4 cores,
+# 0.5 h and 3 GiB at 1,000 on 8, 1 h and 7 GiB at 2,000 on 8, and 7 h and 9 GiB at 4,000 on 4.
+# Timed at M = 10 and multiplied by 50; hours scale with M (M = 20 took 2.00 times as long).
 # CORES should never exceed the session's CPUs; Windows cannot fork.
 # Not part of the cache key: the fit is identical on any number of cores.
 CORES <- if (.Platform$OS.type == "windows") 1L else 4L
@@ -553,8 +551,8 @@ Read the plateau, not Best M alone, when judging whether M was enough.
 # Two ways a fit looks finished and is not, said in the report, not left to the
 # figures. Best M in the last tenth of M with the error still falling: it fell
 # by more than 0.1% over that last tenth. Best M near M alone is not enough, as
-# the curve flattens long before it turns: in the study the M comment above
-# describes, M = 500 put Best M at 498 while the error fell 0.095% over its last
+# the curve flattens long before it turns: in one study fit at NU = 0.05,
+# M = 500 put Best M at 498 while the error fell 0.095% over its last
 # tenth and sat 0.3% above the best a longer fit found. The 0.1% is calibrated on
 # that one fit. lambda at boostmtree's ceiling at Best M: the penalty estimate
 # ran away, a sign of a flat trajectory or too many knots for the visit times.

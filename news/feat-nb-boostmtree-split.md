@@ -6,5 +6,6 @@
   how often each predictor cleared its run's noise band; it warns when boostmtree or randomForestSRC differ from the
   fit's. Both need boostmtree 2.0.13 and ggBoostedTrees 0.10.2. `nb-boostmtree` is deprecated and goes in the
   release after; `migrate_job()` writes `nb-boostmtree_fit` and its warning names `nb-boostmtree_explain`, and
-  `upgrade_job()` keeps an existing job on its own template.
+  `upgrade_job()` keeps an existing job on its own template. The fit's run-time comment now times `M = 500` with five
+  shadows on boostmtree 2.0.13 (#580).
 * The nb end-to-end render tests print Quarto's own error output when a render fails (#493).
