@@ -104,8 +104,9 @@ gallery_family(
     )),
     # No outcome: the nine predictors the rf fits grow on, with NYHA class entered as
     # the grade it is. Three refits keep the render short. The template's 1,000
-    # trees still leave one of the nine unexamined, which the default
-    # MAX_UNTESTED (0.1) refuses, so the gallery reports it instead of stopping.
+    # trees leave two of the nine unexamined (bmi and plvmassi in the 1.6.2
+    # build), more than the default MIN_UNTESTED (1) lets through, so the
+    # gallery reports them instead of stopping.
     "vp-dependence" = list(subject = "preop", type = "vp", choices = list(
       "^<!-- EDIT: say which variables this studies" = paste0(
         "Gallery job on the synthetic cohort: how the nine preoperative predictors the rf fits grow on ",
