@@ -235,3 +235,49 @@ nb_explain_in <- function(root, labels = c("setup", "edit-study-choices", "fit",
   utils::capture.output(nb_explain_run(labels, env, choices))
   env
 }
+
+# Rewrite the one line of `job` matching `from`.
+nb_set_choice <- function(job, from, to) {
+  txt <- readLines(job)
+  hit <- grep(from, txt)
+  stopifnot(length(hit) == 1L)
+  txt[hit] <- to
+  writeLines(txt, job)
+}
+
+# Render `job` and return what it printed. On failure, fail with Quarto's own
+# stderr (#493): the quarto package once lost it while formatting its error with
+# cli, so the console streams are captured here and the condition chain is read
+# too. Each render gets its own TMPDIR, so renders run in parallel share no
+# Quarto temporary files.
+nb_render <- function(job) {
+  withr::local_envvar(TMPDIR = withr::local_tempdir("nb-render-tmp-"))
+  out <- withr::local_tempfile(fileext = ".out")
+  err <- withr::local_tempfile(fileext = ".err")
+  con_out <- file(out, "w")
+  con_err <- file(err, "w")
+  sink(con_out)
+  sink(con_err, type = "message")
+  result <- tryCatch({
+    render_job(job, quiet = FALSE)
+    NULL
+  }, error = function(e) e, finally = {
+    sink(type = "message")
+    sink()
+    close(con_out)
+    close(con_err)
+  })
+  printed <- c(readLines(out, warn = FALSE), readLines(err, warn = FALSE))
+  if (!is.null(result)) {
+    chain <- character()
+    e <- result
+    while (!is.null(e)) {
+      if (is.character(e$stderr)) chain <- c(chain, e$stderr)
+      e <- e$parent
+    }
+    message <- tryCatch(conditionMessage(result), error = function(x) "<the error message could not be formatted>")
+    testthat::fail(paste(c(paste("render_job() failed:", message), "--- stderr on the condition chain ---", chain,
+                           "--- console, last 80 lines ---", utils::tail(printed, 80L)), collapse = "\n"))
+  }
+  printed
+}
