@@ -189,7 +189,8 @@ migrate_job <- function(path, subject, type, prefix = NULL, qualifier = NULL,
   if (!is.null(deprecated)) {
     .warn_deprecated(paste0("migrate_job(): ", deprecated$name, " is deprecated in favor of ",
                             deprecated$deprecated_by, ", so this job is written from ",
-                            deprecated$deprecated_by, " instead. ", deprecated$note))
+                            deprecated$deprecated_by, " instead.",
+                            if (length(deprecated$note) && !is.na(deprecated$note)) paste0(" ", deprecated$note)))
     parts <- .split_template_name(deprecated$deprecated_by)
     prefix <- parts$prefix
     qualifier <- parts$qualifier

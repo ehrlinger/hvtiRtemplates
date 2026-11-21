@@ -57,6 +57,8 @@ def main():
             f"DESCRIPTION pins boostmtree @{ours} but ggBoostedTrees pins @{theirs}. pak refuses two refs for one "
             f"package, so the dependency install fails. Set both to the same tag."
         )
+    if not TEMPLATES:
+        problems.append("no nb-boostmtree*.qmd template found in inst/templates/30_analyses/: nothing to check.")
     for template in TEMPLATES:
         hint = re.findall(r'ref = \\"([^"\\]+)\\"', template.read_text(encoding="utf-8"))
         if hint != [ours]:

@@ -518,7 +518,7 @@ knitr::kable(data.frame(
 # ran from 156 to 400. Prediction stays at Best M; the 1% is for display and
 # changes no fitted value. A rule that picks an iteration on the plateau waits
 # until predictions at its two ends are compared and found to differ.
-.plateau <- lapply(.err, function(e) which(e[, "l2"] <= 1.01 * min(e[, "l2"])))
+.plateau <- lapply(.err, function(e) which(e[, "l2"] <= 1.01 * min(e[, "l2"], na.rm = TRUE)))
 fit_summary <- data.frame(
   component = .components,
   best_m = as.integer(fit$m.opt),

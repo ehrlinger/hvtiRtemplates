@@ -260,8 +260,9 @@ knitr::kable(data.frame(step = c("ID", "KEY", "WHERE", "Rows"),
 # predictor near the noise band can land on either side of it. Each fit gets
 # N_VIMP runs, run j on fit i seeded SEED + j + 1000 * i and cached on its own, and the runs are
 # pooled: each is judged against its own band, never a pooled one.
-if (!is.numeric(N_VIMP) || length(N_VIMP) != 1L || is.na(N_VIMP) || N_VIMP < 1 || N_VIMP != round(N_VIMP)) {
-  stop("N_VIMP must be a whole number of at least 1, the importance runs on each fit.", call. = FALSE)
+if (!is.numeric(N_VIMP) || length(N_VIMP) != 1L || is.na(N_VIMP) || N_VIMP < 1 || N_VIMP > 999 || N_VIMP != round(N_VIMP)) {
+  # At most 999, so the seeds below, SEED + j + 1000 * i, never coincide across fits.
+  stop("N_VIMP must be a whole number from 1 to 999, the importance runs on each fit.", call. = FALSE)
 }
 .fits <- c(list(fit0 = fit), stats::setNames(refits, sprintf("fit%d", seq_along(refits))))
 # Without shadows there is no band to pool against, so importance runs once, on the SEED fit.

@@ -275,16 +275,16 @@ test_that("vimp runs are seeded SEED + j + 1000 * i, so no two fits share a perm
   expect_length(unique(plan$seed), nrow(plan))
 })
 
-test_that("N_VIMP must be a whole number of at least 1", {
+test_that("N_VIMP must be a whole number from 1 to 999, so seeds never coincide across fits", {
   nb_skip_unless_stack()
   local_child_chunks()
   root <- nb_study()
   nb_fit_in(root)
-  for (bad in list(0, 2.5, NA_real_, c(2, 3), "3")) {
+  for (bad in list(0, 1000, 2.5, NA_real_, c(2, 3), "3")) {
     env <- nb_env(root)
     expect_error(utils::capture.output(nb_explain_run(c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance"), env,
                                                       nb_explain_choices(N_VIMP = bad))),
-                 "N_VIMP must be a whole number of at least 1", info = format(bad))
+                 "N_VIMP must be a whole number from 1 to 999", info = format(bad))
   }
 })
 
