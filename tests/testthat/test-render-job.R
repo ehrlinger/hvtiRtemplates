@@ -161,6 +161,16 @@ test_that(".quarto_crashed needs the exact pair, not the token", {
   expect_false(hvtiRtemplates:::.quarto_crashed(e))
 })
 
+test_that(".quarto_crashed takes R-devel's classed object-not-found error", {
+  # R 4.7 signals an object not found as objectNotFoundError, not simpleError.
+  inner <- errorCondition("object 'QUARTO_DENO' not found", class = "objectNotFoundError")
+  outer <- structure(
+    list(message = "Could not evaluate cli `{}` expression: `QUARTO_DENO`.", call = NULL, parent = inner),
+    class = c("rlib_error_3_0", "rlib_error", "error", "condition")
+  )
+  expect_true(hvtiRtemplates:::.quarto_crashed(outer))
+})
+
 race_error <- function(dir) {
   paste0("Error returned by quarto CLI.\nERROR: Directory not empty (os error 39): remove '",
          file.path(dir, "job_files", "execute-results"), "'")
@@ -250,8 +260,11 @@ test_that("a job's own error that mentions os error 39 and execute-results is no
 test_that("the race matches this job's folder through a symlinked study path, existing or not", {
   real <- withr::local_tempdir()
   link <- file.path(withr::local_tempdir(), "study")
-  # Windows may refuse a symlink; the test then runs on the real path rather than skipping.
-  if (!suppressWarnings(file.symlink(real, link))) link <- real
+  # Windows takes a junction: unlink() removes one, but warns that it cannot delete a
+  # Windows symbolic link when the temporary folder is cleaned up. If the link is
+  # refused, the test runs on the real path rather than skipping.
+  made <- suppressWarnings(if (.Platform$OS.type == "windows") Sys.junction(real, link) else file.symlink(real, link))
+  if (!made) link <- real
   expected <- .execute_results_dir(file.path(normalizePath(real), "job.qmd"))
   line <- function(d) paste0("ERROR: Directory not empty (os error 39): remove '", file.path(d, "job_files", "execute-results"), "'")
   expect_true(.is_execute_results_race(line(link), expected))

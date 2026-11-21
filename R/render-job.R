@@ -240,11 +240,13 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
 # 128 or more is not proof of a signal, and processx reports a launcher killed
 # by a signal as a negative status. The pair does not say which signal, so a
 # memory kill mid-render matches too. dev/gallery/gallery.R retries on it.
+# The parent is any error, not a simpleError: R-devel (4.7) signals an object
+# not found as class objectNotFoundError.
 .quarto_crashed <- function(e) {
   while (!is.null(e)) {
     if (inherits(e, "rlib_error") &&
           identical(e$message, "Could not evaluate cli `{}` expression: `QUARTO_DENO`.") &&
-          inherits(e$parent, "simpleError") &&
+          inherits(e$parent, "error") &&
           identical(conditionMessage(e$parent), "object 'QUARTO_DENO' not found")) {
       return(TRUE)
     }

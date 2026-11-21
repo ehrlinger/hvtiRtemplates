@@ -221,7 +221,8 @@ test_that("the bh runner resamples patients on start/stop rows, and its replicat
   expect_false(identical(again$formula, bag$formula))
   expect_error(hvtiRbootstrap::boot_pool_chunks(list(bag, again)), "the model formula")
   expect_type(bag$rng_kind, "character")
-  expect_length(bag$rng_kind, 3L)
+  # As long as this R's RNGkind(): three fields to 4.6, four from 4.7, which adds binom.kind.
+  expect_length(bag$rng_kind, length(RNGkind()))
   # The family's seven-field record, every field present and typed.
   prov <- bag$provenance
   expect_identical(names(prov), c("package", "version", "sha", "method", "seed", "rng_kind", "time"))
