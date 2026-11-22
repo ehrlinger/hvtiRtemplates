@@ -249,6 +249,35 @@ test_that("the importance guards are reached only when runs are still to compute
   expect_identical(long, list("nb-boostmtree_explain-vimp-fit0-run3"))
 })
 
+test_that("under REFIT the importance guards see each run's own fit, so a current cache is not refused", {
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  nb_fit_in(root, choices = nb_choices(N_REFITS = 1))
+  labels <- c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance")
+  long <- list()
+  memory <- list()
+  guarded <- function(...) {
+    long <<- list()
+    memory <<- list()
+    testthat::with_mocked_bindings(
+      utils::capture.output(nb_explain_run(labels, nb_env(root), nb_explain_choices(N_VIMP = 2, ...))),
+      guard_long_fit = function(name, ...) long[[length(long) + 1L]] <<- name,
+      guard_memory = function(need, ...) memory[[length(memory) + 1L]] <<- need
+    )
+  }
+  guarded()
+  # cache_fit() loads a current cache with REFIT left TRUE, so the preflight must not call it a fit. The quoted
+  # call names `f`: a preflight that does not bind it, or binds fit0's for every run, keys these runs differently.
+  guarded(REFIT = TRUE)
+  expect_length(long, 0L)
+  expect_identical(memory, list(0))
+  # A changed seed is stale, so under REFIT every run is still guarded.
+  guarded(REFIT = TRUE, SEED = 99)
+  expect_length(long[[1L]], 4L)
+  expect_gt(memory[[1L]], 0)
+})
+
 test_that("a worker that returns nothing stops the render, naming the run and CORES", {
   nb_skip_unless_stack()
   local_child_chunks()

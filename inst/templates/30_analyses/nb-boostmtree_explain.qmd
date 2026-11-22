@@ -282,6 +282,8 @@ if (.bundle$k_shadow == 0) .fits <- .fits["fit0"]
 # which is conservative for importance and has not been measured for it.
 .need <- function(k) hvtiRtemplates:::.boostmtree_need_gib(fit$n, sum(fit$ni), fit$family, k, fit$M)
 .computing <- vapply(seq_len(nrow(.runs_plan)), function(i) {
+  # Bound as .vimp_run() binds it: the key takes `f` from this frame, and without it a current cache reads as stale.
+  f <- .fits[[.runs_plan$fit[[i]]]]
   hvtiRutilities::cache_would_fit(.runs_plan$cache[[i]], .vimp_code, seed = .runs_plan$seed[[i]], dir = CACHE_DIR,
                                   refit = REFIT, packages = "randomForestSRC")
 }, logical(1L))
