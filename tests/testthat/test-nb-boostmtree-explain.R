@@ -55,6 +55,61 @@ test_that("the partial effects are cached beside the fit, and changed EFFECT_VAR
   expect_identical(stamp(file.path(dir, "nb-boostmtree_fit-fit0.rds")), fit_before)
 })
 
+test_that("the partial effects are guarded only when they are to compute", {
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  nb_fit_in(root)
+  long <- list()
+  memory <- list()
+  guarded <- function(..., labels = nb_effect_labels) {
+    long <<- list()
+    memory <<- list()
+    env <- nb_env(root)
+    testthat::with_mocked_bindings(
+      utils::capture.output(nb_explain_run(labels, env, nb_explain_choices(N_VIMP = 2, ...))),
+      guard_long_fit = function(name, ...) long[[length(long) + 1L]] <<- name,
+      guard_memory = function(need, ...) memory[[length(memory) + 1L]] <<- need
+    )
+    env
+  }
+  # Importance alone, so that every run below loads it and only the partial effects are in question.
+  guarded(labels = setdiff(nb_effect_labels, "effects"))
+  # Not cached: guarded, for the fit's memory at one core, since partial.plot() forks no workers.
+  env <- guarded(EFFECT_VARIABLES = "age")
+  expect_identical(long, list("nb-boostmtree_explain-partial"))
+  expect_identical(memory, list(0, env$.need(1L)))
+  # A current cache loads, REFIT or not, so neither guard is asked.
+  for (refit in c(FALSE, TRUE)) {
+    guarded(EFFECT_VARIABLES = "age", REFIT = refit)
+    expect_length(long, 0L)
+    expect_identical(memory, list(0))
+  }
+  # Stale without REFIT stops as stale, not as a long fit.
+  expect_error(guarded(EFFECT_VARIABLES = "grp"), class = "hvtiRutilities_stale_cache")
+  expect_length(long, 0L)
+  # Changed variables under REFIT recompute the effects while importance loads: guarded.
+  env <- guarded(EFFECT_VARIABLES = "grp", REFIT = TRUE)
+  expect_identical(long, list("nb-boostmtree_explain-partial"))
+  expect_identical(memory, list(0, env$.need(1L)))
+})
+
+test_that("changed EFFECT_VARIABLES under REFIT are refused outside run_job(), with the cache untouched", {
+  nb_skip_unless_stack()
+  local_child_chunks()
+  root <- nb_study()
+  nb_fit_in(root)
+  utils::capture.output(nb_explain_run(nb_effect_labels, nb_env(root), nb_explain_choices(EFFECT_VARIABLES = "age")))
+  partial <- file.path(nb_set_dir(root), "nb-boostmtree_explain-partial.rds")
+  before <- unname(tools::md5sum(partial))
+  withr::local_envvar(HVTI_JOB_MARKER = NA, HVTI_ALLOW_LONG_FIT = NA)
+  withr::local_options(hvtiRtemplates.allow_interactive_fit = NULL)
+  expect_error(utils::capture.output(nb_explain_run(nb_effect_labels, nb_env(root),
+                                                    nb_explain_choices(EFFECT_VARIABLES = "grp", REFIT = TRUE))),
+               "partial effects predict")
+  expect_identical(unname(tools::md5sum(partial)), before)
+})
+
 test_that("EFFECT_VARIABLES may name a factor covariate alone", {
   nb_skip_unless_stack()
   local_child_chunks()

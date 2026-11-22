@@ -4,7 +4,8 @@
   randomForestSRC and ggBoostedTrees versions, and saves `nb-boostmtree_fit.rds`. `nb-boostmtree_explain` reads
   it, never fits, runs importance `N_VIMP` times on each fit and pools the runs with ggBoostedTrees 0.10.2, reporting
   how often each predictor cleared its run's noise band; it warns when boostmtree or randomForestSRC differ from the
-  fit's. Both need boostmtree 2.0.13 and ggBoostedTrees 0.10.2. `nb-boostmtree` is deprecated and goes in the
+  fit's. Importance and partial effects that will be computed are refused outside `run_job()` and checked against the
+  session's memory, as the fit is. Both need boostmtree 2.0.13 and ggBoostedTrees 0.10.2. `nb-boostmtree` is deprecated and goes in the
   release after; `migrate_job()` writes `nb-boostmtree_fit` and its warning names `nb-boostmtree_explain`, and
   `upgrade_job()` keeps an existing job on its own template. The fit's run-time comment is now estimated for `M = 500` from `M = 10` runs with five
   shadows on boostmtree 2.0.13 (#580). Moving a job from `nb-boostmtree` to `nb-boostmtree_fit` refits, because the

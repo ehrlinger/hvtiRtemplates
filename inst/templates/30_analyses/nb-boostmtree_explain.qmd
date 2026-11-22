@@ -132,8 +132,8 @@ KEY <- NULL
 # cached on its own, so raising N_VIMP pays only for the new runs. With no shadows
 # in the fit there is no band to judge runs against, and importance runs once.
 # With EFFECT_VARIABLES <- NULL, raising N_VIMP can change which six variables lead,
-# and the partial-effects cache then stops the render until REFIT <- TRUE; the
-# importance runs themselves are reused.
+# and the partial-effects cache then stops the render until REFIT <- TRUE, which
+# recomputes them and so needs run_job(); the importance runs themselves are reused.
 N_VIMP <- 10
 
 # EDIT: cores for the importance runs, one run per core. Each core is a forked copy
@@ -395,11 +395,24 @@ if (length(.unknown)) stop("EFFECT_VARIABLES names no predictor: ", paste(.unkno
 # patient per grid value, 25 values per continuous covariate. It is cached
 # beside the fit and keyed on it, so a re-render that changes only prose skips
 # it, and a refit or a changed EFFECT_VARIABLES stops until REFIT, as the fit does.
-.partial <- cache_fit("nb-boostmtree_explain-partial",
-                      partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE,
-                                   progress = get(".job")$progress("prediction")),
-                      # randomForestSRC runs under boostmtree and neither call names it, so it is keyed here.
-                      seed = SEED, dir = CACHE_DIR, refit = REFIT, packages = "randomForestSRC")
+# Quoted once, so the check below and cache_fit() read the same call.
+.partial_code <- quote(partial.plot(fit, x.var.names = .effect_vars, output = "data", verbose = FALSE,
+                                    progress = get(".job")$progress("prediction")))
+# Guarded on its own, because the importance runs may all load while this recomputes, as after a changed
+# EFFECT_VARIABLES. partial.plot() forks no workers, so its need is the fit's at one core whatever CORES is, an
+# estimate not measured for prediction. Both guards sit inside the `if`: a guard_memory() of 0 here would overwrite
+# the need the importance runs recorded for job_status().
+if (hvtiRutilities::cache_would_fit("nb-boostmtree_explain-partial", .partial_code, seed = SEED, dir = CACHE_DIR,
+                                    refit = REFIT, packages = "randomForestSRC")) {
+  hvtiRtemplates::guard_long_fit("nb-boostmtree_explain-partial", dir = CACHE_DIR, refit = REFIT,
+                                 why = "the partial effects predict over every patient at each grid value")
+  hvtiRtemplates::guard_memory(.need(1L), sprintf("the partial effects (%s patients, %s visits, %s)",
+                                                  format(fit$n, big.mark = ","), format(sum(fit$ni), big.mark = ","),
+                                                  fit$family))
+}
+# randomForestSRC runs under boostmtree and neither call names it, so it is keyed here.
+.partial <- cache_fit("nb-boostmtree_explain-partial", .partial_code, seed = SEED, dir = CACHE_DIR, refit = REFIT,
+                      packages = "randomForestSRC")
 .effect <- gg_boost_effect(.partial)
 .relabel <- .components[match(levels(.effect$response), .labels)]
 # A component ggBoostedTrees names differently from the fit would otherwise be
