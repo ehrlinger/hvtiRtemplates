@@ -93,32 +93,34 @@ tl
 #> 23 lm.propensity_ordinal   analyses      Logistic model: ordinal propensity ...
 #> 24 mm                      analyses      Mixed model                           
 #> 25 nb.boostmtree           analyses      Boosting: boostmtree                  
-#> 26 rfc.explain             analyses      Random forest classifier: explain     
-#> 27 rfc.fit                 analyses      Random forest classifier: fit         
-#> 28 rfr.explain             analyses      Random forest regression: explain     
-#> 29 rfr.fit                 analyses      Random forest regression: fit         
-#> 30 rfs.explain             analyses      Random forest survival: explain       
-#> 31 rfs.fit                 analyses      Random forest survival: fit           
-#> 32 rhf.explain             analyses      Random hazard forest: explain         
-#> 33 rhf.fit                 analyses      Random hazard forest: fit             
-#> 34 rm.balancing_continuous analyses      Regression model: continuous balanc...
-#> 35 rm.linear               analyses      Regression model: continuous outcome  
-#> 36 sid.clusters            analyses      SID clustering: clusters              
-#> 37 sid.fit                 analyses      SID clustering: fit                   
-#> 38 sid.stability           analyses      SID clustering: stability             
-#> 39 vp.dependence           analyses      VarPro: dependence                    
-#> 40 vp.explain              analyses      VarPro: explain                       
-#> 41 vp.fit                  analyses      VarPro: fit                           
-#> 42 vp.individual           analyses      VarPro: individual                    
-#> 43 vt.explain              analyses      Virtual twins: explain                
-#> 44 vt.fit                  analyses      Virtual twins: fit                    
-#> 45 hp                      graphs        Hazard plot                           
-#> 46 hs.concordance          graphs        Hazard concordance                    
-#> 47 hs.score                graphs        Hazard segment score                  
-#> 48 hs.setup                graphs        Hazard setup                          
-#> 49 lp.mirror               graphs        Logistic plot: mirrored propensity ...
-#> 50 ar                      documents     Analysis report                       
-#> # 50 templates. Read any column with $, such as $description or $call.
+#> 26 nb.boostmtree_explain   analyses      Boosting: boostmtree explain          
+#> 27 nb.boostmtree_fit       analyses      Boosting: boostmtree fit              
+#> 28 rfc.explain             analyses      Random forest classifier: explain     
+#> 29 rfc.fit                 analyses      Random forest classifier: fit         
+#> 30 rfr.explain             analyses      Random forest regression: explain     
+#> 31 rfr.fit                 analyses      Random forest regression: fit         
+#> 32 rfs.explain             analyses      Random forest survival: explain       
+#> 33 rfs.fit                 analyses      Random forest survival: fit           
+#> 34 rhf.explain             analyses      Random hazard forest: explain         
+#> 35 rhf.fit                 analyses      Random hazard forest: fit             
+#> 36 rm.balancing_continuous analyses      Regression model: continuous balanc...
+#> 37 rm.linear               analyses      Regression model: continuous outcome  
+#> 38 sid.clusters            analyses      SID clustering: clusters              
+#> 39 sid.fit                 analyses      SID clustering: fit                   
+#> 40 sid.stability           analyses      SID clustering: stability             
+#> 41 vp.dependence           analyses      VarPro: dependence                    
+#> 42 vp.explain              analyses      VarPro: explain                       
+#> 43 vp.fit                  analyses      VarPro: fit                           
+#> 44 vp.individual           analyses      VarPro: individual                    
+#> 45 vt.explain              analyses      Virtual twins: explain                
+#> 46 vt.fit                  analyses      Virtual twins: fit                    
+#> 47 hp                      graphs        Hazard plot                           
+#> 48 hs.concordance          graphs        Hazard concordance                    
+#> 49 hs.score                graphs        Hazard segment score                  
+#> 50 hs.setup                graphs        Hazard setup                          
+#> 51 lp.mirror               graphs        Logistic plot: mirrored propensity ...
+#> 52 ar                      documents     Analysis report                       
+#> # 52 templates. Read any column with $, such as $description or $call.
 
 # Every template, where its job is written, and the call that scaffolds it.
 tl[, c("name", "folder", "call")]
@@ -148,31 +150,33 @@ tl[, c("name", "folder", "call")]
 #> 23   lm.propensity_ordinal      analyses
 #> 24                      mm      analyses
 #> 25           nb.boostmtree      analyses
-#> 26             rfc.explain      analyses
-#> 27                 rfc.fit      analyses
-#> 28             rfr.explain      analyses
-#> 29                 rfr.fit      analyses
-#> 30             rfs.explain      analyses
-#> 31                 rfs.fit      analyses
-#> 32             rhf.explain      analyses
-#> 33                 rhf.fit      analyses
-#> 34 rm.balancing_continuous      analyses
-#> 35               rm.linear      analyses
-#> 36            sid.clusters      analyses
-#> 37                 sid.fit      analyses
-#> 38           sid.stability      analyses
-#> 39           vp.dependence      analyses
-#> 40              vp.explain      analyses
-#> 41                  vp.fit      analyses
-#> 42           vp.individual      analyses
-#> 43              vt.explain      analyses
-#> 44                  vt.fit      analyses
-#> 45                      hp        graphs
-#> 46          hs.concordance        graphs
-#> 47                hs.score        graphs
-#> 48                hs.setup        graphs
-#> 49               lp.mirror        graphs
-#> 50                      ar     documents
+#> 26   nb.boostmtree_explain      analyses
+#> 27       nb.boostmtree_fit      analyses
+#> 28             rfc.explain      analyses
+#> 29                 rfc.fit      analyses
+#> 30             rfr.explain      analyses
+#> 31                 rfr.fit      analyses
+#> 32             rfs.explain      analyses
+#> 33                 rfs.fit      analyses
+#> 34             rhf.explain      analyses
+#> 35                 rhf.fit      analyses
+#> 36 rm.balancing_continuous      analyses
+#> 37               rm.linear      analyses
+#> 38            sid.clusters      analyses
+#> 39                 sid.fit      analyses
+#> 40           sid.stability      analyses
+#> 41           vp.dependence      analyses
+#> 42              vp.explain      analyses
+#> 43                  vp.fit      analyses
+#> 44           vp.individual      analyses
+#> 45              vt.explain      analyses
+#> 46                  vt.fit      analyses
+#> 47                      hp        graphs
+#> 48          hs.concordance        graphs
+#> 49                hs.score        graphs
+#> 50                hs.setup        graphs
+#> 51               lp.mirror        graphs
+#> 52                      ar     documents
 #>                                                                            call
 #> 1                              add_job("bd", subject = "study", type = "build")
 #> 2                           add_job("dc.eda", subject = "cohort", type = "eda")
@@ -199,31 +203,33 @@ tl[, c("name", "folder", "call")]
 #> 23 add_job("lm.propensity_ordinal", subject = "treatment", type = "propensity")
 #> 24                           add_job("mm", subject = "outcome", type = "mixed")
 #> 25                   add_job("nb.boostmtree", subject = "lvef", type = "boost")
-#> 26                       add_job("rfc.explain", subject = "dead", type = "rfc")
-#> 27                           add_job("rfc.fit", subject = "dead", type = "rfc")
-#> 28                        add_job("rfr.explain", subject = "los", type = "rfr")
-#> 29                            add_job("rfr.fit", subject = "los", type = "rfr")
-#> 30                       add_job("rfs.explain", subject = "dead", type = "rfs")
-#> 31                           add_job("rfs.fit", subject = "dead", type = "rfs")
-#> 32                       add_job("rhf.explain", subject = "dead", type = "rhf")
-#> 33                           add_job("rhf.fit", subject = "dead", type = "rhf")
-#> 34 add_job("rm.balancing_continuous", subject = "exposure", type = "balancing")
-#> 35                   add_job("rm.linear", subject = "outcome", type = "linear")
-#> 36                add_job("sid.clusters", subject = "morphology", type = "sid")
-#> 37                     add_job("sid.fit", subject = "morphology", type = "sid")
-#> 38               add_job("sid.stability", subject = "morphology", type = "sid")
-#> 39              add_job("vp.dependence", subject = "dead", type = "dependence")
-#> 40                         add_job("vp.explain", subject = "dead", type = "vp")
-#> 41                             add_job("vp.fit", subject = "dead", type = "vp")
-#> 42                      add_job("vp.individual", subject = "dead", type = "vp")
-#> 43                         add_job("vt.explain", subject = "dead", type = "vt")
-#> 44                             add_job("vt.fit", subject = "dead", type = "vt")
-#> 45                              add_job("hp", subject = "dead_pa", type = "hz")
-#> 46                  add_job("hs.concordance", subject = "dead_pa", type = "hz")
-#> 47                        add_job("hs.score", subject = "dead_pa", type = "hz")
-#> 48                        add_job("hs.setup", subject = "dead_pa", type = "hz")
-#> 49             add_job("lp.mirror", subject = "treatment", type = "propensity")
-#> 50                        add_job("ar", subject = "dead_pa", type = "question")
+#> 26           add_job("nb.boostmtree_explain", subject = "lvef", type = "boost")
+#> 27               add_job("nb.boostmtree_fit", subject = "lvef", type = "boost")
+#> 28                       add_job("rfc.explain", subject = "dead", type = "rfc")
+#> 29                           add_job("rfc.fit", subject = "dead", type = "rfc")
+#> 30                        add_job("rfr.explain", subject = "los", type = "rfr")
+#> 31                            add_job("rfr.fit", subject = "los", type = "rfr")
+#> 32                       add_job("rfs.explain", subject = "dead", type = "rfs")
+#> 33                           add_job("rfs.fit", subject = "dead", type = "rfs")
+#> 34                       add_job("rhf.explain", subject = "dead", type = "rhf")
+#> 35                           add_job("rhf.fit", subject = "dead", type = "rhf")
+#> 36 add_job("rm.balancing_continuous", subject = "exposure", type = "balancing")
+#> 37                   add_job("rm.linear", subject = "outcome", type = "linear")
+#> 38                add_job("sid.clusters", subject = "morphology", type = "sid")
+#> 39                     add_job("sid.fit", subject = "morphology", type = "sid")
+#> 40               add_job("sid.stability", subject = "morphology", type = "sid")
+#> 41              add_job("vp.dependence", subject = "dead", type = "dependence")
+#> 42                         add_job("vp.explain", subject = "dead", type = "vp")
+#> 43                             add_job("vp.fit", subject = "dead", type = "vp")
+#> 44                      add_job("vp.individual", subject = "dead", type = "vp")
+#> 45                         add_job("vt.explain", subject = "dead", type = "vt")
+#> 46                             add_job("vt.fit", subject = "dead", type = "vt")
+#> 47                              add_job("hp", subject = "dead_pa", type = "hz")
+#> 48                  add_job("hs.concordance", subject = "dead_pa", type = "hz")
+#> 49                        add_job("hs.score", subject = "dead_pa", type = "hz")
+#> 50                        add_job("hs.setup", subject = "dead_pa", type = "hz")
+#> 51             add_job("lp.mirror", subject = "treatment", type = "propensity")
+#> 52                        add_job("ar", subject = "dead_pa", type = "question")
 
 # Find a template by its qualifier, then copy its call: the follow-up jobs.
 subset(tl, qualifier == "gfup", c(name, folder, call))

@@ -63,7 +63,7 @@
       <h1>The template catalog</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-11-21</p>
+      <p class="date">2026-11-22</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiRtemplates/blob/main/vignettes/template-catalog.qmd" class="external-link"><code>vignettes/template-catalog.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -85,7 +85,7 @@
 </h2>
 <p>Each template carries a light.</p>
 <ul>
-<li>🟢 <strong>Shipped</strong> (36): on disk and supported. Scaffold it and use it.</li>
+<li>🟢 <strong>Shipped</strong> (38): on disk and supported. Scaffold it and use it.</li>
 <li>🟡 <strong>In progress</strong> (29): on disk but being reworked, or scheduled into a delivery batch with nothing blocking it.</li>
 <li>🔴 <strong>Not yet on the way</strong> (10): waiting on a function in another package, or not yet scheduled. The job type is known and counted; for now, write it by hand.</li>
 </ul></section><section class="level2"><h2 id="available-now">Available now<a class="anchor" aria-label="anchor" href="#available-now"></a>
@@ -299,6 +299,18 @@
 <td style="text-align: left;"><code>mm</code></td>
 <td style="text-align: left;">Linear mixed model of a repeated continuous response, with the population-average course over time.</td>
 <td style="text-align: left;"><code>add_job("mm", subject, type)</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">🟢 Shipped</td>
+<td style="text-align: left;"><code>nb-boostmtree_explain</code></td>
+<td style="text-align: left;">Explains a saved boostmtree fit: importance pooled over repeated runs against shadow covariates, partial effects over time and patient trajectories. It never fits.</td>
+<td style="text-align: left;"><code>add_job("nb", subject, type, qualifier = "boostmtree_explain")</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">🟢 Shipped</td>
+<td style="text-align: left;"><code>nb-boostmtree_fit</code></td>
+<td style="text-align: left;">Fits boosted multivariate trees, with shadow covariates and optional refits, to a response measured repeatedly over follow-up, and reports its error path and plateau, fit over time and package versions.</td>
+<td style="text-align: left;"><code>add_job("nb", subject, type, qualifier = "boostmtree_fit")</code></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">🟢 Shipped</td>
