@@ -200,7 +200,7 @@ the saved trees, and that path runs through randomForestSRC.
 
 **Study choices**
 
-- `N_VIMP <- 10`. Runs are seeded `SEED + i`, cached one by one through
+- `N_VIMP <- 10`. Run `j` on fit `i` is seeded `SEED + j + 1000 * i` (changed 2026-11-20 after the final review: shared seeds gave every fit the same permutations), cached one by one through
   `cache_fit()`, so raising `N_VIMP` pays only for the new runs. They run in
   parallel over `CORES`; `cache_fit()` seeds each call, so results do not depend
   on the core count. The `EDIT:` gives the cost (about 0.17 fits per run at

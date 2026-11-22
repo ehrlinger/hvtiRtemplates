@@ -264,10 +264,10 @@ test_that("every template that reads its own data offers the join and records th
                      info = basename(f))
   }
   # Every first job of a set reads its own data; a drop here means one stopped offering the join.
-  expect_identical(readers, 30L)
+  expect_identical(readers, 31L)
   # The refusal names the rest, read from the same templates.
   expect_identical(hvtiRtemplates:::.long_join_templates(normalizePath(template_root)),
-                   c("dc-eda", "dc-general", "dc-tables", "dc-trends", "mm", "nb-boostmtree", "rhf-fit"))
+                   c("dc-eda", "dc-general", "dc-tables", "dc-trends", "mm", "nb-boostmtree_fit", "rhf-fit"))
 })
 
 test_that("descriptive templates join an ancillary dataset, long and one row per patient", {
@@ -332,8 +332,8 @@ test_that("templates that model one row per patient refuse a long join; long-dat
   refuse <- files[basename(files) %in% patient_level_templates]
   expect_length(refuse, length(patient_level_templates))
   # Repeated measures (nb-boostmtree's KEY includes TIME) and a descriptive figure keep the long form.
-  accept <- files[basename(files) %in% c("nb-boostmtree.qmd", "dc-trends.qmd")]
-  expect_length(accept, 2L)
+  accept <- files[basename(files) %in% c("nb-boostmtree.qmd", "nb-boostmtree_fit.qmd", "dc-trends.qmd")]
+  expect_length(accept, 3L)
   root <- file.path(withr::local_tempdir(), "one-row-study")
   suppressMessages(hvtiRutilities::study_setup(root, study = "One row route test", study_tracker_id = 1L, renv = FALSE))
   data_dir <- hvtiRutilities::study_dir("datasets", root)
@@ -403,11 +403,11 @@ test_that("a downstream job that rebuilds its upstream rows records the joined d
   expect_identical(rebuilders, 7L)
 })
 
-test_that("nb-boostmtree takes a long join whose visit time is only in the joined dataset", {
+test_that("nb-boostmtree_fit takes a long join whose visit time is only in the joined dataset", {
   skip_if_not_installed("arrow")
   template_root <- system.file("templates", package = "hvtiRtemplates")
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
-  template <- file.path(normalizePath(template_root), "30_analyses", "nb-boostmtree.qmd")
+  template <- file.path(normalizePath(template_root), "30_analyses", "nb-boostmtree_fit.qmd")
   root <- file.path(withr::local_tempdir(), "visit-study")
   suppressMessages(hvtiRutilities::study_setup(root, study = "Visit route test", study_tracker_id = 1L, renv = FALSE))
   data_dir <- hvtiRutilities::study_dir("datasets", root)

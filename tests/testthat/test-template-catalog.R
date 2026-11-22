@@ -1,7 +1,7 @@
 test_that("the template catalog ships every owed job type", {
   catalog <- template_catalog()
   expect_s3_class(catalog, "data.frame")
-  expect_equal(nrow(catalog), 75L)
+  expect_equal(nrow(catalog), 77L)
   expect_equal(length(unique(catalog$prefix)), 45L)
   expect_false(any(c("destination", "replaced_by") %in% names(catalog)))
   expect_true(all(c("uses", "upstream", "downstream", "workflows") %in% names(catalog)))
@@ -18,7 +18,7 @@ test_that("the template catalog ships every owed job type", {
 
   # nb's census describes boostmtree: the exemplar survey found no BoostMLR job.
   nb <- catalog[catalog$prefix == "nb", ]
-  expect_setequal(nb$qualifier, c("boostmtree", "boostmlr"))
+  expect_setequal(nb$qualifier, c("boostmtree", "boostmtree_fit", "boostmtree_explain", "boostmlr"))
   census <- c("sas_breadth", "sas_breadth_jobs", "r_exemplars", "r_jobs")
   expect_true(all(is.na(unlist(nb[nb$qualifier == "boostmlr", census]))))
   expect_false(anyNA(unlist(nb[nb$qualifier == "boostmtree", census])))
@@ -86,7 +86,9 @@ test_that("every function a shipped template's `uses` names appears in that temp
   missing <- character()
   for (i in seq_len(nrow(on_disk))) {
     qualifier <- if (is.na(on_disk$qualifier[i])) NULL else on_disk$qualifier[i]
-    text <- paste(readLines(template_path(on_disk$prefix[i], qualifier = qualifier)), collapse = "\n")
+    path <- withCallingHandlers(template_path(on_disk$prefix[i], qualifier = qualifier),
+                                hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning"))
+    text <- paste(readLines(path), collapse = "\n")
     for (fn in catalog$uses[[rows[i]]]) {
       if (!grepl(paste0("\\b", sub("^.*::", "", fn), "\\b"), text, perl = TRUE)) {
         missing <- c(missing, paste0(on_disk$name[i], ": ", fn))
