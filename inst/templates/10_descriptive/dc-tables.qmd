@@ -208,7 +208,7 @@ CATEGORICAL <- NULL
 COMPARE <- "none"             # EDIT: choose whether to compare groups
 CONTINUOUS_STAT <- "median"   # EDIT: choose the continuous summary
 PERCENTILES <- c(15, 85)       # EDIT: choose the reported percentiles
-ABBREVIATIONS <- character(0) # EDIT: define abbreviations used in the table
+ABBREVIATIONS <- character(0) # EDIT: c(ABBR = "expansion") to add to or override the table's Key
 WORD_FILE <- "dc-tables.docx"  # EDIT: choose the Word filename within this set
 MANUSCRIPT_LAYOUT <- "compare" # EDIT: choose the Word table's layout
 # MIGRATE-END: dc-tables-config
@@ -628,7 +628,23 @@ if (STDDIFF) {
 # header marks, notes and abbreviation key the Word table carries, from the
 # saver's own code.
 ft <- hvtiRtables::hv_man_table(tbl)
-hvtiRtables::hv_man_table_display(ft, abbreviations = ABBREVIATIONS)
+# Every abbreviation a table prints is defined in its own Key, whether or not
+# the manuscript's Abbreviations list carries it: that list is for the text.
+# The Key is built from what the table prints, keying each abbreviation the
+# study's list (_study.yml, then the group defaults) can expand; ABBREVIATIONS
+# adds to it. An abbreviation nothing expands is named in a warning, so define
+# it in _study.yml for every table in the study, or in ABBREVIATIONS for this one.
+.key_from <- c(ABBREVIATIONS, if (STDDIFF && !"Std. Diff." %in% names(ABBREVIATIONS)) c("Std. Diff." = "standardized difference"))
+.key_for <- function(table) {
+  key <- hvtiRtemplates:::.table_key(flextable::information_data_chunk(table)$txt,
+                                     hvtiRutilities::study_abbreviations(.cfg), .key_from)
+  if (length(key$missing)) {
+    warning("The table prints ", paste(key$missing, collapse = ", "), ", which its Key cannot expand. ",
+            "Define each in _study.yml's abbreviations or in ABBREVIATIONS.", call. = FALSE)
+  }
+  key$key
+}
+hvtiRtables::hv_man_table_display(ft, abbreviations = .key_for(ft))
 ```
 
 ```{r}
@@ -684,7 +700,8 @@ if (length(WORD_FILE) != 1L || is.na(WORD_FILE) ||
 }
 word_path <- file.path(study_dir("documents", .root), paste0(SUBJECT, "-", TYPE), WORD_FILE)
 dir.create(dirname(word_path), recursive = TRUE, showWarnings = FALSE)
-hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = ABBREVIATIONS, caption = MANUSCRIPT_CAPTION,
+.word_key <- .key_for(word_ft)
+hvtiRtables::hv_man_table_save(word_ft, word_path, abbreviations = .word_key, caption = MANUSCRIPT_CAPTION,
                                orientation = TABLE_ORIENTATION)
 # The file carries what wrote it, the job, the render and the package versions,
 # as document properties (File > Info in Word), so a copy that is emailed on
@@ -700,7 +717,7 @@ if (nrow(check)) stop("Word output failed the CORR structural check", call. = FA
 ```{r}
 #| label: tbl-word
 #| tbl-cap: !expr 'paste0("The table as saved to Word, in the ", WORD_STYLE, " style")'
-hvtiRtables::hv_man_table_display(word_ft, abbreviations = ABBREVIATIONS)
+hvtiRtables::hv_man_table_display(word_ft, abbreviations = .word_key)
 ```
 
 ## Correlations
