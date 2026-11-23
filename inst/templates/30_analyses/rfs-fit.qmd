@@ -571,7 +571,8 @@ if (.learning_filled) {
                     .learning_note),
   error = paste(sprintf(paste0("Out-of-bag error (1 - C-index) by the number of events in each refit%s. Gray",
                                " points are single refits and the black line their mean, each mean drawn in ",
-                               "its fraction's marker. Open markers have fewer than 50 events, too few for ",
+                               "its fraction's marker. Boxes span the 15th to 85th percentile of the refits, ",
+                               "with a line at the median. Open markers have fewer than 50 events, too few for ",
                                "their error to be trusted."), .learning_right),
                 .learning_note)
 )
@@ -617,7 +618,8 @@ knitr::kable(
 # The dashed line marks 0, Kendall tau's no relation between two orders, and the floor of Jaccard.
 .fig <- plot(learning) +
   ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
-  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
+  # Two legends, the measures and the markers: side by side they run past a 6.5 inch figure, so they stack.
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.box = "vertical")
 save_figure(.fig, "rfs-fit-learning-stability")
 .fig
 ```
@@ -625,7 +627,9 @@ save_figure(.fig, "rfs-fit-learning-stability")
 ```{r}
 #| label: fig-learning-error
 #| fig-cap: !expr .learning_caps$error
+# A box per fraction, from the 15th to the 85th percentile of its refits, with a line at the median.
 .fig <- plot(learning, panel = "error") +
+  hvtiRtemplates:::.learning_error_box(learning) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
 save_figure(.fig, "rfs-fit-learning-error")
 .fig

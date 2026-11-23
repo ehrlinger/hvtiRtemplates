@@ -9,7 +9,7 @@ test_that("both measures over the threshold and level is enough", {
   expect_identical(v$events, "enough")
   expect_true(v$features)
   expect_match(v$text, ".callout-tip", fixed = TRUE)
-  expect_match(v$text, "levelled off", fixed = TRUE)
+  expect_match(v$text, "leveled off", fixed = TRUE)
 })
 
 test_that("one measure under the threshold is not yet", {
@@ -41,6 +41,28 @@ test_that("an optimistic or filled rightmost point is at most borderline", {
   s$optimistic <- FALSE
   expect_identical(hvtiRtemplates:::.learning_verdict(s, 12, k = 5)$events, "enough")
   expect_identical(hvtiRtemplates:::.learning_verdict(s, 12, k = 5, filled = TRUE)$events, "borderline")
+})
+
+test_that("a large fall is not a plateau", {
+  # The reproduction from review: 0.99 to 0.81 and 0.82.
+  v <- hvtiRtemplates:::.learning_verdict(st(c(0.99, 0.81), c(0.99, 0.82)), 12, k = 5)
+  expect_identical(v$events, "borderline")
+  expect_match(v$text, "still falling, by 0.18", fixed = TRUE)
+  expect_false(grepl("leveled off", v$text, fixed = TRUE))
+  # A small move either way is still flat.
+  expect_identical(hvtiRtemplates:::.learning_verdict(st(c(0.86, 0.83), c(0.85, 0.84)), 12, k = 5)$events, "enough")
+})
+
+test_that("a plateau that cannot be assessed is not enough", {
+  # One fraction and no bootstrap: no earlier point.
+  v <- hvtiRtemplates:::.learning_verdict(st(0.85, 0.84), 12, k = 5)
+  expect_identical(v$events, "borderline")
+  expect_match(v$text, "cannot be assessed", fixed = TRUE)
+  expect_match(v$text, "no earlier point to show it has leveled off", fixed = TRUE)
+  # A missing value at the earlier point.
+  v <- hvtiRtemplates:::.learning_verdict(st(c(NA, 0.85), c(0.5, 0.84)), 12, k = 5)
+  expect_identical(v$events, "borderline")
+  expect_match(v$text, "cannot be assessed", fixed = TRUE)
 })
 
 test_that("an unknown event count is not enough", {
@@ -83,4 +105,24 @@ test_that("the Jaccard steps follow k", {
                    "With the top 5, a pair sharing 4 of them scores 0.67, 3 scores 0.43, 2 scores 0.25, 1 scores 0.11.")
   expect_identical(hvtiRtemplates:::.jaccard_steps(2), "With the top 2, a pair sharing 1 of them scores 0.33.")
   expect_identical(hvtiRtemplates:::.jaccard_steps(1), "")
+})
+
+test_that("the error boxes span the 15th to 85th percentile and never overlap", {
+  skip_if_not_installed("ggplot2")
+  learning <- data.frame(events = rep(c(10, 20, 40), each = 21), error = rep(0:20 / 100, 3))
+  layer <- hvtiRtemplates:::.learning_error_box(learning)
+  box <- layer$data
+  expect_equal(box$events, c(10, 20, 40))
+  expect_equal(box$lower, rep(0.03, 3))
+  expect_equal(box$middle, rep(0.10, 3))
+  expect_equal(box$upper, rep(0.17, 3))
+  # Half the narrowest gap, 10 to 20, so the boxes are 5 events wide.
+  drawn <- function(l, d) {
+    built <- ggplot2::ggplot_build(ggplot2::ggplot(d, ggplot2::aes(events, error)) + ggplot2::geom_point() + l)
+    built$data[[2L]]$xmax - built$data[[2L]]$xmin
+  }
+  expect_equal(drawn(layer, learning), rep(5, 3))
+  # One fraction: no gap to halve, so a tenth of its events.
+  one <- learning[learning$events == 40, ]
+  expect_equal(drawn(hvtiRtemplates:::.learning_error_box(one), one), 4)
 })

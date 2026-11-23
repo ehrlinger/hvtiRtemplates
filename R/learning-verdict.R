@@ -36,21 +36,29 @@
                           ". Read the error curve only.")
   } else {
     met <- all(agree >= agreement)
-    rise <- if (nrow(st) > 1L) max(agree - c(st$jaccard[nrow(st) - 1L], st$kendall[nrow(st) - 1L])) else NA_real_
-    rising <- !is.na(rise) && rise > tolerance
+    # The larger move of the two measures since the previous point, in either direction: a fall is no
+    # more a plateau than a rise is.
+    delta <- if (nrow(st) > 1L) agree - c(st$jaccard[nrow(st) - 1L], st$kendall[nrow(st) - 1L]) else NA_real_
+    move <- if (anyNA(delta)) NA_real_ else delta[[which.max(abs(delta))]]
+    moving <- !is.na(move) && abs(move) > tolerance
     # An unknown count (NA, an unstratified draw) is not a count known to be enough.
     low <- !isFALSE(last$low_events)
     # Agreement between refits that share most of their patients, or that saw imputed values from the
     # whole cohort, overstates what a new cohort would show, so it cannot pass on its own.
     optimistic <- isTRUE(last$optimistic) || filled
-    events <- if (!met) "not yet" else if (rising || low || optimistic) "borderline" else "enough"
+    # A plateau needs an earlier point to compare with; without one it is not evidence of enough.
+    flat_unknown <- is.na(move)
+    events <- if (!met) "not yet" else if (moving || low || optimistic || flat_unknown) "borderline" else "enough"
     found <- sprintf(paste0("At the rightmost point, %s %s, the top-%d Jaccard is %.2f and Kendall tau %.2f, ",
                             "against %.2f (LEARNING_AGREEMENT)"),
                      format(last$events), unit, as.integer(k), agree[[1L]], agree[[2L]], agreement)
-    trend <- if (is.na(rise)) "" else if (rising) {
-      sprintf(", and agreement was still rising, by %.2f since the previous point", rise)
+    trend <- if (flat_unknown) {
+      ", and whether it has leveled off cannot be assessed, with no earlier point to compare"
+    } else if (moving) {
+      sprintf(", and agreement was still %s, by %.2f since the previous point", if (move > 0) "rising" else "falling",
+              abs(move))
     } else {
-      ", and agreement has levelled off"
+      ", and agreement has leveled off"
     }
     reading <- switch(events,
       enough = paste0("The importance ranking is reproducible at this cohort size, so the explain job's top variables ",
@@ -60,8 +68,10 @@
                             paste0("on fewer than ", min_events, " ", unit, ", or an unknown number, too few to trust")
                           } else if (optimistic) {
                             "the rightmost point is optimistic, as the table flags it"
+                          } else if (flat_unknown) {
+                            "there is no earlier point to show it has leveled off"
                           } else {
-                            paste0("more ", unit, " would still change the ranking")
+                            paste0("it is still moving, so more ", unit, " would still change the ranking")
                           },
                           ". Read the explain job's top variables as provisional."),
       `not yet` = paste0("The top variables change from refit to refit at this cohort size. The forest may still ",
@@ -93,4 +103,25 @@
     ":::\n"
   )
   list(events = events, features = features, text = text)
+}
+
+# The error figure's boxes: each fraction's refits from their 15th to their 85th percentile, with a
+# line at the median and no whiskers, since the gray points already show every refit. `learning` is
+# a gg_learning object, one row per refit. The x axis counts events on a linear scale, so a box is
+# half the narrowest gap between fractions wide, and neighbors never overlap.
+.learning_error_box <- function(learning) {
+  pts <- as.data.frame(learning)
+  box <- do.call(rbind, lapply(split(pts$error, pts$events), function(e) {
+    data.frame(lower = stats::quantile(e, 0.15, names = FALSE), middle = stats::median(e),
+               upper = stats::quantile(e, 0.85, names = FALSE))
+  }))
+  box$events <- as.numeric(names(split(pts$error, pts$events)))
+  gaps <- diff(sort(box$events))
+  width <- if (length(gaps)) 0.5 * min(gaps) else 0.1 * box$events[1L]
+  ggplot2::geom_boxplot(
+    data = box, stat = "identity", inherit.aes = FALSE, width = width, fill = NA, color = "gray30",
+    ggplot2::aes(x = !!rlang::sym("events"), ymin = !!rlang::sym("lower"), lower = !!rlang::sym("lower"),
+                 middle = !!rlang::sym("middle"), upper = !!rlang::sym("upper"), ymax = !!rlang::sym("upper"),
+                 group = !!rlang::sym("events"))
+  )
 }
