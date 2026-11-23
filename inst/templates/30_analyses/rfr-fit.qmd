@@ -525,7 +525,8 @@ knitr::kable(
 # The dashed line marks 0, Kendall tau's no relation between two orders, and the floor of Jaccard.
 .fig <- plot(learning) +
   ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
-  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
+  # Two legends, the measures and the markers: side by side they run past a 6.5 inch figure, so they stack.
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.box = "vertical")
 save_figure(.fig, "rfr-fit-learning-stability")
 .fig
 ```
