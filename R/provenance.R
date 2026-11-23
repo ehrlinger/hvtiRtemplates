@@ -643,9 +643,10 @@
   if (!length(working)) return(invisible(lineage))
   file <- if (is.character(working[[1L]]$path)) basename(working[[1L]]$path) else "build"
   if (.strict_render()) {
-    # A DATASET read by file name was never registered, so update_manifest(),
-    # which registers a rebuilt version, cannot help it; register_data() does.
-    how <- if (.is_dataset_file(working[[1L]]$dataset %||% "")) {
+    # A DATASET read by file name (it carries an extension, as .is_dataset_file()
+    # tests) was never registered, so update_manifest(), which registers a
+    # rebuilt version, cannot help it; register_data() does.
+    how <- if (grepl("\\.[A-Za-z0-9]+$", working[[1L]]$dataset %||% "")) {
       paste0("Register it with hvtiRutilities::register_data(\"", working[[1L]]$dataset, "\", role = \"named\"), ",
              "name it in DATASET, render ")
     } else {
