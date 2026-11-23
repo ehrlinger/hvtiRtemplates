@@ -756,6 +756,7 @@ test_that("rfr-fit grows a regression forest, imputing missing predictors", {
   # The table's R squared is the one randomForestSRC prints with the forest.
   printed <- grep("R squared:", utils::capture.output(print(env$forest)), value = TRUE)
   expect_equal(1 - env$.oob_mse / env$.var_y, as.numeric(sub(".*R squared:\\s*", "", printed)), tolerance = 1e-6)
+  expect_identical(env$.oob_n, nrow(rfr_data()))   # 50 trees leave every patient out at least once
   expect_identical(env$forest$n, nrow(rfr_data()))   # na.impute kept every patient
   expect_true(file.exists(file.path(env$CACHE_DIR, "rfr.rds")))
   for (p in list(env$err, env$pred)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")

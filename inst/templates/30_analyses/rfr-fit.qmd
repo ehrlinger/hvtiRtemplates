@@ -381,27 +381,36 @@ save_figure(.fig, "rfr-fit-diagnostics-predicted")
 
 ```{r}
 #| label: tbl-variance-explained
-#| tbl-cap: "Variance explained. The out-of-bag mean squared error after the last tree, the variance of the outcome, and
-#|   the share of that variance the forest explains, one minus their ratio."
+#| tbl-cap: "Variance explained. How many patients have an out-of-bag prediction, the out-of-bag mean squared error after
+#|   the last tree, the variance of the outcome, and the share of that variance the forest explains, one minus their ratio."
 # The R squared randomForestSRC prints with the forest, written out so the
 # report shows where it comes from. Out of bag, so no holdout is needed.
+# A patient no tree left out has no out-of-bag prediction, and the error
+# leaves them out, so the table counts who it rests on.
 .oob_mse <- utils::tail(stats::na.omit(forest$err.rate), 1)
 .var_y <- stats::var(forest$yvar)
+.oob_n <- sum(!is.na(forest$predicted.oob))
 knitr::kable(data.frame(
-  measure = c("Out-of-bag mean squared error", "Variance of the outcome", "Variance explained (R squared)"),
-  value = signif(c(.oob_mse, .var_y, 1 - .oob_mse / .var_y), 3)
+  measure = c("Patients with an out-of-bag prediction", "Out-of-bag mean squared error", "Variance of the outcome",
+              "Variance explained (R squared)"),
+  value = c(paste(.oob_n, "of", length(forest$yvar)),
+            format(signif(c(.oob_mse, .var_y, 1 - .oob_mse / .var_y), 3)))
 ))
 ```
 
-The three rows, in order:
+The four rows, in order:
 
+- **Patients with an out-of-bag prediction.** A patient gets one only from a tree grown without them. Each tree
+  leaves out about a third of the patients, so after *b* trees a patient has none with a chance of roughly
+  0.63 to the power *b*: most of the cohort after one tree, about 1 in 100 after ten. The error below is computed on
+  these patients alone. When this row is short of the whole cohort, the forest has too few trees; raise `NTREE`.
 - **Out-of-bag mean squared error.** Each patient is predicted only by the trees grown without them, the
   out-of-bag trees, and the error is the mean of the squared differences between those predictions and the observed
   outcomes. It is in the outcome's units squared. It is the last point of the error curve above, which is not an
-  average of each tree's error: the point at tree *b* is the error of the forest made of the first *b* trees. Each
-  tree leaves out about a third of the patients, so in the first few trees many patients have no out-of-bag
-  prediction yet and the curve's left end is high and noisy. The table reads the last tree, so it rests on every
-  patient, and it is trustworthy once that curve has levelled off; if it has not, raise `NTREE`.
+  average of each tree's error: the point at tree *b* is the error of the forest made of the first *b* trees. In the
+  first few trees many patients have no out-of-bag prediction yet, so the curve's left end is high and noisy. The
+  table reads the last tree, and it is trustworthy once that curve has levelled off and the first row counts the
+  whole cohort; if either falls short, raise `NTREE`.
 - **Variance of the outcome.** The spread of the observed outcome about its mean, in the same squared units. It is
   the mean squared error of the simplest prediction there is, the mean outcome for every patient, and so the
   baseline the forest must beat.
