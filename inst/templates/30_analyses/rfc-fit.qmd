@@ -176,6 +176,15 @@ RESPONSE <- "dead"
 # "yes" for no/yes, or the clinical category of interest for multiclass data.
 ROC_CLASS <- NA_character_
 
+# EDIT: class imbalance. When the larger of two classes outnumbers the smaller
+# by IMBALANCE_RATIO or more, the forest is grown as randomForestSRC's quantile
+# classifier (RFQ) and scored by normalized Brier rather than misclassification:
+# a forest that always predicts the larger class looks accurate by error rate,
+# and its importance ranks variables by how well they predict that class. RFQ
+# takes two classes only, so more classes get a warning. 3 is a start, not
+# evidence. Inf never grows RFQ. Changing it, or crossing it, needs REFIT.
+IMBALANCE_RATIO <- 3
+
 # EDIT: the candidate predictors. Name them rather than taking every column: a
 # built dataset carries identifiers, dates and derived outcomes, and a forest
 # will split on a date that quietly encodes follow-up.
@@ -295,6 +304,10 @@ if (!is.character(ROC_CLASS) || length(ROC_CLASS) != 1L || is.na(ROC_CLASS) || !
        " is not an observed level. Choose one of: ", paste(levels(d[[RESPONSE]]), collapse = ", "), ".", call. = FALSE)
 }
 ROC_OUTCOME <- match(ROC_CLASS, levels(d[[RESPONSE]]))
+# Read before any forest grows: it decides which forest that is. Under na.omit, rfsrc() drops a
+# patient missing any predictor itself, so the classes are counted on the patients it keeps.
+.balance_rows <- if (NA_ACTION == "na.omit") stats::complete.cases(d[PREDICTORS]) else rep(TRUE, nrow(d))
+.balance <- hvtiRtemplates:::.class_balance(d[[RESPONSE]][.balance_rows], IMBALANCE_RATIO)
 
 # A forest splits a text column only as a factor, so text predictors are
 # converted here, and named, rather than left for the fit to refuse or coerce.
@@ -352,12 +365,34 @@ model <- stats::reformulate(".", response = RESPONSE)
 # object beside the formula, `job_data` and its patient IDs included, into
 # the forest.
 environment(model) <- globalenv()
-forest <- cache_fit(
-  "rfc-forest",
-  rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none", block.size = 1, seed = -abs(SEED)),
-  seed = SEED, dir = CACHE_DIR, refit = REFIT
-)
+# Two calls rather than one with switched arguments, so a balanced outcome keeps the cache key it
+# had before the imbalance switch existed. splitrule = "auc" is imbalanced()'s default for RFQ.
+forest <- if (.balance$rfq) {
+  cache_fit(
+    "rfc-forest",
+    rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none", block.size = 1, seed = -abs(SEED),
+          rfq = TRUE, perf.type = "brier", splitrule = "auc"),
+    seed = SEED, dir = CACHE_DIR, refit = REFIT
+  )
+} else {
+  cache_fit(
+    "rfc-forest",
+    rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = "none", block.size = 1, seed = -abs(SEED)),
+    seed = SEED, dir = CACHE_DIR, refit = REFIT
+  )
+}
 forest
+```
+
+```{r}
+#| label: class-balance
+#| echo: false
+#| results: asis
+cat(.balance$text)
+# The error below is the forest's own, so its caption names it.
+.error_cap <- paste("Out-of-bag error by number of trees, overall and per class. Each solid line traces the",
+                    .balance$metric, "of one outcome after each additional tree, the line labeled all being the",
+                    "overall error, one color per line as in the legend.")
 ```
 
 `importance = "none"` is deliberate. Importance is the explain job's work, and
@@ -371,12 +406,14 @@ One block per tree gives the curve that shows whether `NTREE` was large enough.
 
 ```{r}
 #| label: fig-diagnostics-error
-#| fig-cap: "Out-of-bag error by number of trees, overall and per class. Each solid line traces the error rate of one outcome
-#|   after each additional tree, the line labeled all being the overall error, one color per line as in the legend."
+#| fig-cap: !expr .error_cap
 # Out-of-bag error by number of trees, overall and per class.
 err <- gg_error(forest)
 # The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.
+# ggRandomForests labels the axis error rate whatever the forest scored; an RFQ forest scored Brier.
 .fig <- plot(err) +
+  if (.balance$rfq) ggplot2::labs(y = "OOB normalized Brier score")
+.fig <- .fig +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(.fig, "rfc-fit-diagnostics-error")
 .fig
@@ -490,10 +527,19 @@ if (!.learning_boot) {
           "double-bootstrap such a forest. The curve stops at the largest fraction.")
 }
 # Quoted once, so the check below and cache_fit() read the same call.
+# subsample() refits with the forest's own rfq and perf.type, so an RFQ forest's refits are RFQ too.
+# Each is assigned straight from quote(), the form the seed check follows to the seeded cache_fit() below.
 .learning_code <- quote({
   .lf <- rfsrc(model, data = .d_learn, ntree = LEARNING_NTREE, na.action = NA_ACTION, importance = "permute", seed = -abs(SEED))
   learning_subsample(.lf, fractions = LEARNING_FRACTIONS, replicates = LEARNING_B, bootstrap = .learning_boot)
 })
+if (.balance$rfq) {
+  .learning_code <- quote({
+    .lf <- rfsrc(model, data = .d_learn, ntree = LEARNING_NTREE, na.action = NA_ACTION, importance = "permute",
+                 seed = -abs(SEED), rfq = TRUE, perf.type = "brier", splitrule = "auc")
+    learning_subsample(.lf, fractions = LEARNING_FRACTIONS, replicates = LEARNING_B, bootstrap = .learning_boot)
+  })
+}
 # Refused outside run_job() only when the refits will actually run: a current cache loads, even under REFIT.
 if (hvtiRutilities::cache_would_fit("rfc-learning", .learning_code, seed = SEED, dir = CACHE_DIR, refit = REFIT)) {
   hvtiRtemplates::guard_long_fit("rfc-learning", dir = CACHE_DIR,
@@ -538,7 +584,7 @@ if (.learning_filled) {
                                               "as a square, the cohort's count: the expected number in each ",
                                               "draw)") else ""
 .learning_caps <- list(
-  tbl = paste(paste0("Learning curve. Error is the mean out-of-bag error rate of the refits at each ",
+  tbl = paste(paste0("Learning curve. Error is the mean out-of-bag ", .balance$metric, " of the refits at each ",
                      "fraction; agreement is between the refits' top variables by importance. Smallest class",
                      " counts the patients in the outcome's rarest class."),
               if (.learning_boot) paste0("Fraction 1 is a bootstrap of the whole cohort: its count is the ",
@@ -554,7 +600,7 @@ if (.learning_filled) {
                     paste0("Jaccard runs from 0, no top variable shared, to 1, the same set; Kendall tau ",
                            "from -1, the order reversed, through 0, no relation, to 1, the same order. The dashed line marks 0."),
                     .learning_note),
-  error = paste(sprintf(paste0("Out-of-bag error rate by the number of cases in the smallest class in each ",
+  error = paste(sprintf(paste0("Out-of-bag ", .balance$metric, " by the number of cases in the smallest class in each ",
                                "refit%s. Gray points are single refits and the black line their mean, each ",
                                "mean drawn in its fraction's marker. Boxes span the 15th to 85th percentile of ",
                                "the refits, with a line at the median. Open markers have fewer than 50 cases ",
@@ -616,6 +662,8 @@ save_figure(.fig, "rfc-fit-learning-stability")
 .fig <- plot(learning, panel = "error") +
   hvtiRtemplates:::.learning_error_box(learning) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
+# The axis says error rate for any classification forest; an RFQ forest's refits scored Brier.
+if (.balance$rfq) .fig <- .fig + ggplot2::labs(y = "OOB normalized Brier score")
 save_figure(.fig, "rfc-fit-learning-error")
 .fig
 ```

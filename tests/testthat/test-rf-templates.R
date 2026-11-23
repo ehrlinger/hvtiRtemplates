@@ -635,6 +635,62 @@ test_that("rfc-fit draws the learning curve against the smallest class", {
   }
 })
 
+# 50 versicolor to 15 virginica: 3.3 to 1, past the default IMBALANCE_RATIO of 3.
+rfc_imbalanced_data <- function() {
+  d <- rfc_data()
+  d[c(which(d$Species == "versicolor"), which(d$Species == "virginica")[1:15]), ]
+}
+
+test_that("rfc-fit grows an imbalanced two-class outcome as RFQ, and its refits and explain follow", {
+  rf_skip_unless_stack(c(rf_template_packages("rfc", "fit"), rf_template_packages("rfc", "explain")))
+  env <- rf_env(rfc_imbalanced_data())
+  choices <- utils::modifyList(rfc_choices, list(LEARNING_FRACTIONS = 0.5, LEARNING_B = 2, LEARNING_NTREE = 25))
+  rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "class-balance", "fig-diagnostics-error",
+                         "learning", "tbl-learning", "fig-learning-error", "save"), env, choices)
+
+  expect_true(env$.balance$rfq)
+  expect_true(env$forest$forest$rfq)
+  expect_identical(env$forest$forest$perf.type, "brier")
+  expect_match(env$.error_cap, "normalized Brier score", fixed = TRUE)
+  expect_match(env$.learning_caps$error, "normalized Brier score", fixed = TRUE)
+  # subsample() refits with the forest's own settings, so the learning curve is RFQ too.
+  expect_true(env$learning_fits[[1]]$rf$forest$rfq)
+  # The last figure drawn, the learning error, names the score on its axis, not ggRandomForests' error rate.
+  expect_identical(env$.fig$labels$y, "OOB normalized Brier score")
+
+  explain <- new.env(parent = globalenv())
+  explain$.root <- env$.root
+  rf_run("rfc", "explain", explain_labels, explain, list(TOP_K = 2, SEED = 1))
+  expect_identical(explain$vi$perf.type, "brier")
+  expect_length(explain$sel, 2L)
+})
+
+test_that("rfc-fit counts the classes on the patients na.omit keeps", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
+  # 50 versicolor to 18 virginica is 2.8 to 1, under 3. Three virginica missing a predictor leave the
+  # forest 50 to 15, 3.3 to 1, so na.omit's cohort is past the ratio although the read one is not.
+  d <- rfc_data()
+  d <- d[c(which(d$Species == "versicolor"), which(d$Species == "virginica")[1:18]), ]
+  d$Sepal.Width[which(d$Species == "virginica")[1:3]] <- NA
+  env <- rf_env(d)
+  rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data"), env, rfc_choices)
+  expect_true(env$.balance$rfq)
+  expect_equal(env$.balance$ratio, 50 / 15)
+})
+
+test_that("rfc-fit keeps a balanced outcome's forest, and its cache key, as before", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
+  env <- rf_env(rfc_data())
+  rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "class-balance"), env, rfc_choices)
+  expect_false(env$.balance$rfq)
+  expect_false(isTRUE(env$forest$forest$rfq))
+  expect_identical(env$.balance$text, "")
+  # The balanced branch is the call the template made before the switch existed, word for word.
+  src <- paste(readLines(template_path("rfc", "fit"), warn = FALSE), collapse = "\n")
+  expect_true(grepl(paste0("rfsrc(model, data = d, ntree = NTREE, na.action = NA_ACTION, importance = \"none\", ",
+                           "block.size = 1, seed = -abs(SEED)),"), src, fixed = TRUE))
+})
+
 test_that("rfc-fit selects the named ROC class regardless of factor order", {
   rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
   d <- rfc_data()
