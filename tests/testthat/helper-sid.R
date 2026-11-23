@@ -49,12 +49,13 @@ sid_fit_first <- function(data = sid_data(), choices = sid_fit_choices, .local_e
   env
 }
 
-sid_clusters_choices <- list(K_RANGE = 2:5, K = 3L, OVERRIDES = list(), COLLAPSE = NULL, MIN_SIZE = 20,
+sid_clusters_choices <- list(K_RANGE = 2:5, K = 3L, OVERRIDES = list(), REFERENCE = NULL, COLLAPSE = NULL, MIN_SIZE = 20,
                              K_METRICS_MAX = 8, SAVE_FIGURES = FALSE, FIGURES = NULL)
 
 # Every chunk of sid-clusters, in order.
 sid_clusters_labels <- c("setup", "edit-study-choices", "sid-helpers", "handoff", "pam", "fig-metrics", "tbl-metrics",
-                         "tbl-sizes", "small-clusters", "fig-sankey", "sankey-single", "k-unset", "fig-silhouette", "tbl-silhouette",
+                         "tbl-sizes", "tbl-reference", "small-clusters", "fig-sankey", "sankey-single", "k-unset",
+                         "fig-silhouette", "tbl-silhouette",
                          "fig-mds", "tbl-collapse", "save")
 
 # sid-clusters run in the set a sid-fit just wrote, in the same study. Its fig-silhouette chunk prints the plot,

@@ -82,8 +82,24 @@
   invisible(resolved)
 }
 
+# Subsetting rows with `[` drops a plain vector's attributes, "label" among
+# them, so a joined result would read as unlabeled (#614). Each column of `out`
+# without a label takes the one its source column carries, the first source
+# that has one winning.
+.keep_labels <- function(out, ...) {
+  for (source in list(...)) {
+    for (v in intersect(names(out), names(source))) {
+      label <- attr(source[[v]], "label", exact = TRUE)
+      if (!is.null(label) && is.null(attr(out[[v]], "label", exact = TRUE))) attr(out[[v]], "label") <- label
+    }
+  }
+  out
+}
+
 .join_ancillary <- function(cohort, ancillary, id, ancillary_id, join_key, join_vars = NULL, reduce = NULL,
-                            filter = NULL) {
+                            filter = NULL, keep_unjoined = NULL) {
+  # The joined dataset as read, its identifier under the cohort's name, for its labels.
+  source_labels <- stats::setNames(ancillary, replace(names(ancillary), names(ancillary) == ancillary_id, id))
   cols <- if (is.null(join_vars)) names(cohort) else unique(c(id, .match_columns(join_vars, names(cohort))))
   absent <- setdiff(cols, names(cohort))
   if (length(absent)) {
@@ -142,10 +158,28 @@
 
   carried <- cohort[match(anc_ids, cohort_ids), setdiff(cols, id), drop = FALSE]
   if (is.null(reduce)) {
-    out <- cbind(ancillary, carried)
+    # The cohort decides the patients (#613): a patient with no record keeps
+    # one row, the joined columns missing, as under REDUCE. Indexing with NA
+    # gives that row each column's own type, a Date staying a Date. Patients
+    # stay in cohort order, each one's records in the order they were read.
+    # By join type, unless the caller says (maintainer's decision, 2026-11-23):
+    # a wide join, keyed on the ID alone such as an age file, adds columns to
+    # the cohort and keeps every patient; a long join, of repeated records
+    # such as echoes, keeps the patients who have records, since a model of
+    # those records learns nothing from a patient with none. Either way the
+    # patients left out are counted in `left_out`, for the data table and the
+    # job's own note, so none is lost silently.
+    if (is.null(keep_unjoined)) keep_unjoined <- all(join_key == ancillary_id)
+    unjoined <- which(!cohort_ids %in% anc_ids)
+    pos <- c(match(anc_ids, cohort_ids), if (keep_unjoined) unjoined)
+    records <- ancillary[c(seq_len(nrow(ancillary)), rep(NA_integer_, length(pos) - nrow(ancillary))), , drop = FALSE]
+    records[[id]] <- cohort[[id]][pos]
+    out <- cbind(records, cohort[pos, setdiff(cols, id), drop = FALSE])
+    out <- .keep_labels(out[order(pos, method = "radix"), , drop = FALSE], cohort, source_labels)
     rownames(out) <- NULL
     return(list(data = out, key = replace(join_key, join_key == ancillary_id, id), outside = outside,
-                without = sum(!cohort_ids %in% anc_ids), ignored = 0L, rule = NULL, steps = NULL))
+                without = length(unjoined), left_out = if (keep_unjoined) 0L else length(unjoined), ignored = 0L,
+                rule = NULL, steps = NULL, keep_unjoined = keep_unjoined))
   }
 
   columns <- .check_reduce(reduce, ancillary, cohort)
@@ -200,12 +234,27 @@
   chosen <- best
   picked <- ancillary[chosen, setdiff(names(ancillary), id), drop = FALSE]
   m <- match(cohort_ids, anc_ids[chosen])
-  out <- cbind(cohort[cols], picked[m, , drop = FALSE])
+  out <- .keep_labels(cbind(cohort[cols], picked[m, , drop = FALSE]), cohort, source_labels)
   rownames(out) <- NULL
   # The reduction as resolved, its fields in name order and its columns as the
   # data spell them, so the same choice written two ways records the same.
   resolved <- c(list(by = columns$by, rule = rule), if (identical(rule, "nearest")) list(to = columns$to))
-  list(data = out, key = id, outside = outside, without = sum(!cohort_ids %in% with_records), ignored = ignored,
+  list(data = out, key = id, outside = outside, without = sum(!cohort_ids %in% with_records), left_out = 0L,
+       ignored = ignored,
        unvalued = sum(cohort_ids %in% with_records & is.na(m)), rule = .reduce_text(resolved), steps = steps,
        reduce = resolved)
+}
+
+# The sentence read_job_data() raises, as a warning so a rendered report
+# shows it whatever template read the data, old study copies included, when a
+# long join left cohort patients out for having no joined record (#613).
+.unjoined_note <- function(n, join) {
+  paste0(format(n, big.mark = ","), if (n == 1L) " cohort patient has" else " cohort patients have", " no record in `",
+         join, "`, and ", if (n == 1L) "is" else "are", " left out: a long join reads the joined records, one row each.")
+}
+
+.warn_unjoined <- function(n, join) {
+  msg <- .unjoined_note(n, join)
+  warning(structure(class = c("hvtiRtemplates_unjoined", "warning", "condition"),
+                    list(message = msg, call = NULL, n = n, join = join)))
 }

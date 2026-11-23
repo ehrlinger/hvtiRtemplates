@@ -124,15 +124,31 @@ K <- NULL
 #   OVERRIDES <- list(pm4 = c("1" = "B", "2" = "D", "3" = "C", "4" = "A"))
 # PAM numbers its clusters arbitrarily, so an override is a domain decision
 # written down (which cluster a paper calls A), not a fix. Read the cluster
-# numbers from the sizes table. list() lets the lineage rule choose. Overrides
-# are keyed on PAM numbers, which sid-fit's forest decides: after a refit they go
-# stale, so read the sizes table again before reusing them.
+# numbers from the sizes table's pam column, or from the last render with
+#   readRDS(set_path("estimates", "sid-clusters.rds"))$letters$pm4
+# list() lets the lineage rule choose. Overrides are keyed on PAM numbers, which
+# sid-fit's forest decides: after a refit they go stale, so read them again
+# before reusing them. To match an earlier analysis, REFERENCE below does this
+# for you.
 OVERRIDES <- list()
+
+# EDIT: optionally, an earlier assignment of these patients, such as a
+# published one, registered as a dataset keyed by the patient ID:
+#   REFERENCE <- list(dataset = "published_clusters", col = "C7")
+# The clusters at K take its letters, each matched to the reference group it
+# shares most patients with (best Jaccard, one to one), and a table reports
+# how well each matched. A cluster left over keeps the lineage rule's letter.
+# It replaces OVERRIDES at K, so set one or the other. NULL matches nothing.
+REFERENCE <- NULL
 
 # EDIT: optionally, groups made of clusters at K, such as
 #   COLLAPSE <- list(Z = c("C", "D", "E"))
 # written as an extra column G<K>. Letters not named keep their own letter.
-# NULL writes no group column.
+# NULL writes no group column. The letters are this render's: the lineage rule
+# chose them, so they need not be the clusters another analysis called C, D
+# and E. A COLLAPSE copied from one needs REFERENCE (or OVERRIDES at K) to
+# give the clusters that analysis's letters first; without either it warns.
+# With REFERENCE it may name only letters a cluster matched, and stops otherwise.
 COLLAPSE <- NULL
 
 # EDIT: a cluster smaller than this at K is flagged. Later per-cluster tables
@@ -216,6 +232,86 @@ sid_align_labels <- function(mat, overrides = list(), pool = LETTERS) {
     out[, k] <- got[colk]
   }
   out
+}
+
+# An identifier as text, a whole number without exponent or decimals, so an
+# ID stored as a number in one dataset and as text in another still matches.
+sid_id_text <- function(x) {
+  out <- if (is.numeric(x)) format(x, scientific = FALSE, trim = TRUE, drop0trailing = TRUE) else trimws(as.character(x))
+  out[is.na(x)] <- NA_character_
+  out
+}
+
+# Where each clustered patient sits in the reference, matched on the IDs as
+# text. Two reference IDs that differ as stored, "1" and " 1" say, pass a key
+# check and become one ID here; match() would then take the first silently, so
+# that stops instead.
+sid_reference_at <- function(ids, ref_ids) {
+  ref <- sid_id_text(ref_ids)
+  twice <- unique(ref[!is.na(ref) & duplicated(ref)])
+  if (length(twice)) {
+    stop("REFERENCE lists ID ", paste(utils::head(twice, 5L), collapse = ", "),
+         " more than once when its IDs are read as text, so its reference group is ambiguous.", call. = FALSE)
+  }
+  match(sid_id_text(ids), ref, incomparables = NA)
+}
+
+# REFERENCE names a registered dataset and the column of its assignment.
+sid_check_reference <- function(reference) {
+  if (is.null(reference)) return(invisible(NULL))
+  ok <- is.list(reference) && setequal(names(reference), c("dataset", "col")) && length(reference) == 2L &&
+    all(vapply(reference, function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x), logical(1)))
+  if (!ok) {
+    stop("REFERENCE must be NULL or list(dataset = \"<registered dataset>\", col = \"<its cluster column>\").",
+         call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+# The letters a reference assignment gives the PAM clusters at K. Every pair
+# of a cluster and a reference group is scored by Jaccard, the patients in both
+# over the patients in either, among the patients the reference assigns. Pairs
+# are taken best first, each cluster and each group once, so the match is one
+# to one; a cluster left over, when the reference has fewer groups, gets no
+# letter here and keeps the lineage rule's. Never keyed on PAM's own numbers,
+# which change with every refit, only on the patients.
+sid_match_reference <- function(pam, reference) {
+  pam <- as.character(pam)
+  reference <- as.character(reference)
+  known <- !is.na(reference)
+  if (!any(known)) {
+    stop("REFERENCE assigns none of the patients clustered here: check that it holds the same patient IDs, ",
+         "stored the same way.", call. = FALSE)
+  }
+  ids <- sort(unique(pam))
+  groups <- sort(unique(reference[known]))
+  jaccard <- matrix(0, length(ids), length(groups), dimnames = list(ids, groups))
+  for (i in ids) {
+    for (g in groups) {
+      a <- known & pam == i
+      b <- known & reference == g
+      jaccard[i, g] <- sum(a & b) / sum(a | b)
+    }
+  }
+  letter <- stats::setNames(rep(NA_character_, length(ids)), ids)
+  score <- stats::setNames(rep(NA_real_, length(ids)), ids)
+  left <- jaccard
+  # A tie goes to the cluster whose first patient comes first, then to the
+  # earlier group, so PAM's numbering never decides it.
+  first <- stats::setNames(match(ids, pam), ids)
+  while (length(left) && max(left) > 0) {
+    tied <- which(left == max(left), arr.ind = TRUE)
+    at <- tied[order(first[rownames(left)[tied[, 1L]]], tied[, 2L])[1L], ]
+    i <- rownames(left)[at[[1L]]]
+    g <- colnames(left)[at[[2L]]]
+    letter[[i]] <- g
+    score[[i]] <- left[at[[1L]], at[[2L]]]
+    left <- left[-at[[1L]], -at[[2L]], drop = FALSE]
+  }
+  list(overrides = letter[!is.na(letter)],
+       table = data.frame(pam = ids, letter = unname(letter), patients = as.integer(table(factor(pam, ids))),
+                          jaccard = unname(score)),
+       unassigned = sum(!known))
 }
 
 # Groups made of clusters. A letter not in the map keeps its own letter.
@@ -383,6 +479,28 @@ if (length(.unknown)) {
        ". Name them pm<K>, such as pm4, for a K in ", toString(K_RANGE), ".", call. = FALSE)
 }
 .pm <- as.data.frame(lapply(sid_pam[paste0("pm", K_RANGE)], function(p) p$clustering))
+# A REFERENCE gives the clusters at K its letters, by the patients they share,
+# so a COLLAPSE copied from that analysis merges the groups it named (#611).
+sid_check_reference(REFERENCE)
+.reference <- NULL
+.overrides_given <- OVERRIDES
+if (!is.null(REFERENCE) && !is.null(K)) {
+  .pmk <- paste0("pm", K)
+  if (!is.null(OVERRIDES[[.pmk]])) {
+    stop("REFERENCE and OVERRIDES$", .pmk, " both set the letters at K = ", K, ". Keep one.", call. = FALSE)
+  }
+  .ref_read <- hvtiRtemplates::read_job_data(.cfg, dataset = REFERENCE$dataset, id_col = .id, key_cols = .id)
+  # Matched ignoring case, as every column setting is.
+  .ref_col <- names(.ref_read$data)[tolower(names(.ref_read$data)) == tolower(REFERENCE$col)][1L]
+  if (is.na(.ref_col)) {
+    stop("REFERENCE's col, ", REFERENCE$col, ", is not a column of `", REFERENCE$dataset, "`.", call. = FALSE)
+  }
+  .ref_at <- sid_reference_at(sid_ids, .ref_read$data[[.id]])
+  .reference <- sid_match_reference(.pm[[.pmk]], .ref_read$data[[.ref_col]][.ref_at])
+  .overrides_given <- OVERRIDES
+  OVERRIDES[[.pmk]] <- .reference$overrides
+  .provenance_data <- c(.provenance_data, list(.ref_read$provenance))
+}
 .letters <- sid_align_labels(.pm, OVERRIDES)
 sid_letters <- data.frame(sid_ids, .letters, check.names = FALSE)
 names(sid_letters) <- c(.id, paste0("C", K_RANGE))
@@ -398,6 +516,21 @@ knitr::kable(.shown, row.names = FALSE)
 if (nrow(.small)) {
   warning("At K = ", K, ", cluster(s) ", toString(.small$letter), " hold fewer than ", MIN_SIZE, " patients.",
           call. = FALSE)
+}
+```
+
+```{r}
+#| label: tbl-reference
+#| tbl-cap: "Clusters at K matched to REFERENCE; Jaccard is patients shared with the group over patients in either"
+#| include: !expr '!is.null(K) && !is.null(REFERENCE)'
+if (!is.null(.reference)) {
+  if (.reference$unassigned) {
+    warning(.reference$unassigned, if (.reference$unassigned == 1L) " patient" else " patients",
+            " clustered here", if (.reference$unassigned == 1L) " has" else " have", " no group in `",
+            REFERENCE$dataset, "`, so the match is scored on the others.", call. = FALSE)
+  }
+  knitr::kable(transform(.reference$table, jaccard = round(jaccard, 3)), row.names = FALSE,
+               col.names = c("PAM cluster", "Reference letter", "Patients", "Jaccard"))
 }
 ```
 
@@ -530,6 +663,27 @@ here may still be separate; the silhouette above is the better guide.
 #| tbl-cap: "Clusters at K and the groups COLLAPSE makes of them"
 #| include: !expr '!is.null(K) && !is.null(COLLAPSE)'
 if (!is.null(K) && !is.null(COLLAPSE)) {
+  # With nothing pinning the letters at K, a collapse names this render's
+  # lineage letters, and one copied from another analysis can merge clusters
+  # other than the ones it meant, with no other sign (#611).
+  # With a REFERENCE, a collapse names the reference's groups. A group no
+  # cluster matched leaves its letter free, and a cluster that matched nothing
+  # can take it from the lineage rule; merging that cluster as though it were
+  # the reference's group is the mistake REFERENCE exists to prevent.
+  if (!is.null(.reference)) {
+    .unpinned <- setdiff(unlist(COLLAPSE, use.names = FALSE), .reference$overrides)
+    if (length(.unpinned)) {
+      stop("COLLAPSE names ", toString(.unpinned), ", which no cluster at K took from REFERENCE: ",
+           if (length(.unpinned) == 1L) "that letter is" else "those letters are", " the lineage rule's, not `",
+           REFERENCE$dataset, "`'s. Check the REFERENCE table, and name only letters a cluster matched.",
+           call. = FALSE)
+    }
+  }
+  if (is.null(OVERRIDES[[paste0("pm", K)]])) {
+    warning("COLLAPSE merges this render's own letters at K = ", K, ", which the lineage rule chose. A COLLAPSE ",
+            "copied from another analysis names that analysis's letters, which need not be the same clusters: set ",
+            "REFERENCE to take its letters, or pin them with OVERRIDES$pm", K, ".", call. = FALSE)
+  }
   sid_letters[[paste0("G", K)]] <- sid_collapse(.at, COLLAPSE)
   knitr::kable(as.data.frame.matrix(table(cluster = .at, group = sid_letters[[paste0("G", K)]])))
 }
@@ -598,7 +752,8 @@ sid_clusters_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
          tab <- table(.pm[[col]], .letters[, col])
          stats::setNames(colnames(tab)[apply(tab, 1, which.max)], rownames(tab))
        }),
-       k = K, overrides = OVERRIDES, collapse = COLLAPSE),
+       # The overrides as written, so they can be copied back beside REFERENCE.
+       k = K, overrides = .overrides_given, reference = REFERENCE, collapse = COLLAPSE),
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   cohort = .cohort

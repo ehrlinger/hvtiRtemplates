@@ -97,6 +97,49 @@ test_that("sid_collapse stops on a map that does not name its groups", {
   expect_error(h$sid_collapse(x, stats::setNames(list(c("C", "D"), "E"), c("Z", ""))), msg)
 })
 
+test_that("sid_match_reference matches clusters to reference letters one to one, by Jaccard", {
+  h <- sid_helpers_env()
+  # PAM's numbers are arbitrary; the reference calls the same three groups Q, R and S.
+  pam <- c(2, 2, 2, 3, 3, 3, 1, 1, 1, 1)
+  ref <- c("Q", "Q", "Q", "R", "R", "S", "S", "S", "S", "S")
+  m <- h$sid_match_reference(pam, ref)
+  expect_identical(m$overrides, c("1" = "S", "2" = "Q", "3" = "R"))
+  expect_identical(m$table$jaccard, c(4 / 5, 1, 2 / 3))
+  expect_identical(m$unassigned, 0L)
+  # Patients the reference does not assign are left out of the scores and counted.
+  m <- h$sid_match_reference(pam, replace(ref, 1, NA))
+  expect_identical(m$unassigned, 1L)
+  expect_identical(m$overrides[["2"]], "Q")
+  # A reference with fewer groups leaves a cluster to the lineage rule, and none gets two letters.
+  m <- h$sid_match_reference(c(1, 1, 2, 2, 3, 3), c("Q", "Q", "Q", "R", "R", "R"))
+  expect_identical(m$overrides, c("1" = "Q", "3" = "R"))
+  expect_identical(m$table$letter, c("Q", NA, "R"))
+  expect_error(h$sid_match_reference(pam, rep(NA_character_, 10)), "REFERENCE assigns none of the patients")
+  # A tie goes to the cluster whose first patient comes first, however PAM numbered them.
+  ref <- c("Q", "Q", "R", "R")
+  expect_identical(h$sid_match_reference(c(1, 2, 1, 2), ref)$overrides[["1"]], "Q")
+  expect_identical(h$sid_match_reference(c(2, 1, 2, 1), ref)$overrides[["2"]], "Q")
+})
+
+test_that("sid_check_reference names a malformed REFERENCE", {
+  h <- sid_helpers_env()
+  expect_null(h$sid_check_reference(NULL))
+  expect_null(h$sid_check_reference(list(dataset = "published", col = "C7")))
+  msg <- "REFERENCE must be NULL or list\\(dataset = "
+  expect_error(h$sid_check_reference("published"), msg)
+  expect_error(h$sid_check_reference(list(dataset = "published")), msg)
+  expect_error(h$sid_check_reference(list(dataset = "published", col = c("C6", "C7"))), msg)
+  expect_error(h$sid_check_reference(list(dataset = "published", col = "C7", k = 7)), msg)
+})
+
+test_that("sid_reference_at matches IDs across types and stops on IDs that collide once normalized", {
+  h <- sid_helpers_env()
+  expect_identical(h$sid_reference_at(c(2, 1, 3), c("1", " 2", NA)), c(2L, 1L, NA))
+  expect_error(h$sid_reference_at(c(1, 2), c("1", " 1", "2")), "1.*more than once")
+  expect_error(h$sid_reference_at(c(1, 2), c(1, 1.0, 2)), "1.*more than once")
+  expect_identical(h$sid_reference_at(1:2, c(NA, NA, "1", "2")), c(3L, 4L))
+})
+
 test_that("sid_mds_signs gives the same picture under row order and sign flips", {
   h <- sid_helpers_env()
   xy <- cbind(c(1, -3, 2, 0.5), c(-0.2, 0.1, 0.4, -2))
@@ -234,7 +277,9 @@ test_that("sid-clusters writes and registers the cluster letters, and nothing el
   skip_on_cran()
   rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
   env <- sid_fit_first()
-  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(COLLAPSE = list(Z = c("B", "C")))))
+  # Nothing pins the letters at K here, so the COLLAPSE warns (#611).
+  expect_warning(sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(COLLAPSE = list(Z = c("B", "C"))))),
+                 "COLLAPSE merges this render's own letters")
   csv <- file.path(hvtiRutilities::study_dir("datasets", env$.root), "morphology-sid-clusters.csv")
   out <- utils::read.csv(csv)
   expect_identical(names(out), c("ccfid", "C2", "C3", "C4", "C5", "G3"))
@@ -251,6 +296,75 @@ test_that("sid-clusters writes and registers the cluster letters, and nothing el
   # The second render's letters are the flipped ones, patient by patient.
   expect_identical(again$c2[match(env$sid_letters$ccfid, again$ccfid)], as.character(env$sid_letters$C2))
   expect_false(identical(again$c2[match(out$ccfid, again$ccfid)], out$C2))
+})
+
+test_that("sid-clusters warns when COLLAPSE merges letters nothing pinned (#611)", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  env <- sid_fit_first()
+  collapse <- utils::modifyList(sid_clusters_choices, list(COLLAPSE = list(Z = c("B", "C"))))
+  expect_warning(sid_clusters_after(env, collapse), "COLLAPSE merges this render's own letters at K = 3")
+  # Pinned by hand, the letters at K are a decision written down, and there is nothing to warn of.
+  map <- readRDS(env$set_path("estimates", "sid-clusters.rds"))$letters$pm3
+  pinned <- utils::modifyList(collapse, list(OVERRIDES = list(pm3 = map)))
+  expect_no_warning(sid_clusters_after(env, pinned), message = "COLLAPSE merges")
+})
+
+test_that("sid-clusters takes the letters at K from a REFERENCE assignment, so a copied COLLAPSE merges its groups", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  d <- sid_data()
+  env <- sid_fit_first(d)
+  # A published assignment of the same patients, its letters unrelated to the lineage rule's.
+  published <- data.frame(ccfid = seq_len(nrow(d)), grp = c("Q", "R", "S")[d$truth])
+  dd <- hvtiRutilities::study_dir("datasets", env$.root)
+  utils::write.csv(published, file.path(dd, "published.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root = env$.root, file = "published.csv", dataset = "published",
+                                                 role = "named", key_cols = "ccfid"))
+  choices <- utils::modifyList(sid_clusters_choices, list(REFERENCE = list(dataset = "published", col = "grp"),
+                                                          COLLAPSE = list(Z = c("Q", "R"))))
+  expect_no_warning(sid_clusters_after(env, choices), message = "COLLAPSE merges")
+  at_k <- as.character(env$sid_letters$C3)
+  truth <- published$grp[match(env$sid_letters$ccfid, published$ccfid)]
+  # The planted groups are recovered nearly whole, so nearly every patient carries the reference's letter.
+  expect_gt(mean(at_k == truth), 0.9)
+  expect_setequal(unique(at_k), c("Q", "R", "S"))
+  expect_identical(env$sid_letters$G3 == "Z", at_k %in% c("Q", "R"))
+  expect_setequal(env$.reference$table$letter, c("Q", "R", "S"))
+  expect_true(all(env$.reference$table$jaccard > 0.8))
+  saved <- readRDS(env$set_path("estimates", "sid-clusters.rds"))
+  expect_identical(saved$reference, list(dataset = "published", col = "grp"))
+  # The overrides as written, not the ones REFERENCE derived.
+  expect_identical(saved$overrides, list())
+  # A REFERENCE and an override at the same K would be two answers to one question.
+  both <- utils::modifyList(choices, list(OVERRIDES = list(pm3 = saved$letters$pm3)))
+  expect_error(sid_clusters_after(env, both), "REFERENCE and OVERRIDES\\$pm3 both set the letters at K = 3")
+})
+
+test_that("with a REFERENCE, COLLAPSE may name only letters a reference match pinned", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  d <- sid_data()
+  env <- sid_fit_first(d)
+  # The reference assigns A and B to planted groups 1 and 2, and C only to
+  # patients outside this cohort, so the third cluster matches no group and
+  # takes a lineage letter, which may be C. A COLLAPSE naming C would merge it
+  # as though it were the reference's C, so it stops.
+  n <- nrow(d)
+  published <- data.frame(ccfid = c(seq_len(n), n + 1:10),
+                          grp = c(c("A", "B", NA)[d$truth], rep("C", 10)))
+  dd <- hvtiRutilities::study_dir("datasets", env$.root)
+  utils::write.csv(published, file.path(dd, "published.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root = env$.root, file = "published.csv", dataset = "published",
+                                                 role = "named", key_cols = "ccfid"))
+  ref <- list(dataset = "published", col = "grp")
+  bad <- utils::modifyList(sid_clusters_choices, list(REFERENCE = ref, COLLAPSE = list(Z = c("B", "C"))))
+  expect_error(suppressWarnings(sid_clusters_after(env, bad)),
+               "COLLAPSE names C, which no cluster at K took from REFERENCE")
+  # Letters the match pinned collapse as before.
+  good <- utils::modifyList(bad, list(COLLAPSE = list(Z = c("A", "B"))))
+  suppressWarnings(sid_clusters_after(env, good))
+  expect_identical(env$sid_letters$G3 == "Z", as.character(env$sid_letters$C3) %in% c("A", "B"))
 })
 
 test_that("sid-clusters stops on an OVERRIDES name that is no solution in K_RANGE", {

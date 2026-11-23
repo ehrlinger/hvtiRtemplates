@@ -19,6 +19,72 @@ test_that("the long form keeps one row per record, for cohort patients only", {
   expect_identical(out$without, 1L)
   expect_identical(out$ignored, 0L)
   expect_null(out$rule)
+  # A long join, by default, leaves patient 3 out and counts them (#613).
+  expect_identical(out$left_out, 1L)
+  expect_false(out$keep_unjoined)
+})
+
+test_that("a wide join, keyed on the ID alone, keeps every cohort patient, a patient with no record with its columns missing", {
+  # #613: a one-row-per-patient file, such as age at the index echo, joined
+  # without REDUCE dropped the cohort patients it had no row for.
+  wide <- data.frame(ccfid = c(1L, 2L, 4L), age_echo = c(51, 61, 41),
+                     echo_day = as.Date("2020-01-01") + c(1, 2, 4))
+  out <- hvtiRtemplates:::.join_ancillary(cohort, wide, "ccfid", "ccfid", "ccfid")
+  expect_identical(out$data$ccfid, 1:3)
+  expect_identical(out$data$age, c(50, 60, 70))
+  expect_identical(out$data$age_echo, c(51, 61, NA))
+  expect_s3_class(out$data$echo_day, "Date")
+  expect_true(is.na(out$data$echo_day[[3L]]))
+  expect_identical(out$without, 1L)
+  expect_identical(out$left_out, 0L)
+  expect_true(out$keep_unjoined)
+  expect_identical(out$key, "ccfid")
+  # keep_unjoined overrides the join type either way.
+  narrow <- hvtiRtemplates:::.join_ancillary(cohort, wide, "ccfid", "ccfid", "ccfid", keep_unjoined = FALSE)
+  expect_identical(narrow$data$ccfid, 1:2)
+  expect_identical(narrow$left_out, 1L)
+  all_kept <- join(keep_unjoined = TRUE)
+  expect_identical(all_kept$data$ccfid, c(1L, 1L, 1L, 2L, 3L))
+  expect_true(all(is.na(all_kept$data[all_kept$data$ccfid == 3L, c("echo_date", "ef")])))
+  expect_identical(all_kept$left_out, 0L)
+  # With REDUCE every cohort patient keeps one row, whatever keep_unjoined says.
+  r <- join(reduce = list(rule = "first", by = "echo_date"), keep_unjoined = FALSE)
+  expect_identical(r$data$ccfid, 1:3)
+  expect_identical(r$left_out, 0L)
+})
+
+test_that("the unjoined note counts the patients left out and names the joined dataset", {
+  expect_identical(hvtiRtemplates:::.unjoined_note(1L, "echo"),
+                   "1 cohort patient has no record in `echo`, and is left out: a long join reads the joined records, one row each.")
+  expect_match(hvtiRtemplates:::.unjoined_note(1234L, "echo"), "^1,234 cohort patients have no record in `echo`, and are left out")
+  w <- tryCatch(hvtiRtemplates:::.warn_unjoined(2L, "echo"), warning = function(w) w)
+  expect_s3_class(w, "hvtiRtemplates_unjoined")
+  expect_identical(w$n, 2L)
+  expect_null(conditionCall(w))
+})
+
+test_that("a join keeps the variable labels of the cohort and of the joined dataset", {
+  # Issue 614: selecting rows drops a plain vector's label attribute, so every
+  # cohort column lost its label and the report fell back to column names.
+  lab_cohort <- cohort
+  attr(lab_cohort$age, "label") <- "Age at operation (years)"
+  attr(lab_cohort$dt_surg, "label") <- "Date of operation"
+  attr(lab_cohort$ccfid, "label") <- "Patient identifier"
+  lab_echo <- echo
+  attr(lab_echo$ef, "label") <- "Ejection fraction (%)"
+  attr(lab_echo$echo_date, "label") <- "Date of echo"
+  labels <- c(ccfid = "Patient identifier", age = "Age at operation (years)", dt_surg = "Date of operation",
+              ef = "Ejection fraction (%)", echo_date = "Date of echo")
+  for (args in list(list(), list(keep_unjoined = TRUE), list(reduce = list(rule = "first", by = "echo_date")),
+                    list(reduce = list(rule = "nearest", by = "echo_date", to = "dt_surg")))) {
+    out <- do.call(hvtiRtemplates:::.join_ancillary,
+                   c(list(lab_cohort, lab_echo, "ccfid", "ccfid", c("ccfid", "echo_date")), args))
+    got <- vapply(names(labels), function(v) {
+      x <- attr(out$data[[v]], "label")
+      if (is.null(x)) NA_character_ else x
+    }, character(1L))
+    expect_identical(got, labels, info = paste(names(args), collapse = ","))
+  }
 })
 
 test_that("join_vars limits the cohort columns carried, and may name only the ID", {
