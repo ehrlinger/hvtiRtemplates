@@ -66,8 +66,8 @@ test_that("the unjoined note is empty with none left out and counts them otherwi
 })
 
 test_that("a join keeps the variable labels of the cohort and of the joined dataset", {
-  # #614: subsetting rows with `[` drops a plain vector's "label" attribute, so
-  # every cohort column lost its label and the report fell back to column names.
+  # Issue 614: selecting rows drops a plain vector's label attribute, so every
+  # cohort column lost its label and the report fell back to column names.
   lab_cohort <- cohort
   attr(lab_cohort$age, "label") <- "Age at operation (years)"
   attr(lab_cohort$dt_surg, "label") <- "Date of operation"
