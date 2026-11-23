@@ -35,9 +35,12 @@
   key <- candidates[vapply(names(candidates), printed, logical(1))]
   key <- key[order(toupper(names(key)))]
   # The same test .sentence_case() uses for a word that is plainly an acronym:
-  # upper case past its first letter, or holding a digit. Roman numerals are
+  # upper case past its first letter, or holding a digit. Here a word with a
+  # digit must also carry a capital: a variable name such as hba1c, printed in
+  # the report's variable column, is not an abbreviation. Roman numerals are
   # level text (NYHA class I to IV), and units are not keyed.
-  acronym <- grepl("^.[[:alnum:]]*[[:upper:]]", words) | grepl("[[:digit:]]", words) & grepl("[[:alpha:]]{2}", words)
+  acronym <- grepl("^.[[:alnum:]]*[[:upper:]]", words) |
+    grepl("[[:digit:]]", words) & grepl("[[:alpha:]]{2}", words) & grepl("[[:upper:]]", words)
   roman <- grepl("^[IVX]+$", words)
   missing <- words[acronym & !roman & !words %in% c(names(key), paste0(names(key), "s"), .table_key_units)]
   list(key = key, missing = sort(missing))
@@ -45,3 +48,12 @@
 
 # Units a table prints that are not abbreviations to key.
 .table_key_units <- c("mL", "dL", "mmHg", "mEq", "IU", "kPa", "pH")
+
+# The text of each cell a flextable prints, from information_data_chunk(). That
+# returns formatted runs, not cells: a label with markup, HbA~1c~, comes back as
+# "HbA" and "1c", which match neither the abbreviation nor anything else. The
+# runs of one cell are joined again before any word is read.
+.table_cells_text <- function(chunks) {
+  cell <- paste(chunks$.part, chunks$.row_id, chunks$.col_id, sep = "\r")
+  unname(vapply(split(chunks$txt, factor(cell, unique(cell))), paste, "", collapse = ""))
+}

@@ -635,9 +635,16 @@ ft <- hvtiRtables::hv_man_table(tbl)
 # adds to it. An abbreviation nothing expands is named in a warning, so define
 # it in _study.yml for every table in the study, or in ABBREVIATIONS for this one.
 .key_from <- c(ABBREVIATIONS, if (STDDIFF && !"Std. Diff." %in% names(ABBREVIATIONS)) c("Std. Diff." = "standardized difference"))
+# The words are read from a display copy, because the display and the saver add
+# the footer notes (Mean±SD, the test marks) after this point, and an
+# abbreviation printed only there needs the Key too. The table's own
+# definitions, such as CI for an interval column, are already in its Key.
 .key_for <- function(table) {
-  key <- hvtiRtemplates:::.table_key(flextable::information_data_chunk(table)$txt,
-                                     hvtiRutilities::study_abbreviations(.cfg), .key_from)
+  shown <- hvtiRtables::hv_man_table_display(table, abbreviations = NULL)
+  own <- attr(table, "hv_abbreviations", exact = TRUE)
+  key <- hvtiRtemplates:::.table_key(hvtiRtemplates:::.table_cells_text(flextable::information_data_chunk(shown)),
+                                     hvtiRutilities::study_abbreviations(.cfg),
+                                     c(.key_from, own[setdiff(names(own), names(.key_from))]))
   if (length(key$missing)) {
     warning("The table prints ", paste(key$missing, collapse = ", "), ", which its Key cannot expand. ",
             "Define each in _study.yml's abbreviations or in ABBREVIATIONS.", call. = FALSE)

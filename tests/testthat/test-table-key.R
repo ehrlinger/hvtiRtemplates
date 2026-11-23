@@ -17,7 +17,7 @@ test_that("ABBREVIATIONS adds to the key and overrides a study expansion", {
 })
 
 test_that("an abbreviation nothing expands is reported, not dropped silently", {
-  key <- .table_key(c("eGFR", "FEV1 (L)", "NYHA class", "IV", "SBP (mmHg)", "Volume (mL)"))
+  key <- .table_key(c("eGFR", "FEV1 (L)", "hba1c", "NYHA class", "IV", "SBP (mmHg)", "Volume (mL)"))
   expect_identical(key$missing, c("FEV1", "NYHA", "SBP", "eGFR"))
   expect_length(key$key, 0L)
 })
@@ -31,4 +31,15 @@ test_that("a word is matched whole or as its plural, and a phrase such as Std. D
 
 test_that("an unnamed ABBREVIATIONS entry is an error", {
   expect_error(.table_key("CI", extra = "confidence interval"), "ABBREVIATIONS")
+})
+
+test_that("a cell's runs are joined before its words are read", {
+  chunks <- data.frame(.part = c("header", "body", "body", "body", "footer"),
+                       .row_id = c(1L, 1L, 1L, 2L, 1L), .col_id = c("a", "a", "a", "a", "a"),
+                       txt = c("Variable", "HbA", "1c (%)", "Age", "Values are mean ± SD"))
+  cells <- .table_cells_text(chunks)
+  expect_identical(cells, c("Variable", "HbA1c (%)", "Age", "Values are mean ± SD"))
+  key <- .table_key(cells, extra = c(HbA1c = "glycated hemoglobin", SD = "standard deviation"))
+  expect_identical(key$key, c(HbA1c = "glycated hemoglobin", SD = "standard deviation"))
+  expect_identical(key$missing, character(0))
 })
