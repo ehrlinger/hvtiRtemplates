@@ -36,23 +36,27 @@
                           ". Read the error curve only.")
   } else {
     met <- all(agree >= agreement)
-    rise <- if (nrow(st) > 1L) max(agree - c(st$jaccard[nrow(st) - 1L], st$kendall[nrow(st) - 1L])) else NA_real_
-    rising <- !is.na(rise) && rise > tolerance
+    # The larger move of the two measures since the previous point, in either direction: a fall is no
+    # more a plateau than a rise is.
+    delta <- if (nrow(st) > 1L) agree - c(st$jaccard[nrow(st) - 1L], st$kendall[nrow(st) - 1L]) else NA_real_
+    move <- if (anyNA(delta)) NA_real_ else delta[[which.max(abs(delta))]]
+    moving <- !is.na(move) && abs(move) > tolerance
     # An unknown count (NA, an unstratified draw) is not a count known to be enough.
     low <- !isFALSE(last$low_events)
     # Agreement between refits that share most of their patients, or that saw imputed values from the
     # whole cohort, overstates what a new cohort would show, so it cannot pass on its own.
     optimistic <- isTRUE(last$optimistic) || filled
     # A plateau needs an earlier point to compare with; without one it is not evidence of enough.
-    flat_unknown <- is.na(rise)
-    events <- if (!met) "not yet" else if (rising || low || optimistic || flat_unknown) "borderline" else "enough"
+    flat_unknown <- is.na(move)
+    events <- if (!met) "not yet" else if (moving || low || optimistic || flat_unknown) "borderline" else "enough"
     found <- sprintf(paste0("At the rightmost point, %s %s, the top-%d Jaccard is %.2f and Kendall tau %.2f, ",
                             "against %.2f (LEARNING_AGREEMENT)"),
                      format(last$events), unit, as.integer(k), agree[[1L]], agree[[2L]], agreement)
     trend <- if (flat_unknown) {
       ", and whether it has leveled off cannot be assessed, with no earlier point to compare"
-    } else if (rising) {
-      sprintf(", and agreement was still rising, by %.2f since the previous point", rise)
+    } else if (moving) {
+      sprintf(", and agreement was still %s, by %.2f since the previous point", if (move > 0) "rising" else "falling",
+              abs(move))
     } else {
       ", and agreement has leveled off"
     }
@@ -67,7 +71,7 @@
                           } else if (flat_unknown) {
                             "there is no earlier point to show it has leveled off"
                           } else {
-                            paste0("more ", unit, " would still change the ranking")
+                            paste0("it is still moving, so more ", unit, " would still change the ranking")
                           },
                           ". Read the explain job's top variables as provisional."),
       `not yet` = paste0("The top variables change from refit to refit at this cohort size. The forest may still ",

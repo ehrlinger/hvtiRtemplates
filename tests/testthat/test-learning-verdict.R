@@ -43,6 +43,16 @@ test_that("an optimistic or filled rightmost point is at most borderline", {
   expect_identical(hvtiRtemplates:::.learning_verdict(s, 12, k = 5, filled = TRUE)$events, "borderline")
 })
 
+test_that("a large fall is not a plateau", {
+  # The reproduction from review: 0.99 to 0.81 and 0.82.
+  v <- hvtiRtemplates:::.learning_verdict(st(c(0.99, 0.81), c(0.99, 0.82)), 12, k = 5)
+  expect_identical(v$events, "borderline")
+  expect_match(v$text, "still falling, by 0.18", fixed = TRUE)
+  expect_false(grepl("leveled off", v$text, fixed = TRUE))
+  # A small move either way is still flat.
+  expect_identical(hvtiRtemplates:::.learning_verdict(st(c(0.86, 0.83), c(0.85, 0.84)), 12, k = 5)$events, "enough")
+})
+
 test_that("a plateau that cannot be assessed is not enough", {
   # One fraction and no bootstrap: no earlier point.
   v <- hvtiRtemplates:::.learning_verdict(st(0.85, 0.84), 12, k = 5)

@@ -5,8 +5,9 @@
   is cut off at manuscript width. The error figure draws a box per fraction from the 15th to the 85th percentile of
   its refits, with a line at the median.
 * The three rf fit templates print a recommendation under the learning curve, as an advisory callout that never stops
-  the render. **Events** reads the rightmost point: enough when Jaccard and Kendall tau both reach
-  `LEARNING_AGREEMENT` (new `EDIT:`, default 0.8, a cautious start) and have leveled off; borderline when they reach
-  it but are still rising, rest on fewer than 50 events, or read an optimistic point; not yet otherwise. **Predictors** compares the candidate
-  count with `MIN_PREDICTORS` (new `EDIT:`, default 10): under it, the report suggests fitting the matching
-  regression model (Cox, logistic or linear) alongside before relying on the forest.
+  the render. **Cohort size** reads the rightmost point: enough when Jaccard and Kendall tau both reach
+  `LEARNING_AGREEMENT` (new `EDIT:`, default 0.8, a cautious start) and have leveled off, moving less than 0.05
+  either way since the previous point; borderline when they reach it but are still rising or falling, rest on fewer
+  than 50 events, read an optimistic point or have no earlier point to compare; not yet otherwise. **Predictors**
+  compares the candidate count with `MIN_PREDICTORS` (new `EDIT:`, default 10): under it, the report suggests fitting
+  the matching regression model (Cox, logistic or linear) alongside before relying on the forest.
