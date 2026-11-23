@@ -1236,7 +1236,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # as a draft: the record carries working = TRUE, so a final render downstream
 # refuses a hand-off saved from these rows (.check_handoff_working()), and the
 # data table, "About this run" and the render log all say why and how to fix it.
-# Column names and types are normalised as read_built() normalises a working
+# Column names and types are normalized as read_built() normalizes a working
 # read, so ID, KEY and WHERE mean the same whichever way the data arrive.
 .read_unregistered <- function(dataset, cfg) {
   if (grepl("[/\\\\]", dataset)) {
@@ -1258,8 +1258,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     names(raw) <- lower
     logi <- vapply(raw, is.logical, logical(1L))
     raw[logi] <- lapply(raw[logi], as.integer)
-    labelled <- vapply(raw, function(x) inherits(x, "haven_labelled"), logical(1L))
-    raw[labelled] <- lapply(raw[labelled], function(x) structure(as.vector(x), label = attr(x, "label")))
+    labeled <- vapply(raw, function(x) inherits(x, "haven_labelled"), logical(1L))
+    raw[labeled] <- lapply(raw[labeled], function(x) structure(as.vector(x), label = attr(x, "label")))
     raw
   })
   read$record$working <- TRUE
