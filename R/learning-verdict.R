@@ -100,3 +100,24 @@
   )
   list(events = events, features = features, text = text)
 }
+
+# The error figure's boxes: each fraction's refits from their 15th to their 85th percentile, with a
+# line at the median and no whiskers, since the gray points already show every refit. `learning` is
+# a gg_learning object, one row per refit. The x axis counts events on a linear scale, so a box is
+# half the narrowest gap between fractions wide, and neighbours never overlap.
+.learning_error_box <- function(learning) {
+  pts <- as.data.frame(learning)
+  box <- do.call(rbind, lapply(split(pts$error, pts$events), function(e) {
+    data.frame(lower = stats::quantile(e, 0.15, names = FALSE), middle = stats::median(e),
+               upper = stats::quantile(e, 0.85, names = FALSE))
+  }))
+  box$events <- as.numeric(names(split(pts$error, pts$events)))
+  gaps <- diff(sort(box$events))
+  width <- if (length(gaps)) 0.5 * min(gaps) else 0.1 * box$events[1L]
+  ggplot2::geom_boxplot(
+    data = box, stat = "identity", inherit.aes = FALSE, width = width, fill = NA, colour = "grey30",
+    ggplot2::aes(x = !!rlang::sym("events"), ymin = !!rlang::sym("lower"), lower = !!rlang::sym("lower"),
+                 middle = !!rlang::sym("middle"), upper = !!rlang::sym("upper"), ymax = !!rlang::sym("upper"),
+                 group = !!rlang::sym("events"))
+  )
+}

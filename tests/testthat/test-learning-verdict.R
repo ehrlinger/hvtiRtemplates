@@ -96,3 +96,23 @@ test_that("the Jaccard steps follow k", {
   expect_identical(hvtiRtemplates:::.jaccard_steps(2), "With the top 2, a pair sharing 1 of them scores 0.33.")
   expect_identical(hvtiRtemplates:::.jaccard_steps(1), "")
 })
+
+test_that("the error boxes span the 15th to 85th percentile and never overlap", {
+  skip_if_not_installed("ggplot2")
+  learning <- data.frame(events = rep(c(10, 20, 40), each = 21), error = rep(0:20 / 100, 3))
+  layer <- hvtiRtemplates:::.learning_error_box(learning)
+  box <- layer$data
+  expect_equal(box$events, c(10, 20, 40))
+  expect_equal(box$lower, rep(0.03, 3))
+  expect_equal(box$middle, rep(0.10, 3))
+  expect_equal(box$upper, rep(0.17, 3))
+  # Half the narrowest gap, 10 to 20, so the boxes are 5 events wide.
+  drawn <- function(l, d) {
+    built <- ggplot2::ggplot_build(ggplot2::ggplot(d, ggplot2::aes(events, error)) + ggplot2::geom_point() + l)
+    built$data[[2L]]$xmax - built$data[[2L]]$xmin
+  }
+  expect_equal(drawn(layer, learning), rep(5, 3))
+  # One fraction: no gap to halve, so a tenth of its events.
+  one <- learning[learning$events == 40, ]
+  expect_equal(drawn(hvtiRtemplates:::.learning_error_box(one), one), 4)
+})
