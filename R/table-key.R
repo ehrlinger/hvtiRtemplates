@@ -47,7 +47,11 @@
   acronym <- grepl("^.[[:alnum:]]*[[:upper:]]", words) |
     grepl("[[:digit:]]", words) & grepl("[[:alpha:]]{2}", words) & grepl("[[:upper:]]", words)
   roman <- grepl("^[IVX]+$", words)
-  missing <- words[acronym & !roman & !words %in% c(names(key), paste0(names(key), "s"), .table_key_units)]
+  # A surname or eponym is capitalized inside, McNemar, MacDonald, DeBakey,
+  # DiGeorge, but is a name, not an abbreviation: a short prefix, one capital,
+  # then lower case only. An acronym has a second capital or a digit after it.
+  surname <- grepl("^(Mc|Mac|De|Di|Da|Du|La|Le)[[:upper:]][[:lower:]]{2,}$", words)
+  missing <- words[acronym & !roman & !surname & !words %in% c(names(key), paste0(names(key), "s"), .table_key_units)]
   list(key = key, missing = sort(missing))
 }
 
