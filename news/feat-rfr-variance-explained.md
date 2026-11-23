@@ -5,4 +5,5 @@
 * `rfc-fit` and `rfs-fit` report the counterpart, a Brier skill score. `rfc-fit` compares the forest's out-of-bag
   Brier score with that of giving every patient the class shares; `rfs-fit` compares its integrated out-of-bag
   Brier score with that of giving every patient the cohort's Kaplan-Meier curve, scored with the same censoring
-  weights. Each table counts the patients with an out-of-bag prediction, and a note explains each row.
+  weights, and adds the forest's out-of-bag Harrell's C beside it. Each table counts the patients with an
+  out-of-bag prediction, and a note explains each row.

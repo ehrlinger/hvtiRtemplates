@@ -33,6 +33,10 @@ test_that("rfs-fit grows a survival forest and saves the handoff", {
   null <- randomForestSRC:::.get.survival.performance(env$forest, metrics = "brier", brier.null = TRUE)$brier$null
   expect_equal(env$.brier_ref$crps.std, null$crps.std, tolerance = 1e-6)
   expect_true(env$.brier$crps.std < env$.brier_ref$crps.std)
+  # Harrell's C agrees with survival's own, which breaks ties its own way, to within 0.005.
+  y <- env$forest$yvar
+  ref <- survival::concordance(survival::Surv(y[, 1], y[, 2]) ~ env$forest$predicted.oob, reverse = TRUE)$concordance
+  expect_equal(env$.cindex, ref, tolerance = 0.005)
 
   expect_s3_class(env$forest, "rfsrc")
   expect_identical(env$forest$family, "surv")
