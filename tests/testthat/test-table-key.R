@@ -49,3 +49,12 @@ test_that("a cell's runs are joined before its words are read", {
   expect_identical(key$key, c(HbA1c = "glycated hemoglobin", SD = "standard deviation"))
   expect_identical(key$missing, character(0))
 })
+
+test_that("a fallback is used only where neither the job nor the study defines the abbreviation", {
+  own <- c(SD = "standard deviation", "NA" = "not applicable")
+  study <- known(c("Sudden death" = "SD"))
+  expect_identical(.table_key(c("SD", "NA"), study, fallback = own)$key,
+                   c("NA" = "not applicable", SD = "Sudden death"))
+  expect_identical(.table_key("SD", study, c(SD = "standard deviation"), own)$key, c(SD = "standard deviation"))
+  expect_identical(.table_key("Mean±SD", fallback = own)$key, c(SD = "standard deviation"))
+})
