@@ -402,7 +402,62 @@ auc <- calc_auc(roc)
 auc
 ```
 
-`gg_brier()` is not here: it supports survival forests only.
+`gg_brier()` is not here: it supports survival forests only. The table below computes the Brier score directly.
+
+```{r}
+#| label: tbl-brier-skill
+#| tbl-cap: "Brier skill score. How many patients have an out-of-bag prediction, the forest's out-of-bag Brier score,
+#|   the Brier score of predicting each class's share of the cohort for every patient, and the forest's skill, one minus
+#|   their ratio, then the C statistic, the area under the ROC curve above."
+# The classification counterpart of variance explained. A patient no tree left
+# out has no out-of-bag prediction; both scores leave them out, so the two
+# compare the same patients.
+.prob <- forest$predicted.oob
+.oob <- stats::complete.cases(.prob)
+.prob <- .prob[.oob, , drop = FALSE]
+# One column per class, 1 in the patient's own class and 0 elsewhere, matched
+# to the prediction columns by name rather than by position.
+.obs <- outer(as.character(forest$yvar[.oob]), colnames(.prob), "==") * 1
+.brier <- mean(rowSums((.prob - .obs)^2))
+.share <- colMeans(.obs)
+.brier_ref <- sum(.share * (1 - .share))
+knitr::kable(data.frame(
+  measure = c("Patients with an out-of-bag prediction", "Out-of-bag Brier score", "Brier score of the class shares",
+              "Brier skill score", paste0("C statistic (", ROC_CLASS, " against the rest)")),
+  # The C statistic is the area under the ROC curve the diagnostics-auc chunk
+  # computed, not a second calculation, so the table and figure cannot disagree.
+  value = c(paste(sum(.oob), "of", length(.oob)),
+            format(signif(c(.brier, .brier_ref, 1 - .brier / .brier_ref, auc), 3)))
+))
+```
+
+The five rows, in order:
+
+- **Patients with an out-of-bag prediction.** A patient gets one only from a tree grown without them. Each tree
+  leaves out about a third of the patients, so after *b* trees a patient has none with a chance of roughly
+  0.63 to the power *b*. Both scores below rest on these patients alone. When this row is short of the whole
+  cohort, the forest has too few trees; raise `NTREE`.
+- **Out-of-bag Brier score.** For each patient, the squared differences between the forest's out-of-bag
+  probability for each class and 1 for the patient's own class or 0 for the others, summed over the classes and
+  averaged over the patients. It is the mean squared error of the probabilities, so it rewards a forest that is
+  confident and right and penalizes one that is confident and wrong, which the misclassification rate in the error
+  figure does not. 0 is perfect; summed over the classes it can reach 2. With two classes it is twice the more
+  familiar single-column Brier score, and the skill score below is the same either way.
+- **Brier score of the class shares.** The Brier score of the simplest prediction there is: every patient given
+  each class's share of these patients as its probability. It needs no predictors, so it is the baseline the forest
+  must beat. It equals the sum over the classes of the share times one minus the share, so a rare outcome makes it
+  small and leaves the forest little room to improve on it.
+- **Brier skill score.** One minus the second row over the third: the share of the baseline's error the forest
+  removes. It reads like variance explained, 1 perfect and 0 no better than the class shares, and like it, it is out
+  of bag, so it is not inflated by scoring the patients the forest was fit to. It can fall below 0, and when it does
+  the forest's probabilities are worse than the class shares. A forest can rank patients well, a high area under the
+  ROC curve, and still score low here if its probabilities are poorly calibrated.
+- **C statistic.** The area under the ROC curve above, for `ROC_CLASS` against the other classes: the chance that
+  a patient chosen at random from that class is given a higher probability of it than a patient chosen at random
+  from the rest. 0.5 is a coin flip and 1 a perfect ordering. With two classes it is Harrell's C, the same measure
+  `rfs-fit` reports for survival. C measures discrimination, the order, and the rows above measure accuracy, the
+  probabilities: a forest that ranks every patient correctly but gives each a probability far from the truth keeps
+  its C and loses Brier skill. Read the two together.
 
 ### Is the cohort large enough?
 

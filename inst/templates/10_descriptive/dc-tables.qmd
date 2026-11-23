@@ -634,7 +634,13 @@ ft <- hvtiRtables::hv_man_table(tbl)
 # study's list (_study.yml, then the group defaults) can expand; ABBREVIATIONS
 # adds to it. An abbreviation nothing expands is named in a warning, so define
 # it in _study.yml for every table in the study, or in ABBREVIATIONS for this one.
-.key_from <- c(ABBREVIATIONS, if (STDDIFF && !"Std. Diff." %in% names(ABBREVIATIONS)) c("Std. Diff." = "standardized difference"))
+# The table's own wording is defined here, since no study list need carry it:
+# SD from the Mean±SD note, NA from a cell with no value to compute (a
+# difference for a row that has none), and Std. Diff. from STDDIFF's column.
+# Each is keyed only when the table prints it, and only where neither
+# ABBREVIATIONS nor the study's list defines it.
+.key_own <- c(SD = "standard deviation", "NA" = "not applicable",
+              if (STDDIFF) c("Std. Diff." = "standardized difference"))
 # The words are read from a display copy, because the display and the saver add
 # the footer notes (Mean±SD, the test marks) after this point, and an
 # abbreviation printed only there needs the Key too. The table's own
@@ -644,7 +650,7 @@ ft <- hvtiRtables::hv_man_table(tbl)
   own <- attr(table, "hv_abbreviations", exact = TRUE)
   key <- hvtiRtemplates:::.table_key(hvtiRtemplates:::.table_cells_text(flextable::information_data_chunk(shown)),
                                      hvtiRutilities::study_abbreviations(.cfg),
-                                     c(.key_from, own[setdiff(names(own), names(.key_from))]))
+                                     c(ABBREVIATIONS, own[setdiff(names(own), names(ABBREVIATIONS))]), .key_own)
   if (length(key$missing)) {
     warning("The table prints ", paste(key$missing, collapse = ", "), ", which its Key cannot expand. ",
             "Define each in _study.yml's abbreviations or in ABBREVIATIONS.", call. = FALSE)

@@ -12,9 +12,12 @@
 # `text` is every string the table prints: header, body and footer.
 # `known` is hvtiRutilities::study_abbreviations(), phrase to abbreviation with
 # attribute "expansion". `extra` is the job's own c(ABBR = "expansion").
+# `fallback` is the template's own wording, c(ABBR = "expansion"), used only
+# where neither `extra` nor `known` defines the abbreviation: a study whose
+# _study.yml defines SD as sudden death keeps it.
 # Returns `key`, c(ABBR = "expansion") for every abbreviation the table prints,
 # and `missing`, the acronym-shaped words it prints that nothing expands.
-.table_key <- function(text, known = character(0), extra = character(0)) {
+.table_key <- function(text, known = character(0), extra = character(0), fallback = character(0)) {
   if (length(extra) && (is.null(names(extra)) || any(!nzchar(names(extra))) || anyNA(names(extra)))) {
     stop('ABBREVIATIONS must name each expansion by its abbreviation, c(ABBR = "expansion").', call. = FALSE)
   }
@@ -37,6 +40,7 @@
     any(grepl(pattern, text, perl = TRUE))
   }
   candidates <- c(extra, from_study[setdiff(names(from_study), names(extra))])
+  candidates <- c(candidates, fallback[setdiff(names(fallback), names(candidates))])
   key <- candidates[vapply(names(candidates), printed, logical(1))]
   key <- key[order(toupper(names(key)))]
   # The same test .sentence_case() uses for a word that is plainly an acronym:
