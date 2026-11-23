@@ -473,15 +473,15 @@ if (!.learning_boot) {
 }
 # Quoted once, so the check below and cache_fit() read the same call.
 # subsample() refits with the forest's own rfq and perf.type, so an RFQ forest's refits are RFQ too.
-.learning_code <- if (.balance$rfq) {
-  quote({
+# Each is assigned straight from quote(), the form the seed check follows to the seeded cache_fit() below.
+.learning_code <- quote({
+  .lf <- rfsrc(model, data = .d_learn, ntree = LEARNING_NTREE, na.action = NA_ACTION, importance = "permute", seed = -abs(SEED))
+  learning_subsample(.lf, fractions = LEARNING_FRACTIONS, replicates = LEARNING_B, bootstrap = .learning_boot)
+})
+if (.balance$rfq) {
+  .learning_code <- quote({
     .lf <- rfsrc(model, data = .d_learn, ntree = LEARNING_NTREE, na.action = NA_ACTION, importance = "permute",
                  seed = -abs(SEED), rfq = TRUE, perf.type = "brier", splitrule = "auc")
-    learning_subsample(.lf, fractions = LEARNING_FRACTIONS, replicates = LEARNING_B, bootstrap = .learning_boot)
-  })
-} else {
-  quote({
-    .lf <- rfsrc(model, data = .d_learn, ntree = LEARNING_NTREE, na.action = NA_ACTION, importance = "permute", seed = -abs(SEED))
     learning_subsample(.lf, fractions = LEARNING_FRACTIONS, replicates = LEARNING_B, bootstrap = .learning_boot)
   })
 }
