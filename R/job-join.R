@@ -99,7 +99,7 @@
 .join_ancillary <- function(cohort, ancillary, id, ancillary_id, join_key, join_vars = NULL, reduce = NULL,
                             filter = NULL, keep_unjoined = NULL) {
   # The joined dataset as read, its identifier under the cohort's name, for its labels.
-  labelled <- stats::setNames(ancillary, replace(names(ancillary), names(ancillary) == ancillary_id, id))
+  source_labels <- stats::setNames(ancillary, replace(names(ancillary), names(ancillary) == ancillary_id, id))
   cols <- if (is.null(join_vars)) names(cohort) else unique(c(id, .match_columns(join_vars, names(cohort))))
   absent <- setdiff(cols, names(cohort))
   if (length(absent)) {
@@ -175,7 +175,7 @@
     records <- ancillary[c(seq_len(nrow(ancillary)), rep(NA_integer_, length(pos) - nrow(ancillary))), , drop = FALSE]
     records[[id]] <- cohort[[id]][pos]
     out <- cbind(records, cohort[pos, setdiff(cols, id), drop = FALSE])
-    out <- .keep_labels(out[order(pos, method = "radix"), , drop = FALSE], cohort, labelled)
+    out <- .keep_labels(out[order(pos, method = "radix"), , drop = FALSE], cohort, source_labels)
     rownames(out) <- NULL
     return(list(data = out, key = replace(join_key, join_key == ancillary_id, id), outside = outside,
                 without = length(unjoined), left_out = if (keep_unjoined) 0L else length(unjoined), ignored = 0L,
@@ -234,7 +234,7 @@
   chosen <- best
   picked <- ancillary[chosen, setdiff(names(ancillary), id), drop = FALSE]
   m <- match(cohort_ids, anc_ids[chosen])
-  out <- .keep_labels(cbind(cohort[cols], picked[m, , drop = FALSE]), cohort, labelled)
+  out <- .keep_labels(cbind(cohort[cols], picked[m, , drop = FALSE]), cohort, source_labels)
   rownames(out) <- NULL
   # The reduction as resolved, its fields in name order and its columns as the
   # data spell them, so the same choice written two ways records the same.
