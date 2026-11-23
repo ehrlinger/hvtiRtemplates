@@ -269,7 +269,9 @@ test_that("sid-clusters writes and registers the cluster letters, and nothing el
   skip_on_cran()
   rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
   env <- sid_fit_first()
-  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(COLLAPSE = list(Z = c("B", "C")))))
+  # Nothing pins the letters at K here, so the COLLAPSE warns (#611).
+  expect_warning(sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(COLLAPSE = list(Z = c("B", "C"))))),
+                 "COLLAPSE merges this render's own letters")
   csv <- file.path(hvtiRutilities::study_dir("datasets", env$.root), "morphology-sid-clusters.csv")
   out <- utils::read.csv(csv)
   expect_identical(names(out), c("ccfid", "C2", "C3", "C4", "C5", "G3"))

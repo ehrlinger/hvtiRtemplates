@@ -497,7 +497,7 @@ if (nrow(.small)) {
 
 ```{r}
 #| label: tbl-reference
-#| tbl-cap: "Clusters at K matched to the REFERENCE assignment: Jaccard is the patients a cluster shares with its reference group over the patients in either"
+#| tbl-cap: "Clusters at K matched to REFERENCE; Jaccard is patients shared with the group over patients in either"
 #| include: !expr '!is.null(K) && !is.null(REFERENCE)'
 if (!is.null(.reference)) {
   if (.reference$unassigned) {
