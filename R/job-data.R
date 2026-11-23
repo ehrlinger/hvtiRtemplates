@@ -1239,6 +1239,10 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # Column names and types are normalised as read_built() normalises a working
 # read, so ID, KEY and WHERE mean the same whichever way the data arrive.
 .read_unregistered <- function(dataset, cfg) {
+  if (grepl("[/\\\\]", dataset)) {
+    stop("DATASET names `", dataset, "`, a path. Name a file in the study's datasets folder by its name alone.",
+         call. = FALSE)
+  }
   path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), dataset)
   if (!file.exists(path)) {
     stop("DATASET names the file `", dataset, "`, which is not in the study's datasets folder (",
@@ -1262,6 +1266,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   name <- sub("\\.[^.]+$", "", tolower(dataset))
   name <- gsub("[^a-z0-9_]", "_", name)
   if (!grepl("^[a-z]", name)) name <- paste0("d_", name)
+  # "study" and "built" are reserved, and a registered name is taken.
+  if (name %in% c("study", "built", names(cfg$additional_datasets))) name <- paste0(name, "_file")
   call <- paste0("hvtiRutilities::register_data(\"", dataset, "\", dataset = \"", name, "\", role = \"named\")")
   read$notes <- c(paste0(
     "**Unregistered data.** This job read ", dataset, " straight from the datasets folder. It is not in ",

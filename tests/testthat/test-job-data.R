@@ -286,6 +286,27 @@ test_that("a DATASET file that is not in the datasets folder is named, with the 
   expect_match(conditionMessage(e), "datasets folder", fixed = TRUE)
   # A name without an extension is still a registered name, and unknown.
   expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent"), "unknown dataset")
+  # A path would leave the datasets folder, and its provenance could not be recorded.
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "../built.csv"), "by its name alone")
+})
+
+test_that("the suggested registration never takes a reserved or registered name", {
+  withr::local_envvar(HVTI_DATA = NA)
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  cfg <- job_study(d0)
+  saveRDS(d0, file.path(hvtiRutilities::study_dir("datasets", cfg$root), "built.rds"))
+  expect_warning(read_job_data(cfg, id_col = "ccfid", dataset = "built.rds"), "dataset = \"built_file\"", fixed = TRUE)
+})
+
+test_that("a final render refusing a hand-off from an unregistered file names register_data()", {
+  local_mocked_bindings(.strict_render = function() TRUE)
+  lineage <- list(data = list(list(dataset = "match_set.rds", path = "datasets/match_set.rds", working = TRUE)))
+  e <- expect_error(.check_handoff_working(lineage, "estimates/ac.rds", "the ac job"), "register_data(\"match_set.rds\"",
+                    fixed = TRUE)
+  expect_no_match(conditionMessage(e), "update_manifest", fixed = TRUE)
+  lineage$data[[1L]]$dataset <- "study"
+  expect_error(.check_handoff_working(lineage, "estimates/ac.rds", "the ac job"), "update_manifest", fixed = TRUE)
 })
 
 test_that("a job outside a study is told to run study_setup()", {

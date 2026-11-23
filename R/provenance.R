@@ -643,8 +643,16 @@
   if (!length(working)) return(invisible(lineage))
   file <- if (is.character(working[[1L]]$path)) basename(working[[1L]]$path) else "build"
   if (.strict_render()) {
-    stop(basename(path), " was saved from the working ", file, ", not a registered version. Register the build with ",
-         "hvtiRutilities::update_manifest(), render ", rebuild, " again, then render this one.", call. = FALSE)
+    # A DATASET read by file name was never registered, so update_manifest(),
+    # which registers a rebuilt version, cannot help it; register_data() does.
+    how <- if (.is_dataset_file(working[[1L]]$dataset %||% "")) {
+      paste0("Register it with hvtiRutilities::register_data(\"", working[[1L]]$dataset, "\", role = \"named\"), ",
+             "name it in DATASET, render ")
+    } else {
+      "Register the build with hvtiRutilities::update_manifest(), render "
+    }
+    stop(basename(path), " was saved from the working ", file, ", not a registered version. ", how, rebuild,
+         " again, then render this one.", call. = FALSE)
   }
   .run_mark_draft(paste0("it read ", basename(path), ", which was saved from the unregistered ", file))
   invisible(lineage)
