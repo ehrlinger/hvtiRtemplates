@@ -273,8 +273,12 @@ sid_match_reference <- function(pam, reference) {
   letter <- stats::setNames(rep(NA_character_, length(ids)), ids)
   score <- stats::setNames(rep(NA_real_, length(ids)), ids)
   left <- jaccard
+  # A tie goes to the cluster whose first patient comes first, then to the
+  # earlier group, so PAM's numbering never decides it.
+  first <- stats::setNames(match(ids, pam), ids)
   while (length(left) && max(left) > 0) {
-    at <- which(left == max(left), arr.ind = TRUE)[1L, ]
+    tied <- which(left == max(left), arr.ind = TRUE)
+    at <- tied[order(first[rownames(left)[tied[, 1L]]], tied[, 2L])[1L], ]
     i <- rownames(left)[at[[1L]]]
     g <- colnames(left)[at[[2L]]]
     letter[[i]] <- g
@@ -456,6 +460,7 @@ if (length(.unknown)) {
 # so a COLLAPSE copied from that analysis merges the groups it named (#611).
 sid_check_reference(REFERENCE)
 .reference <- NULL
+.overrides_given <- OVERRIDES
 if (!is.null(REFERENCE) && !is.null(K)) {
   .pmk <- paste0("pm", K)
   if (!is.null(OVERRIDES[[.pmk]])) {
@@ -468,6 +473,7 @@ if (!is.null(REFERENCE) && !is.null(K)) {
   }
   .ref_at <- match(hvtiRtemplates:::.id_text(sid_ids), hvtiRtemplates:::.id_text(.ref_read$data[[.id]]))
   .reference <- sid_match_reference(.pm[[.pmk]], .ref_read$data[[.ref_col]][.ref_at])
+  .overrides_given <- OVERRIDES
   OVERRIDES[[.pmk]] <- .reference$overrides
   .provenance_data <- c(.provenance_data, list(.ref_read$provenance))
 }
@@ -709,7 +715,8 @@ sid_clusters_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
          tab <- table(.pm[[col]], .letters[, col])
          stats::setNames(colnames(tab)[apply(tab, 1, which.max)], rownames(tab))
        }),
-       k = K, overrides = OVERRIDES, reference = REFERENCE, collapse = COLLAPSE),
+       # The overrides as written, so they can be copied back beside REFERENCE.
+       k = K, overrides = .overrides_given, reference = REFERENCE, collapse = COLLAPSE),
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   cohort = .cohort

@@ -115,6 +115,10 @@ test_that("sid_match_reference matches clusters to reference letters one to one,
   expect_identical(m$overrides, c("1" = "Q", "3" = "R"))
   expect_identical(m$table$letter, c("Q", NA, "R"))
   expect_error(h$sid_match_reference(pam, rep(NA_character_, 10)), "REFERENCE assigns none of the patients")
+  # A tie goes to the cluster whose first patient comes first, however PAM numbered them.
+  ref <- c("Q", "Q", "R", "R")
+  expect_identical(h$sid_match_reference(c(1, 2, 1, 2), ref)$overrides[["1"]], "Q")
+  expect_identical(h$sid_match_reference(c(2, 1, 2, 1), ref)$overrides[["2"]], "Q")
 })
 
 test_that("sid_check_reference names a malformed REFERENCE", {
@@ -320,6 +324,8 @@ test_that("sid-clusters takes the letters at K from a REFERENCE assignment, so a
   expect_true(all(env$.reference$table$jaccard > 0.8))
   saved <- readRDS(env$set_path("estimates", "sid-clusters.rds"))
   expect_identical(saved$reference, list(dataset = "published", col = "grp"))
+  # The overrides as written, not the ones REFERENCE derived.
+  expect_identical(saved$overrides, list())
   # A REFERENCE and an override at the same K would be two answers to one question.
   both <- utils::modifyList(choices, list(OVERRIDES = list(pm3 = saved$letters$pm3)))
   expect_error(sid_clusters_after(env, both), "REFERENCE and OVERRIDES\\$pm3 both set the letters at K = 3")

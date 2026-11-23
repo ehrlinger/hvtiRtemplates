@@ -5,8 +5,9 @@
   `read_job_data()` gains `keep_unjoined = TRUE`. `mm`, `rhf-fit`, `nb-boostmtree_fit` and `nb-boostmtree`
   model the joined records themselves, so they pass `FALSE` and leave those patients out. The data table says
   so, and each of the four prints how many patients it left out, returned as `unjoined`. **A job already in a
-  study is a copy of the old template**: its read now keeps those patients until the job is re-copied or its
-  read call gains `keep_unjoined = FALSE`.
+  study is a copy of the old template**: an `mm`, `rhf-fit` or `nb-boostmtree*` job with a `JOIN` and no
+  `REDUCE` now reads those patients with their time missing, and `mm` stops on the missing `TIME`. Add
+  `keep_unjoined = FALSE` to its `read_job_data()` call, or re-copy the job.
 - A `JOIN` keeps every variable label (#614). Selecting rows dropped the `label` attribute of every plain
   column, so a joined `dc-eda` report warned that every variable lacked a label and showed raw column names.
   The labels of the cohort and of the joined dataset now survive, with or without `REDUCE`.
