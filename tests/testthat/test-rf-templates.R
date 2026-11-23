@@ -633,7 +633,7 @@ test_that("rfc-fit grows an imbalanced two-class outcome as RFQ, and its refits 
   env <- rf_env(rfc_imbalanced_data())
   choices <- utils::modifyList(rfc_choices, list(LEARNING_FRACTIONS = 0.5, LEARNING_B = 2, LEARNING_NTREE = 25))
   rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "class-balance", "fig-diagnostics-error",
-                         "learning", "tbl-learning", "save"), env, choices)
+                         "learning", "tbl-learning", "fig-learning-error", "save"), env, choices)
 
   expect_true(env$.balance$rfq)
   expect_true(env$forest$forest$rfq)
@@ -642,12 +642,27 @@ test_that("rfc-fit grows an imbalanced two-class outcome as RFQ, and its refits 
   expect_match(env$.learning_caps$error, "normalized Brier score", fixed = TRUE)
   # subsample() refits with the forest's own settings, so the learning curve is RFQ too.
   expect_true(env$learning_fits[[1]]$rf$forest$rfq)
+  # The last figure drawn, the learning error, names the score on its axis, not ggRandomForests' error rate.
+  expect_identical(env$.fig$labels$y, "OOB normalized Brier score")
 
   explain <- new.env(parent = globalenv())
   explain$.root <- env$.root
   rf_run("rfc", "explain", explain_labels, explain, list(TOP_K = 2, SEED = 1))
   expect_identical(explain$vi$perf.type, "brier")
   expect_length(explain$sel, 2L)
+})
+
+test_that("rfc-fit counts the classes on the patients na.omit keeps", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
+  # 50 versicolor to 18 virginica is 2.8 to 1, under 3. Three virginica missing a predictor leave the
+  # forest 50 to 15, 3.3 to 1, so na.omit's cohort is past the ratio although the read one is not.
+  d <- rfc_data()
+  d <- d[c(which(d$Species == "versicolor"), which(d$Species == "virginica")[1:18]), ]
+  d$Sepal.Width[which(d$Species == "virginica")[1:3]] <- NA
+  env <- rf_env(d)
+  rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data"), env, rfc_choices)
+  expect_true(env$.balance$rfq)
+  expect_equal(env$.balance$ratio, 50 / 15)
 })
 
 test_that("rfc-fit keeps a balanced outcome's forest, and its cache key, as before", {

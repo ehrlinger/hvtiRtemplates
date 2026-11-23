@@ -304,8 +304,10 @@ if (!is.character(ROC_CLASS) || length(ROC_CLASS) != 1L || is.na(ROC_CLASS) || !
        " is not an observed level. Choose one of: ", paste(levels(d[[RESPONSE]]), collapse = ", "), ".", call. = FALSE)
 }
 ROC_OUTCOME <- match(ROC_CLASS, levels(d[[RESPONSE]]))
-# Read before any forest grows: it decides which forest that is.
-.balance <- hvtiRtemplates:::.class_balance(d[[RESPONSE]], IMBALANCE_RATIO)
+# Read before any forest grows: it decides which forest that is. Under na.omit, rfsrc() drops a
+# patient missing any predictor itself, so the classes are counted on the patients it keeps.
+.balance_rows <- if (NA_ACTION == "na.omit") stats::complete.cases(d[PREDICTORS]) else rep(TRUE, nrow(d))
+.balance <- hvtiRtemplates:::.class_balance(d[[RESPONSE]][.balance_rows], IMBALANCE_RATIO)
 
 # A forest splits a text column only as a factor, so text predictors are
 # converted here, and named, rather than left for the fit to refuse or coerce.
@@ -408,7 +410,10 @@ One block per tree gives the curve that shows whether `NTREE` was large enough.
 # Out-of-bag error by number of trees, overall and per class.
 err <- gg_error(forest)
 # The manuscript theme hides the legend and its title, and the caption reads the marks from the legend.
+# ggRandomForests labels the axis error rate whatever the forest scored; an RFQ forest scored Brier.
 .fig <- plot(err) +
+  if (.balance$rfq) ggplot2::labs(y = "OOB normalized Brier score")
+.fig <- .fig +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.title = ggplot2::element_text())
 save_figure(.fig, "rfc-fit-diagnostics-error")
 .fig
@@ -602,6 +607,8 @@ save_figure(.fig, "rfc-fit-learning-stability")
 .fig <- plot(learning, panel = "error") +
   hvtiRtemplates:::.learning_error_box(learning) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
+# The axis says error rate for any classification forest; an RFQ forest's refits scored Brier.
+if (.balance$rfq) .fig <- .fig + ggplot2::labs(y = "OOB normalized Brier score")
 save_figure(.fig, "rfc-fit-learning-error")
 .fig
 ```
