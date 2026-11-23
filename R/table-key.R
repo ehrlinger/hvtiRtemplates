@@ -18,6 +18,11 @@
   if (length(extra) && (is.null(names(extra)) || any(!nzchar(names(extra))) || anyNA(names(extra)))) {
     stop('ABBREVIATIONS must name each expansion by its abbreviation, c(ABBR = "expansion").', call. = FALSE)
   }
+  # A blank or missing expansion would replace the study's and key nothing.
+  if (length(extra) && (anyNA(extra) || any(!nzchar(trimws(extra))))) {
+    stop("ABBREVIATIONS must give every abbreviation an expansion; blank or NA: ",
+         paste(names(extra)[is.na(extra) | !nzchar(trimws(extra))], collapse = ", "), call. = FALSE)
+  }
   text <- gsub("[~^][^~^]*[~^]", "", as.character(text[!is.na(text)])) # ^2^ and ~2~ markup
   words <- unique(unlist(regmatches(text, gregexpr("[[:alpha:]][[:alnum:]]*", text))))
   expansion <- attr(known, "expansion", exact = TRUE) %||% names(known)

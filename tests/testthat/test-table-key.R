@@ -33,6 +33,12 @@ test_that("an unnamed ABBREVIATIONS entry is an error", {
   expect_error(.table_key("CI", extra = "confidence interval"), "ABBREVIATIONS")
 })
 
+test_that("a blank or NA expansion is an error, not a silent override of the study's", {
+  study <- known(c("New York Heart Association" = "NYHA"))
+  expect_error(.table_key("NYHA class", study, c(NYHA = "")), "NYHA")
+  expect_error(.table_key("NYHA class", study, c(NYHA = NA_character_)), "NYHA")
+})
+
 test_that("a cell's runs are joined before its words are read", {
   chunks <- data.frame(.part = c("header", "body", "body", "body", "footer"),
                        .row_id = c(1L, 1L, 1L, 2L, 1L), .col_id = c("a", "a", "a", "a", "a"),
