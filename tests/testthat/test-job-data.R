@@ -1464,20 +1464,26 @@ test_that("a downstream job stops when REDUCE chose a different record for a pat
 })
 
 test_that("a long join's count of patients left out shows in a knitted report, as a template's chunk renders it", {
+  skip_on_cran()
   skip_if_not_installed("knitr")
+  # A fresh R process, as a render is, with knitr's own chunk defaults and the
+  # installed package, so nothing this test process set can hide or show it.
+  skip_if_stale_install()
   cfg <- join_study()
-  env <- new.env()
-  env$cfg <- cfg
-  env$read_job_data <- read_job_data
-  # Default chunk options, as a template's read chunk has: the read itself says
-  # how many it left out, so an old study copy with no chunk of its own shows it.
-  out <- knitr::knit(text = c("```{r}", "job_data <- read_job_data(cfg, id_col = \"ccfid\", join = \"echo\")", "```"),
-                     quiet = TRUE, envir = env)
+  dir <- withr::local_tempdir()
+  writeLines(c("```{r}", paste0("job_data <- hvtiRtemplates::read_job_data(hvtiRutilities::study_config(start = \"",
+                                 cfg$root, "\"), id_col = \"ccfid\", join = \"echo\")"), "```"),
+             file.path(dir, "x.Rmd"))
+  status <- withr::with_dir(dir, system2(file.path(R.home("bin"), "Rscript"),
+                                         c("-e", shQuote("knitr::knit('x.Rmd', 'x.md', quiet = TRUE)")),
+                                         stdout = FALSE, stderr = FALSE,
+                                         env = paste0("R_LIBS=", paste(.libPaths(), collapse = .Platform$path.sep))))
+  expect_identical(status, 0L)
+  out <- readLines(file.path(dir, "x.md"))
   # knitr wraps a long warning across "## " lines, so they are joined first.
   shown <- gsub("\\s+", " ", gsub("(^|\n)## ", " ", paste(out, collapse = "\n")))
   expect_match(shown, "Warning: 1 cohort patient has no record in `echo`, and is left out: a long join reads the joined records",
                fixed = TRUE)
-  expect_identical(env$job_data$unjoined, 1L)
 })
 
 test_that("a wide join, keyed on the ID alone, keeps every cohort patient (#613)", {

@@ -298,7 +298,7 @@ test_that("two reads whose conditions redact to the same text are two entries, a
   expect_false(grepl("selection", text, fixed = TRUE))
 })
 
-test_that("a rebuilt joined dataset is reported against the joined dataset, not the cohort", {
+test_that("a rebuilt joined dataset is reported against the joined dataset, not the cohort", without_unjoined_warning({
   testthat::skip_if_not_installed("arrow")
   rf <- run_fixture()
   d <- hazard_data()
@@ -327,7 +327,7 @@ test_that("a rebuilt joined dataset is reported against the joined dataset, not 
   utils::write.csv(hazard_data(n = 170L), file.path(datasets, "built.csv"), row.names = FALSE)
   expect_identical(status(function() read_job_data(rf$cfg, id_col = "ccfid", join = "echo")), c(built = "newer file waiting",
                                                                                                 echo = "current"))
-})
+}))
 
 test_that("a conditional stop_here() that fires makes the facts a draft that stopped early, and the report says so", {
   rf <- run_fixture()
