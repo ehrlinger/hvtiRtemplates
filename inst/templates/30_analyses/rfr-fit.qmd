@@ -411,13 +411,16 @@ The four rows, in order:
   first few trees many patients have no out-of-bag prediction yet, so the curve's left end is high and noisy. The
   table reads the last tree, and it is trustworthy once that curve has levelled off and the first row counts the
   whole cohort; if either falls short, raise `NTREE`.
-- **Variance of the outcome.** The spread of the observed outcome about its mean, in the same squared units. It is
-  the mean squared error of the simplest prediction there is, the mean outcome for every patient, and so the
-  baseline the forest must beat.
-- **Variance explained (R squared).** One minus the first row over the second: the share of the outcome's variance
-  the forest's predictions account for. It reads like the R squared of a linear model, 1 perfect and 0 no better than
-  the mean, but it is out of bag, so it is not inflated by fitting the same patients it scores. It can fall below 0,
-  and when it does the forest predicts worse than the mean outcome.
+- **Variance of the outcome.** The sample variance of the observed outcome about its mean, in the same squared
+  units, and the baseline the forest must beat. It divides by the number of patients less one, as
+  randomForestSRC's R squared does, so it is a shade larger than the mean squared error of the simplest prediction
+  there is, the mean outcome for every patient, which divides by the number of patients.
+- **Variance explained (R squared).** One minus the second row over the third: the share of the outcome's variance
+  the forest's predictions account for. It reads like the R squared of a linear model, 1 perfect and near 0 no
+  better than the mean, but it is out of bag, so it is not inflated by fitting the same patients it scores. Because
+  of the divisor above, predicting the mean for every patient scores 1 over the number of patients rather than
+  exactly 0, so a score that small is no better than the mean. It can fall below 0, and when it does the forest
+  predicts worse than the mean outcome.
 
 ### Is the cohort large enough?
 
