@@ -652,7 +652,8 @@ compares the top one fewer than there are.
 # The recommendation, read off the table above against LEARNING_AGREEMENT and MIN_PREDICTORS.
 .learning_rec <- hvtiRtemplates:::.learning_verdict(.lt, length(PREDICTORS), .learning_k, agreement = LEARNING_AGREEMENT,
                                                     min_predictors = MIN_PREDICTORS, unit = "events",
-                                                    model = "a Cox model", note = .learning_note)
+                                                    model = "a Cox model", note = .learning_note,
+                                                    filled = .learning_filled)
 cat(.learning_rec$text)
 ```
 

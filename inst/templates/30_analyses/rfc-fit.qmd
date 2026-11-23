@@ -580,7 +580,8 @@ agreement is between the top variables, so it needs predictors left out: with
 # The recommendation, read off the table above against LEARNING_AGREEMENT and MIN_PREDICTORS.
 .learning_rec <- hvtiRtemplates:::.learning_verdict(.lt, length(PREDICTORS), .learning_k, agreement = LEARNING_AGREEMENT,
                                                     min_predictors = MIN_PREDICTORS, unit = "cases in the smallest class",
-                                                    model = "a logistic regression", note = .learning_note)
+                                                    model = "a logistic regression", note = .learning_note,
+                                                    filled = .learning_filled)
 cat(.learning_rec$text)
 ```
 

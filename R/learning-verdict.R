@@ -18,23 +18,32 @@
 # `jaccard`, `kendall` and `low_events`. The rightmost point is the whole-cohort bootstrap when it
 # ran, otherwise the largest subsample. `unit` names what `events` counts, `model` the regression
 # model a forest on few predictors should be checked against, `note` the learning note the
-# template already prints. A rise above `tolerance` between the last two points reads as still rising.
+# template already prints, `filled` whether gaps were filled from the whole cohort, which makes every
+# fraction optimistic, and `min_events` the floor gg_learning() flagged with. A rise above
+# `tolerance` between the last two points reads as still rising.
 .learning_verdict <- function(stability, n_predictors, k, agreement = 0.8, min_predictors = 10,
-                              unit = "events", model = "a regression model", note = "", tolerance = 0.05) {
+                              unit = "events", model = "a regression model", note = "", filled = FALSE,
+                              min_events = 50, tolerance = 0.05) {
   st <- stability[order(stability$fraction), , drop = FALSE]
   last <- st[nrow(st), ]
   agree <- c(Jaccard = last$jaccard, `Kendall tau` = last$kendall)
 
   if (anyNA(agree)) {
     events <- "not assessed"
-    events_text <- paste0("With one predictor there is no importance ranking to agree on, so the learning curve ",
-                          "cannot say whether there are enough ", unit, ". Read the error curve only.")
+    why <- if (n_predictors < 2L) "With one predictor there is no importance ranking to agree on" else
+      "The agreement could not be computed at the rightmost point"
+    events_text <- paste0(why, ", so the learning curve cannot say whether there are enough ", unit,
+                          ". Read the error curve only.")
   } else {
     met <- all(agree >= agreement)
     rise <- if (nrow(st) > 1L) max(agree - c(st$jaccard[nrow(st) - 1L], st$kendall[nrow(st) - 1L])) else NA_real_
     rising <- !is.na(rise) && rise > tolerance
-    low <- isTRUE(last$low_events)
-    events <- if (!met) "not yet" else if (rising || low) "borderline" else "enough"
+    # An unknown count (NA, an unstratified draw) is not a count known to be enough.
+    low <- !isFALSE(last$low_events)
+    # Agreement between refits that share most of their patients, or that saw imputed values from the
+    # whole cohort, overstates what a new cohort would show, so it cannot pass on its own.
+    optimistic <- isTRUE(last$optimistic) || filled
+    events <- if (!met) "not yet" else if (rising || low || optimistic) "borderline" else "enough"
     found <- sprintf(paste0("At the rightmost point, %s %s, the top-%d Jaccard is %.2f and Kendall tau %.2f, ",
                             "against %.2f (LEARNING_AGREEMENT)"),
                      format(last$events), unit, as.integer(k), agree[[1L]], agree[[2L]], agreement)
@@ -47,8 +56,13 @@
       enough = paste0("The importance ranking is reproducible at this cohort size, so the explain job's top variables ",
                       "and the partial plots drawn from them can be read."),
       borderline = paste0("Agreement reaches the threshold, but ",
-                          if (low) paste0("on fewer than 50 ", unit, ", too few to trust") else
-                            paste0("more ", unit, " would still change the ranking"),
+                          if (low) {
+                            paste0("on fewer than ", min_events, " ", unit, ", or an unknown number, too few to trust")
+                          } else if (optimistic) {
+                            "the rightmost point is optimistic, as the table flags it"
+                          } else {
+                            paste0("more ", unit, " would still change the ranking")
+                          },
                           ". Read the explain job's top variables as provisional."),
       `not yet` = paste0("The top variables change from refit to refit at this cohort size. The forest may still ",
                          "predict (see the error curve), but its importance ranking and the partial plots drawn ",
@@ -72,7 +86,7 @@
   text <- paste0(
     "::: {.callout-", if (ok) "tip" else "warning", "}\n",
     "## Recommendation\n\n",
-    "**Events: ", events, ".** ", events_text, "\n\n",
+    "**Cohort size: ", events, ".** ", events_text, "\n\n",
     "**Predictors: ", if (features) "enough" else "few", ".** ", features_text, "\n\n",
     "Both thresholds are study choices, set under `EDIT:`, not rules.",
     if (nzchar(note)) paste0(" ", note), "\n",

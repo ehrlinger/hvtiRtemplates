@@ -28,6 +28,25 @@ test_that("over the threshold on too few events is borderline", {
   v <- hvtiRtemplates:::.learning_verdict(st(c(0.85, 0.85), c(0.84, 0.84), low = TRUE), 12, k = 5)
   expect_identical(v$events, "borderline")
   expect_match(v$text, "fewer than 50", fixed = TRUE)
+  expect_match(hvtiRtemplates:::.learning_verdict(st(c(0.85, 0.85), c(0.84, 0.84), low = TRUE), 12, k = 5,
+                                                  min_events = 30)$text, "fewer than 30", fixed = TRUE)
+})
+
+test_that("an optimistic or filled rightmost point is at most borderline", {
+  s <- st(c(0.6, 0.85, 0.85), c(0.5, 0.84, 0.84))
+  s$optimistic <- c(FALSE, FALSE, TRUE)
+  v <- hvtiRtemplates:::.learning_verdict(s, 12, k = 5)
+  expect_identical(v$events, "borderline")
+  expect_match(v$text, "rightmost point is optimistic", fixed = TRUE)
+  s$optimistic <- FALSE
+  expect_identical(hvtiRtemplates:::.learning_verdict(s, 12, k = 5)$events, "enough")
+  expect_identical(hvtiRtemplates:::.learning_verdict(s, 12, k = 5, filled = TRUE)$events, "borderline")
+})
+
+test_that("an unknown event count is not enough", {
+  s <- st(c(0.85, 0.85), c(0.84, 0.84))
+  s$low_events <- NA
+  expect_identical(hvtiRtemplates:::.learning_verdict(s, 12, k = 5)$events, "borderline")
 })
 
 test_that("the threshold is the study's", {
@@ -48,7 +67,10 @@ test_that("few predictors point to the regression model and warn", {
 test_that("one predictor is not assessed rather than judged", {
   v <- hvtiRtemplates:::.learning_verdict(st(c(NA, NA), c(NA, NA)), 1, k = 1)
   expect_identical(v$events, "not assessed")
-  expect_match(v$text, "Read the error curve only", fixed = TRUE)
+  expect_match(v$text, "With one predictor", fixed = TRUE)
+  v <- hvtiRtemplates:::.learning_verdict(st(c(0.6, 0.8), c(0.5, NA)), 6, k = 5)
+  expect_identical(v$events, "not assessed")
+  expect_match(v$text, "could not be computed", fixed = TRUE)
 })
 
 test_that("the learning note is carried into the callout", {
