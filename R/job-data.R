@@ -964,6 +964,9 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
       join = join, join_vars = if (!is.null(join_vars)) .match_columns(join_vars, names(cohort_cols)),
       reduce = joined$reduce, join_key = joined$join_key, cohort_key = cohort_key
     ))
+    # Recorded on every long join, so a downstream job rebuilds the same rows,
+    # and a selection saved before the field existed reads as the inner join it was.
+    if (is.null(reduce)) attr(record, "selection")$keep_unjoined <- keep_unjoined
   }
   .note_job_read(read$record, attr(record, "selection"), read$notes, joined)
   list(data = kept$data, record = record, provenance = read$record,
@@ -1416,13 +1419,15 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   sel <- .check_upstream_selection(upstream, settings)
   if (!read) return(list(selection = sel))
   where <- if (length(sel$where)) lapply(sel$where, str2lang)
+  # A long join saved before keep_unjoined was recorded was an inner join (#613).
+  keep_unjoined <- if (!is.null(sel$keep_unjoined)) sel$keep_unjoined else is.null(sel$join) || !is.null(sel$reduce)
   job_data <- withCallingHandlers(
     # With a join the recorded key is the joined result's; the cohort's own is
     # recorded beside it.
     do.call(read_job_data, list(cfg, dataset = sel$dataset, analysis_set = sel$analysis_set,
                                 where = where, id_col = sel$id, key_cols = if (is.null(sel$join)) sel$key else sel$cohort_key,
                                 join = sel$join, join_cols = sel$join_vars, reduce = sel$reduce,
-                                join_key_cols = sel$join_key),
+                                join_key_cols = sel$join_key, keep_unjoined = keep_unjoined),
             quote = TRUE, envir = parent.frame()),
     # A file saved before WHERE on the identifier was refused can carry one.
     hvtiRtemplates_where_identifier = function(e) {

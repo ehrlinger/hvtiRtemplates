@@ -1458,6 +1458,25 @@ test_that("a downstream job stops when REDUCE chose a different record for a pat
                "differ from the upstream job's")
 })
 
+test_that("a downstream job rebuilds a long join with the upstream job's keep_unjoined", {
+  cfg <- join_study()
+  for (keep in c(TRUE, FALSE)) {
+    up <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = keep)$record, "selection")
+    expect_identical(up$keep_unjoined, keep)
+    again <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = up), list())
+    expect_identical(nrow(again$job_data$data), if (keep) 4L else 3L)
+  }
+  # A selection saved before the field existed was an inner join, and rebuilds as one.
+  old <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = FALSE)$record, "selection")
+  old$keep_unjoined <- NULL
+  expect_identical(nrow(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = old), list())$job_data$data), 3L)
+  # A reduced join keeps every cohort patient either way, and records no field.
+  red <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = list(rule = "first", by = "echo_date"))$record,
+              "selection")
+  expect_null(red$keep_unjoined)
+  expect_null(attr(read_job_data(cfg, id_col = "ccfid")$record, "selection")$keep_unjoined)
+})
+
 test_that("a KEY naming a joined column is checked on the joined rows, so a visit time may live only there", {
   cfg <- join_study()
   # echo_date is in the joined dataset and not the cohort, as a visit time is
