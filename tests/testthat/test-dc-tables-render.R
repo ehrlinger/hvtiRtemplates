@@ -47,11 +47,13 @@ test_that("dc-tables renders %stddiff's difference and saves the table it shows"
   lines <- set_choice(lines, "MEAN_SD", '"age"')
   lines <- set_choice(lines, "ORDINAL", '"nyha"')
   lines <- set_choice(lines, "STDDIFF", "TRUE")
-  lines <- set_choice(lines, "ABBREVIATIONS", 'c(NYHA = "New York Heart Association")')
+  # ABBREVIATIONS is left empty: the group default list expands NYHA, and the
+  # Key is built from what the table prints, so it must define NYHA anyway.
   lines <- set_choice(lines, "GROUPS", paste0('list(Demography = c("age", "female", "race", "redo"), ',
                                               'Clinical = c("creat", "nyha"))'))
   # The study's table labels and level text, read only when the table is drawn.
-  writeLines("creat: \"Creatinine (mg/dL)\"", file.path(root, "table_labels.yml"))
+  # NYHA is printed in a label, so the table's Key must define it.
+  writeLines(c("creat: \"Creatinine (mg/dL)\"", "nyha: \"NYHA class\""), file.path(root, "table_labels.yml"))
   writeLines(c("nyha:", "  1: I", "  2: II", "  3: III", "  4: IV"), file.path(root, "value_labels.yml"))
   # Worked markers, as helper-rm.R does, so the render is the same draft or final.
   writeLines(gsub("EDIT:", "REVIEWED:", lines, fixed = TRUE), job)

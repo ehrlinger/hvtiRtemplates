@@ -206,6 +206,15 @@ LEARNING_B         <- 20
 LEARNING_TOP_K     <- 5
 LEARNING_NTREE     <- 250
 
+# EDIT: the recommendation printed under the learning curve. LEARNING_AGREEMENT is
+# the agreement, Jaccard and Kendall tau both, that the top variables must reach at
+# the rightmost point to call the cohort large enough. 0.8 is a cautious start, not
+# evidence: with the top 5, a mean Jaccard of 0.8 needs most refits to share all
+# five. MIN_PREDICTORS is the fewest candidate predictors for which a forest is
+# worth fitting over a regression model. Both are advice; the job never stops on them.
+LEARNING_AGREEMENT <- 0.8
+MIN_PREDICTORS     <- 10
+
 # EDIT: "na.omit" drops a patient missing any predictor; "na.impute" keeps them
 # and imputes inside the forest. The classification and regression exemplars
 # imputed. Dropping is simpler to report and can shrink the cohort a great deal.
@@ -509,14 +518,32 @@ if (.learning_filled) {
                                    "rightmost point means the importance ranking would change with more ",
                                    "patients. Open markers have fewer than 50 patients; triangles are ",
                                    "fractions above one half, where agreement is optimistic."), .learning_right),
+                    paste0("Jaccard runs from 0, no top variable shared, to 1, the same set; Kendall tau ",
+                           "from -1, the order reversed, through 0, no relation, to 1, the same order. The dashed line marks 0."),
                     .learning_note),
   error = paste(sprintf(paste0("Out-of-bag mean squared error by the number of patients in each refit%s. ",
                                "Gray points are single refits and the black line their mean, each mean drawn",
-                               " in its fraction's marker. Open markers have fewer than 50 patients, too few",
+                               " in its fraction's marker. Boxes span the 15th to 85th percentile of the ",
+                               "refits, with a line at the median. Open markers have fewer than 50 patients, too few",
                                " for their error to be trusted."), .learning_right),
                 .learning_note)
 )
 ```
+
+**What the agreement measures.** Every refit ranks the predictors by importance, and each
+pair of refits at a fraction is compared on its top `r .learning_k` variables. The table and
+figure show the mean over all pairs. Both measures are 1 when two refits agree exactly and
+share the figure's axis, but they do not share a floor.
+
+- **Jaccard** asks whether two refits pick the same top variables, in any order: the number
+  they share divided by the number in either. It runs from 0, no variable in common, to 1,
+  the same set. `r hvtiRtemplates:::.jaccard_steps(.learning_k)`
+- **Kendall tau** asks whether two refits put those variables in the same order. It is taken
+  over every variable in either top set, ranked by each refit's full importance, so a
+  variable in one top set and not the other counts against it. It runs from -1, the order
+  reversed, through 0, no relation, to 1, the same order. A tau of 0.6 means about 80% of
+  pairs of variables fall in the same order in both refits; at or below 0 the order is no
+  better than chance.
 
 ```{r}
 #| label: tbl-learning
@@ -538,8 +565,11 @@ knitr::kable(
 ```{r}
 #| label: fig-learning-stability
 #| fig-cap: !expr .learning_caps$stability
+# The dashed line marks 0, Kendall tau's no relation between two orders, and the floor of Jaccard.
 .fig <- plot(learning) +
-  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
+  ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+  # Two legends, the measures and the markers: side by side they run past a 6.5 inch figure, so they stack.
+  hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top", legend.box = "vertical")
 save_figure(.fig, "rfr-fit-learning-stability")
 .fig
 ```
@@ -547,7 +577,9 @@ save_figure(.fig, "rfr-fit-learning-stability")
 ```{r}
 #| label: fig-learning-error
 #| fig-cap: !expr .learning_caps$error
+# A box per fraction, from the 15th to the 85th percentile of its refits, with a line at the median.
 .fig <- plot(learning, panel = "error") +
+  hvtiRtemplates:::.learning_error_box(learning) +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
 save_figure(.fig, "rfr-fit-learning-error")
 .fig
@@ -564,6 +596,18 @@ fraction above one half is optimistic, because refits that large share most of
 their patients, and the whole-cohort point is a bootstrap for that reason. `r .learning_note` The
 agreement is between the top variables, so it needs predictors left out: with
 `r LEARNING_TOP_K` or fewer predictors the job compares the top one fewer than there are.
+
+```{r}
+#| label: learning-verdict
+#| echo: false
+#| results: asis
+# The recommendation, read off the table above against LEARNING_AGREEMENT and MIN_PREDICTORS.
+.learning_rec <- hvtiRtemplates:::.learning_verdict(.lt, length(PREDICTORS), .learning_k, agreement = LEARNING_AGREEMENT,
+                                                    min_predictors = MIN_PREDICTORS, unit = "patients",
+                                                    model = "a linear model", note = .learning_note,
+                                                    filled = .learning_filled)
+cat(.learning_rec$text)
+```
 
 ```{r}
 #| label: save

@@ -22,6 +22,9 @@ expect_learning_presentation <- function(env, filled, boot) {
   testthat::expect_identical(grepl("Fraction 1 is a bootstrap", caps[["tbl"]], fixed = TRUE), boot)
   testthat::expect_equal(grepl("bootstrap was left out", caps, fixed = TRUE), rep(!boot, 3))
   testthat::expect_identical(env$.learning_note == "", !filled && boot)
+  # The recommendation runs on what ran, and carries the same note as the captions.
+  testthat::expect_true(env$.learning_rec$events %in% c("enough", "borderline", "not yet", "not assessed"))
+  testthat::expect_identical(grepl("Missing values were filled in once", env$.learning_rec$text, fixed = TRUE), filled)
 }
 
 test_that("rfs-fit grows a survival forest and saves the handoff", {
@@ -55,7 +58,7 @@ test_that("rfs-fit draws the learning curve from cached subsamples", {
   env <- rf_env(rfs_data())
   # veteran has 128 deaths in 137 patients; small refits keep this quick.
   choices <- utils::modifyList(rfs_choices, list(LEARNING_FRACTIONS = c(0.25, 0.5), LEARNING_B = 3, LEARNING_NTREE = 25))
-  rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning",
+  rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning", "learning-verdict",
                          "fig-learning-stability", "fig-learning-error"), env, choices)
 
   expect_s3_class(env$learning, "gg_learning")
@@ -611,7 +614,7 @@ test_that("rfc-fit draws the learning curve against the smallest class", {
   env <- rf_env(rfc_data())
   # 100 flowers, 50 of each species; small refits keep this quick.
   choices <- utils::modifyList(rfc_choices, list(LEARNING_FRACTIONS = c(0.25, 0.5), LEARNING_B = 3, LEARNING_NTREE = 25))
-  rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning",
+  rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning", "learning-verdict",
                          "fig-learning-stability", "fig-learning-error"), env, choices)
 
   expect_s3_class(env$learning, "gg_learning")
@@ -779,7 +782,7 @@ test_that("rfr-fit draws the learning curve against patients, filling missing pr
   rf_skip_unless_stack(rf_template_packages("rfr", "fit"))
   env <- rf_env(rfr_data())
   choices <- utils::modifyList(rfr_choices, list(LEARNING_FRACTIONS = c(0.25, 0.5), LEARNING_B = 3, LEARNING_NTREE = 25))
-  rf_run("rfr", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning",
+  rf_run("rfr", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning", "learning-verdict",
                          "fig-learning-stability", "fig-learning-error"), env, choices)
 
   expect_s3_class(env$learning, "gg_learning")
@@ -815,7 +818,7 @@ test_that("rfr-fit leaves the bootstrap out, and says so, when the imputed value
   # A forest that dropped rows: its imputed rows no longer index the data, so nothing is copied.
   env$forest$xvar <- env$forest$xvar[-1, ]
   env$REFIT <- TRUE
-  rf_run("rfr", "fit", c("learning", "tbl-learning", "fig-learning-stability", "fig-learning-error"), env)
+  rf_run("rfr", "fit", c("learning", "tbl-learning", "learning-verdict", "fig-learning-stability", "fig-learning-error"), env)
 
   expect_identical(env$.d_learn, env$d)
   expect_learning_presentation(env, filled = FALSE, boot = FALSE)
@@ -838,7 +841,7 @@ test_that("rfs-fit and rfc-fit fill missing predictors before the learning curve
     choices <- utils::modifyList(choices, list(NA_ACTION = "na.impute", LEARNING_FRACTIONS = 0.5, LEARNING_B = 2,
                                                LEARNING_NTREE = 15))
     env <- rf_env(d)
-    rf_run(fam, "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning",
+    rf_run(fam, "fit", c("set", "edit-study-choices", "tbl-data", "fit", "learning", "tbl-learning", "learning-verdict",
                          "fig-learning-stability", "fig-learning-error"), env, choices)
     expect_false(anyNA(env$.d_learn), info = fam)
     expect_learning_presentation(env, filled = TRUE, boot = TRUE)
