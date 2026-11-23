@@ -55,7 +55,8 @@ JOIN <- NULL
 JOIN_VARS <- NULL
 REDUCE <- NULL
 JOIN_KEY <- NULL
-# EDIT: the registered dataset this job reads ("built" is the study dataset).
+# EDIT: the registered dataset this job reads ("built" is the study dataset). A file name,
+# such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 # EDIT: a named analysis set, or NULL for every row WHERE keeps.
 ANALYSIS_SET <- NULL

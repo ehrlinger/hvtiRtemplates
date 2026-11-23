@@ -492,6 +492,9 @@
   study <- paste0("cfg = hvtiRutilities::study_config(start = ", encodeString(cfg$root, quote = "\""), ")")
   call <- if (!is.null(analysis_set)) {
     paste0("hvtiRdatabuild::read_analysis_set(", encodeString(analysis_set, quote = "\""), ", ", study, ")")
+  } else if (.is_dataset_file(dataset)) {
+    path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), dataset)
+    paste0("hvtiRutilities::read_clinical_data(", encodeString(path, quote = "\""), ")")
   } else {
     paste0("hvtiRutilities::read_built(", study, ", dataset = ", encodeString(dataset, quote = "\""), ")")
   }
@@ -605,7 +608,14 @@
 #' @param cfg Study configuration, from [hvtiRutilities::study_config()].
 #' @param dataset Name of a dataset registered in `_study.yml`;
 #'   `"built"` and `"study"` both name the study dataset, and the
-#'   selection records `"study"`.
+#'   selection records `"study"`. A file name with its extension, such as
+#'   `"match_set.rds"`, reads that file from the study's datasets folder
+#'   without registering it. The job runs, as a **draft**: the render warns,
+#'   the data table and "About this run" say the data are unregistered and
+#'   give the [hvtiRutilities::register_data()] call that fixes it, and a
+#'   final render downstream refuses a hand-off saved from these rows.
+#'   Register the file before a result leaves the study: until then nothing
+#'   checks that a rebuilt file is the one the numbers came from.
 #' @param analysis_set Name of an analysis set written by
 #'   `hvtiRdatabuild::write_analysis_set()`, or `NULL` to read
 #'   `dataset` whole. Analysis sets derive from the study dataset only.
@@ -1198,6 +1208,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 }
 
 .read_job_source <- function(cfg, dataset, analysis_set) {
+  if (is.null(analysis_set) && .is_dataset_file(dataset)) return(.read_unregistered(dataset, cfg))
   if (is.null(analysis_set)) {
     read <- .read_registered(dataset, cfg)
     read$source <- paste0("dataset `", dataset, "` (", basename(read$record$path), ")")
@@ -1214,6 +1225,54 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     role = paste0("analysis_set:", analysis_set)
   ))
   read$source <- paste0("analysis set `", analysis_set, "` of the study dataset")
+  read
+}
+
+# A registered name is lowercase letters, digits and underscores, so a DATASET
+# carrying an extension can only be a file name.
+.is_dataset_file <- function(dataset) grepl("\\.[A-Za-z0-9]+$", dataset)
+
+# Reads a file in the datasets folder that was never registered. The job runs,
+# as a draft: the record carries working = TRUE, so a final render downstream
+# refuses a hand-off saved from these rows (.check_handoff_working()), and the
+# data table, "About this run" and the render log all say why and how to fix it.
+# Column names and types are normalised as read_built() normalises a working
+# read, so ID, KEY and WHERE mean the same whichever way the data arrive.
+.read_unregistered <- function(dataset, cfg) {
+  path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), dataset)
+  if (!file.exists(path)) {
+    stop("DATASET names the file `", dataset, "`, which is not in the study's datasets folder (",
+         basename(dirname(path)), "/). Put the file there, or name a registered dataset.", call. = FALSE)
+  }
+  read <- .provenance_file_read(dataset, file.path(basename(dirname(path)), dataset), cfg, function() {
+    raw <- as.data.frame(hvtiRutilities::read_clinical_data(path, convert_types = FALSE))
+    lower <- tolower(names(raw))
+    if (anyDuplicated(lower)) {
+      stop("Lowercasing the column names of ", dataset, " gives duplicates: ",
+           toString(unique(lower[duplicated(lower)])), ". Rename them at the source.", call. = FALSE)
+    }
+    names(raw) <- lower
+    logi <- vapply(raw, is.logical, logical(1L))
+    raw[logi] <- lapply(raw[logi], as.integer)
+    labelled <- vapply(raw, function(x) inherits(x, "haven_labelled"), logical(1L))
+    raw[labelled] <- lapply(raw[labelled], function(x) structure(as.vector(x), label = attr(x, "label")))
+    raw
+  })
+  read$record$working <- TRUE
+  name <- sub("\\.[^.]+$", "", tolower(dataset))
+  name <- gsub("[^a-z0-9_]", "_", name)
+  if (!grepl("^[a-z]", name)) name <- paste0("d_", name)
+  call <- paste0("hvtiRutilities::register_data(\"", dataset, "\", dataset = \"", name, "\", role = \"named\")")
+  read$notes <- c(paste0(
+    "**Unregistered data.** This job read ", dataset, " straight from the datasets folder. It is not in ",
+    "_study.yml or manifest.yaml, so nothing checks that the file is the one these numbers came from: rebuild it ",
+    "and the next render changes without a word. Every number here is a draft. Register it once with ", call,
+    ", set DATASET <- \"", name, "\" and render again."
+  ), read$notes)
+  .run_mark_draft(paste0("it read ", dataset, ", which is not registered"))
+  warning("DATASET `", dataset, "` is not registered, so this render is a draft. Register it with ", call,
+          " and set DATASET <- \"", name, "\".", call. = FALSE)
+  read$source <- paste0("unregistered file `", dataset, "`")
   read
 }
 

@@ -95,7 +95,8 @@ Set the values in this chunk before rendering.
 
 ```{r}
 #| label: edit-study-choices
-# EDIT: the registered dataset this job reads ("built" is the study dataset).
+# EDIT: the registered dataset this job reads ("built" is the study dataset). A file name,
+# such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 # MIGRATE-BEGIN: dc-tables-data
 DATASET <- "built"
 # MIGRATE-END: dc-tables-data
