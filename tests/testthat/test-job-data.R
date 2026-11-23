@@ -992,13 +992,22 @@ join_study <- function(env = parent.frame(), echo_kind = "ancillary") {
 test_that("a job joins an ancillary dataset in long form and records the counts", {
   cfg <- join_study()
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo")
-  expect_identical(nrow(out$data), 3L)
+  expect_identical(nrow(out$data), 4L)
   expect_setequal(names(out$data), c("ccfid", "echo_date", "ef", "age", "dt_surg"))
   rec <- stats::setNames(out$record$value, out$record$step)
   expect_match(rec[["Joined"]], "dataset `echo` \\(echo_[0-9]{8}[.]parquet\\), 4 rows read")
   expect_identical(rec[["Joined records outside the cohort"]], "1")
   expect_identical(rec[["Cohort patients with no joined record"]], "1")
+  expect_identical(rec[["Rows kept"]], "4 rows on 3 patients")
+  expect_identical(out$unjoined, 0L)
+  # A job that models the records leaves patient 3 out, and the table says so.
+  models <- read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = FALSE)
+  rec <- stats::setNames(models$record$value, models$record$step)
+  expect_identical(models$unjoined, 1L)
+  expect_identical(rec[["Cohort patients with no joined record"]], "1, left out: this job models the joined records")
   expect_identical(rec[["Rows kept"]], "3 rows on 2 patients")
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = NA), "keep_unjoined must be TRUE or FALSE")
+  expect_null(read_job_data(cfg, id_col = "ccfid")$unjoined)
   expect_match(rec[["Identifiers dropped"]], "`mrn`")
   expect_false("Note" %in% out$record$step)
   # The provenance names both datasets' versions.
@@ -1086,7 +1095,7 @@ test_that("an unregistered key with no JOIN_KEY stops with both fixes", {
   expect_match(err, "JOIN_KEY", fixed = TRUE)
   expect_match(err, "register_data", fixed = TRUE)
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = c("ccfid", "echo_date"))
-  expect_identical(nrow(out$data), 3L)
+  expect_identical(nrow(out$data), 4L)
   expect_false("Note" %in% out$record$step)
 })
 
@@ -1266,7 +1275,7 @@ test_that("a job that models one row per patient accepts a reduced join, and the
                        one_row_per_patient = TRUE)
   expect_identical(nrow(out$data), 3L)
   expect_identical(attr(out$record, "selection")$key, "ccfid")
-  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", join = "echo")$data), 3L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", join = "echo")$data), 4L)
   # Without a join the setting changes nothing.
   expect_identical(read_job_data(cfg, id_col = "ccfid", one_row_per_patient = TRUE)$data, read_job_data(cfg, id_col = "ccfid")$data)
 })
@@ -1332,7 +1341,7 @@ test_that("WHERE may not name a cohort column JOIN_VARS leaves out", {
   expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = "dt_surg", where = quote(age >= 55)),
                "WHERE names age, a cohort column JOIN_VARS leaves out")
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = c("dt_surg", "age"), where = quote(age >= 55))
-  expect_identical(nrow(out$data), 1L)
+  expect_identical(nrow(out$data), 2L)
 })
 
 test_that("the data table shows the join before the WHERE that runs on its rows", {
@@ -1454,7 +1463,7 @@ test_that("a KEY naming a joined column is checked on the joined rows, so a visi
   # echo_date is in the joined dataset and not the cohort, as a visit time is
   # for a repeated-measures job such as nb-boostmtree.
   out <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "echo_date"), join = "echo")
-  expect_identical(nrow(out$data), 3L)
+  expect_identical(nrow(out$data), 4L)
   sel <- attr(out$record, "selection")
   expect_identical(sel$key, c("ccfid", "echo_date"))
   expect_identical(sel$cohort_key, c("ccfid", "echo_date"))

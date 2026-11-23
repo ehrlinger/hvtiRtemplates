@@ -10,9 +10,10 @@ join <- function(...) hvtiRtemplates:::.join_ancillary(cohort, echo, "ccfid", "c
 
 test_that("the long form keeps one row per record, for cohort patients only", {
   out <- join()
-  expect_identical(nrow(out$data), 4L)
+  # Four records of cohort patients, and one row for patient 3, who has none (#613).
+  expect_identical(nrow(out$data), 5L)
   expect_setequal(names(out$data), c("ccfid", "echo_date", "ef", "age", "dt_surg"))
-  expect_identical(sort(unique(out$data$ccfid)), 1:2)
+  expect_identical(sort(unique(out$data$ccfid)), 1:3)
   expect_identical(out$data$age[out$data$ccfid == 1L], c(50, 50, 50))
   expect_identical(out$key, c("ccfid", "echo_date"))
   expect_identical(out$outside, 1L)
@@ -21,12 +22,79 @@ test_that("the long form keeps one row per record, for cohort patients only", {
   expect_null(out$rule)
 })
 
+test_that("the long form keeps every cohort patient, a patient with no record once with the joined columns missing", {
+  # #613: an inner join dropped patient 3, so "Rows kept" counted fewer patients
+  # than the cohort read, and nothing but the data table's count said so.
+  out <- join()
+  expect_setequal(unique(out$data$ccfid), cohort$ccfid)
+  none <- out$data[out$data$ccfid == 3L, , drop = FALSE]
+  expect_identical(nrow(none), 1L)
+  expect_true(is.na(none$echo_date))
+  expect_true(is.na(none$ef))
+  expect_identical(none$age, 70)
+  expect_identical(out$without, 1L)
+  # Patients stay in cohort order, each patient's records together.
+  expect_identical(out$data$ccfid, c(1L, 1L, 1L, 2L, 3L))
+  # A joined Date stays a Date on the row with no record.
+  dated <- transform(echo, echo_date = as.Date("2020-01-01") + echo_date)
+  d <- hvtiRtemplates:::.join_ancillary(cohort, dated, "ccfid", "ccfid", c("ccfid", "echo_date"))
+  expect_s3_class(d$data$echo_date, "Date")
+  expect_true(is.na(d$data$echo_date[d$data$ccfid == 3L]))
+})
+
+test_that("keep_unjoined = FALSE leaves out a patient with no record, and counts them", {
+  out <- join(keep_unjoined = FALSE)
+  expect_identical(out$data$ccfid, c(1L, 1L, 1L, 2L))
+  expect_identical(out$without, 1L)
+  expect_identical(out$left_out, 1L)
+  expect_identical(join()$left_out, 0L)
+  # With REDUCE every cohort patient keeps one row either way.
+  r <- join(reduce = list(rule = "first", by = "echo_date"), keep_unjoined = FALSE)
+  expect_identical(r$data$ccfid, 1:3)
+  expect_identical(r$left_out, 0L)
+})
+
+test_that("the unjoined note is empty with none left out and counts them otherwise", {
+  rec <- data.frame(step = character(), value = character())
+  attr(rec, "selection") <- list(join = "echo")
+  expect_identical(hvtiRtemplates:::.unjoined_note(list(record = rec, unjoined = 0L)), "")
+  expect_identical(hvtiRtemplates:::.unjoined_note(list(record = rec, unjoined = NULL)), "")
+  expect_match(hvtiRtemplates:::.unjoined_note(list(record = rec, unjoined = 1L)),
+               "1 cohort patient has no record in `echo`, and is left out of this model.", fixed = TRUE)
+  expect_match(hvtiRtemplates:::.unjoined_note(list(record = rec, unjoined = 1234L)),
+               "1,234 cohort patients have no record in `echo`, and are left out of this model.", fixed = TRUE)
+})
+
+test_that("a join keeps the variable labels of the cohort and of the joined dataset", {
+  # #614: subsetting rows with `[` drops a plain vector's "label" attribute, so
+  # every cohort column lost its label and the report fell back to column names.
+  lab_cohort <- cohort
+  attr(lab_cohort$age, "label") <- "Age at operation (years)"
+  attr(lab_cohort$dt_surg, "label") <- "Date of operation"
+  attr(lab_cohort$ccfid, "label") <- "Patient identifier"
+  lab_echo <- echo
+  attr(lab_echo$ef, "label") <- "Ejection fraction (%)"
+  attr(lab_echo$echo_date, "label") <- "Date of echo"
+  labels <- c(ccfid = "Patient identifier", age = "Age at operation (years)", dt_surg = "Date of operation",
+              ef = "Ejection fraction (%)", echo_date = "Date of echo")
+  for (reduce in list(NULL, list(rule = "first", by = "echo_date"),
+                      list(rule = "nearest", by = "echo_date", to = "dt_surg"))) {
+    out <- hvtiRtemplates:::.join_ancillary(lab_cohort, lab_echo, "ccfid", "ccfid", c("ccfid", "echo_date"),
+                                            reduce = reduce)
+    got <- vapply(names(labels), function(v) {
+      x <- attr(out$data[[v]], "label")
+      if (is.null(x)) NA_character_ else x
+    }, character(1L))
+    expect_identical(got, labels, info = if (is.null(reduce)) "long form" else reduce$rule)
+  }
+})
+
 test_that("join_vars limits the cohort columns carried, and may name only the ID", {
   out <- join(join_vars = "age")
   expect_setequal(names(out$data), c("ccfid", "echo_date", "ef", "age"))
   out <- join(join_vars = "ccfid")
   expect_setequal(names(out$data), c("ccfid", "echo_date", "ef"))
-  expect_identical(nrow(out$data), 4L)
+  expect_identical(nrow(out$data), 5L)
 })
 
 test_that("join_vars naming a column the cohort lacks stops and names it", {
@@ -37,14 +105,14 @@ test_that("identifiers are matched as text, and a missing one is outside the coh
   odd <- echo
   odd$ccfid <- c("1", "1", "1", NA, "4")
   out <- hvtiRtemplates:::.join_ancillary(cohort, odd, "ccfid", "ccfid", c("ccfid", "echo_date"))
-  expect_identical(nrow(out$data), 3L)
+  expect_identical(nrow(out$data), 5L)
   expect_identical(out$outside, 2L)
   expect_identical(out$without, 2L)
   # The identifier keeps the cohort's type, as the reduced form's does.
-  expect_identical(out$data$ccfid, c(1L, 1L, 1L))
+  expect_identical(out$data$ccfid, c(1L, 1L, 1L, 2L, 3L))
   other <- stats::setNames(odd, c("pid", "echo_date", "ef"))
   expect_identical(hvtiRtemplates:::.join_ancillary(cohort, other, "ccfid", "pid", c("pid", "echo_date"))$data$ccfid,
-                   c(1L, 1L, 1L))
+                   c(1L, 1L, 1L, 2L, 3L))
 })
 
 test_that("the joined dataset's identifier may have another name", {
@@ -168,7 +236,7 @@ test_that("a column in both datasets stops and names JOIN_VARS", {
   expect_error(hvtiRtemplates:::.join_ancillary(cohort, both, "ccfid", "ccfid", c("ccfid", "echo_date")), "JOIN_VARS")
   # Leaving the clashing column out of JOIN_VARS resolves it.
   out <- hvtiRtemplates:::.join_ancillary(cohort, both, "ccfid", "ccfid", c("ccfid", "echo_date"), join_vars = "dt_surg")
-  expect_identical(nrow(out$data), 4L)
+  expect_identical(nrow(out$data), 5L)
 })
 
 test_that("bad reduce settings stop with the setting named", {

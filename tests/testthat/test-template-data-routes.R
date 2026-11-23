@@ -300,9 +300,10 @@ test_that("descriptive templates join an ancillary dataset, long and one row per
       eval(code, envir = env)
       utils::capture.output(eval(chunks$data, envir = env))
       info <- paste(basename(template), if (is.null(reduce)) "long" else "reduced")
-      expect_identical(nrow(env$d), 3L, info = info)
+      # The long form keeps patient 3, who has no echo, as one row (#613).
+      expect_identical(nrow(env$d), if (is.null(reduce)) 4L else 3L, info = info)
       if (is.null(reduce)) {
-        expect_identical(sort(unique(env$d$ccfid)), 1:2, info = info)
+        expect_identical(sort(unique(env$d$ccfid)), 1:3, info = info)
       } else {
         expect_equal(env$d$ef, c(55, 45, NA), info = info)
       }
@@ -381,9 +382,33 @@ test_that("templates that model one row per patient refuse a long join; long-dat
   }
   for (template in accept) {
     long <- run(template, NULL)
-    expect_identical(nrow(long$data), 3L, info = basename(template))
-    expect_identical(sort(unique(long$data$ccfid)), 1:2, info = basename(template))
     expect_identical(long$recorded, c("study", "echo"), info = basename(template))
+    rec <- stats::setNames(long$record$value, long$record$step)
+    if (basename(template) == "dc-trends.qmd") {
+      # A data check keeps the cohort: patient 3, with no echo, keeps one row (#613).
+      expect_identical(nrow(long$data), 4L, info = basename(template))
+      expect_identical(sort(unique(long$data$ccfid)), 1:3, info = basename(template))
+      expect_identical(long$unjoined, 0L, info = basename(template))
+      expect_identical(rec[["Cohort patients with no joined record"]], "1", info = basename(template))
+    } else {
+      # A model of the echoes themselves learns nothing from a patient with
+      # none, so it leaves patient 3 out, and says so in the table and the text.
+      expect_identical(nrow(long$data), 3L, info = basename(template))
+      expect_identical(sort(unique(long$data$ccfid)), 1:2, info = basename(template))
+      expect_identical(long$unjoined, 1L, info = basename(template))
+      expect_identical(rec[["Cohort patients with no joined record"]],
+                       "1, left out: this job models the joined records", info = basename(template))
+      expect_match(hvtiRtemplates:::.unjoined_note(long), "1 cohort patient has no record in `echo`, and is left out",
+                   fixed = TRUE, info = basename(template))
+    }
+  }
+  # Every template that leaves unjoined patients out prints the count: the
+  # note chunk follows the read in each, so none says it only in the table.
+  for (template in files) {
+    text <- paste(readLines(template, warn = FALSE), collapse = "\n")
+    if (grepl("keep_unjoined = FALSE", text, fixed = TRUE)) {
+      expect_match(text, "cat(hvtiRtemplates:::.unjoined_note(job_data))", fixed = TRUE, info = basename(template))
+    }
   }
 })
 
