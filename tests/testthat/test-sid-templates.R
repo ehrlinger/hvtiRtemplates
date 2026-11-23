@@ -132,6 +132,14 @@ test_that("sid_check_reference names a malformed REFERENCE", {
   expect_error(h$sid_check_reference(list(dataset = "published", col = "C7", k = 7)), msg)
 })
 
+test_that("sid_reference_at matches IDs across types and stops on IDs that collide once normalized", {
+  h <- sid_helpers_env()
+  expect_identical(h$sid_reference_at(c(2, 1, 3), c("1", " 2", NA)), c(2L, 1L, NA))
+  expect_error(h$sid_reference_at(c(1, 2), c("1", " 1", "2")), "1.*more than once")
+  expect_error(h$sid_reference_at(c(1, 2), c(1, 1.0, 2)), "1.*more than once")
+  expect_identical(h$sid_reference_at(1:2, c(NA, NA, "1", "2")), c(3L, 4L))
+})
+
 test_that("sid_mds_signs gives the same picture under row order and sign flips", {
   h <- sid_helpers_env()
   xy <- cbind(c(1, -3, 2, 0.5), c(-0.2, 0.1, 0.4, -2))

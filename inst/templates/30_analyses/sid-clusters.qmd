@@ -242,6 +242,20 @@ sid_id_text <- function(x) {
   out
 }
 
+# Where each clustered patient sits in the reference, matched on the IDs as
+# text. Two reference IDs that differ as stored, "1" and " 1" say, pass a key
+# check and become one ID here; match() would then take the first silently, so
+# that stops instead.
+sid_reference_at <- function(ids, ref_ids) {
+  ref <- sid_id_text(ref_ids)
+  twice <- unique(ref[!is.na(ref) & duplicated(ref)])
+  if (length(twice)) {
+    stop("REFERENCE lists ID ", paste(utils::head(twice, 5L), collapse = ", "),
+         " more than once when its IDs are read as text, so its reference group is ambiguous.", call. = FALSE)
+  }
+  match(sid_id_text(ids), ref, incomparables = NA)
+}
+
 # REFERENCE names a registered dataset and the column of its assignment.
 sid_check_reference <- function(reference) {
   if (is.null(reference)) return(invisible(NULL))
@@ -481,7 +495,7 @@ if (!is.null(REFERENCE) && !is.null(K)) {
   if (is.na(.ref_col)) {
     stop("REFERENCE's col, ", REFERENCE$col, ", is not a column of `", REFERENCE$dataset, "`.", call. = FALSE)
   }
-  .ref_at <- match(sid_id_text(sid_ids), sid_id_text(.ref_read$data[[.id]]))
+  .ref_at <- sid_reference_at(sid_ids, .ref_read$data[[.id]])
   .reference <- sid_match_reference(.pm[[.pmk]], .ref_read$data[[.ref_col]][.ref_at])
   .overrides_given <- OVERRIDES
   OVERRIDES[[.pmk]] <- .reference$overrides
