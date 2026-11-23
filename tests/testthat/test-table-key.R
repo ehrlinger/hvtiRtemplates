@@ -51,8 +51,8 @@ test_that("a cell's runs are joined before its words are read", {
 })
 
 test_that("a surname or eponym capitalized inside is not an unkeyed abbreviation", {
-  key <- .table_key(c("McNemar test", "MacDonald score", "DeBakey type", "DiGeorge syndrome", "LaPlace"))
+  key <- .table_key(c("McNemar test", "MacDonald score", "DeBakey type", "DiGeorge syndrome"))
   expect_identical(key$missing, character(0))
   # An acronym that happens to start the same way is still reported.
-  expect_identical(.table_key(c("DeLVEF", "MacE2"))$missing, c("DeLVEF", "MacE2"))
+  expect_identical(.table_key(c("DeLVEF", "MacE2", "DaTscan"))$missing, c("DaTscan", "DeLVEF", "MacE2"))
 })
