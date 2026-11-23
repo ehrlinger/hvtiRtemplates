@@ -22,6 +22,7 @@ read_job_data(
   one_row_per_patient = FALSE,
   imputation_col = NULL,
   whole_patients = FALSE,
+  keep_unjoined = NULL,
   id,
   key,
   join_vars,
@@ -116,8 +117,9 @@ read_job_data(
   Name of one registered ancillary dataset (such as echoes or labs) to
   join to the cohort on `id_col`, or `NULL`. The cohort, `dataset` or
   `analysis_set`, decides the patients: joined records of other patients
-  are dropped and counted. A dataset registered with a `kind` other than
-  `"ancillary"` is refused.
+  are dropped and counted, and a cohort patient with no joined record is
+  kept or counted, as `keep_unjoined` says. A dataset registered with a
+  `kind` other than `"ancillary"` is refused.
 
 - join_cols:
 
@@ -178,6 +180,20 @@ read_job_data(
   is not checked: one that selects intervals rather than patients
   shortens follow-up unnoticed. `FALSE`, the default, checks nothing.
 
+- keep_unjoined:
+
+  With `join` and no `reduce`, what becomes of a cohort patient who has
+  no joined record. `NULL`, the default, decides by the join's type. A
+  wide join, whose key is `id_col` alone (one row per patient, such as
+  an age file), keeps the patient as one row with the joined columns
+  missing, so it adds columns and loses no one. A long join, of repeated
+  records such as echoes, leaves the patient out, since its rows are the
+  records. `TRUE` or `FALSE` overrides either. Patients left out are
+  counted in the data table and returned as `unjoined`. With `reduce`,
+  every cohort patient keeps one row either way. When patients are left
+  out the read also warns, with class `hvtiRtemplates_unjoined`, so a
+  rendered report says how many.
+
 - id, key, join_vars, join_key, imputation:
 
   Deprecated: the old names of `id_col`, `key_cols`, `join_cols`,
@@ -208,7 +224,10 @@ A list:
   version read, or `NULL` without `join`;
 
 - `attrition`, an analysis set's per-rule attrition table, or `NULL` for
-  a dataset read whole.
+  a dataset read whole;
+
+- `unjoined`, the number of cohort patients left out for having no
+  joined record, 0 when none were, or `NULL` without `join`.
 
 The `"selection"` attribute is a list that a job saves in its hand-off,
 so a downstream job can rebuild the same rows:
@@ -285,10 +304,10 @@ written.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE)
-#> Study: /tmp/RtmpF4zU7m/job-data-example
+#> Study: /tmp/Rtmplri3O3/job-data-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpF4zU7m/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/Rtmplri3O3/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -298,10 +317,10 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root = root, file = "built.csv")
-#> Study: /tmp/RtmpF4zU7m/job-data-example
+#> Study: /tmp/Rtmplri3O3/job-data-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpF4zU7m/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/Rtmplri3O3/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv, registered as built_20261123.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
