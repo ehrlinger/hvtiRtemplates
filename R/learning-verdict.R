@@ -43,11 +43,15 @@
     # Agreement between refits that share most of their patients, or that saw imputed values from the
     # whole cohort, overstates what a new cohort would show, so it cannot pass on its own.
     optimistic <- isTRUE(last$optimistic) || filled
-    events <- if (!met) "not yet" else if (rising || low || optimistic) "borderline" else "enough"
+    # A plateau needs an earlier point to compare with; without one it is not evidence of enough.
+    flat_unknown <- is.na(rise)
+    events <- if (!met) "not yet" else if (rising || low || optimistic || flat_unknown) "borderline" else "enough"
     found <- sprintf(paste0("At the rightmost point, %s %s, the top-%d Jaccard is %.2f and Kendall tau %.2f, ",
                             "against %.2f (LEARNING_AGREEMENT)"),
                      format(last$events), unit, as.integer(k), agree[[1L]], agree[[2L]], agreement)
-    trend <- if (is.na(rise)) "" else if (rising) {
+    trend <- if (flat_unknown) {
+      ", and whether it has levelled off cannot be assessed, with no earlier point to compare"
+    } else if (rising) {
       sprintf(", and agreement was still rising, by %.2f since the previous point", rise)
     } else {
       ", and agreement has levelled off"
@@ -60,6 +64,8 @@
                             paste0("on fewer than ", min_events, " ", unit, ", or an unknown number, too few to trust")
                           } else if (optimistic) {
                             "the rightmost point is optimistic, as the table flags it"
+                          } else if (flat_unknown) {
+                            "there is no earlier point to show it has levelled off"
                           } else {
                             paste0("more ", unit, " would still change the ranking")
                           },

@@ -43,6 +43,18 @@ test_that("an optimistic or filled rightmost point is at most borderline", {
   expect_identical(hvtiRtemplates:::.learning_verdict(s, 12, k = 5, filled = TRUE)$events, "borderline")
 })
 
+test_that("a plateau that cannot be assessed is not enough", {
+  # One fraction and no bootstrap: no earlier point.
+  v <- hvtiRtemplates:::.learning_verdict(st(0.85, 0.84), 12, k = 5)
+  expect_identical(v$events, "borderline")
+  expect_match(v$text, "cannot be assessed", fixed = TRUE)
+  expect_match(v$text, "no earlier point to show it has levelled off", fixed = TRUE)
+  # A missing value at the earlier point.
+  v <- hvtiRtemplates:::.learning_verdict(st(c(NA, 0.85), c(0.5, 0.84)), 12, k = 5)
+  expect_identical(v$events, "borderline")
+  expect_match(v$text, "cannot be assessed", fixed = TRUE)
+})
+
 test_that("an unknown event count is not enough", {
   s <- st(c(0.85, 0.85), c(0.84, 0.84))
   s$low_events <- NA
