@@ -1472,7 +1472,7 @@ test_that("a long join's count of patients left out shows in a knitted report, a
   cfg <- join_study()
   dir <- withr::local_tempdir()
   writeLines(c("```{r}", paste0("job_data <- hvtiRtemplates::read_job_data(hvtiRutilities::study_config(start = \"",
-                                 cfg$root, "\"), id_col = \"ccfid\", join = \"echo\")"), "```"),
+                                cfg$root, "\"), id_col = \"ccfid\", join = \"echo\")"), "```"),
              file.path(dir, "x.Rmd"))
   status <- withr::with_dir(dir, system2(file.path(R.home("bin"), "Rscript"),
                                          c("-e", shQuote("knitr::knit('x.Rmd', 'x.md', quiet = TRUE)")),
