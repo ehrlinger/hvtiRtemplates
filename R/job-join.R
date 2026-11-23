@@ -245,14 +245,16 @@
        reduce = resolved)
 }
 
-# The sentence a job that takes a long join prints when it left cohort
-# patients out for having no joined record, so the count is in the report's
-# text and not only in its data table. Empty when none were left out.
-.unjoined_note <- function(job_data) {
-  n <- job_data$unjoined
-  if (is.null(n) || !n) return(invisible(""))
-  join <- attr(job_data$record, "selection")$join
-  paste0("\n\n", format(n, big.mark = ","), if (n == 1L) " cohort patient has" else " cohort patients have",
-         " no record in `", join, "`, and ", if (n == 1L) "is" else "are", " left out: this job reads the joined ",
-         "records, one row each.\n\n")
+# The sentence read_job_data() raises, as a warning so a rendered report
+# shows it whatever template read the data, old study copies included, when a
+# long join left cohort patients out for having no joined record (#613).
+.unjoined_note <- function(n, join) {
+  paste0(format(n, big.mark = ","), if (n == 1L) " cohort patient has" else " cohort patients have", " no record in `",
+         join, "`, and ", if (n == 1L) "is" else "are", " left out: a long join reads the joined records, one row each.")
+}
+
+.warn_unjoined <- function(n, join) {
+  msg <- .unjoined_note(n, join)
+  warning(structure(class = c("hvtiRtemplates_unjoined", "warning", "condition"),
+                    list(message = msg, call = NULL, n = n, join = join)))
 }

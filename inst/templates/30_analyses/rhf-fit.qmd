@@ -278,13 +278,6 @@ if (length(.chr)) {
 }
 ```
 
-```{r}
-#| label: unjoined-note
-#| results: asis
-# A long JOIN keeps the patients who have joined records; how many it left out
-# is said here as well as in the data table, so none is lost silently.
-cat(hvtiRtemplates:::.unjoined_note(job_data))
-```
 
 ## Cleanup before the fit
 

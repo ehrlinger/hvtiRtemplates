@@ -334,14 +334,6 @@ knitr::kable(job_data$record, col.names = c("Data", ""))
 ```
 
 ```{r}
-#| label: unjoined-note
-#| results: asis
-# A long JOIN keeps the patients who have joined records; how many it left out
-# is said here as well as in the data table, so none is lost silently.
-cat(hvtiRtemplates:::.unjoined_note(job_data))
-```
-
-```{r}
 #| label: data-attrition
 #| results: asis
 # unnumbered: its child chunk carries its own label and caption
@@ -354,7 +346,6 @@ if (!is.null(job_data$attrition)) {
   ), envir = environment(), quiet = TRUE), sep = "\n")
 }
 ```
-
 
 ```{r}
 #| label: helpers

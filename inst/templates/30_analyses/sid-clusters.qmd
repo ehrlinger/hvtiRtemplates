@@ -234,6 +234,14 @@ sid_align_labels <- function(mat, overrides = list(), pool = LETTERS) {
   out
 }
 
+# An identifier as text, a whole number without exponent or decimals, so an
+# ID stored as a number in one dataset and as text in another still matches.
+sid_id_text <- function(x) {
+  out <- if (is.numeric(x)) format(x, scientific = FALSE, trim = TRUE, drop0trailing = TRUE) else trimws(as.character(x))
+  out[is.na(x)] <- NA_character_
+  out
+}
+
 # REFERENCE names a registered dataset and the column of its assignment.
 sid_check_reference <- function(reference) {
   if (is.null(reference)) return(invisible(NULL))
@@ -468,11 +476,12 @@ if (!is.null(REFERENCE) && !is.null(K)) {
     stop("REFERENCE and OVERRIDES$", .pmk, " both set the letters at K = ", K, ". Keep one.", call. = FALSE)
   }
   .ref_read <- hvtiRtemplates::read_job_data(.cfg, dataset = REFERENCE$dataset, id_col = .id, key_cols = .id)
-  .ref_col <- hvtiRtemplates:::.match_columns(REFERENCE$col, names(.ref_read$data))
-  if (!.ref_col %in% names(.ref_read$data)) {
+  # Matched ignoring case, as every column setting is.
+  .ref_col <- names(.ref_read$data)[tolower(names(.ref_read$data)) == tolower(REFERENCE$col)][1L]
+  if (is.na(.ref_col)) {
     stop("REFERENCE's col, ", REFERENCE$col, ", is not a column of `", REFERENCE$dataset, "`.", call. = FALSE)
   }
-  .ref_at <- match(hvtiRtemplates:::.id_text(sid_ids), hvtiRtemplates:::.id_text(.ref_read$data[[.id]]))
+  .ref_at <- match(sid_id_text(sid_ids), sid_id_text(.ref_read$data[[.id]]))
   .reference <- sid_match_reference(.pm[[.pmk]], .ref_read$data[[.ref_col]][.ref_at])
   .overrides_given <- OVERRIDES
   OVERRIDES[[.pmk]] <- .reference$overrides

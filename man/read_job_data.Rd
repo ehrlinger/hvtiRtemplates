@@ -153,7 +153,9 @@ columns missing, so it adds columns and loses no one. A long join, of
 repeated records such as echoes, leaves the patient out, since its rows
 are the records. \code{TRUE} or \code{FALSE} overrides either. Patients left out are
 counted in the data table and returned as \code{unjoined}. With \code{reduce}, every
-cohort patient keeps one row either way.}
+cohort patient keeps one row either way. When patients are left out the
+read also warns, with class \code{hvtiRtemplates_unjoined}, so a rendered
+report says how many.}
 
 \item{id, key, join_vars, join_key, imputation}{Deprecated: the old names of
 \code{id_col}, \code{key_cols}, \code{join_cols}, \code{join_key_cols} and

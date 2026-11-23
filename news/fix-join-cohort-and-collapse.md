@@ -4,9 +4,9 @@
   gains `keep_unjoined`, whose default, `NULL`, decides by the join's type. A wide join, keyed on the ID
   alone, now keeps every cohort patient, a patient with no row having the joined columns missing. A long
   join, of repeated records such as echoes, still keeps only the patients with records, since its rows are
-  the records, but now says how many it left out: in the data table, in `unjoined`, and in a sentence in the
-  report of every template that takes a long join (`dc-eda`, `dc-general`, `dc-tables`, `dc-trends`, `mm`,
-  `rhf-fit`, `nb-boostmtree_fit` and `nb-boostmtree`). `TRUE` or `FALSE` overrides the default. A job
+  the records, but now says how many it left out: in the data table, in `unjoined`, and in a warning
+  from `read_job_data()` itself, of class `hvtiRtemplates_unjoined`, which every report shows whatever its
+  template, study copies made before this release included. `TRUE` or `FALSE` overrides the default. A job
   already in a study reads as it did, except that a wide join now keeps every cohort patient.
 - A `JOIN` keeps every variable label (#614). Selecting rows dropped the `label` attribute of every plain
   column, so a joined `dc-eda` report warned that every variable lacked a label and showed raw column names.

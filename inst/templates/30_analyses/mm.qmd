@@ -149,14 +149,6 @@ RESPONSE_SCALE <- hvtiRtemplates:::.response_scale(RESPONSE_SCALE)
 ```
 
 ```{r}
-#| label: unjoined-note
-#| results: asis
-# A long JOIN keeps the patients who have joined records; how many it left out
-# is said here as well as in the data table, so none is lost silently.
-cat(hvtiRtemplates:::.unjoined_note(job_data))
-```
-
-```{r}
 #| label: mm-helpers
 # The fit lives here rather than in a package until a second longitudinal template
 # (mp or gm) shows what a package function should be; see the design note.

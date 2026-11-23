@@ -991,7 +991,11 @@ join_study <- function(env = parent.frame(), echo_kind = "ancillary") {
 
 test_that("a job joins an ancillary dataset in long form and records the counts", {
   cfg <- join_study()
-  out <- read_job_data(cfg, id_col = "ccfid", join = "echo")
+  # An old-style call, a long join with no keep_unjoined, says itself how many
+  # patients it left out, so every report shows it, old study copies included (#613).
+  expect_warning(out <- read_job_data(cfg, id_col = "ccfid", join = "echo"),
+                 "1 cohort patient has no record in `echo`, and is left out", fixed = TRUE,
+                 class = "hvtiRtemplates_unjoined")
   expect_identical(nrow(out$data), 3L)
   expect_setequal(names(out$data), c("ccfid", "echo_date", "ef", "age", "dt_surg"))
   rec <- stats::setNames(out$record$value, out$record$step)
@@ -1051,7 +1055,7 @@ test_that("a job without a join reads exactly as before", {
   expect_identical(attr(again$job_data$record, "selection"), attr(out$record, "selection"))
 })
 
-test_that("WHERE applies to the joined rows, and refuses the joined dataset's identifier values", {
+test_that("WHERE applies to the joined rows, and refuses the joined dataset's identifier values", without_unjoined_warning({
   cfg <- join_study()
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo", where = quote(ef >= 50))
   expect_identical(nrow(out$data), 2L)
@@ -1060,9 +1064,9 @@ test_that("WHERE applies to the joined rows, and refuses the joined dataset's id
   err <- tryCatch(read_job_data(cfg, id_col = "ccfid", join = "echo", where = quote(ef != 9100004)), error = conditionMessage)
   expect_match(err, "identifier")
   expect_no_match(err, "9100004")
-})
+}))
 
-test_that("WHERE refuses the joined dataset's SSN by name and by value", {
+test_that("WHERE refuses the joined dataset's SSN by name and by value", without_unjoined_warning({
   testthat::skip_if_not_installed("arrow")
   root <- file.path(withr::local_tempdir(), "study")
   suppressMessages(hvtiRutilities::study_setup(root, "Join", 42L, renv = FALSE))
@@ -1082,9 +1086,9 @@ test_that("WHERE refuses the joined dataset's SSN by name and by value", {
     expect_false(grepl("100000002", err, fixed = TRUE), info = info)
     expect_false(grepl("not found", err, fixed = TRUE), info = info)
   }
-})
+}))
 
-test_that("an unregistered key with no JOIN_KEY stops with both fixes", {
+test_that("an unregistered key with no JOIN_KEY stops with both fixes", without_unjoined_warning({
   cfg <- join_study()
   y <- yaml::read_yaml(cfg$file)
   y$additional_datasets$echo$key <- NULL
@@ -1098,7 +1102,7 @@ test_that("an unregistered key with no JOIN_KEY stops with both fixes", {
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = c("ccfid", "echo_date"))
   expect_identical(nrow(out$data), 3L)
   expect_false("Note" %in% out$record$step)
-})
+}))
 
 test_that("a joined dataset's key errors say when it was rebuilt since registration", {
   testthat::skip_if_not_installed("arrow")
@@ -1143,7 +1147,7 @@ test_that("a job KEY naming a joined column is kept though its values look like 
   expect_false("record_key" %in% names(read_job_data(cfg, id_col = "ccfid", join = "echo")$data))
 })
 
-test_that("a JOIN_KEY that differs from the registered key is used and noted", {
+test_that("a JOIN_KEY that differs from the registered key is used and noted", without_unjoined_warning({
   cfg <- join_study()
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = c("ccfid", "echo_date", "ef"))
   expect_identical(attr(out$record, "selection")$key, c("ccfid", "echo_date", "ef"))
@@ -1151,7 +1155,7 @@ test_that("a JOIN_KEY that differs from the registered key is used and noted", {
   expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = "ccfid"), "1 row of `echo` repeat on its key")
   expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = c("ccfid", "nope")),
                "names a column it does not have: nope")
-})
+}))
 
 test_that("a job key that differs from the registered key is noted", {
   cfg <- join_study()
@@ -1216,7 +1220,7 @@ test_that("a job that models one row per patient refuses a long join, before any
   expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", one_row_per_patient = "yes"), "one_row_per_patient must be")
 })
 
-test_that("WHERE may name a joined column that shares its name with a cohort column JOIN_VARS leaves out", {
+test_that("WHERE may name a joined column that shares its name with a cohort column JOIN_VARS leaves out", without_unjoined_warning({
   skip_if_not_installed("arrow")
   root <- file.path(withr::local_tempdir(), "study")
   suppressMessages(hvtiRutilities::study_setup(root, "Shared name", 42L, renv = FALSE))
@@ -1237,7 +1241,7 @@ test_that("WHERE may name a joined column that shares its name with a cohort col
   # So may KEY: the cohort's ef is not carried, so KEY's ef is the joined one.
   out <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "ef"), join = "echo", join_cols = "age")
   expect_identical(attr(out$record, "selection")$key, c("ccfid", "ef"))
-})
+}))
 
 test_that("the same join written two ways records the same selection", {
   cfg <- join_study()
@@ -1270,7 +1274,7 @@ test_that("a job that models one row per patient refuses a long DATASET as it do
                    2L)
 })
 
-test_that("a job that models one row per patient accepts a reduced join, and the default a long one", {
+test_that("a job that models one row per patient accepts a reduced join, and the default a long one", without_unjoined_warning({
   cfg <- join_study()
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = list(rule = "last", by = "echo_date"),
                        one_row_per_patient = TRUE)
@@ -1279,9 +1283,9 @@ test_that("a job that models one row per patient accepts a reduced join, and the
   expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", join = "echo")$data), 3L)
   # Without a join the setting changes nothing.
   expect_identical(read_job_data(cfg, id_col = "ccfid", one_row_per_patient = TRUE)$data, read_job_data(cfg, id_col = "ccfid")$data)
-})
+}))
 
-test_that("a downstream job rebuilds a joined cohort, and its join settings must agree", {
+test_that("a downstream job rebuilds a joined cohort, and its join settings must agree", without_unjoined_warning({
   cfg <- join_study()
   for (reduce in list(NULL, list(rule = "first", by = "echo_date"))) {
     up <- read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = reduce)
@@ -1304,7 +1308,7 @@ test_that("a downstream job rebuilds a joined cohort, and its join settings must
                "JOIN here \\(echo\\) differs from the upstream job's \\(none\\)")
   # Left NULL, as downstream templates leave them, they agree.
   expect_no_error(hvtiRtemplates:::.check_upstream_selection(plain, list(join = NULL, reduce = NULL)))
-})
+}))
 
 test_that("a stale analysis set read in a draft is a note in the data table", {
   skip_if_not_installed("hvtiRdatabuild", "0.3.0")
@@ -1336,24 +1340,24 @@ test_that("a JOIN naming an unregistered dataset says so before anything is read
                "needs to = one column name")
 })
 
-test_that("WHERE may not name a cohort column JOIN_VARS leaves out", {
+test_that("WHERE may not name a cohort column JOIN_VARS leaves out", without_unjoined_warning({
   cfg <- join_study()
   age <- 0
   expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = "dt_surg", where = quote(age >= 55)),
                "WHERE names age, a cohort column JOIN_VARS leaves out")
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = c("dt_surg", "age"), where = quote(age >= 55))
   expect_identical(nrow(out$data), 1L)
-})
+}))
 
-test_that("the data table shows the join before the WHERE that runs on its rows", {
+test_that("the data table shows the join before the WHERE that runs on its rows", without_unjoined_warning({
   cfg <- join_study()
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo", where = quote(ef >= 50))
   steps <- out$record$step
   expect_lt(match("Joined", steps), match("`ef >= 50`", steps))
   expect_lt(match("`ef >= 50`", steps), match("Rows kept", steps))
-})
+}))
 
-test_that("a downstream job rebuilds a joined cohort with the cohort key the upstream job used", {
+test_that("a downstream job rebuilds a joined cohort with the cohort key the upstream job used", without_unjoined_warning({
   cfg <- join_study()
   up <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "age"), join = "echo")
   sel <- attr(up$record, "selection")
@@ -1361,7 +1365,7 @@ test_that("a downstream job rebuilds a joined cohort with the cohort key the ups
   out <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = sel), list())
   expect_match(out$job_data$record$value[out$job_data$record$step == "Note"], "differs from the registered key")
   expect_null(attr(read_job_data(cfg, id_col = "ccfid")$record, "selection")$cohort_key)
-})
+}))
 
 test_that("one handler turns an out-of-date message into a note, for a dataset and an analysis set alike", {
   stale <- function(text) {
@@ -1459,6 +1463,23 @@ test_that("a downstream job stops when REDUCE chose a different record for a pat
                "differ from the upstream job's")
 })
 
+test_that("a long join's count of patients left out shows in a knitted report, as a template's chunk renders it", {
+  skip_if_not_installed("knitr")
+  cfg <- join_study()
+  env <- new.env()
+  env$cfg <- cfg
+  env$read_job_data <- read_job_data
+  # Default chunk options, as a template's read chunk has: the read itself says
+  # how many it left out, so an old study copy with no chunk of its own shows it.
+  out <- knitr::knit(text = c("```{r}", "job_data <- read_job_data(cfg, id_col = \"ccfid\", join = \"echo\")", "```"),
+                     quiet = TRUE, envir = env)
+  # knitr wraps a long warning across "## " lines, so they are joined first.
+  shown <- gsub("\\s+", " ", gsub("(^|\n)## ", " ", paste(out, collapse = "\n")))
+  expect_match(shown, "Warning: 1 cohort patient has no record in `echo`, and is left out: a long join reads the joined records",
+               fixed = TRUE)
+  expect_identical(env$job_data$unjoined, 1L)
+})
+
 test_that("a wide join, keyed on the ID alone, keeps every cohort patient (#613)", {
   cfg <- join_study()
   dd <- hvtiRutilities::study_dir("datasets", cfg$root)
@@ -1476,7 +1497,7 @@ test_that("a wide join, keyed on the ID alone, keeps every cohort patient (#613)
   expect_identical(out$unjoined, 0L)
 })
 
-test_that("a downstream job rebuilds a long join as its upstream job read it", {
+test_that("a downstream job rebuilds a long join as its upstream job read it", without_unjoined_warning({
   cfg <- join_study()
   for (keep in list(NULL, TRUE, FALSE)) {
     up <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = keep)$record, "selection")
@@ -1493,9 +1514,9 @@ test_that("a downstream job rebuilds a long join as its upstream job read it", {
   red <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = list(rule = "first", by = "echo_date"))$record,
               "selection")
   expect_null(red$keep_unjoined)
-})
+}))
 
-test_that("a KEY naming a joined column is checked on the joined rows, so a visit time may live only there", {
+test_that("a KEY naming a joined column is checked on the joined rows, so a visit time may live only there", without_unjoined_warning({
   cfg <- join_study()
   # echo_date is in the joined dataset and not the cohort, as a visit time is
   # for a repeated-measures job such as nb-boostmtree.
@@ -1515,7 +1536,7 @@ test_that("a KEY naming a joined column is checked on the joined rows, so a visi
   expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("dt_surg", "echo_date"), join = "echo"), "values? of KEY repeat")
   expect_error(read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "nope"), join = "echo"),
                "KEY names a column this dataset does not have")
-})
+}))
 
 # A study whose built dataset is `data`, registered on `key`.
 stacked_study <- function(data, key, env = parent.frame()) {

@@ -270,7 +270,7 @@ test_that("every template that reads its own data offers the join and records th
                    c("dc-eda", "dc-general", "dc-tables", "dc-trends", "mm", "nb-boostmtree_fit", "rhf-fit"))
 })
 
-test_that("descriptive templates join an ancillary dataset, long and one row per patient", {
+test_that("descriptive templates join an ancillary dataset, long and one row per patient", without_unjoined_warning({
   skip_if_not_installed("arrow")
   template_root <- system.file("templates", package = "hvtiRtemplates")
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
@@ -314,7 +314,7 @@ test_that("descriptive templates join an ancillary dataset, long and one row per
       expect_identical(datasets, c("study", "echo"), info = info)
     }
   }
-})
+}))
 
 # The data chunk up to and including its read_job_data() call: the refusal is
 # about the read, and what follows it needs study columns this test has no use for.
@@ -380,22 +380,19 @@ test_that("templates that model one row per patient refuse a long join; long-dat
     expect_identical(reduced$recorded, c("study", "echo"), info = basename(template))
   }
   for (template in accept) {
-    long <- run(template, NULL)
+    # Patient 3, with no echo, is left out, and the read itself says so, so the
+    # report of every template shows it (#613).
+    expect_warning(long <- run(template, NULL), "1 cohort patient has no record in `echo`", fixed = TRUE,
+                   class = "hvtiRtemplates_unjoined")
     expect_identical(nrow(long$data), 3L, info = basename(template))
     expect_identical(sort(unique(long$data$ccfid)), 1:2, info = basename(template))
     expect_identical(long$recorded, c("study", "echo"), info = basename(template))
-    # Patient 3, with no echo, is left out and counted in the text (#613).
     expect_identical(long$unjoined, 1L, info = basename(template))
-    expect_match(hvtiRtemplates:::.unjoined_note(long), "1 cohort patient has no record in `echo`, and is left out",
-                 fixed = TRUE, info = basename(template))
   }
-  # Every template that takes a long join prints that count, so no report
-  # loses patients with only the data table to say so.
-  long_join <- files[sub("[.]qmd$", "", basename(files)) %in% c(hvtiRtemplates:::.long_join_templates(), "nb-boostmtree")]
-  expect_gte(length(long_join), 8L)
-  for (template in long_join) {
-    expect_match(paste(readLines(template, warn = FALSE), collapse = "\n"), "cat(hvtiRtemplates:::.unjoined_note(job_data))",
-                 fixed = TRUE, info = basename(template))
+  # No template reaches into the package for the count: the read says it.
+  for (template in files) {
+    expect_no_match(paste(readLines(template, warn = FALSE), collapse = "\n"), "unjoined_note", fixed = TRUE,
+                    info = basename(template))
   }
 })
 
@@ -415,7 +412,7 @@ test_that("a downstream job that rebuilds its upstream rows records the joined d
   expect_identical(rebuilders, 7L)
 })
 
-test_that("nb-boostmtree_fit takes a long join whose visit time is only in the joined dataset", {
+test_that("nb-boostmtree_fit takes a long join whose visit time is only in the joined dataset", without_unjoined_warning({
   skip_if_not_installed("arrow")
   template_root <- system.file("templates", package = "hvtiRtemplates")
   if (!nzchar(template_root)) template_root <- testthat::test_path("..", "..", "inst", "templates")
@@ -449,4 +446,4 @@ test_that("nb-boostmtree_fit takes a long join whose visit time is only in the j
   eval(data_read_prefix(chunks$data), envir = env)
   expect_identical(nrow(env$job_data$data), 3L)
   expect_identical(attr(env$job_data$record, "selection")$key, c("ccfid", "iv_echo"))
-})
+}))

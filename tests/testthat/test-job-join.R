@@ -53,15 +53,14 @@ test_that("a wide join, keyed on the ID alone, keeps every cohort patient, a pat
   expect_identical(r$left_out, 0L)
 })
 
-test_that("the unjoined note is empty with none left out and counts them otherwise", {
-  rec <- data.frame(step = character(), value = character())
-  attr(rec, "selection") <- list(join = "echo")
-  expect_identical(hvtiRtemplates:::.unjoined_note(list(record = rec, unjoined = 0L)), "")
-  expect_identical(hvtiRtemplates:::.unjoined_note(list(record = rec, unjoined = NULL)), "")
-  expect_match(hvtiRtemplates:::.unjoined_note(list(record = rec, unjoined = 1L)),
-               "1 cohort patient has no record in `echo`, and is left out", fixed = TRUE)
-  expect_match(hvtiRtemplates:::.unjoined_note(list(record = rec, unjoined = 1234L)),
-               "1,234 cohort patients have no record in `echo`, and are left out", fixed = TRUE)
+test_that("the unjoined note counts the patients left out and names the joined dataset", {
+  expect_identical(hvtiRtemplates:::.unjoined_note(1L, "echo"),
+                   "1 cohort patient has no record in `echo`, and is left out: a long join reads the joined records, one row each.")
+  expect_match(hvtiRtemplates:::.unjoined_note(1234L, "echo"), "^1,234 cohort patients have no record in `echo`, and are left out")
+  w <- tryCatch(hvtiRtemplates:::.warn_unjoined(2L, "echo"), warning = function(w) w)
+  expect_s3_class(w, "hvtiRtemplates_unjoined")
+  expect_identical(w$n, 2L)
+  expect_null(conditionCall(w))
 })
 
 test_that("a join keeps the variable labels of the cohort and of the joined dataset", {

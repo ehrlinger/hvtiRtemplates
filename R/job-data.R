@@ -687,7 +687,9 @@
 #'   repeated records such as echoes, leaves the patient out, since its rows
 #'   are the records. `TRUE` or `FALSE` overrides either. Patients left out are
 #'   counted in the data table and returned as `unjoined`. With `reduce`, every
-#'   cohort patient keeps one row either way.
+#'   cohort patient keeps one row either way. When patients are left out the
+#'   read also warns, with class `hvtiRtemplates_unjoined`, so a rendered
+#'   report says how many.
 #' @param join_key_cols Columns that make the joined dataset's rows unique,
 #'   overriding its registered key. A join needs one or the other.
 #' @param one_row_per_patient `TRUE` for a job that models one row per
@@ -970,6 +972,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     if (is.null(reduce)) attr(record, "selection")$keep_unjoined <- joined$keep_unjoined
   }
   .note_job_read(read$record, attr(record, "selection"), read$notes, joined)
+  # Said by the read itself, so every report shows it, whatever its template.
+  if (isTRUE(joined$summary$left_out > 0L)) .warn_unjoined(joined$summary$left_out, join)
   list(data = kept$data, record = record, provenance = read$record,
        provenance_join = joined$provenance, attrition = attrition,
        unjoined = if (!is.null(join)) joined$summary$left_out)
