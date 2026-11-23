@@ -476,7 +476,7 @@ if (.learning_filled) {
                                    "patients. Open markers have fewer than 50 patients; triangles are ",
                                    "fractions above one half, where agreement is optimistic."), .learning_right),
                     paste0("Jaccard runs from 0, no top variable shared, to 1, the same set; Kendall tau ",
-                           "from -1, the order reversed, through 0, no relation, to 1, the same order."),
+                           "from -1, the order reversed, through 0, no relation, to 1, the same order. The dashed line marks 0."),
                     .learning_note),
   error = paste(sprintf(paste0("Out-of-bag mean squared error by the number of patients in each refit%s. ",
                                "Gray points are single refits and the black line their mean, each mean drawn",
@@ -521,7 +521,9 @@ knitr::kable(
 ```{r}
 #| label: fig-learning-stability
 #| fig-cap: !expr .learning_caps$stability
+# The dashed line marks 0, Kendall tau's no relation between two orders, and the floor of Jaccard.
 .fig <- plot(learning) +
+  ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
   hvtiPlotR::theme_hv_manuscript(base_size = 12, legend.position = "top")
 save_figure(.fig, "rfr-fit-learning-stability")
 .fig
