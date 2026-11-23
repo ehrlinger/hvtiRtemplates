@@ -148,6 +148,7 @@ REFERENCE <- NULL
 # chose them, so they need not be the clusters another analysis called C, D
 # and E. A COLLAPSE copied from one needs REFERENCE (or OVERRIDES at K) to
 # give the clusters that analysis's letters first; without either it warns.
+# With REFERENCE it may name only letters a cluster matched, and stops otherwise.
 COLLAPSE <- NULL
 
 # EDIT: a cluster smaller than this at K is flagged. Later per-cluster tables
@@ -642,6 +643,19 @@ if (!is.null(K) && !is.null(COLLAPSE)) {
   # With nothing pinning the letters at K, a collapse names this render's
   # lineage letters, and one copied from another analysis can merge clusters
   # other than the ones it meant, with no other sign (#611).
+  # With a REFERENCE, a collapse names the reference's groups. A group no
+  # cluster matched leaves its letter free, and a cluster that matched nothing
+  # can take it from the lineage rule; merging that cluster as though it were
+  # the reference's group is the mistake REFERENCE exists to prevent.
+  if (!is.null(.reference)) {
+    .unpinned <- setdiff(unlist(COLLAPSE, use.names = FALSE), .reference$overrides)
+    if (length(.unpinned)) {
+      stop("COLLAPSE names ", toString(.unpinned), ", which no cluster at K took from REFERENCE: ",
+           if (length(.unpinned) == 1L) "that letter is" else "those letters are", " the lineage rule's, not `",
+           REFERENCE$dataset, "`'s. Check the REFERENCE table, and name only letters a cluster matched.",
+           call. = FALSE)
+    }
+  }
   if (is.null(OVERRIDES[[paste0("pm", K)]])) {
     warning("COLLAPSE merges this render's own letters at K = ", K, ", which the lineage rule chose. A COLLAPSE ",
             "copied from another analysis names that analysis's letters, which need not be the same clusters: set ",

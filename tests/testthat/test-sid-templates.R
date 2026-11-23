@@ -333,6 +333,32 @@ test_that("sid-clusters takes the letters at K from a REFERENCE assignment, so a
   expect_error(sid_clusters_after(env, both), "REFERENCE and OVERRIDES\\$pm3 both set the letters at K = 3")
 })
 
+test_that("with a REFERENCE, COLLAPSE may name only letters a reference match pinned", {
+  skip_on_cran()
+  rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))
+  d <- sid_data()
+  env <- sid_fit_first(d)
+  # The reference assigns A and B to planted groups 1 and 2, and C only to
+  # patients outside this cohort, so the third cluster matches no group and
+  # takes a lineage letter, which may be C. A COLLAPSE naming C would merge it
+  # as though it were the reference's C, so it stops.
+  n <- nrow(d)
+  published <- data.frame(ccfid = c(seq_len(n), n + 1:10),
+                          grp = c(c("A", "B", NA)[d$truth], rep("C", 10)))
+  dd <- hvtiRutilities::study_dir("datasets", env$.root)
+  utils::write.csv(published, file.path(dd, "published.csv"), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root = env$.root, file = "published.csv", dataset = "published",
+                                                 role = "named", key_cols = "ccfid"))
+  ref <- list(dataset = "published", col = "grp")
+  bad <- utils::modifyList(sid_clusters_choices, list(REFERENCE = ref, COLLAPSE = list(Z = c("B", "C"))))
+  expect_error(suppressWarnings(sid_clusters_after(env, bad)),
+               "COLLAPSE names C, which no cluster at K took from REFERENCE")
+  # Letters the match pinned collapse as before.
+  good <- utils::modifyList(bad, list(COLLAPSE = list(Z = c("A", "B"))))
+  suppressWarnings(sid_clusters_after(env, good))
+  expect_identical(env$sid_letters$G3 == "Z", as.character(env$sid_letters$C3) %in% c("A", "B"))
+})
+
 test_that("sid-clusters stops on an OVERRIDES name that is no solution in K_RANGE", {
   skip_on_cran()
   rf_skip_unless_stack(unique(c(rf_template_packages("sid", "fit"), rf_template_packages("sid", "clusters"))))

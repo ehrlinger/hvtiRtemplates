@@ -16,5 +16,6 @@
   analysis could merge clusters other than the ones it named, without warning. A new study choice,
   `REFERENCE <- list(dataset = "<registered>", col = "<column>")`, matches each cluster at K to the reference
   group it shares the most patients with: best Jaccard, one to one. A table reports each match. `COLLAPSE` set
-  with neither `REFERENCE` nor `OVERRIDES` at K now warns. The `OVERRIDES` comment says that PAM numbers go
+  with neither `REFERENCE` nor `OVERRIDES` at K now warns, and with `REFERENCE` it stops on a letter no
+  cluster matched. The `OVERRIDES` comment says that PAM numbers go
   stale after a refit, and shows where to read them.
