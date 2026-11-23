@@ -135,7 +135,7 @@ test_that("open_job() opens a job it creates once, not twice", {
 test_that("an editor that fails to open is a warning, and the written job's path is returned", {
   root <- new_study("openjob-editor-fails-")
   on.exit(unlink(root, recursive = TRUE), add = TRUE)
-  local_mocked_bindings(interactive = function() TRUE, .package = "base")
+  rlang::local_interactive(TRUE)
   local_mocked_bindings(file.edit = function(...) stop("no editor here"), .package = "utils")
   expect_warning(out <- add_job("ac", subject = "dead", type = "eda", root = root),
                  class = "hvtiRtemplates_editor_failed")

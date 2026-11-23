@@ -76,7 +76,7 @@ open_job <- function(prefix, subject, type, root = NULL, qualifier = NULL, dir) 
 # warning, never an error: an error would report a job that exists as not
 # written, and a retry would then meet add_job()'s refusal to overwrite it.
 .open_in_editor <- function(path) {
-  if (interactive()) {
+  if (rlang::is_interactive()) {
     tryCatch(utils::file.edit(path), error = function(e) {
       warning(warningCondition(
         paste0("'", path, "' was written, but the editor could not open it: ", conditionMessage(e),
