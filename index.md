@@ -70,11 +70,10 @@ history by design.
 
 Two consequences worth stating plainly. Parity work against the SAS
 originals needs a source outside this repository; the institutional SAS
-license runs into 2027, so plan accordingly (`2027-09-29` is the working
-date, not yet confirmed). And a result filed before the migration still
-cannot say what produced it — that was already true, because `%inc`
-bound late to a mutable directory with no version, and removing the
-corpus neither creates nor worsens that gap.
+license runs to September 2027, so plan accordingly. And a result filed
+before the migration still cannot say what produced it — that was
+already true, because `%inc` bound late to a mutable directory with no
+version, and removing the corpus neither creates nor worsens that gap.
 
 ## Why this package exists
 
