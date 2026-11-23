@@ -610,7 +610,9 @@
 #'   `"built"` and `"study"` both name the study dataset, and the
 #'   selection records `"study"`. A file name with its extension, such as
 #'   `"match_set.rds"`, reads that file from the study's datasets folder
-#'   without registering it. The job runs, as a **draft**: the render warns,
+#'   without registering it, in any format
+#'   [hvtiRutilities::read_clinical_data()] reads (`.rda` and `.RData` from
+#'   hvtiRutilities 1.5.27). The job runs, as a **draft**: the render warns,
 #'   the data table and "About this run" say the data are unregistered and
 #'   give the [hvtiRutilities::register_data()] call that fixes it, and a
 #'   final render downstream refuses a hand-off saved from these rows.

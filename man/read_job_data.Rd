@@ -32,7 +32,9 @@ read_job_data(
 \code{"built"} and \code{"study"} both name the study dataset, and the
 selection records \code{"study"}. A file name with its extension, such as
 \code{"match_set.rds"}, reads that file from the study's datasets folder
-without registering it. The job runs, as a \strong{draft}: the render warns,
+without registering it, in any format
+\code{\link[hvtiRutilities:read_clinical_data]{hvtiRutilities::read_clinical_data()}} reads (\code{.rda} and \code{.RData} from
+hvtiRutilities 1.5.27). The job runs, as a \strong{draft}: the render warns,
 the data table and "About this run" say the data are unregistered and
 give the \code{\link[hvtiRutilities:register_data]{hvtiRutilities::register_data()}} call that fixes it, and a
 final render downstream refuses a hand-off saved from these rows.
