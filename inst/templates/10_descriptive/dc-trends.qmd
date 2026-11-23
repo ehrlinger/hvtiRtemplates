@@ -137,7 +137,8 @@ KEY <- ID
 #   JOIN_VARS: the cohort columns each joined row carries; NULL carries all,
 #     and a column both datasets have stops, so list only those the job needs.
 #   REDUCE: NULL keeps a row per joined record, keyed on that dataset's key;
-#     a cohort patient with none keeps one row, the joined columns missing;
+#     a cohort patient with no record is left out, and counted in the text,
+#     unless the join is keyed on the ID alone, which keeps them;
 #     list(rule = "first", by = "echo_date") keeps one row per patient ("last",
 #     or "nearest" with to = a cohort date column). WHERE on a joined column
 #     filters the records first, so "last" with WHERE echo_type == "TTE"
@@ -218,6 +219,14 @@ d <- job_data$data
 .provenance_data <- c(if (exists(".provenance_data")) .provenance_data else list(), list(job_data$provenance),
                       if (!is.null(job_data$provenance_join)) list(job_data$provenance_join))
 knitr::kable(job_data$record, col.names = c("Data", ""))
+```
+
+```{r}
+#| label: unjoined-note
+#| results: asis
+# A long JOIN keeps the patients who have joined records; how many it left out
+# is said here as well as in the data table, so none is lost silently.
+cat(hvtiRtemplates:::.unjoined_note(job_data))
 ```
 
 ```{r}

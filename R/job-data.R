@@ -662,7 +662,7 @@
 #'   labs) to join to the cohort on `id_col`, or `NULL`. The cohort,
 #'   `dataset` or `analysis_set`, decides the patients: joined
 #'   records of other patients are dropped and counted, and a cohort patient
-#'   with no joined record is kept, as `keep_unjoined` says. A dataset registered
+#'   with no joined record is kept or counted, as `keep_unjoined` says. A dataset registered
 #'   with a `kind` other than `"ancillary"` is refused.
 #' @param join_cols Cohort columns each joined row carries, the `id_col`
 #'   always among them; `NULL` carries all of them. A column both
@@ -679,13 +679,15 @@
 #'   tie. Records with no value in the first `by` column are left out and
 #'   counted, and a patient whose chosen record still ties with another stops
 #'   the read, since picking one would be a hidden choice.
-#' @param keep_unjoined With `join` and no `reduce`, `TRUE` (the default) keeps
-#'   a cohort patient who has no joined record as one row with the joined
-#'   columns missing, so the cohort decides the patients and none is lost
-#'   unnoticed. `FALSE` leaves such patients out, for a job that models the
-#'   joined records themselves, such as repeated measures: the data table says
-#'   so, and the count is returned as `unjoined`. With `reduce`, every cohort
-#'   patient keeps one row either way.
+#' @param keep_unjoined With `join` and no `reduce`, what becomes of a cohort
+#'   patient who has no joined record. `NULL`, the default, decides by the
+#'   join's type. A wide join, whose key is `id_col` alone (one row per
+#'   patient, such as an age file), keeps the patient as one row with the joined
+#'   columns missing, so it adds columns and loses no one. A long join, of
+#'   repeated records such as echoes, leaves the patient out, since its rows
+#'   are the records. `TRUE` or `FALSE` overrides either. Patients left out are
+#'   counted in the data table and returned as `unjoined`. With `reduce`, every
+#'   cohort patient keeps one row either way.
 #' @param join_key_cols Columns that make the joined dataset's rows unique,
 #'   overriding its registered key. A join needs one or the other.
 #' @param one_row_per_patient `TRUE` for a job that models one row per
@@ -773,8 +775,7 @@
 #'     \item `attrition`, an analysis set's per-rule attrition table, or
 #'       `NULL` for a dataset read whole;
 #'     \item `unjoined`, the number of cohort patients left out for having
-#'       no joined record, 0 unless `keep_unjoined = FALSE`, or `NULL`
-#'       without `join`.
+#'       no joined record, 0 when none were, or `NULL` without `join`.
 #'   }
 #'   The `"selection"` attribute is a list that a job saves in its
 #'   hand-off, so a downstream job can rebuild the same rows:
@@ -823,7 +824,7 @@
 read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = NULL,
                           id_col, key_cols = NULL, join = NULL, join_cols = NULL, reduce = NULL,
                           join_key_cols = NULL, one_row_per_patient = FALSE, imputation_col = NULL,
-                          whole_patients = FALSE, keep_unjoined = TRUE, id, key, join_vars, join_key, imputation) {
+                          whole_patients = FALSE, keep_unjoined = NULL, id, key, join_vars, join_key, imputation) {
   fn <- "read_job_data"
   if (!missing(id)) id_col <- .take_renamed(fn, "id", "id_col", id, !missing(id_col))
   if (!missing(key)) key_cols <- .take_renamed(fn, "key", "key_cols", key, !missing(key_cols))
@@ -843,8 +844,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   imputation <- imputation_col
   .check_job_settings(dataset, analysis_set, where, id, key, join, join_vars, reduce, join_key, one_row_per_patient,
                       imputation, whole_patients)
-  if (!is.logical(keep_unjoined) || length(keep_unjoined) != 1L || is.na(keep_unjoined)) {
-    stop("keep_unjoined must be TRUE or FALSE.", call. = FALSE)
+  if (!is.null(keep_unjoined) && (!is.logical(keep_unjoined) || length(keep_unjoined) != 1L || is.na(keep_unjoined))) {
+    stop("keep_unjoined must be NULL, TRUE or FALSE.", call. = FALSE)
   }
   # The registration JOIN needs is checked before either dataset is read.
   join_shape <- if (!is.null(join)) .join_shape(cfg, join, join_key)
@@ -966,7 +967,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     ))
     # Recorded on every long join, so a downstream job rebuilds the same rows,
     # and a selection saved before the field existed reads as the inner join it was.
-    if (is.null(reduce)) attr(record, "selection")$keep_unjoined <- keep_unjoined
+    if (is.null(reduce)) attr(record, "selection")$keep_unjoined <- joined$keep_unjoined
   }
   .note_job_read(read$record, attr(record, "selection"), read$notes, joined)
   list(data = kept$data, record = record, provenance = read$record,
@@ -1079,7 +1080,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 }
 
 .read_join <- function(cfg, join, resolved, cohort, cohort_id, join_vars, reduce, values = FALSE, filter = NULL,
-                       key = character(), keep_unjoined = TRUE) {
+                       key = character(), keep_unjoined = NULL) {
   jr <- .read_job_source(cfg, join, NULL)
   a <- jr$value
   a_id <- names(a)[tolower(names(a)) == tolower(cohort_id)]
@@ -1117,6 +1118,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     data = j$data, key = j$key, dropped = a_ids$dropped, notes = c(jr$notes, resolved$note, .ssn_notes(a_ids$by_value)),
     out_of_date = jr$out_of_date,
     provenance = jr$record, join_key = replace(jkey, jkey == a_id, cohort_id), id_values = id_values, reduce = j$reduce,
+    keep_unjoined = j$keep_unjoined,
     summary = list(source = jr$source, rows = nrow(a), outside = j$outside, without = j$without, left_out = j$left_out,
                    ignored = j$ignored, unvalued = j$unvalued, rule = j$rule, steps = j$steps)
   )
@@ -1327,7 +1329,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     rows <- c(rows, .where_rows(join$steps))
     rows[[length(rows) + 1L]] <- c("Cohort patients with no joined record", paste0(
       format(join$without, big.mark = ","),
-      if (isTRUE(join$left_out > 0L)) ", left out: this job models the joined records" else ""
+      if (isTRUE(join$left_out > 0L)) ", left out: a long join keeps the patients with records" else ""
     ))
     if (!is.null(join$rule)) rows[[length(rows) + 1L]] <- c("Reduced to one row per patient", join$rule)
     if (isTRUE(join$ignored > 0L)) {

@@ -97,7 +97,7 @@
 }
 
 .join_ancillary <- function(cohort, ancillary, id, ancillary_id, join_key, join_vars = NULL, reduce = NULL,
-                            filter = NULL, keep_unjoined = TRUE) {
+                            filter = NULL, keep_unjoined = NULL) {
   # The joined dataset as read, its identifier under the cohort's name, for its labels.
   labelled <- stats::setNames(ancillary, replace(names(ancillary), names(ancillary) == ancillary_id, id))
   cols <- if (is.null(join_vars)) names(cohort) else unique(c(id, .match_columns(join_vars, names(cohort))))
@@ -162,9 +162,14 @@
     # one row, the joined columns missing, as under REDUCE. Indexing with NA
     # gives that row each column's own type, a Date staying a Date. Patients
     # stay in cohort order, each one's records in the order they were read.
-    # A job that models the records themselves, such as repeated measures,
-    # learns nothing from a patient with none, so it asks for them left out:
-    # counted in `left_out`, for the data table and the job's own note.
+    # By join type, unless the caller says (maintainer's decision, 2026-11-23):
+    # a wide join, keyed on the ID alone such as an age file, adds columns to
+    # the cohort and keeps every patient; a long join, of repeated records
+    # such as echoes, keeps the patients who have records, since a model of
+    # those records learns nothing from a patient with none. Either way the
+    # patients left out are counted in `left_out`, for the data table and the
+    # job's own note, so none is lost silently.
+    if (is.null(keep_unjoined)) keep_unjoined <- all(join_key == ancillary_id)
     unjoined <- which(!cohort_ids %in% anc_ids)
     pos <- c(match(anc_ids, cohort_ids), if (keep_unjoined) unjoined)
     records <- ancillary[c(seq_len(nrow(ancillary)), rep(NA_integer_, length(pos) - nrow(ancillary))), , drop = FALSE]
@@ -174,7 +179,7 @@
     rownames(out) <- NULL
     return(list(data = out, key = replace(join_key, join_key == ancillary_id, id), outside = outside,
                 without = length(unjoined), left_out = if (keep_unjoined) 0L else length(unjoined), ignored = 0L,
-                rule = NULL, steps = NULL))
+                rule = NULL, steps = NULL, keep_unjoined = keep_unjoined))
   }
 
   columns <- .check_reduce(reduce, ancillary, cohort)
@@ -240,7 +245,7 @@
        reduce = resolved)
 }
 
-# The sentence a job that models joined records prints when it left cohort
+# The sentence a job that takes a long join prints when it left cohort
 # patients out for having no joined record, so the count is in the report's
 # text and not only in its data table. Empty when none were left out.
 .unjoined_note <- function(job_data) {
@@ -248,5 +253,6 @@
   if (is.null(n) || !n) return(invisible(""))
   join <- attr(job_data$record, "selection")$join
   paste0("\n\n", format(n, big.mark = ","), if (n == 1L) " cohort patient has" else " cohort patients have",
-         " no record in `", join, "`, and ", if (n == 1L) "is" else "are", " left out of this model.\n\n")
+         " no record in `", join, "`, and ", if (n == 1L) "is" else "are", " left out: this job reads the joined ",
+         "records, one row each.\n\n")
 }

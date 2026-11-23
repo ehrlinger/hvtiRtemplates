@@ -18,7 +18,7 @@ read_job_data(
   one_row_per_patient = FALSE,
   imputation_col = NULL,
   whole_patients = FALSE,
-  keep_unjoined = TRUE,
+  keep_unjoined = NULL,
   id,
   key,
   join_vars,
@@ -93,7 +93,7 @@ keys the result.}
 labs) to join to the cohort on \code{id_col}, or \code{NULL}. The cohort,
 \code{dataset} or \code{analysis_set}, decides the patients: joined
 records of other patients are dropped and counted, and a cohort patient
-with no joined record is kept, as \code{keep_unjoined} says. A dataset registered
+with no joined record is kept or counted, as \code{keep_unjoined} says. A dataset registered
 with a \code{kind} other than \code{"ancillary"} is refused.}
 
 \item{join_cols}{Cohort columns each joined row carries, the \code{id_col}
@@ -145,13 +145,15 @@ a word. An \code{analysis_set} is not checked: one that selects intervals
 rather than patients shortens follow-up unnoticed. \code{FALSE}, the
 default, checks nothing.}
 
-\item{keep_unjoined}{With \code{join} and no \code{reduce}, \code{TRUE} (the default) keeps
-a cohort patient who has no joined record as one row with the joined
-columns missing, so the cohort decides the patients and none is lost
-unnoticed. \code{FALSE} leaves such patients out, for a job that models the
-joined records themselves, such as repeated measures: the data table says
-so, and the count is returned as \code{unjoined}. With \code{reduce}, every cohort
-patient keeps one row either way.}
+\item{keep_unjoined}{With \code{join} and no \code{reduce}, what becomes of a cohort
+patient who has no joined record. \code{NULL}, the default, decides by the
+join's type. A wide join, whose key is \code{id_col} alone (one row per
+patient, such as an age file), keeps the patient as one row with the joined
+columns missing, so it adds columns and loses no one. A long join, of
+repeated records such as echoes, leaves the patient out, since its rows
+are the records. \code{TRUE} or \code{FALSE} overrides either. Patients left out are
+counted in the data table and returned as \code{unjoined}. With \code{reduce}, every
+cohort patient keeps one row either way.}
 
 \item{id, key, join_vars, join_key, imputation}{Deprecated: the old names of
 \code{id_col}, \code{key_cols}, \code{join_cols}, \code{join_key_cols} and
@@ -179,8 +181,7 @@ naming the version read, or \code{NULL} without \code{join};
 \item \code{attrition}, an analysis set's per-rule attrition table, or
 \code{NULL} for a dataset read whole;
 \item \code{unjoined}, the number of cohort patients left out for having
-no joined record, 0 unless \code{keep_unjoined = FALSE}, or \code{NULL}
-without \code{join}.
+no joined record, 0 when none were, or \code{NULL} without \code{join}.
 }
 The \code{"selection"} attribute is a list that a job saves in its
 hand-off, so a downstream job can rebuild the same rows:

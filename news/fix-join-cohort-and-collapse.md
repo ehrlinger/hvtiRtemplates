@@ -1,13 +1,13 @@
-- A `JOIN` without `REDUCE` no longer drops cohort patients who have no joined record (#613). It was an inner
-  join, so "Rows kept" counted only the matched patients, and only the data table's count of "Cohort patients
-  with no joined record" said that any were lost. The cohort now decides the patients in the long form as it
-  does under `REDUCE`: a patient with no record keeps one row, with the joined columns missing.
-  `read_job_data()` gains `keep_unjoined = TRUE`. `mm`, `rhf-fit`, `nb-boostmtree_fit` and `nb-boostmtree`
-  model the joined records themselves, so they pass `FALSE` and leave those patients out. The data table says
-  so, and each of the four prints how many patients it left out, returned as `unjoined`. **A job already in a
-  study is a copy of the old template**: an `mm`, `rhf-fit` or `nb-boostmtree*` job with a `JOIN` and no
-  `REDUCE` now reads those patients with their time missing, and `mm` stops on the missing `TIME`. Add
-  `keep_unjoined = FALSE` to its `read_job_data()` call, or re-copy the job.
+- A `JOIN` without `REDUCE` no longer drops cohort patients silently (#613). It was an inner join, so a
+  one-row-per-patient file, such as age at the index echo, cut the cohort to the patients it had a row for,
+  and only the data table's count of "Cohort patients with no joined record" said so. `read_job_data()`
+  gains `keep_unjoined`, whose default, `NULL`, decides by the join's type. A wide join, keyed on the ID
+  alone, now keeps every cohort patient, a patient with no row having the joined columns missing. A long
+  join, of repeated records such as echoes, still keeps only the patients with records, since its rows are
+  the records, but now says how many it left out: in the data table, in `unjoined`, and in a sentence in the
+  report of every template that takes a long join (`dc-eda`, `dc-general`, `dc-tables`, `dc-trends`, `mm`,
+  `rhf-fit`, `nb-boostmtree_fit` and `nb-boostmtree`). `TRUE` or `FALSE` overrides the default. A job
+  already in a study reads as it did, except that a wide join now keeps every cohort patient.
 - A `JOIN` keeps every variable label (#614). Selecting rows dropped the `label` attribute of every plain
   column, so a joined `dc-eda` report warned that every variable lacked a label and showed raw column names.
   The labels of the cohort and of the joined dataset now survive, with or without `REDUCE`.

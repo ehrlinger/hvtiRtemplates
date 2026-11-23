@@ -992,21 +992,22 @@ join_study <- function(env = parent.frame(), echo_kind = "ancillary") {
 test_that("a job joins an ancillary dataset in long form and records the counts", {
   cfg <- join_study()
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo")
-  expect_identical(nrow(out$data), 4L)
+  expect_identical(nrow(out$data), 3L)
   expect_setequal(names(out$data), c("ccfid", "echo_date", "ef", "age", "dt_surg"))
   rec <- stats::setNames(out$record$value, out$record$step)
   expect_match(rec[["Joined"]], "dataset `echo` \\(echo_[0-9]{8}[.]parquet\\), 4 rows read")
   expect_identical(rec[["Joined records outside the cohort"]], "1")
-  expect_identical(rec[["Cohort patients with no joined record"]], "1")
-  expect_identical(rec[["Rows kept"]], "4 rows on 3 patients")
-  expect_identical(out$unjoined, 0L)
-  # A job that models the records leaves patient 3 out, and the table says so.
-  models <- read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = FALSE)
-  rec <- stats::setNames(models$record$value, models$record$step)
-  expect_identical(models$unjoined, 1L)
-  expect_identical(rec[["Cohort patients with no joined record"]], "1, left out: this job models the joined records")
+  # A long join, read as an old-style call with no keep_unjoined, keeps the
+  # patients with records and says how many it left out (#613).
+  expect_identical(rec[["Cohort patients with no joined record"]], "1, left out: a long join keeps the patients with records")
   expect_identical(rec[["Rows kept"]], "3 rows on 2 patients")
-  expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = NA), "keep_unjoined must be TRUE or FALSE")
+  expect_identical(out$unjoined, 1L)
+  expect_false(attr(out$record, "selection")$keep_unjoined)
+  kept <- read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = TRUE)
+  expect_identical(stats::setNames(kept$record$value, kept$record$step)[["Rows kept"]], "4 rows on 3 patients")
+  expect_identical(kept$unjoined, 0L)
+  expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = NA),
+               "keep_unjoined must be NULL, TRUE or FALSE")
   expect_null(read_job_data(cfg, id_col = "ccfid")$unjoined)
   expect_match(rec[["Identifiers dropped"]], "`mrn`")
   expect_false("Note" %in% out$record$step)
@@ -1095,7 +1096,7 @@ test_that("an unregistered key with no JOIN_KEY stops with both fixes", {
   expect_match(err, "JOIN_KEY", fixed = TRUE)
   expect_match(err, "register_data", fixed = TRUE)
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_key_cols = c("ccfid", "echo_date"))
-  expect_identical(nrow(out$data), 4L)
+  expect_identical(nrow(out$data), 3L)
   expect_false("Note" %in% out$record$step)
 })
 
@@ -1275,7 +1276,7 @@ test_that("a job that models one row per patient accepts a reduced join, and the
                        one_row_per_patient = TRUE)
   expect_identical(nrow(out$data), 3L)
   expect_identical(attr(out$record, "selection")$key, "ccfid")
-  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", join = "echo")$data), 4L)
+  expect_identical(nrow(read_job_data(cfg, id_col = "ccfid", join = "echo")$data), 3L)
   # Without a join the setting changes nothing.
   expect_identical(read_job_data(cfg, id_col = "ccfid", one_row_per_patient = TRUE)$data, read_job_data(cfg, id_col = "ccfid")$data)
 })
@@ -1341,7 +1342,7 @@ test_that("WHERE may not name a cohort column JOIN_VARS leaves out", {
   expect_error(read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = "dt_surg", where = quote(age >= 55)),
                "WHERE names age, a cohort column JOIN_VARS leaves out")
   out <- read_job_data(cfg, id_col = "ccfid", join = "echo", join_cols = c("dt_surg", "age"), where = quote(age >= 55))
-  expect_identical(nrow(out$data), 2L)
+  expect_identical(nrow(out$data), 1L)
 })
 
 test_that("the data table shows the join before the WHERE that runs on its rows", {
@@ -1458,23 +1459,40 @@ test_that("a downstream job stops when REDUCE chose a different record for a pat
                "differ from the upstream job's")
 })
 
-test_that("a downstream job rebuilds a long join with the upstream job's keep_unjoined", {
+test_that("a wide join, keyed on the ID alone, keeps every cohort patient (#613)", {
   cfg <- join_study()
-  for (keep in c(TRUE, FALSE)) {
+  dd <- hvtiRutilities::study_dir("datasets", cfg$root)
+  utils::write.csv(data.frame(ccfid = c(1L, 2L, 4L), age_echo = c(51, 61, 41)), file.path(dd, "age_echo.csv"),
+                   row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root = cfg$root, file = "age_echo.csv", dataset = "age_echo",
+                                                 role = "named", kind = "ancillary", key_cols = "ccfid"))
+  cfg <- hvtiRutilities::study_config(cfg$root)
+  out <- read_job_data(cfg, id_col = "ccfid", join = "age_echo")
+  rec <- stats::setNames(out$record$value, out$record$step)
+  expect_identical(sort(out$data$ccfid), 1:3)
+  expect_true(is.na(out$data$age_echo[out$data$ccfid == 3L]))
+  expect_identical(rec[["Cohort patients with no joined record"]], "1")
+  expect_identical(rec[["Rows kept"]], "3 rows on 3 patients")
+  expect_identical(out$unjoined, 0L)
+})
+
+test_that("a downstream job rebuilds a long join as its upstream job read it", {
+  cfg <- join_study()
+  for (keep in list(NULL, TRUE, FALSE)) {
     up <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = keep)$record, "selection")
-    expect_identical(up$keep_unjoined, keep)
     again <- hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = up), list())
-    expect_identical(nrow(again$job_data$data), if (keep) 4L else 3L)
+    expect_identical(nrow(again$job_data$data), if (isTRUE(keep)) 4L else 3L)
   }
   # A selection saved before the field existed was an inner join, and rebuilds as one.
-  old <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = FALSE)$record, "selection")
+  old <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", keep_unjoined = TRUE)$record, "selection")
   old$keep_unjoined <- NULL
+  old$rows <- 3L
+  old$patients <- 2L
+  old$key_hash <- NULL
   expect_identical(nrow(hvtiRtemplates:::.read_upstream_job_data(cfg, list(selection = old), list())$job_data$data), 3L)
-  # A reduced join keeps every cohort patient either way, and records no field.
   red <- attr(read_job_data(cfg, id_col = "ccfid", join = "echo", reduce = list(rule = "first", by = "echo_date"))$record,
               "selection")
   expect_null(red$keep_unjoined)
-  expect_null(attr(read_job_data(cfg, id_col = "ccfid")$record, "selection")$keep_unjoined)
 })
 
 test_that("a KEY naming a joined column is checked on the joined rows, so a visit time may live only there", {
@@ -1482,7 +1500,7 @@ test_that("a KEY naming a joined column is checked on the joined rows, so a visi
   # echo_date is in the joined dataset and not the cohort, as a visit time is
   # for a repeated-measures job such as nb-boostmtree.
   out <- read_job_data(cfg, id_col = "ccfid", key_cols = c("ccfid", "echo_date"), join = "echo")
-  expect_identical(nrow(out$data), 4L)
+  expect_identical(nrow(out$data), 3L)
   sel <- attr(out$record, "selection")
   expect_identical(sel$key, c("ccfid", "echo_date"))
   expect_identical(sel$cohort_key, c("ccfid", "echo_date"))
