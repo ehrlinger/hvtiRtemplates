@@ -6,7 +6,7 @@
   its refits, with a line at the median.
 * The three rf fit templates print a recommendation under the learning curve, as an advisory callout that never stops
   the render. **Events** reads the rightmost point: enough when Jaccard and Kendall tau both reach
-  `LEARNING_AGREEMENT` (new `EDIT:`, default 0.8, a cautious start) and have levelled off; borderline when they reach
+  `LEARNING_AGREEMENT` (new `EDIT:`, default 0.8, a cautious start) and have leveled off; borderline when they reach
   it but are still rising, rest on fewer than 50 events, or read an optimistic point; not yet otherwise. **Predictors** compares the candidate
   count with `MIN_PREDICTORS` (new `EDIT:`, default 10): under it, the report suggests fitting the matching
   regression model (Cox, logistic or linear) alongside before relying on the forest.

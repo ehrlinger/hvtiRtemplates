@@ -9,7 +9,7 @@ test_that("both measures over the threshold and level is enough", {
   expect_identical(v$events, "enough")
   expect_true(v$features)
   expect_match(v$text, ".callout-tip", fixed = TRUE)
-  expect_match(v$text, "levelled off", fixed = TRUE)
+  expect_match(v$text, "leveled off", fixed = TRUE)
 })
 
 test_that("one measure under the threshold is not yet", {
@@ -48,7 +48,7 @@ test_that("a plateau that cannot be assessed is not enough", {
   v <- hvtiRtemplates:::.learning_verdict(st(0.85, 0.84), 12, k = 5)
   expect_identical(v$events, "borderline")
   expect_match(v$text, "cannot be assessed", fixed = TRUE)
-  expect_match(v$text, "no earlier point to show it has levelled off", fixed = TRUE)
+  expect_match(v$text, "no earlier point to show it has leveled off", fixed = TRUE)
   # A missing value at the earlier point.
   v <- hvtiRtemplates:::.learning_verdict(st(c(NA, 0.85), c(0.5, 0.84)), 12, k = 5)
   expect_identical(v$events, "borderline")

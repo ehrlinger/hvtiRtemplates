@@ -50,11 +50,11 @@
                             "against %.2f (LEARNING_AGREEMENT)"),
                      format(last$events), unit, as.integer(k), agree[[1L]], agree[[2L]], agreement)
     trend <- if (flat_unknown) {
-      ", and whether it has levelled off cannot be assessed, with no earlier point to compare"
+      ", and whether it has leveled off cannot be assessed, with no earlier point to compare"
     } else if (rising) {
       sprintf(", and agreement was still rising, by %.2f since the previous point", rise)
     } else {
-      ", and agreement has levelled off"
+      ", and agreement has leveled off"
     }
     reading <- switch(events,
       enough = paste0("The importance ranking is reproducible at this cohort size, so the explain job's top variables ",
@@ -65,7 +65,7 @@
                           } else if (optimistic) {
                             "the rightmost point is optimistic, as the table flags it"
                           } else if (flat_unknown) {
-                            "there is no earlier point to show it has levelled off"
+                            "there is no earlier point to show it has leveled off"
                           } else {
                             paste0("more ", unit, " would still change the ranking")
                           },
@@ -104,7 +104,7 @@
 # The error figure's boxes: each fraction's refits from their 15th to their 85th percentile, with a
 # line at the median and no whiskers, since the gray points already show every refit. `learning` is
 # a gg_learning object, one row per refit. The x axis counts events on a linear scale, so a box is
-# half the narrowest gap between fractions wide, and neighbours never overlap.
+# half the narrowest gap between fractions wide, and neighbors never overlap.
 .learning_error_box <- function(learning) {
   pts <- as.data.frame(learning)
   box <- do.call(rbind, lapply(split(pts$error, pts$events), function(e) {
@@ -115,7 +115,7 @@
   gaps <- diff(sort(box$events))
   width <- if (length(gaps)) 0.5 * min(gaps) else 0.1 * box$events[1L]
   ggplot2::geom_boxplot(
-    data = box, stat = "identity", inherit.aes = FALSE, width = width, fill = NA, colour = "grey30",
+    data = box, stat = "identity", inherit.aes = FALSE, width = width, fill = NA, color = "gray30",
     ggplot2::aes(x = !!rlang::sym("events"), ymin = !!rlang::sym("lower"), lower = !!rlang::sym("lower"),
                  middle = !!rlang::sym("middle"), upper = !!rlang::sym("upper"), ymax = !!rlang::sym("upper"),
                  group = !!rlang::sym("events"))
