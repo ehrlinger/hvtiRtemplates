@@ -466,6 +466,54 @@ save_figure(.fig, "rfs-fit-diagnostics-brier")
 .fig
 ```
 
+```{r}
+#| label: tbl-brier-skill
+#| tbl-cap: "Integrated Brier skill score. How many patients have an out-of-bag prediction, the forest's out-of-bag
+#|   Brier score averaged over follow-up, the same for the Kaplan-Meier curve given to every patient, and the forest's
+#|   skill, one minus their ratio."
+# The survival counterpart of variance explained. A patient no tree left out
+# has no out-of-bag prediction, and randomForestSRC leaves them out.
+.oob <- stats::complete.cases(forest$survival.oob)
+.brier <- randomForestSRC::get.brier.survival(forest, cens.model = "km")
+# The baseline: the cohort's Kaplan-Meier survival given to every patient,
+# scored by the same function, so it has the same censoring weights, times and
+# patients as the forest. It is swapped into a copy of the forest only for the
+# rows that have an out-of-bag prediction, so the patients stay the same.
+.km <- survival::survfit(survival::Surv(forest$yvar[, 1], forest$yvar[, 2]) ~ 1)
+.km_surv <- summary(.km, times = forest$time.interest, extend = TRUE)$surv
+.reference <- forest
+.reference$survival.oob[.oob, ] <- matrix(.km_surv, sum(.oob), length(.km_surv), byrow = TRUE)
+.brier_ref <- randomForestSRC::get.brier.survival(.reference, cens.model = "km")
+knitr::kable(data.frame(
+  measure = c("Patients with an out-of-bag prediction", "Integrated out-of-bag Brier score",
+              "Integrated Brier score of Kaplan-Meier", "Integrated Brier skill score"),
+  value = c(paste(sum(.oob), "of", length(.oob)),
+            format(signif(c(.brier$crps.std, .brier_ref$crps.std, 1 - .brier$crps.std / .brier_ref$crps.std), 3)))
+))
+```
+
+The four rows, in order:
+
+- **Patients with an out-of-bag prediction.** A patient gets one only from a tree grown without them. Each tree
+  leaves out about a third of the patients, so after *b* trees a patient has none with a chance of roughly
+  0.63 to the power *b*. Both scores below rest on these patients alone. When this row is short of the whole
+  cohort, the forest has too few trees; raise `NTREE`.
+- **Integrated out-of-bag Brier score.** The curve in the Brier figure above, averaged over follow-up: the area
+  under it divided by the length of follow-up. At each time the Brier score is the mean squared difference
+  between a patient's predicted survival and whether they were still alive, with censored patients handled by
+  weighting the others by the chance of still being under observation (the Kaplan-Meier estimate of censoring).
+  0 is perfect.
+- **Integrated Brier score of Kaplan-Meier.** The same score for the simplest prediction there is: every patient
+  given the cohort's Kaplan-Meier curve. It needs no predictors, so it is the baseline the forest must beat. It is
+  computed with the same function, censoring weights, times and patients as the forest's, so the two differ only in
+  the predictions.
+- **Integrated Brier skill score.** One minus the second row over the third: the share of the Kaplan-Meier curve's
+  error the forest removes, sometimes called R squared for survival. It reads like variance explained, 1 perfect and
+  0 no better than Kaplan-Meier, and it is out of bag, so it is not inflated by scoring the patients the forest was
+  fit to. It can fall below 0, and when it does the forest predicts survival worse than the cohort's curve. Late in
+  follow-up few patients remain at risk and the censoring weights grow large, so a long thin tail can move this
+  score; read it with the Brier figure.
+
 ### Is the cohort large enough?
 
 ```{r}

@@ -28,7 +28,11 @@ test_that("rfs-fit grows a survival forest and saves the handoff", {
   rf_skip_unless_stack(rf_template_packages("rfs", "fit"))
   env <- rf_env(rfs_data())
   rf_run("rfs", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "fig-diagnostics-error", "fig-diagnostics-survival",
-                         "fig-diagnostics-brier", "save"), env, rfs_choices)
+                         "fig-diagnostics-brier", "tbl-brier-skill", "save"), env, rfs_choices)
+  # The baseline is randomForestSRC's own Kaplan-Meier null, reached through its public function.
+  null <- randomForestSRC:::.get.survival.performance(env$forest, metrics = "brier", brier.null = TRUE)$brier$null
+  expect_equal(env$.brier_ref$crps.std, null$crps.std, tolerance = 1e-6)
+  expect_true(env$.brier$crps.std < env$.brier_ref$crps.std)
 
   expect_s3_class(env$forest, "rfsrc")
   expect_identical(env$forest$family, "surv")
@@ -586,8 +590,13 @@ test_that("rfc-fit grows a classification forest from a character outcome", {
   rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
   env <- rf_env(rfc_data())
   rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data", "fit", "fig-diagnostics-error", "fig-diagnostics-roc",
-                         "diagnostics-auc", "save"), env, rfc_choices)
+                         "diagnostics-auc", "tbl-brier-skill", "save"), env, rfc_choices)
   expect_identical(env$forest$family, "class")
+  # The baseline is the Brier score of the class shares, computed the long way.
+  p <- matrix(env$.share, nrow(env$.obs), length(env$.share), byrow = TRUE)
+  expect_equal(env$.brier_ref, mean(rowSums((p - env$.obs)^2)))
+  expect_identical(rowSums(env$.obs), rep(1, nrow(env$.obs)))   # each patient in exactly one class
+  expect_true(env$.brier < env$.brier_ref)
   expect_true(file.exists(file.path(env$CACHE_DIR, "rfc.rds")))
   expect_true(is.numeric(env$auc) && env$auc > 0.5)
   for (p in list(env$err, env$roc)) expect_s3_class(ggplot2::ggplot_build(plot(p)), "ggplot_built")
