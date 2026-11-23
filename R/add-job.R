@@ -108,6 +108,9 @@
 #'   study, so a job is never written somewhere that is not a study.
 #' @param dir Deprecated: the old name of `root`. It works, with a warning,
 #'   for one more release; giving both is an error.
+#' @param open Logical. `TRUE`, the default, opens the new job in the editor,
+#'   as [open_job()] does. The editor is opened only in an interactive session,
+#'   so a script or test is unaffected either way.
 #'
 #' @return The job's path, invisibly. On any failure -- including one after
 #'   the copy, while substituting the set markers -- no file is left behind,
@@ -138,7 +141,7 @@
 #'
 #' list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #' unlink(d, recursive = TRUE)
-add_job <- function(prefix, subject, type, root = NULL, qualifier = NULL, dir) {
+add_job <- function(prefix, subject, type, root = NULL, qualifier = NULL, dir, open = TRUE) {
   if (!missing(dir)) root <- .take_renamed("add_job", "dir", "root", dir, !missing(root))
   absent <- c("subject", "type")[c(missing(subject), missing(type))]
   if (length(absent)) {
@@ -234,7 +237,7 @@ add_job <- function(prefix, subject, type, root = NULL, qualifier = NULL, dir) {
   }
   .install_provenance_hooks(root)
   ok <- TRUE
-  invisible(out)
+  if (isTRUE(open)) .open_in_editor(out) else invisible(out)
 }
 
 # `subject` and `type` are written straight into the filename, which is

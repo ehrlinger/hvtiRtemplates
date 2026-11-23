@@ -500,3 +500,22 @@ test_that("add_job writes nothing when the study cannot get the packages", {
   expect_length(list.files(dir, pattern = "dead", recursive = TRUE), 0L)
   expect_length(list.files(dir, recursive = TRUE, include.dirs = TRUE, all.files = TRUE), 0L)
 })
+
+test_that("add_job() opens the new job by default, and not with open = FALSE", {
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(hvtiRutilities::study_setup(root, study = "Open", study_tracker_id = 1L, renv = FALSE))
+  opened <- character()
+  testthat::local_mocked_bindings(
+    .open_in_editor = function(path) {
+      opened <<- c(opened, path)
+      invisible(path)
+    },
+    .package = "hvtiRtemplates"
+  )
+  out <- add_job("ac", subject = "dead", type = "eda", root = root)
+  expect_identical(opened, out)
+  expect_true(file.exists(out))
+
+  add_job("ac", subject = "reop", type = "eda", root = root, open = FALSE)
+  expect_identical(opened, out)
+})

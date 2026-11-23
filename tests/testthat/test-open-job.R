@@ -119,3 +119,15 @@ test_that("open_job opens a job scaffolded under the old spelling", {
   expect_identical(normalizePath(out), normalizePath(old))
   expect_false(file.exists(file.path(dirname(old), "ac.dead_pa.hz.qmd")))
 })
+
+test_that("open_job() opens a job it creates once, not twice", {
+  root <- new_study("openjob-once-")
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  opened <- character()
+  local_mocked_bindings(.open_in_editor = function(path) {
+    opened <<- c(opened, path)
+    invisible(path)
+  })
+  out <- open_job(prefix = "ac", subject = "dead", type = "eda", root = root)
+  expect_identical(opened, out)
+})

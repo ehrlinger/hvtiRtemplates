@@ -134,7 +134,7 @@ import_job <- function(path, subject = NULL, type = NULL, root = NULL, from, dir
   # replaced with the imported text.
   qualifier <- if (is.na(row$qualifier[[1L]])) NULL else row$qualifier[[1L]]
   out <- withCallingHandlers(
-    tryCatch(add_job(row$prefix[[1L]], subject, type, root = root, qualifier = qualifier),
+    tryCatch(add_job(row$prefix[[1L]], subject, type, root = root, qualifier = qualifier, open = FALSE),
              error = function(e) stop(sub("^add_job\\(\\): ", "import_job(): ", conditionMessage(e)), call. = FALSE)),
     hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning")
   )

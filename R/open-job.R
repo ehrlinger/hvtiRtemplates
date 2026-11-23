@@ -63,7 +63,7 @@ open_job <- function(prefix, subject, type, root = NULL, qualifier = NULL, dir) 
   } else {
     # Warned above already; add_job()'s own warning would say it twice.
     out <- withCallingHandlers(
-      add_job(prefix, subject, type, root = root, qualifier = qualifier),
+      add_job(prefix, subject, type, root = root, qualifier = qualifier, open = FALSE),
       hvtiRtemplates_deprecated = function(w) invokeRestart("muffleWarning")
     )
   }
