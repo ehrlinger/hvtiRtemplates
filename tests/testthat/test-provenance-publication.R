@@ -1009,10 +1009,49 @@ test_that("a second concurrent render in one study stops without touching the fi
       .provenance_owner_alive = function(owner) TRUE,
       .package = "hvtiRtemplates"
     ),
-    "Another Quarto render is in progress in this study [(]process 101[)]"
+    "Another Quarto render is in progress in this study [(]process 101,"
   )
   expect_identical(.provenance_file_state(.provenance_state_path(root)), state_before)
   expect_identical(jsonlite::read_json(file.path(.provenance_lock_path(root), "owner.json")), first)
+})
+
+test_that("a render held off by another names the job it is rendering and who started it", {
+  # The 2026-11-23 training: "process 101" told nobody which job to wait for, or whose it was.
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  first <- list(pid = 101L, created = "1.000000")
+  second <- list(pid = 202L, created = "2.000000")
+  dir.create(file.path(root, "distributions"))
+  source <- file.path(root, "distributions", "ac.dead.hz.qmd")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  testthat::with_mocked_bindings(
+    .provenance_pre_render(root, inputs = source),
+    .provenance_render_owner = function() first,
+    .render_user = function() "jdoe",
+    .package = "hvtiRtemplates"
+  )
+  second_render <- function() {
+    testthat::with_mocked_bindings(
+      .provenance_pre_render(root, inputs = source),
+      .provenance_render_owner = function() second,
+      .provenance_owner_alive = function(owner) TRUE,
+      .render_user = function() "penny",
+      .package = "hvtiRtemplates"
+    )
+  }
+  err <- tryCatch(second_render(), error = conditionMessage)
+  expect_match(err, "(process 101, rendering distributions/ac.dead.hz.qmd for jdoe)", fixed = TRUE)
+  expect_match(err, 'job_status("distributions/ac.dead.hz.qmd")', fixed = TRUE)
+  expect_match(err, "cancel_job(", fixed = TRUE)
+  # A note left by an earlier owner is not read as this one's: after a takeover the
+  # lock may hold the last render's note until the new owner writes its own.
+  about <- file.path(.provenance_lock_path(root), "about.json")
+  note <- jsonlite::read_json(about)
+  note$pid <- 999L
+  jsonlite::write_json(note, about, auto_unbox = TRUE)
+  err <- tryCatch(second_render(), error = conditionMessage)
+  expect_match(err, "in progress in this study (process 101). Wait", fixed = TRUE)
+  expect_no_match(err, "jdoe", fixed = TRUE)
 })
 
 test_that("a lock whose render has exited is taken over", {
@@ -1337,7 +1376,7 @@ test_that("a render on another host keeps its lock and its state", {
       .provenance_render_owner = function() second,
       .package = "hvtiRtemplates"
     ),
-    "[(]process 101 on elsewhere[.]invalid[)]"
+    "[(]process 101 on elsewhere[.]invalid, rendering managed[.]qmd"
   )
   expect_identical(.provenance_file_state(.provenance_state_path(root)), state_before)
   expect_identical(jsonlite::read_json(file.path(.provenance_lock_path(root), "owner.json")), first)
