@@ -52,12 +52,19 @@
 #' remove the job's `_files/execute-results` folder ("Directory not empty
 #' (os error 39)"), because it deletes a file there before the share has let go
 #' of it. A render that fails with that error, read from Quarto's own message or
-#' from what the render added to the job's run log, is rendered once more, with a
-#' message saying so; the job runs twice, which for a long fit means twice the
-#' time. Any other failure is passed through unchanged, and nothing is deleted. A
-#' second such failure stops with an error of class
-#' `hvtiRtemplates_execute_results_stuck`. Rendering from the RStudio
-#' Render button does not go through `render_job()` and is not retried.
+#' from what the render added to the job's run log, is rendered again, up to three
+#' renders in all, with messages saying so; each rerun runs every chunk again,
+#' which for a long fit means that much more time. Before a rerun it waits up to a
+#' minute for the share to let go of the folder's `.nfs` entries, the files it
+#' deleted while something still held them. If they outlast the wait and are all
+#' the folder holds, the folder is moved beside the job as
+#' `<job>.execute-results.stale-<time>`, so the rerun does not meet them; delete it
+#' once nothing holds them. Nothing is deleted, and a folder holding anything else
+#' is left in place. Any other failure is passed through unchanged. A third such
+#' failure stops with an error of class `hvtiRtemplates_execute_results_stuck`,
+#' whose message gives the commands to find what holds the folder and to delete it.
+#' Rendering from the RStudio Render button does not go through `render_job()` and
+#' is not retried.
 #'
 #' One job renders at a time in a study. A render started while another is
 #' still running in the same study stops with a message naming the running
@@ -166,19 +173,34 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
       stop(e)
     })
   }
-  tryCatch(attempt(), hvtiRtemplates_execute_results_race = function(e) {
-    .hvti_inform("render_job(): every chunk ran, then Quarto could not remove ", .execute_results_dir(path),
-                 " (Directory not empty): the network share had not yet let go of a file it had just written. ",
-                 "Rendering again.")
-    tryCatch(attempt(), hvtiRtemplates_execute_results_race = function(e2) {
-      .abort("render_job(): Quarto could not remove ", .execute_results_dir(path),
-             " twice (Directory not empty); the job itself did not fail.\n",
-             "Something on the share still holds a file there; find it with `lsof +D` on the folder.\n",
-             "Delete the folder and render the job again.\n",
-             "Quarto said: ", conditionMessage(e2$parent),
-             class = "execute_results_stuck", parent = e2$parent)
-    })
-  })
+  results <- .execute_results_dir(path)
+  tries <- 1L
+  stale <- character()
+  repeat {
+    raced <- tryCatch({
+      attempt()
+      NULL
+    }, hvtiRtemplates_execute_results_race = function(e) e)
+    if (is.null(raced)) break
+    if (tries >= .race_attempts) {
+      files <- dirname(results)
+      .abort("render_job(): Quarto could not remove ", results, " (Directory not empty) in each of ", tries,
+             " renders; the job itself did not fail.\n",
+             "Something on the share still holds a file there. Find it, then delete the folder and render the job again:\n",
+             "  lsof +D ", shQuote(files), "\n",
+             "  rm -rf ", shQuote(files), "\n",
+             if (length(stale)) paste0("Delete the folders moved aside before each rerun the same way: ",
+                                       paste(stale, collapse = ", "), "\n"),
+             "Quarto said: ", conditionMessage(raced$parent),
+             class = "execute_results_stuck", parent = raced$parent)
+    }
+    .hvti_inform("render_job(): every chunk ran, then Quarto could not remove ", results,
+                 " (Directory not empty): the network share had not yet let go of a file it had just written.")
+    settled <- .settle_execute_results(results)
+    stale <- c(stale, attr(settled, "aside"))
+    tries <- tries + 1L
+    .hvti_inform("render_job(): ", settled, " Rendering again, attempt ", tries, " of ", .race_attempts, ".")
+  }
   invisible(path)
 }
 
@@ -223,6 +245,50 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
   added <- strsplit(rawToChar(readBin(con, "raw", size - from)), "\n")[[1L]]
   last <- utils::tail(grep("^ERROR: ", gsub("\033\\[[0-9;]*m", "", added), value = TRUE, useBytes = TRUE), 1L)
   length(last) == 1L && .is_execute_results_race(last, expected)
+}
+
+# Renders in all, the first included. Each rerun runs every chunk again, so the bound is small.
+.race_attempts <- 3L
+
+# Seconds to wait, in turn, for the share to let go of the folder before a rerun: a minute in all. Functions, not
+# constants, so a test can replace the clock.
+.race_waits <- function() c(1, 2, 4, 8, 15, 30)
+.race_sleep <- function(seconds) Sys.sleep(seconds)
+
+# A file deleted on NFS while something still holds it open stays in its folder as .nfs<id> until that lets go, and
+# while it is there the folder cannot be removed. A rerun into the same folder fails the same way (#625: three of
+# three on lri), so before one, wait for those entries to go. If they outlast the wait, move the folder aside, beside
+# the job rather than inside <stem>_files, which Quarto may try to remove as a whole. It is moved only when .nfs
+# entries are all it holds: those are files already deleted, so no render's output is in it, and a folder holding
+# anything else is left where it is, since another render of the job may own it. Nothing is deleted. The study's
+# render lock is not held between attempts, so a render of the same job started in the moment between the listing and
+# the rename would lose its folder; that window is accepted as too narrow to close on a share with no atomic check.
+# Returns a sentence saying what was done, with the moved folder as attribute "aside" when there is one.
+.settle_execute_results <- function(dir) {
+  entries <- function() list.files(dir, all.files = TRUE, no.. = TRUE)
+  held <- function() any(startsWith(entries(), ".nfs"))
+  waited <- 0
+  for (s in .race_waits()) {
+    if (!held()) break
+    .race_sleep(s)
+    waited <- waited + s
+  }
+  if (!held()) {
+    return(if (waited > 0) sprintf("The share let go of it after %g s.", waited) else "Nothing there is held open now.")
+  }
+  if (!all(startsWith(entries(), ".nfs"))) {
+    return(sprintf("Files there were still held open after %g s, and it holds other files too, so it was left in place.",
+                   waited))
+  }
+  job_dir <- dirname(dirname(dir))
+  aside <- file.path(job_dir, paste0(sub("_files$", "", basename(dirname(dir))), ".execute-results.stale-",
+                                     format(Sys.time(), "%Y%m%d-%H%M%OS3")))
+  if (!file.rename(dir, aside)) {
+    return(sprintf("Files there were still held open after %g s, and the folder could not be moved aside.", waited))
+  }
+  structure(sprintf(paste0("Files there were still held open after %g s, so the folder, which holds only those deleted ",
+                           "files, was moved to %s. Delete it once `lsof +D` on it shows nothing holds them."), waited, aside),
+            aside = aside)
 }
 
 .file_size <- function(path) {
