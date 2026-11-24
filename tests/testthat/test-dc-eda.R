@@ -1025,9 +1025,13 @@ test_that("with X_VAR = NULL the page captions describe a distribution, not a tr
   skip_if_not_installed("hvtiPlotR")
   root <- migration_study_fixture("dp-postage")
   local_child_chunks()
+  # A device of its own, so drawing the pages writes no Rplots.pdf (#494).
+  withr::local_pdf(NULL)
   d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
-  out <- eda_draw(root, d, X_VAR = NULL, VARIABLES = c("iv_fup", "female"),
-                  SECTIONS = c("continuous", "percent"), HOVER = FALSE)
+  out <- withCallingHandlers(
+    eda_draw(root, d, X_VAR = NULL, VARIABLES = c("iv_fup", "female"), SECTIONS = c("continuous", "percent"), HOVER = FALSE),
+    warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning")
+  )
   expect_match(out$text, "Black filled circles mark each patient's value", fixed = TRUE)
   expect_match(out$text, "Stacked bars give the share of patients in each category", fixed = TRUE)
   expect_no_match(out$text, "LOESS", fixed = TRUE)

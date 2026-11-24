@@ -209,7 +209,8 @@ EVENTS <- list()
 # X_VAR <- NULL is for a build with no date and no such column: each
 # continuous variable is drawn as the spread of its values over the whole
 # cohort, each categorical one as a single bar, and the follow-up section,
-# which draws follow-up against the operation date, is left out with a note.
+# which draws follow-up against the operation date, is left out with a note,
+# even if OPYRS and OPDATE are columns of the data.
 # VARIABLES is NULL to draw the VARIABLE_SET below, or the columns to draw, in page
 # order. NULL leaves out X_VAR, EXCLUDE and any column that looks like an
 # identifier or a date, and the report lists what it left out; name such a
@@ -662,9 +663,9 @@ if (length(id_cols)) cat("Identifier columns, not described:", paste(id_cols, co
 #| label: gfup-no-date
 #| results: asis
 #| eval: !expr '"followup" %in% SECTIONS && is.null(X_VAR)'
-cat("\n::: {.callout-note}\nX_VAR is NULL, so the goodness of follow-up section is left out: it draws follow-up",
-    "against the operation date, which this build does not have. Leave \"followup\" out of SECTIONS to drop this",
-    "note, or run dc-gfup once an operation year can be joined.\n:::\n")
+cat("\n::: {.callout-note}\nX_VAR is NULL, so the goodness of follow-up section is left out: X_VAR <- NULL marks a",
+    "build with no operation date to draw follow-up against. If this build has one, set X_VAR to it to draw the",
+    "section; otherwise leave \"followup\" out of SECTIONS to drop this note.\n:::\n")
 ```
 
 ```{r}
