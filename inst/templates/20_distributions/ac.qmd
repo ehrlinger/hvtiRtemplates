@@ -419,6 +419,37 @@ as_percent <- function(x) {
   for (col in intersect(c("survival", "cl_lower", "cl_upper"), names(x))) x[[col]] <- round(100 * x[[col]], 1)
   x
 }
+
+# A life table for print, each stratum's rows ending on a row that totals its
+# events, so the sum can be checked against the counts above. Only the events are
+# totalled: a total of n_censor would not match the censored count on a PEVENT=1
+# table, which leaves out patients censored after the last event. Cells become
+# text so the total row can say "Total"; kable() takes the "align" attribute.
+with_event_totals <- function(x) {
+  num <- vapply(x, is.numeric, logical(1))
+  shown <- x
+  shown[] <- lapply(x, function(col) {
+    if (!is.numeric(col)) return(as.character(col))
+    # Four decimals, as kable(digits = 4) printed them; digits = 15 keeps format()'s
+    # default of seven significant digits from cutting a time in days short.
+    vapply(round(col, 4), function(v) format(v, digits = 15, scientific = FALSE, drop0trailing = TRUE, trim = TRUE), "")
+  })
+  # Groups come from the strata counts, not the rows, so a stratum with no events
+  # (no event rows) still ends on a total of 0; unstratified, the one group is "".
+  by <- if ("stratum" %in% names(x)) x$stratum else rep("", nrow(x))
+  groups <- if ("stratum" %in% names(x)) attr(x, "counts")$stratum %||% unique(by) else ""
+  out <- do.call(rbind, lapply(groups, function(s) {
+    total <- shown[1, , drop = FALSE]
+    total[] <- ""
+    if ("stratum" %in% names(x)) total$stratum <- s
+    total$time <- "Total"
+    total$n_event <- as.character(sum(x$n_event[by == s]))
+    rbind(shown[by == s, , drop = FALSE], total)
+  }))
+  rownames(out) <- NULL
+  attr(out, "align") <- ifelse(num, "r", "l")
+  out
+}
 ```
 
 ```{r}
@@ -465,7 +496,8 @@ ac_art <- hvtiRtemplates:::.attach_handoff_lineage(
 saveRDS(ac_art, set_path("estimates", "ac.rds"))
 # The saved life table is always the event rows, the table hp draws over.
 .km_rows <- if (EVENT_ONLY) km else hvtiRtemplates::life_table(d, TIME, EVENT, conf_level = CLEVEL, event_only = FALSE)
-knitr::kable(as_percent(.km_rows), row.names = FALSE, digits = 4)
+.km_print <- with_event_totals(as_percent(.km_rows))
+knitr::kable(.km_print, row.names = FALSE, align = attr(.km_print, "align"))
 ```
 
 Survival at each horizon is the last estimate at or before it. The number at
@@ -524,8 +556,9 @@ for (v in STRATA) {
   }
   .rows <- .lt
   if (!EVENT_ONLY) .rows <- hvtiRtemplates::life_table(d, TIME, EVENT, strata_col = v, conf_level = CLEVEL, event_only = FALSE)
+  .rows <- with_event_totals(as_percent(.rows))
   .child(paste("tbl km life table", v), paste0("Life table by ", v),
-         "knitr::kable(as_percent(.rows), row.names = FALSE, digits = 4)")
+         "knitr::kable(.rows, row.names = FALSE, align = attr(.rows, \"align\"))")
 }
 ```
 

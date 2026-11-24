@@ -90,6 +90,40 @@ test_that("ac reports survival and the number at risk at each horizon", {
   expect_identical(at$n_risk, vapply(env$grid, function(g) sum(env$d$iv_dead > g), integer(1)))
 })
 
+test_that("ac's life tables end each stratum on a row totalling its events", {
+  skip_ac()
+  env <- ac_run(ac_data(), labels = c("tbl-data", "tbl-cohort", "km-helpers"))
+  overall <- env$with_event_totals(life_table(env$d, env$TIME, env$EVENT))
+  last <- overall[nrow(overall), ]
+  expect_identical(last$time, "Total")
+  expect_identical(last$n_event, as.character(env$cc$n_events))
+  # Only the events are totalled: every other cell of the total row is blank.
+  expect_true(all(unlist(last[setdiff(names(last), c("time", "n_event"))]) == ""))
+  # Ordinary cells keep four decimals however large the value, and never go scientific.
+  cells <- env$with_event_totals(data.frame(time = c(12345.67891, 0.0001), n_event = c(1L, 1234567L)))
+  expect_identical(cells$time, c("12345.6789", "0.0001", "Total"))
+  expect_identical(cells$n_event, c("1", "1234567", "1234568"))
+  # A table with no events still ends on its total, of 0.
+  quiet <- env$d
+  quiet[[env$EVENT]] <- 0
+  none <- env$with_event_totals(life_table(quiet, env$TIME, env$EVENT))
+  expect_identical(none$time, "Total")
+  expect_identical(none$n_event, "0")
+  # Stratified with no events, each stratum still ends on its total of 0.
+  none_by <- env$with_event_totals(life_table(quiet, env$TIME, env$EVENT, strata_col = "grp"))
+  expect_identical(none_by$time, c("Total", "Total"))
+  expect_identical(none_by$n_event, c("0", "0"))
+  # Stratified, each stratum's rows end on that stratum's total, before the next begins.
+  lt <- life_table(env$d, env$TIME, env$EVENT, strata_col = "grp")
+  by_grp <- env$with_event_totals(lt)
+  totals <- which(by_grp$time == "Total")
+  expect_identical(by_grp$stratum[totals], unique(lt$stratum))
+  expect_identical(totals[[length(totals)]], nrow(by_grp))
+  expect_identical(by_grp$stratum[totals[[1]] + 1L], unique(lt$stratum)[[2]])
+  counts <- attr(lt, "counts")
+  expect_identical(by_grp$n_event[totals], as.character(counts$n_events[match(unique(lt$stratum), counts$stratum)]))
+})
+
 test_that("ac's expected counts, when given, still stop an unreconciled cohort", {
   skip_ac()
   bad <- list(EXPECTED = list(n = 1L, n_events = 1L, n_censored = 0L))
