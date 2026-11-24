@@ -561,6 +561,13 @@ within a chunk that reports steps, a line at most every ten minutes:
 `options(hvtiRtemplates.progress_every = 5)` makes that five. A render started from a
 terminal without `submit_job()` records progress too.
 
+**A template with a loop that can run for more than a few minutes reports its steps.** A loop
+over refits, seeds, bootstrap replicates or imputations in template code takes
+`tick <- .job$progress("<unit>")` before it starts and calls `tick(done, total)` after each step
+that did work, skipping steps read from a cache so they do not make the estimate look fast.
+`tick` is `NULL` outside a render. `sid-stability`'s `run_refits()` is the example; a loop
+inside another package's function needs a `progress` argument there, as boostmtree has.
+
 ### Running a long job
 
 `run_job()` is `submit_job()` with the checks done first. A long fit that fails usually fails

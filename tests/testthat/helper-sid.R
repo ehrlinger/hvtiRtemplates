@@ -124,7 +124,8 @@ sid_stability_choices <- list(REPEATS = 3, SEED_OFFSET = 100, TRACK = NULL, DROP
 
 # Every chunk of sid-stability, in order.
 sid_stability_labels <- c("setup", "edit-study-choices", "stability-helpers", "handoff", "refit-data", "refits",
-                          "summarize", "agreement-text", "tbl-stability", "fig-agreement", "tbl-label-free",
+                          "summarize", "agreement-text", "tbl-stability", "fig-agreement", "tbl-reference",
+                          "tbl-reference-groups", "tbl-label-free",
                           "tbl-lost", "coassoc", "tbl-coassoc", "fig-coassoc", "tbl-drop", "save")
 
 # sid-stability run in the set a sid-fit and a sid-clusters just wrote, in the same study. Its fig-agreement chunk
@@ -133,4 +134,15 @@ sid_stability_after <- function(env, choices = sid_stability_choices) {
   rf_skip_unless_stack(rf_template_packages("sid", "stability"))  # nolint: object_usage_linter.
   withr::local_pdf(NULL)
   rf_run("sid", "stability", sid_stability_labels, env, choices)  # nolint: object_usage_linter.
+}
+
+# A reference assignment of the sid_data() patients registered as a dataset, as a published one would be:
+# `grp` holds a letter per patient, NA for a patient it does not assign.
+sid_register_reference <- function(env, grp, dataset = "published") {
+  ref <- data.frame(ccfid = seq_along(grp), grp = grp)
+  dd <- hvtiRutilities::study_dir("datasets", env$.root)
+  utils::write.csv(ref, file.path(dd, paste0(dataset, ".csv")), row.names = FALSE)
+  suppressMessages(hvtiRutilities::register_data(root = env$.root, file = paste0(dataset, ".csv"), dataset = dataset,
+                                                 role = "named", key_cols = "ccfid"))
+  invisible(ref)
 }

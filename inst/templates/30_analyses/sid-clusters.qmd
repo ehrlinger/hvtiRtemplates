@@ -159,6 +159,15 @@ MIN_SIZE <- 20
 # elbow is only visible with points on both sides of it.
 K_METRICS_MAX <- 15
 
+# EDIT: what PAM clusters on. "sid", the default, runs PAM on the SID distance
+# itself, pam(as.dist(D), k). "profile" runs pam(D, k) on the matrix, which
+# treats each patient's row of distances as a point and clusters on the
+# Euclidean distance between rows, a different metric that gives different
+# clusters. Some earlier SID analyses ran that, so "profile" is kept for
+# reproducing them, not as a better choice. sid-stability reads this from the
+# saved result, so its refits always use the metric used here.
+PAM_ON <- "sid"
+
 # Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("sid-clusters-sankey"). The names are the
@@ -424,7 +433,18 @@ deterministic given the distance, so this job needs no seed.
 #| label: pam
 .ks <- seq_len(min(max(K_RANGE, K_METRICS_MAX), attr(D, "Size") - 1L))
 sid_mds <- NULL  # set by fig-mds when K is chosen; defined here so a skipped chunk leaves it NULL
-sid_pam <- lapply(.ks, function(k) cluster::pam(D, k))
+if (!identical(PAM_ON, "sid") && !identical(PAM_ON, "profile")) {
+  stop("PAM_ON must be \"sid\" or \"profile\".", call. = FALSE)
+}
+# The elbow and the silhouette below come from these fits, so they use the same metric as the clusters.
+# The profile distance is what pam(D, k) computes from the matrix, the Euclidean distance between rows,
+# computed once here: pam() on the matrix would recompute it for every K and keep a copy of the matrix in each fit.
+.pam_x <- if (PAM_ON == "profile") stats::dist(sid$dist) else D
+if (PAM_ON == "profile") {
+  cat("PAM runs on the profile distance: the Euclidean distance between patients' rows of SID distances, kept",
+      "for reproducing an earlier analysis that clustered this way.\n")
+}
+sid_pam <- lapply(.ks, function(k) cluster::pam(.pam_x, k))
 names(sid_pam) <- paste0("pm", .ks)
 sid_metrics <- data.frame(
   k = .ks,
@@ -483,6 +503,7 @@ if (length(.unknown)) {
 # so a COLLAPSE copied from that analysis merges the groups it named (#611).
 sid_check_reference(REFERENCE)
 .reference <- NULL
+.ref_letters <- NULL
 .overrides_given <- OVERRIDES
 if (!is.null(REFERENCE) && !is.null(K)) {
   .pmk <- paste0("pm", K)
@@ -496,7 +517,10 @@ if (!is.null(REFERENCE) && !is.null(K)) {
     stop("REFERENCE's col, ", REFERENCE$col, ", is not a column of `", REFERENCE$dataset, "`.", call. = FALSE)
   }
   .ref_at <- sid_reference_at(sid_ids, .ref_read$data[[.id]])
-  .reference <- sid_match_reference(.pm[[.pmk]], .ref_read$data[[.ref_col]][.ref_at])
+  # Each clustered patient's group in the reference, NA where it has none. Saved for sid-stability, which
+  # measures its refits against these groups as well as against this render's.
+  .ref_letters <- as.character(.ref_read$data[[.ref_col]][.ref_at])
+  .reference <- sid_match_reference(.pm[[.pmk]], .ref_letters)
   .overrides_given <- OVERRIDES
   OVERRIDES[[.pmk]] <- .reference$overrides
   .provenance_data <- c(.provenance_data, list(.ref_read$provenance))
@@ -743,6 +767,11 @@ if (!identical(as.character(.reread[[.id]]), as.character(sid_letters[[.id]]))) 
 sid_clusters <- if (!is.null(K)) {
   out <- data.frame(id = rownames(sid$dist), cluster = as.character(sid_letters[[paste0("C", K)]]))
   if (!is.null(COLLAPSE)) out$group <- as.character(sid_letters[[paste0("G", K)]])
+  # Each patient's group in REFERENCE, and the group COLLAPSE makes of it, for sid-stability.
+  if (!is.null(.ref_letters)) {
+    out$reference <- .ref_letters
+    if (!is.null(COLLAPSE)) out$reference_group <- sid_collapse(.ref_letters, COLLAPSE)
+  }
   out
 }
 .cohort <- list(n = as.integer(attr(D, "Size")))
@@ -753,7 +782,7 @@ sid_clusters_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
          stats::setNames(colnames(tab)[apply(tab, 1, which.max)], rownames(tab))
        }),
        # The overrides as written, so they can be copied back beside REFERENCE.
-       k = K, overrides = .overrides_given, reference = REFERENCE, collapse = COLLAPSE),
+       k = K, overrides = .overrides_given, reference = REFERENCE, collapse = COLLAPSE, pam_on = PAM_ON),
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   cohort = .cohort
@@ -797,6 +826,6 @@ cat(hvtiRtemplates:::.embed_provenance(
   data = .provenance_data,
   artifacts = .provenance_artifacts,
   run = .job$run,
-  extra = list(subject = SUBJECT, type = TYPE, cohort = .cohort)
+  extra = list(subject = SUBJECT, type = TYPE, cohort = .cohort, pam_on = PAM_ON)
 ))
 ```

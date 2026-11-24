@@ -513,6 +513,10 @@ test_that("the sid templates hide the captioned chunks that would be empty, and 
     expect_identical(opts(cl, lab)$include, "!is.null(K)", info = lab)
   }
   expect_identical(opts(cl, "tbl-collapse")$include, "!is.null(K) && !is.null(COLLAPSE)")
+  st <- readLines(template_path("sid", "stability"), warn = FALSE)
+  for (lab in c("tbl-reference", "tbl-reference-groups")) {
+    expect_identical(opts(st, lab)$include, "!is.null(stab_ref)", info = lab)
+  }
   # The callouts are printed by chunks that emit markdown.
   expect_identical(opts(cl, "small-clusters")$results, "asis")
   expect_identical(opts(cl, "k-unset")$results, "asis")
@@ -613,6 +617,16 @@ test_that("sid-clusters reading the handoff never creates a study ID key", {
   unlink(key)
   expect_error(rf_run("sid", "clusters", sid_clusters_labels[1:4], env, sid_clusters_choices), "Restore the study's .hvti/id_key")
   expect_false(file.exists(key))
+})
+
+test_that("sid-clusters refuses a PAM_ON other than sid or profile, and says which it used (#629)", {
+  skip_on_cran()
+  env <- sid_fit_first()
+  expect_error(sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(PAM_ON = "euclid"))),
+               "PAM_ON must be \"sid\" or \"profile\"")
+  sid_clusters_after(env)
+  expect_identical(readRDS(env$set_path("estimates", "sid-clusters.rds"))$pam_on, "sid")
+  expect_null(readRDS(env$set_path("estimates", "sid-clusters.rds"))$clusters$reference)
 })
 
 # ---- #610: declaring clustering variables as factors ----------------------------------------------
