@@ -354,11 +354,21 @@ test_that("cancelling a running job on its own host stops it, records cancelled 
   expect_identical(wait_for(job, c("finished", "failed", "vanished"))$state, "finished")
 })
 
+# Waits for a file a test's shell writes once its `trap` is set. A shell signalled before that line runs dies on the
+# signal, so a test that sends SIGTERM after a fixed pause, or none, passes or fails on how loaded the machine is.
+wait_file <- function(f, timeout = 60) {
+  deadline <- Sys.time() + timeout
+  while (!file.exists(f) && Sys.time() < deadline) Sys.sleep(0.05)
+  if (!file.exists(f)) stop("`", basename(f), "` did not appear in ", timeout, " seconds", call. = FALSE)
+  invisible(TRUE)
+}
+
 test_that("a job that ignores SIGTERM is killed after the grace period", {
   skip_on_os("windows")
   skip_on_cran()
   job <- status_job()
-  b <- bystander("trap '' TERM; while :; do sleep 1; done")
+  b <- bystander("trap '' TERM; : > ready; while :; do sleep 1; done")
+  wait_file(file.path(b$dir, "ready"))
   running_on(job, b)
   t0 <- Sys.time()
   expect_identical(cancel_job(job, grace = 1, quiet = TRUE)$state, "cancelled")
@@ -440,10 +450,10 @@ test_that("a process the job starts while shutting down is found by a fresh scan
   writeLines(c(sprintf(paste0("trap 'perl -MPOSIX -e \"open(F, q(>late.pid)); print F POSIX::getpid(), qq(\\n); close(F); ",
                               "POSIX::setsid(); exec @ARGV\" %s late.R > /dev/null 2>&1 &' TERM"),
                        shQuote(file.path(R.home("bin"), "Rscript"))),
-               "while :; do sleep 1; done"), file.path(d, "render.sh"))
+               ": > trap.ready", "while :; do sleep 1; done"), file.path(d, "render.sh"))
   .submit_job(job, final = FALSE, render_call = "system('sh render.sh')", root = d)
   expect_identical(wait_for(job, "running")$state, "running")
-  Sys.sleep(1)
+  wait_file(file.path(d, "trap.ready"))
   expect_identical(cancel_job(job, grace = 3, quiet = TRUE)$state, "cancelled")
   expect_true(file.exists(file.path(d, "late.pid")))
   late <- as.integer(readLines(file.path(d, "late.pid")))
