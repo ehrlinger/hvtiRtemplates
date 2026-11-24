@@ -233,13 +233,13 @@ folder, including when the catalog is absent.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6                        add_job("dc.tables", subject = "cohort", type = "eda")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 7                        add_job("dc.trends", subject = "cohort", type = "eda")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 8                         add_job("lg", subject = "dead", type = "calibration")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9                               add_job("ac", subject = "dead_pa", type = "hz")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10                              add_job("hz", subject = "dead_pa", type = "hz")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11                              add_job("bc", subject = "dead_pa", type = "hz")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12                              add_job("bh", subject = "dead_pa", type = "hz")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13                              add_job("bl", subject = "dead_pa", type = "hz")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 14                              add_job("br", subject = "dead_pa", type = "hz")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 15                              add_job("hm", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9                                  add_job("ac", subject = "dead", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10                                 add_job("hz", subject = "dead", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11                                 add_job("bc", subject = "dead", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12                                 add_job("bh", subject = "dead", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13                                 add_job("bl", subject = "dead", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14                                 add_job("br", subject = "dead", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15                                 add_job("hm", subject = "dead", type = "hz")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 16      add_job("lm.balancing_count", subject = "exposure", type = "balancing")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 17                 add_job("lm.binary", subject = "outcome", type = "analysis")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 18              add_job("lm.checkpred", subject = "outcome", type = "analysis")</span>
@@ -271,12 +271,12 @@ folder, including when the catalog is absent.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 44                      add_job("vp.individual", subject = "dead", type = "vp")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 45                         add_job("vt.explain", subject = "dead", type = "vt")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 46                             add_job("vt.fit", subject = "dead", type = "vt")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 47                              add_job("hp", subject = "dead_pa", type = "hz")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 48                  add_job("hs.concordance", subject = "dead_pa", type = "hz")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 49                        add_job("hs.score", subject = "dead_pa", type = "hz")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 50                        add_job("hs.setup", subject = "dead_pa", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 47                                 add_job("hp", subject = "dead", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 48                     add_job("hs.concordance", subject = "dead", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 49                           add_job("hs.score", subject = "dead", type = "hz")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 50                           add_job("hs.setup", subject = "dead", type = "hz")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 51             add_job("lp.mirror", subject = "treatment", type = "propensity")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 52                        add_job("ar", subject = "dead_pa", type = "question")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 52                           add_job("ar", subject = "dead", type = "question")</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Find a template by its qualifier, then copy its call: the follow-up jobs.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">tl</span>, <span class="va">qualifier</span> <span class="op">==</span> <span class="st">"gfup"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">name</span>, <span class="va">folder</span>, <span class="va">call</span><span class="op">)</span><span class="op">)</span></span></span>
