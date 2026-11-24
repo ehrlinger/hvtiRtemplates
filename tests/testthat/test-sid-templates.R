@@ -628,3 +628,42 @@ test_that("sid-clusters refuses a PAM_ON other than sid or profile, and says whi
   expect_identical(readRDS(env$set_path("estimates", "sid-clusters.rds"))$pam_on, "sid")
   expect_null(readRDS(env$set_path("estimates", "sid-clusters.rds"))$clusters$reference)
 })
+
+# ---- #610: declaring clustering variables as factors ----------------------------------------------
+
+test_that("sid-fit treats the variables FACTORS names as factors, records them, and sid-stability refits on the same types", {
+  skip_on_cran()
+  d <- sid_data()
+  d$g <- withr::with_seed(7L, sample(1:3, nrow(d), replace = TRUE))
+  choices <- utils::modifyList(sid_fit_choices, list(VARS = c("a", "b", "c", "e", "f", "g"), FACTORS = "G"))
+  env <- sid_fit_first(d, choices)
+  expect_true(is.factor(env$d$g))
+  expect_identical(levels(env$d$g), c("1", "2", "3"))
+  expect_true(is.factor(env$d_complete[[1L]]$g))
+  saved <- readRDS(env$set_path("estimates", "sid.rds"))
+  expect_identical(saved$settings$factors, "g")
+  # sid-stability rebuilds the data with the same types, or its fingerprint check would stop it.
+  sid_clusters_after(env)
+  sid_stability_after(env)
+  expect_true(is.factor(env$x$g))
+  expect_true(all(env$stab$by_refit$ari_groups > 0.9))
+})
+
+test_that("without FACTORS, sid-fit keeps numbers numeric, as study copies written before FACTORS expect", {
+  skip_on_cran()
+  d <- sid_data()
+  d$g <- withr::with_seed(7L, sample(1:3, nrow(d), replace = TRUE))
+  env <- sid_fit_first(d, utils::modifyList(sid_fit_choices, list(VARS = c("a", "b", "c", "e", "f", "g"))))
+  expect_true(is.numeric(env$d$g))
+  expect_null(readRDS(env$set_path("estimates", "sid.rds"))$settings$factors)
+  # A study copy of sid-fit from before FACTORS has no such line: the template's own default must be NULL.
+  src <- readLines(template_path("sid", "fit"), warn = FALSE)
+  expect_identical(grep("^FACTORS <- ", src, value = TRUE), "FACTORS <- NULL")
+})
+
+test_that("sid-fit refuses a FACTORS entry that is not a clustering variable", {
+  skip_on_cran()
+  bad <- function(f) sid_fit_first(choices = utils::modifyList(sid_fit_choices, list(FACTORS = f)))
+  expect_error(bad("zz"), "FACTORS names variable\\(s\\) not in VARS: zz")
+  expect_error(bad(1), "FACTORS must be NULL or the names of clustering variables")
+})

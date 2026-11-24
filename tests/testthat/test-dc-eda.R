@@ -998,3 +998,61 @@ test_that("dc-eda puts each page's abbreviations in that page's caption, not onc
   expect_false(grepl("Abbreviations:", captions[["fig eda continuous page 1"]], fixed = TRUE))
   expect_false(grepl("Abbreviations:", out, fixed = TRUE))
 })
+
+# ---- #615: a build with no reference date ---------------------------------------------------------
+
+test_that("X_VAR = NULL draws each variable over the whole cohort, under a cohort label", {
+  d <- data.frame(year = 2001:2010, age = 41:50, valve = rep(c("a", "b"), 5L))
+  env <- eda_spec_env(d, X_VAR = NULL, VARIABLES = c("age", "valve", "year"))
+  eval(eda_chunk("spec"), env)
+  # The template's default label is about operations, which a build with no date has none of.
+  expect_identical(env$X_LABEL, "Cohort")
+  expect_identical(env$.d_eda$Cohort, rep("All patients", nrow(d)))
+  expect_identical(env$.d_eda_bars$Cohort, rep("All patients", nrow(d)))
+  # With no reference column, nothing is left out as one: year is drawn as a variable.
+  expect_identical(env$VARIABLES, c("age", "valve", "year"))
+  # A label the study chose is kept.
+  env <- eda_spec_env(d, X_VAR = NULL, X_LABEL = "All patients in the registry", VARIABLES = "age")
+  eval(eda_chunk("spec"), env)
+  expect_identical(env$X_LABEL, "All patients in the registry")
+  # VARIABLES = NULL takes every column but identifiers, as it does with a reference column.
+  env <- eda_spec_env(d, X_VAR = NULL)
+  eval(eda_chunk("spec"), env)
+  expect_setequal(env$VARIABLES, c("year", "age", "valve"))
+})
+
+test_that("with X_VAR = NULL the page captions describe a distribution, not a trend over a reference", {
+  skip_if_not_installed("hvtiPlotR")
+  root <- migration_study_fixture("dp-postage")
+  local_child_chunks()
+  # A device of its own, so drawing the pages writes no Rplots.pdf (#494).
+  withr::local_pdf(NULL)
+  d <- hvtiRutilities::read_built(hvtiRutilities::study_config(root))
+  out <- withCallingHandlers(
+    eda_draw(root, d, X_VAR = NULL, VARIABLES = c("iv_fup", "female"), SECTIONS = c("continuous", "percent"), HOVER = FALSE),
+    warning = function(w) if (grepl("lack descriptive labels", conditionMessage(w))) invokeRestart("muffleWarning")
+  )
+  expect_match(out$text, "Black filled circles mark each patient's value", fixed = TRUE)
+  expect_match(out$text, "Stacked bars give the share of patients in each category", fixed = TRUE)
+  expect_no_match(out$text, "LOESS", fixed = TRUE)
+  expect_no_match(out$text, "reference value", fixed = TRUE)
+  expect_true(all(file.exists(out$files)))
+})
+
+test_that("dc-eda renders with X_VAR = NULL, leaving out the follow-up section with a note (#615)", {
+  skip_on_cran()
+  skip_if_not_installed("quarto")
+  skip_if_not(quarto::quarto_available())
+  # Replaced, not appended: eda_edits already sets X_VAR, and the first edit for a line wins.
+  edits <- eda_edits
+  edits[["^X_VAR <- "]] <- "X_VAR <- NULL"
+  s <- scaffold_job("dc", "eda", edits, kind = "dp-postage", subfolder = "nodate")
+  quarto::quarto_render(s$job, execute_dir = dirname(s$job), quiet = TRUE)
+  graphs <- file.path(s$root, "graphs", "cohort-eda")
+  expect_false(file.exists(file.path(graphs, "dc-eda-gfup-all.png")))
+  expect_true(file.exists(file.path(graphs, "dc-eda-continuous-page-01.png")))
+  text <- paste(readLines(sub("[.]qmd$", ".html", s$job), warn = FALSE), collapse = "\n")
+  expect_false(grepl("<h2[^>]*>[^<]*Goodness of follow-up", text))
+  expect_match(text, "X_VAR is NULL, so the goodness of follow-up section is left out", fixed = TRUE)
+  expect_match(text, "<h2[^>]*>[^<]*Continuous variables")
+})

@@ -90,6 +90,40 @@ test_that("ac reports survival and the number at risk at each horizon", {
   expect_identical(at$n_risk, vapply(env$grid, function(g) sum(env$d$iv_dead > g), integer(1)))
 })
 
+test_that("ac's life tables end each stratum on a row totalling its events", {
+  skip_ac()
+  env <- ac_run(ac_data(), labels = c("tbl-data", "tbl-cohort", "km-helpers"))
+  overall <- env$with_event_totals(life_table(env$d, env$TIME, env$EVENT))
+  last <- overall[nrow(overall), ]
+  expect_identical(last$time, "Total")
+  expect_identical(last$n_event, as.character(env$cc$n_events))
+  # Only the events are totalled: every other cell of the total row is blank.
+  expect_true(all(unlist(last[setdiff(names(last), c("time", "n_event"))]) == ""))
+  # Ordinary cells keep four decimals however large the value, and never go scientific.
+  cells <- env$with_event_totals(data.frame(time = c(12345.67891, 0.0001), n_event = c(1L, 1234567L)))
+  expect_identical(cells$time, c("12345.6789", "0.0001", "Total"))
+  expect_identical(cells$n_event, c("1", "1234567", "1234568"))
+  # A table with no events still ends on its total, of 0.
+  quiet <- env$d
+  quiet[[env$EVENT]] <- 0
+  none <- env$with_event_totals(life_table(quiet, env$TIME, env$EVENT))
+  expect_identical(none$time, "Total")
+  expect_identical(none$n_event, "0")
+  # Stratified with no events, each stratum still ends on its total of 0.
+  none_by <- env$with_event_totals(life_table(quiet, env$TIME, env$EVENT, strata_col = "grp"))
+  expect_identical(none_by$time, c("Total", "Total"))
+  expect_identical(none_by$n_event, c("0", "0"))
+  # Stratified, each stratum's rows end on that stratum's total, before the next begins.
+  lt <- life_table(env$d, env$TIME, env$EVENT, strata_col = "grp")
+  by_grp <- env$with_event_totals(lt)
+  totals <- which(by_grp$time == "Total")
+  expect_identical(by_grp$stratum[totals], unique(lt$stratum))
+  expect_identical(totals[[length(totals)]], nrow(by_grp))
+  expect_identical(by_grp$stratum[totals[[1]] + 1L], unique(lt$stratum)[[2]])
+  counts <- attr(lt, "counts")
+  expect_identical(by_grp$n_event[totals], as.character(counts$n_events[match(unique(lt$stratum), counts$stratum)]))
+})
+
 test_that("ac's expected counts, when given, still stop an unreconciled cohort", {
   skip_ac()
   bad <- list(EXPECTED = list(n = 1L, n_events = 1L, n_censored = 0L))
@@ -288,6 +322,102 @@ test_that("the curves join event points with straight lines by default, and STEP
   # Drawn to a scoped null device, so no device is left open for the tests after this one.
   withr::local_pdf(NULL)
   expect_no_warning(print(env$km_figure("grp")))
+})
+
+test_that("the manuscript figure's axes meet at (0, 0) and tick at the numbers at risk", {
+  # The 2026-11-23 training: no padding past 0, PLOT_MAX or 100%, and each number
+  # at risk under a tick of its own.
+  skip_ac()
+  local_child_chunks()
+  env <- ac_run(ac_data(), list(STRATA = "grp", PLOT_MAX = 3, CI_TIMES = c(1, 3)))
+  expect_identical(env$.warnings, character(0))
+  for (strata in list(NULL, "grp")) {
+    fig <- env$km_figure(strata)
+    panel <- ggplot2::ggplot_build(fig[[1]])$layout$panel_params[[1]]
+    expect_equal(panel$x.range, c(0, 3))
+    expect_equal(panel$y.range, c(0, 100))
+    at <- env$risk_times(3)
+    expect_equal(panel$x$breaks[!is.na(panel$x$breaks)], at)
+    # The at-risk row spans the same axis, so each count stands under its tick.
+    expect_equal(ggplot2::ggplot_build(fig[[2]])$layout$panel_params[[1]]$x.range, c(0, 3))
+    # The curve is clipped: follow-up runs past PLOT_MAX = 3, and nothing may be
+    # drawn beyond the axis.
+    expect_identical(fig[[1]]$coordinates$clip, "on")
+    # The counts at 0 and PLOT_MAX stand on the row's ends, and are drawn whole.
+    expect_identical(fig[[2]]$coordinates$clip, "off")
+  }
+  withr::local_pdf(NULL)
+  expect_no_warning(print(env$km_figure("grp")))
+})
+
+test_that("COMPLEMENT draws the manuscript figure as 100% minus survival, limits flipped", {
+  # The 2026-11-23 training: a reoperation or readmission figure rises from 0.
+  skip_ac()
+  local_child_chunks()
+  choices <- list(STRATA = "grp", CI_TIMES = c(1, 3))
+  surv <- ac_run(ac_data(), choices)
+  inc <- ac_run(ac_data(), c(choices, list(COMPLEMENT = TRUE)))
+  expect_identical(inc$.warnings, character(0))
+  for (strata in list(NULL, "grp")) {
+    s <- built_layers(surv$km_figure(strata)[[1]])
+    i <- built_layers(inc$km_figure(strata)[[1]])
+    expect_equal(i$GeomLine$y, 100 - s$GeomLine$y)
+    expect_equal(i$GeomPoint$y, 100 - s$GeomPoint$y)
+    # The band and the bars swap ends: the upper survival limit is the lower incidence limit.
+    expect_equal(i$GeomRibbon$ymin, 100 - s$GeomRibbon$ymax)
+    expect_equal(i$GeomRibbon$ymax, 100 - s$GeomRibbon$ymin)
+    expect_equal(i$GeomErrorbar$ymin, 100 - s$GeomErrorbar$ymax)
+    expect_equal(i$GeomErrorbar$ymax, 100 - s$GeomErrorbar$ymin)
+  }
+  expect_identical(surv$km_figure()[[1]]$labels$y, "Survival (%)")
+  expect_identical(inc$km_figure()[[1]]$labels$y, "1 - Kaplan-Meier (%)")
+  # The manuscript figures' captions follow the curve; both chunks read them.
+  expect_identical(surv$.cap_km_survival, "Overall survival, with patients at risk")
+  expect_identical(inc$.cap_km_survival, "Overall 1 - Kaplan-Meier, with patients at risk")
+  expect_identical(surv$.cap_km_survival_by("grp"), "Survival by grp, with patients at risk")
+  expect_identical(inc$.cap_km_survival_by("grp"), "1 - Kaplan-Meier by grp, with patients at risk")
+  ac_src <- readLines(system.file("templates", "20_distributions", "ac.qmd", package = "hvtiRtemplates"))
+  expect_true("#| fig-cap: !expr .cap_km_survival" %in% ac_src)
+  expect_true(any(grepl('.child(paste("fig km survival", v), .cap_km_survival_by(v)', ac_src, fixed = TRUE)))
+  inc$Y_LABEL <- "Reoperation (%)"
+  expect_identical(inc$km_figure()[[1]]$labels$y, "Reoperation (%)")
+  # The numbers at risk do not change with the curve.
+  expect_identical(ggplot2::ggplot_build(inc$km_figure()[[2]])$data[[1]]$label,
+                   ggplot2::ggplot_build(surv$km_figure()[[2]])$data[[1]]$label)
+  withr::local_pdf(NULL)
+  expect_no_warning(print(inc$km_figure("grp")))
+})
+
+test_that('COMPLEMENT = "both" draws survival and its complement on one figure', {
+  # The 2026-11-24 ask: both curves at once, each with its band, points and bars.
+  skip_ac()
+  local_child_chunks()
+  choices <- list(STRATA = "grp", CI_TIMES = c(1, 3))
+  surv <- ac_run(ac_data(), choices)
+  inc <- ac_run(ac_data(), c(choices, list(COMPLEMENT = TRUE)))
+  both <- ac_run(ac_data(), c(choices, list(COMPLEMENT = "both")))
+  expect_identical(both$.warnings, character(0))
+  for (strata in list(NULL, "grp")) {
+    s <- built_layers(surv$km_figure(strata)[[1]])
+    i <- built_layers(inc$km_figure(strata)[[1]])
+    # Layers of one geom stacked in drawing order, since "both" draws two of each.
+    b <- built_layers(both$km_figure(strata)[[1]])
+    b <- lapply(split(b, names(b)), function(l) {
+      do.call(rbind, lapply(l, function(x) x[intersect(c("y", "ymin", "ymax"), names(x))]))
+    })
+    # Each curve is its own layer, so neither is joined to the other.
+    expect_length(b, length(unique(names(s))))
+    expect_equal(b$GeomLine$y, c(s$GeomLine$y, i$GeomLine$y))
+    expect_equal(b$GeomPoint$y, c(s$GeomPoint$y, i$GeomPoint$y))
+    expect_equal(b$GeomRibbon$ymin, c(s$GeomRibbon$ymin, i$GeomRibbon$ymin))
+    expect_equal(sort(b$GeomErrorbar$ymin), sort(c(s$GeomErrorbar$ymin, i$GeomErrorbar$ymin)))
+  }
+  expect_identical(both$km_figure()[[1]]$labels$y, "Survival and 1 - Kaplan-Meier (%)")
+  expect_identical(both$.cap_km_survival, "Overall survival and 1 - Kaplan-Meier, with patients at risk")
+  expect_identical(both$.cap_km_survival_by("grp"), "Survival and 1 - Kaplan-Meier by grp, with patients at risk")
+  expect_error(ac_run(ac_data(), c(choices, list(COMPLEMENT = "yes"))), "COMPLEMENT must be")
+  withr::local_pdf(NULL)
+  expect_no_warning(print(both$km_figure("grp")))
 })
 
 test_that("one curve is black, and strata take the group palette led by red and blue", {

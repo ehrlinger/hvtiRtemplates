@@ -134,6 +134,7 @@ Edit these values for this study before rendering.
 # group's rows, and this job predicts for all of them.
 # EDIT: the dataset, and a WHERE that keeps every group being compared.
 DATASET <- "built"
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 ANALYSIS_SET <- NULL
 WHERE <- NULL
 ID <- "ccfid"

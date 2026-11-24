@@ -63,8 +63,8 @@
 #'
 #' `life_table_at()`: a data frame with a row per stratum and horizon:
 #' `stratum` when `strata_col` is given, then `horizon`,
-#' `time`, `survival`, `cl_lower`, `cl_upper` and
-#' `n_risk`, with the `"dropped"` attribute.
+#' `time`, `n_risk`, `survival`, `cl_lower` and
+#' `cl_upper`, with the `"dropped"` attribute.
 #'
 #' `life_table_tests()`: a data frame with a row per test: `test`,
 #' `chisq`, `df` and `p_value`, with the `"dropped"`
@@ -148,7 +148,7 @@ life_table_at <- function(data, time_col, event_col, times, labels = NULL, strat
         # Survival of zero is absorbing, so it stays known past the last observation.
         if (beyond && est[1] > 0) est <- c(NA_real_, NA_real_, NA_real_)
       }
-      data.frame(time = g, survival = est[1], cl_lower = est[2], cl_upper = est[3], n_risk = sum(p$time > g))
+      data.frame(time = g, n_risk = sum(p$time > g), survival = est[1], cl_lower = est[2], cl_upper = est[3])
     }))
     rows <- cbind(horizon = labels, rows)
     if (is.null(strata)) rows else cbind(stratum = s, rows)

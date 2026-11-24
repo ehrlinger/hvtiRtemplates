@@ -112,6 +112,7 @@ each one does.
 ```{r}
 #| label: edit-study-choices
 # EDIT: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 DATASET <- "built"
 
 # EDIT: an hvtiRdatabuild analysis set, or NULL to read the whole dataset.
@@ -193,7 +194,9 @@ CLEVEL <- 0.68268948
 PLOT_MAX <- NULL
 
 # The times the manuscript figure counts patients at risk, e.g. 0:10; NULL
-# takes evenly spaced times across the axis.
+# takes evenly spaced times across the axis. The figure's x-axis ticks at these
+# times, so each count stands under its tick; times closer together than about a
+# twentieth of the axis, such as 30 days beside 0, print over each other.
 RISK_TIMES <- NULL
 
 # How the manuscript figure shows the CLEVEL limits. CI_BAND draws them as a
@@ -213,6 +216,24 @@ CI_TIMES <- NULL
 # FALSE joins the points with straight lines, as the SAS %KAPLAN figures do;
 # TRUE draws the Kaplan-Meier steps, flat between events and dropping at each one.
 STEPS <- FALSE
+
+# What the manuscript figure's curve shows. FALSE draws survival, falling from
+# 100%. TRUE draws its complement, 1 minus Kaplan-Meier, rising from 0; its
+# limits and bars flip with it. "both" draws the two on one figure, each stratum
+# in its own color and line type, the survival curve falling to meet its
+# complement rising. The tables report survival either way.
+# For all-cause death, 1 minus Kaplan-Meier IS the cumulative mortality. For an
+# event death can pre-empt (reoperation, readmission), a death here is a
+# censoring, and 1 minus Kaplan-Meier then overstates the event's cumulative
+# incidence: it estimates the risk in a world where nobody dies. Report such an
+# event with a competing-risk estimate, not with this curve under that name.
+COMPLEMENT <- FALSE
+
+# The manuscript figure's y-axis title. NULL gives "Survival (%)", or
+# "1 - Kaplan-Meier (%)" under COMPLEMENT, or "Survival and 1 - Kaplan-Meier (%)"
+# under COMPLEMENT <- "both"; name the event for a reader,
+# e.g. Y_LABEL <- "Mortality (%)" when EVENT is all-cause death.
+Y_LABEL <- NULL
 
 # Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
@@ -416,6 +437,37 @@ as_percent <- function(x) {
   for (col in intersect(c("survival", "cl_lower", "cl_upper"), names(x))) x[[col]] <- round(100 * x[[col]], 1)
   x
 }
+
+# A life table for print, each stratum's rows ending on a row that totals its
+# events, so the sum can be checked against the counts above. Only the events are
+# totalled: a total of n_censor would not match the censored count on a PEVENT=1
+# table, which leaves out patients censored after the last event. Cells become
+# text so the total row can say "Total"; kable() takes the "align" attribute.
+with_event_totals <- function(x) {
+  num <- vapply(x, is.numeric, logical(1))
+  shown <- x
+  shown[] <- lapply(x, function(col) {
+    if (!is.numeric(col)) return(as.character(col))
+    # Four decimals, as kable(digits = 4) printed them; digits = 15 keeps format()'s
+    # default of seven significant digits from cutting a time in days short.
+    vapply(round(col, 4), function(v) format(v, digits = 15, scientific = FALSE, drop0trailing = TRUE, trim = TRUE), "")
+  })
+  # Groups come from the strata counts, not the rows, so a stratum with no events
+  # (no event rows) still ends on a total of 0; unstratified, the one group is "".
+  by <- if ("stratum" %in% names(x)) x$stratum else rep("", nrow(x))
+  groups <- if ("stratum" %in% names(x)) attr(x, "counts")$stratum %||% unique(by) else ""
+  out <- do.call(rbind, lapply(groups, function(s) {
+    total <- shown[1, , drop = FALSE]
+    total[] <- ""
+    if ("stratum" %in% names(x)) total$stratum <- s
+    total$time <- "Total"
+    total$n_event <- as.character(sum(x$n_event[by == s]))
+    rbind(shown[by == s, , drop = FALSE], total)
+  }))
+  rownames(out) <- NULL
+  attr(out, "align") <- ifelse(num, "r", "l")
+  out
+}
 ```
 
 ```{r}
@@ -462,7 +514,8 @@ ac_art <- hvtiRtemplates:::.attach_handoff_lineage(
 saveRDS(ac_art, set_path("estimates", "ac.rds"))
 # The saved life table is always the event rows, the table hp draws over.
 .km_rows <- if (EVENT_ONLY) km else hvtiRtemplates::life_table(d, TIME, EVENT, conf_level = CLEVEL, event_only = FALSE)
-knitr::kable(as_percent(.km_rows), row.names = FALSE, digits = 4)
+.km_print <- with_event_totals(as_percent(.km_rows))
+knitr::kable(.km_print, row.names = FALSE, align = attr(.km_print, "align"))
 ```
 
 Survival at each horizon is the last estimate at or before it. The number at
@@ -521,8 +574,9 @@ for (v in STRATA) {
   }
   .rows <- .lt
   if (!EVENT_ONLY) .rows <- hvtiRtemplates::life_table(d, TIME, EVENT, strata_col = v, conf_level = CLEVEL, event_only = FALSE)
+  .rows <- with_event_totals(as_percent(.rows))
   .child(paste("tbl km life table", v), paste0("Life table by ", v),
-         "knitr::kable(as_percent(.rows), row.names = FALSE, digits = 4)")
+         "knitr::kable(.rows, row.names = FALSE, align = attr(.rows, \"align\"))")
 }
 ```
 
@@ -543,6 +597,26 @@ to `graphs/`.
 #| label: km-figures
 # unnumbered: defines the figures; the chunks below draw them
 plot_max <- if (is.null(PLOT_MAX)) max(attr(km, "counts")$max_fup) else PLOT_MAX
+# The manuscript figures' captions name what their curves show. The reading page
+# and the tables stay survival under COMPLEMENT, and so do their captions.
+if (!(isFALSE(COMPLEMENT) || isTRUE(COMPLEMENT) || identical(COMPLEMENT, "both"))) {
+  stop('COMPLEMENT must be FALSE, TRUE or "both".', call. = FALSE)
+}
+.both <- identical(COMPLEMENT, "both")
+.curve_name <- if (.both) "survival and 1 - Kaplan-Meier" else if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier" else "survival"
+.cap_km_survival <- paste0("Overall ", .curve_name, ", with patients at risk")
+.cap_km_survival_by <- function(v) {
+  paste0(toupper(substring(.curve_name, 1, 1)), substring(.curve_name, 2), " by ", v, ", with patients at risk")
+}
+# The complement flips the curve and swaps its limits, so the band reads the
+# same limits from the other side.
+.flip_km <- function(x) {
+  .upper <- x$upper
+  x$surv <- 1 - x$surv
+  x$upper <- 1 - x$lower
+  x$lower <- 1 - .upper
+  x
+}
 
 # The survival curve and the four cumulative-hazard views SAS's %KAPLAN plots
 # (PLOTS, PLOTC and their log scales), one page, colored by stratum.
@@ -617,6 +691,9 @@ km_figure <- function(strata = NULL) {
   .zero <- hv$data$surv == 0
   hv$data$lower[.zero] <- 0
   hv$data$upper[.zero] <- 0
+  # Under COMPLEMENT every layer drawn from hv$data, the line, the band and the
+  # event points, follows the flipped curve.
+  if (isTRUE(COMPLEMENT)) hv$data <- .flip_km(hv$data)
   # Straight lines join the events alone, from time zero to the end of follow-up:
   # a censored row between two events would put a corner where survival did not change.
   if (!isTRUE(STEPS)) {
@@ -627,6 +704,8 @@ km_figure <- function(strata = NULL) {
   # sort as text ("1", "10", "2"). The curve, band, bars and at-risk rows all use the
   # tables' order instead, so each stratum keeps one color throughout.
   if (!is.null(strata)) hv$data$strata <- factor(as.character(hv$data$strata), levels = levels(dd[[strata]]))
+  # Under "both", the complement is drawn from its own copy, in layers of its own.
+  comp <- if (.both) .flip_km(hv$data)
   # The same colors as the page above: black for one curve, red and blue for the first two strata.
   cols <- hvtiRtemplates:::.group_colors(if (is.null(strata)) "All" else levels(dd[[strata]]))
   ltys <- hvtiRtemplates:::.group_linetypes(names(cols))
@@ -640,8 +719,15 @@ km_figure <- function(strata = NULL) {
     # The limits keep a cohort with no event, so no event points, from warning.
     ggplot2::scale_linetype_manual(values = ltys, limits = names(ltys)) +
     ggplot2::scale_shape_manual(values = shps, limits = names(shps)) +
-    ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
-    ggplot2::labs(x = "Years", y = "Survival (%)") +
+    # A tick at each time the row beneath counts patients at risk, so every count
+    # stands under a tick of its own.
+    ggplot2::scale_x_continuous(breaks = at) +
+    # The axes meet at (0, 0) and stop at PLOT_MAX and 100%, with no padding past
+    # them. The panel stays clipped: the curve runs on past a PLOT_MAX shorter than
+    # follow-up, and only the clip stops it there, at the cost of halving a point
+    # that sits on an axis.
+    ggplot2::coord_cartesian(xlim = c(0, plot_max), ylim = c(0, 100), expand = FALSE) +
+    ggplot2::labs(x = "Years", y = Y_LABEL %||% paste0(toupper(substring(.curve_name, 1, 1)), substring(.curve_name, 2), " (%)")) +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   # hv_survival()'s plot draws steps; its curve is redrawn as a line. A layer is
   # changed in place, and an hvtiPlotR that draws no step layer is left as it draws.
@@ -649,6 +735,16 @@ km_figure <- function(strata = NULL) {
   # A point at each event, so a reader sees where the estimate moves and how often.
   curve <- curve + ggplot2::geom_point(ggplot2::aes(shape = .data$strata), data = hv$data[hv$data$n.event > 0, , drop = FALSE],
                                        size = 1.2)
+  # The complement's band, curve and event points, drawn as the survival's are. A
+  # layer of its own keeps the two curves from being joined into one path.
+  if (.both) {
+    if (isTRUE(CI_BAND)) {
+      curve <- curve + ggplot2::geom_ribbon(data = comp, ggplot2::aes(ymin = .data$lower * 100, ymax = .data$upper * 100),
+                                            alpha = 0.2, color = NA)
+    }
+    curve <- curve + (if (isTRUE(STEPS)) ggplot2::geom_step else ggplot2::geom_line)(data = comp, alpha = 0.8) +
+      ggplot2::geom_point(ggplot2::aes(shape = .data$strata), data = comp[comp$n.event > 0, , drop = FALSE], size = 1.2)
+  }
   # Bars at the chosen times, from the same life table as the horizon tables, so a
   # bar and the table row for its time give the same limits.
   if (!is.null(CI_TIMES) && (!is.numeric(CI_TIMES) || anyNA(CI_TIMES) || any(CI_TIMES < 0))) {
@@ -674,6 +770,16 @@ km_figure <- function(strata = NULL) {
     }
   }
   if (length(bars) && nrow(ci)) {
+    # The table's limits, flipped with the curve under COMPLEMENT; under "both",
+    # each time carries a bar on each curve.
+    ci$bar_lower <- if (isTRUE(COMPLEMENT)) 1 - ci$cl_upper else ci$cl_lower
+    ci$bar_upper <- if (isTRUE(COMPLEMENT)) 1 - ci$cl_lower else ci$cl_upper
+    if (.both) {
+      .flipped <- ci
+      .flipped$bar_lower <- 1 - ci$cl_upper
+      .flipped$bar_upper <- 1 - ci$cl_lower
+      ci <- rbind(ci, .flipped)
+    }
     # The strata's bars at one time are dodged apart, across a width that must stay
     # inside the gap to the next chosen time and the distance to zero, or bars for
     # neighboring times interleave and one is drawn before time zero. A fortieth of
@@ -681,7 +787,7 @@ km_figure <- function(strata = NULL) {
     times <- sort(unique(ci$at))
     span <- min(plot_max / 40, 0.8 * min(c(diff(times), 2 * times[[1]])))
     curve <- curve + ggplot2::geom_errorbar(
-      data = ci, ggplot2::aes(x = .data$time, ymin = 100 * .data$cl_lower, ymax = 100 * .data$cl_upper, color = .data$strata),
+      data = ci, ggplot2::aes(x = .data$time, ymin = 100 * .data$bar_lower, ymax = 100 * .data$bar_upper, color = .data$strata),
       # Under straight lines each stratum's bars stand at its own events, not at a
       # shared time, so there is nothing to dodge apart.
       width = span, position = if (isTRUE(STEPS)) ggplot2::position_dodge(width = span) else "identity",
@@ -693,7 +799,15 @@ km_figure <- function(strata = NULL) {
     curve <- curve + ggplot2::theme(legend.position = "top") +
       ggplot2::labs(color = strata, fill = strata, linetype = strata, shape = strata)
   }
-  hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(risk))
+  out <- hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(risk))
+  # The row ends exactly at 0 and PLOT_MAX, like the curve, so the counts there
+  # would be cut in half; it is drawn unclipped, keeping the coordinates the
+  # composition set to line it up under the curve. hv_atrisk_compose() makes that
+  # coordinate system for this row alone, so setting clip on it touches nothing else.
+  out[[2]]$coordinates$clip <- "off"
+  # The count at 0 is centered on the axis, so the row's labels stand clear of it.
+  out[[2]] <- out[[2]] + ggplot2::theme(axis.text.y.left = ggplot2::element_text(margin = ggplot2::margin(r = 14)))
+  out
 }
 ```
 
@@ -707,7 +821,7 @@ km_views(km)
 
 ```{r}
 #| label: fig-km-survival
-#| fig-cap: "Overall survival, with patients at risk"
+#| fig-cap: !expr .cap_km_survival
 #| fig-height: 7.5
 .fig <- km_figure()
 save_figure(.fig, "ac-survival", width = 6, height = 5)
@@ -725,7 +839,7 @@ for (v in names(strata_fits)) {
          ".views", opts = c("#| fig-width: 9.75", "#| fig-height: 12"))
   .fig <- km_figure(v)
   save_figure(.fig, paste0("ac-survival-", v), width = 6, height = 5)
-  .child(paste("fig km survival", v), paste0("Survival by ", v, ", with patients at risk"), ".fig",
+  .child(paste("fig km survival", v), .cap_km_survival_by(v), ".fig",
          opts = "#| fig-height: 7.5")
 }
 ```
