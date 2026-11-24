@@ -303,9 +303,12 @@ if (length(setdiff(.sha_now, .sha_fit))) {
 if (anyNA(.rows)) stop("The rebuilt cohort lacks patients the SID fit clustered; rerun sid-fit.", call. = FALSE)
 cohort <- job_data$data[.rows, , drop = FALSE]
 x <- cohort[sid$vars]
-# As sid-fit does: text variables become factors before the forest.
+# As sid-fit does: text variables, and the variables its FACTORS declared, become factors before the forest.
+# A sid.rds from before FACTORS records none.
 .chr <- names(x)[vapply(x, is.character, logical(1))]
 x[.chr] <- lapply(x[.chr], factor)
+.fac <- intersect(sid$settings$factors, names(x))
+x[.fac] <- lapply(x[.fac], factor)
 CACHE_DIR <- dirname(set_path("estimates", "sid.rds"))
 M <- as.integer(.s$m)
 # The observed values can agree while the imputed ones differ: an interrupted sid-fit rerun
