@@ -556,6 +556,12 @@ to `graphs/`.
 #| label: km-figures
 # unnumbered: defines the figures; the chunks below draw them
 plot_max <- if (is.null(PLOT_MAX)) max(attr(km, "counts")$max_fup) else PLOT_MAX
+# The manuscript figures' captions name what their curves show. The reading page
+# and the tables stay survival under COMPLEMENT, and so do their captions.
+.curve_name <- if (isTRUE(COMPLEMENT)) "cumulative incidence" else "survival"
+.cap_km_survival <- paste0("Overall ", .curve_name, ", with patients at risk")
+.cap_km_survival_by <- function(v) paste0(if (isTRUE(COMPLEMENT)) "Cumulative incidence" else "Survival", " by ", v,
+                                          ", with patients at risk")
 
 # The survival curve and the four cumulative-hazard views SAS's %KAPLAN plots
 # (PLOTS, PLOTC and their log scales), one page, colored by stratum.
@@ -747,7 +753,7 @@ km_views(km)
 
 ```{r}
 #| label: fig-km-survival
-#| fig-cap: "Overall survival, with patients at risk"
+#| fig-cap: !expr .cap_km_survival
 #| fig-height: 7.5
 .fig <- km_figure()
 save_figure(.fig, "ac-survival", width = 6, height = 5)
@@ -765,7 +771,7 @@ for (v in names(strata_fits)) {
          ".views", opts = c("#| fig-width: 9.75", "#| fig-height: 12"))
   .fig <- km_figure(v)
   save_figure(.fig, paste0("ac-survival-", v), width = 6, height = 5)
-  .child(paste("fig km survival", v), paste0("Survival by ", v, ", with patients at risk"), ".fig",
+  .child(paste("fig km survival", v), .cap_km_survival_by(v), ".fig",
          opts = "#| fig-height: 7.5")
 }
 ```

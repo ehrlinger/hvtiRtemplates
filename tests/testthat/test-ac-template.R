@@ -337,6 +337,14 @@ test_that("COMPLEMENT draws the manuscript figure as 100% minus survival, limits
   }
   expect_identical(surv$km_figure()[[1]]$labels$y, "Survival (%)")
   expect_identical(inc$km_figure()[[1]]$labels$y, "Cumulative incidence (%)")
+  # The manuscript figures' captions follow the curve; both chunks read them.
+  expect_identical(surv$.cap_km_survival, "Overall survival, with patients at risk")
+  expect_identical(inc$.cap_km_survival, "Overall cumulative incidence, with patients at risk")
+  expect_identical(surv$.cap_km_survival_by("grp"), "Survival by grp, with patients at risk")
+  expect_identical(inc$.cap_km_survival_by("grp"), "Cumulative incidence by grp, with patients at risk")
+  ac_src <- readLines(system.file("templates", "20_distributions", "ac.qmd", package = "hvtiRtemplates"))
+  expect_true("#| fig-cap: !expr .cap_km_survival" %in% ac_src)
+  expect_true(any(grepl('.child(paste("fig km survival", v), .cap_km_survival_by(v)', ac_src, fixed = TRUE)))
   inc$Y_LABEL <- "Reoperation (%)"
   expect_identical(inc$km_figure()[[1]]$labels$y, "Reoperation (%)")
   # The numbers at risk do not change with the curve.
