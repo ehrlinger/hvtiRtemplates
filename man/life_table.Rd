@@ -81,8 +81,8 @@ time; \code{"dropped"} is described under Details, or \code{NULL}.
 
 \code{life_table_at()}: a data frame with a row per stratum and horizon:
 \code{stratum} when \code{strata_col} is given, then \code{horizon},
-\code{time}, \code{survival}, \code{cl_lower}, \code{cl_upper} and
-\code{n_risk}, with the \code{"dropped"} attribute.
+\code{time}, \code{n_risk}, \code{survival}, \code{cl_lower} and
+\code{cl_upper}, with the \code{"dropped"} attribute.
 
 \code{life_table_tests()}: a data frame with a row per test: \code{test},
 \code{chisq}, \code{df} and \code{p_value}, with the \code{"dropped"}

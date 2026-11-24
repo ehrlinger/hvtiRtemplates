@@ -112,6 +112,7 @@ Edit these values for this study before rendering.
 ```{r}
 #| label: edit-study-choices
 DATASET <- "study"                          # EDIT: the dataset, as named in _study.yml.
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 ANALYSIS_SET <- NULL
 WHERE <- NULL
 ID <- "ccfid"                               # EDIT: the patient identifier.
