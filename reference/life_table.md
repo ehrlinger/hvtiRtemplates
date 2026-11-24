@@ -100,9 +100,8 @@ per stratum with `n`, `n_events`, `n_censored` and `max_fup`, the last
 observed time; `"dropped"` is described under Details, or `NULL`.
 
 `life_table_at()`: a data frame with a row per stratum and horizon:
-`stratum` when `strata_col` is given, then `horizon`, `time`,
-`survival`, `cl_lower`, `cl_upper` and `n_risk`, with the `"dropped"`
-attribute.
+`stratum` when `strata_col` is given, then `horizon`, `time`, `n_risk`,
+`survival`, `cl_lower` and `cl_upper`, with the `"dropped"` attribute.
 
 `life_table_tests()`: a data frame with a row per test: `test`, `chisq`,
 `df` and `p_value`, with the `"dropped"` attribute. A stratum with
