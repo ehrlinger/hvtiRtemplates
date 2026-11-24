@@ -107,6 +107,7 @@ ranges, so they are not manuscript figures, and they do not go in a paper as sav
 ```{r}
 #| label: edit-study-choices
 # EDIT: the registered dataset this job reads ("built" is the study dataset).
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 # MIGRATE-BEGIN: dc-eda-data
 DATASET <- "built"
 # MIGRATE-END: dc-eda-data
