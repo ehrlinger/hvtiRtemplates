@@ -74,8 +74,10 @@
       return(list(reason = paste0("Quarto could not remove this job's execute-results folder (", msg, "), most often ",
                                   "because the network share had not let go of a file there; not an error in the job."),
                   fix = if (retried) {
-                    paste0("render_job() already rendered it twice. Delete the job's _files folder ",
-                           "(`lsof +D` on it names what holds a file there), then run the job again.")
+                    files <- dirname(.execute_results_dir(job))
+                    paste0("render_job() already rendered it again. Find what holds a file in the job's _files folder, ",
+                           "delete the folder, then run the job again:\n",
+                           "  lsof +D ", shQuote(files), "\n  rm -rf ", shQuote(files))
                   } else {
                     "Run the job again; if it fails the same way, delete the job's _files folder first."
                   }))

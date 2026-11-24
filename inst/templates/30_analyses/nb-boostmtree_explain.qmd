@@ -52,7 +52,7 @@ raising N_VIMP pays only for the new runs.
      A set is keyed on (subject, analysis type), not on the subject alone.
      One subject may be analyzed by several methods, such as parametric hazard,
      random forest survival or competing risks, and those chains share their upstream.
-     Two sets keyed on `dead_pa` alone would write their life tables to the
+     Two sets keyed on `dead` alone would write their life tables to the
      same file. -->
 
 

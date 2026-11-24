@@ -285,9 +285,10 @@ general <- open_job("dc", "cohort", "eda", qualifier = "general")
 tables <- open_job("dc", "cohort", "eda", qualifier = "tables")
 ```
 
-The EDA report template is also part of this stage, but it requires a
-meaningful `X_VAR` for the horizontal axis. Create it when the dataset has an
-appropriate reference date, calendar year or follow-up measure:
+The EDA report template is also part of this stage. Its `X_VAR` is the
+horizontal axis every panel is drawn against: a reference date, a calendar year,
+an age or an interval from an index event. A build with none of these sets
+`X_VAR <- NULL`, and each variable is then drawn over the whole cohort:
 
 ```r
 eda <- open_job("dc", "cohort", "eda", qualifier = "eda")

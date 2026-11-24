@@ -106,9 +106,9 @@ hazard_save <- function(object, lineage, path) {
   path
 }
 
-# The set directory the templates' `set` chunk resolves: SUBJECT dead_pa, TYPE hz.
+# The set directory the templates' `set` chunk resolves: SUBJECT dead, TYPE hz.
 hazard_set_path <- function(root, file) {
-  file.path(hvtiRutilities::study_dir("estimates", root), "dead_pa-hz", file)
+  file.path(hvtiRutilities::study_dir("estimates", root), "dead-hz", file)
 }
 
 # Every upstream hand-off a downstream job reads, all recording `lineage`.
