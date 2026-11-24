@@ -446,9 +446,10 @@ if (length(.clash)) {
   # PAM on the SID distance itself, exactly as sid-clusters runs it.
   vapply(refit_k, function(k) cluster::pam(d, k, cluster.only = TRUE), integer(nrow(refit_x[[1L]])))
 })
-# The same refit for a sid-clusters run with PAM_ON = "profile": PAM on the matrix, so each patient's row of
-# distances is a point. Kept as a second call rather than a switch inside the first, because cache_fit() keys on
-# the code's text and a change to the first would make every refit cached under it stale.
+# The same refit for a sid-clusters run with PAM_ON = "profile": each patient's row of distances is a point, and
+# PAM runs on the Euclidean distance between rows, as pam(D, k) on the matrix does. Kept as a second call rather
+# than a switch inside the first, because cache_fit() keys on the code's text and a change to the first would
+# make every refit cached under it stale.
 .refit_code_profile <- quote({
   dists <- lapply(seq_along(refit_x), function(m) {
     s <- refit_seed + m - 1L
@@ -457,7 +458,8 @@ if (length(.clash)) {
     if (is.null(o$dist)) stop("sidClustering() failed on imputation ", m, " (it returned no distance).", call. = FALSE)
     o$dist
   })
-  d <- Reduce(`+`, dists) / length(dists)
+  # The Euclidean distance between rows, which is what pam() computes from a matrix, computed once for every K.
+  d <- stats::dist(Reduce(`+`, dists) / length(dists))
   vapply(refit_k, function(k) cluster::pam(d, k, cluster.only = TRUE), integer(nrow(refit_x[[1L]])))
 })
 .refit_pam <- if (pam_on == "profile") .refit_code_profile else .refit_code

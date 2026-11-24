@@ -437,7 +437,9 @@ if (!identical(PAM_ON, "sid") && !identical(PAM_ON, "profile")) {
   stop("PAM_ON must be \"sid\" or \"profile\".", call. = FALSE)
 }
 # The elbow and the silhouette below come from these fits, so they use the same metric as the clusters.
-.pam_x <- if (PAM_ON == "profile") sid$dist else D
+# The profile distance is what pam(D, k) computes from the matrix, the Euclidean distance between rows,
+# computed once here: pam() on the matrix would recompute it for every K and keep a copy of the matrix in each fit.
+.pam_x <- if (PAM_ON == "profile") stats::dist(sid$dist) else D
 if (PAM_ON == "profile") {
   cat("PAM runs on the profile distance: the Euclidean distance between patients' rows of SID distances, kept",
       "for reproducing an earlier analysis that clustered this way.\n")
