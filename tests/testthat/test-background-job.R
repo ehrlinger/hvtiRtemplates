@@ -253,9 +253,9 @@ bystander <- function(cmd = "exec sleep 60") {
   list(pid = pid, h = h, dir = dir, created = sprintf("%.6f", as.numeric(ps::ps_create_time(h))))
 }
 
-# Waits until a bystander's marker is on a readable process. On Linux Rscript starts through the `R` shell script,
-# and under a loaded check that can take well past ten seconds; failing here names the cause rather than letting a
-# slow start read as a cancel or status defect. The wait stops early if the bystander dies, and a failure says
+# Waits until a bystander's R code has started and its marker is on its own process. On Linux Rscript starts through
+# the `R` shell script, and under a loaded check that can take well past ten seconds; failing here names the cause
+# rather than letting a slow start read as a cancel or status defect. The wait stops early if the bystander dies, and a failure says
 # what state the process was in, what it was running and what it printed, so a slow start (still `sh`), an
 # unreadable marker (already R) and a silent death (a zombie, killed by a signal) can be told apart (#587).
 wait_for_marker <- function(marker, b, timeout = 60) {
@@ -264,14 +264,27 @@ wait_for_marker <- function(marker, b, timeout = 60) {
   # ps_is_running() reads FALSE when /proc/<pid>/stat cannot be parsed, which can happen for an instant while the
   # bystander execs from sh into R, so the wait ends early only after a second of consecutive not-running reads.
   # Ending on the first one gave up on a bystander that carried its marker throughout (#587).
+  # The wait ends only once the bystander's R code has written `ready` AND the marker is on the bystander's own pid,
+  # and the read that ends it is kept, never repeated. Ending on the first hit anywhere was wrong twice over (#639):
+  # - The unreadable instant above comes at every exec, and the bystander execs three times (sh into Rscript, into
+  #   the `R` shell script, into bin/exec/R). The first hit usually came while it was still `sh`, so a later read,
+  #   the helper's own re-check or job_status()'s, could land in an exec and miss a marker carried throughout.
+  # - R's startup runs children that inherit the marker: loading utils runs `which uname` and `uname -a` for
+  #   osVersion. Killed mid-startup, the bystander leaves them orphaned and still carrying it, so a run "dead" by its
+  #   pid still reads submitted. Its `-e` code runs only after those children are reaped, and nothing execs again.
+  ready <- function() {
+    file.exists(file.path(b$dir, "ready")) && b$pid %in% vapply(ps::ps_find_tree(marker), ps::ps_pid, 1L)
+  }
   start <- Sys.time()
   deadline <- start + timeout
   gone <- 0L
-  while (!length(ps::ps_find_tree(marker)) && gone < 10L && Sys.time() < deadline) {
+  found <- ready()
+  while (!found && gone < 10L && Sys.time() < deadline) {
     gone <- if (live()) 0L else gone + 1L
     Sys.sleep(0.1)
+    found <- ready()
   }
-  if (length(ps::ps_find_tree(marker))) return(invisible(TRUE))
+  if (found) return(invisible(TRUE))
   waited <- as.numeric(difftime(Sys.time(), start, units = "secs"))
   out <- file.path(b$dir, "out")
   said <- if (file.exists(out)) paste(utils::tail(readLines(out, warn = FALSE), 20), collapse = "\n") else ""
@@ -285,10 +298,12 @@ wait_for_marker <- function(marker, b, timeout = 60) {
   env <- tryCatch(unclass(ps::ps_environ(b$h))[marker], error = function(e) "unreadable")
   after <- as.numeric(sub("^.*_", "", marker))
   started <- tryCatch(as.numeric(ps::ps_create_time(b$h)), error = function(e) NA_real_)
-  stop("the bystander's marker never appeared in ", sprintf("%.1f", waited), " of ", timeout, " seconds; the bystander ",
+  stop("the bystander's marker never appeared on its R process in ", sprintf("%.1f", waited), " of ", timeout,
+       " seconds; the bystander ",
        if (live()) "is still running" else "had exited", " (status ", state, ", running `", cmd, "`",
        if (length(kids)) paste0(", children: ", paste0("`", kids, "`", collapse = ", ")), ")",
        if (nzchar(said)) paste0(", after printing:\n", said) else ", having printed nothing",
+       if (file.exists(file.path(b$dir, "ready"))) "; its R code had started" else "; its R code had not started",
        "; its environment has the marker as ", if (is.na(env)) "unset" else paste0("\"", env, "\""),
        ", and it started ", sprintf("%.2f", started - after), " s after the marker's time (",
        sprintf("%.2f", started - as.numeric(Sys.time())), " s from now)", call. = FALSE)
@@ -300,6 +315,21 @@ running_on <- function(job, b, host = Sys.info()[["nodename"]]) {
 }
 
 alive <- function(h) isTRUE(tryCatch(ps::ps_is_running(h), error = function(e) FALSE))
+
+# ps_kill() signals and returns without waiting for the process to exit, so under load it can still be running,
+# marker and all, when the next line looks for it. Waits until it is gone or a zombie, whose environment no longer
+# carries the marker (#639). Two reads in a row, since one not-running read can be a /proc read that failed (#587).
+wait_dead <- function(h, timeout = 30) {
+  dead <- function() !alive(h) || identical(tryCatch(ps::ps_status(h), error = function(e) NA), "zombie")
+  deadline <- Sys.time() + timeout
+  streak <- 0L
+  while (streak < 2L && Sys.time() < deadline) {
+    streak <- if (dead()) streak + 1L else 0L
+    if (streak < 2L) Sys.sleep(0.05)
+  }
+  if (streak < 2L) stop("the bystander was still running ", timeout, " seconds after it was killed", call. = FALSE)
+  invisible(TRUE)
+}
 
 test_that("cancelling a running job on its own host stops it, records cancelled and clears its progress", {
   skip_on_os("windows")
@@ -532,8 +562,9 @@ test_that("a slow start whose runner carries the marker reads submitted past two
   job <- status_job()
   marker <- sprintf("PSHVTItest%d_%d", Sys.getpid(), as.integer(Sys.time()) - 5L)
   # Not /bin/sleep: macOS hides a platform binary's environment, so its marker could not be found there.
-  b <- bystander(sprintf("export %s=YES; exec %s -e \"Sys.sleep(60)\"", marker, shQuote(file.path(R.home("bin"), "Rscript"))))
-  # Until sh has exec'd into Rscript the marker is on no readable process.
+  b <- bystander(sprintf("export %s=YES; exec %s -e \"file.create('ready'); Sys.sleep(60)\"", marker,
+                         shQuote(file.path(R.home("bin"), "Rscript"))))
+  # Wait until its R code has run: before that its marker can be missed mid-exec or left on startup children.
   wait_for_marker(marker, b)
   here <- Sys.info()[["nodename"]]
   submitted <- function(host = here) {
@@ -548,6 +579,7 @@ test_that("a slow start whose runner carries the marker reads submitted past two
   expect_identical(job_status(job, quiet = TRUE)$state, "submitted")
   submitted()
   ps::ps_kill(b$h)
+  wait_dead(b$h)
   expect_identical(job_status(job, quiet = TRUE)$state, "vanished")
 })
 
@@ -556,7 +588,8 @@ test_that("a hung start that never records itself can still be cancelled, throug
   skip_on_cran()
   job <- status_job()
   marker <- sprintf("PSHVTItest%d_%d", Sys.getpid(), as.integer(Sys.time()) - 5L)
-  b <- bystander(sprintf("export %s=YES; exec %s -e \"Sys.sleep(60)\"", marker, shQuote(file.path(R.home("bin"), "Rscript"))))
+  b <- bystander(sprintf("export %s=YES; exec %s -e \"file.create('ready'); Sys.sleep(60)\"", marker,
+                         shQuote(file.path(R.home("bin"), "Rscript"))))
   wait_for_marker(marker, b)
   .write_status(.run_files(job)$status, state = "submitted", submitted = .stamp(Sys.time() - 600), marker = marker,
                 host = Sys.info()[["nodename"]])
