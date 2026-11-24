@@ -68,13 +68,13 @@
 #    N_KNOTS = 10, K_SHADOW = 5). Peak RSS of the fit and its workers together, sampled every 2 s, an upper
 #    bound. In /studies/general/_development: boostmtree-retime-20261120 (simLong(), 4 predictors, M = 10),
 #    boostmtree-memory-m500-20261123 (simLong() with 24 predictors, M = 10 and 500) and
-#    boostmtree-memory-commence-20261124 (COMMENCE's own data, 52 predictors, M = 10). Peaks in GiB:
+#    boostmtree-memory-commence-20261124 (COMMENCE's own data, 52 predictors, M = 10 and 500). Peaks in GiB:
 #      patients x cores    M = 10, 4 pred.   M = 10, 24 pred.   M = 500, 4 pred.   M = 500, 24 pred.
 #      1,000 x 4           2.0               2.6                4.2                5.0
 #      1,000 x 8           3.2
 #      2,000 x 8           6.8               8.3                17.1               18.3
 #      4,000 x 4           10.6 (no shadows)
-#      COMMENCE, 1,391 patients / 4,771 visits x 8 cores, 52 predictors: 3.7 at M = 10.
+#      COMMENCE, 1,391 patients / 4,771 visits x 8 cores, 52 predictors: 3.7 at M = 10, 9.2 at M = 500.
 #    Each coefficient is the smallest that puts the estimate 25% above every peak it covers:
 #  - a[continuous] = 0.56, from the M = 10 peaks; 1,000 x 4 with 24 predictors binds. The 2.0.8 value, 2.6,
 #    was set by COMMENCE's kill at its first CV step in a 19.2 GiB session (2026-10-22). On 2.0.13 the same
@@ -86,7 +86,7 @@
 #    for twice the cores and twice the visits, which per core x visits and visits squared explain equally
 #    well. Until a cell separates them (2,000 x 4 or 1,000 x 8 at M = 500), the term is the larger of the
 #    two: 9.1e-5 GiB per boosting step per (1,000 visits)^2 is the second, fitted to the same binding cell.
-#    The estimate is 1.3 to 1.6 times each M = 500 peak.
+#    The estimate is 1.3 to 1.6 times each M = 500 peak, and 1.36 times COMMENCE's.
 #  - Predictors: 24 real predictors (144 with shadows) against 4 added 7% to 30% at the same cell, and
 #    COMMENCE's 52 sat below the simulated cells around it, so the estimate has no predictor term; the 25%
 #    margin holds the 24-predictor peaks. Factors with many levels are unmeasured.
