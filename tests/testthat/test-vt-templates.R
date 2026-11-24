@@ -378,6 +378,54 @@ test_that("the sid method checks the key fingerprint of a set", {
   expect_equal(dimnames(m)[[1]], ids)
 })
 
+# The tests above feed vt_elig_sid() files built by hand. This one runs the morphology-paper chain in one
+# study: sid-fit, sid-clusters, vt-fit judging eligibility on the sid set, and vt-explain stratifying by
+# its clusters. Each set's path and the ID digests on both sides are therefore the templates' own.
+test_that("sid-fit and sid-clusters feed vt-fit's eligibility and vt-explain's strata", {
+  skip_on_cran()
+  d <- vt_data()
+  sid_choices <- utils::modifyList(sid_fit_choices, list(VARS = c("xs", "x1", "g1"), NTREE = 50))  # nolint: object_usage_linter.
+  sid <- sid_fit_first(d, sid_choices)  # nolint: object_usage_linter.
+  # The data has no clusters planted, so K = 2, any cluster size, and a COLLAPSE that only renames A: what matters is
+  # that a "group" column exists. Its warning is the template's own reminder about another analysis's letters.
+  cl_choices <- utils::modifyList(sid_clusters_choices,  # nolint: object_usage_linter.
+                                  list(K_RANGE = 2:3, K = 2L, MIN_SIZE = 1, COLLAPSE = list(Z = "A")))
+  expect_warning(sid_clusters_after(sid, cl_choices), "COLLAPSE merges this render's own letters")  # nolint: object_usage_linter.
+  sid_set <- paste0(sid$SUBJECT, "-", sid$TYPE)
+  expect_true(file.exists(file.path(hvtiRutilities::study_dir("estimates", sid$.root), sid_set, "sid-clusters.rds")))
+
+  rf_skip_unless_stack(rf_template_packages("vt", "fit"))  # nolint: object_usage_linter.
+  vt <- new.env(parent = globalenv())
+  vt$.root <- sid$.root
+  vt$.provenance_data <- list()
+  rf_run("vt", "fit", vt_fit_labels_all, vt,  # nolint: object_usage_linter.
+         utils::modifyList(vt_choices, list(ELIGIBILITY = "sid", SID_SET = sid_set)))
+  expect_false(is.null(vt$.sid_read))
+  expect_setequal(vt$.sid_vars, c("xs", "x1", "g1"))
+  # The rows are judged under the study key's digests, never the raw ccfid.
+  expect_true(all(vt$.elig_rows$ID %in% vt_digest(vt, d$ccfid)))
+  expect_false(any(as.character(d$ccfid) %in% vt$.elig_rows$ID))
+
+  # The collapsed groups, as a morphology paper reports them: the clusters' digests match vt.rds's.
+  strat <- utils::modifyList(vt_explain_defaults, list(STRATIFY = list(set = sid_set, column = "group")))
+  vt_explain(vt, vt_explain_labels_all, strat)
+  expect_setequal(unique(vt$.strata$stratum), c("Z", "B"))
+  expect_true(all(vt$r$ID[!vt$r$no_arm] %in% vt$.strata$ID))
+  expect_identical(nrow(vt$.sa), sum(!vt$r$no_arm))
+
+  # A vt cohort wider than the sid cohort: the patients without a stratum leave the stratum table,
+  # and the table says how many. They are taken from the eligible treated, the rows that table counts.
+  dropped <- utils::head(vt$r$ID[vt$.eligible & !vt$r$no_arm], 20L)
+  vt$.vt_read_sid <- function(p) {
+    got <- hvtiRtemplates:::.read_handoff(p, "SID clusters", vt$.cfg, "the sid job")
+    got$value$clusters <- got$value$clusters[!got$value$clusters$id %in% dropped, ]
+    got
+  }
+  out <- utils::capture.output(vt_explain(vt, vt_explain_labels_all, strat))
+  expect_true(any(grepl("20 eligible patients have no stratum and are not shown", out, fixed = TRUE)))
+  expect_false(any(dropped %in% vt$.sa$ID))
+})
+
 test_that("the propensity sensitivity renders with missing predictors under na.impute", {
   skip_on_cran()
   d <- vt_data()
