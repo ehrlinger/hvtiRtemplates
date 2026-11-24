@@ -53,7 +53,7 @@
   out
 }
 
-# need = 1 GiB base + cores * a[family] * (patients / 1000)^1.7 + growth. Memory follows PATIENTS, not
+# ORDINAL: need = 1 GiB base + cores * 0.5 * (patients / 1000)^1.7 + growth. Memory follows PATIENTS, not
 # visits: a visits term cannot reach Penny's kill (5,500 patients but only 13,900 visits) and also match
 # the 2.0.4 table, where a patients term matches both. Calibrated 2026-10-22; John reviews it in the PR.
 #  - p = 1.7: the shape of the template's 2.0.4 CORES table (2026-10-19, ordinal, ~9 visits/patient, M = 10):
@@ -61,16 +61,28 @@
 #  - a[ordinal] = 0.5: 2.0.8 workers use about a third of 2.0.4's (1.25 / 3 ~ 0.42), raised to 0.5 so Penny's
 #    fit (2026-10-22, 2.0.8, 5,500 patients / 13,900 visits / ordinal / 8 cores, killed at iteration 2 in a
 #    Medium session, 76.8 GiB cap) estimates above 0.9 x 76.8.
-#  - a[continuous] = 2.6: COMMENCE (2026-10-22, 2.0.8, 1,391 / 4,771 / continuous / 8 cores) was killed at
-#    the first CV step in a Default session (19.2 GiB) and ran in Medium. It is set so the COMMENCE fixture
-#    names Medium, the profile it ran in (spec section 8), and is a lower bound: nothing shows Small holds it.
-#  - Any other family takes the largest a, conservatively; that is unmeasured.
 #  - growth: 0.35e-3 GiB per boosting step per 1,000 visits, ordinal only (the CORES comment's term).
-#  - Shadows: 5 shadow copies (4 predictors to 24) changed peak memory by -14% to +26% in the 2026-11-20
-#    retime (boostmtree 2.0.13, Large session, simulated data, M = 10), within the sampler's scatter, so the
-#    estimate has no predictor term (decided 2026-11-20). Unmeasured with many more real predictors. The
-#    same retime measured 7-12 times less than this estimate; recalibration waits on an M = 500 run (#601).
-# The upper bound is unknown: Penny's Large run (started 2026-10-22 13:26 on lri-r03) has not recorded a
+# The ordinal estimate above is unmeasured on boostmtree 2.0.13 and is left as calibrated.
+#
+# CONTINUOUS, recalibrated on boostmtree 2.0.13 (#601, 2026-11-24):
+#   need = 1 GiB base + cores * (patients / 1000)^1.4 * (0.5 + 1.3e-3 * M)
+# Measured peaks, the fit and its workers together sampled every 2 s (an upper bound: shared pages count
+# once per process), randomForestSRC 3.10.0, NU = 0.05, 5 shadow copies:
+#   simulated, M = 500, 24 real predictors: 1,000 patients x 4 cores 5.0 GiB; 2,000 x 8 18.3 GiB
+#   (4 real predictors: 4.2 and 17.1); M = 10: 1,000 x 4 2.6, 1,000 x 8 3.2, 2,000 x 8 8.3, 4,000 x 4 10.6.
+#   COMMENCE (1,391 patients / 4,771 visits / 52 predictors / 8 cores): 3.7 GiB at M = 10, 9.2 at M = 500.
+#  - M: memory grows through the fit, 2.1 to 2.5 times from M = 10 to M = 500 and steadily in between, so the
+#    per-worker term rises with M. A short trial run understates the fit.
+#  - p = 1.4: per-worker memory scaled as patients^1.1 to ^1.6 across the cells, against 1.7 on 2.0.4.
+#  - 0.5 and 1.3e-3: every measured peak sits 1.1 to 2.0 times under its estimate, the tightest at
+#    1,000 x 4 and M = 500 with 24 predictors; the guard refuses at 0.9 of the cap besides.
+#  - Predictors: 24 real predictors against 4 raised the peak 7% to 30%, inside that margin, so the estimate
+#    has no predictor term. Shadows alone moved it -14% to +26% (2026-11-20 retime).
+#  - COMMENCE was killed in a Default session (19.2 GiB) at its first CV step on 2.0.8 (2026-10-22); on 2.0.13
+#    the same fit needs a fifth of that at M = 10, so the kill belongs to the older version.
+#  - Unmeasured: factor predictors with many levels (COMMENCE has none), and 4,000 patients at M = 500.
+#  - Any other family takes the larger of the two estimates, conservatively; that is unmeasured.
+# The ordinal upper bound is unknown: Penny's Large run (started 2026-10-22 13:26 on lri-r03) has not recorded a
 # peak, so whether 8 cores fits Large (threshold 138.2 GiB) is not asserted anywhere.
 .boostmtree_need_gib <- function(patients, visits, family, cores, m) {
   for (x in list(patients, visits, cores, m)) {
@@ -78,10 +90,9 @@
       stop("patients, visits, cores and m must be non-negative numbers.", call. = FALSE)
     }
   }
-  a <- c(ordinal = 0.5, continuous = 2.6)
-  a <- if (family %in% names(a)) a[[family]] else max(a)
-  growth <- if (identical(family, "ordinal")) 0.35e-3 * m * visits / 1000 else 0
-  1 + cores * a * (patients / 1000)^1.7 + growth
+  ordinal <- 1 + cores * 0.5 * (patients / 1000)^1.7 + 0.35e-3 * m * visits / 1000
+  continuous <- 1 + cores * (patients / 1000)^1.4 * (0.5 + 1.3e-3 * m)
+  switch(family, ordinal = ordinal, continuous = continuous, max(ordinal, continuous))
 }
 
 #' Refuse a fit that this session's memory cap cannot hold

@@ -240,11 +240,12 @@ MTRY <- NULL
 # a large study. The fit refuses to start, in the first minutes, when this session's
 # memory cannot hold it at this CORES, and says which Workbench profile to start;
 # the measurements behind that estimate are in R/fit-memory.R and ?guard_memory.
-# Run times at M = 500, NU = 0.05, K_SHADOW = 5, continuous, estimated from runs at M = 10 times 50 (hours scale with
-# M: M = 20 took 2.00 times as long); the GiB are the peaks of the fit and its workers together, measured at M = 10
-# (2026-11-20 retime, boostmtree 2.0.13, randomForestSRC 3.10.0, simulated data, 4 predictors and their 20 shadows):
-# 0.5 h and 2 GiB at 1,000 patients on 4 cores, 0.5 h and 3 GiB at 1,000 on 8, 1 h and 7 GiB at 2,000 on 8, and
-# 7 h and 9 GiB at 4,000 on 4.
+# Run times and peak memory at M = 500, NU = 0.05, K_SHADOW = 5, continuous, measured on boostmtree 2.0.13 and
+# randomForestSRC 3.10.0 (2026-11-23 and 24; the GiB are the fit and its workers together): a study of 1,391
+# patients (4,771 visits, 52 predictors) on 8 cores, 0.5 h and 9 GiB; simulated data with 24 predictors, 0.8 h and
+# 5 GiB at 1,000 patients on 4 cores, and 1.6 h and 18 GiB at 2,000 on 8. Fewer predictors run faster (4: 0.5 h and
+# 1.1 h) in little less memory. Memory grows through the fit, about twice as much at its end as at its start, so a
+# short trial run understates it. 4,000 patients on 4 cores, timed only at M = 10, extrapolates to about 7 h.
 # CORES should never exceed the session's CPUs; Windows cannot fork.
 # Not part of the cache key: the fit is identical on any number of cores.
 CORES <- if (.Platform$OS.type == "windows") 1L else 4L
