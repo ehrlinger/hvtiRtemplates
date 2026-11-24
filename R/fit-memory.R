@@ -93,11 +93,26 @@
 #  - Any other family (binary, nominal) is unmeasured: it takes the larger a and the larger growth, doubled.
 # The upper bound is unknown: Penny's Large run (started 2026-10-22 13:26 on lri-r03) has not recorded a
 # peak, so whether 8 cores fits Large (threshold 138.2 GiB) is not asserted anywhere.
-.boostmtree_need_gib <- function(patients, visits, family, cores, m) {
+# Below 2.0.13 the estimate is the 2.0.8 calibration, unchanged: a[continuous] = 2.6, growth for ordinal only,
+# any other family at the larger a. nb-boostmtree.qmd still accepts 2.0.8, and on 2.0.8 COMMENCE was killed in
+# a Default session that the 2.0.13 coefficients would admit it to. `version` defaults to the installed
+# boostmtree, so jobs already in studies, which call with five arguments, get the calibration for the version
+# they run; a version that cannot be read takes the 2.0.8 path, the larger estimate.
+.boostmtree_version <- function() {
+  tryCatch(as.character(utils::packageVersion("boostmtree")), error = function(e) NA_character_)
+}
+
+.boostmtree_need_gib <- function(patients, visits, family, cores, m, version = .boostmtree_version()) {
   for (x in list(patients, visits, cores, m)) {
     if (!is.numeric(x) || length(x) != 1L || (!is.na(x) && x < 0)) {
       stop("patients, visits, cores and m must be non-negative numbers.", call. = FALSE)
     }
+  }
+  if (is.na(version) || package_version(version) < "2.0.13") {
+    a <- c(ordinal = 0.5, continuous = 2.6)
+    a <- if (family %in% names(a)) a[[family]] else max(a)
+    growth <- if (identical(family, "ordinal")) 0.35e-3 * m * visits / 1000 else 0
+    return(1 + cores * a * (patients / 1000)^1.7 + growth)
   }
   a <- c(ordinal = 0.5, continuous = 0.56)
   growth <- c(ordinal = 0.35e-3 * m * visits / 1000,

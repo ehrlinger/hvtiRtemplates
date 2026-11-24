@@ -8,3 +8,6 @@
   asks for 12.5 GiB rather than 37.5, and fits a Default session. The ordinal
   estimate is unchanged, because it has not been measured on 2.0.13. A binary or
   nominal fit, never measured, is estimated at twice the continuous figure.
+  The new estimate applies only on boostmtree 2.0.13 or later. An
+  `nb-boostmtree` job still running 2.0.8 keeps the old estimate, which is what
+  kept COMMENCE out of the Default session that killed it on 2.0.8.

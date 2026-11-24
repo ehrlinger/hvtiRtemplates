@@ -1,4 +1,7 @@
 # fake_cgroup_v1() is in helper-run-job.R.
+# The estimate depends on the installed boostmtree; every test here reads the 2.0.13 calibration unless it names
+# a version, so the result does not move with the library the suite runs against.
+local_mocked_bindings(.boostmtree_version = function() "2.0.13")
 test_that("the v1 limit is read under the memory controller", {
   cg <- fake_cgroup_v1(19.2)
   m <- .cgroup_memory(cg$proc, cg$sys)
@@ -87,6 +90,21 @@ test_that("the refusal names the CORES that would fit this session", {
 test_that("an NA need cannot be estimated and passes", {
   cg <- fake_cgroup_v1(19.2)
   expect_silent(guard_memory(NA_real_, "x", proc = cg$proc, sys = cg$sys))
+})
+
+test_that("below 2.0.13 the estimate is the 2.0.8 calibration, unchanged", {
+  # nb-boostmtree.qmd still accepts 2.0.8. COMMENCE on 2.0.8 (1,391 / 4,771 / continuous / 8 cores / M = 1000)
+  # was killed in Default; the 2.0.8 estimate keeps it out, the 2.0.13 one would let it in.
+  old <- .boostmtree_need_gib(1391, 4771, "continuous", 8, 1000, version = "2.0.8")
+  expect_equal(old, 1 + 8 * 2.6 * 1.391^1.7, tolerance = 1e-6)
+  expect_gt(old, 0.9 * 19.2)
+  expect_lt(.boostmtree_need_gib(1391, 4771, "continuous", 8, 1000, version = "2.0.13"), 0.9 * 19.2)
+  expect_equal(.boostmtree_need_gib(5500, 13900, "ordinal", 8, 1000, version = "2.0.12"),
+               1 + 8 * 0.5 * 5.5^1.7 + 0.35e-3 * 1000 * 13.9, tolerance = 1e-6)
+  expect_equal(.boostmtree_need_gib(1391, 4771, "binary", 8, 1000, version = "2.0.8"), old, tolerance = 1e-6)
+  # A version that cannot be read takes the 2.0.8 path, the larger estimate.
+  expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 8, 1000, version = NA_character_), old,
+               tolerance = 1e-6)
 })
 
 test_that("the estimates sit where the calibration says", {
