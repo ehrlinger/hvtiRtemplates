@@ -886,9 +886,15 @@
   if (.Platform$OS.type != "unix") return(invisible(FALSE))
   beat <- .provenance_heartbeat_path(lock, owner)
   if (!file.create(beat, showWarnings = FALSE)) return(invisible(FALSE))
-  # touch -c does nothing once the file has gone with its lock, and the loop ends with the owner.
-  script <- sprintf("trap '' HUP; while kill -0 %d 2>/dev/null; do touch -c %s 2>/dev/null || rm -f %s; sleep %s; done",
-                    as.integer(owner$pid), shQuote(beat), shQuote(beat), format(every))
+  # The loop ends with the owner or with the file, which goes when the lock is released or a
+  # touch fails. A missing file reads as alive, so ending on one is safe. The owner can outlive
+  # its lock (a test suite's driver does), so the file is the signal that stops it. The wait
+  # is in steps of at most a second, so a released lock leaves no `sleep` behind for long.
+  step <- min(every, 1)
+  script <- sprintf(paste0("trap '' HUP; b=%s; while kill -0 %d 2>/dev/null && [ -e \"$b\" ]; do ",
+                           "touch -c \"$b\" 2>/dev/null || rm -f \"$b\"; n=0; ",
+                           "while [ $n -lt %d ] && [ -e \"$b\" ]; do sleep %s; n=$((n+1)); done; done"),
+                    shQuote(beat), as.integer(owner$pid), as.integer(ceiling(every / step)), format(step))
   # A loop that never started would read as a dead owner, so its file goes too.
   started <- system2("sh", c("-c", shQuote(script)), stdout = FALSE, stderr = FALSE, stdin = "/dev/null", wait = FALSE)
   if (!identical(as.integer(started), 0L)) unlink(beat)

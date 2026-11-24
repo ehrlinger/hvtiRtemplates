@@ -730,3 +730,24 @@ test_that("the heartbeat moves while its owner lives, and a writer that fails le
   expect_false(file.exists(.provenance_heartbeat_path(lock, failing)))
   expect_false(.provenance_heartbeat_stopped(lock, failing))
 })
+
+test_that("a heartbeat ends with its lock while the owner lives (#599)", {
+  skip_on_os("windows")
+  lock <- file.path(withr::local_tempdir(), "lock")
+  dir.create(lock)
+  # The owner is this session, which outlives the lock as a test suite's driver does. Before #599
+  # the loop ran until the owner exited, leaving an `sh` and a `sleep 60` per lock a suite took.
+  owner <- list(pid = Sys.getpid(), created = "3.000000")
+  beat <- .provenance_heartbeat_path(lock, owner)
+  loops <- function() {
+    sum(vapply(ps::ps()$ps_handle, function(h) {
+      cmd <- tryCatch(ps::ps_cmdline(h), error = function(e) character())
+      any(grepl(beat, cmd, fixed = TRUE))
+    }, logical(1)))
+  }
+  expect_true(.start_provenance_heartbeat(lock, owner))
+  expect_identical(loops(), 1L)
+  unlink(lock, recursive = TRUE)
+  Sys.sleep(2)
+  expect_identical(loops(), 0L)
+})
