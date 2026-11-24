@@ -1,4 +1,5 @@
-* The background-job tests that wait for a bystander's marker no longer fail at random on Linux. The wait ended on
-  the first `ps::ps_find_tree()` hit, often while the bystander was still `sh`, then read the marker again and
-  could miss it in the instant the process execs; it now waits until the marker is on the bystander's own
-  `bin/exec/R`, after which nothing execs again, and keeps the read that ended the wait (#639).
+* The background-job tests that start a bystander carrying a marker no longer fail at random on Linux. Their wait
+  ended on the first `ps::ps_find_tree()` hit, often while the bystander was still `sh`, so a later read could land
+  in one of its execs and miss the marker; and a bystander killed mid-startup left the `uname` children R's
+  startup runs still carrying it. The wait now ends once the bystander's own R code has run and the marker is on
+  its pid, keeps the read that ended it, and the test waits for the killed bystander to exit (#639).
