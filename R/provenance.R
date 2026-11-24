@@ -806,6 +806,59 @@
   paste0("process ", owner$pid, if (.on_other_host(owner)) paste0(" on ", owner$host))
 }
 
+# What a person waiting on the lock needs: the jobs the holding render was asked
+# for and who started it. Kept out of owner.json, which is compared whole to tell
+# one render from another, so it can grow without changing who holds the lock.
+# The note carries its owner's pid and start time, and is read only while they
+# match the lock's owner: after a takeover the old note names the wrong render.
+.provenance_about_path <- function(lock) file.path(lock, "about.json")
+
+.render_user <- function() Sys.info()[["user"]]
+
+# Study-relative, so the name matches what job_status() and cancel_job() take
+# from the study root.
+.provenance_study_relative <- function(paths, root) {
+  paths <- normalizePath(paths, winslash = "/", mustWork = FALSE)
+  prefix <- paste0(root, "/")
+  ifelse(startsWith(paths, prefix), substring(paths, nchar(prefix) + 1L), paths)
+}
+
+# Best effort: a note that cannot be written leaves the error naming the process
+# alone, as it did before, and never stops the render that holds the lock.
+.write_provenance_about <- function(root, owner, inputs) {
+  about <- list(pid = owner$pid, created = owner$created,
+                jobs = as.list(.provenance_study_relative(inputs, root)), user = .render_user())
+  tryCatch(.write_provenance_owner(about, .provenance_about_path(.provenance_lock_path(root))),
+           error = function(e) FALSE)
+  invisible(NULL)
+}
+
+# The holder's jobs and user, or NULL when no note belongs to this owner.
+.provenance_about <- function(lock, owner) {
+  about <- .read_provenance_owner(.provenance_about_path(lock))
+  if (is.null(about) || !identical(about$pid, owner$pid) || !identical(about$created, owner$created)) return(NULL)
+  jobs <- unlist(about$jobs, use.names = FALSE)
+  if (!length(jobs)) return(NULL)
+  list(jobs = jobs, user = about$user)
+}
+
+.provenance_about_label <- function(about) {
+  if (is.null(about)) return("")
+  jobs <- about$jobs
+  shown <- if (length(jobs) > 3L) c(jobs[1:3], paste0("and ", length(jobs) - 3L, " more")) else jobs
+  paste0(", rendering ", paste(shown, collapse = ", "),
+         if (length(about$user) && nzchar(about$user)) paste0(" for ", about$user))
+}
+
+# The console calls that check on or stop the holding job; they apply only to a
+# job started with run_job() or submit_job(), and the hint says so.
+.provenance_about_hint <- function(about) {
+  if (is.null(about)) return("")
+  job <- encodeString(about$jobs[[1L]], quote = "\"")
+  paste0(" If it was started with run_job(), job_status(", job, ") shows how far it has got and cancel_job(",
+         job, ") stops it.")
+}
+
 # A process cannot be checked from another host, but a file on the study's share
 # can. While its owner lives, a small shell loop on the owner's host touches a
 # file named for that owner, so a loop outliving its lock can never refresh the
@@ -970,8 +1023,10 @@
            call. = FALSE)
     }
     if (.provenance_lock_held(current, lock)) {
-      stop("Another Quarto render is in progress in this study (", .provenance_owner_label(current), ")",
-           ". Wait for it to finish, then render again.", .provenance_lock_hint(current, lock), call. = FALSE)
+      about <- .provenance_about(lock, current)
+      stop("Another Quarto render is in progress in this study (", .provenance_owner_label(current),
+           .provenance_about_label(about), ")", ". Wait for it to finish, then render again.",
+           .provenance_about_hint(about), .provenance_lock_hint(current, lock), call. = FALSE)
     }
     if (.take_over_provenance_lock(lock, current, owner)) {
       .start_provenance_heartbeat(lock, owner)
@@ -1004,6 +1059,8 @@
   .acquire_provenance_lock(root)
   ok <- FALSE
   on.exit(if (!ok) .release_provenance_lock(root), add = TRUE)
+  if (is.null(inputs)) inputs <- .quarto_project_files("QUARTO_PROJECT_INPUT_FILES", root)
+  .write_provenance_about(root, .provenance_render_owner(), inputs)
   state <- .provenance_pre_render_locked(root, inputs)
   ok <- TRUE
   invisible(state)
