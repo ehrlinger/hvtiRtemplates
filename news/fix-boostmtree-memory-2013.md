@@ -6,4 +6,5 @@
   25% above every one. Because memory grows over the boosting steps, the
   estimate gains a term in `M`. A 1,391-patient fit on 8 cores at `M = 500` now
   asks for 12.5 GiB rather than 37.5, and fits a Default session. The ordinal
-  estimate is unchanged: it has not been measured on 2.0.13.
+  estimate is unchanged, because it has not been measured on 2.0.13. A binary or
+  nominal fit, never measured, is estimated at twice the continuous figure.

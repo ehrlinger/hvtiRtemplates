@@ -47,7 +47,8 @@ test_that("COMMENCE at 8 cores and M = 500 passes in Default on 2.0.13 (failure 
 })
 
 test_that("every continuous 2.0.13 peak measured for #601 sits at least 25% under its estimate", {
-  # patients, visits, cores, M, peak GiB: R/fit-memory.R has the source of each row.
+  # patients, visits, cores, M, peak GiB: R/fit-memory.R has the source of each row. The 4,000-patient row's
+  # visits are scaled from the other simLong() cells; at M = 10 the growth term barely moves its estimate.
   peaks <- rbind(c(1000, 8202, 4, 10, 2.0), c(1000, 8202, 8, 10, 3.3), c(2000, 16300, 8, 10, 6.9),
                  c(4000, 32600, 4, 10, 10.9), c(1000, 8202, 4, 10, 2.581), c(2000, 16300, 8, 10, 8.272),
                  c(1000, 8202, 4, 500, 4.155), c(1000, 8202, 4, 500, 5.021),
@@ -80,7 +81,7 @@ test_that("the refusal names the CORES that would fit this session", {
   cg <- fake_cgroup_v1(19.2)
   fit <- function(k) .boostmtree_need_gib(2000, 16300, "continuous", k, 500)
   expect_error(guard_memory(fit(8), "x", cores = 8, cores_fit = fit, proc = cg$proc, sys = cg$sys),
-               "CORES <- 4\\b")
+               "CORES <- 2\\b")
 })
 
 test_that("an NA need cannot be estimated and passes", {
@@ -93,9 +94,12 @@ test_that("the estimates sit where the calibration says", {
   expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 3, 1000), 6.7, tolerance = 0.01)
   expect_equal(.boostmtree_need_gib(2000, 16300, "continuous", 8, 500), 27.9, tolerance = 0.01)
   expect_equal(.boostmtree_need_gib(5500, 13900, "ordinal", 8, 1000), 78.4, tolerance = 0.01)
-  # An unmeasured family takes the larger coefficient and the larger growth.
+  # Growth is the larger of per core x visits and visits squared: the second binds with many visits on few cores.
+  expect_equal(.boostmtree_need_gib(4000, 32600, "continuous", 4, 500),
+               1 + 4 * 0.56 * 4^1.7 + 9.1e-5 * 500 * 32.6^2, tolerance = 1e-6)
+  # An unmeasured family takes the larger coefficient and the larger growth, doubled.
   expect_equal(.boostmtree_need_gib(1391, 4771, "binary", 8, 500),
-               1 + 8 * 0.56 * 1.391^1.7 + 0.19e-3 * 8 * 500 * 4.771, tolerance = 1e-6)
+               2 * .boostmtree_need_gib(1391, 4771, "continuous", 8, 500), tolerance = 1e-6)
   expect_true(is.na(.boostmtree_need_gib(NA_real_, 1, "ordinal", 8, 1000)))
   expect_error(.boostmtree_need_gib(-1, 1, "ordinal", 8, 1000), "non-negative")
 })

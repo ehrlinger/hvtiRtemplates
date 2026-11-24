@@ -82,13 +82,15 @@
 #    data understate. The estimate is 1.3 to 2.4 times each M = 10 peak.
 #  - growth[continuous]: 0.19e-3 GiB per core per boosting step per 1,000 visits, from the M = 500 peaks;
 #    1,000 x 4 with 24 predictors binds. Peaks rose roughly linearly over the steps, 2.1 to 2.6 times from
-#    M = 10 to 500, so a term in M is needed. Per core, because the two cells grew by 2.4 and 10.1 GiB:
-#    twice the cores and twice the visits, four times the growth. The estimate is 1.3 to 1.6 times each
-#    M = 500 peak.
+#    M = 10 to 500, so a term in M is needed. The two cells grew by 2.4 and 10.1 GiB, four times the growth
+#    for twice the cores and twice the visits, which per core x visits and visits squared explain equally
+#    well. Until a cell separates them (2,000 x 4 or 1,000 x 8 at M = 500), the term is the larger of the
+#    two: 9.1e-5 GiB per boosting step per (1,000 visits)^2 is the second, fitted to the same binding cell.
+#    The estimate is 1.3 to 1.6 times each M = 500 peak.
 #  - Predictors: 24 real predictors (144 with shadows) against 4 added 7% to 30% at the same cell, and
 #    COMMENCE's 52 sat below the simulated cells around it, so the estimate has no predictor term; the 25%
 #    margin holds the 24-predictor peaks. Factors with many levels are unmeasured.
-#  - Any other family takes the larger a and the larger growth, conservatively; that is unmeasured.
+#  - Any other family (binary, nominal) is unmeasured: it takes the larger a and the larger growth, doubled.
 # The upper bound is unknown: Penny's Large run (started 2026-10-22 13:26 on lri-r03) has not recorded a
 # peak, so whether 8 cores fits Large (threshold 138.2 GiB) is not asserted anywhere.
 .boostmtree_need_gib <- function(patients, visits, family, cores, m) {
@@ -98,15 +100,13 @@
     }
   }
   a <- c(ordinal = 0.5, continuous = 0.56)
-  growth <- c(ordinal = 0.35e-3 * m * visits / 1000, continuous = 0.19e-3 * cores * m * visits / 1000)
+  growth <- c(ordinal = 0.35e-3 * m * visits / 1000,
+              continuous = max(0.19e-3 * cores * m * visits / 1000, 9.1e-5 * m * (visits / 1000)^2))
   if (family %in% names(a)) {
-    a <- a[[family]]
-    growth <- growth[[family]]
+    1 + cores * a[[family]] * (patients / 1000)^1.7 + growth[[family]]
   } else {
-    a <- max(a)
-    growth <- max(growth)
+    2 * (1 + cores * max(a) * (patients / 1000)^1.7 + max(growth))
   }
-  1 + cores * a * (patients / 1000)^1.7 + growth
 }
 
 #' Refuse a fit that this session's memory cap cannot hold
