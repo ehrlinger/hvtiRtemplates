@@ -138,6 +138,17 @@ JOIN_KEY <- NULL
 # allowed, but each adds staggered copies and interactions to the forest.
 VARS <- c("age", "female", "hx_chf")
 
+# EDIT: optionally, clustering variables to treat as categories rather than
+# numbers, such as a graded degree (0 to 4) or a coded class (1 to 3):
+#   FACTORS <- c("<graded variable>", "<coded variable>")
+# sidClustering() staggers and interacts a factor differently from a number,
+# so this changes the forest and the clusters. NULL keeps every variable that
+# is not text a number, as this job always has. To match an analysis that ran
+# hvtiRutilities::r_data_types() first, list the variables it made factors
+# (by default, numbers with 3 to 9 distinct values). A 0/1 indicator needs
+# nothing: the forest treats it the same whether it is a number or logical.
+FACTORS <- NULL
+
 # EDIT: a variable missing in more than this share of patients is dropped and
 # listed, not imputed. An imputation that invents most of a column decides the
 # clusters it was meant to inform.
@@ -204,6 +215,18 @@ VARS <- tolower(VARS)
 if (length(.chr)) {
   d[.chr] <- lapply(d[.chr], factor)
   cat("Text variables converted to factors: ", paste(.chr, collapse = ", "), "\n", sep = "")
+}
+# The variables FACTORS declares are factors too, before the missing values are counted and imputed, so
+# the imputation fills them with one of their levels and the forest treats them as categories.
+if (!is.null(FACTORS)) {
+  if (!is.character(FACTORS) || anyNA(FACTORS)) {
+    stop("FACTORS must be NULL or the names of clustering variables, such as c(\"grade\").", call. = FALSE)
+  }
+  FACTORS <- unique(tolower(FACTORS))
+  .not_var <- setdiff(FACTORS, VARS)
+  if (length(.not_var)) stop("FACTORS names variable(s) not in VARS: ", toString(.not_var), ".", call. = FALSE)
+  d[FACTORS] <- lapply(d[FACTORS], factor)
+  cat("Variables declared as factors: ", paste(FACTORS, collapse = ", "), "\n", sep = "")
 }
 .empty <- rowSums(!is.na(d[VARS])) == 0
 d <- d[!.empty, , drop = FALSE]
@@ -326,9 +349,12 @@ sid_agreement <- data.frame(
 ```{r}
 #| label: tbl-used
 #| tbl-cap: "What the forests were grown on"
+.factors_used <- sid_vars[vapply(d[sid_vars], is.factor, logical(1L))]
 knitr::kable(data.frame(
-  step = c("Clustering variables", "Dropped before the fit", "Kept by the reduce step", "Imputation", "Patients"),
-  value = c(toString(sid_vars), if (nrow(sid_dropped)) toString(sid_dropped$variable) else "none",
+  step = c("Clustering variables", "Treated as factors", "Dropped before the fit", "Kept by the reduce step",
+           "Imputation", "Patients"),
+  value = c(toString(sid_vars), if (length(.factors_used)) toString(.factors_used) else "none",
+            if (nrow(sid_dropped)) toString(sid_dropped$variable) else "none",
             toString(unique(unlist(lapply(sid_fits, `[[`, "outcome.names")))),
             if (.n_missing == 0L) "none needed" else paste0(IMPUTE, ", ", M, " imputation(s)"),
             nrow(sid_dist))
@@ -369,7 +395,9 @@ sid_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
        # The completed data each forest saw, so sid-stability can refit on exactly these values.
        data_fingerprint = vapply(d_complete, hvtiRtemplates:::.sid_data_fingerprint, character(1)),
        settings = list(ntree = NTREE, sid_reduce = SID_REDUCE, seed = SEED, impute = IMPUTE, m = M,
-                       mice_maxit = MICE_MAXIT, max_missing = MAX_MISSING)),
+                       mice_maxit = MICE_MAXIT, max_missing = MAX_MISSING,
+                       # The declared factors that were clustered on, which sid-stability converts the same way.
+                       factors = if (length(intersect(FACTORS, sid_vars))) intersect(FACTORS, sid_vars))),
   data = .provenance_data,
   cohort = .cohort,
   selection = attr(job_data$record, "selection")
