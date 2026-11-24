@@ -350,6 +350,44 @@ test_that("the manuscript figure's axes meet at (0, 0) and tick at the numbers a
   expect_no_warning(print(env$km_figure("grp")))
 })
 
+test_that("COMPLEMENT draws the manuscript figure as 100% minus survival, limits flipped", {
+  # The 2026-11-23 training: a reoperation or readmission figure rises from 0.
+  skip_ac()
+  local_child_chunks()
+  choices <- list(STRATA = "grp", CI_TIMES = c(1, 3))
+  surv <- ac_run(ac_data(), choices)
+  inc <- ac_run(ac_data(), c(choices, list(COMPLEMENT = TRUE)))
+  expect_identical(inc$.warnings, character(0))
+  for (strata in list(NULL, "grp")) {
+    s <- built_layers(surv$km_figure(strata)[[1]])
+    i <- built_layers(inc$km_figure(strata)[[1]])
+    expect_equal(i$GeomLine$y, 100 - s$GeomLine$y)
+    expect_equal(i$GeomPoint$y, 100 - s$GeomPoint$y)
+    # The band and the bars swap ends: the upper survival limit is the lower incidence limit.
+    expect_equal(i$GeomRibbon$ymin, 100 - s$GeomRibbon$ymax)
+    expect_equal(i$GeomRibbon$ymax, 100 - s$GeomRibbon$ymin)
+    expect_equal(i$GeomErrorbar$ymin, 100 - s$GeomErrorbar$ymax)
+    expect_equal(i$GeomErrorbar$ymax, 100 - s$GeomErrorbar$ymin)
+  }
+  expect_identical(surv$km_figure()[[1]]$labels$y, "Survival (%)")
+  expect_identical(inc$km_figure()[[1]]$labels$y, "1 - Kaplan-Meier (%)")
+  # The manuscript figures' captions follow the curve; both chunks read them.
+  expect_identical(surv$.cap_km_survival, "Overall survival, with patients at risk")
+  expect_identical(inc$.cap_km_survival, "Overall 1 - Kaplan-Meier, with patients at risk")
+  expect_identical(surv$.cap_km_survival_by("grp"), "Survival by grp, with patients at risk")
+  expect_identical(inc$.cap_km_survival_by("grp"), "1 - Kaplan-Meier by grp, with patients at risk")
+  ac_src <- readLines(system.file("templates", "20_distributions", "ac.qmd", package = "hvtiRtemplates"))
+  expect_true("#| fig-cap: !expr .cap_km_survival" %in% ac_src)
+  expect_true(any(grepl('.child(paste("fig km survival", v), .cap_km_survival_by(v)', ac_src, fixed = TRUE)))
+  inc$Y_LABEL <- "Reoperation (%)"
+  expect_identical(inc$km_figure()[[1]]$labels$y, "Reoperation (%)")
+  # The numbers at risk do not change with the curve.
+  expect_identical(ggplot2::ggplot_build(inc$km_figure()[[2]])$data[[1]]$label,
+                   ggplot2::ggplot_build(surv$km_figure()[[2]])$data[[1]]$label)
+  withr::local_pdf(NULL)
+  expect_no_warning(print(inc$km_figure("grp")))
+})
+
 test_that("one curve is black, and strata take the group palette led by red and blue", {
   skip_ac()
   skip_if_not_installed("hvtiPlotR", "2.8.20")

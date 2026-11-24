@@ -217,6 +217,21 @@ CI_TIMES <- NULL
 # TRUE draws the Kaplan-Meier steps, flat between events and dropping at each one.
 STEPS <- FALSE
 
+# What the manuscript figure's curve shows. FALSE draws survival, falling from
+# 100%. TRUE draws its complement, 1 minus Kaplan-Meier, rising from 0; its
+# limits and bars flip with it. The tables report survival either way.
+# For all-cause death, 1 minus Kaplan-Meier IS the cumulative mortality. For an
+# event death can pre-empt (reoperation, readmission), a death here is a
+# censoring, and 1 minus Kaplan-Meier then overstates the event's cumulative
+# incidence: it estimates the risk in a world where nobody dies. Report such an
+# event with a competing-risk estimate, not with this curve under that name.
+COMPLEMENT <- FALSE
+
+# The manuscript figure's y-axis title. NULL gives "Survival (%)", or
+# "1 - Kaplan-Meier (%)" under COMPLEMENT; name the event for a reader,
+# e.g. Y_LABEL <- "Mortality (%)" when EVENT is all-cause death.
+Y_LABEL <- NULL
+
 # Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
 # SAVE_FIGURES <- FALSE saves none; FIGURES keeps only the figures whose names
 # start with one of its entries, e.g. FIGURES <- c("ac-survival"). The names are the
@@ -579,6 +594,13 @@ to `graphs/`.
 #| label: km-figures
 # unnumbered: defines the figures; the chunks below draw them
 plot_max <- if (is.null(PLOT_MAX)) max(attr(km, "counts")$max_fup) else PLOT_MAX
+# The manuscript figures' captions name what their curves show. The reading page
+# and the tables stay survival under COMPLEMENT, and so do their captions.
+.curve_name <- if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier" else "survival"
+.cap_km_survival <- paste0("Overall ", .curve_name, ", with patients at risk")
+.cap_km_survival_by <- function(v) {
+  paste0(if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier" else "Survival", " by ", v, ", with patients at risk")
+}
 
 # The survival curve and the four cumulative-hazard views SAS's %KAPLAN plots
 # (PLOTS, PLOTC and their log scales), one page, colored by stratum.
@@ -653,6 +675,15 @@ km_figure <- function(strata = NULL) {
   .zero <- hv$data$surv == 0
   hv$data$lower[.zero] <- 0
   hv$data$upper[.zero] <- 0
+  # The complement flips the curve and swaps its limits, so the band reads the
+  # same limits from the other side. Every layer drawn from hv$data, the line,
+  # the band and the event points, follows.
+  if (isTRUE(COMPLEMENT)) {
+    .upper <- hv$data$upper
+    hv$data$surv <- 1 - hv$data$surv
+    hv$data$upper <- 1 - hv$data$lower
+    hv$data$lower <- 1 - .upper
+  }
   # Straight lines join the events alone, from time zero to the end of follow-up:
   # a censored row between two events would put a corner where survival did not change.
   if (!isTRUE(STEPS)) {
@@ -684,7 +715,7 @@ km_figure <- function(strata = NULL) {
     # follow-up, and only the clip stops it there, at the cost of halving a point
     # that sits on an axis.
     ggplot2::coord_cartesian(xlim = c(0, plot_max), ylim = c(0, 100), expand = FALSE) +
-    ggplot2::labs(x = "Years", y = "Survival (%)") +
+    ggplot2::labs(x = "Years", y = Y_LABEL %||% if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier (%)" else "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   # hv_survival()'s plot draws steps; its curve is redrawn as a line. A layer is
   # changed in place, and an hvtiPlotR that draws no step layer is left as it draws.
@@ -717,6 +748,9 @@ km_figure <- function(strata = NULL) {
     }
   }
   if (length(bars) && nrow(ci)) {
+    # The table's limits, flipped with the curve under COMPLEMENT.
+    ci$bar_lower <- if (isTRUE(COMPLEMENT)) 1 - ci$cl_upper else ci$cl_lower
+    ci$bar_upper <- if (isTRUE(COMPLEMENT)) 1 - ci$cl_lower else ci$cl_upper
     # The strata's bars at one time are dodged apart, across a width that must stay
     # inside the gap to the next chosen time and the distance to zero, or bars for
     # neighboring times interleave and one is drawn before time zero. A fortieth of
@@ -724,7 +758,7 @@ km_figure <- function(strata = NULL) {
     times <- sort(unique(ci$at))
     span <- min(plot_max / 40, 0.8 * min(c(diff(times), 2 * times[[1]])))
     curve <- curve + ggplot2::geom_errorbar(
-      data = ci, ggplot2::aes(x = .data$time, ymin = 100 * .data$cl_lower, ymax = 100 * .data$cl_upper, color = .data$strata),
+      data = ci, ggplot2::aes(x = .data$time, ymin = 100 * .data$bar_lower, ymax = 100 * .data$bar_upper, color = .data$strata),
       # Under straight lines each stratum's bars stand at its own events, not at a
       # shared time, so there is nothing to dodge apart.
       width = span, position = if (isTRUE(STEPS)) ggplot2::position_dodge(width = span) else "identity",
@@ -758,7 +792,7 @@ km_views(km)
 
 ```{r}
 #| label: fig-km-survival
-#| fig-cap: "Overall survival, with patients at risk"
+#| fig-cap: !expr .cap_km_survival
 #| fig-height: 7.5
 .fig <- km_figure()
 save_figure(.fig, "ac-survival", width = 6, height = 5)
@@ -776,7 +810,7 @@ for (v in names(strata_fits)) {
          ".views", opts = c("#| fig-width: 9.75", "#| fig-height: 12"))
   .fig <- km_figure(v)
   save_figure(.fig, paste0("ac-survival-", v), width = 6, height = 5)
-  .child(paste("fig km survival", v), paste0("Survival by ", v, ", with patients at risk"), ".fig",
+  .child(paste("fig km survival", v), .cap_km_survival_by(v), ".fig",
          opts = "#| fig-height: 7.5")
 }
 ```
