@@ -71,9 +71,9 @@
 #    boostmtree-memory-commence-20261124 (COMMENCE's own data, 52 predictors, M = 10). Peaks in GiB:
 #      patients x cores    M = 10, 4 pred.   M = 10, 24 pred.   M = 500, 4 pred.   M = 500, 24 pred.
 #      1,000 x 4           2.0               2.6                4.2                5.0
-#      1,000 x 8           3.3
-#      2,000 x 8           6.9               8.3                17.1               18.3
-#      4,000 x 4           10.9 (no shadows)
+#      1,000 x 8           3.2
+#      2,000 x 8           6.8               8.3                17.1               18.3
+#      4,000 x 4           10.6 (no shadows)
 #      COMMENCE, 1,391 patients / 4,771 visits x 8 cores, 52 predictors: 3.7 at M = 10.
 #    Each coefficient is the smallest that puts the estimate 25% above every peak it covers:
 #  - a[continuous] = 0.56, from the M = 10 peaks; 1,000 x 4 with 24 predictors binds. The 2.0.8 value, 2.6,

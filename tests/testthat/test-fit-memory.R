@@ -47,10 +47,9 @@ test_that("COMMENCE at 8 cores and M = 500 passes in Default on 2.0.13 (failure 
 })
 
 test_that("every continuous 2.0.13 peak measured for #601 sits at least 25% under its estimate", {
-  # patients, visits, cores, M, peak GiB: R/fit-memory.R has the source of each row. The 4,000-patient row's
-  # visits are scaled from the other simLong() cells; at M = 10 the growth term barely moves its estimate.
-  peaks <- rbind(c(1000, 8202, 4, 10, 2.0), c(1000, 8202, 8, 10, 3.3), c(2000, 16300, 8, 10, 6.9),
-                 c(4000, 32600, 4, 10, 10.9), c(1000, 8202, 4, 10, 2.581), c(2000, 16300, 8, 10, 8.272),
+  # patients, visits, cores, M, peak GiB (the harnesses' MiB / 1024): R/fit-memory.R has the source of each row.
+  peaks <- rbind(c(1000, 8202, 4, 10, 1.983), c(1000, 8202, 8, 10, 3.209), c(2000, 16300, 8, 10, 6.778),
+                 c(4000, 32137, 4, 10, 10.612), c(1000, 8202, 4, 10, 2.581), c(2000, 16300, 8, 10, 8.272),
                  c(1000, 8202, 4, 500, 4.155), c(1000, 8202, 4, 500, 5.021),
                  c(2000, 16300, 8, 500, 17.088), c(2000, 16300, 8, 500, 18.325), c(1391, 4771, 8, 10, 3.729))
   for (i in seq_len(nrow(peaks))) {
@@ -95,8 +94,8 @@ test_that("the estimates sit where the calibration says", {
   expect_equal(.boostmtree_need_gib(2000, 16300, "continuous", 8, 500), 27.9, tolerance = 0.01)
   expect_equal(.boostmtree_need_gib(5500, 13900, "ordinal", 8, 1000), 78.4, tolerance = 0.01)
   # Growth is the larger of per core x visits and visits squared: the second binds with many visits on few cores.
-  expect_equal(.boostmtree_need_gib(4000, 32600, "continuous", 4, 500),
-               1 + 4 * 0.56 * 4^1.7 + 9.1e-5 * 500 * 32.6^2, tolerance = 1e-6)
+  expect_equal(.boostmtree_need_gib(4000, 32137, "continuous", 4, 500),
+               1 + 4 * 0.56 * 4^1.7 + 9.1e-5 * 500 * 32.137^2, tolerance = 1e-6)
   # An unmeasured family takes the larger coefficient and the larger growth, doubled.
   expect_equal(.boostmtree_need_gib(1391, 4771, "binary", 8, 500),
                2 * .boostmtree_need_gib(1391, 4771, "continuous", 8, 500), tolerance = 1e-6)
