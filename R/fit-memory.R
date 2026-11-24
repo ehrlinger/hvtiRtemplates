@@ -84,14 +84,24 @@
 #  - Any other family takes the larger of the two estimates, conservatively; that is unmeasured.
 # The ordinal upper bound is unknown: Penny's Large run (started 2026-10-22 13:26 on lri-r03) has not recorded a
 # peak, so whether 8 cores fits Large (threshold 138.2 GiB) is not asserted anywhere.
-.boostmtree_need_gib <- function(patients, visits, family, cores, m) {
+# The 2.0.13 continuous estimate applies only to the version it was measured on. An older boostmtree, which
+# the deprecated nb-boostmtree template and jobs already copied into studies still accept (a study's own
+# library held 2.0.11 on 2026-11-24), keeps the 2.0.8 estimate: 1 + cores * 2.6 * (patients / 1000)^1.7, the one
+# that named Medium for COMMENCE after its Default kill. So does a version that cannot be read.
+.boostmtree_need_gib <- function(patients, visits, family, cores, m, version = NULL) {
   for (x in list(patients, visits, cores, m)) {
     if (!is.numeric(x) || length(x) != 1L || (!is.na(x) && x < 0)) {
       stop("patients, visits, cores and m must be non-negative numbers.", call. = FALSE)
     }
   }
+  if (is.null(version)) version <- tryCatch(utils::packageVersion("boostmtree"), error = function(e) NA)
+  measured <- !is.na(version) && package_version(version) >= "2.0.13"
   ordinal <- 1 + cores * 0.5 * (patients / 1000)^1.7 + 0.35e-3 * m * visits / 1000
-  continuous <- 1 + cores * (patients / 1000)^1.4 * (0.5 + 1.3e-3 * m)
+  continuous <- if (measured) {
+    1 + cores * (patients / 1000)^1.4 * (0.5 + 1.3e-3 * m)
+  } else {
+    1 + cores * 2.6 * (patients / 1000)^1.7
+  }
   switch(family, ordinal = ordinal, continuous = continuous, max(ordinal, continuous))
 }
 

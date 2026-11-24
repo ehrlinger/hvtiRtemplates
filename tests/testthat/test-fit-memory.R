@@ -33,7 +33,7 @@ test_that("the profile named is the smallest whose cap holds the need", {
 # Failure 4 was COMMENCE killed in Default on boostmtree 2.0.8 and run in Medium. On 2.0.13 the same fit
 # peaked at 9.2 GiB at M = 500 (#601), so at its own M = 1000 the guard still refuses Default but names Small.
 test_that("COMMENCE at 8 cores and M = 1000 is refused in a Default session and passes in Small (failure 4)", {
-  need <- .boostmtree_need_gib(patients = 1391, visits = 4771, family = "continuous", cores = 8, m = 1000)
+  need <- .boostmtree_need_gib(patients = 1391, visits = 4771, family = "continuous", cores = 8, m = 1000, version = "2.0.13")
   cg <- fake_cgroup_v1(19.2)
   expect_error(guard_memory(need, "a boostmtree fit", cores = 8, proc = cg$proc, sys = cg$sys),
                "^memory: .*19.2 GiB.*Default.*Small")
@@ -45,14 +45,31 @@ test_that("the continuous estimate holds every peak measured on boostmtree 2.0.1
   # patients, cores, M, measured peak in MB: simulated cells, then COMMENCE (1,391 patients).
   peaks <- data.frame(n = c(1000, 2000, 1000, 1000, 2000, 4000, 1391, 1391), cores = c(4, 8, 4, 8, 8, 4, 8, 8),
                       m = c(500, 500, 10, 10, 10, 10, 10, 500), mb = c(5141, 18765, 2643, 3286, 8471, 10867, 3818, 9380))
-  est <- mapply(function(n, k, m) .boostmtree_need_gib(n, 4 * n, "continuous", k, m), peaks$n, peaks$cores, peaks$m)
+  est <- mapply(function(n, k, m) .boostmtree_need_gib(n, 4 * n, "continuous", k, m, "2.0.13"), peaks$n, peaks$cores, peaks$m)
   expect_true(all(est >= 1.1 * peaks$mb / 1024))
   # The over-estimate #601 removed: at the template's M = 500, COMMENCE (9.2 GiB measured) fits a Default session.
-  need <- .boostmtree_need_gib(1391, 4771, "continuous", 8, 500)
+  need <- .boostmtree_need_gib(1391, 4771, "continuous", 8, 500, "2.0.13")
   cg <- fake_cgroup_v1(19.2)
   expect_silent(guard_memory(need, "a boostmtree fit", cores = 8, proc = cg$proc, sys = cg$sys))
   # Memory grows with the boosting steps, so a longer fit asks for more.
-  expect_gt(.boostmtree_need_gib(1391, 4771, "continuous", 8, 1000), need)
+  expect_gt(.boostmtree_need_gib(1391, 4771, "continuous", 8, 1000, "2.0.13"), need)
+})
+
+test_that("an older or unreadable boostmtree keeps the 2.0.8 estimate, which refuses COMMENCE in Default", {
+  # The deprecated nb-boostmtree template and jobs already copied into studies accept boostmtree 2.0.8, which
+  # was killed in a Default session on COMMENCE; the 2.0.13 calibration must not reach them.
+  cg <- fake_cgroup_v1(19.2)
+  for (v in list("2.0.8", "2.0.12", NA)) {
+    need <- .boostmtree_need_gib(1391, 4771, "continuous", 8, 500, version = v)
+    expect_equal(need, 37.5, tolerance = 0.01)
+    expect_error(guard_memory(need, "a boostmtree fit", cores = 8, proc = cg$proc, sys = cg$sys),
+                 "^memory: .*19.2 GiB.*Default.*Medium")
+  }
+  expect_equal(.boostmtree_need_gib(1391, 4771, "binary", 8, 500, version = "2.0.8"), 37.5, tolerance = 0.01)
+  # Read from the installed package when not given.
+  expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 8, 500),
+               .boostmtree_need_gib(1391, 4771, "continuous", 8, 500,
+                                    tryCatch(utils::packageVersion("boostmtree"), error = function(e) NA)))
 })
 
 test_that("Penny's ordinal fit at 8 cores is refused in a Medium session (failure 5)", {
@@ -85,9 +102,9 @@ test_that("an NA need cannot be estimated and passes", {
 })
 
 test_that("the estimates sit where the calibration says", {
-  expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 8, 1000), 23.9, tolerance = 0.01)
-  expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 3, 1000), 9.57, tolerance = 0.01)
-  expect_equal(.boostmtree_need_gib(1391, 4771, "binary", 8, 500), 15.6, tolerance = 0.01)
+  expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 8, 1000, "2.0.13"), 23.9, tolerance = 0.01)
+  expect_equal(.boostmtree_need_gib(1391, 4771, "continuous", 3, 1000, "2.0.13"), 9.57, tolerance = 0.01)
+  expect_equal(.boostmtree_need_gib(1391, 4771, "binary", 8, 500, "2.0.13"), 15.6, tolerance = 0.01)
   expect_equal(.boostmtree_need_gib(5500, 13900, "ordinal", 8, 1000), 78.4, tolerance = 0.01)
   expect_true(is.na(.boostmtree_need_gib(NA_real_, 1, "ordinal", 8, 1000)))
   expect_error(.boostmtree_need_gib(-1, 1, "ordinal", 8, 1000), "non-negative")
