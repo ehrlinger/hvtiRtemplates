@@ -53,23 +53,42 @@
   out
 }
 
-# need = 1 GiB base + cores * a[family] * (patients / 1000)^1.7 + growth. Memory follows PATIENTS, not
-# visits: a visits term cannot reach Penny's kill (5,500 patients but only 13,900 visits) and also match
-# the 2.0.4 table, where a patients term matches both. Calibrated 2026-10-22; John reviews it in the PR.
+# need = 1 GiB base + cores * a[family] * (patients / 1000)^1.7 + growth[family]. Memory follows PATIENTS,
+# not visits: a visits term cannot reach Penny's kill (5,500 patients but only 13,900 visits) and also match
+# the 2.0.4 table, where a patients term matches both. Ordinal calibrated 2026-10-22, continuous refitted
+# 2026-11-24 (#601); John reviews each in its PR.
 #  - p = 1.7: the shape of the template's 2.0.4 CORES table (2026-10-19, ordinal, ~9 visits/patient, M = 10):
-#    per-worker memory 1.25 GB at 1,000 patients, 3.6 at 2,000 (p ~ 1.5), 17 at 4,000 (p ~ 1.9).
+#    per-worker memory 1.25 GB at 1,000 patients, 3.6 at 2,000 (p ~ 1.5), 17 at 4,000 (p ~ 1.9). The 2.0.13
+#    continuous peaks grow more slowly (p ~ 1.2 to 1.5), so 1.7 overestimates a large study, the safe side.
 #  - a[ordinal] = 0.5: 2.0.8 workers use about a third of 2.0.4's (1.25 / 3 ~ 0.42), raised to 0.5 so Penny's
 #    fit (2026-10-22, 2.0.8, 5,500 patients / 13,900 visits / ordinal / 8 cores, killed at iteration 2 in a
-#    Medium session, 76.8 GiB cap) estimates above 0.9 x 76.8.
-#  - a[continuous] = 2.6: COMMENCE (2026-10-22, 2.0.8, 1,391 / 4,771 / continuous / 8 cores) was killed at
-#    the first CV step in a Default session (19.2 GiB) and ran in Medium. It is set so the COMMENCE fixture
-#    names Medium, the profile it ran in (spec section 8), and is a lower bound: nothing shows Small holds it.
-#  - Any other family takes the largest a, conservatively; that is unmeasured.
-#  - growth: 0.35e-3 GiB per boosting step per 1,000 visits, ordinal only (the CORES comment's term).
-#  - Shadows: 5 shadow copies (4 predictors to 24) changed peak memory by -14% to +26% in the 2026-11-20
-#    retime (boostmtree 2.0.13, Large session, simulated data, M = 10), within the sampler's scatter, so the
-#    estimate has no predictor term (decided 2026-11-20). Unmeasured with many more real predictors. The
-#    same retime measured 7-12 times less than this estimate; recalibration waits on an M = 500 run (#601).
+#    Medium session, 76.8 GiB cap) estimates above 0.9 x 76.8. Not remeasured on 2.0.13.
+#  - growth[ordinal]: 0.35e-3 GiB per boosting step per 1,000 visits (the CORES comment's term).
+#  - Continuous, boostmtree 2.0.13 (randomForestSRC 3.10.0, R 4.6.1, lri Large session, NU = 0.05, K = 5,
+#    N_KNOTS = 10, K_SHADOW = 5). Peak RSS of the fit and its workers together, sampled every 2 s, an upper
+#    bound. In /studies/general/_development: boostmtree-retime-20261120 (simLong(), 4 predictors, M = 10),
+#    boostmtree-memory-m500-20261123 (simLong() with 24 predictors, M = 10 and 500) and
+#    boostmtree-memory-commence-20261124 (COMMENCE's own data, 52 predictors, M = 10). Peaks in GiB:
+#      patients x cores    M = 10, 4 pred.   M = 10, 24 pred.   M = 500, 4 pred.   M = 500, 24 pred.
+#      1,000 x 4           2.0               2.6                4.2                5.0
+#      1,000 x 8           3.3
+#      2,000 x 8           6.9               8.3                17.1               18.3
+#      4,000 x 4           10.9 (no shadows)
+#      COMMENCE, 1,391 patients / 4,771 visits x 8 cores, 52 predictors: 3.7 at M = 10.
+#    Each coefficient is the smallest that puts the estimate 25% above every peak it covers:
+#  - a[continuous] = 0.56, from the M = 10 peaks; 1,000 x 4 with 24 predictors binds. The 2.0.8 value, 2.6,
+#    was set by COMMENCE's kill at its first CV step in a 19.2 GiB session (2026-10-22). On 2.0.13 the same
+#    data at the same step peaked at 3.7 GiB, so the kill was 2.0.8's memory, not a study the simulated
+#    data understate. The estimate is 1.3 to 2.4 times each M = 10 peak.
+#  - growth[continuous]: 0.19e-3 GiB per core per boosting step per 1,000 visits, from the M = 500 peaks;
+#    1,000 x 4 with 24 predictors binds. Peaks rose roughly linearly over the steps, 2.1 to 2.6 times from
+#    M = 10 to 500, so a term in M is needed. Per core, because the two cells grew by 2.4 and 10.1 GiB:
+#    twice the cores and twice the visits, four times the growth. The estimate is 1.3 to 1.6 times each
+#    M = 500 peak.
+#  - Predictors: 24 real predictors (144 with shadows) against 4 added 7% to 30% at the same cell, and
+#    COMMENCE's 52 sat below the simulated cells around it, so the estimate has no predictor term; the 25%
+#    margin holds the 24-predictor peaks. Factors with many levels are unmeasured.
+#  - Any other family takes the larger a and the larger growth, conservatively; that is unmeasured.
 # The upper bound is unknown: Penny's Large run (started 2026-10-22 13:26 on lri-r03) has not recorded a
 # peak, so whether 8 cores fits Large (threshold 138.2 GiB) is not asserted anywhere.
 .boostmtree_need_gib <- function(patients, visits, family, cores, m) {
@@ -78,9 +97,15 @@
       stop("patients, visits, cores and m must be non-negative numbers.", call. = FALSE)
     }
   }
-  a <- c(ordinal = 0.5, continuous = 2.6)
-  a <- if (family %in% names(a)) a[[family]] else max(a)
-  growth <- if (identical(family, "ordinal")) 0.35e-3 * m * visits / 1000 else 0
+  a <- c(ordinal = 0.5, continuous = 0.56)
+  growth <- c(ordinal = 0.35e-3 * m * visits / 1000, continuous = 0.19e-3 * cores * m * visits / 1000)
+  if (family %in% names(a)) {
+    a <- a[[family]]
+    growth <- growth[[family]]
+  } else {
+    a <- max(a)
+    growth <- max(growth)
+  }
   1 + cores * a * (patients / 1000)^1.7 + growth
 }
 
