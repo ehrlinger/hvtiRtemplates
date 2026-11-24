@@ -99,6 +99,10 @@ test_that("ac's life tables end each stratum on a row totalling its events", {
   expect_identical(last$n_event, as.character(env$cc$n_events))
   # Only the events are totalled: every other cell of the total row is blank.
   expect_true(all(unlist(last[setdiff(names(last), c("time", "n_event"))]) == ""))
+  # Ordinary cells keep four decimals however large the value, and never go scientific.
+  cells <- env$with_event_totals(data.frame(time = c(12345.67891, 0.0001), n_event = c(1L, 1234567L)))
+  expect_identical(cells$time, c("12345.6789", "0.0001", "Total"))
+  expect_identical(cells$n_event, c("1", "1234567", "1234568"))
   # A table with no events still ends on its total, of 0.
   quiet <- env$d
   quiet[[env$EVENT]] <- 0

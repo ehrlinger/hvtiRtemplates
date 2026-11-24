@@ -427,7 +427,9 @@ with_event_totals <- function(x) {
   shown <- x
   shown[] <- lapply(x, function(col) {
     if (!is.numeric(col)) return(as.character(col))
-    vapply(round(col, 4), function(v) format(v, scientific = FALSE, drop0trailing = TRUE, trim = TRUE), "")
+    # Four decimals, as kable(digits = 4) printed them; digits = 15 keeps format()'s
+    # default of seven significant digits from cutting a time in days short.
+    vapply(round(col, 4), function(v) format(v, digits = 15, scientific = FALSE, drop0trailing = TRUE, trim = TRUE), "")
   })
   # Groups come from the strata counts, not the rows, so a stratum with no events
   # (no event rows) still ends on a total of 0; unstratified, the one group is "".
