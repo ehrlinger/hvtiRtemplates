@@ -12,7 +12,7 @@ test_that("run_job refuses before submitting when any check fails, and lists eve
   submitted <- FALSE
   testthat::local_mocked_bindings(.session_r = function() numeric_version("4.6.1"),
                                   .check_packages = function(...) .check("packages", FALSE, "quarto missing.", "hvtiR::update()"),
-                                  .check_quarto = function() .check("quarto", TRUE),
+                                  .check_quarto = function(...) .check("quarto", TRUE),
                                   .check_run_state = function(...) .check("run_state", TRUE),
                                   .check_study_render = function(...) .check("study_render", TRUE),
                                   submit_job = function(...) submitted <<- TRUE)

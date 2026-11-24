@@ -79,11 +79,30 @@
   structure(unique(c(pk, .always_needed())), unread = is.null(pk))
 }
 
+# The lock's version of each package it records. GitHub and local sources can carry no Version; they count as unrecorded.
+.locked_versions <- function(lock) {
+  vapply(lock$Packages, function(p) if (is.character(p$Version) && length(p$Version) == 1L) p$Version else NA_character_, "")
+}
+
+# hvtiR::update() installs and records the family, which hvtiR::members() lists. hvtiR is not a dependency of this
+# package, so the family is named here. Any other package it leaves alone, so naming it there was a no-op (#612).
+.family_member <- function(p) grepl("^hvti", p) || p %in% c("ggRandomForests", "TemporalHazard", "ggBoostedTrees")
+
+# The command that brings a package's library copy and its renv.lock record into step. h is the installed version and
+# l the locked one, NA when absent. renv::restore() installs only what the lock records, so a package the lock lacks is
+# installed and then recorded at the version installed.
+.package_fix <- function(p, h, l) {
+  newer <- !is.na(h) && !is.na(l) && numeric_version(h) > numeric_version(l)
+  if (.family_member(p) && (is.na(l) || newer)) return("hvtiR::update()")
+  if (!is.na(l) && (is.na(h) || !newer)) return(sprintf('renv::restore(packages = "%s")', p))
+  if (is.na(h)) return(sprintf('renv::install("%s"); renv::record(paste0("%s@", packageVersion("%s")))', p, p, p))
+  sprintf('renv::record("%s@%s")', p, h)
+}
+
 .check_packages <- function(path, root) {
   lock <- .lock_read(root)
   if (is.null(lock)) return(.check("packages", TRUE, note = "no renv.lock; packages not checked."))
-  # GitHub and local sources can carry no Version; they count as unrecorded.
-  locked <- vapply(lock$Packages, function(p) if (is.character(p$Version) && length(p$Version) == 1L) p$Version else NA_character_, "")
+  locked <- .locked_versions(lock)
   need <- .job_packages(path)
   have <- vapply(as.vector(need), .installed_version, "")
   bad <- character()
@@ -93,17 +112,16 @@
     h <- have[[p]]
     if (is.na(h) && is.na(l)) {
       bad <- c(bad, sprintf("%s is neither installed nor recorded in renv.lock", p))
-      fix <- c(fix, "hvtiR::update()")
     } else if (is.na(l)) {
       bad <- c(bad, sprintf("%s %s is installed but not recorded in renv.lock", p, h))
-      fix <- c(fix, "hvtiR::update()")
     } else if (is.na(h)) {
       bad <- c(bad, sprintf("%s %s is recorded in renv.lock but not installed", p, l))
-      fix <- c(fix, sprintf('renv::restore(packages = "%s")', p))
     } else if (numeric_version(h) != numeric_version(l)) {
       bad <- c(bad, sprintf("%s %s installed, %s locked", p, h, l))
-      fix <- c(fix, if (numeric_version(h) > numeric_version(l)) "hvtiR::update()" else sprintf('renv::restore(packages = "%s")', p))
+    } else {
+      next
     }
+    fix <- c(fix, .package_fix(p, h, l))
   }
   other <- setdiff(names(locked), as.vector(need))
   drift <- other[vapply(other, function(p) .drifts(.installed_version(p), locked[[p]]), NA)]
@@ -153,9 +171,11 @@
   normalizePath(dirs, mustWork = FALSE)
 }
 
-.check_quarto <- function() {
+.check_quarto <- function(root = NULL) {
   if (!.quarto_pkg()) {
-    return(.check("quarto", FALSE, "the quarto R package is not installed.", 'renv::restore(packages = "quarto")'))
+    lock <- if (!is.null(root)) .lock_read(root)
+    l <- if (is.null(lock)) NA_character_ else .locked_versions(lock)["quarto"]
+    return(.check("quarto", FALSE, "the quarto R package is not installed.", .package_fix("quarto", NA_character_, unname(l))))
   }
   if (!.quarto_found()) {
     return(.check("quarto", FALSE, "the Quarto command line tool cannot be found.",
