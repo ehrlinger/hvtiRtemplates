@@ -290,6 +290,32 @@ test_that("the curves join event points with straight lines by default, and STEP
   expect_no_warning(print(env$km_figure("grp")))
 })
 
+test_that("the manuscript figure's axes meet at (0, 0) and tick at the numbers at risk", {
+  # The 2026-11-23 training: no padding past 0, PLOT_MAX or 100%, and each number
+  # at risk under a tick of its own.
+  skip_ac()
+  local_child_chunks()
+  env <- ac_run(ac_data(), list(STRATA = "grp", PLOT_MAX = 3, CI_TIMES = c(1, 3)))
+  expect_identical(env$.warnings, character(0))
+  for (strata in list(NULL, "grp")) {
+    fig <- env$km_figure(strata)
+    panel <- ggplot2::ggplot_build(fig[[1]])$layout$panel_params[[1]]
+    expect_equal(panel$x.range, c(0, 3))
+    expect_equal(panel$y.range, c(0, 100))
+    at <- env$risk_times(3)
+    expect_equal(panel$x$breaks[!is.na(panel$x$breaks)], at)
+    # The at-risk row spans the same axis, so each count stands under its tick.
+    expect_equal(ggplot2::ggplot_build(fig[[2]])$layout$panel_params[[1]]$x.range, c(0, 3))
+    # The curve is clipped: follow-up runs past PLOT_MAX = 3, and nothing may be
+    # drawn beyond the axis.
+    expect_identical(fig[[1]]$coordinates$clip, "on")
+    # The counts at 0 and PLOT_MAX stand on the row's ends, and are drawn whole.
+    expect_identical(fig[[2]]$coordinates$clip, "off")
+  }
+  withr::local_pdf(NULL)
+  expect_no_warning(print(env$km_figure("grp")))
+})
+
 test_that("one curve is black, and strata take the group palette led by red and blue", {
   skip_ac()
   skip_if_not_installed("hvtiPlotR", "2.8.20")
