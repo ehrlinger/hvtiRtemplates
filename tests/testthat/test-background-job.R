@@ -318,12 +318,16 @@ alive <- function(h) isTRUE(tryCatch(ps::ps_is_running(h), error = function(e) F
 
 # ps_kill() signals and returns without waiting for the process to exit, so under load it can still be running,
 # marker and all, when the next line looks for it. Waits until it is gone or a zombie, whose environment no longer
-# carries the marker (#639).
+# carries the marker (#639). Two reads in a row, since one not-running read can be a /proc read that failed (#587).
 wait_dead <- function(h, timeout = 30) {
   dead <- function() !alive(h) || identical(tryCatch(ps::ps_status(h), error = function(e) NA), "zombie")
   deadline <- Sys.time() + timeout
-  while (!dead() && Sys.time() < deadline) Sys.sleep(0.05)
-  if (!dead()) stop("the bystander was still running ", timeout, " seconds after it was killed", call. = FALSE)
+  streak <- 0L
+  while (streak < 2L && Sys.time() < deadline) {
+    streak <- if (dead()) streak + 1L else 0L
+    if (streak < 2L) Sys.sleep(0.05)
+  }
+  if (streak < 2L) stop("the bystander was still running ", timeout, " seconds after it was killed", call. = FALSE)
   invisible(TRUE)
 }
 
@@ -560,7 +564,7 @@ test_that("a slow start whose runner carries the marker reads submitted past two
   # Not /bin/sleep: macOS hides a platform binary's environment, so its marker could not be found there.
   b <- bystander(sprintf("export %s=YES; exec %s -e \"file.create('ready'); Sys.sleep(60)\"", marker,
                          shQuote(file.path(R.home("bin"), "Rscript"))))
-  # Until sh has exec'd into Rscript the marker is on no readable process.
+  # Wait until its R code has run: before that its marker can be missed mid-exec or left on startup children.
   wait_for_marker(marker, b)
   here <- Sys.info()[["nodename"]]
   submitted <- function(host = here) {
