@@ -1027,7 +1027,7 @@ test_that("a render held off by another names the job it is rendering and who st
   testthat::with_mocked_bindings(
     .provenance_pre_render(root, inputs = source),
     .provenance_render_owner = function() first,
-    .render_user = function() "lauren",
+    .render_user = function() "jdoe",
     .package = "hvtiRtemplates"
   )
   second_render <- function() {
@@ -1040,7 +1040,7 @@ test_that("a render held off by another names the job it is rendering and who st
     )
   }
   err <- tryCatch(second_render(), error = conditionMessage)
-  expect_match(err, "(process 101, rendering distributions/ac.dead.hz.qmd for lauren)", fixed = TRUE)
+  expect_match(err, "(process 101, rendering distributions/ac.dead.hz.qmd for jdoe)", fixed = TRUE)
   expect_match(err, 'job_status("distributions/ac.dead.hz.qmd")', fixed = TRUE)
   expect_match(err, "cancel_job(", fixed = TRUE)
   # A note left by an earlier owner is not read as this one's: after a takeover the
@@ -1051,7 +1051,7 @@ test_that("a render held off by another names the job it is rendering and who st
   jsonlite::write_json(note, about, auto_unbox = TRUE)
   err <- tryCatch(second_render(), error = conditionMessage)
   expect_match(err, "in progress in this study (process 101). Wait", fixed = TRUE)
-  expect_no_match(err, "lauren", fixed = TRUE)
+  expect_no_match(err, "jdoe", fixed = TRUE)
 })
 
 test_that("a lock whose render has exited is taken over", {
