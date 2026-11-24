@@ -13,7 +13,8 @@
   profile refits under names of their own (#629).
 - `sid-stability`'s `TRACK` takes one level of a coded column,
   `TRACK <- list(var = "<column>", level = 2)`, beside a 0/1 column as
-  before, and its tables name the level (#624).
+  before, and its tables name the level (#624). `TRACK` refuses an identifier
+  column, whose name and level would otherwise print in the tables and figure.
 - `sid-stability` reports each refit to `job_status()` and the render log as
   done of total with an estimate of the time left, counting only refits that
   fit, not ones read from the cache (#622). The templates README adds the rule

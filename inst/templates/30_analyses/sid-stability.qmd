@@ -383,6 +383,10 @@ if (!is.null(TRACK)) {
     stop("TRACK draws a second panel, which needs the patchwork package. Install it, then re-render.", call. = FALSE)
   }
   if (!.track_var %in% names(cohort)) stop("TRACK names a column the cohort does not have: ", .track_var, call. = FALSE)
+  # TRACK's name and level print in the table headings and the figure, so an identifier column is refused
+  # before its values are read: the cohort keeps the ID, which a level check alone would let through.
+  .no_show <- hvtiRtemplates:::.no_values(cohort, .up$selection$id, attr(job_data$record, "selection")$key)
+  hvtiRtemplates:::.refuse_display(.track_var, .no_show, "TRACK")
   track <- cohort[[.track_var]]
   if (.level_form) {
     # Compared as text, so a level written 2 matches a column stored as 2, "2" or a factor level "2".

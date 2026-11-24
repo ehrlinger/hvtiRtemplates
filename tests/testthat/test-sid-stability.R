@@ -271,6 +271,10 @@ test_that("TRACK takes a level of a coded column and names it, and still takes a
   expect_error(bad(list(var = "grade", level = 7)), "TRACK's level, 7, is not a value of grade")
   expect_error(bad(list(var = "grade")), "TRACK must be NULL, a 0/1 column name")
   expect_error(bad("grade"), "a 0/1 or TRUE/FALSE column")
+  # The ID column passes the level check, since the cohort keeps it, but its values would print
+  # in the table headings and the figure: the display guard refuses it first.
+  expect_error(bad(list(var = "ccfid", level = env$cohort$ccfid[[1L]])), "TRACK names ccfid, which identifies patients")
+  expect_error(bad("ccfid"), "TRACK names ccfid, which identifies patients")
 })
 
 # ---- #622: progress through the refits ----------------------------------------------------------
