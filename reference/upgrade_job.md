@@ -12,7 +12,7 @@ with its template without re-entering every choice by hand.
 ## Usage
 
 ``` r
-upgrade_job(path, root = NULL, dir)
+upgrade_job(path, root = NULL, dir, open = TRUE)
 ```
 
 ## Arguments
@@ -33,6 +33,12 @@ upgrade_job(path, root = NULL, dir)
 
   Deprecated: the old name of `root`. It works, with a warning, for one
   more release; giving both is an error.
+
+- open:
+
+  Logical. `TRUE`, the default, opens the job in the editor afterwards,
+  whether or not it changed. The editor is opened only in an interactive
+  session.
 
 ## Value
 

@@ -9,7 +9,7 @@ replacing one would discard them.
 ## Usage
 
 ``` r
-add_job(prefix, subject, type, root = NULL, qualifier = NULL, dir)
+add_job(prefix, subject, type, root = NULL, qualifier = NULL, dir, open = TRUE)
 ```
 
 ## Arguments
@@ -55,6 +55,13 @@ add_job(prefix, subject, type, root = NULL, qualifier = NULL, dir)
 
   Deprecated: the old name of `root`. It works, with a warning, for one
   more release; giving both is an error.
+
+- open:
+
+  Logical. `TRUE`, the default, opens the new job in the editor, as
+  [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+  does. The editor is opened only in an interactive session, so a script
+  or test is unaffected either way.
 
 ## Value
 
@@ -171,7 +178,7 @@ try(add_job("dp.trends", subject = "cohort", type = "eda", root = d))
 
 # A job accumulates a study's edits, so an existing one is never overwritten.
 try(add_job(prefix = "ac", subject = "death", type = "hz", root = d))
-#> Error : add_job(): '/tmp/Rtmplri3O3/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
+#> Error : add_job(): '/tmp/RtmpYW69wq/add-job-example/20_distributions/ac.death.hz.qmd' already exists; refusing to overwrite.
 
 list.files(d, pattern = "[.]qmd$", recursive = TRUE)
 #> [1] "10_descriptive/dc.gfup.reop.hz.qmd" "20_distributions/ac.death.hz.qmd"  
