@@ -388,6 +388,38 @@ test_that("COMPLEMENT draws the manuscript figure as 100% minus survival, limits
   expect_no_warning(print(inc$km_figure("grp")))
 })
 
+test_that('COMPLEMENT = "both" draws survival and its complement on one figure', {
+  # The 2026-11-24 ask: both curves at once, each with its band, points and bars.
+  skip_ac()
+  local_child_chunks()
+  choices <- list(STRATA = "grp", CI_TIMES = c(1, 3))
+  surv <- ac_run(ac_data(), choices)
+  inc <- ac_run(ac_data(), c(choices, list(COMPLEMENT = TRUE)))
+  both <- ac_run(ac_data(), c(choices, list(COMPLEMENT = "both")))
+  expect_identical(both$.warnings, character(0))
+  for (strata in list(NULL, "grp")) {
+    s <- built_layers(surv$km_figure(strata)[[1]])
+    i <- built_layers(inc$km_figure(strata)[[1]])
+    # Layers of one geom stacked in drawing order, since "both" draws two of each.
+    b <- built_layers(both$km_figure(strata)[[1]])
+    b <- lapply(split(b, names(b)), function(l) {
+      do.call(rbind, lapply(l, function(x) x[intersect(c("y", "ymin", "ymax"), names(x))]))
+    })
+    # Each curve is its own layer, so neither is joined to the other.
+    expect_length(b, length(unique(names(s))))
+    expect_equal(b$GeomLine$y, c(s$GeomLine$y, i$GeomLine$y))
+    expect_equal(b$GeomPoint$y, c(s$GeomPoint$y, i$GeomPoint$y))
+    expect_equal(b$GeomRibbon$ymin, c(s$GeomRibbon$ymin, i$GeomRibbon$ymin))
+    expect_equal(sort(b$GeomErrorbar$ymin), sort(c(s$GeomErrorbar$ymin, i$GeomErrorbar$ymin)))
+  }
+  expect_identical(both$km_figure()[[1]]$labels$y, "Survival and 1 - Kaplan-Meier (%)")
+  expect_identical(both$.cap_km_survival, "Overall survival and 1 - Kaplan-Meier, with patients at risk")
+  expect_identical(both$.cap_km_survival_by("grp"), "Survival and 1 - Kaplan-Meier by grp, with patients at risk")
+  expect_error(ac_run(ac_data(), c(choices, list(COMPLEMENT = "yes"))), "COMPLEMENT must be")
+  withr::local_pdf(NULL)
+  expect_no_warning(print(both$km_figure("grp")))
+})
+
 test_that("one curve is black, and strata take the group palette led by red and blue", {
   skip_ac()
   skip_if_not_installed("hvtiPlotR", "2.8.20")
