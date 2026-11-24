@@ -429,9 +429,10 @@ with_event_totals <- function(x) {
     if (!is.numeric(col)) return(as.character(col))
     vapply(round(col, 4), function(v) format(v, scientific = FALSE, drop0trailing = TRUE, trim = TRUE), "")
   })
-  # Unstratified, the one group is "", so a table with no events still prints a total of 0.
+  # Groups come from the strata counts, not the rows, so a stratum with no events
+  # (no event rows) still ends on a total of 0; unstratified, the one group is "".
   by <- if ("stratum" %in% names(x)) x$stratum else rep("", nrow(x))
-  groups <- if ("stratum" %in% names(x)) unique(by) else ""
+  groups <- if ("stratum" %in% names(x)) attr(x, "counts")$stratum %||% unique(by) else ""
   out <- do.call(rbind, lapply(groups, function(s) {
     total <- shown[1, , drop = FALSE]
     total[] <- ""

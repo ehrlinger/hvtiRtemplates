@@ -105,6 +105,10 @@ test_that("ac's life tables end each stratum on a row totalling its events", {
   none <- env$with_event_totals(life_table(quiet, env$TIME, env$EVENT))
   expect_identical(none$time, "Total")
   expect_identical(none$n_event, "0")
+  # Stratified with no events, each stratum still ends on its total of 0.
+  none_by <- env$with_event_totals(life_table(quiet, env$TIME, env$EVENT, strata_col = "grp"))
+  expect_identical(none_by$time, c("Total", "Total"))
+  expect_identical(none_by$n_event, c("0", "0"))
   # Stratified, each stratum's rows end on that stratum's total, before the next begins.
   lt <- life_table(env$d, env$TIME, env$EVENT, strata_col = "grp")
   by_grp <- env$with_event_totals(lt)
