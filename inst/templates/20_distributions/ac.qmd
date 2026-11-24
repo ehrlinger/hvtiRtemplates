@@ -193,7 +193,9 @@ CLEVEL <- 0.68268948
 PLOT_MAX <- NULL
 
 # The times the manuscript figure counts patients at risk, e.g. 0:10; NULL
-# takes evenly spaced times across the axis.
+# takes evenly spaced times across the axis. The figure's x-axis ticks at these
+# times, so each count stands under its tick; times closer together than about a
+# twentieth of the axis, such as 30 days beside 0, print over each other.
 RISK_TIMES <- NULL
 
 # How the manuscript figure shows the CLEVEL limits. CI_BAND draws them as a
@@ -640,7 +642,12 @@ km_figure <- function(strata = NULL) {
     # The limits keep a cohort with no event, so no event points, from warning.
     ggplot2::scale_linetype_manual(values = ltys, limits = names(ltys)) +
     ggplot2::scale_shape_manual(values = shps, limits = names(shps)) +
-    ggplot2::coord_cartesian(xlim = c(0, plot_max)) +
+    # A tick at each time the row beneath counts patients at risk, so every count
+    # stands under a tick of its own.
+    ggplot2::scale_x_continuous(breaks = at) +
+    # The axes meet at (0, 0) and stop at PLOT_MAX and 100%, with no padding past
+    # them; clip = "off" draws a point or bar on an axis whole rather than halved.
+    ggplot2::coord_cartesian(xlim = c(0, plot_max), ylim = c(0, 100), expand = FALSE, clip = "off") +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   # hv_survival()'s plot draws steps; its curve is redrawn as a line. A layer is
@@ -693,7 +700,15 @@ km_figure <- function(strata = NULL) {
     curve <- curve + ggplot2::theme(legend.position = "top") +
       ggplot2::labs(color = strata, fill = strata, linetype = strata, shape = strata)
   }
-  hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(risk))
+  out <- hvtiPlotR::hv_atrisk_compose(curve, hvtiPlotR::hv_atrisk(risk))
+  # The row ends exactly at 0 and PLOT_MAX, like the curve, so the counts there
+  # would be cut in half; it is drawn unclipped, keeping the coordinates the
+  # composition set to line it up under the curve. hv_atrisk_compose() makes that
+  # coordinate system for this row alone, so setting clip on it touches nothing else.
+  out[[2]]$coordinates$clip <- "off"
+  # The count at 0 is centered on the axis, so the row's labels stand clear of it.
+  out[[2]] <- out[[2]] + ggplot2::theme(axis.text.y.left = ggplot2::element_text(margin = ggplot2::margin(r = 14)))
+  out
 }
 ```
 
