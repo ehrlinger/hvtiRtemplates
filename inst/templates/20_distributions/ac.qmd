@@ -219,7 +219,9 @@ STEPS <- FALSE
 
 # What the manuscript figure's curve shows. FALSE draws survival, falling from
 # 100%. TRUE draws its complement, 1 minus Kaplan-Meier, rising from 0; its
-# limits and bars flip with it. The tables report survival either way.
+# limits and bars flip with it. "both" draws the two on one figure, each stratum
+# in its own color and line type, the survival curve falling to meet its
+# complement rising. The tables report survival either way.
 # For all-cause death, 1 minus Kaplan-Meier IS the cumulative mortality. For an
 # event death can pre-empt (reoperation, readmission), a death here is a
 # censoring, and 1 minus Kaplan-Meier then overstates the event's cumulative
@@ -228,7 +230,8 @@ STEPS <- FALSE
 COMPLEMENT <- FALSE
 
 # The manuscript figure's y-axis title. NULL gives "Survival (%)", or
-# "1 - Kaplan-Meier (%)" under COMPLEMENT; name the event for a reader,
+# "1 - Kaplan-Meier (%)" under COMPLEMENT, or "Survival and 1 - Kaplan-Meier (%)"
+# under COMPLEMENT <- "both"; name the event for a reader,
 # e.g. Y_LABEL <- "Mortality (%)" when EVENT is all-cause death.
 Y_LABEL <- NULL
 
@@ -596,10 +599,23 @@ to `graphs/`.
 plot_max <- if (is.null(PLOT_MAX)) max(attr(km, "counts")$max_fup) else PLOT_MAX
 # The manuscript figures' captions name what their curves show. The reading page
 # and the tables stay survival under COMPLEMENT, and so do their captions.
-.curve_name <- if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier" else "survival"
+if (!(isFALSE(COMPLEMENT) || isTRUE(COMPLEMENT) || identical(COMPLEMENT, "both"))) {
+  stop('COMPLEMENT must be FALSE, TRUE or "both".', call. = FALSE)
+}
+.both <- identical(COMPLEMENT, "both")
+.curve_name <- if (.both) "survival and 1 - Kaplan-Meier" else if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier" else "survival"
 .cap_km_survival <- paste0("Overall ", .curve_name, ", with patients at risk")
 .cap_km_survival_by <- function(v) {
-  paste0(if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier" else "Survival", " by ", v, ", with patients at risk")
+  paste0(toupper(substring(.curve_name, 1, 1)), substring(.curve_name, 2), " by ", v, ", with patients at risk")
+}
+# The complement flips the curve and swaps its limits, so the band reads the
+# same limits from the other side.
+.flip_km <- function(x) {
+  .upper <- x$upper
+  x$surv <- 1 - x$surv
+  x$upper <- 1 - x$lower
+  x$lower <- 1 - .upper
+  x
 }
 
 # The survival curve and the four cumulative-hazard views SAS's %KAPLAN plots
@@ -675,15 +691,9 @@ km_figure <- function(strata = NULL) {
   .zero <- hv$data$surv == 0
   hv$data$lower[.zero] <- 0
   hv$data$upper[.zero] <- 0
-  # The complement flips the curve and swaps its limits, so the band reads the
-  # same limits from the other side. Every layer drawn from hv$data, the line,
-  # the band and the event points, follows.
-  if (isTRUE(COMPLEMENT)) {
-    .upper <- hv$data$upper
-    hv$data$surv <- 1 - hv$data$surv
-    hv$data$upper <- 1 - hv$data$lower
-    hv$data$lower <- 1 - .upper
-  }
+  # Under COMPLEMENT every layer drawn from hv$data, the line, the band and the
+  # event points, follows the flipped curve.
+  if (isTRUE(COMPLEMENT)) hv$data <- .flip_km(hv$data)
   # Straight lines join the events alone, from time zero to the end of follow-up:
   # a censored row between two events would put a corner where survival did not change.
   if (!isTRUE(STEPS)) {
@@ -694,6 +704,8 @@ km_figure <- function(strata = NULL) {
   # sort as text ("1", "10", "2"). The curve, band, bars and at-risk rows all use the
   # tables' order instead, so each stratum keeps one color throughout.
   if (!is.null(strata)) hv$data$strata <- factor(as.character(hv$data$strata), levels = levels(dd[[strata]]))
+  # Under "both", the complement is drawn from its own copy, in layers of its own.
+  comp <- if (.both) .flip_km(hv$data)
   # The same colors as the page above: black for one curve, red and blue for the first two strata.
   cols <- hvtiRtemplates:::.group_colors(if (is.null(strata)) "All" else levels(dd[[strata]]))
   ltys <- hvtiRtemplates:::.group_linetypes(names(cols))
@@ -715,7 +727,7 @@ km_figure <- function(strata = NULL) {
     # follow-up, and only the clip stops it there, at the cost of halving a point
     # that sits on an axis.
     ggplot2::coord_cartesian(xlim = c(0, plot_max), ylim = c(0, 100), expand = FALSE) +
-    ggplot2::labs(x = "Years", y = Y_LABEL %||% if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier (%)" else "Survival (%)") +
+    ggplot2::labs(x = "Years", y = Y_LABEL %||% paste0(toupper(substring(.curve_name, 1, 1)), substring(.curve_name, 2), " (%)")) +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   # hv_survival()'s plot draws steps; its curve is redrawn as a line. A layer is
   # changed in place, and an hvtiPlotR that draws no step layer is left as it draws.
@@ -723,6 +735,16 @@ km_figure <- function(strata = NULL) {
   # A point at each event, so a reader sees where the estimate moves and how often.
   curve <- curve + ggplot2::geom_point(ggplot2::aes(shape = .data$strata), data = hv$data[hv$data$n.event > 0, , drop = FALSE],
                                        size = 1.2)
+  # The complement's band, curve and event points, drawn as the survival's are. A
+  # layer of its own keeps the two curves from being joined into one path.
+  if (.both) {
+    if (isTRUE(CI_BAND)) {
+      curve <- curve + ggplot2::geom_ribbon(data = comp, ggplot2::aes(ymin = .data$lower * 100, ymax = .data$upper * 100),
+                                            alpha = 0.2, color = NA)
+    }
+    curve <- curve + (if (isTRUE(STEPS)) ggplot2::geom_step else ggplot2::geom_line)(data = comp, alpha = 0.8) +
+      ggplot2::geom_point(ggplot2::aes(shape = .data$strata), data = comp[comp$n.event > 0, , drop = FALSE], size = 1.2)
+  }
   # Bars at the chosen times, from the same life table as the horizon tables, so a
   # bar and the table row for its time give the same limits.
   if (!is.null(CI_TIMES) && (!is.numeric(CI_TIMES) || anyNA(CI_TIMES) || any(CI_TIMES < 0))) {
@@ -748,9 +770,16 @@ km_figure <- function(strata = NULL) {
     }
   }
   if (length(bars) && nrow(ci)) {
-    # The table's limits, flipped with the curve under COMPLEMENT.
+    # The table's limits, flipped with the curve under COMPLEMENT; under "both",
+    # each time carries a bar on each curve.
     ci$bar_lower <- if (isTRUE(COMPLEMENT)) 1 - ci$cl_upper else ci$cl_lower
     ci$bar_upper <- if (isTRUE(COMPLEMENT)) 1 - ci$cl_lower else ci$cl_upper
+    if (.both) {
+      .flipped <- ci
+      .flipped$bar_lower <- 1 - ci$cl_upper
+      .flipped$bar_upper <- 1 - ci$cl_lower
+      ci <- rbind(ci, .flipped)
+    }
     # The strata's bars at one time are dodged apart, across a width that must stay
     # inside the gap to the next chosen time and the distance to zero, or bars for
     # neighboring times interleave and one is drawn before time zero. A fortieth of
