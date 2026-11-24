@@ -264,14 +264,26 @@ wait_for_marker <- function(marker, b, timeout = 60) {
   # ps_is_running() reads FALSE when /proc/<pid>/stat cannot be parsed, which can happen for an instant while the
   # bystander execs from sh into R, so the wait ends early only after a second of consecutive not-running reads.
   # Ending on the first one gave up on a bystander that carried its marker throughout (#587).
+  # The same unreadable instant comes at every exec, and the bystander execs three times: sh into Rscript, Rscript
+  # into the `R` shell script, and that script into bin/exec/R. A single ps_find_tree() read inside one of those
+  # windows misses a marker the process carries throughout. So the wait ends only once the marker is on the
+  # bystander's own pid AND that pid is already bin/exec/R, after which nothing execs again and every later read,
+  # job_status()'s included, sees it. Ending on the first hit returned while the bystander was usually still `sh`,
+  # then re-read the marker and could find nothing (#639). The read that ends the loop is kept, never repeated.
+  ready <- function() {
+    final <- grepl("exec/R$", tryCatch(ps::ps_cmdline(b$h)[1], error = function(e) ""))
+    final && b$pid %in% vapply(ps::ps_find_tree(marker), ps::ps_pid, 1L)
+  }
   start <- Sys.time()
   deadline <- start + timeout
   gone <- 0L
-  while (!length(ps::ps_find_tree(marker)) && gone < 10L && Sys.time() < deadline) {
+  found <- ready()
+  while (!found && gone < 10L && Sys.time() < deadline) {
     gone <- if (live()) 0L else gone + 1L
     Sys.sleep(0.1)
+    found <- ready()
   }
-  if (length(ps::ps_find_tree(marker))) return(invisible(TRUE))
+  if (found) return(invisible(TRUE))
   waited <- as.numeric(difftime(Sys.time(), start, units = "secs"))
   out <- file.path(b$dir, "out")
   said <- if (file.exists(out)) paste(utils::tail(readLines(out, warn = FALSE), 20), collapse = "\n") else ""
@@ -285,7 +297,8 @@ wait_for_marker <- function(marker, b, timeout = 60) {
   env <- tryCatch(unclass(ps::ps_environ(b$h))[marker], error = function(e) "unreadable")
   after <- as.numeric(sub("^.*_", "", marker))
   started <- tryCatch(as.numeric(ps::ps_create_time(b$h)), error = function(e) NA_real_)
-  stop("the bystander's marker never appeared in ", sprintf("%.1f", waited), " of ", timeout, " seconds; the bystander ",
+  stop("the bystander's marker never appeared on its R process in ", sprintf("%.1f", waited), " of ", timeout,
+       " seconds; the bystander ",
        if (live()) "is still running" else "had exited", " (status ", state, ", running `", cmd, "`",
        if (length(kids)) paste0(", children: ", paste0("`", kids, "`", collapse = ", ")), ")",
        if (nzchar(said)) paste0(", after printing:\n", said) else ", having printed nothing",
