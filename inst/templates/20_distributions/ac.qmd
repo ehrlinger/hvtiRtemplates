@@ -47,7 +47,9 @@ are `hp`.
      TYPE names the analysis chain the set belongs to, not this job: an ac job
      feeding a parametric hazard chain is type "hz", because hp reads this
      job's ac.rds beside hz's hz.rds in the same set. SUBJECT names the
-     outcome, such as "dead" or "reop".
+     outcome, such as "dead" or "reop". Both are names you choose, not values
+     from a list; what matters is giving every job in a chain (ac, hz, hm, hp)
+     the same pair, because each job finds the one before it by that pair.
 
      Do NOT hand-edit these declarations: the render-time guard below checks
      them against this file's own name and stops if they disagree. To put
@@ -57,13 +59,13 @@ are `hp`.
      A set is keyed on (subject, analysis type), not on the subject alone.
      One subject may be analyzed by several methods -- parametric hazard, random
      forest survival, competing risks -- and those chains share their upstream.
-     Two sets keyed on `dead_pa` alone would write their life tables to the
+     Two sets keyed on `dead` alone would write their life tables to the
      same file. -->
 
 ```{r}
 #| label: setup
 #| results: asis
-SUBJECT <- "dead_pa"
+SUBJECT <- "dead"
 TYPE    <- "hz"
 .in <- knitr::current_input(dir = TRUE)
 suppressPackageStartupMessages(library(hvtiRutilities))

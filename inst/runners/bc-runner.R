@@ -18,7 +18,7 @@
 
 # Written by add_job() from the file name, as in the report; the bag lands in
 # this set's estimates directory, where the report reads it.
-SUBJECT <- "dead_pa"
+SUBJECT <- "dead"
 TYPE    <- "hz"
 
 # EDIT: set FINISHED to TRUE once every EDIT: marker below is worked and

@@ -201,7 +201,7 @@ test_that("the bh runner resamples patients on start/stop rows, and its replicat
   # One patient per row, in the rows the fit used: each patient's segments travel together.
   expect_identical(as.numeric(called$id), as.numeric(env$job$data$ccfid))
   expect_gt(length(called$id), length(unique(called$id)))
-  bag <- readRDS(file.path(hvtiRutilities::study_dir("estimates", root), "dead_pa-hz", "bh.chunk01.rds"))
+  bag <- readRDS(file.path(hvtiRutilities::study_dir("estimates", root), "dead-hz", "bh.chunk01.rds"))
   expect_identical(bag$resampled, "patients")
   # The screen's definition, as boot_bag() records it for the other runners.
   expect_identical(bag$fitter, "TemporalHazard::hzr_bootstrap")
@@ -239,7 +239,7 @@ test_that("the bh runner resamples patients on start/stop rows, and its replicat
   report <- c("set", "edit-study-choices", "load", "tbl-data")
   settings <- list(EXPECT_BOOT = bag$n_boot, EXPECT_CHUNKS = 1L)
   expect_no_error(boot_report("bh", boot_env(root), report, settings))  # nolint: object_usage_linter.
-  set_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "dead_pa-hz")
+  set_dir <- file.path(hvtiRutilities::study_dir("estimates", root), "dead-hz")
   bag$resampled <- "rows"
   saveRDS(bag, file.path(set_dir, "bh.chunk01.rds"))
   expect_error(boot_report("bh", boot_env(root), report, settings), "resampled rows")  # nolint: object_usage_linter.

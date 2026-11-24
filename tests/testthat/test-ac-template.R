@@ -72,7 +72,7 @@ test_that("an ac job runs unedited but for its strata, with no warning, and save
   expect_named(env$strata_fits, c("male", "grp"))
   expect_identical(attr(env$strata_fits$male, "dropped")$n, 3L)
   expect_identical(attr(env$strata_fits$grp, "dropped")$value, "NA")
-  graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead_pa-hz")
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead-hz")
   for (name in c("ac-survival", "ac-survival-male", "ac-survival-grp")) {
     expect_true(file.exists(file.path(graphs, paste0(name, ".png"))), info = name)
     expect_true(file.exists(file.path(graphs, paste0(name, ".pdf"))), info = name)
@@ -131,7 +131,7 @@ test_that("an ac job completes when one stratum is all censored", {
   counts <- attr(env$strata_fits$grp, "counts")
   expect_identical(counts$n[counts$stratum == "b"], 20L)
   expect_identical(counts$n_events[counts$stratum == "b"], 0L)
-  graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead_pa-hz")
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead-hz")
   expect_true(file.exists(file.path(graphs, "ac-survival-grp.png")))
   # The views draw it too, flat at 100% to the end of its follow-up.
   surv <- env$km_views(env$strata_fits$grp)[[1]]$data
@@ -162,7 +162,7 @@ test_that("an ac job completes when no patient has the event", {
   # drawn, not when it is built, so it is drawn.
   withr::local_pdf(NULL)
   expect_no_warning(print(env$km_views(env$km)))
-  graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead_pa-hz")
+  graphs <- file.path(hvtiRutilities::study_dir("graphs", env$.root), "dead-hz")
   expect_true(file.exists(file.path(graphs, "ac-survival.png")))
 })
 

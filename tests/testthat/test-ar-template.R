@@ -29,7 +29,7 @@ test_that("an ar job renders against a finished hz job", {
   writeLines(gsub("EDIT:", "", src, fixed = TRUE), hz)
   render_job(hz)
   ar <- suppressMessages(add_job("ar", "dead", "question", root = root))
-  a <- gsub("hz.dead_pa.hz", "hz.dead.hz", readLines(ar), fixed = TRUE)
+  a <- readLines(ar)
   writeLines(gsub("EDIT:", "", a, fixed = TRUE), ar)
   ar_paste_methods(ar)
   render_job(ar)

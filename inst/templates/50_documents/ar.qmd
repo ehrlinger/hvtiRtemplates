@@ -48,7 +48,7 @@ format:
 ```{r}
 #| label: setup
 #| results: asis
-SUBJECT <- "dead_pa"
+SUBJECT <- "dead"
 TYPE    <- "question"
 .in <- knitr::current_input(dir = TRUE)
 suppressPackageStartupMessages(library(hvtiRutilities))
@@ -81,7 +81,7 @@ cat("> ", QUESTION, "\n", sep = "")
 ```{r}
 #| label: edit-item-1
 # EDIT: name the exhibit as "<job>#<label>".
-hvtiRtemplates::ar_item("hz.dead_pa.hz#fig-fit")
+hvtiRtemplates::ar_item("hz.dead.hz#fig-fit")
 ```
 
 ::: methods
@@ -103,7 +103,7 @@ field, so the number follows the fit instead of being typed. -->
 ```{r}
 #| label: edit-item-2
 # EDIT: name the exhibit as "<job>#<label>".
-hvtiRtemplates::ar_item("hz.dead_pa.hz#tbl-estimates")
+hvtiRtemplates::ar_item("hz.dead.hz#tbl-estimates")
 ```
 
 ::: methods

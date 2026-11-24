@@ -67,7 +67,7 @@ model that is not start/stop, for which `hs-setup` is the job.
 ```{r}
 #| label: setup
 #| results: asis
-SUBJECT <- "dead_pa"
+SUBJECT <- "dead"
 TYPE    <- "hz"
 .in <- knitr::current_input(dir = TRUE)
 .provenance_artifacts <- list()

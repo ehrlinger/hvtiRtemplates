@@ -224,9 +224,9 @@ The layout rule is one sentence, and it holds in every folder:
 
 ```
 <study_root>/
-├── distributions/  ac.dead_pa.hz.qmd        ac.dead_pa.rfs.qmd
-├── estimates/                                dead_pa-hz/ac.rds
-└── graphs/         hp.dead_pa.hz.qmd         dead_pa-hz/hp-fig1.png
+├── distributions/  ac.dead.hz.qmd     ac.dead.rfs.qmd
+├── estimates/                         dead-hz/ac.rds
+└── graphs/         hp.dead.hz.qmd     dead-hz/hp-fig1.png
 ```
 
 **A set is keyed on `(subject, analysis type)`, not on the subject alone.**
@@ -499,8 +499,8 @@ looks like a finished one is the same defect with an extra step, and the
 job from R, from anywhere inside the study:
 
 ```r
-job <- open_job("ac", "dead_pa", "hz")   # creates the job with add_job(), or
-                                          # opens it unchanged if it exists
+job <- open_job("ac", "dead", "hz")      # creates the job with add_job(), or
+                                         # opens it unchanged if it exists
 render_job(job)                          # draft, as far as the markers worked
 render_job(job, final = TRUE)            # the accepted result: stops instead
                                           # of drafting if a marker remains
