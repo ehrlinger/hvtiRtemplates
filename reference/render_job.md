@@ -109,11 +109,19 @@ remove the job's `_files/execute-results` folder ("Directory not empty
 (os error 39)"), because it deletes a file there before the share has
 let go of it. A render that fails with that error, read from Quarto's
 own message or from what the render added to the job's run log, is
-rendered once more, with a message saying so; the job runs twice, which
-for a long fit means twice the time. Any other failure is passed through
-unchanged, and nothing is deleted. A second such failure stops with an
-error of class `hvtiRtemplates_execute_results_stuck`. Rendering from
-the RStudio Render button does not go through `render_job()` and is not
+rendered again, up to three renders in all, with messages saying so;
+each rerun runs every chunk again, which for a long fit means that much
+more time. Before a rerun it waits up to a minute for the share to let
+go of the folder's `.nfs` entries, the files it deleted while something
+still held them. If they outlast the wait and are all the folder holds,
+the folder is moved beside the job as
+`<job>.execute-results.stale-<time>`, so the rerun does not meet them;
+delete it once nothing holds them. Nothing is deleted, and a folder
+holding anything else is left in place. Any other failure is passed
+through unchanged. A third such failure stops with an error of class
+`hvtiRtemplates_execute_results_stuck`, whose message gives the commands
+to find what holds the folder and to delete it. Rendering from the
+RStudio Render button does not go through `render_job()` and is not
 retried.
 
 One job renders at a time in a study. A render started while another is
