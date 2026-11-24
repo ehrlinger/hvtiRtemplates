@@ -90,6 +90,40 @@ test_that("ac reports survival and the number at risk at each horizon", {
   expect_identical(at$n_risk, vapply(env$grid, function(g) sum(env$d$iv_dead > g), integer(1)))
 })
 
+test_that("ac's life tables end each stratum on a row totalling its events", {
+  skip_ac()
+  env <- ac_run(ac_data(), labels = c("tbl-data", "tbl-cohort", "km-helpers"))
+  overall <- env$with_event_totals(life_table(env$d, env$TIME, env$EVENT))
+  last <- overall[nrow(overall), ]
+  expect_identical(last$time, "Total")
+  expect_identical(last$n_event, as.character(env$cc$n_events))
+  # Only the events are totalled: every other cell of the total row is blank.
+  expect_true(all(unlist(last[setdiff(names(last), c("time", "n_event"))]) == ""))
+  # Ordinary cells keep four decimals however large the value, and never go scientific.
+  cells <- env$with_event_totals(data.frame(time = c(12345.67891, 0.0001), n_event = c(1L, 1234567L)))
+  expect_identical(cells$time, c("12345.6789", "0.0001", "Total"))
+  expect_identical(cells$n_event, c("1", "1234567", "1234568"))
+  # A table with no events still ends on its total, of 0.
+  quiet <- env$d
+  quiet[[env$EVENT]] <- 0
+  none <- env$with_event_totals(life_table(quiet, env$TIME, env$EVENT))
+  expect_identical(none$time, "Total")
+  expect_identical(none$n_event, "0")
+  # Stratified with no events, each stratum still ends on its total of 0.
+  none_by <- env$with_event_totals(life_table(quiet, env$TIME, env$EVENT, strata_col = "grp"))
+  expect_identical(none_by$time, c("Total", "Total"))
+  expect_identical(none_by$n_event, c("0", "0"))
+  # Stratified, each stratum's rows end on that stratum's total, before the next begins.
+  lt <- life_table(env$d, env$TIME, env$EVENT, strata_col = "grp")
+  by_grp <- env$with_event_totals(lt)
+  totals <- which(by_grp$time == "Total")
+  expect_identical(by_grp$stratum[totals], unique(lt$stratum))
+  expect_identical(totals[[length(totals)]], nrow(by_grp))
+  expect_identical(by_grp$stratum[totals[[1]] + 1L], unique(lt$stratum)[[2]])
+  counts <- attr(lt, "counts")
+  expect_identical(by_grp$n_event[totals], as.character(counts$n_events[match(unique(lt$stratum), counts$stratum)]))
+})
+
 test_that("ac's expected counts, when given, still stop an unreconciled cohort", {
   skip_ac()
   bad <- list(EXPECTED = list(n = 1L, n_events = 1L, n_censored = 0L))
@@ -286,6 +320,32 @@ test_that("the curves join event points with straight lines by default, and STEP
   expect_true(all(c("GeomStep", "GeomPoint") %in% geoms(env$km_figure()[[1]])))
   expect_true(all(c("GeomStep", "GeomPoint") %in% geoms(env$km_views(env$km)[[1]])))
   # Drawn to a scoped null device, so no device is left open for the tests after this one.
+  withr::local_pdf(NULL)
+  expect_no_warning(print(env$km_figure("grp")))
+})
+
+test_that("the manuscript figure's axes meet at (0, 0) and tick at the numbers at risk", {
+  # The 2026-11-23 training: no padding past 0, PLOT_MAX or 100%, and each number
+  # at risk under a tick of its own.
+  skip_ac()
+  local_child_chunks()
+  env <- ac_run(ac_data(), list(STRATA = "grp", PLOT_MAX = 3, CI_TIMES = c(1, 3)))
+  expect_identical(env$.warnings, character(0))
+  for (strata in list(NULL, "grp")) {
+    fig <- env$km_figure(strata)
+    panel <- ggplot2::ggplot_build(fig[[1]])$layout$panel_params[[1]]
+    expect_equal(panel$x.range, c(0, 3))
+    expect_equal(panel$y.range, c(0, 100))
+    at <- env$risk_times(3)
+    expect_equal(panel$x$breaks[!is.na(panel$x$breaks)], at)
+    # The at-risk row spans the same axis, so each count stands under its tick.
+    expect_equal(ggplot2::ggplot_build(fig[[2]])$layout$panel_params[[1]]$x.range, c(0, 3))
+    # The curve is clipped: follow-up runs past PLOT_MAX = 3, and nothing may be
+    # drawn beyond the axis.
+    expect_identical(fig[[1]]$coordinates$clip, "on")
+    # The counts at 0 and PLOT_MAX stand on the row's ends, and are drawn whole.
+    expect_identical(fig[[2]]$coordinates$clip, "off")
+  }
   withr::local_pdf(NULL)
   expect_no_warning(print(env$km_figure("grp")))
 })

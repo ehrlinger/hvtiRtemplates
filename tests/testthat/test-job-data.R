@@ -231,6 +231,99 @@ test_that("an analysis set with another dataset is refused", {
   expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "other", analysis_set = "eda"), "written from the study dataset")
 })
 
+test_that("a DATASET naming an unregistered file reads it as a draft, loudly", {
+  withr::local_envvar(HVTI_DATA = NA)
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  .run_state$draft_reasons <- character()
+  cfg <- job_study(d0)
+  saveRDS(transform(d0, AGE2 = age), file.path(hvtiRutilities::study_dir("datasets", cfg$root), "match_set.rds"))
+  expect_warning(out <- read_job_data(cfg, id_col = "ccfid", dataset = "match_set.rds", where = quote(age >= 18)),
+                 "not registered")
+  expect_identical(out$data$ccfid, c(2L, 3L, 5L, 6L))
+  # Named as read_built() would name them, so ID, KEY and WHERE read the same either way.
+  expect_true("age2" %in% names(out$data))
+  expect_true(isTRUE(out$provenance$working))
+  expect_identical(out$provenance$dataset, "match_set.rds")
+  # A complete record: the hand-off and the provenance block both validate it.
+  expect_silent(hvtiRutilities:::.provenance_validate_records(list(out$provenance), "data"))
+  notes <- out$record$value[out$record$step == "Note"]
+  expect_match(notes[[1L]], "**Unregistered data.**", fixed = TRUE)
+  expect_match(notes[[1L]], "register_data(\"match_set.rds\"", fixed = TRUE)
+  expect_match(.run_state$draft_reasons, "match_set.rds", fixed = TRUE)
+  # A repeated KEY points at the file, not at read_built(), which cannot read it.
+  saveRDS(rbind(d0, d0[1, ]), file.path(hvtiRutilities::study_dir("datasets", cfg$root), "dup_set.rds"))
+  e <- expect_error(suppressWarnings(read_job_data(cfg, id_col = "ccfid", dataset = "dup_set.rds")), "repeats")
+  expect_match(conditionMessage(e), "read_clinical_data(", fixed = TRUE)
+  expect_no_match(conditionMessage(e), "read_built(", fixed = TRUE)
+})
+
+test_that("a DATASET file is read in each format read_clinical_data() reads", {
+  withr::local_envvar(HVTI_DATA = NA)
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  cfg <- job_study(d0)
+  dir <- hvtiRutilities::study_dir("datasets", cfg$root)
+  d <- d0
+  utils::write.csv(d0, file.path(dir, "f.csv"), row.names = FALSE)
+  files <- "f.csv"
+  # read_clinical_data() reads R data files from hvtiRutilities 1.5.27; the
+  # floor is older, and the family-floors job runs this file at the floor.
+  if (utils::packageVersion("hvtiRutilities") >= "1.5.27") {
+    save(d, file = file.path(dir, "f.rda"))
+    save(d, file = file.path(dir, "f.RData"))
+    files <- c(files, "f.rda", "f.RData")
+  }
+  if (requireNamespace("arrow", quietly = TRUE)) {
+    arrow::write_parquet(d0, file.path(dir, "f.parquet"))
+    files <- c(files, "f.parquet")
+  }
+  for (f in files) {
+    out <- suppressWarnings(read_job_data(cfg, id_col = "ccfid", dataset = f))
+    expect_identical(as.integer(out$data$ccfid), 1:6, label = f)
+    expect_true(isTRUE(out$provenance$working), label = f)
+  }
+})
+
+test_that("a DATASET file that is not in the datasets folder is named, with the fix", {
+  cfg <- job_study(d0)
+  e <- expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent.rds"), "absent.rds")
+  expect_match(conditionMessage(e), "datasets folder", fixed = TRUE)
+  # A name without an extension is still a registered name, and unknown.
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "absent"), "unknown dataset")
+  # A path would leave the datasets folder, and its provenance could not be recorded.
+  expect_error(read_job_data(cfg, id_col = "ccfid", dataset = "../built.csv"), "by its name alone")
+})
+
+test_that("the suggested registration never takes a reserved or registered name", {
+  withr::local_envvar(HVTI_DATA = NA)
+  old <- .run_state$draft_reasons
+  withr::defer(.run_state$draft_reasons <- old)
+  cfg <- job_study(d0)
+  saveRDS(d0, file.path(hvtiRutilities::study_dir("datasets", cfg$root), "built.rds"))
+  expect_warning(read_job_data(cfg, id_col = "ccfid", dataset = "built.rds"), "dataset = \"built_file\"", fixed = TRUE)
+})
+
+test_that("a final render refusing a hand-off from an unregistered file names register_data()", {
+  local_mocked_bindings(.strict_render = function() TRUE)
+  lineage <- list(data = list(list(dataset = "match_set.rds", path = "datasets/match_set.rds", working = TRUE)))
+  # The call names a dataset: register_data() refuses role = "named" under the default "study".
+  e <- expect_error(.check_handoff_working(lineage, "estimates/ac.rds", "the ac job"),
+                    "register_data(\"match_set.rds\", dataset = \"match_set\", role = \"named\")", fixed = TRUE)
+  expect_match(conditionMessage(e), "DATASET <- \"match_set\"", fixed = TRUE)
+  expect_no_match(conditionMessage(e), "update_manifest", fixed = TRUE)
+  lineage$data[[1L]]$dataset <- "study"
+  expect_error(.check_handoff_working(lineage, "estimates/ac.rds", "the ac job"), "update_manifest", fixed = TRUE)
+})
+
+test_that("the suggested name keeps looking until it is free", {
+  cfg <- list(additional_datasets = list(match_set = list(), match_set_file = list(), match_set_file2 = list()))
+  expect_identical(.register_name("match_set.rds", cfg), "match_set_file3")
+  expect_identical(.register_name("Match-Set.csv", NULL), "match_set")
+  expect_identical(.register_name("study.rds", NULL), "study_file")
+  expect_identical(.register_name("2024.rds", NULL), "d_2024")
+})
+
 test_that("a job outside a study is told to run study_setup()", {
   expect_error(hvtiRtemplates:::.find_study_root(withr::local_tempdir()), "study_setup")
 })

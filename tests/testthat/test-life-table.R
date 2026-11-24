@@ -68,6 +68,16 @@ test_that("life_table_at() checks its horizons and labels", {
   expect_error(life_table_at(d, "t", "e", times = c(1, 2), labels = "one"), "1 entries for 2 horizons")
 })
 
+test_that("life_table_at() puts the number at risk next to the time", {
+  # The 2026-11-23 training: the table is wide, so the count read against a
+  # horizon sits beside it rather than past the limits.
+  d <- data.frame(t = c(1, 2, 2.5, 3, 5), e = c(1, 0, 0, 1, 0), g = c("a", "a", "b", "b", "b"))
+  expect_named(life_table_at(d, "t", "e", times = 2),
+               c("horizon", "time", "n_risk", "survival", "cl_lower", "cl_upper"))
+  expect_named(life_table_at(d, "t", "e", times = 2, strata_col = "g"),
+               c("stratum", "horizon", "time", "n_risk", "survival", "cl_lower", "cl_upper"))
+})
+
 test_that("a missing or mean-imputed stratum is dropped, and the drop is recorded", {
   d <- hazard_data(60)
   d$male[1:4] <- NA

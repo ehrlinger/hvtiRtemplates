@@ -100,6 +100,7 @@ GROUP_LABELS <- NULL
 # ID, so no identifier is kept or printed.
 MATCH <- NULL
 DATASET <- "built"
+# A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
 ID <- "ccfid"
 
 # Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
