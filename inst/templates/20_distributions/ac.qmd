@@ -217,14 +217,18 @@ CI_TIMES <- NULL
 STEPS <- FALSE
 
 # What the manuscript figure's curve shows. FALSE draws survival, falling from
-# 100%. TRUE draws its complement, the cumulative incidence (100% minus
-# survival), rising from 0, as a figure of reoperation or readmission usually
-# is; its limits and bars flip with it. The tables report survival either way.
+# 100%. TRUE draws its complement, 1 minus Kaplan-Meier, rising from 0; its
+# limits and bars flip with it. The tables report survival either way.
+# For all-cause death, 1 minus Kaplan-Meier IS the cumulative mortality. For an
+# event death can pre-empt (reoperation, readmission), a death here is a
+# censoring, and 1 minus Kaplan-Meier then overstates the event's cumulative
+# incidence: it estimates the risk in a world where nobody dies. Report such an
+# event with a competing-risk estimate, not with this curve under that name.
 COMPLEMENT <- FALSE
 
 # The manuscript figure's y-axis title. NULL gives "Survival (%)", or
-# "Cumulative incidence (%)" under COMPLEMENT; name the event for a reader,
-# e.g. Y_LABEL <- "Reoperation (%)" or "Freedom from reoperation (%)".
+# "1 - Kaplan-Meier (%)" under COMPLEMENT; name the event for a reader,
+# e.g. Y_LABEL <- "Mortality (%)" when EVENT is all-cause death.
 Y_LABEL <- NULL
 
 # Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher), and as a TIFF when ragg is installed.
@@ -558,10 +562,11 @@ to `graphs/`.
 plot_max <- if (is.null(PLOT_MAX)) max(attr(km, "counts")$max_fup) else PLOT_MAX
 # The manuscript figures' captions name what their curves show. The reading page
 # and the tables stay survival under COMPLEMENT, and so do their captions.
-.curve_name <- if (isTRUE(COMPLEMENT)) "cumulative incidence" else "survival"
+.curve_name <- if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier" else "survival"
 .cap_km_survival <- paste0("Overall ", .curve_name, ", with patients at risk")
-.cap_km_survival_by <- function(v) paste0(if (isTRUE(COMPLEMENT)) "Cumulative incidence" else "Survival", " by ", v,
-                                          ", with patients at risk")
+.cap_km_survival_by <- function(v) {
+  paste0(if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier" else "Survival", " by ", v, ", with patients at risk")
+}
 
 # The survival curve and the four cumulative-hazard views SAS's %KAPLAN plots
 # (PLOTS, PLOTC and their log scales), one page, colored by stratum.
@@ -676,7 +681,7 @@ km_figure <- function(strata = NULL) {
     # follow-up, and only the clip stops it there, at the cost of halving a point
     # that sits on an axis.
     ggplot2::coord_cartesian(xlim = c(0, plot_max), ylim = c(0, 100), expand = FALSE) +
-    ggplot2::labs(x = "Years", y = Y_LABEL %||% if (isTRUE(COMPLEMENT)) "Cumulative incidence (%)" else "Survival (%)") +
+    ggplot2::labs(x = "Years", y = Y_LABEL %||% if (isTRUE(COMPLEMENT)) "1 - Kaplan-Meier (%)" else "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   # hv_survival()'s plot draws steps; its curve is redrawn as a line. A layer is
   # changed in place, and an hvtiPlotR that draws no step layer is left as it draws.
