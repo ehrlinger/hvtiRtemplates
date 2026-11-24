@@ -551,7 +551,7 @@ test_that("a handoff read is listed as upstream with its job set, role, time and
   expect_length(facts$upstream, 1L)
   up <- facts$upstream[[1L]]
   expect_identical(basename(up$file), "hm.rds")
-  expect_identical(up$set, "dead_pa-hz")
+  expect_identical(up$set, "dead-hz")
   expect_identical(up$role, "hazard-moments")
   expect_null(up$saved)
   expect_identical(up$dataset_version, basename(lineage$data[[1L]]$path))
