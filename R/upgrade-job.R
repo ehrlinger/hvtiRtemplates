@@ -94,6 +94,9 @@
 #'   inside its study.
 #' @param dir Deprecated: the old name of `root`. It works, with a warning,
 #'   for one more release; giving both is an error.
+#' @param open Logical. `TRUE`, the default, opens the job in the editor
+#'   afterwards, whether or not it changed. The editor is opened only in an
+#'   interactive session.
 #'
 #' @return The upgraded job's path, invisibly. The report is in the
 #'   `_archive` folder beside it.
@@ -112,7 +115,7 @@
 #' unlink(root, recursive = TRUE)
 #' }
 #' @export
-upgrade_job <- function(path, root = NULL, dir) {
+upgrade_job <- function(path, root = NULL, dir, open = TRUE) {
   if (!missing(dir)) root <- .take_renamed("upgrade_job", "dir", "root", dir, !missing(root))
   tryCatch(.check_scalar_string("path", path), error = function(e) {
     stop("upgrade_job(): ", sub("^template selection: ", "", conditionMessage(e)), call. = FALSE)
@@ -174,7 +177,7 @@ upgrade_job <- function(path, root = NULL, dir) {
   on.exit(unlink(staging, recursive = TRUE), add = TRUE)
   qualifier <- if (is.na(row$qualifier[[1L]])) NULL else row$qualifier[[1L]]
   staged <- suppressWarnings(add_job(row$prefix[[1L]], fields$subject, fields$type, root = staging,
-                                     qualifier = qualifier))
+                                     qualifier = qualifier, open = FALSE))
   old <- readLines(path, warn = FALSE)
   upgraded <- .upgrade_lines(old, readLines(staged, warn = FALSE), .template_prose(row$name[[1L]]))
   # Nothing to change means nothing to archive: a pair per call buried the pairs
@@ -184,7 +187,7 @@ upgrade_job <- function(path, root = NULL, dir) {
   if (current && !length(.legacy_upgrade_files(jobs))) {
     .install_provenance_hooks(root)
     .hvti_inform("upgrade_job(): ", basename(path), " is already current with its template; nothing changed.")
-    return(invisible(path))
+    return(if (isTRUE(open)) .open_in_editor(path) else invisible(path))
   }
 
   report <- .upgrade_report(upgraded, row$name[[1L]], old, path, backup, root)
@@ -205,7 +208,7 @@ upgrade_job <- function(path, root = NULL, dir) {
     .install_provenance_hooks(root)
     .hvti_inform("upgrade_job(): ", basename(path), " is already current with its template; ",
                  "an older upgrade's files beside it moved to ", archive, ".")
-    return(invisible(path))
+    return(if (isTRUE(open)) .open_in_editor(path) else invisible(path))
   }
   # The current template's provenance checks need the study's hooks, which a
   # study older than them may lack; add_job() installs them the same way.
@@ -224,7 +227,7 @@ upgrade_job <- function(path, root = NULL, dir) {
   ok <- TRUE
   .hvti_inform("upgrade_job(): upgraded ", basename(target), ". The old job is ", backup,
                "; the report, with the chunks to check, is ", report_path, ".")
-  .open_in_editor(target)
+  if (isTRUE(open)) .open_in_editor(target) else invisible(target)
 }
 
 # Before 1.5.1 an upgrade left the old job beside the job as <job>.qmd.pre-upgrade

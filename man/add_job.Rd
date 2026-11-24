@@ -4,7 +4,7 @@
 \alias{add_job}
 \title{Scaffold a new analysis job from a template}
 \usage{
-add_job(prefix, subject, type, root = NULL, qualifier = NULL, dir)
+add_job(prefix, subject, type, root = NULL, qualifier = NULL, dir, open = TRUE)
 }
 \arguments{
 \item{prefix}{Job type: one of the prefixes reported by
@@ -38,6 +38,10 @@ filename's fields.}
 
 \item{dir}{Deprecated: the old name of \code{root}. It works, with a warning,
 for one more release; giving both is an error.}
+
+\item{open}{Logical. \code{TRUE}, the default, opens the new job in the editor,
+as \code{\link[=open_job]{open_job()}} does. The editor is opened only in an interactive session,
+so a script or test is unaffected either way.}
 }
 \value{
 The job's path, invisibly. On any failure -- including one after

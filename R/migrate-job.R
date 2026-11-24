@@ -265,7 +265,7 @@ migrate_job <- function(path, subject, type, prefix = NULL, qualifier = NULL,
   dir.create(staging)
   on.exit(unlink(staging, recursive = TRUE), add = TRUE)
   qualifier <- if (is.na(row$qualifier[[1L]])) NULL else row$qualifier[[1L]]
-  staged <- add_job(row$prefix[[1L]], subject, type, root = staging, qualifier = qualifier)
+  staged <- add_job(row$prefix[[1L]], subject, type, root = staging, qualifier = qualifier, open = FALSE)
   folder <- hvtiRutilities::study_dir(row$folder[[1L]], root = root)
   if (.migration_target_exists(folder)) {
     resolved <- normalizePath(folder, winslash = "/", mustWork = TRUE)

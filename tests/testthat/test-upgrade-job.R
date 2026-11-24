@@ -746,3 +746,34 @@ test_that("an old template comment above a resolved choice is not carried as the
   expect_true(any(grepl("SEED_OFFSET \\+ \\(r - 1\\) \\* M \\+ 1", lines)))
   expect_true(any(grepl("^# Our note: 50 refits matched the earlier run[.]$", lines)))
 })
+
+# Records each path upgrade_job() asks the editor to open.
+local_editor <- function(env = parent.frame()) {
+  opened <- new.env()
+  opened$paths <- character()
+  testthat::local_mocked_bindings(.open_in_editor = function(path) {
+    opened$paths <- c(opened$paths, path)
+    invisible(path)
+  }, .package = "hvtiRtemplates", .env = env)
+  opened
+}
+
+test_that("upgrade_job() opens the upgraded job, and never its staging copy", {
+  local_template_moved()
+  opened <- local_editor()
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general", open = FALSE)
+  expect_identical(opened$paths, character())
+  upgraded <- suppressMessages(upgrade_job(job))
+  expect_identical(opened$paths, upgraded)
+})
+
+test_that("upgrade_job() opens a job already current, unless open = FALSE", {
+  opened <- local_editor()
+  root <- migration_study_fixture()
+  job <- add_job("dc", "cohort", "eda", root = root, qualifier = "general", open = FALSE)
+  expect_message(same <- upgrade_job(job), "already current")
+  expect_identical(opened$paths, same)
+  expect_message(upgrade_job(job, open = FALSE), "already current")
+  expect_identical(opened$paths, same)
+})

@@ -4,7 +4,7 @@
 \alias{upgrade_job}
 \title{Rewrite a job from the current version of its template}
 \usage{
-upgrade_job(path, root = NULL, dir)
+upgrade_job(path, root = NULL, dir, open = TRUE)
 }
 \arguments{
 \item{path}{The one job to upgrade: its \code{.qmd} file, relative to the
@@ -17,6 +17,10 @@ inside its study.}
 
 \item{dir}{Deprecated: the old name of \code{root}. It works, with a warning,
 for one more release; giving both is an error.}
+
+\item{open}{Logical. \code{TRUE}, the default, opens the job in the editor
+afterwards, whether or not it changed. The editor is opened only in an
+interactive session.}
 }
 \value{
 The upgraded job's path, invisibly. The report is in the
