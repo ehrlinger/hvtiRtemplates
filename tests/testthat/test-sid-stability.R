@@ -181,3 +181,154 @@ test_that("with M = 2 a refit at sid-fit's seed rebuilds the reported clusters, 
                  info = paste("K =", env$.k_range[i]))
   }
 })
+
+# ---- #623: agreement with a reference assignment ------------------------------------------------
+
+test_that("with a REFERENCE in sid-clusters, the refits are also measured against it, beside the rerun's own (#623)", {
+  skip_on_cran()
+  d <- sid_data()
+  env <- sid_fit_first(d)
+  # The reference moves ten patients of the first planted group into the second and leaves two unassigned,
+  # so it is not the rerun's own solution and the two agreements must differ.
+  grp <- c("Q", "R", "S")[d$truth]
+  grp[1:10] <- "R"
+  grp[149:150] <- NA
+  sid_register_reference(env, grp)
+  expect_warning(sid_clusters_after(env, utils::modifyList(sid_clusters_choices,
+                                                           list(REFERENCE = list(dataset = "published", col = "grp")))),
+                 "2 patients clustered here have no group in `published`")
+  saved <- readRDS(env$set_path("estimates", "sid-clusters.rds"))
+  # sid-clusters hands on each patient's reference group, by digest, NA where the reference has none.
+  expect_identical(saved$clusters$reference, grp[match(env$sid_letters$ccfid, seq_along(grp))])
+  sid_stability_after(env)
+  expect_false(is.null(env$stab_ref))
+  expect_setequal(unique(env$stab_ref$by_group$group), c("Q", "R", "S"))
+  expect_identical(env$ref_assigned, 148L)
+  # The refits recover the planted groups, which agree with the rerun better than with the moved reference.
+  expect_true(all(env$stab_ref$by_refit$ari_groups < env$stab$by_refit$ari_groups))
+  expect_true(all(env$stab_ref$by_refit$ari_groups > 0.7))
+  # Group Q lost ten patients in the reference, so its overlap with every refit is below 1.
+  q <- env$stab_ref$by_group[env$stab_ref$by_group$group == "Q", ]
+  expect_true(all(q$jaccard < 1 & q$jaccard > 0.7))
+  out <- readRDS(env$set_path("estimates", "sid-stability.rds"))
+  expect_identical(out$reference$dataset, "published")
+  expect_identical(out$reference$assigned, 148L)
+  expect_identical(nrow(out$reference$by_group), 9L)
+  # The reference dataset's digest is in the lineage this job records.
+  sha <- vapply(env$.provenance_data, function(p) p$sha256, "")
+  expect_true(any(vapply(env$.cl_read$lineage$data, function(p) p$sha256 %in% sha, NA)))
+  expect_gt(length(unique(sha)), length(unique(vapply(env$.sid_read$lineage$data, function(p) p$sha256, ""))))
+})
+
+test_that("a REFERENCE with COLLAPSE measures the refits against the reference's collapsed groups", {
+  skip_on_cran()
+  d <- sid_data()
+  env <- sid_fit_first(d)
+  sid_register_reference(env, c("Q", "R", "S")[d$truth])
+  sid_clusters_after(env, utils::modifyList(sid_clusters_choices,
+                                            list(REFERENCE = list(dataset = "published", col = "grp"),
+                                                 COLLAPSE = list(Z = c("Q", "R")))))
+  sid_stability_after(env)
+  expect_setequal(unique(env$stab_ref$by_group$group), c("S", "Z"))
+  expect_true(all(env$stab_ref$by_refit$ari_groups > 0.9))
+})
+
+test_that("an older sid-clusters.rds, with no reference or PAM metric, refits as before", {
+  skip_on_cran()
+  env <- sid_fit_first()
+  sid_clusters_after(env)
+  path <- env$set_path("estimates", "sid-clusters.rds")
+  old <- readRDS(path)
+  old$pam_on <- NULL
+  old$clusters$reference <- NULL
+  saveRDS(old, path)
+  sid_stability_after(env)
+  expect_null(env$stab_ref)
+  expect_identical(env$pam_on, "sid")
+  expect_true(all(env$stab$by_refit$ari_groups > 0.9))
+  expect_null(readRDS(env$set_path("estimates", "sid-stability.rds"))$reference)
+})
+
+# ---- #624: TRACK a level of a coded column ------------------------------------------------------
+
+test_that("TRACK takes a level of a coded column and names it, and still takes a 0/1 column (#624)", {
+  skip_on_cran()
+  d <- sid_data()
+  d$grade <- c(1L, 2L, 3L)[d$truth]
+  d$trk <- as.integer(d$truth == 3L)
+  env <- sid_fit_first(d)
+  sid_clusters_after(env)
+  sid_stability_after(env, utils::modifyList(sid_stability_choices, list(TRACK = list(var = "grade", level = 3))))
+  expect_identical(env$track, as.integer(env$cohort$grade == 3L))
+  expect_identical(env$.track_label, "grade = 3")
+  tbl <- env$tbl_stability(env$stab)
+  expect_true("grade = 3, reported" %in% names(tbl))
+  # The binary form, as a study copy written before levels existed sets it.
+  sid_stability_after(env, utils::modifyList(sid_stability_choices, list(TRACK = "trk")))
+  expect_identical(env$.track_label, "trk")
+  expect_identical(env$track, env$cohort$trk)
+  bad <- function(track) sid_stability_after(env, utils::modifyList(sid_stability_choices, list(TRACK = track)))
+  expect_error(bad(list(var = "grade", level = 7)), "TRACK's level, 7, is not a value of grade")
+  expect_error(bad(list(var = "grade")), "TRACK must be NULL, a 0/1 column name")
+  expect_error(bad("grade"), "a 0/1 or TRUE/FALSE column")
+})
+
+# ---- #622: progress through the refits ----------------------------------------------------------
+
+test_that("the refits report done/total to the job's progress, counting only refits that fit (#622)", {
+  skip_on_cran()
+  env <- sid_fit_first()
+  sid_clusters_after(env)
+  labels <- sid_stability_labels
+  before <- labels[seq_len(match("refits", labels) - 1L)]
+  steps <- list()
+  record <- function(unit) function(step, total) steps[[length(steps) + 1L]] <<- c(unit = unit, step = step, total = total)
+  rf_skip_unless_stack(rf_template_packages("sid", "stability"))
+  withr::local_pdf(NULL)
+  rf_run("sid", "stability", before, env, sid_stability_choices)
+  env$.job$progress <- record
+  rf_run("sid", "stability", "refits", env, sid_stability_choices)
+  expect_identical(vapply(steps, function(s) s[["step"]], ""), c("1", "2", "3"))
+  expect_true(all(vapply(steps, function(s) s[["total"]] == "3" && s[["unit"]] == "refit", NA)))
+  # Raising REPEATS reuses the three cached refits: only the two new ones count.
+  steps <- list()
+  env$REPEATS <- 5
+  rf_run("sid", "stability", "refits", env)
+  expect_identical(vapply(steps, function(s) s[["step"]], ""), c("1", "2"))
+  expect_true(all(vapply(steps, function(s) s[["total"]] == "2", NA)))
+})
+
+# ---- #629: PAM on the profile distance ----------------------------------------------------------
+
+test_that("sid-stability refits with the PAM metric sid-clusters used, and the profile metric rebuilds its solution (#629)", {
+  skip_on_cran()
+  env <- sid_fit_first()
+  sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(PAM_ON = "profile")))
+  expect_identical(readRDS(env$set_path("estimates", "sid-clusters.rds"))$pam_on, "profile")
+  # PAM on the matrix itself: each patient's row of dissimilarities is a point.
+  expect_identical(env$sid_pam$pm3$clustering, cluster::pam(env$sid$dist, 3L)$clustering)
+  sid_stability_after(env)
+  expect_identical(env$pam_on, "profile")
+  e <- new.env(parent = env)
+  e$refit_x <- env$x_m
+  e$refit_ntree <- env$.s$ntree
+  e$refit_reduce <- env$.s$sid_reduce
+  e$refit_k <- env$.k_range
+  e$refit_seed <- as.integer(env$.s$seed)
+  lab <- eval(env$.refit_pam, e)
+  for (i in seq_along(env$.k_range)) {
+    expect_equal(env$stab_ari(lab[, i], env$ref_pam[[as.character(env$.k_range[i])]]), 1,
+                 info = paste("K =", env$.k_range[i]))
+  }
+  expect_identical(readRDS(env$set_path("estimates", "sid-stability.rds"))$settings$pam_on, "profile")
+})
+
+test_that("the default refit code is unchanged, so refits cached before PAM_ON existed still load", {
+  # cache_fit() keys on the code, so any change to the default's text would make every cached refit stale.
+  src <- readLines(template_path("sid", "stability"), warn = FALSE)
+  env <- new.env(parent = globalenv())
+  env$pam_on <- "sid"
+  chunk <- rf_chunk(src, "refits")
+  eval(parse(text = chunk[grep("^\\.refit_code <- ", chunk):(grep("^run_refits <- ", chunk) - 1L)]), envir = env)
+  expect_snapshot(cat(deparse(env$.refit_code), sep = "\n"))
+})
