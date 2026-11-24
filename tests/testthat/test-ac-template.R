@@ -306,9 +306,10 @@ test_that("the manuscript figure's axes meet at (0, 0) and tick at the numbers a
     expect_equal(panel$x$breaks[!is.na(panel$x$breaks)], at)
     # The at-risk row spans the same axis, so each count stands under its tick.
     expect_equal(ggplot2::ggplot_build(fig[[2]])$layout$panel_params[[1]]$x.range, c(0, 3))
-    # Points and bars on the axes are drawn whole, not cut at the panel's edge.
-    expect_identical(fig[[1]]$coordinates$clip, "off")
-    # So are the counts at 0 and PLOT_MAX, which stand on the row's ends.
+    # The curve is clipped: follow-up runs past PLOT_MAX = 3, and nothing may be
+    # drawn beyond the axis.
+    expect_identical(fig[[1]]$coordinates$clip, "on")
+    # The counts at 0 and PLOT_MAX stand on the row's ends, and are drawn whole.
     expect_identical(fig[[2]]$coordinates$clip, "off")
   }
   withr::local_pdf(NULL)

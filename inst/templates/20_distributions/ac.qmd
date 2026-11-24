@@ -646,8 +646,10 @@ km_figure <- function(strata = NULL) {
     # stands under a tick of its own.
     ggplot2::scale_x_continuous(breaks = at) +
     # The axes meet at (0, 0) and stop at PLOT_MAX and 100%, with no padding past
-    # them; clip = "off" draws a point or bar on an axis whole rather than halved.
-    ggplot2::coord_cartesian(xlim = c(0, plot_max), ylim = c(0, 100), expand = FALSE, clip = "off") +
+    # them. The panel stays clipped: the curve runs on past a PLOT_MAX shorter than
+    # follow-up, and only the clip stops it there, at the cost of halving a point
+    # that sits on an axis.
+    ggplot2::coord_cartesian(xlim = c(0, plot_max), ylim = c(0, 100), expand = FALSE) +
     ggplot2::labs(x = "Years", y = "Survival (%)") +
     hvtiPlotR::theme_hv_manuscript(base_size = 12)
   # hv_survival()'s plot draws steps; its curve is redrawn as a line. A layer is
