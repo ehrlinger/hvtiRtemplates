@@ -100,7 +100,9 @@ test_that("the race after render_job()'s retry says so", {
   log <- c("render_job(): every chunk ran, then Quarto could not remove <tmp>/descriptive/job_files/execute-results",
            fx("execute-results"))
   d <- .diagnose_failure(log, list(), race_job)
-  expect_match(d$fix, "already rendered it twice", fixed = TRUE)
+  expect_match(d$fix, "already rendered it again", fixed = TRUE)
+  expect_match(d$fix, "lsof +D '<tmp>/descriptive/job_files'", fixed = TRUE)
+  expect_match(d$fix, "rm -rf '<tmp>/descriptive/job_files'", fixed = TRUE)
 })
 
 test_that("an os error 39 on another document's folder, or with no job named, is only a Quarto failure", {

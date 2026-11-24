@@ -188,11 +188,13 @@ test_that("render_job renders once more when Quarto reports the execute-results 
     invisible(NULL)
   }, .package = "quarto")
 
-  expect_message(render_job(job), "Directory not empty")
+  msgs <- testthat::capture_messages(render_job(job))
+  expect_match(msgs[1L], "Directory not empty", fixed = TRUE)
+  expect_match(msgs[2L], "attempt 2 of 3", fixed = TRUE)
   expect_identical(calls, 2L)
 })
 
-test_that("render_job gives up after a second race, with its own class and the original error kept", {
+test_that("render_job gives up after a third race, with its own class, the commands, and the original error kept", {
   skip_if_not_installed("quarto")
   dir <- withr::local_tempdir()
   job <- file.path(dir, "job.qmd")
@@ -204,9 +206,102 @@ test_that("render_job gives up after a second race, with its own class and the o
   }, .package = "quarto")
 
   e <- expect_error(suppressMessages(render_job(job)), class = "hvtiRtemplates_execute_results_stuck")
-  expect_match(conditionMessage(e), "Delete the folder", fixed = TRUE)
+  files <- file.path(normalizePath(dir, winslash = "/"), "job_files")
+  expect_match(conditionMessage(e), "in each of 3 renders", fixed = TRUE)
+  expect_match(conditionMessage(e), paste0("lsof +D ", shQuote(files)), fixed = TRUE)
+  expect_match(conditionMessage(e), paste0("rm -rf ", shQuote(files)), fixed = TRUE)
   expect_match(conditionMessage(e$parent), "os error 39", fixed = TRUE)
+  expect_identical(calls, 3L)
+})
+
+# A folder left as Quarto leaves it on the share: its file deleted while still held, so only an .nfs entry remains.
+stuck_folder <- function(dir, extra = NULL) {
+  results <- file.path(dir, "job_files", "execute-results")
+  dir.create(results, recursive = TRUE, showWarnings = FALSE)
+  for (f in c(".nfs000000000123abcd00000001", extra)) writeLines("{}", file.path(results, f))
+  results
+}
+
+test_that("before a rerun, render_job waits for the share to let go of the folder's .nfs entries", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  calls <- 0L
+  slept <- numeric()
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    if (calls == 1L) {
+      stuck_folder(dir)
+      stop(race_error(dir))
+    }
+    # The rerun starts only once the share has let go.
+    expect_false(any(startsWith(list.files(file.path(dir, "job_files", "execute-results"), all.files = TRUE), ".nfs")))
+    invisible(NULL)
+  }, .package = "quarto")
+  # The share lets go during the second wait.
+  local_mocked_bindings(.race_sleep = function(s) {
+    slept <<- c(slept, s)
+    if (length(slept) == 2L) unlink(list.files(file.path(dir, "job_files", "execute-results"), "^[.]nfs",
+                                               all.files = TRUE, full.names = TRUE))
+  })
+
+  msgs <- testthat::capture_messages(render_job(job))
   expect_identical(calls, 2L)
+  expect_identical(slept, c(1, 2))
+  expect_true(any(grepl("let go of it after 3 s", msgs, fixed = TRUE)))
+  expect_true(any(grepl("attempt 2 of 3", msgs, fixed = TRUE)))
+  expect_length(Sys.glob(file.path(dir, "*.stale-*")), 0L)
+})
+
+test_that("an .nfs entry that outlasts the wait has its folder moved beside the job, not deleted", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  results <- file.path(dir, "job_files", "execute-results")
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    if (calls == 1L) {
+      stuck_folder(dir)
+      stop(race_error(dir))
+    }
+    expect_false(dir.exists(results))
+    invisible(NULL)
+  }, .package = "quarto")
+  local_mocked_bindings(.race_sleep = function(s) NULL)
+
+  msgs <- testthat::capture_messages(render_job(job))
+  expect_identical(calls, 2L)
+  aside <- Sys.glob(file.path(dir, "job.execute-results.stale-*"))
+  expect_length(aside, 1L)
+  expect_identical(list.files(aside, all.files = TRUE, no.. = TRUE), ".nfs000000000123abcd00000001")
+  expect_true(any(grepl("still held open after 60 s", msgs, fixed = TRUE)))
+  expect_true(any(grepl(basename(aside), msgs, fixed = TRUE)))
+})
+
+test_that("a held folder that holds anything but .nfs entries is left in place, and the job is still rerun", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    if (calls == 1L) {
+      stuck_folder(dir, extra = "html.json")
+      stop(race_error(dir))
+    }
+    invisible(NULL)
+  }, .package = "quarto")
+  local_mocked_bindings(.race_sleep = function(s) NULL)
+
+  msgs <- testthat::capture_messages(render_job(job))
+  expect_identical(calls, 2L)
+  expect_true(file.exists(file.path(dir, "job_files", "execute-results", "html.json")))
+  expect_length(Sys.glob(file.path(dir, "*.stale-*")), 0L)
+  expect_true(any(grepl("left in place", msgs, fixed = TRUE)))
 })
 
 test_that("a Quarto error that only leaves execute-results behind is passed through, not retried", {
@@ -307,7 +402,9 @@ test_that("the race is read from the run log when the error chain lost Quarto's 
     invisible(NULL)
   }, .package = "quarto")
 
-  expect_message(render_job(job), "Directory not empty")
+  msgs <- testthat::capture_messages(render_job(job))
+  expect_match(msgs[1L], "Directory not empty", fixed = TRUE)
+  expect_match(msgs[2L], "attempt 2 of 3", fixed = TRUE)
   expect_identical(calls, 2L)
 })
 
@@ -325,4 +422,25 @@ test_that("a race already in the run log before this render began is not read as
 
   expect_error(render_job(job), "chunk failed")
   expect_identical(calls, 1L)
+})
+
+test_that("the stuck error names the folders moved aside before each rerun", {
+  skip_if_not_installed("quarto")
+  dir <- withr::local_tempdir()
+  job <- file.path(dir, "job.qmd")
+  writeLines("x", job)
+  calls <- 0L
+  local_mocked_bindings(quarto_render = function(...) {
+    calls <<- calls + 1L
+    stuck_folder(dir)
+    stop(race_error(dir))
+  }, .package = "quarto")
+  # The folder's name carries milliseconds; a real wait is a minute, so this one only has to outlast the clock's tick.
+  local_mocked_bindings(.race_sleep = function(s) if (s == 1) Sys.sleep(0.01))
+
+  e <- expect_error(suppressMessages(render_job(job)), class = "hvtiRtemplates_execute_results_stuck")
+  aside <- Sys.glob(file.path(dir, "job.execute-results.stale-*"))
+  expect_length(aside, 2L)
+  for (a in basename(aside)) expect_match(conditionMessage(e), a, fixed = TRUE)
+  expect_identical(calls, 3L)
 })
