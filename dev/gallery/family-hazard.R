@@ -221,10 +221,7 @@ gallery_family(
     ar = list(
       subject = "dead", type = "question",
       choices = list(
-        "^QUESTION <- " = "QUESTION <- \"Does the early hazard of death differ from the late hazard?\"",
-        "^hvtiRtemplates::ar_item\\(\"hz.dead_pa.hz#fig-fit\"\\)$" = "hvtiRtemplates::ar_item(\"hz.dead.hz#fig-fit\")",
-        "^hvtiRtemplates::ar_item\\(\"hz.dead_pa.hz#tbl-estimates\"\\)$" =
-          "hvtiRtemplates::ar_item(\"hz.dead.hz#tbl-estimates\")"
+        "^QUESTION <- " = "QUESTION <- \"Does the early hazard of death differ from the late hazard?\""
       ),
       finish = function(root, job) hvtiRtemplates::ar_paste_methods(job)
     ),

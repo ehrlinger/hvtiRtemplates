@@ -14,7 +14,7 @@ hs_score_labels <- c("read-upstream", "tbl-data", "cohort", "model", "tbl-score"
 
 # The scaffolded job's lines, as add_job() writes them into the study.
 hs_score_scaffold <- function(root) {
-  path <- suppressMessages(add_job("hs", subject = "dead_pa", type = "hz", root = root, qualifier = "score"))
+  path <- suppressMessages(add_job("hs", subject = "dead", type = "hz", root = root, qualifier = "score"))
   readLines(path, warn = FALSE)
 }
 
@@ -59,7 +59,7 @@ test_that("hs-score scores every segment at its own start, one row per segment, 
   expect_true(all(score$scr_mort[score$iv_start > 0] > 0))
   expect_identical(score$x1, hs$d$x1[score$row])
 
-  path <- file.path(hvtiRutilities::study_dir("estimates", root), "dead_pa-hz", "hs-score.rds")
+  path <- file.path(hvtiRutilities::study_dir("estimates", root), "dead-hz", "hs-score.rds")
   art <- readRDS(path)
   expect_identical(art$score, score)
   expect_identical(art$start, "iv_start")
