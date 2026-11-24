@@ -142,10 +142,10 @@
 <span>  cleanup <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  renv <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpsUD36t/file208b22812546/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmp4XYi5A/file20552a68a131/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
-<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpsUD36t/file208b22812546/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
+<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
 <span><span class="co">#&gt; [ ] manifest.yaml — no manifest.yaml; register_data() creates it</span></span>
 <span><span class="co">#&gt; [ ] dataset — no default dataset registered; run register_data()</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
@@ -177,10 +177,10 @@
 <span>  population <span class="op">=</span> <span class="st">"Synthetic full cohort"</span>,</span>
 <span>  root <span class="op">=</span> <span class="va">adopted_root</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Study: /tmp/RtmpsUD36t/file208b22812546/legacy-study</span></span>
+<span><span class="co">#&gt; Study: /tmp/Rtmp4XYi5A/file20552a68a131/legacy-study</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [x] _study.yml — study: Synthetic legacy study</span></span>
-<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpsUD36t/file208b22812546/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
+<span><span class="co">#&gt; [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first</span></span>
 <span><span class="co">#&gt; [x] manifest.yaml — 1 dataset entry verified by checksum</span></span>
 <span><span class="co">#&gt; [x] dataset — built.csv, registered as built_20261124.parquet</span></span>
 <span><span class="co">#&gt; [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars</span></span>
@@ -229,7 +229,7 @@
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">general</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"general"</span><span class="op">)</span></span>
 <span><span class="va">tables</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"tables"</span><span class="op">)</span></span></code></pre></div>
-<p>The EDA report template is also part of this stage, but it requires a meaningful <code>X_VAR</code> for the horizontal axis. Create it when the dataset has an appropriate reference date, calendar year or follow-up measure:</p>
+<p>The EDA report template is also part of this stage. Its <code>X_VAR</code> is the horizontal axis every panel is drawn against: a reference date, a calendar year, an age or an interval from an index event. A build with none of these sets <code>X_VAR &lt;- NULL</code>, and each variable is then drawn over the whole cohort:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">eda</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/open_job.html">open_job</a></span><span class="op">(</span><span class="st">"dc"</span>, <span class="st">"cohort"</span>, <span class="st">"eda"</span>, qualifier <span class="op">=</span> <span class="st">"eda"</span><span class="op">)</span></span></code></pre></div>
 <p>Its follow-up section needs the death and follow-up fields; take <code>"followup"</code> out of <code>SECTIONS</code> when the data do not have them; <code>SECTIONS &lt;- c("continuous", "percent", "count")</code> draws the variable sections alone.</p>
@@ -249,15 +249,15 @@
 <span><span class="op">)</span></span>
 <span><span class="va">study_jobs</span></span>
 <span><span class="co">#&gt;                                                                               general </span></span>
-<span><span class="co">#&gt; "/tmp/RtmpsUD36t/file208b22812546/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt; "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study/descriptive/dc.general.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                tables </span></span>
-<span><span class="co">#&gt;  "/tmp/RtmpsUD36t/file208b22812546/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;  "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study/descriptive/dc.tables.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                  gfup </span></span>
-<span><span class="co">#&gt;    "/tmp/RtmpsUD36t/file208b22812546/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;    "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                trends </span></span>
-<span><span class="co">#&gt;  "/tmp/RtmpsUD36t/file208b22812546/legacy-study/descriptive/dc.trends.cohort.eda.qmd" </span></span>
+<span><span class="co">#&gt;  "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study/descriptive/dc.trends.cohort.eda.qmd" </span></span>
 <span><span class="co">#&gt;                                                                                   eda </span></span>
-<span><span class="co">#&gt;     "/tmp/RtmpsUD36t/file208b22812546/legacy-study/descriptive/dc.eda.cohort.eda.qmd"</span></span></code></pre></div>
+<span><span class="co">#&gt;     "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study/descriptive/dc.eda.cohort.eda.qmd"</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="work-the-jobs-and-generate-output">Work the jobs and generate output<a class="anchor" aria-label="anchor" href="#work-the-jobs-and-generate-output"></a>
 </h2>

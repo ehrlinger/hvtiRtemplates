@@ -147,10 +147,10 @@ study_setup(
   cleanup = FALSE,
   renv = FALSE
 )
-#> Study: /tmp/RtmpsUD36t/file208b22812546/legacy-study
+#> Study: /tmp/Rtmp4XYi5A/file20552a68a131/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpsUD36t/file208b22812546/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -201,10 +201,10 @@ register_data(
   population = "Synthetic full cohort",
   root = adopted_root
 )
-#> Study: /tmp/RtmpsUD36t/file208b22812546/legacy-study
+#> Study: /tmp/Rtmp4XYi5A/file20552a68a131/legacy-study
 #> 
 #> [x] _study.yml — study: Synthetic legacy study
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/RtmpsUD36t/file208b22812546/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Synthetic legacy study", study_tracker_id = 42L, root = "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv, registered as built_20261124.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -289,9 +289,11 @@ general <- open_job("dc", "cohort", "eda", qualifier = "general")
 tables <- open_job("dc", "cohort", "eda", qualifier = "tables")
 ```
 
-The EDA report template is also part of this stage, but it requires a
-meaningful `X_VAR` for the horizontal axis. Create it when the dataset
-has an appropriate reference date, calendar year or follow-up measure:
+The EDA report template is also part of this stage. Its `X_VAR` is the
+horizontal axis every panel is drawn against: a reference date, a
+calendar year, an age or an interval from an index event. A build with
+none of these sets `X_VAR <- NULL`, and each variable is then drawn over
+the whole cohort:
 
 ``` r
 
@@ -328,15 +330,15 @@ study_jobs <- c(
 )
 study_jobs
 #>                                                                               general 
-#> "/tmp/RtmpsUD36t/file208b22812546/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
+#> "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study/descriptive/dc.general.cohort.eda.qmd" 
 #>                                                                                tables 
-#>  "/tmp/RtmpsUD36t/file208b22812546/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
+#>  "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study/descriptive/dc.tables.cohort.eda.qmd" 
 #>                                                                                  gfup 
-#>    "/tmp/RtmpsUD36t/file208b22812546/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
+#>    "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study/descriptive/dc.gfup.cohort.eda.qmd" 
 #>                                                                                trends 
-#>  "/tmp/RtmpsUD36t/file208b22812546/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
+#>  "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study/descriptive/dc.trends.cohort.eda.qmd" 
 #>                                                                                   eda 
-#>     "/tmp/RtmpsUD36t/file208b22812546/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
+#>     "/tmp/Rtmp4XYi5A/file20552a68a131/legacy-study/descriptive/dc.eda.cohort.eda.qmd"
 ```
 
 ## Work the jobs and generate output
