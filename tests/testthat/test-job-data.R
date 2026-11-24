@@ -307,11 +307,21 @@ test_that("the suggested registration never takes a reserved or registered name"
 test_that("a final render refusing a hand-off from an unregistered file names register_data()", {
   local_mocked_bindings(.strict_render = function() TRUE)
   lineage <- list(data = list(list(dataset = "match_set.rds", path = "datasets/match_set.rds", working = TRUE)))
-  e <- expect_error(.check_handoff_working(lineage, "estimates/ac.rds", "the ac job"), "register_data(\"match_set.rds\"",
-                    fixed = TRUE)
+  # The call names a dataset: register_data() refuses role = "named" under the default "study".
+  e <- expect_error(.check_handoff_working(lineage, "estimates/ac.rds", "the ac job"),
+                    "register_data(\"match_set.rds\", dataset = \"match_set\", role = \"named\")", fixed = TRUE)
+  expect_match(conditionMessage(e), "DATASET <- \"match_set\"", fixed = TRUE)
   expect_no_match(conditionMessage(e), "update_manifest", fixed = TRUE)
   lineage$data[[1L]]$dataset <- "study"
   expect_error(.check_handoff_working(lineage, "estimates/ac.rds", "the ac job"), "update_manifest", fixed = TRUE)
+})
+
+test_that("the suggested name keeps looking until it is free", {
+  cfg <- list(additional_datasets = list(match_set = list(), match_set_file = list(), match_set_file2 = list()))
+  expect_identical(.register_name("match_set.rds", cfg), "match_set_file3")
+  expect_identical(.register_name("Match-Set.csv", NULL), "match_set")
+  expect_identical(.register_name("study.rds", NULL), "study_file")
+  expect_identical(.register_name("2024.rds", NULL), "d_2024")
 })
 
 test_that("a job outside a study is told to run study_setup()", {

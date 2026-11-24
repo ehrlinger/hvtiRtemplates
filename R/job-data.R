@@ -1234,6 +1234,26 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
 # carrying an extension can only be a file name.
 .is_dataset_file <- function(dataset) grepl("\\.[A-Za-z0-9]+$", dataset)
 
+# The name to suggest registering a DATASET file under: its stem, made a legal
+# name, then suffixed until it is neither reserved ("study", "built") nor taken
+# by a registered dataset, so the suggested register_data() call succeeds.
+.register_name <- function(dataset, cfg = NULL) {
+  stem <- gsub("[^a-z0-9_]", "_", sub("\\.[^.]+$", "", tolower(dataset)))
+  if (!grepl("^[a-z]", stem)) stem <- paste0("d_", stem)
+  taken <- c("study", "built", names(cfg$additional_datasets))
+  name <- stem
+  n <- 1L
+  while (name %in% taken) {
+    name <- paste0(stem, "_file", if (n > 1L) n)
+    n <- n + 1L
+  }
+  name
+}
+
+.register_call <- function(dataset, name) {
+  paste0("hvtiRutilities::register_data(\"", dataset, "\", dataset = \"", name, "\", role = \"named\")")
+}
+
 # Reads a file in the datasets folder that was never registered. The job runs,
 # as a draft: the record carries working = TRUE, so a final render downstream
 # refuses a hand-off saved from these rows (.check_handoff_working()), and the
@@ -1265,12 +1285,8 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
     raw
   })
   read$record$working <- TRUE
-  name <- sub("\\.[^.]+$", "", tolower(dataset))
-  name <- gsub("[^a-z0-9_]", "_", name)
-  if (!grepl("^[a-z]", name)) name <- paste0("d_", name)
-  # "study" and "built" are reserved, and a registered name is taken.
-  if (name %in% c("study", "built", names(cfg$additional_datasets))) name <- paste0(name, "_file")
-  call <- paste0("hvtiRutilities::register_data(\"", dataset, "\", dataset = \"", name, "\", role = \"named\")")
+  name <- .register_name(dataset, cfg)
+  call <- .register_call(dataset, name)
   read$notes <- c(paste0(
     "**Unregistered data.** This job read ", dataset, " straight from the datasets folder. It is not in ",
     "_study.yml or manifest.yaml, so nothing checks that the file is the one these numbers came from: rebuild it ",
