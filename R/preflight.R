@@ -172,6 +172,7 @@
 }
 
 .check_quarto <- function(root = NULL) {
+  # quarto is in Imports, so this holds only where it was removed after this package was installed.
   if (!.quarto_pkg()) {
     lock <- if (!is.null(root)) .lock_read(root)
     l <- if (is.null(lock)) NA_character_ else .locked_versions(lock)["quarto"]
