@@ -1,6 +1,7 @@
 ---
 title: "Migrate a legacy SAS study"
 author: "John Ehrlinger"
+date: today
 vignette: >
   %\VignetteIndexEntry{Migrate a legacy SAS study}
   %\VignetteEngine{quarto::html}

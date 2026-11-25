@@ -296,8 +296,14 @@ test_that("the average expected curve and the spaghetti draw with no warning, un
   withr::local_package("TemporalHazard")
   withr::local_package("hvtiRutilities")
   e <- concordance_copy(estate())
+  # The core chunks read neither BAND nor SPAGHETTI_N, so one run serves every draw below; each draw
+  # sets them on the environment, as its edit-study-choices would, and starts from no figure files.
+  env <- concordance_run(e$root, concordance_choices(e$data), concordance_core)
+  files <- function(name) env$set_path("graphs", paste0(name, c(".png", ".pdf", ".tiff")))
   for (band in c("limits_mean", "spread")) {
-    env <- concordance_run(e$root, concordance_choices(e$data, BAND = band), concordance_core)
+    env$BAND <- band
+    unlink(files("hs-concordance-expected-km"))
+    unlink(files("hs-concordance-spaghetti"))
     warned <- character(0)
     withCallingHandlers(
       utils::capture.output(hazard_run("hs-concordance", c("curves", "fig-expected-km", "fig-spaghetti"), env)),
@@ -308,7 +314,7 @@ test_that("the average expected curve and the spaghetti draw with no warning, un
     )
     expect_identical(warned, character(0), info = band)
     for (name in c("hs-concordance-expected-km", "hs-concordance-spaghetti")) {
-      expect_true(all(file.exists(env$set_path("graphs", paste0(name, c(".png", ".pdf", ".tiff"))))), info = name)
+      expect_true(all(file.exists(files(name))), info = name)
     }
     expect_match(env$.cap_km, if (band == "spread") "not a confidence interval" else "not an interval for the mean curve",
                  info = band)
@@ -322,7 +328,8 @@ test_that("the average expected curve and the spaghetti draw with no warning, un
     expect_identical(grDevices::dev.cur(), c("null device" = 1L))
   }
   # The spaghetti thins to SPAGHETTI_N patients per panel.
-  env <- concordance_run(e$root, concordance_choices(e$data, BAND = "spread", SPAGHETTI_N = 10), concordance_core)
+  env$BAND <- "spread"
+  env$SPAGHETTI_N <- 10
   utils::capture.output(hazard_run("hs-concordance", "curves", env))
   expect_true(all(tapply(env$.lines$patient, env$.lines$panel, function(p) length(unique(p))) == 10L))
 })

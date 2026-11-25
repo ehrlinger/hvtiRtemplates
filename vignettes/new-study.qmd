@@ -1,6 +1,7 @@
 ---
 title: "Start a new study from a delivered dataset"
 author: "John Ehrlinger"
+date: today
 vignette: >
   %\VignetteIndexEntry{Start a new study}
   %\VignetteEngine{quarto::html}

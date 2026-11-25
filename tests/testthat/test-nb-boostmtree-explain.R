@@ -2,10 +2,29 @@
 
 nb_effect_labels <- c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance", "importance-runs", "effects")
 
+# One fitted study for each set of fit choices, grown on first use and removed when the file ends: most tests here
+# explain a fit and never change it, and a fit is the dearest step they share. nb_fit_copy() hands a test its own copy
+# of the whole study, key and caches included, so a test that rewrites the bundle or the caches leaves the shared one
+# as it was fitted.
+nb_fitted <- new.env()
+# nolint start: object_usage_linter.
+nb_fit_copy <- function(choices = nb_choices(), .local_envir = parent.frame()) {
+  key <- paste(deparse(choices), collapse = "")
+  if (is.null(nb_fitted[[key]])) {
+    root <- nb_study(.local_envir = testthat::teardown_env())
+    nb_fit_in(root, choices = choices)
+    nb_fitted[[key]] <- root
+  }
+  dest <- withr::local_tempdir("nb-study-copy-", .local_envir = .local_envir)
+  from <- list.files(nb_fitted[[key]], all.files = TRUE, full.names = TRUE, no.. = TRUE)
+  stopifnot(all(file.copy(from, dest, recursive = TRUE, copy.date = TRUE)))
+  normalizePath(dest)
+}
+# nolint end
+
 test_that("the mean line averages within time bins, not at single visit times", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   env <- nb_env(root)
   utils::capture.output(nb_explain_run(c("setup", "edit-study-choices", "fit", "fig-traces"), env,
                                        nb_explain_choices(N_TRACES = 10)))
@@ -16,8 +35,7 @@ test_that("the mean line averages within time bins, not at single visit times", 
 
 test_that("the trace sample is reproducible under SEED", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   labels <- c("setup", "edit-study-choices", "fit", "fig-traces")
   a <- nb_env(root)
   utils::capture.output(nb_explain_run(labels, a, nb_explain_choices(N_TRACES = 10)))
@@ -29,8 +47,7 @@ test_that("the trace sample is reproducible under SEED", {
 test_that("the partial effects are cached beside the fit, and changed EFFECT_VARIABLES stop until REFIT", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   dir <- nb_set_dir(root)
   partial <- file.path(dir, "nb-boostmtree_explain-partial.rds")
   stamp <- function(f) list(md5 = unname(tools::md5sum(f)), mtime = file.mtime(f))
@@ -58,8 +75,7 @@ test_that("the partial effects are cached beside the fit, and changed EFFECT_VAR
 test_that("the partial effects are guarded only when they are to compute", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   long <- list()
   memory <- list()
   guarded <- function(..., labels = nb_effect_labels) {
@@ -97,8 +113,7 @@ test_that("the partial effects are guarded only when they are to compute", {
 test_that("changed EFFECT_VARIABLES under REFIT are refused outside run_job(), with the cache untouched", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   utils::capture.output(nb_explain_run(nb_effect_labels, nb_env(root), nb_explain_choices(EFFECT_VARIABLES = "age")))
   partial <- file.path(nb_set_dir(root), "nb-boostmtree_explain-partial.rds")
   before <- unname(tools::md5sum(partial))
@@ -113,8 +128,8 @@ test_that("changed EFFECT_VARIABLES under REFIT are refused outside run_job(), w
 test_that("EFFECT_VARIABLES may name a factor covariate alone", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  env <- nb_explain_in(root, labels = nb_effect_labels, choices = nb_explain_choices(EFFECT_VARIABLES = "grp"))
+  root <- nb_fit_copy()
+  env <- nb_explain_in(root, labels = nb_effect_labels, choices = nb_explain_choices(EFFECT_VARIABLES = "grp"), fit = FALSE)
   expect_length(env$p_effects, 1L)
   expect_identical(as.character(unique(env$p_effects[[1L]]$data$variable)), "grp")
   expect_no_error(ggplot2::ggplot_build(env$p_effects[[1L]]))
@@ -123,8 +138,7 @@ test_that("EFFECT_VARIABLES may name a factor covariate alone", {
 test_that("each effects page is emitted at its own width and height", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   env <- nb_env(root)
   # One vectorized sprintf() over both options once gave every page fig-height equal to its width.
   emitted <- list()
@@ -163,8 +177,7 @@ test_that("visits all at one time draw no mean line, and say so", {
 
 test_that("explain reads the bundle, never fits, and takes its lineage into provenance", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   env <- nb_env(root)
   env$boostmtree <- function(...) stop("explain must never fit")
   utils::capture.output(nb_explain_run(c("setup", "edit-study-choices", "fit", "tbl-data"), env, nb_explain_choices()))
@@ -198,8 +211,7 @@ test_that("explain stops, naming the fit job, on a missing file, a non-boostmtre
 
 test_that("explain stops, naming the fit job, when the bundle lacks a field", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   path <- nb_bundle_path(root)
   b <- readRDS(path)
   b$k_shadow <- NULL
@@ -211,8 +223,7 @@ test_that("explain stops, naming the fit job, when the bundle lacks a field", {
 
 test_that("a final render refuses a fit saved from unregistered working data", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   path <- nb_bundle_path(root)
   b <- readRDS(path)
   lineage <- attr(b, "hvti_provenance")
@@ -227,8 +238,7 @@ test_that("a final render refuses a fit saved from unregistered working data", {
 
 test_that("explain warns when boostmtree or randomForestSRC differ from the fit's", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   path <- nb_bundle_path(root)
   b <- readRDS(path)
   b$versions[["randomForestSRC"]] <- "0.0.1"
@@ -244,8 +254,8 @@ test_that("importance pools N_VIMP runs per fit, named fit<i>.run<j>, and report
   nb_skip_unless_stack()
   # importance-runs emits its table as a child chunk.
   local_child_chunks()
-  root <- nb_study()
-  env <- nb_explain_in(root, fit_choices = nb_choices(N_REFITS = 1))
+  root <- nb_fit_copy(nb_choices(N_REFITS = 1))
+  env <- nb_explain_in(root, fit = FALSE)
   expect_identical(names(env$.runs), c("fit0.run1", "fit0.run2", "fit0.run3", "fit1.run1", "fit1.run2", "fit1.run3"))
   expect_s3_class(env$.pool, "gg_boost_vimp_pool")
   expect_identical(unique(env$importance_table$n_runs), 6L)
@@ -261,8 +271,8 @@ test_that("raising N_VIMP reuses the cached runs and adds only the new ones", {
   nb_skip_unless_stack()
   # importance-runs emits its table as a child chunk.
   local_child_chunks()
-  root <- nb_study()
-  nb_explain_in(root, choices = nb_explain_choices(N_VIMP = 2))
+  root <- nb_fit_copy()
+  nb_explain_in(root, choices = nb_explain_choices(N_VIMP = 2), fit = FALSE)
   run <- function(j) file.path(nb_set_dir(root), sprintf("nb-boostmtree_explain-vimp-fit0-run%d.rds", j))
   stamp <- function(f) list(md5 = unname(tools::md5sum(f)), mtime = file.mtime(f))
   before <- lapply(1:2, function(j) stamp(run(j)))
@@ -275,8 +285,7 @@ test_that("raising N_VIMP reuses the cached runs and adds only the new ones", {
 test_that("the importance guards are reached only when runs are still to compute", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   labels <- c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance")
   long <- list()
   memory <- list()
@@ -307,8 +316,7 @@ test_that("the importance guards are reached only when runs are still to compute
 test_that("under REFIT the importance guards see each run's own fit, so a current cache is not refused", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  nb_fit_in(root, choices = nb_choices(N_REFITS = 1))
+  root <- nb_fit_copy(nb_choices(N_REFITS = 1))
   labels <- c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance")
   long <- list()
   memory <- list()
@@ -336,8 +344,7 @@ test_that("under REFIT the importance guards see each run's own fit, so a curren
 test_that("a worker that returns nothing stops the render, naming the run and CORES", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   env <- nb_env(root)
   env$cache_fit <- function(...) NULL
   expect_error(utils::capture.output(nb_explain_run(c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance"), env,
@@ -348,8 +355,8 @@ test_that("a worker that returns nothing stops the render, naming the run and CO
 test_that("vimp runs are seeded SEED + j + 1000 * i, so no two fits share a permutation", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  env <- nb_explain_in(root, fit_choices = nb_choices(N_REFITS = 1), choices = nb_explain_choices(N_VIMP = 2, SEED = 11))
+  root <- nb_fit_copy(nb_choices(N_REFITS = 1))
+  env <- nb_explain_in(root, choices = nb_explain_choices(N_VIMP = 2, SEED = 11), fit = FALSE)
   plan <- env$.runs_plan
   seed <- function(name) plan$seed[plan$name == name]
   expect_identical(seed("fit0.run1"), 12)
@@ -362,8 +369,7 @@ test_that("vimp runs are seeded SEED + j + 1000 * i, so no two fits share a perm
 test_that("N_VIMP must be a whole number from 1 to 999, so seeds never coincide across fits", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   for (bad in list(0, 1000, 2.5, NA_real_, c(2, 3), "3")) {
     env <- nb_env(root)
     expect_error(utils::capture.output(nb_explain_run(c("setup", "edit-study-choices", "fit", "tbl-data", "fig-importance"), env,
@@ -375,8 +381,7 @@ test_that("N_VIMP must be a whole number from 1 to 999, so seeds never coincide 
 test_that("with K_SHADOW = 0 explain runs importance once, draws one run, and never pools", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  nb_fit_in(root, choices = nb_choices(K_SHADOW = 0, N_REFITS = 1))
+  root <- nb_fit_copy(nb_choices(K_SHADOW = 0, N_REFITS = 1))
   env <- nb_env(root)
   pooled <- 0L
   env$gg_boost_vimp <- function(object, ...) {
@@ -402,8 +407,8 @@ test_that("with K_SHADOW = 0 explain runs importance once, draws one run, and ne
 test_that("the default effect variables are the six with the largest median importance", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  env <- nb_explain_in(root, labels = nb_effect_labels)
+  root <- nb_fit_copy()
+  env <- nb_explain_in(root, labels = nb_effect_labels, fit = FALSE)
   main <- env$.pool[env$.pool$component == "main", ]
   top <- sort(tapply(main$median_importance, as.character(main$variable), max), decreasing = TRUE)
   expect_identical(env$.effect_vars, head(names(top), 6L))
@@ -435,8 +440,7 @@ test_that("every explain chunk draws for every family, from fresh runs and from 
 test_that("the partial effects report their steps", {
   nb_skip_unless_stack()
   local_child_chunks()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   env <- nb_env(root)
   utils::capture.output(nb_explain_run(c("setup", "edit-study-choices"), env, nb_explain_choices()))
   seen <- new.env(parent = emptyenv())

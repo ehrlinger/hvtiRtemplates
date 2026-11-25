@@ -570,6 +570,8 @@ if (!is.null(REFERENCE) && !is.null(K)) {
   if (is.na(.ref_col)) {
     stop("REFERENCE's col, ", REFERENCE$col, ", is not a column of `", REFERENCE$dataset, "`.", call. = FALSE)
   }
+  # Its values become the letters the tables and the Sankey print, so an identifier column is refused, as TRACK is.
+  hvtiRtemplates:::.refuse_display(.ref_col, hvtiRtemplates:::.no_values(.ref_read$data, .id), "REFERENCE's col")
   .ref_at <- sid_reference_at(sid_ids, .ref_read$data[[.id]])
   # Each clustered patient's group in the reference, NA where it has none. Saved for sid-stability, which
   # measures its refits against these groups as well as against this render's.

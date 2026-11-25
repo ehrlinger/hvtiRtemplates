@@ -133,8 +133,8 @@ Edit these values for this study before rendering.
 # job's own choice, not taken from a model: each hm model was fitted on ONE
 # group's rows, and this job predicts for all of them.
 # EDIT: the dataset, and a WHERE that keeps every group being compared.
-DATASET <- "built"
 # A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
+DATASET <- "built"
 ANALYSIS_SET <- NULL
 WHERE <- NULL
 ID <- "ccfid"
@@ -153,7 +153,7 @@ KEY <- ID
 #     keeps each patient's last TTE. A tie stops: picking one record
 #     silently would be a hidden choice; by = c("echo_date", "echo_seq")
 #     breaks it. This job models one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL

@@ -295,7 +295,7 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
         "This R process already holds it."
       return(paste0(still, ", and the study's render lock could not be taken, so the folder was left in place. ", why))
     }
-    on.exit(.release_provenance_lock(root, me), add = TRUE)
+    on.exit(.release_settled_lock(root, me), add = TRUE)
   }
   if (!all(startsWith(entries(), ".nfs"))) {
     return(paste0(still, ", and it holds other files too, so it was left in place."))
@@ -310,13 +310,27 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
                    ". Delete it once `lsof +D` on it shows nothing holds them."), aside = aside)
 }
 
-# The Quarto project the job renders in: the nearest folder above it holding _quarto.yml, which is the
+# A lock this R process took and could not release is owned by a live process, the session, so every render of the
+# study, the rerun that follows this included, would be refused until the session exits. Say so, and name the folder.
+.release_settled_lock <- function(root, me) {
+  # A release that fails, as a write into the takeover sentinel can on a share, leaves the lock held all the same.
+  tryCatch(.release_provenance_lock(root, me), error = function(e) NULL)
+  lock <- .provenance_lock_path(root)
+  if (!identical(.read_provenance_owner(file.path(lock, "owner.json")), me)) return(invisible(NULL))
+  warning("render_job(): the study's render lock, taken while the execute-results folder was moved, could not be ",
+          "released, and this R session holds it until it exits. If ", .provenance_takeover_path(lock),
+          " exists, a render on this or another host may be taking the lock over, or a failed release may have left ",
+          "it behind. Once no render of the study is running on any host, delete ", lock, " and, if it is there, ",
+          .provenance_takeover_path(lock), ".", call. = FALSE)
+}
+
+# The Quarto project the job renders in: the nearest folder above it holding _quarto.yml or _quarto.yaml, which is the
 # QUARTO_PROJECT_DIR whose render lock the project's hooks take. NULL when there is none; the execute-results race is a
 # project render's, and with no project no hook takes a lock.
 .job_quarto_project <- function(dir) {
   dir <- normalizePath(dir, winslash = "/", mustWork = FALSE)
   repeat {
-    if (file.exists(file.path(dir, "_quarto.yml"))) return(dir)
+    if (any(file.exists(file.path(dir, .quarto_config_names)))) return(dir)
     parent <- dirname(dir)
     if (identical(parent, dir)) return(NULL)
     dir <- parent

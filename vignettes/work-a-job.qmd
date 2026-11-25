@@ -1,6 +1,7 @@
 ---
 title: "Work a job, from template to final report"
 author: "John Ehrlinger"
+date: today
 vignette: >
   %\VignetteIndexEntry{Work a job}
   %\VignetteEngine{quarto::html}

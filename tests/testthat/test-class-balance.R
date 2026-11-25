@@ -35,3 +35,9 @@ test_that("unused factor levels are not counted as empty classes", {
   f <- factor(c(rep("no", 30), rep("yes", 10)), levels = c("no", "yes", "maybe"))
   expect_true(hvtiRtemplates:::.class_balance(f, ratio = 3)$rfq)
 })
+
+test_that("fewer than two classes stop, without warnings, rather than say the forest is standard", {
+  expect_error(expect_no_warning(hvtiRtemplates:::.class_balance(y(no = 40), ratio = 1)),
+               "two or more classes .* all no [(]40[)]")
+  expect_error(expect_no_warning(hvtiRtemplates:::.class_balance(factor(character()), ratio = 3)), "there are none")
+})

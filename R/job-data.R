@@ -482,8 +482,11 @@
 # are current.
 .key_repeat_hint <- function(read, dataset, analysis_set, key, cfg, joined = FALSE) {
   if (joined) return(" The registered versions read are current, so the repeat is in the data, not a stale version.")
+  file <- is.null(analysis_set) && .is_dataset_file(dataset)
   what <- if (!is.null(analysis_set)) {
     paste0("The analysis set `", analysis_set, "` is current")
+  } else if (file) {
+    paste0("`", dataset, "` is an unregistered file, read as it stands")
   } else if (isTRUE(read$record$working)) {
     paste0("This job read the working build of `", dataset, "`")
   } else {
@@ -492,15 +495,18 @@
   study <- paste0("cfg = hvtiRutilities::study_config(start = ", encodeString(cfg$root, quote = "\""), ")")
   call <- if (!is.null(analysis_set)) {
     paste0("hvtiRdatabuild::read_analysis_set(", encodeString(analysis_set, quote = "\""), ", ", study, ")")
-  } else if (.is_dataset_file(dataset)) {
+  } else if (file) {
+    # The job lowercases a file's column names, and duplicate_keys() matches them exactly, so the call does too.
     path <- file.path(hvtiRutilities::study_dir("datasets", cfg$root), dataset)
-    paste0("hvtiRutilities::read_clinical_data(", encodeString(path, quote = "\""), ")")
+    paste0("local({d <- hvtiRutilities::read_clinical_data(", encodeString(path, quote = "\""),
+           ", convert_types = FALSE); names(d) <- tolower(names(d)); d})")
   } else {
     paste0("hvtiRutilities::read_built(", study, ", dataset = ", encodeString(dataset, quote = "\""), ")")
   }
-  paste0(" ", what, ", so the repeat is in the build itself. List the repeated rows with ",
+  where <- if (file) "file" else "build"
+  paste0(" ", what, ", so the repeat is in the ", where, " itself. List the repeated rows with ",
          "hvtiRutilities::duplicate_keys(", call, ", ", paste(deparse(key), collapse = ""),
-         ") and correct them in the build.")
+         ") and correct them in the ", where, ".")
 }
 
 # A model job's settings name the columns it models, such as OUTCOME and
@@ -706,8 +712,10 @@
 #'   overriding its registered key. A join needs one or the other.
 #' @param one_row_per_patient `TRUE` for a job that models one row per
 #'   patient, such as a hazard, logistic or random forest fit. Such a job stops
-#'   on a `join` without `reduce`, before any data are read, since
-#'   the long form would count every joined record as a patient, and on rows
+#'   on a long `join`, keyed on more than `id_col`, without `reduce`, before
+#'   any data are read, since it would count every joined record as a patient;
+#'   a wide join, keyed on `id_col` alone, adds columns and is allowed. It also
+#'   stops on rows
 #'   kept that repeat a patient, as a dataset of repeated records read whole
 #'   would, after the rows are selected. `FALSE`,
 #'   the default, accepts the long form, as descriptive jobs and jobs that model
@@ -863,6 +871,7 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
   }
   # The registration JOIN needs is checked before either dataset is read.
   join_shape <- if (!is.null(join)) .join_shape(cfg, join, join_key)
+  if (!is.null(join_shape)) .check_one_row_join(one_row_per_patient, join, reduce, join_shape$key, id)
   read <- .read_job_source(cfg, dataset, analysis_set)
   d <- read$value
   # Taken now: subsetting the columns below drops attributes.
@@ -1190,13 +1199,22 @@ read_job_data <- function(cfg, dataset = "study", analysis_set = NULL, where = N
                                  !nzchar(imputation))) {
     stop("imputation must be NULL or name one column, such as \"imp\".", call. = FALSE)
   }
-  if (one_row_per_patient && !is.null(join) && is.null(reduce)) {
-    stop("JOIN names `", join, "`, but this job models one row per patient, so a long join would count every ",
-         "joined record as a patient. Set REDUCE to keep one record per patient, for example ",
-         "REDUCE <- list(rule = \"last\", by = \"<date>\"), or use a template that takes repeated records",
-         .such_as(.long_join_templates()), ".", call. = FALSE)
-  }
   invisible(TRUE)
+}
+
+# A long join, keyed on more than the ID, would count every joined record as a
+# patient. A wide one, keyed on the ID alone such as an age file, adds columns
+# to the cohort and keeps one row per patient, so it is allowed. Checked once
+# the join's key is resolved from its registration, before any data is read; a
+# wide key that repeats stops in .read_join(), and the rows kept are checked
+# again after the read.
+.check_one_row_join <- function(one_row_per_patient, join, reduce, join_key, id) {
+  if (!one_row_per_patient || is.null(join) || !is.null(reduce)) return(invisible(TRUE))
+  if (all(tolower(join_key) == tolower(id))) return(invisible(TRUE))
+  stop("JOIN names `", join, "`, keyed on ", toString(join_key), ", but this job models one row per patient, so a ",
+       "long join would count every joined record as a patient. Set REDUCE to keep one record per patient, for ",
+       "example REDUCE <- list(rule = \"last\", by = \"<date>\"), or use a template that takes repeated records",
+       .such_as(.long_join_templates()), ". A join keyed on ", id, " alone needs no REDUCE.", call. = FALSE)
 }
 
 # The templates that take a long join: each one that reads its own data with

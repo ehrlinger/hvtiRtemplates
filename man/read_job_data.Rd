@@ -127,8 +127,10 @@ overriding its registered key. A join needs one or the other.}
 
 \item{one_row_per_patient}{\code{TRUE} for a job that models one row per
 patient, such as a hazard, logistic or random forest fit. Such a job stops
-on a \code{join} without \code{reduce}, before any data are read, since
-the long form would count every joined record as a patient, and on rows
+on a long \code{join}, keyed on more than \code{id_col}, without \code{reduce}, before
+any data are read, since it would count every joined record as a patient;
+a wide join, keyed on \code{id_col} alone, adds columns and is allowed. It also
+stops on rows
 kept that repeat a patient, as a dataset of repeated records read whole
 would, after the rows are selected. \code{FALSE},
 the default, accepts the long form, as descriptive jobs and jobs that model

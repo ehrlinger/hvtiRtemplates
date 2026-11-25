@@ -1,3 +1,20 @@
+# One fitted study at the default choices, grown on first use and removed when the file ends: the tests that only
+# read a fit take a copy of the whole study, key and caches included, instead of growing it again, and a test that
+# rewrites the bundle or the caches leaves the shared one as it was fitted.
+nb_fitted <- new.env()
+# nolint start: object_usage_linter.
+nb_fit_copy <- function(.local_envir = parent.frame()) {
+  if (is.null(nb_fitted$root)) {
+    nb_fitted$root <- nb_study(.local_envir = testthat::teardown_env())
+    nb_fit_in(nb_fitted$root)
+  }
+  dest <- withr::local_tempdir("nb-study-copy-", .local_envir = .local_envir)
+  from <- list.files(nb_fitted$root, all.files = TRUE, full.names = TRUE, no.. = TRUE)
+  stopifnot(all(file.copy(from, dest, recursive = TRUE, copy.date = TRUE)))
+  normalizePath(dest)
+}
+# nolint end
+
 test_that("add_job scaffolds nb-boostmtree_fit with its subject and type", {
   dir <- withr::local_tempdir("nb-job-")
   job <- add_job("nb", subject = "lvef", type = "boost", root = dir, qualifier = "boostmtree_fit")
@@ -133,13 +150,13 @@ test_that("ggBoostedTrees older than 0.10.2 is refused with its install line", {
 
 test_that("the fit groups visits by the study-keyed digest, never the ID", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  env <- nb_fit_in(root)
-  expect_s3_class(env$fit, "boostmtree")
+  root <- nb_fit_copy()
+  fit <- readRDS(nb_bundle_path(root))$fit
+  expect_s3_class(fit, "boostmtree")
   raw_ids <- unique(nb_data()$ccfid)
-  expect_false(any(as.character(raw_ids) %in% as.character(env$fit$id.unique)))
+  expect_false(any(as.character(raw_ids) %in% as.character(fit$id.unique)))
   key <- hvtiRtemplates:::.study_id_key(root, create = FALSE)
-  expect_setequal(as.character(env$fit$id.unique), hvtiRtemplates:::.id_digest(raw_ids, key))
+  expect_setequal(as.character(fit$id.unique), hvtiRtemplates:::.id_digest(raw_ids, key))
 })
 
 test_that("no saved file holds an MRN, run in globalenv or outside it", {
@@ -186,8 +203,7 @@ test_that("a WHERE on the patient identifier stops before anything is fitted or 
 
 test_that("the saved fit carries the selection in its lineage", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  env <- nb_fit_in(root)
+  root <- nb_fit_copy()
   saved <- readRDS(nb_bundle_path(root))
   sel <- attr(saved, "hvti_provenance")$selection
   expect_identical(sel$id, "ccfid")
@@ -321,8 +337,7 @@ test_that("the fit chunk refuses to start an uncached fit interactively, and nam
 
 test_that("the fit chunk runs interactively once the fit is cached, REFIT left TRUE included", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   withr::local_options(rlang_interactive = TRUE, hvtiRtemplates.allow_interactive_fit = NULL)
   withr::local_envvar(HVTI_ALLOW_LONG_FIT = NA)
   env <- nb_env(root)
@@ -335,8 +350,7 @@ test_that("the fit chunk runs interactively once the fit is cached, REFIT left T
 
 test_that("a cached fit with REFIT left TRUE guards no memory; a stale one with REFIT guards the fit", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   needs <- numeric()
   testthat::local_mocked_bindings(guard_memory = function(need_gib, ...) {
     needs <<- c(needs, need_gib)
@@ -497,8 +511,7 @@ test_that("every fit-side report chunk draws for every family, from a fresh fit 
 
 test_that("the fit saves the bundle, with lineage on the outer list only", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  env <- nb_fit_in(root)
+  root <- nb_fit_copy()
   bundle <- readRDS(nb_bundle_path(root))
   expect_identical(names(bundle), c("fit", "refits", "versions", "k_shadow", "seed"))
   expect_s3_class(bundle$fit, "boostmtree")
@@ -519,8 +532,7 @@ test_that("the fit saves the bundle, with lineage on the outer list only", {
 
 test_that("the bundle records the versions the fit was grown with", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   versions <- readRDS(nb_bundle_path(root))$versions
   expect_identical(names(versions), c("boostmtree", "randomForestSRC", "ggBoostedTrees"))
   expect_identical(unname(versions), vapply(names(versions), function(p) format(utils::packageVersion(p)), "",
@@ -529,10 +541,10 @@ test_that("the bundle records the versions the fit was grown with", {
 
 test_that("shadows reach the fit, and K_SHADOW is part of the cache key", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  env <- nb_fit_in(root)
-  expect_true(all(c("age", "female", "grp") %in% env$fit$x.var.names))
-  expect_length(grep("^shadow[1-5][.]", env$fit$x.var.names), 15L)
+  root <- nb_fit_copy()
+  fit <- readRDS(nb_bundle_path(root))$fit
+  expect_true(all(c("age", "female", "grp") %in% fit$x.var.names))
+  expect_length(grep("^shadow[1-5][.]", fit$x.var.names), 15L)
   expect_error(nb_fit_in(root, choices = nb_choices(K_SHADOW = 0)), "inputs$K_SHADOW", fixed = TRUE,
                class = "hvtiRutilities_stale_cache")
   env0 <- nb_fit_in(root, choices = nb_choices(K_SHADOW = 0, REFIT = TRUE))
@@ -562,8 +574,7 @@ test_that("a predictor that varies within a patient stops before any guard or fi
 
 test_that("a fit cached under another randomForestSRC is stale, so the recorded version is the one it was grown with", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   real <- utils::packageVersion
   testthat::local_mocked_bindings(
     packageVersion = function(p, ...) if (identical(p, "randomForestSRC")) package_version("0.0.1") else real(p, ...),
@@ -614,8 +625,7 @@ test_that("the report provenance carries the versions and the shadow and refit c
 
 test_that("rendering the deprecated job in the same set leaves the explain job's input intact", {
   nb_skip_unless_stack()
-  root <- nb_study()
-  nb_fit_in(root)
+  root <- nb_fit_copy()
   bundle <- nb_bundle_path(root)
   before <- list(md5 = unname(tools::md5sum(bundle)), mtime = file.mtime(bundle))
   nb_fit_in(root, template = "nb.boostmtree")

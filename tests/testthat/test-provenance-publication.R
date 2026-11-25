@@ -1054,6 +1054,31 @@ test_that("a render held off by another names the job it is rendering and who st
   expect_no_match(err, "jdoe", fixed = TRUE)
 })
 
+test_that("a held-off render names the output_file run of the job holding the lock", {
+  # run_job(output_file =) keys the run on the output; a hint without it sends
+  # job_status() and cancel_job() to the job's default run.
+  root <- make_hook_study(withr::local_tempdir())
+  .install_provenance_hooks(root)
+  first <- list(pid = 101L, created = "1.000000")
+  second <- list(pid = 202L, created = "2.000000")
+  dir.create(file.path(root, "distributions"))
+  source <- file.path(root, "distributions", "ac.dead.hz.qmd")
+  writeLines("hvtiRtemplates:::.embed_provenance()", source)
+  withr::with_envvar(c(HVTI_OUTPUT_FILE = "ac.dead.hz.M1000.html"), testthat::with_mocked_bindings(
+    .provenance_pre_render(root, inputs = source),
+    .provenance_render_owner = function() first,
+    .package = "hvtiRtemplates"
+  ))
+  err <- withr::with_envvar(c(HVTI_OUTPUT_FILE = NA), tryCatch(testthat::with_mocked_bindings(
+    .provenance_pre_render(root, inputs = source),
+    .provenance_render_owner = function() second,
+    .provenance_owner_alive = function(owner) TRUE,
+    .package = "hvtiRtemplates"
+  ), error = conditionMessage))
+  expect_match(err, 'job_status("distributions/ac.dead.hz.qmd", output_file = "ac.dead.hz.M1000.html")', fixed = TRUE)
+  expect_match(err, 'cancel_job("distributions/ac.dead.hz.qmd", output_file = "ac.dead.hz.M1000.html")', fixed = TRUE)
+})
+
 test_that("a lock whose render has exited is taken over", {
   root <- withr::local_tempdir()
   dead <- list(pid = 101L, created = "1.000000")

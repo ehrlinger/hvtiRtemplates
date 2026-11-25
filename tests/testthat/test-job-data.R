@@ -266,14 +266,10 @@ test_that("a DATASET file is read in each format read_clinical_data() reads", {
   dir <- hvtiRutilities::study_dir("datasets", cfg$root)
   d <- d0
   utils::write.csv(d0, file.path(dir, "f.csv"), row.names = FALSE)
-  files <- "f.csv"
-  # read_clinical_data() reads R data files from hvtiRutilities 1.5.27; the
-  # floor is older, and the family-floors job runs this file at the floor.
-  if (utils::packageVersion("hvtiRutilities") >= "1.5.27") {
-    save(d, file = file.path(dir, "f.rda"))
-    save(d, file = file.path(dir, "f.RData"))
-    files <- c(files, "f.rda", "f.RData")
-  }
+  # R data files are read from hvtiRutilities 1.5.27, the floor.
+  save(d, file = file.path(dir, "f.rda"))
+  save(d, file = file.path(dir, "f.RData"))
+  files <- c("f.csv", "f.rda", "f.RData")
   if (requireNamespace("arrow", quietly = TRUE)) {
     arrow::write_parquet(d0, file.path(dir, "f.parquet"))
     files <- c(files, "f.parquet")
@@ -562,6 +558,25 @@ test_that("a KEY that repeats in a stale registered version says the source was 
   call <- sub("^.*List the repeated rows with (.*) and correct them in the build\\.$", "\\1", err)
   expect_match(call, "^hvtiRutilities::duplicate_keys\\(")
   dk <- suppressMessages(eval(str2lang(call), baseenv()))
+  expect_identical(dk$summary$repeated_keys, 1L)
+})
+
+test_that("a KEY that repeats in an unregistered file says the file holds it, and how to list it", {
+  long <- data.frame(CCFID = c(9001L, 9001L, 9002L), DT_SURG = c("2020-01-02", "2020-01-02", "2021-03-04"))
+  cfg <- job_study(data.frame(ccfid = 1:2))
+  saveRDS(long, file.path(hvtiRutilities::study_dir("datasets", cfg$root), "long_set.rds"))
+  err <- tryCatch(suppressWarnings(read_job_data(cfg, id_col = "ccfid", dataset = "long_set.rds",
+                                                 key_cols = c("ccfid", "dt_surg"))),
+                  error = conditionMessage)
+  expect_match(err, "`long_set.rds` is an unregistered file, read as it stands, so the repeat is in the file itself",
+               fixed = TRUE)
+  expect_false(grepl("working build|registered version", err))
+  expect_false(grepl("9001", err, fixed = TRUE))
+  # The file's columns are upper case and the job's KEY lower case, as the job reads them; the call still runs.
+  call <- sub("^.*List the repeated rows with (.*) and correct them in the file\\.$", "\\1", err)
+  expect_match(call, "^hvtiRutilities::duplicate_keys\\(")
+  # It reads the file as the job does, so it runs without read_clinical_data()'s convert_types warning.
+  dk <- expect_no_warning(suppressMessages(eval(str2lang(call), baseenv())))
   expect_identical(dk$summary$repeated_keys, 1L)
 })
 
@@ -1299,8 +1314,9 @@ test_that("a job that models one row per patient refuses a long join, before any
     .package = "hvtiRtemplates"
   )
   err <- tryCatch(read_job_data(cfg, id_col = "ccfid", join = "echo", one_row_per_patient = TRUE), error = conditionMessage)
-  expect_match(err, "JOIN names `echo`")
+  expect_match(err, "JOIN names `echo`, keyed on ccfid, echo_date,", fixed = TRUE)
   expect_match(err, "one row per patient")
+  expect_match(err, "A join keyed on ccfid alone needs no REDUCE.", fixed = TRUE)
   expect_match(err, "count every joined record as a patient")
   expect_match(err, "REDUCE <- list(rule = \"last\", by = \"<date>\")", fixed = TRUE)
   expect_match(err, "a template that takes repeated records")
@@ -1594,6 +1610,12 @@ test_that("a wide join, keyed on the ID alone, keeps every cohort patient (#613)
   expect_identical(rec[["Cohort patients with no joined record"]], "1")
   expect_identical(rec[["Rows kept"]], "3 rows on 3 patients")
   expect_identical(out$unjoined, 0L)
+  # It adds columns and keeps one row per patient, so a job that models one row per patient takes it.
+  fit <- read_job_data(cfg, id_col = "ccfid", join = "age_echo", one_row_per_patient = TRUE)
+  expect_identical(fit$data, out$data)
+  # Keyed on the ID however its case is written.
+  expect_identical(read_job_data(cfg, id_col = "ccfid", join = "age_echo", join_key_cols = "CCFID",
+                                 one_row_per_patient = TRUE)$data, out$data)
 })
 
 test_that("a downstream job rebuilds a long join as its upstream job read it", without_unjoined_warning({

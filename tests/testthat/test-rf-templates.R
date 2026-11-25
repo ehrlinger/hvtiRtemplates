@@ -386,6 +386,28 @@ rf_run_bands <- function(...) {
 
 band_labels <- c("bands-plan", "importance-intervals", "dependence-partial-bands")
 
+# The band caches are the dearest thing the band tests make, and three of them start from the same ones, computed at
+# BANDS_B = 3 and SUBRATIO = 0.5 beside the shared explain. They are computed once, on the first test that asks, and
+# each of those tests works on a copy of the study that holds them, so a test that changes a cache leaves the others'.
+# nolint start: object_usage_linter.
+rfs_banded_cache <- new.env()
+rfs_banded_copy <- function(.local_envir = parent.frame()) {
+  if (is.null(rfs_banded_cache$root)) {
+    withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
+    root <- rfs_explained_copy(.local_envir = testthat::teardown_env())
+    env <- new.env(parent = globalenv())
+    env$.root <- root
+    rf_run_bands("rfs", "explain", c(explain_labels, band_labels), env,
+                 c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5)))
+    rfs_banded_cache$root <- root
+  }
+  dest <- withr::local_tempdir("rf-study-copy-", .local_envir = .local_envir)
+  from <- list.files(rfs_banded_cache$root, all.files = TRUE, full.names = TRUE, no.. = TRUE)
+  stopifnot(all(file.copy(from, dest, recursive = TRUE, copy.date = TRUE)))
+  normalizePath(dest)
+}
+# nolint end
+
 test_that("each family's SUBRATIO comment names only its own floor", {
   files <- template_list()$file
   text <- function(name) paste(readLines(files[basename(files) == paste0(name, ".qmd")], warn = FALSE), collapse = "\n")
@@ -508,7 +530,13 @@ test_that("rfs-explain draws the importance intervals and the partial bands from
   rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
   withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
   env <- new.env(parent = globalenv())
-  env$.root <- rfs_explained_copy()
+  env$.root <- rfs_banded_copy()
+  # The copy holds the band figures the shared fixture drew. They go, and the caches stay, so the checks below
+  # see figures this run drew from the cached subsamples.
+  drawn <- list.files(env$.root, "rfs-explain-(importance-intervals|dependence-partial-bands-page-01)",
+                      recursive = TRUE, full.names = TRUE)
+  expect_gt(length(drawn), 0L)
+  unlink(drawn)
   choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
   expect_warning(rf_run("rfs", "explain", c(explain_labels, band_labels), env, choices), "SUBRATIO")
   for (nm in c("rfs-vimp-subsample", "rfs-band-rows", paste0("rfs-partial-band-", env$sel))) {
@@ -524,7 +552,7 @@ test_that("a bigger TOP_K computes bands only for the new variables", {
   skip_on_cran()
   rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
   withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
-  root <- rfs_explained_copy()
+  root <- rfs_banded_copy()
   env <- new.env(parent = globalenv())
   env$.root <- root
   choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
@@ -555,7 +583,7 @@ test_that("BAND_STYLE and BAND_AT only redraw", {
   skip_on_cran()
   rf_skip_unless_stack(c(rf_template_packages("rfs", "explain"), "patchwork"))
   withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
-  root <- rfs_explained_copy()
+  root <- rfs_banded_copy()
   choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
   env <- new.env(parent = globalenv())
   env$.root <- root
@@ -592,6 +620,17 @@ rfc_data <- function() {
 rfc_choices <- list(RESPONSE = "species",
                     PREDICTORS = c("sepal.length", "sepal.width", "petal.length", "petal.width"),
                     ROC_CLASS = "virginica", NTREE = 50, SEED = 1)
+
+test_that("rfc-fit stops on a predictor with no values before counting the classes, without warnings", {
+  rf_skip_unless_stack(rf_template_packages("rfc", "fit"))
+  d <- rfc_data()
+  d$Sepal.Width <- NA_real_
+  # Under na.omit the empty column dropped every patient, so the classes were counted on none: -Inf warnings, then
+  # this stop only in the next chunk.
+  expect_error(expect_no_warning(rf_run("rfc", "fit", c("set", "edit-study-choices", "tbl-data"), rf_env(d),
+                                        utils::modifyList(rfc_choices, list(NA_ACTION = "na.omit")))),
+               "^PREDICTORS names a column with no values: sepal[.]width[.]")
+})
 
 test_that("rfc-fit grows a classification forest from a character outcome", {
   rf_skip_unless_stack(rf_template_packages("rfc", "fit"))

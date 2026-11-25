@@ -111,8 +111,8 @@ Edit these values for this study before rendering.
 
 ```{r}
 #| label: edit-study-choices
-DATASET <- "study"                          # EDIT: the dataset, as named in _study.yml.
 # A file name, such as "match_set.rds", reads an unregistered file in the datasets folder, as a draft.
+DATASET <- "study"                          # EDIT: the dataset, as named in _study.yml.
 ANALYSIS_SET <- NULL
 WHERE <- NULL
 ID <- "ccfid"                               # EDIT: the patient identifier.
@@ -125,7 +125,7 @@ KEY <- NULL
 #   JOIN_VARS: the cohort columns each joined row carries; NULL carries all.
 #   REDUCE: NULL keeps a row per joined record; list(rule = "first", by = "date")
 #     keeps one row per patient. This job models one row per
-#     patient, so a JOIN without REDUCE stops here.
+#     patient, so a long JOIN without REDUCE stops here.
 #   JOIN_KEY: overrides the joined dataset's registered key.
 JOIN <- NULL
 JOIN_VARS <- NULL
