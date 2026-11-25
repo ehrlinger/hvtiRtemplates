@@ -781,6 +781,14 @@ test_that("a heartbeat ends with its lock while the owner lives (#599)", {
   }
   expect_true(.start_provenance_heartbeat(lock, owner))
   expect_identical(loops(), 1L)
+  # Released and taken again within a poll: the path is the same, so only the token tells the
+  # first loop the file is no longer its own. It ends, and leaves the new lock's file alone.
+  unlink(lock, recursive = TRUE)
+  dir.create(lock)
+  expect_true(.start_provenance_heartbeat(lock, owner))
+  Sys.sleep(2)
+  expect_identical(loops(), 1L)
+  expect_true(file.exists(beat))
   unlink(lock, recursive = TRUE)
   Sys.sleep(2)
   expect_identical(loops(), 0L)
