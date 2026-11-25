@@ -306,6 +306,12 @@
   `job_status()` and `cancel_job()` when it was started with `run_job()`. The
   note is kept in the lock beside its owner record and is read only while it
   belongs to the render holding the lock.
+- A job held off by another render in the same study now says which job that
+  render is working on. `run_job()`'s check names the jobs and user a render
+  started outside `run_job()` recorded, where it said "its job is not known",
+  and `job_status()` on a run that failed on the render lock gives the holder's
+  jobs as its reason and `job_status()`/`cancel_job()` for them as the fix,
+  where it gave only the exit code.
 - `render_job()` survives the execute-results race on the network study share
   (#625). Its one rerun met the same `.nfs` entry the first render left, and on
   lri failed three renders of three. Before a rerun it now waits up to a minute
