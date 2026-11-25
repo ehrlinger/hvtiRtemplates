@@ -31,7 +31,9 @@ test_that("render_job stops before rendering a managed job when the study has no
   expect_false(called)
   msg <- conditionMessage(err)
   expect_match(msg, "stopped before rendering", fixed = TRUE)
-  expect_match(msg, paste0("hvtiRtemplates:::.install_provenance_hooks(\"", root, "\")"), fixed = TRUE)
+  # The fix names the exported function, which a study author can call; an internal one is not theirs to use.
+  expect_match(msg, paste0("hvtiRtemplates::install_provenance_hooks(\"", root, "\")"), fixed = TRUE)
+  expect_no_match(msg, ":::", fixed = TRUE)
   expect_match(msg, "delete that _quarto.yml", fixed = TRUE)
 })
 
@@ -67,7 +69,7 @@ test_that("a study _quarto.yml without the hooks is named, and is not to be dele
 
   problem <- .provenance_hooks_problem(job)
   expect_match(problem$message, "pre-render hook is missing or is not last", fixed = TRUE)
-  expect_match(problem$fix, ".install_provenance_hooks(", fixed = TRUE)
+  expect_match(problem$fix, "hvtiRtemplates::install_provenance_hooks(", fixed = TRUE)
   expect_no_match(problem$fix, "delete", fixed = TRUE)
 })
 
@@ -131,10 +133,30 @@ test_that("run_job refuses a managed job without the hooks and names the command
   err <- expect_error(run_job(job, quiet = TRUE), class = "hvtiRtemplates_run_refused")
   expect_false(submitted)
   expect_match(conditionMessage(err), "provenance: ", fixed = TRUE)
-  expect_match(conditionMessage(err), ".install_provenance_hooks(", fixed = TRUE)
+  expect_match(conditionMessage(err), "hvtiRtemplates::install_provenance_hooks(", fixed = TRUE)
 
   check <- .check_provenance_hooks(job)
   expect_false(check$ok)
   .install_provenance_hooks(root)
   expect_true(.check_provenance_hooks(job)$ok)
+})
+
+test_that("install_provenance_hooks() installs the hooks from anywhere inside the study", {
+  root <- precheck_study(withr::local_tempdir())
+  job <- managed_job(root)
+  expect_false(is.null(.provenance_hooks_problem(job)))
+
+  out <- install_provenance_hooks(file.path(root, "analyses"))
+  expect_identical(out, file.path(root, "_quarto.yml"))
+  expect_null(.provenance_hooks_problem(job))
+  # Running it again changes nothing.
+  before <- readLines(out)
+  install_provenance_hooks(root)
+  expect_identical(readLines(out), before)
+})
+
+test_that("install_provenance_hooks() refuses a folder outside a study", {
+  expect_error(install_provenance_hooks(withr::local_tempdir()))
+  withr::local_dir(withr::local_tempdir())
+  expect_error(install_provenance_hooks(), "not inside a study")
 })

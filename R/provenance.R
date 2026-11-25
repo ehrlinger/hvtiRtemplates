@@ -356,7 +356,7 @@
   list(
     message = message,
     fix = paste0(
-      "hvtiRtemplates:::.install_provenance_hooks(", deparse(root), ")",
+      "hvtiRtemplates::install_provenance_hooks(", deparse(root), ")",
       if (created) {
         paste0("\nThis creates _quarto.yml at the study root, which makes the study one Quarto project and can ",
                "change how its other documents render. Once this job has rendered, delete that _quarto.yml to ",
