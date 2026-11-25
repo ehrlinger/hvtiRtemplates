@@ -266,10 +266,10 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
 # the move are made holding the study's render lock, which every Quarto render in the study holds from its pre-render
 # hook to its post-render hook, so no render can start between them; the failed attempt's own lock, left by a Quarto
 # process that has exited, is taken over as any dead render's is. The lock is released before the rerun, whose own
-# hook must claim it. If another render holds it, the folder is left in place. A job outside a study has no lock, and
-# no render could share one. Returns a sentence saying what was done, with the moved folder as attribute "aside"
+# hook must claim it. If another render holds it, the folder is left in place. A job outside a Quarto project has no
+# lock, and no render could share one. Returns a sentence saying what was done, with the moved folder as attribute "aside"
 # when there is one.
-.settle_execute_results <- function(dir, root = .job_study_root(dirname(dirname(dir)))) {
+.settle_execute_results <- function(dir, root = .job_quarto_project(dirname(dirname(dir)))) {
   entries <- function() list.files(dir, all.files = TRUE, no.. = TRUE)
   held <- function() any(startsWith(entries(), ".nfs"))
   waited <- 0
@@ -283,12 +283,14 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
   }
   still <- sprintf("Files there were still held open after %g s", waited)
   if (!is.null(root)) {
-    locked <- tryCatch({
-      .acquire_provenance_lock(root, heartbeat = FALSE)
-      TRUE
-    }, error = function(e) conditionMessage(e))
+    # TRUE only when this call took the lock. FALSE means its owner already reads as this process's parent, which
+    # another session sharing that parent can be; that lock is not this call's to move under or to release.
+    locked <- tryCatch(.acquire_provenance_lock(root, heartbeat = FALSE), error = function(e) e)
     if (!isTRUE(locked)) {
-      return(paste0(still, ", and the study's render lock could not be taken, so the folder was left in place: ", locked))
+      # The refusal's first sentence names the holder; the rest tells someone starting a render what to do.
+      why <- if (inherits(locked, "error")) sub("\\. .*$", ".", conditionMessage(locked)) else
+        "It is already recorded under this session's parent process."
+      return(paste0(still, ", and the study's render lock could not be taken, so the folder was left in place. ", why))
     }
     on.exit(.release_provenance_lock(root), add = TRUE)
   }
@@ -305,9 +307,17 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
                    ". Delete it once `lsof +D` on it shows nothing holds them."), aside = aside)
 }
 
-# The study the job belongs to, or NULL outside one.
-.job_study_root <- function(dir) {
-  tryCatch(normalizePath(hvtiRutilities::study_root(dir), winslash = "/"), error = function(e) NULL)
+# The Quarto project the job renders in: the nearest folder above it holding _quarto.yml, which is the
+# QUARTO_PROJECT_DIR whose render lock the project's hooks take. NULL when there is none; the execute-results race is a
+# project render's, and with no project no hook takes a lock.
+.job_quarto_project <- function(dir) {
+  dir <- normalizePath(dir, winslash = "/", mustWork = FALSE)
+  repeat {
+    if (file.exists(file.path(dir, "_quarto.yml"))) return(dir)
+    parent <- dirname(dir)
+    if (identical(parent, dir)) return(NULL)
+    dir <- parent
+  }
 }
 
 .file_size <- function(path) {

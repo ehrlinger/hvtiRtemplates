@@ -494,8 +494,32 @@ test_that("a folder is left in place while another render holds the study's rend
   out <- .settle_execute_results(results, root = root)
   expect_true(dir.exists(results))
   expect_length(Sys.glob(file.path(dir, "*.stale-*")), 0L)
-  expect_match(out, "render lock could not be taken, so the folder was left in place", fixed = TRUE)
+  expect_match(out, "render lock could not be taken, so the folder was left in place. Another Quarto render", fixed = TRUE)
+  # Only the sentence naming the holder: the advice to wait and render again is for someone starting a render.
+  expect_no_match(out, "Wait for it", fixed = TRUE)
   expect_identical(jsonlite::read_json(file.path(.provenance_lock_path(root), "owner.json")), live)
+})
+
+test_that("a lock already recorded under this process's parent is neither moved under nor released", {
+  skip_if_not_installed("ps")
+  dir <- withr::local_tempdir()
+  results <- stuck_folder(dir)
+  root <- lock_root(.provenance_render_owner())
+  local_mocked_bindings(.race_sleep = function(s) NULL)
+
+  out <- .settle_execute_results(results, root = root)
+  expect_true(dir.exists(results))
+  expect_match(out, "already recorded under this session's parent process", fixed = TRUE)
+  expect_true(dir.exists(.provenance_lock_path(root)))
+})
+
+test_that("the lock is the Quarto project's, the folder holding _quarto.yml that the hooks lock", {
+  root <- withr::local_tempdir()
+  writeLines("project: {}", file.path(root, "_quarto.yml"))
+  job_dir <- file.path(root, "10_descriptive")
+  dir.create(job_dir)
+  expect_identical(.job_quarto_project(job_dir), normalizePath(root, winslash = "/"))
+  expect_null(.job_quarto_project(withr::local_tempdir()))
 })
 
 test_that("a free study render lock is taken without a heartbeat and released after the move", {
