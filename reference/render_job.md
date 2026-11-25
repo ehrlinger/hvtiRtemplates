@@ -107,24 +107,42 @@ its parent.
 On a network share Quarto can fail after every chunk has run, unable to
 remove the job's `_files/execute-results` folder ("Directory not empty
 (os error 39)"), because it deletes a file there before the share has
-let go of it. A render that fails with that error, read from Quarto's
-own message or from what the render added to the job's run log, is
-rendered again, up to three renders in all, with messages saying so;
-each rerun runs every chunk again, which for a long fit means that much
-more time. Before a rerun it waits up to a minute for the share to let
-go of the folder's `.nfs` entries, the files it deleted while something
-still held them. If they outlast the wait and are all the folder holds,
-the folder is moved beside the job as
-`<job>.execute-results.stale-<time>`, so the rerun does not meet them;
-delete it once nothing holds them. The folder is checked and moved
-holding the study's render lock, so no other render can start meanwhile;
-while another render holds it, the folder is left in place. Nothing is
-deleted, and a folder holding anything else is left in place. Any other
-failure is passed through unchanged. A third such failure stops with an
-error of class `hvtiRtemplates_execute_results_stuck`, whose message
-gives the commands to find what holds the folder and to delete it.
-Rendering from the RStudio Render button does not go through
-`render_job()` and is not retried.
+let go of it. A job in a Quarto project, as every study is, renders with
+Quarto writing that folder: it holds the run's results only for the
+moment Quarto copies them to the project's freezer. So before Quarto
+starts, the folder is made a symbolic link to a temporary folder on
+local disk, and Quarto writes, reads and removes it there; the share
+sees only the link, which Quarto removes. Execution is not frozen: every
+chunk runs as before, and the job's caches stay beside it. A folder
+already there is left alone, and so is a link while another render in
+the study is running. A render that stops with the link still there
+removes it only holding the study's render lock, so it never removes one
+another render is writing through. On Windows, or where the link cannot
+be made, the render goes ahead without it.
+
+A render that still fails with that error, read from Quarto's own
+message or from what the render added to the job's run log, is rendered
+again, up to three renders in all, with messages saying so; each rerun
+runs every chunk again, which for a long fit means that much more time.
+Before a rerun it waits up to a minute for the share to let go of the
+folder's `.nfs` entries, the files it deleted while something still held
+them. If they outlast the wait and are all the folder holds, the folder
+is moved beside the job as `<job>.execute-results.stale-<time>`, so the
+rerun does not meet them; delete it once nothing holds them. The folder
+is checked and moved holding the study's render lock, so no other render
+can start meanwhile; while another render holds it, the folder is left
+in place. Nothing is deleted, and a folder holding anything else is left
+in place. Any other failure is passed through unchanged. A third such
+failure stops with an error of class
+`hvtiRtemplates_execute_results_stuck`, whose message gives the commands
+to find what holds the folder and to delete it. Rendering from the
+RStudio Render button does not go through `render_job()` and is not
+retried.
+
+The job's report is copied to local disk before the render. If the
+render fails and the report is gone, the copy is put back with its own
+time, and a message says that it predates the run. A new report, or one
+the failed render left in place, is never touched.
 
 One job renders at a time in a study. A render started while another is
 still running in the same study stops with a message naming the running
