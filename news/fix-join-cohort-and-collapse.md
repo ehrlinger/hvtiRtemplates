@@ -7,7 +7,11 @@
   the records, but now says how many it left out: in the data table, in `unjoined`, and in a warning
   from `read_job_data()` itself, of class `hvtiRtemplates_unjoined`, which every report shows whatever its
   template, study copies made before this release included. `TRUE` or `FALSE` overrides the default. A job
-  already in a study reads as it did, except that a wide join now keeps every cohort patient.
+  already in a study reads the same patients and records as it did, except that a wide join now keeps every
+  cohort patient. **A long join's rows now come in cohort order**, each patient's records together, where
+  they came in the joined file's order before. The rows are the same, but a seeded step that draws them by
+  position, such as cross-validation folds or a bootstrap, can give different numbers when an existing job is
+  rendered again.
 - A `JOIN` keeps every variable label (#614). Selecting rows dropped the `label` attribute of every plain
   column, so a joined `dc-eda` report warned that every variable lacked a label and showed raw column names.
   The labels of the cohort and of the joined dataset now survive, with or without `REDUCE`.
