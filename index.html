@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">hvtiRtemplates</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,6 +120,9 @@
 <div class="section level2">
 <h2 id="api">API<a class="anchor" aria-label="anchor" href="#api"></a>
 </h2>
+<div class="section level3">
+<h3 id="the-taxonomy-and-the-catalog">The taxonomy and the catalog<a class="anchor" aria-label="anchor" href="#the-taxonomy-and-the-catalog"></a>
+</h3>
 <table class="table">
 <colgroup>
 <col width="50%">
@@ -132,7 +135,7 @@
 <tbody>
 <tr>
 <td><code><a href="reference/template_catalog.html">template_catalog()</a></code></td>
-<td>all 75 template jobs, including queued work and dependencies</td>
+<td>every template job, including queued work and dependencies</td>
 </tr>
 <tr>
 <td><code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html" class="external-link">hvti_taxonomy()</a></code></td>
@@ -150,8 +153,24 @@
 <td><code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html" class="external-link">hvti_non_prefixes()</a></code></td>
 <td>leading name fields that are utilities, not analysis prefixes</td>
 </tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
+<h3 id="scaffolding-and-upgrading-jobs">Scaffolding and upgrading jobs<a class="anchor" aria-label="anchor" href="#scaffolding-and-upgrading-jobs"></a>
+</h3>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Function</th>
+<th>Returns</th>
+</tr></thead>
+<tbody>
 <tr>
-<td><code>add_job(prefix, subject, type, root = NULL, qualifier = NULL)</code></td>
+<td><code>add_job(prefix, subject, type, root = NULL, qualifier = NULL, open = TRUE)</code></td>
 <td>the scaffolded job’s path, invisibly</td>
 </tr>
 <tr>
@@ -159,18 +178,100 @@
 <td>job path; creates a missing job or opens an existing one</td>
 </tr>
 <tr>
-<td><code>render_job(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet")))</code></td>
-<td>
-<code>path</code>, invisibly; renders a draft, or with <code>final = TRUE</code> a render that stops on an unfinished job</td>
+<td><code>upgrade_job(path, root = NULL, open = TRUE)</code></td>
+<td>the upgraded job’s path, invisibly; rewrites a job from its template’s current version, keeping its edits, with a report in <code>_archive/</code>
+</td>
 </tr>
 <tr>
 <td><code>import_job(path, subject = NULL, type = NULL, root = NULL)</code></td>
 <td>the imported job’s path, invisibly; copies a job from another study, keeping its edits</td>
 </tr>
 <tr>
-<td><code>migrate_job(path, subject, type, prefix, ...)</code></td>
+<td><code>migrate_job(path, subject, type, prefix = NULL, ...)</code></td>
 <td>the migrated job’s path, invisibly; writes an evidence report beside it</td>
 </tr>
+<tr>
+<td><code>read_job_data(cfg, dataset = "study", ...)</code></td>
+<td>inside a job: a list holding the selected rows and the record of what was read, joined and kept</td>
+</tr>
+<tr>
+<td><code>build_cohort(data, exclude = NULL, path = NULL, ...)</code></td>
+<td>a list holding the kept rows and who was dropped and why</td>
+</tr>
+<tr>
+<td><code><a href="reference/stop_here.html">stop_here()</a></code></td>
+<td>inside a render, the job’s provenance block, so a draft can stop partway</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
+<h3 id="running-jobs">Running jobs<a class="anchor" aria-label="anchor" href="#running-jobs"></a>
+</h3>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Function</th>
+<th>Returns</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>run_job(path, final = FALSE, wait = 300, ...)</code></td>
+<td>the job’s status, invisibly; checks, submits and waits for a background render</td>
+</tr>
+<tr>
+<td><code>render_job(path, final = FALSE, quiet = ..., params = NULL, output_file = NULL)</code></td>
+<td>
+<code>path</code>, invisibly; renders a draft, or with <code>final = TRUE</code> a render that stops on an unfinished job</td>
+</tr>
+<tr>
+<td><code>submit_job(path, final = FALSE, params = NULL, output_file = NULL)</code></td>
+<td>the job’s status, invisibly; starts a render detached from the session</td>
+</tr>
+<tr>
+<td><code>job_status(path, quiet = FALSE, output_file = NULL)</code></td>
+<td>a background render’s state, invisibly</td>
+</tr>
+<tr>
+<td><code>cancel_job(path, grace = 30, ...)</code></td>
+<td>the job’s status afterwards, invisibly</td>
+</tr>
+<tr>
+<td><code>install_hvti(dir)</code></td>
+<td>the installed <code>hvti</code> command’s path, invisibly</td>
+</tr>
+<tr>
+<td><code>install_provenance_hooks(root = NULL)</code></td>
+<td>the study’s <code>_quarto.yml</code> or <code>_quarto.yaml</code> path, invisibly; adds the hooks a job that records its provenance needs, for a study whose jobs came from elsewhere</td>
+</tr>
+<tr>
+<td><code>guard_long_fit(name, dir, why, refit = FALSE)</code></td>
+<td>
+<code>FALSE</code>, invisibly, when a long fit may start; an error outside a background run</td>
+</tr>
+<tr>
+<td><code>guard_memory(need_gib, why, ...)</code></td>
+<td>the session’s memory limit in GiB, invisibly, when the fit fits; an error otherwise</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level3">
+<h3 id="the-ar-analysis-report">The <code>ar</code> analysis report<a class="anchor" aria-label="anchor" href="#the-ar-analysis-report"></a>
+</h3>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Function</th>
+<th>Returns</th>
+</tr></thead>
+<tbody>
 <tr>
 <td>
 <code>ar_item(id)</code>, <code>ar_value(id, field)</code>
@@ -185,15 +286,48 @@
 </tr>
 </tbody>
 </table>
+</div>
+<div class="section level3">
+<h3 id="life-tables-for-the-ac-job">Life tables, for the <code>ac</code> job<a class="anchor" aria-label="anchor" href="#life-tables-for-the-ac-job"></a>
+</h3>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Function</th>
+<th>Returns</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>life_table(data, time_col, event_col, strata_col = NULL, ...)</code></td>
+<td>a Kaplan-Meier life table, by stratum when one is named</td>
+</tr>
+<tr>
+<td><code>life_table_at(data, time_col, event_col, times, ...)</code></td>
+<td>survival and its limits at stated horizons, by stratum</td>
+</tr>
+<tr>
+<td><code>life_table_keep(data, time_col, event_col, strata_col = NULL)</code></td>
+<td>a logical vector, <code>TRUE</code> for each row the life table analyzes</td>
+</tr>
+<tr>
+<td><code>life_table_tests(data, time_col, event_col, strata_col)</code></td>
+<td>the log-rank, Wilcoxon and likelihood-ratio tests comparing strata</td>
+</tr>
+</tbody>
+</table>
 <p><code><a href="reference/add_job.html">add_job()</a></code> also installs idempotent Quarto pre-render and post-render hooks in the study without replacing existing project settings or user hooks. Every managed render captures the registered data actually read, embeds its runtime payload in the completed HTML, and publishes a same-stem <code>.provenance.json</code> beside Quarto’s actual output. A failed render leaves the prior completed HTML and sidecar together when the output stays untouched. If publication fails after an output changes, the hooks expose a prior sidecar only when its recorded output hash still matches. Otherwise they withhold the sidecar and retain its recovery backup with a warning.</p>
 <p>Templates are <code>&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> in a numbered directory (<code>20_distributions/ac.qmd</code>); a job is <code>&lt;prefix&gt;[.&lt;qualifier&gt;].&lt;subject&gt;.&lt;type&gt;.qmd</code> in the study’s matching taxonomy folder, so a study’s jobs sort by template. Jobs scaffolded before 2026-10 keep their <code>&lt;subject&gt;-&lt;type&gt;-&lt;prefix&gt;[-&lt;qualifier&gt;].qmd</code> names and keep rendering. New studies use numbered folders and existing bare-folder studies keep their layout. The ordinal that once prefixed filenames was dropped in 1.1.0.</p>
 <p>The subject groups a job set. It is a statistical endpoint when the job analyses one, such as <code>death</code>; it can instead be an endpoint-free topic such as <code>cohort</code>, <code>treatment</code>, or <code>labs</code>. Each job owns its outcome variables, coding, filters, and any cohort definition. Dataset registration records the data, not a study-wide endpoint or cohort.</p>
 <p><code>qualifier</code> names a job type within a prefix. The current qualified families are <code>dc</code>, <code>hs</code>, <code>lm</code>, <code>lp</code>, <code>nb</code>, <code>rfc</code>, <code>rfr</code>, <code>rfs</code>, <code>rhf</code>, <code>rm</code>, <code>sid</code>, <code>vp</code>, and <code>vt</code>. The <code>lm</code> choices are <code>binary</code>, <code>ordinal</code>, <code>nominal</code>, <code>propensity_binary</code>, <code>propensity_ordinal</code>, <code>propensity_nominal</code>, <code>checkpred</code>, and <code>balancing_count</code>. It is <code>NULL</code> and the column is <code>NA</code> for an unqualified prefix. A prefix is qualified or not as a whole, so a qualified prefix keeps its qualifier even with one template shipped, as <code>nb.boostmtree</code> does. Naming no qualifier where a prefix carries several is an error listing the choices, never a silent pick of the first.</p>
 </div>
+</div>
 <div class="section level2">
 <h2 id="migrate-a-legacy-job">Migrate a legacy job<a class="anchor" aria-label="anchor" href="#migrate-a-legacy-job"></a>
 </h2>
-<p>For a study with SAS programs already in <code>descriptive/</code> and <code>graphs/</code>, first adopt its directory with <code>hvtiR::setup(..., adopt = TRUE)</code> and register its built datasets with <code>register_data()</code>. The tutorial <a href="articles/study-setup.html">Set up an hvtiR study for descriptive and EDA work</a> walks through new-study creation, recoverable legacy cleanup and adoption, data registration, the EDA analysis set, all five pre-analysis jobs, and output review using synthetic data.</p>
+<p>For a study with SAS programs already in <code>descriptive/</code> and <code>graphs/</code>, first adopt its directory with <code>hvtiR::setup(..., adopt = TRUE)</code> and register its built datasets with <code>register_data()</code>. The tutorial <a href="articles/study-setup.html">Adopt an existing study for descriptive and EDA work</a> walks through new-study creation, recoverable legacy cleanup and adoption, data registration, the EDA analysis set, all five pre-analysis jobs, and output review using synthetic data.</p>
 <p>From that study’s root, migrate a descriptive-table job with:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">job</span> <span class="op">&lt;-</span> <span class="fu">hvtiRtemplates</span><span class="fu">::</span><span class="fu"><a href="reference/migrate_job.html">migrate_job</a></span><span class="op">(</span></span>
@@ -205,6 +339,58 @@
 <p>Use your study’s source and evidence filenames. <code>lst_path</code>, <code>log_path</code>, and <code>reference_path</code> are optional; supplied files must exist beneath <code>root</code>. The call writes <code>descriptive/dc.tables.cohort.eda.qmd</code> and <code>descriptive/dc.tables.cohort.eda-migration.md</code> in a study with bare folders. It preserves the evidence files and refuses to overwrite either output.</p>
 <p>Migration supports <code>dc-tables</code>, <code>dc-gfup</code>, <code>dc-trends</code>, and <code>dc-eda</code>. Each adapter reads a defined source shape. Only deterministic extraction can remove an <code>EDIT:</code> marker; uncertain choices remain in the job and report for you to resolve before rendering. Logs, listings, and RTF/DOCX references help you check the translation but do not supply missing analysis choices.</p>
 <p>The table job replaces the SAS RTF output with an editable CORR DOCX through <code>hv_tbl_summary()</code>, <code>hv_man_table()</code>, <code>hv_man_table_save()</code>, and <code>hv_check_docx()</code>. It writes beneath <code>documents/&lt;subject&gt;-&lt;type&gt;/</code> and stops on a structural finding. Compare the rows, summaries, precision, and footnotes with the legacy reference before accepting the document; the structural check does not establish numerical agreement.</p>
+</div>
+<div class="section level2">
+<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
+</h2>
+<p>The articles are on the <a href="https://ehrlinger.github.io/hvtiRtemplates/">package site</a>.</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Article</th>
+<th>For</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><a href="https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html">Work a job, from template to final report</a></td>
+<td>the whole cycle of one job: scaffold, edit, draft, final</td>
+</tr>
+<tr>
+<td><a href="https://ehrlinger.github.io/hvtiRtemplates/articles/long-running-jobs.html">Running a job that takes hours</a></td>
+<td>background renders, their status and their guards</td>
+</tr>
+<tr>
+<td><a href="https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html">Start a new study from a delivered dataset</a></td>
+<td>a study that has no SAS history</td>
+</tr>
+<tr>
+<td><a href="https://ehrlinger.github.io/hvtiRtemplates/articles/study-setup.html">Adopt an existing study for descriptive and EDA work</a></td>
+<td>a study with legacy folders and built datasets</td>
+</tr>
+<tr>
+<td><a href="https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.html">From SAS descriptive jobs to R</a></td>
+<td>each descriptive SAS job beside the template that replaces it</td>
+</tr>
+<tr>
+<td><a href="https://ehrlinger.github.io/hvtiRtemplates/articles/legacy-study-migration.html">Migrate a legacy SAS study</a></td>
+<td>
+<code><a href="reference/migrate_job.html">migrate_job()</a></code> and its evidence report</td>
+</tr>
+<tr>
+<td><a href="https://ehrlinger.github.io/hvtiRtemplates/articles/template-catalog.html">The template catalog</a></td>
+<td>every template, supported and queued</td>
+</tr>
+</tbody>
+</table>
+<p><code>inst/templates/README.md</code> is the contract for the templates themselves: what each one does, its figures, and the rules every job follows.</p>
+</div>
+<div class="section level2">
+<h2 id="related-packages">Related packages<a class="anchor" aria-label="anchor" href="#related-packages"></a>
+</h2>
+<p>The templates call the rest of the hvtiR family: <code>hvtiRutilities</code> (study layout and registered data, imported), and <code>hvtiPlotR</code>, <code>hvtiRtables</code>, <code>hvtiRdatabuild</code>, <code>hvtiRbootstrap</code>, <code>hvtiRlifetables</code> and <code>hvtiRpropensity</code>, which the jobs attach as they need them. <a href="https://github.com/ehrlinger/hvtiR" class="external-link"><code>hvtiR</code></a> installs them together.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

@@ -24,6 +24,8 @@
   : Bring a job from another study into this one
 - [`install_hvti()`](https://ehrlinger.github.io/hvtiRtemplates/reference/install_hvti.md)
   : Install the hvti command
+- [`install_provenance_hooks()`](https://ehrlinger.github.io/hvtiRtemplates/reference/install_provenance_hooks.md)
+  : Install a study's Quarto provenance hooks
 - [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
   : Report a background job's state
 - [`life_table()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md)

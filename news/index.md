@@ -1,5 +1,583 @@
 # Changelog
 
+## hvtiRtemplates 1.6.3
+
+### Before you upgrade
+
+- **Upgrade `sid-stability` with `sid-clusters`.** A study copy of
+  `sid-stability` from before this release reads none of the new
+  choices. Once an upgraded `sid-clusters` sets `PAM_ON <- "profile"` or
+  `CLUSTER_METHOD <- "hclust"`, the old copy refits with PAM on the SID
+  distance and compares those refits with groups found another way, with
+  no error, so the mismatch reads as instability. It also ignores a
+  `REFERENCE`. Run
+  [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+  on both jobs together.
+- Studies’ existing copies of `sid-clusters` and `sid-stability` run
+  unchanged. A `sid-clusters.rds` written before this release refits on
+  the SID distance with no reference, and refits cached before it still
+  load.
+- A `JOIN` without `REDUCE` no longer drops cohort patients silently
+  ([\#613](https://github.com/ehrlinger/hvtiRtemplates/issues/613)). It
+  was an inner join, so a one-row-per-patient file, such as age at the
+  index echo, cut the cohort to the patients it had a row for, and only
+  the data table’s count of “Cohort patients with no joined record” said
+  so.
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+  gains `keep_unjoined`, whose default, `NULL`, decides by the join’s
+  type. A wide join, keyed on the ID alone, now keeps every cohort
+  patient, a patient with no row having the joined columns missing. A
+  long join, of repeated records such as echoes, still keeps only the
+  patients with records, since its rows are the records, but now says
+  how many it left out: in the data table, in `unjoined`, and in a
+  warning from
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+  itself, of class `hvtiRtemplates_unjoined`, which every report shows
+  whatever its template, study copies made before this release included.
+  `TRUE` or `FALSE` overrides the default. A job already in a study
+  reads the same patients and records as it did, except that a wide join
+  now keeps every cohort patient. **A long join’s rows now come in
+  cohort order**, each patient’s records together, where they came in
+  the joined file’s order before. The rows are the same, but a seeded
+  step that draws them by position, such as cross-validation folds or a
+  bootstrap, can give different numbers when an existing job is rendered
+  again.
+- A job that models one row per patient, such as `hz`, `lg` or an `rf`
+  fit, takes a wide `JOIN` without `REDUCE`. It refused every join
+  without `REDUCE`, though a join keyed on the ID alone, such as an age
+  file, adds columns and keeps one row per patient. A long join, keyed
+  on more than the ID, still stops before any data are read, and its
+  message now names the key and says that a join keyed on the ID alone
+  needs no `REDUCE`. The templates’ `JOIN` comments say “a long JOIN
+  without REDUCE stops here”.
+- hvtiRtemplates now requires hvtiRutilities 1.5.27, the first release
+  whose
+  [`update_manifest()`](https://ehrlinger.github.io/hvtiRutilities/reference/update_manifest.html)
+  reads the `.rds` that `sid-clusters` registers.
+- The quarto R package moves from Suggests to Imports:
+  [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  and
+  [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+  need it, so installing hvtiRtemplates now brings it into a study renv
+  ([\#612](https://github.com/ehrlinger/hvtiRtemplates/issues/612)).
+- The `Suggests:` floor on ggBoostedTrees is now 0.10.2, which the split
+  templates need for `boost_shadow()` and pooled importance; 0.9.1
+  promised a version the nb templates cannot run on.
+
+### Reading and joining data
+
+- A `JOIN` keeps every variable label
+  ([\#614](https://github.com/ehrlinger/hvtiRtemplates/issues/614)).
+  Selecting rows dropped the `label` attribute of every plain column, so
+  a joined `dc-eda` report warned that every variable lacked a label and
+  showed raw column names. The labels of the cohort and of the joined
+  dataset now survive, with or without `REDUCE`.
+- A job’s `DATASET` may now name a file in the study’s datasets folder,
+  such as `DATASET <- "match_set.rds"`, to run on data that is not
+  registered: `.rds`, `.rda`, `.RData`, `.parquet`, `.csv`, `.sas7bdat`,
+  `.xlsx` or `.xls`, whatever
+  [`read_clinical_data()`](https://ehrlinger.github.io/hvtiRutilities/reference/read_clinical_data.html)
+  reads (`.rda` and `.RData` from hvtiRutilities 1.5.27).
+  [`read_job_data()`](https://ehrlinger.github.io/hvtiRtemplates/reference/read_job_data.md)
+  reads it as a draft: the render warns, the data table and “About this
+  run” say the data are unregistered and give the
+  [`hvtiRutilities::register_data()`](https://ehrlinger.github.io/hvtiRutilities/reference/register_data.html)
+  call that fixes it, and a final render downstream refuses a hand-off
+  saved from those rows. Every template’s `DATASET` comment names the
+  option.
+- When the patient KEY repeats in a `DATASET` named as an unregistered
+  file, the error says the repeat is in that file, not in a working
+  build, and its
+  [`duplicate_keys()`](https://ehrlinger.github.io/hvtiRutilities/reference/duplicate_keys.html)
+  call lowercases the file’s column names as the job does, so it runs on
+  a file whose columns are upper case.
+
+### Clustering with `sid`
+
+- `sid-clusters` can take its letters at K from an earlier assignment of
+  the same patients
+  ([\#611](https://github.com/ehrlinger/hvtiRtemplates/issues/611)).
+  `COLLAPSE` names letters that the lineage rule chose for this render,
+  so a collapse copied from a published analysis could merge clusters
+  other than the ones it named, without warning. A new study choice,
+  `REFERENCE <- list(dataset = "<registered>", col = "<column>")`,
+  matches each cluster at K to the reference group it shares the most
+  patients with: best Jaccard, one to one. A table reports each match.
+  `COLLAPSE` set with neither `REFERENCE` nor `OVERRIDES` at K now
+  warns, and with `REFERENCE` it stops on a letter no cluster matched. A
+  reference whose IDs repeat once read as text, such as `"1"` and
+  `" 1"`, stops rather than matching the first silently. The `OVERRIDES`
+  comment says that PAM numbers go stale after a refit, and shows where
+  to read them.
+- `sid-stability` measures its refits against `sid-clusters`’
+  `REFERENCE` too, when that job set one: the adjusted Rand index
+  against the reference’s groups beside this rerun’s own, and each
+  reference group’s Jaccard overlap across the refits. Refits are
+  matched to the reference groups by the patients they share, never by
+  letter, and collapsed as `COLLAPSE` collapses the reference.
+  `sid-clusters` now saves each patient’s reference group in its
+  handoff, so the two jobs read the reference once and cannot disagree
+  ([\#623](https://github.com/ehrlinger/hvtiRtemplates/issues/623)).
+- `sid-clusters` takes `PAM_ON <- "profile"` to run PAM on the matrix of
+  SID distances, as some earlier analyses did, in place of the SID
+  distance itself (`"sid"`, the default). `sid-stability` reads the
+  choice from `sid-clusters.rds`, so its refits always use the same
+  metric, and caches profile refits under names of their own
+  ([\#629](https://github.com/ehrlinger/hvtiRtemplates/issues/629)).
+- `sid-clusters` takes `CLUSTER_METHOD <- "hclust"` to cut one
+  complete-linkage tree of the SID distance at each K,
+  `cutree(hclust(as.dist(D)), k)`, which is the `$clustering` that
+  randomForestSRC’s `sidClustering()` returns when given `k`. An
+  analysis that reported those clusters can now be rerun like with like.
+  `"pam"`, the default, is unchanged. The silhouette and the elbow come
+  from the chosen fits, the elbow being the tree’s height at K under
+  `"hclust"`, and the report says which method ran. `"hclust"` with
+  `PAM_ON <- "profile"` stops: the profile distance reproduces a PAM
+  analysis, and `sidClustering()` cuts the SID distance itself
+  ([\#642](https://github.com/ehrlinger/hvtiRtemplates/issues/642)).
+- `sid-stability` reads the method from `sid-clusters.rds`, so its
+  refits cut the distance the same way, and caches hclust refits under
+  names of their own. A `sid-clusters.rds` written before this release
+  refits with PAM, and PAM refits cached before it still load.
+- `sid-stability`’s `TRACK` takes one level of a coded column,
+  `TRACK <- list(var = "<column>", level = 2)`, beside a 0/1 column as
+  before, and its tables name the level
+  ([\#624](https://github.com/ehrlinger/hvtiRtemplates/issues/624)).
+  `TRACK` refuses an identifier column, whose name and level would
+  otherwise print in the tables and figure.
+- `sid-stability` reports each refit to
+  [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+  and the render log as done of total with an estimate of the time left,
+  counting only refits that fit, not ones read from the cache
+  ([\#622](https://github.com/ehrlinger/hvtiRtemplates/issues/622)). The
+  templates README adds the rule for new templates with long loops.
+- `sid-clusters` registers a new set’s cluster letters as `.rds`, not
+  CSV, so a patient ID with leading zeros keeps them and later jobs join
+  on it. It had stopped every study keyed on a zero-padded ID before
+  writing `sid-clusters.rds`, which also blocked `sid-stability`
+  ([\#618](https://github.com/ehrlinger/hvtiRtemplates/issues/618)). A
+  set registered as CSV before keeps its CSV and its read-back check.
+- `sid-fit` takes `FACTORS`, the clustering variables to treat as
+  categories rather than numbers, such as a graded degree or a coded
+  class. They become factors before the missing values are counted and
+  imputed, are listed in the “What the forests were grown on” table and
+  are saved in `sid.rds`, so `sid-stability` refits on the same types.
+  `FACTORS <- NULL`, the default, keeps every variable that is not text
+  a number, as before, so a study’s existing copy reads unchanged and
+  its caches still load
+  ([\#610](https://github.com/ehrlinger/hvtiRtemplates/issues/610)).
+- `sid-fit` takes `IMPUTE <- "none"`, for data already completed
+  upstream, such as one draw of the imputation a published analysis
+  used. It imputes nothing, stops naming each clustering variable that
+  still has a missing value, and needs `M = 1`. The report says the data
+  were complete as supplied, and `sid.rds` and the report’s provenance
+  record `"none"`. Until now a rerun that supplied completed data got a
+  report describing an imputation that did not run
+  ([\#643](https://github.com/ehrlinger/hvtiRtemplates/issues/643)).
+- `sid-fit` takes `SID_ARGS`, a named list of other `sidClustering()`
+  arguments (`ntree.reduce`, `fast`, `dist.sharpen`) and of the
+  `rfsrc()` arguments it passes on (`mtry`, `nodesize`), so a rerun can
+  match an analysis that set them. It refuses the arguments the job sets
+  itself, `formula`, `na.action`, the arguments that carry patient data
+  (`x.no.sid`, `case.wt`, `samp`) and any name neither function takes.
+  The arguments are written into the cached call and saved in `sid.rds`
+  and the provenance. `SID_ARGS <- list()`, the default, makes the call
+  the job always made, so a study’s existing caches still load
+  ([\#644](https://github.com/ehrlinger/hvtiRtemplates/issues/644)).
+  `sid-stability` refits with the same arguments, so a refit differs
+  from the reported forest only by its seed.
+- `sid-fit` says why it asks for randomForestSRC 3.7.0: it is the
+  release the random forest templates were written against, and this job
+  needs nothing new in it. randomForestSRC is in `Suggests`, so the
+  floor gates the job, not installing hvtiRtemplates
+  ([\#646](https://github.com/ehrlinger/hvtiRtemplates/issues/646)).
+
+### Random forests
+
+- `rfs-fit`, `rfc-fit` and `rfr-fit` now define the learning curve’s two
+  agreement measures where the table and figure first use them: Jaccard,
+  from 0 (no top variable shared) to 1 (the same set), with the steps it
+  can take for the top `LEARNING_TOP_K`, and Kendall tau, from -1 (order
+  reversed) through 0 (no relation) to 1 (the same order). The stability
+  figure carries a dashed line at 0 and its caption both ranges, and its
+  two legends stack so neither is cut off at manuscript width. The error
+  figure draws a box per fraction from the 15th to the 85th percentile
+  of its refits, with a line at the median.
+- The three rf fit templates print a recommendation under the learning
+  curve, as an advisory callout that never stops the render. **Cohort
+  size** reads the rightmost point: enough when Jaccard and Kendall tau
+  both reach `LEARNING_AGREEMENT` (new `EDIT:`, default 0.8, a cautious
+  start) and have leveled off, moving less than 0.05 either way since
+  the previous point; borderline when they reach it but are still rising
+  or falling, rest on fewer than 50 events, read an optimistic point or
+  have no earlier point to compare; not yet otherwise. **Predictors**
+  compares the candidate count with `MIN_PREDICTORS` (new `EDIT:`,
+  default 10): under it, the report suggests fitting the matching
+  regression model (Cox, logistic or linear) alongside before relying on
+  the forest.
+- `rfc-fit` guards against class imbalance. When the larger of two
+  classes outnumbers the smaller by `IMBALANCE_RATIO` (new `EDIT:`,
+  default 3, a start rather than evidence) or more, the forest is grown
+  as randomForestSRC’s quantile classifier (`rfq = TRUE`,
+  `splitrule = "auc"`) and scored by normalized Brier rather than
+  misclassification, which rewards predicting the larger class every
+  time. A callout says so, and the error captions name the score. The
+  learning-curve refits and `rfc-explain`’s importance and intervals
+  read the setting off the forest, so they follow without changes. More
+  than two classes past the ratio get a warning callout, since RFQ is
+  two-class. A balanced outcome grows the same forest under the same
+  cache key as before. An existing imbalanced job that is upgraded grows
+  the RFQ forest on its next render: its cache goes stale until `REFIT`,
+  and its error and importance move to the Brier scale.
+  `IMBALANCE_RATIO <- Inf` keeps the old forest.
+- `rfc-fit` stops on an outcome with fewer than two classes among the
+  patients the forest is grown on, saying which class they all have. It
+  warned that the quantile classifier takes two classes only and went
+  on, and a predictor with no values, under `na.omit`, counted the
+  classes on no patients and raised `-Inf` warnings before the job’s own
+  stop on that predictor, which now comes first.
+- `rfr-fit` reports the forest’s variance explained under “Does the
+  forest work?”: a table of how many patients have an out-of-bag
+  prediction, the out-of-bag mean squared error after the last tree, the
+  variance of the outcome and one minus their ratio, the R squared
+  randomForestSRC prints with the forest. A note explains each row, why
+  the error rests only on patients with an out-of-bag prediction, and
+  why R squared can fall below 0.
+- `rfc-fit` and `rfs-fit` report the counterpart, a Brier skill score.
+  `rfc-fit` compares the forest’s out-of-bag Brier score with that of
+  giving every patient the class shares; `rfs-fit` compares its
+  integrated out-of-bag Brier score with that of giving every patient
+  the cohort’s Kaplan-Meier curve, scored with the same censoring
+  weights. Each table ends with a C statistic for discrimination beside
+  the Brier rows’ accuracy: the area under the ROC curve in `rfc-fit`,
+  Harrell’s C from the out-of-bag predictions in `rfs-fit`. Each table
+  counts the patients with an out-of-bag prediction, and a note explains
+  each row.
+
+### `nb-boostmtree`
+
+- `nb-boostmtree` is split into two jobs, as `rfs-fit` and `rfs-explain`
+  are. `nb-boostmtree_fit` fits with five shadow copies of every
+  predictor (`K_SHADOW`), optionally refits under other seeds
+  (`N_REFITS`), reports the plateau of iterations within 1% of the
+  lowest cross-validated error beside Best M, records the boostmtree,
+  randomForestSRC and ggBoostedTrees versions, and saves
+  `nb-boostmtree_fit.rds`. `nb-boostmtree_explain` reads it, never fits,
+  runs importance `N_VIMP` times on each fit and pools the runs with
+  ggBoostedTrees 0.10.2, reporting how often each predictor cleared its
+  run’s noise band; it warns when boostmtree or randomForestSRC differ
+  from the fit’s. Importance and partial effects that will be computed
+  are refused outside
+  [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+  and checked against the session’s memory, as the fit is. Both need
+  boostmtree 2.0.13 and ggBoostedTrees 0.10.2. `nb-boostmtree` is
+  deprecated and goes in the release after;
+  [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  writes `nb-boostmtree_fit` and its warning names
+  `nb-boostmtree_explain`, and
+  [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+  keeps an existing job on its own template. The fit’s run-time comment
+  is now estimated for `M = 500` from `M = 10` runs with five shadows on
+  boostmtree 2.0.13
+  ([\#580](https://github.com/ehrlinger/hvtiRtemplates/issues/580)).
+  Moving a job from `nb-boostmtree` to `nb-boostmtree_fit` refits,
+  because the cache name and the shadow covariates differ.
+- The memory check before an `nb-boostmtree_fit` fit is recalibrated on
+  boostmtree 2.0.13
+  ([\#601](https://github.com/ehrlinger/hvtiRtemplates/issues/601)). Its
+  continuous estimate was set on 2.0.8 and asked for 7 to 12 times what
+  a fit uses, so it refused fits that a smaller session would hold. It
+  now rests on peaks measured at the template’s `M = 500`, on simulated
+  data with 4 and 24 predictors and on COMMENCE’s own data, and sits 25%
+  above every one. Because memory grows over the boosting steps, the
+  estimate gains a term in `M`. A 1,391-patient fit on 8 cores at
+  `M = 500` now asks for 12.5 GiB rather than 37.5, and fits a Default
+  session. The ordinal estimate is unchanged, because it has not been
+  measured on 2.0.13. A binary or nominal fit, never measured, is
+  estimated at twice the continuous figure. The new estimate applies
+  only on boostmtree 2.0.13 or later. An `nb-boostmtree` job still
+  running 2.0.8 keeps the old estimate, which is what kept COMMENCE out
+  of the Default session that killed it on 2.0.8.
+
+### `ac`, life tables and the hazard chain
+
+- `ac` gains `COMPLEMENT` and `Y_LABEL`. `COMPLEMENT <- TRUE` draws the
+  manuscript figure as 1 minus Kaplan-Meier, rising from 0; its band,
+  confidence bars and captions follow it. That is the cumulative
+  mortality for all-cause death, and overstates the cumulative incidence
+  of an event death can pre-empt, which the template says beside the
+  option. `Y_LABEL` names the y-axis, e.g. `"Mortality (%)"`; by default
+  it reads “Survival (%)”, or “1 - Kaplan-Meier (%)” under `COMPLEMENT`.
+  The tables report survival either way.
+- `ac`’s `COMPLEMENT` also takes `"both"`, which draws survival and 1
+  minus Kaplan-Meier on one manuscript figure, each with its band, event
+  points and confidence bars, and each stratum in its own color and line
+  type. The axis title and captions name both. Any other value stops the
+  render.
+- The `ac` manuscript figure’s axes meet at (0, 0) and stop at
+  `PLOT_MAX` and 100%, with no padding past them. Its x-axis ticks at
+  the times the row beneath counts patients at risk (`RISK_TIMES`), so
+  each count stands under a tick of its own; the default times run 0, 2,
+  4, … on a 10-year axis. The counts at either end are drawn whole, and
+  the at-risk row’s labels stand clear of the count at 0.
+- [`life_table_at()`](https://ehrlinger.github.io/hvtiRtemplates/reference/life_table.md)
+  puts `n_risk` right after `time`, ahead of survival and its limits, so
+  the count read against a horizon sits beside it in a wide table. The
+  `ac` horizon tables, overall and by stratum, follow. Code that reads
+  the columns by name is unaffected.
+- The `ac` life tables, overall and by stratum, end each stratum on a
+  “Total” row that sums its events, so the count can be checked against
+  the cohort table. Only events are totalled: on an event-rows table the
+  censored column leaves out patients censored after the last event.
+- The hazard-chain templates (`ac`, `hz`, `hm`, `hp`, `hs-concordance`,
+  `hs-score`, `hs-setup`, `bc`, `bh`, `bl` and `br`), their runners and
+  `ar` ship the example subject `"dead"` in place of `"dead_pa"`, so the
+  gallery’s
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  calls read `subject = "dead", type = "hz"`. The `_pa` suffix named
+  nothing a new user could look up. `ac`’s header now says that subject
+  and type are names you choose, kept the same along a chain. A job
+  already in a study keeps the subject it was scaffolded with.
+
+### Descriptive and `vt` templates
+
+- `dc-eda` takes `X_VAR <- NULL` for a build with no reference date.
+  Each continuous variable is drawn as the spread of its values over the
+  whole cohort and each categorical one as a single bar, under the label
+  “Cohort” unless `X_LABEL` names another, and the captions say so. The
+  follow-up section, which draws follow-up against the operation date,
+  is left out with a note in place of an error. The study-choice comment
+  adds that an age or an interval works as `X_VAR`, and that `JOIN` can
+  bring one in. A job that names its `X_VAR` draws as before
+  ([\#615](https://github.com/ehrlinger/hvtiRtemplates/issues/615)).
+- `dc-tables` builds each table’s Key from what the table prints. Every
+  abbreviation the study’s list (`_study.yml`, then the group defaults)
+  can expand is defined under the table, and `ABBREVIATIONS` adds to or
+  overrides it. Until now the Key was only what a job typed into
+  `ABBREVIATIONS`, which a new job starts empty, so a table printing
+  NYHA went out with no Key. A table’s abbreviations belong in its own
+  Key, not only in the manuscript’s Abbreviations list, which is for the
+  text. An acronym the table prints that nothing expands is named in a
+  warning, and a `STDDIFF` column’s “Std. Diff.” is keyed as
+  standardized difference.
+- `dc-tables` no longer warns that a table’s Key cannot expand a surname
+  or eponym written with an inner capital, such as McNemar, MacDonald,
+  DeBakey or DiGeorge. An acronym with a second capital or a digit is
+  still reported.
+- `dc-tables` defines SD (from the Mean±SD note) and NA (a cell with no
+  value to compute, as a `STDDIFF` difference can be) in a table’s Key
+  when the table prints them, instead of warning that the Key cannot
+  expand them.
+- `vt-explain`’s two stratum figures now say in their captions how many
+  patients they leave out for want of a stratum, as the stratum table
+  already did. A sid-clusters set run on a narrower cohort than `vt-fit`
+  leaves some patients unclustered, and a figure lifted into a paper on
+  its own gave no sign of them. Each figure counts its own patients: the
+  RMST-difference figure draws every treated patient, the curves only
+  those in distribution.
+- A patient whose `STRATIFY` column is missing now counts as having no
+  stratum in the stratum table and both figures. The table left such a
+  patient out of its counts without saying so, and the curves dropped
+  them as well.
+- `vp-fit` and `vp-dependence` report each stability refit, and
+  `sid-fit` each imputation and SID forest, to
+  [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+  and the render log as done of total with an estimate of the time left,
+  as `sid-stability`‘s refits do. Only steps that fit are counted, not
+  ones read from the cache
+  ([\#631](https://github.com/ehrlinger/hvtiRtemplates/issues/631)). The
+  cached code is unchanged, so fits cached by earlier copies of these
+  jobs still load, and studies’ existing copies run as before.
+
+### Running jobs
+
+- [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md),
+  [`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
+  and
+  [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+  stop a job that records its provenance before the render starts when
+  the study lacks the Quarto provenance hooks: a root `_quarto.yml` that
+  runs them, and `.hvtiR/hooks`. Such a job used to fail only at its
+  provenance chunk, after its last fit. The message gives the command
+  that installs the hooks and, in a study that had no `_quarto.yml`,
+  says that deleting it once the job has rendered restores the study’s
+  own rendering. The check and the provenance chunk test the same
+  conditions, from one helper
+  ([\#645](https://github.com/ehrlinger/hvtiRtemplates/issues/645)).
+- [`install_provenance_hooks()`](https://ehrlinger.github.io/hvtiRtemplates/reference/install_provenance_hooks.md)
+  is exported. It adds the Quarto hooks a job that records its
+  provenance needs to a study’s `_quarto.yml`, as
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  and
+  [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+  do, for a study whose jobs came from elsewhere. The message
+  [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  and
+  [`submit_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/submit_job.md)
+  give when such a job is stopped for want of the hooks
+  ([\#653](https://github.com/ehrlinger/hvtiRtemplates/issues/653)) now
+  names it, in place of an internal function.
+- Installing the provenance hooks, by
+  [`install_provenance_hooks()`](https://ehrlinger.github.io/hvtiRtemplates/reference/install_provenance_hooks.md),
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
+  [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+  or
+  [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md),
+  updates a study’s `_quarto.yaml` in place. It wrote the hooks to a new
+  `_quarto.yml` beside it, holding none of the project’s settings. A
+  study with both files is refused, naming both, and the check before a
+  render says the same. The render lock that
+  [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  takes to move a held `execute-results` folder now finds a project by
+  either name too.
+- A render held off by another render in the same study now names the
+  jobs that render is working on and the user who started it, as in
+  `(process 101, rendering distributions/ac.dead.hz.qmd for jdoe)`,
+  where it named the process alone. It adds how to check on or stop that
+  job with
+  [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+  and
+  [`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md)
+  when it was started with
+  [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md).
+  The note is kept in the lock beside its owner record and is read only
+  while it belongs to the render holding the lock.
+- A job held off by another render in the same study now says which job
+  that render is working on.
+  [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)’s
+  check names the jobs and user a render started outside
+  [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+  recorded, where it said “its job is not known”, and
+  [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)
+  on a run that failed on the render lock gives the holder’s jobs as its
+  reason and
+  [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md)/[`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md)
+  for them as the fix, where it gave only the exit code.
+- [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  survives the execute-results race on the network study share
+  ([\#625](https://github.com/ehrlinger/hvtiRtemplates/issues/625)). Its
+  one rerun met the same `.nfs` entry the first render left, and on lri
+  failed three renders of three. Before a rerun it now waits up to a
+  minute for the share to let go of the folder, and if the entries
+  outlast that and are all the folder holds, moves it beside the job as
+  `<job>.execute-results.stale-<time>`, deleting nothing. It renders up
+  to three times in all, and a final failure, like
+  [`job_status()`](https://ehrlinger.github.io/hvtiRtemplates/reference/job_status.md),
+  gives the `lsof` and `rm -rf` commands for the job’s `_files` folder.
+- [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  now checks and moves a job’s held-open `execute-results` folder while
+  holding the study’s render lock
+  ([\#625](https://github.com/ehrlinger/hvtiRtemplates/issues/625),
+  [\#637](https://github.com/ehrlinger/hvtiRtemplates/issues/637)).
+  Before, it released the lock first, so another render of the same job
+  could start between the check and the move and have its own folder
+  moved aside. When another render holds the lock, the folder is left in
+  place and the rerun goes ahead. That hold is this R process’s, with a
+  heartbeat of its own, so a session that dies holding it leaves a lock
+  the next render takes over, on this host or another.
+- If the render lock that
+  [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  takes to move a held `execute-results` folder aside cannot be
+  released, it warns, naming the lock folder. The lock belonged to the R
+  session, so every render of the study was refused until the session
+  ended, the rerun that follows included, and nothing said why.
+- [`render_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/render_job.md)
+  recognizes a Quarto crash under R-devel too, where an object not found
+  is an `objectNotFoundError` rather than a `simpleError`; it had passed
+  the crash through as Quarto’s raw error there.
+- [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md)
+  names a fix that works for each package it finds out of step.
+  `hvtiR::update()` only for hvtiR family packages; for any other,
+  `renv::restore()` when `renv.lock` records it, and `renv::install()`
+  then `renv::record()` when it does not
+  ([\#612](https://github.com/ehrlinger/hvtiRtemplates/issues/612)).
+- [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md)
+  and
+  [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+  open the job in the editor when they finish, as
+  [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md)
+  does, in an interactive session only. Pass `open = FALSE` to leave it
+  closed.
+  [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+  now opens a job that was already current too, where before it opened
+  one only after changing it.
+- An editor that fails to open after
+  [`add_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/add_job.md),
+  [`open_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/open_job.md),
+  [`upgrade_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/upgrade_job.md)
+  or
+  [`migrate_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/migrate_job.md)
+  has written the job is a warning of class
+  `hvtiRtemplates_editor_failed`, not an error: the job is in place and
+  its path is returned.
+- A render lock’s heartbeat loop now ends when its lock is released, not
+  only when the process that owns the lock exits. A long-lived owner,
+  such as a test suite’s driver, kept one `sh` loop and its `sleep 60`
+  running for every lock it had taken
+  ([\#599](https://github.com/ehrlinger/hvtiRtemplates/issues/599)).
+
+### Documentation
+
+- The README’s function table covers every export, grouped as the
+  package is: the taxonomy and catalog, scaffolding and upgrading jobs,
+  running them, the `ar` report and the `ac` life tables. It had listed
+  13 of
+  29. It also gains an index of the articles and a list of the related
+      packages, and the vignettes carry a date.
+- The template catalog’s `mi` row no longer says hvtiRimputation’s
+  `impute_multiple()` is unbuilt. It is built, and takes `predictors`
+  since hvtiRimputation 0.1.4, which become required in 0.1.5; no
+  template calls it yet.
+- The README gives the SAS license end as September 2027, now confirmed,
+  in place of the unconfirmed working date 2027-09-29
+  ([\#585](https://github.com/ehrlinger/hvtiRtemplates/issues/585)).
+- In `rhf-fit` the note on naming a file as `DATASET` no longer splits a
+  sentence, and in `hs-concordance`, `lp-mirror` and `vt-fit` it sits
+  above `DATASET` rather than above the next choice.
+
+### Internal
+
+- A test now runs the whole morphology-paper chain in one study:
+  `sid-fit`, then `sid-clusters`, then `vt-fit` with
+  `ELIGIBILITY = "sid"`, then `vt-explain` with
+  `STRATIFY = list(set = ..., column = "group")`. It proves that each
+  job finds the file the one before it wrote, and that all of them label
+  patients with the same study-keyed ID digests. Until now the `sid`
+  eligibility method was tested only against hand-built files, and no
+  test drove a `STRATIFY` that names a sid set.
+- The nb end-to-end render tests print Quarto’s own error output when a
+  render fails
+  ([\#493](https://github.com/ehrlinger/hvtiRtemplates/issues/493)).
+- Tests: the bystander wait behind the intermittent
+  `test-background-job.R` failure
+  ([\#587](https://github.com/ehrlinger/hvtiRtemplates/issues/587)) no
+  longer gives up on one not-running read taken while the process execs
+  into R.
+- The background-job tests that start a bystander carrying a marker no
+  longer fail at random on Linux. Their wait ended on the first
+  [`ps::ps_find_tree()`](https://ps.r-lib.org/reference/ps_kill_tree.html)
+  hit, often while the bystander was still `sh`, so a later read could
+  land in one of its execs and miss the marker; and a bystander killed
+  mid-startup left the `uname` children R’s startup runs still carrying
+  it. The wait now ends once the bystander’s own R code has run and the
+  marker is on its pid, keeps the read that ended it, and the test waits
+  for the killed bystander to exit
+  ([\#639](https://github.com/ehrlinger/hvtiRtemplates/issues/639)).
+- Two
+  [`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md)
+  tests no longer fail on a loaded machine. Each sent SIGTERM to a shell
+  whose `trap` might not have run yet: “a job that ignores SIGTERM”
+  signalled its bystander as soon as it started, and “a process the job
+  starts while shutting down” waited a fixed second. A shell signalled
+  before its `trap` line dies on the signal, so the first ended in under
+  the grace period and the second never wrote `late.pid`. Each shell now
+  writes a file once its `trap` is set, and the test waits for that file
+  before cancelling.
+- The five heaviest test files share their fits: `lg` runs on 200
+  patients, the `nb-boostmtree` explain and fit tests copy one fitted
+  study per set of choices, the `rfs` band caches are computed once, and
+  `hs-concordance` runs its core chunks once. Every assertion is kept.
+
 ## hvtiRtemplates 1.6.2
 
 - `vp-dependence`’s coverage gate no longer stops a small study on one
@@ -5029,7 +5607,7 @@ template, and no ordinal will ever be issued again.
 ### `graphs/06.02-hs.qmd`
 
 - Now calls
-  [`hvtiRlifetables::us_cohort_curve()`](https://ehrlinger.github.io/hvtiRlifetables/reference/us_cohort_curve.html)
+  [`hvtiRlifetables::us_cohort_curve()`](https://rdrr.io/pkg/hvtiRlifetables/man/us_cohort_curve.html)
   instead of deriving the cohort expected-survival curve inline. The
   template shipped that derivation deliberately, as the specification
   for

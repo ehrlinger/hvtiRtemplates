@@ -1,8 +1,8 @@
 # hvtiRtemplates
 
 Analysis job templates for the HVTI CORR group, plus the prefix taxonomy
-that names them. Twenty-nine exports across 60 source files (counted at
-1.6.0 prep), in five groups: - the taxonomy and catalog:
+that names them. Thirty exports across 66 source files (counted at 1.6.3
+prep), in five groups: - the taxonomy and catalog:
 [`hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html),
 [`hvti_non_prefixes()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_non_prefixes.html),
 [`template_list()`](https://ehrlinger.github.io/hvtiRtemplates/reference/template_list.md),
@@ -26,6 +26,7 @@ running jobs:
 [`cancel_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/cancel_job.md),
 [`run_job()`](https://ehrlinger.github.io/hvtiRtemplates/reference/run_job.md),
 [`install_hvti()`](https://ehrlinger.github.io/hvtiRtemplates/reference/install_hvti.md),
+[`install_provenance_hooks()`](https://ehrlinger.github.io/hvtiRtemplates/reference/install_provenance_hooks.md),
 [`guard_long_fit()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_long_fit.md)
 and
 [`guard_memory()`](https://ehrlinger.github.io/hvtiRtemplates/reference/guard_memory.md); -

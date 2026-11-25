@@ -162,12 +162,14 @@ read_job_data(
 - one_row_per_patient:
 
   `TRUE` for a job that models one row per patient, such as a hazard,
-  logistic or random forest fit. Such a job stops on a `join` without
-  `reduce`, before any data are read, since the long form would count
-  every joined record as a patient, and on rows kept that repeat a
-  patient, as a dataset of repeated records read whole would, after the
-  rows are selected. `FALSE`, the default, accepts the long form, as
-  descriptive jobs and jobs that model repeated measures need.
+  logistic or random forest fit. Such a job stops on a long `join`,
+  keyed on more than `id_col`, without `reduce`, before any data are
+  read, since it would count every joined record as a patient; a wide
+  join, keyed on `id_col` alone, adds columns and is allowed. It also
+  stops on rows kept that repeat a patient, as a dataset of repeated
+  records read whole would, after the rows are selected. `FALSE`, the
+  default, accepts the long form, as descriptive jobs and jobs that
+  model repeated measures need.
 
 - imputation_col:
 
@@ -316,10 +318,10 @@ written.
 root <- file.path(tempdir(), "job-data-example")
 dir.create(root)
 hvtiRutilities::study_setup(root, "Example", 1L, adopt = TRUE, cleanup = FALSE, renv = FALSE)
-#> Study: /tmp/Rtmpc2YY9v/job-data-example
+#> Study: /tmp/RtmpgupxlI/job-data-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/Rtmpc2YY9v/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpgupxlI/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [ ] manifest.yaml — no manifest.yaml; register_data() creates it
 #> [ ] dataset — no default dataset registered; run register_data()
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
@@ -329,10 +331,10 @@ d <- data.frame(ccfid = 1:4, age = c(15, 40, 55, 70))
 utils::write.csv(d, file.path(hvtiRutilities::study_dir("datasets", root), "built.csv"),
                  row.names = FALSE)
 hvtiRutilities::register_data(root = root, file = "built.csv")
-#> Study: /tmp/Rtmpc2YY9v/job-data-example
+#> Study: /tmp/RtmpgupxlI/job-data-example
 #> 
 #> [x] _study.yml — study: Example
-#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/Rtmpc2YY9v/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
+#> [ ] renv.lock — no renv.lock; set the study up with hvtiR::setup(study = "Example", study_tracker_id = 1L, root = "/tmp/RtmpgupxlI/job-data-example", adopt = TRUE), run with no project open, not renv::init(). Adopting deletes tp.* files: see hvtiR's "Start here" first
 #> [x] manifest.yaml — 1 dataset entry verified by checksum
 #> [x] dataset — built.csv, registered as built_20261125.parquet
 #> [ ] provenance — no .qmd/.Rmd sources found; 0 sidecars
