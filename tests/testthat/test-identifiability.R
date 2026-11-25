@@ -222,14 +222,15 @@ test_that("dc-gfup warns of an operation year of few patients only when the figu
 
 test_that("vt-fit counts its arms, events, numbers at risk and flagged patients", {
   km <- data.frame(t = c(1:30, 900), e = c(rep(0L, 28L), 1L, 1L, 0L), a = factor(rep(c("x", "y"), length.out = 31L)))
-  f <- identifiability_chunk(template_path("vt", "fit"), list(
-    .km_data = km, TIME = "t", STATUS = "e", ARM = "a", .counts = data.frame(Patients = c(15L, 16L, 3L)),
+  env <- list(
+    .elig_only = FALSE, .km_data = km, TIME = "t", STATUS = "e", ARM = "a", .counts = data.frame(Patients = c(15L, 16L, 3L)),
     .km = list(tables = list(risk = data.frame(n.risk = c(15L, 2L, 0L)))),
     .ood_counts = table(c("g", "g"), c("x", "y")),
     .overlap = list(combinations = data.frame(flagged_by = c("none", "gower"), x = c(20L, 1L), y = c(30L, 0L))),
     ARMS = c("x", "y"), .forests = list(x = list(n = 22L), y = list(n = 20L)),
     .cal = data.frame(arm = c("x", "y"), patients = 20L, events = c(1L, 10L))
-  ))
+  )
+  f <- identifiability_chunk(template_path("vt", "fit"), env)
   # 1 event in a fifth of 20, and 2 of arm x's patients never out of bag.
   expect_equal(f[["small calibration fifths"]], 1L)
   expect_equal(f[["small patients never out of bag"]], 1L)
@@ -239,6 +240,14 @@ test_that("vt-fit counts its arms, events, numbers at risk and flagged patients"
   expect_equal(f[["at_risk each arm's observed outcome"]], 1L)
   expect_equal(f[["small out of distribution, by method and arm"]], 2L)
   expect_equal(f[["small patients by the rules that flag them"]], 1L)
+  # An eligibility-only fit has no outcome or forest, and still checks the counts it prints.
+  env[c(".km_data", ".km", ".forests", ".cal", "TIME", "STATUS")] <- NULL
+  env$.elig_only <- TRUE
+  f <- identifiability_chunk(template_path("vt", "fit"), env)
+  expect_equal(f[["small patients by arm"]], 1L)
+  expect_equal(f[["small out of distribution, by method and arm"]], 2L)
+  expect_equal(f[["small patients by the rules that flag them"]], 1L)
+  expect_false(any(c("small calibration fifths", "extreme t", "at_risk each arm's observed outcome") %in% names(f)))
 })
 
 test_that("vt-explain counts each table's patients, and a level beside the few a twin favors", {
