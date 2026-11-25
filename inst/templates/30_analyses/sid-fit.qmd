@@ -36,8 +36,8 @@ the one from the other, and measures how often two patients fall in the same
 terminal nodes. Two patients the forest cannot tell apart are close.
 
 The forest needs complete data, so the job first drops variables that are
-mostly missing and fills the rest with one imputation. The imputed values
-stay inside this job. Whatever describes the clusters later reads the study
+mostly missing and fills the rest with one imputation, unless the data
+arrive complete. The imputed values stay inside this job. Whatever describes the clusters later reads the study
 data, so it describes what was measured, not what was imputed.
 
 This template is **in flight**: no study has yet run it end to end.
@@ -68,6 +68,13 @@ suppressPackageStartupMessages({
 # changes with the thread count with every seed held fixed.
 options(rf.cores = 1L, mc.cores = 1L)
 # The oldest versions this template works with.
+# randomForestSRC 3.7.0 is the release the random forest templates were written
+# and tested against (2026-09-19); this job copied the floor from them. It needs
+# nothing new in 3.7.0: sidClustering() has taken every argument used here since
+# 3.4.5 at least, and 3.7.0 changed only survival prediction. randomForestSRC is
+# in Suggests, so the floor gates this job, not installing hvtiRtemplates. To
+# reproduce an analysis, match its version: from 3.10.0 the same seed grows a
+# different forest (rfsrc.RNGversion() selects the old generator).
 if (utils::packageVersion("randomForestSRC") < "3.7.0") {
   stop("This job needs randomForestSRC >= 3.7.0; ", utils::packageVersion("randomForestSRC"),
        " is installed.\nUpdate it, then re-render.", call. = FALSE)
@@ -162,12 +169,25 @@ MAX_MISSING <- 0.4
 NTREE <- 5000
 SID_REDUCE <- TRUE
 
+# EDIT: optionally, other sidClustering() arguments by name, to match an
+# analysis that set them:
+#   SID_ARGS <- list(ntree.reduce = 200, dist.sharpen = FALSE, nodesize = 5)
+# sidClustering()'s own arguments are taken, and the rfsrc() arguments it hands
+# on to the forest (mtry, nodesize). Each changes the distance. The ones this
+# job sets above (data, method, ntree, reduce, seed, k), the formula and
+# na.action are refused. list() makes the call this job has always made, so
+# caches from before SID_ARGS still load.
+SID_ARGS <- list()
+
 # EDIT: how missing values are filled before the forest, which needs complete
 # data. "mice" uses predictive mean matching; "forest" uses randomForestSRC's
-# own imputation. M is the number of imputations: with M > 1 one SID forest is
-# grown on each and their distances are averaged, so the clusters reflect more
-# than one draw of the missing values, at M times the cost. MICE_MAXIT is the
-# number of mice iterations, unused by "forest".
+# own imputation. "none" imputes nothing, for data already completed upstream,
+# such as one draw of the imputation a published analysis used: the job stops
+# if a clustering variable is missing anywhere, and needs M = 1. M is the
+# number of imputations: with M > 1 one SID forest is grown on each and their
+# distances are averaged, so the clusters reflect more than one draw of the
+# missing values, at M times the cost. MICE_MAXIT is the number of mice
+# iterations, used by "mice" only.
 IMPUTE <- "mice"
 M <- 1
 MICE_MAXIT <- 50
@@ -273,15 +293,31 @@ once, by predictive mean matching (`"mice"`) or by randomForestSRC's forest
 imputation (`"forest"`). With one imputation the filled values are treated as
 known, so the cluster boundaries are conditional on one draw; with several,
 the forests' distances are averaged below. Either way, nothing later describes
-the clusters with imputed values.
+the clusters with imputed values. With `IMPUTE = "none"` this job imputes
+nothing: the data must be complete as supplied, for example imputed upstream,
+and the job stops if they are not.
 
 ```{r}
 #| label: impute
-if (!IMPUTE %in% c("mice", "forest")) stop("IMPUTE must be \"mice\" or \"forest\".", call. = FALSE)
+if (!is.character(IMPUTE) || length(IMPUTE) != 1L || !IMPUTE %in% c("mice", "forest", "none")) {
+  stop("IMPUTE must be \"mice\", \"forest\" or \"none\".", call. = FALSE)
+}
 if (!is.numeric(M) || length(M) != 1L || M < 1 || M != trunc(M)) stop("M must be a whole number, 1 or more.", call. = FALSE)
 CACHE_DIR <- dirname(set_path("estimates", "sid.rds"))
 .to_impute <- d[sid_vars]
 .n_missing <- sum(is.na(.to_impute))
+if (identical(IMPUTE, "none")) {
+  # Complete data give M identical forests but for their seeds, which is not M imputations.
+  if (M != 1) stop("IMPUTE = \"none\" needs M = 1: with nothing imputed there is one dataset.", call. = FALSE)
+  .gaps <- colSums(is.na(.to_impute))
+  .gaps <- .gaps[.gaps > 0L]
+  if (length(.gaps)) {
+    stop("IMPUTE = \"none\", but clustering variables have missing values: ",
+         paste0(names(.gaps), " (", .gaps, ")", collapse = ", "),
+         ". Supply completed data, drop the variables from VARS, or choose \"mice\" or \"forest\".", call. = FALSE)
+  }
+  cat("No imputation (IMPUTE = \"none\"): the clustering variables were complete as supplied.\n")
+}
 # Imputation m is cached under its own name and seeded SEED + m - 1, so raising
 # M later reuses the imputations already made.
 d_complete <- lapply(seq_len(M), function(m) {
@@ -302,7 +338,7 @@ if (any(vapply(d_complete, nrow, integer(1L)) != nrow(d))) {
   stop("The imputation returned fewer patients than the cohort holds, so the distances could not be matched to patients.",
        call. = FALSE)
 }
-cat("Values imputed in each of", M, "imputation(s):", .n_missing, "\n")
+if (!identical(IMPUTE, "none")) cat("Values imputed in each of", M, "imputation(s):", .n_missing, "\n")
 ```
 
 ## The SID forest
@@ -321,17 +357,37 @@ cat("Values imputed in each of", M, "imputation(s):", .n_missing, "\n")
 # a stop: a failed fit is then never cached, and the message names the imputation.
 # Only the distance and the kept variables are cached; the forest, which
 # holds patient values, is left out of the cache as it is of sid.rds.
+.sid_names <- names(SID_ARGS)
+if (!is.list(SID_ARGS) || (length(SID_ARGS) && (is.null(.sid_names) || anyNA(.sid_names) || !all(nzchar(.sid_names)) ||
+                                                  anyDuplicated(.sid_names)))) {
+  stop("SID_ARGS must be list() or a list of sidClustering() arguments, each named once, such as list(fast = TRUE).",
+       call. = FALSE)
+}
+.owned <- intersect(.sid_names, c("data", "method", "ntree", "reduce", "seed", "k", "formula", "na.action"))
+if (length(.owned)) {
+  stop("SID_ARGS names argument(s) this job sets itself: ", toString(.owned),
+       ". Set NTREE, SID_REDUCE, SEED or IMPUTE above instead.", call. = FALSE)
+}
+.unknown <- setdiff(.sid_names, setdiff(union(names(formals(randomForestSRC::sidClustering)),
+                                              names(formals(randomForestSRC::rfsrc))), "..."))
+if (length(.unknown)) {
+  stop("SID_ARGS names argument(s) neither sidClustering() nor rfsrc() takes: ", toString(.unknown), ".", call. = FALSE)
+}
+# SID_ARGS is spliced into the call by value, so the call text, and with it the
+# cache key, names each argument and changes when one does. With list() the
+# call is exactly the one this job made before SID_ARGS existed.
+.sid_code <- bquote({
+  o <- sidClustering(d_complete[[m]], method = "sid", ntree = NTREE, reduce = SID_REDUCE, seed = -abs(s), ..(SID_ARGS))
+  if (is.null(o$dist)) {
+    stop("sidClustering() failed on imputation ", m, " (it returned no distance). Look above for the message ",
+         "randomForestSRC gave, and check the clustering variables for a constant or near-empty factor.", call. = FALSE)
+  }
+  o[c("dist", "outcome.names")]
+}, splice = TRUE)
 sid_fits <- lapply(seq_len(M), function(m) {
   if (anyNA(d_complete[[m]])) stop("Missing values reached the SID fit after imputation ", m, ".", call. = FALSE)
   s <- SEED + m - 1L
-  cache_fit(paste0("sid-fit-", m), {
-    o <- sidClustering(d_complete[[m]], method = "sid", ntree = NTREE, reduce = SID_REDUCE, seed = -abs(s))
-    if (is.null(o$dist)) {
-      stop("sidClustering() failed on imputation ", m, " (it returned no distance). Look above for the message ",
-           "randomForestSRC gave, and check the clustering variables for a constant or near-empty factor.", call. = FALSE)
-    }
-    o[c("dist", "outcome.names")]
-  }, seed = s, dir = CACHE_DIR, refit = REFIT)
+  cache_fit(paste0("sid-fit-", m), .sid_code, seed = s, dir = CACHE_DIR, refit = REFIT)
 })
 sid_dist <- Reduce(`+`, lapply(sid_fits, `[[`, "dist")) / M
 # How closely each imputation's distances follow the mean. Near 1, the
@@ -356,7 +412,8 @@ knitr::kable(data.frame(
   value = c(toString(sid_vars), if (length(.factors_used)) toString(.factors_used) else "none",
             if (nrow(sid_dropped)) toString(sid_dropped$variable) else "none",
             toString(unique(unlist(lapply(sid_fits, `[[`, "outcome.names")))),
-            if (.n_missing == 0L) "none needed" else paste0(IMPUTE, ", ", M, " imputation(s)"),
+            if (identical(IMPUTE, "none")) "none: complete as supplied" else
+              if (.n_missing == 0L) "none needed" else paste0(IMPUTE, ", ", M, " imputation(s)"),
             nrow(sid_dist))
 ), col.names = c("", ""))
 ```
@@ -397,7 +454,9 @@ sid_handoff <- hvtiRtemplates:::.attach_handoff_lineage(
        settings = list(ntree = NTREE, sid_reduce = SID_REDUCE, seed = SEED, impute = IMPUTE, m = M,
                        mice_maxit = MICE_MAXIT, max_missing = MAX_MISSING,
                        # The declared factors that were clustered on, which sid-stability converts the same way.
-                       factors = if (length(intersect(FACTORS, sid_vars))) intersect(FACTORS, sid_vars))),
+                       factors = if (length(intersect(FACTORS, sid_vars))) intersect(FACTORS, sid_vars),
+                       # The other sidClustering() arguments the forests were grown with; list() for the defaults.
+                       sid_args = SID_ARGS)),
   data = .provenance_data,
   cohort = .cohort,
   selection = attr(job_data$record, "selection")
@@ -413,6 +472,10 @@ cat(hvtiRtemplates:::.embed_provenance(
   .in,
   data = .provenance_data,
   run = .job$run,
-  extra = list(subject = SUBJECT, type = TYPE, cohort = .cohort)
+  extra = list(subject = SUBJECT, type = TYPE, cohort = .cohort,
+               # How the data were completed, "none" when they arrived complete, and any other
+               # sidClustering() arguments, each written as R code so a function value records too.
+               sid = list(impute = IMPUTE, m = M,
+                          sid_args = lapply(SID_ARGS, function(v) paste(deparse(v), collapse = " "))))
 ))
 ```
