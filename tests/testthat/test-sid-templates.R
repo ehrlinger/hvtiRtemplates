@@ -661,6 +661,76 @@ test_that("sid-clusters refuses a PAM_ON other than sid or profile, and says whi
   expect_null(readRDS(env$set_path("estimates", "sid-clusters.rds"))$clusters$reference)
 })
 
+# ---- #642: hierarchical clustering, as sidClustering() cuts it -----------------------------------
+
+test_that("sid_hclust_cut is cutree(hclust(D, \"complete\"), k), with pam()'s shape for the rest of the job", {
+  skip_if_not_installed("cluster")
+  env <- sid_helpers_env()
+  set.seed(20261124L)
+  m <- as.matrix(stats::dist(matrix(stats::rnorm(60), 20)))
+  dimnames(m) <- list(paste0("p", 1:20), paste0("p", 1:20))
+  d <- stats::as.dist(m)
+  tree <- stats::hclust(d, method = "complete")
+  for (k in 2:5) {
+    fit <- env$sid_hclust_cut(tree, d, k)
+    expect_identical(fit$clustering, stats::cutree(stats::hclust(d, "complete"), k = k))
+    # The widths are named by patient, as pam()'s are, so the job can put them in the patients' order.
+    expect_identical(rownames(fit$silinfo$widths), labels(d))
+    expect_equal(unname(fit$silinfo$widths[, "sil_width"]),
+                 unname(cluster::silhouette(fit$clustering, d)[, "sil_width"]))
+    expect_equal(fit$silinfo$avg.width, mean(fit$silinfo$widths[, "sil_width"]))
+    # Under complete linkage the height at K clusters is the widest cluster's diameter.
+    widest <- max(vapply(split(names(fit$clustering), fit$clustering), function(ids) max(m[ids, ids]), 0))
+    expect_equal(unname(fit$objective[["swap"]]), widest)
+  }
+  expect_null(env$sid_hclust_cut(tree, d, 1L)$silinfo)
+  expect_equal(unname(env$sid_hclust_cut(tree, d, 1L)$objective[["swap"]]), max(m))
+})
+
+test_that("sid_hclust_cut gives the clusters sidClustering(..., k = K) returns, from its own distance", {
+  skip_on_cran()
+  skip_if_not_installed("randomForestSRC")
+  env <- sid_helpers_env()
+  x <- sid_data(n_per = 15L)[c("a", "b", "c", "e")]
+  x <- x[stats::complete.cases(x), ]
+  o <- randomForestSRC::sidClustering(x, k = 3, ntree = 50, seed = -1)
+  d <- stats::as.dist(o$dist)
+  fit <- env$sid_hclust_cut(stats::hclust(d, method = "complete"), d, 3L)
+  expect_identical(unname(fit$clustering), unname(o$clustering))
+})
+
+test_that("CLUSTER_METHOD = \"hclust\" cuts one tree at each K, saves the choice, and says so (#642)", {
+  skip_on_cran()
+  env <- sid_fit_first()
+  out <- utils::capture.output(
+    sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(CLUSTER_METHOD = "hclust")))
+  )
+  expect_match(paste(out, collapse = " "), "complete-linkage tree", fixed = TRUE)
+  tree <- stats::hclust(stats::as.dist(env$sid$dist), "complete")
+  for (k in 2:5) {
+    expect_identical(env$sid_pam[[paste0("pm", k)]]$clustering, stats::cutree(tree, k = k), info = paste("K =", k))
+  }
+  # The silhouette and the elbow come from the tree's cuts, not from PAM.
+  expect_equal(env$sid_metrics$silhouette[3],
+               mean(cluster::silhouette(stats::cutree(tree, k = 3), stats::as.dist(env$sid$dist))[, "sil_width"]))
+  expect_equal(env$sid_metrics$objective, sort(tree$height, decreasing = TRUE)[env$sid_metrics$k] / max(tree$height))
+  h <- readRDS(env$set_path("estimates", "sid-clusters.rds"))
+  expect_identical(h$cluster_method, "hclust")
+  expect_identical(h$pam$pm3$clustering, stats::cutree(tree, k = 3))
+})
+
+test_that("sid-clusters refuses an unknown CLUSTER_METHOD, and hclust on the profile distance (#642)", {
+  skip_on_cran()
+  env <- sid_fit_first()
+  expect_error(sid_clusters_after(env, utils::modifyList(sid_clusters_choices, list(CLUSTER_METHOD = "ward"))),
+               "CLUSTER_METHOD must be \"pam\" or \"hclust\"")
+  expect_error(sid_clusters_after(env, utils::modifyList(sid_clusters_choices,
+                                                         list(CLUSTER_METHOD = "hclust", PAM_ON = "profile"))),
+               "Set PAM_ON <- \"sid\" with \"hclust\"")
+  sid_clusters_after(env)
+  expect_identical(readRDS(env$set_path("estimates", "sid-clusters.rds"))$cluster_method, "pam")
+})
+
 # ---- #610: declaring clustering variables as factors ----------------------------------------------
 
 test_that("sid-fit treats the variables FACTORS names as factors, records them, and sid-stability refits on the same types", {

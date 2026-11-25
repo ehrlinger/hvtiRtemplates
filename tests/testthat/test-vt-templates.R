@@ -728,6 +728,51 @@ test_that("fig-stratum draws nothing when no treated patient is in the stratifie
   expect_true(any(grepl("nothing to draw", out)))
 })
 
+test_that("each stratum figure's caption counts the patients it leaves out for want of a stratum", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_explain(env)
+  r <- env$r
+  # Leave out 3 treated patients out of distribution and 4 in it: fig-stratum draws every treated
+  # patient, so it misses 7; fig-stratum-curves draws those in distribution, so it misses 4.
+  out_ood <- utils::head(r$ID[!r$no_arm & !r$elig], 3L)
+  out_in <- utils::head(r$ID[!r$no_arm & r$elig], 4L)
+  expect_length(out_ood, 3L)
+  vt_sid_fixture(env, data.frame(id = setdiff(r$ID, c(out_ood, out_in)), cluster = "a"))
+  utils::capture.output(vt_explain(env, vt_explain_labels_all, vt_strat_choices()))
+  expect_match(env$.cap_stratum, "out of distribution. 7 patients have no stratum and are not shown.", fixed = TRUE)
+  expect_match(env$.cap_stratum_curves, "survival time. 4 patients have no stratum and are not shown.", fixed = TRUE)
+  expect_false(any(c(out_ood, out_in) %in% env$.sa$ID))
+
+  # The same patients present with a missing cluster count the same way.
+  vt_sid_fixture(env, data.frame(id = r$ID, cluster = ifelse(r$ID %in% c(out_ood, out_in), NA, "a")))
+  utils::capture.output(vt_explain(env, vt_explain_labels_all, vt_strat_choices()))
+  expect_match(env$.cap_stratum, "7 patients have no stratum", fixed = TRUE)
+  expect_match(env$.cap_stratum_curves, "4 patients have no stratum", fixed = TRUE)
+
+  # Every patient stratified: neither caption mentions a missing stratum.
+  vt_sid_fixture(env, data.frame(id = r$ID, cluster = "a"))
+  utils::capture.output(vt_explain(env, vt_explain_labels_all, vt_strat_choices()))
+  expect_no_match(c(env$.cap_stratum, env$.cap_stratum_curves), "no stratum", fixed = TRUE)
+})
+
+test_that("a data-column stratifier counts a patient whose value is missing as having no stratum", {
+  skip_on_cran()
+  d <- vt_data()
+  d$site <- "s1"
+  d$site[seq_len(10L)] <- NA
+  env <- vt_fit_first(data = d, labels = vt_fit_labels_all)
+  utils::capture.output(vt_explain(env, vt_explain_labels_all,
+                                   list(STRATIFY = "site", BOOT = 0L, GAIN_MIN = 0, SAVE_FIGURES = FALSE)))
+  na_ids <- as.character(env$.d_all[[env$.vt$settings$id]][is.na(env$.d_all$site)])
+  n_all <- sum(env$r$ID[!env$r$no_arm] %in% na_ids)
+  n_in <- sum(env$r$ID[env$.eligible] %in% na_ids)
+  expect_gt(n_in, 0L)
+  expect_match(env$.cap_stratum, paste(n_all, "patients have no stratum"), fixed = TRUE)
+  expect_match(env$.cap_stratum_curves, paste(n_in, "patients have no stratum"), fixed = TRUE)
+  expect_false(anyNA(env$.strata$stratum))
+})
+
 test_that("tbl-benefit honors GAIN_MIN and splits the no-arm patients between the arms", {
   skip_on_cran()
   env <- vt_fit_first(labels = vt_fit_labels_all)

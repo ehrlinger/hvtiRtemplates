@@ -444,3 +444,99 @@ test_that("the stuck error names the folders moved aside before each rerun", {
   for (a in basename(aside)) expect_match(conditionMessage(e), a, fixed = TRUE)
   expect_identical(calls, 3L)
 })
+
+# A study root with its render lock, the lock owned by `owner` when one is given.
+lock_root <- function(owner = NULL) {
+  root <- withr::local_tempdir(.local_envir = parent.frame())
+  if (!is.null(owner)) {
+    lock <- .provenance_lock_path(root)
+    dir.create(lock, recursive = TRUE)
+    jsonlite::write_json(owner, file.path(lock, "owner.json"), auto_unbox = TRUE)
+  }
+  root
+}
+
+test_that("the folder is moved holding the study's render lock, taken over from the failed render, then released", {
+  skip_if_not_installed("ps")
+  dir <- withr::local_tempdir()
+  results <- stuck_folder(dir)
+  # The failed attempt's Quarto process has exited, so its lock is a dead render's.
+  root <- lock_root(list(pid = 999999L, created = "0.000000", host = Sys.info()[["nodename"]]))
+  lock <- .provenance_lock_path(root)
+  local_mocked_bindings(.race_sleep = function(s) NULL, .start_provenance_heartbeat = function(...) TRUE)
+  released <- NULL
+  real_release <- .release_provenance_lock
+  local_mocked_bindings(.release_provenance_lock = function(root, me) {
+    # At release the lock is still this process's, and the folder has already moved: the move was made inside it.
+    released <<- list(owner = jsonlite::read_json(file.path(lock, "owner.json")), moved = !dir.exists(results))
+    real_release(root, me)
+  })
+
+  out <- .settle_execute_results(results, root = root)
+  expect_identical(released$owner, .provenance_self_owner())
+  expect_true(released$moved)
+  expect_false(dir.exists(results))
+  expect_length(Sys.glob(file.path(dir, "job.execute-results.stale-*")), 1L)
+  expect_match(out, "was moved to", fixed = TRUE)
+  expect_false(dir.exists(lock))
+})
+
+test_that("a folder is left in place while another render holds the study's render lock", {
+  skip_if_not_installed("ps")
+  dir <- withr::local_tempdir()
+  results <- stuck_folder(dir)
+  # The session's parent stands in for a live render, as a Quarto render's owner is the R hook's parent.
+  live <- .provenance_render_owner()
+  root <- lock_root(live)
+  local_mocked_bindings(.race_sleep = function(s) NULL)
+
+  out <- .settle_execute_results(results, root = root)
+  expect_true(dir.exists(results))
+  expect_length(Sys.glob(file.path(dir, "*.stale-*")), 0L)
+  expect_match(out, "render lock could not be taken, so the folder was left in place. Another Quarto render", fixed = TRUE)
+  # Only the sentence naming the holder: the advice to wait and render again is for someone starting a render.
+  expect_no_match(out, "Wait for it", fixed = TRUE)
+  expect_identical(jsonlite::read_json(file.path(.provenance_lock_path(root), "owner.json")), live)
+})
+
+test_that("a lock this R process already holds is neither moved under nor released", {
+  skip_if_not_installed("ps")
+  dir <- withr::local_tempdir()
+  results <- stuck_folder(dir)
+  root <- lock_root(.provenance_self_owner())
+  local_mocked_bindings(.race_sleep = function(s) NULL)
+
+  out <- .settle_execute_results(results, root = root)
+  expect_true(dir.exists(results))
+  expect_match(out, "This R process already holds it.", fixed = TRUE)
+  expect_true(dir.exists(.provenance_lock_path(root)))
+})
+
+test_that("the lock is the Quarto project's, the folder holding _quarto.yml that the hooks lock", {
+  root <- withr::local_tempdir()
+  writeLines("project: {}", file.path(root, "_quarto.yml"))
+  job_dir <- file.path(root, "10_descriptive")
+  dir.create(job_dir)
+  expect_identical(.job_quarto_project(job_dir), normalizePath(root, winslash = "/"))
+  expect_null(.job_quarto_project(withr::local_tempdir()))
+})
+
+test_that("a free study render lock is held by this R process, its heartbeat tied to it, and released after the move", {
+  skip_if_not_installed("ps")
+  dir <- withr::local_tempdir()
+  results <- stuck_folder(dir)
+  root <- lock_root()
+  lock <- .provenance_lock_path(root)
+  beats <- list()
+  local_mocked_bindings(.race_sleep = function(s) NULL,
+                        .start_provenance_heartbeat = function(lock, owner, ...) beats[[length(beats) + 1L]] <<- owner)
+
+  .settle_execute_results(results, root = root)
+  expect_false(dir.exists(results))
+  # Should this process die holding the lock, the session's parent may live on; the owner and the loop that beats for
+  # it are this process, so the lock then reads as dead here and its heartbeat stops for other hosts.
+  expect_length(beats, 1L)
+  expect_identical(beats[[1L]], .provenance_self_owner())
+  expect_identical(beats[[1L]]$pid, Sys.getpid())
+  expect_false(dir.exists(lock))
+})

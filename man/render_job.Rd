@@ -95,8 +95,10 @@ minute for the share to let go of the folder's \code{.nfs} entries, the files it
 deleted while something still held them. If they outlast the wait and are all
 the folder holds, the folder is moved beside the job as
 \verb{<job>.execute-results.stale-<time>}, so the rerun does not meet them; delete it
-once nothing holds them. Nothing is deleted, and a folder holding anything else
-is left in place. Any other failure is passed through unchanged. A third such
+once nothing holds them. The folder is checked and moved holding the study's
+render lock, so no other render can start meanwhile; while another render holds
+it, the folder is left in place. Nothing is deleted, and a folder holding anything
+else is left in place. Any other failure is passed through unchanged. A third such
 failure stops with an error of class \code{hvtiRtemplates_execute_results_stuck},
 whose message gives the commands to find what holds the folder and to delete it.
 Rendering from the RStudio Render button does not go through \code{render_job()} and
