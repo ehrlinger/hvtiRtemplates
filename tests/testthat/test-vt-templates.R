@@ -680,6 +680,28 @@ test_that("fig-stratum draws nothing when no treated patient is in the stratifie
   expect_true(any(grepl("nothing to draw", out)))
 })
 
+test_that("each stratum figure's caption counts the patients it leaves out for want of a stratum", {
+  skip_on_cran()
+  env <- vt_fit_first(labels = vt_fit_labels_all)
+  vt_explain(env)
+  r <- env$r
+  # Leave out 3 treated patients out of distribution and 4 in it: fig-stratum draws every treated
+  # patient, so it misses 7; fig-stratum-curves draws those in distribution, so it misses 4.
+  out_ood <- utils::head(r$ID[!r$no_arm & !r$elig], 3L)
+  out_in <- utils::head(r$ID[!r$no_arm & r$elig], 4L)
+  expect_length(out_ood, 3L)
+  vt_sid_fixture(env, data.frame(id = setdiff(r$ID, c(out_ood, out_in)), cluster = "a"))
+  utils::capture.output(vt_explain(env, vt_explain_labels_all, vt_strat_choices()))
+  expect_match(env$.cap_stratum, "out of distribution. 7 patients have no stratum and are not shown.", fixed = TRUE)
+  expect_match(env$.cap_stratum_curves, "survival time. 4 patients have no stratum and are not shown.", fixed = TRUE)
+  expect_false(any(c(out_ood, out_in) %in% env$.sa$ID))
+
+  # Every patient stratified: neither caption mentions a missing stratum.
+  vt_sid_fixture(env, data.frame(id = r$ID, cluster = "a"))
+  utils::capture.output(vt_explain(env, vt_explain_labels_all, vt_strat_choices()))
+  expect_no_match(c(env$.cap_stratum, env$.cap_stratum_curves), "no stratum", fixed = TRUE)
+})
+
 test_that("tbl-benefit honors GAIN_MIN and splits the no-arm patients between the arms", {
   skip_on_cran()
   env <- vt_fit_first(labels = vt_fit_labels_all)

@@ -437,6 +437,20 @@ if (is.list(STRATIFY)) {
                                    "STRATIFY")
   .strata <- data.frame(ID = .d_all[[.vt$settings$id]], stratum = as.character(.d_all[[STRATIFY]]))
 }
+# A patient with no stratum is left out of both figures below, and a figure read on its own must say so.
+# Each figure draws its own patients, so each counts its own; the counts are made here because a
+# caption is read before its chunk runs.
+.no_stratum <- function(ids) {
+  n <- if (is.null(.strata)) 0L else sum(!unique(ids) %in% .strata$ID)
+  if (n == 0L) return("")
+  paste0(" ", n, if (n == 1L) " patient has no stratum and is not shown." else " patients have no stratum and are not shown.")
+}
+.cap_stratum <- paste0("The RMST difference by stratum, one panel per arm received. Box: 15th to 85th percentile of the ",
+                       "patients in distribution, whiskers 5th to 95th, drawn where a cell holds at least 5; every patient ",
+                       "is a point, and the ringed ones are out of distribution.", .no_stratum(r$ID[!r$no_arm]))
+.cap_stratum_curves <- paste0("Mean predicted survival under each arm's forest, patients in distribution, one panel per ",
+                              "stratum. The shaded area to the horizon is the restricted mean survival time.",
+                              .no_stratum(r$ID[.eligible]))
 ```
 
 ```{r}
@@ -467,9 +481,7 @@ if (is.null(.strata)) {
 
 ```{r}
 #| label: fig-stratum
-#| fig-cap: "The RMST difference by stratum, one panel per arm received. Box: 15th to 85th percentile of the
-#|   patients in distribution, whiskers 5th to 95th, drawn where a cell holds at least 5; every patient is a
-#|   point, and the ringed ones are out of distribution."
+#| fig-cap: !expr .cap_stratum
 .sa <- if (!is.null(.strata)) merge(r[!r$no_arm, c("ID", "arm", "diff", "elig")], .strata, by = "ID")
 if (!is.null(.sa) && !nrow(.sa)) cat("No treated patient is in the stratifier's set; there is nothing to draw.\n")
 if (!is.null(.sa) && nrow(.sa)) {
@@ -498,8 +510,7 @@ if (!is.null(.sa) && nrow(.sa)) {
 
 ```{r}
 #| label: fig-stratum-curves
-#| fig-cap: "Mean predicted survival under each arm's forest, patients in distribution, one panel per stratum.
-#|   The shaded area to the horizon is the restricted mean survival time."
+#| fig-cap: !expr .cap_stratum_curves
 .sc <- if (!is.null(.strata)) merge(.vt$curves[.vt$curves$ID %in% r$ID[.eligible], ], .strata, by = "ID")
 if (!is.null(.sc) && nrow(.sc)) {
   # Each arm's curves come from one forest and share its time grid, so a mean at each time is a mean curve.
