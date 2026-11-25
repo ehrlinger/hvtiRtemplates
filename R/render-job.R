@@ -319,8 +319,9 @@ render_job <- function(path, final = FALSE, quiet = isTRUE(getOption("hvti.quiet
   if (!identical(.read_provenance_owner(file.path(lock, "owner.json")), me)) return(invisible(NULL))
   warning("render_job(): the study's render lock, taken while the execute-results folder was moved, could not be ",
           "released, and this R session holds it until it exits. If ", .provenance_takeover_path(lock),
-          " exists, a render is taking the lock over and this clears itself. Otherwise, once no render of the study is ",
-          "running, delete ", lock, ".", call. = FALSE)
+          " exists, a render on this or another host may be taking the lock over, or a failed release may have left ",
+          "it behind. Once no render of the study is running on any host, delete ", lock, " and, if it is there, ",
+          .provenance_takeover_path(lock), ".", call. = FALSE)
 }
 
 # The Quarto project the job renders in: the nearest folder above it holding _quarto.yml, which is the

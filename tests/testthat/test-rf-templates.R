@@ -531,6 +531,12 @@ test_that("rfs-explain draws the importance intervals and the partial bands from
   withr::local_options(hvtiRtemplates.allow_interactive_fit = TRUE)
   env <- new.env(parent = globalenv())
   env$.root <- rfs_banded_copy()
+  # The copy holds the band figures the shared fixture drew. They go, and the caches stay, so the checks below
+  # see figures this run drew from the cached subsamples.
+  drawn <- list.files(env$.root, "rfs-explain-(importance-intervals|dependence-partial-bands-page-01)",
+                      recursive = TRUE, full.names = TRUE)
+  expect_gt(length(drawn), 0L)
+  unlink(drawn)
   choices <- c(rfs_explain_choices, list(BANDS_B = 3, SUBRATIO = 0.5))
   expect_warning(rf_run("rfs", "explain", c(explain_labels, band_labels), env, choices), "SUBRATIO")
   for (nm in c("rfs-vimp-subsample", "rfs-band-rows", paste0("rfs-partial-band-", env$sel))) {
