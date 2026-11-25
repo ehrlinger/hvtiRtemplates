@@ -31,6 +31,9 @@ vt_choices <- list(
   HORIZON = 2, NTREE = 50, NSPLIT = 8, SEED = 1, SAVE_FIGURES = FALSE
 )
 
+# The eligibility chunks of vt-fit with no outcome, then its handoff: what TIME <- NULL runs.
+vt_elig_only_choices <- utils::modifyList(vt_choices, list(TIME = NULL, STATUS = NULL), keep.null = TRUE)
+
 # Every chunk of vt-fit, in order. Tasks 2 and 3 extend it.
 vt_fit_labels <- c("setup", "edit-study-choices", "tbl-data", "predictors", "tbl-km", "fig-km",
                    "ood", "eligibility", "tbl-ood", "fig-ood", "tbl-isolation-sensitivity", "tbl-outside-range",
@@ -97,8 +100,9 @@ vt_with_screen <- function(screen, choices, .local_envir = parent.frame()) {
   env
 }
 
-# A fresh study with both vt jobs scaffolded, edited and rendered through Quarto.
-vt_render_fixture <- function(.local_envir = parent.frame()) {
+# A fresh study with both vt jobs scaffolded, edited and rendered through Quarto. `fit_values` overrides
+# vt-fit's choices, as code; `which` names the jobs to scaffold and render.
+vt_render_fixture <- function(fit_values = list(), which = c("fit", "explain"), .local_envir = parent.frame()) {
   root <- tempfile("vt-study-")
   withr::defer(unlink(root, recursive = TRUE), envir = .local_envir)
   suppressMessages(hvtiRutilities::study_setup(root, study = "Synthetic vt study", study_tracker_id = 42L, renv = FALSE))
@@ -110,7 +114,7 @@ vt_render_fixture <- function(.local_envir = parent.frame()) {
     lines[hit[1L]] <- paste(key, "<-", value)
     lines
   }
-  jobs <- vapply(c("fit", "explain"), function(q) {
+  jobs <- vapply(which, function(q) {
     job <- add_job("vt", "dead", "vt", root = root, qualifier = q)
     lines <- gsub("EDIT:", "REVIEWED:", readLines(job, warn = FALSE), fixed = TRUE)
     if (q == "fit") {
@@ -118,6 +122,7 @@ vt_render_fixture <- function(.local_envir = parent.frame()) {
                       c("PREDICTORS", 'c("xs", "x1", "g1")'), c("HORIZON", "2"), c("NTREE", "50"))) {
         lines <- set_line(lines, kv[1], kv[2])
       }
+      for (key in names(fit_values)) lines <- set_line(lines, key, fit_values[[key]])
     } else {
       lines <- set_line(lines, "BOOT", "20")
     }
