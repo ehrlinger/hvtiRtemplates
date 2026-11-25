@@ -342,11 +342,14 @@
   }, error = conditionMessage)
   if (is.null(reason)) return(NULL)
   message <- paste0(basename(path), " records its provenance, which needs the study's Quarto provenance hooks: ", reason)
-  # A _quarto.yml nearer the job makes its folder the project, and hooks at the root would not change that.
+  # A project file nearer the job makes its folder the project, and hooks at the root would not change that.
+  # Name the file found, _quarto.yml or _quarto.yaml, so the advice points at one that exists.
   if (!is.na(project) && !identical(project, root)) {
+    found <- file.path(project, c("_quarto.yml", "_quarto.yaml"))
+    found <- found[file.exists(found)]
     return(list(message = message, fix = paste0(
-      "Move ", file.path(project, "_quarto.yml"), " aside: it makes that folder its own Quarto project, ",
-      "so the render never reaches the study root's hooks."
+      "Move ", paste(found, collapse = " and "), " aside: ", if (length(found) > 1L) "they make" else "it makes",
+      " that folder its own Quarto project, so the render never reaches the study root's hooks."
     )))
   }
   created <- !file.exists(file.path(root, "_quarto.yml"))

@@ -99,6 +99,17 @@ test_that("a _quarto.yml nearer the job than the study root fails the check", {
   expect_no_match(problem$fix, ".install_provenance_hooks(", fixed = TRUE)
 })
 
+test_that("a nearer _quarto.yaml is named as the file it is", {
+  root <- precheck_study(withr::local_tempdir())
+  job <- managed_job(root)
+  .install_provenance_hooks(root)
+  writeLines(c("project:", "  type: default"), file.path(dirname(job), "_quarto.yaml"))
+
+  problem <- .provenance_hooks_problem(job)
+  expect_match(problem$fix, paste0("Move ", dirname(job), "/_quarto.yaml aside: it makes"), fixed = TRUE)
+  expect_no_match(problem$fix, "_quarto.yml", fixed = TRUE)
+})
+
 test_that("submit_job stops before launching a managed job without the hooks", {
   skip_on_os("windows") # submit_job() is not available on Windows
   root <- precheck_study(withr::local_tempdir())
