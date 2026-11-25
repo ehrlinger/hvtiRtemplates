@@ -18,6 +18,15 @@
     n <- length(refusal)
     return(list(reason = paste(refusal[seq_len(max(n - 1L, 1L))], collapse = " "), fix = if (n > 1L) refusal[n] else ""))
   }
+  # Held off by another render holding the study's render lock. The lock's error names that render, its jobs and who
+  # started it, and how to check on it; the line may carry R's "Error: " or "Error in ...: " ahead of it.
+  lk <- hit("Another Quarto render is in progress in this study")
+  if (length(lk)) {
+    msg <- sub("^.*?(Another Quarto render is in progress in this study)", "\\1", log[lk[1L]], perl = TRUE)
+    parts <- strsplit(msg, " Wait for it to finish, then render again.", fixed = TRUE)[[1L]]
+    return(list(reason = paste0(sub("[.]$", "", sub("^Another", "another", parts[1L])), ", so this job could not start."),
+                fix = trimws(paste0("Wait for it to finish, then run this job again.", paste(parts[-1L], collapse = "")))))
+  }
   # The log only: the runner records exit code 0 or 1, never the signal that killed a render.
   killed <- length(hit("worker result\\(s\\) were not delivered|^Killed\\s*$|exit status 137")) > 0L
   if (killed) {

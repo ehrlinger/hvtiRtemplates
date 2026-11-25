@@ -396,9 +396,12 @@
   owner_file <- file.path(lock, "owner.json")
   owner <- if (file.exists(owner_file)) tryCatch(jsonlite::read_json(owner_file), error = function(e) NULL)
   if (!is.null(owner) && .provenance_lock_held(owner, lock)) {
+    # The holding render records its jobs and user beside its owner file; a render from before that records none.
+    about <- .provenance_about(lock, owner)
     return(.check("study_render", FALSE,
-                  sprintf(paste("another Quarto render holds this study's render lock (%s), started outside run_job(),",
-                                "so its job is not known."), .provenance_owner_label(owner)),
+                  sprintf("another Quarto render holds this study's render lock (%s%s), started outside run_job()%s",
+                          .provenance_owner_label(owner), .provenance_about_label(about),
+                          if (is.null(about)) ", so its job is not known." else "."),
                   paste0("Wait for it to finish, then run again.", .provenance_lock_hint(owner, lock)),
                   note))
   }
